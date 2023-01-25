@@ -1,0 +1,1297 @@
+/* Copyright (c) 2008-2022 Jonathan Revusky, revusky@congocc.org
+ * Copyright (c) 2021-2022 Vinay Sajip, vinay_sajip@yahoo.co.uk - changes for Python support.
+ * All rights reserved.
+ *
+ * Redistribution and use in source and binary forms, with or without
+ * modification, are permitted provided that the following conditions are met:
+ *
+ *     * Redistributions of source code must retain the above copyright notices,
+ *       this list of conditions and the following disclaimer.
+ *     * Redistributions in binary form must reproduce the above copyright
+ *       notice, this list of conditions and the following disclaimer in the
+ *       documentation and/or other materials provided with the distribution.
+ *     * Neither the name Jonathan Revusky nor the names of any contributors 
+ *       may be used to endorse or promote products derived from this software 
+ *       without specific prior written permission.
+ *
+ * THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS"
+ * AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
+ * IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
+ * ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT OWNER OR CONTRIBUTORS BE
+ * LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR
+ * CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF
+ * SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS
+ * INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN
+ * CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
+ * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF
+ * THE POSSIBILITY OF SUCH DAMAGE.
+ */
+
+ // This is the Java grammar that is used (via an INCLUDE) in the CongoCC
+ // tool itself but it can be used on its own, and you are free to use it
+ // in your own projects. It supports the stable feature set of the Java
+ // language up to JDK 17.
+ // This grammar is a forward evolution of the sample Java grammar originally
+ // included in the legacy JavaCC distribution in 1997 or thereabouts, but is
+ // close to being a total rewrite, and serves as a kind of showcase for the latest
+ // features in JavaCC 21, so many constructs are expressed in a very clean
+ // and elegant way that is simply not possible with the legacy tool.
+
+JAVA_UNICODE_ESCAPE;
+PARSER_PACKAGE=org.parsers.java;
+NODE_PACKAGE=org.parsers.java.ast;
+DEFAULT_LEXICAL_STATE=JAVA;
+// The following tokens are only activated at key points whether
+// they are needed.
+DEACTIVATE_TOKENS=RECORD, VAR, YIELD, SEALED, NON_SEALED, PERMITS;
+
+//FAULT_TOLERANT;
+MINIMAL_TOKEN;
+ENSURE_FINAL_EOL;
+LEGACY_GLITCHY_LOOKAHEAD=false;
+
+INCLUDE "JavaLexer.ccc"
+
+#CompilationUnit# :
+  [ PackageDeclaration! ]
+  ( ImportDeclaration )*!
+  ( TypeDeclaration )*!
+  [
+    // Why do I have to make this EOF optional?
+    // Will REVISIT later...
+    <EOF>
+  ]
+  {
+    return CURRENT_NODE;
+  }
+;
+
+PackageDeclaration :
+    (Annotation)*
+    <PACKAGE>
+    =>||
+    Name {CURRENT_NODE.setPackageName((Name) peekNode());} 
+    <SEMICOLON>
+;
+
+INJECT PackageDeclaration :
+{
+  @Property Name packageName;
+}
+
+ImportDeclaration : <_IMPORT> [ <STATIC> ] Name [ <DOT> <STAR> ] <SEMICOLON> ;
+
+Modifiers :
+ (
+  SCAN {isParserTolerant() || permissibleModifiers == null
+       || permissibleModifiers.contains(getToken(1).getType())}#
+  =>
+  (
+   <PUBLIC>|<STATIC>|<PROTECTED>|<PRIVATE> |<FINAL>|<ABSTRACT>
+   |<SYNCHRONIZED>|<NATIVE>|<TRANSIENT>|<VOLATILE>|<STRICTFP>
+   |<_DEFAULT>)
+  {
+    if (permissibleModifiers !=null) {
+      TokenType tt = getToken(0).getType();
+      switch(tt) {
+        case ABSTRACT :
+        case FINAL :
+           permissibleModifiers.remove(TokenType.ABSTRACT);
+           permissibleModifiers.remove(TokenType.FINAL);
+           break;
+        case PRIVATE :
+        case PROTECTED :
+        case PUBLIC :
+           permissibleModifiers.remove(TokenType.PRIVATE);
+           permissibleModifiers.remove(TokenType.PROTECTED);
+           permissibleModifiers.remove(TokenType.PUBLIC);
+           break;
+        default :
+           permissibleModifiers.remove(lastConsumedToken.getType());
+      }
+    }
+  }
+  |
+  SCAN {
+    permissibleModifiers == null
+    ||
+    permissibleModifiers.contains(TokenType.SEALED)
+    &&
+    (
+       "sealed".equals(getToken(1).getImage())
+       ||
+       "non".equals(getToken(1).getImage())
+         && "-".equals(getToken(2).getImage())
+         && "sealed".equals(getToken(3).getImage())
+    )
+  }# =>
+  ACTIVATE_TOKENS SEALED, NON_SEALED (<SEALED>|<NON_SEALED>)
+  {
+    if (permissibleModifiers!=null) {
+      permissibleModifiers.remove(TokenType.SEALED);
+      permissibleModifiers.remove(TokenType.NON_SEALED);
+    }
+  }
+  |
+  Annotation
+ )*
+ {permissibleModifiers = null;}#
+;
+
+INJECT PARSER_CLASS : {
+  private EnumSet<TokenType> permissibleModifiers;
+}
+
+TypeDeclaration #interface :
+  SCAN TypeDeclarationLA =>
+  (
+    EmptyDeclaration
+    |
+    AnnotationTypeDeclaration
+    |
+    ClassDeclaration
+    |
+    InterfaceDeclaration
+    |
+    EnumDeclaration
+    |
+    RecordDeclaration
+  )
+;
+
+
+TypeDeclarationLA#scan :
+   <SEMICOLON>
+   |
+   Modifiers /modifiers/
+   (
+     <CLASS>
+     | <INTERFACE>
+     | <ENUM>
+     | <AT> <INTERFACE>
+     | <IDENTIFIER>
+       ASSERT {currentLookaheadToken.getImage().equals("record")}
+       <IDENTIFIER>
+   )
+;
+
+INJECT EmptyDeclaration : implements TypeDeclaration;
+INJECT AnnotationTypeDeclaration : implements TypeDeclaration;
+INJECT ClassDeclaration : implements TypeDeclaration;
+INJECT InterfaceDeclaration : implements TypeDeclaration;
+INJECT EnumDeclaration : implements TypeDeclaration;
+
+EmptyDeclaration# : <SEMICOLON> ;
+
+TypeIdentifier#void :
+   <IDENTIFIER>
+   {String temp = getToken(0).getImage();}#
+   ASSERT {!temp.equals("record")
+           && !temp.equals("var")
+           && !temp.equals("permits")
+           && !temp.equals("sealed")
+           && !temp.equals("yield")}#
+          : "Illegal type name " + temp
+   =>||
+;
+
+ClassDeclaration :
+  {permissibleModifiers = EnumSet.of(TokenType.PUBLIC, TokenType.PROTECTED, TokenType.PRIVATE, TokenType.ABSTRACT, TokenType.FINAL, TokenType.STATIC, TokenType.STRICTFP, TokenType.SEALED, TokenType.NON_SEALED);}#
+  Modifiers /modifiers/
+  <CLASS> =>||
+  TypeIdentifier /name/
+  [ TypeParameters ]
+  [ ExtendsList ]
+  [ ImplementsList ]
+  [ PermitsList ]
+  ClassOrInterfaceBody
+;
+
+InterfaceDeclaration :
+  {permissibleModifiers = EnumSet.of(TokenType.PUBLIC, TokenType.PROTECTED, TokenType.PRIVATE, TokenType.ABSTRACT, TokenType.STATIC, TokenType.STRICTFP, TokenType.SEALED, TokenType.NON_SEALED);}#
+  Modifiers /modifiers/
+  <INTERFACE> =>||
+  TypeIdentifier
+  [ TypeParameters ]
+  [ ExtendsList ]
+  [ PermitsList ]
+  ClassOrInterfaceBody
+;
+
+PermitsList :
+   SCAN 0 {getToken(1).getImage().equals("permits")}# =>
+   ACTIVATE_TOKENS PERMITS (<PERMITS>)
+   ObjectType
+   (<COMMA> ObjectType)*
+;
+
+ExtendsList :
+   <EXTENDS>
+   ObjectType
+   (
+     SCAN 1 \InterfaceDeclaration =>
+     <COMMA> ObjectType
+   )*
+;
+
+INJECT ExtendsList :
+import java.util.List;
+{
+    public List<ObjectType> getTypes() {
+        return childrenOfType(ObjectType.class);
+    }
+}
+
+ImplementsList :
+   <IMPLEMENTS> ObjectType
+   (
+     <COMMA> ObjectType
+   )*
+;
+
+
+EnumDeclaration :
+   {permissibleModifiers = EnumSet.of(TokenType.PUBLIC, TokenType.PROTECTED, TokenType.PRIVATE, TokenType.ABSTRACT, TokenType.FINAL, TokenType.STATIC, TokenType.STRICTFP);}#
+   Modifiers /modifiers/
+   <ENUM> =>||
+   TypeIdentifier /name/
+   [ImplementsList]
+   EnumBody
+;
+
+EnumBody :
+   <LBRACE>
+   [ EnumConstant /[values]/ ( SCAN 2 <COMMA> EnumConstant /[values]/ )* ]
+   [ <COMMA> ]
+   [ <SEMICOLON> ( ClassOrInterfaceBodyDeclaration )*! ]
+   <RBRACE>
+;
+
+RecordDeclaration :
+  {permissibleModifiers = EnumSet.of(TokenType.PUBLIC, TokenType.PROTECTED, TokenType.PRIVATE, TokenType.ABSTRACT, TokenType.FINAL, TokenType.STATIC, TokenType.STRICTFP);}
+  Modifiers /modifiers/
+  ASSERT {getToken(1).getImage().equals("record") && getToken(2).getType() == TokenType.IDENTIFIER}#
+  =>||
+  ACTIVATE_TOKENS RECORD (<RECORD>)
+  TypeIdentifier
+  [TypeParameters]
+  RecordHeader
+  [ImplementsList]
+  RecordBody
+;
+
+RecordHeader :
+   <LPAREN>
+   [
+     RecordComponent
+     (<COMMA> RecordComponent)*
+   ]
+   <RPAREN>
+;
+
+RecordComponent :
+   (Annotation)* Type [(Annotation)* <VAR_ARGS>] <IDENTIFIER>
+;
+
+RecordBody :
+  <LBRACE> 
+  (
+   CompactConstructorDeclaration
+   |
+   ClassOrInterfaceBodyDeclaration
+  )*
+  <RBRACE>
+;
+
+CompactConstructorDeclaration :
+  {permissibleModifiers = EnumSet.of(TokenType.PUBLIC, TokenType.PROTECTED, TokenType.PRIVATE);}#
+  Modifiers /modifiers/
+  TypeIdentifier
+  <LBRACE> =>||
+  [ ExplicitConstructorInvocation =>|| ]
+  ( BlockStatement /[statements]/ )*!
+  <RBRACE>
+;
+
+INJECT CompactConstructorDeclaration : extends ConstructorDeclaration
+
+EnumConstant :
+  (Annotation)* <IDENTIFIER> [ InvocationArguments ] [ ClassOrInterfaceBody ]
+;
+
+TypeParameters :
+   <LT>
+   TypeParameter ( <COMMA> TypeParameter )*
+   DEACTIVATE_TOKENS RSIGNEDSHIFT, RUNSIGNEDSHIFT (<GT>)
+;
+
+INJECT TypeParameters :
+  import java.util.List;
+{
+    public List<TypeParameter> getParameters() {
+        return childrenOfType(TypeParameter.class);
+    }
+}
+
+TypeParameter: (Annotation)* TypeIdentifier =>|| [TypeBound];
+
+TypeBound :
+   <EXTENDS> ObjectType ( <BIT_AND> ObjectType )*
+;
+
+ClassOrInterfaceBody : <LBRACE> (SCAN ~(<RBRACE>) => ClassOrInterfaceBodyDeclaration /[decls]/ )*! <RBRACE> ;
+
+ClassOrInterfaceBodyDeclaration#interface :
+  Initializer
+  |
+  TypeDeclaration
+  |
+  ConstructorDeclaration
+  |
+  MethodDeclaration
+  |
+  FieldDeclaration
+;
+
+INJECT TypeDeclaration : extends ClassOrInterfaceBodyDeclaration
+INJECT Initializer : extends CodeBlock implements ClassOrInterfaceBodyDeclaration
+INJECT ConstructorDeclaration : implements ClassOrInterfaceBodyDeclaration
+INJECT FieldDeclaration : implements ClassOrInterfaceBodyDeclaration
+INJECT MethodDeclaration : implements ClassOrInterfaceBodyDeclaration
+
+FieldDeclaration :
+  {permissibleModifiers = EnumSet.of(TokenType.PUBLIC, TokenType.PROTECTED, TokenType.PRIVATE, TokenType.STATIC, TokenType.FINAL, TokenType.TRANSIENT, TokenType.VOLATILE);}#
+  Modifiers /modifiers/
+  Type VariableDeclarator ( <COMMA> VariableDeclarator )* <SEMICOLON>
+;
+
+VariableDeclarator# : VariableDeclaratorId [ <ASSIGN> VariableInitializer ] ;
+
+VariableDeclaratorId : <IDENTIFIER> /varName/ ( (Annotation)* <LBRACKET> <RBRACKET> )* ;
+
+VariableInitializer : ArrayInitializer | Expression ;
+
+ArrayInitializer :
+   <LBRACE> [ VariableInitializer ( SCAN 2 <COMMA> VariableInitializer )* ] [ <COMMA> ] <RBRACE>
+;
+
+#MethodDeclaration :
+  (
+    SCAN \.\.\InterfaceDeclaration
+    =>
+    {permissibleModifiers = EnumSet.of(TokenType.PUBLIC,TokenType.PRIVATE,TokenType.ABSTRACT,TokenType.STATIC,TokenType.SYNCHRONIZED,TokenType.NATIVE,TokenType.STRICTFP,TokenType._DEFAULT);}
+    |
+    SCAN ~\...\TypeDeclaration // This is a kludge to support the code injection feature in CongoCC
+                               // If we're not in a TypeDeclaration (most likely because we are in a CongoCC code injection)
+                               // we just accept all the possible modifiers.
+    =>
+    {permissibleModifiers = EnumSet.of(TokenType.PUBLIC,TokenType.PROTECTED,TokenType.PRIVATE,TokenType.ABSTRACT,TokenType.STATIC,TokenType.SYNCHRONIZED,TokenType.NATIVE,TokenType.STRICTFP,TokenType._DEFAULT);}
+    |
+    {permissibleModifiers = EnumSet.of(TokenType.PUBLIC,TokenType.PROTECTED,TokenType.PRIVATE,TokenType.ABSTRACT,TokenType.STATIC,TokenType.FINAL,TokenType.SYNCHRONIZED,TokenType.NATIVE,TokenType.STRICTFP);}
+  )
+  Modifiers /modifiers/
+  [ TypeParameters ]
+  ReturnType
+  <IDENTIFIER> /methodName/
+  =>|+1 FormalParameters /formals/ ( (Annotation)* <LBRACKET><RBRACKET> )*
+  [ ThrowsList ]
+  ( Block /statements/ | <SEMICOLON> )
+  {return CURRENT_NODE;}
+;
+
+FormalParameters : <LPAREN> [ FormalParameter ( <COMMA> FormalParameter )* ] <RPAREN> ;
+
+FormalParameter : {permissibleModifiers = EnumSet.of(TokenType.FINAL);}# Modifiers /modifiers/ Type [ (Annotation)* <VAR_ARGS> ] VariableDeclaratorId ;
+
+ConstructorDeclaration :
+  {permissibleModifiers = EnumSet.of(TokenType.PUBLIC, TokenType.PROTECTED, TokenType.PRIVATE);}#
+  Modifiers /modifiers/
+  [ TypeParameters ]
+  TypeIdentifier FormalParameters /formals/ =>||
+  [ ThrowsList ]
+  <LBRACE>
+  [ ExplicitConstructorInvocation =>||]
+  ( BlockStatement /[statements]/ )*!
+  <RBRACE>
+;
+
+ExplicitConstructorInvocation :
+  [TypeArguments] (<THIS> | <SUPER>) =>|+1 InvocationArguments <SEMICOLON>
+  |
+  // Is this 100% correct? I think so, but it is not quite what the
+  // language spec says. Maybe need to revisit this.
+  (Name [<DOT><THIS> =>||] | Parentheses)
+  <DOT> [TypeArguments] <SUPER> =>|+1 InvocationArguments <SEMICOLON>
+;
+
+Initializer# :
+  [ <STATIC> ] =>|+1 Block
+;
+
+Type#interface :
+   ReferenceType =>||
+   |
+   PrimitiveType
+;
+
+INJECT ReferenceType : implements Type
+INJECT PrimitiveArrayType : implements Type
+INJECT PrimitiveType : implements Type
+
+ReferenceType :
+   PrimitiveArrayType =>||
+   |
+   ObjectType ((Annotation)* <LBRACKET><RBRACKET> =>||)*
+;
+
+ObjectType# :
+    (Annotation)*
+    TypeIdentifier [ TypeArguments ]
+    ( <DOT> (Annotation)* <IDENTIFIER> =>|| [ TypeArguments ] )*
+;
+
+INJECT ObjectType : implements Type
+{
+    public boolean equals(Object obj) {
+        if (obj instanceof ObjectType) {
+            return ((ObjectType) obj).toString().equals(this.toString());
+        }
+        return false;
+    }
+
+/*
+ *  Commented out, as interferes with representation used in tests
+ *
+    public String toString() {
+        StringBuilder buf = new StringBuilder();
+        for (Token t : getRealTokens()) {
+            buf.append(t);
+        }
+        return buf.toString();
+    }
+ */
+}
+
+DiamondOperator :  <LT><GT> =>|| ;
+
+PossiblyEmptyTypeArguments #void :
+   DiamondOperator
+   |
+   TypeArguments
+;
+
+TypeArguments :
+  SCAN 2
+  <LT> TypeArgument ( <COMMA> TypeArgument )*
+   DEACTIVATE_TOKENS RSIGNEDSHIFT, RUNSIGNEDSHIFT (<GT>)
+;
+
+TypeArgument :
+  (Annotation)* <HOOK> =>|| [ WildcardBounds ]
+  |
+  ReferenceType
+;
+
+WildcardBounds : (<EXTENDS> | <SUPER>) ReferenceType ;
+
+PrimitiveType# :
+  (Annotation)*
+  <BOOLEAN> | <CHAR> | <BYTE> | <SHORT> | <INT> | <LONG> | <FLOAT> | <DOUBLE>
+  =>||
+;
+
+PrimitiveArrayType : PrimitiveType ((Annotation)* <LBRACKET><RBRACKET> =>||)+ ;
+
+ReturnType# : <VOID> | Type ;
+
+Name# : <IDENTIFIER> (<DOT> <IDENTIFIER> =>||)* ;
+
+ThrowsList : <THROWS> ExceptionType ( <COMMA> ExceptionType )* ;
+
+ExceptionType :
+    (Annotation)*
+    (
+      Name <DOT> =>|+1 (Annotation)+ TypeIdentifier
+      |
+      Name
+    )
+    [TypeArguments]
+;
+
+#Expression#interface :
+    AssignmentExpression
+    {return (Expression) peekNode();}
+;
+
+INJECT Expression :
+{
+  default boolean isAssignableTo() {return false;}
+  default String getAsString() {return toString();}
+}
+
+INJECT PrimaryExpression : extends Expression
+INJECT AdditiveExpression : implements Expression
+INJECT ArrayInitializer : implements Expression
+INJECT AndExpression : implements Expression
+INJECT AssignmentExpression : implements Expression
+INJECT CastExpression : implements Expression
+INJECT ObjectCastExpression : extends CastExpression
+INJECT ConditionalAndExpression : implements Expression
+INJECT ConditionalOrExpression : implements Expression
+INJECT EqualityExpression : implements Expression
+INJECT ExclusiveOrExpression : implements Expression
+INJECT ExplicitConstructorInvocation : implements Expression
+INJECT InclusiveOrExpression : implements Expression
+INJECT InstanceOfExpression : implements Expression
+INJECT ClassLiteral : implements PrimaryExpression
+INJECT DotThis : implements PrimaryExpression
+INJECT LambdaExpression : implements Expression
+INJECT MethodCall : implements PrimaryExpression
+INJECT MethodReference : implements PrimaryExpression
+INJECT MultiplicativeExpression : implements Expression
+INJECT PostfixExpression : implements Expression
+INJECT PreDecrementExpression : implements Expression
+INJECT PreIncrementExpression : implements Expression
+INJECT RelationalExpression : implements Expression
+INJECT ShiftExpression : implements Expression
+INJECT StatementExpression : implements Expression
+INJECT SwitchExpression : implements Expression
+INJECT TernaryExpression : implements Expression
+INJECT UnaryExpression : implements Expression
+INJECT UnaryExpressionNotPlusMinus : implements Expression
+INJECT AllocationExpression : implements PrimaryExpression
+INJECT LiteralExpression : implements PrimaryExpression
+INJECT DotNew : extends AllocationExpression
+
+INJECT Name : implements PrimaryExpression {
+  public boolean isAssignableTo() {return true;}
+}
+
+INJECT DotName : implements PrimaryExpression {
+  public boolean isAssignableTo() {return true;}
+}
+
+INJECT ArrayAccess : implements PrimaryExpression {
+  public boolean isAssignableTo() {return true;}
+}
+
+AssignmentExpression :
+  {
+    Expression lhs;
+  }
+  TernaryExpression {lhs = (Expression) peekNode();}
+  [
+    SCAN 1 {lhs.isAssignableTo()}
+    => AssignmentOperator Expression
+  ]
+;
+
+AssignmentOperator #void :
+  <ASSIGN> | <STARASSIGN> | <SLASHASSIGN> | <REMASSIGN> | <PLUSASSIGN> | <MINUSASSIGN> | <LSHIFTASSIGN> | <RSIGNEDSHIFTASSIGN> | <RUNSIGNEDSHIFTASSIGN> | <ANDASSIGN> | <XORASSIGN> | <ORASSIGN>
+;
+
+TernaryExpression :
+  ConditionalOrExpression [  <HOOK> Expression <COLON> Expression ]
+;
+
+ConditionalOrExpression :
+  ConditionalAndExpression ( <SC_OR> ConditionalAndExpression )*
+;
+
+ConditionalAndExpression :
+  InclusiveOrExpression ( <SC_AND> InclusiveOrExpression )*
+;
+
+InclusiveOrExpression :
+  ExclusiveOrExpression ( <BIT_OR> ExclusiveOrExpression )*
+;
+
+ExclusiveOrExpression :
+  AndExpression ( <XOR> AndExpression )*
+;
+
+AndExpression :
+  EqualityExpression ( <BIT_AND> EqualityExpression )*
+;
+
+EqualityExpression :
+  InstanceOfExpression ( ( <EQ> | <NE> ) InstanceOfExpression #EqualityExpression(3) )*
+;
+
+InstanceOfExpression :
+  RelationalExpression
+  [
+    <INSTANCEOF>
+    (
+      LocalVariableDeclaration // This is a stable feature in JDK 16.
+      |
+      Type
+    )
+  ]
+;
+
+RelationalExpression :
+  ShiftExpression
+  [
+    ( <LT> | <GT> | <LE> | <GE>)
+    ShiftExpression
+  ]
+;
+
+
+ShiftExpression :
+   AdditiveExpression
+   [
+     // Under certain conditions we scanned forward
+     // and (incorrectly) scanned a >>, so we uncache
+     // the tokens and end up rescanning!
+     SCAN <GT> (<GT>|<RSIGNEDSHIFT>) => UNCACHE_TOKENS
+   ]
+   (
+      (<LSHIFT> | <RSIGNEDSHIFT> | <RUNSIGNEDSHIFT>)
+      AdditiveExpression #ShiftExpression(3)
+   )*
+;
+
+AdditiveExpression :
+  MultiplicativeExpression (  ( <PLUS> | <MINUS> ) MultiplicativeExpression )*
+;
+
+MultiplicativeExpression :
+  UnaryExpression (  ( <STAR> | <SLASH>| <REM> ) UnaryExpression )*
+;
+
+UnaryExpression :
+  ( <PLUS> | <MINUS> ) UnaryExpression
+  |
+  PreIncrementExpression
+  |
+  PreDecrementExpression
+  |
+  UnaryExpressionNotPlusMinus
+;
+
+PreIncrementExpression :
+  <INCR> UnaryExpression
+  ASSERT {((Expression)peekNode()).isAssignableTo()}
+  : "Expression after ++ is not an assignable variable."
+;
+
+PreDecrementExpression :
+  <DECR> UnaryExpression
+  ASSERT {((Expression)peekNode()).isAssignableTo()}
+  : "expression after -- is not an assignable variable"
+;
+
+UnaryExpressionNotPlusMinus :
+  ( <TILDE> | <BANG> ) UnaryExpression
+  |
+  LambdaExpression
+  |
+  SwitchExpression
+  |
+  PrimitiveCastExpression
+  |
+  ObjectCastExpression
+  |
+  PostfixExpression
+;
+
+PostfixExpression :
+  PrimaryExpression
+  [
+    SCAN {((Expression)peekNode()).isAssignableTo()}
+    =>
+    <INCR> | <DECR>
+  ]
+;
+
+SwitchExpression# :
+   SwitchStatement
+;
+
+PrimitiveCastExpression#CastExpression :
+   <LPAREN> PrimitiveType <RPAREN> =>|| UnaryExpression
+;
+
+ObjectCastExpression#ObjectCastExpression :
+   <LPAREN> ReferenceType (<BIT_AND> ObjectType)* <RPAREN> =>|+1 UnaryExpressionNotPlusMinus
+;
+
+PrimaryExpression#interface :
+ (
+  LiteralExpression
+  |
+  <THIS> #LiteralExpression
+  |
+  <SUPER> #LiteralExpression
+  |
+  Parentheses
+  |
+  AllocationExpression
+  |
+  ClassLiteral
+  |
+  MethodReference
+  |
+  Name
+ )
+ (
+  (<DOT> <THIS> =>||) #DotThis(+1)
+  |
+  (<DOT> <SUPER> =>||) #DotSuper(+1)
+  |
+  (<DOT> =>|+1 AllocationExpression) #DotNew(+1)
+  |
+  (<LBRACKET> Expression <RBRACKET>) #ArrayAccess(+1)
+  |
+  (<DOT> [TypeArguments] <IDENTIFIER>) #DotName(+1)
+  |
+  (<DOUBLE_COLON> [TypeArguments] (<IDENTIFIER>|<NEW>)) #MethodReference(+1)
+  |
+// The following commented-out line is the absolutely correct condition for recent JDK's,
+// since yield on its own cannot be a method call, though you can write this.yield(), for example.
+// For now, I'm not including a check for that. The compiler catches it, after all. Also, it is
+// still unclear to me whether this should be caught at this point or if it is better to just do
+// a post-parse tree walk that runs over the AST and checks for these things.
+//  SCAN 1 {getToken(0).getType() == IDENTIFIER && (currentLookaheadToken==null || (peekNode().getChildCount() > 1 || !getToken(0).getImage().equals("yield")))}#
+  SCAN 1 {getToken(0).getType() == TokenType.IDENTIFIER}#
+  =>
+  InvocationArguments #MethodCall(+1)
+ )*
+ ASSERT {getToken(0).getType() != TokenType.SUPER}# : "Not a valid expression here"
+;
+
+LiteralExpression# : Literal ;
+
+Parentheses :
+    <LPAREN>
+    Expression {CURRENT_NODE.setNestedExpression((Expression) peekNode());}
+    <RPAREN>
+;
+
+INJECT Parentheses : implements PrimaryExpression {
+  @Property Expression nestedExpression;
+  public boolean isAssignableTo() {return nestedExpression.isAssignableTo();}
+}
+
+ClassLiteral : (<VOID> | Type) <DOT> <CLASS> =>|| ;
+
+MethodReference :
+    (Type | <SUPER>)
+     <DOUBLE_COLON> =>||
+     [TypeArguments]
+     (<IDENTIFIER>|<NEW>)
+;
+
+Literal #void :
+  <INTEGER_LITERAL>
+  |
+  <LONG_LITERAL>
+  |
+  <FLOATING_POINT_LITERAL>
+  |
+  <CHARACTER_LITERAL>
+  |
+  <STRING_LITERAL>
+  |
+  <TEXT_BLOCK_LITERAL>
+  |
+  <TRUE>
+  |
+  <FALSE>
+  |
+  <NULL>
+;
+
+InvocationArguments :
+    <LPAREN>
+    [ Expression (<COMMA> Expression)* ]
+    <RPAREN>
+;
+
+AllocationExpression :
+  <NEW> PrimitiveType =>|| ArrayDimsAndInits
+  |
+  <NEW> [TypeArguments] ObjectType [ PossiblyEmptyTypeArguments ]
+    (
+      ArrayDimsAndInits
+      |
+      InvocationArguments [ ClassOrInterfaceBody ]
+    )
+;
+
+ArrayDimsAndInits :
+  SCAN 2
+  (
+    <LBRACKET> =>|+1 Expression <RBRACKET>
+  )+
+  (
+    (Annotation)* <LBRACKET><RBRACKET> =>||
+  )*
+  |
+  (
+    (Annotation)* <LBRACKET><RBRACKET>
+  )+
+  ArrayInitializer
+;
+
+Label : <IDENTIFIER><COLON> =>|| ;
+
+LabeledStatement : Label =>|| Statement ;
+
+Statement#interface  :
+  LabeledStatement
+  |
+  AssertStatement
+  |
+  Block
+  |
+  YieldStatement
+  |
+  EmptyStatement
+  |
+  ExpressionStatement
+  |
+  SwitchStatement
+  |
+  IfStatement
+  |
+  WhileStatement
+  |
+  DoStatement
+  |
+  ForStatement
+  |
+  BreakStatement
+  |
+  ContinueStatement
+  |
+  ReturnStatement
+  |
+  ThrowStatement
+  |
+  SynchronizedStatement
+  |
+  TryStatement
+;
+
+INJECT AssertStatement : implements Statement;
+INJECT BasicForStatement : extends ForStatement
+INJECT BreakStatement : implements Statement
+INJECT CodeBlock : implements Statement
+INJECT ContinueStatement : implements Statement
+INJECT DoStatement : implements Statement
+INJECT EmptyStatement : implements Statement;
+INJECT EnhancedForStatement : extends ForStatement
+INJECT ExpressionStatement : implements Statement
+INJECT ForStatement : implements Statement
+INJECT IfStatement : implements Statement
+INJECT LabeledStatement : implements Statement
+INJECT LocalVariableDeclaration : implements Statement
+INJECT VarDeclaration : extends LocalVariableDeclaration
+INJECT NoVarDeclaration : extends LocalVariableDeclaration
+INJECT ReturnStatement : implements Statement
+INJECT SwitchStatement : implements Statement
+INJECT SynchronizedStatement : implements Statement
+INJECT ThrowStatement : implements Statement
+INJECT TryStatement : implements Statement
+INJECT WhileStatement : implements Statement
+INJECT YieldStatement : implements Statement;
+
+INJECT ClassicSwitchStatement : extends SwitchStatement;
+INJECT NewSwitchStatement : extends SwitchStatement;
+INJECT ClassicTryStatement : extends TryStatement
+INJECT TryWithResources : extends TryStatement
+
+TryStatement #abstract :
+   TryWithResources
+   |
+   ClassicTryStatement
+   |
+   <TRY> FAIL "Expecting '{' or '(' after 'try'"
+;
+
+AssertStatement : <_ASSERT> Expression [ <COLON> Expression ] <SEMICOLON> ;
+
+Block #CodeBlock : <LBRACE> (BlockStatement)*! <RBRACE> ;
+
+BlockStatement#void :
+ ASSERT ~((<FINAL>|Annotation)* (<PUBLIC>|<PRIVATE>|<PROTECTED>|<STATIC>)) : "Cannot declare anything to be public, private, protected, or static  in a local context"
+ (
+// The YieldStatement option in the Statement production will thus never
+// be matched but this doesn't seem to be a problem really.
+// We need YieldStatement up top here so it does not spuriously match LocalVariableDeclaration.
+  YieldStatement
+  |
+  RecordDeclaration
+  |
+  LocalVariableDeclaration { Node varDecl = peekNode(); }
+  <SEMICOLON> {varDecl.addChild(popNode());}
+  |
+  ClassDeclaration
+  |
+  InterfaceDeclaration
+  |
+  EnumDeclaration
+  |
+  Statement
+ )
+;
+
+LocalVariableDeclaration#abstract :
+   SCAN LocalVariableDeclarationLA
+   =>
+   (
+     NoVarDeclaration
+     |
+     VarDeclaration
+   )
+;
+
+NoVarDeclaration :
+   {permissibleModifiers = EnumSet.of(TokenType.FINAL);}#
+   Modifiers /modifiers/
+   Type =>|| VariableDeclarator ( <COMMA> VariableDeclarator )*
+;
+
+VarDeclaration :
+  {permissibleModifiers = EnumSet.of(TokenType.FINAL);}#
+  Modifiers /modifiers/
+  ASSERT {getToken(1).getImage().equals("var") && getToken(2).getType() == TokenType.IDENTIFIER} =>||
+  ACTIVATE_TOKENS VAR (<VAR>)
+  <IDENTIFIER>
+  [<ASSIGN> Expression]
+;
+
+LocalVariableDeclarationLA#scan :
+   {permissibleModifiers = EnumSet.of(TokenType.FINAL);}
+   Modifiers /modifiers/
+   (
+     Type
+     |
+     <IDENTIFIER>
+     ASSERT {currentLookaheadToken.getImage().equals("var")}
+   )
+   <IDENTIFIER>
+;
+
+EmptyStatement# : <SEMICOLON> ;
+
+StatementExpression# :
+  PreIncrementExpression
+  |
+  PreDecrementExpression
+  |
+  PrimaryExpression
+  {Expression lhs = (Expression) peekNode();}
+  (
+      SCAN 1 {lhs.isAssignableTo()}=>
+      (
+          (<INCR> | <DECR>) #PostfixExpression(2)
+          |
+          AssignmentOperator Expression #AssignmentExpression(3)
+      )
+      |
+      ASSERT {lhs instanceof MethodCall
+               || lhs instanceof AllocationExpression
+               || lhs instanceof ExplicitConstructorInvocation}
+      : "Not a valid statement."
+  )
+;
+
+ExpressionStatement : StatementExpression <SEMICOLON> ;
+
+SwitchStatement#abstract :
+  SCAN <SWITCH> <LPAREN> Expression <RPAREN> <LBRACE> NewSwitchLabel
+  => NewSwitchStatement
+  |
+  ClassicSwitchStatement
+;
+
+ClassicSwitchStatement :
+  <SWITCH> <LPAREN> Expression <RPAREN> <LBRACE>
+  (ClassicCaseStatement)*
+  <RBRACE>
+;
+
+ClassicSwitchLabel :
+  (
+   <CASE> Expression (<COMMA> Expression)*
+   |
+   <_DEFAULT>
+  )
+  <COLON>
+;
+
+ClassicCaseStatement :
+  ClassicSwitchLabel
+  (SCAN 1 {getToken(1).getType() != TokenType._DEFAULT}
+          // We need this because we'll spuriously enter the BlockStatement
+          // if the next token is "default", because "default" is in the
+          // BlockStatement first set. This is really quite tricky, but maybe not my
+          // fault, but the Java designers for re-using keywords!
+  => BlockStatement)*
+;
+
+NewSwitchStatement :
+  <SWITCH> <LPAREN> Expression <RPAREN> <LBRACE>
+  (NewCaseStatement)*
+  <RBRACE>
+;
+
+NewSwitchLabel :
+  (
+   <CASE> Expression (<COMMA> Expression)*
+   |
+   <_DEFAULT>
+  )
+  <LAMBDA>
+;
+
+NewCaseStatement :
+   NewSwitchLabel
+   (
+     Block
+     |
+     ThrowStatement
+     |
+     SCAN 0 \.\.\SwitchExpression
+     => Expression <SEMICOLON> 
+     |
+     BlockStatement
+   )
+;
+
+IfStatement :
+  <IF> <LPAREN> Expression /condition/ <RPAREN> Statement /thenBlock/ [ <ELSE> Statement /elseBlock/ ]
+;
+
+WhileStatement :
+  <WHILE> <LPAREN> Expression <RPAREN> Statement
+;
+
+DoStatement :
+  <DO> Statement <WHILE> <LPAREN> Expression <RPAREN> <SEMICOLON>
+;
+
+ForStatement#abstract :
+   BasicForStatement
+   |
+   EnhancedForStatement
+   |
+   <FOR> FAIL
+;
+
+BasicForStatement :
+   <FOR> <LPAREN> [ForInit] <SEMICOLON> =>|| [Expression] <SEMICOLON> [StatementExpressionList] <RPAREN> Statement
+;
+
+EnhancedForStatement :
+   <FOR> <LPAREN> LocalVariableDeclaration <COLON> =>|| Expression <RPAREN> Statement
+;
+
+
+ForInit#void :
+  LocalVariableDeclaration
+  |
+  StatementExpressionList
+;
+
+StatementExpressionList#void :
+  StatementExpression ( <COMMA> StatementExpression )*
+;
+
+BreakStatement :
+  <BREAK> [ <IDENTIFIER> ] <SEMICOLON>
+;
+
+YieldStatement :
+   ASSERT {getToken(1).getImage().equals("yield")&&isInProduction("SwitchExpression")}#
+   ACTIVATE_TOKENS YIELD (<YIELD>)
+   Expression <SEMICOLON> =>||
+;
+
+ContinueStatement : <CONTINUE> [ <IDENTIFIER> ] <SEMICOLON> ;
+
+ReturnStatement : <RETURN> (Expression)? <SEMICOLON> ;
+
+ThrowStatement : <THROW> Expression <SEMICOLON> ;
+
+SynchronizedStatement : <SYNCHRONIZED> <LPAREN> Expression <RPAREN> Block ;
+
+ClassicTryStatement :
+  <TRY>
+  =>|+1
+  Block /block/
+  (
+     FinallyBlock /finallyBlock/
+     |
+     (
+        ( CatchBlock /[catchBlocks]/ )+
+        [ FinallyBlock /finallyBlock/ ]
+     )
+  )
+;
+
+TryWithResources :
+   <TRY> <LPAREN> =>||
+    (
+      SCAN {getToken(0).getType() == TokenType.SEMICOLON}# ~(<RPAREN>) 
+      =>
+       (
+         LocalVariableDeclaration
+         |
+         Name
+         |
+         PrimaryExpression
+         ASSERT {peekNode() instanceof DotName} : "Resource should be a field access here."
+       )
+       [<SEMICOLON>]
+    )+
+    <RPAREN>
+    Block /block/
+    ( CatchBlock /[catchBlocks]/ )*
+    [ FinallyBlock /finallyBlock/ ]
+;
+
+CatchBlock :
+    <CATCH>
+    <LPAREN>
+    [<FINAL>]
+    ObjectType /[exceptionTypes]/ (<BIT_OR> ObjectType /[exceptionTypes]/ )* VariableDeclaratorId /varDecl/
+    <RPAREN>
+    Block
+;
+
+INJECT CatchBlock : 
+{
+    public CodeBlock getBlock() {
+        return firstChildOfType(CodeBlock.class);
+    }
+}
+
+FinallyBlock : <FINALLY> Block;
+
+INJECT FinallyBlock :
+{
+    public CodeBlock getBlock() {
+        return firstChildOfType(CodeBlock.class);
+    }
+}
+
+Annotation #interface :
+ SCAN 2
+ (
+   NormalAnnotation
+   |
+   SingleMemberAnnotation
+   |
+   MarkerAnnotation
+ )
+;
+
+NormalAnnotation : <AT> Name <LPAREN> =>|+2 [ MemberValuePairs ] <RPAREN> ;
+
+MarkerAnnotation : <AT> Name ;
+
+SingleMemberAnnotation : <AT> Name <LPAREN> =>|| MemberValue <RPAREN> ;
+
+INJECT Annotation :
+{
+  default String getName() {return firstChildOfType(Name.class).toString();}
+}
+
+INJECT NormalAnnotation : implements Annotation
+INJECT MarkerAnnotation : implements Annotation
+INJECT SingleMemberAnnotation : implements Annotation
+
+MemberValuePairs :
+   MemberValuePair ( <COMMA> MemberValuePair )*
+;
+
+MemberValuePair :  <IDENTIFIER> <ASSIGN> MemberValue;
+
+MemberValue :
+   Annotation
+   |
+   MemberValueArrayInitializer
+   |
+   TernaryExpression
+;
+
+MemberValueArrayInitializer :
+  <LBRACE>
+  [
+     MemberValue ( <COMMA> =>|+1 MemberValue )* [<COMMA>] 
+  ]
+  <RBRACE>
+;
+
+
+AnnotationTypeDeclaration :
+  {permissibleModifiers = EnumSet.of(TokenType.PUBLIC, TokenType.PROTECTED, TokenType.PRIVATE, TokenType.ABSTRACT, TokenType.STATIC, TokenType.STRICTFP);}#
+  Modifiers /modifiers/
+  <AT> <INTERFACE> =>|| TypeIdentifier AnnotationTypeBody
+;
+
+AnnotationTypeBody :
+  <LBRACE> ( AnnotationTypeMemberDeclaration )* <RBRACE>
+;
+
+AnnotationMethodDeclaration :
+   {permissibleModifiers = EnumSet.of(TokenType.PUBLIC, TokenType.ABSTRACT);}#
+   Modifiers /modifiers/
+   Type <IDENTIFIER> <LPAREN> =>|| <RPAREN> [ DefaultValue ] <SEMICOLON> 
+;
+
+AnnotationTypeMemberDeclaration :
+  EmptyDeclaration
+  |
+  AnnotationTypeDeclaration
+  |
+  ClassDeclaration
+  |
+  InterfaceDeclaration
+  |
+  EnumDeclaration
+  |
+  AnnotationMethodDeclaration
+  |
+  FieldDeclaration
+;
+
+DefaultValue : <_DEFAULT> MemberValue ;
+
+LambdaExpression :
+  SCAN ~\...\NewSwitchLabel =>
+  LambdaLHS =>|| (Expression | Block)
+;
+
+LambdaLHS : (<IDENTIFIER> | SimpleLambdaLHS | LambdaParameters) <LAMBDA> =>|| ;
+
+SimpleLambdaLHS #void :
+   SCAN 3
+   <LPAREN> <IDENTIFIER>
+   (<COMMA> <IDENTIFIER>)*
+   <RPAREN>
+;
+
+LambdaParameters : <LPAREN> [ LambdaParameter ( <COMMA> LambdaParameter )* ] <RPAREN> ;
+
+LambdaParameter :
+    {permissibleModifiers = EnumSet.of(TokenType.FINAL);}#
+    Modifiers /modifiers/
+    (
+      Type (Annotation)* <VAR_ARGS> =>|| <IDENTIFIER>
+      |
+      (
+        SCAN {getToken(1).getImage().equals("var")}#
+        => ACTIVATE_TOKENS VAR (<VAR>)
+        |
+        Type
+      )
+      <IDENTIFIER>((Annotation)* <LBRACKET><RBRACKET>)*
+    )
+;
+

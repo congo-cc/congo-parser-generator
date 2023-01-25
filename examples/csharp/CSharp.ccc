@@ -1,0 +1,2310 @@
+PARSER_PACKAGE="org.parsers.csharp";
+NODE_PACKAGE="org.parsers.csharp.tree";
+DEFAULT_LEXICAL_STATE=CSHARP;
+PRESERVE_TABS;
+TABS_TO_SPACES=4;
+ENSURE_FINAL_EOL;
+LEGACY_GLITCHY_LOOKAHEAD=false;
+
+
+DEACTIVATE_TOKENS=ADD,ASSEMBLY,ASYNC,AWAIT,INTO,MODULE, NAMEOF,
+                  PARTIAL, RECORD, REMOVE,VAR,WHEN,YIELD, ARGLIST,
+                  GET,SET,INIT,WITH,
+                  // The following are used in patterns:
+                  AND, OR, NOT,
+                  // The following are all used in queries
+                  ASCENDING,BY,DESCENDING,EQUALS,FROM,GROUP,JOIN,LET,
+                  INTO, ON, ORDERBY,SELECT,WHERE;
+
+INCLUDE "CSharpLexer.ccc"
+
+/*
+ * This is not used
+
+INJECT PARSER_CLASS :
+{
+   public PARSER_CLASS(Path path, java.util.Set<String> ppSymbols) throws IOException {
+      this(path);
+      if (ppSymbols != null) token_source.addSymbols(ppSymbols);
+   }
+}
+ */
+
+#CompilationUnit# :
+   (ExternAliasDirective)*
+   (UsingDirective)*
+   (GlobalAttributeSection)*
+   CompilationUnitBody
+   <EOF>
+   {return CURRENT_NODE;}
+;
+
+CompilationUnitBody#void :
+    FileScopedNamespaceDeclaration // Since 10.0
+    |
+    (
+      SCAN ~(<EOF>|<NAMESPACE>|TypeDeclarationLA)
+      =>
+      Statement
+    )*
+    (NamespaceDeclaration | TypeDeclaration)*
+;
+
+TypeDeclarationLA#scan :
+  (AttributeSection)*
+  Modifiers
+  [SCAN {checkNextTokenImage("partial")}# => ACTIVATE_TOKENS PARTIAL (<PARTIAL>)]
+  ASSERT ~(<DELEGATE> <STAR>)
+  (<STRUCT>|<CLASS>|<INTERFACE>|<ENUM>|<DELEGATE>
+    |SCAN {checkNextTokenImage("record")}=>{})
+;
+
+FileScopedNamespaceDeclaration :
+   <NAMESPACE> QualifiedIdentifier <SEMICOLON> =>||
+   (ExternAliasDirective)*
+   (UsingDirective)*
+   (TypeDeclaration)*
+;
+
+NamespaceDeclaration :
+   <NAMESPACE>  QualifiedIdentifier  =>|+1
+   NamespaceBody [<SEMICOLON>]
+;
+
+QualifiedIdentifier :
+    <IDENTIFIER> (<DOT> <IDENTIFIER>)*
+;
+
+NamespaceBody :
+   <LBRACE>
+       (ExternAliasDirective)*
+       (UsingDirective)*
+       (
+          NamespaceDeclaration
+          |
+          TypeDeclaration
+       )*
+   <RBRACE>
+;
+
+ExternAliasDirective :
+   <EXTERN>
+   <IDENTIFIER>
+   ASSERT {getToken(0).getImage().equals("alias")}#
+   =>||
+   <IDENTIFIER> <SEMICOLON>
+;
+
+UsingDirective :
+    UsingStaticDirective
+    |
+    UsingAliasDirective
+    |
+    UsingNamespaceDirective
+;
+
+UsingStaticDirective :
+    <USING><STATIC> =>|| Name <SEMICOLON>
+;
+
+UsingAliasDirective :
+   <USING> <IDENTIFIER> <ASSIGN> =>|| Name <SEMICOLON>
+;
+
+UsingNamespaceDirective :
+    <USING> Name <SEMICOLON> =>||
+;
+
+GlobalAttributeSection :
+   <LBRACKET>  ACTIVATE_TOKENS ASSEMBLY, MODULE (<ASSEMBLY> | <MODULE>) =>|| <COLON> AttributeList [<COMMA>] <RBRACKET>
+;
+
+AttributeSection :
+   <LBRACKET>
+   [
+      (<EVENT> |<RETURN> |<IDENTIFIER> ) <COLON> =>||
+   ]
+   AttributeList
+   [<COMMA>]
+   <RBRACKET>
+;
+
+AttributeList :
+     Attribute (<COMMA> =>|+1 Attribute)*
+;
+
+Attribute :
+   Name
+   [AttributeArguments]
+;
+
+AttributeArguments :
+    <LPAREN>
+    [
+       SCAN ~(<RPAREN> | <IDENTIFIER><ASSIGN>)
+       => [Type <COLON> =>||] Expression
+       (
+          <COMMA>
+          [Type <COLON> =>||] // since when?
+          Expression
+       )*
+    ]
+    [
+       <IDENTIFIER> <ASSIGN> =>|| Expression #NamedArgument(3)
+       (
+          <COMMA> <IDENTIFIER> <ASSIGN> Expression #NamedArgument(3)
+       )*
+    ]
+    <RPAREN>
+;
+
+NamedArgument :
+    <IDENTIFIER> <ASSIGN> Expression
+;
+
+/** Name of a Type or a Namespace */
+Name :
+   (
+     QualifiedAliasMember
+     |
+     <IDENTIFIER>[TypeArgumentList]
+   )
+   (
+      SCAN 2
+      <DOT> <IDENTIFIER> [TypeArgumentList]
+   )*
+;
+
+QualifiedAliasMember :
+   <IDENTIFIER> <DOUBLE_COLON> =>|| <IDENTIFIER>
+   [TypeArgumentList]
+;
+
+TypeArgumentList :
+   <LT>
+   [
+      (AttributeSection)*
+      (<VOID> | Type)
+      (<COMMA> (AttributeSection)* (<VOID> | Type))*
+   ]
+   DEACTIVATE_TOKENS RIGHT_SHIFT, RIGHT_SHIFT_ASSIGN
+   (<GT>)
+;
+
+
+TypeDeclaration :
+  SCAN 0 {!checkNextTokenType(TokenType.RBRACE) && !checkNextTokenType(TokenType.EOF)}# =>
+  (
+   ClassDeclaration
+   |
+   StructDeclaration
+   |
+   RecordDeclaration
+   |
+   InterfaceDeclaration
+   |
+   EnumDeclaration
+   |
+   DelegateDeclaration
+  )
+;
+
+INJECT PARSER_CLASS :
+{
+   EnumSet<TokenType> permissibleModifiers;
+}
+
+Modifiers#void : //TODO
+  (
+    SCAN { permissibleModifiers == null
+         ||
+         permissibleModifiers.contains(getToken(1).getType()) }#
+      =>
+      (<NEW>|<PUBLIC>|<PROTECTED>|<INTERNAL>|<PRIVATE>|<ABSTRACT>
+      |<SEALED>|<STATIC>|<UNSAFE>|<OVERRIDE>|<VIRTUAL>|<EXTERN>
+      // This is allowed on methods in some cases,
+      // but not sure where exactly or when this was added
+      // Have to check where this is possible and since when
+      | <READONLY>
+      // Note that "ref" is only a permissible keyword for struct
+      // since 7.3
+      | <REF>
+      | <VOLATILE>
+      )
+      {
+         if (permissibleModifiers != null) {
+            permissibleModifiers.remove(getToken(0).getType());
+         }
+      }
+     |
+     SCAN { permissibleModifiers == null
+            || permissibleModifiers.contains(TokenType.ASYNC) && checkNextTokenImage("async")
+            || permissibleModifiers.contains(TokenType.RECORD) && checkNextTokenImage("record")
+          }#
+      => ACTIVATE_TOKENS ASYNC, RECORD (<ASYNC>)
+      { if (permissibleModifiers!=null) permissibleModifiers.remove(TokenType.ASYNC);}
+  )*
+  {permissibleModifiers = null;}#
+;
+
+ClassDeclaration :
+  {
+    boolean isaRecordClass = false;
+    permissibleModifiers = EnumSet.of(TokenType.NEW,  TokenType.PUBLIC, TokenType.PROTECTED,
+                                      TokenType.INTERNAL, TokenType.PRIVATE, TokenType.ABSTRACT,
+                                      TokenType.SEALED, TokenType.STATIC, TokenType.UNSAFE);
+  }#
+  (AttributeSection)*
+  Modifiers
+  [SCAN {checkNextTokenImage("partial")}# => ACTIVATE_TOKENS PARTIAL ("partial")]
+  [
+     // Record classes are since 10.0
+     // and barely mentioned anywhere
+     SCAN {checkNextTokenImage("record")}#
+     => ACTIVATE_TOKENS RECORD (<RECORD>)
+     {isaRecordClass =true;}
+  ]
+  <CLASS>
+  =>||
+   <IDENTIFIER>
+   [
+      SCAN 1 {isaRecordClass}
+      =>
+      <LPAREN> FormalParameters <RPAREN>
+   ]
+  [TypeParameterList]
+  [SCAN 1 {isaRecordClass} => <LPAREN> [FormalParameters] <RPAREN>]
+  [<COLON> (Name[ SCAN 1 {isaRecordClass} => <LPAREN> ArgumentList <RPAREN>] | <OBJECT> | <DYNAMIC> | <STRING>) (<COMMA> Name[SCAN 1 {isaRecordClass} => <LPAREN> ArgumentList <RPAREN>] )*]
+  TypeParameterConstraints
+   (
+      <LBRACE> (ClassMemberDeclaration)* <RBRACE>
+      |
+      SCAN {isaRecordClass} => <SEMICOLON>
+   )
+  [<SEMICOLON>]
+;
+
+StructDeclaration :
+  {
+    boolean isaRecordStruct = false;
+    permissibleModifiers = EnumSet.of(TokenType.STATIC, TokenType.INTERNAL, TokenType.PUBLIC,
+                                      TokenType.PRIVATE, TokenType.PROTECTED, TokenType.REF,
+                                      TokenType.READONLY, TokenType.UNSAFE, TokenType.NEW);
+  }#
+  (AttributeSection)*
+  Modifiers
+  [SCAN {checkNextTokenImage("partial")}# => ACTIVATE_TOKENS PARTIAL (<PARTIAL>)]
+  [
+     // Record structs are since 10.0
+     SCAN {checkNextTokenImage("record")}#
+     => ACTIVATE_TOKENS RECORD (<RECORD>)
+     {isaRecordStruct=true;}
+  ]
+   <STRUCT>
+   =>||
+   <IDENTIFIER>
+   [TypeParameterList]
+   [
+      SCAN 1 {isaRecordStruct}
+      =>
+      <LPAREN> FormalParameters <RPAREN>
+   ]
+   [<COLON> Name (<COMMA> Name)*]
+   TypeParameterConstraints
+   (
+      <LBRACE> (ClassMemberDeclaration)* <RBRACE>
+      |
+      SCAN {isaRecordStruct} => <SEMICOLON>
+   )
+   [<SEMICOLON>]
+;
+
+RecordDeclaration :
+  {
+    permissibleModifiers = EnumSet.of(TokenType.STATIC, TokenType.INTERNAL, TokenType.PUBLIC,
+                                      TokenType.PRIVATE, TokenType.PROTECTED, TokenType.SEALED,
+                                      TokenType.ABSTRACT);
+  }#
+  (AttributeSection)*
+  Modifiers
+  [SCAN {checkNextTokenImage("partial")}# => ACTIVATE_TOKENS PARTIAL (<PARTIAL>)]
+  ASSERT {checkNextTokenImage("record")}#
+  ACTIVATE_TOKENS RECORD (<RECORD>)
+  =>||
+  <IDENTIFIER>
+  [TypeParameterList]
+  [<LPAREN> [FormalParameters] <RPAREN>]
+  [
+    // Call of base constructor
+    // Where is this documented?
+    <COLON> Name [<LPAREN> [ArgumentList] <RPAREN>]
+  ]
+  TypeParameterConstraints
+  (
+    <LBRACE> (ClassMemberDeclaration)* <RBRACE> [<SEMICOLON>]
+    |
+    <SEMICOLON>
+  )
+;
+
+InterfaceDeclaration :
+  {
+    permissibleModifiers = EnumSet.of(TokenType.INTERNAL, TokenType.PUBLIC, TokenType.PARTIAL,
+                                      TokenType.PRIVATE);
+  }#
+  (AttributeSection)*
+  Modifiers
+  [SCAN {checkNextTokenImage("partial")}# => ACTIVATE_TOKENS PARTIAL ("partial")]
+  <INTERFACE>
+  =>||
+  <IDENTIFIER>
+  [TypeParameterList]
+  [<COLON> Name (<COMMA> Name)*]
+  TypeParameterConstraints
+  <LBRACE>
+  (InterfaceMemberDeclaration)*
+  <RBRACE>
+  [<SEMICOLON>]
+;
+
+InterfaceMemberDeclaration :
+   SCAN TypeDeclarationLA =>
+   TypeDeclaration
+   |
+   InterfacePropertyDeclaration
+   |
+   InterfaceMethodDeclaration
+   |
+   InterfaceEventDeclaration
+   |
+   InterfaceIndexerDeclaration
+;
+
+InterfaceEventDeclaration :
+   (AttributeSection)*
+   [<NEW>]
+   <EVENT> =>||
+   Type
+   <IDENTIFIER>
+   <SEMICOLON>
+;
+
+InterfaceIndexerDeclaration :
+   (AttributeSection)*
+   [<NEW>]
+   Type
+   <THIS>
+   <LBRACKET> FormalParameters <RBRACKET>
+   <LBRACE> (InterfaceAccessor)+ <RBRACE>
+;
+
+EnumDeclaration :
+  {
+    permissibleModifiers = EnumSet.of(TokenType.STATIC, TokenType.INTERNAL, TokenType.PUBLIC,
+                                      TokenType.PRIVATE, TokenType.PROTECTED, TokenType.SEALED,
+                                      TokenType.ABSTRACT, TokenType.PARTIAL, TokenType.UNSAFE);
+  }#
+  (AttributeSection)*
+  Modifiers
+  <ENUM>
+  =>||
+  <IDENTIFIER>
+  [<COLON> (<SBYTE>|<BYTE>|<SHORT>|<USHORT>|<INT>|<UINT>|<LONG>|<ULONG>|<CHAR>)]
+  EnumBody
+  [<SEMICOLON>]
+;
+
+EnumBody#void :
+   <LBRACE>
+   [
+      EnumMemberDeclaration
+      (<COMMA> =>|+1 EnumMemberDeclaration)*
+      [<COMMA>]
+   ]
+   <RBRACE>
+;
+
+EnumMemberDeclaration :
+   (AttributeSection)*
+   <IDENTIFIER>
+   [<ASSIGN> Expression]
+;
+
+DelegateDeclaration :
+  {
+    permissibleModifiers = EnumSet.of(TokenType.PUBLIC, TokenType.PRIVATE, TokenType.PROTECTED,
+                                      TokenType.INTERNAL, TokenType.UNSAFE, TokenType.VIRTUAL,
+                                      TokenType.OVERRIDE, TokenType.NEW, TokenType.ABSTRACT);
+  }#
+  (AttributeSection)*
+  Modifiers
+  <DELEGATE>
+  ASSERT ~(<STAR>)
+  =>||
+  ReturnType
+  <IDENTIFIER>
+  [TypeParameterList]
+  <LPAREN> [FormalParameters] <RPAREN>
+  TypeParameterConstraints
+  <SEMICOLON>
+;
+
+TypeParameterConstraints :
+  ACTIVATE_TOKENS WHERE
+  (TypeParameterConstraint)*
+;
+
+TypeParameterConstraint :
+   <WHERE>
+   DEACTIVATE_TOKENS WHERE
+   (
+      <IDENTIFIER>
+      <COLON>
+      (
+         <NEW> <LPAREN> <RPAREN>
+         |
+         (<STRUCT> | <CLASS> [<HOOK>] | Name [<HOOK>]) (SCAN 2 <COMMA> Name[<HOOK>])* [<COMMA> <NEW> <LPAREN> <RPAREN>]
+         |
+         <DEFAULT> // Since C# 9.0 apparently
+      )
+   )
+;
+
+ClassMemberDeclaration :
+  ConstantDeclaration
+  |
+  SCAN TypeDeclarationLA =>
+  TypeDeclaration
+  |
+  MethodDeclaration
+  |
+  FieldDeclaration
+  |
+  PropertyDeclaration
+  |
+  EventDeclaration
+  |
+  IndexerDeclaration
+  |
+  OperatorDeclaration
+  |
+  ConstructorDeclaration
+  |
+  SCAN ~\StructDeclaration
+  => DestructorDeclaration
+  |
+  SCAN \StructDeclaration
+  => StructMemberDeclarationUnsafe
+  |
+  StaticConstructorDeclaration
+;
+
+StructMemberDeclarationUnsafe :
+  {
+    permissibleModifiers = EnumSet.of(TokenType.STATIC, TokenType.INTERNAL, TokenType.PUBLIC,
+                                      TokenType.PRIVATE, TokenType.PROTECTED, TokenType.UNSAFE);
+  }#
+  (AttributeSection)*
+  Modifiers
+  <FIXED>
+  =>||
+  Type
+  (<IDENTIFIER> <LBRACKET> Expression <RBRACKET>)+
+  <SEMICOLON>
+;
+
+ConstantDeclaration :
+  {
+    permissibleModifiers = EnumSet.of(TokenType.PUBLIC, TokenType.PRIVATE, TokenType.PROTECTED,
+                                      TokenType.INTERNAL);
+  }#
+  (AttributeSection)*
+  Modifiers
+  <CONST>
+  =>||
+  Type
+  ConstantDeclarator (<COMMA> ConstantDeclarator)*
+  <SEMICOLON>
+;
+
+ConstantDeclarator : <IDENTIFIER> <ASSIGN> Expression ;
+
+FieldDeclaration :
+  {
+    permissibleModifiers = EnumSet.of(TokenType.PUBLIC, TokenType.PRIVATE, TokenType.PROTECTED,
+                                      TokenType.STATIC,TokenType.UNSAFE, TokenType.VIRTUAL,
+                                      TokenType.OVERRIDE, TokenType.NEW, TokenType.ABSTRACT,
+                                      TokenType.EXTERN, TokenType.ASYNC, TokenType.INTERNAL,
+                                      TokenType.REF, TokenType.READONLY, TokenType.SEALED,
+                                      TokenType.VOLATILE);
+  }#
+  (AttributeSection)*
+  Modifiers
+  Type
+  =>|+2
+  VariableDeclarator (<COMMA> VariableDeclarator)*
+ <SEMICOLON>
+;
+
+PropertyDeclaration :
+  {
+    permissibleModifiers = EnumSet.of(TokenType.PUBLIC, TokenType.PRIVATE, TokenType.PROTECTED,
+                                      TokenType.STATIC, TokenType.UNSAFE, TokenType.VIRTUAL,
+                                      TokenType.OVERRIDE, TokenType.NEW, TokenType.ABSTRACT,
+                                      TokenType.EXTERN, TokenType.ASYNC, TokenType.INTERNAL,
+                                      TokenType.REF, TokenType.READONLY, TokenType.SEALED,
+                                      TokenType.VOLATILE);
+  }#
+  (AttributeSection)*
+  Modifiers
+  Type
+  Name
+  =>|+1
+  PropertyBody
+;
+
+InterfacePropertyDeclaration :
+  {
+    permissibleModifiers = EnumSet.of(TokenType.PUBLIC, TokenType.NEW);
+  }#
+  (AttributeSection)*
+  Modifiers
+  Type
+  <IDENTIFIER> =>|+1
+  (
+     <LBRACE> (InterfaceAccessor)+ <RBRACE>
+     |
+     // This seems to be another of these
+     // new features not hardly documented
+     // anywhere. For read-only 'get' properties,
+     // apparently, you can dispense with the
+     // "{ get }" but I'm not sure if this is only
+     // in interfaces.
+     <ARROW> Expression <SEMICOLON>
+  )
+;
+
+InterfaceAccessor : // TODO, check that there is only one of each
+    (AttributeSection)*
+    ASSERT {checkNextTokenImage("get")||checkNextTokenImage("set")||checkNextTokenImage("init")}#
+    : "Expecting get, set, or init here"
+    ACTIVATE_TOKENS GET,SET,INIT
+    ( <GET> | <SET> | <INIT> )
+    =>||
+    [<ARROW> Expression ]
+    <SEMICOLON>
+;
+
+
+EventDeclaration :
+  {
+    permissibleModifiers = EnumSet.of(TokenType.PUBLIC, TokenType.PRIVATE, TokenType.PROTECTED,
+                                      TokenType.STATIC, TokenType.VIRTUAL,
+                                      TokenType.OVERRIDE, TokenType.NEW, TokenType.ABSTRACT,
+                                      TokenType.INTERNAL, TokenType.SEALED);
+  }#
+   (AttributeSection)*
+   Modifiers
+   <EVENT>
+   =>||
+   Type
+   (
+      VariableDeclarator =>|+1 (<COMMA> VariableDeclarator)* <SEMICOLON>
+      |
+      Name
+      <LBRACE>
+      (
+          AddAccessorDeclaration RemoveAccessorDeclaration
+          |
+          RemoveAccessorDeclaration AddAccessorDeclaration
+      )
+      <RBRACE>
+   )
+;
+
+IndexerDeclaration :
+  {
+    permissibleModifiers = EnumSet.of(TokenType.PUBLIC, TokenType.PRIVATE, TokenType.PROTECTED,
+                                      TokenType.STATIC, TokenType.VIRTUAL,
+                                      TokenType.OVERRIDE, TokenType.NEW, TokenType.ABSTRACT,
+                                      TokenType.INTERNAL, TokenType.SEALED);
+  }#
+  (AttributeSection)*
+  Modifiers
+  Type
+  [Name <DOT>]
+  <THIS>
+  <LBRACKET>
+  =>||
+   FormalParameters
+  <RBRACKET>
+  (
+     <LBRACE> (AccessorDeclaration)+ <RBRACE>
+     |
+     <ARROW> [<REF>] Expression <SEMICOLON>
+  )
+;
+
+OperatorDeclaration :
+  {
+    permissibleModifiers = EnumSet.of(TokenType.PUBLIC, TokenType.STATIC,
+                                      TokenType.EXTERN, TokenType.UNSAFE);
+  }#
+  (AttributeSection)*
+  Modifiers
+  (Type | <IMPLICIT> | <EXPLICIT>)
+  <OPERATOR> =>||
+  (
+     (<PLUS>|<MINUS>) <LPAREN> [<IN>] Type <IDENTIFIER> [<COMMA> [<IN>] Type <IDENTIFIER>] <RPAREN>
+     |
+     (<BANG>|<TILDE>|<INCR>|<DECR>|<TRUE>|<FALSE>) <LPAREN> [<IN>] Type <IDENTIFIER> <RPAREN>
+     |
+     (<STAR>|<SLASH>|<REM>|<BIT_AND>|<BIT_OR>|<HAT>|<LEFT_SHIFT>|<RIGHT_SHIFT>|<EQ>|<NE>|<GT>|<LT>|<GE>|<LE>)
+     <LPAREN> [<IN>] Type <IDENTIFIER> <COMMA> [<IN>] Type <IDENTIFIER> <RPAREN>
+     |
+     Type <LPAREN> [<IN>] Type <IDENTIFIER> [<ASSIGN> Expression] <RPAREN>
+  )
+  MethodBody
+;
+
+DestructorDeclaration :
+  {
+    permissibleModifiers = EnumSet.of(TokenType.EXTERN, TokenType.UNSAFE);
+  }#
+  (AttributeSection)*
+  Modifiers
+  <TILDE>
+  <IDENTIFIER>
+  <LPAREN>
+  =>||
+  <RPAREN>
+  MethodBody
+;
+
+ConstructorDeclaration :
+  {
+    permissibleModifiers = EnumSet.of(TokenType.PUBLIC, TokenType.PRIVATE, TokenType.PROTECTED,
+                                      TokenType.STATIC, TokenType.INTERNAL, TokenType.UNSAFE);
+  }#
+  (AttributeSection)*
+  Modifiers
+  <IDENTIFIER>
+  <LPAREN> =>||
+  [FormalParameters]
+  <RPAREN>
+  [
+     <COLON>
+     (<BASE> | <THIS>)
+     <LPAREN> [ArgumentList] <RPAREN>
+  ]
+  MethodBody
+;
+
+StaticConstructorDeclaration :
+  {
+    permissibleModifiers = EnumSet.of(TokenType.EXTERN, TokenType.STATIC);
+  }#
+   (AttributeSection)*
+   Modifiers
+   <IDENTIFIER>
+   <LPAREN> =>||
+   <RPAREN>
+   MethodBody
+;
+
+ArgumentList : Argument (<COMMA> Argument)* ;
+
+Argument :
+   (AttributeSection)*
+   [=> <IDENTIFIER> <COLON>]
+   (
+       // Where is this specified?
+      PrimitiveType ASSERT(<COMMA>|<RPAREN>) =>||
+      |
+      => <OUT> Type <IDENTIFIER> // since C# 7.0
+      |
+      // Not sure since when "in" is allowed here
+      [<REF> | <OUT> | <IN>] Expression
+   )
+;
+
+AddAccessorDeclaration :
+    (AttributeSection)*
+    ACTIVATE_TOKENS ADD (<ADD>)
+    =>||
+    AccessorBody
+;
+
+RemoveAccessorDeclaration :
+    (AttributeSection)*
+    ACTIVATE_TOKENS REMOVE (<REMOVE>)
+    =>||
+    AccessorBody
+;
+
+PropertyBody :
+  <LBRACE> (AccessorDeclaration)+ <RBRACE>
+   [<ASSIGN> VariableInitializer <SEMICOLON>]
+  |
+  <ARROW>
+  [<REF>] // since 7.3, I think...
+  Expression
+  <SEMICOLON>
+;
+
+AccessorDeclaration :
+  {
+    permissibleModifiers = EnumSet.of(TokenType.PUBLIC, TokenType.PRIVATE, TokenType.PROTECTED,
+                                      TokenType.VIRTUAL, TokenType.OVERRIDE, TokenType.NEW,
+                                      TokenType.ABSTRACT, TokenType.INTERNAL, TokenType.READONLY);
+  }#
+   (AttributeSection)*
+   Modifiers
+   ACTIVATE_TOKENS GET,SET,INIT (<GET> | <SET> | <INIT>)
+   =>||
+   AccessorBody
+;
+
+AccessorBody :
+   Block
+   |
+   <ARROW> [<REF>] Expression <SEMICOLON>
+   |
+   <SEMICOLON>
+;
+
+VariableInitializer :
+   Expression
+   |
+   ArrayInitializer
+;
+
+ArrayInitializer :
+   <LBRACE>
+      [VariableInitializer (SCAN 2 <COMMA> VariableInitializer)* [<COMMA>]]
+   <RBRACE>
+;
+
+MethodDeclaration :
+  {
+    permissibleModifiers = EnumSet.of(TokenType.PUBLIC, TokenType.PRIVATE, TokenType.PROTECTED,
+                                      TokenType.STATIC,TokenType.UNSAFE, TokenType.VIRTUAL,
+                                      TokenType.OVERRIDE, TokenType.NEW, TokenType.ABSTRACT,
+                                      TokenType.EXTERN, TokenType.ASYNC, TokenType.INTERNAL,
+                                      TokenType.REF, TokenType.READONLY, TokenType.SEALED);
+  }#
+  (AttributeSection)*
+  Modifiers
+  [SCAN {checkNextTokenImage("partial")}# => ACTIVATE_TOKENS PARTIAL ("partial")]
+  ReturnType
+  //MemberName
+  Name
+  [TypeParameterList]
+  <LPAREN>
+  =>||
+   [FormalParameters]
+  <RPAREN>
+  TypeParameterConstraints
+  MethodBody
+;
+
+MethodBody :
+   Block
+   |
+   [<ARROW> [<REF>] Expression] <SEMICOLON>
+;
+
+InterfaceMethodDeclaration :
+  {
+    permissibleModifiers = EnumSet.of(TokenType.PUBLIC, TokenType.PRIVATE, TokenType.PROTECTED,
+                                      TokenType.INTERNAL, TokenType.UNSAFE);
+  }#
+   (AttributeSection)*
+   Modifiers // REVISIT later.
+   ReturnType
+   <IDENTIFIER>
+   [TypeParameterList]
+   <LPAREN> =>||
+   [FormalParameters]
+   <RPAREN>
+   TypeParameterConstraints
+   MethodBody // since 8.0. NB. The method body can be a lone semicolon.
+;
+
+ReturnType :
+   SCAN {getToken(2).getType() != TokenType.STAR}# =>
+   // If we have void*, we prefer to parse it as Type
+   // for tree-building purposes.
+   <VOID> [<STAR>]
+   |
+   Type
+;
+
+FormalParameters :
+//   SCAN 0 {checkNextTokenImage("__arglist")}#
+//   => ACTIVATE_TOKENS ARGLIST (<ARGLIST>)
+   ArgListParameter
+   |
+   ParameterArray
+   |
+   FixedParameter (=> <COMMA> FixedParameter)* [<COMMA> VarArgsParameter]
+;
+
+VarArgsParameter#void :
+   ArgListParameter
+   |
+   ParameterArray
+;
+
+
+ArgListParameter# :
+    <IDENTIFIER>
+    ASSERT {getToken(0).getImage().equals("__arglist")}#
+    =>||
+;
+
+FixedParameter :
+   (AttributeSection)*
+   (<REF>| <OUT> | <THIS>
+    | <IN> // since 7.2
+   )*
+   =>|+1
+   Type
+   <IDENTIFIER>
+   [<ASSIGN> Expression]
+;
+
+ParameterArray :
+   (AttributeSection)*
+   <PARAMS> =>||
+   ArrayType
+   <IDENTIFIER>
+;
+
+VariableDeclarator : <IDENTIFIER> [<ASSIGN> (Expression|ArrayInitializer)] ;
+
+TypeParameterList :
+   <LT>
+   (AttributeSection)*
+   [<IN>|<OUT>] // Only with interfaces
+   Name
+   (<COMMA> (AttributeSection)* [<IN>|<OUT>] Name)*
+   <GT>
+;
+
+NonArrayType#void : Type ;
+
+ArrayType#void : Type ;
+
+NonNullableType : Type;
+
+NonTupleType : Type;
+
+Type :
+  [<DELEGATE> <STAR> =>||]
+  (
+    => <VOID> <STAR>
+    |
+    PrimitiveType
+    |
+    Name
+    |
+    SCAN ~\NonTupleType
+    => TupleType
+  )
+  (<STAR>)*
+  [
+     // This is weird. Must REVISIT this.
+     SCAN ~\NonNullableType
+     => <HOOK>
+  ]
+  (
+     SCAN 2 ~\NonArrayType =>
+     [<HOOK>]
+     <LBRACKET> (<COMMA>)* <RBRACKET>
+  )*
+  [
+     SCAN 0 \ArrayType =>
+     ASSERT {getToken(0).getType() == TokenType.RBRACKET}#
+  ]
+  (SCAN ~\TupleType => <STAR>)*
+  [
+     SCAN ~\NonNullableType
+     => <HOOK>
+  ]
+;
+
+TupleType :
+   <LPAREN>
+   Type [<IDENTIFIER>]
+   ASSERT (<COMMA>)
+   =>||
+   (<COMMA> Type [<IDENTIFIER>])*
+   <RPAREN>
+;
+
+PrimitiveType#void :
+   <BOOL> | <BYTE> | <CHAR> | <DECIMAL> | <DOUBLE> | <FLOAT>
+   | <INT> | <LONG> | <OBJECT> | <SBYTE> | <SHORT> | <STRING>
+   |<USHORT> |<UINT>|<ULONG>
+;
+
+Block :
+  <LBRACE>
+   ( Statement )*
+  <RBRACE>
+;
+
+Expression#interface :
+   SCAN QueryExpressionLA
+   =>QueryExpression
+   |
+   LambdaExpression
+   |
+   AssignmentExpression
+;
+
+INJECT Expression :
+{
+   /**
+    * Can this expression be on the left-hand-side of
+    * an assignment?
+    */
+   default boolean isAssignableTo() {return false;}
+
+   /**
+    * Can this expression be evaluated at compile-time?
+    */
+   default boolean isConstant() {
+      for (Node child : children()) {
+        if (!(child instanceof Expression)) {
+          continue;
+        }
+        if (!((Expression) child).isConstant()) {
+          return false;
+        }
+      }
+      return true;
+      // return childrenOfType(Expression.class).stream().allMatch(Expression::isConstant);
+   }
+}
+
+INJECT AdditiveExpression : implements Expression
+INJECT AndExpression : implements Expression
+INJECT ArrayCreationExpression : implements Expression
+INJECT AnonymousMethodExpression : implements Expression
+INJECT AnonymousObjectCreationExpression : implements Expression
+INJECT AssignmentExpression : implements StatementExpression
+INJECT CheckedExpression : implements StatementExpression
+INJECT ConditionalExpression : implements Expression
+INJECT ConditionalAndExpression : implements Expression
+INJECT ConditionalOrExpression : implements Expression
+INJECT DefaultValueExpression : implements Expression
+INJECT EqualityExpression : implements Expression
+INJECT ExclusiveOrExpression : implements Expression
+INJECT InclusiveOrExpression : implements Expression
+INJECT LambdaExpression : implements Expression
+INJECT Literal : implements Expression
+INJECT MultiplicativeExpression : implements Expression
+INJECT NameofExpression : implements Expression
+INJECT NullCoalescingExpression : implements Expression
+INJECT NullForgivingExpression : implements Expression
+INJECT NullConditionalExpression : extends UnaryExpression
+INJECT ObjectCreationExpression : implements StatementExpression
+INJECT OrExpression : implements Expression
+INJECT PrimitiveTypeAccess : implements Expression
+INJECT RangeExpression : implements Expression
+INJECT InterpolatedString : implements Expression
+INJECT RegularStringInterpolation : extends InterpolatedString
+INJECT MultiStringInterpolation : extends InterpolatedString
+INJECT RelationalExpression : implements Expression
+INJECT ShiftExpression : implements Expression
+INJECT StackAllocInitializer : implements Expression
+INJECT StatementExpression : extends Expression
+INJECT TypeofExpression : implements Expression
+INJECT QualifiedAliasMember : implements Expression
+INJECT SizeofExpression : implements Expression
+INJECT SwitchExpression : implements Expression
+INJECT UncheckedExpression : implements StatementExpression
+INJECT UnaryExpression : implements Expression {
+   public boolean isAssignableTo() {return true;}
+}
+INJECT WithExpression : implements Expression
+INJECT PostDecrementExpression : extends UnaryExpression implements StatementExpression
+INJECT PostIncrementExpression : extends UnaryExpression implements StatementExpression
+INJECT PreDecrementExpression : extends UnaryExpression implements StatementExpression
+INJECT PreIncrementExpression : extends UnaryExpression implements StatementExpression
+INJECT AwaitExpression : extends UnaryExpression implements StatementExpression
+INJECT CastExpression : extends UnaryExpression
+INJECT ThrowExpression : extends UnaryExpression
+INJECT UnaryExpressionNotPlusMinus : extends UnaryExpression
+INJECT UnaryExpressionPlusOrMinus : extends UnaryExpression
+INJECT FromEndIndex : extends UnaryExpression
+
+INJECT InvocationExpression : implements StatementExpression
+{
+   public boolean isAssignableTo() {return true;}
+}
+
+INJECT LiteralExpression : implements Expression
+{
+    public boolean isConstant() {return true;}
+}
+
+INJECT UnaryExpressionUnsafe : extends UnaryExpression
+{
+   public boolean isAssignableTo() {return true;}
+}
+
+INJECT BaseAccess : implements Expression
+{
+   public boolean isAssignableTo() {return true;}
+}
+
+INJECT Tuple : implements Expression
+{
+   public boolean isAssignableTo() {return true;}
+}
+
+INJECT SimpleName : implements Expression
+{
+   public boolean isAssignableTo() {return true;}
+
+   public boolean isConstant() {return false;}
+}
+
+INJECT This : implements Expression
+{
+   public boolean isAssignableTo() {return true;}
+}
+
+INJECT MemberAccess : implements Expression
+{
+   public boolean isAssignableTo() {return true;}
+}
+
+INJECT PointerMemberAccess : implements Expression
+{
+   public boolean isAssignableTo() {return true;}
+}
+
+INJECT ElementAccess : implements Expression
+{
+   public boolean isAssignableTo() {return true;}
+}
+
+LambdaExpression : LambdaLHS =>|| (Block | Expression) ;
+
+LambdaLHS :
+  {boolean seenStatic = false;}
+  [<STATIC> {seenStatic = true;}] // since 9.0
+  [
+     SCAN {checkNextTokenImage("async")}#
+     => ACTIVATE_TOKENS ASYNC (<ASYNC>)
+     [
+        SCAN {!seenStatic} => <STATIC>
+     ]
+  ]
+  [
+     SCAN (<VOID> | NonNullableType) <LPAREN>
+     => ReturnType
+  ]
+  (
+   =>ImplicitAnonymousFunctionSignature
+   |
+   ExplicitLambdaSignature
+  )
+  <ARROW>
+;
+
+ImplicitAnonymousFunctionSignature :
+   <IDENTIFIER>
+   |
+   <LPAREN> [<IDENTIFIER> (<COMMA> <IDENTIFIER>)*] <RPAREN>
+;
+
+QueryExpressionLA#scan :
+   <IDENTIFIER> ASSERT {getToken(0).getImage().equals("from")}
+   (
+      <IDENTIFIER> <IN>
+      |
+      Type <IDENTIFIER> <IN>
+   )
+;
+
+QueryExpression :
+   ACTIVATE_TOKENS ASCENDING,BY,DESCENDING,EQUALS,FROM,GROUP,JOIN,LET,
+                   INTO, ON, ORDERBY,SELECT,WHERE
+   (
+     FromClause
+     QueryBody
+   )
+;
+
+InQueryExpression#void :
+   DEACTIVATE_TOKENS ASCENDING,BY,DESCENDING,EQUALS,FROM,
+                   GROUP,JOIN,LET,INTO,
+                   ON, ORDERBY
+   (Expression)
+;
+
+FromClause :
+   <FROM>
+   (
+      <IDENTIFIER> <IN> =>|| InQueryExpression
+      |
+      Type <IDENTIFIER> <IN> InQueryExpression
+   )
+;
+
+QueryBody :
+   ACTIVATE_TOKENS SELECT, GROUP (QueryBodyClause)*
+   (
+      SelectClause
+      |
+      GroupClause
+   )
+   [
+      <INTO>
+      <IDENTIFIER>
+      QueryBody
+   ]
+;
+
+QueryBodyClause :
+   FromClause
+   |
+   LetClause
+   |
+   WhereClause
+   |
+   JoinClause
+   |
+   OrderbyClause
+;
+
+LetClause : <LET> <IDENTIFIER> <ASSIGN> InQueryExpression ;
+
+WhereClause : <WHERE> InQueryExpression ;
+
+JoinClause :
+   <JOIN>
+   (
+      <IDENTIFIER> <IN>
+      |
+      Type <IDENTIFIER> <IN>
+   )
+   InQueryExpression
+   <ON>
+   InQueryExpression
+   <EQUALS>
+   InQueryExpression
+   [<INTO> <IDENTIFIER>]
+;
+
+SelectClause : <SELECT> InQueryExpression ;
+
+GroupClause : <GROUP> InQueryExpression <BY> InQueryExpression;
+
+OrderbyClause :
+    <ORDERBY>
+    InQueryExpression
+    [<ASCENDING>|<DESCENDING>]
+    (
+       <COMMA> InQueryExpression [<ASCENDING>|<DESCENDING>]
+    )*
+;
+
+AssignmentExpression :
+   ConditionalExpression {Expression lhs = (Expression) peekNode();}
+   [
+      AssignmentOperator
+      ASSERT {lhs.isAssignableTo()} : "Left-hand side is not assignable." :
+      [<REF>] // since 7.0 ?
+      Expression
+   ]
+;
+
+MultiplicativeExpression :
+   WithExpression
+   (
+      (<STAR> | <SLASH> | <REM>)
+      WithExpression
+   )*
+;
+
+WithExpression :
+   SwitchExpression
+   [
+      SCAN 0 {checkNextTokenImage("with")}#
+      => ACTIVATE_TOKENS WITH (<WITH>)
+      <LBRACE>
+      [
+         MemberInitializer
+         (SCAN 2 <COMMA> MemberInitializer)*
+         [<COMMA>]
+      ]
+      <RBRACE>
+   ]
+;
+
+SwitchExpression :
+   RangeExpression
+   [
+      <SWITCH>
+      <LBRACE>
+         SwitchExpressionCase
+         (SCAN 2 <COMMA> SwitchExpressionCase)*
+         [<COMMA>]
+      <RBRACE>
+   ]
+;
+
+SwitchExpressionCase :
+   Expression [WhenClause] <ARROW> =>|| Expression
+   |
+   Pattern [WhenClause] <ARROW> Expression
+;
+
+RangeExpression :
+   <RANGE> [UnaryExpression]
+   |
+   UnaryExpression [<RANGE> [UnaryExpression]]
+;
+
+AdditiveExpression :
+   MultiplicativeExpression
+   (
+      (<PLUS> | <MINUS>)
+      MultiplicativeExpression
+   )*
+;
+
+ShiftExpression :
+   AdditiveExpression
+   (
+      (<LEFT_SHIFT> | <RIGHT_SHIFT>)
+      AdditiveExpression
+   )*
+;
+
+RelationalExpression :
+   ShiftExpression
+   (
+      (<LT>|<GT>|<LE>|<GE>) ShiftExpression
+      |
+      <AS> Type
+      |
+      <IS> Pattern
+   )*
+;
+
+EqualityExpression :
+   RelationalExpression
+   (
+      (<EQ>|<NE>)
+      RelationalExpression
+   )*
+;
+
+AndExpression :
+   EqualityExpression
+   (
+      <BIT_AND>
+      EqualityExpression
+   )*
+;
+
+ExclusiveOrExpression :
+   AndExpression
+   (
+      <HAT>
+      ExclusiveOrExpression
+   )*
+;
+
+InclusiveOrExpression :
+   ExclusiveOrExpression
+   (
+      <BIT_OR>
+      ExclusiveOrExpression
+   )*
+;
+
+ConditionalAndExpression :
+   InclusiveOrExpression
+   (
+      <SC_AND>
+      InclusiveOrExpression
+   )*
+;
+
+ConditionalOrExpression :
+    ConditionalAndExpression
+    (
+       <SC_OR>
+       ConditionalAndExpression
+    )*
+;
+
+NullCoalescingExpression :
+    ConditionalOrExpression
+    (
+       <DOUBLE_HOOK>
+       ConditionalOrExpression
+    )*
+;
+
+ConditionalExpression :
+   NullCoalescingExpression
+   [
+      <HOOK>
+      (
+       [<REF>] Expression
+       <COLON>
+       [<REF>] Expression
+      )
+   ]
+;
+
+AssignmentOperator #void :
+  <ASSIGN>
+  | <PLUSASSIGN>
+  | <MINUSASSIGN>
+  | <STARASSIGN>
+  | <SLASHASSIGN>
+  | <REMASSIGN>
+  | <ANDASSIGN>
+  | <ORASSIGN>
+  | <XORASSIGN>
+  | <LEFT_SHIFT_ASSIGN>
+  | <RIGHT_SHIFT_ASSIGN>
+  | <DOUBLE_HOOK_EQUALS> // since 8.0
+;
+
+UnaryExpression#abstract :
+   UnaryExpressionPlusOrMinus
+   |
+   UnaryExpressionNotPlusMinus
+   |
+   CastExpression
+   |
+   AwaitExpression
+   |
+   ThrowExpression // since 7.0
+   |
+   PreIncrementExpression
+   |
+   PreDecrementExpression
+   |
+   UnaryExpressionUnsafe
+   |
+   FromEndIndex
+   |
+   NullConditionalExpression
+;
+
+FromEndIndex :  // since 8.0
+    <HAT> UnaryExpression
+;
+
+ThrowExpression# : <THROW> [Expression] ;
+
+CastExpression : <LPAREN> Type <RPAREN> =>|+1 UnaryExpression ;
+
+AwaitExpression :
+   SCAN 2 {checkNextTokenImage("await")}#
+    =>
+   ACTIVATE_TOKENS AWAIT (<AWAIT>) UnaryExpression
+;
+
+UnaryExpressionUnsafe : (<STAR>| <BIT_AND>) UnaryExpression ;
+
+PreIncrementExpression : <INCR> UnaryExpression ;
+
+PreDecrementExpression : <DECR> UnaryExpression ;
+
+UnaryExpressionPlusOrMinus : (<PLUS> | <MINUS>) UnaryExpression ;
+
+UnaryExpressionNotPlusMinus : (<BANG> | <TILDE>) UnaryExpression ;
+
+NullConditionalOperations :
+   <HOOK> =>|+1
+   (
+      <DOT> <IDENTIFIER> [<BANG>][=>TypeArgumentList]
+      |
+      <LBRACKET> ArgumentList <RBRACKET>
+   )
+   (
+      [<HOOK>] <DOT> =>|| <IDENTIFIER> [<BANG>] [=>TypeArgumentList]
+      |
+      [<HOOK>] <LBRACKET> =>|| ArgumentList <RBRACKET>
+      |
+      <LPAREN> [ArgumentList] <RPAREN>
+   )*
+   [<BANG>] // since 8.0
+;
+
+NullConditionalExpression : PrimaryExpression [NullConditionalOperations] ;
+
+PrimaryExpression#void :
+   (
+      ArrayCreationExpression
+      |
+      LiteralExpression
+      |
+      InterpolatedString
+      |
+      <THIS> #This
+      |
+      BaseAccess
+      |
+      PrimitiveTypeAccess
+      |
+      AnonymousMethodExpression
+      |
+      QualifiedAliasMemberAccess
+      |
+      NameofExpression
+      |
+      SimpleName
+      |
+      StackAllocInitializer // since 8.0
+      |
+      ParenthesizedOrTuple
+      |
+      TypeofExpression
+      |
+      DefaultValueExpression
+      |
+      CheckedExpression
+      |
+      SizeofExpression
+      |
+      UncheckedExpression
+      |
+      ObjectCreationExpression
+      |
+      AnonymousObjectCreationExpression
+   )
+   [
+        // since 8.0
+        <BANG> #NullForgivingExpression(2)
+   ]
+   (
+    (
+      (<LPAREN> [ArgumentList] <RPAREN>) #InvocationExpression(+1)
+      |
+      (<LBRACKET> [=><IDENTIFIER> <COLON>] Expression (<COMMA> [=><IDENTIFIER><COLON>] Expression)*  <RBRACKET>) #ElementAccess(+1)
+      |
+      (<DOT> <IDENTIFIER> [=>TypeArgumentList]) #MemberAccess(+1)
+      |
+      (<POINTER_ACCESS> <IDENTIFIER> [TypeArgumentList=>||]) #PointerMemberAccess(+1)
+      |
+      <INCR> #PostIncrementExpression(2)
+      |
+      <DECR> #PostDecrementExpression(2)
+      )
+      [
+         // since 8.0
+        <BANG> #NullForgivingExpression(2)
+      ]
+   )*
+;
+
+ParenthesizedOrTuple#void :
+    => ParenthesizedExpression
+    |
+    Tuple
+;
+
+ArrayCreationExpression :
+    SCAN <NEW> [NonArrayType] <LBRACKET> =>
+    <NEW>
+    (
+       RankSpecifier ArrayInitializer
+       |
+       NonArrayType <LBRACKET> =>|+1 Expression (<COMMA> Expression)* <RBRACKET> (RankSpecifier)* [ArrayInitializer]
+       |
+       ArrayType ArrayInitializer
+    )
+;
+
+ObjectCreationExpression :
+   <NEW> =>|+1 [SCAN 1 {getToken(1).getType() != TokenType.LPAREN} => NonArrayType] // This seems possible since C# 9
+   (
+      <LPAREN> [ArgumentList] <RPAREN> [ObjectInitializer | CollectionInitializer]
+      |
+      (ObjectInitializer | CollectionInitializer)
+   )
+;
+
+AnonymousObjectCreationExpression :
+   <NEW>
+   <LBRACE> =>||
+    [MemberDeclarator (<COMMA> MemberDeclarator)* [<COMMA>]]
+   <RBRACE>
+;
+
+
+RankSpecifier : <LBRACKET> (<COMMA>)* <RBRACKET> ;
+
+Tuple :
+   <LPAREN>
+   TupleElement =>|+1
+   (
+      <COMMA> TupleElement
+   )+
+   <RPAREN>
+;
+
+TupleElement :
+   [=> <IDENTIFIER> <COLON>]
+   (
+       =>Expression ASSERT (<COMMA> | <RPAREN>)
+       |
+       =>Type Expression ASSERT (<COMMA> | <RPAREN>)
+   )
+   =>||
+;
+
+PrimitiveTypeAccess :
+   (<DYNAMIC> | PrimitiveType)
+   <DOT> =>||
+   <IDENTIFIER>
+   [ => TypeArgumentList ]
+;
+
+QualifiedAliasMemberAccess :
+   <IDENTIFIER> <DOUBLE_COLON> =>||
+   <IDENTIFIER> [TypeArgumentList]
+;
+
+BaseAccess :
+   <BASE>
+   (
+     <DOT> <IDENTIFIER> [TypeArgumentList]
+     |
+    <LBRACKET> Expression (<COMMA> Expression)* <RBRACKET>
+   )
+;
+
+NameofExpression :
+   ASSERT {checkNextTokenImage("nameof")}#
+   ACTIVATE_TOKENS NAMEOF (<NAMEOF>)
+   <LPAREN> =>||
+   NamedEntity
+   <RPAREN>
+;
+
+NamedEntity :
+   (SimpleName | <THIS> | <BASE> | PredefinedType | QualifiedAliasMember)
+   (<DOT> <IDENTIFIER> [TypeArgumentList])*
+;
+
+PredefinedType#void :
+    <BOOL> | <BYTE> | <CHAR>| <DECIMAL> | <DOUBLE> | <FLOAT> | <INT>
+    | <LONG> | <OBJECT> | <SBYTE> | <SHORT> | <STRING> | <UINT> | <ULONG> | <USHORT>
+;
+
+// The "(Type)" part is optional (since C# 7.1)
+// if it can be inferred by the compiler.
+DefaultValueExpression# : <DEFAULT> [ <LPAREN> Type <RPAREN> ] ;
+
+SimpleName# : <IDENTIFIER> [=>TypeArgumentList] ;
+
+ParenthesizedExpression : <LPAREN> Expression <RPAREN> ;
+
+INJECT ParenthesizedExpression : implements Expression
+{
+   public boolean isAssignableTo() {
+      return ((Expression) getChild(1)).isAssignableTo();
+   }
+}
+
+TypeofExpression :
+    <TYPEOF> <LPAREN>
+    (
+       <VOID>
+       |
+   // The following expansion is a little bit tricky.
+   // If our initial scanahead doesn't find any
+   // any empty type args, like <,,,> sort of things,
+   // then the assertion at the end fails, and this means
+   // that we go to the next choice, which is
+   // a regular Type production (with no funky <,,> thingies
+       =>UnboundTypeName ASSERT {sawEmptyTypeArgs}#
+       |
+       Type
+    )
+    <RPAREN>
+;
+
+INJECT PARSER_CLASS : {boolean sawEmptyTypeArgs = false;}
+
+UnboundTypeName :
+   {sawEmptyTypeArgs = false;}#
+   [<IDENTIFIER> <DOUBLE_COLON> =>||]
+   <IDENTIFIER>
+   [<LT> (<COMMA>)* <GT> {sawEmptyTypeArgs = true;}#]
+   (
+      <DOT>
+      <IDENTIFIER>
+      [<LT> (<COMMA>)* <GT> {sawEmptyTypeArgs = true;}#]
+   )*
+;
+
+MemberDeclarator :
+    <IDENTIFIER> <ASSIGN> =>|| Expression
+    |
+    PrimaryExpression // TODO ensure that it is of the right type
+;
+
+
+AnonymousMethodExpression :
+  {boolean seenStatic = false;}
+  [<STATIC> {seenStatic = true;}] // since 9.0
+  [
+     SCAN {checkNextTokenImage("async")}#
+     => ACTIVATE_TOKENS ASYNC (<ASYNC>)
+     [
+        SCAN {!seenStatic} => <STATIC>
+     ]
+  ]
+   <DELEGATE>
+   =>||
+   [
+      <LPAREN>
+      [ExplicitAnonymousFunctionSignature]
+      <RPAREN>
+   ]
+   Block
+;
+
+ExplicitLambdaSignature :
+   <LPAREN>
+       ExplicitAnonymousFunctionSignature
+   <RPAREN>
+;
+
+ExplicitAnonymousFunctionSignature :
+   ExplicitAnonymousFunctionParameter
+   (<COMMA> ExplicitAnonymousFunctionParameter)*
+;
+
+
+ExplicitAnonymousFunctionParameter :  (AttributeSection)* [<REF>|<OUT>|<IN>] Type <IDENTIFIER> ;
+
+ObjectInitializer :
+  SCAN <LBRACE> (QualifiedIdentifier | <LBRACKET> ArgumentList <RBRACKET>) <ASSIGN>
+  =>
+  <LBRACE>
+  MemberInitializer (SCAN 2 <COMMA> MemberInitializer)* [<COMMA>]
+  <RBRACE>
+;
+
+MemberInitializer :
+   (QualifiedIdentifier | <LBRACKET> ArgumentList <RBRACKET>)
+   [
+      // If this is really optional, it is a mistake in the spec.
+      // At least the C# 6.0 spec
+     <ASSIGN>
+     (Expression | ObjectInitializer | CollectionInitializer)
+   ]
+;
+
+CollectionInitializer :
+   <LBRACE>
+       [
+          ElementInitializer (<COMMA> =>|+1 ElementInitializer)* [<COMMA>]
+       ]
+   <RBRACE>
+;
+
+ElementInitializer :
+    <LBRACE> Expression (<COMMA> Expression)* <RBRACE>
+    |
+    Expression // non-assignment, deal with later
+;
+
+CheckedExpression : <CHECKED> <LPAREN> Expression <RPAREN> ;
+
+UncheckedExpression : <UNCHECKED> <LPAREN> Expression <RPAREN> ;
+
+SizeofExpression : <SIZEOF> <LPAREN> Type <RPAREN> ;
+
+LiteralExpression# :
+   <TRUE>
+   |
+   <FALSE>
+   |
+   <NULL>
+   |
+   <INTEGER_LITERAL>
+   |
+   <REAL_LITERAL>
+   |
+   <CHARACTER_LITERAL>
+   |
+   <REGULAR_STRING_LITERAL>
+   |
+   <VERBATIM_STRING_LITERAL>
+;
+
+Label : SCAN 2 <IDENTIFIER> <COLON> ;
+
+Statement :
+   (Label)*
+    (
+       // REVISIT this
+       SCAN {!checkNextTokenImage("await")}#
+       =>
+       MethodDeclaration
+       |
+       LocalConstantDeclaration <SEMICOLON>
+       |
+       LocalVariableDeclaration <SEMICOLON>
+       |
+       EmbeddedStatement
+    )
+;
+
+EmptyStatement : <SEMICOLON> ;
+
+EmbeddedStatement :
+    Block
+    |
+    EmptyStatement
+    |
+    IfStatement
+    |
+    WhileStatement
+    |
+    DoStatement
+    |
+    SCAN 2 {checkNextTokenImage("yield")}#
+    => YieldStatement
+    |
+    CheckedStatement
+    |
+    UncheckedStatement
+    |
+    TryStatement
+    |
+    BreakStatement
+    |
+    ContinueStatement
+    |
+    GotoStatement
+    |
+    ReturnStatement
+    |
+    ThrowStatement
+    |
+    UnsafeStatement
+    |
+    UsingStatement
+    |
+    LockStatement
+    |
+    FixedStatement
+    |
+    SwitchStatement
+    |
+    ForStatement
+    |
+    ForeachStatement
+    |
+    ExpressionStatement
+;
+
+LocalVariableDeclarationLA#scan :
+   [
+      <USING>
+   ]
+   ASSERT {!checkNextTokenImage("await")} // Is there any possibility that a local type is named "await"?
+   [<REF>] [<READONLY>]
+   (
+      (
+         <IDENTIFIER> ASSERT {getToken(0).getImage().equals("var")} =>||
+         (<IDENTIFIER>|Tuple) <ASSIGN>
+      )
+      |
+      (
+         Type <IDENTIFIER> (<ASSIGN>|<SEMICOLON>|<COMMA>)
+      )
+   )
+;
+
+LocalVariableDeclaration :
+  SCAN LocalVariableDeclarationLA =>
+  [<REF>]
+  [<USING>] // since 8.0
+  (
+     VarDeclaration
+     |
+     NoVarDeclaration
+  )
+;
+
+NoVarDeclaration :
+   [
+      <REF> // since C# 7.0
+   ]
+   [
+      <READONLY> //REVISIT
+   ]
+   Type
+   ASSERT {getToken(-1).getType() == TokenType.DOT || !getToken(0).toString().equals("await")}#
+   =>|+1
+   LocalVariableDeclarator
+   (<COMMA> LocalVariableDeclarator)*
+;
+
+VarDeclaration :
+   [
+      <REF> // since C# 7.0
+   ]
+   [
+      <READONLY> //REVISIT
+   ]
+   ACTIVATE_TOKENS VAR (<VAR>)
+   =>||
+   (<IDENTIFIER>|Tuple) <ASSIGN> [<REF>] LocalVariableInitializer
+;
+
+LocalVariableDeclarator :
+   <IDENTIFIER> [<ASSIGN> [<REF>] LocalVariableInitializer]
+;
+
+LocalVariableInitializer :
+   Expression
+   |
+   ArrayInitializer
+;
+
+StackAllocInitializer :
+   <STACKALLOC>
+   (
+      <LBRACKET> <RBRACKET> ArrayInitializer
+      |
+      Type
+      (
+         SCAN 0 {getToken(0).getType() != TokenType.RBRACKET}#
+         => <LBRACKET> Expression <RBRACKET>
+         |
+         <LBRACKET> Expression <RBRACKET>
+         |
+         {}
+      )
+      [ArrayInitializer]
+   )
+;
+
+LocalConstantDeclaration :
+   <CONST>
+   Type
+   ConstantDeclarator
+   (<COMMA> ConstantDeclarator)*
+;
+
+CheckedStatement : <CHECKED> =>|+1 Block ;
+
+UncheckedStatement : <UNCHECKED> =>|+1 Block ;
+
+BreakStatement : <BREAK> <SEMICOLON> ;
+
+ContinueStatement : <CONTINUE> <SEMICOLON> ;
+
+GotoStatement :
+   <GOTO>
+   (
+      <IDENTIFIER>
+      |
+      <DEFAULT> #DefaultValueExpression
+      |
+      <CASE> Expression
+   )
+   <SEMICOLON>
+;
+
+IfStatement : <IF> <LPAREN> Expression <RPAREN> EmbeddedStatement [ <ELSE> EmbeddedStatement] ;
+
+DoStatement : <DO> EmbeddedStatement <WHILE> <LPAREN> Expression <RPAREN> <SEMICOLON> ;
+
+WhileStatement : <WHILE> <LPAREN> Expression <RPAREN> EmbeddedStatement ;
+
+ForeachStatement :
+   {boolean iteratingOverTupleType=false;}
+    [
+       //Since 8.0 (I think...)
+       SCAN {checkNextTokenImage("await")}#
+       => ACTIVATE_TOKENS AWAIT (<AWAIT>)
+    ]
+    <FOREACH> =>||
+    <LPAREN>
+    [<REF>]
+    (
+       <VAR>
+       |
+       Tuple {iteratingOverTupleType = true;}
+       |
+       Type
+    )
+    (
+       <IDENTIFIER>
+       |
+       SCAN {!iteratingOverTupleType} => Tuple // since ???
+       |
+       SCAN {iteratingOverTupleType} =>{}
+    )
+    <IN>
+    Expression
+    <RPAREN>
+    EmbeddedStatement
+;
+
+TryStatement :
+   <TRY> Block
+   (
+      FinallyClause
+      |
+      (CatchClause)+ [FinallyClause]
+   )
+;
+
+ReturnStatement :
+   <RETURN>
+   [
+      [
+         // since 7.0. Note that this can only happen in a return statement
+         // in a method that was itself declared using ref
+         // However, I don't think this is our problem. At least for now.
+         // We leave it to the compiler!
+         <REF>
+      ]
+      Expression
+   ]
+   <SEMICOLON>
+;
+
+ThrowStatement : ThrowExpression <SEMICOLON> ;
+
+FinallyClause : <FINALLY> Block ;
+
+UnsafeStatement : <UNSAFE> Block ;
+
+CatchClause :
+   <CATCH>
+   [ <LPAREN> Type [<IDENTIFIER>] <RPAREN> ]
+   [ ACTIVATE_TOKENS WHEN (<WHEN>) =>|| <LPAREN> Expression <RPAREN> ]
+   Block
+;
+
+YieldStatement :
+   ACTIVATE_TOKENS YIELD (<YIELD>)
+   (
+      <BREAK>
+      |
+      <RETURN> Expression
+   )
+   <SEMICOLON>
+;
+
+UsingStatement :
+   [
+      SCAN {checkNextTokenImage("await")}#
+      =>ACTIVATE_TOKENS AWAIT (<AWAIT>)
+   ]
+   <USING>
+   {boolean hasParenthesis = false;}
+   [<LPAREN> {hasParenthesis=true;}]
+   =>||
+   (
+      SCAN LocalVariableDeclaration <RPAREN>
+      => LocalVariableDeclaration
+      |
+      Expression
+   )
+   [SCAN 0 {hasParenthesis} => <RPAREN>]
+   EmbeddedStatement
+;
+
+LockStatement : <LOCK> <LPAREN> Expression <RPAREN> EmbeddedStatement ;
+
+FixedStatement :
+   <FIXED>
+   <LPAREN> =>||
+   Type ASSERT {getToken(0).getType() == TokenType.STAR}
+   FixedPointerDeclarator (<COMMA> FixedPointerDeclarator)*
+   <RPAREN>
+   EmbeddedStatement
+;
+
+FixedPointerDeclarator :
+   <IDENTIFIER>
+   <ASSIGN> [<BIT_AND>] Expression
+;
+
+StatementExpression#interface :
+   PreIncrementExpression
+   |
+   PreDecrementExpression
+   |
+   AwaitExpression
+   |
+   PrimaryExpression
+   {Expression lhs = (Expression) peekNode();}
+   (
+      NullConditionalOperations #NullConditionalExpression(2)
+      |
+      SCAN 1 {lhs.isAssignableTo()} =>
+      (AssignmentOperator [<REF>] Expression) #AssignmentExpression(+1)
+      |
+      ASSERT {lhs instanceof StatementExpression} : "Not a statement."
+   )
+   |
+   AssignmentExpression
+   ASSERT {peekNode() instanceof AssignmentExpression} : "Not a statement."
+;
+
+ExpressionStatement : StatementExpression <SEMICOLON> ;
+
+SwitchStatement : <SWITCH> <LPAREN> Expression (<COMMA> Expression)* <RPAREN> SwitchBlock ;
+
+SwitchBlock : <LBRACE> (SwitchSection)* <RBRACE> ;
+
+SwitchLabel :
+   <DEFAULT> <COLON>
+   |
+   // REVISIT: Why do I need this line?
+   // The third choice should be enough, it seems...
+   => <CASE> Expression [WhenClause] <COLON>
+   |
+   <CASE> Pattern [WhenClause] <COLON>
+;
+
+WhenClause :
+   SCAN 0 {checkNextTokenImage("when")}#
+   =>
+   ACTIVATE_TOKENS WHEN (<WHEN>)
+   NullCoalescingExpression
+;
+
+SwitchSection :
+   (SwitchLabel)+
+   (
+      SCAN 0 {
+         // A bit ugly. Really need to make syntactic lookahead a bit more powerful
+         // in terms of negative conditions!
+                getToken(1).getType() != TokenType.RBRACE
+                && getToken(1).getType() != TokenType.CASE
+                && !(getToken(1).getType() == TokenType.DEFAULT && getToken(2).getType() == TokenType.COLON)
+             }
+      => Statement
+   )+
+;
+
+ForStatement :
+   <FOR>
+   <LPAREN>
+   [LocalVariableDeclaration | StatementExpression (<COMMA> StatementExpression)*]
+   <SEMICOLON>
+   [Expression]
+   <SEMICOLON>
+   [
+      StatementExpression
+      (<COMMA> StatementExpression)*
+   ]
+   <RPAREN>
+   EmbeddedStatement
+;
+
+// C# 8 Pattern syntax follows.
+
+Pattern :
+   //ACTIVATE_TOKENS AND, OR, NOT, VAR, WHEN (OrPattern)
+   ACTIVATE_TOKENS AND, OR, NOT (OrPattern)
+;
+
+OrPattern : AndPattern (<OR> AndPattern)* ;
+
+AndPattern : NotPattern (<AND> NotPattern)* ;
+
+NotPattern : (<NOT>)* PrimaryPattern ;
+
+PrimaryPattern :
+   <NULL> | <TRUE> | <FALSE>
+   |
+   RelationalPattern
+   |
+   // These next three options are a bit ugly.
+   => CastExpression // Maybe there is a better way but I don't see it.
+   |
+   => ParenthesizedPattern
+   |
+   NameofExpression
+   |
+   DeclarationPattern
+   |
+   PropertyPattern
+   |
+   VarPattern
+   |
+   =>TypePattern
+   |
+   =>PositionalPattern
+   |
+   //Which should it be here?
+   ShiftExpression
+   //InclusiveOrExpression
+;
+
+ParenthesizedPattern : <LPAREN> Pattern <RPAREN> ;
+
+DeclarationPattern :
+    NonNullableType
+    ASSERT {checkNextTokenType(TokenType.IDENTIFIER)}#
+    ACTIVATE_TOKENS FROM, WHERE
+    (
+       ASSERT ~(FromClause)
+       ASSERT ~(WhenClause)
+    )
+    <IDENTIFIER>
+    =>||
+;
+
+VarPattern :
+    SCAN 0 {checkNextTokenImage("var")}# =>
+    ACTIVATE_TOKENS VAR (<VAR>)
+    (<IDENTIFIER> | Tuple)
+;
+
+TypePattern :
+   (
+      Type
+      [
+         SCAN {getToken(0) instanceof NODE_PACKAGE.PrimitiveType}#
+         => <DOT> <IDENTIFIER>
+      ]
+      {
+         TokenType lastTokType = getToken(0).getType();
+         TokenType nextTokType = getToken(1).getType();
+      }#
+      ASSERT
+      {
+         // If we have a left parenthesis, this choice fails
+         // and we go to PositionalPattern
+         nextTokType != TokenType.LPAREN
+         &&
+         (
+            lastTokType != TokenType.HOOK
+         // This is now really grotesque!
+         // If the Type we matched is "nullable", i.e.
+         // ends in a ?  // then the token after that must be
+         // one of the following half dozen types
+         // Otherwise we effectively backtrack
+         // and match the Type as a NonNullableType,
+         // i.e. we parse it without the trailing "?"
+            || nextTokType == TokenType.HOOK
+            || nextTokType == TokenType.RPAREN
+            || nextTokType == TokenType.SEMICOLON
+            || nextTokType == TokenType.EQ
+            || nextTokType == TokenType.SC_OR
+            || nextTokType == TokenType.SC_AND
+            || nextTokType == TokenType.COMMA
+            || checkNextTokenImage("and")
+            || checkNextTokenImage("or")
+         )
+      }# =>||
+      |
+      NonNullableType ASSERT {getToken(1).getType() != TokenType.LPAREN}#
+   )
+;
+
+RelationalPattern : (<GT>|<GE>|<LE>|<LT>) RelationalExpression ;
+
+PositionalPattern :
+    [=>NonTupleType]
+    <LPAREN>
+    [SubPatterns]
+    <RPAREN>
+    [PropertySubPattern]
+    [SCAN {!checkNextTokenImage("when") || !isInProduction("SwitchExpressionCase", "SwitchLabel")}# => <IDENTIFIER>]
+;
+
+SubPatterns :
+   [=> QualifiedIdentifier <COLON>]
+   Pattern
+   (
+      SCAN 2
+      <COMMA>
+      [=> QualifiedIdentifier <COLON>]
+      Pattern
+   )*
+;
+
+PropertyPattern :
+   [Type] =>|+1 PropertySubPattern
+   [
+      SCAN {!checkNextTokenImage("when") || !isInProduction("SwitchExpression", "SwitchStatement")}#
+      =><IDENTIFIER>
+   ]
+;
+
+PropertySubPattern :
+   <LBRACE>
+    [SubPatterns [<COMMA>]]
+   <RBRACE>
+;
+
+InterpolatedString#abstract : RegularStringInterpolation | MultiStringInterpolation ;
+
+RegularStringInterpolation :
+   <REGULAR_INTERPOLATION_START>
+   LEXICAL_STATE IN_REGULAR_INTERPOLATION
+   (
+      (
+         RegularNonInterpolatedText
+         |
+         PlaceHolder
+      )*
+      <ENDING_QUOTE>
+   )
+;
+
+MultiStringInterpolation :
+   <MULTI_INTERPOLATION_START>
+   LEXICAL_STATE IN_MULTI_INTERPOLATION
+   (
+      (
+         MultiNonInterpolatedText
+         |
+         PlaceHolder
+      )*
+      <ENDING_QUOTE>
+   )
+;
+
+PlaceHolder :
+   <LBRACE>
+   LEXICAL_STATE CSHARP
+   (
+      Expression
+      [<COMMA> Expression]
+      [
+         <COLON>
+         RegularNonInterpolatedText
+      ]
+      <RBRACE>
+   )
+;
+
+RegularNonInterpolatedText :
+   LEXICAL_STATE IN_REGULAR_INTERPOLATION
+   (<NON_INTERPOLATED_TEXT>)
+;
+
+MultiNonInterpolatedText : IN_MULTI_INTERPOLATION :
+   <NON_INTERPOLATED_TEXT2>
+;

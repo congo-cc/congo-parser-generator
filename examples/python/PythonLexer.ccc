@@ -1,0 +1,481 @@
+/*
+ * The Python lexical grammar 
+ */
+
+PARSER_PACKAGE = org.parsers.pylexer;
+DEFAULT_LEXICAL_STATE = PYTHON;
+ENSURE_FINAL_EOL;
+EXTRA_TOKENS = INDENT#IndentToken, DEDENT#DedentToken;
+TABS_TO_SPACES=4;
+
+/*
+ * The following code injection implements the various indent/dedent logic.
+ */
+INJECT LEXER_CLASS : 
+   import java.util.List;
+   import java.util.ArrayList;
+   import java.util.Iterator;
+   import NODE_PACKAGE.IndentToken;
+   import NODE_PACKAGE.DedentToken;
+{ 
+   private Token danglingIndentation;
+   private int bracketNesting, parenthesesNesting, braceNesting;
+   private List<Integer> indentationStack = initIndentationStack();
+
+   private static List<Integer> initIndentationStack() {
+      List<Integer> result = new ArrayList<Integer>();
+      result.add(1);
+      return result;
+   }
+   
+   private Token TOKEN_HOOK(Token tok) {
+      boolean lineJoiningOn = bracketNesting >0 || parenthesesNesting > 0 || braceNesting > 0; 
+      TokenType type = tok.getType();
+      switch (type) {
+         case LBRACE : braceNesting++; break;
+         case RBRACE : braceNesting--; break;
+         case LPAREN : parenthesesNesting++; break;
+         case RPAREN : parenthesesNesting--; break;
+         case LBRACKET : bracketNesting++; break;
+         case RBRACKET : bracketNesting--; break;
+         case NEWLINE :  if (lineJoiningOn || tok.startsLine()) {
+                             tok.setUnparsed(true);
+                         }
+                         return tok;
+      }
+      if (danglingIndentation != null) {
+         tok.preInsert(danglingIndentation);
+      }
+      if (lineJoiningOn || tok.isUnparsed() 
+        || danglingIndentation == null && !tok.startsLine()) {
+         return tok;
+      }
+      danglingIndentation = null;
+      int beginColumn = tok.getBeginColumn();
+      int indentation = indentationStack.get(indentationStack.size()-1);
+      if (beginColumn > indentation) {
+         indentationStack.add(beginColumn);
+         return IndentToken.makeIndentToken(tok, this, indentationStack);
+      }
+      if (beginColumn < indentation) {
+         return handleDedent(tok, beginColumn);
+      }
+      return tok;
+   }
+
+   private Token handleDedent(Token tok, final int offset) {
+       int dedentIndex = indentationStack.indexOf(offset);
+       if (dedentIndex <0) {
+          Token invalidDedent = new InvalidToken(this, 0,0);
+          invalidDedent.setImage("Invalid Dedent");
+          tok.preInsert(invalidDedent);
+          return invalidDedent;
+       }
+       Token firstDedent = null;
+       for (int i=indentationStack.size()-1; i>dedentIndex; i--) {
+          int dedentAmount = indentationStack.get(i) - indentationStack.get(i-1);
+          indentationStack.remove(i);
+          Token dedent = DedentToken.makeDedentToken(tok, this, indentationStack, dedentAmount);
+          if (firstDedent == null) firstDedent = dedent;
+       }
+       return firstDedent; 
+   }
+ 
+   private void RESET_TOKEN_HOOK(Token tok) {
+      braceNesting = bracketNesting = parenthesesNesting = 0;
+      if (tok.getType() == TokenType.INDENT || tok.getType() == TokenType.DEDENT) {
+         danglingIndentation = tok;
+         indentationStack = tok.getIndents();
+         return;
+      }
+      for (Iterator<Token> toks = tok.precedingTokens(); toks.hasNext();) {
+         Token previous = toks.next();
+         TokenType prevType = previous.getType();
+         switch (prevType) {
+            case LBRACE : braceNesting++; break;
+            case RBRACE : braceNesting--; break;
+            case LPAREN : parenthesesNesting++; break;
+            case RPAREN : parenthesesNesting--; break;
+            case LBRACKET : bracketNesting++; break;
+            case RBRACKET : bracketNesting--; break;
+            case INDENT :
+            case DEDENT : indentationStack = previous.getIndents(); return;
+         }
+      }
+   }
+}
+
+INJECT Token : {
+   public java.util.List<Integer> getIndents() {
+      return null;
+   }
+
+   boolean startsLine() {
+      for (java.util.Iterator<Token> toks = precedingTokens(); toks.hasNext();) {
+         Token t = toks.next();
+         if (t.getType()==TokenType.CONTINUE_LINE) return false;
+         if (!t.isUnparsed()) return t.getEndLine() != this.getBeginLine();
+      }
+      return true;
+   }
+
+   public Token getPreviousToken() {
+        return previousCachedToken();
+    }
+
+   public void setImage(String image) {
+      this.image = image;
+   }
+
+}
+
+INJECT DedentToken : 
+   import java.util.List;
+   import java.util.ArrayList;
+{
+   private List<Integer> indents;
+   private int dedentAmount;
+
+   public static Token makeDedentToken(Token followingToken, LEXER_CLASS tokenSource, List<Integer> indents, int dedentAmount) {
+      DedentToken result = new DedentToken(TokenType.DEDENT, tokenSource, 0, 0);
+      result.indents = new ArrayList<Integer>(indents.size());
+      result.indents.addAll(indents);
+      result.dedentAmount = dedentAmount;
+      followingToken.preInsert(result);
+      return result;
+   }
+
+   public List<Integer> getIndents() { return new ArrayList<Integer>(indents);}
+
+   public boolean isVirtual() {
+      return true;
+   }
+
+/*
+ *  Commented out, as interferes with representation used in tests
+ *
+   public String toString() {
+       return "DEDENT";
+   }
+ */
+
+   public int getDedentAmount() {
+      return dedentAmount;
+   }
+}
+
+INJECT IndentToken : 
+   import java.util.List;
+   import java.util.ArrayList;
+{
+   private List<Integer> indents;
+
+   public static Token makeIndentToken(Token followingToken, LEXER_CLASS tokenSource, List<Integer> indents) {
+      IndentToken result = new IndentToken(TokenType.INDENT, tokenSource, 0, 0);
+      result.indents = new ArrayList<Integer>(indents.size());
+      result.indents.addAll(indents);
+      followingToken.preInsert(result);
+      return result;
+   }
+
+   public List<Integer> getIndents() { return new ArrayList<Integer>(indents);}
+
+   public boolean isVirtual() {
+      return true;
+   }
+
+/*
+ *  Commented out, as interferes with representation used in tests
+ *
+   public String toString() {
+       return "INDENT";
+   }
+ */
+
+   public int getIndentAmount() {
+      return indents.get(indents.size() - 1) - indents.get(indents.size() - 2);
+   }
+}
+
+SKIP : <SPACE : (' ' | "\f")+>; 
+
+UNPARSED : 
+   <CONTINUE_LINE : "\\\n"> #Whitespace
+   |
+   <COMMENT: "#" (~["\n"])* > #Comment  
+;
+
+TOKEN : 
+   <NEWLINE : (<SPACE>)? "\n"> #Newline
+;
+
+TOKEN #Delimiter :
+   <ASSIGN : '='>
+   |
+   <AT : '@'>
+   |
+   <COLON : ":" >
+   |
+   <COMMA : ",">
+   |
+   <EQ : "==">
+   | 
+   <LBRACE: "{" > 
+   | 
+   <RBRACE: "}" > 
+   |
+   <LBRACKET : "[">
+   |
+   <RBRACKET : "]">
+   |
+   <LPAREN : "(">
+   |
+   <RPAREN : ")" >
+   |
+   <SEMICOLON : ";">
+   |
+   <STAR : "*"> 
+   |
+   <STAR_STAR : "**">
+   |
+   <MINUSASSIGN : "-=">
+   |
+   <PLUSASSIGN : "+=">
+   |
+   <STARASSIGN : "*=">
+   |
+   <ATASSIGN : "@=">
+   |
+   <SLASHASSIGN : "/=">
+   |
+   <REMASSIGN : "%=">
+   |
+   <ANDASSIGN : "&=">
+   |
+   <ORASSIGN : "|=">
+   |
+   <XORASSIGN : "^=">
+   |
+   <LSHIFTASSIGN : "<<=">
+   |
+   <RSHIFTASSIGN : ">>=">
+   |
+   <STARSTARASSIGN : "**=">
+   |
+   <SLASHSLASHASSIGN : "//=">
+;
+
+TOKEN #Operator :
+   <BIT_AND : "&">
+   |
+   <BIT_OR : "|">
+   |
+   <XOR : "^">
+   |
+   <TILDE : "~">
+   |
+   <COLONEQUALS : ":=">
+   |
+   <DOT : ".">
+   |
+   <ELLIPSIS : "...">
+   |
+   <LE: "<=" > 
+   | 
+   <GE: ">=" > 
+   | 
+   <NE: "!=" > 
+   |
+   <GT: ">" > 
+   | 
+   <LT: "<" > 
+   |
+   <MINUS : "-">
+   |
+   <PLUS : "+">
+   |
+   <SLASH : "/">
+   |
+   <SLASHSLASH : "//">
+   |
+   <PERCENT : "%">
+   |
+   <LSHIFT : "<<">
+   |
+   <RSHIFT : ">>">
+   |
+   <HOOK : "? ">
+   |
+   <RARROW : "->">
+;
+
+TOKEN #Keyword :
+   <AND : "and">
+   |
+   <AS : "as">
+   |
+   <_ASSERT : "assert">
+   |
+   <ASYNC : "async">
+   |
+   <AWAIT : "await">
+   |
+   <BREAK : "break">
+   |
+   <CASE : "case">
+   |
+   <CLASS : "class">
+   |
+   <CONTINUE : "continue">
+   |
+   <DEF : "def">
+   |
+   <DEL : "del">
+   |
+   <EXCEPT : "except">
+   |
+   <FINALLY : "finally">
+   |
+   <FOR : "for">
+   |
+   <FROM : "from">
+   |
+   <GLOBAL : "global">
+   |
+   <IF : "if">
+   |
+   <IN : "in">
+   |
+   <IS : "is">
+   |
+   <ELIF : "elif">
+   |
+   <ELSE : "else">
+   |
+   <FALSE : "False">
+   |
+   <IMPORT : "import">
+   |
+   <LAMBDA : "lambda">
+   |
+   <MATCH : "match">
+   |
+   <NONLOCAL : "nonlocal">
+   |
+   <NONE : "None">
+   |
+   <NOT : "not">
+   |
+   <OR : "or">
+   |
+   <PASS : "pass">
+   |
+   <PEG_PARSER : "__peg_parser__">
+   |
+   <RAISE : "raise">
+   |
+   <RETURN : "return">
+   |
+   <TRUE : "True">   
+   |
+   <TRY : "try">
+   |
+   <WHILE : "while">
+   |
+   <WITH : "with">
+   |
+   <YIELD : "yield">
+;   
+
+// The following is lifted from the Pydev code. See:
+// https://github.com/fabioz/Pydev/blob/master/plugins/org.python.pydev.parser/src/org/python/pydev/parser/grammar38/python.jjt#L392-L411
+// I think this is fair use. I don't anticipate anybody complaining. Besides, they most likely lifted this 
+// from somewhere else!
+TOKEN #NumericalLiteral : 
+    <DECNUMBER:
+        ["1"-"9"] ((["_"])?["0"-"9"])* (["l", "L"])?
+      | ("0")+
+      >
+    |
+    <BADDECNUMBER: ["0"-"9"] ((["_"])?["0"-"9"])+ (["l", "L"])? >
+    |
+    <HEXNUMBER: "0" ["x","X"] ((["_"])? ["0"-"9","a"-"f","A"-"F"])+ (["l","L"])? >
+    |   
+    <OCTNUMBER: "0" ["o","O"] ((["_"])? ["0"-"7"])* (["l","L"])? >
+    |   
+    <BINNUMBER: "0" (["b","B"])? ((["_"])? ["0"-"1"])* (["l","L"])? >
+    |
+    <FLOAT:
+        ["0"-"9"]((["_"])?["0"-"9"])* "." ((["_"])?["0"-"9"])* (<EXPONENT>)?
+      | "." ["0"-"9"]((["_"])?["0"-"9"])* (<EXPONENT>)?
+      | ["0"-"9"]((["_"])?["0"-"9"])* <EXPONENT>
+      >
+    |
+    <COMPLEX: (<DECNUMBER> | <FLOAT> | "0" <DECNUMBER> ) ["j", "J"]>
+    |
+    <#EXPONENT: ["e","E"] (["+","-"])? ["0"-"9"]((["_"])?["0"-"9"])* >
+;
+
+TOKEN #StringLiteral :
+   <STRING_LITERAL : <STRING_LITERAL1> | <STRING_LITERAL2> | <STRING_LITERAL3> | <STRING_LITERAL4>
+                     | <BYTES_LITERAL_1> | <BYTES_LITERAL_2> | <BYTES_LITERAL_3> | <BYTES_LITERAL_4>>
+   |
+   <#STRING_LITERAL1 : (<STRING_PREFIX>)? '"' ((~['"', "\\", "\n"])|<STRING_ESCAPE>)* '"'>
+   |
+   <#STRING_LITERAL2 : (<STRING_PREFIX>)? "'" ((~["'", "\\", "\n"])|<STRING_ESCAPE>)* "'">
+   |
+   <#STRING_LITERAL3 : (<STRING_PREFIX>)? "'''" (<INSIDE_SL_3>)* "'''">
+   |  
+   <#STRING_LITERAL4 : (<STRING_PREFIX>)? '"""' (<INSIDE_SL_4>)* '"""'>
+   |
+   <#INSIDE_SL_3 : ("'" ("'")? )? (<STRING_ESCAPE> | (~["'"]))>
+   |
+   <#INSIDE_SL_4 : ('"' ('"')? )? (<STRING_ESCAPE> | (~['"']))>
+   |
+   <#BYTES_LITERAL_1 : <BYTES_PREFIX> "'" ((~["\n","'", "\\"])|<BYTES_ESCAPE>)* "'">
+   |
+   <#BYTES_LITERAL_2 : <BYTES_PREFIX> '"' ((~["\n",'"','\\'])|<BYTES_ESCAPE>)* '"'>
+   |
+   <#BYTES_LITERAL_3 : <BYTES_PREFIX> "'''" (<INSIDE_BL_3>)* "'''">
+   |
+   <#BYTES_LITERAL_4 : <BYTES_PREFIX> '"""' (<INSIDE_BL_4>)* '"""'>
+   |
+   <#INSIDE_BL_3 : ("'" ("'")? )? (<BYTES_ESCAPE> | (~["'"]))>
+   |
+   <#INSIDE_BL_4 : ('"' ('"')? )? (<BYTES_ESCAPE> | (~['"']))>
+   |
+   <#STRING_PREFIX : "r" | "u" | "R" | "U" | "f" | "F"
+                     | "fr" | "Fr" | "fR" | "FR" | "rf" | "rF" | "Rf" | "RF">
+   |                  
+   <#BYTES_PREFIX :  "b" | "B" | "br" | "Br" | "bR" | "BR" | "rb" | "rB" | "Rb" | "RB">
+   |
+   <#STRING_ESCAPE: "\\" ~[] >
+   |
+   <#BYTES_ESCAPE : "\\" ["\u0000"-"\u007F"]>
+;
+
+//INCLUDE PYTHON_IDENTIFIER_DEF
+INCLUDE "PythonIdentifierDef.ccc"
+
+TOKEN :
+  <NAME : <PYTHON_IDENTIFIER_START> (<PYTHON_IDENTIFIER_PART>)* > #Name
+;
+
+TOKEN :
+  <BADNAME :
+    [
+       "a"-"z",
+       "A"-"Z",
+       "_",
+       "\u0080"-"\uffff"
+    ]
+    (
+        [
+           "a"-"z",
+           "A"-"Z",
+           "0"-"9",
+           "_",
+           "\u0080"-"\uffff"
+        ]
+    )* >
+;

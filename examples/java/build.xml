@@ -1,0 +1,45 @@
+<project name="Java Parser" default="compile">
+
+<target name="clean">
+   <delete dir="org"/>
+   <delete file="JParse.class"/>
+   <delete file="JLex.class"/>
+</target>
+
+<target name="init">
+	<uptodate property="javaparser.uptodate" srcfile="Java.ccc" targetfile="org/parsers/java/JavaParser.java"
+/>
+</target>
+
+<target name="parser-gen" depends="init" unless="javaparser.uptodate">
+  <java classpath="../../build:../../congocc.jar:../../bin/congocc.jar:../../bin/freemarker.jar" classname="org.congocc.Main" failonerror="true" fork="true">
+    <assertions><enable/></assertions>
+     <arg value="-q"/>
+    <arg value="${basedir}/Java.ccc"/>
+  </java>
+</target>
+ 
+ 
+<target name="compile" depends="init, parser-gen">
+     <javac srcdir="."  failonerror="true" source="1.8" target="1.8"
+      excludes="testfiles/**"
+      classpath="." debug="on" optimize="off" includeantruntime="no" fork="true"/>
+</target>
+
+<target name="test" depends="compile">
+     <java fork="true" classpath="." failonerror="true" classname="JParse">
+         <assertions><enable/></assertions>
+         <arg value="org/parsers/java"/>
+     </java>
+     <echo>
+        -------------------
+        Okay, that seems okay. Now let's dump the parse tree for a single source file
+        -------------------
+     </echo>
+     <java fork="true" classpath="." failonerror="true" classname="JParse">
+	       <assertions><enable/></assertions>
+         <arg value="org/parsers/java/ast/CompilationUnit.java"/>
+     </java>
+</target>
+
+</project>

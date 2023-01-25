@@ -1,0 +1,388 @@
+/* Copyright (c) 2008-2020 Jonathan Revusky, revusky@congocc.org
+ * All rights reserved.
+ *
+ * Redistribution and use in source and binary forms, with or without
+ * modification, are permitted provided that the following conditions are met:
+ *
+ *     * Redistributions of source code must retain the above copyright notices,
+ *       this list of conditions and the following disclaimer.
+ *     * Redistributions in binary form must reproduce the above copyright
+ *       notice, this list of conditions and the following disclaimer in the
+ *       documentation and/or other materials provided with the distribution.
+ *     * Neither the name Jonathan Revusky nor the names of any contributors 
+ *       may be used to endorse or promote products derived from this software 
+ *       without specific prior written permission.
+ *
+ * THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS"
+ * AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
+ * IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
+ * ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT OWNER OR CONTRIBUTORS BE
+ * LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR
+ * CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF
+ * SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS
+ * INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN
+ * CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
+ * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF
+ * THE POSSIBILITY OF SUCH DAMAGE.
+ */
+
+PARSER_PACKAGE="fel";
+SPECIAL_TOKENS_ARE_NODES=true;
+DEFAULT_LEXICAL_STATE="FTL_EXPRESSION";
+FAULT_TOLERANT=true;
+
+INJECT FELParser : {
+   static public void main(String[] args) throws ParseException, IOException {
+       String input = LEXER_CLASS.readFully(new java.io.InputStreamReader(System.in));
+       FELParser parser = new FELParser(input);
+       Node n = parser.Input();
+       n.dump("  ");
+   }
+}
+
+INCLUDE "../java/JavaIdentifierDef.ccc"
+
+SKIP :
+    <EXP_WHITE_SPACE : (" "|"\t"|"\n"|"\r")+>
+;
+
+MORE :
+    <"<#--"> : EXPRESSION_COMMENT
+    |
+    <"<!--"> : EXPRESSION_COMMENT
+    |
+    <"[#--"> : EXPRESSION_COMMENT
+;
+
+<EXPRESSION_COMMENT> MORE : <~[]> ;
+
+<EXPRESSION_COMMENT> SPECIAL_TOKEN :
+    <"-->"> : FTL_EXPRESSION
+    |
+    <"--]"> : FTL_EXPRESSION
+;
+
+TOKEN :
+    <OPEN_PAREN : "(">
+    |
+    <CLOSE_PAREN : ")">
+    |
+    <OPEN_BRACKET : "[">
+    |
+    <CLOSE_BRACKET : "]">
+    |
+    <OPEN_BRACE : "{">
+    |
+    <CLOSE_BRACE : "}">
+    |
+    <EQUALS : "=">
+    |
+    <DOT : ".">
+    |
+    <PLUS : "+">
+    |
+    <MINUS : "-">
+    |
+    <TIMES : "*">
+    |
+    <DIVIDE : "/">
+    |
+    <PERCENT : "%">
+    |
+    <OR : "|">
+    |
+    <AND : "&">
+    |
+    <LT : "<">
+    |
+    <GT : ">">
+    |
+    <COMMA : ",">
+    |
+    <COLON : ":">
+    |
+    <SEMICOLON : ";">
+    |
+    <EXCLAM : "!">
+    |
+    <BUILT_IN : "?">
+    |
+    <DOUBLE_EQUALS : "==">
+    |
+    <NOT_EQUALS : "!=">
+    |
+    <EXISTS_OPERATOR : "??">
+    |
+    <LTE : "<=">
+    |
+    <GTE : ">=">
+    |
+    <OR2 : "||">
+    |
+    <AND2 : "&&">
+    |
+    <DOT_DOT : "..">
+    |
+    <ALT_GT : "gt">
+    |
+    <ALT_LT : "lt">
+    |
+    <AS : "as">
+    |
+    <IN : "in">
+    |
+    <ALT_GTE : "gte">
+    |
+    <ALT_LTE : "lte">
+    |
+    <ELLIPSIS : "...">
+    |
+    <NULL : "null">
+    |
+    <TRUE : "true">
+    |
+    <FALSE : "false">
+    |
+    <USING : "using">
+    |
+    <INTEGER : (["0"-"9"])+>
+    |
+    <DECIMAL : <INTEGER> "." <INTEGER>>
+    |
+    <IDENTIFIER : ("@" | <JAVA_IDENTIFIER_START>) ("@" | <JAVA_IDENTIFIER_PART>)* >
+    |
+    <STRING_LITERAL :
+      ("\""
+          ((~["\\", "\""]) | ("\\" ~[]))*
+      "\"")
+      |
+      ("'"
+          ((~["\\", "'"]) | ("\\" ~[]))*
+      "'")
+   >
+   |
+   <RAW_STRING : "r" (("\"" (~["\""])* "\"") | ("'" (~["'"])* "'"))>
+;
+
+Node Input #void :
+   Expression
+   <EOF>
+   {
+       return rootNode();
+   }
+;
+
+Expression :
+    OrExpression
+;
+
+OrExpression :
+    AndExpression
+    (
+        (<OR>|<OR2>) AndExpression
+    )*
+;
+
+AndExpression :
+    EqualityExpression
+    (
+        (<AND>|<AND2>) EqualityExpression
+    )*
+;
+
+EqualityExpression :
+    RelationalExpression
+    [
+        (<EQUALS>|<DOUBLE_EQUALS>|<NOT_EQUALS>)
+        RelationalExpression
+    ]
+;
+
+RelationalExpression :
+    RangeExpression
+    [
+        (<GT>|<GTE>|<LT>|<LTE>|<ALT_GT>|<ALT_GTE>|<ALT_LTE>|<ALT_LT>)
+        RangeExpression
+    ]
+;
+
+RangeExpression :
+    AdditiveExpression
+    [
+       <DOT_DOT>
+       [
+          => AdditiveExpression
+       ]
+    ]
+;
+
+AdditiveExpression :
+    MultiplicativeExpression
+    (
+           (<PLUS>|<MINUS>)
+           MultiplicativeExpression
+    )*
+;
+
+MultiplicativeExpression :
+    UnaryExpression
+    (
+          (<TIMES>|<DIVIDE>|<PERCENT>)
+          UnaryExpression
+    )*
+;
+
+
+UnaryExpression #void :
+    UnaryPlusMinusExpression
+    |
+    NotExpression
+    |
+    DefaultToExpression
+;
+
+UnaryPlusMinusExpression :
+    (<PLUS>|<MINUS>) DefaultToExpression
+;
+
+NotExpression :
+    <EXCLAM>
+    DefaultToExpression
+;
+
+BuiltinVariable :
+    <DOT><IDENTIFIER>
+;
+
+DefaultToExpression :
+    PrimaryExpression
+    (
+    // A bit ugly, REVISIT
+        SCAN {getToken(2).getType() != IDENTIFIER || getToken(3).getType() != EQUALS}
+        => <EXCLAM>PrimaryExpression
+    )*
+    [
+       <EXCLAM>
+    ]
+;
+
+PrimaryExpression :
+  BaseExpression
+  (
+      DotKey
+      |
+      DynamicKey
+      |
+      MethodInvoke
+      |
+      BuiltIn
+      |
+      Exists
+  )*
+;
+
+BaseExpression :
+    <IDENTIFIER>
+    |
+    NumberLiteral
+    |
+    HashLiteral
+    |
+    StringLiteral
+    |
+    BooleanLiteral
+    |
+    NullLiteral
+    |
+    ListLiteral
+    |
+    Parenthesis
+    |
+    BuiltinVariable
+;
+
+
+DotKey #void :
+    <DOT>
+    (<IDENTIFIER>|<TIMES>)
+;
+
+DynamicKey #void :
+    <OPEN_BRACKET>Expression<CLOSE_BRACKET>
+;
+
+MethodInvoke #void :
+  <OPEN_PAREN>[ArgsList]<CLOSE_PAREN>
+;
+
+BuiltIn #void :
+    <BUILT_IN><IDENTIFIER>
+;
+
+Exists :
+    <EXISTS_OPERATOR>
+;
+
+ListLiteral :
+    <OPEN_BRACKET>
+    [Expression ([<COMMA>]Expression)*]
+    <CLOSE_BRACKET>
+;
+
+StringLiteral :
+    <STRING_LITERAL>|<RAW_STRING>
+;
+
+
+HashLiteral :
+    <OPEN_BRACE>
+    [
+       Expression <COLON> Expression
+       (<COMMA> Expression <COLON> Expression)*
+    ]
+    <CLOSE_BRACE>
+;
+
+NumberLiteral :
+    <INTEGER>|<DECIMAL>
+;
+
+BooleanLiteral :
+    <TRUE>|<FALSE>
+;
+
+NullLiteral : <NULL> ;
+
+Parenthesis :
+    <OPEN_PAREN> Expression <CLOSE_PAREN>
+;
+
+ArgsList #void :
+    (
+        SCAN <IDENTIFIER><EQUALS> =>
+        NamedArgsList
+        |
+        PositionalArgsList
+    )
+;
+
+NamedArgsList :
+    <IDENTIFIER>
+    <EQUALS>
+    Expression
+    (
+       [<COMMA>]
+       <IDENTIFIER>
+       <EQUALS>
+       Expression
+    )*
+;
+
+PositionalArgsList :
+    Expression
+    (
+       [<COMMA>]
+       Expression
+    )*
+;
+

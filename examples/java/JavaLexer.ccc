@@ -1,0 +1,366 @@
+/* Copyright (c) 2008-2022 Jonathan Revusky, revusky@congocc.org
+ * All rights reserved.
+ *
+ * Redistribution and use in source and binary forms, with or without
+ * modification, are permitted provided that the following conditions are met:
+ *
+ *     * Redistributions of source code must retain the above copyright notices,
+ *       this list of conditions and the following disclaimer.
+ *     * Redistributions in binary form must reproduce the above copyright
+ *       notice, this list of conditions and the following disclaimer in the
+ *       documentation and/or other materials provided with the distribution.
+ *     * Neither the name Jonathan Revusky nor the names of any contributors 
+ *       may be used to endorse or promote products derived from this software 
+ *       without specific prior written permission.
+ *
+ * THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS"
+ * AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
+ * IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
+ * ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT OWNER OR CONTRIBUTORS BE
+ * LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR
+ * CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF
+ * SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS
+ * INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN
+ * CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
+ * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF
+ * THE POSSIBILITY OF SUCH DAMAGE.
+ */
+
+/*
+ * This file contains the purely lexical grammar of
+ * the Java language. It can be used on its own if all
+ * you want is to tokenize some Java code.
+ */
+
+DEFAULT_LEXICAL_STATE=JAVA;
+JAVA_UNICODE_ESCAPE;
+TREE_BUILDING_ENABLED=false;
+
+SKIP : <WHITESPACE : (" "| "\t"| "\n"| "\r"| "\f")+> #Whitespace;   
+
+<IN_MULTI_LINE_COMMENT>
+   UNPARSED #Comment :  
+      <MULTI_LINE_COMMENT: "*/" > #MultiLineComment : JAVA
+;
+
+
+MORE :
+  <SINGLE_LINE_COMMENT_START: "//"> : IN_SINGLE_LINE_COMMENT
+  |
+  <MULTI_LINE_COMMENT_START : "/*"> : IN_MULTI_LINE_COMMENT
+;
+
+<IN_SINGLE_LINE_COMMENT>
+  UNPARSED #Comment :
+     <SINGLE_LINE_COMMENT: "\n" | "\r" | "\r\n" > #SingleLineComment : JAVA
+;
+
+<IN_SINGLE_LINE_COMMENT, IN_MULTI_LINE_COMMENT>
+MORE : < ANY_CHAR : ~[] >;
+
+TOKEN #KeyWord :
+  <UNDERSCORE : "_">
+|  < ABSTRACT: "abstract" > 
+| < _ASSERT: "assert" > 
+| < BOOLEAN: "boolean" > #Primitive
+| < BREAK: "break" > 
+| < BYTE: "byte" > #Primitive
+| < CASE: "case" > 
+| < CATCH: "catch" >
+| < CHAR: "char" > #Primitive
+| < CLASS: "class" > 
+| < CONST: "const" > 
+| < CONTINUE: "continue" > 
+| < _DEFAULT: "default" > 
+| < DO: "do" > 
+| < DOUBLE: "double" > #Primitive
+| < ELSE: "else" > 
+| < ENUM: "enum" > 
+| < EXTENDS: "extends" > 
+| < FALSE: "false" > #BooleanLiteral
+| < FINAL: "final" > 
+| < FINALLY: "finally" > 
+| < FLOAT: "float" > #Primitive
+| < FOR: "for" > 
+| < GOTO: "goto" > 
+| < IF: "if" > 
+| < IMPLEMENTS: "implements" > 
+| < _IMPORT: "import" > 
+| < INSTANCEOF: "instanceof" >
+| < INT: "int" > #Primitive 
+| < INTERFACE: "interface" > 
+| < LONG: "long" > #Primitive
+| < NATIVE: "native" > 
+| < NEW: "new" > 
+| < NULL: "null" > #NullLiteral
+| < PACKAGE: "package"> 
+| < PRIVATE: "private" > 
+| < PROTECTED: "protected" > 
+| < PUBLIC: "public" > 
+| < RETURN: "return" > 
+| < RECORD : "record" > 
+| < SHORT: "short" > #Primitive 
+| < STATIC: "static" > 
+| < STRICTFP: "strictfp" > 
+| < SUPER: "super" > 
+| < SWITCH: "switch" >
+| < SYNCHRONIZED: "synchronized" > 
+| < THIS: "this" > #ThisLiteral 
+| < THROW: "throw" > 
+| < THROWS: "throws" > 
+| < TRANSIENT: "transient" > 
+| < TRUE: "true" > #BooleanLiteral 
+| < TRY: "try" >
+| < VAR: "var" > 
+| < VOID: "void" > 
+| < VOLATILE: "volatile" > 
+| < WHILE: "while" > 
+| < YIELD : "yield" > 
+| < SEALED : "sealed">
+| < NON_SEALED : "non-sealed">
+| < PERMITS : "permits">
+;
+
+TOKEN #Literal :
+  < #STRING_ESCAPE:
+      '\\'
+      ( ["n","t","b","r","f", "s", "\\","'",'"']
+      // octal escapes
+      | ["0"-"7"] ( ["0"-"7"] )?
+      | ["0"-"3"] ["0"-"7"] ["0"-"7"]
+      )
+  >
+  |
+  < #HORIZONTAL_WHITESPACE: [" ", "\t", "\f"] >
+  | 
+  < #LINE_TERMINATOR: "\n" | "\r" | "\r\n" >
+  |
+  < CHARACTER_LITERAL:
+      "'" 
+      (   
+          ~["'","\\","\n","\r"]
+          |
+          <STRING_ESCAPE>
+      )
+      "'"
+  > #CharacterLiteral 
+  |
+  < STRING_LITERAL:
+      '"'
+      (   (~["\"","\\","\n","\r"])
+          |
+          <STRING_ESCAPE>
+      )*
+      '"'
+  > #StringLiteral
+  |
+  < TEXT_BLOCK_LITERAL:
+     '"""' (<HORIZONTAL_WHITESPACE>)* <LINE_TERMINATOR>
+     // This was slightly broken until recently (2022-12-10) 
+     // I think it's okay now. (JR)
+        (('"'){0,2} ((~['"', '\\']) | <STRING_ESCAPE> | ("\\" <LINE_TERMINATOR>)))*
+     '"""'
+  > #StringLiteral
+;
+
+INJECT CharacterLiteral :
+extends Literal;
+
+INJECT StringLiteral : 
+  extends Literal 
+{
+  /**
+   * @return the literal string unescaped without the quotes
+   */
+  public String getString() {
+    return removeEscapesAndQuotes(getImage());
+  }
+
+  @MinJDK15
+  static public String removeEscapesAndQuotes(String input) {
+    if (!input.startsWith("\"\"\"")) 
+       return input.substring(1, input.length()-1).translateEscapes();
+    String content = input.substring(3, input.length()-3);
+    return content.translateEscapes().stripIndent();
+  }
+
+  @MaxJDK14
+  static public String removeEscapesAndQuotes(String content) {
+      StringBuilder buf = new StringBuilder();
+      for (int i = 1; i < content.length()-1; i++) {
+          char ch = content.charAt(i);
+          if (ch != '\\') {
+              buf.append(ch);
+          } else if (i < content.length() -2) {
+              char nextChar = content.charAt(++i);
+              if (nextChar < '0' || nextChar > '7') {
+                  switch (nextChar) {
+                      case '\\' : buf.append('\\'); break;
+                      case 'b': buf.append('\b'); break;
+                      case 't': buf.append('\t'); break;
+                      case 'n': buf.append('\n'); break;
+                      case 'f': buf.append('\f'); break;
+                      case 'r': buf.append('\r'); break;
+                      case '"': buf.append('"'); break;
+                      case '\'': buf.append('\''); break;
+                  }
+              } else {
+                // Deal with this legacy C handling of octals
+                  int octal = nextChar - '0';
+                  boolean possibly3digits = octal <=3;
+                  if (i < content.length() - 2) {
+                      nextChar = content.charAt(i + 1);
+                      if (nextChar >= '0' && nextChar <= '7') {
+                          octal = octal * 8 + nextChar - '0';
+                          i++;
+                          if (possibly3digits && i < content.length() - 2) {
+                              nextChar = content.charAt(i + 1);
+                              if (nextChar >= '0' && nextChar <= '7') {
+                                  octal = octal * 8 + nextChar - '0';
+                                  i++;
+                              }
+                          }
+                      }
+                  }
+                  buf.append((char) octal);
+              }
+          }
+      }
+      return buf.toString();
+    }
+}
+
+TOKEN #NumericalLiteral :
+  < INTEGER_LITERAL:
+      <HEX_LITERAL>
+      | <OCTAL_LITERAL>
+      | <DECIMAL_LITERAL>
+      | <BINARY_LITERAL>
+  > #IntegerLiteral 
+  |
+  < LONG_LITERAL: <INTEGER_LITERAL> (["l","L"]) > #LongLiteral
+  |
+  < #DECIMAL_LITERAL: ["0"-"9"]((["0"-"9","_"])*["0"-"9"])? >
+  |
+  < #HEX_LITERAL: "0" ["x","X"] <HEX_DIGITS> >
+  |
+  < #OCTAL_LITERAL: "0" ["0"-"7"]((["0"-"7","_"])*["0"-"7"])? >
+  |
+  < #BINARY_LITERAL: "0" ["b","B"] ["0","1"]((["0","1","_"])*["0","1"])? >
+  |
+  < FLOATING_POINT_LITERAL:
+        <DECIMAL_FLOATING_POINT_LITERAL>
+      | <HEXADECIMAL_FLOATING_POINT_LITERAL>
+  > #FloatingPointLiteral
+  |
+  < #DECIMAL_FLOATING_POINT_LITERAL:
+        <DECIMAL_LITERAL> "." (<DECIMAL_LITERAL>)? (<DECIMAL_EXPONENT>)? (["f","F","d","D"])?
+      | "." <DECIMAL_LITERAL> (<DECIMAL_EXPONENT>)? (["f","F","d","D"])?
+      | <DECIMAL_LITERAL> <DECIMAL_EXPONENT> (["f","F","d","D"])?
+      | <DECIMAL_LITERAL> (<DECIMAL_EXPONENT>)? ["f","F","d","D"]
+  >
+|
+  < #DECIMAL_EXPONENT: ["e","E"] (["+","-"])? (<DECIMAL_LITERAL>)+ >
+|
+  < #HEXADECIMAL_FLOATING_POINT_LITERAL:
+        <HEX_LITERAL> (".")? <HEXADECIMAL_EXPONENT> (["f","F","d","D"])?
+      | "0" ["x","X"] (<HEX_DIGITS>)? "." <HEX_DIGITS> <HEXADECIMAL_EXPONENT> (["f","F","d","D"])?
+  >
+|
+  < #HEXADECIMAL_EXPONENT: ["p","P"] (["+","-"])? <DECIMAL_LITERAL> >
+|
+  < #HEX_DIGITS: ["0"-"9","a"-"f","A"-"F"]((["0"-"9","a"-"f","A"-"F","_"])*["0"-"9","a"-"f","A"-"F"])? >
+;
+
+INJECT NumericalLiteral : extends Literal 
+
+INJECT IntegerLiteral :
+{
+   public int getValue() {
+     String image = removeUnderscores(getImage());
+     if (image.equals("0")) return 0;
+     if (image.codePointAt(0) != '0') return Integer.parseInt(image);
+     int secondChar = image.codePointAt(1);
+     if (secondChar == 'x' || secondChar=='X') {
+       return Integer.parseInt(image.substring(2), 16);
+     }
+     if (secondChar == 'b' || secondChar == 'B') {
+       return Integer.parseInt(image.substring(2), 2);
+     }
+     return Integer.parseInt(image.substring(1), 8);
+   }
+
+   static public String removeUnderscores(String s) {
+     if (s.indexOf('-')<0) return s;
+     StringBuilder buf = new StringBuilder();
+     for (int i=0; i<s.length();i++) {
+       int ch = s.codePointAt(i);
+       if (ch != '_') buf.append(ch);
+     }
+     return buf.toString();
+   }
+}
+
+TOKEN #Delimiter :
+  < LPAREN: "(" > 
+| < RPAREN: ")" >
+| < LBRACE: "{" > 
+| < RBRACE: "}" > 
+| < LBRACKET: "[" > 
+| < RBRACKET: "]" > 
+| < SEMICOLON: ";" > 
+| < COMMA: "," > 
+| < DOT: "." > 
+| < DOUBLE_COLON: "::" > 
+| < VAR_ARGS: "..." > 
+| < AT : "@"> 
+;
+
+TOKEN #Operator : 
+< ASSIGN: "=" > 
+| < GT: ">" > 
+| < LT: "<" > 
+| < BANG: "!" > 
+| < TILDE: "~" > 
+| < HOOK: "?" > 
+| < COLON: ":" > 
+| < EQ: "==" > 
+| < LE: "<=" > 
+| < GE: ">=" > 
+| < NE: "!=" > 
+| < SC_OR: "||" > 
+| < SC_AND: "&&" > 
+| < INCR: "++" > 
+| < DECR: "--" > 
+| < PLUS: "+" > 
+| < MINUS: "-" > 
+| < STAR: "*" > 
+| < SLASH: "/" > 
+| < BIT_AND: "&" > 
+| < BIT_OR: "|" > 
+| < XOR: "^" > 
+| < REM: "%" > 
+| < LSHIFT: "<<" > 
+| < PLUSASSIGN: "+=" > 
+| < MINUSASSIGN: "-=" > 
+| < STARASSIGN: "*=" > 
+| < SLASHASSIGN: "/=" > 
+| < ANDASSIGN: "&=" > 
+| < ORASSIGN: "|=" > 
+| < XORASSIGN: "^=" > 
+| < REMASSIGN: "%=" > 
+| < LSHIFTASSIGN: "<<=" > 
+| < RSIGNEDSHIFT: ">>" > 
+| < RUNSIGNEDSHIFT: ">>>" > 
+| < RSIGNEDSHIFTASSIGN: ">>=" > 
+| < RUNSIGNEDSHIFTASSIGN: ">>>=" > 
+| < LAMBDA : "->" > 
+;
+
+//INCLUDE JAVA_IDENTIFIER_DEF
+INCLUDE "JavaIdentifierDef.ccc"
+
+TOKEN :
+  < IDENTIFIER: <JAVA_IDENTIFIER_START> (<JAVA_IDENTIFIER_PART>)* > #Identifier
+;
+

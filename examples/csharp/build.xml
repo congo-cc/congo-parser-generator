@@ -1,0 +1,61 @@
+<project name="CSharp Parser" default="compile">
+
+<target name="clean">
+   <delete dir="org"/>
+   <delete file="CSParse.class"/>
+   <delete file="CSLex.class"/>
+</target>
+
+<target name="init">
+  <uptodate property="csparser.uptodate"
+            targetfile="org/parsers/csharp/CSharpParser.java">
+      <srcfiles dir="." includes="*.ccc"/>
+  </uptodate>
+
+  <uptodate property="pplineparser.uptodate"
+    targetfile="org/parsers/csharp/ppline/PPDirectiveLineParser.java"
+    srcfile="PPDirectiveLine.ccc"
+  />
+</target>
+
+<target name="line-directive-parser-gen" depends="init" unless="pplineparser.uptodate">
+	<echo>Using Bootstrap JavaCC to regenerate preprocessor</echo>
+  <java classpath="../../build:../../congocc.jar:../../bin/congocc.jar:../../bin/freemarker.jar" classname="org.congocc.Main" failonerror="true" fork="true">
+     <assertions><enable/></assertions>
+ 	   <arg line="-n PPDirectiveLine.ccc"/>
+  </java>
+</target>
+
+<target name="parser-gen" depends="init,line-directive-parser-gen" unless="csparser.uptodate">
+  <java classpath="../../build:../../congocc.jar:../../bin/congocc.jar:../../bin/freemarker.jar" classname="org.congocc.Main" failonerror="true" fork="true">
+    <assertions><enable/></assertions>
+     <arg value="-n"/>
+    <arg value="${basedir}/CSharp.ccc"/>
+  </java>
+</target>
+
+<target name="compile" depends="init,parser-gen">
+     <javac srcdir="."  failonerror="true" source="1.8" target="1.8"
+      excludes="testfiles/**"
+      classpath="." debug="on" optimize="off" includeantruntime="no" fork="true"/>
+</target>
+
+<target name="test" depends="compile">
+     <java fork="true" classpath="." failonerror="true" classname="CSParse">
+         <assertions><enable/></assertions>
+         <arg value="testfiles"/>
+     </java>
+    <!--
+     <echo>
+
+        Okay, that seems okay. Now let's dump the parse tree for a single source file
+
+     </echo>
+     <java fork="true" failonerror="true" classname="CSParse">
+	       <assertions><enable/></assertions>
+         <arg value="testfiles/CSharpAddAccessibilityModifiersDiagnosticAnalyzer.cs"/>
+     </java>
+  -->
+</target>
+
+</project>

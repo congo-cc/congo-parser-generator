@@ -1,0 +1,421 @@
+DEFAULT_LEXICAL_STATE=CSHARP;
+PARSER_PACKAGE=org.parsers.csharplexer;
+
+<CSHARP> SKIP :
+  <WHITESPACE : (<WS_CHAR>)+> #Whitespace
+  |
+  <#WS_CHAR : 
+       [
+         " ", "\t", "\n", "\r", 
+         "\u000b", "\u00a0", "\u1680",
+         "\u2000"-"\u200a",
+         "\u202f", "\u205f", "\u3000"
+       ]
+  >
+;
+
+UNPARSED #Comment :
+  < MULTI_LINE_COMMENT : "/*" (~["*"])* "*" (~["*","/"] (~["*"])* "*" | "*")* "/">
+  |
+  < SINGLE_LINE_COMMENT : "//" (~["\n"])* "\n" > 
+;
+
+TOKEN #Literal :
+  < INTEGER_LITERAL: (<DECIMAL_LITERAL> | <HEX_LITERAL> | <BINARY_LITERAL>) (<INTEGER_TYPE_SUFFIX>)?> #IntegerLiteral
+  |
+  < REAL_LITERAL:
+     ((<DECIMAL_LITERAL>)? ".")? <DECIMAL_LITERAL> (<EXPONENT_PART>)? (["f","F","d","D","m","M"])?
+  > #RealLiteral
+  |
+  < #DECIMAL_LITERAL: ["0"-"9"]((["0"-"9","_"])*["0"-"9"])?>
+  |
+  < #HEX_LITERAL: "0" ["x","X"] <HEX_DIGITS>>
+  |
+  < #BINARY_LITERAL : "0b" (["0", "1", "_"])+ (["0","1"])?>
+  | 
+  < #INTEGER_TYPE_SUFFIX : "U" | "u" | "L" | "l" | "UL" | "Ul" | "uL" | "ul"| "LU" | "Lu" | "lU" | "lu">
+  |
+  < #HEX_DIGITS: (["0"-"9","a"-"f","A"-"F","_"])* ["0"-"9","a"-"f","A"-"F"] >
+  |
+  < #EXPONENT_PART : ["e","E"] (["+","-"])? <DECIMAL_LITERAL> >
+  |
+  < FALSE : "false" > #BooleanLiteral
+  |
+  < TRUE : "true"> #BooleanLiteral
+  | 
+  < NULL : "null" > #NullLiteral
+;
+
+TOKEN #Delimiter :
+  < LPAREN: "(" > 
+| < RPAREN: ")" >
+//| < LBRACE: "{" > 
+| < RBRACE: "}" > 
+| < LBRACKET: "[" > 
+| < RBRACKET: "]" > 
+| < SEMICOLON: ";" > 
+| < COMMA: "," > 
+;
+
+TOKEN #Operator : 
+ < GT: ">" > 
+| < LT: "<" > 
+| < BANG: "!" > 
+| < TILDE: "~" > 
+| < HOOK: "?" >
+// The following two since 8.0
+| < DOUBLE_HOOK: "??">
+| < DOUBLE_HOOK_EQUALS : "??=">
+| < COLON: ":" > 
+| < EQ: "==" > 
+| < LE: "<=" > 
+| < GE: ">=" > 
+| < NE: "!=" > 
+| < SC_OR: "||" > 
+| < SC_AND: "&&" > 
+| < INCR: "++" > 
+| < DECR: "--" > 
+| < PLUS: "+" > 
+| < MINUS: "-" > 
+| < STAR: "*" > 
+| < SLASH: "/" > 
+| < BIT_AND: "&" > 
+| < BIT_OR: "|" > 
+| < HAT: "^" > 
+| < REM: "%" > 
+| < LEFT_SHIFT: "<<" > 
+| < PLUSASSIGN: "+=" > 
+| < MINUSASSIGN: "-=" > 
+| < STARASSIGN: "*=" > 
+| < SLASHASSIGN: "/=" > 
+| < ANDASSIGN: "&=" > 
+| < ORASSIGN: "|=" > 
+| < XORASSIGN: "^=" > 
+| < REMASSIGN: "%=" > 
+| < LEFT_SHIFT_ASSIGN: "<<=" > 
+| < RIGHT_SHIFT: ">>" > 
+| < RIGHT_SHIFT_ASSIGN: ">>=" > 
+| < ARROW : "=>"> 
+| < POINTER_ACCESS : "->"> 
+| < ASSIGN: "=" > 
+| < DOUBLE_COLON: "::" > 
+| < DOT: "." > 
+| < RANGE : ".." > 
+| < VAR_ARGS: "..." > 
+| < AT : "@"> 
+;
+
+// C# Keywords
+
+TOKEN #KeyWord : 
+   <ABSTRACT : "abstract" > 
+   | < AS : "as" > 
+   | < BASE : "base" > 
+   | < BOOL : "bool" > #PrimitiveType
+   | < BREAK : "break" >
+   | < BYTE : "byte" > #PrimitiveType
+   |  <CASE : "case" > 
+   | < CATCH : "catch" > 
+   | < CHAR : "char" > #PrimitiveType
+   | < CHECKED : "checked" > 
+   | < CLASS : "class" > 
+   | < CONST : "const" > 
+   | < CONTINUE : "continue" > 
+   | < DECIMAL : "decimal" > #PrimitiveType
+   | < DEFAULT : "default" > 
+   | < DELEGATE : "delegate" > 
+   | < DO : "do" > 
+   | < DOUBLE : "double" > #PrimitiveType
+   | < DYNAMIC : "dynamic">
+   | < ELSE : "else" > 
+   | < ENUM : "enum" > 
+   | < EVENT : "event" > 
+   | < EXPLICIT : "explicit" > 
+   | < EXTERN : "extern" > 
+   | < FINALLY : "finally" > 
+   | < FIXED : "fixed" > 
+   | < FLOAT : "float" > #PrimitiveType
+   | < FOR : "for" > 
+   | < FOREACH : "foreach" > 
+   | < GOTO : "goto" > 
+   | < IF : "if" > 
+   | < IMPLICIT : "implicit" > 
+   | < IN : "in" > 
+   | < INT : "int" > #PrimitiveType
+   | < INTERFACE : "interface" > 
+   | < INTERNAL : "internal" > 
+   | < IS : "is">
+   | < LOCK : "lock" >
+   | < LONG : "long" > #PrimitiveType
+   | < NAMESPACE : "namespace" >
+   | < NEW : "new" >
+   | < OBJECT : "object" >
+   | < OPERATOR : "operator" >
+   | < OUT : "out" >
+   | < OVERRIDE : "override" >
+   | < PARAMS : "params">
+   | < PRIVATE : "private" > 
+   | < PROTECTED : "protected" > 
+   | < PUBLIC : "public" > 
+   | < READONLY : "readonly" > 
+   | < REF : "ref" > 
+   | < RETURN : "return" > 
+   | < SBYTE : "sbyte" > #PrimitiveType
+   | < SEALED : "sealed" > 
+   | < SHORT : "short" > #PrimitiveType
+   | < SIZEOF : "sizeof" > 
+   | < STACKALLOC : "stackalloc" > 
+   | < STATIC : "static" > 
+   | < STRING : "string" > #PrimitiveType
+   | < STRUCT : "struct" > 
+   | < SWITCH : "switch" > 
+   | < THIS : "this" > 
+   | < THROW : "throw" > 
+   | < TRY : "try" >
+   | < TYPEOF : "typeof" >
+   | < UINT : "uint" > #PrimitiveType
+   | < ULONG : "ulong" > #PrimitiveType
+   | < UNCHECKED : "unchecked" >
+   | < UNSAFE : "unsafe" >
+   | < USHORT : "ushort" > #PrimitiveType
+   | < USING : "using" > 
+   | < VIRTUAL : "virtual" > 
+   | < VOID : "void" >
+   | < VOLATILE : "volatile" > 
+   | < WHILE : "while" > 
+// Now contextual Keywords
+   | < ARGLIST : "__arglist">
+   | < ADD : "add">
+   | < ASSEMBLY : "assembly">
+   | < ASYNC : "async" >
+   | < AWAIT : "await" >
+   | < GET : "get" >
+   | < INIT : "init" >
+   | < MODULE : "module">
+   | < NAMEOF : "nameof">
+   | < PARTIAL : "partial">
+   | < RECORD : "record" >
+   | < REMOVE : "remove">
+   | < SET : "set" >
+   | < VAR : "var" > 
+   | < WHEN : "when">
+   | < YIELD : "yield" >
+   | < AND : "and">
+   | < OR  : "or" >
+   | < NOT : "not">
+   | < WITH : "with" >
+// Here are the soft keywords used in queries 
+   | <ASCENDING : "ascending">
+   | <BY : "by">
+   | <DESCENDING : "descending">
+   | <EQUALS : "equals">
+   | <FROM : "from">
+   | <GROUP : "group">
+   | <INTO : "into">
+   | <JOIN : "join">
+   | <LET : "let">
+   | <ON : "on">
+   | <ORDERBY : "orderby" >
+   | <SELECT : "select">
+   | <WHERE : "where">  
+;
+
+INCLUDE "CSharpIdentifierDef.ccc"
+
+TOKEN :
+  <IDENTIFIER : ("@")? (<CSHARP_IDENTIFIER_START>|<UNICODE_ESCAPE>) (<CSHARP_IDENTIFIER_PART>|<UNICODE_ESCAPE>)*>
+  |   
+  <#UNICODE_ESCAPE : "\\" 
+                    (
+                      "u" (["0"-"9", "a"-"f", "A"-"F"]){4}
+                      |
+                      "U" (["0"-"9", "a"-"f", "A"-"F"]){8}
+                    ) >
+;
+
+TOKEN #Literal :
+  < CHARACTER_LITERAL: "'" ((~["'","\\","\n","\r"]) | <ESCAPED_CHAR>) "'"> #CharacterLiteral
+  |
+  < #ESCAPED_CHAR :  "\\"
+                    (
+                      (["0","a","b","f","n", "r","t","v","\\","'",'"'])
+                      |
+                      "x" (["0"-"9", "a"-"f", "A"-"F"]){1,4}
+                      |
+                      "u" (["0"-"9", "a"-"f", "A"-"F"]){4}
+                    ) 
+  >
+  |                                                  
+  < #ESCAPED_CHAR2 :  "\\"
+                    (
+                      (["0","a","b","f","n", "r","t","v","\\","'",'"'])
+                      |
+                      "x" (["0"-"9", "a"-"f", "A"-"F"]){1,4}
+                      |
+                      "u" (["0"-"9", "a"-"f", "A"-"F"]){4}
+                      |
+                      "U" (["0"-"9", "a"-"f", "A"-"F"]){8}
+                    ) 
+  >                                                  
+  |
+  < REGULAR_STRING_LITERAL : '"' ((~['"',"\\","\n","\r"]) | <ESCAPED_CHAR2>)* '"'> #StringLiteral
+  |
+  < VERBATIM_STRING_LITERAL : '@"' (~['"'] | '""')* '"' > #StringLiteral
+  | 
+  < REGULAR_INTERPOLATION_START : '$"' >  
+  |
+  < MULTI_INTERPOLATION_START : '$@"' | '@$"' > 
+; 
+
+<IN_REGULAR_INTERPOLATION>
+TOKEN :
+  // Just any non-interpolated character in an interpolated string.
+  < NON_INTERPOLATED_TEXT : ((~['"',"\\","\n","\r","{","}"]) | "{{" | "}}" | <ESCAPED_CHAR2>)+ >
+;
+
+<IN_MULTI_INTERPOLATION>
+TOKEN :
+  // Just any non-interpolated character in an interpolated string.
+  < NON_INTERPOLATED_TEXT2 : ((~['"',"{","}"] | '""') | "{{" | "}}")+ >
+;
+
+<CSHARP, IN_REGULAR_INTERPOLATION, IN_MULTI_INTERPOLATION > 
+TOKEN #Delimiter :
+   <LBRACE : "{" >  
+;
+
+<IN_REGULAR_INTERPOLATION,IN_MULTI_INTERPOLATION >
+TOKEN :
+  < ENDING_QUOTE : '"' >  
+;  
+
+<IN_IGNORED_SECTION> UNPARSED :
+    <#HORIZONTAL_WHITESPACE : 
+       [
+         " ", "\t",  
+         "\u000b", "\u00a0", "\u1680",
+         "\u2000"-"\u200a",
+         "\u202f", "\u205f", "\u3000"
+       ]
+   >
+   |
+   <HASH_IF : "#" (<HORIZONTAL_WHITESPACE>)* "if" <HORIZONTAL_WHITESPACE>>
+   |
+   <HASH_ELIF : "#" (<HORIZONTAL_WHITESPACE>)* "elif" <HORIZONTAL_WHITESPACE>>
+   |
+   <HASH_ELSE : "#" (<HORIZONTAL_WHITESPACE>)* "else" (<HORIZONTAL_WHITESPACE>|"\n"|"//")>
+   |
+   <HASH_ENDIF : "#" (<HORIZONTAL_WHITESPACE>)* "endif" (<HORIZONTAL_WHITESPACE>|"\n"|"//")>
+;
+
+<IN_IGNORED_SECTION> SKIP : <  ~[] > ;
+
+UNPARSED :
+    <HASH : "#">
+;
+
+INJECT CSharpLexer :
+    import java.util.HashSet;
+    import java.util.Set;
+    import org.parsers.csharp.ppline.PPDirectiveLineParser;
+    import org.parsers.csharp.ppline.PPDirectiveLineParser.DirectiveType;
+{
+   private boolean parsingOn, alreadyHandled, seenElse;
+   private int ifNesting, turnedOffPoint;
+
+   private BitSet parsingOnStack = new BitSet(1000), seenElseStack = new BitSet(1000), alreadyHandledStack = new BitSet(1000);
+   private Set<String> ppSymbols = new HashSet<String>();
+   
+   {
+     // We start with parsing on, of course
+     parsingOn = true;
+     parsingOnStack.set(0);
+   }
+
+   void addSymbols(Set<String> symbols) {
+      ppSymbols.addAll(symbols);
+   }
+
+// Token hook to handle preprocessor directives.
+
+   private Token TOKEN_HOOK(Token tok) {
+      TokenType type = tok.getType();
+      if (type == TokenType.EOF) {
+        assert ifNesting == 0 : "unclosed #if";
+        return tok;
+      }
+      String image = tok.getImage();
+      if (image.length() == 0 || image.charAt(0) != '#')
+      {
+         return tok;
+      }
+      if (!this.atLineStart(tok)) {
+        return tok;
+      }
+      Token prevToken = tok.previousCachedToken();
+      // We let this little helper parser defined in PPDirectiveLine.ccc
+      // parse the line. So we just pass it the line where the token occurs
+      // and get back an info object that tells us what we need to know.
+      String line = getLine(tok);
+      PPDirectiveLineParser.Info info = PPDirectiveLineParser.evaluate(line, ppSymbols);
+      DirectiveType directiveType = info.directiveType;
+      
+      setLineSkipped(tok);
+
+      if (directiveType == DirectiveType.UNKNOWN) {
+         tok.setType(TokenType.INVALID);
+         return tok;
+      }
+      if (ifNesting == 0 
+           && (directiveType == DirectiveType.ELIF 
+               || directiveType == DirectiveType.ELSE 
+               || directiveType == DirectiveType.ENDIF)) {
+          tok.setType(TokenType.INVALID);
+          return tok;
+      }
+      if (seenElse && (directiveType == DirectiveType.ELIF || directiveType == DirectiveType.ELSE)) {
+        tok.setType(TokenType.INVALID);
+        return tok;
+      }
+      if (directiveType == DirectiveType.ENDIF) {
+        seenElse = seenElseStack.get(ifNesting);
+        alreadyHandled = alreadyHandledStack.get(ifNesting);
+        setParsingEnabled(parsingOnStack.get(ifNesting), tok);
+        --ifNesting;
+      }
+      else if (directiveType == DirectiveType.ELSE) {
+        seenElse = true;
+        setParsingEnabled(parsingOnStack.get(ifNesting) && !alreadyHandled, tok);
+      }
+      else if (directiveType == DirectiveType.ELIF) {
+        setParsingEnabled(parsingOnStack.get(ifNesting) && !alreadyHandled && info.evaluationResult, tok);
+        alreadyHandled |= info.evaluationResult;
+      }
+      else if (directiveType == DirectiveType.IF) {
+        ++ifNesting;
+        alreadyHandledStack.set(ifNesting, alreadyHandled);
+        seenElseStack.set(ifNesting, seenElse);
+        parsingOnStack.set(ifNesting, parsingOn);
+        seenElse = false;
+        alreadyHandled = info.evaluationResult;
+        setParsingEnabled(parsingOn && info.evaluationResult, tok);
+      }
+      return tok;
+   }
+
+   void setParsingEnabled(boolean parsingOn, Token tok) {
+       boolean turnedOn = !this.parsingOn && parsingOn;
+       boolean turnedOff = this.parsingOn && !parsingOn;
+       if (turnedOn) {
+         switchTo(LexicalState.CSHARP);
+         int endRegion = getLineEndOffset(tok.getEndLine()) +1 ;
+         setRegionIgnore(turnedOffPoint, endRegion);
+       }
+       if (turnedOff) {
+         turnedOffPoint = getLineStartOffset(tok.getBeginLine());
+         switchTo(LexicalState.IN_IGNORED_SECTION);
+       }
+       this.parsingOn = parsingOn;
+   }
+}
+
