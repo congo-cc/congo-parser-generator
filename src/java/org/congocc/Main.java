@@ -152,19 +152,12 @@ public final class Main {
         System.out.println("   For example:   -p debug,strict");
         System.out.println(" -q                Quieter output");
         System.out.println();
-        System.out.println("There is now a syntax converter available that can be run with:");
-        System.out.println("     java -jar " + jarFileName + " convert grammarfile");
-        System.out.println();
     }
 
     /**
      * The main program.
      */
     public static void main(String[] args) throws Exception {
-        if (args.length > 0 && args[0].equalsIgnoreCase("convert")) {
-            org.congocc.output.congo.SyntaxConverter.main(args);
-            System.exit(0);
-        }
         try {
             Class.forName("freemarker.core.Scope");
         } catch (ClassNotFoundException e) {
