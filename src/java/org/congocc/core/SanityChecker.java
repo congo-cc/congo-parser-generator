@@ -91,6 +91,16 @@ public class SanityChecker {
             if (sequence.getHasExplicitNumericalLookahead() && sequence.getHasExplicitScanLimit()) {
                 grammar.addError(sequence, "An expansion cannot have both numerical lookahead and a scan limit.");
             }
+            
+            if (sequence.getHasExplicitLookahead()) {
+                if (sequence.getHasExplicitLookahead()
+                    && !sequence.getHasSeparateSyntacticLookahead()
+                    && !sequence.getHasScanLimit()
+                    && !sequence.getHasExplicitNumericalLookahead() 
+                    && sequence.getMaximumSize() > 1) {
+                        grammar.addWarning(sequence, "Expansion defaults to a lookahead of 1. In a similar spot in JavaCC 21, it would be an indefinite lookahead here, but this changed in Congo");
+                    }
+            }
         }
 /* REVISIT this later.*/
         for (Expansion exp : grammar.descendants(Expansion.class, Expansion::isScanLimit)) {

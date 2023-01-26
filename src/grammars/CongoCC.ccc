@@ -82,7 +82,6 @@ INJECT PARSER_CLASS :
 /* congocc RESERVED WORDS: These are the only tokens in congocc but not in Java */
 
 TOKEN :
-{
   < _INJECT: "INJECT" > #congoccKeyWord
   |
   < _INCLUDE : "INCLUDE" | "INCLUDE_GRAMMAR"> #congoccKeyWord
@@ -148,7 +147,7 @@ TOKEN :
       ){2,}
        "'"
   > #StringLiteral
-}
+;
 
 INJECT BaseNode :
     import java.lang.reflect.*;
@@ -832,7 +831,7 @@ INJECT Token :
       |
       CodeInjection
       |
-      =>GrammarInclusion
+      GrammarInclusion =>||
       |
       BNFProduction
   )+!
@@ -932,11 +931,11 @@ CodeInjection :
         [
              "extends" 
              ot=ObjectType {CURRENT_NODE.addExtendsType(ot);}
-             (SCAN {isInterface} => "," ot=ObjectType {CURRENT_NODE.addExtendsType(ot);})*
+             (SCAN 1 {isInterface} => "," ot=ObjectType {CURRENT_NODE.addExtendsType(ot);})*
              [";"]
         ]
         [
-             SCAN {!isInterface} =>
+             SCAN 1 {!isInterface} =>
              "implements" ot=ObjectType {CURRENT_NODE.addImplementsType(ot);}
              ("," ot=ObjectType {CURRENT_NODE.addImplementsType(ot);})*
              [";"]
@@ -1103,7 +1102,7 @@ BNFProduction #org.congocc.core.BNFProduction :
 TreeNodeDescriptor #TreeBuildingAnnotation :
   "#" 
   (
-      SCAN \BNFProduction => 
+      SCAN 0 \BNFProduction => 
       (Name|"abstract"|"interface"|"void"|{})
       |
       Name
@@ -1173,7 +1172,7 @@ TokenProduction :
     Token t = null;
     String tokenClassName = null;
     String firstSpecifiedLexicalState = null;
-    boolean multipleStatesSpecified = false, useBraces = false;
+    boolean multipleStatesSpecified = false;
     boolean ignoreCase = false;
 }
   [
@@ -1197,12 +1196,9 @@ TokenProduction :
     }
   ] 
   ":"
-  ["{" {useBraces = true;}]
    RegexpSpec(tokenClassName)
    ( "|" RegexpSpec(tokenClassName) )*
    (
-      SCAN {useBraces} => "}" 
-      | 
       ";"
    )
    {
@@ -1439,14 +1435,14 @@ ExpansionSequence #org.congocc.core.ExpansionSequence :
   [ 
     SCAN ~\...\Lookahead 
     =>
-    la=Lookahead 
+    la=Lookahead  =>||
     {
        la.setExpansion(CURRENT_NODE);
        CURRENT_NODE.setLookahead(la);
      }
   ]
   (
-     => sub=ExpansionUnit
+     sub=ExpansionUnit =>||
      {
          pokeNode(sub);
      }
@@ -1505,7 +1501,7 @@ ScanAhead #org.congocc.core.Lookahead :
    Name name = null;
    Node lb = null;
 }
-[=>name=Name "=" {CURRENT_NODE.setLHS(name);}]
+[name=Name "=" =>|| {CURRENT_NODE.setLHS(name);}]
 <_SCAN>
 [
     <INTEGER_LITERAL> {getHasExplicitNumericalLookahead = true;}
@@ -1516,12 +1512,12 @@ ScanAhead #org.congocc.core.Lookahead :
     "}"
     ["#" {CURRENT_NODE.setSemanticLookaheadNested(true);}]
 ]
-[SCAN LookBehind {lb = peekNode();}]
+[LookBehind =>|| {lb = peekNode();}]
 [
     SCAN {!getHasExplicitNumericalLookahead} => 
     ["~" {CURRENT_NODE.setNegated(true);}] 
     ExpansionChoice {expansion = (Expansion) peekNode();}
-    <RIGHT_ARROW>
+    <RIGHT_ARROW> =>||
     {
        CURRENT_NODE.setNestedExpansion(expansion);
     }

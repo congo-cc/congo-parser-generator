@@ -183,7 +183,7 @@ RangeExpression :
     [
        <DOT_DOT>
        [
-          => AdditiveExpression
+          AdditiveExpression =>||
        ]
     ]
 ;
@@ -231,7 +231,7 @@ DefaultToExpression :
     (
     // A bit ugly, REVISIT
         SCAN {getToken(2).getType() != IDENTIFIER || getToken(3).getType() != EQUALS}
-        => <EXCLAM>PrimaryExpression
+        => <EXCLAM>PrimaryExpression =>||
     )*
     [
        <EXCLAM>

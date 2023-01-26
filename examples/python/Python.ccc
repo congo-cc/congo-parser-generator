@@ -524,7 +524,7 @@ ClosedPattern :
    |
    NameOrAttribute
    |
-   =>GroupPattern
+   GroupPattern =>||
    |
    SequencePattern
    |
