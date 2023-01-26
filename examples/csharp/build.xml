@@ -19,7 +19,7 @@
 </target>
 
 <target name="line-directive-parser-gen" depends="init" unless="pplineparser.uptodate">
-	<echo>Using Bootstrap JavaCC to regenerate preprocessor</echo>
+	<echo>Using Bootstrap CongoCC to regenerate preprocessor</echo>
   <java classpath="../../build:../../congocc.jar:../../bin/congocc.jar:../../bin/freemarker.jar" classname="org.congocc.Main" failonerror="true" fork="true">
      <assertions><enable/></assertions>
  	   <arg line="-n PPDirectiveLine.ccc"/>

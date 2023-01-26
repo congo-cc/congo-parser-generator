@@ -1,6 +1,6 @@
 Use the build.xml in this directory to build a Java source code parser. This is the same Java Parser that is
-used in JavaCC itself to handle embedded java code in JavaCC grammar files. In fact, the JavaCC.ccc grammar file 
-in the src/main/grammars directory simply uses the grammar file in this directory via an [INCLUDE](https://doku.ccc.com/doku.php?id=include).
+used in CongoCC itself to handle embedded java code in CongoCC grammar files. In fact, the CongoCC.ccc grammar file 
+in the src/grammars directory simply uses the grammar file in this directory via an [INCLUDE](https://doku.ccc.com/doku.php?id=include).
 
 The JParse.java in the top-level directory can be used as a test harness. Try it as follows:
 

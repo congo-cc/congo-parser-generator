@@ -5,7 +5,7 @@
  // This grammar is a forward evolution of the sample Java grammar originally
  // included in the legacy JavaCC distribution in 1997 or thereabouts, but is
  // close to being a total rewrite, and serves as a kind of showcase for the latest
- // features in JavaCC 21, so many constructs are expressed in a very clean
+ // features in CongoCC, so many constructs are expressed in a very clean
  // and elegant way that is simply not possible with the legacy tool.
 
 JAVA_UNICODE_ESCAPE;

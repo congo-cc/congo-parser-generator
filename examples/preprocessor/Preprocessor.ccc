@@ -18,7 +18,7 @@ PARSER_PACKAGE=org.congocc.preprocessor;
 #endif
 
 /*
- * This is the preprocessor used internally in JavaCC 21. It began with the intent
+ * This is the preprocessor used internally in CongoCC. It began with the intent
  * of being an implementation of the standard C# preprocessor. However, I (JR) had to
  * re-implement the C# preprocessor for the C# grammar because I had misread the spec
  * somewhat. Oh well. It is the same basic approach. Really the only thing that is supported

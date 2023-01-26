@@ -1,4 +1,4 @@
-## JSON (and JSONC) JavaCC Parsers
+## JSON (and JSONC) CongoCC Grammars
 
 The JSON.ccc is a pretty faithful implementation of the JSON grammar 
 described [here](https://www.json.org/json-en.html)
@@ -11,7 +11,7 @@ be a rather annoying thing to do in legacy JavaCC, since it would involve
 copying-pasting the JSON grammar to a new file and adding the extra bit for
 handling the comments.
 
-Both of these grammars make use of a couple of very new features in JavaCC 21. The first is a new option
+Both of these grammars make use of a couple of very new features in CongoCC. The first is a new option
 called <pre>DEFAULT_LEXICAL_STATE</pre>. The idea should actually be fairly self-explanatory. The purpose of this
 is that a grammar that is frequently INCLUDEd in other grammars defines its own default lexical state so that
 any TOKEN productions in it do not automatically clobber things defined in the including grammar.
