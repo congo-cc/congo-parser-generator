@@ -19,3 +19,12 @@ AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
 LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
 OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
+
+The following addendum is not part of the standard MIT License boilerplate:
+
+In the interests of absolute clarity, it behooves us to add that the above 
+license terms refer to the source code of the tool itself. Any code that users 
+generate using the tool belongs to them alone and is completely unencumbered. 
+Since that is the important part for most users, it bears repeating:
+
+ANY CODE THAT USERS GENERATE USING THE TOOL BELONGS TO THEM ALONE AND IS COMPLETELY UNENCUMBERED.
