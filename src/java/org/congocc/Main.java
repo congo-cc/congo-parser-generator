@@ -145,7 +145,7 @@ public final class Main {
         System.out.println("   If this is unset, files are generated relative to the grammar file location.");
         System.out.println(" -lang <language>  Specify the language to generate code in (the default is 'java')");
         System.out.println("                     (valid choices are currently " + sb.toString() + ")");
-        System.out.println(" -jdkN             Specify the target JDK version. N is a number from 8 to 18. (Default is 8)");
+        System.out.println(" -jdkN             Specify the target JDK version. N is a number from 8 to 19. (Default is 8)");
         System.out.println("                     (this is only useful when the code generation is in Java)");
         System.out.println(" -n                Suppress the check for a newer version");
         System.out.println(" -p                Define one or more comma-separated (no spaces) symbols to pass to the preprocessor.");
@@ -190,7 +190,6 @@ public final class Main {
                     while (st.hasMoreTokens()) {
                         String s = st.nextToken().trim();
                         Matcher m = symbolPattern.matcher(s);
-
                         if (!m.find()) {
                             System.err.println(String.format("-p flag with invalid argument '%s'", s));
                             System.exit(-1);
@@ -242,8 +241,8 @@ public final class Main {
                     } catch (NumberFormatException nfe) {
                         System.err.println("Expecting a number after 'jdk', like -jdk11");
                     }
-                    if (jdkTarget <8 || jdkTarget > 18) {
-                        System.err.println("The JDK Target currently must be between 8 and 18.");
+                    if (jdkTarget <8 || jdkTarget > 19) {
+                        System.err.println("The JDK Target currently must be between 8 and 19.");
                     }
                 }
                 else {

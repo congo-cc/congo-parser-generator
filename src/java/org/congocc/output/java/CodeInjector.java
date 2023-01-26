@@ -51,15 +51,7 @@ public class CodeInjector {
                 CodeInjection ci = (CodeInjection) n;
                 String name = ci.name;
                 add(name, ci.importDeclarations, ci.annotations, ci.extendsList, ci.implementsList, ci.body, ci.isInterface);
-            } else if (n instanceof TokenManagerDecls) {
-                for (Iterator<Node> it = n.iterator(); it.hasNext();) {
-                    Node child  = it.next();
-                    if (child instanceof ClassOrInterfaceBody) {
-                        ClassOrInterfaceBody body = (ClassOrInterfaceBody) child;       
-                        add(lexerClassName, null, null, null, null, body, false);
-                    }
-                }
-            }
+            } 
         } 
     }
     

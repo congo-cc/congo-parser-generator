@@ -234,18 +234,18 @@ public class Grammar extends BaseNode {
 
     private static Map<String, String> locationAliases = new HashMap<String, String>() {
         {
-            put("JAVA_IDENTIFIER_DEF", "/include/java/JavaIdentifierDef.congocc");
-            put("JAVA_LEXER", "/include/java/JavaLexer.congocc");
-            put("JAVA", "/include/java/Java.congocc");
-            put("PYTHON_IDENTIFIER_DEF", "/include/python/PythonIdentifierDef.congocc");
-            put("PYTHON_LEXER", "/include/python/PythonLexer.congocc");
-            put("PYTHON", "/include/python/Python.congocc");
-            put("CSHARP", "/include/csharp/CSharp.congocc");
-            put("CSHARP_LEXER", "/include/csharp/CSharpLexer.congocc");
-            put("CSHARP_IDENTIFIER_DEF", "/include/csharp/CSharpIdentifierDef.congocc");
-            put("PREPROCESSOR", "/include/preprocessor/Preprocessor.congocc");
-            put("JSON", "/include/json/JSON.congocc");
-            put("JSONC", "/include/json/JSONC.congocc");
+            put("JAVA_IDENTIFIER_DEF", "/include/java/JavaIdentifierDef.ccc");
+            put("JAVA_LEXER", "/include/java/JavaLexer.ccc");
+            put("JAVA", "/include/java/Java.ccc");
+            put("PYTHON_IDENTIFIER_DEF", "/include/python/PythonIdentifierDef.ccc");
+            put("PYTHON_LEXER", "/include/python/PythonLexer.ccc");
+            put("PYTHON", "/include/python/Python.ccc");
+            put("CSHARP", "/include/csharp/CSharp.ccc");
+            put("CSHARP_LEXER", "/include/csharp/CSharpLexer.ccc");
+            put("CSHARP_IDENTIFIER_DEF", "/include/csharp/CSharpIdentifierDef.ccc");
+            put("PREPROCESSOR", "/include/preprocessor/Preprocessor.ccc");
+            put("JSON", "/include/json/JSON.ccc");
+            put("JSONC", "/include/json/JSONC.ccc");
         }
     };
 
@@ -832,17 +832,7 @@ public class Grammar extends BaseNode {
         if (node == null || node instanceof Token || node instanceof EmptyDeclaration) {
             return;
         }
-        if (node instanceof TokenManagerDecls) {
-            ClassOrInterfaceBody body = node.childrenOfType(ClassOrInterfaceBody.class).get(0);
-            checkForHooks(body, getLexerClassName());
-        }
-        else if (node instanceof ParserCodeDecls) {
-            List<CompilationUnit> cus = node.childrenOfType(CompilationUnit.class);
-            if (!cus.isEmpty()) {
-                checkForHooks(cus.get(0), getParserClassName());
-            }
-        }
-        else if (node instanceof CodeInjection) {
+        if (node instanceof CodeInjection) {
             CodeInjection ci = (CodeInjection) node;
             if (ci.name.equals(getLexerClassName())) {
                 checkForHooks(ci.body, lexerClassName);
@@ -1040,8 +1030,8 @@ public class Grammar extends BaseNode {
 
     public boolean getLegacyGlitchyLookahead() {
         Boolean b = (Boolean) settings.get("LEGACY_GLITCHY_LOOKAHEAD");
-        return b == null || b;
-//        return b!=null && b;
+//        return b == null || b;
+        return b!=null && b;
     }
 
     public boolean getTreeBuildingEnabled() {
@@ -1097,11 +1087,6 @@ public class Grammar extends BaseNode {
 
     public boolean getMinimalToken() {
         Boolean b = (Boolean) settings.get("MINIMAL_TOKEN");
-        return b != null && b;
-    }
-
-    public boolean getUsePreprocessor() {
-        Boolean b = (Boolean) settings.get("USE_PREPROCESSOR");
         return b != null && b;
     }
 
@@ -1176,7 +1161,7 @@ public class Grammar extends BaseNode {
             else if (key.equals("DEFAULT_LEXICAL_STATE")) {
                 setDefaultLexicalState((String) value);
             }
-            else if (key.equals("DEACTIVATE_TOKENS") || key.equals("TURN_OFF_TOKENS")) {
+            else if (key.equals("DEACTIVATE_TOKENS")) {
                 String tokens = (String) settings.get(key);
                 for (StringTokenizer st = new StringTokenizer(tokens, ", \t\n\r"); st.hasMoreTokens();) {
                     String tokenName = st.nextToken();
@@ -1219,8 +1204,8 @@ public class Grammar extends BaseNode {
         }
     }
     private int jdkTarget = 8;
-    private String booleanSettings = ",FAULT_TOLERANT,PRESERVE_TABS,PRESERVE_LINE_ENDINGS,JAVA_UNICODE_ESCAPE,IGNORE_CASE,LEXER_USES_PARSER,NODE_DEFAULT_VOID,SMART_NODE_CREATION,NODE_USES_PARSER,TREE_BUILDING_DEFAULT,TREE_BUILDING_ENABLED,TOKENS_ARE_NODES,SPECIAL_TOKENS_ARE_NODES,UNPARSED_TOKENS_ARE_NODES,FREEMARKER_NODES,NODE_FACTORY,TOKEN_MANAGER_USES_PARSER,ENSURE_FINAL_EOL,MINIMAL_TOKEN,C_CONTINUATION_LINE,USE_PREPROCESSOR,USE_CHECKED_EXCEPTION,LEGACY_GLITCHY_LOOKAHEAD,";
-    private String stringSettings = ",BASE_NAME,PARSER_PACKAGE,PARSER_CLASS,LEXER_CLASS,CONSTANTS_CLASS,BASE_SRC_DIR,BASE_NODE_CLASS,NODE_PREFIX,NODE_CLASS,NODE_PACKAGE,DEFAULT_LEXICAL_STATE,NODE_CLASS,OUTPUT_DIRECTORY,DEACTIVATE_TOKENS,TURN_OFF_TOKENS,EXTRA_TOKENS,";
+    private String booleanSettings = ",FAULT_TOLERANT,PRESERVE_TABS,PRESERVE_LINE_ENDINGS,JAVA_UNICODE_ESCAPE,IGNORE_CASE,LEXER_USES_PARSER,NODE_DEFAULT_VOID,SMART_NODE_CREATION,NODE_USES_PARSER,TREE_BUILDING_DEFAULT,TREE_BUILDING_ENABLED,TOKENS_ARE_NODES,SPECIAL_TOKENS_ARE_NODES,UNPARSED_TOKENS_ARE_NODES,FREEMARKER_NODES,NODE_FACTORY,TOKEN_MANAGER_USES_PARSER,ENSURE_FINAL_EOL,MINIMAL_TOKEN,C_CONTINUATION_LINE,USE_CHECKED_EXCEPTION,LEGACY_GLITCHY_LOOKAHEAD,";
+    private String stringSettings = ",BASE_NAME,PARSER_PACKAGE,PARSER_CLASS,LEXER_CLASS,CONSTANTS_CLASS,BASE_SRC_DIR,BASE_NODE_CLASS,NODE_PREFIX,NODE_CLASS,NODE_PACKAGE,DEFAULT_LEXICAL_STATE,NODE_CLASS,OUTPUT_DIRECTORY,DEACTIVATE_TOKENS,EXTRA_TOKENS,";
     private String integerSettings = ",TAB_SIZE,TABS_TO_SPACES,JDK_TARGET,";
 
     public boolean isASetting(String key) {

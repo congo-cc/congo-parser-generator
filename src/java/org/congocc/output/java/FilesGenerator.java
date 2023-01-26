@@ -236,7 +236,6 @@ public class FilesGenerator {
             JavaCodeUtils.removeWrongJDKElements(jcu, grammar.getJdkTarget());
             JavaCodeUtils.addGetterSetters(jcu);
             JavaCodeUtils.stripUnused(jcu);
-//          OlderJavaFormatter formatter = new OlderJavaFormatter();
             JavaFormatter formatter = new JavaFormatter();
             output.write(formatter.format(jcu));
         }

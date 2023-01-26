@@ -1,30 +1,15 @@
-   #define artsy // Since I couldn't be bothered to write a separate unit test for the preprocessor...
-
-#if artsy   
-  TREE_BUILDING_ENABLED;
-  ENSURE_FINAL_EOL;
-#endif
-
-#undef artsy
-
-#if artsy
-   May I compare thee to a Summer's day?
-   Thou art more beautiful..
-#elif foobar && artsy
-   I'm just testing the preprocessor a bit!
- #else
+TREE_BUILDING_ENABLED;
+ENSURE_FINAL_EOL;
 JAVA_UNICODE_ESCAPE;
 FREEMARKER_NODES;
 PARSER_PACKAGE=org.congocc.parser;
 NODE_PACKAGE=org.congocc.parser.tree;
 DEFAULT_LEXICAL_STATE=JAVA;
 BASE_SRC_DIR="../java";
-#endif 
 
 DEACTIVATE_TOKENS=_INCLUDE,_INJECT,_EOF;
 
 //FAULT_TOLERANT=true;
-LEGACY_GLITCHY_LOOKAHEAD=false;
 
 INJECT LEXER_CLASS : 
 {
@@ -648,7 +633,7 @@ INJECT PARSER_CLASS : {
     private Token TOKEN_HOOK(Token t) {
         if (congoccKeyWords.contains(t.getType())) {
             if (isInProduction("CompilationUnit", "ClassOrInterfaceBody", "BlockStatement", "TreeBuildingAnnotation")) {
-               if (t.getType() != _PARSER_END || !isInProduction("ParserCodeDecls")) {
+               if (t.getType() != _PARSER_END) {
                    Token id = Token.newToken(IDENTIFIER, t.getImage(), token_source);
                    id.copyLocationInfo(t);
                    return id;
@@ -835,20 +820,13 @@ INJECT Token :
 
 #Root throws IOException #GrammarFile :
 {
-    TokenManagerDecls decls;
     TokenProduction tp;
 }
-{
    [
       OptionsBlock | Options
    ]!
-   [ParserCodeDecls]
    (
-      JavacodeProduction
-      |
       tp=TokenProduction  {grammar.addTokenProduction(tp);}
-      |
-      decls=TokenManagerDecls {grammar.addCodeInjection(decls);}
       |
       CodeInjection2 
       |
@@ -862,29 +840,7 @@ INJECT Token :
   {
         return CURRENT_NODE;
   }
-}
-
-ParserCodeDecls : 
-{
-    Token id;
-    CompilationUnit parserCode;
-}
-{
-   "PARSER_BEGIN"
-   "("
-   id=<IDENTIFIER>
-   ")"
-   {
-      if (!grammar.isInInclude())
-          grammar.setParserClassName(id.getImage());
-   }
-   parserCode=CompilationUnit
-   {
-       if (!grammar.isInInclude())
-           grammar.setParserCode(parserCode);
-   }
-   "PARSER_END" ["(" <IDENTIFIER> ")"]
-}
+;
 
 INJECT ReturnType :
     import java.util.List;
@@ -1127,33 +1083,21 @@ BNFProduction #org.congocc.core.BNFProduction :
         {CURRENT_NODE.setLexicalState(lastConsumedToken.getImage());}
         ":"
     ]
-    (
-        // Older syntax
-        [=>Block] "{" ExpansionChoice 
-        {CURRENT_NODE.setExpansion((Expansion) peekNode());}
-        "}" =>|| 
-        |
-        [Block {CodeBlock block = (CodeBlock) peekNode();}
-          ["#" {block.setAppliesInLookahead(true);}]
-          ASSERT ~(";") =>||
-        ]
-        ExpansionChoice 
-        {CURRENT_NODE.setExpansion((Expansion) peekNode());} 
-        ";"
-    )
+    [
+        Block 
+        {CodeBlock block = (CodeBlock) peekNode();}
+        ["#" {block.setAppliesInLookahead(true);}]
+        ASSERT ~(";") =>||
+    ]
+    ExpansionChoice 
+    {CURRENT_NODE.setExpansion((Expansion) peekNode());} 
+    ";"
     {
         CURRENT_NODE.adjustFirstToken(firstToken);
         if (tba == null && !grammar.getNodeDefaultVoid()) {
            grammar.addNodeType(CURRENT_NODE.getName(),CURRENT_NODE.getName());
         }
      }
-;
-
-JavacodeProduction :
-  <IDENTIFIER>
-  ASSERT {getToken(0).getImage().equals("JAVACODE")}#
-  =>||
-  MethodDeclaration
 ;
 
 TreeNodeDescriptor #TreeBuildingAnnotation :
@@ -1344,11 +1288,6 @@ INJECT TokenProduction :
       return "TOKEN";
     }
 }
-
-TokenManagerDecls :
-   "TOKEN_MGR_DECLS" ":"
-    ClassOrInterfaceBody
-;
 
 RegexpSpec(String tokenClassName) #RegexpSpec :
 {
@@ -1692,7 +1631,6 @@ LegacyLookahead# :
     Expression exp = null;
     boolean empty = true, commaAtEnd = false;
 }
-{
   <_LOOKAHEAD>
   [
    "(" 
@@ -1723,7 +1661,7 @@ LegacyLookahead# :
       ]
      ")"
   ]
-}
+;
 
 ChildNameInfo(Expansion expansion) : //#void :
 {
