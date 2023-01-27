@@ -17,8 +17,8 @@ import static org.congocc.parser.CongoCCConstants.TokenType.*;
  * in inner classes, but we don't bother about that either.
  */
 class DeadCodeEliminator extends Node.Visitor {
-    private Set<String> usedNames = new HashSet<String>();
-    private Set<Node> alreadyVisited = new HashSet<Node>();
+    private Set<String> usedNames = new HashSet<>();
+    private Set<Node> alreadyVisited = new HashSet<>();
     private CompilationUnit jcu;
 
     DeadCodeEliminator(CompilationUnit jcu) {

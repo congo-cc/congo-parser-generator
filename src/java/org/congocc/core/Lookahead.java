@@ -63,14 +63,11 @@ public class Lookahead extends BaseNode {
     public int getAmount() {
         IntegerLiteral it = firstChildOfType(IntegerLiteral.class);
         if (it!=null) return it.getValue();
-        if (this instanceof LegacyLookahead) {
-            if (getNestedExpansion() == null && hasSemanticLookahead()) return 0;
-        }
-        return Integer.MAX_VALUE;
+        if (nestedExpansion !=null || expansion.getHasScanLimit()) return Integer.MAX_VALUE;
+        return 1;
     }
 
     public LookBehind getLookBehind() {
         return firstChildOfType(LookBehind.class);
     }
-
 }

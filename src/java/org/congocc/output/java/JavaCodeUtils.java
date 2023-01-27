@@ -122,7 +122,8 @@ public class JavaCodeUtils {
      * unused private methods and fields
      */
     static public void stripUnused(CompilationUnit jcu) {
-        new DeadCodeEliminator(jcu).stripUnused();
+        new Reaper(jcu).stripUnused();
+//        new DeadCodeEliminator(jcu).stripUnused();
     }
 
     static private final String capitalizeFirstLetter(String s) {

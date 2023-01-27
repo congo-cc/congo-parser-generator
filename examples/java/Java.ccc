@@ -339,7 +339,7 @@ VariableDeclarator# : VariableDeclaratorId [ <ASSIGN> VariableInitializer ] ;
 
 VariableDeclaratorId : <IDENTIFIER> /varName/ ( (Annotation)* <LBRACKET> <RBRACKET> )* ;
 
-VariableInitializer : ArrayInitializer | Expression ;
+VariableInitializer#void : ArrayInitializer | Expression ;
 
 ArrayInitializer :
    <LBRACE> [ VariableInitializer ( SCAN 2 <COMMA> VariableInitializer )* ] [ <COMMA> ] <RBRACE>
@@ -428,18 +428,6 @@ INJECT ObjectType : implements Type
         }
         return false;
     }
-
-/*
- *  Commented out, as interferes with representation used in tests
- *
-    public String toString() {
-        StringBuilder buf = new StringBuilder();
-        for (Token t : getRealTokens()) {
-            buf.append(t);
-        }
-        return buf.toString();
-    }
- */
 }
 
 DiamondOperator :  <LT><GT> =>|| ;
@@ -478,7 +466,7 @@ Name# : <IDENTIFIER> (<DOT> <IDENTIFIER> =>||)* ;
 
 ThrowsList : <THROWS> ExceptionType ( <COMMA> ExceptionType )* ;
 
-ExceptionType :
+ExceptionType#ObjectType :
     (Annotation)*
     (
       Name <DOT> =>|+1 (Annotation)+ TypeIdentifier

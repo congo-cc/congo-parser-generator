@@ -2146,7 +2146,7 @@ PrimaryPattern :
    RelationalPattern
    |
    // These next three options are a bit ugly.
-   => CastExpression // Maybe there is a better way but I don't see it.
+   CastExpression =>|| // Maybe there is a better way but I don't see it.
    |
    ParenthesizedPattern =>||
    |

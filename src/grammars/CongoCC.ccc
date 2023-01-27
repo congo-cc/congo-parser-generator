@@ -27,7 +27,6 @@ INJECT LEXER_CLASS :
 
 INJECT PARSER_CLASS :
     import java.util.*;
-    import java.nio.file.Path;
     import org.congocc.*;
     import org.congocc.core.*;
     import org.congocc.parser.tree.*;
@@ -692,6 +691,7 @@ INJECT ThrowsList :
     import java.util.List;
     import java.util.ArrayList;
 {
+#if false    
     public List<Node> getTypes() {
         List<Node> result = new ArrayList<>();
         for (Node n : children()) {
@@ -701,6 +701,12 @@ INJECT ThrowsList :
         }
         return result; 
     }
+#else
+
+    public List<Node> getTypes() {
+        return new ArrayList<Node>(childrenOfType(ObjectType.class));
+    }    
+#endif    
 }
 
 INJECT Identifier : 
@@ -1214,8 +1220,6 @@ TokenProduction :
 
 INJECT TokenProduction :
     import java.util.*;
-    import org.congocc.core.LexerData;
-    import org.congocc.core.LexicalStateData;
 {
     @Property private boolean explicit=true, ignoreCase;
     @Property String tokenClassName;
@@ -1449,12 +1453,6 @@ ExpansionSequence #org.congocc.core.ExpansionSequence :
   )+!
 ;
 
-org.congocc.core.Lookahead Lookahead #void :
-(<RIGHT_ARROW>#org.congocc.core.Lookahead | ScanAhead | LegacyLookahead) 
-{
-    return (Lookahead) peekNode();
-};
-
 INJECT Assertion :
    import org.congocc.core.Expansion;
    extends org.congocc.core.EmptyExpansion 
@@ -1492,7 +1490,7 @@ Assertion :
    [UpToHere(CURRENT_NODE)]
 ;
 
-ScanAhead #org.congocc.core.Lookahead : 
+org.congocc.core.Lookahead Lookahead #org.congocc.core.Lookahead : 
 {
    Token amountToken=null;
    boolean hasSemanticLookahead = false, getHasExplicitNumericalLookahead=false;
@@ -1527,6 +1525,7 @@ ScanAhead #org.congocc.core.Lookahead :
     |
     SCAN {expansion != null || (exp ==null && lb == null)} => {}
 )
+{return CURRENT_NODE;}
 ;
 
 LookBehind : 
@@ -1615,49 +1614,6 @@ import java.util.*;
     }
 }
 
-INJECT LegacyLookahead : 
-extends org.congocc.core.Lookahead
-{
-    public boolean isSemanticLookaheadNested() {return true;}
-}
-
-LegacyLookahead# :
-{
-    Expansion expansion = null;
-    Expression exp = null;
-    boolean empty = true, commaAtEnd = false;
-}
-  <_LOOKAHEAD>
-  [
-   "(" 
-      [
-        <INTEGER_LITERAL> {empty = false;}
-      ]
-      [ 
-        SCAN {!empty} ~<RPAREN> 
-        => "," {commaAtEnd = true;}
-      ]
-      [ 
-        SCAN {empty} ~<RPAREN>|<LBRACE> 
-        =>
-        ["~" {CURRENT_NODE.setNegated(true);}] 
-        ExpansionChoice
-        {
-           expansion = (Expansion) peekNode();
-           CURRENT_NODE.setNestedExpansion(expansion);
-           empty = false; commaAtEnd = false;
-        }
-      ]
-      [ 
-        SCAN {!empty && !commaAtEnd} ~")" => ","
-      ]
-      [
-        "{"  exp=Expression  "}" {CURRENT_NODE.setSemanticLookahead(exp);}
-        ["#"]
-      ]
-     ")"
-  ]
-;
 
 ChildNameInfo(Expansion expansion) : //#void :
 {
