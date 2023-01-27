@@ -828,7 +828,7 @@ INJECT Token :
     TokenProduction tp;
 }
    [
-      OptionsBlock | Options
+      Options
    ]!
    (
       tp=TokenProduction  {grammar.addTokenProduction(tp);}
@@ -988,21 +988,10 @@ CodeInjection2 :
         }
 ;
 
-Options #Options :
+Options# :
     {HashMap<String, Object> settings = new HashMap<>();} 
     Setting(settings) =>||
     (Setting(settings))*
-    {grammar.setSettings(settings);}
-;
-
-OptionsBlock #Options :
-    {Map<String, Object> settings = new HashMap<>();} 
-    <IDENTIFIER> 
-    ASSERT {getToken(0).getImage().equalsIgnoreCase("options")}#
-    =>||
-    [":"]
-    "{" 
-    ( Setting (settings) )*! "}"
     {grammar.setSettings(settings);}
 ;
 
