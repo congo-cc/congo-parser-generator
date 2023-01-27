@@ -59,7 +59,7 @@ public class CodeInjector {
         return !classname.equals(parserClassName)
              && !classname.equals(lexerClassName)
              && !classname.equals(constantsClassName)
-             && !classname.equals(baseNodeClassName)
+             //&& !classname.equals(baseNodeClassName)
              && !classname.equals("ParseException")
              && !classname.equals("Token")
              && !classname.equals("InvalidToken")

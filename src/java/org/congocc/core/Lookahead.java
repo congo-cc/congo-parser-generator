@@ -1,7 +1,7 @@
 package org.congocc.core;
 
-import org.congocc.parser.BaseNode;
 import org.congocc.parser.tree.*;
+//import org.congocc.parser.BaseNode;
 
 public class Lookahead extends BaseNode {
     private Name LHS;

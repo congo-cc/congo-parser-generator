@@ -1,7 +1,7 @@
 package org.congocc.core;
 
-import org.congocc.parser.BaseNode;
 import org.congocc.parser.Token;
+//import org.congocc.parser.BaseNode;
 import org.congocc.parser.tree.*;
 import static org.congocc.parser.CongoCCConstants.TokenType.*;
 
