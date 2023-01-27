@@ -172,15 +172,6 @@
         this.buildTree = buildTree;
     }
 
-    /**
-     * Just a kludge so that existing jjtree-based code that uses
-     * parser.jjtree.foo can work without change.
-     */
-    
-    ${grammar.parserClassName} jjtree = this; 
-    
-    
-    
     @SuppressWarnings("serial")
     class NodeScope extends ArrayList<Node> {
         NodeScope parentScope;

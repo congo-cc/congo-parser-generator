@@ -875,10 +875,10 @@ public class Grammar extends BaseNode {
                     if (methodName.startsWith("tokenHook$")) {
                         parserTokenHooks.add(methodName);
                     }
-                    else if (methodName.equals("jjtreeOpenNodeScope") || methodName.startsWith("openNodeScopeHook")) {
+                    else if (methodName.startsWith("openNodeScopeHook")) {
                         openNodeScopeHooks.add(methodName);
                     }
-                    else if (methodName.equals("jjtreeCloseNodeScope") || methodName.startsWith("closeNodeScopeHook")) {
+                    else if (methodName.startsWith("closeNodeScopeHook")) {
                         closeNodeScopeHooks.add(methodName);
                     }
                 }

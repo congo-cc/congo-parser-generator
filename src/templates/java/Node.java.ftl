@@ -11,9 +11,9 @@ import java.util.function.Predicate;
 import freemarker.template.*;
 [/#if]
 
-public interface Node extends Comparable<Node> 
+public interface Node 
 [#if grammar.settings.FREEMARKER_NODES?? && grammar.settings.FREEMARKER_NODES]
-   , TemplateNodeModel, TemplateScalarModel
+   extends TemplateNodeModel, TemplateScalarModel
 [/#if] {
 
     /** Life-cycle hook method called after the node has been made the current
@@ -179,23 +179,6 @@ public interface Node extends Comparable<Node>
          int idx = parent.indexOf(this);
          if (idx >= parent.getChildCount() -1) return null;
          return parent.getChild(idx+1);
-     }
-
-     /**
-      * Used to order Nodes by location.
-      * @param n the Node to compare to
-      * @return typical Comparator semantics
-      */
-     default int compareTo(Node n) {
-         if (this == n) return 0;
-         int diff = this.getBeginLine() - n.getBeginLine();
-         if (diff !=0) return diff;
-         diff = this.getBeginColumn() -n.getBeginColumn();
-         if (diff != 0) return diff;
-         // A child node is considered to come after its parent.
-         diff = n.getEndLine() - this.getEndLine();
-         if (diff != 0) return diff;
-         return n.getEndColumn() - this.getEndColumn();
      }
 
      /**

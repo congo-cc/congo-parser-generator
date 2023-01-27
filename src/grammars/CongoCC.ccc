@@ -82,51 +82,51 @@ INJECT PARSER_CLASS :
 /* congocc RESERVED WORDS: These are the only tokens in congocc but not in Java */
 
 TOKEN :
-  < _INJECT: "INJECT" > #congoccKeyWord
+  < _INJECT: "INJECT" > #CongoCCKeyWord
   |
-  < _INCLUDE : "INCLUDE" | "INCLUDE_GRAMMAR"> #congoccKeyWord
+  < _INCLUDE : "INCLUDE" | "INCLUDE_GRAMMAR"> #CongoCCKeyWord
   |
-  < _LOOKAHEAD: "LOOKAHEAD" > #congoccKeyWord
+  < _LOOKAHEAD: "LOOKAHEAD" > #CongoCCKeyWord
   |
-  < _FAIL : "FAIL" > #congoccKeyWord
+  < _FAIL : "FAIL" > #CongoCCKeyWord
   |
-  < _UNCACHE_TOKENS : "UNCACHE_TOKENS"> #congoccKeyWord
+  < _UNCACHE_TOKENS : "UNCACHE_TOKENS"> #CongoCCKeyWord
   |
-  < _ACTIVE_TOKENS : "ACTIVE_TOKENS"> #congoccKeyWord
+  < _ACTIVE_TOKENS : "ACTIVE_TOKENS"> #CongoCCKeyWord
   |
-  < _ACTIVATE_TOKENS : "ACTIVATE_TOKENS"> #congoccKeyWord
+  < _ACTIVATE_TOKENS : "ACTIVATE_TOKENS"> #CongoCCKeyWord
   |
-  < _DEACTIVATE_TOKENS : "DEACTIVATE_TOKENS"> #congoccKeyWord
+  < _DEACTIVATE_TOKENS : "DEACTIVATE_TOKENS"> #CongoCCKeyWord
   |
-  < _ENSURE : "ASSERT"> #congoccKeyWord
+  < _ENSURE : "ASSERT"> #CongoCCKeyWord
   |
-  < _SCAN : "SCAN" > #congoccKeyWord
+  < _SCAN : "SCAN" > #CongoCCKeyWord
   |
-  < _IGNORE_CASE: "IGNORE_CASE" > #congoccKeyWord
+  < _IGNORE_CASE: "IGNORE_CASE" > #CongoCCKeyWord
   |
-  < _PARSER_BEGIN: "PARSER_BEGIN" > #congoccKeyWord
+  < _PARSER_BEGIN: "PARSER_BEGIN" > #CongoCCKeyWord
   |
-  < _PARSER_END: "PARSER_END" > #congoccKeyWord
+  < _PARSER_END: "PARSER_END" > #CongoCCKeyWord
   |
-  < _TOKEN: "TOKEN" | "REGULAR_TOKEN"> #congoccKeyWord
+  < _TOKEN: "TOKEN" | "REGULAR_TOKEN"> #CongoCCKeyWord
   |
-  < _UNPARSED: "SPECIAL_TOKEN" | "UNPARSED" > #congoccKeyWord
+  < _UNPARSED: "SPECIAL_TOKEN" | "UNPARSED" > #CongoCCKeyWord
   |
-  < _MORE: "MORE" | "INCOMPLETE_TOKEN" > #congoccKeyWord
+  < _MORE: "MORE" | "INCOMPLETE_TOKEN" > #CongoCCKeyWord
   |
-  < _SKIP: "SKIP" > #congoccKeyWord
+  < _SKIP: "SKIP" > #CongoCCKeyWord
   |
-  <_EOF : "EOF"> #congoccKeyWord
+  <_EOF : "EOF"> #CongoCCKeyWord
   |
-  < _TOKEN_MGR_DECLS: "TOKEN_MGR_DECLS" > #congoccKeyWord
+  < _TOKEN_MGR_DECLS: "TOKEN_MGR_DECLS" > #CongoCCKeyWord
   |
-  < _ATTEMPT: "ATTEMPT"> #congoccKeyWord
+  < _ATTEMPT: "ATTEMPT"> #CongoCCKeyWord
   |
-  < _RECOVER : "RECOVER"> #congoccKeyWord
+  < _RECOVER : "RECOVER"> #CongoCCKeyWord
   |
-  < _RECOVER_TO : "RECOVER_TO"> #congoccKeyWord
+  < _RECOVER_TO : "RECOVER_TO"> #CongoCCKeyWord
   |
-  < _ON_ERROR : "ON_ERROR"> #congoccKeyWord
+  < _ON_ERROR : "ON_ERROR"> #CongoCCKeyWord
   |
   <HASH : "#">
   |
@@ -136,7 +136,7 @@ TOKEN :
   |
   <UP_TO_HERE : "=>|" ("|" | ("+" ["0"-"9"]))> 
   |
-  <_LEXICAL_STATE : "LEXICAL_STATE"> #congoccKeyWord
+  <_LEXICAL_STATE : "LEXICAL_STATE"> #CongoCCKeyWord
   |
   <SINGLE_QUOTE_STRING:
       "'"
@@ -623,14 +623,14 @@ INJECT FieldDeclaration :
 
 INJECT PARSER_CLASS : {
 
-    private EnumSet<TokenType> congoccKeyWords = EnumSet.of(
+    private EnumSet<TokenType> CongoCCKeyWords = EnumSet.of(
        _LOOKAHEAD, _FAIL, _ENSURE, _SCAN, _IGNORE_CASE, 
        _PARSER_BEGIN, _PARSER_END, _TOKEN, _UNPARSED, _SKIP, _MORE,
        _TOKEN_MGR_DECLS, _ATTEMPT, _RECOVER, _ON_ERROR,  
        _LEXICAL_STATE);
 
     private Token TOKEN_HOOK(Token t) {
-        if (congoccKeyWords.contains(t.getType())) {
+        if (CongoCCKeyWords.contains(t.getType())) {
             if (isInProduction("CompilationUnit", "ClassOrInterfaceBody", "BlockStatement", "TreeBuildingAnnotation")) {
                if (t.getType() != _PARSER_END) {
                    Token id = Token.newToken(IDENTIFIER, t.getImage(), token_source);
@@ -960,7 +960,7 @@ INJECT CodeInjection :
    public List<Annotation> annotations = new ArrayList<>();
    public List<ObjectType> extendsList = new ArrayList<>();
    public List<ObjectType> implementsList = new ArrayList<>();
-   public ClassOrInterfaceBody body;
+   public ClassOrInterfaceBody body; 
    public boolean isInterface;   
 
    public void addExtendsType(ObjectType type) {extendsList.add(type);}
