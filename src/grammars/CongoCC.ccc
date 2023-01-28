@@ -10,6 +10,7 @@ BASE_SRC_DIR="../java";
 DEACTIVATE_TOKENS=_INCLUDE,_INJECT,_EOF;
 
 //FAULT_TOLERANT=true;
+//BASE_NODE_IN_PARSER_PACKAGE=false;
 
 INJECT LEXER_CLASS : 
 {
@@ -84,8 +85,6 @@ TOKEN :
   < _INJECT: "INJECT" > #CongoCCKeyWord
   |
   < _INCLUDE : "INCLUDE" | "INCLUDE_GRAMMAR"> #CongoCCKeyWord
-  |
-  < _LOOKAHEAD: "LOOKAHEAD" > #CongoCCKeyWord
   |
   < _FAIL : "FAIL" > #CongoCCKeyWord
   |
@@ -623,7 +622,7 @@ INJECT FieldDeclaration :
 INJECT PARSER_CLASS : {
 
     private EnumSet<TokenType> CongoCCKeyWords = EnumSet.of(
-       _LOOKAHEAD, _FAIL, _ENSURE, _SCAN, _IGNORE_CASE, 
+       _FAIL, _ENSURE, _SCAN, _IGNORE_CASE, 
        _PARSER_BEGIN, _PARSER_END, _TOKEN, _UNPARSED, _SKIP, _MORE,
        _TOKEN_MGR_DECLS, _ATTEMPT, _RECOVER, _ON_ERROR,  
        _LEXICAL_STATE);

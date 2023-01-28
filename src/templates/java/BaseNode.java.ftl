@@ -3,9 +3,13 @@
 [#if explicitPackageName?has_content]
 package ${explicitPackageName};
 [#elseif grammar.nodePackage?has_content]
+   [#if grammar.baseNodeInParserPackage]
+package ${grammar.parserPackage};
+   [#else]
 package ${grammar.nodePackage};
+   [/#if]
 [/#if]
-[#if grammar.parserPackage?has_content && grammar.nodePackage != grammar.parserPackage]
+[#if !grammar.baseNodeInParserPackage && grammar.parserPackage?has_content && grammar.nodePackage != grammar.parserPackage]
 import ${grammar.parserPackage}.*;
 [/#if]
 [#if grammar.settings.FREEMARKER_NODES?? && grammar.settings.FREEMARKER_NODES]
