@@ -35,7 +35,7 @@ PARSER_PACKAGE=org.congocc.preprocessor;
  * should eventually be done about this.
  */
 
-INJECT PARSER_CLASS : 
+INJECT PARSER_CLASS :
 {
     private final BitSet lineMarkers = new BitSet();
     private final Map<String, String> definedSymbols = new HashMap<>();
@@ -46,13 +46,13 @@ INJECT PARSER_CLASS :
         this(path);
         this.csharpMode = csharpMode;
         if (definedSymbols !=null) addSymbols(definedSymbols);
-        token_source.switchTo(LexicalState.PP_SCAN_LINES);
+        token_source.switchTo(LEXER_CLASS.LexicalState.PP_SCAN_LINES);
     }
 
     public PARSER_CLASS(CharSequence content, Map<String, String> definedSymbols) throws IOException {
        this(content);
        if (definedSymbols != null) addSymbols(definedSymbols);
-       token_source.switchTo(LexicalState.PP_SCAN_LINES);
+       token_source.switchTo(LEXER_CLASS.LexicalState.PP_SCAN_LINES);
 #if csharp
        this.csharpMode = true;
 #else        

@@ -17,6 +17,8 @@
 
 [#var lexerData=grammar.lexerData]
 [#var multipleLexicalStates = lexerData.lexicalStates.size()>1]
+[#var NFA_RANGE_THRESHOLD = 16]
+
 
 [#var PRESERVE_LINE_ENDINGS=grammar.preserveLineEndings?string("true", "false")
       JAVA_UNICODE_ESCAPE= grammar.javaUnicodeEscape?string("true", "false")
@@ -57,17 +59,17 @@ import java.util.EnumSet;
 
 public class ${grammar.lexerClassName} implements ${grammar.constantsClassName} {
 
-    // For some backward compatibility with very old stuff
-    private ${grammar.lexerClassName} input_stream = this;
+   public enum LexicalState {
+     [#list lexerData.lexicalStates as lexicalState]
+        ${lexicalState.name}
+         [#if lexicalState_has_next],[/#if]
+      [/#list]
+   }
+
     private void backup(int amount) {
         if (amount > bufferPosition) throw new ArrayIndexOutOfBoundsException();
         this.bufferPosition -= amount;
     }
-
-
-[#if !multipleLexicalStates]
-    static final private ${grammar.nfaDataClassName}.NfaFunction[] nfaFunctions= ${grammar.nfaDataClassName}.getFunctionTableMap(null);
-[/#if]
 
     static final int DEFAULT_TAB_SIZE = ${grammar.tabSize};
 
@@ -150,7 +152,7 @@ public class ${grammar.lexerClassName} implements ${grammar.constantsClassName} 
   // Token types that are "regular" tokens that participate in parsing,
   // i.e. declared as TOKEN
   [@EnumSet "regularTokens" lexerData.regularTokens.tokenNames /]
-  // Token types that do not participate in parsing, a.k.a. "special" tokens in legacy congocc,
+  // Token types that do not participate in parsing
   // i.e. declared as UNPARSED (or SPECIAL_TOKEN)
   [@EnumSet "unparsedTokens" lexerData.unparsedTokens.tokenNames /]
   // Tokens that are skipped, i.e. SKIP 
@@ -310,7 +312,7 @@ public class ${grammar.lexerClassName} implements ${grammar.constantsClassName} 
        // Get the NFA function table current lexical state
        // There is some possibility that there was a lexical state change
        // since the last iteration of this loop!
-        ${grammar.nfaDataClassName}.NfaFunction[] nfaFunctions= ${grammar.nfaDataClassName}.getFunctionTableMap(lexicalState);
+        NfaFunction[] nfaFunctions = functionTableMap.get(lexicalState);
       [/#if]
         // the core NFA loop
         if (!reachedEnd) do {
@@ -965,4 +967,182 @@ public class ${grammar.lexerClassName} implements ${grammar.constantsClassName} 
   static public String stringFromBytes(byte[] bytes) throws CharacterCodingException {
      return stringFromBytes(bytes, null);
   }
+
+  // NFA related code follows.
+
+
+  // The functional interface that represents 
+  // the acceptance method of an NFA state
+  static interface NfaFunction {
+    TokenType apply(int ch, BitSet bs, EnumSet<TokenType> validTypes);
+  }
+
+ [#if multipleLexicalStates]
+  // A lookup of the NFA function tables for the respective lexical states.
+  private static final EnumMap<LexicalState,NfaFunction[]> functionTableMap = new EnumMap<>(LexicalState.class);
+ [#else]
+  [#-- We don't need the above lookup if there is only one lexical state.--]
+   static private NfaFunction[] nfaFunctions;
+ [/#if]
+ 
+  // Initialize the various NFA method tables
+  static {
+    [#list grammar.lexerData.lexicalStates as lexicalState]
+      ${lexicalState.name}.NFA_FUNCTIONS_init();
+    [/#list]
+  }
+
+  // Just use the canned binary search to check whether the char
+  // is in one of the intervals
+  private static final boolean checkIntervals(int[] ranges, int ch) {
+    int result = Arrays.binarySearch(ranges, ch);
+    return result >=0 || result%2 == 0;
+  }
+
+ [#list grammar.lexerData.lexicalStates as lexicalState]
+ /**
+  * Holder class for NFA code related to ${lexicalState.name} lexical state
+  */
+  private static class ${lexicalState.name} {
+   [@GenerateStateCode lexicalState/]
+  }
+ [/#list]  
 }
+
+[#--
+  Generate all the NFA transition code
+  for the given lexical state
+--]
+[#macro GenerateStateCode lexicalState]
+  [#list lexicalState.canonicalSets as state]
+     [@GenerateNfaMethod state/]
+  [/#list]
+
+  [#list lexicalState.allNfaStates as state]
+    [#if state.moveRanges.size() >= NFA_RANGE_THRESHOLD]
+      [@GenerateMoveArray state/]
+    [/#if]
+  [/#list]
+
+  static private void NFA_FUNCTIONS_init() {
+    [#if multipleLexicalStates]
+      NfaFunction[] functions = new NfaFunction[]
+    [#else]
+      nfaFunctions = new NfaFunction[]
+    [/#if] 
+    {
+    [#list lexicalState.canonicalSets as state]
+      ${lexicalState.name}::${state.methodName}
+      [#if state_has_next],[/#if]
+    [/#list]
+    };
+    [#if multipleLexicalStates]
+      functionTableMap.put(LexicalState.${lexicalState.name}, functions);
+    [/#if]
+  }
+[/#macro]
+
+[#--
+   Generate the array representing the characters
+   that this NfaState "accepts".
+   This corresponds to the moveRanges field in 
+   org.congocc.core.NfaState
+--]
+[#macro GenerateMoveArray nfaState]
+  [#var moveRanges = nfaState.moveRanges]
+  [#var arrayName = nfaState.movesArrayName]
+    static private int[] ${arrayName} = ${arrayName}_init();
+
+    static private int[] ${arrayName}_init() {
+        return new int[]
+        {
+        [#list nfaState.moveRanges as char]
+          ${grammar.utils.displayChar(char)}
+          [#if char_has_next],[/#if]
+        [/#list]
+        };
+    }
+[/#macro] 
+
+[#--
+   Generate the method that represents the transitions
+   that correspond to an instanceof org.congocc.core.CompositeStateSet
+--]
+[#macro GenerateNfaMethod nfaState]  
+    static private TokenType ${nfaState.methodName}(int ch, BitSet nextStates, EnumSet<TokenType> validTypes) {
+      TokenType type = null;
+    [#var states = nfaState.orderedStates, lastBlockStartIndex=0]
+    [#list states as state]
+      [#if state_index ==0 || !state.moveRanges.equals(states[state_index-1].moveRanges)]
+          [#-- In this case we need a new if or possibly else if --]
+         [#if state_index == 0 || state.overlaps(states.subList(lastBlockStartIndex, state_index))]
+           [#-- If there is overlap between this state and any of the states
+                 handled since the last lone if, we start a new if-else 
+                 If not, we continue in the same if-else block as before. --]
+           [#set lastBlockStartIndex = state_index]
+               if
+         [#else]
+               else if
+         [/#if]    
+           ([@NfaStateCondition state /]) {
+      [/#if]
+      [#if state.nextStateIndex >= 0]
+         nextStates.set(${state.nextStateIndex});
+      [/#if]
+      [#if !state_has_next || !state.moveRanges.equals(states[state_index+1].moveRanges)]
+        [#-- We've reached the end of the block. --]
+          [#var type = state.nextStateType]
+          [#if type??]
+            if (validTypes.contains(${CU.TT}${type.label}))
+              type = ${CU.TT}${type.label};
+          [/#if]
+        }
+      [/#if]
+    [/#list]
+      return type;
+    }
+[/#macro]
+
+[#--
+Generate the condition part of the NFA state transition
+If the size of the moveRanges vector is greater than NFA_RANGE_THRESHOLD
+it uses the canned binary search routine. For the smaller moveRanges
+it just generates the inline conditional expression
+--]
+[#macro NfaStateCondition nfaState]
+    [#if nfaState.moveRanges?size < NFA_RANGE_THRESHOLD]
+      [@RangesCondition nfaState.moveRanges /]
+    [#elseif nfaState.hasAsciiMoves && nfaState.hasNonAsciiMoves]
+      ([@RangesCondition nfaState.asciiMoveRanges/])
+      || (ch >=128 && checkIntervals(${nfaState.movesArrayName}, ch))
+    [#else]
+      checkIntervals(${nfaState.movesArrayName}, ch)
+    [/#if]
+[/#macro]
+
+[#-- 
+This is a recursive macro that generates the code corresponding
+to the accepting condition for an NFA state. It is used
+if NFA state's moveRanges array is smaller than NFA_RANGE_THRESHOLD
+(which is set to 16 for now)
+--]
+[#macro RangesCondition moveRanges]
+    [#var left = moveRanges[0], right = moveRanges[1]]
+    [#var displayLeft = grammar.utils.displayChar(left), displayRight = grammar.utils.displayChar(right)]
+    [#var singleChar = left == right]
+    [#if moveRanges?size==2]
+       [#if singleChar]
+          ch == ${displayLeft}
+       [#elseif left +1 == right]
+          ch == ${displayLeft} || ch == ${displayRight}
+       [#else]
+          ch >= ${displayLeft} 
+          [#if right < 1114111]
+             && ch <= ${displayRight}
+          [/#if]
+       [/#if]
+    [#else]
+       ([@RangesCondition moveRanges[0..1]/])||([@RangesCondition moveRanges[2..moveRanges?size-1]/])
+    [/#if]
+[/#macro]
+

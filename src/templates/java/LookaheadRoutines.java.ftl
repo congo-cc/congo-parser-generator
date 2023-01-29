@@ -357,7 +357,7 @@
 
 [#--
    Generates the lookahead code for an ExpansionSequence.
-   In legacy congocc there was some quite complicated logic so as 
+   In legacy JavaCC there was some quite complicated logic so as 
    not to generate unnecessary code. They actually had a longstanding bug
    there, which was the topic of this blog post: https://congocc.com/2020/10/28/a-bugs-life/
    I very much doubt that this kind of space optimization is worth

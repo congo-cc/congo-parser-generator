@@ -22,16 +22,5 @@ package ${grammar.parserPackage};
      [/#list]
      INVALID
   }
-  
-  /**
-   * Lexical States
-   */
-
-  public enum LexicalState {
-  [#list grammar.lexerData.lexicalStates as lexicalState]
-     ${lexicalState.name}
-     [#if lexicalState_has_next],[/#if]
-  [/#list]
-   }
-}
+} 
 

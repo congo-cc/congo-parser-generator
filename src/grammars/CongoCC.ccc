@@ -1027,10 +1027,10 @@ Setting(Map<String,Object> settings) #Setting :
         |
         <IDENTIFIER> {value = lastConsumedToken.getImage();}
         [ <HASH> <IDENTIFIER> { value += "#" + lastConsumedToken.getImage();} ]
-           ("," {value+=",";}
+        ("," {value+=",";}
             <IDENTIFIER> {value+=lastConsumedToken.getImage();}
             [ <HASH> <IDENTIFIER> { value += "#" + lastConsumedToken.getImage();} ]
-           )* 
+        )* 
      )
   ]
   ";"

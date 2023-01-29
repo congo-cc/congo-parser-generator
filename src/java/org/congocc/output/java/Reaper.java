@@ -35,12 +35,12 @@ class Reaper extends Node.Visitor {
             visit(jcu);
             nameCount = usedMethodNames.size() + usedTypeNames.size() + usedVarNames.size();
         } while (nameCount > prevNameCount);
-        // If the name of the method is not in usedNames, we delete it.
+        // If the name of the method is not in usedMethodNames, we delete it.
         for (MethodDeclaration md : jcu.descendants(MethodDeclaration.class, md->!usedMethodNames.contains(md.getName()))) {
             md.getParent().removeChild(md);
         }
         // We go through all the private FieldDeclarations and get rid of any variables that
-        // are not in usedNames
+        // are not in usedVarNames
         for (FieldDeclaration fd : jcu.descendants(FieldDeclaration.class, fd->isPrivate(fd))) {
             stripUnusedVars(fd);
         }

@@ -214,11 +214,11 @@ public boolean isCancelled() {return cancelled;}
       token_source.reset(getToken(0));
   }
 
-  private void resetTo(LexicalState state) {
+  private void resetTo(${grammar.lexerClassName}.LexicalState state) {
     token_source.reset(getToken(0), state);
   }
 
-  private void resetTo(Token tok, LexicalState state) {
+  private void resetTo(Token tok, ${grammar.lexerClassName}.LexicalState state) {
     token_source.reset(tok, state);
   } 
 

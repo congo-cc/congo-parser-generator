@@ -90,13 +90,13 @@
    [#var resetToken = inLookahead?string("currentLookaheadToken", "lastConsumedToken")]
    [#var prevLexicalStateVar = newVarName("previousLexicalState")]
    [#if expansion.specifiedLexicalState??]
-         LexicalState ${prevLexicalStateVar} = token_source.lexicalState;
-         token_source.reset(${resetToken}, LexicalState.${expansion.specifiedLexicalState});
+         ${grammar.lexerClassName}.LexicalState ${prevLexicalStateVar} = token_source.lexicalState;
+         token_source.reset(${resetToken}, ${grammar.lexerClassName}.LexicalState.${expansion.specifiedLexicalState});
          try {
            [#nested/]
          }
          finally {
-            if (${prevLexicalStateVar} != LexicalState.${expansion.specifiedLexicalState}) {
+            if (${prevLexicalStateVar} != ${grammar.lexerClassName}.LexicalState.${expansion.specifiedLexicalState}) {
                 if (${resetToken}.getNext() != null) {
                     token_source.reset(${resetToken}, ${prevLexicalStateVar});
                 }

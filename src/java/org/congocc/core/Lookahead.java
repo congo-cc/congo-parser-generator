@@ -1,7 +1,6 @@
 package org.congocc.core;
 
 import org.congocc.parser.tree.*;
-//import org.congocc.parser.BaseNode;
 
 public class Lookahead extends BaseNode {
     private Name LHS;
@@ -32,10 +31,6 @@ public class Lookahead extends BaseNode {
     public boolean isNegated() {return negated;}
 
     public void setNegated(boolean negated) {this.negated = negated;}
-
-    public boolean isAlwaysSuccessful() {
-        return !hasSemanticLookahead() && (getAmount() == 0 || getLookaheadExpansion().isPossiblyEmpty()); 
-    }
 
     boolean getRequiresScanAhead() {
         if (!getLookaheadExpansion().isPossiblyEmpty()) return true;

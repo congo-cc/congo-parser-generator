@@ -71,24 +71,19 @@ public class FilesGenerator {
         initializeTemplateEngine();
         switch (codeLang) {
             case "java":
-//                long start = System.nanoTime();
                 generateToken();
                 generateLexer();
-                generateNfaData();
                 generateConstantsFile();
                 if (!grammar.getProductionTable().isEmpty()) {
                     generateParseException();
                     generateParser();
                 }
-//                System.out.println("Spent " + (System.nanoTime() -start)/10000000 + " milliseconds generating Parser/lexer.");
                 if (grammar.getFaultTolerant()) {
                     generateInvalidNode();
                     generateParsingProblem();
                 }
                 if (grammar.getTreeBuildingEnabled()) {
-//                    start = System.nanoTime();
                     generateTreeBuildingFiles();
-//                    System.out.println("Spent " + (System.nanoTime() -start)/10000000 + " milliseconds generating AST nodes.");
                 }
                 break;
             case "python": {
@@ -281,12 +276,6 @@ public class FilesGenerator {
     
     void generateLexer() throws IOException, TemplateException {
         String filename = grammar.getLexerClassName() + ".java";
-        Path outputFile = grammar.getParserOutputDirectory().resolve(filename);
-        generate(outputFile);
-    }
-
-    void generateNfaData() throws IOException, TemplateException {
-        String filename = grammar.getNfaDataClassName() + ".java";
         Path outputFile = grammar.getParserOutputDirectory().resolve(filename);
         generate(outputFile);
     }

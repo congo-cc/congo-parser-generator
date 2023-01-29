@@ -224,7 +224,7 @@ ${grammar.utils.translateLexerImports()}
         // Token types that are "regular" tokens that participate in parsing,
         // i.e. declared as TOKEN
         [@EnumSet "regularTokens" lexerData.regularTokens.tokenNames 8 /]
-        // Token types that do not participate in parsing, a.k.a. "special" tokens in legacy congocc,
+        // Token types that do not participate in parsing 
         // i.e. declared as UNPARSED (or SPECIAL_TOKEN)
         [@EnumSet "unparsedTokens" lexerData.unparsedTokens.tokenNames 8 /]
         [#-- // Tokens that are skipped, i.e. SKIP --]
