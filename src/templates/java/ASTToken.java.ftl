@@ -22,7 +22,7 @@ import static ${grammar.parserPackage}.TokenType.*;
 [/#if]
 
 public class ${classname} extends ${superclass} {
-    public ${classname}(TokenType type, ${grammar.lexerClassName} tokenSource, int beginOffset, int endOffset) {
+    public ${classname}(TokenType type, TokenSource<Token> tokenSource, int beginOffset, int endOffset) {
         super(type, tokenSource, beginOffset, endOffset);
     }
 }

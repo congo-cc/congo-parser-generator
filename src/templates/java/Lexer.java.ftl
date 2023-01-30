@@ -57,7 +57,8 @@ import java.util.BitSet;
 import java.util.EnumMap;
 import java.util.EnumSet;
 
-public class ${grammar.lexerClassName} {
+public class ${grammar.lexerClassName} extends TokenSource<Token>
+{
  [@CU.TokenTypeConstants/]
     private void backup(int amount) {
         if (amount > bufferPosition) throw new ArrayIndexOutOfBoundsException();
@@ -546,9 +547,7 @@ public class ${grammar.lexerClassName} {
 
     public void setUnparsedLines(BitSet unparsedLines) {setParsedLines(unparsedLines,true);}
 
-    /**
-     * @return the line number from the absolute offset passed in as a parameter
-     */
+    @Override
     public int getLineFromOffset(int pos) {
         if (pos >= content.length()) {
             if (content.charAt(content.length()-1) == '\n') {
@@ -565,11 +564,7 @@ public class ${grammar.lexerClassName} {
         return Math.max(1,startingLine-(bsearchResult+2));
     }
 
-    /**
-     * @return the column (1-based and in code points)
-     * from the absolute offset passed in as a parameter
-     */
-
+    @Override
     public int getCodePointColumnFromOffset(int pos) {
         if (pos >= content.length()) return 1;
         if (pos == 0) return startingColumn;
@@ -602,10 +597,7 @@ public class ${grammar.lexerClassName} {
         return result;
     }
     
-    /**
-     * @return the text between startOffset (inclusive)
-     * and endOffset(exclusive)
-     */
+    @Override
     public String getText(int startOffset, int endOffset) {
         StringBuilder buf = new StringBuilder();
         for (int offset = startOffset; offset < endOffset; offset++) {
@@ -615,7 +607,8 @@ public class ${grammar.lexerClassName} {
         }
         return buf.toString();
     }
-
+ 
+    @Override
     void cacheToken(Token tok) {
 [#if !grammar.minimalToken]        
         if (tok.isInserted()) {
@@ -641,11 +634,13 @@ public class ${grammar.lexerClassName} {
       [/#if]
     }
 
+    @Override
     Token nextCachedToken(int offset) {
         int nextOffset = tokenOffsets.nextSetBit(offset);
 	    return nextOffset != -1 ? tokenLocationTable[nextOffset] : null;
     } 
 
+    @Override
     Token previousCachedToken(int offset) {
         int prevOffset = tokenOffsets.previousSetBit(offset-1);
         return prevOffset == -1 ? null : tokenLocationTable[prevOffset];

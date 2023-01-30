@@ -28,7 +28,7 @@ import freemarker.template.*;
 
 public class Token ${implementsNode} {
 
-    private ${grammar.lexerClassName} tokenSource;
+    private TokenSource<Token> tokenSource;
     
     private TokenType type;
     
@@ -77,13 +77,13 @@ public class Token ${implementsNode} {
      * @param image the String content of the token
      * @param tokenSource the object that vended this token.
      */
-    public Token(TokenType type, String image, ${grammar.lexerClassName} tokenSource) {
+    public Token(TokenType type, String image, TokenSource<Token> tokenSource) {
         this.type = type;
         this.image = image;
         this.tokenSource = tokenSource;
     }
 
-    public static Token newToken(TokenType type, String image, ${grammar.lexerClassName} tokenSource) {
+    public static Token newToken(TokenType type, String image, TokenSource<Token> tokenSource) {
         Token result = newToken(type, tokenSource, 0, 0);
         result.setImage(image);
         return result;
@@ -112,30 +112,15 @@ public class Token ${implementsNode} {
      * @return the ${grammar.lexerClassName} object that handles 
      * location info for the tokens. 
      */
-    public ${grammar.lexerClassName} getTokenSource() {
-      [#if grammar.minimalToken] 
+    public TokenSource<Token> getTokenSource() {
         return this.tokenSource; 
-      [#else]
-        ${grammar.lexerClassName} flm = this.tokenSource;
-        // If this is null and we have chained tokens,
-        // we try to get it from there! (Why not?)
-        if (flm == null) {
-            if (prependedToken != null) {
-                flm = prependedToken.getTokenSource();
-            }
-            if (flm == null && appendedToken != null) {
-                flm = appendedToken.getTokenSource();
-            }
-        }
-        return flm;
-    [/#if]
     }
 
     /**
      * It should be exceedingly rare that an application
      * programmer needs to use this method.
      */
-    public void setTokenSource(${grammar.lexerClassName} tokenSource) {
+    public void setTokenSource(TokenSource<Token> tokenSource) {
         this.tokenSource = tokenSource;
     }
 
@@ -205,7 +190,7 @@ public class Token ${implementsNode} {
      * @return the (1-based) line location where this Token starts
      */      
     public int getBeginLine() {
-        ${grammar.lexerClassName} flm = getTokenSource();
+        TokenSource<?> flm = getTokenSource();
         return flm == null ? 0 : flm.getLineFromOffset(getBeginOffset());                
     };
 
@@ -213,7 +198,7 @@ public class Token ${implementsNode} {
      * @return the (1-based) line location where this Token ends
      */
     public int getEndLine() {
-        ${grammar.lexerClassName} flm = getTokenSource();
+        TokenSource<?> flm = getTokenSource();
         return flm == null ? 0 : flm.getLineFromOffset(getEndOffset()-1);
     };
 
@@ -221,7 +206,7 @@ public class Token ${implementsNode} {
      * @return the (1-based) column where this Token starts
      */
     public int getBeginColumn() {
-        ${grammar.lexerClassName} flm = getTokenSource();
+        TokenSource<?> flm = getTokenSource();
         return flm == null ? 0 : flm.getCodePointColumnFromOffset(getBeginOffset());        
     };
 
@@ -229,12 +214,12 @@ public class Token ${implementsNode} {
      * @return the (1-based) column offset where this Token ends
      */ 
     public int getEndColumn() {
-        ${grammar.lexerClassName} flm = getTokenSource();
+        TokenSource<?> flm = getTokenSource();
         return flm == null ? 0 : flm.getCodePointColumnFromOffset(getEndOffset());
     }
 
     public String getInputSource() {
-        ${grammar.lexerClassName} flm = getTokenSource();
+        TokenSource<?> flm = getTokenSource();
         return flm != null ? flm.getInputSource() : "input";
     }
 [/#if]    
@@ -298,7 +283,7 @@ public class Token ${implementsNode} {
 [#if !grammar.minimalToken]        
         if (appendedToken != null) return appendedToken;
 [/#if]        
-        ${grammar.lexerClassName} tokenSource = getTokenSource();
+        TokenSource<Token> tokenSource = getTokenSource();
         return tokenSource != null ? tokenSource.nextCachedToken(getEndOffset()) : null;
     }
 
@@ -307,7 +292,7 @@ public class Token ${implementsNode} {
         if (prependedToken !=null) return prependedToken;
 [/#if]        
         if (getTokenSource()==null) return null;
-        return getTokenSource().previousCachedToken(getBeginOffset());
+        return (Token) getTokenSource().previousCachedToken(getBeginOffset());
     }
 
     Token getPreviousToken() {
@@ -338,7 +323,7 @@ public class Token ${implementsNode} {
 
     public String getSource() {
          if (type == TokenType.EOF) return "";
-         ${grammar.lexerClassName} flm = getTokenSource();
+         TokenSource<?> flm = getTokenSource();
          return flm == null ? null : flm.getText(getBeginOffset(), getEndOffset());
     }
 
@@ -346,7 +331,7 @@ public class Token ${implementsNode} {
 
     protected Token() {}
 
-    public Token(TokenType type, ${grammar.lexerClassName} tokenSource, int beginOffset, int endOffset) {
+    public Token(TokenType type, TokenSource<Token> tokenSource, int beginOffset, int endOffset) {
         this.type = type;
         this.tokenSource = tokenSource;
         this.beginOffset = beginOffset;
@@ -469,7 +454,7 @@ public class Token ${implementsNode} {
     }
 [/#if]
 
-    public static Token newToken(TokenType type, ${grammar.lexerClassName} tokenSource, int beginOffset, int endOffset) {
+    public static Token newToken(TokenType type, TokenSource<Token> tokenSource, int beginOffset, int endOffset) {
         [#if grammar.treeBuildingEnabled]
            switch(type) {
            [#list grammar.orderedNamedTokens as re]

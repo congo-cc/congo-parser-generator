@@ -159,7 +159,7 @@ public class FilesGenerator {
                 result = "NfaData.java.ftl";
             } else if (outputFilename.equals(grammar.getBaseNodeClassName() + ".java")) {
                 result = "BaseNode.java.ftl";
-            } else if (outputFilename.equals("TokenType.java") || outputFilename.equals("LexicalState.java")) {
+            } else if (outputFilename.equals("TokenType.java") || outputFilename.equals("LexicalState.java") || outputFilename.equals("TokenSource.java")) {
                 result = outputFilename + ".ftl";
             }
             else if (outputFilename.startsWith(grammar.getNodePrefix())) {
@@ -238,6 +238,8 @@ public class FilesGenerator {
         Path outputFile = grammar.getParserOutputDirectory().resolve("TokenType.java");
         generate(outputFile);
         outputFile = grammar.getParserOutputDirectory().resolve("LexicalState.java");
+        generate(outputFile);
+        outputFile = grammar.getParserOutputDirectory().resolve("TokenSource.java");
         generate(outputFile);
     }
 
