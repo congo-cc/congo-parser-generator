@@ -224,7 +224,7 @@ INJECT BaseNode :
             }
             if (outputOpeningBrace) {
                 buf.append(t);
-            } else if (t.getType() == LBRACE) {
+            } else if (t.getType() == TokenType.LBRACE) {
                 outputOpeningBrace = true;
             }
         }
@@ -463,7 +463,7 @@ INJECT TypeDeclaration :
    
     
     default boolean isClass() {
-        return firstChildOfType(CLASS) != null;
+        return firstChildOfType(TokenType.CLASS) != null;
     }
     
     default void addImplements(ObjectType type) {
