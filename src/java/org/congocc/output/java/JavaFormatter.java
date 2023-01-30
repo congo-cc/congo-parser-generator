@@ -22,9 +22,10 @@ public class JavaFormatter extends Node.Visitor {
     private String currentIndent = "";
     private String eol = "\n";
     private EnumSet<TokenType> alwaysPrependSpace = EnumSet.of(ASSIGN, COLON, LBRACE, THROWS, EQ, NE, LE, GE, PLUS, MINUS, SLASH, SC_AND, SC_OR, BIT_AND, BIT_OR, XOR, REM, LSHIFT, PLUSASSIGN, MINUSASSIGN, STARASSIGN, SLASHASSIGN, ANDASSIGN, ORASSIGN, XORASSIGN, REMASSIGN, LSHIFTASSIGN, RSIGNEDSHIFT, RUNSIGNEDSHIFT, RSIGNEDSHIFTASSIGN, RUNSIGNEDSHIFTASSIGN, LAMBDA);
-    private EnumSet<TokenType> alwaysAppendSpace = EnumSet.of(ASSIGN, COLON, COMMA, DO, CATCH, FOR, IF, WHILE, THROWS, EXTENDS, EQ, NE, LE, GE, PLUS, SLASH, SC_AND, SC_OR, BIT_AND, BIT_OR, XOR, REM, LSHIFT, PLUSASSIGN, MINUSASSIGN, STARASSIGN, SLASHASSIGN, ANDASSIGN, ORASSIGN, XORASSIGN, REMASSIGN, LSHIFTASSIGN, RSIGNEDSHIFT, RUNSIGNEDSHIFT, RSIGNEDSHIFTASSIGN, RUNSIGNEDSHIFTASSIGN, LAMBDA);
+    private EnumSet<TokenType> alwaysAppendSpace = EnumSet.of(ASSIGN, COLON, DO, CATCH, FOR, IF, WHILE, THROWS, EXTENDS, EQ, NE, LE, GE, PLUS, SLASH, SC_AND, SC_OR, BIT_AND, BIT_OR, XOR, REM, LSHIFT, PLUSASSIGN, MINUSASSIGN, STARASSIGN, SLASHASSIGN, ANDASSIGN, ORASSIGN, XORASSIGN, REMASSIGN, LSHIFTASSIGN, RSIGNEDSHIFT, RUNSIGNEDSHIFT, RSIGNEDSHIFTASSIGN, RUNSIGNEDSHIFTASSIGN, LAMBDA);
     private static final Pattern multiBlock = Pattern.compile("else|catch|finally");
-
+    private static final int MAX_LINE_LENGTH = 80;
+    
     public String format(BaseNode code, int indentLevel) {
         buf = new StringBuilder();
         for (int i = 0; i < indentLevel; i++) {
@@ -127,6 +128,14 @@ public class JavaFormatter extends Node.Visitor {
 
     void visit(Delimiter delimiter) {
         switch (delimiter.getType()) {
+            case COMMA :
+                outputToken(delimiter);
+                if (currentLineLength() > MAX_LINE_LENGTH) {
+                    if (delimiter.getParent() instanceof ArrayInitializer || delimiter.getParent() instanceof EnumBody)
+                        newLine();
+                }
+                else buf.append(' ');
+                break;
             case RBRACKET :
                 outputToken(delimiter);
                 TokenType nextType = delimiter.getNext().getType();
@@ -322,5 +331,9 @@ public class JavaFormatter extends Node.Visitor {
             buf.append(eol);
         }
         buf.append(currentIndent);
+    }
+
+    private int currentLineLength() {
+        return buf.length() - buf.lastIndexOf(eol) - eol.length();
     }
 }

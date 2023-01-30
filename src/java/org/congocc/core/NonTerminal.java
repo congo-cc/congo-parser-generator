@@ -29,7 +29,7 @@ public class NonTerminal extends Expansion {
     }
 
     public String getName() {
-        return firstChildOfType(TokenType.IDENTIFIER).getImage();
+        return firstChildOfType(TokenType.IDENTIFIER).getSource();
     }
     
     /**

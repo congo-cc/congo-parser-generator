@@ -16,6 +16,12 @@ public interface Node
    extends TemplateNodeModel, TemplateScalarModel
 [/#if] {
 
+    public interface NodeType {}
+
+    default NodeType getType() {
+        return null;
+    }
+
     /** Life-cycle hook method called after the node has been made the current
 	 *  node 
 	 */
@@ -380,29 +386,23 @@ public interface Node
     }
 
 [#if grammar.tokensAreNodes]
-    default Token firstDescendantOfType(TokenType type) {
+    default Node firstDescendantOfType(NodeType type) {
          for (int i=0; i<getChildCount(); i++) {
              Node child = getChild(i);
-             if (child instanceof Token) {
-                 Token tok = (Token) child;
-                 if (tok.getType()==type) {
-                     return tok;
-                 }
+             if (child.getType() == type) {
+                return (Token) child;
              } else {
-                 Token tok = child.firstDescendantOfType(type);
+                 Node tok = child.firstDescendantOfType(type);
                  if (tok != null) return tok;
              }
          }
          return null;
     }
 
-    default Token firstChildOfType(TokenType tokenType) {
+    default Node firstChildOfType(NodeType tokenType) {
         for (int i=0; i<getChildCount();i++) {
             Node child = getChild(i);
-            if (child instanceof Token) {
-                Token tok = (Token) child;
-                if (tok.getType() == tokenType) return tok;
-            }
+            if (child.getType() == tokenType) return child;
         }
         return null;
     }
@@ -454,8 +454,9 @@ public interface Node
         return null;
     }
 
-    default TokenType getTokenType() {
-        return this instanceof Token ? ((Token)this).getType() : null;
+    default NodeType getTokenType() {
+        //return this instanceof Token ? ((Token)this).getType() : null;
+        return getType();
     }
 
 [#if grammar.tokensAreNodes]

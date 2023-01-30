@@ -6,7 +6,11 @@
 package ${grammar.parserPackage};
 [/#if]
 
-public enum TokenType {
+public enum TokenType 
+[#if grammar.treeBuildingEnabled]
+   implements Node.NodeType
+[/#if]
+{
      [#list grammar.lexerData.regularExpressions as regexp]
        ${regexp.label},
      [/#list]

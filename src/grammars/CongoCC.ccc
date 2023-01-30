@@ -1114,7 +1114,7 @@ INJECT TreeBuildingAnnotation :
      * Just returns whatever comes after the hash ("#") including "void", etc.
      */
     public String getNodeName() {
-        Token hash = firstChildOfType(TokenType.HASH);
+        Token hash = (Token) firstChildOfType(TokenType.HASH);
         if (hash == null) return null;
         Node nextNode = hash.nextSibling();
         if (nextNode instanceof Name) {
