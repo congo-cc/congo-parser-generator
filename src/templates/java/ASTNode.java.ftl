@@ -28,7 +28,7 @@ public interface ${classname} extends Node {}
 [#else]
 
 [#if grammar.parserPackage?has_content]
-import static ${grammar.parserPackage}.${grammar.constantsClassName}.TokenType.*;
+import static ${grammar.parserPackage}.TokenType.*;
 [/#if]
 
 [#if isAbstract]abstract[/#if]

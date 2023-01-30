@@ -146,7 +146,6 @@ public class FilesGenerator {
 
     private String getTemplateName(String outputFilename) {
         String result = outputFilename + ".ftl";
-
         if (codeLang.equals("java")) {
             if (tokenSubclassFileNames.contains(outputFilename)) {
                 result = "ASTToken.java.ftl";
@@ -160,15 +159,16 @@ public class FilesGenerator {
             } else if (outputFilename.endsWith("NfaData.java") ||
                     outputFilename.equals(grammar.getNfaDataClassName() + ".java")) {
                 result = "NfaData.java.ftl";
-            } else if (outputFilename.endsWith(".html")) {
-                result = "doc.html.ftl";
             } else if (outputFilename.equals(grammar.getBaseNodeClassName() + ".java")) {
                 result = "BaseNode.java.ftl";
-            } else if (outputFilename.startsWith(grammar.getNodePrefix())) {
+            } else if (outputFilename.equals("TokenType.java") || outputFilename.equals("LexicalState.java")) {
+                result = outputFilename + ".ftl";
+            }
+            else if (outputFilename.startsWith(grammar.getNodePrefix())) {
                 if (!nonNodeNames.contains(outputFilename)) {
                     result = "ASTNode.java.ftl";
                 }
-            }
+            } 
         }
         else if (codeLang.equals("csharp")) {
             if (outputFilename.endsWith(".csproj")) {
@@ -237,8 +237,10 @@ public class FilesGenerator {
     }
 
     void generateConstantsFile() throws IOException, TemplateException {
-        String filename = grammar.getConstantsClassName() + ".java";
-        Path outputFile = grammar.getParserOutputDirectory().resolve(filename);
+        //String filename = grammar.getConstantsClassName() + ".java";
+        Path outputFile = grammar.getParserOutputDirectory().resolve("TokenType.java");
+        generate(outputFile);
+        outputFile = grammar.getParserOutputDirectory().resolve("LexicalState.java");
         generate(outputFile);
     }
 

@@ -35,10 +35,10 @@ import java.util.concurrent.CancellationException;
 [/#if]
 
 [#if grammar.parserPackage?has_content]
-import static ${grammar.parserPackage}.${grammar.constantsClassName}.TokenType.*;
+import static ${grammar.parserPackage}.TokenType.*;
 [/#if]
 
-public class ${grammar.parserClassName} implements ${grammar.constantsClassName} {
+public class ${grammar.parserClassName} {
 static final int UNLIMITED = Integer.MAX_VALUE;    
 // The last token successfully "consumed"
 Token lastConsumedToken;
@@ -214,11 +214,11 @@ public boolean isCancelled() {return cancelled;}
       token_source.reset(getToken(0));
   }
 
-  private void resetTo(${grammar.lexerClassName}.LexicalState state) {
+  private void resetTo(LexicalState state) {
     token_source.reset(getToken(0), state);
   }
 
-  private void resetTo(Token tok, ${grammar.lexerClassName}.LexicalState state) {
+  private void resetTo(Token tok, LexicalState state) {
     token_source.reset(tok, state);
   } 
 

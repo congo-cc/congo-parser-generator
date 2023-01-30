@@ -15,10 +15,10 @@ package ${grammar.nodePackage};
 
 [#if grammar.parserPackage?has_content && package != grammar.parserPackage]
 import ${grammar.parserPackage}.*;
-import ${grammar.parserPackage}.${grammar.constantsClassName}.TokenType;
+import ${grammar.parserPackage}.TokenType;
 [/#if]
 [#if grammar.parserPackage?has_content]
-import static ${grammar.parserPackage}.${grammar.constantsClassName}.TokenType.*;
+import static ${grammar.parserPackage}.TokenType.*;
 [/#if]
 
 public class ${classname} extends ${superclass} {

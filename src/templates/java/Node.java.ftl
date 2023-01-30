@@ -380,7 +380,7 @@ public interface Node
     }
 
 [#if grammar.tokensAreNodes]
-    default Token firstDescendantOfType(${grammar.constantsClassName}.TokenType type) {
+    default Token firstDescendantOfType(TokenType type) {
          for (int i=0; i<getChildCount(); i++) {
              Node child = getChild(i);
              if (child instanceof Token) {
@@ -396,7 +396,7 @@ public interface Node
          return null;
     }
 
-    default Token firstChildOfType(${grammar.constantsClassName}.TokenType tokenType) {
+    default Token firstChildOfType(TokenType tokenType) {
         for (int i=0; i<getChildCount();i++) {
             Node child = getChild(i);
             if (child instanceof Token) {
@@ -454,7 +454,7 @@ public interface Node
         return null;
     }
 
-    default ${grammar.constantsClassName}.TokenType getTokenType() {
+    default TokenType getTokenType() {
         return this instanceof Token ? ((Token)this).getType() : null;
     }
 

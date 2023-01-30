@@ -2,7 +2,7 @@ import java.io.*;
 import java.nio.file.Files;
 import java.util.*;
 import org.parsers.java.*;
-import org.parsers.java.JavaConstants.TokenType;
+import org.parsers.java.TokenType;
 
 /**
  * A test harness for lexing Java files from 

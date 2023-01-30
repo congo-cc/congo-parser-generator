@@ -2,7 +2,7 @@ import java.io.*;
 import java.nio.file.Files;
 import java.util.*;
 import org.parsers.python.*;
-import org.parsers.python.PythonConstants.TokenType;
+import org.parsers.python.TokenType;
 
 /**
  * A test harness for lexing Java files from 

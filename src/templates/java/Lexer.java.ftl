@@ -10,7 +10,7 @@
  
 [#if grammar.parserPackage?has_content]
     package ${grammar.parserPackage};
-    import static ${grammar.parserPackage}.${grammar.constantsClassName}.TokenType.*;
+    import static ${grammar.parserPackage}.TokenType.*;
 [/#if]
 
 [#import "CommonUtils.java.ftl" as CU  ]
@@ -57,14 +57,7 @@ import java.util.BitSet;
 import java.util.EnumMap;
 import java.util.EnumSet;
 
-public class ${grammar.lexerClassName} implements ${grammar.constantsClassName} {
-
-   public enum LexicalState {
-     [#list lexerData.lexicalStates as lexicalState]
-        ${lexicalState.name}
-         [#if lexicalState_has_next],[/#if]
-      [/#list]
-   }
+public class ${grammar.lexerClassName} {
 
     private void backup(int amount) {
         if (amount > bufferPosition) throw new ArrayIndexOutOfBoundsException();

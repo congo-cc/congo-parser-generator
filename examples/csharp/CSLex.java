@@ -3,7 +3,7 @@ import java.nio.file.Files;
 import java.util.*;
 
 import org.parsers.csharp.*;
-import org.parsers.csharp.CSharpConstants.TokenType;
+import org.parsers.csharp.TokenType;
 
 /**
  * A test harness for lexing C# files from

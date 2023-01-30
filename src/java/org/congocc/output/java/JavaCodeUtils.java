@@ -2,8 +2,8 @@ package org.congocc.output.java;
 
 import java.util.*;
 import org.congocc.parser.*;
-import static org.congocc.parser.CongoCCConstants.TokenType;
-import static org.congocc.parser.CongoCCConstants.TokenType.*;
+import org.congocc.parser.TokenType;
+import static org.congocc.parser.TokenType.*;
 import org.congocc.parser.tree.*;
 
 public class JavaCodeUtils {

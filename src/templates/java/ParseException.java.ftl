@@ -8,7 +8,7 @@
 import java.util.*;
 
 @SuppressWarnings("serial")
-public class ParseException extends ${BASE_EXCEPTION_TYPE} implements ${grammar.constantsClassName} {
+public class ParseException extends ${BASE_EXCEPTION_TYPE} {
 
   // The token we tripped up on.
   private Token token;

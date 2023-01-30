@@ -5,10 +5,8 @@ DEFAULT_LEXICAL_STATE="TEMPLATE_TEXT";
 INJECT FTLParser :
     import java.io.*;
     import java.util.*;
-    import PARSER_PACKAGE.LEXER_CLASS.LexicalState;
+    import PARSER_PACKAGE.LexicalState;
 {
-
-    static final boolean DUMPTREE = false;
 
     static public void main(String[] args) throws Exception {
         if (args.length == 0) {

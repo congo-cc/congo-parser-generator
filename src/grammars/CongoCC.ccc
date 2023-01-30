@@ -151,7 +151,7 @@ INJECT BaseNode :
     import java.lang.reflect.*;
     import org.congocc.Grammar;
     import NODE_PACKAGE.KeyWord;
-    implements Node, TemplateHashModel, CONSTANTS_CLASS;
+    implements Node, TemplateHashModel;
 {
     public TemplateModel get(String key) throws TemplateModelException {
         String methodName = "get" + key.substring(0,1).toUpperCase() + key.substring(1);
@@ -430,7 +430,7 @@ VariableDeclarator# : VariableDeclaratorId [ "=" VariableInitializer ] ;
 
 INJECT TypeDeclaration : 
     import java.util.*;
-    import PARSER_PACKAGE.CONSTANTS_CLASS.TokenType;
+    import PARSER_PACKAGE.TokenType;
 {
     default void addElements(List<ClassOrInterfaceBodyDeclaration> elements) {
         Set<String> keys = new HashSet<String>();

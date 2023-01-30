@@ -20,13 +20,13 @@ import java.util.List;
 import freemarker.template.*;
 [/#if]
 
- [#var extendsNode = ""]
+ [#var implementsNode = ""]
 
  [#if grammar.treeBuildingEnabled]
-    [#set extendsNode =", Node"]
+    [#set implementsNode ="implements Node"]
  [/#if]
 
-public class Token implements ${grammar.constantsClassName} ${extendsNode} {
+public class Token ${implementsNode} {
 
     transient private ${grammar.lexerClassName} tokenSource;
     
