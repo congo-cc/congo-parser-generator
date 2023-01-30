@@ -141,6 +141,9 @@ public class FilesGenerator {
             add("InvalidToken.java");
             add("Node.java");
             add("InvalidNode.java");
+            add("TokenSource.java");
+            add("LexicalState.java");
+            add("TokenType.java");
         }
     };
 
@@ -154,13 +157,8 @@ public class FilesGenerator {
             } else if (outputFilename.endsWith("Lexer.java")
                     || outputFilename.equals(grammar.getLexerClassName() + ".java")) {
                 result = "Lexer.java.ftl";
-            } else if (outputFilename.endsWith("NfaData.java") ||
-                    outputFilename.equals(grammar.getNfaDataClassName() + ".java")) {
-                result = "NfaData.java.ftl";
             } else if (outputFilename.equals(grammar.getBaseNodeClassName() + ".java")) {
                 result = "BaseNode.java.ftl";
-            } else if (outputFilename.equals("TokenType.java") || outputFilename.equals("LexicalState.java") || outputFilename.equals("TokenSource.java")) {
-                result = outputFilename + ".ftl";
             }
             else if (outputFilename.startsWith(grammar.getNodePrefix())) {
                 if (!nonNodeNames.contains(outputFilename)) {
@@ -239,8 +237,10 @@ public class FilesGenerator {
         generate(outputFile);
         outputFile = grammar.getParserOutputDirectory().resolve("LexicalState.java");
         generate(outputFile);
-        outputFile = grammar.getParserOutputDirectory().resolve("TokenSource.java");
-        generate(outputFile);
+        if (grammar.getRootAPIPackage() == null) {
+            outputFile = grammar.getParserOutputDirectory().resolve("TokenSource.java");
+            generate(outputFile);
+        }
     }
 
     void generateParseException() throws IOException, TemplateException {
@@ -328,7 +328,9 @@ public class FilesGenerator {
     }
 
     void generateTreeBuildingFiles() throws IOException, TemplateException {
-    	generateNodeFile();
+        if (grammar.getRootAPIPackage() == null) {
+    	    generateNodeFile();
+        }
         Map<String, Path> files = new LinkedHashMap<>();
         files.put(grammar.getBaseNodeClassName(), getOutputFile(grammar.getBaseNodeClassName()));
 

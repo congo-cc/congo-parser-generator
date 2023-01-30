@@ -998,12 +998,12 @@ public class Grammar extends BaseNode {
         return nodePackage;
     }
 
-    public String getBaseAPIPackage() {
-        String baseAPIPackage = (String) settings.get("BASE_API_PACKAGE");
-        if (baseAPIPackage == null) {
-            baseAPIPackage = this.getParserPackage();
+    public String getRootAPIPackage() {
+        String rootApiPackage = (String) settings.get("ROOT_API_PACKAGE");
+        if (rootApiPackage != null && rootApiPackage.equals(getParserPackage())) {
+            return null;
         }
-        return baseAPIPackage;
+        return rootApiPackage;
     }
 
     public String getCurrentNodeVariableName() {
@@ -1208,7 +1208,7 @@ public class Grammar extends BaseNode {
     }
     private int jdkTarget = 8;
     private String booleanSettings = ",FAULT_TOLERANT,PRESERVE_TABS,PRESERVE_LINE_ENDINGS,JAVA_UNICODE_ESCAPE,IGNORE_CASE,LEXER_USES_PARSER,NODE_DEFAULT_VOID,SMART_NODE_CREATION,NODE_USES_PARSER,TREE_BUILDING_DEFAULT,TREE_BUILDING_ENABLED,TOKENS_ARE_NODES,SPECIAL_TOKENS_ARE_NODES,UNPARSED_TOKENS_ARE_NODES,FREEMARKER_NODES,NODE_FACTORY,TOKEN_MANAGER_USES_PARSER,ENSURE_FINAL_EOL,MINIMAL_TOKEN,C_CONTINUATION_LINE,USE_CHECKED_EXCEPTION,LEGACY_GLITCHY_LOOKAHEAD,BASE_NODE_IN_PARSER_PACKAGE,";
-    private String stringSettings = ",BASE_NAME,PARSER_PACKAGE,PARSER_CLASS,LEXER_CLASS,BASE_SRC_DIR,BASE_NODE_CLASS,NODE_PREFIX,NODE_CLASS,NODE_PACKAGE,DEFAULT_LEXICAL_STATE,NODE_CLASS,OUTPUT_DIRECTORY,DEACTIVATE_TOKENS,EXTRA_TOKENS,BASE_API_PACKAGE,";
+    private String stringSettings = ",BASE_NAME,PARSER_PACKAGE,PARSER_CLASS,LEXER_CLASS,BASE_SRC_DIR,BASE_NODE_CLASS,NODE_PREFIX,NODE_CLASS,NODE_PACKAGE,DEFAULT_LEXICAL_STATE,NODE_CLASS,OUTPUT_DIRECTORY,DEACTIVATE_TOKENS,EXTRA_TOKENS,ROOT_API_PACKAGE,";
     private String integerSettings = ",TAB_SIZE,TABS_TO_SPACES,JDK_TARGET,";
 
     public boolean isASetting(String key) {

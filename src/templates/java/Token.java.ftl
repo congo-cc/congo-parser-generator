@@ -16,6 +16,10 @@ import java.util.Collections;
 import java.util.Iterator;
 import java.util.List;
 
+[#if grammar.rootAPIPackage?has_content]
+import ${grammar.rootAPIPackage}.Node;
+[/#if]
+
 [#if grammar.settings.FREEMARKER_NODES?? && grammar.settings.FREEMARKER_NODES]
 import freemarker.template.*;
 [/#if]
@@ -24,6 +28,9 @@ import freemarker.template.*;
 
  [#if grammar.treeBuildingEnabled]
     [#set implementsNode ="implements Node.TerminalNode"]
+    [#if grammar.rootAPIPackage?has_content]
+       import ${grammar.rootAPIPackage}.Node;
+    [/#if]
  [/#if]
 
 public class Token ${implementsNode} {
