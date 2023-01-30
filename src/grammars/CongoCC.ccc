@@ -723,17 +723,11 @@ INJECT Identifier :
         if (image.equals("LEXER_CLASS")) {
             return getGrammar().getLexerClassName();
         }
-        if (image.equals("CONSTANTS_CLASS")) {
-            return getGrammar().getConstantsClassName();
-        }
         if (image.equals("NODE_PACKAGE")) {
             return getGrammar().getNodePackage();
         }
         if (image.equals("PARSER_PACKAGE")) {
             return getGrammar().getParserPackage();
-        }
-        if (image.equals("current_token")) {
-            return "lastConsumedToken";
         }
         if (image.equals("TOKEN_HOOK")) {
             if (tokenHookName ==null) {

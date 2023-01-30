@@ -171,7 +171,7 @@ def main():
             Token = getattr(mod, 'Token')
         else:
             Lexer = getattr(mod, cls)
-            TokenType = getattr(Lexer, 'TokenType')
+            TokenType = getattr(mod, 'TokenType')
     elif IS_DOTNET:
         resdir = 'csharp'
         # import pdb; pdb.set_trace()

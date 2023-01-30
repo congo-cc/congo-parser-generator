@@ -12,7 +12,7 @@ import org.congocc.parser.tree.*;
  */
 public class CodeInjector {
     
-    private final String parserPackage, nodePackage, parserClassName, lexerClassName, constantsClassName, baseNodeClassName;
+    private final String parserPackage, nodePackage, parserClassName, lexerClassName, baseNodeClassName;
 
     private final Map<String, TypeDeclaration> types = new HashMap<>();  // Not presently queried ...
     private final Map<String, Set<ImportDeclaration>> injectedImportsMap = new HashMap<>();
@@ -34,7 +34,6 @@ public class CodeInjector {
         this.grammar = grammar;
         parserClassName = grammar.getParserClassName();
         lexerClassName = grammar.getLexerClassName();
-        constantsClassName = grammar.getConstantsClassName();
         baseNodeClassName = grammar.getBaseNodeClassName();
         if (parserPackage == null) {
             parserPackage = "";
@@ -58,7 +57,6 @@ public class CodeInjector {
     private boolean isInNodePackage(String classname) {
         return !classname.equals(parserClassName)
              && !classname.equals(lexerClassName)
-             && !classname.equals(constantsClassName)
              //&& !classname.equals(baseNodeClassName)
              && !classname.equals("ParseException")
              && !classname.equals("Token")

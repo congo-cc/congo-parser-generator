@@ -73,7 +73,7 @@ public class FilesGenerator {
             case "java":
                 generateToken();
                 generateLexer();
-                generateConstantsFile();
+                generateEnumFiles();
                 if (!grammar.getProductionTable().isEmpty()) {
                     generateParseException();
                     generateParser();
@@ -151,8 +151,6 @@ public class FilesGenerator {
                 result = "ASTToken.java.ftl";
             } else if (outputFilename.equals(grammar.getParserClassName() + ".java")) {
                 result = "Parser.java.ftl";
-            } else if (outputFilename.equals(grammar.getConstantsClassName() + ".java")) {
-                result = "Constants.java.ftl";
             } else if (outputFilename.endsWith("Lexer.java")
                     || outputFilename.equals(grammar.getLexerClassName() + ".java")) {
                 result = "Lexer.java.ftl";
@@ -236,8 +234,7 @@ public class FilesGenerator {
         }
     }
 
-    void generateConstantsFile() throws IOException, TemplateException {
-        //String filename = grammar.getConstantsClassName() + ".java";
+    void generateEnumFiles() throws IOException, TemplateException {
         Path outputFile = grammar.getParserOutputDirectory().resolve("TokenType.java");
         generate(outputFile);
         outputFile = grammar.getParserOutputDirectory().resolve("LexicalState.java");
