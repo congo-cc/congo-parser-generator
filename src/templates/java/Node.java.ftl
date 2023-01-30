@@ -15,8 +15,12 @@ public interface Node
 [#if grammar.settings.FREEMARKER_NODES?? && grammar.settings.FREEMARKER_NODES]
    extends TemplateNodeModel, TemplateScalarModel
 [/#if] {
-
+    // Marker interface for objects
+    // that represent a node's type, i.e. TokenType
     public interface NodeType {}
+
+    //Marker interface for tokens
+    public interface TerminalNode extends Node {}
 
     default NodeType getType() {
         return null;
@@ -277,13 +281,17 @@ public interface Node
       * this is just the default implementation of an API and it does not 
       * address this problem!
       */
-     default String getSource() {
+    default String getSource() {
         ${grammar.lexerClassName} tokenSource = getTokenSource();
         return tokenSource == null ? null : tokenSource.getText(getBeginOffset(), getEndOffset());
     }
 
+    default String getImage() {
+        return getSource();
+    }
+
     default int getLength() {
-        return 1 + getEndOffset() - getBeginOffset();
+        return getEndOffset() - getBeginOffset();
     }
 
     /**

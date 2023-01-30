@@ -256,7 +256,7 @@
        activateTokenTypes(
     [/#if]
     [#list activation.tokenNames as name]
-       ${CU.TT}${name} [#if name_has_next],[/#if]
+       ${name} [#if name_has_next],[/#if]
     [/#list]
        );
 [/#macro]
@@ -271,7 +271,7 @@
    [#var LHS = ""]
    [#if regexp.LHS??][#set LHS = regexp.LHS + "="][/#if]
    [#if !grammar.faultTolerant]
-       ${LHS} consumeToken(${CU.TT}${regexp.label});
+       ${LHS} consumeToken(${regexp.label});
    [#else]
        [#var tolerant = regexp.tolerantParsing?string("true", "false")]
        [#var followSetVarName = regexp.followSetVarName]
@@ -283,7 +283,7 @@
             ${followSetVarName}.addAll(outerFollowSet);
          }
        [/#if]
-       ${LHS} consumeToken(${CU.TT}${regexp.label}, ${tolerant}, ${followSetVarName});
+       ${LHS} consumeToken(${regexp.label}, ${tolerant}, ${followSetVarName});
    [/#if]
    [#if !regexp.childName?is_null && !grammar.currentNodeVariableName?is_null]
     if (buildTree) {
@@ -503,7 +503,7 @@
    [#elseif expansion.firstSet.tokenNames?size < CU.USE_FIRST_SET_THRESHOLD] 
       [#list expansion.firstSet.tokenNames as name]
           nextTokenType [#if name_index ==0]() [/#if]
-          == ${CU.TT}${name} 
+          == ${name} 
          [#if name_has_next] || [/#if] 
       [/#list]
    [#else]

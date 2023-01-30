@@ -23,12 +23,12 @@ import freemarker.template.*;
  [#var implementsNode = ""]
 
  [#if grammar.treeBuildingEnabled]
-    [#set implementsNode ="implements Node"]
+    [#set implementsNode ="implements Node.TerminalNode"]
  [/#if]
 
 public class Token ${implementsNode} {
 
-    transient private ${grammar.lexerClassName} tokenSource;
+    private ${grammar.lexerClassName} tokenSource;
     
     private TokenType type;
     
@@ -142,6 +142,7 @@ public class Token ${implementsNode} {
     /**
      * Return the TokenType of this Token object
      */
+[#if grammar.treeBuildingEnabled]@Override[/#if]
     public TokenType getType() {
         return type;
     }
@@ -249,6 +250,7 @@ public class Token ${implementsNode} {
     /**
      * @return the string image of the token.
      */
+[#if grammar.treeBuildingEnabled]@Override[/#if]
     public String getImage() {
       [#if grammar.minimalToken]
         return getSource();
@@ -425,7 +427,7 @@ public class Token ${implementsNode} {
      * Copy the location info from a Node
      */
     public void copyLocationInfo(Node from) {
-        Node.super.copyLocationInfo(from);
+        Node.TerminalNode.super.copyLocationInfo(from);
         if (from instanceof Token) {
             Token otherTok = (Token) from;
             appendedToken = otherTok.appendedToken;
@@ -435,7 +437,7 @@ public class Token ${implementsNode} {
     }
     
     public void copyLocationInfo(Node start, Node end) {
-        Node.super.copyLocationInfo(start, end);
+        Node.TerminalNode.super.copyLocationInfo(start, end);
         if (start instanceof Token) {
             prependedToken = ((Token) start).prependedToken;
         }

@@ -17,11 +17,11 @@ INJECT LEXER_CLASS :
   // Set whether to generate unparsed tokens for WHITESPACE
   static public void keepWhitespace(boolean b) {
     if (b) {
-        skippedTokens.remove(TokenType.WHITESPACE);
-        unparsedTokens.add(TokenType.WHITESPACE);
+        skippedTokens.remove(WHITESPACE);
+        unparsedTokens.add(WHITESPACE);
     } else {
-        skippedTokens.add(TokenType.WHITESPACE);
-        unparsedTokens.remove(TokenType.WHITESPACE);
+        skippedTokens.add(WHITESPACE);
+        unparsedTokens.remove(WHITESPACE);
     }
   }
 }
@@ -224,7 +224,7 @@ INJECT BaseNode :
             }
             if (outputOpeningBrace) {
                 buf.append(t);
-            } else if (t.getType() == TokenType.LBRACE) {
+            } else if (t.getType() == LBRACE) {
                 outputOpeningBrace = true;
             }
         }
@@ -370,7 +370,7 @@ INJECT ImplementsList :
     public void addType(ObjectType type) {
         ListIterator<Node> iterator = iterator();
         if (!iterator.hasNext()) {
-            iterator.add(Token.newToken(TokenType.IMPLEMENTS, "implements", this.getTokenSource()));
+            iterator.add(Token.newToken(IMPLEMENTS, "implements", this.getTokenSource()));
             iterator.next();
             iterator.add(type);
         } else {
@@ -378,7 +378,7 @@ INJECT ImplementsList :
                 if (type.equals(iterator.next())) 
                     return;
             }
-            iterator.add(Token.newToken(TokenType.COMMA, ",", this.getTokenSource()));
+            iterator.add(Token.newToken(COMMA, ",", this.getTokenSource()));
             iterator.next();
             iterator.add(type);
         }
@@ -423,8 +423,8 @@ INJECT InvocationArguments :
 
 // In general, it is probably better to INCLUDE the (more stable) Java grammar
 // that is in the bootstrap jarfile.
-//INCLUDE JAVA
-INCLUDE "../../examples/java/Java.ccc"
+INCLUDE JAVA
+//INCLUDE "../../examples/java/Java.ccc"
 
 VariableDeclarator# : VariableDeclaratorId [ "=" VariableInitializer ] ;
 
@@ -463,7 +463,7 @@ INJECT TypeDeclaration :
    
     
     default boolean isClass() {
-        return firstChildOfType(TokenType.CLASS) != null;
+        return firstChildOfType(CLASS) != null;
     }
     
     default void addImplements(ObjectType type) {
@@ -511,7 +511,7 @@ INJECT ExtendsList :
         }
         ListIterator<Node> iterator = iterator();
         if (!iterator.hasNext()) {
-            iterator.add(Token.newToken(TokenType.EXTENDS, "extends", this.getTokenSource()));
+            iterator.add(Token.newToken(EXTENDS, "extends", this.getTokenSource()));
             iterator.next();
             iterator.add(type);
         } else {
@@ -519,7 +519,7 @@ INJECT ExtendsList :
                 if (type.equals(iterator.next())) 
                     return;
             }
-            iterator.add(Token.newToken(TokenType.COMMA, ",", this.getTokenSource()));
+            iterator.add(Token.newToken(COMMA, ",", this.getTokenSource()));
             iterator.next();
             iterator.add(type);
         }
@@ -537,7 +537,7 @@ INJECT TypeParameters :
                 iterator.next();
             }
             iterator.previous();
-            iterator.add(Token.newToken(TokenType.COMMA, ",", this.getTokenSource()));
+            iterator.add(Token.newToken(COMMA, ",", this.getTokenSource()));
             iterator.next();
             iterator.add(param);
         }
@@ -566,7 +566,7 @@ INJECT ClassOrInterfaceBody :
             n = iterator.next();
               if (n instanceof Token) {
               Token t = (Token) n;
-               if (t.getType() == TokenType.LBRACE) {
+               if (t.getType() == LBRACE) {
                    break;
                }
               }
@@ -1114,7 +1114,7 @@ INJECT TreeBuildingAnnotation :
      * Just returns whatever comes after the hash ("#") including "void", etc.
      */
     public String getNodeName() {
-        Token hash = (Token) firstChildOfType(TokenType.HASH);
+        Token hash = (Token) firstChildOfType(HASH);
         if (hash == null) return null;
         Node nextNode = hash.nextSibling();
         if (nextNode instanceof Name) {
@@ -1915,10 +1915,10 @@ INJECT TokenActivation :
     public List<String> getDeactivatedTokens() {
         List<String> result = new ArrayList<>();
         for (Identifier id : childrenOfType(Identifier.class)) {
-            if (id.getPrevious().getType() == TokenType.MINUS) {
+            if (id.getPrevious().getType() == MINUS) {
                 result.add(id.getImage());
             }
-            else if (isDeactivate() && id.getPrevious().getType() != TokenType.PLUS) {
+            else if (isDeactivate() && id.getPrevious().getType() != PLUS) {
                 result.add(id.getImage());
             }
         }
@@ -1928,10 +1928,10 @@ INJECT TokenActivation :
     public List<String> getActivatedTokens() {
         List<String> result = new ArrayList<>();
         for (Identifier id : childrenOfType(Identifier.class)) {
-            if (id.getPrevious().getType() == TokenType.PLUS) {
+            if (id.getPrevious().getType() == PLUS) {
                 result.add(id.getImage());
             }
-            else if (!isDeactivate() && id.getPrevious().getType() != TokenType.MINUS) {
+            else if (!isDeactivate() && id.getPrevious().getType() != MINUS) {
                 result.add(id.getImage());
             }
         }
@@ -2283,7 +2283,7 @@ INJECT CharacterList :
     }
 
     public boolean isNegated() {
-        return firstChildOfType(TokenType.TILDE) != null;
+        return firstChildOfType(TILDE) != null;
     }
 
     public boolean matchesEmptyString() {

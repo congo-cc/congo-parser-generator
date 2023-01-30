@@ -404,7 +404,7 @@
     [#if firstSet?size < CU.USE_FIRST_SET_THRESHOLD]
       if (!scanToken(
         [#list expansion.firstSet.tokenNames as name]
-          ${CU.TT}${name}
+          ${name}
           [#if name_has_next],[/#if]
         [/#list]
       )) return false; 
@@ -508,7 +508,7 @@
      [#if expansion.firstSet.tokenNames?size < CU.USE_FIRST_SET_THRESHOLD]
       scanToken(
         [#list expansion.firstSet.tokenNames as name]
-          ${CU.TT}${name}
+          ${name}
           [#if name_has_next],[/#if]
         [/#list]
       ) 

@@ -130,8 +130,10 @@ public class JavaFormatter extends Node.Visitor {
         switch (delimiter.getType()) {
             case COMMA :
                 outputToken(delimiter);
-                if (currentLineLength() > MAX_LINE_LENGTH) {
-                    if (delimiter.getParent() instanceof ArrayInitializer || delimiter.getParent() instanceof EnumBody)
+                if (currentLineLength() > MAX_LINE_LENGTH 
+                    && (delimiter.getParent() instanceof ArrayInitializer 
+                        || delimiter.getParent() instanceof EnumBody)) 
+                {
                         newLine();
                 }
                 else buf.append(' ');

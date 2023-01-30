@@ -33,7 +33,7 @@
        static final EnumSet<TokenType> ${varName} = EnumSet.of(
        [#list tokenNames as type]
           [#if type_index > 0],[/#if]
-          ${CU.TT}${type} 
+          ${type} 
        [/#list]
      ); 
    [/#if]
@@ -58,7 +58,7 @@ import java.util.EnumMap;
 import java.util.EnumSet;
 
 public class ${grammar.lexerClassName} {
-
+ [@CU.TokenTypeConstants/]
     private void backup(int amount) {
         if (amount > bufferPosition) throw new ArrayIndexOutOfBoundsException();
         this.bufferPosition -= amount;
@@ -132,10 +132,10 @@ public class ${grammar.lexerClassName} {
   [#if grammar.deactivatedTokens?size>0 || grammar.extraTokens?size >0]
      {
        [#list grammar.deactivatedTokens as token]
-          activeTokenTypes.remove(${CU.TT}${token});
+          activeTokenTypes.remove(${token});
        [/#list]
        [#list grammar.extraTokenNames as token]
-          regularTokens.add(${CU.TT}${token});
+          regularTokens.add(${token});
        [/#list]
      }
   [/#if]
@@ -297,7 +297,7 @@ public class ${grammar.lexerClassName} {
             tokenBeginOffset = this.bufferPosition;
             firstChar = curChar = readChar();
             if (curChar == -1) {
-              matchedType = TokenType.EOF;
+              matchedType = EOF;
               reachedEnd = true;
             }
         } 
@@ -385,7 +385,7 @@ public class ${grammar.lexerClassName} {
   static {
     [#list grammar.lexerData.regularExpressions as regexp]
       [#if !regexp.newLexicalState?is_null]
-          tokenTypeToLexicalStateMap.put(TokenType.${regexp.label},LexicalState.${regexp.newLexicalState.name});
+          tokenTypeToLexicalStateMap.put(${regexp.label}, LexicalState.${regexp.newLexicalState.name});
       [/#if]
     [/#list]
   }
@@ -1086,8 +1086,8 @@ public class ${grammar.lexerClassName} {
         [#-- We've reached the end of the block. --]
           [#var type = state.nextStateType]
           [#if type??]
-            if (validTypes.contains(${CU.TT}${type.label}))
-              type = ${CU.TT}${type.label};
+            if (validTypes.contains(${type.label}))
+              type = ${type.label};
           [/#if]
         }
       [/#if]

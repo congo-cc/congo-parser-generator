@@ -3,13 +3,13 @@
 [#-- A place to put some utility routines used in various templates. Currently doesn't
      really have much! --]
 
-[#var TT = "TokenType."]
+[#--var TT = "TokenType."--]
 [#var USE_FIRST_SET_THRESHOLD = 5]
 
- [#if grammar.parserPackage?has_content]
+ [#--if grammar.parserPackage?has_content]
    [#-- This is necessary because you can't do a static import from the unnamed or "default package" --]
-   [#set TT=""]
- [/#if]
+   [#--set TT=""]
+ [/#if--]
 
 [#--
   Rewritten version of this macro to try to get around the Code too large problem.
@@ -21,7 +21,7 @@
     static private final EnumSet<TokenType> ${varName} = tokenTypeSet(
        [#list tokenNames as type]
          [#if type_index > 0],[/#if]
-         ${TT}${type}
+         ${type}
        [/#list]
     );
    [#else]
@@ -30,7 +30,7 @@
        return tokenTypeSet(
          [#list tokenNames as type]
           [#if type_index > 0],[/#if]
-           ${TT}${type}
+           ${type}
          [/#list]
        );
     }
@@ -115,14 +115,14 @@
       [#if tokenActivation.activatedTokens?size>0]
          ${somethingChanged} = activateTokenTypes(
          [#list tokenActivation.activatedTokens as tokenName]
-             ${TT}${tokenName}[#if tokenName_has_next],[/#if]
+             ${tokenName}[#if tokenName_has_next],[/#if]
          [/#list]
          );
       [/#if]
       [#if tokenActivation.deactivatedTokens?size>0]
          ${somethingChanged} = ${somethingChanged} |= deactivateTokenTypes(
          [#list tokenActivation.deactivatedTokens as tokenName]
-             ${TT}${tokenName}[#if tokenName_has_next],[/#if]
+             ${tokenName}[#if tokenName_has_next],[/#if]
          [/#list]
          );
       [/#if]
@@ -141,3 +141,16 @@
    [/#if]
 [/#macro]
 
+[#macro TokenTypeConstants]
+ [#if !grammar.parserPackage?has_content]
+  static private final TokenType 
+   [#list grammar.lexerData.regularExpressions as regexp]
+      [#if regexp_index > 0],[/#if]
+       ${regexp.label} = TokenType.${regexp.label}
+   [/#list]
+   [#list grammar.extraTokenNames as extraToken]
+       , ${extraToken} = TokenType.${extraToken}
+   [/#list]
+   , INVALID = TokenType.INVALID;
+[/#if]
+[/#macro]
