@@ -8,6 +8,7 @@ namespace ${csPackage} {
     using System.Collections.Generic;
     using System.Diagnostics;
     using System.Text;
+    using static TokenType;
 ${grammar.utils.translateParserImports()}
 
     public class ParseException : Exception {
