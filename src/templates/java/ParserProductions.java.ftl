@@ -1,5 +1,3 @@
-[#ftl strict_vars=true]
-
 [#-- This template contains the core logic for generating the various parser routines. --]
 
 [#import "CommonUtils.java.ftl" as CU]

@@ -1,5 +1,3 @@
-[#ftl strict_vars=true]
-
 [#-- A place to put some utility routines used in various templates. Currently doesn't
      really have much! --]
 

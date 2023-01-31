@@ -1,5 +1,3 @@
-[#ftl strict_vars=true]
-
 [#if grammar.treeBuildingDefault]
     private boolean buildTree = true;
 [#else]

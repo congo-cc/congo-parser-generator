@@ -53,6 +53,7 @@ public class FilesGenerator {
         fmConfig.setObjectWrapper(new BeansWrapper());
         fmConfig.setNumberFormat("computer");
         fmConfig.setArithmeticEngine(freemarker.core.ast.ArithmeticEngine.CONSERVATIVE_ENGINE);
+        fmConfig.setStrictVariableDefinition(true);
     }
 
     public FilesGenerator(Grammar grammar, String codeLang, List<Node> codeInjections) {
