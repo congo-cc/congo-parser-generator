@@ -11,7 +11,7 @@ import java.util.function.Predicate;
 import freemarker.template.*;
 [/#if]
 
-public interface Node 
+public interface Node
 [#if grammar.settings.FREEMARKER_NODES?? && grammar.settings.FREEMARKER_NODES]
    extends TemplateNodeModel, TemplateScalarModel
 [/#if] {
@@ -42,7 +42,7 @@ public interface Node
      * @return the input source (usually a filename) from which this Node came from
      */
     default String getInputSource() {
-        TokenSource<?> tokenSource = getTokenSource();
+        TokenSource tokenSource = getTokenSource();
         return tokenSource == null ? "input" : tokenSource.getInputSource();
     }
 
@@ -267,9 +267,9 @@ public interface Node
       * Node yourself, i.e. it didn't really come about via the parsing/tokenizing
       * machinery.
       */
-     TokenSource<Token> getTokenSource();
+     TokenSource getTokenSource();
 
-     void setTokenSource(TokenSource<Token> tokenSource);
+     void setTokenSource(TokenSource tokenSource);
 
      /**
       * @return the original source content this Node came from
@@ -282,7 +282,7 @@ public interface Node
       * address this problem!
       */
     default String getSource() {
-        TokenSource<?> tokenSource = getTokenSource();
+        TokenSource tokenSource = getTokenSource();
         return tokenSource == null ? null : tokenSource.getText(getBeginOffset(), getEndOffset());
     }
 
@@ -298,7 +298,7 @@ public interface Node
      * @return the (1-based) line location where this Node starts
      */      
     default int getBeginLine() {
-        TokenSource<?> tokenSource = getTokenSource();
+        TokenSource tokenSource = getTokenSource();
         return tokenSource == null ? 0 : tokenSource.getLineFromOffset(getBeginOffset());                
     };
 
@@ -306,7 +306,7 @@ public interface Node
      * @return the (1-based) line location where this Node ends
      */
     default int getEndLine() {
-        TokenSource<?> tokenSource = getTokenSource();
+        TokenSource tokenSource = getTokenSource();
         return tokenSource == null ? 0 : tokenSource.getLineFromOffset(getEndOffset()-1);
     };
 
@@ -314,7 +314,7 @@ public interface Node
      * @return the (1-based) column where this Node starts
      */
     default int getBeginColumn() {
-        TokenSource<?> tokenSource = getTokenSource();
+        TokenSource tokenSource = getTokenSource();
         return tokenSource == null ? 0 : tokenSource.getCodePointColumnFromOffset(getBeginOffset());        
     };
 
@@ -322,7 +322,7 @@ public interface Node
      * @return the (1-based) column offset where this Node ends
      */ 
     default int getEndColumn() {
-        TokenSource<?> tokenSource = getTokenSource();
+        TokenSource tokenSource = getTokenSource();
         return tokenSource == null ? 0 : tokenSource.getCodePointColumnFromOffset(getEndOffset()-1);
     }
     

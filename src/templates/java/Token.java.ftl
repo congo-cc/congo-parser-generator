@@ -37,7 +37,7 @@ import freemarker.template.*;
 
 public class Token ${implementsNode} {
 
-    private TokenSource<Token> tokenSource;
+    private TokenSource tokenSource;
     
     private TokenType type;
     
@@ -86,13 +86,13 @@ public class Token ${implementsNode} {
      * @param image the String content of the token
      * @param tokenSource the object that vended this token.
      */
-    public Token(TokenType type, String image, TokenSource<Token> tokenSource) {
+    public Token(TokenType type, String image, TokenSource tokenSource) {
         this.type = type;
         this.image = image;
         this.tokenSource = tokenSource;
     }
 
-    public static Token newToken(TokenType type, String image, TokenSource<Token> tokenSource) {
+    public static Token newToken(TokenType type, String image, TokenSource tokenSource) {
         Token result = newToken(type, tokenSource, 0, 0);
         result.setImage(image);
         return result;
@@ -121,7 +121,7 @@ public class Token ${implementsNode} {
      * @return the ${grammar.lexerClassName} object that handles 
      * location info for the tokens. 
      */
-    public TokenSource<Token> getTokenSource() {
+    public TokenSource getTokenSource() {
         return this.tokenSource; 
     }
 
@@ -129,7 +129,7 @@ public class Token ${implementsNode} {
      * It should be exceedingly rare that an application
      * programmer needs to use this method.
      */
-    public void setTokenSource(TokenSource<Token> tokenSource) {
+    public void setTokenSource(TokenSource tokenSource) {
         this.tokenSource = tokenSource;
     }
 
@@ -199,7 +199,7 @@ public class Token ${implementsNode} {
      * @return the (1-based) line location where this Token starts
      */      
     public int getBeginLine() {
-        TokenSource<?> flm = getTokenSource();
+        TokenSource flm = getTokenSource();
         return flm == null ? 0 : flm.getLineFromOffset(getBeginOffset());                
     };
 
@@ -207,7 +207,7 @@ public class Token ${implementsNode} {
      * @return the (1-based) line location where this Token ends
      */
     public int getEndLine() {
-        TokenSource<?> flm = getTokenSource();
+        TokenSource flm = getTokenSource();
         return flm == null ? 0 : flm.getLineFromOffset(getEndOffset()-1);
     };
 
@@ -215,7 +215,7 @@ public class Token ${implementsNode} {
      * @return the (1-based) column where this Token starts
      */
     public int getBeginColumn() {
-        TokenSource<?> flm = getTokenSource();
+        TokenSource flm = getTokenSource();
         return flm == null ? 0 : flm.getCodePointColumnFromOffset(getBeginOffset());        
     };
 
@@ -223,12 +223,12 @@ public class Token ${implementsNode} {
      * @return the (1-based) column offset where this Token ends
      */ 
     public int getEndColumn() {
-        TokenSource<?> flm = getTokenSource();
+        TokenSource flm = getTokenSource();
         return flm == null ? 0 : flm.getCodePointColumnFromOffset(getEndOffset());
     }
 
     public String getInputSource() {
-        TokenSource<?> flm = getTokenSource();
+        TokenSource flm = getTokenSource();
         return flm != null ? flm.getInputSource() : "input";
     }
 [/#if]    
@@ -292,8 +292,8 @@ public class Token ${implementsNode} {
 [#if !grammar.minimalToken]        
         if (appendedToken != null) return appendedToken;
 [/#if]        
-        TokenSource<Token> tokenSource = getTokenSource();
-        return tokenSource != null ? tokenSource.nextCachedToken(getEndOffset()) : null;
+        TokenSource tokenSource = getTokenSource();
+        return tokenSource != null ? (Token) tokenSource.nextCachedToken(getEndOffset()) : null;
     }
 
     public Token previousCachedToken() {
@@ -332,7 +332,7 @@ public class Token ${implementsNode} {
 
     public String getSource() {
          if (type == TokenType.EOF) return "";
-         TokenSource<?> flm = getTokenSource();
+         TokenSource flm = getTokenSource();
          return flm == null ? null : flm.getText(getBeginOffset(), getEndOffset());
     }
 
@@ -340,7 +340,7 @@ public class Token ${implementsNode} {
 
     protected Token() {}
 
-    public Token(TokenType type, TokenSource<Token> tokenSource, int beginOffset, int endOffset) {
+    public Token(TokenType type, TokenSource tokenSource, int beginOffset, int endOffset) {
         this.type = type;
         this.tokenSource = tokenSource;
         this.beginOffset = beginOffset;
@@ -463,7 +463,7 @@ public class Token ${implementsNode} {
     }
 [/#if]
 
-    public static Token newToken(TokenType type, TokenSource<Token> tokenSource, int beginOffset, int endOffset) {
+    public static Token newToken(TokenType type, TokenSource tokenSource, int beginOffset, int endOffset) {
         [#if grammar.treeBuildingEnabled]
            switch(type) {
            [#list grammar.orderedNamedTokens as re]

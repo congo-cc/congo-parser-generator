@@ -46,13 +46,8 @@ abstract public class TokenSource
 
     abstract void cacheToken(Token token);
 
-  [#if grammar.treeBuildingEnabled]
     abstract T previousCachedToken(int offset);
     abstract T nextCachedToken(int pos);
-  [#else]
-    abstract Token previousCachedToken(int pos);
-    abstract Token nextCachedToken(int pos);
-  [/#if]
 
    /**
     * @param bytes the raw byte array 

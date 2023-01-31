@@ -26,9 +26,9 @@ import java.util.Collections;
  * The base concrete class for non-terminal Nodes
  */
 public class ${grammar.baseNodeClassName} implements Node {
-    private TokenSource<Token> tokenSource;
+    private TokenSource tokenSource;
     
-    public TokenSource<Token> getTokenSource() {
+    public TokenSource getTokenSource() {
         if (tokenSource==null) {
             for (Node child : children()) {
                 tokenSource = child.getTokenSource();
@@ -38,7 +38,7 @@ public class ${grammar.baseNodeClassName} implements Node {
         return tokenSource;
     }
 
-    public void setTokenSource(TokenSource<Token> tokenSource) {
+    public void setTokenSource(TokenSource tokenSource) {
         this.tokenSource = tokenSource;
     }
     
