@@ -74,7 +74,7 @@ public class FilesGenerator {
             case "java":
                 generateToken();
                 generateLexer();
-                generateEnumFiles();
+                generateOtherFiles();
                 if (!grammar.getProductionTable().isEmpty()) {
                     generateParseException();
                     generateParser();
@@ -144,6 +144,7 @@ public class FilesGenerator {
             add("InvalidNode.java");
             add("TokenSource.java");
             add("LexicalState.java");
+            add("NonTerminalCall.java");
             add("TokenType.java");
         }
     };
@@ -233,13 +234,15 @@ public class FilesGenerator {
         }
     }
 
-    void generateEnumFiles() throws IOException, TemplateException {
+    void generateOtherFiles() throws IOException, TemplateException {
         Path outputFile = grammar.getParserOutputDirectory().resolve("TokenType.java");
         generate(outputFile);
         outputFile = grammar.getParserOutputDirectory().resolve("LexicalState.java");
         generate(outputFile);
         if (grammar.getRootAPIPackage() == null) {
             outputFile = grammar.getParserOutputDirectory().resolve("TokenSource.java");
+            generate(outputFile);
+            outputFile = grammar.getParserOutputDirectory().resolve("NonTerminalCall.java");
             generate(outputFile);
         }
     }

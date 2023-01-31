@@ -48,7 +48,7 @@ private int remainingLookahead;
 private boolean hitFailure, passedPredicate;
 private String currentlyParsedProduction, currentLookaheadProduction;
 private int lookaheadRoutineNesting, passedPredicateThreshold = -1;
-private EnumSet<TokenType> outerFollowSet;
+EnumSet<TokenType> outerFollowSet;
 
 [#if grammar.legacyGlitchyLookahead]
    private boolean legacyGlitchyLookahead = true;

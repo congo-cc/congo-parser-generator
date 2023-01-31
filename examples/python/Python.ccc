@@ -10,8 +10,14 @@
  * that are deliberately screwy.
  */
 
-PARSER_PACKAGE = org.parsers.python;
-NODE_PACKAGE = org.parsers.python.ast;
+#if congo_internal
+  ROOT_API_PACKAGE = org.congocc.parser;
+  PARSER_PACKAGE = org.congocc.python.parser;
+  NODE_PACKAGE = org.congocc.python.ast;
+#else
+  PARSER_PACKAGE = org.parsers.python;
+  NODE_PACKAGE = org.parsers.python.ast;
+#endif
 DEFAULT_LEXICAL_STATE = PYTHON;
 ENSURE_FINAL_EOL;
 DEACTIVATE_TOKENS=MATCH,CASE;

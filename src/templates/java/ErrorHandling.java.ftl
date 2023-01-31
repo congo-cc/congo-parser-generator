@@ -7,44 +7,8 @@ private ArrayList<NonTerminalCall> lookaheadStack = new ArrayList<>();
   private EnumSet<TokenType> currentFollowSet;
 [/#if]
 
-/**
- * Inner class that represents entering a grammar production
- */
-class NonTerminalCall {
-    final String sourceFile;
-    final String productionName;
-    final int line, column;
-
-   [#if grammar.faultTolerant]
-    final EnumSet<TokenType> followSet;
-   [/#if]
-
-
-    NonTerminalCall(String sourceFile, String productionName, int line, int column) {
-        this.sourceFile = sourceFile;
-        this.productionName = productionName;
-        this.line = line;
-        this.column = column;
-      [#if grammar.faultTolerant]
-        this.followSet = ${grammar.parserClassName}.this.outerFollowSet;
-      [/#if]
-    }
-
-    final ${grammar.lexerClassName} getTokenSource() {
-        return ${grammar.parserClassName}.this.token_source;
-    }
-
-    StackTraceElement createStackTraceElement() {
-        return new StackTraceElement("${grammar.parserClassName}", productionName, sourceFile, line);
-    }
-
-    void dump(PrintStream ps) {
-         ps.println(productionName + ":" + line + ":" + column);
-    }
-}
-
 private final void pushOntoCallStack(String methodName, String fileName, int line, int column) {
-   parsingStack.add(new NonTerminalCall(fileName, methodName, line, column));
+   parsingStack.add(new NonTerminalCall(this, token_source, fileName, methodName, line, column));
 }
 
 private final void popCallStack() {
@@ -111,7 +75,7 @@ private ListIterator<NonTerminalCall> stackIteratorBackward() {
 
 
 private final void pushOntoLookaheadStack(String methodName, String fileName, int line, int column) {
-    lookaheadStack.add(new NonTerminalCall(fileName, methodName, line, column));
+    lookaheadStack.add(new NonTerminalCall(this, token_source, fileName, methodName, line, column));
 }
 
 private final void popLookaheadStack() {

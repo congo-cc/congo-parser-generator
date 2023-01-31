@@ -15,13 +15,13 @@ public class ParseException extends ${BASE_EXCEPTION_TYPE} {
   //We were expecting one of these token types
   private EnumSet<TokenType> expectedTypes;
   
-    private List<${grammar.parserClassName}.NonTerminalCall> callStack;
+    private List<NonTerminalCall> callStack;
   
   private boolean alreadyAdjusted;
 
   private ${grammar.parserClassName} parser;
 
-  private void setInfo(${grammar.parserClassName} parser, Token token, EnumSet<TokenType> expectedTypes, List<${grammar.parserClassName}.NonTerminalCall> callStack) {
+  private void setInfo(${grammar.parserClassName} parser, Token token, EnumSet<TokenType> expectedTypes, List<NonTerminalCall> callStack) {
     this.parser = parser;
     if (token != null && token.getType() != TokenType.EOF && token.getNext() != null) {
         token = token.getNext();
@@ -35,7 +35,7 @@ public class ParseException extends ${BASE_EXCEPTION_TYPE} {
     return token != null && token.getType() == TokenType.EOF;
   }
 
-  public ParseException(${grammar.parserClassName} parser, Token token, EnumSet<TokenType> expectedTypes, List<${grammar.parserClassName}.NonTerminalCall> callStack) {
+  public ParseException(${grammar.parserClassName} parser, Token token, EnumSet<TokenType> expectedTypes, List<NonTerminalCall> callStack) {
       setInfo(parser, token, expectedTypes, callStack);
   }
 
@@ -44,7 +44,7 @@ public class ParseException extends ${BASE_EXCEPTION_TYPE} {
      setInfo(parser, parser.lastConsumedToken, null, parser.parsingStack);
   }
 
-  public ParseException(${grammar.parserClassName} parser, EnumSet<TokenType> expectedTypes, List<${grammar.parserClassName}.NonTerminalCall> callStack) {
+  public ParseException(${grammar.parserClassName} parser, EnumSet<TokenType> expectedTypes, List<NonTerminalCall> callStack) {
     this(parser, parser.lastConsumedToken, expectedTypes, callStack);
   }
 
@@ -118,7 +118,7 @@ public class ParseException extends ${BASE_EXCEPTION_TYPE} {
       if (alreadyAdjusted || callStack == null || callStack.isEmpty()) return;
       List<StackTraceElement> fullTrace = new LinkedList<>();
       List<StackTraceElement> ourCallStack = new LinkedList<>();
-      for (${grammar.parserClassName}.NonTerminalCall ntc : callStack) {
+      for (NonTerminalCall ntc : callStack) {
          ourCallStack.add(ntc.createStackTraceElement());
       }
       StackTraceElement[] jvmCallStack = super.getStackTrace();
