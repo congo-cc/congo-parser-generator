@@ -625,7 +625,7 @@ ${grammar.utils.translateCodeBlock(regexp.codeSnippet.javaCode, 12)}
                 if last_char != '\n' and last_char != '\r':
                     content += '\n'
             return content
-
+        tab_size=${grammar.tabSize}
         buf = []
         index = 0
         # This is just to handle tabs to spaces. If you don't have that setting set, it
@@ -671,7 +671,7 @@ ${grammar.utils.translateCodeBlock(regexp.codeSnippet.javaCode, 12)}
                 if index < cplen and code_points[index] == '\n':
                     index += 1
             elif ch == '\t' and not preserve_tabs:
-                spaces_to_add = self.tab_size - col % self.tab_size
+                spaces_to_add = tab_size - col % tab_size
                 for i in range(spaces_to_add):
                     buf.append(' ')
                     col += 1
