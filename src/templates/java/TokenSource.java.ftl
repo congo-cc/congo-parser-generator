@@ -6,6 +6,8 @@
 package ${grammar.parserPackage};
 [/#if]
 
+[#var BaseToken = grammar.treeBuildingEnabled?string("Node.TerminalNode", "Token")]
+
 import java.io.*;
 import java.nio.charset.Charset;
 import java.nio.Buffer;
@@ -18,8 +20,6 @@ import static java.nio.charset.StandardCharsets.*;
 
 
 abstract public class TokenSource
-[#if grammar.treeBuildingEnabled]<T extends Node.TerminalNode>
-[#else]<T extends Token>[/#if]
 {
     /**
      * @return the input source (usually a filename) 
@@ -43,10 +43,8 @@ abstract public class TokenSource
      */
     abstract public int getCodePointColumnFromOffset(int pos);
 
-    abstract void cacheToken(T token);
-
-    abstract T previousCachedToken(int offset);
-    abstract T nextCachedToken(int pos);
+    abstract ${BaseToken} nextCachedToken(int pos);
+    abstract ${BaseToken} previousCachedToken(int pos);
 
    /**
     * @param bytes the raw byte array 

@@ -50,7 +50,7 @@ import java.util.EnumSet;
 import ${grammar.rootAPIPackage}.TokenSource;
 [/#if]
 
-public class ${grammar.lexerClassName} extends TokenSource<Token>
+public class ${grammar.lexerClassName} extends TokenSource
 {
  [@CU.TokenTypeConstants/]
     private void backup(int amount) {
@@ -58,7 +58,7 @@ public class ${grammar.lexerClassName} extends TokenSource<Token>
         this.bufferPosition -= amount;
     }
 
-    static final int DEFAULT_TAB_SIZE = ${grammar.tabSize};
+    static final int DEFAULT_TAB_SIZE = ${grammar.tabSize}; 
 
 [#if grammar.preserveTabs]
     private int tabSize = DEFAULT_TAB_SIZE;
@@ -597,7 +597,6 @@ public class ${grammar.lexerClassName} extends TokenSource<Token>
         return buf.toString();
     }
  
-    @Override
     void cacheToken(Token tok) {
 [#if !grammar.minimalToken]        
         if (tok.isInserted()) {

@@ -25,12 +25,13 @@ import java.util.Collections;
  * The base concrete class for non-terminal Nodes
  */
 public class ${grammar.baseNodeClassName} implements Node {
-    private TokenSource tokenSource;
+    private ${grammar.lexerClassName} tokenSource;
     
-    public TokenSource getTokenSource() {
+    public ${grammar.lexerClassName} getTokenSource() {
         if (tokenSource==null) {
             for (Node child : children()) {
-                tokenSource = child.getTokenSource();
+                if (child.getTokenSource() instanceof ${grammar.lexerClassName})
+                    tokenSource = (${grammar.lexerClassName}) child.getTokenSource();
                 if (tokenSource != null) break;
             }
         }
@@ -38,7 +39,7 @@ public class ${grammar.baseNodeClassName} implements Node {
     }
 
     public void setTokenSource(TokenSource tokenSource) {
-        this.tokenSource = tokenSource;
+        this.tokenSource = (${grammar.lexerClassName}) tokenSource;
     }
     
     static private Class<? extends List> listClass;

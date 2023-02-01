@@ -34,7 +34,7 @@ import freemarker.template.*;
 
 public class Token ${implementsNode} {
 
-    private TokenSource tokenSource;
+    private ${grammar.lexerClassName} tokenSource;
     
     private TokenType type;
     
@@ -83,13 +83,13 @@ public class Token ${implementsNode} {
      * @param image the String content of the token
      * @param tokenSource the object that vended this token.
      */
-    public Token(TokenType type, String image, TokenSource tokenSource) {
+    public Token(TokenType type, String image, ${grammar.lexerClassName} tokenSource) {
         this.type = type;
         this.image = image;
         this.tokenSource = tokenSource;
     }
 
-    public static Token newToken(TokenType type, String image, TokenSource tokenSource) {
+    public static Token newToken(TokenType type, String image, ${grammar.lexerClassName} tokenSource) {
         Token result = newToken(type, tokenSource, 0, 0);
         result.setImage(image);
         return result;
@@ -118,7 +118,7 @@ public class Token ${implementsNode} {
      * @return the ${grammar.lexerClassName} object that handles 
      * location info for the tokens. 
      */
-    public TokenSource getTokenSource() {
+    public ${grammar.lexerClassName} getTokenSource() {
         return this.tokenSource; 
     }
 
@@ -127,7 +127,7 @@ public class Token ${implementsNode} {
      * programmer needs to use this method.
      */
     public void setTokenSource(TokenSource tokenSource) {
-        this.tokenSource = tokenSource;
+        this.tokenSource = (${grammar.lexerClassName}) tokenSource;
     }
 
     /**
@@ -196,7 +196,7 @@ public class Token ${implementsNode} {
      * @return the (1-based) line location where this Token starts
      */      
     public int getBeginLine() {
-        TokenSource flm = getTokenSource();
+        ${grammar.lexerClassName} flm = getTokenSource();
         return flm == null ? 0 : flm.getLineFromOffset(getBeginOffset());                
     };
 
@@ -204,7 +204,7 @@ public class Token ${implementsNode} {
      * @return the (1-based) line location where this Token ends
      */
     public int getEndLine() {
-        TokenSource flm = getTokenSource();
+        ${grammar.lexerClassName} flm = getTokenSource();
         return flm == null ? 0 : flm.getLineFromOffset(getEndOffset()-1);
     };
 
@@ -212,7 +212,7 @@ public class Token ${implementsNode} {
      * @return the (1-based) column where this Token starts
      */
     public int getBeginColumn() {
-        TokenSource flm = getTokenSource();
+        ${grammar.lexerClassName} flm = getTokenSource();
         return flm == null ? 0 : flm.getCodePointColumnFromOffset(getBeginOffset());        
     };
 
@@ -220,12 +220,12 @@ public class Token ${implementsNode} {
      * @return the (1-based) column offset where this Token ends
      */ 
     public int getEndColumn() {
-        TokenSource flm = getTokenSource();
+        ${grammar.lexerClassName} flm = getTokenSource();
         return flm == null ? 0 : flm.getCodePointColumnFromOffset(getEndOffset());
     }
 
     public String getInputSource() {
-        TokenSource flm = getTokenSource();
+        ${grammar.lexerClassName} flm = getTokenSource();
         return flm != null ? flm.getInputSource() : "input";
     }
 [/#if]    
@@ -289,7 +289,7 @@ public class Token ${implementsNode} {
 [#if !grammar.minimalToken]        
         if (appendedToken != null) return appendedToken;
 [/#if]        
-        TokenSource tokenSource = getTokenSource();
+        ${grammar.lexerClassName} tokenSource = getTokenSource();
         return tokenSource != null ? (Token) tokenSource.nextCachedToken(getEndOffset()) : null;
     }
 
@@ -329,7 +329,7 @@ public class Token ${implementsNode} {
 
     public String getSource() {
          if (type == TokenType.EOF) return "";
-         TokenSource flm = getTokenSource();
+         ${grammar.lexerClassName} flm = getTokenSource();
          return flm == null ? null : flm.getText(getBeginOffset(), getEndOffset());
     }
 
@@ -337,7 +337,7 @@ public class Token ${implementsNode} {
 
     protected Token() {}
 
-    public Token(TokenType type, TokenSource tokenSource, int beginOffset, int endOffset) {
+    public Token(TokenType type, ${grammar.lexerClassName} tokenSource, int beginOffset, int endOffset) {
         this.type = type;
         this.tokenSource = tokenSource;
         this.beginOffset = beginOffset;
@@ -460,7 +460,7 @@ public class Token ${implementsNode} {
     }
 [/#if]
 
-    public static Token newToken(TokenType type, TokenSource tokenSource, int beginOffset, int endOffset) {
+    public static Token newToken(TokenType type, ${grammar.lexerClassName} tokenSource, int beginOffset, int endOffset) {
         [#if grammar.treeBuildingEnabled]
            switch(type) {
            [#list grammar.orderedNamedTokens as re]

@@ -9,7 +9,7 @@ package ${grammar.parserPackage};
 public class InvalidToken extends Token 
 [#if grammar.faultTolerant] implements ParsingProblem [/#if] {
 
-    public InvalidToken(TokenSource tokenSource, int beginOffset, int endOffset) {
+    public InvalidToken(${grammar.lexerClassName} tokenSource, int beginOffset, int endOffset) {
         super(TokenType.INVALID, tokenSource, beginOffset, endOffset);
 [#if grammar.faultTolerant]
         super.setUnparsed(true);
