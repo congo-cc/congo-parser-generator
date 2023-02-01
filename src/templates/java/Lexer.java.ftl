@@ -179,30 +179,6 @@ public class ${grammar.lexerClassName} extends TokenSource
      [/#if]
      }
 
-    /**
-     * @Deprecated Preferably use the constructor that takes a #java.nio.files.Path or simply a String,
-     * depending on your use case
-     */
-    public ${grammar.lexerClassName}(Reader reader) {
-       this("input", reader, LexicalState.${lexerData.lexicalStates[0].name}, 1, 1);
-    }
-    /**
-     * @Deprecated Preferably use the constructor that takes a #java.nio.files.Path or simply a String,
-     * depending on your use case
-     */
-    public ${grammar.lexerClassName}(String inputSource, Reader reader) {
-       this(inputSource, reader, LexicalState.${lexerData.lexicalStates[0].name}, 1, 1);
-    }
-
-    /**
-     * @Deprecated Preferably use the constructor that takes a #java.nio.files.Path or simply a String,
-     * depending on your use case
-     */
-    public ${grammar.lexerClassName}(String inputSource, Reader reader, LexicalState lexState, int line, int column) {
-        this(inputSource, readToEnd(reader), lexState, line, column);
-        switchTo(lexState);
-    }
-
     private Token getNextToken() {
       InvalidToken invalidToken = null;
       Token token = nextToken();
@@ -851,4 +827,3 @@ public class ${grammar.lexerClassName} extends TokenSource
   }
  [/#list]  
 }
-

@@ -386,7 +386,7 @@ ${is}PushOntoLookaheadStack("${nt.containingProduction.name}", "${nt.inputSource
 [#var prevScanToEndVarName = "prevScanToEnd" + CU.newID()]
 ${is}bool ${prevScanToEndVarName} = ScanToEnd;
 ${is}_currentLookaheadProduction = "${nt.production.name}";
-${is}ScanToEnd = ${CU.bool(nt.ScanToEnd)};
+${is}ScanToEnd = ${CU.bool(nt.scanToEnd)};
 ${is}try {
 ${is}    if (!${nt.production.lookaheadMethodName}()) {
 ${is}        return false;

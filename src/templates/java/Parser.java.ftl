@@ -91,11 +91,11 @@ public boolean isCancelled() {return cancelled;}
    * @param path The location (typically the filename) from which to get the input to parse
    */
   public ${grammar.parserClassName}(String inputSource, Path path) throws IOException {
-    this(inputSource, ${grammar.lexerClassName}.stringFromBytes(Files.readAllBytes(path)));
+    this(inputSource, TokenSource.stringFromBytes(Files.readAllBytes(path)));
   }
 
   public ${grammar.parserClassName}(String inputSource, Path path, Charset charset) throws IOException {
-    this(inputSource, ${grammar.lexerClassName}.stringFromBytes(Files.readAllBytes(path), charset));
+    this(inputSource, TokenSource.stringFromBytes(Files.readAllBytes(path), charset));
   }
 
   /**
@@ -104,26 +104,6 @@ public boolean isCancelled() {return cancelled;}
   public ${grammar.parserClassName}(Path path) throws IOException {
     this(path.toString(), path);
   }
-
-  /**
-   * @Deprecated Use the constructor that takes a #java.nio.files.Path or just 
-   * a String (i.e. CharSequence) directly.
-   */
-  public ${grammar.parserClassName}(java.io.InputStream stream) {
-      this(new InputStreamReader(stream));
-  }
-
-  /**
-   * @Deprecated Use the constructor that takes a #java.nio.files.Path or just 
-   * a String (i.e. CharSequence) directly.
-   */
-  public ${grammar.parserClassName}(Reader reader) {
-    this(new ${grammar.lexerClassName}("input", reader));
-      [#if grammar.lexerUsesParser]
-      token_source.parser = this;
-      [/#if]
-  }
-
 
   /** Constructor with user supplied Lexer. */
   public ${grammar.parserClassName}(${grammar.lexerClassName} lexer) {
