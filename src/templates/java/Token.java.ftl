@@ -4,7 +4,7 @@
 [#var parserPackageWithDot = ""]
 [#if grammar.parserPackage?has_content]
 package ${grammar.parserPackage};
-[#set parserPackageWithDot = grammar.ParserPackage + "."]
+[#set parserPackageWithDot = grammar.parserPackage + "."]
 [/#if]
 [#if grammar.nodePackage?has_content && grammar.nodePackage != grammar.parserPackage]
 import ${grammar.nodePackage}.*;

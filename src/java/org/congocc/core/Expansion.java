@@ -462,7 +462,7 @@ abstract public class Expansion extends BaseNode {
         return result;
     }
 
-    public Boolean isBeforeLexicalStateSwitch() {
+    public Boolean getBeforeLexicalStateSwitch() {
         // We return a null if we don't have full info.
         Expansion following = this;
         do {
