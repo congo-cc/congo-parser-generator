@@ -22,6 +22,7 @@
       ENSURE_FINAL_EOL = grammar.ensureFinalEOL?string("true", "false")
       PRESERVE_TABS = grammar.preserveTabs?string("true", "false")
 ]      
+[#var BaseToken = grammar.treeBuildingEnabled?string("Node.TerminalNode", "Token")]
 
 [#macro EnumSet varName tokenNames]
    [#if tokenNames?size=0]
@@ -57,6 +58,7 @@ public class ${grammar.lexerClassName} extends TokenSource
         if (amount > bufferPosition) throw new ArrayIndexOutOfBoundsException();
         this.bufferPosition -= amount;
     }
+    
 
     static final int DEFAULT_TAB_SIZE = ${grammar.tabSize}; 
 
@@ -72,9 +74,6 @@ public class ${grammar.lexerClassName} extends TokenSource
 
 
   final Token DUMMY_START_TOKEN = new Token();
-// Just a dummy Token value that we put in the tokenLocationTable
-// to indicate that this location in the file is ignored.
-  static final private Token IGNORED = new Token(), SKIPPED = new Token();
 
    // Munged content, possibly replace unicode escapes, tabs, or CRLF with LF.
     private CharSequence content;
@@ -94,22 +93,11 @@ public class ${grammar.lexerClassName} extends TokenSource
     private int bufferPosition;
 
 
-// A BitSet that stores where the tokens are located.
-// This is not strictly necessary, I suppose...
-   private BitSet tokenOffsets;
 
 //  A Bitset that stores the line numbers that
 // contain either hard tabs or extended (beyond 0xFFFF) unicode
 // characters.
    private BitSet needToCalculateColumns=new BitSet();
-
-// Just a very simple, bloody minded approach, just store the
-// Token objects in a table where the offsets are the code unit 
-// positions in the content buffer. If the Token at a given offset is
-// the dummy or marker type IGNORED, then the location is skipped via
-// whatever preprocessor logic.    
-    private Token[] tokenLocationTable;
-
 
  [#if grammar.lexerUsesParser]
   public ${grammar.parserClassName} parser;
@@ -182,8 +170,7 @@ public class ${grammar.lexerClassName} extends TokenSource
         this.content = mungeContent(input, ${PRESERVE_TABS}, ${PRESERVE_LINE_ENDINGS}, ${JAVA_UNICODE_ESCAPE}, ${ENSURE_FINAL_EOL});
         this.inputSource = inputSource;
         createLineOffsetsTable();
-        tokenLocationTable = new Token[content.length()+1];
-        tokenOffsets = new BitSet(content.length() +1);
+        createTokenLocationTable(content.length()+1);
         this.startingLine = startingLine;
         this.startingColumn = startingColumn;
         switchTo(lexState);
@@ -340,9 +327,7 @@ public class ${grammar.lexerClassName} extends TokenSource
         } 
         bufferPosition -= (codeUnitsRead - matchedPos);
         if (skippedTokens.contains(matchedType)) {
-            for (int i=tokenBeginOffset; i< bufferPosition; i++) {
-                if (tokenLocationTable[i] != IGNORED) tokenLocationTable[i] = SKIPPED;
-            }
+            skipTokens(tokenBeginOffset, bufferPosition);
         }
         else if (regularTokens.contains(matchedType) || unparsedTokens.contains(matchedType)) {
             matchedToken = Token.newToken(matchedType, 
@@ -440,10 +425,7 @@ public class ${grammar.lexerClassName} extends TokenSource
 
     // But there is no goto in Java!!!
     private void goTo(int offset) {
-        while (offset<content.length() && tokenLocationTable[offset] == IGNORED) {
-            ++offset;
-        }
-        this.bufferPosition = offset;
+        this.bufferPosition = nextUnignoredOffset(offset);
     }
 
     /**
@@ -487,9 +469,7 @@ public class ${grammar.lexerClassName} extends TokenSource
     }
 
     private int readChar() {
-        while (tokenLocationTable[bufferPosition] == IGNORED && bufferPosition < content.length()) {
-            ++bufferPosition;
-        }
+        bufferPosition = nextUnignoredOffset(bufferPosition);
         if (bufferPosition >= content.length()) {
             return -1;
         }
@@ -518,9 +498,7 @@ public class ${grammar.lexerClassName} extends TokenSource
             if (turnOffLine) {
                 int lineOffset = lineOffsets[i];
                 int nextLineOffset = i < lineOffsets.length -1 ? lineOffsets[i+1] : content.length();
-                for (int offset = lineOffset; offset < nextLineOffset; offset++) {
-                    tokenLocationTable[offset] = IGNORED;
-                }
+                setIgnoredRange(lineOffset, nextLineOffset);
             }
         }
     }
@@ -590,7 +568,7 @@ public class ${grammar.lexerClassName} extends TokenSource
     public String getText(int startOffset, int endOffset) {
         StringBuilder buf = new StringBuilder();
         for (int offset = startOffset; offset < endOffset; offset++) {
-            if (tokenLocationTable[offset] != IGNORED) {
+            if (!isIgnored(offset)) {
                 buf.append(content.charAt(offset));
             }
         }
@@ -606,33 +584,18 @@ public class ${grammar.lexerClassName} extends TokenSource
         }
 [/#if]        
 	    int offset = tok.getBeginOffset();
-        if (tokenLocationTable[offset] != IGNORED) {
-	        tokenOffsets.set(offset);
-	        tokenLocationTable[offset] = tok;
+        if (!isIgnored(offset)) {
+            cacheTokenAt(tok, offset);
         }
     }
 
-    void uncacheTokens(Token lastToken) {
-        int endOffset = lastToken.getEndOffset();
-        if (endOffset < tokenOffsets.length()) {
-            tokenOffsets.clear(lastToken.getEndOffset(), tokenOffsets.length());
-        }
-      [#if !grammar.minimalToken]
-        lastToken.unsetAppendedToken();
-      [/#if]
-    }
-
+[#if !grammar.minimalToken]
     @Override
-    Token nextCachedToken(int offset) {
-        int nextOffset = tokenOffsets.nextSetBit(offset);
-	    return nextOffset != -1 ? tokenLocationTable[nextOffset] : null;
-    } 
-
-    @Override
-    Token previousCachedToken(int offset) {
-        int prevOffset = tokenOffsets.previousSetBit(offset-1);
-        return prevOffset == -1 ? null : tokenLocationTable[prevOffset];
+    void uncacheTokens(${BaseToken} lastToken) {
+        super.uncacheTokens(lastToken);
+        ((Token)lastToken).unsetAppendedToken();
     }
+[/#if]    
 
     private void createLineOffsetsTable() {
         if (content.length() == 0) {
@@ -756,7 +719,7 @@ public class ${grammar.lexerClassName} extends TokenSource
           int nlIndex = input.indexOf('\n', offset);
           if (nlIndex < 0) break;
           if (input.substring(offset+1, nlIndex).trim().isEmpty()) {
-              for (int i=offset; i<=nlIndex; i++) tokenLocationTable[i] = IGNORED;
+              for (int i=offset; i<=nlIndex; i++) setIgnoredRange(i, i+1);
           } 
       }
   }
@@ -765,10 +728,7 @@ public class ${grammar.lexerClassName} extends TokenSource
   // more uniformly in other generation languages.
 
    private void setRegionIgnore(int start, int end) {
-     for (int i = start; i< end; i++) {
-       tokenLocationTable[i] = IGNORED;
-     }
-     tokenOffsets.clear(start, end);
+     setIgnoredRange(start, end);
    }
 
    private boolean atLineStart(Token tok) {

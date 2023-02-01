@@ -17,10 +17,82 @@ import java.nio.charset.CharsetDecoder;
 import java.nio.charset.CoderResult;
 import java.nio.charset.CharacterCodingException;
 import static java.nio.charset.StandardCharsets.*;
+import java.util.BitSet;
 
 
 abstract public class TokenSource
 {
+   // Just a dummy Token value that we put in the tokenLocationTable
+   // to indicate that this location in the file is ignored.
+    private static final Token IGNORED = new Token(), SKIPPED=new Token();
+// Just a very simple, bloody minded approach, just store the
+// Token objects in a table where the offsets are the code unit 
+// positions in the content buffer. If the Token at a given offset is
+// the dummy or marker type IGNORED, then the location is skipped via
+// whatever preprocessor logic.    
+    private ${BaseToken}[] tokenLocationTable;
+// A BitSet that stores where the tokens are located.
+// This is not strictly necessary, I suppose...
+   private BitSet tokenOffsets;
+
+
+    final void createTokenLocationTable(int size) {
+       tokenLocationTable = new ${BaseToken}[size];
+       tokenOffsets = new BitSet(size);
+    }
+
+    final void skipTokens(int begin, int end) {
+      for (int i=begin; i< end; i++) {
+          if (tokenLocationTable[i] != IGNORED) tokenLocationTable[i] = SKIPPED;
+      }
+    }
+
+    final int nextUnignoredOffset(int offset) {
+        while (offset<tokenLocationTable.length-1 && tokenLocationTable[offset] == IGNORED) {
+            ++offset;
+        } 
+        return offset;         
+    }
+
+    final void setIgnoredRange(int begin, int end) {
+        for (int offset = begin; offset < end; offset++) {
+           tokenLocationTable[offset] = IGNORED;
+           tokenOffsets.clear(begin,end);
+        }
+    }
+
+    final boolean isIgnored(int offset) {
+      return tokenLocationTable[offset] == IGNORED;
+    }
+
+    final void cacheTokenAt(Token tok, int offset) {
+        if (!isIgnored(offset)) {
+             tokenOffsets.set(offset);
+             tokenLocationTable[offset] = tok;
+        }
+    }
+
+    final ${BaseToken} cachedTokenAt(int offset) {
+        return tokenLocationTable[offset];
+    }
+
+    void uncacheTokens(${BaseToken} lastToken) {
+        int endOffset = lastToken.getEndOffset();
+        if (endOffset < tokenOffsets.length()) {
+            tokenOffsets.clear(lastToken.getEndOffset(), tokenOffsets.length());
+        }
+    }
+
+    ${BaseToken} nextCachedToken(int offset) {
+        int nextOffset = tokenOffsets.nextSetBit(offset);
+	      return nextOffset != -1 ? cachedTokenAt(nextOffset) : null;
+    } 
+
+    ${BaseToken} previousCachedToken(int offset) {
+        int prevOffset = tokenOffsets.previousSetBit(offset-1);
+        return prevOffset == -1 ? null : cachedTokenAt(prevOffset);
+    }
+
     /**
      * @return the input source (usually a filename) 
      */
@@ -42,9 +114,6 @@ abstract public class TokenSource
      * from the absolute offset passed in as a parameter
      */
     abstract public int getCodePointColumnFromOffset(int pos);
-
-    abstract ${BaseToken} nextCachedToken(int pos);
-    abstract ${BaseToken} previousCachedToken(int pos);
 
    /**
     * @param bytes the raw byte array 
