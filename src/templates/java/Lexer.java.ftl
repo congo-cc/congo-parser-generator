@@ -410,6 +410,10 @@ public class ${grammar.lexerClassName} extends TokenSource
   // Utility methods. Having them here makes it easier to handle things
   // more uniformly in other generation languages.
 
+   private void setRegionIgnore(int start, int end) {
+     setIgnoredRange(start, end);
+   }
+
    private boolean atLineStart(Token tok) {
       int offset = tok.getBeginOffset();
       while (offset > 0) {

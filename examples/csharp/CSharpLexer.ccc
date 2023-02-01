@@ -409,7 +409,7 @@ INJECT CSharpLexer :
        if (turnedOn) {
          switchTo(LexicalState.CSHARP);
          int endRegion = getLineEndOffset(tok.getEndLine()) +1 ;
-         setIgnoredRange(turnedOffPoint, endRegion);
+         setRegionIgnore(turnedOffPoint, endRegion);
        }
        if (turnedOff) {
          turnedOffPoint = getLineStartOffset(tok.getBeginLine());
