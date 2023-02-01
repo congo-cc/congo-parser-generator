@@ -58,46 +58,16 @@ public class ${grammar.lexerClassName} extends TokenSource
         if (amount > bufferPosition) throw new ArrayIndexOutOfBoundsException();
         this.bufferPosition -= amount;
     }
-    
-
-    static final int DEFAULT_TAB_SIZE = ${grammar.tabSize}; 
-
-[#if grammar.preserveTabs]
-    private int tabSize = DEFAULT_TAB_SIZE;
-
-    /**
-     * set the tab size used for location reporting
-     */
-    public void setTabSize(int tabSize) {this.tabSize = tabSize;}
-[/#if]    
-
-
 
   final Token DUMMY_START_TOKEN = new Token();
 
-   // Munged content, possibly replace unicode escapes, tabs, or CRLF with LF.
-    private CharSequence content;
-    // Typically a filename, I suppose.
-    private String inputSource = "input";
-    // A list of offsets of the beginning of lines
-    private int[] lineOffsets;
 
-
-    // The starting line and column, usually 1,1
-    // that is used to report a file position 
-    // in 1-based line/column terms
-    private int startingLine, startingColumn;
 
     // The offset in the internal buffer to the very
     // next character that the readChar method returns
     private int bufferPosition;
 
 
-
-//  A Bitset that stores the line numbers that
-// contain either hard tabs or extended (beyond 0xFFFF) unicode
-// characters.
-   private BitSet needToCalculateColumns=new BitSet();
 
  [#if grammar.lexerUsesParser]
   public ${grammar.parserClassName} parser;
@@ -132,15 +102,6 @@ public class ${grammar.lexerClassName} extends TokenSource
   // additional input
   [@EnumSet "moreTokens" lexerData.moreTokens.tokenNames /]
 
-  // The source of the raw characters that we are scanning  
-
-  public String getInputSource() {
-      return inputSource;
-  }
-  
-  public void setInputSource(String inputSource) {
-      this.inputSource = inputSource;
-  }
    
   public ${grammar.lexerClassName}(CharSequence input) {
     this("input", input);
@@ -166,13 +127,12 @@ public class ${grammar.lexerClassName} extends TokenSource
       * usages this is 1.
       */
      public ${grammar.lexerClassName}(String inputSource, CharSequence input, LexicalState lexState, int startingLine, int startingColumn) {
-        this.inputSource = inputSource;
-        this.content = mungeContent(input, ${PRESERVE_TABS}, ${PRESERVE_LINE_ENDINGS}, ${JAVA_UNICODE_ESCAPE}, ${ENSURE_FINAL_EOL});
-        this.inputSource = inputSource;
+        setInputSource(inputSource);
+        setTabSize(${grammar.tabSize});
+        setContent(mungeContent(input, ${PRESERVE_TABS}, getTabSize(), ${PRESERVE_LINE_ENDINGS}, ${JAVA_UNICODE_ESCAPE}, ${ENSURE_FINAL_EOL}));
         createLineOffsetsTable();
-        createTokenLocationTable(content.length()+1);
-        this.startingLine = startingLine;
-        this.startingColumn = startingColumn;
+        createTokenLocationTable();
+        setStartingPos(startingLine, startingColumn);
         switchTo(lexState);
      [#if grammar.cppContinuationLine]
         handleCContinuationLines();
@@ -404,47 +364,8 @@ public class ${grammar.lexerClassName} extends TokenSource
         this.bufferPosition = nextUnignoredOffset(offset);
     }
 
-    /**
-     * @return the line length in code _units_
-     */ 
-    private int getLineLength(int lineNumber) {
-        int startOffset = getLineStartOffset(lineNumber);
-        int endOffset = getLineEndOffset(lineNumber);
-        return 1+endOffset - startOffset;
-    }
-
-    /**
-     * The offset of the start of the given line. This is in code units
-     */
-    private int getLineStartOffset(int lineNumber) {
-        int realLineNumber = lineNumber - startingLine;
-        if (realLineNumber <=0) {
-            return 0;
-        }
-        if (realLineNumber >= lineOffsets.length) {
-            return content.length();
-        }
-        return lineOffsets[realLineNumber];
-    }
-
-    /**
-     * The offset of the end of the given line. This is in code units.
-     */
-    private int getLineEndOffset(int lineNumber) {
-        int realLineNumber = lineNumber - startingLine;
-        if (realLineNumber <0) {
-            return 0;
-        }
-        if (realLineNumber >= lineOffsets.length) {
-            return content.length();
-        }
-        if (realLineNumber == lineOffsets.length -1) {
-            return content.length() -1;
-        }
-        return lineOffsets[realLineNumber+1] -1;
-    }
-
     private int readChar() {
+        CharSequence content = getContent();
         bufferPosition = nextUnignoredOffset(bufferPosition);
         if (bufferPosition >= content.length()) {
             return -1;
@@ -460,97 +381,8 @@ public class ${grammar.lexerClassName} extends TokenSource
         return ch;
     }
 
-    /**
-     * This is used in conjunction with having a preprocessor.
-     * We set which lines are actually parsed lines and the 
-     * unset ones are ignored. 
-     * @param parsedLines a #java.util.BitSet that holds which lines
-     * are parsed (i.e. not ignored)
-     */
-    private void setParsedLines(BitSet parsedLines, boolean reversed) {
-        for (int i=0; i < lineOffsets.length; i++) {
-            boolean turnOffLine = !parsedLines.get(i+1);
-            if (reversed) turnOffLine = !turnOffLine;
-            if (turnOffLine) {
-                int lineOffset = lineOffsets[i];
-                int nextLineOffset = i < lineOffsets.length -1 ? lineOffsets[i+1] : content.length();
-                setIgnoredRange(lineOffset, nextLineOffset);
-            }
-        }
-    }
 
-    /**
-     * This is used in conjunction with having a preprocessor.
-     * We set which lines are actually parsed lines and the 
-     * unset ones are ignored. 
-     * @param parsedLines a #java.util.BitSet that holds which lines
-     * are parsed (i.e. not ignored)
-     */
-    public void setParsedLines(BitSet parsedLines) {setParsedLines(parsedLines,false);}
-
-    public void setUnparsedLines(BitSet unparsedLines) {setParsedLines(unparsedLines,true);}
-
-    @Override
-    public int getLineFromOffset(int pos) {
-        if (pos >= content.length()) {
-            if (content.charAt(content.length()-1) == '\n') {
-                return startingLine + lineOffsets.length;
-            }
-            return startingLine + lineOffsets.length-1;
-        }
-        int bsearchResult = Arrays.binarySearch(lineOffsets, pos);
-        if (bsearchResult>=0) {
-        [#-- REVISIT --]
-            return Math.max(1,startingLine + bsearchResult);
-        }
-        [#-- REVISIT --]
-        return Math.max(1,startingLine-(bsearchResult+2));
-    }
-
-    @Override
-    public int getCodePointColumnFromOffset(int pos) {
-        if (pos >= content.length()) return 1;
-        if (pos == 0) return startingColumn;
-        final int line = getLineFromOffset(pos)-startingLine;
-        final int lineStart = lineOffsets[line];
-        int startColumnAdjustment = line > 0 ? 1 : startingColumn;
-        int unadjustedColumn = pos - lineStart + startColumnAdjustment;
-        if (!needToCalculateColumns.get(line)) {
-            return unadjustedColumn;
-        }
-        if (Character.isLowSurrogate(content.charAt(pos))) --pos;
-        int result = startColumnAdjustment;
-        for (int i = lineStart; i < pos; i++) {
-            char ch = content.charAt(i);
-            if (ch == '\t') {
-             [#if grammar.preserveTabs]
-                result += tabSize - (result - 1) % tabSize;
-             [#else]
-                result += DEFAULT_TAB_SIZE - (result - 1) % DEFAULT_TAB_SIZE;
-             [/#if]
-            } 
-            else if (Character.isHighSurrogate(ch)) {
-                ++result;
-                ++i;
-            } 
-            else {
-                ++result;
-            }
-        }
-        return result;
-    }
     
-    @Override
-    public String getText(int startOffset, int endOffset) {
-        StringBuilder buf = new StringBuilder();
-        for (int offset = startOffset; offset < endOffset; offset++) {
-            if (!isIgnored(offset)) {
-                buf.append(content.charAt(offset));
-            }
-        }
-        return buf.toString();
-    }
- 
     void cacheToken(Token tok) {
 [#if !grammar.minimalToken]        
         if (tok.isInserted()) {
@@ -573,145 +405,16 @@ public class ${grammar.lexerClassName} extends TokenSource
     }
 [/#if]    
 
-    private void createLineOffsetsTable() {
-        if (content.length() == 0) {
-            this.lineOffsets = new int[0];
-            return;
-        }
-        int lineCount = 0;
-        int length = content.length();
-        for (int i = 0; i < length; i++) {
-            char ch = content.charAt(i);
-            if (ch == '\t' || Character.isHighSurrogate(ch)) {
-                needToCalculateColumns.set(lineCount);
-            }
-            if (ch == '\n') {
-                lineCount++;
-            }
-        }
-        if (content.charAt(length - 1) != '\n') {
-            lineCount++;
-        }
-        int[] lineOffsets = new int[lineCount];
-        lineOffsets[0] = 0;
-        int index = 1;
-        for (int i = 0; i < length; i++) {
-            char ch = content.charAt(i);
-            if (ch == '\n') {
-                if (i + 1 == length)
-                    break;
-                lineOffsets[index++] = i + 1;
-            }
-        }
-        this.lineOffsets = lineOffsets;
-    }
  
-// Icky method to handle annoying stuff. Might make this public later if it is
-// needed elsewhere
-  private static String mungeContent(CharSequence content, boolean preserveTabs, boolean preserveLines,
-        boolean javaUnicodeEscape, boolean ensureFinalEndline) {
-    if (preserveTabs && preserveLines && !javaUnicodeEscape) {
-        if (ensureFinalEndline) {
-            if (content.length() == 0) {
-                content = "\n";
-            } else {
-                int lastChar = content.charAt(content.length()-1);
-                if (lastChar != '\n' && lastChar != '\r') {
-                    if (content instanceof StringBuilder) {
-                        ((StringBuilder) content).append((char) '\n');
-                    } else {
-                        StringBuilder buf = new StringBuilder(content);
-                        buf.append('\n');
-                        content = buf.toString();
-                    }
-                }
-            }
-        }
-        return content.toString();
-    }
-    StringBuilder buf = new StringBuilder();
-    // This is just to handle tabs to spaces. If you don't have that setting set, it
-    // is really unused.
-    int col = 0;
-    int index = 0, contentLength = content.length();
-    while (index < contentLength) {
-        char ch = content.charAt(index++);
-        if (ch == '\n') {
-            buf.append(ch);
-            col = 0;
-        }
-        else if (javaUnicodeEscape && ch == '\\' && index < contentLength && content.charAt(index)=='u') {
-            int numPrecedingSlashes = 0;
-            for (int i = index-1; i>=0; i--) {
-                if (content.charAt(i) == '\\') 
-                    numPrecedingSlashes++;
-                else break;
-            }
-            if (numPrecedingSlashes % 2 == 0) {
-                buf.append('\\');
-                ++col;
-                continue;
-            }
-            int numConsecutiveUs = 0;
-            for (int i = index; i < contentLength; i++) {
-                if (content.charAt(i) == 'u') numConsecutiveUs++;
-                else break;
-            }
-            String fourHexDigits = content.subSequence(index+numConsecutiveUs, index+numConsecutiveUs+4).toString();
-            buf.append((char) Integer.parseInt(fourHexDigits, 16));
-            index+=(numConsecutiveUs +4);
-            ++col;
-        }
-        else if (!preserveLines && ch == '\r') {
-            buf.append('\n');
-            col = 0;
-            if (index < contentLength && content.charAt(index) == '\n') {
-                ++index;
-            }
-        } else if (ch == '\t' && !preserveTabs) {
-            int spacesToAdd = DEFAULT_TAB_SIZE - col % DEFAULT_TAB_SIZE;
-            for (int i = 0; i < spacesToAdd; i++) {
-                buf.append(' ');
-                col++;
-            }
-        } else {
-            buf.append(ch);
-            if (!Character.isLowSurrogate(ch)) col++;
-        }
-    }
-    if (ensureFinalEndline) {
-        if (buf.length() ==0) {
-            return "\n";
-        }
-        char lastChar = buf.charAt(buf.length()-1);
-        if (lastChar != '\n' && lastChar != '\r') buf.append('\n');
-    }
-    return buf.toString();
-  }
-
-  private void handleCContinuationLines() {
-      String input = content.toString();
-      for (int offset = input.indexOf('\\'); offset >=0; offset = input.indexOf('\\', offset+1)) {
-          int nlIndex = input.indexOf('\n', offset);
-          if (nlIndex < 0) break;
-          if (input.substring(offset+1, nlIndex).trim().isEmpty()) {
-              for (int i=offset; i<=nlIndex; i++) setIgnoredRange(i, i+1);
-          } 
-      }
-  }
 
   // Utility methods. Having them here makes it easier to handle things
   // more uniformly in other generation languages.
-
-   private void setRegionIgnore(int start, int end) {
-     setIgnoredRange(start, end);
-   }
 
    private boolean atLineStart(Token tok) {
       int offset = tok.getBeginOffset();
       while (offset > 0) {
         --offset;
-        char c = this.content.charAt(offset);
+        char c = getContent().charAt(offset);
         if (!Character.isWhitespace(c)) return false;
         if (c=='\n') break;
       }
@@ -722,69 +425,6 @@ public class ${grammar.lexerClassName} extends TokenSource
        int lineNum = tok.getBeginLine();
        return getText(getLineStartOffset(lineNum), getLineEndOffset(lineNum)+1);
    }
-
-   private void setLineSkipped(Token tok) {
-       int lineNum = tok.getBeginLine();
-       int start = getLineStartOffset(lineNum);
-       int end = getLineStartOffset(lineNum+1);
-       setRegionIgnore(start, end);
-       tok.setBeginOffset(start);
-       tok.setEndOffset(end);
-   }
-
-  static String displayChar(int ch) {
-    if (ch == '\'') return "\'\\'\'";
-    if (ch == '\\') return "\'\\\\\'";
-    if (ch == '\t') return "\'\\t\'";
-    if (ch == '\r') return "\'\\r\'";
-    if (ch == '\n') return "\'\\n\'";
-    if (ch == '\f') return "\'\\f\'";
-    if (ch == ' ') return "\' \'";
-    if (ch < 128 && !Character.isWhitespace(ch) && !Character.isISOControl(ch)) return "\'" + (char) ch + "\'";
-    if (ch < 10) return "" + ch;
-    return "0x" + Integer.toHexString(ch);
-  }
-
-  static String addEscapes(String str) {
-      StringBuilder retval = new StringBuilder();
-      for (int ch : str.codePoints().toArray()) {
-        switch (ch) {
-           case '\b':
-              retval.append("\\b");
-              continue;
-           case '\t':
-              retval.append("\\t");
-              continue;
-           case '\n':
-              retval.append("\\n");
-              continue;
-           case '\f':
-              retval.append("\\f");
-              continue;
-           case '\r':
-              retval.append("\\r");
-              continue;
-           case '\"':
-              retval.append("\\\"");
-              continue;
-           case '\'':
-              retval.append("\\\'");
-              continue;
-           case '\\':
-              retval.append("\\\\");
-              continue;
-           default:
-              if (Character.isISOControl(ch)) {
-                 String s = "0000" + java.lang.Integer.toString(ch, 16);
-                 retval.append("\\u" + s.substring(s.length() - 4, s.length()));
-              } else {
-                 retval.appendCodePoint(ch);
-              }
-              continue;
-        }
-      }
-      return retval.toString();
-  }
 
   
   // NFA related code follows.
@@ -808,13 +448,6 @@ public class ${grammar.lexerClassName} extends TokenSource
     [#list grammar.lexerData.lexicalStates as lexicalState]
       ${lexicalState.name}.NFA_FUNCTIONS_init();
     [/#list]
-  }
-
-  // Just use the canned binary search to check whether the char
-  // is in one of the intervals
-  private static final boolean checkIntervals(int[] ranges, int ch) {
-    int result = Arrays.binarySearch(ranges, ch);
-    return result >=0 || result%2 == 0;
   }
 
  //The Nitty-gritty of the NFA code is in this loop.
