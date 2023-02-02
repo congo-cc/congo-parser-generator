@@ -17,5 +17,8 @@ public enum TokenType
      [#list grammar.extraTokenNames as extraToken]
        ${extraToken},
      [/#list]
-     INVALID
+     INVALID;
+
+     public boolean isInvalid() {return this == INVALID;}
+     public boolean isEOF() {return this == EOF;}
 }

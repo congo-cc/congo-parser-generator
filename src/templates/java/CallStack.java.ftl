@@ -5,6 +5,8 @@ package ${grammar.parserPackage};
 
 import java.util.ArrayList;
 
+// WIP, currently unused
+
 public class CallStack extends ArrayList<NonTerminalCall> {
     
 }

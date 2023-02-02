@@ -4,6 +4,12 @@
 [/#if]
 
 [#var BASE_EXCEPTION_TYPE = grammar.useCheckedException?string("Exception", "RuntimeException")]
+[#var TOKEN_TYPE_SET = "EnumSet<TokenType>", BaseToken = "Token", BaseTokenType = "TokenType"]
+[#if grammar.treeBuildingEnabled]
+  [#set TOKEN_TYPE_SET = "Set<? extends Node.NodeType>"]
+  [#set BaseToken = "Node.TerminalNode"]
+  [#set BaseTokenType = "Node.NodeType"]
+[/#if]
 
 import java.util.*;
 
@@ -11,19 +17,19 @@ import java.util.*;
 public class ParseException extends ${BASE_EXCEPTION_TYPE} {
 
   // The token we tripped up on.
-  private Token token;
+  private ${BaseToken} token;
   //We were expecting one of these token types
-  private EnumSet<TokenType> expectedTypes;
+  private ${TOKEN_TYPE_SET} expectedTypes;
   
-    private List<NonTerminalCall> callStack;
+  private List<NonTerminalCall> callStack;
   
   private boolean alreadyAdjusted;
 
-  private ${grammar.parserClassName} parser;
+//  private ${grammar.parserClassName} parser;
 
-  private void setInfo(${grammar.parserClassName} parser, Token token, EnumSet<TokenType> expectedTypes, List<NonTerminalCall> callStack) {
-    this.parser = parser;
-    if (token != null && token.getType() != TokenType.EOF && token.getNext() != null) {
+  private void setInfo(${BaseToken} token, ${TOKEN_TYPE_SET} expectedTypes, List<NonTerminalCall> callStack) {
+//    this.parser = parser;
+    if (token != null && !token.getType().isEOF() && token.getNext() != null) {
         token = token.getNext();
     }
     this.token = token;
@@ -32,23 +38,23 @@ public class ParseException extends ${BASE_EXCEPTION_TYPE} {
   }
 
   public boolean hitEOF() {
-    return token != null && token.getType() == TokenType.EOF;
+    return token != null && token.getType().isEOF();
   }
 
-  public ParseException(${grammar.parserClassName} parser, Token token, EnumSet<TokenType> expectedTypes, List<NonTerminalCall> callStack) {
-      setInfo(parser, token, expectedTypes, callStack);
+  public ParseException(${grammar.parserClassName} parser, ${BaseToken} token, ${TOKEN_TYPE_SET} expectedTypes, List<NonTerminalCall> callStack) {
+      setInfo(token, expectedTypes, callStack);
   }
 
   public ParseException(${grammar.parserClassName} parser, String message) {
      super(message);
-     setInfo(parser, parser.lastConsumedToken, null, parser.parsingStack);
+//     setInfo(parser.lastConsumedToken, null, parser.parsingStack);
   }
 
-  public ParseException(${grammar.parserClassName} parser, EnumSet<TokenType> expectedTypes, List<NonTerminalCall> callStack) {
-    this(parser, parser.lastConsumedToken, expectedTypes, callStack);
+  public ParseException(${grammar.parserClassName} parser, ${TOKEN_TYPE_SET} expectedTypes, List<NonTerminalCall> callStack) {
+      this(parser, parser.lastConsumedToken, expectedTypes, callStack);
   }
 
-  public ParseException(Token token) {
+  public ParseException(${BaseToken} token) {
      this.token = token;
   }
 
@@ -78,7 +84,7 @@ public class ParseException extends ${BASE_EXCEPTION_TYPE} {
      if (expectedTypes != null) {
          buf.append("\nWas expecting one of the following:\n");
          boolean isFirst = true;
-         for (TokenType type : expectedTypes) {
+         for (${BaseTokenType} type : expectedTypes) {
              if (!isFirst) buf.append(", ");
              isFirst = false;
              buf.append(type);
@@ -108,11 +114,11 @@ public class ParseException extends ${BASE_EXCEPTION_TYPE} {
    * 
    * @return the token which causes the parse error and null otherwise.
    */
-   public Token getToken() {
+   public ${BaseToken} getToken() {
       return token;
    }
   
-   public ${grammar.parserClassName} getParser() { return parser; }
+//   public ${grammar.parserClassName} getParser() { return parser; }
 
    private void adjustStackTrace() {
       if (alreadyAdjusted || callStack == null || callStack.isEmpty()) return;

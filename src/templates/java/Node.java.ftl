@@ -16,14 +16,21 @@ public interface Node
 [/#if] {
     // Marker interface for objects
     // that represent a node's type, i.e. TokenType
-    public interface NodeType {}
+    public interface NodeType { 
+        boolean isInvalid();
+        boolean isEOF();
+    }
 
     //Marker interface for tokens
-    public interface TerminalNode extends Node {}
-
-    default NodeType getType() {
-        return null;
+    public interface TerminalNode extends Node {
+        [#-- I added this so that code compiles. Not sure
+             what I am doing with this.. --]
+        TerminalNode getNext();
     }
+
+    default NodeType getType() { return null; }
+
+    default NodeType getNodeType() {return getType();}
 
     /** Life-cycle hook method called after the node has been made the current
 	 *  node 
