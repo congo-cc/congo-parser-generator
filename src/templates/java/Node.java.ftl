@@ -412,10 +412,10 @@ public interface Node
          return null;
     }
 
-    default Node firstChildOfType(NodeType tokenType) {
+    default Node firstChildOfType(NodeType type) {
         for (int i=0; i<getChildCount();i++) {
             Node child = getChild(i);
-            if (child.getType() == tokenType) return child;
+            if (child.getType() == type) return child;
         }
         return null;
     }

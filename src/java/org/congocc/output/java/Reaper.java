@@ -3,7 +3,7 @@ package org.congocc.output.java;
 import java.util.*;
 import org.congocc.parser.*;
 import org.congocc.parser.tree.*;
-import static org.congocc.parser.TokenType.*;
+import static org.congocc.parser.Token.TokenType.*;
 
 /**
  * A visitor that eliminates unused code.

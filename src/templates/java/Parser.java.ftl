@@ -18,6 +18,9 @@ import java.util.Iterator;
 import java.util.ListIterator;
 import java.util.Map;
 import java.util.concurrent.CancellationException;
+import ${grammar.parserPackage}.${grammar.lexerClassName}.LexicalState;
+import ${grammar.parserPackage}.Token.TokenType;
+import static ${grammar.parserPackage}.Token.TokenType.*;
 
 [#if grammar.parserPackage! != grammar.nodePackage]
   [#list grammar.nodeNames as node]
@@ -28,8 +31,6 @@ import java.util.concurrent.CancellationException;
     [/#if]
   [/#list]
 [/#if]
-
-import static ${grammar.parserPackage}.TokenType.*;
 
 public class ${grammar.parserClassName} {
 

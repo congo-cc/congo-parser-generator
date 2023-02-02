@@ -17,7 +17,8 @@ import ${grammar.parserPackage}.*;
 import ${grammar.parserPackage}.*;
 [/#if]
 
-import static ${grammar.parserPackage}.TokenType.*;
+import ${grammar.parserPackage}.Token.TokenType;
+import static ${grammar.parserPackage}.Token.TokenType.*;
 
 public class ${classname} extends ${superclass} {
     public ${classname}(TokenType type, ${grammar.lexerClassName} tokenSource, int beginOffset, int endOffset) {

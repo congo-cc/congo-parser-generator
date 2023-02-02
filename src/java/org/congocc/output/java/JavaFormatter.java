@@ -2,8 +2,8 @@ package org.congocc.output.java;
 
 import org.congocc.parser.*;
 import org.congocc.parser.tree.*;
-import org.congocc.parser.TokenType;
-import static org.congocc.parser.TokenType.*;
+import org.congocc.parser.Token.TokenType;
+import static org.congocc.parser.Token.TokenType.*;
 
 import java.util.EnumSet;
 import java.util.regex.Pattern;

@@ -149,50 +149,10 @@ TOKEN :
 ;
 
 INJECT BaseNode :
-    import java.lang.reflect.*;
     import org.congocc.Grammar;
-    import NODE_PACKAGE.KeyWord;
-    import PARSER_PACKAGE.*;
-    implements Node; //, TemplateHashModel;
+    import PARSER_PACKAGE.Token.TokenType;
+    implements Node; 
 {
-#if false
-    public TemplateModel get(String key) { //throws TemplateModelException {
-        String methodName = "get" + key.substring(0,1).toUpperCase() + key.substring(1);
-        TemplateModel result = invokeMethod(methodName);
-        if (result == null) {
-            result = invokeMethod(methodName.replace("get", "is"));
-        }
-        return result;
-   }
-    
-    private TemplateModel invokeMethod(String methodName) {//throws TemplateModelException {
-        Method method = null;
-        try {
-            method = this.getClass().getMethod(methodName);
-        } catch (NoSuchMethodException e) {
-            return null;
-        }
-        try {
-            Object result = method.invoke(this);
-            TemplateModel wrappedResult = Configuration.getCurrentObjectWrapper().wrap(result);
-            if (methodName.startsWith("is") && !(wrappedResult instanceof TemplateBooleanModel)) {
-                return null; //Maybe should throw an exception here, or maybe it doesn't matter.
-            }
-            return wrappedResult;
-        } catch (IllegalAccessException e) {
-            throw new TemplateModelException(e);
-        } catch (InvocationTargetException e) {
-            Throwable cause = e.getCause();
-            if (cause instanceof TemplateModelException) {
-                throw (TemplateModelException) cause;
-            }
-            if (cause instanceof Exception) {
-                throw new TemplateModelException((Exception) cause);
-            }
-            throw (Error) cause;
-        }
-    } 
-#endif    
     private Grammar grammar;
 
     public Grammar getGrammar() {
@@ -466,7 +426,7 @@ VariableDeclarator# : VariableDeclaratorId [ "=" VariableInitializer ] ;
 
 INJECT TypeDeclaration : 
     import java.util.*;
-    import PARSER_PACKAGE.TokenType;
+    import PARSER_PACKAGE.Token.TokenType;
 {
     default void addElements(List<ClassOrInterfaceBodyDeclaration> elements) {
         Set<String> keys = new HashSet<String>();

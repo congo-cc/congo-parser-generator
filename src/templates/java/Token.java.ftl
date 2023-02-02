@@ -31,6 +31,23 @@ import freemarker.template.*;
 
 public class Token ${implementsNode} {
 
+    public enum TokenType 
+    [#if grammar.treeBuildingEnabled]
+       implements Node.NodeType
+    [/#if]
+    {
+       [#list grammar.lexerData.regularExpressions as regexp]
+          ${regexp.label},
+       [/#list]
+       [#list grammar.extraTokenNames as extraToken]
+          ${extraToken},
+       [/#list]
+       INVALID;
+
+       public boolean isInvalid() {return this == INVALID;}
+       public boolean isEOF() {return this == EOF;}
+    }    
+
     private ${grammar.lexerClassName} tokenSource;
     
     private TokenType type;

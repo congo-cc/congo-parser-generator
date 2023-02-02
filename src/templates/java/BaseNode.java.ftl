@@ -9,6 +9,8 @@ package ${package};
 import ${grammar.parserPackage}.*;
 [/#if]
 
+import ${grammar.parserPackage}.Token.TokenType;
+
 [#if grammar.settings.FREEMARKER_NODES?? && grammar.settings.FREEMARKER_NODES]
 import freemarker.template.*;
 [/#if]

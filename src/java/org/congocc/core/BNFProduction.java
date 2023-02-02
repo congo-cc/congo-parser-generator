@@ -1,9 +1,8 @@
 package org.congocc.core;
 
 import org.congocc.parser.Token;
-//import org.congocc.parser.BaseNode;
-import org.congocc.parser.TokenType;
-import static org.congocc.parser.TokenType.*;
+import org.congocc.parser.Token.TokenType;
+import static org.congocc.parser.Token.TokenType.*;
 import org.congocc.parser.tree.*;
 
 public class BNFProduction extends BaseNode {

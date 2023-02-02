@@ -2,7 +2,7 @@ import java.io.*;
 import java.nio.file.Files;
 import java.util.*;
 import org.parsers.java.*;
-import org.parsers.java.TokenType;
+import org.parsers.java.Token.TokenType;
 
 /**
  * A test harness for lexing Java files from 
@@ -24,7 +24,7 @@ public class JLex {
               System.err.println("File " + file + " does not exist.");
               continue;
           }
-	   addFilesRecursively(files, file);
+	      addFilesRecursively(files, file);
       }
       long startTime = System.currentTimeMillis();
       int numTokens =0;

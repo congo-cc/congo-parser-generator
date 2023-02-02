@@ -145,9 +145,8 @@ public class FilesGenerator {
             add("Node.java");
             add("InvalidNode.java");
             add("TokenSource.java");
-            add("LexicalState.java");
             add("NonTerminalCall.java");
-            add("TokenType.java");
+//            add("TokenType.java");
         }
     };
 
@@ -237,12 +236,10 @@ public class FilesGenerator {
     }
 
     void generateOtherFiles() throws IOException, TemplateException {
-        Path outputFile = grammar.getParserOutputDirectory().resolve("TokenType.java");
-        generate(outputFile);
-        outputFile = grammar.getParserOutputDirectory().resolve("LexicalState.java");
-        generate(outputFile);
+//        Path outputFile = grammar.getParserOutputDirectory().resolve("TokenType.java");
+//        generate(outputFile);
         if (grammar.getRootAPIPackage() == null) {
-            outputFile = grammar.getParserOutputDirectory().resolve("TokenSource.java");
+            Path outputFile = grammar.getParserOutputDirectory().resolve("TokenSource.java");
             generate(outputFile);
             outputFile = grammar.getParserOutputDirectory().resolve("NonTerminalCall.java");
             generate(outputFile);
