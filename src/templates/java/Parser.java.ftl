@@ -56,6 +56,7 @@ EnumSet<TokenType> outerFollowSet;
    private boolean legacyGlitchyLookahead = false;
 [/#if]
 
+private final Token DUMMY_START_TOKEN = new Token();
 private boolean cancelled;
 public void cancel() {cancelled = true;}
 public boolean isCancelled() {return cancelled;}
@@ -111,7 +112,7 @@ public boolean isCancelled() {return cancelled;}
       [#if grammar.lexerUsesParser]
       token_source.parser = this;
       [/#if]
-      lastConsumedToken = lexer.DUMMY_START_TOKEN;
+      lastConsumedToken = DUMMY_START_TOKEN;
       lastConsumedToken.setTokenSource(lexer);
   }
 

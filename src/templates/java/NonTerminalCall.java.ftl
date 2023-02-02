@@ -3,34 +3,30 @@
 package ${grammar.parserPackage};
 [/#if]
 
+[#var BaseTokenType = grammar.treeBuildingEnabled?string("? extends Node.NodeType", "TokenType")]
+
 import java.io.PrintStream;
-import java.util.EnumSet;
+import java.util.Set;
 
 public class NonTerminalCall {
-    final ${grammar.parserClassName} parser;
-    final ${grammar.lexerClassName} lexer;
+    final TokenSource lexer;
     final String sourceFile;
     final String productionName;
+    final String parserClassName;
     final int line, column;
+    final Set<${BaseTokenType}> followSet;
 
-   [#if grammar.faultTolerant]
-    final EnumSet<TokenType> followSet;
-   [/#if]
-
-
-    NonTerminalCall(${grammar.parserClassName} parser, ${grammar.lexerClassName} lexer, String sourceFile, String productionName, int line, int column) {
-        this.parser = parser;
+    NonTerminalCall(String parserClassName, TokenSource lexer, String sourceFile, String productionName, int line, int column, Set<${BaseTokenType}> followSet) {
+        this.parserClassName = parserClassName;
         this.lexer = lexer;
         this.sourceFile = sourceFile;
         this.productionName = productionName;
         this.line = line;
         this.column = column;
-      [#if grammar.faultTolerant]
-        this.followSet = parser.outerFollowSet;
-      [/#if]
+        this.followSet = followSet;
     }
 
-    final ${grammar.lexerClassName} getTokenSource() {
+    final TokenSource getTokenSource() {
         return lexer;
     }
 

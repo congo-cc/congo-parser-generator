@@ -53,21 +53,7 @@ import ${grammar.rootAPIPackage}.TokenSource;
 
 public class ${grammar.lexerClassName} extends TokenSource
 {
- [@CU.TokenTypeConstants/]
-    private void backup(int amount) {
-        if (amount > bufferPosition) throw new ArrayIndexOutOfBoundsException();
-        this.bufferPosition -= amount;
-    }
-
-  final Token DUMMY_START_TOKEN = new Token();
-
-
-
-    // The offset in the internal buffer to the very
-    // next character that the readChar method returns
-    private int bufferPosition;
-
-
+   [@CU.TokenTypeConstants/]
 
  [#if grammar.lexerUsesParser]
   public ${grammar.parserClassName} parser;
@@ -127,8 +113,7 @@ public class ${grammar.lexerClassName} extends TokenSource
       * usages this is 1.
       */
      public ${grammar.lexerClassName}(String inputSource, CharSequence input, LexicalState lexState, int startingLine, int startingColumn) {
-        setInputSource(inputSource);
-        setTabSize(${grammar.tabSize});
+        super(inputSource, input, startingLine, startingColumn);
         setContent(mungeContent(input, ${PRESERVE_TABS}, getTabSize(), ${PRESERVE_LINE_ENDINGS}, ${JAVA_UNICODE_ESCAPE}, ${ENSURE_FINAL_EOL}));
         createLineOffsetsTable();
         createTokenLocationTable();
@@ -196,10 +181,10 @@ public class ${grammar.lexerClassName} extends TokenSource
  private final Token nextToken() {
       Token matchedToken = null;
       boolean inMore = false;
-      int tokenBeginOffset = this.bufferPosition, firstChar =0;
+      int tokenBeginOffset = getBufferPosition(), firstChar =0;
       // The core tokenization loop
       while (matchedToken == null) {
-        int curChar, codeUnitsRead=0, matchedPos=0;
+        int curChar, codePointsRead=0, matchedPos=0;
         TokenType matchedType = null;
         boolean reachedEnd = false;
         if (inMore) {
@@ -207,7 +192,7 @@ public class ${grammar.lexerClassName} extends TokenSource
             if (curChar == -1) reachedEnd = true;
         }
         else {
-            tokenBeginOffset = this.bufferPosition;
+            tokenBeginOffset = getBufferPosition();
             firstChar = curChar = readChar();
             if (curChar == -1) {
               matchedType = EOF;
@@ -224,7 +209,7 @@ public class ${grammar.lexerClassName} extends TokenSource
         if (!reachedEnd) do {
             // Holder for the new type (if any) matched on this iteration
             TokenType newType = null;
-            if (codeUnitsRead > 0) {
+            if (codePointsRead > 0) {
                 // What was nextStates on the last iteration 
                 // is now the currentStates!
                 BitSet temp = currentStates;
@@ -240,36 +225,35 @@ public class ${grammar.lexerClassName} extends TokenSource
                 }
             }
             nextStates.clear();
-            int nextActive = codeUnitsRead == 0 ? 0 : currentStates.nextSetBit(0);
+            int nextActive = codePointsRead == 0 ? 0 : currentStates.nextSetBit(0);
             do {
                 TokenType returnedType = nfaFunctions[nextActive].apply(curChar, nextStates, activeTokenTypes);
                 if (returnedType != null && (newType == null || returnedType.ordinal() < newType.ordinal())) {
                     newType = returnedType;
                 }
-                nextActive = codeUnitsRead == 0 ? -1 : currentStates.nextSetBit(nextActive+1);
+                nextActive = codePointsRead == 0 ? -1 : currentStates.nextSetBit(nextActive+1);
             } while (nextActive != -1);
-            ++codeUnitsRead;
-            if (curChar>0xFFFF) ++codeUnitsRead;
+            ++codePointsRead;
             if (newType != null) {
                 matchedType = newType;
                 inMore = moreTokens.contains(matchedType);
-                matchedPos= codeUnitsRead;
+                matchedPos= codePointsRead;
             }
         } while (!nextStates.isEmpty());
         if (matchedType == null) {
-            bufferPosition = tokenBeginOffset+1;
-            if (firstChar>0xFFFF) ++bufferPosition;
-            return new InvalidToken(this, tokenBeginOffset, bufferPosition);
+            setBufferPosition(tokenBeginOffset);
+            forward(1);
+            return new InvalidToken(this, tokenBeginOffset, getBufferPosition());
         } 
-        bufferPosition -= (codeUnitsRead - matchedPos);
+        backup(codePointsRead - matchedPos);
         if (skippedTokens.contains(matchedType)) {
-            skipTokens(tokenBeginOffset, bufferPosition);
+            skipTokens(tokenBeginOffset, getBufferPosition());
         }
         else if (regularTokens.contains(matchedType) || unparsedTokens.contains(matchedType)) {
             matchedToken = Token.newToken(matchedType, 
                                         this, 
                                         tokenBeginOffset,
-                                        bufferPosition);
+                                        getBufferPosition());
             matchedToken.setUnparsed(!regularTokens.contains(matchedType));
         }
      [#if lexerData.hasLexicalStateTransitions]
@@ -359,30 +343,6 @@ public class ${grammar.lexerClassName} extends TokenSource
   }
  [/#if]
 
-    // But there is no goto in Java!!!
-    private void goTo(int offset) {
-        this.bufferPosition = nextUnignoredOffset(offset);
-    }
-
-    private int readChar() {
-        CharSequence content = getContent();
-        bufferPosition = nextUnignoredOffset(bufferPosition);
-        if (bufferPosition >= content.length()) {
-            return -1;
-        }
-        char ch = content.charAt(bufferPosition++);
-        if (Character.isHighSurrogate(ch) && bufferPosition < content.length()) {
-            char nextChar = content.charAt(bufferPosition);
-            if (Character.isLowSurrogate(nextChar)) {
-                ++bufferPosition;
-                return Character.toCodePoint(ch, nextChar);
-            }
-        }
-        return ch;
-    }
-
-
-    
     void cacheToken(Token tok) {
 [#if !grammar.minimalToken]        
         if (tok.isInserted()) {
@@ -391,10 +351,7 @@ public class ${grammar.lexerClassName} extends TokenSource
             return;
         }
 [/#if]        
-	    int offset = tok.getBeginOffset();
-        if (!isIgnored(offset)) {
-            cacheTokenAt(tok, offset);
-        }
+        cacheTokenAt(tok, tok.getBeginOffset());
     }
 
 [#if !grammar.minimalToken]
@@ -436,7 +393,7 @@ public class ${grammar.lexerClassName} extends TokenSource
   // The functional interface that represents 
   // the acceptance method of an NFA state
   static interface NfaFunction {
-    TokenType apply(int ch, BitSet bs, EnumSet<TokenType> validTypes);
+      TokenType apply(int ch, BitSet bs, EnumSet<TokenType> validTypes);
   }
 
  [#if NFA.multipleLexicalStates]

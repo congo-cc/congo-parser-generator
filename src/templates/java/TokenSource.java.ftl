@@ -55,6 +55,12 @@ abstract public class TokenSource
    private int[] lineOffsets;
    // Munged content, possibly replace unicode escapes, tabs, or CRLF with LF.
    private CharSequence content;
+   // The offset in the internal buffer to the very
+   // next character that the readChar method returns
+   private int bufferPosition;
+
+   final int getBufferPosition() {return bufferPosition;}
+   final void setBufferPosition(int bufferPosition) {this.bufferPosition=bufferPosition;}
 
     // The starting line and column, usually 1,1
     // that is used to report a file position 
@@ -65,6 +71,14 @@ abstract public class TokenSource
       this.startingLine = startingLine;
       this.startingColumn = startingColumn;
     }
+
+    public TokenSource(String inputSource, CharSequence input, int startingLine, int startingColumn) {
+        this.inputSource = inputSource;
+        tabSize = ${grammar.tabSize};
+        this.startingLine = startingLine;
+        this.startingColumn = startingColumn;
+     }
+
 
 // Icky method to handle annoying stuff. Might make this public later if it is
 // needed elsewhere
@@ -167,7 +181,51 @@ abstract public class TokenSource
 
     int contentLength() {return content.length();}
 
-    final int nextUnignoredOffset(int offset) {
+    int readChar() {
+        CharSequence content = getContent();
+        bufferPosition = nextUnignoredOffset(bufferPosition);
+        if (bufferPosition >= content.length()) {
+            return -1;
+        }
+        char ch = content.charAt(bufferPosition++);
+        if (Character.isHighSurrogate(ch) && bufferPosition < content.length()) {
+            char nextChar = content.charAt(bufferPosition);
+            if (Character.isLowSurrogate(nextChar)) {
+                ++bufferPosition;
+                return Character.toCodePoint(ch, nextChar);
+            }
+        }
+        return ch;
+    }
+
+    /**
+     * backup a certain number of code points
+     */
+    final void backup(int amount) {
+        for (int i = 0; i < amount; i++) {
+            bufferPosition--;
+            while(isIgnored(bufferPosition)) bufferPosition--;
+            if (Character.isLowSurrogate(content.charAt(bufferPosition))) bufferPosition--;
+        }
+    }
+
+    /**
+     * advance a certain number of code points
+     */
+    final void forward(int amount) {
+        for (int i = 0; i < amount; i++) {
+            if (Character.isHighSurrogate(content.charAt(bufferPosition))) bufferPosition++;
+            bufferPosition++;
+            while(isIgnored(bufferPosition)) bufferPosition++;
+        }
+    }
+
+    // But there is no goto in Java!!!
+    final void goTo(int offset) {
+        this.bufferPosition = nextUnignoredOffset(offset);
+    }
+
+    private final int nextUnignoredOffset(int offset) {
         while (offset<tokenLocationTable.length-1 && tokenLocationTable[offset] == IGNORED) {
             ++offset;
         } 
@@ -185,7 +243,7 @@ abstract public class TokenSource
       return tokenLocationTable[offset] == IGNORED;
     }
 
-    final void cacheTokenAt(Token tok, int offset) {
+    final void cacheTokenAt(${BaseToken} tok, int offset) {
         if (!isIgnored(offset)) {
              tokenOffsets.set(offset);
              tokenLocationTable[offset] = tok;
@@ -263,7 +321,7 @@ abstract public class TokenSource
       }
     }
 
-    void setLineSkipped(Token tok) {
+    void setLineSkipped(${BaseToken} tok) {
        int lineNum = tok.getBeginLine();
        int start = getLineStartOffset(lineNum);
        int end = getLineStartOffset(lineNum+1);

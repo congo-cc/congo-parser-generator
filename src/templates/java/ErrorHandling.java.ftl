@@ -8,14 +8,18 @@ private ArrayList<NonTerminalCall> lookaheadStack = new ArrayList<>();
 [/#if]
 
 private final void pushOntoCallStack(String methodName, String fileName, int line, int column) {
-   parsingStack.add(new NonTerminalCall(this, token_source, fileName, methodName, line, column));
+    [#if grammar.faultTolerant]
+   parsingStack.add(new NonTerminalCall("${grammar.parserClassName}", token_source, fileName, methodName, line, column, currentFollowSet));
+    [#else]
+   parsingStack.add(new NonTerminalCall("${grammar.parserClassName}", token_source, fileName, methodName, line, column, null));
+    [/#if]
 }
 
 private final void popCallStack() {
     NonTerminalCall ntc = parsingStack.remove(parsingStack.size() -1);
     this.currentlyParsedProduction = ntc.productionName;
    [#if grammar.faultTolerant]
-    this.outerFollowSet = ntc.followSet;
+    this.outerFollowSet = (EnumSet<TokenType>) ntc.followSet;
    [/#if]
 }
 
@@ -75,7 +79,7 @@ private ListIterator<NonTerminalCall> stackIteratorBackward() {
 
 
 private final void pushOntoLookaheadStack(String methodName, String fileName, int line, int column) {
-    lookaheadStack.add(new NonTerminalCall(this, token_source, fileName, methodName, line, column));
+    lookaheadStack.add(new NonTerminalCall("${grammar.parserClassName}", token_source, fileName, methodName, line, column, null));
 }
 
 private final void popLookaheadStack() {

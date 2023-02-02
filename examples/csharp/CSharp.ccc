@@ -248,7 +248,7 @@ Modifiers#void : //TODO
 ClassDeclaration :
   {
     boolean isaRecordClass = false;
-    permissibleModifiers = EnumSet.of(TokenType.NEW,  TokenType.PUBLIC, TokenType.PROTECTED,
+    permissibleModifiers = EnumSet.of(NEW,  PUBLIC, TokenType.PROTECTED,
                                       TokenType.INTERNAL, TokenType.PRIVATE, TokenType.ABSTRACT,
                                       TokenType.SEALED, TokenType.STATIC, TokenType.UNSAFE);
   }#
