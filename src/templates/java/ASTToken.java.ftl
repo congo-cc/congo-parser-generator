@@ -3,22 +3,21 @@
   * Generated Code for ${classname} Token subclass
   * by the ASTToken.java.ftl template
   */
-[#var package = ""]
-[#if explicitPackageName??]
-package ${explicitPackageName};
-[#set package = explicitPackageName]
-[#elseif grammar.nodePackage?has_content]
-package ${grammar.nodePackage};
-[#set package = grammar.nodePackage]
+
+[#var package = grammar.nodePackage]
+[#if explicitPackageName??][#set package = explicitPackageName][/#if]
+
+package ${package};
+
+[#if package != grammar.parserPackage]
+import ${grammar.parserPackage}.*;
 [/#if]
 
-[#if grammar.parserPackage?has_content && package != grammar.parserPackage]
+[#if package != grammar.parserPackage]
 import ${grammar.parserPackage}.*;
-import ${grammar.parserPackage}.TokenType;
 [/#if]
-[#if grammar.parserPackage?has_content]
+
 import static ${grammar.parserPackage}.TokenType.*;
-[/#if]
 
 public class ${classname} extends ${superclass} {
     public ${classname}(TokenType type, ${grammar.lexerClassName} tokenSource, int beginOffset, int endOffset) {

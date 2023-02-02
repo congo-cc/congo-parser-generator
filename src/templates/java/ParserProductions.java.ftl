@@ -1,7 +1,5 @@
 [#-- This template contains the core logic for generating the various parser routines. --]
 
-[#import "CommonUtils.java.ftl" as CU]
-
 [#var nodeNumbering = 0]
 [#var NODE_USES_PARSER = grammar.nodeUsesParser]
 [#var NODE_PREFIX = grammar.nodePrefix]

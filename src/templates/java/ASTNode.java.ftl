@@ -4,19 +4,13 @@
   * by the ASTNode.java.ftl template
   */
 
-[#var package = ""]
-[#if explicitPackageName??]
-package ${explicitPackageName};
-[#set package = explicitPackageName]
-[#elseif grammar.nodePackage?has_content]
-[#set package = grammar.nodePackage]
+[#var package = grammar.nodePackage]
+[#if explicitPackageName??][#set package = explicitPackageName][/#if]
+
 package ${package};
-[/#if]
-[#if grammar.parserPackage?has_content && package != grammar.parserPackage]
+
+[#if package != grammar.parserPackage]
 import ${grammar.parserPackage}.*;
-  [#if grammar.baseNodeInParserPackage]
-import ${grammar.parserPackage}.${grammar.baseNodeClassName};
-  [/#if]
 [/#if]
 
 [#if isInterface]

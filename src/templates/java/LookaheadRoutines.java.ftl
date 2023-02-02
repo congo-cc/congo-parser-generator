@@ -1,7 +1,5 @@
 [#-- This template generates the various lookahead/predicate routines --]
 
-[#import "CommonUtils.java.ftl" as CU]
-
 [#macro Generate]
     [@firstSetVars /]
     [@followSetVars /]
@@ -9,7 +7,6 @@
        [@BuildLookaheads /]
      [/#if]
 [/#macro]
-
 
 [#macro firstSetVars]
     //=================================

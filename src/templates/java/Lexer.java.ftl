@@ -6,12 +6,10 @@
     are in the imported template NfaCode.java.ftl
  --]
  
-[#if grammar.parserPackage?has_content]
-    package ${grammar.parserPackage};
-    import static ${grammar.parserPackage}.TokenType.*;
-[/#if]
+package ${grammar.parserPackage};
 
-[#import "CommonUtils.java.ftl" as CU  ]
+import static ${grammar.parserPackage}.TokenType.*;
+
 [#import "NfaCode.java.ftl" as NFA]
 
 [#var lexerData=grammar.lexerData]
@@ -53,8 +51,6 @@ import ${grammar.rootAPIPackage}.TokenSource;
 
 public class ${grammar.lexerClassName} extends TokenSource
 {
-   [@CU.TokenTypeConstants/]
-
  [#if grammar.lexerUsesParser]
   public ${grammar.parserClassName} parser;
  [/#if]

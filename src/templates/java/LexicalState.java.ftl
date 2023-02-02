@@ -2,9 +2,7 @@
  * Generated Code for LexicalState
  * by the LexicalState.java.ftl template
  */
-[#if grammar.parserPackage?has_content]
 package ${grammar.parserPackage};
-[/#if]
 
 public enum LexicalState {
   [#list grammar.lexerData.lexicalStates as lexicalState]

@@ -246,8 +246,7 @@ public final class Main {
                     }
                 }
                 else {
-                    System.err.println("Unknown flag: " + arg);
-                    System.exit(-1);
+                    System.err.println("Ignoring unknown flag: " + arg);
                 }
             } else {
                 if (grammarFile == null) {

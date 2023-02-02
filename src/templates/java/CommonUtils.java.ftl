@@ -1,7 +1,6 @@
 [#-- A place to put some utility routines used in various templates. Currently doesn't
      really have much! --]
 
-[#--var TT = "TokenType."--]
 [#var USE_FIRST_SET_THRESHOLD = 5]
 
  [#--if grammar.parserPackage?has_content]
@@ -137,18 +136,4 @@
    [#else]
       [#nested/]
    [/#if]
-[/#macro]
-
-[#macro TokenTypeConstants]
- [#if !grammar.parserPackage?has_content]
-  static private final TokenType 
-   [#list grammar.lexerData.regularExpressions as regexp]
-      [#if regexp_index > 0],[/#if]
-       ${regexp.label} = TokenType.${regexp.label}
-   [/#list]
-   [#list grammar.extraTokenNames as extraToken]
-       , ${extraToken} = TokenType.${extraToken}
-   [/#list]
-   , INVALID = TokenType.INVALID;
-[/#if]
 [/#macro]
