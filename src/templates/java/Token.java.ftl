@@ -3,7 +3,7 @@
   */
 package ${grammar.parserPackage};
 
-[#if grammar.nodePackage != grammar.parserPackage]
+[#if grammar.treeBuildingEnabled]
 import ${grammar.nodePackage}.*;
 [/#if]
 
@@ -20,7 +20,7 @@ import ${grammar.rootAPIPackage}.Node;
 import freemarker.template.*;
 [/#if]
 
- [#var implementsNode = ""]
+[#var implementsNode = ""]
 
  [#if grammar.treeBuildingEnabled]
     [#set implementsNode ="implements Node.TerminalNode"]

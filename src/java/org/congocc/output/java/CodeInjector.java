@@ -23,7 +23,6 @@ public class CodeInjector {
     private final Map<String, List<ClassOrInterfaceBodyDeclaration>> bodyDeclarations = new HashMap<>();
     private final Set<String> overriddenMethods = new HashSet<>();  // Not presently queried ...
     private final Set<String> typeNames = new HashSet<>();
-    private final Map<String, String> explicitPackages = new HashMap<>();
     private final Set<String> interfaces = new HashSet<>();  // Not presently queried ...
     private final Grammar grammar;
     
@@ -64,24 +63,14 @@ public class CodeInjector {
              && !classname.equals("Node");
     }
     
-    String getExplicitlyDeclaredPackage(String className) {
-        return explicitPackages.get(className);
-    }
-
     private void add(CompilationUnit jcu) {
-        String explicitPackageName = jcu.getPackageName();
         List<ImportDeclaration> importDecls = new ArrayList<>(jcu.getImportDeclarations());
         for (TypeDeclaration dec : jcu.getTypeDeclarations()) {
             String name = dec.getName();
             typeNames.add(name);
-            if (explicitPackageName != null) {
-                explicitPackages.put(name, explicitPackageName);
-                name = explicitPackageName + "." + name;
-            } else {
-                String packageName = isInNodePackage(name) ? nodePackage : parserPackage;
-                if (packageName.length() > 0) {
-                    name = packageName + "." + name;
-                }
+            String packageName = isInNodePackage(name) ? nodePackage : parserPackage;
+            if (packageName.length() > 0) {
+                name = packageName + "." + name;
             }
             types.put(name, dec);
             if (dec instanceof InterfaceDeclaration) {
@@ -133,9 +122,6 @@ public class CodeInjector {
                    key = ((MethodDeclaration) decl).getFullSignature();
                 }
                 if (key != null) {
-                    if (explicitPackageName != null && explicitPackageName.length()>0) {
-                        key = explicitPackageName + "." + key;
-                    }
                     overriddenMethods.add(key);
                 }
             }

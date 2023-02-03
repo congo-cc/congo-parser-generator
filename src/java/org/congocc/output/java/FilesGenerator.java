@@ -143,10 +143,9 @@ public class FilesGenerator {
             add("Token.java");
             add("InvalidToken.java");
             add("Node.java");
-            add("InvalidNode.java");
+//            add("InvalidNode.java");
             add("TokenSource.java");
             add("NonTerminalCall.java");
-//            add("TokenType.java");
         }
     };
 
@@ -190,9 +189,6 @@ public class FilesGenerator {
         String superClassName = superClassLookup.get(classname);
         if (superClassName == null) superClassName = "Token";
         dataModel.put("superclass", superClassName);
-        if (codeInjector.getExplicitlyDeclaredPackage(classname) != null) {
-            dataModel.put("explicitPackageName", codeInjector.getExplicitlyDeclaredPackage(classname));
-        }
         Writer out = new StringWriter();
         Template template = fmConfig.getTemplate(templateName);
         // Sometimes needed in templates for e.g. injector.hasInjectedCode(node)
@@ -236,8 +232,6 @@ public class FilesGenerator {
     }
 
     void generateOtherFiles() throws IOException, TemplateException {
-//        Path outputFile = grammar.getParserOutputDirectory().resolve("TokenType.java");
-//        generate(outputFile);
         if (grammar.getRootAPIPackage() == null) {
             Path outputFile = grammar.getParserOutputDirectory().resolve("TokenSource.java");
             generate(outputFile);
@@ -261,7 +255,8 @@ public class FilesGenerator {
     }
 
     void generateInvalidNode() throws IOException, TemplateException {
-        Path outputFile = grammar.getParserOutputDirectory().resolve("InvalidNode.java");
+//        Path outputFile = grammar.getParserOutputDirectory().resolve("InvalidNode.java");
+        Path outputFile = grammar.getNodeOutputDirectory().resolve("InvalidNode.java");
         if (regenerate(outputFile)) {
             generate(outputFile);
         }
@@ -384,16 +379,6 @@ public class FilesGenerator {
         if (nodeName.equals(grammar.getBaseNodeClassName())) {
             className = nodeName;
         }
-        String explicitlyDeclaredPackage = codeInjector.getExplicitlyDeclaredPackage(className);
-        if (explicitlyDeclaredPackage == null) {
-            return grammar.getNodeOutputDirectory().resolve(className + ".java");
-        }
-        String sourceBase = grammar.getBaseSourceDirectory();
-        if (sourceBase.equals("")) {
-            return grammar.getNodeOutputDirectory().resolve(className + ".java");
-        }
-        Path result = Paths.get(sourceBase);
-        result = result.resolve(explicitlyDeclaredPackage.replace('.', '/'));
-        return result.resolve(className + ".java");
+        return grammar.getNodeOutputDirectory().resolve(className + ".java");
     }
 }

@@ -995,8 +995,8 @@ public class Grammar extends BaseNode {
 
     public String getNodePackage() {
         String nodePackage = (String) settings.get("NODE_PACKAGE");
-        if (nodePackage == null) {
-            nodePackage = this.getParserPackage();
+        if (nodePackage == null || nodePackage.equals(getParserPackage())) {
+            nodePackage = getParserPackage() + ".ast";
         }
         return nodePackage;
     }

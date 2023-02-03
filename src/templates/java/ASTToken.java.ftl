@@ -4,18 +4,9 @@
   * by the ASTToken.java.ftl template
   */
 
-[#var package = grammar.nodePackage]
-[#if explicitPackageName??][#set package = explicitPackageName][/#if]
+package ${grammar.nodePackage};
 
-package ${package};
-
-[#if package != grammar.parserPackage]
 import ${grammar.parserPackage}.*;
-[/#if]
-
-[#if package != grammar.parserPackage]
-import ${grammar.parserPackage}.*;
-[/#if]
 
 import ${grammar.parserPackage}.Token.TokenType;
 import static ${grammar.parserPackage}.Token.TokenType.*;

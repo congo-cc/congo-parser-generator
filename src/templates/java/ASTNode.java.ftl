@@ -4,14 +4,9 @@
   * by the ASTNode.java.ftl template
   */
 
-[#var package = grammar.nodePackage]
-[#if explicitPackageName??][#set package = explicitPackageName][/#if]
+package ${grammar.nodePackage};
 
-package ${package};
-
-[#if package != grammar.parserPackage]
 import ${grammar.parserPackage}.*;
-[/#if]
 
 [#if isInterface]
 

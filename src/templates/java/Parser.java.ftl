@@ -21,6 +21,9 @@ import java.util.concurrent.CancellationException;
 import ${grammar.parserPackage}.${grammar.lexerClassName}.LexicalState;
 import ${grammar.parserPackage}.Token.TokenType;
 import static ${grammar.parserPackage}.Token.TokenType.*;
+[#if grammar.faultTolerant]
+import ${grammar.nodePackage}.InvalidNode;
+[/#if]
 
 [#if grammar.parserPackage! != grammar.nodePackage]
   [#list grammar.nodeNames as node]
