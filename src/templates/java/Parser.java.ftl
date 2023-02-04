@@ -25,7 +25,7 @@ import static ${grammar.parserPackage}.Token.TokenType.*;
 import ${grammar.nodePackage}.InvalidNode;
 [/#if]
 
-[#if grammar.parserPackage! != grammar.nodePackage]
+[#if grammar.treeBuildingEnabled]
   [#list grammar.nodeNames as node]
     [#if node?index_of('.')>0]
       import ${node};
