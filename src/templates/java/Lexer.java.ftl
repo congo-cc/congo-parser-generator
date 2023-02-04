@@ -40,7 +40,7 @@ import static ${grammar.parserPackage}.Token.TokenType.*;
    ${import}
 [/#list]
 
-import java.io.*;
+import java.io.IOException;
 import java.util.Arrays;
 import java.util.BitSet;
 import java.util.EnumMap;

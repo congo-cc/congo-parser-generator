@@ -3,7 +3,8 @@ SPECIAL_TOKENS_ARE_NODES=true;
 DEFAULT_LEXICAL_STATE="FTL_EXPRESSION";
 FAULT_TOLERANT=true;
 
-INJECT FELParser : {
+INJECT FELParser : 
+{
    static public void main(String[] args) throws ParseException, IOException {
        String input = LEXER_CLASS.readFully(new java.io.InputStreamReader(System.in));
        FELParser parser = new FELParser(input);
@@ -12,7 +13,9 @@ INJECT FELParser : {
    }
 }
 
-INJECT LEXER_CLASS : {
+INJECT LEXER_CLASS : 
+    import java.io.Reader;
+{
   static final int BUF_SIZE = 0x10000;
 
   static String readFully(Reader reader) throws IOException {

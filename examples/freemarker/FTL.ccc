@@ -2,7 +2,7 @@ PARSER_PACKAGE="ftl";
 NODE_PACKAGE="ftl.ast";
 DEFAULT_LEXICAL_STATE="TEMPLATE_TEXT";
 
-INJECT FTLParser :
+INJECT PARSER_CLASS :
     import java.io.*;
     import java.util.*;
 {
@@ -53,6 +53,7 @@ INJECT FTLParser :
 }
 
 INJECT LEXER_CLASS :
+    import java.io.Reader;
 {
     boolean syntaxEstablished, olderSyntax;
     boolean noWhitespaceInExpression, rightAfterHeader;
