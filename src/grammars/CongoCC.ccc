@@ -2360,7 +2360,7 @@ INJECT CharacterRange :
             this.right = right.codePointAt(0);
         }
         if (this.left>this.right) {
-            getGrammar().addError(this, "The left side of the character range must a lower ordinal (in Unicode) value than the right side.");
+            getGrammar().addError(this, "The left side of the character range must be a lower ordinal (in Unicode) value than the right side.");
         }
     }
 }

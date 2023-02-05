@@ -26,8 +26,6 @@ import org.congocc.output.Translator;
 import org.congocc.parser.*;
 import org.congocc.parser.tree.*;
 
-import freemarker.template.TemplateException;
-
 /**
  * This object is the root Node of the data structure that contains all the
  * information regarding a congocc processing job.
@@ -318,7 +316,7 @@ public class Grammar extends BaseNode {
         resolveStringLiterals();
     }
 
-    public void generateFiles() throws IOException, TemplateException {
+    public void generateFiles() throws IOException {
         translator = Translator.getTranslatorFor(this);
         new FilesGenerator(this, codeLang, codeInjections).generateAll();
     }

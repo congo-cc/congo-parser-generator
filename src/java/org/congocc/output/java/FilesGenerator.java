@@ -66,7 +66,7 @@ public class FilesGenerator {
                                              codeInjections);
     }
 
-    public void generateAll() throws IOException, TemplateException { 
+    public void generateAll() throws IOException { 
         if (grammar.getErrorCount() != 0) {
             throw new ParseException();
         }
@@ -131,7 +131,7 @@ public class FilesGenerator {
         }
     }
 
-    public void generate(Path outputFile) throws IOException, TemplateException {
+    public void generate(Path outputFile) throws IOException {
         generate(null, outputFile);
     }
 
@@ -175,7 +175,7 @@ public class FilesGenerator {
         return result;
     }
 
-    public void generate(String nodeName, Path outputFile) throws IOException, TemplateException  {
+    public void generate(String nodeName, Path outputFile) throws IOException {
         String currentFilename = outputFile.getFileName().toString();
         String templateName = getTemplateName(currentFilename);
         HashMap<String, Object> dataModel = new HashMap<>();
@@ -230,7 +230,7 @@ public class FilesGenerator {
         }
     }
 
-    void generateOtherFiles() throws IOException, TemplateException {
+    void generateOtherFiles() throws IOException {
         if (grammar.getRootAPIPackage() == null) {
             Path outputFile = grammar.getParserOutputDirectory().resolve("TokenSource.java");
             generate(outputFile);
@@ -239,21 +239,21 @@ public class FilesGenerator {
         }
     }
 
-    void generateParseException() throws IOException, TemplateException {
+    void generateParseException() throws IOException {
         Path outputFile = grammar.getParserOutputDirectory().resolve("ParseException.java");
         if (regenerate(outputFile)) {
             generate(outputFile);
         }
     }
 
-    void generateParsingProblem() throws IOException, TemplateException {
+    void generateParsingProblem() throws IOException {
         Path outputFile = grammar.getParserOutputDirectory().resolve("ParsingProblem.java");
         if (regenerate(outputFile)) {
             generate(outputFile);
         }
     }
 
-    void generateInvalidNode() throws IOException, TemplateException {
+    void generateInvalidNode() throws IOException {
 //        Path outputFile = grammar.getParserOutputDirectory().resolve("InvalidNode.java");
         Path outputFile = grammar.getNodeOutputDirectory().resolve("InvalidNode.java");
         if (regenerate(outputFile)) {
@@ -261,7 +261,7 @@ public class FilesGenerator {
         }
     }
 
-    void generateToken() throws IOException, TemplateException {
+    void generateToken() throws IOException {
         Path outputFile = grammar.getParserOutputDirectory().resolve("Token.java");
         if (regenerate(outputFile)) {
             generate(outputFile);
@@ -272,13 +272,13 @@ public class FilesGenerator {
         }
     }
     
-    void generateLexer() throws IOException, TemplateException {
+    void generateLexer() throws IOException {
         String filename = grammar.getLexerClassName() + ".java";
         Path outputFile = grammar.getParserOutputDirectory().resolve(filename);
         generate(outputFile);
     }
 
-    void generateParser() throws IOException, TemplateException {
+    void generateParser() throws IOException {
         if (grammar.getErrorCount() !=0) {
         	throw new ParseException();
         }
@@ -287,7 +287,7 @@ public class FilesGenerator {
         generate(outputFile);
     }
     
-    void generateNodeFile() throws IOException, TemplateException {
+    void generateNodeFile() throws IOException {
         Path outputFile = grammar.getParserOutputDirectory().resolve("Node.java");
         if (regenerate(outputFile)) {
             generate(outputFile);
@@ -324,7 +324,7 @@ public class FilesGenerator {
         return extension.equals(".py") || extension.equals(".cs");    // for now, always regenerate
     }
 
-    void generateTreeBuildingFiles() throws IOException, TemplateException {
+    void generateTreeBuildingFiles() throws IOException {
         if (grammar.getRootAPIPackage() == null) {
     	    generateNodeFile();
         }
