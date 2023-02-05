@@ -20,6 +20,7 @@ class Reaper extends Node.Visitor {
     private Set<String> usedMethodNames = new HashSet<>();
     private Set<String> usedTypeNames = new HashSet<>();
     private Set<String> usedVarNames = new HashSet<>();
+    private Set<String> usedImportDeclarations = new HashSet<>();
     private CompilationUnit jcu;
 
     Reaper(CompilationUnit jcu) {
@@ -51,8 +52,12 @@ class Reaper extends Node.Visitor {
             }
         }
 
-        // Now get rid of unused imports.
+        // Now get rid of unused and repeated imports.
         for (ImportDeclaration imp : jcu.childrenOfType(ImportDeclaration.class)) {
+            if (!usedImportDeclarations.add(getKey(imp))) {
+                jcu.removeChild(imp);
+                continue;
+            }
             if (imp.firstChildOfType(STAR) == null) {
                 List<Identifier> names = imp.descendantsOfType(Identifier.class);
                 String name = names.get(names.size()-1).getImage();
@@ -63,6 +68,12 @@ class Reaper extends Node.Visitor {
                 }
             }
         }
+    }
+
+    private String getKey(ImportDeclaration decl) {
+        String result = "";
+        for (Node child : decl.descendants(Token.class)) result += child;
+        return result;
     }
 
     private boolean isPrivate(Node node) {
