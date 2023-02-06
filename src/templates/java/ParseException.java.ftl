@@ -27,7 +27,7 @@ public class ParseException extends ${BASE_EXCEPTION_TYPE} {
   private boolean alreadyAdjusted;
 
   private void setInfo(${BaseToken} token, ${TOKEN_TYPE_SET} expectedTypes, List<NonTerminalCall> callStack) {
-    if (token != null && !token.getType().isEOF() && token.getNext() != null) {
+    if (token != null && token.getType() != null && !token.getType().isEOF() && token.getNext() != null) {
         token = token.getNext();
     }
     this.token = token;
@@ -36,7 +36,7 @@ public class ParseException extends ${BASE_EXCEPTION_TYPE} {
   }
 
   public boolean hitEOF() {
-    return token != null && token.getType().isEOF();
+    return token != null && token.getType() != null && token.getType().isEOF();
   }
 
   public ParseException(${grammar.parserClassName} parser, ${BaseToken} token, ${TOKEN_TYPE_SET} expectedTypes, List<NonTerminalCall> callStack) {
@@ -74,7 +74,7 @@ public class ParseException extends ${BASE_EXCEPTION_TYPE} {
      StringBuilder buf = new StringBuilder();
      if (msg != null) buf.append(msg);
      buf.append("\nEncountered an error at (or somewhere around) " + token.getLocation());
-     if  (expectedTypes != null && token!=null && expectedTypes.contains(token.getType())) {
+     if  (expectedTypes != null && token!=null && token.getType() != null && expectedTypes.contains(token.getType())) {
          [#-- //This is really screwy, have to revisit this whole case. --]
          return buf.toString();
      }
@@ -87,10 +87,14 @@ public class ParseException extends ${BASE_EXCEPTION_TYPE} {
              buf.append(type);
          }
      }
-     String content = token.getImage();
-     if (content == null) content = "";
-     if (content.length() > 32) content = content.substring(0, 32) + "...";
-     buf.append("\nFound string \"" + addEscapes(content) + "\" of type " + token.getType());
+     if (token.getType() != null) {
+         String content = token.getImage();
+         if (content == null) content = "";
+         if (content.length() > 32) content = content.substring(0, 32) + "...";
+         buf.append("\nFound string \"" + addEscapes(content) + "\" of type " + token.getType());
+     } else {
+         buf.append("\nBut found a DUMMY_START_TOKEN");
+     } 
      return buf.toString();
   }
   
