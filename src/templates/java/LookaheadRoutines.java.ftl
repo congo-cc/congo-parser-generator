@@ -166,6 +166,7 @@
        int ${storeRemainingLookahead} = remainingLookahead;
        remainingLookahead = UNLIMITED;
        Token ${storeCurrentLookaheadVar} = currentLookaheadToken;
+       boolean prevHitFailure = hitFailure;
        if (currentLookaheadToken == null) {
           currentLookaheadToken = lastConsumedToken;
        }
@@ -178,6 +179,7 @@
        lookaheadRoutineNesting--;
        currentLookaheadToken = ${storeCurrentLookaheadVar};
        remainingLookahead = ${storeRemainingLookahead};
+       hitFailure = prevHitFailure;
     }
   }
 [/#macro]
