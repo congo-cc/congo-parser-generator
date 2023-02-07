@@ -42,15 +42,17 @@ public class Token ${implementsNode} {
        [#list grammar.extraTokenNames as extraToken]
           ${extraToken},
        [/#list]
+       DUMMY,
        INVALID;
 
+       public boolean isUndefined() {return this == DUMMY;}
        public boolean isInvalid() {return this == INVALID;}
        public boolean isEOF() {return this == EOF;}
     }    
 
     private ${grammar.lexerClassName} tokenSource;
     
-    private TokenType type;
+    private TokenType type=TokenType.DUMMY;
     
     private int beginOffset, endOffset;
     

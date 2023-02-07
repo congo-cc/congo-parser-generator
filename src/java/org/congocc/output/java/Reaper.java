@@ -3,6 +3,7 @@ package org.congocc.output.java;
 import java.util.*;
 import org.congocc.parser.*;
 import org.congocc.parser.tree.*;
+
 import static org.congocc.parser.Token.TokenType.*;
 
 /**
@@ -83,26 +84,40 @@ class Reaper extends Node.Visitor {
     }
 
     void visit(MethodDeclaration md) {
-        if (!isPrivate(md) || usedMethodNames.contains(md.getName())) {
+        if (!isPrivate(md)) {
+            usedMethodNames.add(md.getName());
+        }
+        if (usedMethodNames.contains(md.getName())) {
             recurse(md);
         }
     }
 
     void visit(ObjectType ot) {
-        String firstID = ot.firstDescendantOfType(Identifier.class).getImage();
-        usedTypeNames.add(firstID);
+        Identifier firstID = ot.firstChildOfType(Identifier.class);
+        usedTypeNames.add(firstID.getImage());
+        recurse(ot);
     }
 
-    void visit(Identifier id) {
-        if (id.getNext().getType() == LPAREN || id.getParent() instanceof MethodReference) {
-            usedMethodNames.add(id.getImage());
-        }
-        else {
-            usedVarNames.add(id.getImage());
-            if (id.getNext().getType() == DOT || id.firstAncestorOfType(ThrowsList.class) != null) {
-                usedTypeNames.add(id.getImage());
-            }
-        }
+    void visit(Annotation ann) {
+        String firstID = ann.firstDescendantOfType(Identifier.class).getImage();
+        usedTypeNames.add(firstID);
+        recurse(ann);
+    }
+
+    void visit(MethodCall mc) {
+        String lhs = mc.firstChildOfType(InvocationArguments.class).previousSibling().getImage();
+        usedMethodNames.add(lhs.substring(lhs.lastIndexOf('.')+1));
+        recurse(mc);
+    }
+
+    void visit(MethodReference mr) {
+        usedMethodNames.add(mr.firstChildOfType(Identifier.class).getImage());
+        recurse(mr);
+    }
+
+    void visit(Name name) {
+        usedVarNames.add(name.getChild(0).toString());
+        usedTypeNames.add(name.getChild(0).toString());
     }
 
     void visit(VariableDeclarator vd) {
@@ -122,7 +137,7 @@ class Reaper extends Node.Visitor {
     void visit(PackageDeclaration decl) {}
 
     // Get rid of any variable declarations where the variable name
-    // is not in usedNames. The only complicated case is if the field
+    // is not in usedVarNames. The only complicated case is if the field
     // has more than one variable declaration comma-separated
     private void stripUnusedVars(FieldDeclaration fd) {
         Set<Node> toBeRemoved = new HashSet<Node>();

@@ -495,13 +495,18 @@ ThrowsList : <THROWS> ExceptionType ( <COMMA> ExceptionType )* ;
 
 ExceptionType#ObjectType :
     (Annotation)*
+    <IDENTIFIER>
     (
-      Name <DOT> =>|+1 (Annotation)+ TypeIdentifier
-      |
-      Name
-    )
+       <DOT> <IDENTIFIER> =>||
+    )*
+    [
+      <DOT> =>|+1
+      (Annotation)+
+      <IDENTIFIER>
+    ]
     [TypeArguments]
 ;
+
 
 #Expression#interface :
     AssignmentExpression
