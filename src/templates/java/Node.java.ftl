@@ -16,6 +16,7 @@ public interface Node
     // Marker interface for objects
     // that represent a node's type, i.e. TokenType
     public interface NodeType { 
+        boolean isUndefined();
         boolean isInvalid();
         boolean isEOF();
     }

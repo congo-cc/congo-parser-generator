@@ -137,7 +137,7 @@ class Reaper extends Node.Visitor {
     void visit(PackageDeclaration decl) {}
 
     // Get rid of any variable declarations where the variable name
-    // is not in usedNames. The only complicated case is if the field
+    // is not in usedVarNames. The only complicated case is if the field
     // has more than one variable declaration comma-separated
     private void stripUnusedVars(FieldDeclaration fd) {
         Set<Node> toBeRemoved = new HashSet<Node>();
