@@ -60,14 +60,14 @@ public class Token ${implementsNode} {
     private Node parent;
 [/#if]
 
-[#if !grammar.minimalToken || grammar.faultTolerant]
+[#if grammar.tokenChaining || grammar.faultTolerant]
     private String image;
     public void setImage(String image) {
        this.image = image;
     }
 [/#if]
 
-[#if !grammar.minimalToken]
+[#if grammar.tokenChaining]
 
     private Token prependedToken, appendedToken;
 
@@ -257,7 +257,7 @@ public class Token ${implementsNode} {
      */
 [#if grammar.treeBuildingEnabled]@Override[/#if]
     public String getImage() {
-      [#if grammar.minimalToken]
+      [#if !grammar.tokenChaining]
         return getSource();
       [#else]  
         return image != null ? image : getSource();
@@ -300,7 +300,7 @@ public class Token ${implementsNode} {
      */
     public Token nextCachedToken() {
         if (getType() == TokenType.EOF) return null;
-[#if !grammar.minimalToken]        
+[#if grammar.tokenChaining]        
         if (appendedToken != null) return appendedToken;
 [/#if]        
         ${grammar.lexerClassName} tokenSource = getTokenSource();
@@ -308,7 +308,7 @@ public class Token ${implementsNode} {
     }
 
     public Token previousCachedToken() {
-[#if !grammar.minimalToken]        
+[#if grammar.tokenChaining]        
         if (prependedToken !=null) return prependedToken;
 [/#if]        
         if (getTokenSource()==null) return null;
@@ -321,7 +321,7 @@ public class Token ${implementsNode} {
 
     public Token replaceType(TokenType type) {
         Token result = newToken(type, getTokenSource(), getBeginOffset(), getEndOffset());
-[#if !grammar.minimalToken]        
+[#if grammar.tokenChaining]        
         result.prependedToken = this.prependedToken;
         result.appendedToken = this.appendedToken;
         result.inserted = this.inserted;
@@ -427,7 +427,7 @@ public class Token ${implementsNode} {
         };
     }
 
-[#if grammar.treeBuildingEnabled && !grammar.minimalToken]
+[#if grammar.treeBuildingEnabled && grammar.tokenChaining]
     /**
      * Copy the location info from a Node
      */
@@ -456,7 +456,7 @@ public class Token ${implementsNode} {
         setTokenSource(from.getTokenSource());
         setBeginOffset(from.getBeginOffset());
         setEndOffset(from.getEndOffset());
-    [#if !grammar.minimalToken]    
+    [#if grammar.tokenChaining]    
         appendedToken = from.appendedToken;
         prependedToken = from.prependedToken;
     [/#if]
@@ -467,7 +467,7 @@ public class Token ${implementsNode} {
         if (tokenSource == null) setTokenSource(end.getTokenSource());
         setBeginOffset(start.getBeginOffset());
         setEndOffset(end.getEndOffset());
-    [#if !grammar.minimalToken]
+    [#if grammar.tokenChaining]
         prependedToken = start.prependedToken;
         appendedToken = end.appendedToken;
     [/#if]

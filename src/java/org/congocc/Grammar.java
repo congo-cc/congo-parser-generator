@@ -335,6 +335,10 @@ public class Grammar extends BaseNode {
             if (lastDot >0) {
                 baseName = baseName.substring(0, lastDot);
             }
+            if (Character.isLowerCase(baseName.charAt(0))) {
+                baseName = baseName.substring(0, 1).toUpperCase() 
+                                  + baseName.substring(1);
+            }
         }
         return baseName;
     }
@@ -344,14 +348,7 @@ public class Grammar extends BaseNode {
             parserClassName = (String) settings.get("PARSER_CLASS");
         }
         if (parserClassName == null) {
-            parserClassName = getBaseName();
-            if (!parserClassName.toLowerCase().endsWith("parser")) {
-                parserClassName += "Parser";
-            }
-            if (Character.isLowerCase(parserClassName.charAt(0))) {
-                parserClassName = parserClassName.substring(0, 1).toUpperCase() 
-                                  + parserClassName.substring(1);
-            }
+            parserClassName = getBaseName() + "Parser";
         }
         return parserClassName;
     }
@@ -375,20 +372,9 @@ public class Grammar extends BaseNode {
             lexerClassName = (String) settings.get("LEXER_CLASS");
         }
         if (lexerClassName == null) {
-            lexerClassName = getBaseName();
-            if (!lexerClassName.toLowerCase().endsWith("lexer")) {
-                lexerClassName += "Lexer"; 
-            }
+            lexerClassName = getBaseName() + "Lexer";
         }
         return lexerClassName;
-    }
-
-    public String getNfaDataClassName() {
-        String lexerClassName = getLexerClassName();
-        if (lexerClassName.contains("Lexer")) {
-            return lexerClassName.replace("Lexer", "NfaData");
-        }
-        return lexerClassName + "NfaData";
     }
 
     public String getDefaultLexicalState() {
@@ -1087,9 +1073,11 @@ public class Grammar extends BaseNode {
         return b != null && b;
     }
 
-    public boolean getMinimalToken() {
-        Boolean b = (Boolean) settings.get("MINIMAL_TOKEN");
-        return b != null && b;
+    public boolean getTokenChaining() {
+        Boolean b = (Boolean) settings.get("TOKEN_CHAINING");
+        if (b != null) return b;
+        b = (Boolean) settings.get("MINIMAL_TOKEN");
+        return b != null && !b;
     }
 
     public boolean getPreserveLineEndings() {
@@ -1206,7 +1194,7 @@ public class Grammar extends BaseNode {
         }
     }
     private int jdkTarget = 8;
-    private String booleanSettings = ",FAULT_TOLERANT,PRESERVE_TABS,PRESERVE_LINE_ENDINGS,JAVA_UNICODE_ESCAPE,IGNORE_CASE,LEXER_USES_PARSER,NODE_DEFAULT_VOID,SMART_NODE_CREATION,NODE_USES_PARSER,TREE_BUILDING_DEFAULT,TREE_BUILDING_ENABLED,TOKENS_ARE_NODES,SPECIAL_TOKENS_ARE_NODES,UNPARSED_TOKENS_ARE_NODES,FREEMARKER_NODES,NODE_FACTORY,TOKEN_MANAGER_USES_PARSER,ENSURE_FINAL_EOL,MINIMAL_TOKEN,C_CONTINUATION_LINE,USE_CHECKED_EXCEPTION,LEGACY_GLITCHY_LOOKAHEAD,";
+    private String booleanSettings = ",FAULT_TOLERANT,PRESERVE_TABS,PRESERVE_LINE_ENDINGS,JAVA_UNICODE_ESCAPE,IGNORE_CASE,LEXER_USES_PARSER,NODE_DEFAULT_VOID,SMART_NODE_CREATION,NODE_USES_PARSER,TREE_BUILDING_DEFAULT,TREE_BUILDING_ENABLED,TOKENS_ARE_NODES,SPECIAL_TOKENS_ARE_NODES,UNPARSED_TOKENS_ARE_NODES,FREEMARKER_NODES,NODE_FACTORY,TOKEN_MANAGER_USES_PARSER,ENSURE_FINAL_EOL,MINIMAL_TOKEN,C_CONTINUATION_LINE,USE_CHECKED_EXCEPTION,LEGACY_GLITCHY_LOOKAHEAD,TOKEN_CHAINING,";
     private String stringSettings = ",BASE_NAME,PARSER_PACKAGE,PARSER_CLASS,LEXER_CLASS,BASE_SRC_DIR,BASE_NODE_CLASS,NODE_PREFIX,NODE_CLASS,NODE_PACKAGE,DEFAULT_LEXICAL_STATE,NODE_CLASS,OUTPUT_DIRECTORY,DEACTIVATE_TOKENS,EXTRA_TOKENS,ROOT_API_PACKAGE,COPYRIGHT_BLURB,";
     private String integerSettings = ",TAB_SIZE,TABS_TO_SPACES,JDK_TARGET,";
 
@@ -1563,12 +1551,6 @@ public class Grammar extends BaseNode {
                 result.add(re.getLabel());
             }
             return result;
-        }
-
-        private void addIndent(int amount, StringBuilder result) {
-            for (int i = 0; i < amount; i++) {
-                result.append(' ');
-            }
         }
 
         public String translateCodeBlock(String cb, int indent) {

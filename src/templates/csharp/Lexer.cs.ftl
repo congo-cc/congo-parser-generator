@@ -1012,7 +1012,7 @@ ${grammar.utils.translateCodeBlock(regexp.codeSnippet.javaCode, 16)}
         }
 
         internal void CacheToken(Token tok) {
-[#if !grammar.minimalToken]
+[#if grammar.tokenChaining]
             if (tok.isInserted) {
                 Token next = tok.NextCachedToken;
                 if (next != null) CacheToken(next);
@@ -1031,7 +1031,7 @@ ${grammar.utils.translateCodeBlock(regexp.codeSnippet.javaCode, 16)}
             if (endOffset < _tokenOffsets.Length) {
                 _tokenOffsets.Clear(lastToken.EndOffset, _tokenOffsets.Length);
             }
-[#if !grammar.minimalToken]
+[#if grammar.tokenChaining]
             lastToken.UnsetAppendedToken();
 [/#if]
         }

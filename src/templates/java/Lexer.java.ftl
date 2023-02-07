@@ -348,7 +348,7 @@ public class ${grammar.lexerClassName} extends TokenSource
  [/#if]
 
     void cacheToken(Token tok) {
-[#if !grammar.minimalToken]        
+[#if grammar.tokenChaining]        
         if (tok.isInserted()) {
             Token next = tok.nextCachedToken();
             if (next != null) cacheToken(next);
@@ -358,7 +358,7 @@ public class ${grammar.lexerClassName} extends TokenSource
         cacheTokenAt(tok, tok.getBeginOffset());
     }
 
-[#if !grammar.minimalToken]
+[#if grammar.tokenChaining]
     @Override
     void uncacheTokens(${BaseToken} lastToken) {
         super.uncacheTokens(lastToken);

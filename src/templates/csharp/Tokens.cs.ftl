@@ -556,7 +556,7 @@ namespace ${csPackage} {
         public bool IsUnparsed { get; internal set; }
 [/#if]
 
-[#if !grammar.minimalToken || grammar.faultTolerant]
+[#if grammar.tokenChaining || grammar.faultTolerant]
         private string _image;
 
         public string Image {
@@ -627,7 +627,7 @@ namespace ${csPackage} {
 [/#if]
         }
 
-[#if !grammar.minimalToken]
+[#if grammar.tokenChaining]
 
         internal Token prependedToken, appendedToken;
 
@@ -689,7 +689,7 @@ namespace ${csPackage} {
             }
         }
 
-[#if grammar.treeBuildingEnabled && !grammar.minimalToken]
+[#if grammar.treeBuildingEnabled && grammar.tokenChaining]
         // Copy the location info from another node or start/end nodes
         internal void CopyLocationInfo(Node start, Node end = null) {
             ((Node) this).CopyLocationInfo(start, end);
@@ -708,12 +708,12 @@ namespace ${csPackage} {
             TokenSource = start.TokenSource;
             BeginOffset = start.BeginOffset;
             EndOffset = start.EndOffset;
-[#if !grammar.minimalToken]
+[#if grammar.tokenChaining]
             appendedToken = start.appendedToken;
             prependedToken = start.prependedToken;
 [/#if]
             if (end != null) {
-[#if !grammar.minimalToken]
+[#if grammar.tokenChaining]
                 appendedToken = end.appendedToken;
 [/#if]
             }
@@ -748,7 +748,7 @@ namespace ${csPackage} {
 
         internal Token NextCachedToken {
             get {
-[#if !grammar.minimalToken]        
+[#if grammar.tokenChaining]        
                 if (appendedToken != null) {
                     return appendedToken;
                 }
@@ -759,7 +759,7 @@ namespace ${csPackage} {
 
         internal Token PreviousCachedToken {
             get {
-[#if !grammar.minimalToken]        
+[#if grammar.tokenChaining]        
                 if (prependedToken !=null) {
                     return prependedToken;
                 }
@@ -776,7 +776,7 @@ namespace ${csPackage} {
 
         internal Token ReplaceType(TokenType type) {
             Token result = NewToken(Type, TokenSource, BeginOffset, EndOffset);
-[#if !grammar.minimalToken] 
+[#if grammar.tokenChaining] 
             result.prependedToken = prependedToken;
             result.appendedToken = appendedToken;
             result.isInserted = isInserted;

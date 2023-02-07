@@ -13,7 +13,7 @@ __all__ = [
 [#list tokenSubClassInfo.sortedNames as name]
     '${name}',
 [/#list]
-[#if !grammar.minimalToken]
+[#if grammar.tokenChaining]
     'new_token',
 [/#if]
     'InvalidToken',
@@ -88,7 +88,7 @@ class ${grammar.baseNodeClassName}:
     @property
     def token_source(self):
         result = self._token_source
-[#if !grammar.minimalToken]
+[#if grammar.tokenChaining]
         if not result:
             if self.prepended_token:
                 result = self.prepended_token.token_source
@@ -151,7 +151,7 @@ class ${grammar.baseNodeClassName}:
         self.begin_offset = start.begin_offset
         if end is None:
             self.end_offset = start.end_offset
-[#if !grammar.minimalToken]
+[#if grammar.tokenChaining]
         self.prepended_token = start.prepended_token
         if end is None:
             self.appended_token = start.appended_token
@@ -160,7 +160,7 @@ class ${grammar.baseNodeClassName}:
             if self.token_source is None:
                 self.token_source = end.token_source
             self.end_offset = end.end_offset
-[#if !grammar.minimalToken]
+[#if grammar.tokenChaining]
             self.appended_token = end.appended_token
 [/#if]
 
@@ -261,10 +261,10 @@ class Token[#if grammar.treeBuildingEnabled](${grammar.baseNodeClassName})[/#if]
 
     __slots__ = (
         'type',
-[#if !grammar.minimalToken || grammar.faultTolerant]
+[#if grammar.tokenChaining || grammar.faultTolerant]
         '_image',
 [/#if]
-[#if !grammar.minimalToken]
+[#if grammar.tokenChaining]
         'prepended_token',
         'appended_token',
         'is_inserted',
@@ -309,10 +309,10 @@ ${grammar.utils.translateTokenInjections(true)}
         self._is_virtual = False
         self._is_skipped = False
 [/#if]
-[#if !grammar.minimalToken || grammar.faultTolerant]
+[#if grammar.tokenChaining || grammar.faultTolerant]
         self._image = None
 [/#if]
-[#if !grammar.minimalToken]
+[#if grammar.tokenChaining]
         self.prepended_token = None
         self.appended_token = None
         self.is_inserted = False
@@ -336,7 +336,7 @@ ${grammar.utils.translateTokenInjections(true)}
 
     @property
     def image(self):
-[#if grammar.minimalToken]
+[#if !grammar.tokenChaining]
         return self.source
 [#else]
         return self._image if self._image else self.source
@@ -349,7 +349,7 @@ ${grammar.utils.translateTokenInjections(true)}
         ts = self.token_source
         return None if not ts else ts.get_text(self.begin_offset, self.end_offset)
 
-[#if !grammar.minimalToken || grammar.faultTolerant]
+[#if grammar.tokenChaining || grammar.faultTolerant]
     @image.setter
     def image(self, value):
         self._image = value
@@ -433,7 +433,7 @@ ${grammar.utils.translateTokenInjections(true)}
 
     @property
     def previous_cached_token(self):
-[#if !grammar.minimalToken]
+[#if grammar.tokenChaining]
         if self.prepended_token:
             return self.prepended_token
 [/#if]
@@ -444,7 +444,7 @@ ${grammar.utils.translateTokenInjections(true)}
 
     @property
     def next_cached_token(self):
-[#if !grammar.minimalToken]
+[#if grammar.tokenChaining]
         if self.appended_token:
             return self.appended_token
 [/#if]
@@ -463,7 +463,7 @@ ${grammar.utils.translateTokenInjections(true)}
                                                  self.end_line,
                                                  self.end_column)
 
-[#if grammar.treeBuildingEnabled && !grammar.minimalToken]
+[#if grammar.treeBuildingEnabled && grammar.tokenChaining]
     # Copy the location info from another node or start/end nodes
     def copy_location_info(self, start, end=None):
         super().copy_location_info(start, end)
@@ -486,7 +486,7 @@ ${grammar.utils.translateTokenInjections(true)}
         self.begin_offset = start.begin_offset
         if end is None:
             self.end_offset = start.end_offset
-[#if !grammar.minimalToken]
+[#if grammar.tokenChaining]
             self.prepended_token = start.prepended_token
             self.appended_token = start.appended_token
 [/#if]
@@ -494,7 +494,7 @@ ${grammar.utils.translateTokenInjections(true)}
             if self.token_source is None:
                 self.token_source = end.token_source
             self.end_offset = end.end_offset
-[#if !grammar.minimalToken]
+[#if grammar.tokenChaining]
             self.prepended_token = start.prepended_token
             self.appended_token = end.appended_token
 [/#if]

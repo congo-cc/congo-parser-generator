@@ -745,7 +745,7 @@ ${grammar.utils.translateCodeBlock(regexp.codeSnippet.javaCode, 12)}
         return result
 
     def cache_token(self, tok):
-[#if !grammar.minimalToken]
+[#if grammar.tokenChaining]
         if tok.is_inserted:
             next = tok.next_cached_token
             if next:
@@ -762,7 +762,7 @@ ${grammar.utils.translateCodeBlock(regexp.codeSnippet.javaCode, 12)}
         end_offset = last_token.end_offset
         if end_offset < self._token_offsets.bits:
             self._token_offsets.clear(end_offset, self._token_offsets.bits)
-[#if !grammar.minimalToken]
+[#if grammar.tokenChaining]
         last_token.unset_appended_token()
 [/#if]
 
