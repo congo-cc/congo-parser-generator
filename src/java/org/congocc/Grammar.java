@@ -1336,38 +1336,7 @@ public class Grammar extends BaseNode {
             }
             return retval.toString();
         }
-
-        public long[] bitSetToLongArray(BitSet bs, int numLongs) {
-            long[] longs = bs.toLongArray();
-            return Arrays.copyOf(longs, numLongs);
-        }
-
-        public String codePointAsString(int ch) {
-            return new String(new int[]{ch}, 0, 1);
-        }
-
-
-        public boolean isBitSet(long num, int bit) {
-            return (num & (1L<<bit)) != 0;
-        }
-
-        public int firstCharAsInt(String s) {
-            return s.codePointAt(0);
-        }
-
-        public String powerOfTwoInHex(int i) {
-            return toHexStringL(1L << i);
-        }
-
-        public String getID(String name) {
-            String value = id_map.get(name);
-            if (value == null) {
-              value = "prod" + id++;
-              id_map.put(name, value);
-            }
-            return value;
-        }
-
+        
         // For use from templates.
         public String getPreprocessorSymbol(String key, String defaultValue) {
             return preprocessorSymbols.getOrDefault(key, defaultValue);

@@ -14,7 +14,6 @@ import ${grammar.parserPackage}.Token.TokenType;
 
 import java.util.*;
 
-@SuppressWarnings("serial")
 public class ParseException extends ${BASE_EXCEPTION_TYPE} {
 
   // The token we tripped up on.
@@ -39,22 +38,15 @@ public class ParseException extends ${BASE_EXCEPTION_TYPE} {
     return token != null && token.getType().isEOF();
   }
 
-  public ParseException(Object parser, ${BaseToken} token, ${TOKEN_TYPE_SET} expectedTypes, List<NonTerminalCall> callStack) {
+  public ParseException(${BaseToken} token, ${TOKEN_TYPE_SET} expectedTypes, List<NonTerminalCall> callStack) {
       setInfo(token, expectedTypes, callStack);
-  }
-
-  public ParseException(Object parser, String message) {
-     super(message);
   }
 
   public ParseException(${BaseToken} token) {
      this.token = token;
   }
 
-  // Needed because of inheritance
-  public ParseException() {
-    super();
-  }
+  public ParseException() {}
   
   // Needed because of inheritance
   public ParseException(String message) {
@@ -104,7 +96,6 @@ public class ParseException extends ${BASE_EXCEPTION_TYPE} {
 
   /**
    * Returns the token which causes the parse error and null otherwise.
-   * 
    * @return the token which causes the parse error and null otherwise.
    */
    public ${BaseToken} getToken() {

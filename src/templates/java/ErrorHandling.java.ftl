@@ -199,10 +199,10 @@ void dumpLookaheadCallStack(PrintStream ps) {
       [#if grammar.useCheckedException] throws ParseException [/#if]
       {
       [#if !grammar.faultTolerant]
-       throw new ParseException(this, nextToken, EnumSet.of(expectedType), parsingStack);
+       throw new ParseException(nextToken, EnumSet.of(expectedType), parsingStack);
       [#else]
        if (!this.tolerantParsing) {
-          throw new ParseException(this, nextToken, EnumSet.of(expectedType), parsingStack);
+          throw new ParseException(nextToken, EnumSet.of(expectedType), parsingStack);
        }
        Token nextNext = nextToken(nextToken);
        if (nextNext.getType() == expectedType) {
@@ -232,7 +232,7 @@ void dumpLookaheadCallStack(PrintStream ps) {
 [/#if]
            return virtualToken;
        }
-       throw new ParseException(this, nextToken, EnumSet.of(expectedType), parsingStack);
+       throw new ParseException(nextToken, EnumSet.of(expectedType), parsingStack);
       [/#if]
   }
   
