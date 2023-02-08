@@ -5,7 +5,7 @@ PARSER_PACKAGE=org.congocc.parser.python;
 ROOT_API_PACKAGE=org.congocc.parser;
 TOKEN_CHAINING;
 
-INCLUDE PYTHON;
+INCLUDE "../../examples/python/Python.ccc";
 
 INJECT BaseNode :
    import org.congocc.Grammar;
