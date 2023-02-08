@@ -116,8 +116,10 @@ class Reaper extends Node.Visitor {
     }
 
     void visit(Name name) {
-        usedVarNames.add(name.getChild(0).toString());
-        usedTypeNames.add(name.getChild(0).toString());
+        if (name.getChildCount() > 1 || !(name.getParent() instanceof MethodCall)) {
+            usedVarNames.add(name.getChild(0).toString());
+            usedTypeNames.add(name.getChild(0).toString());
+        }
     }
 
     void visit(VariableDeclarator vd) {

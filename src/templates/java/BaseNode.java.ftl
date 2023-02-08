@@ -7,6 +7,11 @@ import ${grammar.parserPackage}.*;
 import ${grammar.parserPackage}.Token.TokenType;
 import static ${grammar.parserPackage}.Token.TokenType.*;
 
+[#if grammar.rootAPIPackage?has_content]
+import ${grammar.rootAPIPackage}.Node;
+import ${grammar.rootAPIPackage}.TokenSource;
+[/#if]
+
 [#if grammar.settings.FREEMARKER_NODES?? && grammar.settings.FREEMARKER_NODES]
 import freemarker.template.*;
 [/#if]
@@ -203,11 +208,7 @@ public class ${grammar.baseNodeClassName} implements Node {
 [/#if]    
     
     public String toString() {
-        StringBuilder buf=new StringBuilder();
-        for(Token t : getRealTokens()) {
-            buf.append(t);
-        }
-        return buf.toString();
+        return getSource();
     }
 
     private Map<String, Node> namedChildMap;

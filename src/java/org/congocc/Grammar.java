@@ -335,6 +335,7 @@ public class Grammar extends BaseNode {
             if (lastDot >0) {
                 baseName = baseName.substring(0, lastDot);
             }
+            baseName = removeNonJavaIdentifierPart(baseName);
             if (Character.isLowerCase(baseName.charAt(0))) {
                 baseName = baseName.substring(0, 1).toUpperCase() 
                                   + baseName.substring(1);
@@ -353,8 +354,14 @@ public class Grammar extends BaseNode {
         return parserClassName;
     }
 
-    public void setParserClassName(String parserClassName) {
-        this.parserClassName = parserClassName;
+    public String getLexerClassName() {
+        if (lexerClassName == null) {
+            lexerClassName = (String) settings.get("LEXER_CLASS");
+        }
+        if (lexerClassName == null) {
+            lexerClassName = getBaseName() + "Lexer";
+        }
+        return lexerClassName;
     }
 
     public String getBaseNodeClassName() {
@@ -365,16 +372,6 @@ public class Grammar extends BaseNode {
             baseNodeClassName = "BaseNode";
         }
         return baseNodeClassName;
-    }
-
-    public String getLexerClassName() {
-        if (lexerClassName == null) {
-            lexerClassName = (String) settings.get("LEXER_CLASS");
-        }
-        if (lexerClassName == null) {
-            lexerClassName = getBaseName() + "Lexer";
-        }
-        return lexerClassName;
     }
 
     public String getDefaultLexicalState() {

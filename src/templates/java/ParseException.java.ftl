@@ -39,16 +39,12 @@ public class ParseException extends ${BASE_EXCEPTION_TYPE} {
     return token != null && token.getType().isEOF();
   }
 
-  public ParseException(${grammar.parserClassName} parser, ${BaseToken} token, ${TOKEN_TYPE_SET} expectedTypes, List<NonTerminalCall> callStack) {
+  public ParseException(Object parser, ${BaseToken} token, ${TOKEN_TYPE_SET} expectedTypes, List<NonTerminalCall> callStack) {
       setInfo(token, expectedTypes, callStack);
   }
 
-  public ParseException(${grammar.parserClassName} parser, String message) {
+  public ParseException(Object parser, String message) {
      super(message);
-  }
-
-  public ParseException(${grammar.parserClassName} parser, ${TOKEN_TYPE_SET} expectedTypes, List<NonTerminalCall> callStack) {
-      this(parser, parser.lastConsumedToken, expectedTypes, callStack);
   }
 
   public ParseException(${BaseToken} token) {

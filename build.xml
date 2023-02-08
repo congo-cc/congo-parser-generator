@@ -7,14 +7,20 @@
     <echo>Join the Discussion forum at: https://discuss.congocc.org/</echo>
 	  <echo>Send any bug report to bugs@congocc.org and include the following information.</echo>
 	  <echo>JDK Version: ${java.version} on ${os.name}</echo>
-	  <uptodate property="parser.uptodate"
-		targetfile="src/java/org/congocc/parser/CongoCCParser.java">
-        <srcfiles dir="src/grammars" includes="*.ccc"/>
-	  </uptodate>
+	  <uptodate property="parser.uptodate" 
+              targetfile="src/java/org/congocc/parser/CongoCCParser.java" 
+              srcfile="src/grammars/CongoCC.ccc" />
     <uptodate property="preprocessor.uptodate"
     		targetfile="src/java/org/congocc/preprocessor/PreprocessorParser.java"
         srcfile="examples/preprocessor/Preprocessor.ccc"
     />
+    <uptodate property="python.uptodate" targetfile="src/java/org/congocc/parser/python/PythonParser.java">
+      <srcfiles>
+        <filename name = "src/grammars/PythonInternal.ccc"/>
+        <filename name = "examples/python/Python.ccc"/>
+        <filename name = "examples/python/PythonLexer.ccc"/>
+      </srcfiles>
+    </uptodate>
 </target>
 
 <target name="restore-bootstrap-jar">
@@ -65,8 +71,15 @@
  	   <arg line="-n -q -d ../../src/java examples/preprocessor/Preprocessor.ccc"/>
  	</java>
 </target>
+<target name="python-gen" depends="parser-gen" unless="python.uptodate">
+	<echo>Using Bootstrap congocc to regenerate internal python parser</echo>
+ 	<java jar="bin/congocc.jar" fork="true" failonerror="true">
+     <assertions><enable/></assertions>
+ 	   <arg line="-n -q -d ../../src/java src/grammars/PythonInternal.ccc"/>
+ 	</java>
+</target>
 
-<target name="compile" depends="parser-gen, preprocessor-gen">
+<target name="compile" depends="parser-gen, preprocessor-gen, python-gen">
   	<mkdir dir="build"/>
     <javac srcdir="src/java"
  	       destdir="build"

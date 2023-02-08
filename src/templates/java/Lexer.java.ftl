@@ -10,6 +10,11 @@ package ${grammar.parserPackage};
 
 import ${grammar.parserPackage}.Token.TokenType;
 import static ${grammar.parserPackage}.Token.TokenType.*;
+[#if grammar.rootAPIPackage?has_content]
+   import ${grammar.rootAPIPackage}.Node;
+   import ${grammar.rootAPIPackage}.TokenSource;
+[/#if]
+
 
 [#import "NfaCode.java.ftl" as NFA]
 
@@ -360,7 +365,7 @@ public class ${grammar.lexerClassName} extends TokenSource
 
 [#if grammar.tokenChaining]
     @Override
-    void uncacheTokens(${BaseToken} lastToken) {
+    protected void uncacheTokens(${BaseToken} lastToken) {
         super.uncacheTokens(lastToken);
         ((Token)lastToken).unsetAppendedToken();
     }

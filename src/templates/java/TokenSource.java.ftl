@@ -27,7 +27,7 @@ abstract public class TokenSource
     // Typically a filename, I suppose.
     private String inputSource = "input";
 
-   int getTabSize() {return tabSize;}
+   protected int getTabSize() {return tabSize;}
 
    // Just a dummy Token value that we put in the tokenLocationTable
    // to indicate that this location in the file is ignored.
@@ -55,15 +55,15 @@ abstract public class TokenSource
    // next character that the readChar method returns
    private int bufferPosition;
 
-   final int getBufferPosition() {return bufferPosition;}
-   final void setBufferPosition(int bufferPosition) {this.bufferPosition=bufferPosition;}
+   protected final int getBufferPosition() {return bufferPosition;}
+   protected final void setBufferPosition(int bufferPosition) {this.bufferPosition=bufferPosition;}
 
     // The starting line and column, usually 1,1
     // that is used to report a file position 
     // in 1-based line/column terms
     private int startingLine, startingColumn;
 
-    void setStartingPos(int startingLine, int startingColumn) {
+    protected void setStartingPos(int startingLine, int startingColumn) {
       this.startingLine = startingLine;
       this.startingColumn = startingColumn;
     }
@@ -78,7 +78,7 @@ abstract public class TokenSource
 
 // Icky method to handle annoying stuff. Might make this public later if it is
 // needed elsewhere
-   static String mungeContent(CharSequence content, boolean preserveTabs, int tabSize, boolean preserveLines,
+   static protected String mungeContent(CharSequence content, boolean preserveTabs, int tabSize, boolean preserveLines,
         boolean javaUnicodeEscape, boolean ensureFinalEndline) {
     if (preserveTabs && preserveLines && !javaUnicodeEscape) {
         if (ensureFinalEndline) {
@@ -159,25 +159,25 @@ abstract public class TokenSource
     return buf.toString();
    }
 
-   final void createTokenLocationTable() {
+   protected final void createTokenLocationTable() {
       int size = content.length() +1;
       tokenLocationTable = new ${BaseToken}[size];
       tokenOffsets = new BitSet(size);
    }
 
-    final void skipTokens(int begin, int end) {
+    protected final void skipTokens(int begin, int end) {
       for (int i=begin; i< end; i++) {
           if (tokenLocationTable[i] != IGNORED) tokenLocationTable[i] = SKIPPED;
       }
     }
 
-    void setContent(CharSequence content) {this.content = content;}
+    protected void setContent(CharSequence content) {this.content = content;}
 
     CharSequence getContent() {return content;}
 
     int contentLength() {return content.length();}
 
-    int readChar() {
+    protected final int readChar() {
         CharSequence content = getContent();
         bufferPosition = nextUnignoredOffset(bufferPosition);
         if (bufferPosition >= content.length()) {
@@ -197,7 +197,7 @@ abstract public class TokenSource
     /**
      * backup a certain number of code points
      */
-    final void backup(int amount) {
+    protected final void backup(int amount) {
         for (int i = 0; i < amount; i++) {
             bufferPosition--;
             while(isIgnored(bufferPosition)) bufferPosition--;
@@ -208,7 +208,7 @@ abstract public class TokenSource
     /**
      * advance a certain number of code points
      */
-    final void forward(int amount) {
+    protected final void forward(int amount) {
         for (int i = 0; i < amount; i++) {
             if (Character.isHighSurrogate(content.charAt(bufferPosition))) bufferPosition++;
             bufferPosition++;
@@ -217,7 +217,7 @@ abstract public class TokenSource
     }
 
     // But there is no goto in Java!!!
-    final void goTo(int offset) {
+    protected final void goTo(int offset) {
         this.bufferPosition = nextUnignoredOffset(offset);
     }
 
@@ -239,7 +239,7 @@ abstract public class TokenSource
       return tokenLocationTable[offset] == IGNORED;
     }
 
-    final void cacheTokenAt(${BaseToken} tok, int offset) {
+    protected final void cacheTokenAt(${BaseToken} tok, int offset) {
         if (!isIgnored(offset)) {
              tokenOffsets.set(offset);
              tokenLocationTable[offset] = tok;
@@ -250,19 +250,19 @@ abstract public class TokenSource
         return tokenLocationTable[offset];
     }
 
-    void uncacheTokens(${BaseToken} lastToken) {
+    protected void uncacheTokens(${BaseToken} lastToken) {
         int endOffset = lastToken.getEndOffset();
         if (endOffset < tokenOffsets.length()) {
             tokenOffsets.clear(lastToken.getEndOffset(), tokenOffsets.length());
         }
     }
 
-    ${BaseToken} nextCachedToken(int offset) {
+    public ${BaseToken} nextCachedToken(int offset) {
         int nextOffset = tokenOffsets.nextSetBit(offset);
 	      return nextOffset != -1 ? cachedTokenAt(nextOffset) : null;
     } 
 
-    ${BaseToken} previousCachedToken(int offset) {
+    public ${BaseToken} previousCachedToken(int offset) {
         int prevOffset = tokenOffsets.previousSetBit(offset-1);
         return prevOffset == -1 ? null : cachedTokenAt(prevOffset);
     }
@@ -288,7 +288,7 @@ abstract public class TokenSource
 
     // Just use the canned binary search to check whether the char
     // is in one of the intervals
-    static final boolean checkIntervals(int[] ranges, int ch) {
+    static protected boolean checkIntervals(int[] ranges, int ch) {
       int result = Arrays.binarySearch(ranges, ch);
       return result >=0 || result%2 == 0;
     }
@@ -372,7 +372,7 @@ abstract public class TokenSource
         return Math.max(1,startingLine-(bsearchResult+2));
     }
 
-    void createLineOffsetsTable() {
+    protected void createLineOffsetsTable() {
         if (content.length() == 0) {
             this.lineOffsets = new int[0];
             return;

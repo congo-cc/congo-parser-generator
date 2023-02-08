@@ -1,0 +1,20 @@
+DEFAULT_LEXICAL_STATE=PYTHON;
+BASE_SRC_DIR="../java";
+BASE_NAME="Python";
+PARSER_PACKAGE=org.congocc.parser.python;
+ROOT_API_PACKAGE=org.congocc.parser;
+TOKEN_CHAINING;
+
+INCLUDE PYTHON;
+
+INJECT BaseNode :
+   import org.congocc.Grammar;
+{
+    @Property Grammar grammar;
+}
+
+INJECT Token :
+   import org.congocc.Grammar;
+{
+    @Property Grammar grammar;
+}

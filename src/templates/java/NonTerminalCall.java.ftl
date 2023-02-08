@@ -9,12 +9,12 @@ import java.util.Set;
 public class NonTerminalCall {
     final TokenSource lexer;
     final String sourceFile;
-    final String productionName;
+    public final String productionName;
     final String parserClassName;
     final int line, column;
     final Set<${BaseTokenType}> followSet;
 
-    NonTerminalCall(String parserClassName, TokenSource lexer, String sourceFile, String productionName, int line, int column, Set<${BaseTokenType}> followSet) {
+    public NonTerminalCall(String parserClassName, TokenSource lexer, String sourceFile, String productionName, int line, int column, Set<${BaseTokenType}> followSet) {
         this.parserClassName = parserClassName;
         this.lexer = lexer;
         this.sourceFile = sourceFile;
@@ -32,7 +32,7 @@ public class NonTerminalCall {
         return new StackTraceElement("${grammar.parserClassName}", productionName, sourceFile, line);
     }
 
-    void dump(PrintStream ps) {
+    public void dump(PrintStream ps) {
          ps.println(productionName + ":" + line + ":" + column);
     }
 }

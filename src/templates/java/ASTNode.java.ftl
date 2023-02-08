@@ -8,6 +8,10 @@ package ${grammar.nodePackage};
 
 import ${grammar.parserPackage}.*;
 
+[#if grammar.rootAPIPackage?has_content]
+import ${grammar.rootAPIPackage}.Node;
+[/#if]
+
 [#if isInterface]
 
 public interface ${classname} extends Node {}

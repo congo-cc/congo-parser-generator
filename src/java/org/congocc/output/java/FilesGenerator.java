@@ -24,6 +24,7 @@ public class FilesGenerator {
     private final Set<String> tokenSubclassFileNames = new HashSet<>();
     private final HashMap<String, String> superClassLookup = new HashMap<>();
     private final String codeLang;
+    private final boolean generateRootApi;
 
     void initializeTemplateEngine() throws IOException {
         fmConfig = new freemarker.template.Configuration();
@@ -59,6 +60,7 @@ public class FilesGenerator {
 
     public FilesGenerator(Grammar grammar, String codeLang, List<Node> codeInjections) {
         this.grammar = grammar;
+        this.generateRootApi = grammar.getRootAPIPackage() == null; 
         this.codeLang = codeLang;
         this.codeInjector = new CodeInjector(grammar,
                                              grammar.getParserPackage(), 
@@ -77,10 +79,12 @@ public class FilesGenerator {
                 generateLexer();
                 generateOtherFiles();
                 if (!grammar.getProductionTable().isEmpty()) {
-                    generateParseException();
+                    if (generateRootApi) {
+                       generateParseException();
+                    }
                     generateParser();
                 }
-                if (grammar.getFaultTolerant()) {
+                if (grammar.getFaultTolerant() && generateRootApi) {
                     generateInvalidNode();
                     generateParsingProblem();
                 }
@@ -231,7 +235,7 @@ public class FilesGenerator {
     }
 
     void generateOtherFiles() throws IOException {
-        if (grammar.getRootAPIPackage() == null) {
+        if (generateRootApi) {
             Path outputFile = grammar.getParserOutputDirectory().resolve("TokenSource.java");
             generate(outputFile);
             outputFile = grammar.getParserOutputDirectory().resolve("NonTerminalCall.java");
@@ -325,7 +329,7 @@ public class FilesGenerator {
     }
 
     void generateTreeBuildingFiles() throws IOException {
-        if (grammar.getRootAPIPackage() == null) {
+        if (generateRootApi) {
     	    generateNodeFile();
         }
         Map<String, Path> files = new LinkedHashMap<>();

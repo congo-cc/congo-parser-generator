@@ -14,6 +14,7 @@ import java.util.List;
 
 [#if grammar.rootAPIPackage?has_content]
 import ${grammar.rootAPIPackage}.Node;
+import ${grammar.rootAPIPackage}.TokenSource;
 [/#if]
 
 [#if grammar.settings.FREEMARKER_NODES?? && grammar.settings.FREEMARKER_NODES]
