@@ -15,7 +15,7 @@
         srcfile="examples/preprocessor/Preprocessor.ccc"
     />
     <uptodate property="python.uptodate" targetfile="src/java/org/congocc/parser/python/PythonParser.java">
-      <srcfiles>
+      <srcfiles dir=".">
         <filename name = "src/grammars/PythonInternal.ccc"/>
         <filename name = "examples/python/Python.ccc"/>
         <filename name = "examples/python/PythonLexer.ccc"/>
