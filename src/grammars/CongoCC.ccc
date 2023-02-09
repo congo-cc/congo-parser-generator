@@ -721,6 +721,9 @@ INJECT Identifier :
         if (image.equals("LEXER_CLASS")) {
             return getGrammar().getLexerClassName();
         }
+        if (image.equals("BASE_NODE_CLASS")) {
+            return getGrammar().getBaseNodeClassName();
+        }
         if (image.equals("NODE_PACKAGE")) {
             return getGrammar().getNodePackage();
         }

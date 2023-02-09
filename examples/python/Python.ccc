@@ -10,13 +10,9 @@
  * that are deliberately screwy.
  */
 
-#if congo_internal
-  ROOT_API_PACKAGE = org.congocc.parser;
-  PARSER_PACKAGE = org.congocc.python.parser;
-#else
-  PARSER_PACKAGE = org.parsers.python;
-#endif
+PARSER_PACKAGE = org.parsers.python;
 DEFAULT_LEXICAL_STATE = PYTHON;
+//BASE_NODE_CLASS="PythonNode";
 TOKEN_CHAINING;
 ENSURE_FINAL_EOL;
 DEACTIVATE_TOKENS=MATCH,CASE;

@@ -21,6 +21,16 @@
         <filename name = "examples/python/PythonLexer.ccc"/>
       </srcfiles>
     </uptodate>
+    <uptodate property="csharp.uptodate" targetfile="src/java/org/congocc/parser/csharp/CSharpParser.java">
+      <srcfiles dir=".">
+        <filename name = "src/grammars/CSharpInternal.ccc"/>
+        <filename name = "examples/csharp/CSharp.ccc"/>
+        <filename name = "examples/python/CSharpLexer.ccc"/>
+      </srcfiles>
+    </uptodate>
+    <uptodate property = "ppline.uptodate" 
+              targetfile = "src/java/org/parsers/csharp/ppline/PPDirectiveLineParser.java"
+              srcfile = "examples/csharp/PPDirectiveLine.ccc" />
 </target>
 
 <target name="restore-bootstrap-jar">
@@ -47,6 +57,7 @@
  	<delete dir="build"/>
 	<delete dir="src/java/org/congocc/parser"/>
 	<delete dir="src/java/org/congocc/preprocessor"/>
+	<delete dir="src/java/org/parsers/csharp/ppline"/>
   <delete dir="examples/csharp/org"/>
   <delete dir="examples/java/org"/>
   <delete dir="examples/freemarker/fel"/>
@@ -71,6 +82,13 @@
  	   <arg line="-n -q -d ../../src/java examples/preprocessor/Preprocessor.ccc"/>
  	</java>
 </target>
+<target name="ppline-gen" depends="init" unless="ppline.uptodate">
+	<echo>Using Bootstrap congocc to regenerate the PPDirectiveLine parser used for C#</echo>
+ 	<java jar="bin/congocc.jar" fork="true" failonerror="true">
+     <assertions><enable/></assertions>
+ 	   <arg line="-n -q -d ../../src/java examples/csharp/PPDirectiveLine.ccc"/>
+ 	</java>
+</target>
 <target name="python-gen" depends="parser-gen" unless="python.uptodate">
 	<echo>Using Bootstrap congocc to regenerate internal python parser</echo>
  	<java jar="bin/congocc.jar" fork="true" failonerror="true">
@@ -78,8 +96,15 @@
  	   <arg line="-n -q -d ../../src/java src/grammars/PythonInternal.ccc"/>
  	</java>
 </target>
+<target name="csharp-gen" depends="parser-gen" unless="csharp.uptodate">
+	<echo>Using Bootstrap congocc to regenerate internal C# parser</echo>
+ 	<java jar="bin/congocc.jar" fork="true" failonerror="true">
+     <assertions><enable/></assertions>
+ 	   <arg line="-n -q -d ../../src/java src/grammars/CSharpInternal.ccc"/>
+ 	</java>
+</target>
 
-<target name="compile" depends="parser-gen, preprocessor-gen, python-gen">
+<target name="compile" depends="parser-gen,preprocessor-gen,python-gen,ppline-gen,csharp-gen">
   	<mkdir dir="build"/>
     <javac srcdir="src/java"
  	       destdir="build"

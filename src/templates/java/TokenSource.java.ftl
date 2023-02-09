@@ -173,7 +173,7 @@ abstract public class TokenSource
 
     protected void setContent(CharSequence content) {this.content = content;}
 
-    CharSequence getContent() {return content;}
+    protected final CharSequence getContent() {return content;}
 
     int contentLength() {return content.length();}
 
@@ -228,7 +228,7 @@ abstract public class TokenSource
         return offset;         
     }
 
-    final void setIgnoredRange(int begin, int end) {
+    protected final void setIgnoredRange(int begin, int end) {
         for (int offset = begin; offset < end; offset++) {
            tokenLocationTable[offset] = IGNORED;
            tokenOffsets.clear(begin,end);
@@ -315,7 +315,7 @@ abstract public class TokenSource
       }
     }
 
-    void setLineSkipped(${BaseToken} tok) {
+    protected void setLineSkipped(${BaseToken} tok) {
        int lineNum = tok.getBeginLine();
        int start = getLineStartOffset(lineNum);
        int end = getLineStartOffset(lineNum+1);
@@ -328,7 +328,7 @@ abstract public class TokenSource
     /**
      * The offset of the start of the given line. This is in code units
      */
-    int getLineStartOffset(int lineNumber) {
+    public int getLineStartOffset(int lineNumber) {
         int realLineNumber = lineNumber - startingLine;
         if (realLineNumber <=0) {
             return 0;
@@ -342,7 +342,7 @@ abstract public class TokenSource
     /**
      * The offset of the end of the given line. This is in code units.
      */
-    int getLineEndOffset(int lineNumber) {
+    public int getLineEndOffset(int lineNumber) {
         int realLineNumber = lineNumber - startingLine;
         if (realLineNumber <0) {
             return 0;

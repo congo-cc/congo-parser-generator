@@ -12,6 +12,7 @@ PARSER_PACKAGE=org.parsers.csharplexer;
          "\u202f", "\u205f", "\u3000"
        ]
   >
+
 ;
 
 UNPARSED #Comment :
@@ -323,7 +324,7 @@ INJECT CSharpLexer :
    private boolean parsingOn, alreadyHandled, seenElse;
    private int ifNesting, turnedOffPoint;
 
-   private BitSet parsingOnStack = new BitSet(1000), seenElseStack = new BitSet(1000), alreadyHandledStack = new BitSet(1000);
+   private BitSet parsingOnStack = new BitSet(), seenElseStack = new BitSet(), alreadyHandledStack = new BitSet();
    private Set<String> ppSymbols = new HashSet<String>();
    
    {
