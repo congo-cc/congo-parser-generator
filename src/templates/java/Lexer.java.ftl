@@ -41,10 +41,6 @@ import static ${grammar.parserPackage}.Token.TokenType.*;
    [/#if]
 [/#macro]
 
-[#list grammar.parserCodeImports as import]
-   ${import}
-[/#list]
-
 import java.io.IOException;
 import java.util.Arrays;
 import java.util.BitSet;

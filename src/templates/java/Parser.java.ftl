@@ -300,8 +300,4 @@ public boolean isCancelled() {return cancelled;}
 }
   
 }
-[#list grammar.otherParserCodeDeclarations as decl]
-//Generated from code at ${decl.location}
-   ${decl}
-[/#list]
 

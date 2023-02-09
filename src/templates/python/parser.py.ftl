@@ -450,7 +450,3 @@ ${grammar.utils.translateParserInjections(true)}
 
 [/#if]
 ${grammar.utils.translateParserInjections(false)}
-[#list grammar.otherParserCodeDeclarations as decl]
-    # Generated from code at ${decl.location}
-    # TODO actual declaration
-[/#list]

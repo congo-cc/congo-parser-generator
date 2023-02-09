@@ -44,7 +44,7 @@ public class TokenSet extends BitSet {
 		}
 		return names;
 	}
-	
+/*	
 	public String getFirstTokenName() {
 		int tokCount = grammar.getLexerData().getTokenCount();
 		for (int i=0; i<tokCount; i++) {
@@ -54,7 +54,7 @@ public class TokenSet extends BitSet {
 		}
 		return null;
 	}
-
+*/
 
     public List<String> getTokenSetNames() {
         int tokenCount = grammar.getLexerData().getTokenCount();
