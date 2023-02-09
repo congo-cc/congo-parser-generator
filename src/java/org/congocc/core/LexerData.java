@@ -118,8 +118,7 @@ public class LexerData {
     }
    
     static public boolean isJavaIdentifier(String s) {
-        if (s.length() == 0) return false;
-        return Character.isJavaIdentifierStart(s.codePointAt(0)) 
+        return !s.isEmpty() && Character.isJavaIdentifierStart(s.codePointAt(0)) 
               && s.codePoints().allMatch(ch->Character.isJavaIdentifierPart(ch));
     }
    
@@ -129,7 +128,6 @@ public class LexerData {
         }
         return false;
     }
-
     
     public String getStringLiteralLabel(String image) {
         for (RegularExpression regexp : regularExpressions) {

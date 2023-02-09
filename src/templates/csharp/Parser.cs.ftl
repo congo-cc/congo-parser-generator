@@ -468,14 +468,4 @@ ${grammar.utils.translateParserInjections(true)}
 ${grammar.utils.translateParserInjections(false)}
 
     }
-
-/*
-
-Still TODO:
-
-[#list grammar.otherParserCodeDeclarations as decl]
-        # Generated from code at ${decl.location}
-        # TODO actual declaration
-[/#list]
-*/
 }
