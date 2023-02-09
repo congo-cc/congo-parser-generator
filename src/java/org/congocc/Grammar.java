@@ -368,7 +368,11 @@ public class Grammar extends BaseNode {
             baseNodeClassName = (String) settings.get("BASE_NODE_CLASS");
         }
         if (baseNodeClassName == null) {
-            baseNodeClassName = getRootAPIPackage() == null ? "BaseNode" : getBaseName() + "Node";
+            if (getRootAPIPackage() == null || getBaseName().length() == 0) {
+                baseNodeClassName = "BaseNode";
+            } else {
+                baseNodeClassName = getBaseName() + "Node";
+            }
         }
         return baseNodeClassName;
     }

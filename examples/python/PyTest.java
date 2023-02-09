@@ -11,6 +11,11 @@ import java.util.stream.Stream;
 import org.parsers.python.Node;
 import org.parsers.python.PythonParser;
 
+// The following two imports would be the ones to use
+// to test the internal Python parser inside congocc.jar
+// and you would have to comment out the previous two.
+// And you need the congocc.jar on the classpath
+// when you compile/run
 //import org.congocc.parser.Node;
 //import org.congocc.parser.python.PythonParser;
 

@@ -1,5 +1,6 @@
-PARSER_PACKAGE="org.parsers.csharp";
-NODE_PACKAGE="org.parsers.csharp.tree";
+PARSER_PACKAGE=org.parsers.csharp;
+NODE_PACKAGE=org.parsers.csharp.tree;
+BASE_NODE_CLASS=BaseNode;
 DEFAULT_LEXICAL_STATE=CSHARP;
 PRESERVE_TABS;
 TABS_TO_SPACES=4;
@@ -15,18 +16,6 @@ DEACTIVATE_TOKENS=ADD,ASSEMBLY,ASYNC,AWAIT,INTO,MODULE, NAMEOF,
                   INTO, ON, ORDERBY,SELECT,WHERE;
 
 INCLUDE "CSharpLexer.ccc"
-
-/*
- * This is not used
-
-INJECT PARSER_CLASS :
-{
-   public PARSER_CLASS(Path path, java.util.Set<String> ppSymbols) throws IOException {
-      this(path);
-      if (ppSymbols != null) token_source.addSymbols(ppSymbols);
-   }
-}
- */
 
 #CompilationUnit# :
    (ExternAliasDirective)*

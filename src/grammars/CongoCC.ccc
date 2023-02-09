@@ -38,7 +38,7 @@ INJECT PARSER_CLASS :
         this.grammar = grammar;
         BitSet lineMarkers = null;
         try {
-            PreprocessorParser ppp = new PreprocessorParser(path, definedSymbols, false);
+            PreprocessorParser ppp = new PreprocessorParser(path, definedSymbols);
             lineMarkers = ppp.PP_Root();
         } catch (org.congocc.preprocessor.ParseException pe) {
             throw new RuntimeException(pe);

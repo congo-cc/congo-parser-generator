@@ -1,8 +1,7 @@
 /*
  * Authors: Jonathan Revusky revusky@congocc.org
  *          Vinay Sajip vinay_sajip@yahoo.co.uk - adapted to allow string values for symbols
- * This partial implementation of the C# Preprocessor
- * is free to use or adapt.
+ * This barebones Preprocessor is free to use or adapt.
  */
 
 DEFAULT_LEXICAL_STATE = PP_SCAN_LINES;
@@ -11,8 +10,6 @@ ENSURE_FINAL_EOL;
 MINIMAL_TOKEN;
 #if localtest
 PARSER_PACKAGE=org.parsers.preprocessor;
-#elif csharp
-PARSER_PACKAGE=org.parsers.csharp.preprocessor;
 #else
 PARSER_PACKAGE=org.congocc.preprocessor;
 #endif
@@ -40,24 +37,15 @@ INJECT PARSER_CLASS :
     private final BitSet lineMarkers = new BitSet();
     private final Map<String, String> definedSymbols = new HashMap<>();
     private boolean currentlyOn = true;
-    private boolean csharpMode = false;
 
-    public PARSER_CLASS(Path path, Map<String, String> definedSymbols, boolean csharpMode) throws IOException {
+    public PARSER_CLASS(Path path, Map<String, String> definedSymbols) throws IOException {
         this(path);
-        this.csharpMode = csharpMode;
         if (definedSymbols !=null) addSymbols(definedSymbols);
-        token_source.switchTo(LexicalState.PP_SCAN_LINES);
     }
 
     public PARSER_CLASS(CharSequence content, Map<String, String> definedSymbols) throws IOException {
        this(content);
        if (definedSymbols != null) addSymbols(definedSymbols);
-       token_source.switchTo(LexicalState.PP_SCAN_LINES);
-#if csharp
-       this.csharpMode = true;
-#else        
-       this.csharpMode = false;
-#endif       
     }
 
     public BitSet getLineMarkers() {
@@ -207,9 +195,6 @@ PP_DefStatement#void :
   [
     <PP_ASSIGN>
     <PP_SYMBOL> {
-      if (csharpMode) {
-        throw new ParseException("Symbols cannot have defined values in C# mode.");
-      }
       value = lastConsumedToken.getImage();
     }
   ]
@@ -235,7 +220,7 @@ Expression PP_Expression#void :
     (<PP_EQUALS>|<PP_NOT_EQUALS>{inequality=true;}) 
     result2=PP_OrExpression 
     {
-      if (csharpMode || result.symbol == null || result2.symbol == null) {
+      if (result.symbol == null || result2.symbol == null) {
         result.booleanValue = inequality == (result.booleanValue != result2.booleanValue);
       }
       else {

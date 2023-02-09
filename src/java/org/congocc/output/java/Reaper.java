@@ -23,6 +23,7 @@ class Reaper extends Node.Visitor {
     private Set<String> usedVarNames = new HashSet<>();
     private Set<String> usedImportDeclarations = new HashSet<>();
     private CompilationUnit jcu;
+    private boolean onSecondPass;
 
     Reaper(CompilationUnit jcu) {
         this.jcu = jcu;
@@ -53,6 +54,12 @@ class Reaper extends Node.Visitor {
             }
         }
 
+        usedMethodNames.clear();
+        usedTypeNames.clear();
+        usedVarNames.clear();
+        onSecondPass = true;
+        visit(jcu);
+
         // Now get rid of unused and repeated imports.
         for (ImportDeclaration imp : jcu.childrenOfType(ImportDeclaration.class)) {
             if (!usedImportDeclarations.add(getKey(imp))) {
@@ -78,6 +85,11 @@ class Reaper extends Node.Visitor {
     }
 
     private boolean isPrivate(Node node) {
+        // a bit kludgy, when we are on the second pass before 
+        // getting rid of imports, we just say nothing is private, since we 
+        // presumably got rid of everything to be got rid of, on the previous pass
+        // except for unused imports.
+        if (onSecondPass) return false;
         if (node.firstChildOfType(PRIVATE) != null) return true;
         Modifiers mods = node.firstChildOfType(Modifiers.class);
         return mods == null ? false : mods.firstChildOfType(PRIVATE) != null;
