@@ -9,7 +9,6 @@ import org.congocc.Grammar;
  * Will probably eventually move this into the Token.java.ftl as 
  * something available to all generated parsers.
  */
-
 public class TokenSet extends BitSet {
 	
 	private static final long serialVersionUID = 1L;
@@ -35,15 +34,6 @@ public class TokenSet extends BitSet {
 		this.incomplete = incomplete;
 	}
 	
-	public long[] toLongArray() {
-	    long[] ll = super.toLongArray();
-	    int numKinds = grammar.getLexerData().getTokenCount();
-	    if (ll.length < 1+numKinds/64) {
-	        ll = Arrays.copyOf(ll, 1 + numKinds/64);
-	    }
-	    return ll; 
-	}
-	
 	public List<String> getTokenNames() {
 		List<String> names = new ArrayList<>();
 		int tokCount = grammar.getLexerData().getTokenCount();
@@ -54,17 +44,6 @@ public class TokenSet extends BitSet {
 		}
 		return names;
 	}
-	
-	public String getFirstTokenName() {
-		int tokCount = grammar.getLexerData().getTokenCount();
-		for (int i=0; i<tokCount; i++) {
-			if (get(i)) {
-				return grammar.getLexerData().getTokenName(i);
-			}
-		}
-		return null;
-	}
-
 
     public List<String> getTokenSetNames() {
         int tokenCount = grammar.getLexerData().getTokenCount();
@@ -76,21 +55,4 @@ public class TokenSet extends BitSet {
         }
         return result;
     }
- 	
-	public String getCommaDelimitedTokens() {
-		if (cardinality() <=1) {
-			return getFirstTokenName();
-		}
-		StringBuilder result = new StringBuilder();
-		for (String name : getTokenNames()) {
-			result.append(name);
-			result.append(", ");
-		}
-		result.setLength(result.length() -2);
-		return result.toString();
-	}
-
-	public void not() {
-		flip(0, grammar.getLexerData().getTokenCount());
-	}
 }

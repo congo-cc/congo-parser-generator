@@ -118,14 +118,8 @@ public class LexerData {
     }
    
     static public boolean isJavaIdentifier(String s) {
-        if (s.length() == 0) return false;
-        for (int i=0; i<s.length(); i++) {
-            int ch = s.codePointAt(i);
-            if (i==0 && !Character.isJavaIdentifierStart(ch)) return false;
-            if (!Character.isJavaIdentifierPart(ch)) return false;
-            if (ch > 0xFFFF) i++;
-        }
-        return true;
+        return !s.isEmpty() && Character.isJavaIdentifierStart(s.codePointAt(0)) 
+              && s.codePoints().allMatch(ch->Character.isJavaIdentifierPart(ch));
     }
    
     private boolean regexpLabelAlreadyUsed(String label) {
@@ -134,7 +128,6 @@ public class LexerData {
         }
         return false;
     }
-
     
     public String getStringLiteralLabel(String image) {
         for (RegularExpression regexp : regularExpressions) {

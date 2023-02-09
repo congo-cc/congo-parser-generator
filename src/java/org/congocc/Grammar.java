@@ -39,7 +39,6 @@ public class Grammar extends BaseNode {
                    defaultLexicalState;
     private Path filename;
     private Map<String, Object> settings = new HashMap<>();
-    private CompilationUnit parserCode;
     private LexerData lexerData = new LexerData(this);
     private int includeNesting;
 
@@ -390,51 +389,6 @@ public class Grammar extends BaseNode {
             injector = new CodeInjector(this, parserPackage, getNodePackage(), codeInjections);
         }
         return injector;
-    }
-
-    public List<Node> getOtherParserCodeDeclarations() {
-        List<Node> result = new ArrayList<Node>();
-        if (parserCode != null) {
-            for (Node child : parserCode.children()) {
-                if (child instanceof Token) {
-                    continue;
-                }
-                if (child instanceof PackageDeclaration || child instanceof ImportDeclaration) {
-                    continue;
-                }
-                if (child instanceof TypeDeclaration) {
-                    if (((TypeDeclaration) child).getName().equals(parserClassName)) {
-                        continue;
-                    }
-                }
-                result.add(child);
-            }
-        }
-        return result;
-    }
-
-    public List<ImportDeclaration> getParserCodeImports() {
-        return parserCode == null ? Collections.emptyList(): parserCode.childrenOfType(ImportDeclaration.class);
-    }
-
-    public void setParserCode(CompilationUnit parserCode) {
-        this.parserCode = parserCode;
-        parserPackage = (String) settings.get("PARSER_PACKAGE");
-        String specifiedPackageName = parserCode.getPackageName();
-        if (specifiedPackageName != null && specifiedPackageName.length() >0) {
-            if (parserPackage != null) {
-                if (!parserPackage.equals(specifiedPackageName)) {
-                    String msg = "PARSER_PACKAGE was specified in the options directory as " + parserPackage + " but is specified in the PARSER_BEGIN/PARSER_END section as " + specifiedPackageName +".";
-                    addError(null, msg);
-                }
-            }
-            parserPackage = specifiedPackageName;
-        }
-        addCodeInjection(parserCode);
-    }
-
-    public void setParserPackage(String parserPackage) {
-        this.parserPackage = parserPackage;
     }
 
     public Collection<BNFProduction> getParserProductions() {
@@ -1336,38 +1290,7 @@ public class Grammar extends BaseNode {
             }
             return retval.toString();
         }
-
-        public long[] bitSetToLongArray(BitSet bs, int numLongs) {
-            long[] longs = bs.toLongArray();
-            return Arrays.copyOf(longs, numLongs);
-        }
-
-        public String codePointAsString(int ch) {
-            return new String(new int[]{ch}, 0, 1);
-        }
-
-
-        public boolean isBitSet(long num, int bit) {
-            return (num & (1L<<bit)) != 0;
-        }
-
-        public int firstCharAsInt(String s) {
-            return s.codePointAt(0);
-        }
-
-        public String powerOfTwoInHex(int i) {
-            return toHexStringL(1L << i);
-        }
-
-        public String getID(String name) {
-            String value = id_map.get(name);
-            if (value == null) {
-              value = "prod" + id++;
-              id_map.put(name, value);
-            }
-            return value;
-        }
-
+        
         // For use from templates.
         public String getPreprocessorSymbol(String key, String defaultValue) {
             return preprocessorSymbols.getOrDefault(key, defaultValue);

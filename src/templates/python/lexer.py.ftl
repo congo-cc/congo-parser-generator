@@ -240,10 +240,6 @@ ${is}}
 [/#if]
 [/#macro]
 
-[#list grammar.parserCodeImports as import]
-   ${import}
-[/#list]
-
 [#if multipleLexicalStates]
 # A mapping for lexical state transitions triggered by a certain token type (token type -> lexical state)
 token_type_to_lexical_state_map = {}
