@@ -144,6 +144,10 @@ TOKEN :
       ){2,}
        "'"
   > #StringLiteral
+  |
+  <SCHMOO :
+      "{$" (~["$"] | ("$" ~["}"]))* "$}"
+  > #Schmoo
 ;
 
 INJECT BaseNode :

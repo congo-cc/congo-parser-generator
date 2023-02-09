@@ -18,7 +18,7 @@ import java.util.Arrays;
 import java.util.BitSet;
 
 
-abstract public class TokenSource
+abstract public class TokenSource implements CharSequence
 {
    private int tabSize = 1;
 
@@ -63,16 +63,27 @@ abstract public class TokenSource
     // in 1-based line/column terms
     private int startingLine, startingColumn;
 
-    protected void setStartingPos(int startingLine, int startingColumn) {
-      this.startingLine = startingLine;
-      this.startingColumn = startingColumn;
-    }
+//    protected void setStartingPos(int startingLine, int startingColumn) {
+//      this.startingLine = startingLine;
+//      this.startingColumn = startingColumn;
+//    }
 
-    public TokenSource(String inputSource, CharSequence input, int startingLine, int startingColumn) {
+    protected TokenSource(String inputSource, 
+                         CharSequence input, 
+                         int startingLine, 
+                         int startingColumn, 
+                         int tabSize,
+                         boolean preserveTabs, 
+                         boolean preserveLineEndings, 
+                         boolean javaUnicodeEscape,
+                         boolean ensureFinalEOL) {
         this.inputSource = inputSource;
-        tabSize = ${grammar.tabSize};
+        this.tabSize = tabSize;
         this.startingLine = startingLine;
         this.startingColumn = startingColumn;
+        this.content = mungeContent(input, preserveTabs, tabSize, preserveLineEndings, javaUnicodeEscape, ensureFinalEOL);
+        createLineOffsetsTable();
+        createTokenLocationTable();        
      }
 
 
@@ -159,7 +170,7 @@ abstract public class TokenSource
     return buf.toString();
    }
 
-   protected final void createTokenLocationTable() {
+   private final void createTokenLocationTable() {
       int size = content.length() +1;
       tokenLocationTable = new ${BaseToken}[size];
       tokenOffsets = new BitSet(size);
@@ -171,14 +182,23 @@ abstract public class TokenSource
       }
     }
 
-    protected void setContent(CharSequence content) {this.content = content;}
+    public char charAt(int pos) {
+        return content.charAt(pos);
+    }
 
-    protected final CharSequence getContent() {return content;}
+    public int length() {
+        return content.length();
+    }
 
-    int contentLength() {return content.length();}
+    public CharSequence subSequence(int start, int end) {
+        return content.subSequence(start, end);
+    }
+
+    public String toString() {
+        return content.toString();
+    }
 
     protected final int readChar() {
-        CharSequence content = getContent();
         bufferPosition = nextUnignoredOffset(bufferPosition);
         if (bufferPosition >= content.length()) {
             return -1;
@@ -197,7 +217,7 @@ abstract public class TokenSource
     /**
      * backup a certain number of code points
      */
-    protected final void backup(int amount) {
+    public final void backup(int amount) {
         for (int i = 0; i < amount; i++) {
             bufferPosition--;
             while(isIgnored(bufferPosition)) bufferPosition--;
@@ -304,7 +324,7 @@ abstract public class TokenSource
 
     public void setUnparsedLines(BitSet unparsedLines) {setParsedLines(unparsedLines,true);}
 
-    void handleCContinuationLines() {
+    protected void handleCContinuationLines() {
       String input = content.toString();
       for (int offset = input.indexOf('\\'); offset >=0; offset = input.indexOf('\\', offset+1)) {
           int nlIndex = input.indexOf('\n', offset);
@@ -372,7 +392,7 @@ abstract public class TokenSource
         return Math.max(1,startingLine-(bsearchResult+2));
     }
 
-    protected void createLineOffsetsTable() {
+    private void createLineOffsetsTable() {
         if (content.length() == 0) {
             this.lineOffsets = new int[0];
             return;

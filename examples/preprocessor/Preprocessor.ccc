@@ -224,7 +224,6 @@ Expression PP_Expression#void :
         result.booleanValue = inequality == (result.booleanValue != result2.booleanValue);
       }
       else {
-        // Not C# mode, and LHS and RHS are symbols
         String key = result.symbol;
         String value = result2.symbol;
 

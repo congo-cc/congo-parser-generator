@@ -118,11 +118,11 @@ public class ${grammar.lexerClassName} extends TokenSource
       * usages this is 1.
       */
      public ${grammar.lexerClassName}(String inputSource, CharSequence input, LexicalState lexState, int startingLine, int startingColumn) {
-        super(inputSource, input, startingLine, startingColumn);
-        setContent(mungeContent(input, ${PRESERVE_TABS}, getTabSize(), ${PRESERVE_LINE_ENDINGS}, ${JAVA_UNICODE_ESCAPE}, ${ENSURE_FINAL_EOL}));
-        createLineOffsetsTable();
-        createTokenLocationTable();
-        setStartingPos(startingLine, startingColumn);
+        super(inputSource, input, startingLine, startingColumn,
+                        ${grammar.tabSize}, ${PRESERVE_TABS}, 
+                        ${PRESERVE_LINE_ENDINGS}, 
+                        ${JAVA_UNICODE_ESCAPE}, 
+                        ${ENSURE_FINAL_EOL});
         switchTo(lexState);
      [#if grammar.cppContinuationLine]
         handleCContinuationLines();
@@ -380,7 +380,7 @@ public class ${grammar.lexerClassName} extends TokenSource
       int offset = tok.getBeginOffset();
       while (offset > 0) {
         --offset;
-        char c = getContent().charAt(offset);
+        char c = charAt(offset);
         if (!Character.isWhitespace(c)) return false;
         if (c=='\n') break;
       }
@@ -416,7 +416,7 @@ public class ${grammar.lexerClassName} extends TokenSource
     [/#list]
   }
 
- //The Nitty-gritty of the NFA code is in this loop.
+ //The Nitty-gritty of the NFA code follows.
  [#list lexerData.lexicalStates as lexicalState]
  /**
   * Holder class for NFA code related to ${lexicalState.name} lexical state
