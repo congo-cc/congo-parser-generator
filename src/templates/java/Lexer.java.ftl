@@ -112,6 +112,8 @@ public class ${grammar.lexerClassName} extends TokenSource
       * @param inputSource just the name of the input source (typically the filename) that 
       * will be used in error messages and so on.
       * @param input the input
+      * @param lexicalState The starting lexical state, may be null to indicate the default
+      * starting state
       * @param line The line number at which we are starting for the purposes of location/error messages. In most 
       * normal usage, this is 1.
       * @param column number at which we are starting for the purposes of location/error messages. In most normal
@@ -123,7 +125,7 @@ public class ${grammar.lexerClassName} extends TokenSource
                         ${PRESERVE_LINE_ENDINGS}, 
                         ${JAVA_UNICODE_ESCAPE}, 
                         ${ENSURE_FINAL_EOL});
-        switchTo(lexState);
+        if (lexicalState != null) switchTo(lexState);
      [#if grammar.cppContinuationLine]
         handleCContinuationLines();
      [/#if]

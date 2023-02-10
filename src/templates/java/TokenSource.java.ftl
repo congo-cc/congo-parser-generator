@@ -63,10 +63,15 @@ abstract public class TokenSource implements CharSequence
     // in 1-based line/column terms
     private int startingLine, startingColumn;
 
-//    protected void setStartingPos(int startingLine, int startingColumn) {
-//      this.startingLine = startingLine;
-//      this.startingColumn = startingColumn;
-//    }
+
+    /**
+     * Set the starting line/column for location reporting.
+     * By default, this is 1,1.
+     */
+    public void setStartingPos(int startingLine, int startingColumn) {
+      this.startingLine = startingLine;
+      this.startingColumn = startingColumn;
+    }
 
     protected TokenSource(String inputSource, 
                          CharSequence input, 

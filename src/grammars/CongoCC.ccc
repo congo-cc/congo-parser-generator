@@ -101,10 +101,6 @@ TOKEN :
   |
   < _IGNORE_CASE: "IGNORE_CASE" > #CongoCCKeyWord
   |
-  < _PARSER_BEGIN: "PARSER_BEGIN" > #CongoCCKeyWord
-  |
-  < _PARSER_END: "PARSER_END" > #CongoCCKeyWord
-  |
   < _TOKEN: "TOKEN" | "REGULAR_TOKEN"> #CongoCCKeyWord
   |
   < _UNPARSED: "SPECIAL_TOKEN" | "UNPARSED" > #CongoCCKeyWord
@@ -114,8 +110,6 @@ TOKEN :
   < _SKIP: "SKIP" > #CongoCCKeyWord
   |
   <_EOF : "EOF"> #CongoCCKeyWord
-  |
-  < _TOKEN_MGR_DECLS: "TOKEN_MGR_DECLS" > #CongoCCKeyWord
   |
   < _ATTEMPT: "ATTEMPT"> #CongoCCKeyWord
   |
@@ -154,19 +148,23 @@ TOKEN :
   <END_UNPARSED : "$}" > : JAVA
 ;
 
-UnparsedCodeBlock : 
-   <START_UNPARSED>
+UnparsedCodeBlock #org.congocc.core.UnparsedCodeBlock : 
+   <START_UNPARSED> 
    [<UNPARSED_CONTENT>]
    <END_UNPARSED>
 ;
 
-INJECT UnparsedCodeBlock : extends org.congocc.core.EmptyExpansion
+//INJECT UnparsedCodeBlock : extends org.congocc.core.EmptyExpansion
 
 INJECT BASE_NODE_CLASS :
     import org.congocc.Grammar;
     import PARSER_PACKAGE.Token.TokenType;
     implements Node; 
 {
+    protected void setChildren(List<Node> children) {
+        this.children = children;
+    }
+
     private Grammar grammar;
 
     public Grammar getGrammar() {
@@ -188,26 +186,6 @@ INJECT BASE_NODE_CLASS :
     public String getSimpleName() {
         String name = getClass().getName();
         return name.substring(name.lastIndexOf(".") + 1); // strip the package name
-    }
-    
-    protected String getInnerText() {
-        StringBuilder buf = new StringBuilder();
-        List<Token> tokens = getAllTokens(true);
-        boolean outputOpeningBrace = false;
-        for (int i=0; i<tokens.size() -1; i++) {
-            Token t = tokens.get(i);
-            buf.append(" ");
-            if (i>0 && tokens.get(i-1).getEndOffset() != t.getBeginOffset()) {
-                buf.append(" ");
-            }
-            if (outputOpeningBrace) {
-                buf.append(t);
-            } else if (t.getType() == TokenType.LBRACE) {
-                outputOpeningBrace = true;
-            }
-            buf.append(" ");
-        }
-        return buf.toString();
     }
 
     public String toString() {
@@ -366,9 +344,26 @@ INJECT ImplementsList :
 }
 
 INJECT CodeBlock :
+  import java.util.List;
 {
     public String toString() {
-        return getInnerText();
+        StringBuilder buf = new StringBuilder();
+        List<Token> tokens = getAllTokens(true);
+        boolean outputOpeningBrace = false;
+        for (int i=0; i<tokens.size() -1; i++) {
+            Token t = tokens.get(i);
+            buf.append(" ");
+            if (i>0 && tokens.get(i-1).getEndOffset() != t.getBeginOffset()) {
+                buf.append(" ");
+            }
+            if (outputOpeningBrace) {
+                buf.append(t);
+            } else if (t.getType() == TokenType.LBRACE) {
+                outputOpeningBrace = true;
+            }
+            buf.append(" ");
+        }
+        return buf.toString();
     }
 }
 
@@ -526,9 +521,6 @@ INJECT TypeParameters :
 INJECT ClassOrInterfaceBody : 
     import java.util.*;
 {
-    public String toString() {
-        return getInnerText();
-    }
     
     // REVISIT. fix token chaining?
     public void prepend(List<ClassOrInterfaceBodyDeclaration> elements) {
@@ -595,19 +587,17 @@ INJECT PARSER_CLASS : {
 
     private EnumSet<TokenType> CongoCCKeyWords = EnumSet.of(
        _FAIL, _ENSURE, _SCAN, _IGNORE_CASE, 
-       _PARSER_BEGIN, _PARSER_END, _TOKEN, _UNPARSED, _SKIP, _MORE,
-       _TOKEN_MGR_DECLS, _ATTEMPT, _RECOVER, _ON_ERROR,  
+       _TOKEN, _UNPARSED, _SKIP, _MORE,
+       _ATTEMPT, _RECOVER, _ON_ERROR,  
        _LEXICAL_STATE);
 
     private Token TOKEN_HOOK(Token t) {
         if (CongoCCKeyWords.contains(t.getType())) {
             if (isInProduction("CompilationUnit", "ClassOrInterfaceBody", "BlockStatement", "TreeBuildingAnnotation")) {
-               if (t.getType() != _PARSER_END) {
-                   Token id = Token.newToken(IDENTIFIER, t.getImage(), token_source);
-                   id.copyLocationInfo(t);
-                   return id;
-               }
-           }
+                Token id = Token.newToken(IDENTIFIER, t.getImage(), token_source);
+                id.copyLocationInfo(t);
+                return id;
+            }
         }
         t.setGrammar(getGrammar());
         return t;

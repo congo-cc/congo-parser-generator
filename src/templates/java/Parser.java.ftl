@@ -126,6 +126,15 @@ public boolean isCancelled() {return cancelled;}
       lastConsumedToken.setTokenSource(lexer);
   }
 
+    /**
+     * Set the starting line/column for location reporting.
+     * By default, this is 1,1.
+     */
+    public void setStartingPos(int startingLine, int startingColumn) {
+        token_source.setStartingPos(startingLine, startingColumn);
+    }
+
+
   // If the next token is cached, it returns that
   // Otherwise, it goes to the token_source, i.e. the Lexer.
   final private Token nextToken(final Token tok) {
