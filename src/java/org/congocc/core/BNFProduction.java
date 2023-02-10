@@ -116,7 +116,7 @@ public class BNFProduction extends BaseNode {
             return getNodeName();
         }
         ReturnType rt = firstChildOfType(ReturnType.class);
-        return rt == null ? "void" : rt.getAsString();
+        return rt == null ? "void" : rt.toString();
     }
 
     // used in templates

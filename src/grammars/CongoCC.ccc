@@ -145,12 +145,24 @@ TOKEN :
        "'"
   > #StringLiteral
   |
-  <SCHMOO :
-      "{$" (~["$"] | ("$" ~["}"]))* "$}"
-  > #Schmoo
+  <START_UNPARSED : "{$" > : IN_UNPARSED_CODE_BLOCK
 ;
 
-INJECT BaseNode :
+<IN_UNPARSED_CODE_BLOCK> TOKEN : 
+  <UNPARSED_CONTENT : (~["$"] | (("$")+ ~["}"]))+ > #UnparsedContent
+  |
+  <END_UNPARSED : "$}" > : JAVA
+;
+
+UnparsedCodeBlock : 
+   <START_UNPARSED>
+   [<UNPARSED_CONTENT>]
+   <END_UNPARSED>
+;
+
+INJECT UnparsedCodeBlock : extends org.congocc.core.EmptyExpansion
+
+INJECT BASE_NODE_CLASS :
     import org.congocc.Grammar;
     import PARSER_PACKAGE.Token.TokenType;
     implements Node; 
@@ -198,19 +210,7 @@ INJECT BaseNode :
         return buf.toString();
     }
 
-    public String getAsString() {
-        return getLiteralText();
-    }
-
     public String toString() {
-        return getLiteralText();
-    }
-    
-    public boolean isEmpty() {
-        return getRealTokens().isEmpty();
-    }
-
-    protected String getLiteralText() {
         StringBuilder buf = new StringBuilder();
         Token prevToken = null;
         for (Token t : getAllTokens(true)) {
@@ -325,7 +325,7 @@ INJECT FormalParameters :
         return childrenOfType(FormalParameter.class);
     }
     
-    public String getAsString() {
+    public String toString() {
         StringBuilder buf = new StringBuilder();
         List<FormalParameter> params = getParams();
         boolean first = true;
@@ -333,18 +333,8 @@ INJECT FormalParameters :
             if (!first) {
                 buf.append(", ");
             }
-            buf.append(param.getAsString());
+            buf.append(param.toString());
             first = false;
-        }
-        return buf.toString();
-    }
-    
-    public String toString() {
-        if (true) return getAsString();
-        StringBuilder buf = new StringBuilder();
-        for (Token tok : getRealTokens()) {
-            buf.append(" ");
-            buf.append(tok);
         }
         return buf.toString();
     }
@@ -377,19 +367,8 @@ INJECT ImplementsList :
 
 INJECT CodeBlock :
 {
-    public String getAsString() {
-        return getInnerText();
-    }
-
     public String toString() {
         return getInnerText();
-    }
-    
-    /**
-     * The block is empty if it only consists of { and }
-     */
-    public boolean isEmpty() {
-        return getRealTokens().size() == 2;
     }
 }
 
@@ -400,7 +379,7 @@ INJECT InvocationArguments :
         return childrenOfType(Expression.class);
     }
 
-    public String getAsString() {
+    public String toString() {
         StringBuilder buf = new StringBuilder();
         List<Expression> args = getArgs();
         boolean first = true;
@@ -408,14 +387,10 @@ INJECT InvocationArguments :
             if (!first) {
                 buf.append(", ");
             }
-            buf.append(arg.getAsString());
+            buf.append(arg.toString());
             first = false;
         }
         return buf.toString();
-    }
-
-    public String toString() {
-        return getAsString();
     }
 }
 
@@ -450,15 +425,14 @@ INJECT TypeDeclaration :
         getBody().prepend(elements);
     }
     
-   default void addAnnotations(Set<Annotation> annotations) {
+    default void addAnnotations(Set<Annotation> annotations) {
        Node parent = this.getParent();
        int index = parent.indexOf(this);
        //REVISIT. fix token chaining
        for (Annotation annotation : annotations) {
            parent.addChild(index, annotation);
        }
-   } 
-   
+    } 
     
     default boolean isClass() {
         return firstChildOfType(TokenType.CLASS) != null;
@@ -552,10 +526,6 @@ INJECT TypeParameters :
 INJECT ClassOrInterfaceBody : 
     import java.util.*;
 {
-    public String getAsString() {
-        return getInnerText();
-    }
-
     public String toString() {
         return getInnerText();
     }
@@ -641,23 +611,6 @@ INJECT PARSER_CLASS : {
         }
         t.setGrammar(getGrammar());
         return t;
-    }
-}
-
-INJECT CaseStatement :
-{
-    // If the case statement has an unreachable break statement at the
-    // end, we remove it. This allows us to get rid of this horrid longstanding kludge
-    // This is no longer used! I leave it here for historical reasons! 
-    // See: https://parsers.org/t/a-fun-example-of-code-injection-at-work/30
-    public void close() {
-        if (getChildCount() >= 2) {
-            Node last = this.getLastChild();
-            Node secondLast = this.getChild(getChildCount() -2);
-            if ((last instanceof BreakStatement) && (secondLast instanceof ReturnStatement)) {
-                removeChild(last);
-            }
-        }
     }
 }
 
@@ -1642,6 +1595,8 @@ Expansion ExpansionUnit :
          //result.addChild(lastConsumedToken);
     }
   ]
+  |
+  result = UnparsedCodeBlock
   |
   SCAN 1 ~\...\Lookahead =>
   result=AttemptBlock

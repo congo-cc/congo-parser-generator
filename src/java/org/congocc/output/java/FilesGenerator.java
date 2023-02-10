@@ -92,7 +92,7 @@ public class FilesGenerator {
                     generateTreeBuildingFiles();
                 }
                 break;
-            case "python": {
+            case "python": 
                 // Hardcoded for now, could make configurable later
                 String[] paths = new String[]{
                         "__init__.py",
@@ -109,10 +109,9 @@ public class FilesGenerator {
                     generate(outputFile);
                 }
                 break;
-            }
-            case "csharp": {
+            case "csharp": 
                 // Hardcoded for now, could make configurable later
-                String[] paths = new String[]{
+                paths = new String[]{
                         "Utils.cs",
                         "Tokens.cs",
                         "Lexer.cs",
@@ -121,7 +120,7 @@ public class FilesGenerator {
                 };
                 String csPackageName = grammar.getUtils().getPreprocessorSymbol("cs.package", grammar.getParserPackage());
                 paths[paths.length - 1] = csPackageName + ".csproj";
-                Path outDir = grammar.getParserOutputDirectory();
+                outDir = grammar.getParserOutputDirectory();
                 for (String p : paths) {
                     Path outputFile = outDir.resolve(p);
                     // Could check if regeneration is needed, but for now
@@ -129,7 +128,6 @@ public class FilesGenerator {
                     generate(outputFile);
                 }
                 break;
-            }
             default:
                 throw new UnsupportedOperationException(String.format("Code generation in '%s' is currently not supported.", codeLang));
         }
