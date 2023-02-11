@@ -26,6 +26,7 @@ public interface Node
         [#-- I added this so that code compiles. Not sure
              what I am doing with this.. --]
         TerminalNode getNext();
+        List<? extends TerminalNode> precedingUnparsedTokens();
     }
 
     default NodeType getType() { return null; }
@@ -218,8 +219,8 @@ public interface Node
          List<Node> result = new ArrayList<>();
          for (int i = 0; i < getChildCount(); i++) {
              Node child = getChild(i);
-             if (includeUnparsedTokens && child instanceof Token) {
-                 Token tok = (Token) child;
+             if (includeUnparsedTokens && child instanceof TerminalNode) {
+                 TerminalNode tok = (TerminalNode) child;
                  if (!tok.isUnparsed()) {
                      result.addAll(tok.precedingUnparsedTokens());
                  }
@@ -230,26 +231,31 @@ public interface Node
       }
 
       default List<Node> children() {
-          return children(false);
+          List<Node> result = new ArrayList<>();
+          for (int i =0; i<getChildCount(); i++) {
+              result.add(getChild(i));
+          }
+          return result;
       }
+[#--
+     default List<? extends TerminalNode> getAllTokens(boolean includeCommentTokens) {
+        return Collections.emptyList();
+     }
+--]     
 
-    /**
-     * @return a List containing all the tokens in a Node
-     * @param includeCommentTokens Whether to include comment tokens
-     */
-     default List<Token> getAllTokens(boolean includeCommentTokens) {
-		List<Token> result = new ArrayList<>();
+   default public List<? extends TerminalNode> getAllTokens(boolean includeCommentTokens) {
+		List<TerminalNode> result = new ArrayList<>();
         for (Iterator<Node> it = iterator(); it.hasNext();) {
             Node child = it.next();
-            if (child instanceof Token) {
-                Token token = (Token) child;
-                if (token.isUnparsed()) {
+            if (child instanceof TerminalNode) {
+                TerminalNode tn = (TerminalNode) child;
+                if (tn.isUnparsed()) {
                     continue;
                 }
                 if (includeCommentTokens) {
-                    result.addAll(token.precedingUnparsedTokens());
+                    result.addAll(tn.precedingUnparsedTokens());
                 }
-                result.add(token);
+                result.add(tn);
             } 
             else if (child.getChildCount() >0) {
                result.addAll(child.getAllTokens(includeCommentTokens));
@@ -258,14 +264,6 @@ public interface Node
         return result;
     }
 
-    /**
-     * @return All the tokens in the node that 
-     * are "real" (i.e. participate in parsing)
-     */
-    default List<Token> getRealTokens() {
-        return descendants(Token.class, t->!t.isUnparsed());
-    }
-    
      /**
       * @return the #${grammar.lexerClassName} from which this Node object
       * originated. There is no guarantee that this doesn't return null.
@@ -364,7 +362,6 @@ public interface Node
          return getInputSource() + ":" + getBeginLine() + ":" + getBeginColumn();
     }
      
-     
      /**
       * @return whether this Node was created by regular operations of the 
       * parsing machinery. 
@@ -378,39 +375,38 @@ public interface Node
       * normal parsing
       * @param b whether to set the Node as unparsed or parsed.
       */ 
-     void setUnparsed(boolean b);
+    void setUnparsed(boolean b);
      
     default <T extends Node>T firstChildOfType(Class<T>clazz) {
-        for (int i=0; i<getChildCount();i++) {
-            Node child = getChild(i);
-            if (clazz.isInstance(child)) return clazz.cast(child);
-        }
-        return null; 
+        return firstChildOfType(clazz, null);
     }
 
-    default <T extends Node>T firstChildOfType(Class<T> clazz, Predicate<T> pred) {
+    default <T extends Node> T firstChildOfType(Class<T> clazz, Predicate<T> pred) {
         for (int i=0; i<getChildCount();i++) {
             Node child = getChild(i);
             if (clazz.isInstance(child)) {
                 T t = clazz.cast(child);
-                if (pred.test(t)) return t;
+                if (pred == null || pred.test(t)) return t;
             }
         }
         return null;
     }
 
-[#if grammar.tokensAreNodes]
-    default Node firstDescendantOfType(NodeType type) {
+    default Node firstDescendantOfType(NodeType type, Predicate<Node> pred) {
          for (int i=0; i<getChildCount(); i++) {
              Node child = getChild(i);
              if (child.getType() == type) {
-                return (Token) child;
+                if (pred == null || pred.test(child)) return child;
              } else {
-                 Node tok = child.firstDescendantOfType(type);
+                 Node tok = child.firstDescendantOfType(type, pred);
                  if (tok != null) return tok;
              }
          }
          return null;
+    }
+
+    default Node firstDescendantOfType(NodeType type) {
+        return firstDescendantOfType(type, null);
     }
 
     default Node firstChildOfType(NodeType type) {
@@ -420,41 +416,57 @@ public interface Node
         }
         return null;
     }
-[/#if]
 
-    default <T extends Node>T firstDescendantOfType(Class<T> clazz) {
+    default <T extends Node>T firstDescendantOfType(Class<T> clazz, Predicate<T> pred) {
          for (int i=0; i<getChildCount();i++) {
              Node child = getChild(i);
-             if (clazz.isInstance(child)) return clazz.cast(child);
+             if (clazz.isInstance(child)) {
+                T t = clazz.cast(child);
+                if (pred==null || pred.test(t)) return t;
+             } 
              else {
-                 T descendant = child.firstDescendantOfType(clazz);
+                 T descendant = child.firstDescendantOfType(clazz, pred);
                  if (descendant !=null) return descendant;
              }
          }
          return null;
     }
 
-    default <T extends Node>List<T>childrenOfType(Class<T>clazz) {
+    default <T extends Node> T firstDescendantOfType(Class<T> clazz) {
+        return firstDescendantOfType(clazz, null);
+    }
+
+    default <T extends Node> List<T> childrenOfType(Class<T>clazz, Predicate<T> pred) {
         List<T>result=new java.util.ArrayList<>();
         for (int i=0; i< getChildCount(); i++) {
             Node child = getChild(i);
             if (clazz.isInstance(child)) {
-                result.add(clazz.cast(child));
+                T t = clazz.cast(child);
+                if (pred == null || pred.test(t)) result.add(t);
             }
         }
         return result;
    }
+
+   default <T extends Node> List<T> childrenOfType(Class<T> clazz) {
+       return childrenOfType(clazz, null);
+   }
    
-   default <T extends Node> List<T> descendantsOfType(Class<T> clazz) {
+   default <T extends Node> List<T> descendantsOfType(Class<T> clazz, Predicate<T> pred) {
         List<T> result = new ArrayList<T>();
         for (int i=0; i< getChildCount(); i++) {
             Node child = getChild(i);
             if (clazz.isInstance(child)) {
-                result.add(clazz.cast(child));
+                T t = clazz.cast(child);
+                if (pred == null || pred.test(t)) result.add(t);
             } 
-            result.addAll(child.descendantsOfType(clazz));
+            result.addAll(child.descendantsOfType(clazz, pred));
         }
         return result;
+   }
+
+   default <T extends Node> List<T> descendantsOfType(Class<T> clazz) {
+       return descendantsOfType(clazz, null);
    }
    
    default <T extends Node> T firstAncestorOfType(Class<T> clazz) {
@@ -469,38 +481,9 @@ public interface Node
     }
 
     default NodeType getTokenType() {
-        //return this instanceof Token ? ((Token)this).getType() : null;
         return getType();
     }
 
-[#if grammar.tokensAreNodes]
-    /**
-     * @return the very first token that is part of this node.
-     * It may be an unparsed (i.e. special) token.
-     */
-    default Token getFirstToken() {
-        Node first = getFirstChild();
-        if (first == null) return null;
-        if (first instanceof Token) {
-            Token tok = (Token) first;
-            while (tok.previousCachedToken() != null && tok.previousCachedToken().isUnparsed()) {
-                tok = tok.previousCachedToken();
-            }
-           return tok;
-        }
-        return first.getFirstToken(); 
-    }
-
-    default Token getLastToken() {
-        Node last = getLastChild();
-        if (last == null) return null;
-        if (last instanceof Token) {
-            return (Token) last;
-        }
-        return last.getLastToken();
-    }
-[/#if]    
-    
     /**
      * Copy the location info from another Node
      * @param from the Node to copy the info from 
@@ -564,30 +547,7 @@ public interface Node
         }
         return parent; 
     }
-    
-     static public List<Token> getTokens(Node node) {
-        List<Token> result = new ArrayList<Token>();
-        for (Node child : node.children()) {
-            if (child instanceof Token) {
-                result.add((Token) child);
-            } else {
-                result.addAll(getTokens(child));
-            }
-        }
-        return result;
-    }
         
-        
-    static public List<Token> getRealTokens(Node n) {
-        List<Token> result = new ArrayList<Token>();
-		for (Token token : getTokens(n)) {
-		    if (!token.isUnparsed()) {
-		        result.add(token);
-		    }
-		}
-	    return result;
-    }
-
     default List<Node> descendants() {
         return descendants(Node.class, null);
     }
@@ -617,7 +577,7 @@ public interface Node
     default void dump(String prefix) {
         String output;
 
-        if (this instanceof Token) {
+        if (this instanceof TerminalNode) {
             output = toString().trim();
         }
         else {
@@ -626,7 +586,6 @@ public interface Node
                                    getBeginLine(), getBeginColumn(),
                                    getEndLine(), getEndColumn());
         }
-        // String output = (this instanceof Token) ? toString().trim() : getClass().getSimpleName();
 [#if grammar.faultTolerant]
         if (this.isDirty()) {
             output += " (incomplete)";

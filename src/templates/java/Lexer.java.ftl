@@ -339,8 +339,8 @@ public class ${grammar.lexerClassName} extends TokenSource
     switch(matchedType) {
    [#list lexerData.regularExpressions as regexp]
         [#if regexp.codeSnippet?has_content]
-		  case ${regexp.label} :
-		      ${regexp.codeSnippet.javaCode}
+      case ${regexp.label} :
+          ${regexp.codeSnippet.javaCode}
            break;
         [/#if]
    [/#list]

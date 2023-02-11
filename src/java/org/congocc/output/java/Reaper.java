@@ -160,10 +160,10 @@ class Reaper extends Node.Visitor {
                 toBeRemoved.add(vd);
                 Node prev = vd.previousSibling();
                 Node next = vd.nextSibling();
-                if (prev.getTokenType()==COMMA) {
+                if (prev.getType()==COMMA) {
                     toBeRemoved.add(prev);
                 }
-                else if (next.getTokenType() == COMMA) {
+                else if (next.getType() == COMMA) {
                     toBeRemoved.add(next);
                 }
             }

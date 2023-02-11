@@ -1,14 +1,13 @@
 DEFAULT_LEXICAL_STATE=PYTHON;
 BASE_SRC_DIR="../java";
 BASE_NAME=Python;
-BASE_NODE_CLASS=PythonNode;
 ROOT_API_PACKAGE=org.congocc.parser;
 PARSER_PACKAGE=org.congocc.parser.python;
 TOKEN_CHAINING;
 
 INCLUDE "../../examples/python/Python.ccc";
 
-INJECT PythonNode :
+INJECT BASE_NODE_CLASS :
    import org.congocc.Grammar;
 {
     @Property Grammar grammar;

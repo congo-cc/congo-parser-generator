@@ -190,8 +190,8 @@ INJECT BASE_NODE_CLASS :
 
     public String toString() {
         StringBuilder buf = new StringBuilder();
-        Token prevToken = null;
-        for (Token t : getAllTokens(true)) {
+        TerminalNode prevToken = null;
+        for (TerminalNode t : getAllTokens(true)) {
             if (prevToken != null && prevToken.getEndOffset() != t.getBeginOffset()) {
                 buf.append(" ");
             }
@@ -348,12 +348,12 @@ INJECT CodeBlock :
 {
     public String toString() {
         StringBuilder buf = new StringBuilder();
-        List<Token> tokens = getAllTokens(true);
+        List<? extends TerminalNode> tokens = getAllTokens(true);
         boolean outputOpeningBrace = false;
         for (int i=0; i<tokens.size() -1; i++) {
-            Token t = tokens.get(i);
+            Token t = (Token) tokens.get(i);
             buf.append(" ");
-            if (i>0 && tokens.get(i-1).getEndOffset() != t.getBeginOffset()) {
+            if (i>0 && ((Token)tokens.get(i-1)).getEndOffset() != t.getBeginOffset()) {
                 buf.append(" ");
             }
             if (outputOpeningBrace) {
