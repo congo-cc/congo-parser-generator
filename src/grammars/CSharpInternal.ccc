@@ -18,3 +18,11 @@ INJECT Token :
 {
     @Property Grammar grammar;
 }
+
+#InjectionBody : 
+    (ClassMemberDeclaration)*
+    <EOF>
+    {
+        return CURRENT_NODE;
+    }
+;

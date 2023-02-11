@@ -1,10 +1,11 @@
 package org.congocc.core;
 
 import org.congocc.parser.Node;
+import org.congocc.parser.ParseException;
 import static org.congocc.parser.Token.TokenType.UNPARSED_CONTENT;
 import org.congocc.parser.csharp.CSharpParser;
-import org.congocc.parser.csharp.CSharpLexer;
-import org.congocc.parser.python.PythonLexer;
+//import org.congocc.parser.csharp.ast.EmbeddedBlock;
+import org.congocc.parser.python.PythonParser;
 
 public class UnparsedCodeBlock extends EmptyExpansion {
 
@@ -17,6 +18,7 @@ public class UnparsedCodeBlock extends EmptyExpansion {
 
     private boolean expanded;
     private Type type;
+    private boolean hasError;
 
     public void setType(Type type) {this.type = type;}
 
@@ -33,10 +35,13 @@ public class UnparsedCodeBlock extends EmptyExpansion {
     }
 
     Node parseCSharpBlock() {
-        //CSharpLexer csLexer = new CSharpLexer(getInputSource())
         CSharpParser csParser = new CSharpParser(getInputSource(), getContent());
-//        csParser.setStartingPos(getBeginLine(), getBeginColumn()+2);
-        csParser.Block();
-        return csParser.rootNode();
+/*        csParser.setStartingPos(getBeginLine(), getBeginColumn()+2);
+        try {
+           return csParser.EmbeddedBlock();
+        } catch (ParseException pe) {
+            hasError = true;
+        }*/
+        return null;
     }
 }

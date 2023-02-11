@@ -31,7 +31,7 @@ public interface Node
 
     default NodeType getType() { return null; }
 
-    default NodeType getNodeType() {return getType();}
+//    default NodeType getNodeType() {return getType();}
 
     /** Life-cycle hook method called after the node has been made the current
 	 *  node 
@@ -480,6 +480,10 @@ public interface Node
         return null;
     }
 
+    /**
+     * @deprecated Just use #getType instead
+     */
+    @Deprecated
     default NodeType getTokenType() {
         return getType();
     }

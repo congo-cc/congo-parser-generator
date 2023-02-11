@@ -6,7 +6,7 @@ import ${grammar.parserPackage}.Token.TokenType;
 
 [#var BASE_EXCEPTION_TYPE = grammar.useCheckedException?string("Exception", "RuntimeException")]
 [#var TOKEN_TYPE_SET = "EnumSet<TokenType>", BaseToken = "Token", BaseTokenType = "TokenType"]
-[#if grammar.treeBuildingEnabled]
+[#if grammar.treeBuildingEnabled || grammar.rootAPIPackage?has_content]
   [#set TOKEN_TYPE_SET = "Set<? extends Node.NodeType>"]
   [#set BaseToken = "Node.TerminalNode"]
   [#set BaseTokenType = "Node.NodeType"]

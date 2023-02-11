@@ -172,54 +172,6 @@ public class ${grammar.baseNodeClassName} implements Node {
     public List<Token> getRealTokens() {
         return descendants(Token.class, t->!t.isUnparsed());
     }
-[#--
-    /**
-     * @return a List containing all the tokens in a Node
-     * @param includeCommentTokens Whether to include comment tokens
-     */
-     default List<Token> getAllTokens(boolean includeCommentTokens) {
-		List<Token> result = new ArrayList<>();
-        for (Iterator<Node> it = iterator(); it.hasNext();) {
-            Node child = it.next();
-            if (child instanceof Token) {
-                Token token = (Token) child;
-                if (token.isUnparsed()) {
-                    continue;
-                }
-                if (includeCommentTokens) {
-                    result.addAll(token.precedingUnparsedTokens());
-                }
-                result.add(token);
-            } 
-            else if (child.getChildCount() >0) {
-               result.addAll(child.getAllTokens(includeCommentTokens));
-            }
-        }
-        return result;
-    }
---]
-[#--
-    public List<Token> getAllTokens(boolean includeCommentTokens) {
-		List<Token> result = new ArrayList<>();
-        for (Iterator<Node> it = iterator(); it.hasNext();) {
-            Node child = it.next();
-            if (child instanceof Token) {
-                Token token = (Token) child;
-                if (token.isUnparsed()) {
-                    continue;
-                }
-                if (includeCommentTokens) {
-                    result.addAll(token.precedingUnparsedTokens());
-                }
-                result.add(token);
-            } 
-            else if (child.getChildCount() >0) {
-               result.addAll(child.getAllTokens(includeCommentTokens));
-            }
-        }
-        return result;
-    }
---]
      
 [#if grammar.settings.FREEMARKER_NODES?? && grammar.settings.FREEMARKER_NODES]
     public TemplateSequenceModel getChildNodes() {
