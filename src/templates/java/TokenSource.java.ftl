@@ -31,12 +31,12 @@ abstract public class TokenSource implements CharSequence
 
    protected int getTabSize() {return tabSize;}
 
-   // Just a dummy Token value that we put in the tokenLocationTable
+   // Just a dummy token value that we put in the tokenLocationTable
    // to indicate that this location in the file is ignored.
-    private static final Token IGNORED = new Token(), SKIPPED=new Token();
+    private static final ${BaseToken} IGNORED = new Token(), SKIPPED=new Token();
 // Just a very simple, bloody minded approach, just store the
-// Token objects in a table where the offsets are the code unit 
-// positions in the content buffer. If the Token at a given offset is
+// token objects in a table where the offsets are the code unit 
+// positions in the content buffer. If the token at a given offset is
 // the dummy or marker type IGNORED, then the location is skipped via
 // whatever preprocessor logic.    
     private ${BaseToken}[] tokenLocationTable;

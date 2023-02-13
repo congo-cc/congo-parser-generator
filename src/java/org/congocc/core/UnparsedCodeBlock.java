@@ -18,7 +18,7 @@ public class UnparsedCodeBlock extends EmptyExpansion {
 
     private boolean expanded;
     private Type type;
-    private boolean hasError;
+    private ParseException parseException;
 
     public void setType(Type type) {this.type = type;}
 
@@ -29,6 +29,10 @@ public class UnparsedCodeBlock extends EmptyExpansion {
     private void expand() {
     }
 
+    public boolean hasError() {
+        return parseException != null;
+    }
+
     String getContent() {
         Node uc = firstChildOfType(UNPARSED_CONTENT);
         return uc == null ? "" : uc.getSource();
@@ -36,12 +40,12 @@ public class UnparsedCodeBlock extends EmptyExpansion {
 
     Node parseCSharpBlock() {
         CSharpParser csParser = new CSharpParser(getInputSource(), getContent());
-/*        csParser.setStartingPos(getBeginLine(), getBeginColumn()+2);
+        csParser.setStartingPos(getBeginLine(), getBeginColumn()+2);
         try {
-           return csParser.EmbeddedBlock();
+           return csParser.InjectionBody();
         } catch (ParseException pe) {
-            hasError = true;
-        }*/
+            this.parseException = pe;
+        }
         return null;
     }
 }

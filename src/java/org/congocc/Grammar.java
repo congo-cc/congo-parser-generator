@@ -1218,16 +1218,13 @@ public class Grammar extends BaseNode {
 
     public class Utils {
 
-        public void pushNodeVariableName(String jjtThis) {
-            nodeVariableNameStack.add(jjtThis);
+        public void pushNodeVariableName(String nodeName) {
+            nodeVariableNameStack.add(nodeName);
         }
 
         public void popNodeVariableName() {
             nodeVariableNameStack.remove(nodeVariableNameStack.size() - 1);
         }
-
-        private Map<String, String> id_map = new HashMap<String, String>();
-        private int id = 1;
 
         public String toHexString(int i) {
             return "0x" + Integer.toHexString(i);
