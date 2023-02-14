@@ -2,14 +2,14 @@
 
 package ${grammar.parserPackage};
 
-import ${grammar.parserPackage}.Token.TokenType;
-
 [#var BASE_EXCEPTION_TYPE = grammar.useCheckedException?string("Exception", "RuntimeException")]
 [#var TOKEN_TYPE_SET = "EnumSet<TokenType>", BaseToken = "Token", BaseTokenType = "TokenType"]
 [#if grammar.treeBuildingEnabled || grammar.rootAPIPackage?has_content]
   [#set TOKEN_TYPE_SET = "Set<? extends Node.NodeType>"]
   [#set BaseToken = "Node.TerminalNode"]
   [#set BaseTokenType = "Node.NodeType"]
+[#else]
+  import ${grammar.parserPackage}.Token.TokenType;
 [/#if]
 
 import java.util.*;
@@ -51,6 +51,11 @@ public class ParseException extends ${BASE_EXCEPTION_TYPE} {
   // Needed because of inheritance
   public ParseException(String message) {
     super(message);
+  }
+
+  public ParseException(String message, List<NonTerminalCall> callStack) {
+    super(message);
+    this.callStack = callStack;
   }
   
   @Override 
@@ -104,8 +109,8 @@ public class ParseException extends ${BASE_EXCEPTION_TYPE} {
   
    private void adjustStackTrace() {
       if (alreadyAdjusted || callStack == null || callStack.isEmpty()) return;
-      List<StackTraceElement> fullTrace = new LinkedList<>();
-      List<StackTraceElement> ourCallStack = new LinkedList<>();
+      List<StackTraceElement> fullTrace = new ArrayList<>();
+      List<StackTraceElement> ourCallStack = new ArrayList<>();
       for (NonTerminalCall ntc : callStack) {
          ourCallStack.add(ntc.createStackTraceElement());
       }

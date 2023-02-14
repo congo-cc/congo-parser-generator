@@ -237,7 +237,7 @@ public boolean isCancelled() {return cancelled;}
   private void fail(String message) [#if grammar.useCheckedException] throws ParseException [/#if] 
   {
     if (currentLookaheadToken == null) {
-      throw new ParseException(message);
+      throw new ParseException(message, parsingStack);
     }
     this.hitFailure = true;
   }

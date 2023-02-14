@@ -31,8 +31,6 @@ public interface Node
 
     default NodeType getType() { return null; }
 
-//    default NodeType getNodeType() {return getType();}
-
     /** Life-cycle hook method called after the node has been made the current
 	 *  node 
 	 */
@@ -265,7 +263,7 @@ public interface Node
     }
 
      /**
-      * @return the #${grammar.lexerClassName} from which this Node object
+      * @return the #TokenSource from which this Node object
       * originated. There is no guarantee that this doesn't return null.
       * Most likely that would simply be because you constructed the 
       * Node yourself, i.e. it didn't really come about via the parsing/tokenizing
@@ -277,7 +275,7 @@ public interface Node
 
      /**
       * @return the original source content this Node came from
-      * a reference to the #${grammar.lexerClassName} that stores the source code and
+      * a reference to the #TokenSource that stores the source code and
       * the start/end location info stored in the Node object itself.
       * This method could throw a NullPointerException if #getTokenSource
       * returns null. Also, the return value could be spurious if 
@@ -695,9 +693,10 @@ public interface Node
 			Class<? extends Node> nodeClass = node.getClass();
             Method method = methodCache.get(nodeClass);
             if (method == null) {
-                methodCache.put(nodeClass, getVisitMethodImpl(nodeClass));
+                method = getVisitMethodImpl(nodeClass);
+                methodCache.put(nodeClass, method);
             }
-            return methodCache.get(nodeClass);
+            return method;
 		}
 
         // Find handler method for this node type. If there is none, 
@@ -747,7 +746,7 @@ public interface Node
 		}
 
         /**
-         * Just recurses over (i.e. visits) node's children
+         * Just recurses over (i.e. visits) the node's children
          * @param node the node we are traversing
          */
 		public void recurse(Node node) {

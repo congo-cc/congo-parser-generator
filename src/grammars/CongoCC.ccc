@@ -163,8 +163,6 @@ UnparsedCodeBlock #org.congocc.core.UnparsedCodeBlock :
    )
 ;
 
-//INJECT UnparsedCodeBlock : extends org.congocc.core.EmptyExpansion
-
 INJECT BASE_NODE_CLASS :
     import org.congocc.Grammar;
     import PARSER_PACKAGE.Token.TokenType;
@@ -1611,7 +1609,7 @@ Expansion ExpansionUnit :
   |
   result=Terminal
   |
-  result=NonTerminal {$ Fuckin'a $$ } mon! $}
+  result=NonTerminal
   |
   FAIL
  )
