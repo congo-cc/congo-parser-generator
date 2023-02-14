@@ -393,10 +393,10 @@ abstract public class TokenSource implements CharSequence
         int bsearchResult = Arrays.binarySearch(lineOffsets, pos);
         if (bsearchResult>=0) {
         [#-- REVISIT --]
-            return Math.max(1,startingLine + bsearchResult);
+            return Math.max(startingLine,startingLine + bsearchResult);
         }
         [#-- REVISIT --]
-        return Math.max(1,startingLine-(bsearchResult+2));
+        return Math.max(startingLine,startingLine-(bsearchResult+2));
     }
 
     private void createLineOffsetsTable() {
@@ -452,11 +452,7 @@ abstract public class TokenSource implements CharSequence
         for (int i = lineStart; i < pos; i++) {
             char ch = content.charAt(i);
             if (ch == '\t') {
-             [#if grammar.preserveTabs]
                 result += tabSize - (result - 1) % tabSize;
-             [#else]
-                result += tabSize - (result - 1) % tabSize;
-             [/#if]
             } 
             else if (Character.isHighSurrogate(ch)) {
                 ++result;
