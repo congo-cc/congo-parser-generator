@@ -1030,9 +1030,13 @@ public class Grammar extends BaseNode {
 
     public boolean getTokenChaining() {
         Boolean b = (Boolean) settings.get("TOKEN_CHAINING");
-        if (b != null) return b;
-        b = (Boolean) settings.get("MINIMAL_TOKEN");
-        return b != null && !b;
+        return b!= null && b;
+    }
+
+    public boolean getMinimalToken() {
+        if (getTokenChaining()) return false;
+        Boolean b = (Boolean) settings.get("MINIMAL_TOKEN");
+        return b!=null && b;
     }
 
     public boolean getPreserveLineEndings() {
