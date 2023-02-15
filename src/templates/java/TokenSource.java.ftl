@@ -7,7 +7,6 @@ package ${grammar.parserPackage};
   [#set BaseToken = "Node.TerminalNode"]
 [/#if]  
 
-import java.io.*;
 import java.nio.charset.Charset;
 import java.nio.Buffer;
 import java.nio.ByteBuffer;
@@ -273,10 +272,6 @@ abstract public class TokenSource implements CharSequence
         }
     }
 
-    final ${BaseToken} cachedTokenAt(int offset) {
-        return tokenLocationTable[offset];
-    }
-
     protected void uncacheTokens(${BaseToken} lastToken) {
         int endOffset = lastToken.getEndOffset();
         if (endOffset < tokenOffsets.length()) {
@@ -286,12 +281,12 @@ abstract public class TokenSource implements CharSequence
 
     public ${BaseToken} nextCachedToken(int offset) {
         int nextOffset = tokenOffsets.nextSetBit(offset);
-	      return nextOffset != -1 ? cachedTokenAt(nextOffset) : null;
+	      return nextOffset != -1 ? tokenLocationTable[nextOffset] : null;
     } 
 
     public ${BaseToken} previousCachedToken(int offset) {
         int prevOffset = tokenOffsets.previousSetBit(offset-1);
-        return prevOffset == -1 ? null : cachedTokenAt(prevOffset);
+        return prevOffset == -1 ? null : tokenLocationTable[prevOffset];
     }
 
     /**

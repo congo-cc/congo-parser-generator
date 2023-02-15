@@ -1593,7 +1593,7 @@ Expansion ExpansionUnit :
     }
   ]
   |
-  result = UnparsedCodeBlock
+  result = UnparsedCodeBlock // Currently unused
   |
   SCAN 1 ~\...\Lookahead =>
   result=AttemptBlock

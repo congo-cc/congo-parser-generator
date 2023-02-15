@@ -54,6 +54,8 @@ public class FilesGenerator {
         fmConfig.setNumberFormat("computer");
         fmConfig.setArithmeticEngine(freemarker.core.ast.ArithmeticEngine.CONSERVATIVE_ENGINE);
         fmConfig.setStrictVariableDefinition(true);
+        fmConfig.setSharedVariable("utils", grammar.getUtils());
+        fmConfig.setSharedVariable("lexerData", grammar.getLexerData());
         if (codeLang.equals("java"))
            fmConfig.addAutoImport("CU", "CommonUtils.java.ftl");
     }
