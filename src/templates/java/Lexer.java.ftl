@@ -198,21 +198,22 @@ public class ${grammar.lexerClassName} extends TokenSource
       int tokenBeginOffset = bufferPosition;
       // The core tokenization loop
       while (matchedToken == null) {
-        int curChar, codePointsRead=0, matchedPos=0;
+        int curChar=0, codePointsRead=0, matchedPos=0;
         TokenType matchedType = null;
         boolean reachedEnd = false;
-        if (inMore) {
-            curChar = readChar();
-            if (curChar == -1) reachedEnd = true;
-        }
-        else {
-            tokenBeginOffset = bufferPosition;
-            curChar = readChar();
-            if (curChar == -1) {
-              matchedType = EOF;
-              reachedEnd = true;
+        bufferPosition = nextUnignoredOffset(bufferPosition);
+        if (!inMore) tokenBeginOffset = bufferPosition;
+        if (bufferPosition < length()) {
+            char ch = charAt(bufferPosition++);
+            if (Character.isHighSurrogate(ch)) {
+                curChar = Character.toCodePoint(ch, charAt(bufferPosition++));
+            } else {
+                curChar = ch;
             }
-        } 
+        } else {
+            reachedEnd = true;
+            if (!inMore) matchedType = EOF;
+        }
       [#if NFA.multipleLexicalStates]
        // Get the NFA function table current lexical state
        // There is some possibility that there was a lexical state change
@@ -229,11 +230,15 @@ public class ${grammar.lexerClassName} extends TokenSource
                 BitSet temp = currentStates;
                 currentStates = nextStates;
                 nextStates = temp;
-                int retval = readChar();
-                if (retval >=0) {
-                    curChar = retval;
-                }
-                else {
+                bufferPosition = nextUnignoredOffset(bufferPosition);
+                if (bufferPosition < length()) {
+                    char ch = charAt(bufferPosition++);
+                    if (Character.isHighSurrogate(ch)) {
+                        curChar = Character.toCodePoint(ch, charAt(bufferPosition++));
+                    } else {
+                        curChar = ch;
+                    }
+                } else {
                     reachedEnd = true;
                     break;
                 }
@@ -285,23 +290,6 @@ public class ${grammar.lexerClassName} extends TokenSource
  [/#list]
       return lastReturnedToken = matchedToken;
    }
-
-    private int readChar() {
-        bufferPosition = nextUnignoredOffset(bufferPosition);
-        if (bufferPosition >= length()) {
-            return -1;
-        }
-        char ch = charAt(bufferPosition++);
-        if (Character.isHighSurrogate(ch) && bufferPosition < length()) {
-            char nextChar = charAt(bufferPosition);
-            if (Character.isLowSurrogate(nextChar)) {
-                ++bufferPosition;
-                return Character.toCodePoint(ch, nextChar);
-            }
-        }
-        return ch;
-    }
-
 
     private void goTo(int offset) {
         this.bufferPosition = nextUnignoredOffset(offset);

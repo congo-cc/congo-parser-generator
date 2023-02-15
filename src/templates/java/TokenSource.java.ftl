@@ -52,18 +52,11 @@ abstract public class TokenSource implements CharSequence
    private int[] lineOffsets;
    // Munged content, possibly replace unicode escapes, tabs, or CRLF with LF.
    private CharSequence content;
-   // The offset in the internal buffer to the very
-   // next character that the readChar method returns
-//   private int bufferPosition;
-
-//   protected final int getBufferPosition() {return bufferPosition;}
-//   protected final void setBufferPosition(int bufferPosition) {this.bufferPosition=bufferPosition;}
 
     // The starting line and column, usually 1,1
     // that is used to report a file position 
     // in 1-based line/column terms
     private int startingLine, startingColumn;
-
 
     /**
      * Set the starting line/column for location reporting.
