@@ -54,10 +54,10 @@ abstract public class TokenSource implements CharSequence
    private CharSequence content;
    // The offset in the internal buffer to the very
    // next character that the readChar method returns
-   private int bufferPosition;
+//   private int bufferPosition;
 
-   protected final int getBufferPosition() {return bufferPosition;}
-   protected final void setBufferPosition(int bufferPosition) {this.bufferPosition=bufferPosition;}
+//   protected final int getBufferPosition() {return bufferPosition;}
+//   protected final void setBufferPosition(int bufferPosition) {this.bufferPosition=bufferPosition;}
 
     // The starting line and column, usually 1,1
     // that is used to report a file position 
@@ -188,15 +188,15 @@ abstract public class TokenSource implements CharSequence
       }
     }
 
-    public char charAt(int pos) {
+    public final char charAt(int pos) {
         return content.charAt(pos);
     }
 
-    public int length() {
+    public final int length() {
         return content.length();
     }
 
-    public CharSequence subSequence(int start, int end) {
+    public final CharSequence subSequence(int start, int end) {
         return content.subSequence(start, end);
     }
 
@@ -204,50 +204,7 @@ abstract public class TokenSource implements CharSequence
         return content.toString();
     }
 
-    protected final int readChar() {
-        bufferPosition = nextUnignoredOffset(bufferPosition);
-        if (bufferPosition >= content.length()) {
-            return -1;
-        }
-        char ch = content.charAt(bufferPosition++);
-        if (Character.isHighSurrogate(ch) && bufferPosition < content.length()) {
-            char nextChar = content.charAt(bufferPosition);
-            if (Character.isLowSurrogate(nextChar)) {
-                ++bufferPosition;
-                return Character.toCodePoint(ch, nextChar);
-            }
-        }
-        return ch;
-    }
-
-    /**
-     * backup a certain number of code points
-     */
-    public final void backup(int amount) {
-        for (int i = 0; i < amount; i++) {
-            bufferPosition--;
-            while(isIgnored(bufferPosition)) bufferPosition--;
-            if (Character.isLowSurrogate(content.charAt(bufferPosition))) bufferPosition--;
-        }
-    }
-
-    /**
-     * advance a certain number of code points
-     */
-    protected final void forward(int amount) {
-        for (int i = 0; i < amount; i++) {
-            if (Character.isHighSurrogate(content.charAt(bufferPosition))) bufferPosition++;
-            bufferPosition++;
-            while(isIgnored(bufferPosition)) bufferPosition++;
-        }
-    }
-
-    // But there is no goto in Java!!!
-    protected final void goTo(int offset) {
-        this.bufferPosition = nextUnignoredOffset(offset);
-    }
-
-    private final int nextUnignoredOffset(int offset) {
+    protected final int nextUnignoredOffset(int offset) {
         while (offset<tokenLocationTable.length-1 && tokenLocationTable[offset] == IGNORED) {
             ++offset;
         } 
@@ -261,7 +218,7 @@ abstract public class TokenSource implements CharSequence
         }
     }
 
-    final boolean isIgnored(int offset) {
+    protected final boolean isIgnored(int offset) {
       return tokenLocationTable[offset] == IGNORED;
     }
 

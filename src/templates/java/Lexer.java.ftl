@@ -93,6 +93,9 @@ public class ${grammar.lexerClassName} extends TokenSource
   // additional input
   [@EnumSet "moreTokens" lexerData.moreTokens.tokenNames /]
 
+  private int bufferPosition;
+  private Token lastReturnedToken = new Token();
+
    
   public ${grammar.lexerClassName}(CharSequence input) {
     this("input", input);
@@ -100,7 +103,7 @@ public class ${grammar.lexerClassName} extends TokenSource
 
 
      /**
-      * @param inputSource just the naem of the input source (typically the filename)
+      * @param inputSource just the name of the input source (typically the filename)
       * that will be used in error messages and so on.
       * @param input the input
       */
@@ -170,7 +173,11 @@ public class ${grammar.lexerClassName} extends TokenSource
            reset(tok);
            cachedToken = null;
        }
-       return cachedToken != null ? cachedToken : getNextToken(tok.getEndOffset());
+       if (cachedToken == null) {
+         goTo(tok.getEndOffset());
+         return getNextToken();
+       }
+       return cachedToken;
     }
 
     /**
@@ -178,17 +185,17 @@ public class ${grammar.lexerClassName} extends TokenSource
      * offset into the content buffer as a parameter
      * @param offset where to start
      * @return the token that results from scanning from the given starting point 
-     */
+     *//*
     public Token getNextToken(int offset) {
         goTo(offset);
         return getNextToken();
-    }
+    }*/
 
 // The main method to invoke the NFA machinery
  private final Token nextToken() {
       Token matchedToken = null;
       boolean inMore = false;
-      int tokenBeginOffset = getBufferPosition(), firstChar =0;
+      int tokenBeginOffset = bufferPosition;
       // The core tokenization loop
       while (matchedToken == null) {
         int curChar, codePointsRead=0, matchedPos=0;
@@ -199,8 +206,8 @@ public class ${grammar.lexerClassName} extends TokenSource
             if (curChar == -1) reachedEnd = true;
         }
         else {
-            tokenBeginOffset = getBufferPosition();
-            firstChar = curChar = readChar();
+            tokenBeginOffset = bufferPosition;
+            curChar = readChar();
             if (curChar == -1) {
               matchedType = EOF;
               reachedEnd = true;
@@ -248,19 +255,18 @@ public class ${grammar.lexerClassName} extends TokenSource
             }
         } while (!nextStates.isEmpty());
         if (matchedType == null) {
-            setBufferPosition(tokenBeginOffset);
-            forward(1);
-            return new InvalidToken(this, tokenBeginOffset, getBufferPosition());
+            bufferPosition = forward(tokenBeginOffset, 1);
+            return lastReturnedToken = new InvalidToken(this, tokenBeginOffset, bufferPosition);
         } 
-        backup(codePointsRead - matchedPos);
+        bufferPosition = backup(bufferPosition, codePointsRead - matchedPos);
         if (skippedTokens.contains(matchedType)) {
-            skipTokens(tokenBeginOffset, getBufferPosition());
+            skipTokens(tokenBeginOffset, bufferPosition);
         }
         else if (regularTokens.contains(matchedType) || unparsedTokens.contains(matchedType)) {
             matchedToken = Token.newToken(matchedType, 
                                         this, 
                                         tokenBeginOffset,
-                                        getBufferPosition());
+                                        bufferPosition);
             matchedToken.setUnparsed(!regularTokens.contains(matchedType));
         }
      [#if lexerData.hasLexicalStateTransitions]
@@ -277,8 +283,48 @@ public class ${grammar.lexerClassName} extends TokenSource
             matchedToken = ${tokenHookMethodName}(matchedToken);
     [/#if]
  [/#list]
-      return matchedToken;
+      return lastReturnedToken = matchedToken;
    }
+
+    private int readChar() {
+        bufferPosition = nextUnignoredOffset(bufferPosition);
+        if (bufferPosition >= length()) {
+            return -1;
+        }
+        char ch = charAt(bufferPosition++);
+        if (Character.isHighSurrogate(ch) && bufferPosition < length()) {
+            char nextChar = charAt(bufferPosition);
+            if (Character.isLowSurrogate(nextChar)) {
+                ++bufferPosition;
+                return Character.toCodePoint(ch, nextChar);
+            }
+        }
+        return ch;
+    }
+
+
+    private void goTo(int offset) {
+        this.bufferPosition = nextUnignoredOffset(offset);
+    }
+
+    private int backup(int pos, int amount) {
+        for (int i = 0; i < amount; i++) {
+            pos--;
+            while (isIgnored(pos)) pos--;
+            if (Character.isLowSurrogate(charAt(pos))) pos--;
+        }
+        return pos;
+    }
+
+    private int forward(int pos, int amount) {
+        for (int i = 0; i < amount; i++) {
+            if (Character.isHighSurrogate(charAt(pos))) pos++;
+            pos++;
+            while (isIgnored(pos)) pos++;
+        }
+        return pos;
+    }
+
 
    LexicalState lexicalState = LexicalState.values()[0];
 
