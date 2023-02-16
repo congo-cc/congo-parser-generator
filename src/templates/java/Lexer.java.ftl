@@ -137,6 +137,11 @@ public class ${grammar.lexerClassName} extends TokenSource
    * to the NFA machinery
    */ 
     public Token getNextToken(Token tok) {
+       if (tok == null) {
+          tok = nextToken(0);
+          cacheToken(tok);
+          return tok;
+       }
        Token cachedToken = tok.nextCachedToken();
     // If the cached next token is not currently active, we
     // throw it away and go back to the XXXLexer
