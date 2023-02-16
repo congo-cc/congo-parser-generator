@@ -126,23 +126,21 @@ INJECT LEXER_CLASS :
 
              case END_USER_DIRECTIVE1 :
              case END_USER_DIRECTIVE2 :
-             if (hasPointyDelimiter != olderSyntax) tok.setType(TokenType.PRINTABLE_CHARS);
-             break;
-
-              case GT :
-              case GTE :
-              if (parenthesisNesting == 0 && olderSyntax) {
-                 tok.setType(TokenType.CLOSE_TAG);
-                 if (tok.getType() == TokenType.GTE) {
-                      tok.setImage(">");
-                      tok.setEndOffset(tok.getEndOffset()-1);
+                 if (hasPointyDelimiter != olderSyntax) tok.setType(TokenType.PRINTABLE_CHARS);
+                 break;
+             case GT :
+             case GTE :
+                 if (parenthesisNesting == 0 && olderSyntax) {
+                     tok.setType(TokenType.CLOSE_TAG);
+                     if (tok.getType() == TokenType.GTE) {
+                          tok.setImage(">");
+                          tok.setEndOffset(tok.getEndOffset()-1);
                       //bufferPosition = backup(bufferPosition,1);
-                      bufferPosition = tok.getEndOffset();
+                      //bufferPosition = tok.getEndOffset();
+                     }
+                     switchTo(LexicalState.TEMPLATE_TEXT);
                  }
-                  switchTo(LexicalState.TEMPLATE_TEXT);
-             }
-             break;
-
+                break;
              case OPEN_PAREN : parenthesisNesting++; break;
              case CLOSE_PAREN : parenthesisNesting--; break;
 
