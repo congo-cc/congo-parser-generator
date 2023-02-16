@@ -185,6 +185,17 @@ abstract public class TokenSource implements CharSequence
         return content.charAt(pos);
     }
 
+    public final int codePointAt(int pos) {
+        char c1 = charAt(pos);
+        if (Character.isHighSurrogate(c1) && ++pos < length()) {
+            char c2 = charAt(pos);
+            if (Character.isLowSurrogate(c2)) {
+                return Character.toCodePoint(c1,c2);
+            }
+        }
+        return c1;
+    }
+
     public final int length() {
         return content.length();
     }

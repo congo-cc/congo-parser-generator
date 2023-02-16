@@ -94,7 +94,6 @@ public class ${grammar.lexerClassName} extends TokenSource
   [@EnumSet "moreTokens" lexerData.moreTokens.tokenNames /]
 
   private int bufferPosition;
-  private Token lastReturnedToken = new Token();
 
    
   public ${grammar.lexerClassName}(CharSequence input) {
@@ -134,38 +133,13 @@ public class ${grammar.lexerClassName} extends TokenSource
      [/#if]
      }
 
-    private Token getNextToken() {
-      InvalidToken invalidToken = null;
-      Token token = nextToken();
-      while (token instanceof InvalidToken) {
-          if (invalidToken == null) {
-              invalidToken = (InvalidToken) token;
-          } else {
-              invalidToken.setEndOffset(token.getEndOffset());
-          }
-          token = nextToken();
-      }
-      if (invalidToken != null) cacheToken(invalidToken);
-      cacheToken(token);
-      if (invalidToken != null) {
-        goTo(invalidToken.getEndOffset());
-        return invalidToken;
-      }
-      return token;
-    }
-
   /**
    * The public method for getting the next token.
-   * If the tok parameter is null, it just tokenizes 
-   * starting at the internal bufferPosition
-   * Otherwise, it checks whether we have already cached
+   * It checks whether we have already cached
    * the token after this one. If not, it finally goes 
    * to the NFA machinery
    */ 
     public Token getNextToken(Token tok) {
-       if(tok == null) {
-           return getNextToken();
-       }
        Token cachedToken = tok.nextCachedToken();
     // If the cached next token is not currently active, we
     // throw it away and go back to the XXXLexer
@@ -174,27 +148,20 @@ public class ${grammar.lexerClassName} extends TokenSource
            cachedToken = null;
        }
        if (cachedToken == null) {
-         goTo(tok.getEndOffset());
-         return getNextToken();
+           goTo(tok.getEndOffset());
+           Token token = nextToken();
+           cacheToken(token);
+           return token;
        }
        return cachedToken;
     }
 
-    /**
-     * A lower level method to tokenize, that takes the absolute
-     * offset into the content buffer as a parameter
-     * @param offset where to start
-     * @return the token that results from scanning from the given starting point 
-     *//*
-    public Token getNextToken(int offset) {
-        goTo(offset);
-        return getNextToken();
-    }*/
 
 // The main method to invoke the NFA machinery
  private final Token nextToken() {
       Token matchedToken = null;
       boolean inMore = false;
+      StringBuilder invalidChars = null;
       int tokenBeginOffset = bufferPosition;
       // The core tokenization loop
       while (matchedToken == null) {
@@ -204,15 +171,12 @@ public class ${grammar.lexerClassName} extends TokenSource
         bufferPosition = nextUnignoredOffset(bufferPosition);
         if (!inMore) tokenBeginOffset = bufferPosition;
         if (bufferPosition < length()) {
-            char ch = charAt(bufferPosition++);
-            if (Character.isHighSurrogate(ch)) {
-                curChar = Character.toCodePoint(ch, charAt(bufferPosition++));
-            } else {
-                curChar = ch;
-            }
+            curChar = codePointAt(bufferPosition++);
+            if (curChar > 0xFFFF) bufferPosition++;
         } else {
             reachedEnd = true;
-            if (!inMore) matchedType = EOF;
+            if (!inMore && invalidChars == null) matchedType = EOF;
+            else matchedType = INVALID;
         }
       [#if NFA.multipleLexicalStates]
        // Get the NFA function table current lexical state
@@ -232,12 +196,8 @@ public class ${grammar.lexerClassName} extends TokenSource
                 nextStates = temp;
                 bufferPosition = nextUnignoredOffset(bufferPosition);
                 if (bufferPosition < length()) {
-                    char ch = charAt(bufferPosition++);
-                    if (Character.isHighSurrogate(ch)) {
-                        curChar = Character.toCodePoint(ch, charAt(bufferPosition++));
-                    } else {
-                        curChar = ch;
-                    }
+                    curChar = codePointAt(bufferPosition++);
+                    if (curChar > 0xFFFF) bufferPosition++;
                 } else {
                     reachedEnd = true;
                     break;
@@ -260,9 +220,18 @@ public class ${grammar.lexerClassName} extends TokenSource
             }
         } while (!nextStates.isEmpty());
         if (matchedType == null) {
+            if (invalidChars==null) {
+                invalidChars=new StringBuilder();
+            } 
+            invalidChars.appendCodePoint(codePointAt(tokenBeginOffset));
             bufferPosition = forward(tokenBeginOffset, 1);
-            return lastReturnedToken = new InvalidToken(this, tokenBeginOffset, bufferPosition);
-        } 
+            continue;
+        }
+        if (invalidChars !=null) {
+            bufferPosition = tokenBeginOffset;
+            int numCodePoints = invalidChars.codePointCount(0, invalidChars.length());
+            return new InvalidToken(this, backup(tokenBeginOffset, numCodePoints), tokenBeginOffset);
+        }
         bufferPosition = backup(bufferPosition, codePointsRead - matchedPos);
         if (skippedTokens.contains(matchedType)) {
             skipTokens(tokenBeginOffset, bufferPosition);
@@ -275,9 +244,10 @@ public class ${grammar.lexerClassName} extends TokenSource
             matchedToken.setUnparsed(!regularTokens.contains(matchedType));
         }
      [#if lexerData.hasLexicalStateTransitions]
-        doLexicalStateSwitch(matchedType);
+       if (matchedType != null) doLexicalStateSwitch(matchedType);
      [/#if]
      [#if lexerData.hasTokenActions]
+       if (matchedToken !=null)
         matchedToken = tokenLexicalActions(matchedToken, matchedType);
      [/#if]
       }
@@ -288,7 +258,7 @@ public class ${grammar.lexerClassName} extends TokenSource
             matchedToken = ${tokenHookMethodName}(matchedToken);
     [/#if]
  [/#list]
-      return lastReturnedToken = matchedToken;
+      return matchedToken;
    }
 
     private void goTo(int offset) {

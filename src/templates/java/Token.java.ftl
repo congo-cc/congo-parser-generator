@@ -23,12 +23,12 @@ import freemarker.template.*;
 
 [#var implementsNode = ""]
 
- [#if grammar.treeBuildingEnabled]
+[#if grammar.treeBuildingEnabled]
     [#set implementsNode ="implements Node.TerminalNode"]
     [#if grammar.rootAPIPackage?has_content]
        import ${grammar.rootAPIPackage}.Node;
     [/#if]
- [/#if]
+[/#if]
 
 public class Token ${implementsNode} {
 
@@ -63,7 +63,7 @@ public class Token ${implementsNode} {
     private Node parent;
 [/#if]
 
-[#if grammar.tokenChaining || grammar.faultTolerant]
+[#if !grammar.minimalToken]
     private String image;
     public void setImage(String image) {
        this.image = image;
