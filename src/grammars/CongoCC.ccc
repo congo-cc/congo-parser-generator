@@ -1043,7 +1043,7 @@ BNFProduction #org.congocc.core.BNFProduction :
 ;
 
 TreeNodeDescriptor #TreeBuildingAnnotation :
-  "#" 
+  [<BACKSLASH>] "#" 
   (
       SCAN 0 \BNFProduction => 
       (Name|"abstract"|"interface"|"void"|{})
