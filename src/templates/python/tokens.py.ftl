@@ -6,14 +6,14 @@ from enum import Enum, auto, unique
 from .utils import _GenWrapper, _List
 
 __all__ = [
-    '${grammar.baseNodeClassName}',
+    '${settings.baseNodeClassName}',
     'TokenType',
     'Token',
 [#var tokenSubClassInfo = globals.tokenSubClassInfo()]
 [#list tokenSubClassInfo.sortedNames as name]
     '${name}',
 [/#list]
-[#if grammar.tokenChaining]
+[#if settings.tokenChaining]
     'new_token',
 [/#if]
     'InvalidToken',
@@ -36,10 +36,10 @@ class LexicalState(Enum):
     ${lexicalState.name} = auto()
   [/#list]
 
-class ${grammar.baseNodeClassName}:
+class ${settings.baseNodeClassName}:
 
     __slots__ = (
-[#if grammar.nodeUsesParser]
+[#if settings.nodeUsesParser]
         'parser',
 [/#if]
         '_token_source',
@@ -48,7 +48,7 @@ class ${grammar.baseNodeClassName}:
         'is_unparsed',
         'begin_offset',
         'end_offset',
-[#if grammar.faultTolerant]
+[#if settings.faultTolerant]
         'dirty',
 [/#if]
         'named_child_map',
@@ -88,7 +88,7 @@ class ${grammar.baseNodeClassName}:
     @property
     def token_source(self):
         result = self._token_source
-[#if grammar.tokenChaining]
+[#if settings.tokenChaining]
         if not result:
             if self.prepended_token:
                 result = self.prepended_token.token_source
@@ -151,7 +151,7 @@ class ${grammar.baseNodeClassName}:
         self.begin_offset = start.begin_offset
         if end is None:
             self.end_offset = start.end_offset
-[#if grammar.tokenChaining]
+[#if settings.tokenChaining]
         self.prepended_token = start.prepended_token
         if end is None:
             self.appended_token = start.appended_token
@@ -160,7 +160,7 @@ class ${grammar.baseNodeClassName}:
             if self.token_source is None:
                 self.token_source = end.token_source
             self.end_offset = end.end_offset
-[#if grammar.tokenChaining]
+[#if settings.tokenChaining]
             self.appended_token = end.appended_token
 [/#if]
 
@@ -174,7 +174,7 @@ class ${grammar.baseNodeClassName}:
             return self.type
         # return None
 
-[#if grammar.tokensAreNodes]
+[#if settings.tokensAreNodes]
     #
     # Return the very first token that is part of this node.
     # It may be an unparsed (i.e. special) token.
@@ -257,14 +257,14 @@ class ${grammar.baseNodeClassName}:
                                            self.end_line,
                                            self.end_column)
 
-class Token[#if grammar.treeBuildingEnabled](${grammar.baseNodeClassName})[/#if]:
+class Token[#if settings.treeBuildingEnabled](${settings.baseNodeClassName})[/#if]:
 
     __slots__ = (
         'type',
-[#if grammar.tokenChaining || grammar.faultTolerant]
+[#if settings.tokenChaining || settings.faultTolerant]
         '_image',
 [/#if]
-[#if grammar.tokenChaining]
+[#if settings.tokenChaining]
         'prepended_token',
         'appended_token',
         'is_inserted',
@@ -278,12 +278,12 @@ class Token[#if grammar.treeBuildingEnabled](${grammar.baseNodeClassName})[/#if]
         '${fieldName}',
 [/#list]
 [/#if]
-[#if grammar.faultTolerant]
+[#if settings.faultTolerant]
         '_is_skipped',
         '_is_virtual',
         'dirty',
 [/#if]
-[#if !grammar.treeBuildingEnabled]
+[#if !settings.treeBuildingEnabled]
         'begin_offset',
         'end_offset',
         'is_unparsed',
@@ -292,7 +292,7 @@ class Token[#if grammar.treeBuildingEnabled](${grammar.baseNodeClassName})[/#if]
     )
 
     def __init__(self, type, token_source, begin_offset, end_offset):
-[#if grammar.treeBuildingEnabled]
+[#if settings.treeBuildingEnabled]
         super().__init__(token_source, begin_offset, end_offset)
 [#else]
         self.begin_offset = begin_offset
@@ -304,15 +304,15 @@ ${globals.translateTokenInjections(true)}
         self.previous_token = None
         self.next_token = None
         self.is_unparsed = False
-[#if grammar.faultTolerant]
+[#if settings.faultTolerant]
         self.dirty = False
         self._is_virtual = False
         self._is_skipped = False
 [/#if]
-[#if grammar.tokenChaining || grammar.faultTolerant]
+[#if settings.tokenChaining || settings.faultTolerant]
         self._image = None
 [/#if]
-[#if grammar.tokenChaining]
+[#if settings.tokenChaining]
         self.prepended_token = None
         self.appended_token = None
         self.is_inserted = False
@@ -336,7 +336,7 @@ ${globals.translateTokenInjections(true)}
 
     @property
     def image(self):
-[#if !grammar.tokenChaining]
+[#if !settings.tokenChaining]
         return self.source
 [#else]
         return self._image if self._image else self.source
@@ -349,7 +349,7 @@ ${globals.translateTokenInjections(true)}
         ts = self.token_source
         return None if not ts else ts.get_text(self.begin_offset, self.end_offset)
 
-[#if grammar.tokenChaining || grammar.faultTolerant]
+[#if settings.tokenChaining || settings.faultTolerant]
     @image.setter
     def image(self, value):
         self._image = value
@@ -389,13 +389,13 @@ ${globals.translateTokenInjections(true)}
 
     @property
     def is_virtual(self):
-[#if grammar.faultTolerant]
+[#if settings.faultTolerant]
         return self._is_virtual || self.type == TokenType.EOF
 [#else]
         return self.type == TokenType.EOF
 [/#if]
 
-[#if grammar.faultTolerant]
+[#if settings.faultTolerant]
     @is_virtual.setter
     def is_virtual(self, value):
         self._is_virtual = value
@@ -403,7 +403,7 @@ ${globals.translateTokenInjections(true)}
 [/#if]
     @property
     def is_skipped(self):
-[#if grammar.faultTolerant]
+[#if settings.faultTolerant]
         return self._is_skipped
 [#else]
         return False
@@ -433,7 +433,7 @@ ${globals.translateTokenInjections(true)}
 
     @property
     def previous_cached_token(self):
-[#if grammar.tokenChaining]
+[#if settings.tokenChaining]
         if self.prepended_token:
             return self.prepended_token
 [/#if]
@@ -444,7 +444,7 @@ ${globals.translateTokenInjections(true)}
 
     @property
     def next_cached_token(self):
-[#if grammar.tokenChaining]
+[#if settings.tokenChaining]
         if self.appended_token:
             return self.appended_token
 [/#if]
@@ -463,7 +463,7 @@ ${globals.translateTokenInjections(true)}
                                                  self.end_line,
                                                  self.end_column)
 
-[#if grammar.treeBuildingEnabled && grammar.tokenChaining]
+[#if settings.treeBuildingEnabled && settings.tokenChaining]
     # Copy the location info from another node or start/end nodes
     def copy_location_info(self, start, end=None):
         super().copy_location_info(start, end)
@@ -486,7 +486,7 @@ ${globals.translateTokenInjections(true)}
         self.begin_offset = start.begin_offset
         if end is None:
             self.end_offset = start.end_offset
-[#if grammar.tokenChaining]
+[#if settings.tokenChaining]
             self.prepended_token = start.prepended_token
             self.appended_token = start.appended_token
 [/#if]
@@ -494,7 +494,7 @@ ${globals.translateTokenInjections(true)}
             if self.token_source is None:
                 self.token_source = end.token_source
             self.end_offset = end.end_offset
-[#if grammar.tokenChaining]
+[#if settings.tokenChaining]
             self.prepended_token = start.prepended_token
             self.appended_token = end.appended_token
 [/#if]
@@ -515,7 +515,7 @@ ${globals.translateTokenInjections(false)}
 class InvalidToken(Token):
     def __init__(self, token_source, begin_offset, end_offset):
         super().__init__(TokenType.INVALID, token_source, begin_offset, end_offset)
-[#if grammar.faultTolerant]
+[#if settings.faultTolerant]
         self.is_unparsed = True
         self.dirty = True
 [/#if]
@@ -549,10 +549,10 @@ def new_token(type, *args):
   [/#if]
 [/#list --]
     if isinstance(args[0], str):  # called with an image
-        # assert isinstance(args[1], ${grammar.lexerClassName})
+        # assert isinstance(args[1], ${settings.lexerClassName})
         result = Token(type, args[1], 0, 0)
         result.image = args[0]
     else:
-        # assert isinstance(args[0], ${grammar.lexerClassName})
+        # assert isinstance(args[0], ${settings.lexerClassName})
         result = Token(type, args[0], args[1], args[2])
     return result

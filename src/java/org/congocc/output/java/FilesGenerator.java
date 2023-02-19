@@ -8,6 +8,7 @@ import java.nio.file.Path;
 import java.util.*;
 
 import org.congocc.Grammar;
+import org.congocc.AppSettings;
 import org.congocc.core.RegularExpression;
 import org.congocc.parser.*;
 import org.congocc.parser.tree.CompilationUnit;
@@ -20,6 +21,7 @@ public class FilesGenerator {
 
     private Configuration fmConfig;
     private final Grammar grammar;
+    private final AppSettings appSettings;
     private final CodeInjector codeInjector;
     private final Set<String> tokenSubclassFileNames = new HashSet<>();
     private final HashMap<String, String> superClassLookup = new HashMap<>();
@@ -56,6 +58,7 @@ public class FilesGenerator {
         fmConfig.setStrictVariableDefinition(true);
         fmConfig.setSharedVariable("grammar", grammar);
         fmConfig.setSharedVariable("globals", grammar.getUtils());
+        fmConfig.setSharedVariable("settings", grammar.getAppSettings());
         fmConfig.setSharedVariable("lexerData", grammar.getLexerData());
         fmConfig.setSharedVariable("generated_by", org.congocc.Main.PROG_NAME);
         if (codeLang.equals("java"))
@@ -64,11 +67,12 @@ public class FilesGenerator {
 
     public FilesGenerator(Grammar grammar, String codeLang, List<Node> codeInjections) {
         this.grammar = grammar;
-        this.generateRootApi = grammar.getRootAPIPackage() == null; 
+        this.appSettings = grammar.getAppSettings();
+        this.generateRootApi = appSettings.getRootAPIPackage() == null; 
         this.codeLang = codeLang;
         this.codeInjector = new CodeInjector(grammar,
-                                             grammar.getParserPackage(), 
-                                             grammar.getNodePackage(), 
+                                             appSettings.getParserPackage(), 
+                                             appSettings.getNodePackage(), 
                                              codeInjections);
     }
 
@@ -88,11 +92,11 @@ public class FilesGenerator {
                     }
                     generateParser();
                 }
-                if (grammar.getFaultTolerant() && generateRootApi) {
+                if (appSettings.getFaultTolerant() && generateRootApi) {
                     generateInvalidNode();
                     generateParsingProblem();
                 }
-                if (grammar.getTreeBuildingEnabled()) {
+                if (appSettings.getTreeBuildingEnabled()) {
                     generateTreeBuildingFiles();
                 }
                 break;
@@ -105,7 +109,7 @@ public class FilesGenerator {
                         "lexer.py",
                         "parser.py"
                 };
-                Path outDir = grammar.getParserOutputDirectory();
+                Path outDir = appSettings.getParserOutputDirectory();
                 for (String p : paths) {
                     Path outputFile = outDir.resolve(p);
                     // Could check if regeneration is needed, but for now
@@ -122,9 +126,9 @@ public class FilesGenerator {
                         "Parser.cs",
                         null  // filled in below
                 };
-                String csPackageName = grammar.getUtils().getPreprocessorSymbol("cs.package", grammar.getParserPackage());
+                String csPackageName = grammar.getUtils().getPreprocessorSymbol("cs.package", appSettings.getParserPackage());
                 paths[paths.length - 1] = csPackageName + ".csproj";
-                outDir = grammar.getParserOutputDirectory();
+                outDir = appSettings.getParserOutputDirectory();
                 for (String p : paths) {
                     Path outputFile = outDir.resolve(p);
                     // Could check if regeneration is needed, but for now
@@ -159,15 +163,15 @@ public class FilesGenerator {
         if (codeLang.equals("java")) {
             if (tokenSubclassFileNames.contains(outputFilename)) {
                 result = "ASTToken.java.ftl";
-            } else if (outputFilename.equals(grammar.getParserClassName() + ".java")) {
+            } else if (outputFilename.equals(appSettings.getParserClassName() + ".java")) {
                 result = "Parser.java.ftl";
             } else if (outputFilename.endsWith("Lexer.java")
-                    || outputFilename.equals(grammar.getLexerClassName() + ".java")) {
+                    || outputFilename.equals(appSettings.getLexerClassName() + ".java")) {
                 result = "Lexer.java.ftl";
-            } else if (outputFilename.equals(grammar.getBaseNodeClassName() + ".java")) {
+            } else if (outputFilename.equals(appSettings.getBaseNodeClassName() + ".java")) {
                 result = "BaseNode.java.ftl";
             }
-            else if (outputFilename.startsWith(grammar.getNodePrefix())) {
+            else if (outputFilename.startsWith(appSettings.getNodePrefix())) {
                 if (!nonNodeNames.contains(outputFilename)) {
                     result = "ASTNode.java.ftl";
                 }
@@ -226,7 +230,7 @@ public class FilesGenerator {
         }
         try (Writer output = Files.newBufferedWriter(outputFile)) {
             codeInjector.injectCode(jcu);
-            JavaCodeUtils.removeWrongJDKElements(jcu, grammar.getJdkTarget());
+            JavaCodeUtils.removeWrongJDKElements(jcu, grammar.getAppSettings().getJdkTarget());
             JavaCodeUtils.addGetterSetters(jcu);
             JavaCodeUtils.stripUnused(jcu);
             JavaFormatter formatter = new JavaFormatter();
@@ -236,22 +240,22 @@ public class FilesGenerator {
 
     void generateOtherFiles() throws IOException {
         if (generateRootApi) {
-            Path outputFile = grammar.getParserOutputDirectory().resolve("TokenSource.java");
+            Path outputFile = appSettings.getParserOutputDirectory().resolve("TokenSource.java");
             generate(outputFile);
-            outputFile = grammar.getParserOutputDirectory().resolve("NonTerminalCall.java");
+            outputFile = appSettings.getParserOutputDirectory().resolve("NonTerminalCall.java");
             generate(outputFile);
         }
     }
 
     void generateParseException() throws IOException {
-        Path outputFile = grammar.getParserOutputDirectory().resolve("ParseException.java");
+        Path outputFile = appSettings.getParserOutputDirectory().resolve("ParseException.java");
         if (regenerate(outputFile)) {
             generate(outputFile);
         }
     }
 
     void generateParsingProblem() throws IOException {
-        Path outputFile = grammar.getParserOutputDirectory().resolve("ParsingProblem.java");
+        Path outputFile = appSettings.getParserOutputDirectory().resolve("ParsingProblem.java");
         if (regenerate(outputFile)) {
             generate(outputFile);
         }
@@ -259,26 +263,26 @@ public class FilesGenerator {
 
     void generateInvalidNode() throws IOException {
 //        Path outputFile = grammar.getParserOutputDirectory().resolve("InvalidNode.java");
-        Path outputFile = grammar.getNodeOutputDirectory().resolve("InvalidNode.java");
+        Path outputFile = appSettings.getNodeOutputDirectory().resolve("InvalidNode.java");
         if (regenerate(outputFile)) {
             generate(outputFile);
         }
     }
 
     void generateToken() throws IOException {
-        Path outputFile = grammar.getParserOutputDirectory().resolve("Token.java");
+        Path outputFile = appSettings.getParserOutputDirectory().resolve("Token.java");
         if (regenerate(outputFile)) {
             generate(outputFile);
         }
-        outputFile = grammar.getParserOutputDirectory().resolve("InvalidToken.java");
+        outputFile = appSettings.getParserOutputDirectory().resolve("InvalidToken.java");
         if (regenerate(outputFile)) {
             generate(outputFile);
         }
     }
     
     void generateLexer() throws IOException {
-        String filename = grammar.getLexerClassName() + ".java";
-        Path outputFile = grammar.getParserOutputDirectory().resolve(filename);
+        String filename = appSettings.getLexerClassName() + ".java";
+        Path outputFile = appSettings.getParserOutputDirectory().resolve(filename);
         generate(outputFile);
     }
 
@@ -286,13 +290,13 @@ public class FilesGenerator {
         if (grammar.getErrorCount() !=0) {
         	throw new ParseException();
         }
-        String filename = grammar.getParserClassName() + ".java";
-        Path outputFile = grammar.getParserOutputDirectory().resolve(filename);
+        String filename = appSettings.getParserClassName() + ".java";
+        Path outputFile = appSettings.getParserOutputDirectory().resolve(filename);
         generate(outputFile);
     }
     
     void generateNodeFile() throws IOException {
-        Path outputFile = grammar.getParserOutputDirectory().resolve("Node.java");
+        Path outputFile = appSettings.getParserOutputDirectory().resolve("Node.java");
         if (regenerate(outputFile)) {
             generate(outputFile);
         }
@@ -333,7 +337,7 @@ public class FilesGenerator {
     	    generateNodeFile();
         }
         Map<String, Path> files = new LinkedHashMap<>();
-        files.put(grammar.getBaseNodeClassName(), getOutputFile(grammar.getBaseNodeClassName()));
+        files.put(appSettings.getBaseNodeClassName(), getOutputFile(appSettings.getBaseNodeClassName()));
 
         for (RegularExpression re : grammar.getOrderedNamedTokens()) {
             if (re.isPrivate()) continue;
@@ -374,14 +378,14 @@ public class FilesGenerator {
 
     // only used for tree-building files (a bit kludgy)
     private Path getOutputFile(String nodeName) throws IOException {
-        if (nodeName.equals(grammar.getBaseNodeClassName())) {
-            return grammar.getNodeOutputDirectory().resolve(nodeName + ".java");
+        if (nodeName.equals(appSettings.getBaseNodeClassName())) {
+            return appSettings.getNodeOutputDirectory().resolve(nodeName + ".java");
         }
         String className = grammar.getNodeClassName(nodeName);
         //KLUDGE
-        if (nodeName.equals(grammar.getBaseNodeClassName())) {
+        if (nodeName.equals(appSettings.getBaseNodeClassName())) {
             className = nodeName;
         }
-        return grammar.getNodeOutputDirectory().resolve(className + ".java");
+        return appSettings.getNodeOutputDirectory().resolve(className + ".java");
     }
 }

@@ -2,6 +2,7 @@ package org.congocc.core;
 
 import java.util.*;
 
+import org.congocc.AppSettings;
 import org.congocc.Grammar;
 import org.congocc.core.nfa.LexicalStateData;
 import org.congocc.parser.*;
@@ -19,11 +20,13 @@ import org.congocc.parser.tree.*;
 public class SanityChecker {
 
     private Grammar grammar;
+    private AppSettings appSettings;
 
     private LexerData lexerData;
 
     public SanityChecker(Grammar grammar) {
         this.grammar = grammar;
+        this.appSettings = grammar.getAppSettings();
         this.lexerData = grammar.getLexerData();
     }
 

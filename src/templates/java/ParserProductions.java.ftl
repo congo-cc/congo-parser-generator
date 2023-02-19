@@ -1,7 +1,7 @@
 [#-- This template contains the core logic for generating the various parser routines. --]
 
 [#var nodeNumbering = 0]
-[#var NODE_USES_PARSER = grammar.nodeUsesParser]
+[#var NODE_USES_PARSER = settings.nodeUsesParser]
 [#var NODE_PREFIX = grammar.nodePrefix]
 [#var currentProduction]
 
@@ -17,7 +17,7 @@
     [@ParserProduction production/]
    [/#if]
   [/#list]
-  [#if grammar.faultTolerant]
+  [#if settings.faultTolerant]
     [@BuildRecoverRoutines /]
   [/#if]
 [/#macro]
@@ -28,7 +28,7 @@
     final ${production.accessModifier}
     ${production.returnType}
     ${production.name}(${production.parameterList!}) 
-   [#if grammar.useCheckedException]    
+   [#if settings.useCheckedException]    
     throws ParseException
     [#list (production.throwsList.types)! as throw], ${throw}[/#list] 
    [#elseif (production.throwsList.types)?has_content] 
@@ -59,7 +59,7 @@
   // Code for ${expansion.simpleName} specified at ${expansion.location}
   [/#if]
      [@CU.HandleLexicalStateChange expansion false]
-      [#if grammar.faultTolerant && expansion.requiresRecoverMethod && !expansion.possiblyEmpty]
+      [#if settings.faultTolerant && expansion.requiresRecoverMethod && !expansion.possiblyEmpty]
          if (pendingRecovery) {
 //            if (debugFaultTolerant) LOGGER.info("Re-synching to expansion at: ${expansion.location?j_string}");
             ${expansion.recoverMethodName}();
@@ -82,15 +82,15 @@
           javaCodePrologue = "",
           parseExceptionVar = CU.newVarName("parseException"),
           callStackSizeVar = CU.newVarName("callStackSize"),
-          canRecover = grammar.faultTolerant && expansion.tolerantParsing && !expansion.isRegexp
+          canRecover = settings.faultTolerant && expansion.tolerantParsing && !expansion.isRegexp
     ]
     [#set treeNodeBehavior = expansion.treeNodeBehavior]
     [#if expansion.parent.simpleName = "BNFProduction"]
       [#set production = expansion.parent]
       [#set javaCodePrologue = production.javaCode!]
     [/#if]
-    [#if grammar.treeBuildingEnabled]
-      [#set buildTreeNode = (treeNodeBehavior?is_null && production?? && !grammar.nodeDefaultVoid)
+    [#if settings.treeBuildingEnabled]
+      [#set buildTreeNode = (treeNodeBehavior?is_null && production?? && !settings.nodeDefaultVoid)
                         || (treeNodeBehavior?? && !treeNodeBehavior.neverInstantiated)]
     [/#if]
     [#if !buildTreeNode && !canRecover]
@@ -101,7 +101,7 @@
      [#set nodeNumbering = nodeNumbering +1]
      [#set nodeVarName = currentProduction.name + nodeNumbering] ${globals.pushNodeVariableName(nodeVarName)!}
       [#if !treeNodeBehavior?? && !production?is_null]
-         [#if grammar.smartNodeCreation]
+         [#if settings.smartNodeCreation]
             [#set treeNodeBehavior = {"name" : production.name, "condition" : "1", "gtNode" : true, "void" :false, "initialShorthand" : ">"}]
          [#else]
             [#set treeNodeBehavior = {"name" : production.name, "condition" : null, "gtNode" : false, "void" : false}]
@@ -122,7 +122,7 @@
          ParseException ${parseExceptionVar} = null;
          int ${callStackSizeVar} = parsingStack.size();
          try {
-[#if grammar.useCheckedException]
+[#if settings.useCheckedException]
             if (false) throw new ParseException("Never happens!");
 [/#if]
             [#nested]
@@ -130,7 +130,7 @@
          catch (ParseException e) { 
             ${parseExceptionVar} = e;
             [#if !canRecover]
-              [#if grammar.faultTolerant]
+              [#if settings.faultTolerant]
                 if (isParserTolerant()) this.pendingRecovery = true;
               [/#if]
               throw e;
@@ -159,7 +159,7 @@
                         ${hook}(${nodeVarName});
                      [/#list]
                  } else {
-                  [#if grammar.faultTolerant]
+                  [#if settings.faultTolerant]
                      closeNodeScope(${nodeVarName}, true);
                      ${nodeVarName}.setDirty(true);
                   [#else]
@@ -181,7 +181,7 @@
    [#if !isAbstractType]
    if (buildTree) {
      ${nodeVarName} = new ${nodeName}();
-  [#if grammar.nodeUsesParser]
+  [#if settings.nodeUsesParser]
      ${nodeVarName}.setParser(this);
   [/#if]
    openNodeScope(${nodeVarName});
@@ -266,7 +266,7 @@
 [#macro BuildCodeRegexp regexp]
    [#var LHS = ""]
    [#if regexp.LHS??][#set LHS = regexp.LHS + "="][/#if]
-   [#if !grammar.faultTolerant]
+   [#if !settings.faultTolerant]
        ${LHS} consumeToken(${regexp.label});
    [#else]
        [#var tolerant = regexp.tolerantParsing?string("true", "false")]
@@ -281,14 +281,14 @@
        [/#if]
        ${LHS} consumeToken(${regexp.label}, ${tolerant}, ${followSetVarName});
    [/#if]
-   [#if !regexp.childName?is_null && !grammar.currentNodeVariableName?is_null]
+   [#if !regexp.childName?is_null && !globals.currentNodeVariableName?is_null]
     if (buildTree) {
         Node child = peekNode();
         String name = "${regexp.childName}";
     [#if regexp.multipleChildren]
-        ${grammar.currentNodeVariableName}.addToNamedChildList(name, child);
+        ${globals.currentNodeVariableName}.addToNamedChildList(name, child);
     [#else]
-        ${grammar.currentNodeVariableName}.setNamedChild(name, child);
+        ${globals.currentNodeVariableName}.setNamedChild(name, child);
     [/#if]
     }
    [/#if]
@@ -319,7 +319,7 @@
 [#macro BuildCodeNonTerminal nonterminal]
    [#var production = nonterminal.production]
    pushOntoCallStack("${nonterminal.containingProduction.name}", "${nonterminal.inputSource?j_string}", ${nonterminal.beginLine}, ${nonterminal.beginColumn});
-   [#if grammar.faultTolerant]
+   [#if settings.faultTolerant]
       [#var followSet = nonterminal.followSet]
       [#if !followSet.incomplete]
          [#if !nonterminal.beforeLexicalStateSwitch]
@@ -352,9 +352,9 @@
             Node child = peekNode();
             String name = "${nonterminal.childName}";
     [#if nonterminal.multipleChildren]
-            ${grammar.currentNodeVariableName}.addToNamedChildList(name, child);
+            ${globals.currentNodeVariableName}.addToNamedChildList(name, child);
     [#else]
-            ${grammar.currentNodeVariableName}.setNamedChild(name, child);
+            ${globals.currentNodeVariableName}.setNamedChild(name, child);
     [/#if]
         }
    [/#if]
@@ -405,7 +405,7 @@
 [/#macro]
 
 [#macro RecoveryLoop loopExpansion]
-   [#if !grammar.faultTolerant || !loopExpansion.requiresRecoverMethod]
+   [#if !settings.faultTolerant || !loopExpansion.requiresRecoverMethod]
        ${BuildCode(loopExpansion.nestedExpansion)}
    [#else]
        [#var initialTokenVarName = "initialToken" + CU.newID()]

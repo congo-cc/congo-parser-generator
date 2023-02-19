@@ -2,6 +2,7 @@ package org.congocc.output.java;
 
 import java.util.*;
 
+import org.congocc.AppSettings;
 import org.congocc.Grammar;
 import org.congocc.parser.*;
 import org.congocc.parser.tree.*;
@@ -31,9 +32,10 @@ public class CodeInjector {
                         String nodePackage, 
                         List<Node> codeInjections) {
         this.grammar = grammar;
-        parserClassName = grammar.getParserClassName();
-        lexerClassName = grammar.getLexerClassName();
-        baseNodeClassName = grammar.getBaseNodeClassName();
+        AppSettings appSettings = grammar.getAppSettings();
+        parserClassName = appSettings.getParserClassName();
+        lexerClassName = appSettings.getLexerClassName();
+        baseNodeClassName = appSettings.getBaseNodeClassName();
         if (parserPackage == null) {
             parserPackage = "";
         }

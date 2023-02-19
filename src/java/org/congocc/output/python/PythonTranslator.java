@@ -839,7 +839,7 @@ public class PythonTranslator extends Translator {
     }
 
     @Override public void translateImport(String javaName, StringBuilder result) {
-        String prefix = String.format("%s.", grammar.getParserPackage());
+        String prefix = String.format("%s.", grammar.getAppSettings().getParserPackage());
         if (!javaName.startsWith(prefix)) {
             throw new UnsupportedOperationException();
         }

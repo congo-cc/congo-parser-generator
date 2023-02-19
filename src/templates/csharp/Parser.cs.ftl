@@ -2,7 +2,7 @@
 // ReSharper disable InconsistentNaming
 [#import "CommonUtils.inc.ftl" as CU]
 [#var MULTIPLE_LEXICAL_STATE_HANDLING = (grammar.lexerData.numLexicalStates >1)]
-[#var csPackage = globals.getPreprocessorSymbol('cs.package', grammar.parserPackage) ]
+[#var csPackage = globals.getPreprocessorSymbol('cs.package', settings.parserPackage) ]
 namespace ${csPackage} {
     using System;
     using System.Collections.Generic;
@@ -33,7 +33,7 @@ ${globals.translateParserImports()}
         }
     }
 
-[#if grammar.treeBuildingEnabled]
+[#if settings.treeBuildingEnabled]
     internal class NodeScope : List<Node> {
         private readonly NodeScope _parentScope;
         private readonly Parser _parser;
@@ -149,7 +149,7 @@ ${globals.translateParserImports()}
 [#if MULTIPLE_LEXICAL_STATE_HANDLING]
         public LexicalState LexicalState {get; private set; }
 [/#if]
-[#if grammar.treeBuildingEnabled]
+[#if settings.treeBuildingEnabled]
         public NodeScope NodeScope { get; private set; }
 [/#if]
 
@@ -160,13 +160,13 @@ ${globals.translateParserImports()}
 [#if MULTIPLE_LEXICAL_STATE_HANDLING]
             LexicalState = parser.tokenSource.LexicalState;
 [/#if]
-[#if grammar.treeBuildingEnabled]
+[#if settings.treeBuildingEnabled]
             NodeScope = parser.CurrentNodeScope.Clone();
 [/#if]
         }
     }
 
-[#if grammar.treeBuildingEnabled]
+[#if settings.treeBuildingEnabled]
     //
     // AST nodes
     //
@@ -199,13 +199,13 @@ ${globals.translateInjectedClass(node)}
         internal ISet<TokenType> OuterFollowSet { get; private set; }
         internal IList<NonTerminalCall> ParsingStack { get; private set; } = new List<NonTerminalCall>();
         internal readonly Lexer tokenSource;
-[#if grammar.treeBuildingEnabled]
-        public bool BuildTree { get; set; } = ${CU.bool(grammar.treeBuildingDefault)};
-        public bool TokensAreNodes { get; set; } = ${CU.bool(grammar.tokensAreNodes)};
-        public bool UnparsedTokensAreNodes { get; set; } = ${CU.bool(grammar.unparsedTokensAreNodes)};
+[#if settings.treeBuildingEnabled]
+        public bool BuildTree { get; set; } = ${CU.bool(settings.treeBuildingDefault)};
+        public bool TokensAreNodes { get; set; } = ${CU.bool(settings.tokensAreNodes)};
+        public bool UnparsedTokensAreNodes { get; set; } = ${CU.bool(settings.unparsedTokensAreNodes)};
         internal NodeScope CurrentNodeScope { get; set; }
 [/#if]
-[#if grammar.faultTolerant]
+[#if settings.faultTolerant]
         public bool DebugFaultTolerant { get; set; } =  = ${CU.bool(grammar.debugFaultTolerant)};
 [/#if]
         private TokenType? _nextTokenType;
@@ -217,7 +217,7 @@ ${globals.translateInjectedClass(node)}
         //private ISet<TokenType> _currentFollowSet;
         private readonly IList<NonTerminalCall> _lookaheadStack = new List<NonTerminalCall>();
         private readonly IList<ParseState> _parseStateStack = new List<ParseState>();
-[#if grammar.faultTolerant]
+[#if settings.faultTolerant]
         private bool _tolerantParsing = true;
         private bool _pendingRecovery = false;
         private readonly IList<Node> _parsingProblems = new List<Node>();
@@ -245,17 +245,17 @@ ${globals.translateInjectedClass(node)}
         public Parser(string inputSource) {
             InputSource = inputSource;
             tokenSource = new Lexer(inputSource);
-[#if grammar.lexerUsesParser]
+[#if settings.lexerUsesParser]
             tokenSource.Parser = this;
 [/#if]
             LastConsumedToken = Lexer.DummyStartToken;
-[#if grammar.treeBuildingEnabled]
+[#if settings.treeBuildingEnabled]
             new NodeScope(this); // attaches NodeScope instance to Parser instance
 [/#if]
 ${globals.translateParserInitializers()}
         }
 
-[#if grammar.faultTolerant]
+[#if settings.faultTolerant]
         public void AddParsingProblem(BaseNode problem) {
             _parsingProblems.Add(problem);
         }
@@ -272,7 +272,7 @@ ${globals.translateParserInitializers()}
 
 
         private void PushLastTokenBack() {
-[#if grammar.treeBuildingEnabled]
+[#if settings.treeBuildingEnabled]
             if (PeekNode().Equals(LastConsumedToken)) {
                 PopNode();
             }
@@ -290,7 +290,7 @@ ${globals.translateParserInitializers()}
 
         private void RestoreStashedParseState() {
             var state = PopParseState();
-[#if grammar.treeBuildingEnabled]
+[#if settings.treeBuildingEnabled]
             CurrentNodeScope = state.NodeScope;
             ParsingStack = state.ParsingStack;
 [/#if]
@@ -305,7 +305,7 @@ ${globals.translateParserInitializers()}
 [/#if]
         }
 
-[#if grammar.treeBuildingEnabled]
+[#if settings.treeBuildingEnabled]
         public bool IsTreeBuildingEnabled { get { return BuildTree; } }
 
    [#embed "TreeBuildingCode.inc.ftl"]

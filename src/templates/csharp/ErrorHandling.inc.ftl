@@ -11,15 +11,15 @@
             _currentLookaheadProduction = ntc.ProductionName;
         }
 
-        private Token ConsumeToken(TokenType expectedType[#if grammar.faultTolerant], bool tolerant, HashSet<TokenType> followSet[/#if]) {
+        private Token ConsumeToken(TokenType expectedType[#if settings.faultTolerant], bool tolerant, HashSet<TokenType> followSet[/#if]) {
             var oldToken = LastConsumedToken;
             var nextToken = NextToken(LastConsumedToken);
             if (nextToken.Type != expectedType) {
-                nextToken = HandleUnexpectedTokenType(expectedType, nextToken[#if grammar.faultTolerant], tolerant, followSet[/#if]);
+                nextToken = HandleUnexpectedTokenType(expectedType, nextToken[#if settings.faultTolerant], tolerant, followSet[/#if]);
             }
             LastConsumedToken = nextToken;
             _nextTokenType = null;
-[#if grammar.treeBuildingEnabled]
+[#if settings.treeBuildingEnabled]
             if (BuildTree && TokensAreNodes) {
             }
   [#list grammar.openNodeScopeHooks as hook]
@@ -30,7 +30,7 @@
             ${hook}(LastConsumedToken);
   [/#list]
 [/#if]
-[#if grammar.faultTolerant]
+[#if settings.faultTolerant]
             // Check whether the very next token is in the follow set of the last consumed token
             // and if it is not, we check one token ahead to see if skipping the next token remedies
             // the problem.
@@ -49,8 +49,8 @@
             return LastConsumedToken;
         }
 
-        private Token HandleUnexpectedTokenType(TokenType expectedType, Token nextToken[#if grammar.faultTolerant], bool tolerant, HashSet<TokenType> followSet[/#if]) {
-[#if !grammar.faultTolerant]
+        private Token HandleUnexpectedTokenType(TokenType expectedType, Token nextToken[#if settings.faultTolerant], bool tolerant, HashSet<TokenType> followSet[/#if]) {
+[#if !settings.faultTolerant]
             throw new ParseException(this, null, nextToken, Utils.EnumSet(expectedType));
 [#else]
             if (!TolerantParsing) {
@@ -61,7 +61,7 @@
                 [#-- REVISIT. Here we skip one token (as well as any InvalidToken) but maybe (probably!) this behavior
                 should be configurable. But we need to experiment, because this is really a heuristic question, no?--]
                 nextToken.skipped = true;
-  [#if grammar.treeBuildingEnabled]
+  [#if settings.treeBuildingEnabled]
                 PushNode(nextToken);
   [/#if]
                 return nextNext;

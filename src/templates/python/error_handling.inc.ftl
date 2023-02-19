@@ -59,14 +59,14 @@
         self.current_lookahead_production = ntc.production_name
         self.scan_to_end = ntc.scan_to_end
 
-    def consume_token(self, expected_type[#if grammar.faultTolerant], tolerant, follow_set[/#if]):
+    def consume_token(self, expected_type[#if settings.faultTolerant], tolerant, follow_set[/#if]):
         # old_token = self.last_consumed_token
         next_token = self.next_token(self.last_consumed_token)
         if next_token.type != expected_type:
-            next_token = self.handle_unexpected_token_type(expected_type, next_token[#if grammar.faultTolerant], tolerant, follow_set[/#if])
+            next_token = self.handle_unexpected_token_type(expected_type, next_token[#if settings.faultTolerant], tolerant, follow_set[/#if])
         self.last_consumed_token = next_token
         self._next_token_type = None
-[#if grammar.treeBuildingEnabled]
+[#if settings.treeBuildingEnabled]
         if self.build_tree and self.tokens_are_nodes:
   [#list grammar.openNodeScopeHooks as hook]
             ${hook}(self.last_consumed_token)
@@ -76,7 +76,7 @@
             ${hook}(self.last_consumed_token)
   [/#list]
 [/#if]
-[#if grammar.faultTolerant]
+[#if settings.faultTolerant]
         # Check whether the very next token is in the follow set of the last consumed token
         # and if it is not, we check one token ahead to see if skipping the next token remedies
         # the problem.
@@ -92,8 +92,8 @@
 [/#if]
         return self.last_consumed_token
 
-    def handle_unexpected_token_type(self, expected_type, next_token[#if grammar.faultTolerant], tolerant, follow_set[/#if]):
-      [#if !grammar.faultTolerant]
+    def handle_unexpected_token_type(self, expected_type, next_token[#if settings.faultTolerant], tolerant, follow_set[/#if]):
+      [#if !settings.faultTolerant]
         raise ParseException(self, token=next_token, expected=set([expected_type]))
       [#else]
         if not self.tolerant_parsing:
@@ -106,7 +106,7 @@
             next_token.skipped = True
             if self.debug_fault_tolerant:
                 logger.info('Skipping token of type: %s at: %s', next_token.type, next_token.location)
-[#if grammar.treeBuildingEnabled]
+[#if settings.treeBuildingEnabled]
             self.push_node(next_token)
 [/#if]
             # self.last_consumed_token.next = next_next

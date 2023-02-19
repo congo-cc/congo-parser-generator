@@ -77,6 +77,10 @@ INJECT PARSER_CLASS :
     public Grammar getGrammar() {
         return grammar;
     }
+
+    public AppSettings getAppSettings() {
+        return grammar.getAppSettings();
+    }
     
     public void openNodeScopeHook(Node n) {
         n.setGrammar(grammar);
@@ -667,22 +671,22 @@ INJECT Identifier :
     public String getNormalizedText() {
         String image = getImage();
         if (image.equals("jjtThis") || image.equals("CURRENT_NODE")) { 
-            return getGrammar().getCurrentNodeVariableName();
+            return getGrammar().getUtils().getCurrentNodeVariableName();
         }
         if (image.equals("PARSER_CLASS")) {
-            return getGrammar().getParserClassName();
+            return getAppSettings().getParserClassName();
         }
         if (image.equals("LEXER_CLASS")) {
-            return getGrammar().getLexerClassName();
+            return getAppSettings().getLexerClassName();
         }
         if (image.equals("BASE_NODE_CLASS")) {
-            return getGrammar().getBaseNodeClassName();
+            return getAppSettings().getBaseNodeClassName();
         }
         if (image.equals("NODE_PACKAGE")) {
-            return getGrammar().getNodePackage();
+            return getAppSettings().getNodePackage();
         }
         if (image.equals("PARSER_PACKAGE")) {
-            return getGrammar().getParserPackage();
+            return getAppSettings().getParserPackage();
         }
         if (image.equals("TOKEN_HOOK")) {
             if (tokenHookName ==null) {
@@ -730,6 +734,7 @@ INJECT interface Node :
 
 INJECT Token :
     import org.congocc.Grammar;
+    import org.congocc.AppSettings;
 {
     private Grammar grammar;
 
@@ -744,6 +749,10 @@ INJECT Token :
 
     public void setGrammar(Grammar grammar) {
          this.grammar = grammar;
+    }
+
+    public AppSettings getAppSettings() {
+        return getGrammar().getAppSettings();
     }
     
     public String getNodeName() {
@@ -1036,7 +1045,7 @@ BNFProduction #org.congocc.core.BNFProduction :
     ";"
     {
         CURRENT_NODE.adjustFirstToken(firstToken);
-        if (tba == null && !grammar.getNodeDefaultVoid()) {
+        if (tba == null && !grammar.getAppSettings().getNodeDefaultVoid()) {
            grammar.addNodeType(CURRENT_NODE.getName(),CURRENT_NODE.getName());
         }
      }

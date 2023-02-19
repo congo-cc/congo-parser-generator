@@ -55,7 +55,7 @@ def is_lexer(stream_or_lexer):
 
 UNLIMITED = (1 << 31) - 1
 
-[#if grammar.treeBuildingEnabled]
+[#if settings.treeBuildingEnabled]
 class NodeScope(list):
 
     __slots__ = ('parent_scope', 'parser')
@@ -121,7 +121,7 @@ class NonTerminalCall:
         'production_name',
         'line', 'column',
         'scan_to_end',
-[#if grammar.faultTolerant]
+[#if settings.faultTolerant]
         'follow_set',
 [/#if]
     )
@@ -134,7 +134,7 @@ class NonTerminalCall:
         self.column = column
         # We actually only use this when we're working with the LookaheadStack
         self.scan_to_end = parser.scan_to_end
-[#if grammar.faultTolerant]
+[#if settings.faultTolerant]
         self.follow_set = parser.outer_follow_set
 [/#if]
 
@@ -153,11 +153,11 @@ class ParseState:
 [#if MULTIPLE_LEXICAL_STATE_HANDLING]
         self.lexical_state = parser.token_source.lexical_state
 [/#if]
-[#if grammar.treeBuildingEnabled]
+[#if settings.treeBuildingEnabled]
         self.node_scope = parser.current_node_scope.clone()
 [/#if]
 
-[#if grammar.treeBuildingEnabled]
+[#if settings.treeBuildingEnabled]
 #
 # AST definitions
 #
@@ -189,7 +189,7 @@ class Parser:
         'hit_failure',
         'lookahead_routine_nesting',
         'outer_follow_set',
-[#if grammar.faultTolerant]
+[#if settings.faultTolerant]
         'current_follow_set',
 [/#if]
         'parsing_stack',
@@ -220,7 +220,7 @@ ${globals.translateParserInjections(true)}
             self.token_source = Lexer(input_source_or_lexer)
         else:
             self.token_source = input_source_or_lexer
-[#if grammar.lexerUsesParser]
+[#if settings.lexerUsesParser]
         self.token_source.parser = self
 [/#if]
         self.last_consumed_token = self.token_source._dummy_start_token
@@ -235,15 +235,15 @@ ${globals.translateParserInjections(true)}
         self.outer_follow_set = set()
         self.parsing_stack = []
         self.lookahead_stack = []
-[#if grammar.treeBuildingEnabled]
-        self.build_tree = ${CU.bool(grammar.treeBuildingDefault)}
-        self.tokens_are_nodes = ${CU.bool(grammar.tokensAreNodes)}
-        self.unparsed_tokens_are_nodes = ${CU.bool(grammar.unparsedTokensAreNodes)}
+[#if settings.treeBuildingEnabled]
+        self.build_tree = ${CU.bool(settings.treeBuildingDefault)}
+        self.tokens_are_nodes = ${CU.bool(settings.tokensAreNodes)}
+        self.unparsed_tokens_are_nodes = ${CU.bool(settings.unparsedTokensAreNodes)}
         self.current_node_scope = None
         NodeScope(self)  # attaches to parser
 [/#if]
         self.parse_state_stack = []
-[#if grammar.faultTolerant]
+[#if settings.faultTolerant]
         self.current_follow_set = set()
         self.tolerant_parsing = True
         self.pending_recovery = False
@@ -277,7 +277,7 @@ ${globals.translateParserInjections(true)}
         return self.token_source.input_source
 
     def push_last_token_back(self):
-[#if grammar.treeBuildingEnabled]
+[#if settings.treeBuildingEnabled]
         if self.peek_node() == self.last_consumed_token:
             self.pop_node()
 [/#if]
@@ -291,7 +291,7 @@ ${globals.translateParserInjections(true)}
 
     def restore_stashed_parse_state(self):
         state = self.pop_parse_state()
-[#if grammar.treeBuildingEnabled]
+[#if settings.treeBuildingEnabled]
         self.current_node_scope = state.node_scope
         self.parsing_stack = state.parsing_stack
 [/#if]
@@ -310,7 +310,7 @@ ${globals.translateParserInjections(true)}
     def pop_call_stack(self):
         ntc = self.parsing_stack.pop()
         self.currently_parsed_production = ntc.production_name
-[#if grammar.faultTolerant]
+[#if settings.faultTolerant]
         self.outer_follow_set = ntc.follow_set
 [/#if]
 
@@ -436,7 +436,7 @@ ${globals.translateParserInjections(true)}
 
 [#embed "error_handling.inc.ftl"]
 
-[#if grammar.treeBuildingEnabled]
+[#if settings.treeBuildingEnabled]
 
     @property
     def is_tree_building_enabled(self):

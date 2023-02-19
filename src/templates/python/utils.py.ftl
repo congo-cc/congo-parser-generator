@@ -307,7 +307,7 @@ class BitSet:
             return result + INT_BITSIZE * idx
 
 
-[#var TABS_TO_SPACES = 0, PRESERVE_LINE_ENDINGS="True", JAVA_UNICODE_ESCAPE="False", ENSURE_FINAL_EOL = grammar.ensureFinalEOL?string("True", "False")]
+[#var TABS_TO_SPACES = 0, PRESERVE_LINE_ENDINGS="True", JAVA_UNICODE_ESCAPE="False", ENSURE_FINAL_EOL = settings.ensureFinalEOL?string("True", "False")]
 [#if grammar.settings.TABS_TO_SPACES??]
    [#set TABS_TO_SPACES = grammar.settings.TABS_TO_SPACES]
 [/#if]

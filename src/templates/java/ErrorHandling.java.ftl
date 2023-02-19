@@ -3,22 +3,22 @@
 private ArrayList<NonTerminalCall> parsingStack = new ArrayList<>();
 private ArrayList<NonTerminalCall> lookaheadStack = new ArrayList<>();
 
-[#if grammar.faultTolerant]
+[#if settings.faultTolerant]
   private EnumSet<TokenType> currentFollowSet;
 [/#if]
 
 private final void pushOntoCallStack(String methodName, String fileName, int line, int column) {
-    [#if grammar.faultTolerant]
-   parsingStack.add(new NonTerminalCall("${grammar.parserClassName}", token_source, fileName, methodName, line, column, currentFollowSet));
+    [#if settings.faultTolerant]
+   parsingStack.add(new NonTerminalCall("${settings.parserClassName}", token_source, fileName, methodName, line, column, currentFollowSet));
     [#else]
-   parsingStack.add(new NonTerminalCall("${grammar.parserClassName}", token_source, fileName, methodName, line, column, null));
+   parsingStack.add(new NonTerminalCall("${settings.parserClassName}", token_source, fileName, methodName, line, column, null));
     [/#if]
 }
 
 private final void popCallStack() {
     NonTerminalCall ntc = parsingStack.remove(parsingStack.size() -1);
     this.currentlyParsedProduction = ntc.productionName;
-   [#if grammar.faultTolerant]
+   [#if settings.faultTolerant]
     this.outerFollowSet = (EnumSet<TokenType>) ntc.followSet;
    [/#if]
 }
@@ -79,7 +79,7 @@ private ListIterator<NonTerminalCall> stackIteratorBackward() {
 
 
 private final void pushOntoLookaheadStack(String methodName, String fileName, int line, int column) {
-    lookaheadStack.add(new NonTerminalCall("${grammar.parserClassName}", token_source, fileName, methodName, line, column, null));
+    lookaheadStack.add(new NonTerminalCall("${settings.parserClassName}", token_source, fileName, methodName, line, column, null));
 }
 
 private final void popLookaheadStack() {
@@ -110,7 +110,7 @@ void dumpLookaheadCallStack(PrintStream ps) {
     dumpCallStack(ps);
 }
 
-[#if grammar.faultTolerant] 
+[#if settings.faultTolerant] 
     private boolean tolerantParsing = true;
     // Are we pending a recovery routine to
     // get back on the rails?
@@ -133,7 +133,7 @@ void dumpLookaheadCallStack(PrintStream ps) {
 [/#if]    
 
     public boolean isParserTolerant() {
-       [#if grammar.faultTolerant] 
+       [#if settings.faultTolerant] 
         return tolerantParsing;
        [#else]
         return false;
@@ -141,7 +141,7 @@ void dumpLookaheadCallStack(PrintStream ps) {
     }
     
     public void setParserTolerant(boolean tolerantParsing) {
-        [#if grammar.faultTolerant]
+        [#if settings.faultTolerant]
           this.tolerantParsing = tolerantParsing;
         [#else]
           if (tolerantParsing) {
@@ -151,19 +151,19 @@ void dumpLookaheadCallStack(PrintStream ps) {
     }
 
       private Token consumeToken(TokenType expectedType 
-        [#if grammar.faultTolerant], boolean tolerant, EnumSet<TokenType> followSet [/#if]
+        [#if settings.faultTolerant], boolean tolerant, EnumSet<TokenType> followSet [/#if]
       ) 
-      [#if grammar.useCheckedException] throws ParseException [/#if]
+      [#if settings.useCheckedException] throws ParseException [/#if]
       {
         Token nextToken = nextToken(lastConsumedToken);
         if (nextToken.getType() != expectedType) {
             nextToken = handleUnexpectedTokenType(expectedType, nextToken
-            [#if grammar.faultTolerant], tolerant, followSet[/#if]
+            [#if settings.faultTolerant], tolerant, followSet[/#if]
             ) ;
         }
         this.lastConsumedToken = nextToken;
         this.nextTokenType = null;
-[#if grammar.treeBuildingEnabled]
+[#if settings.treeBuildingEnabled]
       if (buildTree && tokensAreNodes) {
   [#list grammar.openNodeScopeHooks as hook]
      ${hook}(lastConsumedToken);
@@ -174,7 +174,7 @@ void dumpLookaheadCallStack(PrintStream ps) {
   [/#list]
       }
 [/#if]
-[#if grammar.faultTolerant]
+[#if settings.faultTolerant]
 // Check whether the very next token is in the follow set of the last consumed token
 // and if it is not, we check one token ahead to see if skipping the next token remedies
 // the problem.
@@ -194,11 +194,11 @@ void dumpLookaheadCallStack(PrintStream ps) {
   }
  
   private Token handleUnexpectedTokenType(TokenType expectedType, Token nextToken
-      [#if grammar.faultTolerant], boolean tolerant, EnumSet<TokenType> followSet[/#if]
+      [#if settings.faultTolerant], boolean tolerant, EnumSet<TokenType> followSet[/#if]
       ) 
-      [#if grammar.useCheckedException] throws ParseException [/#if]
+      [#if settings.useCheckedException] throws ParseException [/#if]
       {
-      [#if !grammar.faultTolerant]
+      [#if !settings.faultTolerant]
        throw new ParseException(nextToken, EnumSet.of(expectedType), parsingStack);
       [#else]
        if (!this.tolerantParsing) {
@@ -210,7 +210,7 @@ void dumpLookaheadCallStack(PrintStream ps) {
              should be configurable. But we need to experiment, because this is really a heuristic question, no?--]
              nextToken.setSkipped(true);
 //             if (debugFaultTolerant) LOGGER.info("Skipping token of type: " + nextToken.getType() + " at: " + nextToken.getLocation());
-[#if grammar.treeBuildingEnabled]             
+[#if settings.treeBuildingEnabled]             
              pushNode(nextToken);
 [/#if]             
              //lastConsumedToken.setNext(nextNext);
@@ -240,7 +240,7 @@ void dumpLookaheadCallStack(PrintStream ps) {
    * pushes the last token back.
    */
   private void pushLastTokenBack() {
-     [#if grammar.treeBuildingEnabled]
+     [#if settings.treeBuildingEnabled]
         if (peekNode() == lastConsumedToken) {
             popNode();
         }
@@ -254,18 +254,18 @@ void dumpLookaheadCallStack(PrintStream ps) {
    [#if MULTIPLE_LEXICAL_STATE_HANDLING]
        LexicalState lexicalState;
    [/#if]
-   [#if grammar.treeBuildingEnabled]
+   [#if settings.treeBuildingEnabled]
        NodeScope nodeScope;
  [/#if]       
        ParseState() {
-           this.lastConsumed = ${grammar.parserClassName}.this.lastConsumedToken;
+           this.lastConsumed = ${settings.parserClassName}.this.lastConsumedToken;
           @SuppressWarnings("unchecked")
-           ArrayList<NonTerminalCall> parsingStack = (ArrayList<NonTerminalCall>) ${grammar.parserClassName}.this.parsingStack.clone();
+           ArrayList<NonTerminalCall> parsingStack = (ArrayList<NonTerminalCall>) ${settings.parserClassName}.this.parsingStack.clone();
            this.parsingStack = parsingStack;
 [#if grammar.lexerData.numLexicalStates > 1]
            this.lexicalState = token_source.lexicalState;
 [/#if]
-[#if grammar.treeBuildingEnabled]            
+[#if settings.treeBuildingEnabled]            
            this.nodeScope = currentNodeScope.clone();
 [/#if]           
        } 
@@ -283,10 +283,10 @@ void dumpLookaheadCallStack(PrintStream ps) {
   
   private void restoreStashedParseState() {
      ParseState state = popParseState();
-[#if grammar.treeBuildingEnabled]
+[#if settings.treeBuildingEnabled]
      currentNodeScope = state.nodeScope;
 [/#if]
-     ${grammar.parserClassName}.this.parsingStack = state.parsingStack;
+     ${settings.parserClassName}.this.parsingStack = state.parsingStack;
     if (state.lastConsumed != null) {
         //REVISIT
          lastConsumedToken = state.lastConsumed;

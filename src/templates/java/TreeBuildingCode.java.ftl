@@ -1,14 +1,14 @@
-[#if grammar.treeBuildingDefault]
+[#if settings.treeBuildingDefault]
     private boolean buildTree = true;
 [#else]
     private boolean buildTree = false;
 [/#if]    
-[#if grammar.tokensAreNodes]
+[#if settings.tokensAreNodes]
     private boolean tokensAreNodes = true;
 [#else]
     private boolean tokensAreNodes = false;
 [/#if]
-[#if grammar.unparsedTokensAreNodes]
+[#if settings.unparsedTokensAreNodes]
     private boolean unparsedTokensAreNodes = true;
 [#else]
     private boolean unparsedTokensAreNodes = false;
@@ -174,8 +174,8 @@
     class NodeScope extends ArrayList<Node> {
         NodeScope parentScope;
         NodeScope() {
-            this.parentScope = ${grammar.parserClassName}.this.currentNodeScope;
-            ${grammar.parserClassName}.this.currentNodeScope = this;
+            this.parentScope = ${settings.parserClassName}.this.currentNodeScope;
+            ${settings.parserClassName}.this.currentNodeScope = this;
         }
 
         boolean isRootScope() {
@@ -212,7 +212,7 @@
 
         void close() {
             parentScope.addAll(this);
-            ${grammar.parserClassName}.this.currentNodeScope = parentScope;
+            ${settings.parserClassName}.this.currentNodeScope = parentScope;
         }
         
         int nestingLevel() {

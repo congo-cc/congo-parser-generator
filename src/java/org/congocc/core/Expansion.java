@@ -91,7 +91,7 @@ abstract public class Expansion extends BaseNode {
     }
 
     public void setTreeNodeBehavior(TreeBuildingAnnotation treeNodeBehavior) {
-        if (getGrammar().getTreeBuildingEnabled()) {
+        if (getGrammar().getAppSettings().getTreeBuildingEnabled()) {
             this.treeNodeBehavior = treeNodeBehavior;
             if (treeNodeBehavior != null) {
                 getGrammar().addNodeType(null, treeNodeBehavior.getNodeName());

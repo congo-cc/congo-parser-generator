@@ -7,10 +7,10 @@
 [#var lexerData=grammar.lexerData]
 [#var multipleLexicalStates = lexerData.lexicalStates.size() > 1]
 [#var TT = "TokenType."]
-[#var PRESERVE_LINE_ENDINGS=grammar.preserveLineEndings?string("true", "false")
-      JAVA_UNICODE_ESCAPE= grammar.javaUnicodeEscape?string("true", "false")
-      ENSURE_FINAL_EOL = grammar.ensureFinalEOL?string("true", "false")
-      PRESERVE_TABS = grammar.preserveTabs?string("true", "false")
+[#var PRESERVE_LINE_ENDINGS=settings.preserveLineEndings?string("true", "false")
+      JAVA_UNICODE_ESCAPE= settings.javaUnicodeEscape?string("true", "false")
+      ENSURE_FINAL_EOL = settings.ensureFinalEOL?string("true", "false")
+      PRESERVE_TABS = settings.preserveTabs?string("true", "false")
  ]
 
 [#macro EnumSet varName tokenNames indent=0]
@@ -186,7 +186,7 @@ if NFA state's moveRanges array is smaller than NFA_RANGE_THRESHOLD
     [/#if]
 [/#macro]
 
-[#var csPackage = globals.getPreprocessorSymbol('cs.package', grammar.parserPackage) ]
+[#var csPackage = globals.getPreprocessorSymbol('cs.package', settings.parserPackage) ]
 namespace ${csPackage} {
     using System;
     using System.Collections.Generic;
@@ -199,7 +199,7 @@ ${globals.translateLexerImports()}
     public class Lexer[#if useLogging!false] : IObservable<LogInfo>[/#if] {
         // Lexer fields and properties (non-NFA-related)
 
-        const int DEFAULT_TAB_SIZE = ${grammar.tabSize};
+        const int DEFAULT_TAB_SIZE = ${settings.tabSize};
 
         internal static readonly Token DummyStartToken, Ignored, Skipped;
 
@@ -207,7 +207,7 @@ ${globals.translateLexerImports()}
         private readonly string _content;
         private readonly int _contentLength;
 
-[#if grammar.lexerUsesParser]
+[#if settings.lexerUsesParser]
         internal Parser Parser { get; internal set; }
 [/#if]
 
@@ -820,7 +820,7 @@ ${globals.translateCodeBlock(regexp.codeSnippet.javaCode, 16)}
                     case '\t' when !preserveTabs:
                     {
                         justSawUnicodeEscape = false;
-                        int spacesToAdd = ${grammar.tabSize} - col % ${grammar.tabSize};
+                        int spacesToAdd = ${settings.tabSize} - col % ${settings.tabSize};
                         for (int i = 0; i < spacesToAdd; i++) {
                             buf.Append(' ');
                             col++;
@@ -1012,7 +1012,7 @@ ${globals.translateCodeBlock(regexp.codeSnippet.javaCode, 16)}
         }
 
         internal void CacheToken(Token tok) {
-[#if grammar.tokenChaining]
+[#if settings.tokenChaining]
             if (tok.isInserted) {
                 Token next = tok.NextCachedToken;
                 if (next != null) CacheToken(next);
@@ -1031,7 +1031,7 @@ ${globals.translateCodeBlock(regexp.codeSnippet.javaCode, 16)}
             if (endOffset < _tokenOffsets.Length) {
                 _tokenOffsets.Clear(lastToken.EndOffset, _tokenOffsets.Length);
             }
-[#if grammar.tokenChaining]
+[#if settings.tokenChaining]
             lastToken.UnsetAppendedToken();
 [/#if]
         }

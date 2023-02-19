@@ -5,7 +5,7 @@
 [#import "common_utils.inc.ftl" as CU]
 
 [#var nodeNumbering = 0]
-[#var NODE_USES_PARSER = grammar.nodeUsesParser]
+[#var NODE_USES_PARSER = settings.nodeUsesParser]
 [#var NODE_PREFIX = grammar.nodePrefix]
 [#var currentProduction]
 
@@ -21,7 +21,7 @@
     [@ParserProduction production/]
   [/#if]
 [/#list]
-[#if grammar.faultTolerant]
+[#if settings.faultTolerant]
     [@BuildRecoverRoutines /]
 [/#if]
 [/#macro]
@@ -53,7 +53,7 @@ ${BuildCode(production.expansion, 8)}
 ${is}# Code for ${expansion.simpleName} specified at ${expansion.location}
   [/#if]
      [@CU.HandleLexicalStateChange expansion false indent; indent]
-      [#if grammar.faultTolerant && expansion.requiresRecoverMethod && !expansion.possiblyEmpty]
+      [#if settings.faultTolerant && expansion.requiresRecoverMethod && !expansion.possiblyEmpty]
 ${is}if self.pending_recovery:
 ${is}    if self.debug_fault_tolerant:
 ${is}        logger.info('Re-synching to expansion at: ${expansion.location?j_string}')
@@ -77,15 +77,15 @@ ${is}    self.${expansion.recoverMethodName}()
           javaCodePrologue = null,
           parseExceptionVar = CU.newVarName("parseException"),
           callStackSizeVar = CU.newVarName("callStackSize"),
-          canRecover = grammar.faultTolerant && expansion.tolerantParsing && !expansion.isRegexp
+          canRecover = settings.faultTolerant && expansion.tolerantParsing && !expansion.isRegexp
     ]
     [#set treeNodeBehavior = expansion.treeNodeBehavior]
     [#if expansion.parent.simpleName = "BNFProduction"]
       [#set production = expansion.parent]
       [#set javaCodePrologue = production.javaCode]
     [/#if]
-    [#if grammar.treeBuildingEnabled]
-      [#set buildTreeNode = (treeNodeBehavior?is_null && production?? && !grammar.nodeDefaultVoid)
+    [#if settings.treeBuildingEnabled]
+      [#set buildTreeNode = (treeNodeBehavior?is_null && production?? && !settings.nodeDefaultVoid)
                         || (treeNodeBehavior?? && !treeNodeBehavior.neverInstantiated)]
     [/#if]
     [#if !buildTreeNode && !canRecover]
@@ -97,7 +97,7 @@ ${BuildExpansionCode(expansion, indent)}[#t]
      [#set nodeVarName = currentProduction.name + nodeNumbering]
 ${globals.pushNodeVariableName(nodeVarName)!}
       [#if !treeNodeBehavior?? && !production?is_null]
-         [#if grammar.smartNodeCreation]
+         [#if settings.smartNodeCreation]
             [#set treeNodeBehavior = {"name" : production.name, "condition" : "1", "gtNode" : true, "void" :false, "initialShorthand" : " > "}]
          [#else]
             [#set treeNodeBehavior = {"name" : production.name, "condition" : null, "gtNode" : false, "void" : false}]
@@ -125,7 +125,7 @@ ${BuildExpansionCode(expansion, indent + 4)}[#t]
 ${is}except ParseException as e:
 ${is}    ${parseExceptionVar} = e
             [#if !canRecover]
-              [#if grammar.faultTolerant]
+              [#if settings.faultTolerant]
 ${is}    if self.is_tolerant: self.pending_recovery = True
               [/#if]
 ${is}    raise
@@ -153,7 +153,7 @@ ${is}            self.close_node_scope(${nodeVarName}, ${closeCondition})
 ${is}            ${hook}(${nodeVarName})
                      [/#list]
 ${is}        else:
-                  [#if grammar.faultTolerant]
+                  [#if settings.faultTolerant]
 ${is}            self.close_node_scope(${nodeVarName}, True)
 ${is}            ${nodeVarName}.dirty = True
                   [#else]
@@ -173,7 +173,7 @@ ${globals.popNodeVariableName()!}
 ${is}${nodeVarName} = None
    [#if !isAbstractType]
 ${is}if self.build_tree:
-${is}    ${nodeVarName} = ${nodeName}([#if grammar.nodeUsesParser]self[#else]self.input_source[/#if])
+${is}    ${nodeVarName} = ${nodeName}([#if settings.nodeUsesParser]self[#else]self.input_source[/#if])
 ${is}    self.open_node_scope(${nodeVarName})
   [/#if]
 [/#macro]
@@ -269,7 +269,7 @@ ${BuildCode(subexp, indent)}
 [#-- ${is}# DBG > BuildCodeRegexp ${indent} --]
   [#var LHS = ""]
   [#if regexp.LHS??][#set LHS = regexp.LHS + "="][/#if]
-  [#if !grammar.faultTolerant]
+  [#if !settings.faultTolerant]
 ${is}${LHS}self.consume_token(${regexp.label})
   [#else]
     [#var tolerant = regexp.tolerantParsing?string("True", "False")]
@@ -287,9 +287,9 @@ ${is}if self.build_tree:
 ${is}    child = self.peek_node()
 ${is}    name = '${regexp.childName}'
     [#if regexp.multipleChildren]
-${is}    ${grammar.currentNodeVariableName}.add_to_named_child_list(name, child)
+${is}    ${globals.currentNodeVariableName}.add_to_named_child_list(name, child)
     [#else]
-${is}    ${grammar.currentNodeVariableName}.set_named_child(name, child)
+${is}    ${globals.currentNodeVariableName}.set_named_child(name, child)
     [/#if]
   [/#if]
 [#-- ${is}# DBG < BuildCodeRegexp ${indent} --]
@@ -328,7 +328,7 @@ ${is}# DBG < BuildCodeAttemptBlock ${indent}
 [#-- ${is}# DBG > BuildCodeNonTerminal ${indent} ${nonterminal.production.name} --]
    [#var production = nonterminal.production]
 ${is}self.push_onto_call_stack('${nonterminal.containingProduction.name}', '${nonterminal.inputSource?j_string}', ${nonterminal.beginLine}, ${nonterminal.beginColumn})
-[#if grammar.faultTolerant]
+[#if settings.faultTolerant]
   [#var followSet = nonterminal.followSet]
   [#if !followSet.incomplete]
     [#if !nonterminal.beforeLexicalStateSwitch]
@@ -355,9 +355,9 @@ ${is}    if self.build_tree:
 ${is}        child = self.peek_node()
 ${is}        name = '${nonterminal.childName}'
      [#if nonterminal.multipleChildren]
-${is}        ${grammar.currentNodeVariableName}.add_to_named_child_list(name, child)
+${is}        ${globals.currentNodeVariableName}.add_to_named_child_list(name, child)
      [#else]
-${is}        ${grammar.currentNodeVariableName}.set_named_child(name, child)
+${is}        ${globals.currentNodeVariableName}.set_named_child(name, child)
      [/#if]
    [/#if]
 ${is}finally:
@@ -414,7 +414,7 @@ ${is}    if not (${ExpansionCondition(zom.nestedExpansion)}): break
 [#macro RecoveryLoop loopExpansion indent]
 [#var is = ""?right_pad(indent)]
 [#-- ${is}# DBG > RecoveryLoop ${indent} --]
-[#if !grammar.faultTolerant || !loopExpansion.requiresRecoverMethod]
+[#if !settings.faultTolerant || !loopExpansion.requiresRecoverMethod]
 ${BuildCode(loopExpansion.nestedExpansion, indent)}
 [#else]
 [#var initialTokenVarName = "initialToken" + CU.newID()]

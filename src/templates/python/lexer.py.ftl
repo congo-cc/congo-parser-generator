@@ -35,7 +35,7 @@ ${globals.translateLexerImports()}
 
 logger = logging.getLogger(__name__)
 
-DEFAULT_TAB_SIZE = ${grammar.tabSize}
+DEFAULT_TAB_SIZE = ${settings.tabSize}
 
 #
 # Hack to allow token types to be referenced in snippets without
@@ -253,10 +253,10 @@ def get_function_table_map(lexical_state):
     return nfa_functions
     [/#if]
 
-[#var PRESERVE_LINE_ENDINGS=grammar.preserveLineEndings?string("True", "False")
-      JAVA_UNICODE_ESCAPE= grammar.javaUnicodeEscape?string("True", "False")
-      ENSURE_FINAL_EOL = grammar.ensureFinalEOL?string("True", "False")
-      PRESERVE_TABS = grammar.preserveTabs?string("True", "False")
+[#var PRESERVE_LINE_ENDINGS=settings.preserveLineEndings?string("True", "False")
+      JAVA_UNICODE_ESCAPE= settings.javaUnicodeEscape?string("True", "False")
+      ENSURE_FINAL_EOL = settings.ensureFinalEOL?string("True", "False")
+      PRESERVE_TABS = settings.preserveTabs?string("True", "False")
 ]
 
 CODING_PATTERN = re.compile(rb'^[ \t\f]*#.*coding[:=][ \t]*([-_.a-zA-Z0-9]+)')
@@ -306,14 +306,14 @@ def _input_text(input_source):
             raise
         return text.decode('latin-1')
 
-[#-- #var lexerClassName = grammar.lexerClassName --]
+[#-- #var lexerClassName = settings.lexerClassName --]
 [#var lexerClassName = "Lexer"]
 class ${lexerClassName}:
 
     __slots__ = (
         'input_source',
         'tab_size',
-[#if grammar.lexerUsesParser]
+[#if settings.lexerUsesParser]
         'parser',
 [/#if]
         'next_states',
@@ -359,7 +359,7 @@ ${globals.translateLexerInjections(true)}
         self.content_len = n = len(self.content)
         n += 1
         self.tab_size = DEFAULT_TAB_SIZE
-[#if grammar.lexerUsesParser]
+[#if settings.lexerUsesParser]
         self.parser = None
 [/#if]
         self._buffer_position = 0
@@ -621,7 +621,7 @@ ${globals.translateCodeBlock(regexp.codeSnippet.javaCode, 12)}
                 if last_char != '\n' and last_char != '\r':
                     content += '\n'
             return content
-        tab_size=${grammar.tabSize}
+        tab_size=${settings.tabSize}
         buf = []
         index = 0
         # This is just to handle tabs to spaces. If you don't have that setting set, it
@@ -741,7 +741,7 @@ ${globals.translateCodeBlock(regexp.codeSnippet.javaCode, 12)}
         return result
 
     def cache_token(self, tok):
-[#if grammar.tokenChaining]
+[#if settings.tokenChaining]
         if tok.is_inserted:
             next = tok.next_cached_token
             if next:
@@ -758,7 +758,7 @@ ${globals.translateCodeBlock(regexp.codeSnippet.javaCode, 12)}
         end_offset = last_token.end_offset
         if end_offset < self._token_offsets.bits:
             self._token_offsets.clear(end_offset, self._token_offsets.bits)
-[#if grammar.tokenChaining]
+[#if settings.tokenChaining]
         last_token.unset_appended_token()
 [/#if]
 
