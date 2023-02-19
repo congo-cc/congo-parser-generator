@@ -1057,22 +1057,27 @@ TreeNodeDescriptor #TreeBuildingAnnotation :
 
 InlineTreeNodeDescriptor #TreeBuildingAnnotation :
   [<BACKSLASH>] <HASH> Name
-  [
-       "("
-        (
-          (
-            (">" | ">=" | "<" | "<=" | "+" | "-")
-            {CURRENT_NODE.setInitialShorthand(lastConsumedToken.getImage());}
-            [Expression {CURRENT_NODE.setCondition((Expression) peekNode());}] 
-            ")"
-          )
-          |
-          (
-            Expression {CURRENT_NODE.setCondition((Expression) peekNode());}
-            ")" ASSERT ~(<STAR>|<PLUS>|<HOOK>|<HASH>) =>|| 
-          )  
-        )
-  ]
+  (
+    SCAN ~("(") => {}
+    |
+    "(" (">" | ">=" | "<" | "<=" | "+" | "-") =>||
+    {CURRENT_NODE.setInitialShorthand(lastConsumedToken.getImage());}
+    [Expression {CURRENT_NODE.setCondition((Expression) peekNode());}] 
+    ")"
+    |
+    "("
+    ASSERT ~(ExpansionSequence "|") //A bit kludgy, but we treat this case specially for principle of least surprise.
+    Expression {CURRENT_NODE.setCondition((Expression) peekNode());}
+    ")"
+    // If any of the following tokens are after the closing parenthesesis, this must
+    // be an expansion (or the code is just invalid)  
+    ASSERT ~(<STAR>|<PLUS>|<HOOK>|<HASH>) 
+    =>||
+    |
+    SCAN "(" ExpansionChoice ")" => {}
+    |
+    "(" FAIL "Expecting either an expression or an expansion here."
+ )
 ;
 
 INJECT TreeBuildingAnnotation :
