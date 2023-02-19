@@ -99,7 +99,7 @@
     [#else]
      [#if buildTreeNode]
      [#set nodeNumbering = nodeNumbering +1]
-     [#set nodeVarName = currentProduction.name + nodeNumbering] ${grammar.utils.pushNodeVariableName(nodeVarName)!}
+     [#set nodeVarName = currentProduction.name + nodeNumbering] ${globals.pushNodeVariableName(nodeVarName)!}
       [#if !treeNodeBehavior?? && !production?is_null]
          [#if grammar.smartNodeCreation]
             [#set treeNodeBehavior = {"name" : production.name, "condition" : "1", "gtNode" : true, "void" :false, "initialShorthand" : ">"}]
@@ -167,7 +167,7 @@
                   [/#if]
                  }
              }
-          ${grammar.utils.popNodeVariableName()!}
+          ${globals.popNodeVariableName()!}
              [/#if]
              this.currentlyParsedProduction = prevProduction;
          }       

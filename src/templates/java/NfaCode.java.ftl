@@ -48,7 +48,7 @@
         return new int[]
         {
         [#list nfaState.moveRanges as char]
-          ${grammar.utils.displayChar(char)}
+          ${globals.displayChar(char)}
           [#if char_has_next],[/#if]
         [/#list]
         };
@@ -119,7 +119,7 @@ if NFA state's moveRanges array is smaller than NFA_RANGE_THRESHOLD
 --]
 [#macro RangesCondition moveRanges]
     [#var left = moveRanges[0], right = moveRanges[1]]
-    [#var displayLeft = grammar.utils.displayChar(left), displayRight = grammar.utils.displayChar(right)]
+    [#var displayLeft = globals.displayChar(left), displayRight = globals.displayChar(right)]
     [#var singleChar = left == right]
     [#if moveRanges?size==2]
        [#if singleChar]

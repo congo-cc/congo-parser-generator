@@ -70,7 +70,7 @@ public final class Main {
                     // If the current jarfile is less than an hour old, let's not bother.
                     return;
                 }
-                URL url = new URL("https://congocc.org/download/" + jarPath.getFileName());
+                URL url = new URL("https://parsers.org/download/" + jarPath.getFileName());
                 URLConnection connection = url.openConnection();
                 connection.setConnectTimeout(1000);
                 long lastUpdate = connection.getLastModified();

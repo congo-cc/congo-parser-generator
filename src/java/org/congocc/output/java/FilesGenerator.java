@@ -54,8 +54,10 @@ public class FilesGenerator {
         fmConfig.setNumberFormat("computer");
         fmConfig.setArithmeticEngine(freemarker.core.ast.ArithmeticEngine.CONSERVATIVE_ENGINE);
         fmConfig.setStrictVariableDefinition(true);
-        fmConfig.setSharedVariable("utils", grammar.getUtils());
+        fmConfig.setSharedVariable("grammar", grammar);
+        fmConfig.setSharedVariable("globals", grammar.getUtils());
         fmConfig.setSharedVariable("lexerData", grammar.getLexerData());
+        fmConfig.setSharedVariable("generated_by", org.congocc.Main.PROG_NAME);
         if (codeLang.equals("java"))
            fmConfig.addAutoImport("CU", "CommonUtils.java.ftl");
     }
@@ -183,11 +185,9 @@ public class FilesGenerator {
         String currentFilename = outputFile.getFileName().toString();
         String templateName = getTemplateName(currentFilename);
         HashMap<String, Object> dataModel = new HashMap<>();
-        dataModel.put("grammar", grammar);
         dataModel.put("filename", currentFilename);
         dataModel.put("isAbstract", grammar.nodeIsAbstract(nodeName));
         dataModel.put("isInterface", grammar.nodeIsInterface(nodeName));
-        dataModel.put("generated_by", org.congocc.Main.PROG_NAME);
         String classname = currentFilename.substring(0, currentFilename.length() - 5);
         String superClassName = superClassLookup.get(classname);
         if (superClassName == null) superClassName = "Token";

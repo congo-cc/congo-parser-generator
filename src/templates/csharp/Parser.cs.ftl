@@ -2,14 +2,14 @@
 // ReSharper disable InconsistentNaming
 [#import "CommonUtils.inc.ftl" as CU]
 [#var MULTIPLE_LEXICAL_STATE_HANDLING = (grammar.lexerData.numLexicalStates >1)]
-[#var csPackage = grammar.utils.getPreprocessorSymbol('cs.package', grammar.parserPackage) ]
+[#var csPackage = globals.getPreprocessorSymbol('cs.package', grammar.parserPackage) ]
 namespace ${csPackage} {
     using System;
     using System.Collections.Generic;
     using System.Diagnostics;
     using System.Text;
     using static TokenType;
-${grammar.utils.translateParserImports()}
+${globals.translateParserImports()}
 
     public class ParseException : Exception {
         public Parser Parser { get; private set; }
@@ -170,9 +170,9 @@ ${grammar.utils.translateParserImports()}
     //
     // AST nodes
     //
-[#list grammar.utils.sortedNodeClassNames as node]
+[#list globals.sortedNodeClassNames as node]
   [#if !injector.hasInjectedCode(node)]
-    [#if grammar.utils.nodeIsInterface(node)]
+    [#if globals.nodeIsInterface(node)]
     public interface ${node} : Node {}
     [#else]
     public class ${node} : BaseNode {
@@ -181,7 +181,7 @@ ${grammar.utils.translateParserImports()}
     [/#if]
 
   [#else]
-${grammar.utils.translateInjectedClass(node)}
+${globals.translateInjectedClass(node)}
 
   [/#if]
 [/#list]
@@ -252,7 +252,7 @@ ${grammar.utils.translateInjectedClass(node)}
 [#if grammar.treeBuildingEnabled]
             new NodeScope(this); // attaches NodeScope instance to Parser instance
 [/#if]
-${grammar.utils.translateParserInitializers()}
+${globals.translateParserInitializers()}
         }
 
 [#if grammar.faultTolerant]
@@ -464,8 +464,8 @@ ${grammar.utils.translateParserInitializers()}
 [#embed "ErrorHandling.inc.ftl"]
 
 
-${grammar.utils.translateParserInjections(true)}
-${grammar.utils.translateParserInjections(false)}
+${globals.translateParserInjections(true)}
+${globals.translateParserInjections(false)}
 
     }
 }

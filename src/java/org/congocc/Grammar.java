@@ -37,10 +37,10 @@ public class Grammar extends BaseNode {
                    baseNodeClassName,
                    defaultLexicalState;
     private Path filename;
-    private Map<String, Object> settings = new HashMap<>();
     private LexerData lexerData = new LexerData(this);
     private int includeNesting;
 
+    private Map<String, Object> settings = new HashMap<>();
     private List<TokenProduction> tokenProductions = new ArrayList<>();
 
     private Map<String, BNFProduction> productionTable;
@@ -1223,6 +1223,9 @@ public class Grammar extends BaseNode {
     }
 
     private final TemplateGlobals utils = new TemplateGlobals(this);
+    private final AppSettings appSettings = new AppSettings(this);
+
+    public AppSettings getAppSettings() {return appSettings;}
 
     public TemplateGlobals getUtils() {return utils;}
 }

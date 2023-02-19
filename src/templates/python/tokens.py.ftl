@@ -9,7 +9,7 @@ __all__ = [
     '${grammar.baseNodeClassName}',
     'TokenType',
     'Token',
-[#var tokenSubClassInfo = grammar.utils.tokenSubClassInfo()]
+[#var tokenSubClassInfo = globals.tokenSubClassInfo()]
 [#list tokenSubClassInfo.sortedNames as name]
     '${name}',
 [/#list]
@@ -271,7 +271,7 @@ class Token[#if grammar.treeBuildingEnabled](${grammar.baseNodeClassName})[/#if]
 [/#if]
         'previous_token',
         'next_token',
-[#var injectedFields = grammar.utils.injectedTokenFieldNames()]
+[#var injectedFields = globals.injectedTokenFieldNames()]
 [#if injectedFields?size > 0]
         # injected fields
 [#list injectedFields as fieldName]
@@ -299,7 +299,7 @@ class Token[#if grammar.treeBuildingEnabled](${grammar.baseNodeClassName})[/#if]
         self.end_offset = end_offset
         self.token_source = token_source
 [/#if]
-${grammar.utils.translateTokenInjections(true)}
+${globals.translateTokenInjections(true)}
         self.type = type
         self.previous_token = None
         self.next_token = None
@@ -510,7 +510,7 @@ ${grammar.utils.translateTokenInjections(true)}
         return '%s:%s:%s' % (self.input_source, self.begin_line,
                              self.begin_column)
 
-${grammar.utils.translateTokenInjections(false)}
+${globals.translateTokenInjections(false)}
 
 class InvalidToken(Token):
     def __init__(self, token_source, begin_offset, end_offset):
@@ -536,8 +536,8 @@ class ${name}(${tokenSubClassInfo.tokenClassMap[name]}): pass
 class ${cn}(Token):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
-${grammar.utils.translateTokenSubclassInjections(cn, true)}
-${grammar.utils.translateTokenSubclassInjections(cn, false)}
+${globals.translateTokenSubclassInjections(cn, true)}
+${globals.translateTokenSubclassInjections(cn, false)}
   [/#list]
 [/#if]
 

@@ -183,7 +183,7 @@ ${is}        self.current_lookahead_token = ${storeCurrentLookaheadVar}
 [#var is=""?right_pad(indent)]
 [#-- ${is}# DBG > BuildPredicateCode ${indent} --]
 [#if expansion.hasSemanticLookahead && (expansion.lookahead.semanticLookaheadNested || expansion.containingProduction.onlyForLookahead)]
-${is}if not (${grammar.utils.translateExpression(expansion.semanticLookahead)}):
+${is}if not (${globals.translateExpression(expansion.semanticLookahead)}):
 ${is}    return False
 [/#if]
 [#if expansion.hasLookBehind]
@@ -284,7 +284,7 @@ ${is}    return True
     def ${production.lookaheadMethodName}(self):
         # import pdb; pdb.set_trace()
 [#if production.javaCode?? && production.javaCode.appliesInLookahead]
-${grammar.utils.translateCodeBlock(production.javaCode, 8)}
+${globals.translateCodeBlock(production.javaCode, 8)}
 [/#if]
 ${BuildScanCode(production.expansion, 8)}
         return True
@@ -339,7 +339,7 @@ ${ScanCodeOneOrMore(expansion, indent)}
 ${ScanCodeChoice(expansion, indent)}
    [#elseif classname = "CodeBlock"]
       [#if expansion.appliesInLookahead || expansion.insideLookahead || expansion.containingProduction.onlyForLookahead]
-${grammar.utils.translateCodeBlock(expansion, indent)}
+${globals.translateCodeBlock(expansion, indent)}
       [/#if]
    [/#if]
   [/@CU.HandleLexicalStateChange]
@@ -416,7 +416,7 @@ ${is}    return False
 [#var is=""?right_pad(indent)]
 [#-- ${is}# DBG > ScanCodeAssertion ${indent} --]
 [#if assertion.assertionExpression?? && (assertion.insideLookahead || assertion.semanticLookaheadNested || assertion.containingProduction.onlyForLookahead)]
-${is}if not (${grammar.utils.translateExpression(assertion.assertionExpression)}):
+${is}if not (${globals.translateExpression(assertion.assertionExpression)}):
 ${is}    self.hit_failure = True
 ${is}    return False
 [/#if]

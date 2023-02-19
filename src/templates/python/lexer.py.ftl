@@ -25,7 +25,7 @@ except ImportError:
     from .utils import BitSet
     _fast_bitset = False
 
-${grammar.utils.translateLexerImports()}
+${globals.translateLexerImports()}
 
 [#var NFA_RANGE_THRESHOLD = 16]
 [#var MAX_INT=2147483647]
@@ -113,7 +113,7 @@ nfa_functions = NFA_FUNCTIONS_${lexicalState.name}_init()
 [#var arrayName = nfaState.movesArrayName]
 ${arrayName} = [
 [#list nfaState.moveRanges as char]
-    ${grammar.utils.displayChar(char)}[#if char_has_next],[/#if]
+    ${globals.displayChar(char)}[#if char_has_next],[/#if]
 [/#list]
 ]
 [/#macro]
@@ -193,7 +193,7 @@ if NFA state's moveRanges array is smaller than NFA_RANGE_THRESHOLD
 --]
 [#macro RangesCondition moveRanges]
     [#var left = moveRanges[0], right = moveRanges[1]]
-    [#var displayLeft = grammar.utils.displayChar(left), displayRight = grammar.utils.displayChar(right)]
+    [#var displayLeft = globals.displayChar(left), displayRight = globals.displayChar(right)]
     [#var singleChar = left == right]
     [#if moveRanges?size==2]
        [#if singleChar]
@@ -340,7 +340,7 @@ class ${lexerClassName}:
         '_dummy_start_token',
         '_ignored',
         '_skipped',
-[#var injectedFields = grammar.utils.injectedLexerFieldNames()]
+[#var injectedFields = globals.injectedLexerFieldNames()]
 [#if injectedFields?size > 0]
         # injected fields
 [#list injectedFields as fieldName]
@@ -350,7 +350,7 @@ class ${lexerClassName}:
     )
 
     def __init__(self, input_source, lex_state=LexicalState.${lexerData.lexicalStates[0].name}, line=1, column=1):
-${grammar.utils.translateLexerInjections(true)}
+${globals.translateLexerInjections(true)}
         if not input_source:
             raise ValueError('input filename not specified')
         self.input_source = input_source
@@ -589,7 +589,7 @@ ${grammar.utils.translateLexerInjections(true)}
     # to just after the Token passed in.
     def reset(self, t, lex_state=None):
 [#list grammar.resetTokenHooks as resetTokenHookMethodName]
-        self.${grammar.utils.translateIdentifier(resetTokenHookMethodName)}(t)
+        self.${globals.translateIdentifier(resetTokenHookMethodName)}(t)
 [/#list]
         self.go_to(t.end_offset)
         self.uncache_tokens(t)
@@ -606,7 +606,7 @@ ${grammar.utils.translateLexerInjections(true)}
     [#list lexerData.regularExpressions as regexp]
         [#if regexp.codeSnippet?has_content]
         [#if idx > 0]el[/#if]if matched_type == TokenType.${regexp.label}:
-${grammar.utils.translateCodeBlock(regexp.codeSnippet.javaCode, 12)}
+${globals.translateCodeBlock(regexp.codeSnippet.javaCode, 12)}
           [#set idx = idx + 1]
         [/#if]
     [/#list]
@@ -845,7 +845,7 @@ ${grammar.utils.translateCodeBlock(regexp.codeSnippet.javaCode, 12)}
         tok.end_offset = eoff
 
 
-${grammar.utils.translateLexerInjections(false)}
+${globals.translateLexerInjections(false)}
 
  [#if lexerData.hasLexicalStateTransitions]
 # Generate the map for lexical state transitions from the various token types (if necessary)

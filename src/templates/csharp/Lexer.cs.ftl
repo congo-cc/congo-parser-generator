@@ -69,7 +69,7 @@ ${is});
 [#var arrayName = nfaState.movesArrayName]
         private static int[] ${arrayName} = {
 [#list nfaState.moveRanges as char]
-            ${grammar.utils.displayChar(char)}[#if char_has_next],[/#if]
+            ${globals.displayChar(char)}[#if char_has_next],[/#if]
 [/#list]
         };
 
@@ -166,7 +166,7 @@ if NFA state's moveRanges array is smaller than NFA_RANGE_THRESHOLD
 --]
 [#macro RangesCondition moveRanges]
     [#var left = moveRanges[0], right = moveRanges[1]]
-    [#var displayLeft = grammar.utils.displayChar(left), displayRight = grammar.utils.displayChar(right)]
+    [#var displayLeft = globals.displayChar(left), displayRight = globals.displayChar(right)]
     [#var singleChar = left == right]
     [#if moveRanges?size==2]
        [#if singleChar]
@@ -186,7 +186,7 @@ if NFA state's moveRanges array is smaller than NFA_RANGE_THRESHOLD
     [/#if]
 [/#macro]
 
-[#var csPackage = grammar.utils.getPreprocessorSymbol('cs.package', grammar.parserPackage) ]
+[#var csPackage = globals.getPreprocessorSymbol('cs.package', grammar.parserPackage) ]
 namespace ${csPackage} {
     using System;
     using System.Collections.Generic;
@@ -194,7 +194,7 @@ namespace ${csPackage} {
     using System.IO;
     using System.Text;
     using System.Text.RegularExpressions;
-${grammar.utils.translateLexerImports()}
+${globals.translateLexerImports()}
 
     public class Lexer[#if useLogging!false] : IObservable<LogInfo>[/#if] {
         // Lexer fields and properties (non-NFA-related)
@@ -336,7 +336,7 @@ ${grammar.utils.translateLexerImports()}
             regularTokens.Add(${CU.TT}${token});
   [/#list]
 [/#if]
-${grammar.utils.translateLexerInitializers()}
+${globals.translateLexerInitializers()}
             SwitchTo(lexState);
         }
 
@@ -700,7 +700,7 @@ ${grammar.utils.translateLexerInitializers()}
         // to just after the Token passed in.
         internal void Reset(Token t, LexicalState? state = null) {
 [#list grammar.resetTokenHooks as resetTokenHookMethodName]
-            ${grammar.utils.translateIdentifier(resetTokenHookMethodName)}(t);
+            ${globals.translateIdentifier(resetTokenHookMethodName)}(t);
 [/#list]
             GoTo(t.EndOffset);
             UncacheTokens(t);
@@ -720,7 +720,7 @@ ${grammar.utils.translateLexerInitializers()}
         [#list lexerData.regularExpressions as regexp]
                 [#if regexp.codeSnippet?has_content]
             case ${regexp.label}:
-${grammar.utils.translateCodeBlock(regexp.codeSnippet.javaCode, 16)}
+${globals.translateCodeBlock(regexp.codeSnippet.javaCode, 16)}
                 break;
                 [/#if]
         [/#list]
@@ -1087,8 +1087,8 @@ ${grammar.utils.translateCodeBlock(regexp.codeSnippet.javaCode, 16)}
             tok.EndOffset = end;
         }
 
-${grammar.utils.translateLexerInjections(true)}
+${globals.translateLexerInjections(true)}
 
-${grammar.utils.translateLexerInjections(false)}
+${globals.translateLexerInjections(false)}
     }
 }

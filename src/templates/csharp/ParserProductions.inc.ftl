@@ -29,12 +29,12 @@
 [#macro ParserProduction production]
         ${production.leadingComments}
         // ${production.location}
-        ${grammar.utils.startProduction()}${grammar.utils.translateModifiers(production.accessModifier)} ${grammar.utils.translateType(production.returnType)} Parse${production.name}([#if production.parameterList?has_content]${grammar.utils.translateParameters(production.parameterList)}[/#if]) {
+        ${globals.startProduction()}${globals.translateModifiers(production.accessModifier)} ${globals.translateType(production.returnType)} Parse${production.name}([#if production.parameterList?has_content]${globals.translateParameters(production.parameterList)}[/#if]) {
             var prevProduction = _currentlyParsedProduction;
             _currentlyParsedProduction = "${production.name}";
 ${BuildCode(production.expansion, 12)}
         }
-        // end of Parse${production.name}${grammar.utils.endProduction()}
+        // end of Parse${production.name}${globals.endProduction()}
 
 [/#macro]
 
@@ -80,13 +80,13 @@ ${is}}
                         || (treeNodeBehavior?? && !treeNodeBehavior.neverInstantiated)]
     [/#if]
     [#if !buildTreeNode && !canRecover]
-${grammar.utils.translateCodeBlock(javaCodePrologue, indent)}[#rt]
+${globals.translateCodeBlock(javaCodePrologue, indent)}[#rt]
 ${BuildExpansionCode(expansion, indent)}[#t]
     [#else]
      [#if buildTreeNode]
      [#set nodeNumbering = nodeNumbering +1]
      [#set nodeVarName = currentProduction.name + nodeNumbering]
-     ${grammar.utils.pushNodeVariableName(nodeVarName)!}
+     ${globals.pushNodeVariableName(nodeVarName)!}
       [#if !treeNodeBehavior?? && !production?is_null]
          [#if grammar.smartNodeCreation]
             [#set treeNodeBehavior = {"name" : production.name, "condition" : "1", "gtNode" : true, "void" :false, "initialShorthand" : " > "}]
@@ -95,7 +95,7 @@ ${BuildExpansionCode(expansion, indent)}[#t]
          [/#if]
       [/#if]
       [#if treeNodeBehavior.condition?has_content]
-         [#set closeCondition = grammar.utils.translateString(treeNodeBehavior.condition)]
+         [#set closeCondition = globals.translateString(treeNodeBehavior.condition)]
          [#if treeNodeBehavior.gtNode]
             [#set closeCondition = "NodeArity" + treeNodeBehavior.initialShorthand + closeCondition]
          [/#if]
@@ -105,7 +105,7 @@ ${BuildExpansionCode(expansion, indent)}[#t]
          [#-- I put this here for the hypertechnical reason
               that I want the initial code block to be able to
               reference CURRENT_NODE. --]
-${grammar.utils.translateCodeBlock(javaCodePrologue, indent)}
+${globals.translateCodeBlock(javaCodePrologue, indent)}
 ${is}ParseException ${parseExceptionVar} = null;
 ${is}var ${callStackSizeVar} = ParsingStack.Count;
 ${is}try {
@@ -153,7 +153,7 @@ ${is}            ${nodeVarName}.dirty = true;
     [#else]
 ${is}            ClearNodeScope();
     [/#if]
-                ${grammar.utils.popNodeVariableName()!}
+                ${globals.popNodeVariableName()!}
 ${is}        }
 [/#if]
 ${is}        _currentlyParsedProduction = prevProduction;
@@ -192,7 +192,7 @@ ${is}}
     [#if classname = "ExpansionWithParentheses"]
 ${BuildExpansionCode(expansion.nestedExpansion, indent)}[#t]
     [#elseif classname = "CodeBlock"]
-${grammar.utils.translateCodeBlock(expansion, indent)}
+${globals.translateCodeBlock(expansion, indent)}
     [#elseif classname = "Failure"]
        [@BuildCodeFailure expansion indent /]
     [#elseif classname = "TokenTypeActivation"]
@@ -231,7 +231,7 @@ ${is}Fail("Failure: " + ${fail.exp});
 ${is}Fail("Failure");
       [/#if]
     [#else]
-${grammar.utils.translateCodeBlock(fail.code, indent)}
+${globals.translateCodeBlock(fail.code, indent)}
     [/#if]
 [#-- ${is}// DBG < BuildCodeFailure ${indent} --]
 [/#macro]
@@ -350,7 +350,7 @@ ${is}try {
    [#if !nonterminal.LHS?is_null && production.returnType != "void"]
 ${is}    ${nonterminal.LHS} =
    [/#if]
-${is}    Parse${nonterminal.name}(${grammar.utils.translateNonterminalArgs(nonterminal.args)});
+${is}    Parse${nonterminal.name}(${globals.translateNonterminalArgs(nonterminal.args)});
    [#if !nonterminal.LHS?is_null && production.returnType = "void"]
 ${is}    try {
 ${is}        ${nonterminal.LHS} = PeekNode();
@@ -506,13 +506,13 @@ ${is}}
 
 [#-- Generates code for when we need a scanahead --]
 [#macro ScanAheadCondition expansion]
-[#if expansion.lookahead?? && expansion.lookahead.LHS??](${expansion.lookahead.LHS} = [/#if][#if expansion.hasSemanticLookahead && !expansion.lookahead.semanticLookaheadNested](${grammar.utils.translateExpression(expansion.semanticLookahead)}) && [/#if]${expansion.predicateMethodName}()[#if expansion.lookahead?? && expansion.lookahead.LHS??])[/#if][#t]
+[#if expansion.lookahead?? && expansion.lookahead.LHS??](${expansion.lookahead.LHS} = [/#if][#if expansion.hasSemanticLookahead && !expansion.lookahead.semanticLookaheadNested](${globals.translateExpression(expansion.semanticLookahead)}) && [/#if]${expansion.predicateMethodName}()[#if expansion.lookahead?? && expansion.lookahead.LHS??])[/#if][#t]
 [/#macro]
 
 
 [#-- Generates code for when we don't need any scanahead routine --]
 [#macro SingleTokenCondition expansion]
-   [#if expansion.hasSemanticLookahead](${grammar.utils.translateExpression(expansion.semanticLookahead)}) && [/#if][#t]
+   [#if expansion.hasSemanticLookahead](${globals.translateExpression(expansion.semanticLookahead)}) && [/#if][#t]
    [#if expansion.firstSet.tokenNames?size = 0 || expansion.lookaheadAmount ==0]true[#elseif expansion.firstSet.tokenNames?size < 5][#list expansion.firstSet.tokenNames as name](NextTokenType == TokenType.${name})[#if name_has_next] || [/#if][/#list][#t][#else](${expansion.firstSetVarName}.Contains(NextTokenType))[/#if][#t]
 [/#macro]
 
@@ -520,11 +520,11 @@ ${is}}
 [#var is = ""?right_pad(indent)]
 [#var optionalPart = ""]
 [#if assertion.messageExpression??]
-  [#set optionalPart = " + " + grammar.utils.translateExpression(assertion.messageExpression)]
+  [#set optionalPart = " + " + globals.translateExpression(assertion.messageExpression)]
 [/#if]
    [#var assertionMessage = "Assertion at: " + assertion.location?j_string + " failed. "]
    [#if assertion.assertionExpression??]
-${is}if (!(${grammar.utils.translateExpression(assertion.assertionExpression)})) {
+${is}if (!(${globals.translateExpression(assertion.assertionExpression)})) {
 ${is}    Fail("${assertionMessage}"${optionalPart});
 ${is}}
    [/#if]
