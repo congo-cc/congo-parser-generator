@@ -75,8 +75,8 @@ public class Grammar extends BaseNode {
         this.preprocessorSymbols = preprocessorSymbols;
         this.appSettings = new AppSettings(this);
         appSettings.setJdkTarget(jdkTarget);
-        appSettings.outputDir = outputDir;
-        appSettings.codeLang = codeLang;
+        appSettings.setOutputDir(outputDir);
+        appSettings.setCodeLang(codeLang);
     }
 
     public Grammar() {this.appSettings = new AppSettings(this);}
@@ -145,14 +145,14 @@ public class Grammar extends BaseNode {
         else alreadyIncluded.add(canonicalPath);
         CongoCCParser parser = new CongoCCParser(this, canonicalPath, preprocessorSymbols);
         parser.setEnterIncludes(enterIncludes);
-        Path prevIncludedFileDirectory = appSettings.includedFileDirectory;
+        Path prevIncludedFileDirectory = appSettings.getIncludedFileDirectory();
         if (!isInInclude()) {
-            setFilename(file);
+            appSettings.setFilename(file);
         } else {
-            appSettings.includedFileDirectory = canonicalPath.getParent();
+            appSettings.setIncludedFileDirectory(canonicalPath.getParent());
         }
         GrammarFile rootNode = parser.Root();
-        appSettings.includedFileDirectory = prevIncludedFileDirectory;
+        appSettings.setIncludedFileDirectory(prevIncludedFileDirectory);
         if (!isInInclude()) {
             addChild(rootNode);
         }
@@ -175,16 +175,16 @@ public class Grammar extends BaseNode {
             codeInjections.add(cu);
             return cu;
         } else {
-            Path prevLocation = appSettings.filename;
+            Path prevLocation = appSettings.getFilename();
             String prevDefaultLexicalState = this.defaultLexicalState;
-            boolean prevIgnoreCase = appSettings.ignoreCase;
+            boolean prevIgnoreCase = appSettings.isIgnoreCase();
             includeNesting++;
             Node root = parse(path, true);
             if (root==null) return null;
             includeNesting--;
-            setFilename(prevLocation);
+            appSettings.setFilename(prevLocation);
             this.defaultLexicalState = prevDefaultLexicalState;
-            appSettings.ignoreCase = prevIgnoreCase;
+            appSettings.setIgnoreCase(prevIgnoreCase);
             return root;
         }
     }
@@ -196,21 +196,9 @@ public class Grammar extends BaseNode {
         }
     }
 
-    /**
-     * The grammar file being processed.
-     */
-    public Path getFilename() {
-        return appSettings.filename;
-    }
-
-    public void setFilename(Path filename) {
-        appSettings.filename = filename;
-    }
-
     public void generateLexer() {
         lexerData.buildData();
     }
-
 
     public void doSanityChecks() {
         if (defaultLexicalState == null) {

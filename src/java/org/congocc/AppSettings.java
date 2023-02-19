@@ -25,13 +25,14 @@ public class AppSettings {
     private static Pattern extraTokenPattern = Pattern.compile("^(\\w+)(#\\w+)?$");
     private Grammar grammar;
     Map<String, Object> settings = new HashMap<>();
-    Path outputDir, filename, includedFileDirectory;
-    String codeLang, parserPackage, parserClassName, lexerClassName, baseName, baseNodeClassName;
+    private Path outputDir, filename, includedFileDirectory;
+    private String codeLang, parserPackage, parserClassName, lexerClassName, baseName, baseNodeClassName;
+
+
     Set<String> tokensOffByDefault = new LinkedHashSet<>();
     Map<String, String> extraTokens = new LinkedHashMap<>();
-    boolean ignoreCase;
+    private boolean ignoreCase;
     private int jdkTarget = 8;
-
 
     AppSettings(Grammar grammar) {
         this.grammar = grammar;
@@ -59,6 +60,8 @@ public class AppSettings {
     };
 
     public String getCodeLang() {return codeLang;}
+
+    public void setCodeLang(String codeLang) {this.codeLang = codeLang;}
 
     public boolean isASetting(String key) {
         return booleanSettings.contains("," + key + ",")
@@ -529,6 +532,26 @@ public class AppSettings {
             }
         }
         return baseNodeClassName;
+    }
+
+    public void setOutputDir(Path outputDir) {this.outputDir = outputDir;}
+
+    public Path getOutputDir() {return outputDir;}
+
+    public Path getIncludedFileDirectory() {
+        return includedFileDirectory;
+    }
+
+    public void setIncludedFileDirectory(Path includedFileDirectory) {
+        this.includedFileDirectory = includedFileDirectory;
+    }
+
+    public Path getFilename() {
+        return filename;
+    }
+
+    public void setFilename(Path filename) {
+        this.filename = filename;
     }
 
 }

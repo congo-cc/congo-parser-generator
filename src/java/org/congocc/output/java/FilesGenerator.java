@@ -30,7 +30,7 @@ public class FilesGenerator {
 
     void initializeTemplateEngine() throws IOException {
         fmConfig = new freemarker.template.Configuration();
-        Path filename = grammar.getFilename().toAbsolutePath();
+        Path filename = appSettings.getFilename().toAbsolutePath();
         Path dir = filename.getParent();
         //
         // The first two loaders are really for developers - templates
