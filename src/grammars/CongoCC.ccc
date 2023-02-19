@@ -1043,21 +1043,35 @@ BNFProduction #org.congocc.core.BNFProduction :
 ;
 
 TreeNodeDescriptor #TreeBuildingAnnotation :
-  [<BACKSLASH>] "#" 
-  (
-      SCAN 0 \BNFProduction => 
-      (Name|"abstract"|"interface"|"void"|{})
-      |
-      Name
-  )
+  "#" (Name|"abstract"|"interface"|"void"|{})
   [
        "("
           [
             (">" | ">=" | "<" | "<=" | "+" | "-")
             {CURRENT_NODE.setInitialShorthand(lastConsumedToken.getImage());}  
           ]
-          Expression =>|| {CURRENT_NODE.setCondition((Expression) peekNode());}
+          Expression {CURRENT_NODE.setCondition((Expression) peekNode());}
        ")"
+  ]
+;
+
+InlineTreeNodeDescriptor #TreeBuildingAnnotation :
+  [<BACKSLASH>] <HASH> Name
+  [
+       "("
+        (
+          (
+            (">" | ">=" | "<" | "<=" | "+" | "-")
+            {CURRENT_NODE.setInitialShorthand(lastConsumedToken.getImage());}
+            [Expression {CURRENT_NODE.setCondition((Expression) peekNode());}] 
+            ")"
+          )
+          |
+          (
+            Expression {CURRENT_NODE.setCondition((Expression) peekNode());}
+            ")" ASSERT ~(<STAR>|<PLUS>|<HOOK>|<HASH>) =>|| 
+          )  
+        )
   ]
 ;
 
@@ -1615,7 +1629,7 @@ Expansion ExpansionUnit :
  )
  [
      SCAN 1 ~\...\Lookahead => 
-    tba=TreeNodeDescriptor
+    tba=InlineTreeNodeDescriptor
  ]
  {
         result.setTreeNodeBehavior(tba);
