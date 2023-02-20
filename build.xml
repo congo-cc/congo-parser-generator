@@ -206,7 +206,7 @@
     <echo>Creating basic jarfile, using this requires a freemarker.jar in the same directory</echo>
     <jar jarfile="congocc.jar" basedir="build" compress="true">
         <manifest>
-            <attribute name="Main-Class" value="org.congocc.Main"/>
+            <attribute name="Main-Class" value="org.congocc.app.Main"/>
             <attribute name="Class-Path" value="freemarker.jar bin/freemarker.jar"/>
             <attribute name="Built-By" value="${user.name}"/>
             <attribute name="Build-Date"   value="${timestamp}"/>
@@ -221,7 +221,7 @@
         <fileset dir="build"/>
         <zipfileset includes="**/*.class" src="bin/freemarker.jar"/>
         <manifest>
-            <attribute name="Main-Class" value="org.congocc.Main"/>
+            <attribute name="Main-Class" value="org.congocc.app.Main"/>
             <attribute name="Built-By" value="${user.name}"/>
             <attribute name="Build-Date"   value="${timestamp}"/>
         </manifest>

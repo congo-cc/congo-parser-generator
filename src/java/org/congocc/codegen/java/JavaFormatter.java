@@ -1,4 +1,4 @@
-package org.congocc.output.java;
+package org.congocc.codegen.java;
 
 import org.congocc.parser.*;
 import org.congocc.parser.tree.*;

@@ -20,14 +20,14 @@
 
 <target name="line-directive-parser-gen" depends="init" unless="pplineparser.uptodate">
 	<echo>Using Bootstrap CongoCC to regenerate preprocessor</echo>
-  <java classpath="../../build:../../congocc.jar:../../bin/congocc.jar:../../bin/freemarker.jar" classname="org.congocc.Main" failonerror="true" fork="true">
+  <java classpath="../../build:../../congocc.jar:../../bin/congocc.jar:../../bin/freemarker.jar" classname="org.congocc.app.Main" failonerror="true" fork="true">
      <assertions><enable/></assertions>
  	   <arg line="-n PPDirectiveLine.ccc"/>
   </java>
 </target>
 
 <target name="parser-gen" depends="init,line-directive-parser-gen" unless="csparser.uptodate">
-  <java classpath="../../build:../../congocc.jar:../../bin/congocc.jar:../../bin/freemarker.jar" classname="org.congocc.Main" failonerror="true" fork="true">
+  <java classpath="../../build:../../congocc.jar:../../bin/congocc.jar:../../bin/freemarker.jar" classname="org.congocc.app.Main" failonerror="true" fork="true">
     <assertions><enable/></assertions>
      <arg value="-n"/>
     <arg value="${basedir}/CSharp.ccc"/>

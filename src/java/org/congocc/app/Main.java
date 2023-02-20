@@ -1,4 +1,4 @@
-package org.congocc;
+package org.congocc.app;
 
 import java.io.IOException;
 import java.io.InputStream;
@@ -305,34 +305,36 @@ public final class Main {
         grammar.parse(grammarFile, true);
         grammar.createOutputDir();
         grammar.doSanityChecks();
-        if (grammar.getErrorCount() > 0) {
+        Errors errors = grammar.getErrors();
+        if (errors.getErrorCount() > 0) {
             outputErrors(grammar, quiet);
             return 1;
         }
         grammar.generateLexer();
-        if (grammar.getErrorCount() > 0) {
+        if (errors.getErrorCount() > 0) {
             outputErrors(grammar, quiet);
             return 1;
         }
         grammar.generateFiles();
-        if (grammar.getWarningCount() == 0 && !quiet) {
+        if (errors.getWarningCount() == 0 && !quiet) {
             System.out.println("Parser generated successfully.");
-        } else if (grammar.getWarningCount()>0) {
+        } else if (errors.getWarningCount()>0) {
             System.out.println("Parser generated with 0 errors and "
-                                + grammar.getWarningCount() + " warnings.");
+                                + errors.getWarningCount() + " warnings.");
         }
         outputErrors(grammar, quiet);
-        return (grammar.getErrorCount() == 0) ? 0 : 1;
+        return (errors.getErrorCount() == 0) ? 0 : 1;
     }
 
     static void outputErrors(Grammar grammar, boolean quiet) {
-        for (String error : grammar.errorMessages) {
+        Errors errors = grammar.getErrors();
+        for (String error : errors.getErrorMessages()) {
             System.err.println(error);
         }
-        for (String warning : grammar.warningMessages) {
+        for (String warning : errors.getWarningMessages()) {
             System.err.println(warning);
         }
-        if (!quiet && !grammar.errorMessages.isEmpty()) for (String info: grammar.infoMessages) {
+        if (!quiet && !errors.getErrorMessages().isEmpty()) for (String info: errors.getInfoMessages()) {
             System.err.println(info);
         }
     }

@@ -2,7 +2,7 @@ package org.congocc.core;
 
 import java.util.*;
 
-import org.congocc.Grammar;
+import org.congocc.app.Grammar;
 import org.congocc.core.nfa.LexicalStateData;
 import org.congocc.parser.tree.EndOfFile;
 import org.congocc.parser.tree.RegexpStringLiteral;

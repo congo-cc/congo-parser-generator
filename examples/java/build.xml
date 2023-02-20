@@ -12,7 +12,7 @@
 </target>
 
 <target name="parser-gen" depends="init" unless="javaparser.uptodate">
-  <java classpath="../../build:../../congocc.jar:../../bin/congocc.jar:../../bin/freemarker.jar" classname="org.congocc.Main" failonerror="true" fork="true">
+  <java classpath="../../build:../../congocc.jar:../../bin/congocc.jar:../../bin/freemarker.jar" classname="org.congocc.app.Main" failonerror="true" fork="true">
     <assertions><enable/></assertions>
      <arg value="-q"/>
     <arg value="${basedir}/Java.ccc"/>

@@ -1,11 +1,11 @@
-package org.congocc.output;
+package org.congocc.codegen;
 
 import java.util.*;
 
-import org.congocc.Grammar;
-import org.congocc.output.csharp.CSharpTranslator;
-import org.congocc.output.java.CodeInjector;
-import org.congocc.output.python.PythonTranslator;
+import org.congocc.app.Grammar;
+import org.congocc.codegen.csharp.CSharpTranslator;
+import org.congocc.codegen.java.CodeInjector;
+import org.congocc.codegen.python.PythonTranslator;
 import org.congocc.parser.Node;
 import org.congocc.parser.Token;
 import org.congocc.parser.tree.*;

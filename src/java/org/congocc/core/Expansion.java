@@ -2,9 +2,8 @@ package org.congocc.core;
 
 import java.util.*;
 
-import org.congocc.Grammar;
+import org.congocc.app.Grammar;
 import org.congocc.parser.Node;
-//import org.congocc.parser.BaseNode;
 import org.congocc.parser.tree.*;
 
 /**

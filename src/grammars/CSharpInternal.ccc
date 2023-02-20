@@ -8,13 +8,13 @@ TAB_SIZE=4;
 INCLUDE "../../examples/csharp/CSharp.ccc";
 
 INJECT BASE_NODE_CLASS :
-   import org.congocc.Grammar;
+   import org.congocc.app.Grammar;
 {
     @Property Grammar grammar;
 }
 
 INJECT Token :
-   import org.congocc.Grammar;
+   import org.congocc.app.Grammar;
 {
     @Property Grammar grammar;
 }

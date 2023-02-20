@@ -2,7 +2,8 @@ package org.congocc.core.nfa;
 
 import java.util.*;
 
-import org.congocc.Grammar;
+import org.congocc.app.Errors;
+import org.congocc.app.Grammar;
 import org.congocc.core.RegularExpression;
 import org.congocc.parser.tree.RegexpSpec;
 import org.congocc.parser.tree.RegexpStringLiteral;
@@ -27,9 +28,12 @@ public class LexicalStateData {
     private NfaState initialState;
 
     private Set<NfaState> allStates = new HashSet<>();
+
+    private Errors errors;
     
     public LexicalStateData(Grammar grammar, String name) {
         this.grammar = grammar;
+        this.errors = grammar.getErrors();
         this.name = name;
         initialState = new NfaState(this);
     }
@@ -88,7 +92,7 @@ public class LexicalStateData {
             processTokenProduction(tp);
         }
         if (regularExpressions.isEmpty()) {
-            grammar.addWarning("Warning: Lexical State " + getName() + " does not contain any token types!");
+            errors.addWarning("Warning: Lexical State " + getName() + " does not contain any token types!");
         }
         generateData();
     }

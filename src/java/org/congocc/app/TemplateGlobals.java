@@ -1,12 +1,12 @@
-package org.congocc;
+package org.congocc.app;
 
 import java.util.*;
 
-import org.congocc.output.Sequencer;
+import org.congocc.codegen.Sequencer;
 import org.congocc.core.*;
 import org.congocc.parser.*;
 import org.congocc.parser.tree.*;
-import org.congocc.output.Translator;
+import org.congocc.codegen.Translator;
 
 /**
  * Class to hold various methods and variables

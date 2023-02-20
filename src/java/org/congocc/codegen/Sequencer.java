@@ -1,4 +1,4 @@
-package org.congocc.output;
+package org.congocc.codegen;
 
 import java.util.ArrayList;
 import java.util.HashMap;

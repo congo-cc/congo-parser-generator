@@ -1,4 +1,4 @@
-package org.congocc;
+package org.congocc.app;
 
 import java.io.FileNotFoundException;
 import java.io.IOException;
@@ -24,6 +24,7 @@ public class AppSettings {
 
     private static Pattern extraTokenPattern = Pattern.compile("^(\\w+)(#\\w+)?$");
     private Grammar grammar;
+    private Errors errors;
     Map<String, Object> settings = new HashMap<>();
     private Path outputDir, filename, includedFileDirectory;
     private String codeLang, parserPackage, parserClassName, lexerClassName, baseName, baseNodeClassName;
@@ -36,6 +37,7 @@ public class AppSettings {
 
     AppSettings(Grammar grammar) {
         this.grammar = grammar;
+        this.errors = grammar.getErrors();
     }
 
     private String booleanSettings = ",FAULT_TOLERANT,PRESERVE_TABS,PRESERVE_LINE_ENDINGS,JAVA_UNICODE_ESCAPE,IGNORE_CASE,LEXER_USES_PARSER,NODE_DEFAULT_VOID,SMART_NODE_CREATION,NODE_USES_PARSER,TREE_BUILDING_DEFAULT,TREE_BUILDING_ENABLED,TOKENS_ARE_NODES,SPECIAL_TOKENS_ARE_NODES,UNPARSED_TOKENS_ARE_NODES,FREEMARKER_NODES,NODE_FACTORY,TOKEN_MANAGER_USES_PARSER,ENSURE_FINAL_EOL,MINIMAL_TOKEN,C_CONTINUATION_LINE,USE_CHECKED_EXCEPTION,LEGACY_GLITCHY_LOOKAHEAD,TOKEN_CHAINING,";
@@ -74,21 +76,21 @@ public class AppSettings {
             Object value = settings.get(key);
             if (booleanSettings.contains("," + key + ",")) {
                 if (!(value instanceof Boolean)) {
-                    grammar.addError("The option " + key + " is supposed to be a boolean (true/false) type");
+                    errors.addError("The option " + key + " is supposed to be a boolean (true/false) type");
                 }
             }
             else if (stringSettings.contains("," + key + ",")) {
                 if (!(value instanceof String)) {
-                    grammar.addError("The option " + key + " is supposed to be a string");
+                    errors.addError("The option " + key + " is supposed to be a string");
                 }
             }
             else if (integerSettings.contains("," + key + ",")) {
                 if (!(value instanceof Integer)) {
-                    grammar.addError("The option " + key + " is supposed to be an integer");
+                    errors.addError("The option " + key + " is supposed to be an integer");
                 }
             }
             else {
-                grammar.addWarning("The option " + key + " is not recognized and will be ignored.");
+                errors.addWarning("The option " + key + " is not recognized and will be ignored.");
             }
         }
     }
@@ -102,19 +104,19 @@ public class AppSettings {
                     + "meaningless unless the TREE_BUILDING_ENABLED is set to true."
                     + " This option will be ignored.\n";
             if (settings.get("TOKENS_ARE_NODES") != null) {
-                grammar.addWarning(null, msg.replace("OPTION_NAME", "TOKENS_ARE_NODES"));
+                errors.addWarning(null, msg.replace("OPTION_NAME", "TOKENS_ARE_NODES"));
             }
             if (settings.get("UNPARSED_TOKENS_ARE_NODES") != null) {
-                grammar.addWarning(null, msg.replace("OPTION_NAME", "UNPARSED_TOKENS_ARE_NODES"));
+                errors.addWarning(null, msg.replace("OPTION_NAME", "UNPARSED_TOKENS_ARE_NODES"));
             }
             if (settings.get("SMART_NODE_CREATION") != null) {
-                grammar.addWarning(null, msg.replace("OPTION_NAME", "SMART_NODE_CREATION"));
+                errors.addWarning(null, msg.replace("OPTION_NAME", "SMART_NODE_CREATION"));
             }
             if (settings.get("NODE_DEFAULT_VOID") != null) {
-                grammar.addWarning(null, msg.replace("OPTION_NAME", "NODE_DEFAULT_VOID"));
+                errors.addWarning(null, msg.replace("OPTION_NAME", "NODE_DEFAULT_VOID"));
             }
             if (settings.get("NODE_USES_PARSER") != null) {
-                grammar.addWarning(null, msg.replace("OPTION_NAME", "NODE_USES_PARSER"));
+                errors.addWarning(null, msg.replace("OPTION_NAME", "NODE_USES_PARSER"));
             }
         }
     }
@@ -171,7 +173,7 @@ public class AppSettings {
                 }
                 else {
                     this.jdkTarget = 8;
-                    grammar.addWarning(null, "Invalid JDK Target " + jdkTarget);
+                    errors.addWarning(null, "Invalid JDK Target " + jdkTarget);
                 }
             }
         }

@@ -26,7 +26,7 @@ INJECT LEXER_CLASS :
 
 INJECT PARSER_CLASS :
     import java.util.*;
-    import org.congocc.*;
+    import org.congocc.app.*;
     import org.congocc.core.*;
     import org.congocc.parser.tree.*;
     import org.congocc.preprocessor.PreprocessorParser;
@@ -80,6 +80,10 @@ INJECT PARSER_CLASS :
 
     public AppSettings getAppSettings() {
         return grammar.getAppSettings();
+    }
+
+    public Errors getErrors() {
+        return grammar.getErrors();
     }
     
     public void openNodeScopeHook(Node n) {
@@ -168,7 +172,7 @@ UnparsedCodeBlock #org.congocc.core.UnparsedCodeBlock :
 ;
 
 INJECT BASE_NODE_CLASS :
-    import org.congocc.Grammar;
+    import org.congocc.app.*;
     import PARSER_PACKAGE.Token.TokenType;
     implements Node; 
 {
@@ -192,6 +196,10 @@ INJECT BASE_NODE_CLASS :
 
     public void setGrammar(Grammar grammar) {
          this.grammar = grammar;
+    }
+
+    public Errors getErrors() {
+        return getGrammar().getErrors();
     }
     
     public String getSimpleName() {
@@ -721,7 +729,7 @@ INJECT Identifier :
 }
 
 INJECT interface Node :
-   import org.congocc.Grammar;
+   import org.congocc.app.Grammar;
 {
     Grammar getGrammar();
     void setGrammar(Grammar grammar);
@@ -733,8 +741,7 @@ INJECT interface Node :
 
 
 INJECT Token :
-    import org.congocc.Grammar;
-    import org.congocc.AppSettings;
+    import org.congocc.app.*;
 {
     private Grammar grammar;
 
@@ -753,6 +760,10 @@ INJECT Token :
 
     public AppSettings getAppSettings() {
         return getGrammar().getAppSettings();
+    }
+
+    public Errors getErrors() {
+        return getGrammar().getErrors();
     }
     
     public String getNodeName() {
@@ -852,7 +863,7 @@ GrammarInclusion throws IOException :
           if (included!=null) {
               CURRENT_NODE.addChild(included);
           } else {
-              grammar.addWarning(CURRENT_NODE, "File is already included.");
+              getErrors().addWarning(CURRENT_NODE, "File is already included.");
           }
       }
    }
@@ -2125,7 +2136,7 @@ RegexpSequence :
 
 INJECT RegexpSequence : 
    import java.util.*;
-   import org.congocc.Grammar;
+   import org.congocc.app.Grammar;
    import org.congocc.core.RegularExpression;
    extends RegularExpression;
 {
@@ -2328,26 +2339,26 @@ INJECT CharacterRange :
             rightBound = StringLiteral.removeEscapesAndQuotes(bounds.get(1).getImage());
         }
         if (!isSingleChar(leftBound)) {
-            getGrammar().addError(bounds.get(0),
+            getErrors().addError(bounds.get(0),
                     "String in character list may contain only one character.");
         }
         this.left = this.right = leftBound.codePointAt(0);
         if (!leftBound.equals(rightBound)) {
             if (!isSingleChar(rightBound)) {
-                getGrammar().addError(bounds.get(1),
+                getErrors().addError(bounds.get(1),
                         "String in character list may contain only one character.");
             }
         }
         if (bounds.size()>1) {
             String right = StringLiteral.removeEscapesAndQuotes(bounds.get(1).getImage());
             if (!isSingleChar(right)) {
-                getGrammar().addError(bounds.get(1),
+                getErrors().addError(bounds.get(1),
                         "String in character list may contain only one character.");
             }
             this.right = right.codePointAt(0);
         }
         if (this.left>this.right) {
-            getGrammar().addError(this, "The left side of the character range must be a lower ordinal (in Unicode) value than the right side.");
+            getErrors().addError(this, "The left side of the character range must be a lower ordinal (in Unicode) value than the right side.");
         }
     }
 }

@@ -2,7 +2,7 @@ package org.congocc.core;
 
 import java.util.*;
 
-import org.congocc.Grammar;
+import org.congocc.app.Grammar;
 
 /**
  * A class to represent a set of Token types.

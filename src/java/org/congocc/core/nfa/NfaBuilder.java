@@ -4,7 +4,7 @@ import java.util.ArrayList;
 import java.util.BitSet;
 import java.util.List;
 
-import org.congocc.Grammar;
+import org.congocc.app.Grammar;
 import org.congocc.core.RegularExpression;
 import org.congocc.parser.Node;
 import org.congocc.parser.tree.*;

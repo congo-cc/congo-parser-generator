@@ -1,9 +1,9 @@
-package org.congocc.output.java;
+package org.congocc.codegen.java;
 
 import java.util.*;
 
-import org.congocc.AppSettings;
-import org.congocc.Grammar;
+import org.congocc.app.AppSettings;
+import org.congocc.app.Grammar;
 import org.congocc.parser.*;
 import org.congocc.parser.tree.*;
 
@@ -176,7 +176,7 @@ public class CodeInjector {
         }
     }
 
-    void injectCode(CompilationUnit jcu) {
+    public void injectCode(CompilationUnit jcu) {
         String packageName = jcu.getPackageName();
         Set<ImportDeclaration> allInjectedImports = new HashSet<>();
         for (TypeDeclaration typeDecl : jcu.getTypeDeclarations()) {

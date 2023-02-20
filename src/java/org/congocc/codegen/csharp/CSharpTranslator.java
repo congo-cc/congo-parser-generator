@@ -1,10 +1,10 @@
-package org.congocc.output.csharp;
+package org.congocc.codegen.csharp;
 
 import java.util.*;
 
-import org.congocc.Grammar;
-import org.congocc.output.Translator;
-import org.congocc.output.java.CodeInjector;
+import org.congocc.app.Grammar;
+import org.congocc.codegen.Translator;
+import org.congocc.codegen.java.CodeInjector;
 import org.congocc.parser.tree.*;
 
 public class CSharpTranslator extends Translator {

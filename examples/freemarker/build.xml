@@ -13,12 +13,12 @@
 </target>
 
 <target name="build" depends="init">
-    <java fork="true" failonerror="true" classname="org.congocc.Main" 
+    <java fork="true" failonerror="true" classname="org.congocc.app.Main" 
           classpath="${basedir}/../../build:${basedir}/../../bin/congocc.jar:${basedir}/../../bin/freemarker.jar">
       <arg line="-q -n ${basedir}/FEL.ccc"/>
       <assertions enableSystemAssertions="true"/>
     </java>
-    <java fork="true" failonerror="true" classname="org.congocc.Main" 
+    <java fork="true" failonerror="true" classname="org.congocc.app.Main" 
           classpath="${basedir}/../../build:${basedir}/../../bin/congocc.jar:${basedir}/../../bin/freemarker.jar">
           <arg line="-q -n ${basedir}/FTL.ccc"/>     
             <assertions><enable/></assertions>

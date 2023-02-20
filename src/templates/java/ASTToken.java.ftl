@@ -8,7 +8,6 @@ package ${settings.nodePackage};
 
 import ${settings.parserPackage}.*;
 
-import ${settings.parserPackage}.Token.TokenType;
 import static ${settings.parserPackage}.Token.TokenType.*;
 
 public class ${classname} extends ${superclass} {

@@ -1,4 +1,4 @@
-package org.congocc;
+package org.congocc.app;
 
 import java.util.*;
 import java.io.FileNotFoundException;
@@ -14,9 +14,9 @@ import org.congocc.core.LexerData;
 import org.congocc.core.Lookahead;
 import org.congocc.core.RegularExpression;
 import org.congocc.core.SanityChecker;
-import org.congocc.output.java.FilesGenerator;
-import org.congocc.output.java.CodeInjector;
-import org.congocc.output.Translator;
+import org.congocc.codegen.FilesGenerator;
+import org.congocc.codegen.java.CodeInjector;
+import org.congocc.codegen.Translator;
 import org.congocc.parser.*;
 import org.congocc.parser.tree.*;
 
@@ -61,12 +61,9 @@ public class Grammar extends BaseNode {
 
     private Set<RegexpStringLiteral> stringLiteralsToResolve = new HashSet<>();
 
-    List<String> errorMessages = new ArrayList<>(), warningMessages = new ArrayList<>(), infoMessages = new ArrayList<>();
-
-	private int parseErrorCount;
-	private int semanticErrorCount;
-    private int warningCount;
-
+    private TemplateGlobals utils;
+    private AppSettings appSettings;
+    private Errors errors = new Errors();
     private boolean quiet;
     private Translator translator;
 
@@ -77,9 +74,21 @@ public class Grammar extends BaseNode {
         appSettings.setJdkTarget(jdkTarget);
         appSettings.setOutputDir(outputDir);
         appSettings.setCodeLang(codeLang);
+        this.utils = new TemplateGlobals(this);
     }
 
     public Grammar() {this.appSettings = new AppSettings(this);}
+
+
+    public AppSettings getAppSettings() {return appSettings;}
+
+    public TemplateGlobals getUtils() {return utils;}
+
+    public Errors getErrors() {return errors;}
+
+    public void setSettings(Map<String, Object> settings) {
+        appSettings.setSettings((settings));
+    }
 
     public boolean isQuiet() {return quiet;}
 
@@ -164,7 +173,7 @@ public class Grammar extends BaseNode {
     public Node include(List<String> locations, Node includeLocation) throws IOException {
         Path path = appSettings.resolveLocation(locations);
         if (path == null) {
-            addError(includeLocation, "Could not resolve location of include file");
+            errors.addError(includeLocation, "Could not resolve location of include file");
             throw new FileNotFoundException(includeLocation.getLocation());
         }
         String location = path.toString();
@@ -192,7 +201,7 @@ public class Grammar extends BaseNode {
     public void createOutputDir() {
         Path outputDir = Paths.get(".");
         if (!Files.isWritable(outputDir)) {
-            addError(null, "Cannot write to the output directory : \"" + outputDir + "\"");
+            errors.addError(null, "Cannot write to the output directory : \"" + outputDir + "\"");
         }
     }
 
@@ -208,7 +217,7 @@ public class Grammar extends BaseNode {
             lexerData.addLexicalState(lexicalState);
         }
         new SanityChecker(this).doChecks();
-        if (getErrorCount() > 0) {
+        if (errors.getErrorCount() > 0) {
             return;
         }
         lexerData.ensureStringLabels();
@@ -491,67 +500,6 @@ public class Grammar extends BaseNode {
         tokenNames.put(index, name);
     }
 
-	/**
-	 * Returns the warning count during grammar parsing.
-	 *
-	 * @return the warning count during grammar parsing.
-	 */
-	public int getWarningCount() {
-		return warningCount;
-	}
-
-	/**
-	 * Returns the parse error count during grammar parsing.
-	 *
-	 * @return the parse error count during grammar parsing.
-	 */
-	public int getParseErrorCount() {
-		return parseErrorCount;
-	}
-
-	/**
-	 * Returns the semantic error count during grammar parsing.
-	 *
-	 * @return the semantic error count during grammar parsing.
-	 */
-	public int getSemanticErrorCount() {
-		return semanticErrorCount;
-	}
-
-    public void addError(String errorMessage) {
-        errorMessages.add(errorMessage);
-    }
-
-    public void addError(Node location, String errorMessage) {
-        String locationString = location == null ? "" : location.getLocation();
-        errorMessages.add("Error: " + locationString + ":" + errorMessage);
-    }
-
-    public void addWarning(String warningMessage) {
-        warningMessages.add(warningMessage);
-    }
-
-    public void addWarning(Node location, String warningMessage) {
-        String locationString = location == null ? "" : location.getLocation();
-        warningMessages.add("Warning: " + locationString + ":" + warningMessage);
-    }
-
-    public void addInfo(String infoMessage) {
-        infoMessages.add(infoMessage);
-    }
-
-    public void addInfo(Node location, String infoMessage) {
-        String locationString = location == null ? "" : location.getLocation();
-        infoMessages.add("Info: " + locationString + ":" + infoMessage);
-    }
-
-	/**
-	 * @return the total error count during grammar parsing.
-	 */
-	public int getErrorCount() {
-        return errorMessages.size();
-	}
-
     public Set<String> getNodeNames() {
         return nodeNames;
     }
@@ -706,16 +654,4 @@ public class Grammar extends BaseNode {
 
 
     public Map<String, Object> getSettings() {return appSettings.settings;}
-
-
-    private final TemplateGlobals utils = new TemplateGlobals(this);
-    private final AppSettings appSettings;
-
-    public AppSettings getAppSettings() {return appSettings;}
-
-    public TemplateGlobals getUtils() {return utils;}
-
-    public void setSettings(Map<String, Object> settings) {
-        appSettings.setSettings((settings));
-    }
 }

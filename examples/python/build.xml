@@ -11,7 +11,7 @@
         <delete dir="${basedir}/org"/>
     </target>
    <target name="parser-gen" unless="pyparser.uptodate">
-        <java classpath="../../build:../../bin/congocc.jar:../../bin/freemarker.jar" classname="org.congocc.Main" failonerror="true" fork="true">
+        <java classpath="../../build:../../bin/congocc.jar:../../bin/freemarker.jar" classname="org.congocc.app.Main" failonerror="true" fork="true">
             <assertions><enable/></assertions>
             <arg line="-n -q ${basedir}/Python.ccc"/>
         </java>

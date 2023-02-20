@@ -1,4 +1,4 @@
-package org.congocc.output.java;
+package org.congocc.codegen;
 
 import java.io.IOException;
 import java.io.Writer;
@@ -7,9 +7,9 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.*;
 
-import org.congocc.Grammar;
-import org.congocc.AppSettings;
+import org.congocc.app.*;
 import org.congocc.core.RegularExpression;
+import org.congocc.codegen.java.*;
 import org.congocc.parser.*;
 import org.congocc.parser.tree.CompilationUnit;
 
@@ -22,6 +22,7 @@ public class FilesGenerator {
     private Configuration fmConfig;
     private final Grammar grammar;
     private final AppSettings appSettings;
+    private final Errors errors;
     private final CodeInjector codeInjector;
     private final Set<String> tokenSubclassFileNames = new HashSet<>();
     private final HashMap<String, String> superClassLookup = new HashMap<>();
@@ -60,7 +61,7 @@ public class FilesGenerator {
         fmConfig.setSharedVariable("globals", grammar.getUtils());
         fmConfig.setSharedVariable("settings", grammar.getAppSettings());
         fmConfig.setSharedVariable("lexerData", grammar.getLexerData());
-        fmConfig.setSharedVariable("generated_by", org.congocc.Main.PROG_NAME);
+        fmConfig.setSharedVariable("generated_by", org.congocc.app.Main.PROG_NAME);
         if (codeLang.equals("java"))
            fmConfig.addAutoImport("CU", "CommonUtils.java.ftl");
     }
@@ -68,6 +69,7 @@ public class FilesGenerator {
     public FilesGenerator(Grammar grammar, String codeLang, List<Node> codeInjections) {
         this.grammar = grammar;
         this.appSettings = grammar.getAppSettings();
+        this.errors = grammar.getErrors();
         this.generateRootApi = appSettings.getRootAPIPackage() == null; 
         this.codeLang = codeLang;
         this.codeInjector = new CodeInjector(grammar,
@@ -77,7 +79,7 @@ public class FilesGenerator {
     }
 
     public void generateAll() throws IOException { 
-        if (grammar.getErrorCount() != 0) {
+        if (errors.getErrorCount() != 0) {
             throw new ParseException();
         }
         initializeTemplateEngine();
@@ -287,7 +289,7 @@ public class FilesGenerator {
     }
 
     void generateParser() throws IOException {
-        if (grammar.getErrorCount() !=0) {
+        if (errors.getErrorCount() !=0) {
         	throw new ParseException();
         }
         String filename = appSettings.getParserClassName() + ".java";
@@ -365,7 +367,7 @@ public class FilesGenerator {
             if (tokenSubclassFileNames.contains(outputFile.getFileName().toString())) {
                 String name = outputFile.getFileName().toString();
                 name = name.substring(0, name.length() -5);
-                grammar.addError("The name " + name + " is already used as a Token subclass.");
+                errors.addError("The name " + name + " is already used as a Token subclass.");
             }
             files.put(nodeName, outputFile);
         }
