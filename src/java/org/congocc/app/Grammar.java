@@ -653,5 +653,5 @@ public class Grammar extends BaseNode {
     public void setIgnoreCase(boolean ignoreCase) {appSettings.setIgnoreCase(ignoreCase);}
 
 
-    public Map<String, Object> getSettings() {return appSettings.settings;}
+//    public Map<String, Object> getSettings() {return appSettings.settings;}
 }

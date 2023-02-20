@@ -5,12 +5,12 @@ import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
 import java.lang.reflect.*;
 import java.util.function.Predicate;
-[#if grammar.settings.FREEMARKER_NODES?? && grammar.settings.FREEMARKER_NODES]
+[#if settings.freemarkerNodes]
 import freemarker.template.*;
 [/#if]
 
 public interface Node
-[#if grammar.settings.FREEMARKER_NODES?? && grammar.settings.FREEMARKER_NODES]
+[#if settings.freemarkerNodes]
    extends TemplateNodeModel, TemplateScalarModel
 [/#if] {
     // Marker interface for objects

@@ -307,16 +307,10 @@ class BitSet:
             return result + INT_BITSIZE * idx
 
 
-[#var TABS_TO_SPACES = 0, PRESERVE_LINE_ENDINGS="True", JAVA_UNICODE_ESCAPE="False", ENSURE_FINAL_EOL = settings.ensureFinalEOL?string("True", "False")]
-[#if grammar.settings.TABS_TO_SPACES??]
-   [#set TABS_TO_SPACES = grammar.settings.TABS_TO_SPACES]
-[/#if]
-[#if grammar.settings.PRESERVE_LINE_ENDINGS?? && !grammar.settings.PRESERVE_LINE_ENDINGS]
-   [#set PRESERVE_LINE_ENDINGS = "False"]
-[/#if]
-[#if grammar.settings.JAVA_UNICODE_ESCAPE?? && grammar.settings.JAVA_UNICODE_ESCAPE]
-   [#set JAVA_UNICODE_ESCAPE = "True"]
-[/#if]
+[#var JAVA_UNICODE_ESCAPE = settings.javaUnicodeEscape?string("True", "False")]
+[#var ENSURE_FINAL_EOL = settings.ensureFinalEOL?string("True", "False")]
+[#var PRESERVE_LINE_ENDINGS = settings.preserveLineEndings?string("True", "False")]
+
 class ListIterator:
     #
     # Emulation of the Java interface / implementation

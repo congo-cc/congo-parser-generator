@@ -15,15 +15,15 @@ import org.congocc.codegen.Translator;
 public class TemplateGlobals {
 
     private Grammar grammar;
+    private AppSettings appSettings;
     private List<String> nodeVariableNameStack = new ArrayList<>();
     private LexerData lexerData;
 
     TemplateGlobals(Grammar grammar) {
         this.grammar = grammar;
+        this.appSettings = grammar.getAppSettings();
         this.lexerData = grammar.getLexerData();
     }
-
-    AppSettings getAppSettings() {return grammar.getAppSettings();}
 
     public void pushNodeVariableName(String nodeName) {
         nodeVariableNameStack.add(nodeName);
@@ -426,60 +426,60 @@ public class TemplateGlobals {
     }
 
     public List<String> injectedTokenFieldNames() {
-        String className = String.format("%s.Token", getAppSettings().getParserPackage());
+        String className = String.format("%s.Token", appSettings.getParserPackage());
         return injectedFieldNames(className);
     }
 
     public List<String> injectedLexerFieldNames() {
-        String className = String.format("%s.%s", getAppSettings().getParserPackage(), getAppSettings().getLexerClassName());
+        String className = String.format("%s.%s", appSettings.getParserPackage(), appSettings.getLexerClassName());
         return injectedFieldNames(className);
     }
 
     // used in templates
     public List<String> injectedParserFieldNames() {
-        String className = String.format("%s.%s", getAppSettings().getParserPackage(), getAppSettings().getParserClassName());
+        String className = String.format("%s.%s", appSettings.getParserPackage(), appSettings.getParserClassName());
         return injectedFieldNames(className);
     }
 
     // used in templates
     public String translateNestedTypes(String className, boolean fields) {
-        className = String.format("%s.%s", getAppSettings().getNodePackage(), className);
+        className = String.format("%s.%s", appSettings.getNodePackage(), className);
         return translateInjections(className, fields, false);
     }
 
     // used in templates
     public String translateTokenInjections(boolean fields) {
-        String className = String.format("%s.Token", getAppSettings().getParserPackage());
+        String className = String.format("%s.Token", appSettings.getParserPackage());
         return translateInjections(className, fields, fields && grammar.getTranslator().isIncludeInitializers());
     }
 
     // used in templates
     public String translateLexerInjections(boolean fields) {
-        String className = String.format("%s.%s", getAppSettings().getParserPackage(), getAppSettings().getLexerClassName());
+        String className = String.format("%s.%s", appSettings.getParserPackage(), appSettings.getLexerClassName());
         return translateInjections(className, fields, fields && grammar.getTranslator().isIncludeInitializers());
     }
 
     // used in templates
     public String translateParserInjections(boolean fields) {
-        String className = String.format("%s.%s", getAppSettings().getParserPackage(), getAppSettings().getParserClassName());
+        String className = String.format("%s.%s", appSettings.getParserPackage(), appSettings.getParserClassName());
         return translateInjections(className, fields, fields && grammar.getTranslator().isIncludeInitializers());
     }
 
     // used in templates
     public String translateLexerInitializers() {
-        String className = String.format("%s.%s", getAppSettings().getParserPackage(), getAppSettings().getLexerClassName());
+        String className = String.format("%s.%s", appSettings.getParserPackage(), appSettings.getLexerClassName());
         return translateInitializers(className);
     }
 
     // used in templates
     public String translateParserInitializers() {
-        String className = String.format("%s.%s", getAppSettings().getParserPackage(), getAppSettings().getParserClassName());
+        String className = String.format("%s.%s", appSettings.getParserPackage(), appSettings.getParserClassName());
         return translateInitializers(className);
     }
 
     // used in templates
     public String translateTokenSubclassInjections(String className, boolean fields) {
-        className = String.format("%s.%s", getAppSettings().getNodePackage(), className);
+        className = String.format("%s.%s", appSettings.getNodePackage(), className);
         return translateInjections(className, fields, fields && grammar.getTranslator().isIncludeInitializers());
     }
 
@@ -494,7 +494,7 @@ public class TemplateGlobals {
     }
 
     protected void processImports(Set<ImportDeclaration> imports, StringBuilder result) {
-        String prefix = String.format("%s.", getAppSettings().getNodePackage());
+        String prefix = String.format("%s.", appSettings.getNodePackage());
         for (ImportDeclaration decl : imports) {
             String name = decl.getChild(1).toString();
             if (name.startsWith("java.") || name.startsWith(prefix)) {
@@ -507,7 +507,7 @@ public class TemplateGlobals {
     // used in templates
     public String translateLexerImports() {
         StringBuilder result = new StringBuilder();
-        String cn = String.format("%s.%s", getAppSettings().getParserPackage(), getAppSettings().getLexerClassName());
+        String cn = String.format("%s.%s", appSettings.getParserPackage(), appSettings.getLexerClassName());
         Set<ImportDeclaration> imports = grammar.getInjector().getImportDeclarations(cn);
 
         if (imports != null) {
@@ -519,7 +519,7 @@ public class TemplateGlobals {
     // used in templates
     public String translateParserImports() {
         StringBuilder result = new StringBuilder();
-        String cn = String.format("%s.%s", getAppSettings().getParserPackage(), getAppSettings().getParserClassName());
+        String cn = String.format("%s.%s", appSettings.getParserPackage(), appSettings.getParserClassName());
         Set<ImportDeclaration> imports = grammar.getInjector().getImportDeclarations(cn);
 
         if (imports != null) {

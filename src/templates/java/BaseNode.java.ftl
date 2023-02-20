@@ -12,7 +12,7 @@ import ${settings.rootAPIPackage}.Node;
 import ${settings.rootAPIPackage}.TokenSource;
 [/#if]
 
-[#if grammar.settings.FREEMARKER_NODES?? && grammar.settings.FREEMARKER_NODES]
+[#if settings.freemarkerNodes]
 import freemarker.template.*;
 [/#if]
 
@@ -173,7 +173,7 @@ public class ${settings.baseNodeClassName} implements Node {
         return descendants(Token.class, t->!t.isUnparsed());
     }
      
-[#if grammar.settings.FREEMARKER_NODES?? && grammar.settings.FREEMARKER_NODES]
+[#if settings.freemarkerNodes]
     public TemplateSequenceModel getChildNodes() {
         SimpleSequence seq = new SimpleSequence();
         for (Node child : children) {

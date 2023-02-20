@@ -17,7 +17,7 @@ import ${settings.rootAPIPackage}.Node;
 import ${settings.rootAPIPackage}.TokenSource;
 [/#if]
 
-[#if grammar.settings.FREEMARKER_NODES?? && grammar.settings.FREEMARKER_NODES]
+[#if settings.freemarkerNodes]
 import freemarker.template.*;
 [/#if]
 
@@ -542,7 +542,7 @@ public class Token ${implementsNode} {
         return java.util.Collections.emptyList();
     }
 
-   [#if grammar.settings.FREEMARKER_NODES?? && grammar.settings.FREEMARKER_NODES]
+   [#if settings.freemarkerNodes]
     public TemplateNodeModel getParentNode() {
         return parent;
     }

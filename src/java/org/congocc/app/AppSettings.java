@@ -25,7 +25,7 @@ public class AppSettings {
     private static Pattern extraTokenPattern = Pattern.compile("^(\\w+)(#\\w+)?$");
     private Grammar grammar;
     private Errors errors;
-    Map<String, Object> settings = new HashMap<>();
+    private Map<String, Object> settings = new HashMap<>();
     private Path outputDir, filename, includedFileDirectory;
     private String codeLang, parserPackage, parserClassName, lexerClassName, baseName, baseNodeClassName;
 
@@ -493,6 +493,11 @@ public class AppSettings {
         Boolean b = (Boolean) settings.get("TOKENS_ARE_NODES");
         if (b == null) b = (Boolean) settings.get("SPECIAL_TOKENS_ARE_NODES");
         return b != null;
+    }
+
+    public boolean getFreemarkerNodes() {
+        Boolean b = (Boolean) settings.get("FREEMARKER_NODES");
+        return b != null && b;
     }
 
     public boolean getSmartNodeCreation() {
