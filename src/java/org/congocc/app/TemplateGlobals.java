@@ -16,14 +16,16 @@ public class TemplateGlobals {
 
     private Grammar grammar;
     private AppSettings appSettings;
+    private Translator translator;
+
     private List<String> nodeVariableNameStack = new ArrayList<>();
-    private LexerData lexerData;
 
     TemplateGlobals(Grammar grammar) {
         this.grammar = grammar;
         this.appSettings = grammar.getAppSettings();
-        this.lexerData = grammar.getLexerData();
     }
+
+    public void setTranslator(Translator translator) {this.translator = translator;}
 
     public void pushNodeVariableName(String nodeName) {
         nodeVariableNameStack.add(nodeName);
@@ -219,21 +221,20 @@ public class TemplateGlobals {
 
     // Used in templates specifically for method name translation
     public String translateIdentifier(String ident) {
-        return grammar.getTranslator().translateIdentifier(ident, Translator.TranslationContext.METHOD);
+        return translator.translateIdentifier(ident, Translator.TranslationContext.METHOD);
     }
 
     // Used in templates for side effects, hence returning empty string
     public String startProduction() {
         Translator.SymbolTable symbols = new Translator.SymbolTable();
-
-        grammar.getTranslator().pushSymbols(symbols);
+        translator.pushSymbols(symbols);
         return "";
     }
 
     // Used in templates for side effects, hence returning empty string
     public String endProduction() {
-        grammar.getTranslator().popSymbols();
-        grammar.getTranslator().clearParameterNames();
+        translator.popSymbols();
+        translator.clearParameterNames();
         return "";
     }
 
@@ -249,13 +250,13 @@ public class TemplateGlobals {
         List<FormalParameter> parameters = ((FormalParameters) parser.rootNode()).getParams();
         // Now build the result
         sb.setLength(0);
-        grammar.getTranslator().translateFormals(parameters, null, sb);
+        translator.translateFormals(parameters, null, sb);
         return sb.toString();
     }
 
     public String translateExpression(Node expr) {
         StringBuilder result = new StringBuilder();
-        grammar.getTranslator().translateExpression(expr, result);
+        translator.translateExpression(expr, result);
         return result.toString();
     }
 
@@ -265,27 +266,27 @@ public class TemplateGlobals {
         CongoCCParser parser = new CongoCCParser(expr);
         parser.Expression();
         StringBuilder result = new StringBuilder();
-        grammar.getTranslator().translateExpression(parser.rootNode(), result);
+        translator.translateExpression(parser.rootNode(), result);
         return result.toString();
     }
 
     private void translateStatements(Node node, int indent, StringBuilder result) {
         if (node instanceof Statement) {
-            grammar.getTranslator().translateStatement(node, indent, result);
+            translator.translateStatement(node, indent, result);
         } else {
             for (int i = 0; i < node.getChildCount(); i++) {
                 Node child = node.getChild(i);
                 if (child instanceof Delimiter) {
                     continue; // could put in more checks here
                 }
-                grammar.getTranslator().translateStatement(child, indent, result);
+                translator.translateStatement(child, indent, result);
             }
         }
     }
 
     public Set<String> getTokenNames() {
         HashSet<String> result = new HashSet<>();
-        for (RegularExpression re : lexerData.getRegularExpressions()) {
+        for (RegularExpression re : grammar.getLexerData().getRegularExpressions()) {
             result.add(re.getLabel());
         }
         return result;
@@ -296,16 +297,16 @@ public class TemplateGlobals {
         if (cb != null) {
             cb = cb.trim();
             if (cb.length() == 0) {
-                grammar.getTranslator().translateEmptyBlock(indent, result);
+                translator.translateEmptyBlock(indent, result);
             } else {
                 String block = "{" + cb + "}";
                 CongoCCParser parser = new CongoCCParser(block);
                 parser.Block();
                 Node node = parser.rootNode();
                 Translator.SymbolTable syms = new Translator.SymbolTable();
-                grammar.getTranslator().pushSymbols(syms);
+                translator.pushSymbols(syms);
                 translateStatements(node, indent, result);
-                grammar.getTranslator().popSymbols();
+                translator.popSymbols();
             }
         }
         return result.toString();
@@ -318,31 +319,31 @@ public class TemplateGlobals {
         // being generated. For the Java template, they don't come through this method -
         // they are passed
         // straight through as a string by the Java template.
-        return (args == null) ? "" : grammar.getTranslator().translateNonterminalArgs(args);
+        return (args == null) ? "" : translator.translateNonterminalArgs(args);
     }
 
     // used in templates
     public String translateInjectedClass(String name) {
         String result;
 
-        grammar.getTranslator().startClass(name, false, null);
-        result = grammar.getTranslator().translateInjectedClass(grammar.getInjector(), name);
-        grammar.getTranslator().endClass(name, false, null);
+        translator.startClass(name, false, null);
+        result = translator.translateInjectedClass(grammar.getInjector(), name);
+        translator.endClass(name, false, null);
         return result;
     }
 
     public String translateInjections(String className, boolean fields, boolean initializers) {
         StringBuilder result = new StringBuilder();
         if (fields) {
-            grammar.getTranslator().clearFields();
+            translator.clearFields();
         }
         String cn = lastPart(className, '.');
-        grammar.getTranslator().startClass(cn, fields, result);
+        translator.startClass(cn, fields, result);
         try {
             List<ClassOrInterfaceBodyDeclaration> declsToProcess = grammar.getInjector().getBodyDeclarations(className);
             if (declsToProcess != null) {
-                int fieldIndent = grammar.getTranslator().getFieldIndent();
-                int methodIndent = grammar.getTranslator().getMethodIndent();
+                int fieldIndent = translator.getFieldIndent();
+                int methodIndent = translator.getMethodIndent();
                 for (ClassOrInterfaceBodyDeclaration decl : declsToProcess) {
                     // If processing fields, we want to process FieldDeclarations or Initializers.
                     // Otherwise, we want to process TypeDeclarations, MethodDeclarations and
@@ -354,10 +355,10 @@ public class TemplateGlobals {
                             if ((decl instanceof Initializer) && !initializers) {
                                 continue;
                             }
-                            grammar.getTranslator().translateStatement(decl, fieldIndent, result);
+                            translator.translateStatement(decl, fieldIndent, result);
                         } else if (decl instanceof MethodDeclaration || decl instanceof ConstructorDeclaration ||
                                 decl instanceof EnumDeclaration || decl instanceof ClassDeclaration) {
-                            grammar.getTranslator().translateStatement(decl, methodIndent, result);
+                            translator.translateStatement(decl, methodIndent, result);
                         } else {
                             throw new UnsupportedOperationException();
                         }
@@ -365,7 +366,7 @@ public class TemplateGlobals {
                 }
             }
         } finally {
-            grammar.getTranslator().endClass(cn, fields, result);
+            translator.endClass(cn, fields, result);
         }
         return result.toString();
     }
@@ -374,10 +375,10 @@ public class TemplateGlobals {
         StringBuilder result = new StringBuilder();
         List<ClassOrInterfaceBodyDeclaration> declsToProcess = grammar.getInjector().getBodyDeclarations(className);
         if (declsToProcess != null) {
-            int fieldIndent = grammar.getTranslator().getFieldIndent();
+            int fieldIndent = translator.getFieldIndent();
             for (ClassOrInterfaceBodyDeclaration decl : declsToProcess) {
                 if (decl instanceof Initializer) {
-                    grammar.getTranslator().translateStatement(decl, fieldIndent, result);
+                    translator.translateStatement(decl, fieldIndent, result);
                 }
             }
         }
@@ -414,7 +415,7 @@ public class TemplateGlobals {
                         throw new UnsupportedOperationException();
                     }
                     for (String name : names) {
-                        result.add(grammar.getTranslator().translateIdentifier(name,
+                        result.add(translator.translateIdentifier(name,
                                 Translator.TranslationContext.VARIABLE));
                     }
                 } else {
@@ -450,19 +451,19 @@ public class TemplateGlobals {
     // used in templates
     public String translateTokenInjections(boolean fields) {
         String className = String.format("%s.Token", appSettings.getParserPackage());
-        return translateInjections(className, fields, fields && grammar.getTranslator().isIncludeInitializers());
+        return translateInjections(className, fields, fields && translator.isIncludeInitializers());
     }
 
     // used in templates
     public String translateLexerInjections(boolean fields) {
         String className = String.format("%s.%s", appSettings.getParserPackage(), appSettings.getLexerClassName());
-        return translateInjections(className, fields, fields && grammar.getTranslator().isIncludeInitializers());
+        return translateInjections(className, fields, fields && translator.isIncludeInitializers());
     }
 
     // used in templates
     public String translateParserInjections(boolean fields) {
         String className = String.format("%s.%s", appSettings.getParserPackage(), appSettings.getParserClassName());
-        return translateInjections(className, fields, fields && grammar.getTranslator().isIncludeInitializers());
+        return translateInjections(className, fields, fields && translator.isIncludeInitializers());
     }
 
     // used in templates
@@ -480,12 +481,12 @@ public class TemplateGlobals {
     // used in templates
     public String translateTokenSubclassInjections(String className, boolean fields) {
         className = String.format("%s.%s", appSettings.getNodePackage(), className);
-        return translateInjections(className, fields, fields && grammar.getTranslator().isIncludeInitializers());
+        return translateInjections(className, fields, fields && translator.isIncludeInitializers());
     }
 
     // used in templates
     public String translateType(String type) {
-        return grammar.getTranslator().translateTypeName(type);
+        return translator.translateTypeName(type);
     }
 
     // used in templates
@@ -500,7 +501,7 @@ public class TemplateGlobals {
             if (name.startsWith("java.") || name.startsWith(prefix)) {
                 continue;
             }
-            grammar.getTranslator().translateImport(name, result);
+            translator.translateImport(name, result);
         }
     }
 

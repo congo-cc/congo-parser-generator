@@ -258,7 +258,7 @@ public class CodeInjector {
         List<String> result = new ArrayList<>();
         List<ObjectType> extendsList = getExtendsList(qualifiedName);
         List<ObjectType> implementsList = getImplementsList(qualifiedName);
-        String name = grammar.getUtils().lastPart(qualifiedName, '.');
+        String name = grammar.getTemplateGlobals().lastPart(qualifiedName, '.');
         if (extendsList.isEmpty() && implementsList.isEmpty()) {
             if (grammar.nodeIsInterface(name)) {
                 result.add("Node");

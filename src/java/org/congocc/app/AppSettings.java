@@ -32,7 +32,7 @@ public class AppSettings {
 
     Set<String> tokensOffByDefault = new LinkedHashSet<>();
     Map<String, String> extraTokens = new LinkedHashMap<>();
-    private boolean ignoreCase;
+    private boolean ignoreCase, quiet;
     private int jdkTarget = 8;
 
     AppSettings(Grammar grammar) {
@@ -64,6 +64,9 @@ public class AppSettings {
     public String getCodeLang() {return codeLang;}
 
     public void setCodeLang(String codeLang) {this.codeLang = codeLang;}
+
+    public List<String> getExtraTokenNames() {return new ArrayList<>(extraTokens.keySet());}
+    public Collection<String> getExtraTokenClassNames() {return extraTokens.values();}
 
     public boolean isASetting(String key) {
         return booleanSettings.contains("," + key + ",")
@@ -561,4 +564,11 @@ public class AppSettings {
         this.filename = filename;
     }
 
+    public boolean isQuiet() {
+        return quiet;
+    }
+
+    public void setQuiet(boolean quiet) {
+        this.quiet = quiet;
+    }
 }

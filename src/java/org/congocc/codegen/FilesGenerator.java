@@ -58,7 +58,7 @@ public class FilesGenerator {
         fmConfig.setArithmeticEngine(freemarker.core.ast.ArithmeticEngine.CONSERVATIVE_ENGINE);
         fmConfig.setStrictVariableDefinition(true);
         fmConfig.setSharedVariable("grammar", grammar);
-        fmConfig.setSharedVariable("globals", grammar.getUtils());
+        fmConfig.setSharedVariable("globals", grammar.getTemplateGlobals());
         fmConfig.setSharedVariable("settings", grammar.getAppSettings());
         fmConfig.setSharedVariable("lexerData", grammar.getLexerData());
         fmConfig.setSharedVariable("generated_by", org.congocc.app.Main.PROG_NAME);
@@ -128,7 +128,7 @@ public class FilesGenerator {
                         "Parser.cs",
                         null  // filled in below
                 };
-                String csPackageName = grammar.getUtils().getPreprocessorSymbol("cs.package", appSettings.getParserPackage());
+                String csPackageName = grammar.getTemplateGlobals().getPreprocessorSymbol("cs.package", appSettings.getParserPackage());
                 paths[paths.length - 1] = csPackageName + ".csproj";
                 outDir = appSettings.getParserOutputDirectory();
                 for (String p : paths) {
@@ -204,7 +204,7 @@ public class FilesGenerator {
         dataModel.put("injector", grammar.getInjector());
         template.process(dataModel, out);
         String code = out.toString();
-        if (!grammar.isQuiet()) {
+        if (!appSettings.isQuiet()) {
             System.out.println("Outputting: " + outputFile.normalize());
         }
         if (outputFile.getFileName().toString().endsWith(".java")) {

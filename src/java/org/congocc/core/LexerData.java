@@ -32,7 +32,7 @@ public class LexerData {
         if (ordinal < regularExpressions.size()) {
             return regularExpressions.get(ordinal).getLabel();
         }
-        return grammar.getExtraTokenNames().get(ordinal-regularExpressions.size());
+        return grammar.getAppSettings().getExtraTokenNames().get(ordinal-regularExpressions.size());
     }
 
     public String getLexicalStateName(int index) {

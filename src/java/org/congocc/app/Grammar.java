@@ -61,20 +61,19 @@ public class Grammar extends BaseNode {
 
     private Set<RegexpStringLiteral> stringLiteralsToResolve = new HashSet<>();
 
-    private TemplateGlobals utils;
+    private TemplateGlobals templateGlobals;
     private AppSettings appSettings;
     private Errors errors = new Errors();
-    private boolean quiet;
-    private Translator translator;
+//    private Translator translator;
 
     public Grammar(Path outputDir, String codeLang, int jdkTarget, boolean quiet, Map<String, String> preprocessorSymbols) {
-        this.quiet = quiet;
         this.preprocessorSymbols = preprocessorSymbols;
         this.appSettings = new AppSettings(this);
         appSettings.setJdkTarget(jdkTarget);
         appSettings.setOutputDir(outputDir);
         appSettings.setCodeLang(codeLang);
-        this.utils = new TemplateGlobals(this);
+        appSettings.setQuiet(quiet);
+        this.templateGlobals = new TemplateGlobals(this);
     }
 
     public Grammar() {this.appSettings = new AppSettings(this);}
@@ -82,15 +81,13 @@ public class Grammar extends BaseNode {
 
     public AppSettings getAppSettings() {return appSettings;}
 
-    public TemplateGlobals getUtils() {return utils;}
+    public TemplateGlobals getTemplateGlobals() {return templateGlobals;}
 
     public Errors getErrors() {return errors;}
 
     public void setSettings(Map<String, Object> settings) {
         appSettings.setSettings((settings));
     }
-
-    public boolean isQuiet() {return quiet;}
 
     public String getCodeLang() { return appSettings.getCodeLang(); }
 
@@ -225,11 +222,10 @@ public class Grammar extends BaseNode {
     }
 
     public void generateFiles() throws IOException {
-        translator = Translator.getTranslatorFor(this);
+        Translator translator = Translator.getTranslatorFor(this);
+        templateGlobals.setTranslator(translator);
         new FilesGenerator(this, appSettings.getCodeLang(), codeInjections).generateAll();
     }
-
-    public Translator getTranslator() {return translator;}
 
     public LexerData getLexerData() {
         return lexerData;
@@ -646,12 +642,8 @@ public class Grammar extends BaseNode {
     public Map<String, String> getExtraTokens() {
         return appSettings.extraTokens;
     }
-    public List<String> getExtraTokenNames() { return new ArrayList<>(appSettings.extraTokens.keySet()); }
-    public Collection<String> getExtraTokenClassNames() { return appSettings.extraTokens.values(); }
+    public List<String> getExtraTokenNames() { return appSettings.getExtraTokenNames(); }
+    public Collection<String> getExtraTokenClassNames() { return appSettings.getExtraTokenClassNames();}
 
     public boolean isIgnoreCase() {return appSettings.isIgnoreCase();}
-    public void setIgnoreCase(boolean ignoreCase) {appSettings.setIgnoreCase(ignoreCase);}
-
-
-//    public Map<String, Object> getSettings() {return appSettings.settings;}
 }

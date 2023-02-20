@@ -703,7 +703,7 @@ public class Translator {
 
     public Translator(Grammar grammar) {
         this.grammar = grammar;
-        tokenNames = grammar.getUtils().getTokenNames();
+        tokenNames = grammar.getTemplateGlobals().getTokenNames();
     }
 
     public int getFieldIndent() {

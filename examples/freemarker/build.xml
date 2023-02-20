@@ -38,7 +38,7 @@
 	 <echo>Now let's try out the full FTL parser on the templates used in CongoCC</echo>
      <java fork="true" classpath="." failonerror="true" classname="ftl.FTLParser">
        <assertions><enable/></assertions>
-     	 <arg value = "../../src/templates/java"/>
+     	 <arg value = "../../src/templates/csharp"/>
      </java>
 </target>
 
