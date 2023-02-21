@@ -3,7 +3,7 @@ package org.congocc.codegen.java;
 import java.util.*;
 
 import org.congocc.app.AppSettings;
-import org.congocc.app.Grammar;
+import org.congocc.core.Grammar;
 import org.congocc.parser.*;
 import org.congocc.parser.tree.*;
 
@@ -258,7 +258,7 @@ public class CodeInjector {
         List<String> result = new ArrayList<>();
         List<ObjectType> extendsList = getExtendsList(qualifiedName);
         List<ObjectType> implementsList = getImplementsList(qualifiedName);
-        String name = grammar.getTemplateGlobals().lastPart(qualifiedName, '.');
+        String name = qualifiedName.substring(qualifiedName.lastIndexOf('.')+1);
         if (extendsList.isEmpty() && implementsList.isEmpty()) {
             if (grammar.nodeIsInterface(name)) {
                 result.add("Node");

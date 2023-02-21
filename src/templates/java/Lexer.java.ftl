@@ -15,11 +15,9 @@ import static ${settings.parserPackage}.Token.TokenType.*;
    import ${settings.rootAPIPackage}.TokenSource;
 [/#if]
 
-
 [#import "NfaCode.java.ftl" as NFA]
 
 [#var lexerData=grammar.lexerData]
-
 
 [#var PRESERVE_LINE_ENDINGS=settings.preserveLineEndings?string("true", "false")
       JAVA_UNICODE_ESCAPE= settings.javaUnicodeEscape?string("true", "false")
@@ -55,7 +53,7 @@ public class ${settings.lexerClassName} extends TokenSource
 {
 
  public enum LexicalState {
-  [#list grammar.lexerData.lexicalStates as lexicalState]
+  [#list lexerData.lexicalStates as lexicalState]
      ${lexicalState.name}
      [#if lexicalState_has_next],[/#if]
   [/#list]
@@ -65,12 +63,12 @@ public class ${settings.lexerClassName} extends TokenSource
  [/#if]
 
   EnumSet<TokenType> activeTokenTypes = EnumSet.allOf(TokenType.class);
-  [#if grammar.deactivatedTokens?size>0 || grammar.extraTokens?size >0]
+  [#if settings.deactivatedTokens?size>0 || settings.extraTokens?size >0]
      {
-       [#list grammar.deactivatedTokens as token]
+       [#list settings.deactivatedTokens as token]
           activeTokenTypes.remove(${token});
        [/#list]
-       [#list grammar.extraTokenNames as token]
+       [#list settings.extraTokenNames as token]
           regularTokens.add(${token});
        [/#list]
      }

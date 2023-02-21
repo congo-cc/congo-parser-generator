@@ -2,7 +2,7 @@ package org.congocc.core;
 
 import java.util.*;
 
-import org.congocc.app.Grammar;
+import org.congocc.core.Grammar;
 import org.congocc.core.nfa.LexicalStateData;
 import org.congocc.parser.tree.CodeBlock;
 import org.congocc.parser.tree.Name;
@@ -44,7 +44,7 @@ public abstract class RegularExpression extends Expansion {
     public boolean getIgnoreCase() {
         TokenProduction tp = firstAncestorOfType(TokenProduction.class);
         if (tp !=null) return tp.isIgnoreCase();
-        return getGrammar().isIgnoreCase();//REVISIT
+        return getAppSettings().isIgnoreCase();//REVISIT
     }
 
     /**

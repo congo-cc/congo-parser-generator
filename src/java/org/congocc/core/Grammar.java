@@ -1,4 +1,4 @@
-package org.congocc.app;
+package org.congocc.core;
 
 import java.util.*;
 import java.io.FileNotFoundException;
@@ -8,15 +8,12 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 
-import org.congocc.core.BNFProduction;
-import org.congocc.core.Expansion;
-import org.congocc.core.LexerData;
-import org.congocc.core.Lookahead;
-import org.congocc.core.RegularExpression;
-import org.congocc.core.SanityChecker;
 import org.congocc.codegen.FilesGenerator;
 import org.congocc.codegen.java.CodeInjector;
+import org.congocc.codegen.TemplateGlobals;
 import org.congocc.codegen.Translator;
+import org.congocc.app.AppSettings;
+import org.congocc.app.Errors;
 import org.congocc.parser.*;
 import org.congocc.parser.tree.*;
 
@@ -635,15 +632,5 @@ public class Grammar extends BaseNode {
         return buf.toString();
     }
 
-    public Set<String> getDeactivatedTokens() {
-        return appSettings.tokensOffByDefault;
-    }
-
-    public Map<String, String> getExtraTokens() {
-        return appSettings.extraTokens;
-    }
-    public List<String> getExtraTokenNames() { return appSettings.getExtraTokenNames(); }
-    public Collection<String> getExtraTokenClassNames() { return appSettings.getExtraTokenClassNames();}
-
-    public boolean isIgnoreCase() {return appSettings.isIgnoreCase();}
+//    public boolean isIgnoreCase() {return appSettings.isIgnoreCase();}
 }

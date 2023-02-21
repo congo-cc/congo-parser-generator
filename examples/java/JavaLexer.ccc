@@ -251,8 +251,8 @@ INJECT IntegerLiteral :
    public int getValue() {
      String image = removeUnderscores(getImage());
      if (image.equals("0")) return 0;
-     if (image.codePointAt(0) != '0') return Integer.parseInt(image);
-     int secondChar = image.codePointAt(1);
+     if (image.charAt(0) != '0') return Integer.parseInt(image);
+     int secondChar = image.charAt(1);
      if (secondChar == 'x' || secondChar=='X') {
        return Integer.parseInt(image.substring(2), 16);
      }
@@ -263,10 +263,10 @@ INJECT IntegerLiteral :
    }
 
    static public String removeUnderscores(String s) {
-     if (s.indexOf('-')<0) return s;
+     if (s.indexOf('_')<0) return s;
      StringBuilder buf = new StringBuilder();
      for (int i=0; i<s.length();i++) {
-       int ch = s.codePointAt(i);
+       int ch = s.charAt(i);
        if (ch != '_') buf.append(ch);
      }
      return buf.toString();

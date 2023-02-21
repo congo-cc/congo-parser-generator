@@ -8,13 +8,13 @@ TOKEN_CHAINING;
 INCLUDE "../../examples/python/Python.ccc";
 
 INJECT BASE_NODE_CLASS :
-   import org.congocc.app.Grammar;
+   import org.congocc.core.Grammar;
 {
     @Property Grammar grammar;
 }
 
 INJECT Token :
-   import org.congocc.app.Grammar;
+   import org.congocc.core.Grammar;
 {
     @Property Grammar grammar;
 }

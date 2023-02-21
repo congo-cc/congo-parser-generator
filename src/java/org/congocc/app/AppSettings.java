@@ -14,6 +14,7 @@ import java.util.regex.MatchResult;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
+import org.congocc.core.Grammar;
 import org.congocc.core.LexerData;
 
 /**
@@ -30,12 +31,12 @@ public class AppSettings {
     private String codeLang, parserPackage, parserClassName, lexerClassName, baseName, baseNodeClassName;
 
 
-    Set<String> tokensOffByDefault = new LinkedHashSet<>();
-    Map<String, String> extraTokens = new LinkedHashMap<>();
+    private Set<String> tokensOffByDefault = new LinkedHashSet<>();
+    private Map<String, String> extraTokens = new LinkedHashMap<>();
     private boolean ignoreCase, quiet;
     private int jdkTarget = 8;
 
-    AppSettings(Grammar grammar) {
+    public AppSettings(Grammar grammar) {
         this.grammar = grammar;
         this.errors = grammar.getErrors();
     }
@@ -65,6 +66,10 @@ public class AppSettings {
 
     public void setCodeLang(String codeLang) {this.codeLang = codeLang;}
 
+    public Set<String> getDeactivatedTokens() {
+        return tokensOffByDefault;
+    }
+    public Map<String,String> getExtraTokens() {return extraTokens;}
     public List<String> getExtraTokenNames() {return new ArrayList<>(extraTokens.keySet());}
     public Collection<String> getExtraTokenClassNames() {return extraTokens.values();}
 
@@ -254,7 +259,7 @@ public class AppSettings {
         return dir;
     }
     
-    String separatorString() {
+    public String separatorString() {
         // Temporary solution. Use capital sigma for Python / others, for now
         return codeLang.equals("java") ? "$": "\u03A3";
     }
@@ -357,7 +362,7 @@ public class AppSettings {
         return result != null ? result : "";
     }
 
-    Path resolveLocation(String location) {
+    public Path resolveLocation(String location) {
         Path path = Paths.get(location);
         if (Files.exists(path)) return path;
         if (!path.isAbsolute()) {
@@ -401,11 +406,11 @@ public class AppSettings {
         return null;
     }
 
-    String resolveAlias(String location) {
+    public String resolveAlias(String location) {
         return locationAliases.getOrDefault(location, location);
     }
 
-    Path resolveLocation(List<String> locations) {
+    public Path resolveLocation(List<String> locations) {
         for (String location : locations) {
             Path path = resolveLocation(location);
             if (path != null) return path;

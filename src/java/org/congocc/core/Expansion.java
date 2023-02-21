@@ -2,7 +2,7 @@ package org.congocc.core;
 
 import java.util.*;
 
-import org.congocc.app.Grammar;
+import org.congocc.core.Grammar;
 import org.congocc.parser.Node;
 import org.congocc.parser.tree.*;
 

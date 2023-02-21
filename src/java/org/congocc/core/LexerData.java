@@ -2,7 +2,6 @@ package org.congocc.core;
 
 import java.util.*;
 
-import org.congocc.app.Grammar;
 import org.congocc.core.nfa.LexicalStateData;
 import org.congocc.parser.tree.EndOfFile;
 import org.congocc.parser.tree.RegexpStringLiteral;
@@ -141,7 +140,7 @@ public class LexerData {
     }
 
     public int getTokenCount() {
-        return regularExpressions.size() + grammar.getExtraTokenNames().size();
+        return regularExpressions.size() + grammar.getAppSettings().getExtraTokenNames().size();
     }
     
     public TokenSet getMoreTokens() {

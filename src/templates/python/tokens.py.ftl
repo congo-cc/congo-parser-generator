@@ -25,7 +25,7 @@ class TokenType(Enum):
  [#list grammar.lexerData.regularExpressions as regexp]
     ${regexp.label} = auto()
  [/#list]
- [#list grammar.extraTokenNames as t]
+ [#list settings.extraTokenNames as t]
     ${t} = auto()
  [/#list]
     INVALID = auto()
@@ -530,9 +530,9 @@ class SkippedToken(InvalidToken): pass
 class ${name}(${tokenSubClassInfo.tokenClassMap[name]}): pass
 
 [/#list]
-[#if grammar.extraTokens?size > 0]
-  [#list grammar.extraTokenNames as name]
-    [#var cn = grammar.extraTokens[name]]
+[#if settings.extraTokens?size > 0]
+  [#list settings.extraTokenNames as name]
+    [#var cn = settings.extraTokens[name]]
 class ${cn}(Token):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)

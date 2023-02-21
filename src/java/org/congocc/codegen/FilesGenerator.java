@@ -7,7 +7,9 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.*;
 
-import org.congocc.app.*;
+import org.congocc.app.AppSettings;
+import org.congocc.app.Errors;
+import org.congocc.core.Grammar;
 import org.congocc.core.RegularExpression;
 import org.congocc.codegen.java.*;
 import org.congocc.parser.*;
@@ -355,7 +357,7 @@ public class FilesGenerator {
                 superClassLookup.put(tokenClassName, superClassName);
             }
         }
-        for (Map.Entry<String, String> es : grammar.getExtraTokens().entrySet()) {
+        for (Map.Entry<String, String> es : appSettings.getExtraTokens().entrySet()) {
             String value = es.getValue();
             Path outputFile = getOutputFile(value);
             files.put(value, outputFile);

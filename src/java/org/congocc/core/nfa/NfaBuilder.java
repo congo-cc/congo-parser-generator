@@ -4,7 +4,7 @@ import java.util.ArrayList;
 import java.util.BitSet;
 import java.util.List;
 
-import org.congocc.app.Grammar;
+import org.congocc.core.Grammar;
 import org.congocc.core.RegularExpression;
 import org.congocc.parser.Node;
 import org.congocc.parser.tree.*;
@@ -88,7 +88,7 @@ class NfaBuilder extends Node.Visitor {
     void visit(RegexpStringLiteral stringLiteral) {
         NfaState state = end = start = new NfaState(lexicalState);
         for (int ch : stringLiteral.getImage().codePoints().toArray()) {
-            state.setCharMove(ch, grammar.isIgnoreCase() || ignoreCase);
+            state.setCharMove(ch, ignoreCase || grammar.getAppSettings().isIgnoreCase());
             this.end = new NfaState(lexicalState);
             state.setNextState(this.end);
             state = this.end;

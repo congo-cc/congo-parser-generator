@@ -3,7 +3,7 @@ package org.congocc.core.nfa;
 import java.util.*;
 
 import org.congocc.app.Errors;
-import org.congocc.app.Grammar;
+import org.congocc.core.Grammar;
 import org.congocc.core.RegularExpression;
 import org.congocc.parser.tree.RegexpSpec;
 import org.congocc.parser.tree.RegexpStringLiteral;
@@ -126,7 +126,7 @@ public class LexicalStateData {
     }
 
     private void processTokenProduction(TokenProduction tp) {
-        boolean ignore = tp.isIgnoreCase() || grammar.isIgnoreCase();//REVISIT
+        boolean ignore = tp.isIgnoreCase() || grammar.getAppSettings().isIgnoreCase();//REVISIT
         for (RegexpSpec regexpSpec : tp.getRegexpSpecs()) {
             RegularExpression currentRegexp = regexpSpec.getRegexp();
             if (currentRegexp.isPrivate() || grammar.isOverridden(currentRegexp)) {

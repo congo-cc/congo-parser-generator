@@ -1,12 +1,11 @@
-package org.congocc.app;
+package org.congocc.codegen;
 
 import java.util.*;
 
-import org.congocc.codegen.Sequencer;
+import org.congocc.app.*;
 import org.congocc.core.*;
 import org.congocc.parser.*;
 import org.congocc.parser.tree.*;
-import org.congocc.codegen.Translator;
 
 /**
  * Class to hold various methods and variables
@@ -20,7 +19,7 @@ public class TemplateGlobals {
 
     private List<String> nodeVariableNameStack = new ArrayList<>();
 
-    TemplateGlobals(Grammar grammar) {
+    public TemplateGlobals(Grammar grammar) {
         this.grammar = grammar;
         this.appSettings = grammar.getAppSettings();
     }
@@ -33,26 +32,6 @@ public class TemplateGlobals {
 
     public void popNodeVariableName() {
         nodeVariableNameStack.remove(nodeVariableNameStack.size() - 1);
-    }
-
-    public String toHexString(int i) {
-        return "0x" + Integer.toHexString(i);
-    }
-
-    public String toHexStringL(long l) {
-        return "0x" + Long.toHexString(l) + "L";
-    }
-
-    public String toOctalString(int i) {
-        return "\\" + Integer.toOctalString(i);
-    }
-
-    public String lastPart(String source, int delimiter) {
-        int i = source.lastIndexOf(delimiter);
-        if (i < 0) {
-            return source;
-        }
-        return source.substring(i + 1);
     }
 
     public boolean nodeIsInterface(String nodeName) {
@@ -337,7 +316,8 @@ public class TemplateGlobals {
         if (fields) {
             translator.clearFields();
         }
-        String cn = lastPart(className, '.');
+//        String cn = lastPart(className, '.');
+        String cn = className.substring(className.lastIndexOf('.')+1);
         translator.startClass(cn, fields, result);
         try {
             List<ClassOrInterfaceBodyDeclaration> declsToProcess = grammar.getInjector().getBodyDeclarations(className);

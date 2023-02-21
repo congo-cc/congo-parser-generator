@@ -13,6 +13,7 @@ import java.nio.file.Paths;
 import java.util.*;
 import java.util.regex.*;
 
+import org.congocc.core.Grammar;
 import org.congocc.parser.ParseException;
 
 import freemarker.template.TemplateException;

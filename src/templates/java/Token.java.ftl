@@ -40,7 +40,7 @@ public class Token ${implementsNode} {
        [#list grammar.lexerData.regularExpressions as regexp]
           ${regexp.label},
        [/#list]
-       [#list grammar.extraTokenNames as extraToken]
+       [#list settings.extraTokenNames as extraToken]
           ${extraToken},
        [/#list]
        DUMMY,
@@ -485,8 +485,8 @@ public class Token ${implementsNode} {
               case ${re.label} : return new ${grammar.nodePrefix}${re.generatedClassName}(TokenType.${re.label}, tokenSource, beginOffset, endOffset);
             [/#if]
            [/#list]
-           [#list grammar.extraTokenNames as tokenName]
-              case ${tokenName} : return new ${grammar.nodePrefix}${grammar.extraTokens[tokenName]}(TokenType.${tokenName}, tokenSource, beginOffset, endOffset);
+           [#list settings.extraTokenNames as tokenName]
+              case ${tokenName} : return new ${grammar.nodePrefix}${settings.extraTokens[tokenName]}(TokenType.${tokenName}, tokenSource, beginOffset, endOffset);
            [/#list]
               case INVALID : return new InvalidToken(tokenSource, beginOffset, endOffset);
               default : return new Token(type, tokenSource, beginOffset, endOffset);

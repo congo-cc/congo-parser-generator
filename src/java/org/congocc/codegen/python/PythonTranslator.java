@@ -2,7 +2,7 @@ package org.congocc.codegen.python;
 
 import java.util.*;
 
-import org.congocc.app.Grammar;
+import org.congocc.core.Grammar;
 import org.congocc.codegen.Translator;
 import org.congocc.codegen.java.CodeInjector;
 import org.congocc.parser.CongoCCParser;

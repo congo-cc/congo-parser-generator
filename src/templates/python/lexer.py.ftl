@@ -10,9 +10,9 @@ import re
 from .tokens import (TokenType, LexicalState, InvalidToken, IgnoredToken,
                      SkippedToken, new_token)
 
-[#if grammar.extraTokens?size > 0]
-  [#list grammar.extraTokenNames as tokenName]
-from .tokens import ${grammar.extraTokens[tokenName]}
+[#if settings.extraTokens?size > 0]
+  [#list settings.extraTokenNames as tokenName]
+from .tokens import ${settings.extraTokens[tokenName]}
   [/#list]
 [/#if]
 from .utils import as_chr, _List, EMPTY_SET, HashSet
@@ -378,8 +378,8 @@ ${globals.translateLexerInjections(true)}
         self.current_states = BitSet(MAX_STATES)
 
         self.active_token_types = set(TokenType)
-  [#if grammar.deactivatedTokens?size>0]
-       [#list grammar.deactivatedTokens as token]
+  [#if settings.deactivatedTokens?size>0]
+       [#list settings.deactivatedTokens as token]
         self.active_token_types.remove(TokenType.${token})
        [/#list]
   [/#if]

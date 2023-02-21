@@ -3,7 +3,6 @@ package org.congocc.core;
 import java.util.*;
 
 import org.congocc.app.Errors;
-import org.congocc.app.Grammar;
 import org.congocc.core.nfa.LexicalStateData;
 import org.congocc.parser.*;
 import org.congocc.parser.tree.*;
@@ -279,7 +278,7 @@ public class SanityChecker {
 
         for (RegexpRef ref : grammar.descendants(RegexpRef.class)) {
             String label = ref.getLabel();
-            if (grammar.getExtraTokens().containsKey(label)) continue;
+            if (grammar.getAppSettings().getExtraTokens().containsKey(label)) continue;
             RegularExpression referenced = grammar.getNamedToken(label);
             if (referenced == null) {
                 errors.addError(ref,  "Undefined lexical token name \"" + label + "\".");

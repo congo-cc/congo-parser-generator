@@ -328,11 +328,11 @@ ${globals.translateLexerImports()}
             _tokenOffsets = new BitSet(_contentLength + 1);
             startingLine = line;
             startingColumn = column;
-[#if grammar.deactivatedTokens?size>0 || grammar.extraTokens?size >0]
-  [#list grammar.deactivatedTokens as token]
+[#if settings.deactivatedTokens?size>0 || settings.extraTokens?size >0]
+  [#list settings.deactivatedTokens as token]
             ActiveTokenTypes.Remove(${CU.TT}${token});
   [/#list]
-  [#list grammar.extraTokenNames as token]
+  [#list settings.extraTokenNames as token]
             regularTokens.Add(${CU.TT}${token});
   [/#list]
 [/#if]
