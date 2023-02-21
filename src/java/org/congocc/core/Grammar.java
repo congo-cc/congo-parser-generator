@@ -31,10 +31,8 @@ public class Grammar extends BaseNode {
     private Map<String, BNFProduction> productionTable;
     private Map<String, RegularExpression> namedTokensTable = new LinkedHashMap<>();
     private Set<RegularExpression> overriddenTokens = new HashSet<>();
-    private Map<String, String> tokenNamesToConstName = new HashMap<>();
     private Set<String> lexicalStates = new LinkedHashSet<>();
     private Map<String, String> preprocessorSymbols = new HashMap<>();
-    private Map<Integer, String> tokenNames = new HashMap<>();
     private Set<String> nodeNames = new LinkedHashSet<>();
     private Map<String,String> nodeClassNames = new HashMap<>();
     // TODO use these later for Nodes that correspond to abstract
@@ -42,7 +40,6 @@ public class Grammar extends BaseNode {
     private Set<String> abstractNodeNames = new HashSet<>();
     private Set<String> interfaceNodeNames = new HashSet<>();
     private Map<String, String> nodePackageNames = new HashMap<>();
-    private Set<String> usedIdentifiers = new HashSet<>();
     private List<Node> codeInjections = new ArrayList<>();
     private List<String> lexerTokenHooks = new ArrayList<>(),
                          parserTokenHooks = new ArrayList<>(),
@@ -53,15 +50,11 @@ public class Grammar extends BaseNode {
 
     private Set<Path> alreadyIncluded = new HashSet<>();
 
-
-
-
     private Set<RegexpStringLiteral> stringLiteralsToResolve = new HashSet<>();
 
     private TemplateGlobals templateGlobals;
     private AppSettings appSettings;
     private Errors errors = new Errors();
-//    private Translator translator;
 
     public Grammar(Path outputDir, String codeLang, int jdkTarget, boolean quiet, Map<String, String> preprocessorSymbols) {
         this.preprocessorSymbols = preprocessorSymbols;
@@ -85,8 +78,6 @@ public class Grammar extends BaseNode {
     public void setSettings(Map<String, Object> settings) {
         appSettings.setSettings((settings));
     }
-
-    public String getCodeLang() { return appSettings.getCodeLang(); }
 
     public Map<String,String> getPreprocessorSymbols() {
         return preprocessorSymbols;
@@ -119,28 +110,6 @@ public class Grammar extends BaseNode {
     }
 
 
-    public String generateIdentifierPrefix(String basePrefix) {
-        return basePrefix + appSettings.separatorString();
-    }
-
-    public String generateUniqueIdentifier(String prefix, Node exp) {
-        String inputSource = exp.getInputSource();
-        String sep = appSettings.separatorString();
-
-        if (inputSource != null) {
-            int lastSlash = Math.max(inputSource.lastIndexOf('\\'), inputSource.lastIndexOf('/'));
-            if (lastSlash+1<inputSource.length()) inputSource = inputSource.substring(lastSlash+1);
-        } else {
-            inputSource = "";
-        }
-        String id = prefix + inputSource + sep + exp.getBeginLine() + sep + exp.getBeginColumn();
-        id = removeNonJavaIdentifierPart(id);
-        while (usedIdentifiers.contains(id)) {
-            id += sep;
-        }
-        usedIdentifiers.add(id);
-        return id;
-    }
 
     public Node parse(Path file, boolean enterIncludes) throws IOException {
         Path canonicalPath = file.normalize();
@@ -447,10 +416,6 @@ public class Grammar extends BaseNode {
         return overriddenTokens.contains(regexp);
     }
 
-    public boolean hasTokenOfName(String name) {
-        return namedTokensTable.containsKey(name);
-    }
-
     /**
      * Contains the same entries as "namedTokensTable", but this is an ordered
      * list which is ordered by the order of appearance in the input file.
@@ -459,38 +424,6 @@ public class Grammar extends BaseNode {
      */
     public List<RegularExpression> getOrderedNamedTokens() {
         return new ArrayList<RegularExpression>(namedTokensTable.values());
-    }
-
-    /**
-     * A mapping of ordinal values (represented as objects of type "Integer") to
-     * the corresponding labels (of type "String"). An entry exists for an
-     * ordinal value only if there is a labeled token corresponding to this
-     * entry. If there are multiple labels representing the same ordinal value,
-     * then only one label is stored.
-     */
-
-    public String getTokenName(int index) {
-        String tokenName = tokenNames.get(index);
-        return tokenName == null ? String.valueOf(index) : tokenName;
-    }
-
-    public String classNameFromTokenName(String tokenName) {
-        if (Character.isDigit(tokenName.charAt(0))) {
-            return null;
-        }
-        if (namedTokensTable.get(tokenName).isPrivate()) {
-            return null;
-        }
-        tokenNamesToConstName.put(tokenName, tokenName);
-        return tokenName;
-    }
-
-    public String constNameFromClassName(String className) {
-        return this.tokenNamesToConstName.get(className);
-    }
-
-    public void addTokenName(int index, String name) {
-        tokenNames.put(index, name);
     }
 
     public Set<String> getNodeNames() {
@@ -571,12 +504,12 @@ public class Grammar extends BaseNode {
         else if (node instanceof MethodDeclaration) {
             MethodDeclaration decl = (MethodDeclaration) node;
             String sig = decl.getFullSignature();
-            String closeNodePrefix = generateIdentifierPrefix("closeNodeHook");
+            String closeNodePrefix = appSettings.generateIdentifierPrefix("closeNodeHook");
             if (sig != null) {
                 String methodName = new StringTokenizer(sig, "(\n ").nextToken();
                 if (className.equals(appSettings.getLexerClassName())) {
-                    String prefix = generateIdentifierPrefix("tokenHook");
-                    String resetPrefix = generateIdentifierPrefix("resetTokenHook");
+                    String prefix = appSettings.generateIdentifierPrefix("tokenHook");
+                    String resetPrefix = appSettings.generateIdentifierPrefix("resetTokenHook");
                     if (methodName.startsWith(prefix) || methodName.equals("tokenHook") || methodName.equals("CommonTokenAction")) {
                         lexerTokenHooks.add(methodName);
                     }
@@ -615,22 +548,4 @@ public class Grammar extends BaseNode {
     public boolean isInInclude() {
         return includeNesting >0;
     }
-
-    public String getParserPackage() {
-        return appSettings.getParserPackage();
-    }
-
-    static public String removeNonJavaIdentifierPart(String s) {
-        StringBuilder buf = new StringBuilder(s.length());
-        for (int ch : s.codePoints().toArray()) {
-            boolean addChar = buf.length() == 0 ? (Character.isJavaIdentifierStart(ch)) : Character.isJavaIdentifierPart(ch);
-            if (addChar) {
-                buf.appendCodePoint(ch);
-            }
-            if (ch == '.') buf.appendCodePoint('_');
-        }
-        return buf.toString();
-    }
-
-//    public boolean isIgnoreCase() {return appSettings.isIgnoreCase();}
 }

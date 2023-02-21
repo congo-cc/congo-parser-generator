@@ -16,6 +16,7 @@ import java.util.regex.Pattern;
 
 import org.congocc.core.Grammar;
 import org.congocc.core.LexerData;
+import org.congocc.parser.Node;
 
 /**
  * Class to hold the various application settings
@@ -30,7 +31,7 @@ public class AppSettings {
     private Path outputDir, filename, includedFileDirectory;
     private String codeLang, parserPackage, parserClassName, lexerClassName, baseName, baseNodeClassName;
 
-
+    private Set<String> usedIdentifiers = new HashSet<>();
     private Set<String> tokensOffByDefault = new LinkedHashSet<>();
     private Map<String, String> extraTokens = new LinkedHashMap<>();
     private boolean ignoreCase, quiet;
@@ -304,7 +305,7 @@ public class AppSettings {
             if (lastDot >0) {
                 baseName = baseName.substring(0, lastDot);
             }
-            baseName = Grammar.removeNonJavaIdentifierPart(baseName);
+            baseName = removeNonJavaIdentifierPart(baseName);
             if (Character.isLowerCase(baseName.charAt(0))) {
                 baseName = baseName.substring(0, 1).toUpperCase() 
                                   + baseName.substring(1);
@@ -575,5 +576,40 @@ public class AppSettings {
 
     public void setQuiet(boolean quiet) {
         this.quiet = quiet;
+    }
+
+    public String generateUniqueIdentifier(String prefix, Node exp) {
+        String inputSource = exp.getInputSource();
+        String sep = separatorString();
+
+        if (inputSource != null) {
+            int lastSlash = Math.max(inputSource.lastIndexOf('\\'), inputSource.lastIndexOf('/'));
+            if (lastSlash+1<inputSource.length()) inputSource = inputSource.substring(lastSlash+1);
+        } else {
+            inputSource = "";
+        }
+        String id = prefix + inputSource + sep + exp.getBeginLine() + sep + exp.getBeginColumn();
+        id = removeNonJavaIdentifierPart(id);
+        while (usedIdentifiers.contains(id)) {
+            id += sep;
+        }
+        usedIdentifiers.add(id);
+        return id;
+    }
+
+    public String generateIdentifierPrefix(String basePrefix) {
+        return basePrefix + separatorString();
+    }
+
+    static public String removeNonJavaIdentifierPart(String s) {
+        StringBuilder buf = new StringBuilder(s.length());
+        for (int ch : s.codePoints().toArray()) {
+            boolean addChar = buf.length() == 0 ? (Character.isJavaIdentifierStart(ch)) : Character.isJavaIdentifierPart(ch);
+            if (addChar) {
+                buf.appendCodePoint(ch);
+            }
+            if (ch == '.') buf.appendCodePoint('_');
+        }
+        return buf.toString();
     }
 }

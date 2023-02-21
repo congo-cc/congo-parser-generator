@@ -273,10 +273,9 @@ abstract public class Expansion extends BaseNode {
             if (this.getParent() instanceof BNFProduction) {
                 firstSetVarName = ((BNFProduction) getParent()).getFirstSetVarName();
             } else {
-                Grammar g = getGrammar();
-                String prefix = g.generateIdentifierPrefix("first_set");
+                String prefix = getAppSettings().generateIdentifierPrefix("first_set");
 
-                firstSetVarName = g.generateUniqueIdentifier(prefix, this);
+                firstSetVarName = getAppSettings().generateUniqueIdentifier(prefix, this);
             }
         }
         return firstSetVarName;
@@ -284,7 +283,7 @@ abstract public class Expansion extends BaseNode {
 
     public String getFinalSetVarName() {
         String result = getFirstSetVarName();
-        String prefix = getGrammar().generateIdentifierPrefix("first_set");
+        String prefix = getAppSettings().generateIdentifierPrefix("first_set");
 
         if (result.startsWith(prefix)) {
             return result.replaceFirst("first", "final");
@@ -294,7 +293,7 @@ abstract public class Expansion extends BaseNode {
 
     public String getFollowSetVarName() {
         String result = getFirstSetVarName();
-        String prefix = getGrammar().generateIdentifierPrefix("first_set");
+        String prefix = getAppSettings().generateIdentifierPrefix("first_set");
 
         if (result.startsWith(prefix)) {
             return result.replaceFirst("first", "follow");
@@ -308,35 +307,31 @@ abstract public class Expansion extends BaseNode {
                 BNFProduction prod = (BNFProduction) getParent();
                 scanRoutineName = prod.getLookaheadMethodName();
             } else {
-                Grammar g = getGrammar();
-                String prefix = g.generateIdentifierPrefix("check");
+                String prefix = getAppSettings().generateIdentifierPrefix("check");
                 if (this.getParent() instanceof Assertion) {
                     prefix = prefix.replace("check", "assert");
                 }
-                scanRoutineName = g.generateUniqueIdentifier(prefix, this);
+                scanRoutineName = getAppSettings().generateUniqueIdentifier(prefix, this);
             }
         }
         return scanRoutineName;
     }
 
     public String getPredicateMethodName() {
-        Grammar g = getGrammar();
-        String checkPrefix = g.generateIdentifierPrefix("check");
-        String scanPrefix = g.generateIdentifierPrefix("scan");
+        String checkPrefix = getAppSettings().generateIdentifierPrefix("check");
+        String scanPrefix = getAppSettings().generateIdentifierPrefix("scan");
         return getScanRoutineName().replace(checkPrefix, scanPrefix);
     }
 
     public String getRecoverMethodName() {
-        Grammar g = getGrammar();
-        String checkPrefix = g.generateIdentifierPrefix("check");
-        String recoverPrefix = g.generateIdentifierPrefix("recover");
+        String checkPrefix = getAppSettings().generateIdentifierPrefix("check");
+        String recoverPrefix = getAppSettings().generateIdentifierPrefix("recover");
         return getScanRoutineName().replace(checkPrefix, recoverPrefix);
     }
 
     public String getRecoverToMethodName() {
-        Grammar g = getGrammar();
-        String checkPrefix = g.generateIdentifierPrefix("check");
-        String recoverToPrefix = g.generateIdentifierPrefix("recover_to");
+        String checkPrefix = getAppSettings().generateIdentifierPrefix("check");
+        String recoverToPrefix = getAppSettings().generateIdentifierPrefix("recover_to");
         return getScanRoutineName().replace(checkPrefix, recoverToPrefix);
     }
 

@@ -715,7 +715,7 @@ public class Translator {
     }
 
     public static Translator getTranslatorFor(Grammar grammar) {
-        String codeLang = grammar.getCodeLang();
+        String codeLang = grammar.getAppSettings().getCodeLang();
 
         if (codeLang.equals("python")) {
             return new PythonTranslator(grammar);
@@ -1462,7 +1462,7 @@ public class Translator {
     protected ASTHelperNode transformTree(Node node) { return transformTree(node, false); }
 
     public void fail() throws UnsupportedOperationException {
-        String message = String.format("not supported by translator for the '%s' language", grammar.getCodeLang());
+        String message = String.format("not supported by translator for the '%s' language", grammar.getAppSettings().getCodeLang());
         throw new UnsupportedOperationException(message);
     }
 

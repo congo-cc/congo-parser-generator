@@ -298,7 +298,6 @@ public final class Main {
      * @return error code
      * @throws Exception
      */
-
     public static int mainProgram(Path grammarFile, Path outputDir, String codeLang, int jdkTarget, boolean quiet, Map<String, String> symbols)
       throws IOException, ParseException, TemplateException {
         if (!quiet) bannerLine();

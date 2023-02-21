@@ -113,7 +113,7 @@ public class TemplateGlobals {
         if (ch < 128 && !Character.isWhitespace(ch) && !Character.isISOControl(ch))
             return "'" + (char) ch + "'";
         s = "0x" + Integer.toHexString(ch);
-        if (grammar.getCodeLang().equals("python")) {
+        if (appSettings.getCodeLang().equals("python")) {
             s = String.format("as_chr(%s)", s);
         }
         return s;

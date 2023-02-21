@@ -81,7 +81,7 @@ public class BNFProduction extends BaseNode {
     }
 
     public String getLookaheadMethodName() {
-        return getGrammar().generateIdentifierPrefix("check") + name;
+        return getAppSettings().generateIdentifierPrefix("check") + name;
     }
 
     public String getNodeName() {

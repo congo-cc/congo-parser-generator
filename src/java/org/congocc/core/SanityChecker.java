@@ -266,9 +266,6 @@ public class SanityChecker {
                         }
                     }
                 } 
-                if (!regexp.getLabel().equals("")) {
-                    grammar.addTokenName(regexp.getOrdinal(), regexp.getLabel());
-                }
             }
         }
 

@@ -703,29 +703,29 @@ INJECT Identifier :
         }
         if (image.equals("TOKEN_HOOK")) {
             if (tokenHookName ==null) {
-                String prefix = getGrammar().generateIdentifierPrefix("tokenHook");
-                tokenHookName = getGrammar().generateUniqueIdentifier(prefix, this);
+                String prefix = getAppSettings().generateIdentifierPrefix("tokenHook");
+                tokenHookName = getAppSettings().generateUniqueIdentifier(prefix, this);
             }
             return tokenHookName;
         }
         if (image.equals("RESET_TOKEN_HOOK")) {
             if (resetTokenHookName == null) {
-                String prefix = getGrammar().generateIdentifierPrefix("resetTokenHook");
-                resetTokenHookName = getGrammar().generateUniqueIdentifier(prefix, this);
+                String prefix = getAppSettings().generateIdentifierPrefix("resetTokenHook");
+                resetTokenHookName = getAppSettings().generateUniqueIdentifier(prefix, this);
             }
             return resetTokenHookName;
         }
         if (image.equals("OPEN_NODE_HOOK")) {
             if (openHookName == null) {
-                String prefix = getGrammar().generateIdentifierPrefix("openNodeHook");
-                openHookName = getGrammar().generateUniqueIdentifier(prefix, this);
+                String prefix = getAppSettings().generateIdentifierPrefix("openNodeHook");
+                openHookName = getAppSettings().generateUniqueIdentifier(prefix, this);
             }
             return openHookName;
         }
         if (image.equals("CLOSE_NODE_HOOK")) {
             if (closeHookName == null) {
-                String prefix = getGrammar().generateIdentifierPrefix("closeNodeHook");
-                closeHookName = getGrammar().generateUniqueIdentifier(prefix, this);
+                String prefix = getAppSettings().generateIdentifierPrefix("closeNodeHook");
+                closeHookName = getAppSettings().generateUniqueIdentifier(prefix, this);
             }
             return closeHookName;
         }
@@ -1590,8 +1590,8 @@ import java.util.*;
     
     public String getRoutineName() {
         if (routineName == null) {
-            String prefix = getGrammar().generateIdentifierPrefix("backscan");
-            routineName = getGrammar().generateUniqueIdentifier(prefix, this);
+            String prefix = getAppSettings().generateIdentifierPrefix("backscan");
+            routineName = getAppSettings().generateUniqueIdentifier(prefix, this);
         }
         return routineName;
     }

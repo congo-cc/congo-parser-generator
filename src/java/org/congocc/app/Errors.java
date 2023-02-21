@@ -5,7 +5,6 @@ import org.congocc.parser.Node;
 
 public class Errors {
 	private int parseErrorCount;
-	private int semanticErrorCount;
     private int warningCount;
 
     private List<String> errorMessages = new ArrayList<>(), 
@@ -14,8 +13,6 @@ public class Errors {
 
 
 	/**
-	 * Returns the warning count during grammar parsing.
-	 *
 	 * @return the warning count during grammar parsing.
 	 */
 	public int getWarningCount() {
@@ -23,21 +20,10 @@ public class Errors {
 	}
 
 	/**
-	 * Returns the parse error count during grammar parsing.
-	 *
 	 * @return the parse error count during grammar parsing.
 	 */
 	public int getParseErrorCount() {
 		return parseErrorCount;
-	}
-
-	/**
-	 * Returns the semantic error count during grammar parsing.
-	 *
-	 * @return the semantic error count during grammar parsing.
-	 */
-	public int getSemanticErrorCount() {
-		return semanticErrorCount;
 	}
 
     public void addError(String errorMessage) {

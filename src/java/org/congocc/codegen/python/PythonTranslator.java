@@ -53,7 +53,7 @@ public class PythonTranslator extends Translator {
         String result = ident;
 
         if (specialPrefixes.isEmpty()) {
-            specialPrefixes.add(grammar.generateIdentifierPrefix("tokenHook"));
+            specialPrefixes.add(grammar.getAppSettings().generateIdentifierPrefix("tokenHook"));
         }
         if (ident.equals("null")) {
             result = "None";

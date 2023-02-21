@@ -43,7 +43,7 @@ public class CSharpTranslator extends Translator {
         String result = ident;
 
         if (specialPrefixes.isEmpty()) {
-            specialPrefixes.add(grammar.generateIdentifierPrefix("tokenHook"));
+            specialPrefixes.add(grammar.getAppSettings().generateIdentifierPrefix("tokenHook"));
         }
         if (ident.equals("toString")) {
             result = "ToString";
