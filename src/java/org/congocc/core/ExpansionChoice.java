@@ -8,6 +8,7 @@ public class ExpansionChoice extends Expansion {
         return childrenOfType(ExpansionSequence.class);
     }
     
+    @Override
     public TokenSet getFirstSet() {
          if (firstSet == null) {
             firstSet = new TokenSet(getGrammar());
@@ -18,6 +19,7 @@ public class ExpansionChoice extends Expansion {
          return firstSet;
     }
     
+    @Override
     public TokenSet getFinalSet() {
         TokenSet finalSet = new TokenSet(getGrammar());
         for (ExpansionSequence choice : childrenOfType(ExpansionSequence.class)) {
@@ -27,14 +29,17 @@ public class ExpansionChoice extends Expansion {
     }
     
     
+    @Override
     public boolean isPossiblyEmpty() {
         return childrenOfType(ExpansionSequence.class).stream().anyMatch(choice->choice.isPossiblyEmpty());
     }
- 
-    public boolean isAlwaysSuccessful() {
-        return childrenOfType(ExpansionSequence.class).stream().anyMatch(choice->choice.isAlwaysSuccessful());
+
+    @Override
+    public boolean isAlwaysEntered() {
+        return childrenOfType(ExpansionSequence.class).stream().anyMatch(choice->choice.isAlwaysEntered());
     }
     
+    @Override
     public int getMinimumSize() {
         int result = Integer.MAX_VALUE;
         for (ExpansionSequence choice : childrenOfType(ExpansionSequence.class)) {
@@ -45,6 +50,7 @@ public class ExpansionChoice extends Expansion {
         return result;
     }
  
+    @Override
     public int getMaximumSize() {
         int result = 0;
         for (ExpansionSequence exp : childrenOfType(ExpansionSequence.class)) {
@@ -54,6 +60,7 @@ public class ExpansionChoice extends Expansion {
         return result;
     }
     
+    @Override
     public boolean potentiallyStartsWith(String productionName, Set<String> alreadyVisited) {
         for (ExpansionSequence choice : childrenOfType(ExpansionSequence.class)) {
             if (choice.potentiallyStartsWith(productionName, alreadyVisited)) return true;
@@ -61,6 +68,7 @@ public class ExpansionChoice extends Expansion {
         return false;
     }
 
+    @Override
     public boolean isSingleToken() {
         if (!super.isSingleToken()) return false;
         for (ExpansionSequence exp : childrenOfType(ExpansionSequence.class)) {

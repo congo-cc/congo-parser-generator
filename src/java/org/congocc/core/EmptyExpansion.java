@@ -9,7 +9,8 @@ abstract public class EmptyExpansion extends Expansion {
     
     public boolean isPossiblyEmpty() {return true;}
 
-    public boolean isAlwaysSuccessful() {return true;}
+    @Override
+    public boolean isAlwaysEntered() {return true;}
     
     public TokenSet getFirstSet() {return new TokenSet(getGrammar());}
     

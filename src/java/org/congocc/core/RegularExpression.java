@@ -174,7 +174,7 @@ public abstract class RegularExpression extends Expansion {
     
     abstract public boolean matchesEmptyString();
 
-    public boolean isAlwaysSuccessful() {return matchesEmptyString();}
+    public boolean isAlwaysEntered() {return matchesEmptyString();}
 }
 
 

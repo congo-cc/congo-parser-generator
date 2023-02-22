@@ -369,7 +369,7 @@ ${is}    self.pop_call_stack()
 [#macro BuildCodeZeroOrOne zoo indent]
 [#var is = ""?right_pad(indent)]
 [#-- ${is}# DBG > BuildCodeZeroOrOne ${indent} ${zoo.nestedExpansion.class.simpleName} --]
-    [#if zoo.nestedExpansion.alwaysSuccessful
+    [#if zoo.nestedExpansion.alwaysEntered
       || zoo.nestedExpansion.class.simpleName = "ExpansionChoice"]
 ${BuildCode(zoo.nestedExpansion, indent)}
     [#else]
@@ -445,7 +445,7 @@ ${is}    if self.pending_recovery: raise
 [#var is = ""?right_pad(indent)]
 [#-- ${is}# DBG > BuildCodeChoice ${indent} --]
    [#list choice.choices as expansion]
-      [#if expansion.alwaysSuccessful]
+      [#if expansion.alwaysEntered]
 ${is}else:
 ${BuildCode(expansion, indent + 4)}
          [#return]

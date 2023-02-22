@@ -67,8 +67,9 @@ public class NonTerminal extends Expansion {
          return getProduction().isPossiblyEmpty();
      }
 
-     public boolean isAlwaysSuccessful() {
-         return getProduction().getExpansion().isAlwaysSuccessful();
+     @Override
+     public boolean isAlwaysEntered() {
+         return getProduction().getExpansion().isAlwaysEntered();
      }
      
      private boolean inMinimumSize, inMaximumSize;

@@ -367,7 +367,7 @@ abstract public class Expansion extends BaseNode {
      * This is really a misnomer. It should really be alwaysEnter
      * or something like that.
      */
-    abstract public boolean isAlwaysSuccessful();
+    abstract public boolean isAlwaysEntered();
 
     /**
      * @return the minimum number of tokens that this expansion consumes.
