@@ -1540,8 +1540,8 @@ INJECT Assertion :
     @Property boolean expansionNegated, semanticLookaheadNested;
 
 
-    @Override
-    public boolean isAlwaysEntered() {return true;}
+//    @Override
+//    public boolean isAlwaysEntered() {return true;}
 
     @Override 
     public boolean startsWithGlobalCodeAction() {
@@ -2003,8 +2003,8 @@ INJECT Failure :
         return firstChildOfType(CodeBlock.class);
     }
 
-    @Override
-    public boolean isAlwaysEntered() {return false;}
+//    @Override
+//    public boolean isAlwaysEntered() {return true;}
 
     @Override 
     public boolean startsWithGlobalCodeAction() {return true;}    
@@ -2145,9 +2145,9 @@ INJECT CodeBlock :
         return this;
     }
     
-    public boolean isPossiblyEmpty() {
-       return true;
-    }
+//    public boolean isPossiblyEmpty() {
+//       return true;
+//    }
 
     public boolean startsWithGlobalCodeAction() {
         return isAppliesInLookahead();

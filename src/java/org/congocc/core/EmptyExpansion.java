@@ -7,18 +7,22 @@ package org.congocc.core;
 
 abstract public class EmptyExpansion extends Expansion {
     
-    public boolean isPossiblyEmpty() {return true;}
+    @Override
+    public final boolean isPossiblyEmpty() {return true;}
 
     @Override
-    public boolean isAlwaysEntered() {return true;}
+    public final boolean isAlwaysEntered() {return true;}
+   
+    @Override
+    public final TokenSet getFirstSet() {return new TokenSet(getGrammar());}
+   
+    @Override
+    public final TokenSet getFinalSet() {return new TokenSet(getGrammar());}
     
-    public TokenSet getFirstSet() {return new TokenSet(getGrammar());}
-    
-    public TokenSet getFinalSet() {return new TokenSet(getGrammar());}
-     
-    public int getMinimumSize() {return 0;}
+    @Override
+    public final int getMinimumSize() {return 0;}
 
-    public int getMaximumSize() {return 0;}
+    @Override
+    public final int getMaximumSize() {return 0;}
 
-    public boolean getSpecifiesLexicalStateSwitch() {return false;}
 }
