@@ -1338,9 +1338,87 @@ INJECT RegexpSpec :
     }
 }
 
-ExpansionChoice #org.congocc.core.ExpansionChoice(>1) : 
+ExpansionChoice :
   ExpansionSequence ( "|" ExpansionSequence)*
 ;
+
+INJECT ExpansionChoice :
+   import org.congocc.core.*;
+   extends Expansion
+{
+    public java.util.List<ExpansionSequence> getChoices() {
+        return childrenOfType(ExpansionSequence.class);
+    }
+    
+    @Override
+    public TokenSet getFirstSet() {
+         if (firstSet == null) {
+            firstSet = new TokenSet(getGrammar());
+            for (ExpansionSequence choice : childrenOfType(ExpansionSequence.class)) {
+                firstSet.or(choice.getLookaheadExpansion().getFirstSet());
+            }
+         }
+         return firstSet;
+    }
+    
+    @Override
+    public TokenSet getFinalSet() {
+        TokenSet finalSet = new TokenSet(getGrammar());
+        for (ExpansionSequence choice : childrenOfType(ExpansionSequence.class)) {
+            finalSet.or(choice.getFinalSet());
+        }
+        return finalSet;
+    }
+    
+    @Override
+    public boolean isPossiblyEmpty() {
+        return childrenOfType(ExpansionSequence.class).stream().anyMatch(choice->choice.isPossiblyEmpty());
+    }
+
+    @Override
+    public boolean isAlwaysEntered() {
+        return childrenOfType(ExpansionSequence.class).stream().anyMatch(choice->choice.isAlwaysEntered());
+    }
+    
+    @Override
+    public int getMinimumSize() {
+        int result = Integer.MAX_VALUE;
+        for (ExpansionSequence choice : childrenOfType(ExpansionSequence.class)) {
+           int choiceMin = choice.getMinimumSize();
+           if (choiceMin ==0) return 0;
+           result = Math.min(result, choiceMin);
+        }
+        return result;
+    }
+ 
+    @Override
+    public int getMaximumSize() {
+        int result = 0;
+        for (ExpansionSequence exp : childrenOfType(ExpansionSequence.class)) {
+            result = Math.max(result, exp.getMaximumSize());
+            if (result == Integer.MAX_VALUE) break;
+        }
+        return result;
+    }
+    
+    @Override
+    public boolean potentiallyStartsWith(String productionName, java.util.Set<String> alreadyVisited) {
+        for (ExpansionSequence choice : childrenOfType(ExpansionSequence.class)) {
+            if (choice.potentiallyStartsWith(productionName, alreadyVisited)) return true;
+        }
+        return false;
+    }
+
+    @Override
+    public boolean isSingleToken() {
+        if (!super.isSingleToken()) return false;
+        for (ExpansionSequence exp : childrenOfType(ExpansionSequence.class)) {
+            if (!exp.isSingleToken()) return false;
+        }
+        return true;
+    }
+}
+
 
 ExpansionWithParentheses :
 {
