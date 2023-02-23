@@ -164,23 +164,4 @@ public class BNFProduction extends BaseNode {
     public boolean isLeftRecursive() {
         return getExpansion().potentiallyStartsWith(getName());
     }
-
-
-    private boolean recursing;
-
-    public int getMinimumSize() {
-        if (recursing) return Integer.MAX_VALUE;
-        recursing = true;
-        int result = getExpansion().getMinimumSize();
-        recursing = false;
-        return result;
-    }
-
-    public int getMaximumSize() {
-        if (recursing) return Integer.MAX_VALUE;
-        recursing = true;
-        int result = getExpansion().getMaximumSize();
-        recursing = false;
-        return result;
-    }
 }

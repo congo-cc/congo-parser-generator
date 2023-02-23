@@ -157,11 +157,11 @@ public abstract class RegularExpression extends Expansion {
         return getFirstSet();	
     }
     
-    final public int getMinimumSize() {
+    final public int getMinimumSize(Set<String> unused) {
         return 1;
     }
 
-    final public int getMaximumSize() {
+    final public int getMaximumSize(Set<String> unused) {
         return 1;
     }
 

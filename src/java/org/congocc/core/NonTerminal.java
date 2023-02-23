@@ -69,12 +69,21 @@ public class NonTerminal extends Expansion {
          return getProduction().getExpansion().isAlwaysEntered();
      }
 
-     public int getMinimumSize() {
-        return getProduction().getMinimumSize();
+     protected int getMinimumSize(Set<String> visitedNonTerminals) {
+         if (visitedNonTerminals.contains(getName())) {
+            return Integer.MAX_VALUE;
+         }
+         visitedNonTerminals.add(getName());
+         return getNestedExpansion().getMinimumSize(visitedNonTerminals);
      }
 
-     public int getMaximumSize() {
-        return getProduction().getMaximumSize();
+     protected int getMaximumSize(Set<String> visitedNonTerminals) {
+        //return getProduction().getMaximumSize();
+        if (visitedNonTerminals.contains(getName())) {
+            return Integer.MAX_VALUE;
+        }
+        visitedNonTerminals.add(getName());
+        return getNestedExpansion().getMaximumSize(visitedNonTerminals);
      }
     
      // We don't nest into NonTerminals
