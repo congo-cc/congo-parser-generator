@@ -74,9 +74,11 @@
 [#macro TreeBuildingAndRecovery expansion]
 [#-- This macro handles both tree building AND recovery. It doesn't seem right.
      It should probably be two macros. Also, it is too darned big. --]
-    [#var nodeVarName, 
+    [#var nodeVarName,
+          nodeTypeName, 
           production, 
-          treeNodeBehavior, 
+          treeNodeBehavior,
+          lhs, 
           buildTreeNode=false, 
           closeCondition = "true", 
           javaCodePrologue = "",
@@ -84,6 +86,9 @@
           callStackSizeVar = CU.newVarName("callStackSize"),
           canRecover = settings.faultTolerant && expansion.tolerantParsing && !expansion.isRegexp
     ]
+    [#if !expansion.treeNodeBehavior?is_null && !expansion.treeNodeBehavior.LHS?is_null]
+      [#set lhs = expansion.treeNodeBehavior.LHS]
+    [/#if]
     [#set treeNodeBehavior = expansion.treeNodeBehavior]
     [#if expansion.parent.simpleName = "BNFProduction"]
       [#set production = expansion.parent]
@@ -100,6 +105,7 @@
      [#if buildTreeNode]
      [#set nodeNumbering = nodeNumbering +1]
      [#set nodeVarName = currentProduction.name + nodeNumbering] ${globals.pushNodeVariableName(nodeVarName)!}
+     [#set nodeTypeName = nodeClassName(treeNodeBehavior)]
       [#if !treeNodeBehavior?? && !production?is_null]
          [#if settings.smartNodeCreation]
             [#set treeNodeBehavior = {"name" : production.name, "condition" : "1", "gtNode" : true, "void" :false, "initialShorthand" : ">"}]
@@ -155,6 +161,13 @@
              if (${nodeVarName}!=null) {
                  if (${parseExceptionVar} == null) {
                      closeNodeScope(${nodeVarName}, ${closeCondition});
+                     [#if !lhs?is_null]
+                     try {
+                        ${lhs} = (${nodeTypeName}) peekNode();
+                     } catch (ClassCastException cce) {
+                        ${lhs} = null;
+                     }
+                     [/#if]
                      [#list grammar.closeNodeHooksByClass[nodeClassName(treeNodeBehavior)]! as hook]
                         ${hook}(${nodeVarName});
                      [/#list]
@@ -433,13 +446,15 @@
    [#list choice.choices as expansion]
       [#if expansion.alwaysSuccessful]
          else {
-           [@BuildCode expansion /]
+           [@BuildCode expansion /]           
+           // CURRENT_NODE.setChoice(${expansion_index});
          }
          [#return]
       [/#if]
       ${(expansion_index=0)?string("if", "else if")}
       (${ExpansionCondition(expansion)}) { 
          ${BuildCode(expansion)}
+         // CURRENT_NODE.setChoice(${expansion_index});
       }
    [/#list]
    [#if choice.parent.simpleName == "ZeroOrMore"]
