@@ -127,15 +127,6 @@ public class ExpansionSequence extends Expansion {
         return lookahead != null;
     }
 
-    public boolean isPossiblyEmpty() {
-        for (Expansion e : childrenOfType(Expansion.class)) {
-            if (!e.isPossiblyEmpty()) {
-                return false;
-            }
-        }
-        return true;
-    }
-
     public int getMinimumSize() {
         int result = 0;
         for (Expansion unit : childrenOfType(Expansion.class)) {
@@ -198,7 +189,7 @@ public class ExpansionSequence extends Expansion {
     @Override
     public boolean potentiallyStartsWith(String productionName, Set<String> alreadyVisited) {
         boolean result = false;
-        for (Expansion unit : childrenOfType(Expansion.class)) {
+        for (Expansion unit : getUnits()) {
             if (unit.potentiallyStartsWith(productionName, alreadyVisited)) result = true;
             if (!unit.isPossiblyEmpty()) break;
         }

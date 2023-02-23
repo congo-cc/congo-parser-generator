@@ -4,12 +4,7 @@ package org.congocc.core;
  * A convenience base class for defining empty expansions, i.e. that 
  * do not consume any tokens. 
  */
-
 abstract public class EmptyExpansion extends Expansion {
-    
-    @Override
-    public final boolean isPossiblyEmpty() {return true;}
-
     @Override
     public final boolean isAlwaysEntered() {return true;}
    
@@ -24,5 +19,4 @@ abstract public class EmptyExpansion extends Expansion {
 
     @Override
     public final int getMaximumSize() {return 0;}
-
 }

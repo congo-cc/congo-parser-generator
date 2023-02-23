@@ -68,6 +68,7 @@ public class SanityChecker {
         }
         if (!undefinedNTs.isEmpty()) return;
 
+
         /*
          * Check whether we have any LOOKAHEADs at non-choice points 
          * REVISIT: Why is this not handled in the grammar spec?
@@ -111,17 +112,6 @@ public class SanityChecker {
             }
         }
 
-        for (BNFProduction prod : grammar.descendants(BNFProduction.class)) {
-            String lexicalStateName = prod.getLexicalState();
-            if (lexicalStateName != null && lexerData.getLexicalState(lexicalStateName) == null) {
-                errors.addError(prod, "Lexical state \""
-                + lexicalStateName + "\" has not been defined.");
-            }
-
-            if (prod.isLeftRecursive()) {
-                errors.addWarning(prod, "Production " + prod.getName() + " is left recursive.");
-            }
-        }
 
         for (Expansion exp : grammar.descendants(Expansion.class)) {
             String lexicalStateName = exp.getSpecifiedLexicalState();
@@ -160,6 +150,7 @@ public class SanityChecker {
             errors.addWarning(zoo, "The expansion inside this (...)? construct can be matched by empty input so it is always matched. This may not be your intention.");
         }
    
+
 
         // Check that no LookBehind predicates refer to an undefined Production
         for (LookBehind lb : grammar.getAllLookBehinds()) {
@@ -269,7 +260,6 @@ public class SanityChecker {
             }
         }
 
-
         //Let's jump out here, I guess.
         if (errors.getErrorCount() >0) return;
 
@@ -303,6 +293,17 @@ public class SanityChecker {
                 if (res.getRegexp() instanceof RegexpRef) {
                     tp.removeChild(res);
                 }
+            }
+        }
+
+        for (BNFProduction prod : grammar.descendants(BNFProduction.class)) {
+            String lexicalStateName = prod.getLexicalState();
+            if (lexicalStateName != null && lexerData.getLexicalState(lexicalStateName) == null) {
+                errors.addError(prod, "Lexical state \""
+                + lexicalStateName + "\" has not been defined.");
+            }
+            if (prod.isLeftRecursive()) {
+                errors.addError(prod, "Production " + prod.getName() + " is left recursive.");
             }
         }
 

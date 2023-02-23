@@ -360,7 +360,9 @@ abstract public class Expansion extends BaseNode {
     /**
      * @return Can this expansion be matched by the empty string.
      */
-    public boolean isPossiblyEmpty() {return getMinimumSize() == 0;};
+    public final boolean isPossiblyEmpty() {
+        return getMinimumSize() == 0;
+    }
 
 
     /**

@@ -1371,11 +1371,6 @@ INJECT ExpansionChoice :
     }
     
     @Override
-    public boolean isPossiblyEmpty() {
-        return childrenOfType(ExpansionSequence.class).stream().anyMatch(choice->choice.isPossiblyEmpty());
-    }
-
-    @Override
     public boolean isAlwaysEntered() {
         return childrenOfType(ExpansionSequence.class).stream().anyMatch(choice->choice.isAlwaysEntered());
     }
@@ -1464,9 +1459,6 @@ INJECT ExpansionWithParentheses :
     @Override 
     public int getMinimumSize() {return getNestedExpansion().getMinimumSize();}
     
-    @Override 
-    public boolean isPossiblyEmpty() {return getNestedExpansion().isPossiblyEmpty();}
-
     @Override
     public boolean isAlwaysEntered() {return getNestedExpansion().isAlwaysEntered();}
     
@@ -1869,8 +1861,7 @@ INJECT ZeroOrOne :
 {
     @Override
     public boolean isAlwaysEntered() {return true;}
-    @Override
-    public boolean isPossiblyEmpty() {return true;}
+
     @Override
     public int getMinimumSize() {return 0;}
 }
@@ -1881,9 +1872,6 @@ INJECT ZeroOrMore :
      import org.congocc.core.TokenSet;
      extends ExpansionWithParentheses 
 {
-    @Override
-    public boolean isPossiblyEmpty() {return true;}
-
     @Override
     public boolean isAlwaysEntered() {return true;}
     
@@ -1901,10 +1889,7 @@ INJECT OneOrMore :
      extends ExpansionWithParentheses 
 {
     @Override 
-     public int getMaximumSize() {return Integer.MAX_VALUE;}
-    
-    @Override 
-     public boolean isPossiblyEmpty() {return false;}
+    public int getMaximumSize() {return Integer.MAX_VALUE;}
 }
 
 
@@ -1927,11 +1912,6 @@ INJECT AttemptBlock :
        return (Expansion) getChild(3);
     }
    
-    @Override 
-    public boolean isPossiblyEmpty() {
-        return getNestedExpansion().isPossiblyEmpty();
-    }
-    
     @Override
     public boolean isAlwaysEntered() {
         return getNestedExpansion().isAlwaysEntered();
@@ -2095,11 +2075,6 @@ INJECT TryBlock  :
     }
     
     @Override 
-    public boolean isPossiblyEmpty() {
-        return getNestedExpansion().isPossiblyEmpty();
-    }
-
-    @Override 
     public boolean isAlwaysEntered() {
         return getNestedExpansion().isAlwaysEntered();
     }
@@ -2144,11 +2119,8 @@ INJECT CodeBlock :
     public CodeBlock getJavaCode() {
         return this;
     }
-    
-//    public boolean isPossiblyEmpty() {
-//       return true;
-//    }
 
+    @Override 
     public boolean startsWithGlobalCodeAction() {
         return isAppliesInLookahead();
     }

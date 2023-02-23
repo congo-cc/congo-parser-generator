@@ -157,11 +157,6 @@ public abstract class RegularExpression extends Expansion {
         return getFirstSet();	
     }
     
-    
-    final public boolean isPossiblyEmpty() {
-    	return false;
-    }
-    
     final public int getMinimumSize() {
         return 1;
     }

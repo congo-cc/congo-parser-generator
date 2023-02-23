@@ -2,6 +2,7 @@ package org.congocc.core;
 
 import org.congocc.parser.Token.TokenType;
 import org.congocc.parser.tree.*;
+import java.util.Set;
 
 public class NonTerminal extends Expansion {
     
@@ -63,36 +64,19 @@ public class NonTerminal extends Expansion {
           return result;
      }
      
-     public boolean isPossiblyEmpty() {
-         return getProduction().isPossiblyEmpty();
-     }
-
      @Override
      public boolean isAlwaysEntered() {
          return getProduction().getExpansion().isAlwaysEntered();
      }
-     
-     private boolean inMinimumSize, inMaximumSize;
-     
+
      public int getMinimumSize() {
-         if (inMinimumSize) return Integer.MAX_VALUE;
-         inMinimumSize = true;
-         int result = getProduction().getExpansion().getMinimumSize();
-         inMinimumSize = false;
-         return result;
+        return getProduction().getMinimumSize();
      }
 
      public int getMaximumSize() {
-         if (inMaximumSize) {
-             return Integer.MAX_VALUE;
-         }
-         inMaximumSize = true;
-         int result = getProduction().getExpansion().getMaximumSize(); 
-         inMaximumSize = false;
-         return result;
+        return getProduction().getMaximumSize();
      }
     
-     
      // We don't nest into NonTerminals
      @Override
      public boolean getHasScanLimit() {
@@ -141,4 +125,14 @@ public class NonTerminal extends Expansion {
         }
         return false;
      }
+
+     @Override
+     public boolean potentiallyStartsWith(String productionName, Set<String> alreadyVisited) {
+        if (productionName.equals(getName())) {
+            return true;
+        }
+        if (alreadyVisited.contains(getName())) return false;
+        alreadyVisited.add(getName());
+        return getNestedExpansion().potentiallyStartsWith(productionName, alreadyVisited);
+    }
 }
