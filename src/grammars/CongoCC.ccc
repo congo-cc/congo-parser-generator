@@ -1398,10 +1398,7 @@ INJECT ExpansionChoice :
     
     @Override
     public boolean potentiallyStartsWith(String productionName, java.util.Set<String> alreadyVisited) {
-        for (ExpansionSequence choice : childrenOfType(ExpansionSequence.class)) {
-            if (choice.potentiallyStartsWith(productionName, alreadyVisited)) return true;
-        }
-        return false;
+        return getChoices().stream().anyMatch(exp->exp.potentiallyStartsWith(productionName,alreadyVisited));
     }
 
     @Override
@@ -1449,30 +1446,9 @@ ExpansionWithParentheses :
 
 
 INJECT ExpansionWithParentheses : 
-   import org.congocc.core.TokenSet;
-   import org.congocc.core.Expansion;
-   extends Expansion
+   import org.congocc.core.*;
+   extends ExpansionWithNested
 {
-    @Override 
-    public int getMaximumSize() {return getNestedExpansion().getMaximumSize();}
-    
-    @Override 
-    public int getMinimumSize() {return getNestedExpansion().getMinimumSize();}
-    
-    @Override
-    public boolean isAlwaysEntered() {return getNestedExpansion().isAlwaysEntered();}
-    
-    @Override 
-    public TokenSet getFirstSet() {return getNestedExpansion().getFirstSet();}
-    
-    @Override 
-    public TokenSet getFinalSet() {return getNestedExpansion().getFinalSet();}
-
-    @Override 
-    public Expansion getNestedExpansion() {
-        return firstChildOfType(Expansion.class);
-    }
-
     @Override 
     public String getSpecifiedLexicalState() {
         LexicalStateSwitch lss = firstChildOfType(LexicalStateSwitch.class);
@@ -1480,19 +1456,9 @@ INJECT ExpansionWithParentheses :
     }
 
     @Override 
-    public boolean potentiallyStartsWith(String productionName, java.util.Set<String> alreadyVisited) {
-        return getNestedExpansion().potentiallyStartsWith(productionName, alreadyVisited);
-    }
-
-    @Override 
     public boolean startsWithLexicalChange() {
         return firstChildOfType(LexicalStateSwitch.class) != null || firstChildOfType(TokenActivation.class) != null
               || getNestedExpansion().startsWithLexicalChange();
-    }
-
-    @Override 
-    public boolean startsWithGlobalCodeAction() {
-        return getNestedExpansion().startsWithGlobalCodeAction();
     }
 
     @Override 
@@ -1531,9 +1497,6 @@ INJECT Assertion :
     @Property Expansion expansion;
     @Property boolean expansionNegated, semanticLookaheadNested;
 
-
-//    @Override
-//    public boolean isAlwaysEntered() {return true;}
 
     @Override 
     public boolean startsWithGlobalCodeAction() {
@@ -1600,6 +1563,11 @@ org.congocc.core.Lookahead Lookahead #org.congocc.core.Lookahead :
 )
 {return CURRENT_NODE;}
 ;
+
+INJECT Lookahead :
+{
+    
+}
 
 LookBehind : 
    [<TILDE> {CURRENT_NODE.setNegated(true);}] 
@@ -1901,58 +1869,11 @@ INJECT AttemptBlock :
    import java.util.List;
    import org.congocc.core.Expansion;
    import org.congocc.core.TokenSet;
-   extends Expansion;
+   extends org.congocc.core.ExpansionWithNested;
 {
-   @Override
-   public Expansion getNestedExpansion() {
-       return firstChildOfType(Expansion.class);
-   }
-   
-   public Expansion getRecoveryExpansion() {
+    public Expansion getRecoveryExpansion() {
        return (Expansion) getChild(3);
     }
-   
-    @Override
-    public boolean isAlwaysEntered() {
-        return getNestedExpansion().isAlwaysEntered();
-    }
-    
-    //REVISIT: Should this take RECOVER into account? I don't think so,
-    // but I still have to think about it a bit more.
-    @Override 
-    public TokenSet getFirstSet() {
-        if (firstSet == null) {
-           firstSet=getNestedExpansion().getFirstSet();
-        }
-        return firstSet;
-    }
-   
-   
-    //REVISIT: Should this take RECOVER into account? 
-    @Override 
-    public TokenSet getFinalSet() {
-        return getNestedExpansion().getFinalSet();
-    }
-     
-    @Override 
-     public int getMinimumSize() {
-         return getNestedExpansion().getMinimumSize();
-     }
-
-    @Override 
-     public int getMaximumSize() {
-         return getNestedExpansion().getMaximumSize();
-     }
-
-    @Override 
-     public boolean startsWithLexicalChange() {
-        return getNestedExpansion().startsWithLexicalChange();
-     }
-
-    @Override 
-     public boolean startsWithGlobalCodeAction() {
-        return getNestedExpansion().startsWithGlobalCodeAction();
-     }
 }
 
 UncacheTokens# : "UNCACHE_TOKENS" ;   
@@ -1982,9 +1903,6 @@ INJECT Failure :
     public CodeBlock getCode() {
         return firstChildOfType(CodeBlock.class);
     }
-
-//    @Override
-//    public boolean isAlwaysEntered() {return true;}
 
     @Override 
     public boolean startsWithGlobalCodeAction() {return true;}    
@@ -2056,17 +1974,9 @@ TryBlock :
 ;
 
 INJECT TryBlock  : 
-    import java.util.List;
-    import org.congocc.core.TokenSet;
-    import org.congocc.core.Expansion;
-    extends Expansion;
+    extends org.congocc.core.ExpansionWithNested;
 {
-    @Override 
-    public Expansion getNestedExpansion() {
-        return firstChildOfType(Expansion.class);
-    }
-    
-    public List<CatchBlock> getCatchBlocks() {
+    public java.util.List<CatchBlock> getCatchBlocks() {
         return childrenOfType(CatchBlock.class);
     }
 
@@ -2074,42 +1984,7 @@ INJECT TryBlock  :
         return firstChildOfType(FinallyBlock.class);
     }
     
-    @Override 
-    public boolean isAlwaysEntered() {
-        return getNestedExpansion().isAlwaysEntered();
-    }
-
-    @Override 
-    public TokenSet getFirstSet() {
-        return getNestedExpansion().getFirstSet();
-    }
-    
-    @Override 
-    public TokenSet getFinalSet() {
-        return getNestedExpansion().getFinalSet();
-    }
-     
-    @Override 
-    public int getMinimumSize() {
-        return getNestedExpansion().getMinimumSize();
-    }
-
-    @Override 
-    public int getMaximumSize() {
-        return getNestedExpansion().getMaximumSize();
-    }
-    
-    @Override 
-    public boolean startsWithLexicalChange() {
-        return getNestedExpansion().startsWithLexicalChange();
-    }
-
-    @Override 
-    public boolean startsWithGlobalCodeAction() {
-        return getNestedExpansion().startsWithGlobalCodeAction();
-    }
 }
-
 
 INJECT CodeBlock :
    extends org.congocc.core.EmptyExpansion;
