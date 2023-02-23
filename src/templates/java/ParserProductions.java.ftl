@@ -379,7 +379,7 @@
 
 
 [#macro BuildCodeZeroOrOne zoo]
-    [#if zoo.nestedExpansion.alwaysSuccessful
+    [#if zoo.nestedExpansion.alwaysEntered
       || zoo.nestedExpansion.class.simpleName = "ExpansionChoice"]
        [@BuildCode zoo.nestedExpansion /]
     [#else]
@@ -444,7 +444,7 @@
 
 [#macro BuildCodeChoice choice]
    [#list choice.choices as expansion]
-      [#if expansion.alwaysSuccessful]
+      [#if expansion.alwaysEntered]
          else {
            [@BuildCode expansion /]           
            // CURRENT_NODE.setChoice(${expansion_index});

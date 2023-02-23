@@ -413,7 +413,7 @@ INJECT InvocationArguments :
     }
 }
 
-// In general, it is probably better to INCLUDE the (more stable) Java grammar
+// In general usage, it is probably better to INCLUDE the (more stable) Java grammar
 // that is in the bootstrap jarfile.
 //INCLUDE JAVA
 INCLUDE "../../examples/java/Java.ccc"
@@ -1350,9 +1350,79 @@ INJECT RegexpSpec :
     }
 }
 
-ExpansionChoice #org.congocc.core.ExpansionChoice(>1) : 
+ExpansionChoice :
   ExpansionSequence ( "|" ExpansionSequence)*
 ;
+
+INJECT ExpansionChoice :
+   import org.congocc.core.*;
+   extends Expansion
+{
+    public java.util.List<ExpansionSequence> getChoices() {
+        return childrenOfType(ExpansionSequence.class);
+    }
+    
+    @Override
+    public TokenSet getFirstSet() {
+         if (firstSet == null) {
+            firstSet = new TokenSet(getGrammar());
+            for (ExpansionSequence choice : childrenOfType(ExpansionSequence.class)) {
+                firstSet.or(choice.getLookaheadExpansion().getFirstSet());
+            }
+         }
+         return firstSet;
+    }
+    
+    @Override
+    public TokenSet getFinalSet() {
+        TokenSet finalSet = new TokenSet(getGrammar());
+        for (ExpansionSequence choice : childrenOfType(ExpansionSequence.class)) {
+            finalSet.or(choice.getFinalSet());
+        }
+        return finalSet;
+    }
+    
+    @Override
+    public boolean isAlwaysEntered() {
+        return childrenOfType(ExpansionSequence.class).stream().anyMatch(choice->choice.isAlwaysEntered());
+    }
+    
+    @Override
+    public int getMinimumSize() {
+        int result = Integer.MAX_VALUE;
+        for (ExpansionSequence choice : childrenOfType(ExpansionSequence.class)) {
+           int choiceMin = choice.getMinimumSize();
+           if (choiceMin ==0) return 0;
+           result = Math.min(result, choiceMin);
+        }
+        return result;
+    }
+ 
+    @Override
+    public int getMaximumSize() {
+        int result = 0;
+        for (ExpansionSequence exp : childrenOfType(ExpansionSequence.class)) {
+            result = Math.max(result, exp.getMaximumSize());
+            if (result == Integer.MAX_VALUE) break;
+        }
+        return result;
+    }
+    
+    @Override
+    public boolean potentiallyStartsWith(String productionName, java.util.Set<String> alreadyVisited) {
+        return getChoices().stream().anyMatch(exp->exp.potentiallyStartsWith(productionName,alreadyVisited));
+    }
+
+    @Override
+    public boolean isSingleToken() {
+        if (!super.isSingleToken()) return false;
+        for (ExpansionSequence exp : childrenOfType(ExpansionSequence.class)) {
+            if (!exp.isSingleToken()) return false;
+        }
+        return true;
+    }
+}
+
 
 ExpansionWithParentheses :
 {
@@ -1388,39 +1458,22 @@ ExpansionWithParentheses :
 
 
 INJECT ExpansionWithParentheses : 
-   import org.congocc.core.TokenSet;
-   import org.congocc.core.Expansion;
-   extends Expansion
+   import org.congocc.core.*;
+   extends ExpansionWithNested
 {
-    public int getMaximumSize() {return getNestedExpansion().getMaximumSize();}
-    public int getMinimumSize() {return getNestedExpansion().getMinimumSize();}
-    public boolean isPossiblyEmpty() {return getNestedExpansion().isPossiblyEmpty();}
-    public boolean isAlwaysSuccessful() {return getNestedExpansion().isAlwaysSuccessful();}
-    public TokenSet getFirstSet() {return getNestedExpansion().getFirstSet();}
-    public TokenSet getFinalSet() {return getNestedExpansion().getFinalSet();}
-
-    public Expansion getNestedExpansion() {
-        return firstChildOfType(Expansion.class);
-    }
-
+    @Override 
     public String getSpecifiedLexicalState() {
         LexicalStateSwitch lss = firstChildOfType(LexicalStateSwitch.class);
         return lss == null ? super.getSpecifiedLexicalState() : lss.getLexicalStateName();
     }
 
-    public boolean potentiallyStartsWith(String productionName, java.util.Set<String> alreadyVisited) {
-        return getNestedExpansion().potentiallyStartsWith(productionName, alreadyVisited);
-    }
-
+    @Override 
     public boolean startsWithLexicalChange() {
         return firstChildOfType(LexicalStateSwitch.class) != null || firstChildOfType(TokenActivation.class) != null
               || getNestedExpansion().startsWithLexicalChange();
     }
 
-    public boolean startsWithGlobalCodeAction() {
-        return getNestedExpansion().startsWithGlobalCodeAction();
-    }
-
+    @Override 
     public boolean isSingleToken() {
          return super.isSingleToken() && getNestedExpansion().isSingleToken();
     }
@@ -1456,8 +1509,8 @@ INJECT Assertion :
     @Property Expansion expansion;
     @Property boolean expansionNegated, semanticLookaheadNested;
 
-    public boolean isAlwaysSuccessful() {return false;}
 
+    @Override 
     public boolean startsWithGlobalCodeAction() {
         return expansion != null || semanticLookaheadNested;
     }
@@ -1485,7 +1538,7 @@ Assertion :
    [UpToHere(CURRENT_NODE)]
 ;
 
-org.congocc.core.Lookahead Lookahead #org.congocc.core.Lookahead : 
+ #Lookahead# : 
 {
    Token amountToken=null;
    boolean hasSemanticLookahead = false, getHasExplicitNumericalLookahead=false;
@@ -1522,6 +1575,49 @@ org.congocc.core.Lookahead Lookahead #org.congocc.core.Lookahead :
 )
 {return CURRENT_NODE;}
 ;
+
+INJECT Lookahead :
+    import org.congocc.core.Expansion;
+{
+    @Property Name LHS;
+    @Property Expansion expansion, nestedExpansion;
+    @Property boolean negated, semanticLookaheadNested;
+    @Property Expression semanticLookahead;
+
+    public boolean getRequiresScanAhead() {
+        if (!getLookaheadExpansion().isPossiblyEmpty()) return true;
+        if (getSemanticLookahead() != null) return true;
+        if (this.getLookBehind()!=null) return true;
+        return getAmount() >0;
+    }
+
+    public boolean hasSemanticLookahead() {
+        return getSemanticLookahead() != null;
+    }
+    
+    public Expansion getLookaheadExpansion() {
+        Expansion result = getNestedExpansion();
+        if (result != null) {
+            return result;
+        }
+        return expansion;
+    }
+
+    public boolean getHasExplicitNumericalAmount() {
+        return firstChildOfType(TokenType.INTEGER_LITERAL) != null;
+    }
+
+    public int getAmount() {
+        IntegerLiteral it = firstChildOfType(IntegerLiteral.class);
+        if (it!=null) return it.getValue();
+        if (nestedExpansion !=null || expansion.getHasScanLimit()) return Integer.MAX_VALUE;
+        return 1;
+    }
+
+    public LookBehind getLookBehind() {
+        return firstChildOfType(LookBehind.class);
+    }    
+}
 
 LookBehind : 
    [<TILDE> {CURRENT_NODE.setNegated(true);}] 
@@ -1781,8 +1877,10 @@ INJECT ZeroOrOne :
      import org.congocc.core.TokenSet;
      extends ExpansionWithParentheses 
 {
-    public boolean isAlwaysSuccessful() {return true;}
-    public boolean isPossiblyEmpty() {return true;}
+    @Override
+    public boolean isAlwaysEntered() {return true;}
+
+    @Override
     public int getMinimumSize() {return 0;}
 }
 
@@ -1792,9 +1890,13 @@ INJECT ZeroOrMore :
      import org.congocc.core.TokenSet;
      extends ExpansionWithParentheses 
 {
-    public boolean isPossiblyEmpty() {return true;}
-    public boolean isAlwaysSuccessful() {return true;}
+    @Override
+    public boolean isAlwaysEntered() {return true;}
+    
+    @Override  
     public int getMinimumSize() {return 0;}
+    
+    @Override
     public int getMaximumSize() {return Integer.MAX_VALUE;}
 }
 
@@ -1804,8 +1906,8 @@ INJECT OneOrMore :
      import org.congocc.core.TokenSet;
      extends ExpansionWithParentheses 
 {
-     public int getMaximumSize() {return Integer.MAX_VALUE;}
-     public boolean isPossiblyEmpty() {return false;}
+    @Override 
+    public int getMaximumSize() {return Integer.MAX_VALUE;}
 }
 
 
@@ -1817,54 +1919,11 @@ INJECT AttemptBlock :
    import java.util.List;
    import org.congocc.core.Expansion;
    import org.congocc.core.TokenSet;
-   extends Expansion;
+   extends org.congocc.core.ExpansionWithNested;
 {
-   public Expansion getNestedExpansion() {
-       return firstChildOfType(Expansion.class);
-   }
-   
-   public Expansion getRecoveryExpansion() {
+    public Expansion getRecoveryExpansion() {
        return (Expansion) getChild(3);
     }
-   
-    public boolean isPossiblyEmpty() {
-        return getNestedExpansion().isPossiblyEmpty();
-    }
-    
-    public boolean isAlwaysSuccessful() {
-        return getNestedExpansion().isAlwaysSuccessful();
-    }
-    
-    //REVISIT: Should this take RECOVER into account? I don't think so,
-    // but I still have to think about it a bit more.
-    public TokenSet getFirstSet() {
-        if (firstSet == null) {
-           firstSet=getNestedExpansion().getFirstSet();
-        }
-        return firstSet;
-    }
-   
-   
-    //REVISIT: Should this take RECOVER into account? 
-    public TokenSet getFinalSet() {
-        return getNestedExpansion().getFinalSet();
-    }
-     
-     public int getMinimumSize() {
-         return getNestedExpansion().getMinimumSize();
-     }
-
-     public int getMaximumSize() {
-         return getNestedExpansion().getMaximumSize();
-     }
-
-     public boolean startsWithLexicalChange() {
-        return getNestedExpansion().startsWithLexicalChange();
-     }
-
-     public boolean startsWithGlobalCodeAction() {
-        return getNestedExpansion().startsWithGlobalCodeAction();
-     }
 }
 
 UncacheTokens# : "UNCACHE_TOKENS" ;   
@@ -1895,8 +1954,7 @@ INJECT Failure :
         return firstChildOfType(CodeBlock.class);
     }
 
-    public boolean isAlwaysSuccessful() {return false;}
-
+    @Override 
     public boolean startsWithGlobalCodeAction() {return true;}    
 }
 
@@ -1966,16 +2024,9 @@ TryBlock :
 ;
 
 INJECT TryBlock  : 
-    import java.util.List;
-    import org.congocc.core.TokenSet;
-    import org.congocc.core.Expansion;
-    extends Expansion;
+    extends org.congocc.core.ExpansionWithNested;
 {
-    public Expansion getNestedExpansion() {
-        return firstChildOfType(Expansion.class);
-    }
-    
-    public List<CatchBlock> getCatchBlocks() {
+    public java.util.List<CatchBlock> getCatchBlocks() {
         return childrenOfType(CatchBlock.class);
     }
 
@@ -1983,39 +2034,7 @@ INJECT TryBlock  :
         return firstChildOfType(FinallyBlock.class);
     }
     
-    public boolean isPossiblyEmpty() {
-        return getNestedExpansion().isPossiblyEmpty();
-    }
-    
-    public boolean isAlwaysSuccessful() {
-        return getNestedExpansion().isAlwaysSuccessful();
-    }
-    
-    public TokenSet getFirstSet() {
-        return getNestedExpansion().getFirstSet();
-    }
-    
-    public TokenSet getFinalSet() {
-        return getNestedExpansion().getFinalSet();
-    }
-     
-    public int getMinimumSize() {
-        return getNestedExpansion().getMinimumSize();
-    }
-
-    public int getMaximumSize() {
-        return getNestedExpansion().getMaximumSize();
-    }
-    
-    public boolean startsWithLexicalChange() {
-        return getNestedExpansion().startsWithLexicalChange();
-    }
-
-    public boolean startsWithGlobalCodeAction() {
-        return getNestedExpansion().startsWithGlobalCodeAction();
-    }
 }
-
 
 INJECT CodeBlock :
    extends org.congocc.core.EmptyExpansion;
@@ -2025,11 +2044,8 @@ INJECT CodeBlock :
     public CodeBlock getJavaCode() {
         return this;
     }
-    
-    public boolean isPossiblyEmpty() {
-       return true;
-    }
 
+    @Override 
     public boolean startsWithGlobalCodeAction() {
         return isAppliesInLookahead();
     }
@@ -2054,6 +2070,7 @@ INJECT RegexpStringLiteral :
   }
   
   //REVISIT What about different lexical states? As well as ignoreCase... 
+  @Override 
   public boolean equals(Object obj) {
       return obj instanceof RegexpStringLiteral && ((RegexpStringLiteral) obj).image == this.image;
   }
@@ -2062,6 +2079,7 @@ INJECT RegexpStringLiteral :
       return image.hashCode();
   }
 
+  @Override 
   public boolean matchesEmptyString() {
       return getImage().length() == 0;
   }
@@ -2090,10 +2108,12 @@ INJECT RegexpRef :
         return regexp!= null && regexp.isPrivate(); 
     }
 
+    @Override 
     public boolean matchesEmptyString() {
         return regexp != null && regexp.matchesEmptyString();
     }
 
+    @Override 
     public int getOrdinal() {
         if (regexp == null) {
             // This is the case if this RegexpRef refers to a token type
@@ -2110,6 +2130,7 @@ EndOfFile : "<" <_EOF> =>|| ">" ;
 
 INJECT EndOfFile : extends org.congocc.core.RegularExpression
 {
+    @Override 
     public boolean matchesEmptyString() {return true;}
 }
 
@@ -2131,6 +2152,7 @@ INJECT RegexpChoice :
         return childrenOfType(RegularExpression.class);
     }
 
+    @Override 
     public boolean matchesEmptyString() {
         for (RegularExpression choice: getChoices()) {
             if (choice.matchesEmptyString()) {
@@ -2171,6 +2193,7 @@ INJECT RegexpSequence :
        return childrenOfType(RegularExpression.class);
    }
 
+   @Override 
    public boolean matchesEmptyString() {
        for (RegularExpression child : getUnits()) {
            if (!child.matchesEmptyString()) return false;
@@ -2214,6 +2237,7 @@ INJECT RepetitionRange :
         return firstChildOfType(RegularExpression.class);
     }
 
+    @Override
     public boolean matchesEmptyString() {
         return min==0 || getRegexp().matchesEmptyString();
     }
@@ -2228,6 +2252,7 @@ INJECT OneOrMoreRegexp :
       return firstChildOfType(RegularExpression.class);
    }
 
+   @Override
    public boolean matchesEmptyString() {
        return getRegexp().matchesEmptyString(); 
    }
@@ -2251,6 +2276,7 @@ INJECT ZeroOrMoreRegexp :
       }
    }
 
+   @Override
    public boolean matchesEmptyString() {
        return true;
    }
@@ -2275,6 +2301,7 @@ INJECT ZeroOrOneRegexp :
       }
    }
 
+   @Override
    public boolean matchesEmptyString() {
        return true;
    }
@@ -2301,6 +2328,7 @@ INJECT CharacterList :
         return firstChildOfType(TILDE) != null;
     }
 
+    @Override
     public boolean matchesEmptyString() {
             return false;
         }

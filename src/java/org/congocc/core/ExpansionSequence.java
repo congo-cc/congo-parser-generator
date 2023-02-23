@@ -36,7 +36,7 @@ public class ExpansionSequence extends Expansion {
 
 
     @Override
-    public boolean isAlwaysSuccessful() {
+    public boolean isAlwaysEntered() {
         if (!isPossiblyEmpty()) return false;
         if (allUnits().stream().anyMatch(unit->unit instanceof Assertion || unit instanceof Failure)) return false;
         Lookahead la = getLookahead();
@@ -47,11 +47,12 @@ public class ExpansionSequence extends Expansion {
             return la.getAmount() == 0;
         }
         for (Expansion exp : childrenOfType(Expansion.class)) {
-            if (!exp.isAlwaysSuccessful()) return false;
+            if (!exp.isAlwaysEntered()) return false;
         }
         return true;
     }
 
+    @Override
     public TokenSet getFirstSet() {
         if (firstSet == null) {
             firstSet = new TokenSet(getGrammar());
@@ -65,6 +66,7 @@ public class ExpansionSequence extends Expansion {
         return firstSet;
     }
 
+    @Override
     public TokenSet getFinalSet() {
         TokenSet finalSet = new TokenSet(getGrammar());
         List<Expansion> children = childrenOfType(Expansion.class);
@@ -123,15 +125,6 @@ public class ExpansionSequence extends Expansion {
 
     public boolean getHasExplicitLookahead() {
         return lookahead != null;
-    }
-
-    public boolean isPossiblyEmpty() {
-        for (Expansion e : childrenOfType(Expansion.class)) {
-            if (!e.isPossiblyEmpty()) {
-                return false;
-            }
-        }
-        return true;
     }
 
     public int getMinimumSize() {
@@ -196,7 +189,7 @@ public class ExpansionSequence extends Expansion {
     @Override
     public boolean potentiallyStartsWith(String productionName, Set<String> alreadyVisited) {
         boolean result = false;
-        for (Expansion unit : childrenOfType(Expansion.class)) {
+        for (Expansion unit : getUnits()) {
             if (unit.potentiallyStartsWith(productionName, alreadyVisited)) result = true;
             if (!unit.isPossiblyEmpty()) break;
         }
@@ -215,31 +208,37 @@ public class ExpansionSequence extends Expansion {
     /**
      * Does this expansion have a separate lookahead expansion?
      */
+    @Override
     public boolean getHasSeparateSyntacticLookahead() {
         Lookahead la = getLookahead();
         return la != null && la.getNestedExpansion() != null;
     }
 
+    @Override
     public Expansion getLookaheadExpansion() {
         Lookahead la = getLookahead();
         Expansion exp = la == null ? null : la.getNestedExpansion();
         return exp != null ? exp : this;
     }
 
+    @Override
     public boolean isNegated() {
         return getLookahead() != null && getLookahead().isNegated();
     }
 
+    @Override
     public LookBehind getLookBehind() {
         Lookahead la = getLookahead();
         return la == null ? null : la.getLookBehind();
     }
 
+    @Override
     public final Expression getSemanticLookahead() {
         Lookahead la = getLookahead();
         return la == null ? null : la.getSemanticLookahead();
     }
 
+    @Override
     public boolean getHasNumericalLookahead() {
         Lookahead la = getLookahead();
         return la != null && la.getHasExplicitNumericalAmount();
@@ -249,6 +248,7 @@ public class ExpansionSequence extends Expansion {
         return lookahead != null && lookahead.getHasExplicitNumericalAmount();
     }
 
+    @Override
     public boolean getHasSemanticLookahead() {
         Lookahead la = getLookahead();
         return la != null && la.hasSemanticLookahead();
@@ -258,12 +258,13 @@ public class ExpansionSequence extends Expansion {
      * Do we do a syntactic lookahead using this expansion itself as the lookahead
      * expansion?
      */
+    @Override
     boolean getHasImplicitSyntacticLookahead() {
         if (!this.isAtChoicePoint())
             return false;
         if (getHasSeparateSyntacticLookahead())
             return false;
-        if (this.isAlwaysSuccessful())
+        if (this.isAlwaysEntered())
             return false;
         if (getHasScanLimit()) {
             return true;
@@ -277,6 +278,7 @@ public class ExpansionSequence extends Expansion {
         return getLookahead() != null;
     }
 
+    @Override
     public boolean isSingleToken() {
         if (!super.isSingleToken()) return false;
         for (Expansion exp : childrenOfType(Expansion.class)) {
@@ -287,6 +289,7 @@ public class ExpansionSequence extends Expansion {
         return true;
     }
 
+    @Override
     public boolean startsWithLexicalChange() {
         Node parent = getParent();
         if (parent instanceof BNFProduction) {
@@ -301,6 +304,7 @@ public class ExpansionSequence extends Expansion {
         return false;
     }
 
+    @Override
     public boolean startsWithGlobalCodeAction() {
         for (Expansion exp : childrenOfType(Expansion.class)) {
             if (exp.startsWithGlobalCodeAction()) return true;

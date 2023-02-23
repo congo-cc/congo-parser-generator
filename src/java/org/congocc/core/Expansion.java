@@ -360,14 +360,16 @@ abstract public class Expansion extends BaseNode {
     /**
      * @return Can this expansion be matched by the empty string.
      */
-    abstract public boolean isPossiblyEmpty();
+    public final boolean isPossiblyEmpty() {
+        return getMinimumSize() == 0;
+    }
 
 
     /**
      * This is really a misnomer. It should really be alwaysEnter
      * or something like that.
      */
-    abstract public boolean isAlwaysSuccessful();
+    abstract public boolean isAlwaysEntered();
 
     /**
      * @return the minimum number of tokens that this expansion consumes.

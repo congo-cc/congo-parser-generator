@@ -68,13 +68,6 @@ public class BNFProduction extends BaseNode {
        return firstChildOfType(CodeBlock.class);
     }
 
-    /**
-     * Can this production be matched by an empty string?
-     */
-    public boolean isPossiblyEmpty() {
-        return getExpansion().isPossiblyEmpty();
-    }
-
     public boolean isOnlyForLookahead() {
         TreeBuildingAnnotation tba = getTreeBuildingAnnotation();
         return tba!=null && "scan".equals(tba.getNodeName());
@@ -170,5 +163,24 @@ public class BNFProduction extends BaseNode {
      */
     public boolean isLeftRecursive() {
         return getExpansion().potentiallyStartsWith(getName());
+    }
+
+
+    private boolean recursing;
+
+    public int getMinimumSize() {
+        if (recursing) return Integer.MAX_VALUE;
+        recursing = true;
+        int result = getExpansion().getMinimumSize();
+        recursing = false;
+        return result;
+    }
+
+    public int getMaximumSize() {
+        if (recursing) return Integer.MAX_VALUE;
+        recursing = true;
+        int result = getExpansion().getMaximumSize();
+        recursing = false;
+        return result;
     }
 }

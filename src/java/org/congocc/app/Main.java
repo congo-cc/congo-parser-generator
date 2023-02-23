@@ -42,7 +42,7 @@ public final class Main {
                 is.read(bytes);
                 is.close();
                 String content = new String(bytes);
-                if (content.indexOf("congocc.Main") >= 0) {
+                if (content.indexOf("congocc.app.Main") >= 0) {
                     String path = url.getFile();
                     if (path.startsWith("file:")) {
                         path = path.substring(5);
