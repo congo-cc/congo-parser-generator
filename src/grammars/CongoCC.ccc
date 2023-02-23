@@ -1526,7 +1526,7 @@ Assertion :
    [UpToHere(CURRENT_NODE)]
 ;
 
-org.congocc.core.Lookahead Lookahead #org.congocc.core.Lookahead : 
+ #Lookahead# : 
 {
    Token amountToken=null;
    boolean hasSemanticLookahead = false, getHasExplicitNumericalLookahead=false;
@@ -1565,8 +1565,46 @@ org.congocc.core.Lookahead Lookahead #org.congocc.core.Lookahead :
 ;
 
 INJECT Lookahead :
+    import org.congocc.core.Expansion;
 {
+    @Property Name LHS;
+    @Property Expansion expansion, nestedExpansion;
+    @Property boolean negated, semanticLookaheadNested;
+    @Property Expression semanticLookahead;
+
+    public boolean getRequiresScanAhead() {
+        if (!getLookaheadExpansion().isPossiblyEmpty()) return true;
+        if (getSemanticLookahead() != null) return true;
+        if (this.getLookBehind()!=null) return true;
+        return getAmount() >0;
+    }
+
+    public boolean hasSemanticLookahead() {
+        return getSemanticLookahead() != null;
+    }
     
+    public Expansion getLookaheadExpansion() {
+        Expansion result = getNestedExpansion();
+        if (result != null) {
+            return result;
+        }
+        return expansion;
+    }
+
+    public boolean getHasExplicitNumericalAmount() {
+        return firstChildOfType(TokenType.INTEGER_LITERAL) != null;
+    }
+
+    public int getAmount() {
+        IntegerLiteral it = firstChildOfType(IntegerLiteral.class);
+        if (it!=null) return it.getValue();
+        if (nestedExpansion !=null || expansion.getHasScanLimit()) return Integer.MAX_VALUE;
+        return 1;
+    }
+
+    public LookBehind getLookBehind() {
+        return firstChildOfType(LookBehind.class);
+    }    
 }
 
 LookBehind : 
