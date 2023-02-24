@@ -2,7 +2,6 @@ package org.congocc.core;
 
 import java.util.*;
 
-import org.congocc.core.Grammar;
 import org.congocc.core.nfa.LexicalStateData;
 import org.congocc.parser.tree.CodeBlock;
 import org.congocc.parser.tree.Name;
@@ -15,13 +14,6 @@ import org.congocc.parser.tree.TokenProduction;
 
 public abstract class RegularExpression extends Expansion {
 
-    public RegularExpression(Grammar grammar) {
-        super(grammar);
-    }
-    
-    public RegularExpression() {
-    }
-    
    /**
      * The ordinal value assigned to the regular expression. It is used for
      * internal processing and passing information between the parser and the
@@ -157,11 +149,11 @@ public abstract class RegularExpression extends Expansion {
         return getFirstSet();	
     }
     
-    final public int getMinimumSize() {
+    final public int getMinimumSize(Set<String> unused) {
         return 1;
     }
 
-    final public int getMaximumSize() {
+    final public int getMaximumSize(Set<String> unused) {
         return 1;
     }
 

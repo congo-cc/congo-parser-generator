@@ -147,23 +147,23 @@ class NfaBuilder extends Node.Visitor {
     }
 
     void visit(RepetitionRange repRange) {
-        List<RegularExpression> units = new ArrayList<RegularExpression>();
+        RegexpSequence seq = new RegexpSequence();
         for (int i=0; i < repRange.getMin(); i++) {
-            units.add(repRange.getRegexp());
+            seq.addChild(repRange.getRegexp());
         }
         if (repRange.hasMax() && repRange.getMax() == -1) { // Unlimited
             ZeroOrMoreRegexp zom = new ZeroOrMoreRegexp();
             zom.setGrammar(grammar);
             zom.setRegexp(repRange.getRegexp());
-            units.add(zom);
+            seq.addChild(zom);
         }
         else for (int i = repRange.getMin(); i< repRange.getMax(); i++) {
             ZeroOrOneRegexp zoo = new ZeroOrOneRegexp();
             zoo.setGrammar(grammar);
             zoo.setRegexp(repRange.getRegexp());
-            units.add(zoo);
+            seq.addChild(zoo);
         }
-        visit(new RegexpSequence(grammar, units));
+        visit(seq);
     }
 
     static private List<CharacterRange> orderedRanges(CharacterList charList, boolean caseNeutral) {

@@ -8,7 +8,9 @@ TOKEN_CHAINING;
 
 DEACTIVATE_TOKENS=_INCLUDE,_INJECT,_EOF;
 
+#if fault_tolerant
 //FAULT_TOLERANT=true;
+#endif
 
 INJECT LEXER_CLASS : 
 {
@@ -1356,6 +1358,7 @@ ExpansionChoice :
 
 INJECT ExpansionChoice :
    import org.congocc.core.*;
+   import java.util.Set;
    extends Expansion
 {
     public java.util.List<ExpansionSequence> getChoices() {
@@ -1388,10 +1391,10 @@ INJECT ExpansionChoice :
     }
     
     @Override
-    public int getMinimumSize() {
+    protected int getMinimumSize(Set<String> usedNonTerminals) {
         int result = Integer.MAX_VALUE;
-        for (ExpansionSequence choice : childrenOfType(ExpansionSequence.class)) {
-           int choiceMin = choice.getMinimumSize();
+        for (ExpansionSequence choice : getChoices()) {
+           int choiceMin = choice.getMinimumSize(usedNonTerminals);
            if (choiceMin ==0) return 0;
            result = Math.min(result, choiceMin);
         }
@@ -1399,10 +1402,10 @@ INJECT ExpansionChoice :
     }
  
     @Override
-    public int getMaximumSize() {
+    protected int getMaximumSize(Set<String> usedNonTerminals) {
         int result = 0;
-        for (ExpansionSequence exp : childrenOfType(ExpansionSequence.class)) {
-            result = Math.max(result, exp.getMaximumSize());
+        for (ExpansionSequence exp : getChoices()) {
+            result = Math.max(result, exp.getMaximumSize(usedNonTerminals));
             if (result == Integer.MAX_VALUE) break;
         }
         return result;
@@ -1881,23 +1884,24 @@ INJECT ZeroOrOne :
     public boolean isAlwaysEntered() {return true;}
 
     @Override
-    public int getMinimumSize() {return 0;}
+    protected int getMinimumSize(java.util.Set<String> unused) {return 0;}
 }
 
 
 INJECT ZeroOrMore : 
      import org.congocc.core.Expansion;
      import org.congocc.core.TokenSet;
+     import java.util.Set;
      extends ExpansionWithParentheses 
 {
     @Override
     public boolean isAlwaysEntered() {return true;}
     
     @Override  
-    public int getMinimumSize() {return 0;}
+    protected int getMinimumSize(Set<String> unused) {return 0;}
     
     @Override
-    public int getMaximumSize() {return Integer.MAX_VALUE;}
+    protected int getMaximumSize(Set<String> unused) {return Integer.MAX_VALUE;}
 }
 
 
@@ -1907,7 +1911,7 @@ INJECT OneOrMore :
      extends ExpansionWithParentheses 
 {
     @Override 
-    public int getMaximumSize() {return Integer.MAX_VALUE;}
+    protected int getMaximumSize(java.util.Set<String> unused) {return Integer.MAX_VALUE;}
 }
 
 
@@ -2177,17 +2181,9 @@ RegexpSequence :
 
 INJECT RegexpSequence : 
    import java.util.*;
-   import org.congocc.core.Grammar;
    import org.congocc.core.RegularExpression;
    extends RegularExpression;
 {
-
-   public RegexpSequence(Grammar grammar, List<RegularExpression> units) {
-       super(grammar);
-       for (RegularExpression re : units) addChild(re);
-   }
-
-   public RegexpSequence() {}
 
    public List<RegularExpression> getUnits() {
        return childrenOfType(RegularExpression.class);

@@ -1,5 +1,7 @@
 package org.congocc.core;
 
+import java.util.Set;
+
 /**
  * A convenience base class for defining expansions with an inner 
  * expansion 
@@ -9,10 +11,10 @@ abstract public class ExpansionWithNested extends Expansion {
     public Expansion getNestedExpansion() {return firstChildOfType(Expansion.class);}
 
     @Override
-    public int getMinimumSize() {return getNestedExpansion().getMinimumSize();}
+    protected int getMinimumSize(Set<String> visitedNonTerminals) {return getNestedExpansion().getMinimumSize(visitedNonTerminals);}
 
     @Override
-    public int getMaximumSize() {return getNestedExpansion().getMaximumSize();}
+    protected int getMaximumSize(Set<String> visitedNonTerminals) {return getNestedExpansion().getMaximumSize(visitedNonTerminals);}
 
     @Override
     public boolean isAlwaysEntered() {return getNestedExpansion().isAlwaysEntered();}

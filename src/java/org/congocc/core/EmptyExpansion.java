@@ -1,5 +1,7 @@
 package org.congocc.core;
 
+import java.util.Set;
+
 /**
  * A convenience base class for defining empty expansions, i.e. that 
  * do not consume any tokens. 
@@ -15,8 +17,8 @@ abstract public class EmptyExpansion extends Expansion {
     public final TokenSet getFinalSet() {return new TokenSet(getGrammar());}
     
     @Override
-    public final int getMinimumSize() {return 0;}
+    protected final int getMinimumSize(Set<String> unused) {return 0;}
 
     @Override
-    public final int getMaximumSize() {return 0;}
+    protected final int getMaximumSize(Set<String> unused) {return 0;}
 }

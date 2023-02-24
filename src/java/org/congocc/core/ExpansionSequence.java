@@ -127,10 +127,11 @@ public class ExpansionSequence extends Expansion {
         return lookahead != null;
     }
 
-    public int getMinimumSize() {
+    public int getMinimumSize(Set<String> visitedNonTerminals) {
+        if (this.minSize >= 0) return minSize;
         int result = 0;
         for (Expansion unit : childrenOfType(Expansion.class)) {
-            int minUnit = unit.getMinimumSize();
+            int minUnit = unit.getMinimumSize(visitedNonTerminals);
             if (minUnit == Integer.MAX_VALUE)
                 return Integer.MAX_VALUE;
             result += minUnit;
@@ -138,15 +139,16 @@ public class ExpansionSequence extends Expansion {
         return result;
     }
 
-    public int getMaximumSize() {
+    public int getMaximumSize(Set<String> visitedNonTerminals) {
+        if (this.maxSize >=0) return maxSize;
         int result = 0;
         for (Expansion exp : childrenOfType(Expansion.class)) {
-            int max = exp.getMaximumSize();
+            int max = exp.getMaximumSize(visitedNonTerminals);
             if (max == Integer.MAX_VALUE)
                 return Integer.MAX_VALUE;
             result += max;
         }
-        return result;
+        return this.maxSize = result;
     }
 
     /**
