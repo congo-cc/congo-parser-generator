@@ -8,7 +8,9 @@ TOKEN_CHAINING;
 
 DEACTIVATE_TOKENS=_INCLUDE,_INJECT,_EOF;
 
+#if fault_tolerant
 //FAULT_TOLERANT=true;
+#endif
 
 INJECT LEXER_CLASS : 
 {
@@ -2167,17 +2169,9 @@ RegexpSequence :
 
 INJECT RegexpSequence : 
    import java.util.*;
-   import org.congocc.core.Grammar;
    import org.congocc.core.RegularExpression;
    extends RegularExpression;
 {
-
-   public RegexpSequence(Grammar grammar, List<RegularExpression> units) {
-       super(grammar);
-       for (RegularExpression re : units) addChild(re);
-   }
-
-   public RegexpSequence() {}
 
    public List<RegularExpression> getUnits() {
        return childrenOfType(RegularExpression.class);

@@ -2,7 +2,6 @@ package org.congocc.core;
 
 import java.util.*;
 
-import org.congocc.core.Grammar;
 import org.congocc.parser.Node;
 import org.congocc.parser.tree.*;
 
@@ -21,10 +20,6 @@ abstract public class Expansion extends BaseNode {
 
     public int getIndex() {
         return getParent().indexOf(this);
-    }
-
-    public Expansion(Grammar grammar) {
-        setGrammar(grammar);
     }
 
     public Expansion() {
@@ -366,8 +361,7 @@ abstract public class Expansion extends BaseNode {
 
 
     /**
-     * This is really a misnomer. It should really be alwaysEnter
-     * or something like that.
+     *  Do we always enter this expansion?
      */
     abstract public boolean isAlwaysEntered();
 
@@ -381,8 +375,11 @@ abstract public class Expansion extends BaseNode {
      */
     abstract protected int getMaximumSize(Set<String> visitedNonTermiinals);
 
-    private int minSize=-1, maxSize=-1;
+    protected int minSize=-1, maxSize=-1;
 
+    /**
+     * @return the maximum number of tokens that this expansion consumes.
+     */
     final public int getMaximumSize() {
         if (maxSize == -1) {
             maxSize = getMaximumSize(new HashSet<>());
@@ -390,6 +387,9 @@ abstract public class Expansion extends BaseNode {
         return maxSize;
     }
 
+    /**
+     * @return the minimum number of tokens that this expansion consumes.
+     */
     final public int getMinimumSize() {
         if (minSize == -1) {
             minSize = getMinimumSize(new HashSet<>());
