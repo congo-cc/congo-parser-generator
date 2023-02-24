@@ -1771,8 +1771,8 @@ Expansion ExpansionUnit :
   FAIL
  )
  [
-     SCAN 100 ~\...\Lookahead => 
-    tba=InlineTreeNodeDescriptor
+    SCAN ~\...\Lookahead => 
+    tba=InlineTreeNodeDescriptor =>||
  ]
  {
         result.setTreeNodeBehavior(tba);
