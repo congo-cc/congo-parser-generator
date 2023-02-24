@@ -230,6 +230,9 @@ public class ${settings.lexerClassName} extends TokenSource
             position = forward(tokenBeginOffset, 1);
             continue;
         }
+        if (matchedType == INVALID) {
+           return new InvalidToken(this, tokenBeginOffset, position);
+        }
         if (invalidChars !=null) {
             position = tokenBeginOffset;
             int numCodePoints = invalidChars.codePointCount(0, invalidChars.length());
