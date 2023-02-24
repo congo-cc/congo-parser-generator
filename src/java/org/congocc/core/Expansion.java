@@ -391,6 +391,14 @@ abstract public class Expansion extends BaseNode {
         return minSize;
     }
 
+
+    /**
+     * @return whether this expansion consumes exactly one token
+     */
+    final public boolean isSingleToken() {
+        return getMinimumSize() == 1 && getMaximumSize() == 1;
+    }
+
     private Expansion getPreceding() {
         Node parent = getParent();
         if (parent instanceof ExpansionSequence) {

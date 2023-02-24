@@ -39,10 +39,19 @@ public class ExpansionSequence extends Expansion {
     public TokenSet getFirstSet() {
         if (firstSet == null) {
             firstSet = new TokenSet(getGrammar());
-            for (Expansion child : childrenOfType(Expansion.class)) {
+            for (Expansion child : getUnits()) {
                 firstSet.or(child.getFirstSet());
                 if (!child.isPossiblyEmpty()) {
                     break;
+                }
+            }
+            Expansion lookaheadExpansion = getLookaheadExpansion();
+            if (lookaheadExpansion != this) {
+                if (!getLookahead().isNegated()) {
+                    firstSet.and(lookaheadExpansion.getFirstSet());
+                } 
+                else if (lookaheadExpansion.isSingleToken()) {
+                    firstSet.andNot(lookaheadExpansion.getFirstSet());
                 }
             }
         }

@@ -52,16 +52,13 @@ public class NonTerminal extends Expansion {
 
     public TokenSet getFirstSet() {
         if (firstSet == null) {
-            firstSet = getProduction().getExpansion().getFirstSet();
+            firstSet = getNestedExpansion().getFirstSet();
         }
         return firstSet;
      }
-     private int reEntries;     
+     
      public TokenSet getFinalSet() {
-          ++reEntries;
-          TokenSet result = reEntries == 1 ? getProduction().getExpansion().getFinalSet() : new TokenSet(getGrammar());
-          --reEntries;
-          return result;
+          return getNestedExpansion().getFinalSet();
      }
      
      protected int getMinimumSize(Set<String> visitedNonTerminals) {

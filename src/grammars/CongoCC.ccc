@@ -9,6 +9,7 @@ TOKEN_CHAINING;
 DEACTIVATE_TOKENS=_INCLUDE,_INJECT,_EOF;
 
 #if fault_tolerant
+  Howdy!!!
 //FAULT_TOLERANT=true;
 #endif
 
@@ -1358,7 +1359,8 @@ INJECT ExpansionChoice :
          if (firstSet == null) {
             firstSet = new TokenSet(getGrammar());
             for (ExpansionSequence choice : childrenOfType(ExpansionSequence.class)) {
-                firstSet.or(choice.getLookaheadExpansion().getFirstSet());
+                //firstSet.or(choice.getLookaheadExpansion().getFirstSet());
+                firstSet.or(choice.getFirstSet());
             }
          }
          return firstSet;
