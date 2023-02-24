@@ -345,7 +345,7 @@ abstract public class Expansion extends BaseNode {
     /**
      * @return Can we do a short-cut and scan this expansion as a single token (using the scanToken method)
      */
-    public boolean isSingleToken() {
+    public boolean isSingleTokenLookahead() {
         // Uncomment the following line to turn off this optimization.
          //if (true) return false;
         return !isPossiblyEmpty() && getMaximumSize() == 1 && !getHasScanLimit() && getLookahead() == null 
@@ -355,15 +355,9 @@ abstract public class Expansion extends BaseNode {
     /**
      * @return Can this expansion be matched by the empty string.
      */
-    public final boolean isPossiblyEmpty() {
+    public boolean isPossiblyEmpty() {
         return getMinimumSize() == 0;
     }
-
-
-    /**
-     *  Do we always enter this expansion?
-     */
-    abstract public boolean isAlwaysEntered();
 
     /**
      * @return the minimum number of tokens that this expansion consumes.
@@ -481,7 +475,6 @@ abstract public class Expansion extends BaseNode {
             following = following.getFollowingExpansion();
             if (following == null)
                 return null;
-//            if (following.getSpecifiesLexicalStateSwitch())
             if (following.startsWithLexicalChange())
                 return true;
         } while (following.isPossiblyEmpty());

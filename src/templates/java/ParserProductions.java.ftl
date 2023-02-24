@@ -366,8 +366,7 @@
 
 
 [#macro BuildCodeZeroOrOne zoo]
-    [#if zoo.nestedExpansion.alwaysEntered
-      || zoo.nestedExpansion.class.simpleName = "ExpansionChoice"]
+    [#if zoo.nestedExpansion.class.simpleName = "ExpansionChoice"]
        [@BuildCode zoo.nestedExpansion /]
     [#else]
        if (${ExpansionCondition(zoo.nestedExpansion)}) {
@@ -431,16 +430,10 @@
 
 [#macro BuildCodeChoice choice]
    [#list choice.choices as expansion]
-      [#if expansion.alwaysEntered]
-         else {
-           [@BuildCode expansion /]
-         }
-         [#return]
-      [/#if]
-      ${(expansion_index=0)?string("if", "else if")}
-      (${ExpansionCondition(expansion)}) { 
+      if (${ExpansionCondition(expansion)}) { 
          ${BuildCode(expansion)}
       }
+      [#if expansion_has_next] else [/#if]
    [/#list]
    [#if choice.parent.simpleName == "ZeroOrMore"]
       else {

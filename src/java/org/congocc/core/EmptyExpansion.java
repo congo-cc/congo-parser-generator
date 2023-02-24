@@ -8,9 +8,6 @@ import java.util.Set;
  */
 abstract public class EmptyExpansion extends Expansion {
     @Override
-    public final boolean isAlwaysEntered() {return true;}
-   
-    @Override
     public final TokenSet getFirstSet() {return new TokenSet(getGrammar());}
    
     @Override

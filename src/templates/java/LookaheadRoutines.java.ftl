@@ -116,7 +116,7 @@
 [/#macro]
 
 [#macro BuildScanRoutine expansion]
- [#if !expansion.singleToken]
+ [#if !expansion.singleTokenLookahead]
   // scanahead routine for expansion at: 
   // ${expansion.location}
   // BuildScanRoutine macro
@@ -316,7 +316,7 @@
    --]
    [#if classname = "ExpansionWithParentheses"]
       [@BuildScanCode expansion.nestedExpansion /]
-   [#elseif expansion.singleToken]
+   [#elseif expansion.singleTokenLookahead]
       [#--if !expansion.isRegexp]
    // Applying single-token optimization for expansion of type ${classname}
    // ${expansion.location}
@@ -501,7 +501,7 @@
 
 
 [#macro CheckExpansion expansion]
-   [#if expansion.singleToken]
+   [#if expansion.singleTokenLookahead]
      [#if expansion.firstSet.tokenNames?size < CU.USE_FIRST_SET_THRESHOLD]
       scanToken(
         [#list expansion.firstSet.tokenNames as name]

@@ -123,7 +123,7 @@ ${BuildScanCode(expansion, 12)}
 [#macro BuildScanRoutine expansion indent]
 [#var is=""?right_pad(indent)]
 [#-- ${is}# DBG > BuildScanRoutine ${indent} --]
- [#if !expansion.singleToken || expansion.requiresPredicateMethod]
+ [#if !expansion.singleTokenLookahead || expansion.requiresPredicateMethod]
 ${is}// scanahead routine for expansion at:
 ${is}// ${expansion.location}
 ${is}// BuildScanRoutine macro
@@ -317,7 +317,7 @@ ${is}// Lookahead Code for ${classname} specified at ${expansion.location}
   [@CU.HandleLexicalStateChange expansion true indent; indent]
    [#if classname = "ExpansionWithParentheses"]
       [@BuildScanCode expansion.nestedExpansion indent /]
-   [#elseif expansion.singleToken]
+   [#elseif expansion.singleTokenLookahead]
 ${ScanSingleToken(expansion, indent)}
    [#elseif classname = "Assertion"]
 ${ScanCodeAssertion(expansion, indent)}
@@ -524,7 +524,7 @@ ${is}}--]
 
 
 [#macro CheckExpansion expansion]
-   [#if expansion.singleToken && !expansion.requiresPredicateMethod]
+   [#if expansion.singleTokenLookahead && !expansion.requiresPredicateMethod]
      [#if expansion.firstSet.tokenNames?size = 1]
       ScanToken(${CU.TT}${expansion.firstSet.tokenNames[0]})[#t]
      [#else]

@@ -16,9 +16,6 @@ abstract public class ExpansionWithNested extends Expansion {
     @Override
     protected int getMaximumSize(Set<String> visitedNonTerminals) {return getNestedExpansion().getMaximumSize(visitedNonTerminals);}
 
-    @Override
-    public boolean isAlwaysEntered() {return getNestedExpansion().isAlwaysEntered();}
-    
     @Override 
     public TokenSet getFirstSet() {return getNestedExpansion().getFirstSet();}
     

@@ -64,11 +64,6 @@ public class NonTerminal extends Expansion {
           return result;
      }
      
-     @Override
-     public boolean isAlwaysEntered() {
-         return getProduction().getExpansion().isAlwaysEntered();
-     }
-
      protected int getMinimumSize(Set<String> visitedNonTerminals) {
         if (minSize >=0) return minSize;
          if (visitedNonTerminals.contains(getName())) {
@@ -99,8 +94,8 @@ public class NonTerminal extends Expansion {
         return false;
      }
 
-     public boolean isSingleToken() {
-        return getNestedExpansion().isSingleToken();
+     public boolean isSingleTokenLookahead() {
+        return getNestedExpansion().isSingleTokenLookahead();
      }
 
      public boolean startsWithLexicalChange() {
