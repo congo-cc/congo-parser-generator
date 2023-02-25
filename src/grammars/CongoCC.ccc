@@ -10,7 +10,7 @@ DEACTIVATE_TOKENS=_INCLUDE,_INJECT,_EOF;
 
 #if fault_tolerant
   Howdy!!!
-//FAULT_TOLERANT=true;
+ FAULT_TOLERANT=true;
 #endif
 
 INJECT LEXER_CLASS : 

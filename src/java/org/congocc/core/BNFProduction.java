@@ -142,22 +142,6 @@ public class BNFProduction extends BaseNode {
 */
     }
 
-    private TokenSet firstSet, finalSet;
-    
-    public TokenSet getFirstSet() {
-        if (firstSet == null) {
-           firstSet = getExpansion().getFirstSet();
-        }
-        return firstSet;
-    }
-
-    public TokenSet getFinalSet() {
-          if (finalSet == null) {
-              finalSet = getExpansion().getFinalSet();
-          }
-          return finalSet;
-    }
-
     /**
      * Does this production potentially have left recursion?
      */

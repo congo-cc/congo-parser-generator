@@ -1,45 +1,54 @@
-<?xml version='1.0' encoding='ISO-8859-1' ?>
+<?xml version='1.0' encoding='ISO-8859-1'?>
 
 <project name="FreeMarker Parser" default="build" basedir=".">
 
-<target name="clean">
-    <delete dir="fel"/>
-     <delete dir="ftl"/>
-</target>
+   <target name="clean">
+      <delete dir="fel" />
+      <delete dir="ftl" />
+   </target>
 
-<target name="init">
-   <mkdir dir="fel"/>
-   <mkdir dir="ftl"/>
-</target>
+   <target name="init">
+      <mkdir dir="fel" />
+      <mkdir dir="ftl" />
+   </target>
 
-<target name="build" depends="init">
-    <java fork="true" failonerror="true" classname="org.congocc.app.Main" 
-          classpath="${basedir}/../../build:${basedir}/../../bin/congocc.jar:${basedir}/../../bin/freemarker.jar">
-      <arg line="-q -n ${basedir}/FEL.ccc"/>
-      <assertions enableSystemAssertions="true"/>
-    </java>
-    <java fork="true" failonerror="true" classname="org.congocc.app.Main" 
-          classpath="${basedir}/../../build:${basedir}/../../bin/congocc.jar:${basedir}/../../bin/freemarker.jar">
-          <arg line="-q -n ${basedir}/FTL.ccc"/>     
-            <assertions><enable/></assertions>
-    </java>      
-    <javac classpath="." debug="on" srcdir="." includeantruntime="no"  fork="true" failonerror="true"/>
-</target>
+   <target name="build" depends="init">
+      <java fork="true" failonerror="true" classname="org.congocc.app.Main"
+         classpath="${basedir}/../../build:${basedir}/../../bin/congocc.jar:${basedir}/../../bin/freemarker.jar">
+         <arg line="-q -n ${basedir}/FEL.ccc" />
+         <assertions enableSystemAssertions="true" />
+      </java>
+      <java fork="true" failonerror="true" classname="org.congocc.app.Main"
+         classpath="${basedir}/../../build:${basedir}/../../bin/congocc.jar:${basedir}/../../bin/freemarker.jar">
+         <arg line="-q -n ${basedir}/FTL.ccc" />
+         <assertions>
+            <enable />
+         </assertions>
+      </java>
+      <javac classpath="." debug="on" srcdir="." includeantruntime="no" fork="true"
+         failonerror="true" />
+   </target>
 
-<target name="test" depends="build">
-     <echo>Here is a really simple FEL example: 2+2</echo>
-     <java fork="true" classpath="." failonerror="true" classname="fel.FELParser" inputstring="2+2">
-        <assertions><enable/></assertions>
-     </java>
-     <echo>Okay, a bit more complex example now: x.y.z(foo, &quot;bar&quot;)?upper_case</echo>
-     <java fork="true" classpath="." failonerror="true" classname="fel.FELParser" inputstring='x.y.z(foo, "bar")?upper_case'>
-        <assertions><enable/></assertions>
-     </java>
-	 <echo>Now let's try out the full FTL parser on the templates used in CongoCC</echo>
-     <java fork="true" classpath="." failonerror="true" classname="ftl.FTLParser">
-       <assertions><enable/></assertions>
-     	 <arg value = "../../src/templates/csharp"/>
-     </java>
-</target>
-
+   <target name="test" depends="build">
+      <echo>Here is a really simple FEL example: 2+2</echo>
+      <java fork="true" classpath="." failonerror="true" classname="fel.FELParser" inputstring="2+2">
+         <assertions>
+            <enable />
+         </assertions>
+      </java>
+      <echo>Okay, a bit more complex example now: x.y.z(foo, &quot;bar&quot;)?upper_case</echo>
+      <java fork="true" classpath="." failonerror="true" classname="fel.FELParser"
+         inputstring='x.y.z(foo, "bar")?upper_case'>
+         <assertions>
+            <enable />
+         </assertions>
+      </java>
+      <echo>Now let's try out the full FTL parser on the templates used in CongoCC</echo>
+      <java fork="true" classpath="." failonerror="true" classname="ftl.FTLParser">
+         <assertions>
+            <enable />
+         </assertions>
+         <arg value="../../src/templates/csharp" />
+      </java>
+   </target>
 </project>
