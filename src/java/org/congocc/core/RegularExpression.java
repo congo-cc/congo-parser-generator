@@ -3,6 +3,7 @@ package org.congocc.core;
 import java.util.*;
 
 import org.congocc.core.nfa.LexicalStateData;
+import static org.congocc.core.LexerData.isJavaIdentifier;
 import org.congocc.parser.tree.CodeBlock;
 import org.congocc.parser.tree.Name;
 import org.congocc.parser.tree.TokenProduction;
@@ -14,7 +15,7 @@ import org.congocc.parser.tree.TokenProduction;
 
 public abstract class RegularExpression extends Expansion {
 
-   /**
+    /**
      * The ordinal value assigned to the regular expression. It is used for
      * internal processing and passing information between the parser and the
      * lexical analyzer.
@@ -35,8 +36,9 @@ public abstract class RegularExpression extends Expansion {
 
     public boolean getIgnoreCase() {
         TokenProduction tp = firstAncestorOfType(TokenProduction.class);
-        if (tp !=null) return tp.isIgnoreCase();
-        return getAppSettings().isIgnoreCase();//REVISIT
+        if (tp != null)
+            return tp.isIgnoreCase();
+        return getAppSettings().isIgnoreCase();// REVISIT
     }
 
     /**
@@ -52,19 +54,29 @@ public abstract class RegularExpression extends Expansion {
      */
     private boolean _private = false;
 
+    private String label;
+
     protected TokenProduction getTokenProduction() {
         return firstAncestorOfType(TokenProduction.class);
     }
 
+    public final void setLabel(String label) {
+        assert label.equals("") || isJavaIdentifier(label);
+        this.label = label;
+    }
+
     public final String getLabel() {
-    	String label = super.getLabel();
-    	if (label != null && label.length() != 0) {
-    	    return label;
-    	}
-  	    if (id == 0) {
- 	        return "EOF";
- 	    }
-  	    return String.valueOf(id);
+        if (label != null && label.length() != 0) {
+            return label;
+        }
+        if (id == 0) {
+            return "EOF";
+        }
+        return String.valueOf(id);
+    }
+
+    public final boolean hasLabel() {
+        return label != null && isJavaIdentifier(label);
     }
 
     public int getOrdinal() {
@@ -72,13 +84,13 @@ public abstract class RegularExpression extends Expansion {
     }
 
     public final void setOrdinal(int id) {
-        this.id =  id;
+        this.id = id;
     }
 
     public Name getLHS() {
         return lhs;
     }
-    
+
     public void setLHS(Name lhs) {
         this.lhs = lhs;
     }
@@ -92,9 +104,9 @@ public abstract class RegularExpression extends Expansion {
             }
         }
         return result;
-        
+
     }
-    
+
     public void setNewLexicalState(LexicalStateData newLexicalState) {
         this.newLexicalState = newLexicalState;
     }
@@ -102,26 +114,26 @@ public abstract class RegularExpression extends Expansion {
     public LexicalStateData getNewLexicalState() {
         return newLexicalState;
     }
- 
+
     public boolean isPrivate() {
         return this._private;
     }
 
-    public String getImage() {
+    public String getLiteralString() {
         return null;
     }
-    
+
     public void setPrivate(boolean _private) {
         this._private = _private;
     }
-    
+
     public String getGeneratedClassName() {
         if (generatedClassName.equals("Token")) {
             generatedClassName = getLabel();
         }
         return generatedClassName;
     }
-    
+
     public void setGeneratedClassName(String generatedClassName) {
         this.generatedClassName = generatedClassName;
     }
@@ -133,22 +145,21 @@ public abstract class RegularExpression extends Expansion {
     public void setGeneratedSuperClassName(String generatedSuperClassName) {
         this.generatedSuperClassName = generatedSuperClassName;
     }
-    
+
     private String generatedClassName = "Token", generatedSuperClassName;
-    
-    
+
     public TokenSet getFirstSet() {
-    	if (firstSet== null) {
-    		firstSet = new TokenSet(getGrammar());
-    		firstSet.set(getOrdinal());
-    	}
+        if (firstSet == null) {
+            firstSet = new TokenSet(getGrammar());
+            firstSet.set(getOrdinal());
+        }
         return firstSet;
     }
-    
+
     public TokenSet getFinalSet() {
-        return getFirstSet();	
+        return getFirstSet();
     }
-    
+
     final public int getMinimumSize(Set<String> unused) {
         return 1;
     }
@@ -157,9 +168,9 @@ public abstract class RegularExpression extends Expansion {
         return 1;
     }
 
-    public boolean isSingleTokenLookahead() {return true;}
-    
+    public boolean isSingleTokenLookahead() {
+        return true;
+    }
+
     abstract public boolean matchesEmptyString();
 }
-
-

@@ -50,8 +50,6 @@ public class Grammar extends BaseNode {
 
     private Set<Path> alreadyIncluded = new HashSet<>();
 
-    private Set<RegexpStringLiteral> stringLiteralsToResolve = new HashSet<>();
-
     private TemplateGlobals templateGlobals;
     private AppSettings appSettings;
     private Errors errors = new Errors();
@@ -89,7 +87,7 @@ public class Grammar extends BaseNode {
 
     public void addInplaceRegexp(RegularExpression regexp) {
         if (regexp instanceof RegexpStringLiteral) {
-            stringLiteralsToResolve.add((RegexpStringLiteral) regexp);
+            ((RegexpStringLiteral)regexp).setResolved(false);
         }
         TokenProduction tp = new TokenProduction();
         tp.setGrammar(this);
@@ -103,9 +101,10 @@ public class Grammar extends BaseNode {
     }
 
     private void resolveStringLiterals() {
-        for (RegexpStringLiteral stringLiteral : stringLiteralsToResolve) {
-            String label = lexerData.getStringLiteralLabel(stringLiteral.getImage());
-            stringLiteral.setLabel(label);
+        for (RegexpStringLiteral rsl : descendantsOfType(RegexpStringLiteral.class, r->!r.isResolved())) {
+            String label = lexerData.getStringLiteralLabel(rsl.getLiteralString());
+            rsl.setLabel(label);
+            rsl.setResolved(true);
         }
     }
 
@@ -183,7 +182,7 @@ public class Grammar extends BaseNode {
         if (errors.getErrorCount() > 0) {
             return;
         }
-        lexerData.ensureStringLabels();
+        lexerData.ensureRegexpLabels();
         resolveStringLiterals();
     }
 
@@ -380,6 +379,7 @@ public class Grammar extends BaseNode {
      */
     public List<TokenProduction> getAllTokenProductions() {
         return tokenProductions;
+//        return descendantsOfType(TokenProduction.class);
     }
 
     public List<Lookahead> getAllLookaheads() {

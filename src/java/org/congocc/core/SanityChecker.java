@@ -172,6 +172,45 @@ public class SanityChecker {
             }
         }
 
+        Set<String> labels = new HashSet<>();
+        Set<RegularExpression> unlabeled = new HashSet<>();
+        Map<String, RegexpStringLiteral> labeledStringLiterals = new HashMap<>();
+        Map<String, RegexpStringLiteral> labeledStringLiteralsIgnoreCase = new HashMap<>();
+        for (RegularExpression regexp : grammar.descendantsOfType(RegularExpression.class, re->re.getParent() instanceof RegexpSpec)) {
+            if (regexp instanceof RegexpRef) continue;
+            if (regexp.hasLabel()) {
+                if (labels.contains(regexp.getLabel())) {
+                    errors.addError(regexp, "repeated regexp label " + regexp.getLabel());
+                    labels.add(regexp.getLabel());
+                }
+                if (regexp instanceof RegexpStringLiteral) {
+                    RegexpStringLiteral stringLiteral = (RegexpStringLiteral) regexp;
+                    String literalString = stringLiteral.getLiteralString();
+                    TokenProduction tp = regexp.getTokenProduction();
+                    if (tp.isInDefaultLexicalState()) {
+                        labeledStringLiterals.putIfAbsent(literalString, stringLiteral);
+                        if (tp.isIgnoreCase()) {
+                            literalString = literalString.toLowerCase();
+                            labeledStringLiteralsIgnoreCase.putIfAbsent(literalString, stringLiteral);
+                        }
+                    }
+                }
+            } else {
+                unlabeled.add(regexp);
+            }
+        }
+
+        for (RegularExpression regexp : unlabeled) {
+            if (regexp instanceof RegexpStringLiteral && !regexp.getTokenProduction().isExplicit()) {
+                String literalString = ((RegexpStringLiteral)regexp).getLiteralString();
+                RegexpStringLiteral rsl = labeledStringLiterals.get(literalString);
+                if (rsl == null) {
+                    rsl = labeledStringLiteralsIgnoreCase.get(literalString.toLowerCase());
+                }
+
+            }
+        }
+
         /*
          * The following code checks for duplicate string literal
          * tokens in the same lexical state. This is the result 
@@ -192,7 +231,7 @@ public class SanityChecker {
                     lexerData.addRegularExpression(res.getRegexp());
                 } else {
                     RegexpStringLiteral stringLiteral = (RegexpStringLiteral) regexp;
-                    String image = stringLiteral.getImage();
+                    String image = stringLiteral.getLiteralString();
             // This loop performs the checks and actions with respect to
                     // each lexical state.
                     for (String name : tp.getLexicalStateNames()) {
@@ -201,7 +240,7 @@ public class SanityChecker {
                         if (alreadyPresent == null) {
                             if (stringLiteral.getOrdinal() == 0) {
                                 lexerData.addRegularExpression(stringLiteral);
-                            }
+                            } //else {assert false;}
                             lsd.addStringLiteral(stringLiteral);
                         } 
                         else if (!tp.isExplicit()) {

@@ -662,22 +662,9 @@ INJECT ThrowsList :
     import java.util.List;
     import java.util.ArrayList;
 {
-#if false    
-    public List<Node> getTypes() {
-        List<Node> result = new ArrayList<>();
-        for (Node n : children()) {
-           if ((n instanceof Name) || (n instanceof Identifier)) {
-              result.add(n);
-           }
-        }
-        return result; 
-    }
-#else
-
     public List<Node> getTypes() {
         return new ArrayList<Node>(childrenOfType(ObjectType.class));
     }    
-#endif    
 }
 
 INJECT Identifier : 
@@ -1248,6 +1235,15 @@ INJECT TokenProduction :
         } 
         return lexStates;
     }
+
+    public boolean isInDefaultLexicalState() {
+        if (isInAllLexStates()) return true;
+        if (!isExplicit()) return true;
+        for (String s : getLexicalStateNames()) {
+            if (s.equals(getGrammar().getDefaultLexicalState())) return true;
+        }
+        return false;
+    }
     
     private boolean isInAllLexStates() {
        for (Node n : children()) {
@@ -1281,49 +1277,50 @@ RegexpSpec(String tokenClassName) #RegexpSpec :
     boolean isPrivate = false;
     String image = "";
 }
-(
-  RegexpStringLiteral {regexp = (RegularExpression) peekNode();}
-  |
-  <LT>
-  [
-    ["#" {isPrivate = true;}]
-    <IDENTIFIER> {image = lastConsumedToken.getImage();}
-    ":"
-  ]
-  RegexpChoice {regexp = (RegularExpression) peekNode();} 
-  <GT>
-  {
-      if (regexp instanceof RegexpRef) {
-        RegexpSequence seq = new RegexpSequence();
-        seq.addChild(regexp);
-        pokeNode(seq);
-        regexp = seq;
-      } 
-      regexp.setLabel(image);
-      regexp.setGeneratedClassName(image);
-      regexp.setPrivate(isPrivate); 
-  }
- )
- {
-      if (tokenClassName != null) {
-          regexp.setGeneratedClassName(tokenClassName);
-      }
- }
- [
-     "#"<IDENTIFIER>
-     {
-        regexp.setGeneratedSuperClassName(tokenClassName);
-        regexp.setGeneratedClassName(lastConsumedToken.getImage());
-     }
-  ]
-  [
-      SCAN 1 {!regexp.isPrivate()} =>
-      Block
-  ]
-  [ 
-      SCAN 1 {!regexp.isPrivate()} =>
-      ":" <IDENTIFIER> {CURRENT_NODE.setNextLexicalState(lastConsumedToken.getImage());}
-  ]
+    (
+        RegexpStringLiteral {regexp = (RegularExpression) peekNode();}
+        |
+        <LT>
+        [
+            ["#" {isPrivate = true;}]
+            <IDENTIFIER> {image = lastConsumedToken.getImage();}
+            ":"
+        ]
+        RegexpChoice 
+        {
+            regexp = (RegularExpression) peekNode();
+            if (regexp instanceof RegexpRef) {
+                RegexpSequence seq = new RegexpSequence();
+                seq.addChild(regexp);
+                pokeNode(seq);
+                regexp = seq;
+            } 
+            regexp.setLabel(image);
+            regexp.setGeneratedClassName(image);
+            regexp.setPrivate(isPrivate); 
+        }
+        <GT>
+    )
+    {
+        if (tokenClassName != null) {
+            regexp.setGeneratedClassName(tokenClassName);
+        }
+    }
+    [
+        "#"<IDENTIFIER>
+        {
+            regexp.setGeneratedSuperClassName(tokenClassName);
+            regexp.setGeneratedClassName(lastConsumedToken.getImage());
+        }
+    ]
+    [
+        SCAN 1 {!regexp.isPrivate()} =>
+        Block
+    ]
+    [ 
+        SCAN 1 {!regexp.isPrivate()} =>
+        ":" <IDENTIFIER> {CURRENT_NODE.setNextLexicalState(lastConsumedToken.getImage());}
+    ]
 ;
 
 INJECT RegexpSpec : 
@@ -2038,7 +2035,7 @@ RegexpStringLiteral# :
    (<STRING_LITERAL>|<CHARACTER_LITERAL>|<SINGLE_QUOTE_STRING>)
    {
       String image = StringLiteral.removeEscapesAndQuotes(lastConsumedToken.getImage());
-      CURRENT_NODE.setImage(image);
+      CURRENT_NODE.setLiteralString(image);
    }
 ;
 
@@ -2046,25 +2043,28 @@ INJECT RegexpStringLiteral :
    import org.congocc.core.*;
    extends RegularExpression;
 {
-  @Property String image;
+  @Property String literalString;
+  @Property boolean resolved = true;
 
   public String toString() {
-    return super.toString() + " - " + getImage();
+    return super.toString() + " - " + getLiteralString();
   }
   
   //REVISIT What about different lexical states? As well as ignoreCase... 
   @Override 
   public boolean equals(Object obj) {
-      return obj instanceof RegexpStringLiteral && ((RegexpStringLiteral) obj).image == this.image;
+      if (!(obj instanceof RegexpStringLiteral)) return false;
+      RegexpStringLiteral other = (RegexpStringLiteral) obj;
+      return other.literalString.equals(this.literalString);
   }
   
   public int hashCode() {
-      return image.hashCode();
+      return literalString.hashCode();
   }
 
   @Override 
   public boolean matchesEmptyString() {
-      return getImage().length() == 0;
+      return literalString.length() == 0;
   }
 }
 

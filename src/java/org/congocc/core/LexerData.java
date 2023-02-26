@@ -1,6 +1,7 @@
 package org.congocc.core;
 
 import java.util.*;
+import java.util.stream.Collectors;
 
 import org.congocc.core.nfa.LexicalStateData;
 import org.congocc.parser.tree.EndOfFile;
@@ -43,25 +44,11 @@ public class LexerData {
     }
 
     public LexicalStateData getLexicalState(String name) {
-        for (LexicalStateData state : lexicalStates) {
-            if (state.getName().equals(name)) {
-                return state;
-            }
-        }
-        return null;
+        return lexicalStates.stream().filter(state->state.getName().equals(name)).findFirst().get();
     }
 
     public int getMaxNfaStates() {
-        int result = 0;
-        for (LexicalStateData lsd : lexicalStates) {
-            result = Math.max(result, lsd.getAllNfaStates().size());
-        }
-        return result;
-    }
-
-    public RegularExpression getRegularExpression(int idx) {
-        if (idx == Integer.MAX_VALUE) return null;
-        return regularExpressions.get(idx);
+        return lexicalStates.stream().mapToInt(state->state.getAllNfaStates().size()).max().getAsInt();
     }
 
     public List<RegularExpression> getRegularExpressions() {
@@ -79,16 +66,6 @@ public class LexerData {
         return regularExpressions.stream().anyMatch(re->re.getCodeSnippet()!=null);
     }
 
-    public int getLexicalStateIndex(String lexicalStateName) {
-        for (int i = 0; i < lexicalStates.size(); i++) {
-            LexicalStateData state = lexicalStates.get(i);
-            if (state.getName().equals(lexicalStateName)) {
-                return i;
-            }
-        }
-        return -1;
-    }
-    
     public int getNumLexicalStates() {
         return lexicalStates.size();
     }
@@ -102,13 +79,13 @@ public class LexerData {
         regularExpressions.add(regexp);
     }
     
-    public void ensureStringLabels() {
+    public void ensureRegexpLabels() {
         for (ListIterator<RegularExpression> it = regularExpressions.listIterator();it.hasNext();) {
             RegularExpression regexp = it.next();
             if (!isJavaIdentifier(regexp.getLabel())) {
                 String label = "_TOKEN_" + it.previousIndex();
                 if (regexp instanceof RegexpStringLiteral) {
-                    String s= ((RegexpStringLiteral)regexp).getImage().toUpperCase();
+                    String s= ((RegexpStringLiteral)regexp).getLiteralString().toUpperCase();
                     if (isJavaIdentifier(s) && !regexpLabelAlreadyUsed(s)) label = s;
                 }
                 regexp.setLabel(label);
@@ -131,7 +108,7 @@ public class LexerData {
     public String getStringLiteralLabel(String image) {
         for (RegularExpression regexp : regularExpressions) {
             if (regexp instanceof RegexpStringLiteral) {
-                if (regexp.getImage().equals(image)) {
+                if (regexp.getLiteralString().equals(image)) {
                     return regexp.getLabel();
                 }
             }

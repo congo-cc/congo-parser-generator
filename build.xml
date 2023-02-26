@@ -8,11 +8,8 @@
     <echo>Send any bug report to bugs@congocc.org and include the following information.</echo>
     <echo>JDK Version: ${java.version} on ${os.name}</echo>
     <uptodate property="parser.uptodate" targetfile="src/java/org/congocc/parser/CongoCCParser.java">
-      <srcfiles dir=".">
-        <filename name="src/grammars/CongoCC.ccc" />
-        <filename name="examples/java/Java.ccc" />
-        <filename name="examples/java/JavaLexer.ccc" />
-      </srcfiles>
+      <srcfiles dir="." includes="src/grammars/CongoCC.ccc"/>
+      <srcfiles dir="examples/java" includes="*.ccc"/>
     </uptodate>
     <uptodate property="preprocessor.uptodate"
       targetfile="src/java/org/congocc/preprocessor/PreprocessorParser.java"
@@ -20,19 +17,13 @@
     />
     <uptodate property="python.uptodate"
       targetfile="src/java/org/congocc/parser/python/PythonParser.java">
-      <srcfiles dir=".">
-        <filename name="src/grammars/PythonInternal.ccc" />
-        <filename name="examples/python/Python.ccc" />
-        <filename name="examples/python/PythonLexer.ccc" />
-      </srcfiles>
+      <srcfiles dir="src/grammars" includes="Python.ccc"/>
+      <srcfiles dir="examples/python" includes="*.ccc"/>
     </uptodate>
     <uptodate property="csharp.uptodate"
       targetfile="src/java/org/congocc/parser/csharp/CSharpParser.java">
-      <srcfiles dir=".">
-        <filename name="src/grammars/CSharpInternal.ccc" />
-        <filename name="examples/csharp/CSharp.ccc" />
-        <filename name="examples/python/CSharpLexer.ccc" />
-      </srcfiles>
+      <srcfiles dir="src/grammars" includes="SharpInternal.ccc"/>
+      <srcfiles dir="examples/csharp" includes="*.ccc"/>
     </uptodate>
     <uptodate property="ppline.uptodate"
       targetfile="src/java/org/parsers/csharp/ppline/PPDirectiveLineParser.java"
@@ -44,7 +35,6 @@
       <arg line="checkout bin/congocc.jar" />
     </exec>
   </target>
-
 
   <!--
      Build and test using the bootstrap jarfile, then
@@ -241,7 +231,6 @@
         <attribute name="Build-Date" value="${timestamp}" />
       </manifest>
     </jar>
-    <chmod file="congocc-full.jar" perm="+x" />
   </target>
 
   <target name="update-bootstrap">
