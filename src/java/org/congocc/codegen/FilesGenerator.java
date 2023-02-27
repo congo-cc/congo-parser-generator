@@ -10,6 +10,7 @@ import java.util.*;
 import org.congocc.app.AppSettings;
 import org.congocc.app.Errors;
 import org.congocc.core.Grammar;
+import org.congocc.core.LexerData;
 import org.congocc.core.RegularExpression;
 import org.congocc.codegen.java.*;
 import org.congocc.parser.*;
@@ -23,6 +24,7 @@ public class FilesGenerator {
 
     private Configuration fmConfig;
     private final Grammar grammar;
+    private final LexerData lexerData;
     private final AppSettings appSettings;
     private final Errors errors;
     private final CodeInjector codeInjector;
@@ -70,6 +72,7 @@ public class FilesGenerator {
 
     public FilesGenerator(Grammar grammar, String codeLang, List<Node> codeInjections) {
         this.grammar = grammar;
+        this.lexerData = grammar.getLexerData();
         this.appSettings = grammar.getAppSettings();
         this.errors = grammar.getErrors();
         this.generateRootApi = appSettings.getRootAPIPackage() == null; 
@@ -343,7 +346,7 @@ public class FilesGenerator {
         Map<String, Path> files = new LinkedHashMap<>();
         files.put(appSettings.getBaseNodeClassName(), getOutputFile(appSettings.getBaseNodeClassName()));
 
-        for (RegularExpression re : grammar.getOrderedNamedTokens()) {
+        for (RegularExpression re : lexerData.getOrderedNamedTokens()) {
             if (re.isPrivate()) continue;
             String tokenClassName = re.getGeneratedClassName();
             Path outputFile = getOutputFile(tokenClassName);

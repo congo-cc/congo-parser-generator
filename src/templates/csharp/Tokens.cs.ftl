@@ -662,7 +662,7 @@ namespace ${csPackage} {
         internal static Token NewToken(TokenType type, Lexer tokenSource, int beginOffset, int endOffset) {
 [#if settings.treeBuildingEnabled]
             switch(type) {
-  [#list grammar.orderedNamedTokens as re]
+  [#list lexerData.orderedNamedTokens as re]
     [#if re.generatedClassName != "Token" && !re.private]
             case TokenType.${re.label} : return new ${grammar.nodePrefix}${re.generatedClassName}(TokenType.${re.label}, tokenSource, beginOffset, endOffset);
     [/#if]

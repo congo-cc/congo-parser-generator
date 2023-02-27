@@ -796,7 +796,7 @@ INJECT Token :
       Options
    ]!
    (
-      tp=TokenProduction  {grammar.addTokenProduction(tp);}
+      tp=TokenProduction {grammar.addTokenProduction(tp);}
       |
       CodeInjection2 
       |
@@ -1807,7 +1807,7 @@ RegularExpression Terminal #void :
       }
   }
   [
-      SCAN {isInProduction("BNFProduction") && !isInProduction("Lookahead")}
+      SCAN ~\...\Lookahead
       =>
       {
           RegularExpression regexp = (RegularExpression) peekNode();

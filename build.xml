@@ -121,8 +121,7 @@
       failonerror="true"
       fork="true"
       includeantruntime="false"
-      target="1.8" source="1.8"
-    />
+      target="1.8" source="1.8"/>
     <copy todir="build/templates/java">
       <fileset dir="src/templates/java">
         <include name="*.ftl" />

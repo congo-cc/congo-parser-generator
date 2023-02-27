@@ -1,0 +1,128 @@
+DEFAULT_LEXICAL_STATE=LUA;
+TAB_SIZE=4;
+
+TOKEN #Delimiter :
+   <SEMICOLON: ";">
+   |
+   <COMMA: ",">
+;
+
+TOKEN #Operator :
+   <EQUALS: "=">
+   |
+   <LT: "<">
+   |
+   <OR: "or"> 
+   |
+   <AND: "and">
+;  
+
+TOKEN #Literal :
+  <NORMALSTRING : '"' ( <ESCAPE_SEQUENCE> | (~['\\', '"']) )* '"'>
+  |
+  <CHARSTRING : "'" (<ESCAPE_SEQUENCE> | (~['\\','|','\\']))* "'" >
+  |
+  <LONGSTRING : '[' <NESTED_STR> ']' >
+  |
+  <#NESTED_STR : ('=')* '[' (~[']'])* ']' ('=')* > 
+  |
+  <#DIGIT : ["0"-"9"]>
+  |
+  <INT : (<DIGIT>)+ >
+  |
+  <HEX : "0" ["x", "X"] (<HEX_DIGIT>)+ >
+  |
+  <FLOAT : 
+      (<INT> "." (<DIGIT>)* (<EXPONENT_PART>)?)
+      |
+      ("." <INT> (<EXPONENT_PART>)?)
+      |
+      (<INT> <EXPONENT_PART>)
+  >
+  |
+  <HEX_FLOAT :
+      ("0" ["x", "X"] (<HEX_DIGIT>)+ "." (<HEX_DIGIT>)* (<HEX_EXPONENT_PART>)?)
+      |
+      ( "0" ["x", "X"] "." (<HEX_DIGIT>)+ (<HEX_EXPONENT_PART>)?) 
+      |
+      ( "0" ["x", "X"] (<HEX_DIGIT>)+ <HEX_EXPONENT_PART>)
+  >
+  |
+  <#EXPONENT_PART : ["e", "E"] (["+", "-"])? <INT> >
+  |
+  <#HEX_EXPONENT_PART : ["p", "P"] (["+","-"])? <INT> >
+  |
+  <#ESCAPE_SEQUENCE : 
+     ("\\" ["a","b","f","n","r","t","v","z","'", '"', "|", "$", "#", "\\"])
+     |
+     ("\\" (["\r"])? "\n")
+     |
+     <DECIMAL_ESCAPE>
+     |
+     <UTF_ESCAPE>
+     |
+     <UTF_ESCAPE>
+  >
+  |
+  <#DECIMAL_ESCAPE : 
+     "\\"
+     (
+        (["0"-"2"] <DIGIT> <DIGIT>)
+        |
+        (<DIGIT> (<DIGIT>)?)
+     )
+  >
+  |
+  <#HEX_ESCAPE : "\\x" <HEX_DIGIT> <HEX_DIGIT> >
+  |
+  <#UTF_ESCAPE : "\\u{" (<HEX_DIGIT>)+ "}" >
+  |
+  <#HEX_DIGIT : ["0"-"9", "a"-"f", "A"-"F"] >
+;
+
+
+TOKEN #KeyWord :
+   <BREAK : "break">
+   |
+   <CONTINUE : "continue">
+   |
+   <DO : "do">
+   |
+   <ELSE : "else">
+   |
+   <ELSEIF : "elseif">
+   |
+   <END : "end">
+   |
+   <FOR : "for">
+   |
+   <FUNCTION : "function">
+   |
+   <GOTO : "goto">
+   |
+   <IF : "if">
+   |
+   <IN : "in">
+   |
+   <REPEAT : "repeat">
+   |
+   <RETURN : "return">
+   |
+   <THEN : "then">
+   |
+   <UNTIL : "until" >
+   |
+   <WHILE : "while" >
+;
+
+SKIP :
+ <#SINGLE_LINE_INPUT_CHARACTER : ~["\r","\n","\u0085","\u2028","\u2029"] >
+ |
+ <COMMENT : "--" <NESTED_STR> "]" >
+ |
+ <LINE_COMMENT : "--" (<SINGLE_LINE_INPUT_CHARACTER>)* >
+ |
+ <WS : ([" ", "\t", "\u000C", "\r", "\n"])+>
+ |
+ <SHEBANG : "#!" (<SINGLE_LINE_INPUT_CHARACTER>)*>
+;

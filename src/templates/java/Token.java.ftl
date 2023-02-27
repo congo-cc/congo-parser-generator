@@ -480,7 +480,7 @@ public class Token ${implementsNode} {
     public static Token newToken(TokenType type, ${settings.lexerClassName} tokenSource, int beginOffset, int endOffset) {
         [#if settings.treeBuildingEnabled]
            switch(type) {
-           [#list grammar.orderedNamedTokens as re]
+           [#list lexerData.orderedNamedTokens as re]
             [#if re.generatedClassName != "Token" && !re.private]
               case ${re.label} : return new ${grammar.nodePrefix}${re.generatedClassName}(TokenType.${re.label}, tokenSource, beginOffset, endOffset);
             [/#if]

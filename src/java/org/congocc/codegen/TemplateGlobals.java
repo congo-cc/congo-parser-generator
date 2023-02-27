@@ -14,6 +14,7 @@ import org.congocc.parser.tree.*;
 public class TemplateGlobals {
 
     private Grammar grammar;
+    private LexerData lexerData;
     private AppSettings appSettings;
     private Translator translator;
 
@@ -21,6 +22,7 @@ public class TemplateGlobals {
 
     public TemplateGlobals(Grammar grammar) {
         this.grammar = grammar;
+        this.lexerData = grammar.getLexerData();
         this.appSettings = grammar.getAppSettings();
     }
 
@@ -150,7 +152,7 @@ public class TemplateGlobals {
         Map<String, String> superClassMap = new HashMap<>();
         // List<String> classes = new ArrayList<>();
 
-        for (RegularExpression re : grammar.getOrderedNamedTokens()) {
+        for (RegularExpression re : lexerData.getOrderedNamedTokens()) {
             if (re.isPrivate())
                 continue;
             String tokenClassName = re.getGeneratedClassName();
