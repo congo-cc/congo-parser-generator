@@ -205,6 +205,8 @@ public class LexerData {
         return new ArrayList<RegularExpression>(namedTokensTable.values());
     }
 
+
+    // This method still really needs to be cleaned up!
     public void buildData() {
         for (TokenProduction tp : grammar.descendants(TokenProduction.class)) { 
             for (RegexpSpec res : tp.getRegexpSpecs()){

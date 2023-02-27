@@ -5,16 +5,76 @@ TOKEN #Delimiter :
    <SEMICOLON: ";">
    |
    <COMMA: ",">
+   |
+   <LPAREN: "(">
+   |
+   <RPAREN: ")">
+   |
+   <LBRACE: "{">
+   |
+   <RBRACE: "}">
+   |
+   <LBRACKET : "[">
+   |
+   <RBRACKET : "]">
 ;
 
 TOKEN #Operator :
-   <EQUALS: "=">
+   <ASSIGN : "=">
    |
    <LT: "<">
+   |
+   <GT: ">">
+   |
+   <COLON : ":">
+   |
+   <DOUBLE_COLON : "::">
+   |
+   <DOT : ".">
+   |
+   <ELLIPSIS : "...">
+   |
+   <HAT : "^">
+   |
+   <LE : "<=">
+   |
+   <GT : ">=">
+   |
+   <NE : "~=">
+   |
+   <EQ : "==">
+   |
+   <STR_CAT : "..">
+   |
+   <PLUS : "+">
+   |
+   <MINUS : "-">
+   |
+   <TIMES : "*">
+   |
+   <SLASH : "/">
+   |
+   <DOUBLE_SLASH : "//">
+   |
+   <MOD : "%">
+   |
+   <BIT_OR : "|">
+   |
+   <BIT_AND : "&">
+   |
+   <TILDE : "~">
+   |
+   <LSHIFT : "<<">
+   |
+   <RSHIFT  : ">>">
+   |
+   <HASH : "#">
    |
    <OR: "or"> 
    |
    <AND: "and">
+   |
+   <NOT : "not">
 ;  
 
 TOKEN #Literal :
@@ -94,6 +154,8 @@ TOKEN #KeyWord :
    |
    <END : "end">
    |
+   <FALSE : "false">
+   |
    <FOR : "for">
    |
    <FUNCTION : "function">
@@ -104,16 +166,24 @@ TOKEN #KeyWord :
    |
    <IN : "in">
    |
+   <LOCAL : "local">
+   |
+   <NIL : "nil">
+   |
    <REPEAT : "repeat">
    |
    <RETURN : "return">
    |
    <THEN : "then">
    |
+   <TRUE : "true">
+   |
    <UNTIL : "until" >
    |
    <WHILE : "while" >
 ;
+
+TOKEN : <NAME : ["a"-"z","A"-"Z", "_"](["a"-"z","A"-"Z","0"-"9","_"])*> #Name ;
 
 SKIP :
  <#SINGLE_LINE_INPUT_CHARACTER : ~["\r","\n","\u0085","\u2028","\u2029"] >

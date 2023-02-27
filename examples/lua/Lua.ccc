@@ -9,7 +9,7 @@ TAB_SIZE=4;
 
 INCLUDE "LuaLexer.ccc"
 
-Root : Block <EOF> ;
+#Root : Block <EOF> {return CURRENT_NODE;};
 
 Block#(>=0) : (Statement)* [LastStatement] ;
 
@@ -69,7 +69,7 @@ RepeatStatement : "repeat" Block "until" Expression ;
 
 WhileStatement : "while" Expression "do" Block "end" ;
 
-AttributeNameList : <NAME> Attribute ("," <NAME> Attribute)* ;
+AttributeNameList : <NAME> [Attribute] ("," <NAME> [Attribute])* ;
 
 Attribute : "<" <NAME> ">" ;
 
@@ -109,9 +109,11 @@ Expression : OrExpression (OperatorBitwise OrExpression)* ;
 
 PrefixExp : VarOrExp (NameAndArgs)* ;
 
-FunctionCall : VarOrExp =>|+1 (NameAndArgs)+ ;
+FunctionCall : VarOrExp (NameAndArgs)+ ;
 
-VarOrExp : Var | "(" Expression ")" ;
+//VarOrExp : Var | "(" Expression ")" ;
+VarOrExp : (<NAME> | "(" Expression ")" ) (VarSuffix)* ;
+
 
 Var : (<NAME> | "(" Expression ")" VarSuffix) (VarSuffix)* ;
 
@@ -153,5 +155,5 @@ Number : <INT> | <HEX> | <FLOAT> | <HEX_FLOAT> ;
 
 StringLiteral : <NORMALSTRING> | <CHARSTRING> | <LONGSTRING> ;
 
-TOKEN : <NAME : ["a"-"z","A"-"Z", "_"](["a"-"z","A"-"Z","0"-"9","_"])*> #Name ;
+
 

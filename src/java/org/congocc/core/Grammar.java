@@ -50,7 +50,7 @@ public class Grammar extends BaseNode {
 
     private TemplateGlobals templateGlobals;
     private AppSettings appSettings;
-    private Errors errors = new Errors();
+    private Errors errors;
 
     public Grammar(Path outputDir, String codeLang, int jdkTarget, boolean quiet, Map<String, String> preprocessorSymbols) {
         this.preprocessorSymbols = preprocessorSymbols;
@@ -69,7 +69,10 @@ public class Grammar extends BaseNode {
 
     public TemplateGlobals getTemplateGlobals() {return templateGlobals;}
 
-    public Errors getErrors() {return errors;}
+    public Errors getErrors() {
+        if (errors == null) errors = new Errors();
+        return errors;
+    }
 
     public void setSettings(Map<String, Object> settings) {
         appSettings.setSettings((settings));
