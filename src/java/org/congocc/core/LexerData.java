@@ -1,7 +1,6 @@
 package org.congocc.core;
 
 import java.util.*;
-import java.util.stream.Collectors;
 
 import org.congocc.core.nfa.LexicalStateData;
 import org.congocc.parser.tree.EndOfFile;
@@ -45,6 +44,10 @@ public class LexerData {
 
     public LexicalStateData getLexicalState(String name) {
         return lexicalStates.stream().filter(state->state.getName().equals(name)).findFirst().get();
+    }
+
+    public LexicalStateData getDefaultLexicalState() {
+        return lexicalStates.get(0);
     }
 
     public int getMaxNfaStates() {
@@ -109,6 +112,9 @@ public class LexerData {
         for (RegularExpression regexp : regularExpressions) {
             if (regexp instanceof RegexpStringLiteral) {
                 if (regexp.getLiteralString().equals(image)) {
+                    return regexp.getLabel();
+                }
+                if (regexp.getIgnoreCase() && regexp.getLiteralString().equalsIgnoreCase(image)) {
                     return regexp.getLabel();
                 }
             }

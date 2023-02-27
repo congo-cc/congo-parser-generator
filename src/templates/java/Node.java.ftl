@@ -235,11 +235,6 @@ public interface Node
           }
           return result;
       }
-[#--
-     default List<? extends TerminalNode> getAllTokens(boolean includeCommentTokens) {
-        return Collections.emptyList();
-     }
---]     
 
    default public List<? extends TerminalNode> getAllTokens(boolean includeCommentTokens) {
 		List<TerminalNode> result = new ArrayList<>();
@@ -451,20 +446,11 @@ public interface Node
    }
    
    default <T extends Node> List<T> descendantsOfType(Class<T> clazz, Predicate<T> pred) {
-        List<T> result = new ArrayList<T>();
-        for (int i=0; i< getChildCount(); i++) {
-            Node child = getChild(i);
-            if (clazz.isInstance(child)) {
-                T t = clazz.cast(child);
-                if (pred == null || pred.test(t)) result.add(t);
-            } 
-            result.addAll(child.descendantsOfType(clazz, pred));
-        }
-        return result;
+        return descendants(clazz, pred);
    }
 
    default <T extends Node> List<T> descendantsOfType(Class<T> clazz) {
-       return descendantsOfType(clazz, null);
+       return descendants(clazz, null);
    }
    
    default <T extends Node> T firstAncestorOfType(Class<T> clazz) {
@@ -564,14 +550,15 @@ public interface Node
 
     default <T extends Node> List<T> descendants(Class<T> clazz, Predicate<? super T> predicate) {
        List<T> result = new ArrayList<>();
-       for (Node child : children()) {
-          if (clazz.isInstance(child)) {
-              T t = clazz.cast(child);
-              if (predicate == null || predicate.test(t)) {
-                  result.add(t);
-              }
-          }
-          result.addAll(child.descendants(clazz, predicate)); 
+       for (int i=0; i< getChildCount(); i++) {
+           Node child = getChild(i);
+           if (clazz.isInstance(child)) {
+               T t = clazz.cast(child);
+               if (predicate == null || predicate.test(t)) {
+                   result.add(t);
+               }
+           } 
+           result.addAll(child.descendants(clazz, predicate));
        }
        return result;
     }

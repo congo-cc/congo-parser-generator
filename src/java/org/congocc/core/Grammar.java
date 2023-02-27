@@ -85,9 +85,13 @@ public class Grammar extends BaseNode {
         return lexicalStates.toArray(new String[]{});
     }
 
+    private Set<RegexpStringLiteral> unresolvedStringLiterals = new HashSet<>();
+
     public void addInplaceRegexp(RegularExpression regexp) {
         if (regexp instanceof RegexpStringLiteral) {
             ((RegexpStringLiteral)regexp).setResolved(false);
+            unresolvedStringLiterals.add((RegexpStringLiteral) regexp);
+            //return;
         }
         TokenProduction tp = new TokenProduction();
         tp.setGrammar(this);
@@ -101,14 +105,12 @@ public class Grammar extends BaseNode {
     }
 
     private void resolveStringLiterals() {
-        for (RegexpStringLiteral rsl : descendantsOfType(RegexpStringLiteral.class, r->!r.isResolved())) {
+        for (RegexpStringLiteral rsl : descendants(RegexpStringLiteral.class, r->!r.isResolved())) {
             String label = lexerData.getStringLiteralLabel(rsl.getLiteralString());
             rsl.setLabel(label);
             rsl.setResolved(true);
         }
     }
-
-
 
     public Node parse(Path file, boolean enterIncludes) throws IOException {
         Path canonicalPath = file.normalize();
@@ -215,7 +217,7 @@ public class Grammar extends BaseNode {
     }
 
     public Collection<BNFProduction> getParserProductions() {
-        List<BNFProduction> productions = descendantsOfType(BNFProduction.class);
+        List<BNFProduction> productions = descendants(BNFProduction.class);
         LinkedHashMap<String, BNFProduction> map = new LinkedHashMap<>();
         for (BNFProduction production: productions) {
             map.put(production.getName(), production);
@@ -377,9 +379,9 @@ public class Grammar extends BaseNode {
      * implicit TokenProductions that are created for uses of regular
      * expressions within BNF productions.
      */
-    public List<TokenProduction> getAllTokenProductions() {
+    List<TokenProduction> getAllTokenProductions() {
         return tokenProductions;
-//        return descendantsOfType(TokenProduction.class);
+//         return descendants(TokenProduction.class);
     }
 
     public List<Lookahead> getAllLookaheads() {

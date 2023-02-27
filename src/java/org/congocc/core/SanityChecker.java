@@ -171,7 +171,7 @@ public class SanityChecker {
                 }
             }
         }
-
+/*
         Set<String> labels = new HashSet<>();
         Set<RegularExpression> unlabeled = new HashSet<>();
         Map<String, RegexpStringLiteral> labeledStringLiterals = new HashMap<>();
@@ -209,7 +209,7 @@ public class SanityChecker {
                 }
 
             }
-        }
+        }*/
 
         /*
          * The following code checks for duplicate string literal
@@ -316,9 +316,7 @@ public class SanityChecker {
         }
 
         // Check for self-referential loops in regular expressions
-        RegexpVisitor reVisitor = new RegexpVisitor();
-        for (TokenProduction tp : grammar.getAllTokenProductions()) {
-            reVisitor.visit(tp);
-        }
+        //RegexpVisitor reVisitor = new RegexpVisitor();
+        new RegexpVisitor().visit(grammar);
     }
 }
