@@ -82,7 +82,7 @@ public class Grammar extends BaseNode {
     }
 
     public String[] getLexicalStates() {
-        return lexicalStates.toArray(new String[]{});
+        return lexicalStates.toArray(new String[0]);
     }
 
     private Set<RegexpStringLiteral> unresolvedStringLiterals = new HashSet<>();
@@ -104,7 +104,7 @@ public class Grammar extends BaseNode {
         tp.addChild(res);
     }
 
-    private void resolveStringLiterals() {
+    void resolveStringLiterals() {
         for (RegexpStringLiteral rsl : descendants(RegexpStringLiteral.class, r->!r.isResolved())) {
             String label = lexerData.getStringLiteralLabel(rsl.getLiteralString());
             rsl.setLabel(label);
@@ -184,8 +184,8 @@ public class Grammar extends BaseNode {
         if (errors.getErrorCount() > 0) {
             return;
         }
-        lexerData.ensureRegexpLabels();
-        resolveStringLiterals();
+//        lexerData.ensureRegexpLabels();
+//        resolveStringLiterals();
     }
 
     public void generateFiles() throws IOException {

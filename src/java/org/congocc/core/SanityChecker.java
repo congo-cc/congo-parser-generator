@@ -29,30 +29,6 @@ public class SanityChecker {
         this.errors = grammar.getErrors();
     }
 
-    /**
-     * A visitor that checks whether there is a self-referential loop in a 
-     * Regexp reference. It is a much more terse, readable replacement
-     * for some ugly legacy code.
-     * @author revusky
-     */
-    class RegexpVisitor extends Node.Visitor {
-
-        private HashSet<RegularExpression> alreadyVisited = new HashSet<>(), currentlyVisiting = new HashSet<>();
-
-        void visit(RegexpRef ref) {
-            RegularExpression referredTo = ref.getRegexp();
-            if (referredTo != null && !alreadyVisited.contains(referredTo)) {
-                if (!currentlyVisiting.contains(referredTo)) {
-                    currentlyVisiting.add(referredTo);
-                    visit(referredTo);
-                    currentlyVisiting.remove(referredTo);
-                } else {
-                    alreadyVisited.add(referredTo);
-                    errors.addError(ref, "Self-referential loop detected");
-                }
-            }
-        }
-    }
 
     // This method contains various sanity checks and adjustments
     // that have been in the code forever. There is a general need
@@ -71,10 +47,6 @@ public class SanityChecker {
 
         /*
          * Check whether we have any LOOKAHEADs at non-choice points 
-         * REVISIT: Why is this not handled in the grammar spec?
-         * The legacy code had some kind of very complex munging going on 
-         * in these cases, but serious analysis seems to show that it was not something
-         * of any real value.
          */
         for (ExpansionSequence sequence : grammar.descendants(ExpansionSequence.class)) {
             if (sequence.getHasExplicitLookahead() 
@@ -147,16 +119,22 @@ public class SanityChecker {
                 errors.addError(regexpSpec, "Regular Expression can match empty string. This is not allowed here.");
             }
         }
-
-
-// Below this point is legacy code that I'm still schlepping around.
-// Well, actually, even what is below this point is substantially cleaned up now!
+        for (BNFProduction prod : grammar.descendants(BNFProduction.class)) {
+            String lexicalStateName = prod.getLexicalState();
+            if (lexicalStateName != null && lexerData.getLexicalState(lexicalStateName) == null) {
+                errors.addError(prod, "Lexical state \""
+                + lexicalStateName + "\" has not been defined.");
+            }
+            if (prod.isLeftRecursive()) {
+                errors.addError(prod, "Production " + prod.getName() + " is left recursive.");
+            }
+        }
 
         /*
          * The following loop inserts all names of regular expressions into
          * "namedTokensTable" and "ordered_named_tokens". Duplications are
          * flagged as errors.
-         */
+         *//*
         for (TokenProduction tp : grammar.descendants(TokenProduction.class)) { 
             for (RegexpSpec res : tp.getRegexpSpecs()){
                 RegularExpression re = res.getRegexp();
@@ -170,153 +148,6 @@ public class SanityChecker {
                     grammar.addNamedToken(label, re);
                 }
             }
-        }
-/*
-        Set<String> labels = new HashSet<>();
-        Set<RegularExpression> unlabeled = new HashSet<>();
-        Map<String, RegexpStringLiteral> labeledStringLiterals = new HashMap<>();
-        Map<String, RegexpStringLiteral> labeledStringLiteralsIgnoreCase = new HashMap<>();
-        for (RegularExpression regexp : grammar.descendantsOfType(RegularExpression.class, re->re.getParent() instanceof RegexpSpec)) {
-            if (regexp instanceof RegexpRef) continue;
-            if (regexp.hasLabel()) {
-                if (labels.contains(regexp.getLabel())) {
-                    errors.addError(regexp, "repeated regexp label " + regexp.getLabel());
-                    labels.add(regexp.getLabel());
-                }
-                if (regexp instanceof RegexpStringLiteral) {
-                    RegexpStringLiteral stringLiteral = (RegexpStringLiteral) regexp;
-                    String literalString = stringLiteral.getLiteralString();
-                    TokenProduction tp = regexp.getTokenProduction();
-                    if (tp.isInDefaultLexicalState()) {
-                        labeledStringLiterals.putIfAbsent(literalString, stringLiteral);
-                        if (tp.isIgnoreCase()) {
-                            literalString = literalString.toLowerCase();
-                            labeledStringLiteralsIgnoreCase.putIfAbsent(literalString, stringLiteral);
-                        }
-                    }
-                }
-            } else {
-                unlabeled.add(regexp);
-            }
-        }
-
-        for (RegularExpression regexp : unlabeled) {
-            if (regexp instanceof RegexpStringLiteral && !regexp.getTokenProduction().isExplicit()) {
-                String literalString = ((RegexpStringLiteral)regexp).getLiteralString();
-                RegexpStringLiteral rsl = labeledStringLiterals.get(literalString);
-                if (rsl == null) {
-                    rsl = labeledStringLiteralsIgnoreCase.get(literalString.toLowerCase());
-                }
-
-            }
         }*/
-
-        /*
-         * The following code checks for duplicate string literal
-         * tokens in the same lexical state. This is the result 
-         * of refactoring some really grotesque legacy code.
-         * Though significantly cleaned up, it is still horrible!
-         * TODO: Rewrite this in a simpler manner!
-         */
-        for (TokenProduction tp : grammar.getAllTokenProductions()) {
-            Set<RegularExpression> privateRegexps = new HashSet<>();
-            for (RegexpSpec res : tp.getRegexpSpecs()) {
-                RegularExpression regexp = res.getRegexp();
-                if (regexp instanceof RegexpRef) continue;
-                if (regexp.isPrivate()) {
-                    privateRegexps.add(regexp);
-                    continue;
-                }
-                if (!(regexp instanceof RegexpStringLiteral)) {
-                    lexerData.addRegularExpression(res.getRegexp());
-                } else {
-                    RegexpStringLiteral stringLiteral = (RegexpStringLiteral) regexp;
-                    String image = stringLiteral.getLiteralString();
-            // This loop performs the checks and actions with respect to
-                    // each lexical state.
-                    for (String name : tp.getLexicalStateNames()) {
-                        LexicalStateData lsd = lexerData.getLexicalState(name);
-                        RegularExpression alreadyPresent = lsd.getStringLiteral(image);
-                        if (alreadyPresent == null) {
-                            if (stringLiteral.getOrdinal() == 0) {
-                                lexerData.addRegularExpression(stringLiteral);
-                            } //else {assert false;}
-                            lsd.addStringLiteral(stringLiteral);
-                        } 
-                        else if (!tp.isExplicit()) {
-                            if (alreadyPresent.getTokenProduction() != null && !alreadyPresent.getTokenProduction().getKind().equals("TOKEN")) {
-                                String kind = alreadyPresent.getTokenProduction().getKind();
-                                errors.addError(stringLiteral,
-                                        "String token \""
-                                                + image
-                                                + "\" has been defined as a \""
-                                                + kind
-                                                + "\" token.");
-                            } else if (privateRegexps.contains(alreadyPresent)) {
-                                errors.addError(stringLiteral,   
-                                     "String token \"" + image
-                                     + "\" has been defined as a private regular expression.");
-                            } else {
-                                // This is now a legitimate reference to an
-                                // existing StringLiteralRegexp.
-                                stringLiteral.setOrdinal(alreadyPresent.getOrdinal());
-                                tp.removeChild(res);
-                            }
-                        }
-                    }
-                } 
-            }
-        }
-
-        //Let's jump out here, I guess.
-        if (errors.getErrorCount() >0) return;
-
-        for (RegexpRef ref : grammar.descendants(RegexpRef.class)) {
-            String label = ref.getLabel();
-            if (grammar.getAppSettings().getExtraTokens().containsKey(label)) continue;
-            RegularExpression referenced = grammar.getNamedToken(label);
-            if (referenced == null) {
-                errors.addError(ref,  "Undefined lexical token name \"" + label + "\".");
-            } else if (ref.getTokenProduction() == null || !ref.getTokenProduction().isExplicit()) {
-                if (referenced.isPrivate()) {
-                    errors.addError(ref, "Token name \"" + label + "\" refers to a private (with a #) regular expression.");
-                }   else if (!referenced.getTokenProduction().getKind().equals("TOKEN")) {
-                    errors.addError(ref, "Token name \"" + label + "\" refers to a non-token (SKIP, MORE, UNPARSED) regular expression.");
-                } 
-            } 
-        }
-        
-        for (TokenProduction tp : grammar.descendants(TokenProduction.class)) {
-            for (RegexpRef ref : tp.descendants(RegexpRef.class)) {
-                RegularExpression rexp = grammar.getNamedToken(ref.getLabel());
-                if (rexp != null) {
-                    ref.setOrdinal(rexp.getOrdinal());
-                    ref.setRegexp(rexp);
-                }
-            }
-        }
-        
-        for (TokenProduction tp : grammar.descendants(TokenProduction.class)) {
-            for (RegexpSpec res : tp.getRegexpSpecs()) {
-                if (res.getRegexp() instanceof RegexpRef) {
-                    tp.removeChild(res);
-                }
-            }
-        }
-
-        for (BNFProduction prod : grammar.descendants(BNFProduction.class)) {
-            String lexicalStateName = prod.getLexicalState();
-            if (lexicalStateName != null && lexerData.getLexicalState(lexicalStateName) == null) {
-                errors.addError(prod, "Lexical state \""
-                + lexicalStateName + "\" has not been defined.");
-            }
-            if (prod.isLeftRecursive()) {
-                errors.addError(prod, "Production " + prod.getName() + " is left recursive.");
-            }
-        }
-
-        // Check for self-referential loops in regular expressions
-        //RegexpVisitor reVisitor = new RegexpVisitor();
-        new RegexpVisitor().visit(grammar);
     }
 }
