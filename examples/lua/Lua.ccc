@@ -6,10 +6,16 @@
 PARSER_PACKAGE=org.parsers.lua;
 DEFAULT_LEXICAL_STATE=LUA;
 TAB_SIZE=4;
+DEACTIVATE_TOKENS=SHEBANG;
 
 INCLUDE "LuaLexer.ccc"
 
-#Root : Block <EOF> {return CURRENT_NODE;};
+#Root : 
+   [
+      SCAN <HASH> => ACTIVATE_TOKENS SHEBANG (<SHEBANG>)
+   ]
+   Block <EOF> {return CURRENT_NODE;}
+;
 
 Block#(>=0) : (Statement)* [LastStatement] ;
 
@@ -73,7 +79,7 @@ AttributeNameList : <NAME> [Attribute] ("," <NAME> [Attribute])* ;
 
 Attribute : "<" <NAME> ">" ;
 
-LastStatement : "return" [ExpressionList] | "break" | "continue" [<SEMICOLON>] ;
+LastStatement : ( "return" [ExpressionList] | "break" ) [<SEMICOLON>] ;
 
 Label : "::" <NAME> "::" ;
 
@@ -81,7 +87,7 @@ FunctionName : <NAME> ("." <NAME>)* [":" <NAME>] ;
 
 VarList : Var ("," Var)* ;
 
-NameList : <NAME> ("," <NAME>)* ;
+NameList : <NAME> ("," <NAME> =>||)* ;
 
 ExpressionList : Expression ("," Expression)* ;
 
@@ -89,7 +95,7 @@ Literal#void : "nil" | "false" | "true" | Number | StringLiteral | "..." ;
 
 PrimaryExpression : Literal | FunctionDef | PrefixExp | TableConstructor ;
 
-PowerExpression : PrimaryExpression ("^" PowerExpression)* ;
+PowerExpression : PrimaryExpression ("^" UnaryExpression)* ;
 
 UnaryExpression : (OperatorUnary)* PowerExpression ;
 
@@ -97,7 +103,7 @@ MultiplicativeExpression : UnaryExpression (OperatorMulDivMod UnaryExpression)* 
 
 AdditiveExpression : MultiplicativeExpression (OperatorAddSub MultiplicativeExpression)* ;
 
-StringCatExpression : MultiplicativeExpression (OperatorStrCat StringCatExpression)* ;
+StringCatExpression : AdditiveExpression (OperatorStrCat StringCatExpression)* ;
 
 ComparisonExpression : StringCatExpression (OperatorComparison ComparisonExpression)* ;
 
@@ -111,13 +117,11 @@ PrefixExp : VarOrExp (NameAndArgs)* ;
 
 FunctionCall : VarOrExp (NameAndArgs)+ ;
 
-//VarOrExp : Var | "(" Expression ")" ;
 VarOrExp : (<NAME> | "(" Expression ")" ) (VarSuffix)* ;
-
 
 Var : (<NAME> | "(" Expression ")" VarSuffix) (VarSuffix)* ;
 
-VarSuffix : (NameAndArgs)* ("[" Expression "]" | "." <NAME>) ;
+VarSuffix : (NameAndArgs)* =>|+1 ("[" Expression "]" | "." <NAME>) ;
 
 NameAndArgs : [":" <NAME>] Args ;
 
@@ -127,13 +131,13 @@ FunctionDef : "function" FunctionBody ;
 
 FunctionBody : "(" [ParamList] ")" Block "end" ;
 
-ParamList : NameList ["," | "..."] | "..." ;
+ParamList : NameList ["," "..."] | "..." ;
 
 TableConstructor : "{" [FieldList]  "}" ;
 
-FieldList : Field (FieldSep Field)* [FieldSep] ;
+FieldList : Field (FieldSep =>|+1 Field)* [FieldSep] ;
 
-Field : "[" Expression "]" "=" Expression | <NAME> "=" Expression | Expression ;
+Field : "[" Expression "]" "=" Expression | [<NAME> "=" =>||] Expression ;
 
 FieldSep : "," | <SEMICOLON> ;
 
@@ -154,6 +158,3 @@ OperatorPower : "^" ;
 Number : <INT> | <HEX> | <FLOAT> | <HEX_FLOAT> ;
 
 StringLiteral : <NORMALSTRING> | <CHARSTRING> | <LONGSTRING> ;
-
-
-

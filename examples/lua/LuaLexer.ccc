@@ -3,86 +3,56 @@ TAB_SIZE=4;
 
 TOKEN #Delimiter :
    <SEMICOLON: ";">
-   |
-   <COMMA: ",">
-   |
-   <LPAREN: "(">
-   |
-   <RPAREN: ")">
-   |
-   <LBRACE: "{">
-   |
-   <RBRACE: "}">
-   |
-   <LBRACKET : "[">
-   |
-   <RBRACKET : "]">
+ | <COMMA: ",">
+ | <LPAREN: "(">
+ | <RPAREN: ")">
+ | <LBRACE: "{">
+ | <RBRACE: "}">
+ | <LBRACKET : "[">
+ | <RBRACKET : "]">
 ;
 
 TOKEN #Operator :
    <ASSIGN : "=">
-   |
-   <LT: "<">
-   |
-   <GT: ">">
-   |
-   <COLON : ":">
-   |
-   <DOUBLE_COLON : "::">
-   |
-   <DOT : ".">
-   |
-   <ELLIPSIS : "...">
-   |
-   <HAT : "^">
-   |
-   <LE : "<=">
-   |
-   <GT : ">=">
-   |
-   <NE : "~=">
-   |
-   <EQ : "==">
-   |
-   <STR_CAT : "..">
-   |
-   <PLUS : "+">
-   |
-   <MINUS : "-">
-   |
-   <TIMES : "*">
-   |
-   <SLASH : "/">
-   |
-   <DOUBLE_SLASH : "//">
-   |
-   <MOD : "%">
-   |
-   <BIT_OR : "|">
-   |
-   <BIT_AND : "&">
-   |
-   <TILDE : "~">
-   |
-   <LSHIFT : "<<">
-   |
-   <RSHIFT  : ">>">
-   |
-   <HASH : "#">
-   |
-   <OR: "or"> 
-   |
-   <AND: "and">
-   |
-   <NOT : "not">
+ | <LT: "<">
+ | <LE : "<=">
+ | <GT: ">">
+ | <GE : ">=">
+ | <COLON : ":">
+ | <DOUBLE_COLON : "::">
+ | <DOT : ".">
+ | <ELLIPSIS : "...">
+ | <HAT : "^">
+ | <NE : "~=">
+ | <EQ : "==">
+ | <STR_CAT : "..">
+ | <PLUS : "+">
+ | <MINUS : "-">
+ | <TIMES : "*">
+ | <SLASH : "/">
+ | <DOUBLE_SLASH : "//">
+ | <MOD : "%">
+ | <BIT_OR : "|">
+ | <BIT_AND : "&">
+ | <TILDE : "~">
+ | <LSHIFT : "<<">
+ | <RSHIFT  : ">>">
+ | <HASH : "#">
+ | <OR: "or"> 
+ | <AND: "and">
+ | <NOT : "not">
 ;  
 
 TOKEN #Literal :
   <NORMALSTRING : '"' ( <ESCAPE_SEQUENCE> | (~['\\', '"']) )* '"'>
   |
-  <CHARSTRING : "'" (<ESCAPE_SEQUENCE> | (~['\\','|','\\']))* "'" >
+  <CHARSTRING : "'" (<ESCAPE_SEQUENCE> | (~['\\',"'"]))* "'" >
   |
-  <LONGSTRING : '[' <NESTED_STR> ']' >
+  <LONGSTRING : <LONGSTRING1> | <LONGSTRING2>>
+  |
+  <#LONGSTRING1 : '[[' (~["]"] | ("]" ~["]"]))* ']]' >
+  |
+  <#LONGSTRING2 : "[=" ("=")* "[" (~["]"] | (("]")+ ~["="]))* "]=" ("=")* "]">
   |
   <#NESTED_STR : ('=')* '[' (~[']'])* ']' ('=')* > 
   |
@@ -119,7 +89,7 @@ TOKEN #Literal :
      |
      <DECIMAL_ESCAPE>
      |
-     <UTF_ESCAPE>
+     <HEX_ESCAPE>
      |
      <UTF_ESCAPE>
   >
@@ -143,56 +113,73 @@ TOKEN #Literal :
 
 TOKEN #KeyWord :
    <BREAK : "break">
-   |
-   <CONTINUE : "continue">
-   |
-   <DO : "do">
-   |
-   <ELSE : "else">
-   |
-   <ELSEIF : "elseif">
-   |
-   <END : "end">
-   |
-   <FALSE : "false">
-   |
-   <FOR : "for">
-   |
-   <FUNCTION : "function">
-   |
-   <GOTO : "goto">
-   |
-   <IF : "if">
-   |
-   <IN : "in">
-   |
-   <LOCAL : "local">
-   |
-   <NIL : "nil">
-   |
-   <REPEAT : "repeat">
-   |
-   <RETURN : "return">
-   |
-   <THEN : "then">
-   |
-   <TRUE : "true">
-   |
-   <UNTIL : "until" >
-   |
-   <WHILE : "while" >
+// | <CONTINUE : "continue">
+ | <DO : "do">
+ | <ELSE : "else">
+ | <ELSEIF : "elseif">
+ | <END : "end">
+ | <FALSE : "false">
+ | <FOR : "for">
+ | <FUNCTION : "function">
+ | <GOTO : "goto">
+ | <IF : "if">
+ | <IN : "in">
+ | <LOCAL : "local">
+ | <NIL : "nil">
+ | <REPEAT : "repeat">
+ | <RETURN : "return">
+ | <THEN : "then">
+ | <TRUE : "true">
+ | <UNTIL : "until" >
+ | <WHILE : "while" >
 ;
 
-TOKEN : <NAME : ["a"-"z","A"-"Z", "_"](["a"-"z","A"-"Z","0"-"9","_"])*> #Name ;
+TOKEN : 
+    <NAME : ["a"-"z","A"-"Z", "_"](["a"-"z","A"-"Z","0"-"9","_"])*> #Name 
+    |
+    <SHEBANG : "#" (<SINGLE_LINE_INPUT_CHARACTER>)*>
+;
+
 
 SKIP :
  <#SINGLE_LINE_INPUT_CHARACTER : ~["\r","\n","\u0085","\u2028","\u2029"] >
  |
- <COMMENT : "--" <NESTED_STR> "]" >
+ <COMMENT : <COMMENT1> | <COMMENT2> >
  |
- <LINE_COMMENT : "--" (<SINGLE_LINE_INPUT_CHARACTER>)* >
+ <#COMMENT1 : "--[=" ("=")* "[" (~["]"] | (("]")+ (~["="]|("=")* ~["]"])))* "]=" ("=")* "]">
+ |
+ <#COMMENT2 : "--[[" (~["]"] | ("]" ~["]"]))* "]]">
+ |
+ <LINE_COMMENT : "--\n" | ("--" ~["\n","["] (<SINGLE_LINE_INPUT_CHARACTER>)*) >
  |
  <WS : ([" ", "\t", "\u000C", "\r", "\n"])+>
- |
- <SHEBANG : "#!" (<SINGLE_LINE_INPUT_CHARACTER>)*>
 ;
+#if false
+MORE :
+ <SINGLE_LINE_COMMENT_START : "--" > : IN_SINGLE_LINE_COMMENT
+ |
+ <MULTILINE1_START : "--[["> : IN_MULTI_LINE1
+ |
+ <MULTILINE2_START : "--[" ("=")+> : IN_MULTI_LINE2
+;
+
+<IN_SINGLE_LINE_COMMENT> 
+UNPARSED :
+  < "\n" | "\r" | "\r\n" > #SingleLineComment : LUA
+;
+
+<IN_MULTI_LINE1>
+UNPARSED :
+  < MULTI1 : "]]" > #MultiLineComment : LUA
+;
+
+<IN_MULTI_LINE2>
+UNPARSED :
+  < MULTI2 : "]" ("=")+ "]" > #MultiLineComment : LUA
+;
+
+<IN_SINGLE_LINE_COMMENT, IN_MULTI_LINE1, IN_MULTI_LINE2>
+MORE :
+  < ANY_CHAR : ~[] >
+;
+#endif

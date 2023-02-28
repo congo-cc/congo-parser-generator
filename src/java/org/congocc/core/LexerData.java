@@ -276,9 +276,11 @@ public class LexerData {
                 }   else if (!referenced.getTokenProduction().getKind().equals("TOKEN")) {
                     errors.addError(ref, "Token name \"" + label + "\" refers to a non-token (SKIP, MORE, UNPARSED) regular expression.");
                 } 
-            } 
-            ref.setOrdinal(referenced.getOrdinal());
-            ref.setRegexp(referenced);
+            }
+            if (referenced != null) {
+               ref.setOrdinal(referenced.getOrdinal());
+               ref.setRegexp(referenced);
+            }
         }        
 // Check for self-referential loops in regular expressions
         new RegexpVisitor().visit(grammar);        
