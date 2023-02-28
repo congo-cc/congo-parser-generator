@@ -8,10 +8,10 @@ import org.congocc.core.nfa.LexicalStateData;
 import org.congocc.parser.tree.*;
 
 /**
- * Base object that contains lexical data. 
+ * Base object that contains lexical data.
  * It contains LexicalStateData objects that contain
  * the data for each lexical state. The LexicalStateData
- * objects hold the data related to generating the NFAs 
+ * objects hold the data related to generating the NFAs
  * for the respective lexical states.
  */
 public class LexerData {
@@ -19,7 +19,7 @@ public class LexerData {
     private Errors errors;
     private List<LexicalStateData> lexicalStates = new ArrayList<>();
     private List<RegularExpression> regularExpressions = new ArrayList<>();
-    
+
     private Map<String, RegularExpression> namedTokensTable = new LinkedHashMap<>();
     private Set<RegularExpression> overriddenTokens = new HashSet<>();
 
@@ -31,12 +31,12 @@ public class LexerData {
         reof.setLabel("EOF");
         regularExpressions.add(reof);
     }
-    
+
     public String getTokenName(int ordinal) {
         if (ordinal < regularExpressions.size()) {
             return regularExpressions.get(ordinal).getLabel();
         }
-        return grammar.getAppSettings().getExtraTokenNames().get(ordinal-regularExpressions.size());
+        return grammar.getAppSettings().getExtraTokenNames().get(ordinal - regularExpressions.size());
     }
 
     public String getLexicalStateName(int index) {
@@ -48,7 +48,12 @@ public class LexerData {
     }
 
     public LexicalStateData getLexicalState(String name) {
-        return lexicalStates.stream().filter(state->state.getName().equals(name)).findFirst().get();
+        for (LexicalStateData lsd : lexicalStates) {
+            if (lsd.getName().equals(name)) {
+                return lsd;
+            }
+        }
+        return null;
     }
 
     public LexicalStateData getDefaultLexicalState() {
@@ -56,22 +61,22 @@ public class LexerData {
     }
 
     public int getMaxNfaStates() {
-        return lexicalStates.stream().mapToInt(state->state.getAllNfaStates().size()).max().getAsInt();
+        return lexicalStates.stream().mapToInt(state -> state.getAllNfaStates().size()).max().getAsInt();
     }
 
     public List<RegularExpression> getRegularExpressions() {
         List<RegularExpression> result = new ArrayList<>(regularExpressions);
-        result.removeIf(re->isOverridden(re));
+        result.removeIf(re -> isOverridden(re));
         return result;
     }
 
     public boolean getHasLexicalStateTransitions() {
-        return getNumLexicalStates() > 1 && 
-               regularExpressions.stream().anyMatch(re->re.getNewLexicalState()!=null);
+        return getNumLexicalStates() > 1 &&
+                regularExpressions.stream().anyMatch(re -> re.getNewLexicalState() != null);
     }
 
     public boolean getHasTokenActions() {
-        return regularExpressions.stream().anyMatch(re->re.getCodeSnippet()!=null);
+        return regularExpressions.stream().anyMatch(re -> re.getCodeSnippet() != null);
     }
 
     public int getNumLexicalStates() {
@@ -88,39 +93,41 @@ public class LexerData {
     }
 
     private void resolveStringLiterals() {
-        for (RegexpStringLiteral rsl : grammar.descendants(RegexpStringLiteral.class, r->!r.isResolved())) {
+        for (RegexpStringLiteral rsl : grammar.descendants(RegexpStringLiteral.class, r -> !r.isResolved())) {
             String label = getStringLiteralLabel(rsl.getLiteralString());
             rsl.setLabel(label);
             rsl.setResolved(true);
         }
     }
-    
+
     private void ensureRegexpLabels() {
-        for (ListIterator<RegularExpression> it = regularExpressions.listIterator();it.hasNext();) {
+        for (ListIterator<RegularExpression> it = regularExpressions.listIterator(); it.hasNext();) {
             RegularExpression regexp = it.next();
             if (!isJavaIdentifier(regexp.getLabel())) {
                 String label = "_TOKEN_" + it.previousIndex();
                 if (regexp instanceof RegexpStringLiteral) {
-                    String s= ((RegexpStringLiteral)regexp).getLiteralString().toUpperCase();
-                    if (isJavaIdentifier(s) && !regexpLabelAlreadyUsed(s)) label = s;
+                    String s = ((RegexpStringLiteral) regexp).getLiteralString().toUpperCase();
+                    if (isJavaIdentifier(s) && !regexpLabelAlreadyUsed(s))
+                        label = s;
                 }
                 regexp.setLabel(label);
             }
         }
     }
-   
+
     static public boolean isJavaIdentifier(String s) {
-        return !s.isEmpty() && Character.isJavaIdentifierStart(s.codePointAt(0)) 
-              && s.codePoints().allMatch(ch->Character.isJavaIdentifierPart(ch));
+        return !s.isEmpty() && Character.isJavaIdentifierStart(s.codePointAt(0))
+                && s.codePoints().allMatch(ch -> Character.isJavaIdentifierPart(ch));
     }
-   
+
     private boolean regexpLabelAlreadyUsed(String label) {
         for (RegularExpression regexp : regularExpressions) {
-            if (label.contentEquals(regexp.getLabel())) return true;
+            if (label.contentEquals(regexp.getLabel()))
+                return true;
         }
         return false;
     }
-    
+
     public String getStringLiteralLabel(String image) {
         for (RegularExpression regexp : regularExpressions) {
             if (regexp instanceof RegexpStringLiteral) {
@@ -138,15 +145,15 @@ public class LexerData {
     public int getTokenCount() {
         return regularExpressions.size() + grammar.getAppSettings().getExtraTokenNames().size();
     }
-    
+
     public TokenSet getMoreTokens() {
         return getTokensOfKind("MORE");
-    } 
+    }
 
     public TokenSet getSkippedTokens() {
         return getTokensOfKind("SKIP");
     }
-    
+
     public TokenSet getUnparsedTokens() {
         return getTokensOfKind("UNPARSED");
     }
@@ -164,11 +171,12 @@ public class LexerData {
     private TokenSet getTokensOfKind(String kind) {
         TokenSet result = new TokenSet(grammar);
         for (RegularExpression re : regularExpressions) {
-            if (isOverridden(re)) continue;
+            if (isOverridden(re))
+                continue;
             TokenProduction tp = re.getTokenProduction();
             if (tp != null && tp.getKind().equals(kind)) {
                 result.set(re.getOrdinal());
-            } 
+            }
         }
         return result;
     }
@@ -187,8 +195,8 @@ public class LexerData {
             RegularExpression oldValue = namedTokensTable.get(name);
             namedTokensTable.replace(name, oldValue, regexp);
             overriddenTokens.add(oldValue);
-        }
-        else namedTokensTable.put(name, regexp);
+        } else
+            namedTokensTable.put(name, regexp);
     }
 
     public boolean isOverridden(RegularExpression regexp) {
@@ -205,11 +213,10 @@ public class LexerData {
         return new ArrayList<RegularExpression>(namedTokensTable.values());
     }
 
-
     // This method still really needs to be cleaned up!
     public void buildData() {
-        for (TokenProduction tp : grammar.descendants(TokenProduction.class)) { 
-            for (RegexpSpec res : tp.getRegexpSpecs()){
+        for (TokenProduction tp : grammar.descendants(TokenProduction.class)) {
+            for (RegexpSpec res : tp.getRegexpSpecs()) {
                 RegularExpression re = res.getRegexp();
                 if (re.hasLabel()) {
                     String label = re.getLabel();
@@ -217,21 +224,22 @@ public class LexerData {
                     if (regexp != null) {
                         errors.addInfo(res.getRegexp(),
                                 "Token name \"" + label + " is redefined.");
-                    } 
+                    }
                     addNamedToken(label, re);
                 }
             }
-        }        
+        }
         for (TokenProduction tp : grammar.getAllTokenProductions()) {
             for (RegexpSpec res : tp.getRegexpSpecs()) {
                 RegularExpression regexp = res.getRegexp();
-                if (regexp.isPrivate() || regexp instanceof RegexpRef) continue;
+                if (regexp.isPrivate() || regexp instanceof RegexpRef)
+                    continue;
                 if (!(regexp instanceof RegexpStringLiteral)) {
                     addRegularExpression(res.getRegexp());
                 } else {
                     RegexpStringLiteral stringLiteral = (RegexpStringLiteral) regexp;
                     String image = stringLiteral.getLiteralString();
-            // This loop performs the checks and actions with respect to
+                    // This loop performs the checks and actions with respect to
                     // each lexical state.
                     for (String name : tp.getLexicalStateNames()) {
                         LexicalStateData lsd = getLexicalState(name);
@@ -241,10 +249,9 @@ public class LexerData {
                                 addRegularExpression(stringLiteral);
                             }
                             lsd.addStringLiteral(stringLiteral);
-                        } 
-                        else if (!tp.isExplicit()) {
-                            String kind = alreadyPresent.getTokenProduction() == null ? "TOKEN" 
-                                          : alreadyPresent.getTokenProduction().getKind();
+                        } else if (!tp.isExplicit()) {
+                            String kind = alreadyPresent.getTokenProduction() == null ? "TOKEN"
+                                    : alreadyPresent.getTokenProduction().getKind();
                             if (!kind.equals("TOKEN")) {
                                 errors.addError(stringLiteral,
                                         "String token \""
@@ -259,32 +266,35 @@ public class LexerData {
                             }
                         }
                     }
-                } 
+                }
             }
-        }    
+        }
         ensureRegexpLabels();
         resolveStringLiterals();
         for (RegexpRef ref : grammar.descendants(RegexpRef.class)) {
             String label = ref.getLabel();
-            if (grammar.getAppSettings().getExtraTokens().containsKey(label)) continue;
+            if (grammar.getAppSettings().getExtraTokens().containsKey(label))
+                continue;
             RegularExpression referenced = getNamedToken(label);
             if (referenced == null) {
-                errors.addError(ref,  "Undefined lexical token name \"" + label + "\".");
+                errors.addError(ref, "Undefined lexical token name \"" + label + "\".");
             } else if (ref.getTokenProduction() == null || !ref.getTokenProduction().isExplicit()) {
                 if (referenced.isPrivate()) {
-                    errors.addError(ref, "Token name \"" + label + "\" refers to a private (with a #) regular expression.");
-                }   else if (!referenced.getTokenProduction().getKind().equals("TOKEN")) {
-                    errors.addError(ref, "Token name \"" + label + "\" refers to a non-token (SKIP, MORE, UNPARSED) regular expression.");
-                } 
+                    errors.addError(ref,
+                            "Token name \"" + label + "\" refers to a private (with a #) regular expression.");
+                } else if (!referenced.getTokenProduction().getKind().equals("TOKEN")) {
+                    errors.addError(ref, "Token name \"" + label
+                            + "\" refers to a non-token (SKIP, MORE, UNPARSED) regular expression.");
+                }
             }
             if (referenced != null) {
-               ref.setOrdinal(referenced.getOrdinal());
-               ref.setRegexp(referenced);
+                ref.setOrdinal(referenced.getOrdinal());
+                ref.setRegexp(referenced);
             }
-        }        
-// Check for self-referential loops in regular expressions
-        new RegexpVisitor().visit(grammar);        
-        for (TokenProduction tokenProduction : grammar.descendants(TokenProduction.class, tp->tp.isExplicit())) {
+        }
+        // Check for self-referential loops in regular expressions
+        new RegexpVisitor().visit(grammar);
+        for (TokenProduction tokenProduction : grammar.descendants(TokenProduction.class, tp -> tp.isExplicit())) {
             for (String lexStateName : tokenProduction.getLexicalStateNames()) {
                 LexicalStateData lexState = getLexicalState(lexStateName);
                 lexState.addTokenProduction(tokenProduction);
@@ -295,10 +305,9 @@ public class LexerData {
         }
     }
 
-
     /**
-     * A visitor that checks whether there is a self-referential loop in a 
-     * Regexp reference. 
+     * A visitor that checks whether there is a self-referential loop in a
+     * Regexp reference.
      */
     class RegexpVisitor extends Node.Visitor {
 

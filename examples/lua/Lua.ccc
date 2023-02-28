@@ -7,8 +7,10 @@ PARSER_PACKAGE=org.parsers.lua;
 DEFAULT_LEXICAL_STATE=LUA;
 TAB_SIZE=4;
 DEACTIVATE_TOKENS=SHEBANG;
+ENSURE_FINAL_EOL;
 
 INCLUDE "LuaLexer.ccc"
+
 
 #Root : 
    [
@@ -157,4 +159,4 @@ OperatorPower : "^" ;
 
 Number : <INT> | <HEX> | <FLOAT> | <HEX_FLOAT> ;
 
-StringLiteral : <NORMALSTRING> | <CHARSTRING> | <LONGSTRING> ;
+StringLiteral : <NORMALSTRING> | <CHARSTRING> | <LONGSTRING1> | <LONGSTRING2> ;

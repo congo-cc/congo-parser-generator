@@ -1,6 +1,73 @@
 DEFAULT_LEXICAL_STATE=LUA;
 TAB_SIZE=4;
 
+INJECT LEXER_CLASS :
+{
+   private String desiredEnd;
+   private boolean hasPendingMultiLine;
+   private int realStartOffset;
+
+   // A rather kludgy token hook routine
+   // to deal with multiline strings and comments
+   // which are admittedly quite funky in Lua.
+   private Token TOKEN_HOOK(Token tok) {
+      TokenType type = tok.getType();
+      if (type == LONGSTRING2 || type == MULTI2) {
+         boolean isComment = type == MULTI2;
+         String image = tok.getImage();
+         if (!hasPendingMultiLine) {
+            desiredEnd = getDesiredEnd(image);
+            if (!image.endsWith(desiredEnd)) {
+                hasPendingMultiLine = true;
+                if (isComment) switchTo(LexicalState.IN_MULTI_LINE2);
+                else switchTo(LexicalState.IN_LONGSTRING2);
+                tok.setUnparsed(true);
+                // We need to adjust the end offset
+                // so that on the next tokenization iteration
+                // we pick up a trailing ] character, if there is one.
+                // Tricky...
+                tok.setEndOffset(tok.getEndOffset()-1);
+                // We store the starting offset 
+                // so that we can make the necessary
+                // adjustment on a later iteration.
+                // Also quite tricky!
+                realStartOffset = tok.getBeginOffset();
+            }
+         }
+         else if (image.endsWith(desiredEnd)) {
+            hasPendingMultiLine = false;
+            tok.setBeginOffset(realStartOffset);
+         }
+         else {
+             if (isComment) switchTo(LexicalState.IN_MULTI_LINE2);
+             else switchTo(LexicalState.IN_LONGSTRING2);
+             tok.setUnparsed(true);
+             tok.setEndOffset(tok.getEndOffset()-1);
+         }
+      }
+      return tok;
+   }
+
+   // Return the terminating string that would balance
+   // out this multiline string or comment.
+   // i.e. if it is a comment that starts with --[===[
+   // then the terminating string must be ]===]
+   // That also is why we need to adjust the end offset
+   // back by one at a key moment, so that we can find
+   // the terminating string on the next cycle.
+   private String getDesiredEnd(String tokenImage) {
+       boolean isComment = tokenImage.startsWith("--");
+       int startIndex = isComment? 3 : 1;
+       int idx = startIndex;
+       while (tokenImage.charAt(idx) == '=') idx++;
+       int numEquals = idx - startIndex;
+       String result = "]";
+       for (int i = 0; i< numEquals; i++) result += "=";
+       result += "]";
+       return result;
+   }
+}
+
 TOKEN #Delimiter :
    <SEMICOLON: ";">
  | <COMMA: ",">
@@ -48,12 +115,12 @@ TOKEN #Literal :
   |
   <CHARSTRING : "'" (<ESCAPE_SEQUENCE> | (~['\\',"'"]))* "'" >
   |
-  <LONGSTRING : <LONGSTRING1> | <LONGSTRING2>>
-  |
-  <#LONGSTRING1 : '[[' (~["]"] | ("]" ~["]"]))* ']]' >
-  |
-  <#LONGSTRING2 : "[=" ("=")* "[" (~["]"] | (("]")+ ~["="]))* "]=" ("=")* "]">
-  |
+//  <LONGSTRING : <LONGSTRING1> | <LONGSTRING2>>
+//  |
+//  <#LONGSTRING1 : '[[' (~["]"] | ("]" ~["]"]))* ']]' >
+//  |
+//  <#LONGSTRING2 : "[=" ("=")* "[" (~["]"] | (("]")+ ~["="]))* "]=" ("=")* "]">
+//  |
   <#NESTED_STR : ('=')* '[' (~[']'])* ']' ('=')* > 
   |
   <#DIGIT : ["0"-"9"]>
@@ -113,7 +180,6 @@ TOKEN #Literal :
 
 TOKEN #KeyWord :
    <BREAK : "break">
-// | <CONTINUE : "continue">
  | <DO : "do">
  | <ELSE : "else">
  | <ELSEIF : "elseif">
@@ -152,8 +218,11 @@ MORE :
  |
  <MULTILINE1_START : "--[["> : IN_MULTI_LINE1
  |
- <MULTILINE2_START : "--[" ("=")+> : IN_MULTI_LINE2
- 
+ <MULTILINE2_START : "--[" ("=")+ "["> : IN_MULTI_LINE2
+ |
+ <LONGSTRING1_START : "[[" > : IN_LONGSTRING1
+ |
+ <LONGSTRING2_START : "[" ("=")+ "[" > : IN_LONGSTRING2
 ;
 
 <IN_SINGLE_LINE_COMMENT> 
@@ -171,7 +240,17 @@ UNPARSED :
   < MULTI2 : "]" ("=")+ "]" > #MultiLineComment : LUA
 ;
 
-<IN_SINGLE_LINE_COMMENT, IN_MULTI_LINE1, IN_MULTI_LINE2>
+<IN_LONGSTRING1>
+TOKEN :
+  < LONGSTRING1 : "]]" > #LongString : LUA
+;
+
+<IN_LONGSTRING2>
+TOKEN :
+  < LONGSTRING2 : "]=" ("=")* "]"> #LongString : LUA
+;
+
+<IN_SINGLE_LINE_COMMENT, IN_MULTI_LINE1, IN_MULTI_LINE2, IN_LONGSTRING1, IN_LONGSTRING2>
 MORE :
   < ANY_CHAR : ~[] >
 ;

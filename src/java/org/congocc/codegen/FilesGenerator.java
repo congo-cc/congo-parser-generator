@@ -331,6 +331,11 @@ public class FilesGenerator {
             if (codeInjector.hasInjectedCode(typename)) {
                 return true;
             }
+            if (typename.equals("Token")) {
+                // The Token class now contains the TokenType enum
+                // so we always regenerate.
+                return true;
+            }
         }
         //
         // For now regenerate() isn't called for generating Python or C# files,

@@ -187,6 +187,9 @@
     <echo>Testing the Preprocessor</echo>
     <ant antfile="build.xml" dir="examples/preprocessor" target="clean" />
     <ant antfile="build.xml" dir="examples/preprocessor" target="test" />
+    <echo>Testing the Lua parser</echo>
+    <ant antfile="build.xml" dir="examples/lua" target = "clean" />
+    <ant antfile="build.xml" dir="examples/lua" target = "test" />
     <echo>Testing the CSharp parser standalone</echo>
     <ant antfile="build.xml" dir="examples/csharp" target="clean" />
     <ant antfile="build.xml" dir="examples/csharp" target="test" />
