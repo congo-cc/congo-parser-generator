@@ -157,26 +157,16 @@
         <include name="*.ccc" />
       </fileset>
     </copy>
+    <copy todir="build/include/lua">
+      <fileset dir="examples/lua">
+        <include name="*.ccc" />
+      </fileset>
+    </copy>
     <copy todir="build/include/preprocessor">
       <fileset dir="examples/preprocessor">
         <include name="*.ccc" />
       </fileset>
     </copy>
-    <copy todir="build/include/json">
-      <fileset dir="examples/json">
-        <include name="*.ccc" />
-      </fileset>
-    </copy>
-    <copy todir="build">
-      <fileset dir="src/templates">
-        <include name="*.properties" />
-      </fileset>
-    </copy>
-  </target>
-
-
-  <target name='docs'>
-    <ant antfile="build.xml" dir="src/docs" target="docs" />
   </target>
 
 

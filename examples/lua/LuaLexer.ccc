@@ -115,12 +115,6 @@ TOKEN #Literal :
   |
   <CHARSTRING : "'" (<ESCAPE_SEQUENCE> | (~['\\',"'"]))* "'" >
   |
-//  <LONGSTRING : <LONGSTRING1> | <LONGSTRING2>>
-//  |
-//  <#LONGSTRING1 : '[[' (~["]"] | ("]" ~["]"]))* ']]' >
-//  |
-//  <#LONGSTRING2 : "[=" ("=")* "[" (~["]"] | (("]")+ ~["="]))* "]=" ("=")* "]">
-//  |
   <#NESTED_STR : ('=')* '[' (~[']'])* ']' ('=')* > 
   |
   <#DIGIT : ["0"-"9"]>

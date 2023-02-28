@@ -60,6 +60,7 @@ public class AppSettings {
             put("PREPROCESSOR", "/include/preprocessor/Preprocessor.ccc");
             put("JSON", "/include/json/JSON.ccc");
             put("JSONC", "/include/json/JSONC.ccc");
+            put("LUA", "/include/lua/Lua.ccc");
         }
     };
 
