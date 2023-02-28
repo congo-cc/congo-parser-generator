@@ -138,34 +138,27 @@ TOKEN :
     <NAME : ["a"-"z","A"-"Z", "_"](["a"-"z","A"-"Z","0"-"9","_"])*> #Name 
     |
     <SHEBANG : "#" (<SINGLE_LINE_INPUT_CHARACTER>)*>
+    |
+    <#SINGLE_LINE_INPUT_CHARACTER : ~["\r","\n","\u0085","\u2028","\u2029"] >
 ;
 
 
 SKIP :
- <#SINGLE_LINE_INPUT_CHARACTER : ~["\r","\n","\u0085","\u2028","\u2029"] >
- |
- <COMMENT : <COMMENT1> | <COMMENT2> >
- |
- <#COMMENT1 : "--[=" ("=")* "[" (~["]"] | (("]")+ (~["="]|("=")* ~["]"])))* "]=" ("=")* "]">
- |
- <#COMMENT2 : "--[[" (~["]"] | ("]" ~["]"]))* "]]">
- |
- <LINE_COMMENT : "--\n" | ("--" ~["\n","["] (<SINGLE_LINE_INPUT_CHARACTER>)*) >
- |
  <WS : ([" ", "\t", "\u000C", "\r", "\n"])+>
 ;
-#if false
+
 MORE :
  <SINGLE_LINE_COMMENT_START : "--" > : IN_SINGLE_LINE_COMMENT
  |
  <MULTILINE1_START : "--[["> : IN_MULTI_LINE1
  |
  <MULTILINE2_START : "--[" ("=")+> : IN_MULTI_LINE2
+ 
 ;
 
 <IN_SINGLE_LINE_COMMENT> 
 UNPARSED :
-  < "\n" | "\r" | "\r\n" > #SingleLineComment : LUA
+  < LINE_COMMENT : "\n" | "\r" | "\r\n" > #SingleLineComment : LUA
 ;
 
 <IN_MULTI_LINE1>
@@ -182,4 +175,4 @@ UNPARSED :
 MORE :
   < ANY_CHAR : ~[] >
 ;
-#endif
+
