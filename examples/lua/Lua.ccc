@@ -51,112 +51,104 @@ Statement :
    LocalAttributeAssignment
 ;
 
-Assignment : VarList "=" =>|| ExpressionList ;
+Assignment : VarList <ASSIGN> =>|| ExpressionList ;
 
-DoBlock : "do" Block "end" ;
+DoBlock : <DO> Block <END> ;
 
-GotoStatement : "goto" <NAME> ;
+GotoStatement : <GOTO> <NAME> ;
 
 ForStatement :
-   "for" <NAME> "=" =>|| Expression "," Expression ["," Expression] DoBlock
+   <FOR> <NAME> <ASSIGN> =>|| Expression <COMMA> Expression [<COMMA> Expression] DoBlock
    |
-   "for" NameList "in" =>|| ExpressionList DoBlock
+   <FOR> NameList <IN> =>|| ExpressionList DoBlock
    |
-   "for" FAIL "invalid for statement"
+   <FOR> FAIL "invalid for statement"
 ;
 
-FunctionDeclaration : "function" FunctionName FunctionBody ;
+FunctionDeclaration : <FUNCTION> FunctionName FunctionBody ;
 
-LocalFunctionDeclaration : "local" "function" =>|| <NAME> FunctionBody ;
+LocalFunctionDeclaration : <LOCAL> <FUNCTION> =>|| <NAME> FunctionBody ;
 
-LocalAttributeAssignment : "local" =>|+1 AttributeNameList ["=" ExpressionList] ;
+LocalAttributeAssignment : <LOCAL> =>|+1 AttributeNameList [<ASSIGN> ExpressionList] ;
 
-IfStatement : "if" Expression "then" Block ("elseif" Expression "then" Block)* ["else" Block] "end" ;
+IfStatement : <IF> Expression <THEN> Block (<ELSEIF> Expression <THEN> Block)* [<ELSE> Block] <END> ;
 
-RepeatStatement : "repeat" Block "until" Expression ;
+RepeatStatement : <REPEAT> Block <UNTIL> Expression ;
 
-WhileStatement : "while" Expression "do" Block "end" ;
+WhileStatement : <WHILE> Expression <DO> Block <END> ;
 
-AttributeNameList : <NAME> [Attribute] ("," <NAME> [Attribute])* ;
+AttributeNameList : <NAME> [Attribute] (<COMMA> <NAME> [Attribute])* ;
 
-Attribute : "<" <NAME> ">" ;
+Attribute : <LT> <NAME> <GT> ;
 
-LastStatement : ( "return" [ExpressionList] | "break" ) [<SEMICOLON>] ;
+LastStatement : ( <RETURN> [ExpressionList] | <BREAK> ) [<SEMICOLON>] ;
 
-Label : "::" <NAME> "::" ;
+Label : <DOUBLE_COLON> <NAME> <DOUBLE_COLON> ;
 
-FunctionName : <NAME> ("." <NAME>)* [":" <NAME>] ;
+FunctionName : <NAME> (<DOT> <NAME>)* [<COLON> <NAME>] ;
 
-VarList : Var ("," Var)* ;
+VarList : Var (<COMMA> Var)* ;
 
-NameList : <NAME> ("," <NAME> =>||)* ;
+NameList : <NAME> (<COMMA> <NAME> =>||)* ;
 
-ExpressionList : Expression ("," Expression)* ;
+ExpressionList : Expression (<COMMA> Expression)* ;
 
-Literal#void : "nil" | "false" | "true" | Number | StringLiteral | "..." ; 
+Literal#void : <NIL> | <FALSE> | <TRUE> | Number | StringLiteral | <ELLIPSIS> ; 
 
 PrimaryExpression : Literal | FunctionDef | PrefixExp | TableConstructor ;
 
-PowerExpression : PrimaryExpression ("^" UnaryExpression)* ;
+PowerExpression : PrimaryExpression (<HAT> UnaryExpression)* ;
 
-UnaryExpression : (OperatorUnary)* PowerExpression ;
+UnaryExpression : (UnaryOperator)* PowerExpression ;
 
-MultiplicativeExpression : UnaryExpression (OperatorMulDivMod UnaryExpression)* ;
+MultiplicativeExpression : UnaryExpression (MultiplicativeOperator UnaryExpression)* ;
 
-AdditiveExpression : MultiplicativeExpression (OperatorAddSub MultiplicativeExpression)* ;
+AdditiveExpression : MultiplicativeExpression ((<PLUS>|<MINUS>) MultiplicativeExpression)* ;
 
-StringCatExpression : AdditiveExpression (OperatorStrCat StringCatExpression)* ;
+StringCatExpression : AdditiveExpression (<STR_CAT> StringCatExpression)* ;
 
-ComparisonExpression : StringCatExpression (OperatorComparison ComparisonExpression)* ;
+ComparisonExpression : StringCatExpression (ComparisonOperator ComparisonExpression)* ;
 
-AndExpression : ComparisonExpression ("and" ComparisonExpression)* ;
+AndExpression : ComparisonExpression (<AND> ComparisonExpression)* ;
 
-OrExpression : AndExpression ("or" AndExpression)* ;
+OrExpression : AndExpression (<OR> AndExpression)* ;
 
-Expression : OrExpression (OperatorBitwise OrExpression)* ;
+Expression : OrExpression (BitwiseOperator OrExpression)* ;
 
 PrefixExp : VarOrExp (NameAndArgs)* ;
 
 FunctionCall : VarOrExp (NameAndArgs)+ ;
 
-VarOrExp : (<NAME> | "(" Expression ")" ) (VarSuffix)* ;
+VarOrExp : (<NAME> | <LPAREN> Expression <RPAREN> ) (VarSuffix)* ;
 
-Var : (<NAME> | "(" Expression ")" VarSuffix) (VarSuffix)* ;
+Var : (<NAME> | <LPAREN> Expression <RPAREN> VarSuffix) (VarSuffix)* ;
 
-VarSuffix : (NameAndArgs)* =>|+1 ("[" Expression "]" | "." <NAME>) ;
+VarSuffix : (NameAndArgs)* =>|+1 (<LBRACKET> Expression <RBRACKET> | <DOT> <NAME>) ;
 
-NameAndArgs : [":" <NAME>] Args ;
+NameAndArgs : [<COLON> <NAME>] Args ;
 
-Args : "(" [ExpressionList] ")" | TableConstructor | StringLiteral ;
+Args : <LPAREN> [ExpressionList] <RPAREN> | TableConstructor | StringLiteral ;
 
-FunctionDef : "function" FunctionBody ;
+FunctionDef : <FUNCTION> FunctionBody ;
 
-FunctionBody : "(" [ParamList] ")" Block "end" ;
+FunctionBody : <LPAREN> [ParamList] <RPAREN> Block <END> ;
 
-ParamList : NameList ["," "..."] | "..." ;
+ParamList : NameList [<COMMA> <ELLIPSIS>] | <ELLIPSIS> ;
 
-TableConstructor : "{" [FieldList]  "}" ;
+TableConstructor : <LBRACE> [FieldList]  <RBRACE> ;
 
-FieldList : Field (FieldSep =>|+1 Field)* [FieldSep] ;
+FieldList : Field ((<COMMA>|<SEMICOLON>) =>|+1 Field)* [<COMMA>|<SEMICOLON>] ;
 
-Field : "[" Expression "]" "=" Expression | [<NAME> "=" =>||] Expression ;
+Field : <LBRACKET> Expression <RBRACKET> <ASSIGN> Expression | [<NAME> <ASSIGN> =>||] Expression ;
 
-FieldSep : "," | <SEMICOLON> ;
+ComparisonOperator#void : <LT> | <GT> | <LE> | <GE> | <NE> | <EQ> ;
 
-OperatorComparison : "<" | ">" | "<=" | ">=" | "~=" | "==" ;
+MultiplicativeOperator#void : <TIMES> | <SLASH> | <MOD> | <DOUBLE_SLASH> ;
 
-OperatorStrCat : ".." ;
+BitwiseOperator#void : <BIT_AND> | <BIT_OR> | <TILDE> | <LSHIFT> | <RSHIFT> ;
 
-OperatorAddSub : "+" | "-" ;
+UnaryOperator#void : <NOT> | <HASH> | <MINUS>| <TILDE> ;
 
-OperatorMulDivMod : "*" | "/" | "%" | "//" ;
+Number#void : <INT> | <HEX> | <FLOAT> | <HEX_FLOAT> ;
 
-OperatorBitwise : "&" | "|" | "~" | "<<" | ">>" ;
-
-OperatorUnary : "not" | "#" | "-" | "~" ;
-
-OperatorPower : "^" ;
-
-Number : <INT> | <HEX> | <FLOAT> | <HEX_FLOAT> ;
-
-StringLiteral : <NORMALSTRING> | <CHARSTRING> | <LONGSTRING1> | <LONGSTRING2> ;
+StringLiteral#void : <NORMALSTRING> | <CHARSTRING> | <LONGSTRING1> | <LONGSTRING2> ;

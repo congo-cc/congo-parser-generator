@@ -7,7 +7,7 @@
 
   <target name="init">
     <uptodate property="luaparser.uptodate"
-      targetfile="org/parsers/csharp/LuaParser.java">
+      targetfile="org/parsers/lua/LuaParser.java">
       <srcfiles dir="." includes="*.ccc" />
     </uptodate>
   </target>
