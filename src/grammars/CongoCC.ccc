@@ -34,6 +34,8 @@ INJECT PARSER_CLASS :
     import org.congocc.parser.tree.*;
     import org.congocc.preprocessor.PreprocessorParser;
     import org.congocc.parser.csharp.CSharpParser;
+    import org.congocc.parser.python.PythonParser;
+    import org.congocc.parser.python.ast.Module;
 {
     Grammar grammar;
     
@@ -70,6 +72,18 @@ INJECT PARSER_CLASS :
     static public CompilationUnit parseJavaFile(Path path) throws IOException {
         PARSER_CLASS parser = new PARSER_CLASS(path);
         return parser.CompilationUnit();
+    }
+
+    static public Module parsePythonFile(String inputSource, CharSequence content, boolean useAltIndentDedent) {
+        PythonParser parser = new PythonParser(inputSource, content);
+        parser.setUseAltIndentDedent(useAltIndentDedent);
+        return parser.Module();
+    }
+
+    static public Module parsePythonFile(Path path, boolean useAltIndentDedent) throws IOException {
+        PythonParser parser = new PythonParser(path);
+        parser.setUseAltIndentDedent(useAltIndentDedent);
+        return parser.Module();
     }
     
     static public org.congocc.parser.csharp.ast.CompilationUnit parseCSharpFile(String inputSource, CharSequence content) {

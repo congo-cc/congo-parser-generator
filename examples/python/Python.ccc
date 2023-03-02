@@ -135,8 +135,12 @@ RaiseStatement : <RAISE> [ Expression [<FROM> Expression ] ];
 Block :
     SimpleStatement
     |
-    <NEWLINE><INDENT>(Statement)+<DEDENT>
-;    
+    Indent (Statement)+ Dedent 
+; 
+
+Indent#void : <NEWLINE><INDENT> ;
+
+Dedent#void : <DEDENT> ;
 
 ElseBlock : <ELSE> <COLON> Block ;
 
@@ -486,10 +490,9 @@ MatchStatement :
    ACTIVATE_TOKENS MATCH (<MATCH>) 
    SubjectExpression 
    <COLON> 
-   <NEWLINE>
-   <INDENT>
+   Indent 
    ACTIVATE_TOKENS CASE (CaseBlock)+
-   <DEDENT>
+   Dedent
 ;
 
 CaseBlock :

@@ -19,6 +19,7 @@ INJECT LEXER_CLASS :
    import NODE_PACKAGE.IndentToken;
    import NODE_PACKAGE.DedentToken;
 { 
+   @Property boolean useAltIndentDedent;
    private Token danglingIndentation;
    private int bracketNesting, parenthesesNesting, braceNesting;
    private List<Integer> indentationStack = initIndentationStack();
@@ -30,6 +31,7 @@ INJECT LEXER_CLASS :
    }
    
    private Token TOKEN_HOOK(Token tok) {
+      if (useAltIndentDedent) return tok;
       boolean lineJoiningOn = bracketNesting >0 || parenthesesNesting > 0 || braceNesting > 0; 
       TokenType type = tok.getType();
       switch (type) {
@@ -152,14 +154,6 @@ INJECT DedentToken :
       return true;
    }
 
-/*
- *  Commented out, as interferes with representation used in tests
- *
-   public String toString() {
-       return "DEDENT";
-   }
- */
-
    public int getDedentAmount() {
       return dedentAmount;
    }
@@ -185,15 +179,8 @@ INJECT IndentToken :
       return true;
    }
 
-/*
- *  Commented out, as interferes with representation used in tests
- *
-   public String toString() {
-       return "INDENT";
-   }
- */
-
    public int getIndentAmount() {
+      if (indents.size() == 1) return indents.get(0);
       return indents.get(indents.size() - 1) - indents.get(indents.size() - 2);
    }
 }

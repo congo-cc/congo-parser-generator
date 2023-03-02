@@ -18,3 +18,30 @@ INJECT Token :
 {
     @Property Grammar grammar;
 }
+
+INJECT LEXER_CLASS : 
+{
+    private Token TOKEN_HOOK(Token tok) {
+        if (tok.getType() == NEWLINE && tok.startsLine()) {
+            tok.setUnparsed(true);
+        }
+        return tok;
+    }
+}
+
+INJECT PARSER_CLASS : 
+{
+    public void setUseAltIndentDedent(boolean useAltIndentDedent) {
+        token_source.setUseAltIndentDedent(useAltIndentDedent);
+    }
+}
+
+TOKEN :
+   <ALT_INDENT : "==>" > #AltIndent
+   |
+   <ALT_DEDENT : "<==" > #AltDedent
+;
+
+Indent : <NEWLINE> (<INDENT>|<ALT_INDENT>) ;
+
+Dedent : <DEDENT> | <ALT_DEDENT> ;
