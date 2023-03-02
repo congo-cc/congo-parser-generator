@@ -151,4 +151,4 @@ UnaryOperator#void : <NOT> | <HASH> | <MINUS>| <TILDE> ;
 
 Number#void : <INT> | <HEX> | <FLOAT> | <HEX_FLOAT> ;
 
-StringLiteral#void : <NORMALSTRING> | <CHARSTRING> | <LONGSTRING1> | <LONGSTRING2> ;
+StringLiteral#void : <NORMALSTRING> | <CHARSTRING> | <LONGSTRING> ;
