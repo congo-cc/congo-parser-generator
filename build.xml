@@ -56,6 +56,7 @@
     <delete dir="src/java/org/parsers/csharp/ppline" />
     <delete dir="examples/csharp/org" />
     <delete dir="examples/java/org" />
+    <delete dir="examples/lua/org" />
     <delete dir="examples/freemarker/fel" />
     <delete dir="examples/freemarker/ftl" />
     <delete dir="examples/json/org" />
