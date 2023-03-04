@@ -1,16 +1,12 @@
 import java.io.*;
 import java.util.*;
 
-import org.parsers.csharp.CSharpParser;
-import org.parsers.csharp.Node;
-
-// The following two imports would be the ones to use
-// to test the internal CSharp parser inside congocc.jar
-// and you would have to comment out the previous two.
-// And you need the congocc.jar on the classpath
-// when you compile/run
-//import org.congocc.parser.Node;
+//import org.parsers.csharp.CSharpParser;
+//import org.parsers.csharp.Node;
 //import org.congocc.parser.csharp.CSharpParser;
+import org.congocc.parser.Node;
+import org.congocc.parser.CongoCCParser;
+
 
 /**
  * A test harness for parsing C# source code
@@ -69,8 +65,9 @@ public class CSParse {
     }
 
    static public void parseFile(File file, boolean dumpTree) throws IOException {
-       CSharpParser parser = new CSharpParser(file.toPath());
-       Node root=parser.CompilationUnit();
+//       CSharpParser parser = new CSharpParser(file.toPath());
+//       Node root=parser.CompilationUnit();
+       Node root = CongoCCParser.parseCSharpFile(file.toPath());
        if (dumpTree) {
            root.dump("");
        }

@@ -119,8 +119,6 @@ TOKEN #Literal :
   |
   <CHARSTRING : "'" (<ESCAPE_SEQUENCE> | (~['\\',"'"]))* "'" >
   |
-  <#NESTED_STR : ('=')* '[' (~[']'])* ']' ('=')* > 
-  |
   <#DIGIT : ["0"-"9"]>
   |
   <INT : (<DIGIT>)+ >
@@ -238,4 +236,3 @@ TOKEN :
 MORE :
   < ANY_CHAR : ~[] >
 ;
-

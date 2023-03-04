@@ -341,7 +341,7 @@ INJECT CSharpLexer :
    private Token TOKEN_HOOK(Token tok) {
       TokenType type = tok.getType();
       if (type == TokenType.EOF) {
-        assert ifNesting == 0 : "unclosed #if";
+        //assert ifNesting == 0 : "unclosed #if";
         return tok;
       }
       String image = tok.getImage();

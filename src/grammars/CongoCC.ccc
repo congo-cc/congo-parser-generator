@@ -76,18 +76,23 @@ INJECT PARSER_CLASS :
 
     static public Module parsePythonFile(String inputSource, CharSequence content, boolean useAltIndentDedent) {
         PythonParser parser = new PythonParser(inputSource, content);
-        parser.setUseAltIndentDedent(useAltIndentDedent);
+//        parser.setUseAltIndentDedent(useAltIndentDedent);
         return parser.Module();
     }
 
     static public Module parsePythonFile(Path path, boolean useAltIndentDedent) throws IOException {
         PythonParser parser = new PythonParser(path);
-        parser.setUseAltIndentDedent(useAltIndentDedent);
+//        parser.setUseAltIndentDedent(useAltIndentDedent);
         return parser.Module();
     }
     
     static public org.congocc.parser.csharp.ast.CompilationUnit parseCSharpFile(String inputSource, CharSequence content) {
         CSharpParser parser  = new CSharpParser(inputSource, content);
+        return parser.CompilationUnit();
+    } 
+
+    static public org.congocc.parser.csharp.ast.CompilationUnit parseCSharpFile(Path path) throws IOException {
+        CSharpParser parser  = new CSharpParser(path);
         return parser.CompilationUnit();
     } 
 

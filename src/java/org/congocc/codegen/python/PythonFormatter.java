@@ -8,6 +8,8 @@ import static org.congocc.parser.python.Token.TokenType.*;
 import org.congocc.parser.python.ast.*;
 
 public class PythonFormatter extends Node.Visitor {
+    {this.visitUnparsedTokens = true;}
+
     private static final String defaultIndent = "    ";
     private String currentIndent = "";
     private StringBuilder buffer;

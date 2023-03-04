@@ -1,5 +1,4 @@
 PARSER_PACKAGE=org.parsers.csharp;
-NODE_PACKAGE=org.parsers.csharp.tree;
 BASE_NODE_CLASS=BaseNode;
 DEFAULT_LEXICAL_STATE=CSHARP;
 PRESERVE_TABS;
