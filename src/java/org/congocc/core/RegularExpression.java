@@ -95,18 +95,6 @@ public abstract class RegularExpression extends Expansion {
         this.lhs = lhs;
     }
 
-    public LexicalStateData getLexicalState() {
-        List<LexicalStateData> states = getGrammar().getLexerData().getLexicalStates();
-        LexicalStateData result = states.get(0);
-        for (LexicalStateData ls : states) {
-            if (ls.containsRegularExpression(this)) {
-                result = ls;
-            }
-        }
-        return result;
-
-    }
-
     public void setNewLexicalState(LexicalStateData newLexicalState) {
         this.newLexicalState = newLexicalState;
     }

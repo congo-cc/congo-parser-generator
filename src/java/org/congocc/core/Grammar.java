@@ -101,7 +101,7 @@ public class Grammar extends BaseNode {
         tp.addChild(res);
     }
 
-    public Node parse(Path file, boolean enterIncludes) throws IOException {
+    public GrammarFile parse(Path file, boolean enterIncludes) throws IOException {
         Path canonicalPath = file.normalize();
         if (alreadyIncluded.contains(canonicalPath)) return null;
         else alreadyIncluded.add(canonicalPath);
@@ -139,7 +139,7 @@ public class Grammar extends BaseNode {
             String prevDefaultLexicalState = this.defaultLexicalState;
             boolean prevIgnoreCase = appSettings.isIgnoreCase();
             includeNesting++;
-            Node root = parse(path, true);
+            GrammarFile root = parse(path, true);
             if (root==null) return null;
             includeNesting--;
             appSettings.setFilename(prevLocation);

@@ -215,7 +215,7 @@ public class LexerData {
 
     // This method still really needs to be cleaned up!
     public void buildData() {
-        for (TokenProduction tp : grammar.descendants(TokenProduction.class)) {
+        for (TokenProduction tp : grammar.descendants(TokenProduction.class, tp->tp.isExplicit())) {
             for (RegexpSpec res : tp.getRegexpSpecs()) {
                 RegularExpression re = res.getRegexp();
                 if (re.hasLabel()) {
@@ -227,16 +227,13 @@ public class LexerData {
                     }
                     addNamedToken(label, re);
                 }
+                addRegularExpression(re);
             }
         }
         for (TokenProduction tp : grammar.getAllTokenProductions()) {
             for (RegexpSpec res : tp.getRegexpSpecs()) {
                 RegularExpression regexp = res.getRegexp();
-                if (regexp.isPrivate() || regexp instanceof RegexpRef)
-                    continue;
-                if (!(regexp instanceof RegexpStringLiteral)) {
-                    addRegularExpression(res.getRegexp());
-                } else {
+                if (!regexp.isPrivate() && regexp instanceof RegexpStringLiteral) {
                     RegexpStringLiteral stringLiteral = (RegexpStringLiteral) regexp;
                     String image = stringLiteral.getLiteralString();
                     // This loop performs the checks and actions with respect to

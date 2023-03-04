@@ -1297,7 +1297,10 @@ RegexpSpec(String tokenClassName) #RegexpSpec :
     String image = "";
 }
     (
-        RegexpStringLiteral {regexp = (RegularExpression) peekNode();}
+        RegexpStringLiteral 
+        {   regexp = (RegularExpression) peekNode(); 
+            ((RegexpStringLiteral) regexp).setLexicalState(getGrammar().getDefaultLexicalState());
+        }
         |
         <LT>
         [
@@ -2062,7 +2065,7 @@ INJECT RegexpStringLiteral :
    import org.congocc.core.*;
    extends RegularExpression;
 {
-  @Property String literalString;
+  @Property String literalString, lexicalState;
   @Property boolean resolved = true;
 
   public String toString() {

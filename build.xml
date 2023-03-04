@@ -62,6 +62,7 @@
     <delete dir="examples/json/org" />
     <delete dir="examples/preprocessor/org/" />
     <delete dir="examples/python/org/" />
+    <delete><fileset dir="." includes="**/*.class"/></delete>
   </target>
 
 
@@ -196,7 +197,7 @@
   </target>
 
   <target name="test-java" depends="jar">
-    <echo>Testing the Java parser standalone</echo>
+    <echo>Testing the Java parser standalone"</echo>
     <ant antfile="build.xml" dir="examples/java" target="clean" />
     <ant antfile="build.xml" dir="examples/java" target="test" />
   </target>
