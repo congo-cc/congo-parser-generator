@@ -98,10 +98,9 @@ public class LexerData {
     }
 
     private void resolveStringLiterals() {
-        for (RegexpStringLiteral rsl : grammar.descendants(RegexpStringLiteral.class, r -> !r.isResolved())) {
+        for (RegexpStringLiteral rsl : grammar.descendants(RegexpStringLiteral.class, rsl->rsl.getTokenProduction()==null)) {
             String label = getStringLiteralLabel(rsl.getLiteralString());
             rsl.setLabel(label);
-            rsl.setResolved(true);
         }
     }
 
@@ -219,7 +218,7 @@ public class LexerData {
 
     // This method still really needs to be cleaned up!
     public void buildData() {
-        for (TokenProduction tp : grammar.descendants(TokenProduction.class, tp -> tp.isExplicit())) {
+        for (TokenProduction tp : grammar.descendants(TokenProduction.class)) {
             for (RegexpSpec res : tp.getRegexpSpecs()) {
                 RegularExpression re = res.getRegexp();
                 if (re.hasLabel()) {
@@ -235,7 +234,7 @@ public class LexerData {
                 }
             }
         }
-        for (RegexpStringLiteral stringLiteral : grammar.getUnresolvedStringLiterals()) {
+        for (RegexpStringLiteral stringLiteral : grammar.descendants(RegexpStringLiteral.class, rsl->rsl.getTokenProduction() == null)) {
             String image = stringLiteral.getLiteralString();
             String lexicalStateName = stringLiteral.getLexicalState();
             LexicalStateData lsd = getLexicalState(lexicalStateName);
@@ -266,7 +265,7 @@ public class LexerData {
             RegularExpression referenced = getNamedToken(label);
             if (referenced == null) {
                 errors.addError(ref, "Undefined lexical token name \"" + label + "\".");
-            } else if (ref.getTokenProduction() == null || !ref.getTokenProduction().isExplicit()) {
+            } else if (ref.getTokenProduction() == null) {
                 if (referenced.isPrivate()) {
                     errors.addError(ref,
                             "Token name \"" + label + "\" refers to a private (with a #) regular expression.");
@@ -282,7 +281,7 @@ public class LexerData {
         }
         // Check for self-referential loops in regular expressions
         new RegexpVisitor().visit(grammar);
-        for (TokenProduction tokenProduction : grammar.descendants(TokenProduction.class, tp -> tp.isExplicit())) {
+        for (TokenProduction tokenProduction : grammar.descendants(TokenProduction.class)) {
             for (String lexStateName : tokenProduction.getLexicalStateNames()) {
                 LexicalStateData lexState = getLexicalState(lexStateName);
                 lexState.addTokenProduction(tokenProduction);

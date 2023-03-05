@@ -1213,7 +1213,7 @@ TokenProduction :
 INJECT TokenProduction :
     import java.util.*;
 {
-    @Property private boolean explicit=true, ignoreCase;
+    @Property private boolean ignoreCase;
     @Property String tokenClassName;
 
     private String implicitLexicalState;
@@ -1255,15 +1255,6 @@ INJECT TokenProduction :
         return lexStates;
     }
 
-    public boolean isInDefaultLexicalState() {
-        if (isInAllLexStates()) return true;
-        if (!isExplicit()) return true;
-        for (String s : getLexicalStateNames()) {
-            if (s.equals(getGrammar().getDefaultLexicalState())) return true;
-        }
-        return false;
-    }
-    
     private boolean isInAllLexStates() {
        for (Node n : children()) {
           if (n instanceof Token) {
@@ -1825,7 +1816,7 @@ RegularExpression Terminal #void :
       result = (RegularExpression) peekNode();
       result.setLHS(lhs);
       if (result instanceof RegexpStringLiteral) {
-            grammar.addInplaceRegexp((RegexpStringLiteral) result);
+            ((RegexpStringLiteral) result).setLexicalState(grammar.getDefaultLexicalState());
       }
   }
   [
@@ -2066,7 +2057,6 @@ INJECT RegexpStringLiteral :
    extends RegularExpression;
 {
   @Property String literalString, lexicalState;
-  @Property boolean resolved = true;
 
   public String toString() {
     return super.toString() + " - " + getLiteralString();
@@ -2090,12 +2080,9 @@ INJECT RegexpStringLiteral :
   }
 
   public String[] getLexicalStateNames() {
-      TokenProduction tp = getTokenProduction();
-      if (tp != null && tp.isExplicit()) {
-        return tp.getLexicalStateNames();
-      }
-      return new String[]{lexicalState};
-  } 
+     TokenProduction tp = getTokenProduction();
+     return tp != null ? tp.getLexicalStateNames() : new String[]{lexicalState};
+  }
 }
 
 #RegexpRef : 
