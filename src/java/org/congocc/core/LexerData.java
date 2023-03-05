@@ -235,31 +235,25 @@ public class LexerData {
                 }
             }
         }
-        for (TokenProduction tp : grammar.descendants(TokenProduction.class, tp->!tp.isExplicit())) {
-            for (RegexpSpec res : tp.getRegexpSpecs()) {
-                RegularExpression regexp = res.getRegexp();
-                if (!regexp.isPrivate() && regexp instanceof RegexpStringLiteral) {
-                    RegexpStringLiteral stringLiteral = (RegexpStringLiteral) regexp;
-                    String image = stringLiteral.getLiteralString();
-                    String lexicalStateName = stringLiteral.getLexicalState();
-                    LexicalStateData lsd = getLexicalState(lexicalStateName);
-                    RegexpStringLiteral alreadyPresent = lsd.getStringLiteral(image);
-                    if (alreadyPresent == null) {
-                        if (stringLiteral.getOrdinal() == 0) {
-                            addRegularExpression(stringLiteral);
-                        }
-                    } else {
-                        String kind = alreadyPresent.getTokenProduction() == null ? "TOKEN"
-                                : alreadyPresent.getTokenProduction().getKind();
-                        if (!kind.equals("TOKEN")) {
-                            errors.addError(stringLiteral,
-                                    "String token \"" + image + "\" has been defined as a \"" + kind + "\" token.");
-                        } else {
-                            // This is now a reference to an
-                            // existing StringLiteralRegexp.
-                            stringLiteral.setOrdinal(alreadyPresent.getOrdinal());
-                        }
-                    }
+        for (RegexpStringLiteral stringLiteral : grammar.getUnresolvedStringLiterals()) {
+            String image = stringLiteral.getLiteralString();
+            String lexicalStateName = stringLiteral.getLexicalState();
+            LexicalStateData lsd = getLexicalState(lexicalStateName);
+            RegexpStringLiteral alreadyPresent = lsd.getStringLiteral(image);
+            if (alreadyPresent == null) {
+                if (stringLiteral.getOrdinal() == 0) {
+                    addRegularExpression(stringLiteral);
+                }
+            } else {
+                String kind = alreadyPresent.getTokenProduction() == null ? "TOKEN"
+                        : alreadyPresent.getTokenProduction().getKind();
+                if (!kind.equals("TOKEN")) {
+                    errors.addError(stringLiteral,
+                            "String token \"" + image + "\" has been defined as a \"" + kind + "\" token.");
+                } else {
+                    // This is now a reference to an
+                    // existing StringLiteralRegexp.
+                    stringLiteral.setOrdinal(alreadyPresent.getOrdinal());
                 }
             }
         }

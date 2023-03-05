@@ -45,6 +45,7 @@ public class Grammar extends BaseNode {
     private Map<String, List<String>> closeNodeHooksByClass = new HashMap<>();
 
     private Set<Path> alreadyIncluded = new HashSet<>();
+    private List<RegexpStringLiteral> unresolvedStringLiterals = new ArrayList<>();
 
     private TemplateGlobals templateGlobals;
     private AppSettings appSettings;
@@ -84,19 +85,14 @@ public class Grammar extends BaseNode {
         return lexicalStates.toArray(new String[0]);
     }
 
-    public void addInplaceRegexp(RegularExpression regexp) {
-        if (regexp instanceof RegexpStringLiteral) {
-            ((RegexpStringLiteral)regexp).setResolved(false);
-            ((RegexpStringLiteral)regexp).setLexicalState(getDefaultLexicalState());
-        }
-        TokenProduction tp = new TokenProduction();
-        tp.setGrammar(this);
-        tp.setExplicit(false);
-        tp.setImplicitLexicalState(getDefaultLexicalState());
-        addChild(tp);
-        RegexpSpec res = new RegexpSpec();
-        res.addChild(regexp);
-        tp.addChild(res);
+    public void addInplaceRegexp(RegexpStringLiteral regexp) {
+        regexp.setLexicalState(getDefaultLexicalState());
+        unresolvedStringLiterals.add(regexp);
+        regexp.setResolved(false);
+    }
+
+    List<RegexpStringLiteral> getUnresolvedStringLiterals() {
+        return unresolvedStringLiterals;
     }
 
     public GrammarFile parse(Path file, boolean enterIncludes) throws IOException {

@@ -1824,8 +1824,8 @@ RegularExpression Terminal #void :
   {
       result = (RegularExpression) peekNode();
       result.setLHS(lhs);
-      if (!(result instanceof EndOfFile)) {
-            grammar.addInplaceRegexp(result);
+      if (result instanceof RegexpStringLiteral) {
+            grammar.addInplaceRegexp((RegexpStringLiteral) result);
       }
   }
   [
