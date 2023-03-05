@@ -815,7 +815,7 @@ INJECT Token :
       Options
    ]!
    (
-      tp=TokenProduction {grammar.addTokenProduction(tp);}
+      tp=TokenProduction 
       |
       CodeInjection2 
       |

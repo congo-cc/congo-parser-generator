@@ -26,8 +26,6 @@ public class Grammar extends BaseNode {
     private LexerData lexerData = new LexerData(this);
     private int includeNesting;
 
-    private List<TokenProduction> tokenProductions = new ArrayList<>();
-
     private Map<String, BNFProduction> productionTable;
     private Set<String> lexicalStates = new LinkedHashSet<>();
     private Map<String, String> preprocessorSymbols = new HashMap<>();
@@ -89,14 +87,13 @@ public class Grammar extends BaseNode {
     public void addInplaceRegexp(RegularExpression regexp) {
         if (regexp instanceof RegexpStringLiteral) {
             ((RegexpStringLiteral)regexp).setResolved(false);
-            ((RegexpStringLiteral)regexp).setLexicalState(defaultLexicalState);
+            ((RegexpStringLiteral)regexp).setLexicalState(getDefaultLexicalState());
         }
         TokenProduction tp = new TokenProduction();
         tp.setGrammar(this);
         tp.setExplicit(false);
         tp.setImplicitLexicalState(getDefaultLexicalState());
-        //addChild(tp);
-        addTokenProduction(tp);
+        addChild(tp);
         RegexpSpec res = new RegexpSpec();
         res.addChild(regexp);
         tp.addChild(res);
@@ -172,7 +169,7 @@ public class Grammar extends BaseNode {
     }
     
     public String getDefaultLexicalState() {
-        return this.defaultLexicalState;
+        return defaultLexicalState == null ? "DEFAULT" : defaultLexicalState;
     }
 
     public void setDefaultLexicalState(String defaultLexicalState) {
@@ -347,28 +344,12 @@ public class Grammar extends BaseNode {
         return result;
     }
 
-    /**
-     * The list of all TokenProductions from the input file. This list includes
-     * implicit TokenProductions that are created for uses of regular
-     * expressions within BNF productions.
-     */
-    List<TokenProduction> getAllTokenProductions() {
-        //System.err.println("KILROY 1: " + tokenProductions.size());
-        //System.err.println("KILROY 2: " + descendants(TokenProduction.class).size());
-
-        return tokenProductions;
-    }
-
     public List<Lookahead> getAllLookaheads() {
         return this.descendants(Lookahead.class);
     }
 
     public List<LookBehind> getAllLookBehinds() {
         return this.descendants(LookBehind.class);
-    }
-
-    public void addTokenProduction(TokenProduction tp) {
-        tokenProductions.add(tp);
     }
 
     public Set<String> getNodeNames() {

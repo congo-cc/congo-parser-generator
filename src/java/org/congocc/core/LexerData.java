@@ -8,11 +8,10 @@ import org.congocc.core.nfa.LexicalStateData;
 import org.congocc.parser.tree.*;
 
 /**
- * Base object that contains lexical data.
- * It contains LexicalStateData objects that contain
- * the data for each lexical state. The LexicalStateData
- * objects hold the data related to generating the NFAs
- * for the respective lexical states.
+ * Base object that contains lexical data. It contains LexicalStateData objects
+ * that contain the data for each lexical state. The LexicalStateData objects
+ * hold the data related to generating the NFAs for the respective lexical
+ * states.
  */
 public class LexerData {
     private Grammar grammar;
@@ -71,8 +70,7 @@ public class LexerData {
     }
 
     public boolean getHasLexicalStateTransitions() {
-        return getNumLexicalStates() > 1 &&
-                regularExpressions.stream().anyMatch(re -> re.getNewLexicalState() != null);
+        return getNumLexicalStates() > 1 && regularExpressions.stream().anyMatch(re -> re.getNewLexicalState() != null);
     }
 
     public boolean getHasTokenActions() {
@@ -189,9 +187,9 @@ public class LexerData {
     }
 
     /**
-     * This is a symbol table that contains all named tokens (those that are
-     * defined with a label). The index to the table is the image of the label
-     * and the contents of the table are of type "RegularExpression".
+     * This is a symbol table that contains all named tokens (those that are defined
+     * with a label). The index to the table is the image of the label and the
+     * contents of the table are of type "RegularExpression".
      */
     public RegularExpression getNamedToken(String name) {
         return namedTokensTable.get(name);
@@ -211,10 +209,9 @@ public class LexerData {
     }
 
     /**
-     * Contains the same entries as "namedTokensTable", but this is an ordered
-     * list which is ordered by the order of appearance in the input file.
-     * (Actually, the only place where this is used is in generating the
-     * TokenType enum)
+     * Contains the same entries as "namedTokensTable", but this is an ordered list
+     * which is ordered by the order of appearance in the input file. (Actually, the
+     * only place where this is used is in generating the TokenType enum)
      */
     public List<RegularExpression> getOrderedNamedTokens() {
         return new ArrayList<RegularExpression>(namedTokensTable.values());
@@ -222,56 +219,45 @@ public class LexerData {
 
     // This method still really needs to be cleaned up!
     public void buildData() {
-        for (TokenProduction tp : grammar.descendants(TokenProduction.class, tp->tp.isExplicit())) {
+        for (TokenProduction tp : grammar.descendants(TokenProduction.class, tp -> tp.isExplicit())) {
             for (RegexpSpec res : tp.getRegexpSpecs()) {
                 RegularExpression re = res.getRegexp();
                 if (re.hasLabel()) {
                     String label = re.getLabel();
                     RegularExpression regexp = getNamedToken(label);
                     if (regexp != null) {
-                        errors.addInfo(res.getRegexp(),
-                                "Token name \"" + label + " is redefined.");
+                        errors.addInfo(res.getRegexp(), "Token name \"" + label + " is redefined.");
                     }
                     addNamedToken(label, re);
                 }
                 if (!re.isPrivate() && re.getOrdinal() == 0) {
-                   addRegularExpression(re);
+                    addRegularExpression(re);
                 }
             }
         }
-        for (TokenProduction tp : grammar.getAllTokenProductions()) {
+        for (TokenProduction tp : grammar.descendants(TokenProduction.class, tp->!tp.isExplicit())) {
             for (RegexpSpec res : tp.getRegexpSpecs()) {
                 RegularExpression regexp = res.getRegexp();
                 if (!regexp.isPrivate() && regexp instanceof RegexpStringLiteral) {
                     RegexpStringLiteral stringLiteral = (RegexpStringLiteral) regexp;
                     String image = stringLiteral.getLiteralString();
-                    // This loop performs the checks and actions with respect to
-                    // each lexical state.
-                    for (String name : tp.getLexicalStateNames()) {
-                        LexicalStateData lsd = getLexicalState(name);
-                        RegexpStringLiteral alreadyPresent = lsd.getStringLiteral(image);
-                        if (alreadyPresent == null) {
-                            assert !stringLiteral.getTokenProduction().isExplicit();
-                            if (stringLiteral.getOrdinal() == 0) {
-                                assert !stringLiteral.getTokenProduction().isExplicit();
-                                addRegularExpression(stringLiteral);
-                            }
-//                            lsd.addStringLiteral(stringLiteral);
-                        } else if (!tp.isExplicit()) {
-                            String kind = alreadyPresent.getTokenProduction() == null ? "TOKEN"
-                                    : alreadyPresent.getTokenProduction().getKind();
-                            if (!kind.equals("TOKEN")) {
-                                errors.addError(stringLiteral,
-                                        "String token \""
-                                                + image
-                                                + "\" has been defined as a \""
-                                                + kind
-                                                + "\" token.");
-                            } else {
-                                // This is now a reference to an
-                                // existing StringLiteralRegexp.
-                                stringLiteral.setOrdinal(alreadyPresent.getOrdinal());
-                            }
+                    String lexicalStateName = stringLiteral.getLexicalState();
+                    LexicalStateData lsd = getLexicalState(lexicalStateName);
+                    RegexpStringLiteral alreadyPresent = lsd.getStringLiteral(image);
+                    if (alreadyPresent == null) {
+                        if (stringLiteral.getOrdinal() == 0) {
+                            addRegularExpression(stringLiteral);
+                        }
+                    } else {
+                        String kind = alreadyPresent.getTokenProduction() == null ? "TOKEN"
+                                : alreadyPresent.getTokenProduction().getKind();
+                        if (!kind.equals("TOKEN")) {
+                            errors.addError(stringLiteral,
+                                    "String token \"" + image + "\" has been defined as a \"" + kind + "\" token.");
+                        } else {
+                            // This is now a reference to an
+                            // existing StringLiteralRegexp.
+                            stringLiteral.setOrdinal(alreadyPresent.getOrdinal());
                         }
                     }
                 }
@@ -314,8 +300,8 @@ public class LexerData {
     }
 
     /**
-     * A visitor that checks whether there is a self-referential loop in a
-     * Regexp reference.
+     * A visitor that checks whether there is a self-referential loop in a Regexp
+     * reference.
      */
     class RegexpVisitor extends Node.Visitor {
 
