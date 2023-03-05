@@ -3,9 +3,6 @@
 
 TREE_BUILDING_ENABLED = false;
 PARSER_PACKAGE=org.parsers.csharp.ppline;
-#if !localtest
-BASE_SRC_DIR="../../src/java";
-#endif
 
 INCLUDE "CSharpIdentifierDef.ccc"
 

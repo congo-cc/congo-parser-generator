@@ -82,7 +82,7 @@
     <congocc target="examples/preprocessor/Preprocessor.ccc"/>
   </target>
   <target name="ppline-gen" unless="ppline.uptodate">
-    <congocc target="examples/csharp/PPDirectiveLine.ccc" args="-n -d ../../java" />
+    <congocc target="examples/csharp/PPDirectiveLine.ccc" args="-n -q -d ../../java" />
   </target>
   <target name="python-gen" unless="python.uptodate">
     <congocc target="src/grammars/PythonInternal.ccc"/>
