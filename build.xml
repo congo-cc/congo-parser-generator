@@ -1,12 +1,9 @@
-<project name="congocc" default="compile" basedir=".">
+<project name="congo" default="full-jar" basedir=".">
   <tstamp>
     <format property="timestamp" pattern="yyyy-MM-dd HH:mm:ss" />
   </tstamp>
 
   <target name="init">
-    <echo>Join the Discussion forum at: https://discuss.congocc.org/</echo>
-    <echo>Send any bug report to bugs@congocc.org and include the following information.</echo>
-    <echo>JDK Version: ${java.version} on ${os.name}</echo>
     <uptodate property="parser.uptodate" targetfile="src/java/org/congocc/parser/CongoCCParser.java">
       <srcfiles dir="." includes="src/grammars/CongoCC.ccc"/>
       <srcfiles dir="examples/java" includes="*.ccc"/>
@@ -65,54 +62,46 @@
     <delete><fileset dir="." includes="**/*.class"/></delete>
   </target>
 
+  <macrodef name="congocc">
+    <attribute name="target"/>
+    <attribute name="args" default="-n -q"/>
+    <sequential>
+      <echo message="Building parser from @{target}"/>
+      <java fork="true" jar="${basedir}/bin/congocc.jar" failonerror="true">
+        <assertions><enable/></assertions>
+        <arg line="@{args} @{target}"/>
+      </java>
+    </sequential>
+  </macrodef>
 
-  <target name="parser-gen" depends="init" unless="parser.uptodate">
-    <echo>Using Bootstrap congocc to regenerate congocc parser</echo>
-    <java jar="bin/congocc.jar" fork="true" failonerror="true">
-      <assertions>
-        <enable />
-      </assertions>
-      <arg line="-n -q -d ../java src/grammars/CongoCC.ccc" />
-    </java>
+
+  <target name="parser-gen" unless="parser.uptodate">
+    <congocc target="src/grammars/CongoCC.ccc"/>
   </target>
-  <target name="preprocessor-gen" depends="init" unless="preprocessor.uptodate">
-    <echo>Using Bootstrap congocc to regenerate preprocessor</echo>
-    <java jar="bin/congocc.jar" fork="true" failonerror="true">
-      <assertions>
-        <enable />
-      </assertions>
-      <arg line="-n -q -d ../../src/java examples/preprocessor/Preprocessor.ccc" />
-    </java>
+  <target name="preprocessor-gen" unless="preprocessor.uptodate">
+    <congocc target="examples/preprocessor/Preprocessor.ccc"/>
   </target>
-  <target name="ppline-gen" depends="init" unless="ppline.uptodate">
-    <echo>Using Bootstrap congocc to regenerate the PPDirectiveLine parser used for C#</echo>
-    <java jar="bin/congocc.jar" fork="true" failonerror="true">
-      <assertions>
-        <enable />
-      </assertions>
-      <arg line="-n -q -d ../../src/java examples/csharp/PPDirectiveLine.ccc" />
-    </java>
+  <target name="ppline-gen" unless="ppline.uptodate">
+    <congocc target="examples/csharp/PPDirectiveLine.ccc"/>
   </target>
-  <target name="python-gen" depends="parser-gen" unless="python.uptodate">
-    <echo>Using Bootstrap congocc to regenerate internal python parser</echo>
-    <java jar="bin/congocc.jar" fork="true" failonerror="true">
-      <assertions>
-        <enable />
-      </assertions>
-      <arg line="-n -q -d ../../src/java src/grammars/PythonInternal.ccc" />
-    </java>
+  <target name="python-gen" unless="python.uptodate">
+    <congocc target="src/grammars/PythonInternal.ccc"/>
   </target>
-  <target name="csharp-gen" depends="parser-gen" unless="csharp.uptodate">
-    <echo>Using Bootstrap congocc to regenerate internal C# parser</echo>
-    <java jar="bin/congocc.jar" fork="true" failonerror="true">
-      <assertions>
-        <enable />
-      </assertions>
-      <arg line="-n -q -d ../../src/java src/grammars/CSharpInternal.ccc" />
-    </java>
+  <target name="csharp-gen" unless="csharp.uptodate">
+    <congocc target="src/grammars/CSharpInternal.ccc"/>
   </target>
 
-  <target name="compile" depends="parser-gen,preprocessor-gen,python-gen,ppline-gen,csharp-gen">
+  <target name="build-parsers" depends="init">
+    <parallel>
+      <antcall target="parser-gen"/>
+      <antcall target="preprocessor-gen"/>
+      <antcall target="ppline-gen"/>
+      <antcall target="python-gen"/>
+      <antcall target="csharp-gen"/>
+    </parallel>
+  </target>
+
+  <target name="compile" depends="build-parsers">
     <mkdir dir="build" />
     <javac srcdir="src/java"
       destdir="build"
@@ -121,7 +110,6 @@
       optimize="off"
       classpath="bin/freemarker.jar"
       failonerror="true"
-      fork="true"
       includeantruntime="false"
       target="1.8" source="1.8"/>
     <copy todir="build/templates/java">

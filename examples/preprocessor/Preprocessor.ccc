@@ -12,6 +12,7 @@ MINIMAL_TOKEN;
 PARSER_PACKAGE=org.parsers.preprocessor;
 #else
 PARSER_PACKAGE=org.congocc.preprocessor;
+BASE_SRC_DIR="../../src/java";
 #endif
 
 /*

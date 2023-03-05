@@ -2088,6 +2088,14 @@ INJECT RegexpStringLiteral :
   public boolean matchesEmptyString() {
       return literalString.length() == 0;
   }
+
+  public String[] getLexicalStateNames() {
+      TokenProduction tp = getTokenProduction();
+      if (tp != null && tp.isExplicit()) {
+        return tp.getLexicalStateNames();
+      }
+      return new String[]{lexicalState};
+  } 
 }
 
 #RegexpRef : 

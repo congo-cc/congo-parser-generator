@@ -90,6 +90,13 @@ public class LexerData {
     private void addRegularExpression(RegularExpression regexp) {
         regexp.setOrdinal(regularExpressions.size());
         regularExpressions.add(regexp);
+        if (regexp instanceof RegexpStringLiteral) {
+            RegexpStringLiteral stringLiteral = (RegexpStringLiteral) regexp;
+            for (String lexicalStateName : stringLiteral.getLexicalStateNames()) {
+                LexicalStateData lsd = getLexicalState(lexicalStateName);
+                lsd.addStringLiteral(stringLiteral);
+            }
+        }
     }
 
     private void resolveStringLiterals() {
@@ -227,7 +234,9 @@ public class LexerData {
                     }
                     addNamedToken(label, re);
                 }
-                addRegularExpression(re);
+                if (!re.isPrivate() && re.getOrdinal() == 0) {
+                   addRegularExpression(re);
+                }
             }
         }
         for (TokenProduction tp : grammar.getAllTokenProductions()) {
@@ -242,10 +251,12 @@ public class LexerData {
                         LexicalStateData lsd = getLexicalState(name);
                         RegexpStringLiteral alreadyPresent = lsd.getStringLiteral(image);
                         if (alreadyPresent == null) {
+                            assert !stringLiteral.getTokenProduction().isExplicit();
                             if (stringLiteral.getOrdinal() == 0) {
+                                assert !stringLiteral.getTokenProduction().isExplicit();
                                 addRegularExpression(stringLiteral);
                             }
-                            lsd.addStringLiteral(stringLiteral);
+//                            lsd.addStringLiteral(stringLiteral);
                         } else if (!tp.isExplicit()) {
                             String kind = alreadyPresent.getTokenProduction() == null ? "TOKEN"
                                     : alreadyPresent.getTokenProduction().getKind();

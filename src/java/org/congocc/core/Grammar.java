@@ -89,6 +89,7 @@ public class Grammar extends BaseNode {
     public void addInplaceRegexp(RegularExpression regexp) {
         if (regexp instanceof RegexpStringLiteral) {
             ((RegexpStringLiteral)regexp).setResolved(false);
+            ((RegexpStringLiteral)regexp).setLexicalState(defaultLexicalState);
         }
         TokenProduction tp = new TokenProduction();
         tp.setGrammar(this);

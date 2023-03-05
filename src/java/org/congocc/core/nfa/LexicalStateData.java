@@ -64,9 +64,9 @@ public class LexicalStateData {
 
     public void addStringLiteral(RegexpStringLiteral re) {
         if (re.getIgnoreCase()) {
-            caseInsensitiveTokenTable.put(re.getLiteralString().toUpperCase(), re);
+            caseInsensitiveTokenTable.putIfAbsent(re.getLiteralString().toUpperCase(), re);
         } else {
-            caseSensitiveTokenTable.put(re.getLiteralString(), re);
+            caseSensitiveTokenTable.putIfAbsent(re.getLiteralString(), re);
         }
     }
 
