@@ -24,6 +24,7 @@ ENSURE_FINAL_EOL;
 
 INCLUDE "JavaLexer.ccc"
 
+#if use_token_hook
 INJECT PARSER_CLASS :
 {
     private Token TOKEN_HOOK(Token tok) {
@@ -36,6 +37,7 @@ INJECT PARSER_CLASS :
         return tok;
     }
 }
+#endif
 
 #CompilationUnit# :
   [ PackageDeclaration! ]
@@ -318,8 +320,11 @@ EnumConstant :
 TypeParameters :
    <LT>
    TypeParameter ( <COMMA> TypeParameter )*
+#if use_token_hook
    <GT>
-   //DEACTIVATE_TOKENS RSIGNEDSHIFT, RUNSIGNEDSHIFT (<GT>)
+#else   
+   DEACTIVATE_TOKENS RSIGNEDSHIFT, RUNSIGNEDSHIFT (<GT>)
+#endif   
 ;
 
 INJECT TypeParameters :
@@ -481,8 +486,12 @@ PossiblyEmptyTypeArguments #void :
 
 TypeArguments :
   SCAN 2
-  <LT> TypeArgument ( <COMMA> TypeArgument )* <GT>
-   //DEACTIVATE_TOKENS RSIGNEDSHIFT, RUNSIGNEDSHIFT (<GT>)
+  <LT> TypeArgument ( <COMMA> TypeArgument )* 
+  #if use_token_hook
+    <GT>
+  #else
+   DEACTIVATE_TOKENS RSIGNEDSHIFT, RUNSIGNEDSHIFT (<GT>)
+  #endif   
 ;
 
 TypeArgument :
