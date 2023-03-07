@@ -4,26 +4,26 @@
   </tstamp>
 
   <target name="init">
-    <uptodate property="parser.uptodate" targetfile="src/java/org/congocc/parser/CongoCCParser.java">
+    <uptodate property="parser.uptodate" targetfile="build/generated-java/org/congocc/parser/CongoCCParser.java">
       <srcfiles dir="." includes="src/grammars/CongoCC.ccc"/>
       <srcfiles dir="examples/java" includes="*.ccc"/>
     </uptodate>
     <uptodate property="preprocessor.uptodate"
-      targetfile="src/java/org/congocc/preprocessor/PreprocessorParser.java"
+      targetfile="build/generated-java/org/congocc/preprocessor/PreprocessorParser.java"
       srcfile="examples/preprocessor/Preprocessor.ccc"
     />
     <uptodate property="python.uptodate"
-      targetfile="src/java/org/congocc/parser/python/PythonParser.java">
+      targetfile="build/generated-java/org/congocc/parser/python/PythonParser.java">
       <srcfiles dir="src/grammars" includes="Python.ccc"/>
       <srcfiles dir="examples/python" includes="*.ccc"/>
     </uptodate>
     <uptodate property="csharp.uptodate"
-      targetfile="src/java/org/congocc/parser/csharp/CSharpParser.java">
+      targetfile="build/generated-java/org/congocc/parser/csharp/CSharpParser.java">
       <srcfiles dir="src/grammars" includes="SharpInternal.ccc"/>
       <srcfiles dir="examples/csharp" includes="*.ccc"/>
     </uptodate>
     <uptodate property="ppline.uptodate"
-      targetfile="src/java/org/parsers/csharp/ppline/PPDirectiveLineParser.java"
+      targetfile="build/generated-java/org/parsers/csharp/ppline/PPDirectiveLineParser.java"
       srcfile="examples/csharp/PPDirectiveLine.ccc" />
   </target>
 
@@ -48,10 +48,6 @@
     <delete file="congocc.jar" />
     <delete file="congocc-full.jar" />
     <delete dir="build" />
-    <delete dir="src/generated-java" />
-    <delete dir="src/human-written-java/org/parsers" />
-    <delete dir="src/human-written-java/org/congocc/parser" />
-    <delete dir="src/human-written-java/org/congocc/preprocessor" />
     <delete><fileset dir="." includes="**/*.class"/></delete>
   </target>
 
@@ -75,7 +71,7 @@
     <congocc target="examples/preprocessor/Preprocessor.ccc"/>
   </target>
   <target name="ppline-gen" unless="ppline.uptodate">
-    <congocc target="examples/csharp/PPDirectiveLine.ccc" args="-n -q -d ../../src/generated-java" />
+    <congocc target="examples/csharp/PPDirectiveLine.ccc" args="-n -q -d ../../build/generated-java" />
   </target>
   <target name="python-gen" unless="python.uptodate">
     <congocc target="src/grammars/PythonInternal.ccc"/>
@@ -104,52 +100,20 @@
       failonerror="true"
       includeantruntime="false"
       target="1.8" source="1.8">
-      <src path="src/human-written-java"/>
-      <src path="src/generated-java"/>
+      <src path="src/java"/>
+      <src path="build/generated-java"/>
     </javac>
-    <copy todir="build/templates/java">
-      <fileset dir="src/templates/java">
-        <include name="*.ftl" />
+    <copy todir="build/templates">
+      <fileset dir="src/templates">
+        <include name="**/*.ftl" />
       </fileset>
     </copy>
-    <copy todir="build/templates/python">
-      <fileset dir="src/templates/python">
-        <include name="*.ftl" />
-      </fileset>
-    </copy>
-    <copy todir="build/templates/csharp">
-      <fileset dir="src/templates/csharp">
-        <include name="*.ftl" />
-      </fileset>
-    </copy>
-    <copy todir="build/include/java">
-      <fileset dir="examples/java">
-        <include name="*.ccc" />
-      </fileset>
-    </copy>
-    <copy todir="build/include/python">
-      <fileset dir="examples/python">
-        <include name="*.ccc" />
-      </fileset>
-    </copy>
-    <copy todir="build/include/csharp">
-      <fileset dir="examples/csharp">
-        <include name="*.ccc" />
-      </fileset>
-    </copy>
-    <copy todir="build/include/json">
-      <fileset dir="examples/json">
-        <include name="*.ccc" />
-      </fileset>
-    </copy>
-    <copy todir="build/include/lua">
-      <fileset dir="examples/lua">
-        <include name="*.ccc" />
-      </fileset>
-    </copy>
-    <copy todir="build/include/preprocessor">
-      <fileset dir="examples/preprocessor">
-        <include name="*.ccc" />
+    <copy todir="build/include">
+      <fileset dir="examples">
+        <include name="**/*.ccc"/>
+        <exclude name="arithmetic/**"/>
+        <exclude name="freemarker/**"/>
+        <exclude name="kotlin/**"/>
       </fileset>
     </copy>
   </target>
@@ -187,7 +151,7 @@
 
   <target name="jar" depends="compile">
     <echo>Creating basic jarfile, using this requires a freemarker.jar in the same directory</echo>
-    <jar jarfile="congocc.jar" basedir="build" compress="true">
+    <jar jarfile="congocc.jar" basedir="build" compress="true" excludes="**/*.java">
       <manifest>
         <attribute name="Main-Class" value="org.congocc.app.Main" />
         <attribute name="Class-Path" value="freemarker.jar bin/freemarker.jar" />
@@ -199,7 +163,7 @@
 
   <target name="full-jar" depends="compile">
     <echo>Creating the "uber-jar" with all dependencies, i.e. the FreeMarker classes</echo>
-    <jar jarfile="congocc-full.jar" compress="true">
+    <jar jarfile="congocc-full.jar" compress="true" excludes="**/*.java">
       <fileset dir="build" />
       <zipfileset includes="**/*.class" src="bin/freemarker.jar" />
       <manifest>

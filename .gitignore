@@ -7,7 +7,6 @@
 __pycache__/*
 /*.jar
 \#*
-/src/generated-java/**
 /examples/freemarker/ftl/*
 /examples/freemarker/fel/*
 /examples/legacy/test.tmp/*
