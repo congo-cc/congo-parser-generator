@@ -7,9 +7,7 @@
 __pycache__/*
 /*.jar
 \#*
-/src/java/org/congocc/parser/*
-/src/java/org/parsers/*
-/src/java/org/congocc/preprocessor/*
+/src/generated-java/**
 /examples/freemarker/ftl/*
 /examples/freemarker/fel/*
 /examples/legacy/test.tmp/*

@@ -48,17 +48,10 @@
     <delete file="congocc.jar" />
     <delete file="congocc-full.jar" />
     <delete dir="build" />
-    <delete dir="src/java/org/congocc/parser" />
-    <delete dir="src/java/org/congocc/preprocessor" />
-    <delete dir="src/java/org/parsers/csharp/ppline" />
-    <delete dir="examples/csharp/org" />
-    <delete dir="examples/java/org" />
-    <delete dir="examples/lua/org" />
-    <delete dir="examples/freemarker/fel" />
-    <delete dir="examples/freemarker/ftl" />
-    <delete dir="examples/json/org" />
-    <delete dir="examples/preprocessor/org/" />
-    <delete dir="examples/python/org/" />
+    <delete dir="src/generated-java" />
+    <delete dir="src/human-written-java/org/parsers" />
+    <delete dir="src/human-written-java/org/congocc/parser" />
+    <delete dir="src/human-written-java/org/congocc/preprocessor" />
     <delete><fileset dir="." includes="**/*.class"/></delete>
   </target>
 
@@ -82,7 +75,7 @@
     <congocc target="examples/preprocessor/Preprocessor.ccc"/>
   </target>
   <target name="ppline-gen" unless="ppline.uptodate">
-    <congocc target="examples/csharp/PPDirectiveLine.ccc" args="-n -q -d ../../src/java" />
+    <congocc target="examples/csharp/PPDirectiveLine.ccc" args="-n -q -d ../../src/generated-java" />
   </target>
   <target name="python-gen" unless="python.uptodate">
     <congocc target="src/grammars/PythonInternal.ccc"/>
@@ -103,15 +96,17 @@
 
   <target name="compile" depends="build-parsers">
     <mkdir dir="build" />
-    <javac srcdir="src/java"
-      destdir="build"
+    <javac destdir="build"
       deprecation="off"
       debug="on"
       optimize="off"
       classpath="bin/freemarker.jar"
       failonerror="true"
       includeantruntime="false"
-      target="1.8" source="1.8"/>
+      target="1.8" source="1.8">
+      <src path="src/human-written-java"/>
+      <src path="src/generated-java"/>
+    </javac>
     <copy todir="build/templates/java">
       <fileset dir="src/templates/java">
         <include name="*.ftl" />

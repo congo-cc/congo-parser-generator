@@ -3,7 +3,7 @@ JAVA_UNICODE_ESCAPE;
 PARSER_PACKAGE=org.congocc.parser;
 NODE_PACKAGE=org.congocc.parser.tree;
 DEFAULT_LEXICAL_STATE=JAVA;
-BASE_SRC_DIR="../java";
+BASE_SRC_DIR="../generated-java";
 TOKEN_CHAINING;
 
 DEACTIVATE_TOKENS=_INCLUDE,_INJECT,_EOF;
@@ -1799,7 +1799,7 @@ Expansion ExpansionUnit :
   {return CURRENT_NODE;}
 ;
 
-RegularExpression Terminal #void :
+RegularExpression Terminal# :
 {
     Name lhs=null;
     RegularExpression result=null;
@@ -1837,9 +1837,27 @@ RegularExpression Terminal #void :
     {result.addChild(popNode());}
   ]
   {
+    //return CURRENT_NODE;
     return result;
   }
-;  
+;
+
+INJECT Terminal :
+   import org.congocc.core.RegularExpression;
+   extends RegularExpression
+{
+    @Property RegularExpression regexp;
+
+    public boolean isPrivate() {
+        return regexp.isPrivate(); 
+    }
+
+    @Override 
+    public boolean matchesEmptyString() {
+        return regexp.matchesEmptyString();
+    }
+
+}   
 
 UpToHere(Expansion exp) #void :
    <UP_TO_HERE>

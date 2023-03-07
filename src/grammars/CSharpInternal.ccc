@@ -1,5 +1,5 @@
 DEFAULT_LEXICAL_STATE=CSHARP;
-BASE_SRC_DIR="../java";
+BASE_SRC_DIR="../generated-java";
 BASE_NAME=CSharp;
 PARSER_PACKAGE=org.congocc.parser.csharp;
 ROOT_API_PACKAGE=org.congocc.parser;
