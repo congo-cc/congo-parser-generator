@@ -34,4 +34,4 @@ CongoCC also supports [fault-tolerant parsing](https://parsers.org/javacc21/the-
 
 If you are interested in this project, either as a user or developer, by all means sign up on our [Discussion Forum](https://discuss.congocc.org) and post any questions or suggestions there.
 
-See our [QuickStart Guide]().
+See our [QuickStart Guide](https://parsers.org/home/).
