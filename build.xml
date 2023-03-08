@@ -110,10 +110,11 @@
     </copy>
     <copy todir="build/include">
       <fileset dir="examples">
-        <include name="**/*.ccc"/>
-        <exclude name="arithmetic/**"/>
-        <exclude name="freemarker/**"/>
-        <exclude name="kotlin/**"/>
+        <include name="csharp/*.ccc"/>
+        <include name="java/*.ccc"/>
+        <include name="json/*.ccc"/>
+        <include name="lua/*.ccc"/>
+        <include name="python/*.ccc"/>
       </fileset>
     </copy>
   </target>

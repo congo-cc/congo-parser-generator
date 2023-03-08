@@ -21,8 +21,8 @@ import static ${settings.parserPackage}.Token.TokenType.*;
 
 [#var PRESERVE_LINE_ENDINGS=settings.preserveLineEndings?string("true", "false")
       JAVA_UNICODE_ESCAPE= settings.javaUnicodeEscape?string("true", "false")
-      ENSURE_FINAL_EOL = settings.ensureFinalEOL?string("true", "false")
       PRESERVE_TABS = settings.preserveTabs?string("true", "false")
+      TERMINATING_STRING = "\"" + globals.addEscapes(settings.terminatingString) + "\""
 ]      
 [#var BaseToken = settings.treeBuildingEnabled?string("Node.TerminalNode", "Token")]
 
@@ -120,7 +120,7 @@ public class ${settings.lexerClassName} extends TokenSource
                         ${settings.tabSize}, ${PRESERVE_TABS}, 
                         ${PRESERVE_LINE_ENDINGS}, 
                         ${JAVA_UNICODE_ESCAPE}, 
-                        ${ENSURE_FINAL_EOL});
+                        ${TERMINATING_STRING});
         if (lexicalState != null) switchTo(lexState);
      [#if settings.cppContinuationLine]
         handleCContinuationLines();
