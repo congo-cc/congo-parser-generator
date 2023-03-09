@@ -165,7 +165,7 @@ abstract public class TokenSource implements CharSequence
         }
         if (buf.length() < terminatingString.length()) {
             buf.append(terminatingString);
-        } else if (buf.substring(buf.length()-terminatingString.length()).equals(terminatingString)) {
+        } else if (!buf.substring(buf.length()-terminatingString.length()).equals(terminatingString)) {
             buf.append(terminatingString);
         }
     }
