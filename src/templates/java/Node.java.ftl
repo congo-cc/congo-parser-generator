@@ -27,6 +27,11 @@ public interface Node
              what I am doing with this.. --]
         TerminalNode getNext();
         List<? extends TerminalNode> precedingUnparsedTokens();
+
+        default void truncate(int amount) {
+            int newEndOffset = Math.max(getBeginOffset(), getEndOffset()-amount);
+            setEndOffset(newEndOffset);
+        }
     }
 
     default NodeType getType() { return null; }

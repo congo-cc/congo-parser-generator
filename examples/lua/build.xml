@@ -1,4 +1,4 @@
-<project name="CSharp Parser" default="compile">
+<project name="Lua Parser" default="compile">
 
   <target name="clean">
     <delete dir="org" />
