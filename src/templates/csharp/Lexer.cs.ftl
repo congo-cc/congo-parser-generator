@@ -849,7 +849,7 @@ ${globals.translateCodeBlock(regexp.codeSnippet.javaCode, 16)}
             }
             else {
                 String finalPart = buf.ToString(buf.Length - terminatingString.Length, terminatingString.Length);
-                if (!finalPart.equals(terminatingString)) {
+                if (!finalPart.Equals(terminatingString)) {
                     buf.Append(terminatingString);
                 }
             }
