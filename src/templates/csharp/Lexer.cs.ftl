@@ -843,13 +843,15 @@ ${globals.translateCodeBlock(regexp.codeSnippet.javaCode, 16)}
                     }
                 }
             }
-
             if (terminatingString.Length == 0) return buf.ToString();
-            if (buf.Length == 0) {
-                return terminatingString;
-            }
-            if (!buf.EndsWith(terminatingString)) {
+            if (buf.Length < terminatingString.Length) {
                 buf.Append(terminatingString);
+            }
+            else {
+                String finalPart = buf.ToString(buf.Length - terminatingString.Length, terminatingString.Length);
+                if (!finalPart.equals(terminatingString)) {
+                    buf.Append(terminatingString);
+                }
             }
             return buf.ToString();
         }
