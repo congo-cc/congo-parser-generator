@@ -1,11 +1,11 @@
 import java.io.*;
 import java.util.*;
 
-//import org.parsers.csharp.CSharpParser;
-//import org.parsers.csharp.Node;
+import org.parsers.csharp.CSharpParser;
+import org.parsers.csharp.Node;
 //import org.congocc.parser.csharp.CSharpParser;
-import org.congocc.parser.Node;
-import org.congocc.parser.CongoCCParser;
+//import org.congocc.parser.Node;
+//import org.congocc.parser.CongoCCParser;
 
 
 /**
@@ -65,9 +65,9 @@ public class CSParse {
     }
 
    static public void parseFile(File file, boolean dumpTree) throws IOException {
-//       CSharpParser parser = new CSharpParser(file.toPath());
-//       Node root=parser.CompilationUnit();
-       Node root = CongoCCParser.parseCSharpFile(file.toPath());
+       CSharpParser parser = new CSharpParser(file.toPath());
+       Node root=parser.CompilationUnit();
+//       Node root = CongoCCParser.parseCSharpFile(file.toPath());
        if (dumpTree) {
            root.dump("");
        }

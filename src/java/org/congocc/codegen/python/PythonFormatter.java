@@ -2,9 +2,9 @@ package org.congocc.codegen.python;
 
 import java.util.EnumSet;
 import org.congocc.parser.Node;
-import org.congocc.parser.python.Token;
-import org.congocc.parser.python.Token.TokenType;
-import static org.congocc.parser.python.Token.TokenType.*;
+import org.congocc.parser.python.PythonToken;
+import org.congocc.parser.python.PythonToken.TokenType;
+import static org.congocc.parser.python.PythonToken.TokenType.*;
 import org.congocc.parser.python.ast.*;
 
 public class PythonFormatter extends Node.Visitor {
@@ -50,7 +50,7 @@ public class PythonFormatter extends Node.Visitor {
         buffer.append(currentIndent);
     }
 
-    void visit(Token tok) {
+    void visit(PythonToken tok) {
 //        if (alwaysPrependSpace.contains(tok.getType())) addSpaceIfNecessary();
         addSpaceIfNecessary();
         buffer.append(tok.getImage());

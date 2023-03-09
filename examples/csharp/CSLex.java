@@ -2,12 +2,12 @@ import java.io.*;
 import java.nio.file.Files;
 import java.util.*;
 
-//import org.parsers.csharp.*;
-//import org.parsers.csharp.Token.TokenType;
-import org.congocc.parser.csharp.*;
-import org.congocc.parser.csharp.Token.TokenType;
-import org.congocc.parser.ParseException;
-import org.congocc.parser.Node;
+import org.parsers.csharp.*;
+import org.parsers.csharp.Token.TokenType;
+//import org.congocc.parser.csharp.*;
+//import org.congocc.parser.csharp.Token.TokenType;
+//import org.congocc.parser.ParseException;
+//import org.congocc.parser.Node;
 
 /**
  * A test harness for lexing C# files from

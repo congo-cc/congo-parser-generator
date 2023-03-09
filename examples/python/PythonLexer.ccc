@@ -19,7 +19,7 @@ INJECT LEXER_CLASS :
    import NODE_PACKAGE.IndentToken;
    import NODE_PACKAGE.DedentToken;
 { 
-   private Token danglingIndentation;
+   private BASE_TOKEN_CLASS danglingIndentation;
    private int bracketNesting, parenthesesNesting, braceNesting;
    private List<Integer> indentationStack = initIndentationStack();
 
@@ -29,7 +29,7 @@ INJECT LEXER_CLASS :
       return result;
    }
    
-   private Token TOKEN_HOOK(Token tok) {
+   private BASE_TOKEN_CLASS TOKEN_HOOK(BASE_TOKEN_CLASS tok) {
       boolean lineJoiningOn = bracketNesting >0 || parenthesesNesting > 0 || braceNesting > 0; 
       TokenType type = tok.getType();
       switch (type) {
@@ -64,33 +64,33 @@ INJECT LEXER_CLASS :
       return tok;
    }
 
-   private Token handleDedent(Token tok, final int offset) {
+   private BASE_TOKEN_CLASS handleDedent(BASE_TOKEN_CLASS tok, final int offset) {
        int dedentIndex = indentationStack.indexOf(offset);
        if (dedentIndex <0) {
-          Token invalidDedent = new InvalidToken(this, 0,0);
+          BASE_TOKEN_CLASS invalidDedent = new InvalidToken(this, 0,0);
           invalidDedent.setImage("Invalid Dedent");
           tok.preInsert(invalidDedent);
           return invalidDedent;
        }
-       Token firstDedent = null;
+       BASE_TOKEN_CLASS firstDedent = null;
        for (int i=indentationStack.size()-1; i>dedentIndex; i--) {
           int dedentAmount = indentationStack.get(i) - indentationStack.get(i-1);
           indentationStack.remove(i);
-          Token dedent = DedentToken.makeDedentToken(tok, this, indentationStack, dedentAmount);
+          BASE_TOKEN_CLASS dedent = DedentToken.makeDedentToken(tok, this, indentationStack, dedentAmount);
           if (firstDedent == null) firstDedent = dedent;
        }
        return firstDedent; 
    }
  
-   private void RESET_TOKEN_HOOK(Token tok) {
+   private void RESET_TOKEN_HOOK(BASE_TOKEN_CLASS tok) {
       braceNesting = bracketNesting = parenthesesNesting = 0;
       if (tok.getType() == TokenType.INDENT || tok.getType() == TokenType.DEDENT) {
          danglingIndentation = tok;
          indentationStack = tok.getIndents();
          return;
       }
-      for (Iterator<Token> toks = tok.precedingTokens(); toks.hasNext();) {
-         Token previous = toks.next();
+      for (Iterator<BASE_TOKEN_CLASS> toks = tok.precedingTokens(); toks.hasNext();) {
+         BASE_TOKEN_CLASS previous = toks.next();
          TokenType prevType = previous.getType();
          switch (prevType) {
             case LBRACE : braceNesting++; break;
@@ -106,21 +106,21 @@ INJECT LEXER_CLASS :
    }
 }
 
-INJECT Token : {
+INJECT BASE_TOKEN_CLASS : {
    public java.util.List<Integer> getIndents() {
       return null;
    }
 
    boolean startsLine() {
-      for (java.util.Iterator<Token> toks = precedingTokens(); toks.hasNext();) {
-         Token t = toks.next();
+      for (java.util.Iterator<BASE_TOKEN_CLASS> toks = precedingTokens(); toks.hasNext();) {
+         BASE_TOKEN_CLASS t = toks.next();
          if (t.getType()==TokenType.CONTINUE_LINE) return false;
          if (!t.isUnparsed()) return t.getEndLine() != this.getBeginLine();
       }
       return true;
    }
 
-   public Token getPreviousToken() {
+   public BASE_TOKEN_CLASS getPreviousToken() {
         return previousCachedToken();
     }
 
@@ -137,7 +137,7 @@ INJECT DedentToken :
    private List<Integer> indents;
    private int dedentAmount;
 
-   public static Token makeDedentToken(Token followingToken, LEXER_CLASS tokenSource, List<Integer> indents, int dedentAmount) {
+   public static BASE_TOKEN_CLASS makeDedentToken(BASE_TOKEN_CLASS followingToken, LEXER_CLASS tokenSource, List<Integer> indents, int dedentAmount) {
       DedentToken result = new DedentToken(TokenType.DEDENT, tokenSource, 0, 0);
       result.indents = new ArrayList<Integer>(indents.size());
       result.indents.addAll(indents);
@@ -171,7 +171,7 @@ INJECT IndentToken :
 {
    private List<Integer> indents;
 
-   public static Token makeIndentToken(Token followingToken, LEXER_CLASS tokenSource, List<Integer> indents) {
+   public static BASE_TOKEN_CLASS makeIndentToken(BASE_TOKEN_CLASS followingToken, LEXER_CLASS tokenSource, List<Integer> indents) {
       IndentToken result = new IndentToken(TokenType.INDENT, tokenSource, 0, 0);
       result.indents = new ArrayList<Integer>(indents.size());
       result.indents.addAll(indents);

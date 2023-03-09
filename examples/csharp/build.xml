@@ -40,7 +40,7 @@
     </java>
   </target>
 
-  <target name="compile" >
+  <target name="compile" depends="parser-gen">
     <javac srcdir="." failonerror="true" source="1.8" target="1.8"
       excludes="testfiles/**"
       classpath=".;../../congocc.jar" debug="on" optimize="off" includeantruntime="no" fork="true" />
