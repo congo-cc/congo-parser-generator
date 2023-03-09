@@ -22,7 +22,7 @@ import static ${settings.parserPackage}.Token.TokenType.*;
 [#var PRESERVE_LINE_ENDINGS=settings.preserveLineEndings?string("true", "false")
       JAVA_UNICODE_ESCAPE= settings.javaUnicodeEscape?string("true", "false")
       PRESERVE_TABS = settings.preserveTabs?string("true", "false")
-      TERMINATING_STRING = "\"" + globals.addEscapes(settings.terminatingString) + "\""
+      TERMINATING_STRING = "\"" + settings.terminatingString?j_string + "\""
 ]      
 [#var BaseToken = settings.treeBuildingEnabled?string("Node.TerminalNode", "Token")]
 

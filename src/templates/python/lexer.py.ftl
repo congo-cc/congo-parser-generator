@@ -256,6 +256,7 @@ def get_function_table_map(lexical_state):
 [#var PRESERVE_LINE_ENDINGS=settings.preserveLineEndings?string("True", "False")
       JAVA_UNICODE_ESCAPE= settings.javaUnicodeEscape?string("True", "False")
       ENSURE_FINAL_EOL = settings.ensureFinalEOL?string("True", "False")
+      TERMINATING_STRING = "\"" + settings.terminatingString?j_string + "\""
       PRESERVE_TABS = settings.preserveTabs?string("True", "False")
 ]
 
@@ -355,7 +356,7 @@ ${globals.translateLexerInjections(true)}
             raise ValueError('input filename not specified')
         self.input_source = input_source
         text = _input_text(input_source)
-        self.content = self.munge_content(text, ${PRESERVE_TABS}, ${PRESERVE_LINE_ENDINGS}, ${JAVA_UNICODE_ESCAPE}, ${ENSURE_FINAL_EOL})
+        self.content = self.munge_content(text, ${PRESERVE_TABS}, ${PRESERVE_LINE_ENDINGS}, ${JAVA_UNICODE_ESCAPE}, ${TERMINATING_STRING})
         self.content_len = n = len(self.content)
         n += 1
         self.tab_size = DEFAULT_TAB_SIZE
@@ -614,13 +615,11 @@ ${globals.translateCodeBlock(regexp.codeSnippet.javaCode, 12)}
  [/#if]
 
     def munge_content(self, content, preserve_tabs, preserve_lines,
-                      java_unicode_escape, ensure_final_endline):
+                      java_unicode_escape, terminating_string):
         if preserve_tabs and preserve_lines and not java_unicode_escape:
-            if ensure_final_endline:
-                last_char = content[-1]
-                if last_char != '\n' and last_char != '\r':
-                    content += '\n'
-            return content
+            if terminating_string :
+                if content[-len(terminating_string):] != terminating_string :
+                    return content
         tab_size=${settings.tabSize}
         buf = []
         index = 0
@@ -674,10 +673,9 @@ ${globals.translateCodeBlock(regexp.codeSnippet.javaCode, 12)}
             else:
                 buf.append(ch)
                 col += 1
-        if ensure_final_endline:
-            last_char = buf[-1] if len(buf) > 0 else ''
-            if last_char != '\n' and last_char != '\r':
-                buf.append('\n')
+        if terminating_string :
+            if content[-len(terminating_string):] != terminating_string :
+                buf.append(terminating_string)
         return ''.join(buf)
 
     def create_line_offsets_table(self, content):
