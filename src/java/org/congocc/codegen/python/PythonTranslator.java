@@ -773,7 +773,7 @@ public class PythonTranslator extends Translator {
 
     @Override  public String translateInjectedClass(CodeInjector injector, String name) {
         StringBuilder result = new StringBuilder();
-        String qualifiedName = String.format("%s.%s", injector.getNodePackage(), name);
+        String qualifiedName = String.format("%s.%s", appSettings.getNodePackage(), name);
         List<String> nameList = injector.getParentClasses(qualifiedName);
         List<ClassOrInterfaceBodyDeclaration> decls = injector.getBodyDeclarations(qualifiedName);
         // boolean isInterface = grammar.nodeIsInterface(name);
@@ -782,7 +782,7 @@ public class PythonTranslator extends Translator {
         nameList.remove("Node");    // don't have the Node interface in Python
         for (String s : new ArrayList<>(nameList)) {
             if (grammar.nodeIsInterface(s)) {
-                String q = String.format("%s.%s", injector.getNodePackage(), s);
+                String q = String.format("%s.%s", appSettings.getNodePackage(), s);
                 List<ClassOrInterfaceBodyDeclaration> dl = injector.getBodyDeclarations(q);
                 if (dl == null) {
                     nameList.remove(s);

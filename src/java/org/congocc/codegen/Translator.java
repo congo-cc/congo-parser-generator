@@ -3,6 +3,7 @@ package org.congocc.codegen;
 import java.util.*;
 
 import org.congocc.core.Grammar;
+import org.congocc.app.AppSettings;
 import org.congocc.codegen.csharp.CSharpTranslator;
 import org.congocc.codegen.java.CodeInjector;
 import org.congocc.codegen.python.PythonTranslator;
@@ -12,6 +13,7 @@ import org.congocc.parser.tree.*;
 
 public class Translator {
     protected Grammar grammar;
+    protected AppSettings appSettings;
     protected int tempVarCounter;
     protected Set<String> tokenNames;
     protected int fieldIndent;
@@ -703,6 +705,7 @@ public class Translator {
 
     public Translator(Grammar grammar) {
         this.grammar = grammar;
+        this.appSettings = grammar.getAppSettings();
         tokenNames = grammar.getTemplateGlobals().getTokenNames();
     }
 

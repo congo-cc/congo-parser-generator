@@ -22,7 +22,7 @@ import freemarker.ext.beans.BeansWrapper;
 
 public class FilesGenerator {
 
-    private Configuration fmConfig;
+    private final Configuration fmConfig = new freemarker.template.Configuration();
     private final Grammar grammar;
     private final LexerData lexerData;
     private final AppSettings appSettings;
@@ -34,7 +34,6 @@ public class FilesGenerator {
     private final boolean generateRootApi;
 
     void initializeTemplateEngine() throws IOException {
-        fmConfig = new freemarker.template.Configuration();
         Path filename = appSettings.getFilename().toAbsolutePath();
         Path dir = filename.getParent();
         //
@@ -70,17 +69,14 @@ public class FilesGenerator {
            fmConfig.addAutoImport("CU", "CommonUtils.java.ftl");
     }
 
-    public FilesGenerator(Grammar grammar, String codeLang, List<Node> codeInjections) {
+    public FilesGenerator(Grammar grammar, String codeLang) {
         this.grammar = grammar;
         this.lexerData = grammar.getLexerData();
         this.appSettings = grammar.getAppSettings();
+        this.codeLang = appSettings.getCodeLang();
         this.errors = grammar.getErrors();
         this.generateRootApi = appSettings.getRootAPIPackage() == null; 
-        this.codeLang = codeLang;
-        this.codeInjector = new CodeInjector(grammar,
-                                             appSettings.getParserPackage(), 
-                                             appSettings.getNodePackage(), 
-                                             codeInjections);
+        this.codeInjector = grammar.getInjector();
     }
 
     public void generateAll() throws IOException { 

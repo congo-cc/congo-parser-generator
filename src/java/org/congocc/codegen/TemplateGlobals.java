@@ -172,7 +172,7 @@ public class TemplateGlobals {
             }
         }
         // Sort out superclasses' superclasses
-        String pkg = grammar.getInjector().getNodePackage();
+        String pkg = appSettings.getNodePackage();
         for (String key : superClassMap.keySet()) {
             String qualifiedName = String.format("%s.%s", pkg, key);
             List<ObjectType> extendsList = grammar.getInjector().getExtendsList(qualifiedName);
@@ -226,7 +226,7 @@ public class TemplateGlobals {
         sb.append('(');
         sb.append(parameterList);
         sb.append(')');
-        CongoCCParser parser = new CongoCCParser(sb.toString());
+        CongoCCParser parser = new CongoCCParser(sb);
         parser.FormalParameters();
         List<FormalParameter> parameters = ((FormalParameters) parser.rootNode()).getParams();
         // Now build the result
@@ -513,8 +513,8 @@ public class TemplateGlobals {
 
     public List<String> getSortedNodeClassNames() {
         Sequencer seq = new Sequencer();
-        String pkg = grammar.getInjector().getNodePackage();
-        String bnn = grammar.getInjector().getBaseNodeClassName();
+        String pkg = appSettings.getNodePackage();
+        String bnn = appSettings.getBaseNodeClassName();
 
         seq.addNode(bnn);
         for (String cn : grammar.getNodeNames()) {

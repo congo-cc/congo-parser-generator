@@ -146,7 +146,7 @@ public class Grammar extends BaseNode {
     public void generateFiles() throws IOException {
         Translator translator = Translator.getTranslatorFor(this);
         templateGlobals.setTranslator(translator);
-        new FilesGenerator(this, appSettings.getCodeLang(), codeInjections).generateAll();
+        new FilesGenerator(this, appSettings.getCodeLang()).generateAll();
     }
 
     public LexerData getLexerData() {
@@ -166,7 +166,7 @@ public class Grammar extends BaseNode {
 
     public CodeInjector getInjector() {
         if (injector == null) {
-            injector = new CodeInjector(this, appSettings.getParserPackage(), appSettings.getNodePackage(), codeInjections);
+            injector = new CodeInjector(this, codeInjections);
         }
         return injector;
     }

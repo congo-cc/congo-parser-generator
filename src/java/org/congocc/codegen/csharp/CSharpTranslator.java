@@ -844,7 +844,7 @@ public class CSharpTranslator extends Translator {
     }
 
     @Override  public String translateInjectedClass(CodeInjector injector, String name) {
-        String qualifiedName = String.format("%s.%s", injector.getNodePackage(), name);
+        String qualifiedName = String.format("%s.%s", appSettings.getNodePackage(), name);
         List<String> nameList = injector.getParentClasses(qualifiedName);
         List<ClassOrInterfaceBodyDeclaration> decls = injector.getBodyDeclarations(qualifiedName);
         int n = decls.size();
