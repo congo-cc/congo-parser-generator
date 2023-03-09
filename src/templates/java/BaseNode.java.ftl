@@ -4,8 +4,8 @@ package ${settings.nodePackage};
 
 import ${settings.parserPackage}.*;
 
-import ${settings.parserPackage}.Token.TokenType;
-import static ${settings.parserPackage}.Token.TokenType.*;
+import ${settings.parserPackage}.${settings.baseTokenClassName}.TokenType;
+import static ${settings.parserPackage}.${settings.baseTokenClassName}.TokenType.*;
 
 [#if settings.rootAPIPackage?has_content]
 import ${settings.rootAPIPackage}.Node;
@@ -169,8 +169,8 @@ public class ${settings.baseNodeClassName} implements Node {
         this.endOffset = endOffset;
     }
 
-    public List<Token> getRealTokens() {
-        return descendants(Token.class, t->!t.isUnparsed());
+    public List<${settings.baseTokenClassName}> getRealTokens() {
+        return descendants(${settings.baseTokenClassName}.class, t->!t.isUnparsed());
     }
      
 [#if settings.freemarkerNodes]

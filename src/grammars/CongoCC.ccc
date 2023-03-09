@@ -704,6 +704,9 @@ INJECT Identifier :
         if (image.equals("BASE_NODE_CLASS")) {
             return getAppSettings().getBaseNodeClassName();
         }
+        if (image.equals("BASE_TOKEN_CLASS")) {
+            return getAppSettings().getBaseTokenClassName();
+        }
         if (image.equals("NODE_PACKAGE")) {
             return getAppSettings().getNodePackage();
         }

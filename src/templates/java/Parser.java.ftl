@@ -20,8 +20,8 @@ import java.util.ListIterator;
 import java.util.Map;
 import java.util.concurrent.CancellationException;
 import ${settings.parserPackage}.${settings.lexerClassName}.LexicalState;
-import ${settings.parserPackage}.Token.TokenType;
-import static ${settings.parserPackage}.Token.TokenType.*;
+import ${settings.parserPackage}.${settings.baseTokenClassName}.TokenType;
+import static ${settings.parserPackage}.${settings.baseTokenClassName}.TokenType.*;
 [#if settings.rootAPIPackage?has_content]
    import ${settings.rootAPIPackage}.ParseException;
    import ${settings.rootAPIPackage}.TokenSource;
@@ -51,9 +51,9 @@ public class ${settings.parserClassName} {
 
 static final int UNLIMITED = Integer.MAX_VALUE;    
 // The last token successfully "consumed"
-Token lastConsumedToken;
+${settings.baseTokenClassName} lastConsumedToken;
 private TokenType nextTokenType;
-private Token currentLookaheadToken;
+private ${settings.baseTokenClassName} currentLookaheadToken;
 private int remainingLookahead;
 private boolean hitFailure, passedPredicate;
 private String currentlyParsedProduction, currentLookaheadProduction;
@@ -66,7 +66,7 @@ EnumSet<TokenType> outerFollowSet;
    private boolean legacyGlitchyLookahead = false;
 [/#if]
 
-private final Token DUMMY_START_TOKEN = new Token();
+private final ${settings.baseTokenClassName} DUMMY_START_TOKEN = new ${settings.baseTokenClassName}();
 private boolean cancelled;
 public void cancel() {cancelled = true;}
 public boolean isCancelled() {return cancelled;}
@@ -137,8 +137,8 @@ public boolean isCancelled() {return cancelled;}
 
   // If the next token is cached, it returns that
   // Otherwise, it goes to the token_source, i.e. the Lexer.
-  final private Token nextToken(final Token tok) {
-    Token result = token_source.getNextToken(tok);
+  final private ${settings.baseTokenClassName} nextToken(final ${settings.baseTokenClassName} tok) {
+    ${settings.baseTokenClassName} result = token_source.getNextToken(tok);
     while (result.isUnparsed()) {
      [#list grammar.parserTokenHooks as methodName] 
       result = ${methodName}(result);
@@ -153,21 +153,21 @@ public boolean isCancelled() {return cancelled;}
   }
 
   /**
-   * @return the next Token off the stream. This is the same as #getToken(1)
+   * @return the next ${settings.baseTokenClassName} off the stream. This is the same as #getToken(1)
    */
-  final public Token getNextToken() {
+  final public ${settings.baseTokenClassName} getNextToken() {
     return getToken(1);
   }
 
 /**
  * @param index how many tokens to look ahead
- * @return the specific regular (i.e. parsed) Token index ahead/behind in the stream. 
+ * @return the specific regular (i.e. parsed) ${settings.baseTokenClassName} index ahead/behind in the stream. 
  * If we are in a lookahead, it looks ahead from the currentLookaheadToken
  * Otherwise, it is the lastConsumedToken. If you pass in a negative
  * number it goes backward.
  */
-  final public Token getToken(final int index) {
-    Token t = currentLookaheadToken == null ? lastConsumedToken : currentLookaheadToken;
+  final public ${settings.baseTokenClassName} getToken(final int index) {
+    ${settings.baseTokenClassName} t = currentLookaheadToken == null ? lastConsumedToken : currentLookaheadToken;
     for (int i = 0; i < index; i++) {
       t = nextToken(t);
     }
@@ -218,7 +218,7 @@ public boolean isCancelled() {return cancelled;}
     token_source.reset(getToken(0), state);
   }
 
-  private void resetTo(Token tok, LexicalState state) {
+  private void resetTo(${settings.baseTokenClassName} tok, LexicalState state) {
     token_source.reset(tok, state);
   } 
 

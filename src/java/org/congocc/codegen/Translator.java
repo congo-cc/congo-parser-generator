@@ -1511,7 +1511,7 @@ public class Translator {
         fail();
     }
 
-    protected void internalTranslateExpression(ASTExpression expr, TranslationContext ctx, StringBuilder result) {
+    final protected void internalTranslateExpression(ASTExpression expr, TranslationContext ctx, StringBuilder result) {
         ASTTypeExpression cast = expr.getCast();
 
         if (isTyped && (cast != null)) {

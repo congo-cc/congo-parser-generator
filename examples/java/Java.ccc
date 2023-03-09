@@ -27,7 +27,7 @@ INCLUDE "JavaLexer.ccc"
 #if use_token_hook
 INJECT PARSER_CLASS :
 {
-    private Token TOKEN_HOOK(Token tok) {
+    private Token TOKEN_HOOK(BASE_TOKEN_CLASS tok) {
         if ((tok.getType() == RSIGNEDSHIFT || tok.getType() == RUNSIGNEDSHIFT) 
             && isInProduction("TypeArguments","TypeParameters")) {
             tok.setType(GT);

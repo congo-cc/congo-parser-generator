@@ -150,12 +150,12 @@ void dumpLookaheadCallStack(PrintStream ps) {
         [/#if]
     }
 
-      private Token consumeToken(TokenType expectedType 
+      private ${settings.baseTokenClassName} consumeToken(TokenType expectedType 
         [#if settings.faultTolerant], boolean tolerant, EnumSet<TokenType> followSet [/#if]
       ) 
       [#if settings.useCheckedException] throws ParseException [/#if]
       {
-        Token nextToken = nextToken(lastConsumedToken);
+        ${settings.baseTokenClassName} nextToken = nextToken(lastConsumedToken);
         if (nextToken.getType() != expectedType) {
             nextToken = handleUnexpectedTokenType(expectedType, nextToken
             [#if settings.faultTolerant], tolerant, followSet[/#if]
@@ -181,7 +181,7 @@ void dumpLookaheadCallStack(PrintStream ps) {
       if (followSet != null && isParserTolerant()) {
          nextToken = nextToken(lastConsumedToken);
          if (!followSet.contains(nextToken.getType())) {
-            Token nextNext = nextToken(nextToken);
+            ${settings.baseTokenClassName} nextNext = nextToken(nextToken);
             if (followSet.contains(nextNext.getType())) {
                nextToken.setSkipped(true);
 //               if (debugFaultTolerant) LOGGER.info("Skipping token " + nextToken.getType() + " at: " + nextToken.getLocation());
@@ -193,7 +193,7 @@ void dumpLookaheadCallStack(PrintStream ps) {
       return lastConsumedToken;
   }
  
-  private Token handleUnexpectedTokenType(TokenType expectedType, Token nextToken
+  private ${settings.baseTokenClassName} handleUnexpectedTokenType(TokenType expectedType, ${settings.baseTokenClassName} nextToken
       [#if settings.faultTolerant], boolean tolerant, EnumSet<TokenType> followSet[/#if]
       ) 
       [#if settings.useCheckedException] throws ParseException [/#if]
@@ -204,7 +204,7 @@ void dumpLookaheadCallStack(PrintStream ps) {
        if (!this.tolerantParsing) {
           throw new ParseException(nextToken, EnumSet.of(expectedType), parsingStack);
        }
-       Token nextNext = nextToken(nextToken);
+       ${settings.baseTokenClassName} nextNext = nextToken(nextToken);
        if (nextNext.getType() == expectedType) {
              [#-- REVISIT. Here we skip one token (as well as any InvalidToken) but maybe (probably!) this behavior
              should be configurable. But we need to experiment, because this is really a heuristic question, no?--]
@@ -218,7 +218,7 @@ void dumpLookaheadCallStack(PrintStream ps) {
        }
          [#-- Since skipping the next token did not work, we will insert a virtual token --]
        if (tolerant || followSet==null || followSet.contains(nextToken.getType())) {
-           Token virtualToken = Token.newToken(expectedType, token_source, 0,0);
+           ${settings.baseTokenClassName} virtualToken = ${settings.baseTokenClassName}.newToken(expectedType, token_source, 0,0);
            virtualToken.setImage("VIRTUAL " + expectedType);
            virtualToken.setVirtual(true);
            virtualToken.copyLocationInfo(nextToken);
@@ -249,7 +249,7 @@ void dumpLookaheadCallStack(PrintStream ps) {
   }
  
   private class ParseState {
-       Token lastConsumed;
+       ${settings.baseTokenClassName} lastConsumed;
        ArrayList<NonTerminalCall> parsingStack;
    [#if MULTIPLE_LEXICAL_STATE_HANDLING]
        LexicalState lexicalState;

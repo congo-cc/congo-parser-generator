@@ -87,7 +87,7 @@
     private void openNodeScope(Node n) {
         new NodeScope();
         if (n!=null) {
-            Token next = nextToken(lastConsumedToken);
+            ${settings.baseTokenClassName} next = nextToken(lastConsumedToken);
             n.setTokenSource(lastConsumedToken.getTokenSource());
             n.setBeginOffset(next.getBeginOffset());
             n.open();
@@ -139,8 +139,8 @@
             }
             Collections.reverse(nodes);
             for (Node child : nodes) {
-                if (unparsedTokensAreNodes && child instanceof Token) {
-                    Token tok = (Token) child;
+                if (unparsedTokensAreNodes && child instanceof ${settings.baseTokenClassName}) {
+                    ${settings.baseTokenClassName} tok = (${settings.baseTokenClassName}) child;
                     while (tok.previousCachedToken() != null && tok.previousCachedToken().isUnparsed()) {
                         tok = tok.previousCachedToken();
                     }

@@ -408,7 +408,7 @@
        ${BuildCode(loopExpansion.nestedExpansion)}
    [#else]
        [#var initialTokenVarName = "initialToken" + CU.newID()]
-       Token ${initialTokenVarName} = lastConsumedToken;
+       ${settings.baseTokenClassName} ${initialTokenVarName} = lastConsumedToken;
        try {
           ${BuildCode(loopExpansion.nestedExpansion)}
        } catch (ParseException pe) {
@@ -528,8 +528,8 @@
 [#macro BuildRecoverRoutines]
    [#list grammar.expansionsNeedingRecoverMethod as expansion]
        private void ${expansion.recoverMethodName}() {
-          Token initialToken = lastConsumedToken;
-          java.util.List<Token> skippedTokens = new java.util.ArrayList<>();
+          ${settings.baseTokenClassName} initialToken = lastConsumedToken;
+          java.util.List<${settings.baseTokenClassName}> skippedTokens = new java.util.ArrayList<>();
           boolean success = false;
           while (lastConsumedToken.getType() != EOF) {
             [#if expansion.simpleName = "OneOrMore" || expansion.simpleName = "ZeroOrMore"]
@@ -576,7 +576,7 @@
           if (success&& !skippedTokens.isEmpty()) {
              InvalidNode iv = new InvalidNode();
              iv.copyLocationInfo(skippedTokens.get(0));
-             for (Token tok : skippedTokens) {
+             for (${settings.baseTokenClassName} tok : skippedTokens) {
                 iv.addChild(tok);
                 iv.setEndOffset(tok.getEndOffset());
              }

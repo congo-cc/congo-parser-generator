@@ -18,8 +18,8 @@ public interface ${classname} extends Node {}
 
 [#else]
 
-import ${settings.parserPackage}.Token.TokenType;
-import static ${settings.parserPackage}.Token.TokenType.*;
+import ${settings.parserPackage}.${settings.baseTokenClassName}.TokenType;
+import static ${settings.parserPackage}.${settings.baseTokenClassName}.TokenType.*;
 
 [#if isAbstract]abstract[/#if]
 public class ${classname} extends ${settings.baseNodeClassName} {}
