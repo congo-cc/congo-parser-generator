@@ -381,6 +381,9 @@ public class CSharpTranslator extends Translator {
             case "Integer":
                 result = "int";
                 break;
+            case "BASE_TOKEN_CLASS" :
+                result = "Token";
+                break;
             case "LEXER_CLASS":
                 result = "Lexer";
                 break;

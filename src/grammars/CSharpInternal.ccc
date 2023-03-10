@@ -1,7 +1,7 @@
 DEFAULT_LEXICAL_STATE=CSHARP;
 BASE_SRC_DIR="../../build/generated-java";
 BASE_NAME=CSharp;
-//BASE_TOKEN_CLASS=Token;
+BASE_TOKEN_CLASS=CSToken;
 PARSER_PACKAGE=org.congocc.parser.csharp;
 ROOT_API_PACKAGE=org.congocc.parser;
 TAB_SIZE=4;
