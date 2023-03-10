@@ -69,6 +69,9 @@ public class CSharpTranslator extends Translator {
         else if (ident.equals("PARSER_CLASS")) {
             result = "Parser";
         }
+        else if (ident.equals("BASE_TOKEN_CLASS")) {
+            result = "Token";
+        }
         else if (ident.startsWith("NODE_PACKAGE.")) {
             result = ident.substring(13);
         }
