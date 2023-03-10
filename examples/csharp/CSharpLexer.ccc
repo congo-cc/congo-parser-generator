@@ -338,7 +338,7 @@ INJECT LEXER_CLASS :
 
 // Token hook to handle preprocessor directives.
 
-   private Token TOKEN_HOOK(Token tok) {
+   private BASE_TOKEN_CLASS TOKEN_HOOK(BASE_TOKEN_CLASS tok) {
       TokenType type = tok.getType();
       if (type == TokenType.EOF) {
         //assert ifNesting == 0 : "unclosed #if";
@@ -352,7 +352,7 @@ INJECT LEXER_CLASS :
       if (!this.atLineStart(tok)) {
         return tok;
       }
-      Token prevToken = tok.previousCachedToken();
+      BASE_TOKEN_CLASS prevToken = tok.previousCachedToken();
       // We let this little helper parser defined in PPDirectiveLine.ccc
       // parse the line. So we just pass it the line where the token occurs
       // and get back an info object that tells us what we need to know.
@@ -403,7 +403,7 @@ INJECT LEXER_CLASS :
       return tok;
    }
 
-   void setParsingEnabled(boolean parsingOn, Token tok) {
+   void setParsingEnabled(boolean parsingOn, BASE_TOKEN_CLASS tok) {
        boolean turnedOn = !this.parsingOn && parsingOn;
        boolean turnedOff = this.parsingOn && !parsingOn;
        if (turnedOn) {
