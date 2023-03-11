@@ -8,7 +8,14 @@ DEFAULT_LEXICAL_STATE=JAVA;
 JAVA_UNICODE_ESCAPE;
 TREE_BUILDING_ENABLED=false;
 
-SKIP : <WHITESPACE : (" "| "\t"| "\n"| "\r"| "\f")+> #Whitespace;   
+SKIP : 
+  <WHITESPACE : (" "| "\t"| "\n"| "\r"| "\f")+> #Whitespace
+;
+
+<*> TOKEN :
+  <CTRL_Z : "\u001A" | "\uFFDF" > {matchedToken.setType(TokenType.EOF);}
+;  
+
 
 <IN_MULTI_LINE_COMMENT>
    UNPARSED #Comment :  
