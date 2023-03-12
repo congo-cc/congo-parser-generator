@@ -43,11 +43,7 @@ INJECT PARSER_CLASS :
   [ PackageDeclaration! ]
   ( ImportDeclaration )*!
   ( TypeDeclaration )*!
-  [
-    // Why do I have to make this EOF optional?
-    // Will REVISIT later...
-    <EOF>
-  ]
+  <EOF>
   {
     return CURRENT_NODE;
   }

@@ -307,6 +307,4 @@ public boolean isCancelled() {return cancelled;}
   } 
 [/#if]
 }
-  
-}
 

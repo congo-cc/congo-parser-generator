@@ -33,7 +33,7 @@ INJECT PARSER_CLASS :
     import org.congocc.core.*;
     import org.congocc.parser.tree.*;
     import org.congocc.preprocessor.PreprocessorParser;
-    import org.congocc.parser.csharp.CSharpParser;
+    import org.congocc.parser.csharp.CSParser;
     import org.congocc.parser.python.PythonParser;
     import org.congocc.parser.python.ast.Module;
 {
@@ -87,12 +87,12 @@ INJECT PARSER_CLASS :
     }
     
     static public org.congocc.parser.csharp.ast.CompilationUnit parseCSharpFile(String inputSource, CharSequence content) {
-        CSharpParser parser  = new CSharpParser(inputSource, content);
+        CSParser parser  = new CSParser(inputSource, content);
         return parser.CompilationUnit();
     } 
 
     static public org.congocc.parser.csharp.ast.CompilationUnit parseCSharpFile(Path path) throws IOException {
-        CSharpParser parser  = new CSharpParser(path);
+        CSParser parser  = new CSParser(path);
         return parser.CompilationUnit();
     } 
 
@@ -1199,9 +1199,7 @@ TokenProduction :
   ":"
    RegexpSpec(tokenClassName)
    ( "|" RegexpSpec(tokenClassName) )*
-   (
-      ";"
-   )
+   ";"
    {
       if (!multipleStatesSpecified) {
           if (firstSpecifiedLexicalState == null) {
@@ -1284,7 +1282,7 @@ INJECT TokenProduction :
     }
 }
 
-RegexpSpec(String tokenClassName) #RegexpSpec :
+RegexpSpec(String tokenClassName)# :
 {
     RegularExpression regexp;
     boolean isPrivate = false;
