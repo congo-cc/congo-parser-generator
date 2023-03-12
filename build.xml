@@ -18,7 +18,7 @@
       <srcfiles dir="examples/python" includes="*.ccc"/>
     </uptodate>
     <uptodate property="csharp.uptodate"
-      targetfile="build/generated-java/org/congocc/parser/csharp/CSharpParser.java">
+      targetfile="build/generated-java/org/congocc/parser/csharp/CSParser.java">
       <srcfiles dir="src/grammars" includes="SharpInternal.ccc"/>
       <srcfiles dir="examples/csharp" includes="*.ccc"/>
     </uptodate>

@@ -154,14 +154,18 @@ public class ${settings.lexerClassName} extends TokenSource
        return cachedToken;
     }
 
-  // The following two BitSets are used to store 
-  // the current active NFA states in the core tokenization loop
-  private BitSet currentStates = new BitSet(${lexerData.maxNfaStates});
-  private BitSet nextStates=new BitSet(${lexerData.maxNfaStates});
+  private final ${settings.baseTokenClassName} nextToken(int position) {
+      return nextToken(position, this, this.activeTokenTypes);
+  }
 
 
 // The main method to invoke the NFA machinery
-  private final ${settings.baseTokenClassName} nextToken(int position) {
+  private final ${settings.baseTokenClassName} nextToken(int position, CharSequence input, EnumSet<TokenType> activeTokenTypes) {
+  // The following two BitSets are used to store 
+  // the current active NFA states in the core tokenization loop
+      BitSet currentStates = new BitSet(${lexerData.maxNfaStates}),
+             nextStates=new BitSet(${lexerData.maxNfaStates});
+      
       ${settings.baseTokenClassName} matchedToken = null;
       boolean inMore = false;
       StringBuilder invalidChars = null;
@@ -171,10 +175,12 @@ public class ${settings.lexerClassName} extends TokenSource
         int curChar=0, codePointsRead=0, matchedPos=0;
         TokenType matchedType = null;
         boolean reachedEnd = false;
-        position = nextUnignoredOffset(position);
+        if (input == this) {
+           position = nextUnignoredOffset(position);
+        }
         if (!inMore) tokenBeginOffset = position;
-        if (position < length()) {
-            curChar = codePointAt(position++);
+        if (position < input.length()) {
+            curChar = Character.codePointAt(input, position++);
             if (curChar > 0xFFFF) position++;
         } else {
             reachedEnd = true;
@@ -197,16 +203,17 @@ public class ${settings.lexerClassName} extends TokenSource
                 BitSet temp = currentStates;
                 currentStates = nextStates;
                 nextStates = temp;
-                position = nextUnignoredOffset(position);
-                if (position < length()) {
-                    curChar = codePointAt(position++);
+                nextStates.clear();
+                if (input == this)
+                    position = nextUnignoredOffset(position);
+                if (position < input.length()) {
+                    curChar = Character.codePointAt(input, position++);
                     if (curChar > 0xFFFF) position++;
                 } else {
                     reachedEnd = true;
                     break;
                 }
             }
-            nextStates.clear();
             int nextActive = codePointsRead == 0 ? 0 : currentStates.nextSetBit(0);
             do {
                 TokenType returnedType = nfaFunctions[nextActive].apply(curChar, nextStates, activeTokenTypes);
@@ -226,8 +233,8 @@ public class ${settings.lexerClassName} extends TokenSource
             if (invalidChars==null) {
                 invalidChars=new StringBuilder();
             } 
-            invalidChars.appendCodePoint(codePointAt(tokenBeginOffset));
-            position = forward(tokenBeginOffset, 1);
+            invalidChars.appendCodePoint(Character.codePointAt(input, tokenBeginOffset));
+            position = forward(input, tokenBeginOffset, 1);
             continue;
         }
         if (matchedType == INVALID) {
@@ -236,9 +243,9 @@ public class ${settings.lexerClassName} extends TokenSource
         if (invalidChars !=null) {
             position = tokenBeginOffset;
             int numCodePoints = invalidChars.codePointCount(0, invalidChars.length());
-            return new InvalidToken(this, backup(tokenBeginOffset, numCodePoints), tokenBeginOffset);
+            return new InvalidToken(this, backup(input, tokenBeginOffset, numCodePoints), tokenBeginOffset);
         }
-        position = backup(position, codePointsRead - matchedPos);
+        position = backup(input, position, codePointsRead - matchedPos);
         if (skippedTokens.contains(matchedType)) {
             skipTokens(tokenBeginOffset, position);
         }
@@ -267,24 +274,27 @@ public class ${settings.lexerClassName} extends TokenSource
       return matchedToken;
    }
 
-    private int backup(int pos, int amount) {
+    private int backup(CharSequence input, int pos, int amount) {
         for (int i = 0; i < amount; i++) {
             pos--;
-            while (isIgnored(pos)) pos--;
-            if (Character.isLowSurrogate(charAt(pos))) pos--;
+            if (input == this) {
+               while (isIgnored(pos)) pos--;
+            }
+            if (Character.isLowSurrogate(input.charAt(pos))) pos--;
         }
         return pos;
     }
 
-    private int forward(int pos, int amount) {
+    private int forward(CharSequence input, int pos, int amount) {
         for (int i = 0; i < amount; i++) {
-            if (Character.isHighSurrogate(charAt(pos))) pos++;
+            if (Character.isHighSurrogate(input.charAt(pos))) pos++;
             pos++;
-            while (isIgnored(pos)) pos++;
+            if (input == this) {
+              while (isIgnored(pos)) pos++;
+            }
         }
         return pos;
     }
-
 
    LexicalState lexicalState = LexicalState.values()[0];
 
