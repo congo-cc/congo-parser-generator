@@ -482,7 +482,7 @@ ${is}    raise ParseException(self, expected=self.${choice.firstSetVarName})
 [#-- Generates code for when we don't need any scanahead routine --]
 [#macro SingleTokenCondition expansion]
    [#if expansion.hasSemanticLookahead](${globals.translateExpression(expansion.semanticLookahead)}) and [/#if][#t]
-   [#if expansion.firstSet.tokenNames?size =0 || expansion.lookaheadAmount ==0]True[#elseif expansion.firstSet.tokenNames?size < 5][#list expansion.firstSet.tokenNames as name](self.next_token_type == ${name})[#if name_has_next] or [/#if][/#list][#t][#else](self.next_token_type in self.${expansion.firstSetVarName})[/#if][#t]
+   [#if expansion.firstSet.tokenNames?size =0 || expansion.lookaheadAmount ==0 || expansion.minimumSize=0]True[#elseif expansion.firstSet.tokenNames?size < 5][#list expansion.firstSet.tokenNames as name](self.next_token_type == ${name})[#if name_has_next] or [/#if][/#list][#t][#else](self.next_token_type in self.${expansion.firstSetVarName})[/#if][#t]
 [/#macro]
 
 [#macro BuildAssertionCode assertion indent]

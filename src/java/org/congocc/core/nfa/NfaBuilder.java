@@ -87,7 +87,7 @@ class NfaBuilder extends Node.Visitor {
 
     void visit(RegexpStringLiteral stringLiteral) {
         NfaState state = end = start = new NfaState(lexicalState);
-        for (int ch : stringLiteral.getImage().codePoints().toArray()) {
+        for (int ch : stringLiteral.getLiteralString().codePoints().toArray()) {
             state.setCharMove(ch, ignoreCase || grammar.getAppSettings().isIgnoreCase());
             this.end = new NfaState(lexicalState);
             state.setNextState(this.end);

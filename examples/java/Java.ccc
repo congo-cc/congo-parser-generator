@@ -24,6 +24,21 @@ ENSURE_FINAL_EOL;
 
 INCLUDE "JavaLexer.ccc"
 
+#if use_token_hook
+INJECT PARSER_CLASS :
+{
+    private Token TOKEN_HOOK(BASE_TOKEN_CLASS tok) {
+        if ((tok.getType() == RSIGNEDSHIFT || tok.getType() == RUNSIGNEDSHIFT) 
+            && isInProduction("TypeArguments","TypeParameters")) {
+            tok.setType(GT);
+            tok.setEndOffset(tok.getBeginOffset()+1);
+            token_source.uncacheTokens(tok);
+        }
+        return tok;
+    }
+}
+#endif
+
 #CompilationUnit# :
   [ PackageDeclaration! ]
   ( ImportDeclaration )*!
@@ -305,7 +320,11 @@ EnumConstant :
 TypeParameters :
    <LT>
    TypeParameter ( <COMMA> TypeParameter )*
+#if use_token_hook
+   <GT>
+#else   
    DEACTIVATE_TOKENS RSIGNEDSHIFT, RUNSIGNEDSHIFT (<GT>)
+#endif   
 ;
 
 INJECT TypeParameters :
@@ -467,8 +486,12 @@ PossiblyEmptyTypeArguments #void :
 
 TypeArguments :
   SCAN 2
-  <LT> TypeArgument ( <COMMA> TypeArgument )*
+  <LT> TypeArgument ( <COMMA> TypeArgument )* 
+  #if use_token_hook
+    <GT>
+  #else
    DEACTIVATE_TOKENS RSIGNEDSHIFT, RUNSIGNEDSHIFT (<GT>)
+  #endif   
 ;
 
 TypeArgument :

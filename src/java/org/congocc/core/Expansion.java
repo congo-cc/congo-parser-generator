@@ -14,8 +14,6 @@ abstract public class Expansion extends BaseNode {
 
     private TreeBuildingAnnotation treeNodeBehavior;
 
-    private String label = "";
-
     protected TokenSet firstSet;
 
     public int getIndex() {
@@ -30,18 +28,6 @@ abstract public class Expansion extends BaseNode {
     }
 
     private String scanRoutineName, firstSetVarName;
-
-    public String getLabel() {
-        return label;
-    }
-
-    final boolean hasLabel() {
-        return label.length() > 0;
-    }
-
-    public void setLabel(String label) {
-        this.label = label;
-    }
 
     private boolean tolerantParsing;
 

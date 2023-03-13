@@ -67,7 +67,7 @@ class Reaper extends Node.Visitor {
                 continue;
             }
             if (imp.firstChildOfType(STAR) == null) {
-                List<Identifier> names = imp.descendantsOfType(Identifier.class);
+                List<Identifier> names = imp.descendants(Identifier.class);
                 String name = names.get(names.size()-1).getImage();
                 // Note that a static import can import methods.
                 if (imp.firstChildOfType(STATIC) != null && usedMethodNames.contains(name)) continue;

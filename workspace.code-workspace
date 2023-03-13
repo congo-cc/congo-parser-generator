@@ -15,10 +15,17 @@
 	],
 	"settings": {
 		"java.project.sourcePaths": [
-			"src/java"
+			"src/generated-java",
+			"src/human-written-java",
+			"examples/json",
+			"examples/java",
+			"examples/python",
+			"examples/lua",
+			"examples/csharp
 		],
 		"java.project.referencedLibraries": [
 			"bin/freemarker.jar"
-		]
+		],
+		"cSpell.enabled": false
 	}
 }

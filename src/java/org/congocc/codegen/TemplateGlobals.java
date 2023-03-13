@@ -14,6 +14,7 @@ import org.congocc.parser.tree.*;
 public class TemplateGlobals {
 
     private Grammar grammar;
+    private LexerData lexerData;
     private AppSettings appSettings;
     private Translator translator;
 
@@ -21,6 +22,7 @@ public class TemplateGlobals {
 
     public TemplateGlobals(Grammar grammar) {
         this.grammar = grammar;
+        this.lexerData = grammar.getLexerData();
         this.appSettings = grammar.getAppSettings();
     }
 
@@ -150,7 +152,7 @@ public class TemplateGlobals {
         Map<String, String> superClassMap = new HashMap<>();
         // List<String> classes = new ArrayList<>();
 
-        for (RegularExpression re : grammar.getOrderedNamedTokens()) {
+        for (RegularExpression re : lexerData.getOrderedNamedTokens()) {
             if (re.isPrivate())
                 continue;
             String tokenClassName = re.getGeneratedClassName();
@@ -170,7 +172,7 @@ public class TemplateGlobals {
             }
         }
         // Sort out superclasses' superclasses
-        String pkg = grammar.getInjector().getNodePackage();
+        String pkg = appSettings.getNodePackage();
         for (String key : superClassMap.keySet()) {
             String qualifiedName = String.format("%s.%s", pkg, key);
             List<ObjectType> extendsList = grammar.getInjector().getExtendsList(qualifiedName);
@@ -224,7 +226,7 @@ public class TemplateGlobals {
         sb.append('(');
         sb.append(parameterList);
         sb.append(')');
-        CongoCCParser parser = new CongoCCParser(sb.toString());
+        CongoCCParser parser = new CongoCCParser(sb);
         parser.FormalParameters();
         List<FormalParameter> parameters = ((FormalParameters) parser.rootNode()).getParams();
         // Now build the result
@@ -511,8 +513,8 @@ public class TemplateGlobals {
 
     public List<String> getSortedNodeClassNames() {
         Sequencer seq = new Sequencer();
-        String pkg = grammar.getInjector().getNodePackage();
-        String bnn = grammar.getInjector().getBaseNodeClassName();
+        String pkg = appSettings.getNodePackage();
+        String bnn = appSettings.getBaseNodeClassName();
 
         seq.addNode(bnn);
         for (String cn : grammar.getNodeNames()) {

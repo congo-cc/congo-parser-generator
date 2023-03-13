@@ -8,8 +8,8 @@
  
 package ${settings.parserPackage};
 
-import ${settings.parserPackage}.Token.TokenType;
-import static ${settings.parserPackage}.Token.TokenType.*;
+import ${settings.parserPackage}.${settings.baseTokenClassName}.TokenType;
+import static ${settings.parserPackage}.${settings.baseTokenClassName}.TokenType.*;
 [#if settings.rootAPIPackage?has_content]
    import ${settings.rootAPIPackage}.Node;
    import ${settings.rootAPIPackage}.TokenSource;
@@ -21,10 +21,10 @@ import static ${settings.parserPackage}.Token.TokenType.*;
 
 [#var PRESERVE_LINE_ENDINGS=settings.preserveLineEndings?string("true", "false")
       JAVA_UNICODE_ESCAPE= settings.javaUnicodeEscape?string("true", "false")
-      ENSURE_FINAL_EOL = settings.ensureFinalEOL?string("true", "false")
       PRESERVE_TABS = settings.preserveTabs?string("true", "false")
+      TERMINATING_STRING = "\"" + settings.terminatingString?j_string + "\""
 ]      
-[#var BaseToken = settings.treeBuildingEnabled?string("Node.TerminalNode", "Token")]
+[#var BaseToken = settings.treeBuildingEnabled?string("Node.TerminalNode", "${settings.baseTokenClassName}")]
 
 [#macro EnumSet varName tokenNames]
    [#if tokenNames?size=0]
@@ -76,10 +76,10 @@ public class ${settings.lexerClassName} extends TokenSource
 
   // A lookup for lexical state transitions triggered by a certain token type
   private static EnumMap<TokenType, LexicalState> tokenTypeToLexicalStateMap = new EnumMap<>(TokenType.class);
-  // Token types that are "regular" tokens that participate in parsing,
+  // ${settings.baseTokenClassName} types that are "regular" tokens that participate in parsing,
   // i.e. declared as TOKEN
   [@EnumSet "regularTokens" lexerData.regularTokens.tokenNames /]
-  // Token types that do not participate in parsing
+  // ${settings.baseTokenClassName} types that do not participate in parsing
   // i.e. declared as UNPARSED (or SPECIAL_TOKEN)
   [@EnumSet "unparsedTokens" lexerData.unparsedTokens.tokenNames /]
   // Tokens that are skipped, i.e. SKIP 
@@ -120,7 +120,7 @@ public class ${settings.lexerClassName} extends TokenSource
                         ${settings.tabSize}, ${PRESERVE_TABS}, 
                         ${PRESERVE_LINE_ENDINGS}, 
                         ${JAVA_UNICODE_ESCAPE}, 
-                        ${ENSURE_FINAL_EOL});
+                        ${TERMINATING_STRING});
         if (lexicalState != null) switchTo(lexState);
      [#if settings.cppContinuationLine]
         handleCContinuationLines();
@@ -133,13 +133,13 @@ public class ${settings.lexerClassName} extends TokenSource
    * the token after this one. If not, it finally goes 
    * to the NFA machinery
    */ 
-    public Token getNextToken(Token tok) {
+    public ${settings.baseTokenClassName} getNextToken(${settings.baseTokenClassName} tok) {
        if (tok == null) {
           tok = nextToken(0);
           cacheToken(tok);
           return tok;
        }
-       Token cachedToken = tok.nextCachedToken();
+       ${settings.baseTokenClassName} cachedToken = tok.nextCachedToken();
     // If the cached next token is not currently active, we
     // throw it away and go back to the XXXLexer
        if (cachedToken != null && !activeTokenTypes.contains(cachedToken.getType())) {
@@ -147,7 +147,7 @@ public class ${settings.lexerClassName} extends TokenSource
            cachedToken = null;
        }
        if (cachedToken == null) {
-           Token token = nextToken(tok.getEndOffset());
+           ${settings.baseTokenClassName} token = nextToken(tok.getEndOffset());
            cacheToken(token);
            return token;
        }
@@ -161,8 +161,8 @@ public class ${settings.lexerClassName} extends TokenSource
 
 
 // The main method to invoke the NFA machinery
-  private final Token nextToken(int position) {
-      Token matchedToken = null;
+  private final ${settings.baseTokenClassName} nextToken(int position) {
+      ${settings.baseTokenClassName} matchedToken = null;
       boolean inMore = false;
       StringBuilder invalidChars = null;
       int tokenBeginOffset = position;
@@ -243,7 +243,7 @@ public class ${settings.lexerClassName} extends TokenSource
             skipTokens(tokenBeginOffset, position);
         }
         else if (regularTokens.contains(matchedType) || unparsedTokens.contains(matchedType)) {
-            matchedToken = Token.newToken(matchedType, 
+            matchedToken = ${settings.baseTokenClassName}.newToken(matchedType, 
                                         this, 
                                         tokenBeginOffset,
                                         position);
@@ -319,8 +319,8 @@ public class ${settings.lexerClassName} extends TokenSource
     }
 
     // Reset the token source input
-    // to just after the Token passed in.
-    void reset(Token t, LexicalState state) {
+    // to just after the ${settings.baseTokenClassName} passed in.
+    void reset(${settings.baseTokenClassName} t, LexicalState state) {
 [#list grammar.resetTokenHooks as resetTokenHookMethodName]
       ${resetTokenHookMethodName}(t);
 [/#list]
@@ -335,12 +335,12 @@ public class ${settings.lexerClassName} extends TokenSource
 [/#if]        
     }
 
-  void reset(Token t) {
+  void reset(${settings.baseTokenClassName} t) {
       reset(t, null);
   }
     
  [#if lexerData.hasTokenActions]
-  private Token tokenLexicalActions(Token matchedToken, TokenType matchedType) {
+  private ${settings.baseTokenClassName} tokenLexicalActions(${settings.baseTokenClassName} matchedToken, TokenType matchedType) {
     switch(matchedType) {
    [#list lexerData.regularExpressions as regexp]
         [#if regexp.codeSnippet?has_content]
@@ -355,10 +355,10 @@ public class ${settings.lexerClassName} extends TokenSource
   }
  [/#if]
 
-    void cacheToken(Token tok) {
+    void cacheToken(${settings.baseTokenClassName} tok) {
 [#if settings.tokenChaining]        
         if (tok.isInserted()) {
-            Token next = tok.nextCachedToken();
+            ${settings.baseTokenClassName} next = tok.nextCachedToken();
             if (next != null) cacheToken(next);
             return;
         }
@@ -370,7 +370,7 @@ public class ${settings.lexerClassName} extends TokenSource
     @Override
     protected void uncacheTokens(${BaseToken} lastToken) {
         super.uncacheTokens(lastToken);
-        ((Token)lastToken).unsetAppendedToken();
+        ((${settings.baseTokenClassName})lastToken).unsetAppendedToken();
     }
 [/#if]    
 
@@ -383,7 +383,7 @@ public class ${settings.lexerClassName} extends TokenSource
      setIgnoredRange(start, end);
    }
 
-   private boolean atLineStart(Token tok) {
+   private boolean atLineStart(${settings.baseTokenClassName} tok) {
       int offset = tok.getBeginOffset();
       while (offset > 0) {
         --offset;
@@ -394,7 +394,7 @@ public class ${settings.lexerClassName} extends TokenSource
       return true;
    }
 
-   private String getLine(Token tok) {
+   private String getLine(${settings.baseTokenClassName} tok) {
        int lineNum = tok.getBeginLine();
        return getText(getLineStartOffset(lineNum), getLineEndOffset(lineNum)+1);
    }

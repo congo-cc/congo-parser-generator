@@ -1,0 +1,154 @@
+#if false
+   This is a grammar for the Lua programming language.
+   It may be used for any purpose.
+#endif
+
+PARSER_PACKAGE=org.parsers.lua;
+DEFAULT_LEXICAL_STATE=LUA;
+TAB_SIZE=4;
+DEACTIVATE_TOKENS=SHEBANG;
+ENSURE_FINAL_EOL;
+
+INCLUDE "LuaLexer.ccc"
+
+
+#Root : 
+   [
+      SCAN <HASH> => ACTIVATE_TOKENS SHEBANG (<SHEBANG>)
+   ]
+   Block <EOF> {return CURRENT_NODE;}
+;
+
+Block#(>=0) : (Statement)* [LastStatement] ;
+
+Statement :
+   <SEMICOLON> #EmptyStatement(1)
+   |
+   Assignment
+   |
+   FunctionCall
+   |
+   Label
+   |
+   <BREAK> #BreakStatement(1)
+   |
+   GotoStatement
+   |
+   DoBlock 
+   |
+   WhileStatement 
+   |
+   RepeatStatement
+   |
+   IfStatement
+   |
+   ForStatement
+   |
+   FunctionDeclaration
+   |
+   LocalFunctionDeclaration
+   |
+   LocalAttributeAssignment
+;
+
+Assignment : VarList <ASSIGN> =>|| ExpressionList ;
+
+DoBlock : <DO> Block <END> ;
+
+GotoStatement : <GOTO> <NAME> ;
+
+ForStatement :
+   <FOR> <NAME> <ASSIGN> =>|| Expression <COMMA> Expression [<COMMA> Expression] DoBlock
+   |
+   <FOR> NameList <IN> =>|| ExpressionList DoBlock
+   |
+   <FOR> FAIL "invalid for statement"
+;
+
+FunctionDeclaration : <FUNCTION> FunctionName FunctionBody ;
+
+LocalFunctionDeclaration : <LOCAL> <FUNCTION> =>|| <NAME> FunctionBody ;
+
+LocalAttributeAssignment : <LOCAL> =>|+1 AttributeNameList [<ASSIGN> ExpressionList] ;
+
+IfStatement : <IF> Expression <THEN> Block (<ELSEIF> Expression <THEN> Block)* [<ELSE> Block] <END> ;
+
+RepeatStatement : <REPEAT> Block <UNTIL> Expression ;
+
+WhileStatement : <WHILE> Expression <DO> Block <END> ;
+
+AttributeNameList : <NAME> [Attribute] (<COMMA> <NAME> [Attribute])* ;
+
+Attribute : <LT> <NAME> <GT> ;
+
+LastStatement : ( <RETURN> [ExpressionList] | <BREAK> ) [<SEMICOLON>] ;
+
+Label : <DOUBLE_COLON> <NAME> <DOUBLE_COLON> ;
+
+FunctionName : <NAME> (<DOT> <NAME>)* [<COLON> <NAME>] ;
+
+VarList : Var (<COMMA> Var)* ;
+
+NameList : <NAME> (<COMMA> <NAME> =>||)* ;
+
+ExpressionList : Expression (<COMMA> Expression)* ;
+
+Literal#void : <NIL> | <FALSE> | <TRUE> | Number | StringLiteral | <ELLIPSIS> ; 
+
+PrimaryExpression : Literal | FunctionDef | PrefixExp | TableConstructor ;
+
+PowerExpression : PrimaryExpression (<HAT> UnaryExpression)* ;
+
+UnaryExpression : (UnaryOperator)* PowerExpression ;
+
+MultiplicativeExpression : UnaryExpression (MultiplicativeOperator UnaryExpression)* ;
+
+AdditiveExpression : MultiplicativeExpression ((<PLUS>|<MINUS>) MultiplicativeExpression)* ;
+
+StringCatExpression : AdditiveExpression (<STR_CAT> StringCatExpression)* ;
+
+ComparisonExpression : StringCatExpression (ComparisonOperator ComparisonExpression)* ;
+
+AndExpression : ComparisonExpression (<AND> ComparisonExpression)* ;
+
+OrExpression : AndExpression (<OR> AndExpression)* ;
+
+Expression : OrExpression (BitwiseOperator OrExpression)* ;
+
+PrefixExp : VarOrExp (NameAndArgs)* ;
+
+FunctionCall : VarOrExp (NameAndArgs)+ ;
+
+VarOrExp : (<NAME> | <LPAREN> Expression <RPAREN> ) (VarSuffix)* ;
+
+Var : (<NAME> | <LPAREN> Expression <RPAREN> VarSuffix) (VarSuffix)* ;
+
+VarSuffix : (NameAndArgs)* =>|+1 (<LBRACKET> Expression <RBRACKET> | <DOT> <NAME>) ;
+
+NameAndArgs : [<COLON> <NAME>] Args ;
+
+Args : <LPAREN> [ExpressionList] <RPAREN> | TableConstructor | StringLiteral ;
+
+FunctionDef : <FUNCTION> FunctionBody ;
+
+FunctionBody : <LPAREN> [ParamList] <RPAREN> Block <END> ;
+
+ParamList : NameList [<COMMA> <ELLIPSIS>] | <ELLIPSIS> ;
+
+TableConstructor : <LBRACE> [FieldList]  <RBRACE> ;
+
+FieldList : Field ((<COMMA>|<SEMICOLON>) =>|+1 Field)* [<COMMA>|<SEMICOLON>] ;
+
+Field : <LBRACKET> Expression <RBRACKET> <ASSIGN> Expression | [<NAME> <ASSIGN> =>||] Expression ;
+
+ComparisonOperator#void : <LT> | <GT> | <LE> | <GE> | <NE> | <EQ> ;
+
+MultiplicativeOperator#void : <TIMES> | <SLASH> | <MOD> | <DOUBLE_SLASH> ;
+
+BitwiseOperator#void : <BIT_AND> | <BIT_OR> | <TILDE> | <LSHIFT> | <RSHIFT> ;
+
+UnaryOperator#void : <NOT> | <HASH> | <MINUS>| <TILDE> ;
+
+Number#void : <INT> | <HEX> | <FLOAT> | <HEX_FLOAT> ;
+
+StringLiteral#void : <NORMALSTRING> | <CHARSTRING> | <LONGSTRING> ;

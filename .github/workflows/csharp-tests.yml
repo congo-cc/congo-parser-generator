@@ -23,7 +23,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        os: [ubuntu-20.04, macos-latest, windows-latest]
+        os: [ubuntu-22.04, macos-latest, windows-latest]
         java-version: ['8', '11', '17', '19']
         dotnet-version: ['5.0.x', '6.0.x', '7.0.x']
 
@@ -61,7 +61,7 @@ jobs:
           }
         }
     - name: Setup IronPython 2.7.11 (Ubuntu)
-      if: ${{ matrix.os == 'ubuntu-20.04' }}
+      if: ${{ matrix.os == 'ubuntu-22.04' }}
       run: |
         pwd
         echo ==================

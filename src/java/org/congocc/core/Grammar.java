@@ -26,11 +26,7 @@ public class Grammar extends BaseNode {
     private LexerData lexerData = new LexerData(this);
     private int includeNesting;
 
-    private List<TokenProduction> tokenProductions = new ArrayList<>();
-
     private Map<String, BNFProduction> productionTable;
-    private Map<String, RegularExpression> namedTokensTable = new LinkedHashMap<>();
-    private Set<RegularExpression> overriddenTokens = new HashSet<>();
     private Set<String> lexicalStates = new LinkedHashSet<>();
     private Map<String, String> preprocessorSymbols = new HashMap<>();
     private Set<String> nodeNames = new LinkedHashSet<>();
@@ -50,11 +46,9 @@ public class Grammar extends BaseNode {
 
     private Set<Path> alreadyIncluded = new HashSet<>();
 
-    private Set<RegexpStringLiteral> stringLiteralsToResolve = new HashSet<>();
-
     private TemplateGlobals templateGlobals;
     private AppSettings appSettings;
-    private Errors errors = new Errors();
+    private Errors errors;
 
     public Grammar(Path outputDir, String codeLang, int jdkTarget, boolean quiet, Map<String, String> preprocessorSymbols) {
         this.preprocessorSymbols = preprocessorSymbols;
@@ -73,7 +67,10 @@ public class Grammar extends BaseNode {
 
     public TemplateGlobals getTemplateGlobals() {return templateGlobals;}
 
-    public Errors getErrors() {return errors;}
+    public Errors getErrors() {
+        if (errors == null) errors = new Errors();
+        return errors;
+    }
 
     public void setSettings(Map<String, Object> settings) {
         appSettings.setSettings((settings));
@@ -84,34 +81,10 @@ public class Grammar extends BaseNode {
     }
 
     public String[] getLexicalStates() {
-        return lexicalStates.toArray(new String[]{});
+        return lexicalStates.toArray(new String[0]);
     }
 
-    public void addInplaceRegexp(RegularExpression regexp) {
-        if (regexp instanceof RegexpStringLiteral) {
-            stringLiteralsToResolve.add((RegexpStringLiteral) regexp);
-        }
-        TokenProduction tp = new TokenProduction();
-        tp.setGrammar(this);
-        tp.setExplicit(false);
-        tp.setImplicitLexicalState(getDefaultLexicalState());
-        addChild(tp);
-        addTokenProduction(tp);
-        RegexpSpec res = new RegexpSpec();
-        res.addChild(regexp);
-        tp.addChild(res);
-    }
-
-    private void resolveStringLiterals() {
-        for (RegexpStringLiteral stringLiteral : stringLiteralsToResolve) {
-            String label = lexerData.getStringLiteralLabel(stringLiteral.getImage());
-            stringLiteral.setLabel(label);
-        }
-    }
-
-
-
-    public Node parse(Path file, boolean enterIncludes) throws IOException {
+    public GrammarFile parse(Path file, boolean enterIncludes) throws IOException {
         Path canonicalPath = file.normalize();
         if (alreadyIncluded.contains(canonicalPath)) return null;
         else alreadyIncluded.add(canonicalPath);
@@ -131,8 +104,6 @@ public class Grammar extends BaseNode {
         return rootNode;
     }
 
-
-
     public Node include(List<String> locations, Node includeLocation) throws IOException {
         Path path = appSettings.resolveLocation(locations);
         if (path == null) {
@@ -151,7 +122,7 @@ public class Grammar extends BaseNode {
             String prevDefaultLexicalState = this.defaultLexicalState;
             boolean prevIgnoreCase = appSettings.isIgnoreCase();
             includeNesting++;
-            Node root = parse(path, true);
+            GrammarFile root = parse(path, true);
             if (root==null) return null;
             includeNesting--;
             appSettings.setFilename(prevLocation);
@@ -172,25 +143,10 @@ public class Grammar extends BaseNode {
         lexerData.buildData();
     }
 
-    public void doSanityChecks() {
-        if (defaultLexicalState == null) {
-            setDefaultLexicalState("DEFAULT");
-        }
-        for (String lexicalState : lexicalStates) {
-            lexerData.addLexicalState(lexicalState);
-        }
-        new SanityChecker(this).doChecks();
-        if (errors.getErrorCount() > 0) {
-            return;
-        }
-        lexerData.ensureStringLabels();
-        resolveStringLiterals();
-    }
-
     public void generateFiles() throws IOException {
         Translator translator = Translator.getTranslatorFor(this);
         templateGlobals.setTranslator(translator);
-        new FilesGenerator(this, appSettings.getCodeLang(), codeInjections).generateAll();
+        new FilesGenerator(this, appSettings.getCodeLang()).generateAll();
     }
 
     public LexerData getLexerData() {
@@ -198,7 +154,7 @@ public class Grammar extends BaseNode {
     }
     
     public String getDefaultLexicalState() {
-        return this.defaultLexicalState;
+        return defaultLexicalState == null ? "DEFAULT" : defaultLexicalState;
     }
 
     public void setDefaultLexicalState(String defaultLexicalState) {
@@ -210,13 +166,13 @@ public class Grammar extends BaseNode {
 
     public CodeInjector getInjector() {
         if (injector == null) {
-            injector = new CodeInjector(this, appSettings.getParserPackage(), appSettings.getNodePackage(), codeInjections);
+            injector = new CodeInjector(this, codeInjections);
         }
         return injector;
     }
 
     public Collection<BNFProduction> getParserProductions() {
-        List<BNFProduction> productions = descendantsOfType(BNFProduction.class);
+        List<BNFProduction> productions = descendants(BNFProduction.class);
         LinkedHashMap<String, BNFProduction> map = new LinkedHashMap<>();
         for (BNFProduction production: productions) {
             map.put(production.getName(), production);
@@ -373,57 +329,12 @@ public class Grammar extends BaseNode {
         return result;
     }
 
-    /**
-     * The list of all TokenProductions from the input file. This list includes
-     * implicit TokenProductions that are created for uses of regular
-     * expressions within BNF productions.
-     */
-    public List<TokenProduction> getAllTokenProductions() {
-        return tokenProductions;
-    }
-
     public List<Lookahead> getAllLookaheads() {
         return this.descendants(Lookahead.class);
     }
 
     public List<LookBehind> getAllLookBehinds() {
         return this.descendants(LookBehind.class);
-    }
-
-    public void addTokenProduction(TokenProduction tp) {
-        tokenProductions.add(tp);
-    }
-
-    /**
-     * This is a symbol table that contains all named tokens (those that are
-     * defined with a label). The index to the table is the image of the label
-     * and the contents of the table are of type "RegularExpression".
-     */
-    public RegularExpression getNamedToken(String name) {
-        return namedTokensTable.get(name);
-    }
-
-    public void addNamedToken(String name, RegularExpression regexp) {
-        if (namedTokensTable.containsKey(name)) {
-            RegularExpression oldValue = namedTokensTable.get(name);
-            namedTokensTable.replace(name, oldValue, regexp);
-            overriddenTokens.add(oldValue);
-        }
-        else namedTokensTable.put(name, regexp);
-    }
-
-    public boolean isOverridden(RegularExpression regexp) {
-        return overriddenTokens.contains(regexp);
-    }
-
-    /**
-     * Contains the same entries as "namedTokensTable", but this is an ordered
-     * list which is ordered by the order of appearance in the input file.
-     * (Actually, the only place where this is used is in generating the
-     * TokenType enum)
-     */
-    public List<RegularExpression> getOrderedNamedTokens() {
-        return new ArrayList<RegularExpression>(namedTokensTable.values());
     }
 
     public Set<String> getNodeNames() {
@@ -547,5 +458,96 @@ public class Grammar extends BaseNode {
 
     public boolean isInInclude() {
         return includeNesting >0;
+    }
+
+
+    /**
+     * Run over the tree and do some sanity checks
+     */
+    public void doSanityChecks() {
+        if (defaultLexicalState == null) {
+            setDefaultLexicalState("DEFAULT");
+        }
+        for (String lexicalState : lexicalStates) {
+            lexerData.addLexicalState(lexicalState);
+        }
+        // Check that non-terminals have all been defined.
+        List<NonTerminal> undefinedNTs = descendants(NonTerminal.class, nt->nt.getProduction() == null);
+        for (NonTerminal nt : undefinedNTs) {
+            errors.addError(nt, "Non-terminal " + nt.getName() + " has not been defined.");
+        }
+        if (!undefinedNTs.isEmpty()) return;
+        // Check whether we have any LOOKAHEADs at non-choice points 
+        for (ExpansionSequence sequence : descendants(ExpansionSequence.class)) {
+            if (sequence.getHasExplicitLookahead() 
+               && !sequence.isAtChoicePoint())
+            {
+                errors.addError(sequence, "Encountered scanahead at a non-choice location." );
+            }
+            if (sequence.getHasExplicitScanLimit() && !sequence.isAtChoicePoint()) {
+                errors.addError(sequence, "Encountered an up-to-here marker at a non-choice location.");
+            }
+            if (sequence.getHasExplicitLookahead() && sequence.getHasSeparateSyntacticLookahead() && sequence.getHasExplicitScanLimit()) {
+                errors.addError(sequence, "An expansion cannot have both syntactic lookahead and a scan limit.");
+            }
+            if (sequence.getHasExplicitNumericalLookahead() && sequence.getHasExplicitScanLimit()) {
+                errors.addError(sequence, "An expansion cannot have both numerical lookahead and a scan limit.");
+            }
+            if (sequence.getHasExplicitLookahead()) {
+                if (sequence.getHasExplicitLookahead()
+                    && !sequence.getHasSeparateSyntacticLookahead()
+                    && !sequence.getHasScanLimit()
+                    && !sequence.getHasExplicitNumericalLookahead() 
+                    && sequence.getMaximumSize() > 1) {
+                        errors.addWarning(sequence, "Expansion defaults to a lookahead of 1. In a similar spot in JavaCC 21, it would be an indefinite lookahead here, but this changed in Congo");
+                    }
+            }
+        }
+        for (Expansion exp : descendants(Expansion.class, Expansion::isScanLimit)) {
+            if (!((Expansion) exp.getParent()).isAtChoicePoint()) {
+                errors.addError(exp, "The up-to-here delimiter can only be at a choice point.");
+            }
+        }
+        for (Expansion exp : descendants(Expansion.class)) {
+            String lexicalStateName = exp.getSpecifiedLexicalState();
+            if (lexicalStateName != null && lexerData.getLexicalState(lexicalStateName) == null) {
+                errors.addError(exp, "Lexical state \""
+                + lexicalStateName + "\" has not been defined.");
+            }
+        }
+        // Check that no LookBehind predicates refer to an undefined Production
+        for (LookBehind lb : getAllLookBehinds()) {
+            for (String name: lb.getPath()) {
+                if (Character.isJavaIdentifierStart(name.codePointAt(0))) {
+                    if (getProductionByName(name) == null) {
+                        errors.addError(lb, "Predicate refers to undefined Non-terminal: " + name);
+                    }
+                }
+            }
+        }
+        // Check that any lexical state referred to actually exists
+        for (RegexpSpec res : descendants(RegexpSpec.class)) {
+            String nextLexicalState = res.getNextLexicalState();
+            if (nextLexicalState != null && lexerData.getLexicalState(nextLexicalState) == null) {
+                Node lastChild = res.getChild(res.getChildCount()-1);
+                errors.addError(lastChild, "Lexical state \""
+                + nextLexicalState + "\" has not been defined.");
+            }
+        }
+        for (RegexpSpec regexpSpec : descendants(RegexpSpec.class)) {
+            if (regexpSpec.getRegexp().matchesEmptyString()) {
+                errors.addError(regexpSpec, "Regular Expression can match empty string. This is not allowed here.");
+            }
+        }
+        for (BNFProduction prod : descendants(BNFProduction.class)) {
+            String lexicalStateName = prod.getLexicalState();
+            if (lexicalStateName != null && lexerData.getLexicalState(lexicalStateName) == null) {
+                errors.addError(prod, "Lexical state \""
+                + lexicalStateName + "\" has not been defined.");
+            }
+            if (prod.isLeftRecursive()) {
+                errors.addError(prod, "Production " + prod.getName() + " is left recursive.");
+            }
+        }
     }
 }

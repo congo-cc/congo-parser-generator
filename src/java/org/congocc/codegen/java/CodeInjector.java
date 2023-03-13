@@ -13,8 +13,6 @@ import org.congocc.parser.tree.*;
  */
 public class CodeInjector {
     
-    private final String parserPackage, nodePackage, parserClassName, lexerClassName, baseNodeClassName;
-
     private final Map<String, TypeDeclaration> types = new HashMap<>();  // Not presently queried ...
     private final Map<String, Set<ImportDeclaration>> injectedImportsMap = new HashMap<>();
     private final Map<String, Set<Annotation>> injectedAnnotationsMap = new HashMap<>();
@@ -26,24 +24,11 @@ public class CodeInjector {
     private final Set<String> typeNames = new HashSet<>();
     private final Set<String> interfaces = new HashSet<>();  // Not presently queried ...
     private final Grammar grammar;
+    private AppSettings appSettings;
     
-    public CodeInjector(Grammar grammar,
-                        String parserPackage,
-                        String nodePackage, 
-                        List<Node> codeInjections) {
+    public CodeInjector(Grammar grammar, List<Node> codeInjections) {
         this.grammar = grammar;
-        AppSettings appSettings = grammar.getAppSettings();
-        parserClassName = appSettings.getParserClassName();
-        lexerClassName = appSettings.getLexerClassName();
-        baseNodeClassName = appSettings.getBaseNodeClassName();
-        if (parserPackage == null) {
-            parserPackage = "";
-        }
-        this.parserPackage = parserPackage;
-        if (nodePackage == null) {
-            nodePackage = parserPackage;
-        }
-        this.nodePackage = nodePackage;
+        this.appSettings = grammar.getAppSettings();
         for (Node n : codeInjections) {
             if (n instanceof CompilationUnit) {
                 add((CompilationUnit) n);
@@ -56,11 +41,11 @@ public class CodeInjector {
     }
     
     private boolean isInNodePackage(String classname) {
-        return !classname.equals(parserClassName)
-             && !classname.equals(lexerClassName)
+        return !classname.equals(appSettings.getParserClassName())
+             && !classname.equals(appSettings.getLexerClassName())
              //&& !classname.equals(baseNodeClassName)
              && !classname.equals("ParseException")
-             && !classname.equals("Token")
+             && !classname.equals(appSettings.getBaseTokenClassName())
              && !classname.equals("InvalidToken")
              && !classname.equals("Node");
     }
@@ -70,7 +55,7 @@ public class CodeInjector {
         for (TypeDeclaration dec : jcu.getTypeDeclarations()) {
             String name = dec.getName();
             typeNames.add(name);
-            String packageName = isInNodePackage(name) ? nodePackage : parserPackage;
+            String packageName = isInNodePackage(name) ? appSettings.getNodePackage() : appSettings.getParserPackage();
             if (packageName.length() > 0) {
                 name = packageName + "." + name;
             }
@@ -152,7 +137,7 @@ public class CodeInjector {
         if (isInterface) {
             interfaces.add(name);
         }
-        String packageName = isInNodePackage(name) ? nodePackage : parserPackage;
+        String packageName = isInNodePackage(name) ? appSettings.getNodePackage() : appSettings.getParserPackage();
         if (packageName.length() >0) {
             name = packageName + "." + name;
         }
@@ -264,13 +249,13 @@ public class CodeInjector {
                 result.add("Node");
             }
             else {
-                result.add(baseNodeClassName);
+                result.add(appSettings.getBaseNodeClassName());
                 result.add("Node");
             }
         }
         else {
             if (extendsList.isEmpty()) {
-                result.add(baseNodeClassName);
+                result.add(appSettings.getBaseNodeClassName());
             }
             else {
                 for (ObjectType ot : extendsList) {
@@ -286,15 +271,5 @@ public class CodeInjector {
 
     public Map<String, TypeParameters> getTypeParameterLists() {
         return typeParameterLists;
-    }
-
-    public String getNodePackage() {
-        return nodePackage;
-    }
-
-    public String getParserPackage() { return parserPackage;}
-
-    public String getBaseNodeClassName() {
-        return baseNodeClassName;
     }
 }

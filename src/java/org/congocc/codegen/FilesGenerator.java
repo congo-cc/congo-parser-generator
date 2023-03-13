@@ -10,6 +10,7 @@ import java.util.*;
 import org.congocc.app.AppSettings;
 import org.congocc.app.Errors;
 import org.congocc.core.Grammar;
+import org.congocc.core.LexerData;
 import org.congocc.core.RegularExpression;
 import org.congocc.codegen.java.*;
 import org.congocc.parser.*;
@@ -21,8 +22,9 @@ import freemarker.ext.beans.BeansWrapper;
 
 public class FilesGenerator {
 
-    private Configuration fmConfig;
+    private final Configuration fmConfig = new freemarker.template.Configuration();
     private final Grammar grammar;
+    private final LexerData lexerData;
     private final AppSettings appSettings;
     private final Errors errors;
     private final CodeInjector codeInjector;
@@ -32,7 +34,6 @@ public class FilesGenerator {
     private final boolean generateRootApi;
 
     void initializeTemplateEngine() throws IOException {
-        fmConfig = new freemarker.template.Configuration();
         Path filename = appSettings.getFilename().toAbsolutePath();
         Path dir = filename.getParent();
         //
@@ -68,16 +69,14 @@ public class FilesGenerator {
            fmConfig.addAutoImport("CU", "CommonUtils.java.ftl");
     }
 
-    public FilesGenerator(Grammar grammar, String codeLang, List<Node> codeInjections) {
+    public FilesGenerator(Grammar grammar, String codeLang) {
         this.grammar = grammar;
+        this.lexerData = grammar.getLexerData();
         this.appSettings = grammar.getAppSettings();
+        this.codeLang = appSettings.getCodeLang();
         this.errors = grammar.getErrors();
         this.generateRootApi = appSettings.getRootAPIPackage() == null; 
-        this.codeLang = codeLang;
-        this.codeInjector = new CodeInjector(grammar,
-                                             appSettings.getParserPackage(), 
-                                             appSettings.getNodePackage(), 
-                                             codeInjections);
+        this.codeInjector = grammar.getInjector();
     }
 
     public void generateAll() throws IOException { 
@@ -165,7 +164,9 @@ public class FilesGenerator {
     private String getTemplateName(String outputFilename) {
         String result = outputFilename + ".ftl";
         if (codeLang.equals("java")) {
-            if (tokenSubclassFileNames.contains(outputFilename)) {
+            if (outputFilename.equals(appSettings.getBaseTokenClassName() + ".java")) {
+                result = "Token.java.ftl";
+            } else if (tokenSubclassFileNames.contains(outputFilename)) {
                 result = "ASTToken.java.ftl";
             } else if (outputFilename.equals(appSettings.getParserClassName() + ".java")) {
                 result = "Parser.java.ftl";
@@ -176,7 +177,7 @@ public class FilesGenerator {
                 result = "BaseNode.java.ftl";
             }
             else if (outputFilename.startsWith(appSettings.getNodePrefix())) {
-                if (!nonNodeNames.contains(outputFilename)) {
+                if (!nonNodeNames.contains(outputFilename) && !outputFilename.equals(appSettings.getBaseTokenClassName()+".java")) {
                     result = "ASTNode.java.ftl";
                 }
             } 
@@ -198,7 +199,7 @@ public class FilesGenerator {
         dataModel.put("isInterface", grammar.nodeIsInterface(nodeName));
         String classname = currentFilename.substring(0, currentFilename.length() - 5);
         String superClassName = superClassLookup.get(classname);
-        if (superClassName == null) superClassName = "Token";
+        if (superClassName == null) superClassName = appSettings.getBaseTokenClassName();
         dataModel.put("superclass", superClassName);
         Writer out = new StringWriter();
         Template template = fmConfig.getTemplate(templateName);
@@ -274,7 +275,8 @@ public class FilesGenerator {
     }
 
     void generateToken() throws IOException {
-        Path outputFile = appSettings.getParserOutputDirectory().resolve("Token.java");
+        String filename = appSettings.getBaseTokenClassName() + ".java";
+        Path outputFile = appSettings.getParserOutputDirectory().resolve(filename);
         if (regenerate(outputFile)) {
             generate(outputFile);
         }
@@ -328,6 +330,11 @@ public class FilesGenerator {
             if (codeInjector.hasInjectedCode(typename)) {
                 return true;
             }
+            if (typename.equals(appSettings.getBaseTokenClassName())) {
+                // The Token class now contains the TokenType enum
+                // so we always regenerate.
+                return true;
+            }
         }
         //
         // For now regenerate() isn't called for generating Python or C# files,
@@ -343,7 +350,7 @@ public class FilesGenerator {
         Map<String, Path> files = new LinkedHashMap<>();
         files.put(appSettings.getBaseNodeClassName(), getOutputFile(appSettings.getBaseNodeClassName()));
 
-        for (RegularExpression re : grammar.getOrderedNamedTokens()) {
+        for (RegularExpression re : lexerData.getOrderedNamedTokens()) {
             if (re.isPrivate()) continue;
             String tokenClassName = re.getGeneratedClassName();
             Path outputFile = getOutputFile(tokenClassName);

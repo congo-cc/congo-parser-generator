@@ -69,6 +69,9 @@ public class CSharpTranslator extends Translator {
         else if (ident.equals("PARSER_CLASS")) {
             result = "Parser";
         }
+        else if (ident.equals("BASE_TOKEN_CLASS")) {
+            result = "Token";
+        }
         else if (ident.startsWith("NODE_PACKAGE.")) {
             result = ident.substring(13);
         }
@@ -377,6 +380,9 @@ public class CSharpTranslator extends Translator {
                 break;
             case "Integer":
                 result = "int";
+                break;
+            case "BASE_TOKEN_CLASS" :
+                result = "Token";
                 break;
             case "LEXER_CLASS":
                 result = "Lexer";
@@ -844,7 +850,7 @@ public class CSharpTranslator extends Translator {
     }
 
     @Override  public String translateInjectedClass(CodeInjector injector, String name) {
-        String qualifiedName = String.format("%s.%s", injector.getNodePackage(), name);
+        String qualifiedName = String.format("%s.%s", appSettings.getNodePackage(), name);
         List<String> nameList = injector.getParentClasses(qualifiedName);
         List<ClassOrInterfaceBodyDeclaration> decls = injector.getBodyDeclarations(qualifiedName);
         int n = decls.size();

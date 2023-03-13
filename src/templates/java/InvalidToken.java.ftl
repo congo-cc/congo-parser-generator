@@ -2,9 +2,9 @@
 package ${settings.parserPackage};
 
 /**
- * Token subclass to represent lexically invalid input
+ * ${settings.baseTokenClassName} subclass to represent lexically invalid input
  */
-public class InvalidToken extends Token 
+public class InvalidToken extends ${settings.baseTokenClassName}
 [#if settings.faultTolerant] implements ParsingProblem [/#if] {
 
     public InvalidToken(${settings.lexerClassName} tokenSource, int beginOffset, int endOffset) {

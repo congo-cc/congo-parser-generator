@@ -304,8 +304,8 @@ public final class Main {
         Grammar grammar = new Grammar(outputDir, codeLang, jdkTarget, quiet, symbols);
         grammar.parse(grammarFile, true);
         grammar.createOutputDir();
-        grammar.doSanityChecks();
         Errors errors = grammar.getErrors();
+        grammar.doSanityChecks();
         if (errors.getErrorCount() > 0) {
             outputErrors(grammar, quiet);
             return 1;

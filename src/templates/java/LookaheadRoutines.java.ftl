@@ -39,7 +39,7 @@
 
 [#macro BuildLookaheads]
   private final boolean scanToken(TokenType expectedType, TokenType... additionalTypes) {
-     Token peekedToken = nextToken(currentLookaheadToken);
+     ${settings.baseTokenClassName} peekedToken = nextToken(currentLookaheadToken);
      TokenType type = peekedToken.getType();
      if (type != expectedType) {
        boolean matched = false;
@@ -57,7 +57,7 @@
   }
 
   private final boolean scanToken(EnumSet<TokenType> types) {
-     Token peekedToken = nextToken(currentLookaheadToken);
+     ${settings.baseTokenClassName} peekedToken = nextToken(currentLookaheadToken);
      TokenType type = peekedToken.getType();
      if (!types.contains(type)) return false;
      --remainingLookahead;
@@ -165,7 +165,7 @@
        final boolean scanToEnd = true;
        int ${storeRemainingLookahead} = remainingLookahead;
        remainingLookahead = UNLIMITED;
-       Token ${storeCurrentLookaheadVar} = currentLookaheadToken;
+       ${settings.baseTokenClassName} ${storeCurrentLookaheadVar} = currentLookaheadToken;
        boolean prevHitFailure = hitFailure;
        if (currentLookaheadToken == null) {
           currentLookaheadToken = lastConsumedToken;
@@ -221,7 +221,7 @@
      private final boolean ${lookahead.nestedExpansion.scanRoutineName}(boolean scanToEnd) {
         int prevRemainingLookahead = remainingLookahead;
         boolean prevHitFailure = hitFailure;
-        Token prevScanAheadToken = currentLookaheadToken;
+        ${settings.baseTokenClassName} prevScanAheadToken = currentLookaheadToken;
         try {
           lookaheadRoutineNesting++;
           [@BuildScanCode lookahead.nestedExpansion/]
@@ -436,14 +436,14 @@
 [/#macro]
 
 [#macro ScanCodeChoice choice]
-   [@CU.newVar "Token", "currentLookaheadToken"/]
+   [@CU.newVar settings.baseTokenClassName, "currentLookaheadToken"/]
    int remainingLookahead${CU.newVarIndex} = remainingLookahead;
    boolean hitFailure${CU.newVarIndex} = hitFailure, passedPredicate${CU.newVarIndex} = passedPredicate;
    try {
   [#list choice.choices as subseq]
      passedPredicate = false;
      if (!${CheckExpansion(subseq)}) {
-     currentLookaheadToken = token${CU.newVarIndex};
+     currentLookaheadToken = ${settings.baseTokenClassName?lower_case}${CU.newVarIndex};
      remainingLookahead=remainingLookahead${CU.newVarIndex};
      hitFailure = hitFailure${CU.newVarIndex};
      [#if !subseq_has_next]
@@ -457,13 +457,13 @@
 [/#macro]
 
 [#macro ScanCodeZeroOrOne zoo]
-   [@CU.newVar type="Token" init="currentLookaheadToken"/]
+   [@CU.newVar type=settings.baseTokenClassName init="currentLookaheadToken"/]
    boolean passedPredicate${CU.newVarIndex} = passedPredicate;
    passedPredicate = false;
    try {
       if (!${CheckExpansion(zoo.nestedExpansion)}) {
          if (passedPredicate && !legacyGlitchyLookahead) return false;
-         currentLookaheadToken = token${CU.newVarIndex};
+         currentLookaheadToken = ${settings.baseTokenClassName?lower_case}${CU.newVarIndex};
          hitFailure = false;
       }
    } finally {passedPredicate = passedPredicate${CU.newVarIndex};}
@@ -477,11 +477,11 @@
     boolean ${prevPassPredicateVarName} = passedPredicate;
     try {
       while (remainingLookahead > 0 && !hitFailure) {
-      [@CU.newVar type="Token" init="currentLookaheadToken"/]
+      [@CU.newVar type=settings.baseTokenClassName init="currentLookaheadToken"/]
         passedPredicate = false;
         if (!${CheckExpansion(zom.nestedExpansion)}) {
             if (passedPredicate && !legacyGlitchyLookahead) return false;
-            currentLookaheadToken = token${CU.newVarIndex};
+            currentLookaheadToken = ${settings.baseTokenClassName?lower_case}${CU.newVarIndex};
             break;
         }
       }

@@ -20,8 +20,8 @@ public class LexicalStateData {
     private List<NfaState> simpleStates = new ArrayList<>();
     private Map<Set<NfaState>, CompositeStateSet> canonicalSetLookup = new HashMap<>();
 
-    private Map<String, RegularExpression> caseSensitiveTokenTable = new HashMap<>();
-    private Map<String, RegularExpression> caseInsensitiveTokenTable = new HashMap<>();
+    private Map<String, RegexpStringLiteral> caseSensitiveTokenTable = new HashMap<>();
+    private Map<String, RegexpStringLiteral> caseInsensitiveTokenTable = new HashMap<>();
 
     private HashSet<RegularExpression> regularExpressions = new HashSet<>();
 
@@ -64,14 +64,14 @@ public class LexicalStateData {
 
     public void addStringLiteral(RegexpStringLiteral re) {
         if (re.getIgnoreCase()) {
-            caseInsensitiveTokenTable.put(re.getImage().toUpperCase(), re);
+            caseInsensitiveTokenTable.putIfAbsent(re.getLiteralString().toUpperCase(), re);
         } else {
-            caseSensitiveTokenTable.put(re.getImage(), re);
+            caseSensitiveTokenTable.putIfAbsent(re.getLiteralString(), re);
         }
     }
 
-    public RegularExpression getStringLiteral(String image) {
-        RegularExpression result = caseSensitiveTokenTable.get(image);
+    public RegexpStringLiteral getStringLiteral(String image) {
+        RegexpStringLiteral result = caseSensitiveTokenTable.get(image);
         if (result == null) {
             result = caseInsensitiveTokenTable.get(image.toUpperCase());
         }
@@ -129,7 +129,7 @@ public class LexicalStateData {
         boolean ignore = tp.isIgnoreCase() || grammar.getAppSettings().isIgnoreCase();//REVISIT
         for (RegexpSpec regexpSpec : tp.getRegexpSpecs()) {
             RegularExpression currentRegexp = regexpSpec.getRegexp();
-            if (currentRegexp.isPrivate() || grammar.isOverridden(currentRegexp)) {
+            if (currentRegexp.isPrivate() || grammar.getLexerData().isOverridden(currentRegexp)) {
                 continue;
             }
             regularExpressions.add(currentRegexp);

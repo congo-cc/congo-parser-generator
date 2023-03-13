@@ -542,7 +542,7 @@ ${globals.translateTokenSubclassInjections(cn, false)}
 [/#if]
 
 def new_token(type, *args):
-[#-- list grammar.orderedNamedTokens as re]
+[#-- list lexerData.orderedNamedTokens as re]
   [#if re.generatedClassName != "Token" && !re.private]
     if type == TokenType.${re.label}:
         return ${grammar.nodePrefix}${re.generatedClassName}(type, image, input_source)

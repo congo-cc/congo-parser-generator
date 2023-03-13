@@ -10,6 +10,7 @@
 [#var PRESERVE_LINE_ENDINGS=settings.preserveLineEndings?string("true", "false")
       JAVA_UNICODE_ESCAPE= settings.javaUnicodeEscape?string("true", "false")
       ENSURE_FINAL_EOL = settings.ensureFinalEOL?string("true", "false")
+      TERMINATING_STRING = "\"" + settings.terminatingString?j_string + "\""
       PRESERVE_TABS = settings.preserveTabs?string("true", "false")
  ]
 
@@ -320,7 +321,7 @@ ${globals.translateLexerImports()}
         public Lexer(string inputSource, LexicalState lexState = LexicalState.${lexerData.lexicalStates[0].name}, int line = 1, int column = 1) {
             InputSource = inputSource;
             var input = InputText(inputSource);
-            _content = MungeContent(input, ${PRESERVE_TABS}, ${PRESERVE_LINE_ENDINGS}, ${JAVA_UNICODE_ESCAPE}, ${ENSURE_FINAL_EOL});
+            _content = MungeContent(input, ${PRESERVE_TABS}, ${PRESERVE_LINE_ENDINGS}, ${JAVA_UNICODE_ESCAPE}, ${TERMINATING_STRING});
             _contentLength = _content.Length;
             _needToCalculateColumns = new BitSet(_contentLength + 1);
             _lineOffsets = CreateLineOffsetsTable(_content);
@@ -731,20 +732,21 @@ ${globals.translateCodeBlock(regexp.codeSnippet.javaCode, 16)}
 [/#if]
 
         private string MungeContent(string content, bool preserveTabs, bool preserveLines,
-                      bool unicodeEscape, bool ensureFinalEol)
+                      bool unicodeEscape, string terminatingString)
         {
             StringBuilder buf;
 
             if (preserveTabs && preserveLines && !unicodeEscape) {
-                if (!ensureFinalEol) return _content;
+                if (terminatingString.Length == 0) return _content;
                 if (content.Length == 0) {
-                    content = "\n";
+                    content = terminatingString;
                 }
                 else {
-                    int lastChar = _content[^1];
-                    if (lastChar == '\n' || lastChar == '\r') return content;
+                    if (content.EndsWith(terminatingString)) {
+                       return content; 
+                    }
                     buf = new StringBuilder(content);
-                    buf.Append('\n');
+                    buf.Append(terminatingString);
                     content = buf.ToString();
                 }
                 return content;
@@ -841,13 +843,16 @@ ${globals.translateCodeBlock(regexp.codeSnippet.javaCode, 16)}
                     }
                 }
             }
-
-            if (!ensureFinalEol) return buf.ToString();
-            if (buf.Length == 0) {
-                return "\n";
+            if (terminatingString.Length == 0) return buf.ToString();
+            if (buf.Length < terminatingString.Length) {
+                buf.Append(terminatingString);
             }
-            var lc = buf[^1];
-            if (lc != '\n' && lc!='\r') buf.Append('\n');
+            else {
+                String finalPart = buf.ToString(buf.Length - terminatingString.Length, terminatingString.Length);
+                if (!finalPart.Equals(terminatingString)) {
+                    buf.Append(terminatingString);
+                }
+            }
             return buf.ToString();
         }
 

@@ -1,0 +1,240 @@
+DEFAULT_LEXICAL_STATE=PHP;
+
+UNPARSED #Comment :
+  < MULTI_LINE_COMMENT : "/*" (~["*"])* "*" (~["*","/"] (~["*"])* "*" | "*")* "/">
+  |
+  < SINGLE_LINE_COMMENT : ("//" | "#") (~["\n"])* > 
+;
+
+SKIP :
+   <WHITESPACE : ([" ", "\t", "\r", "\n"])+ > #Whitespace
+;
+
+TOKEN #Keyword :
+     <ABSTRACT : "abstract">
+   | <AND : "and">
+   | <ARRAY : "array">
+   | <AS : "as">
+   | <BREAK : "break">
+   | <CALLABLE : "callable">
+   | <CASE : "case">
+   | <CATCH : "catch">
+   | <CLASS : "class">
+   | <CLONE : "clone">
+   | <CONST : "const">
+   | <CONTINUE : "continue">
+   | <DECLARE : "declare">
+   | <DEFAULT : "default">
+   | <DIE : "die">
+   | <ECHO : "echo">
+   | <ELSE : "else">
+   | <ELSEIF : "elseif">
+   | <EMPTY : "empty">
+   | <ENDDECLARE : "endeclare">
+   | <ENDFOR : "endfor">
+   | <ENDFOREACH : "endforeach">
+   | <ENDIF : "endif">
+   | <ENDSWITCH : "endswitch">
+   | <ENDWHILE : "endwhile">
+   | <EVAL : "eval">
+   | <EXIT : "exit">
+   | <EXTENDS : "extends">
+   | <FINAL : "final">
+   | <FINALLY : "finally">
+   | <FOR : "for">
+   | <FOREACH : "foreach">
+   | <FUNCTION : "function">
+   | <GLOBAL : "global">
+   | <GOTO : "goto">
+   | <IF : "if">
+   | <IMPLEMENTS : "implements">
+   | <INCLUDE : "include">
+   | <INCLUDE_ONCE : "include_once">
+   | <INSTEADOF : "insteadof">
+   | <INTERFACE : "interface">
+   | <ISSET : "isset">
+   | <LIST : "list">
+   | <NAMESPACE : "namespace">
+   | <NEW : "new">
+   | <OR : "or">
+   | <PRINT : "print">
+   | <PRIVATE : "private">
+   | <PROTECTED : "protected">
+   | <PUBLIC : "public">
+   | <REQUIRE : "require">
+   | <REQUIRE_ONCE : "require_once">
+   | <RETURN : "return">
+   | <STATIC : "static">
+   | <SWITCH : "switch">
+   | <THROW : "throw">
+   | <TRAIT : "trait">
+   | <TRY : "try">
+   | <UNSET : "unset">
+   | <USE : "use">
+   | <VAR : "var">
+   | <WHILE : "while">
+   | <XOR : "xor">
+   | <YIELD : "yield">
+   | <YIELD_FROM : "yield from">
+;
+
+TOKEN :
+   <NAME : ["a"-"z","A"-"Z","\u0080"-"\u00FF"] ([a"-"z","A"-"Z","\u0080"-"\u00FF","0"-"9"])*> #Name
+   |
+   <VARNAME : "$" <NAME>> #VarName
+;
+
+TOKEN #Operator :
+     <DOT : ".">
+   | <RIGHT_ARROW : "->">
+   | <INCR : "++">
+   | <DECR: "--">
+   | <DOUBLE_STAR : "**">
+   | <STAR : "*">
+   | <PLUS : "+">
+   | <MINUS : "-">
+   | <TILDE : "~">
+   | <EXCLAM : "!">
+   | <DOLLAR : "$">
+   | <SLASH : "/">
+   | <PERCENT : "%">
+   | <LSHIFT : "<<">
+   | <RSHIFT : ">>">
+   | <LT : "<">
+   | <GT : ">">
+   | <LE : "<=">
+   | <GE : ">=">
+   | <EQUALS : "==">
+   | <TRIPLE_EQUALS : "==="
+   | <NE  "!=">
+   | <DOUBLE_NE : "!==">
+   | <HAT : "^">
+   | <BIT_OR : "|">
+   | <BIT_AND : "&">
+   | <SC_AND : "&&">
+   | <SC_OR : "||">
+   | <HOOK : "?">
+   | <SEMICOLON : ";">
+   | <COLON : ":">
+   | <ASSIGN : "=">
+   | <STAR_STAR_ASSIGN : "**=">
+   | <STAR_ASSIGN : "*=">
+   | <SLASH_ASSIGN : "/=">
+   | <PERCENT_ASSIGN : "%=">
+   | <PLUS_ASSIGN : "+='>
+   | <MINUS_ASSIGN : "-=">
+   | <DOT_ASSIGN : ".=">
+   | <LEFT_SHIFT_ASSIGN : "<<=">
+   | <RIGHT_SHIFT_ASSIGN : ">>=">
+   | <AND_ASSIGN : "&=">
+   | <OR_ASSIGN : "|="> 
+   | <COMMA : ",">
+   | <DOUBLE_HOOK : "??">
+   | <DOUBLE_ARROW : "<==>" >
+   | <ELLIPSIS : "...">
+   | <BACKSLASH : "\\">
+;
+
+TOKEN #Delimiter :
+   <LBRACKET : "[">
+   |
+   <RBRACKET : "]">
+   |
+   <LPAREN : "(">
+   |
+   <RPAREN : ")">
+   |
+   <LBRACE : "{">
+   |
+   <RBRACE : "}">
+;
+
+TOKEN #NumericalLiteral :
+  < INTEGER_LITERAL:
+      <HEX_LITERAL>
+      | <OCTAL_LITERAL>
+      | <DECIMAL_LITERAL>
+      | <BINARY_LITERAL>
+  > #IntegerLiteral 
+  |
+  < LONG_LITERAL: <INTEGER_LITERAL> (["l","L"]) > #LongLiteral
+  |
+  < #DECIMAL_LITERAL: ["0"-"9"]((["0"-"9","_"])*["0"-"9"])? >
+  |
+  < #HEX_LITERAL: "0" ["x","X"] <HEX_DIGITS> >
+  |
+  < #OCTAL_LITERAL: "0" ["0"-"7"]((["0"-"7","_"])*["0"-"7"])? >
+  |
+  < #BINARY_LITERAL: "0" ["b","B"] ["0","1"]((["0","1","_"])*["0","1"])? >
+  |
+  < FLOATING_POINT_LITERAL:
+        <DECIMAL_FLOATING_POINT_LITERAL>
+      | <HEXADECIMAL_FLOATING_POINT_LITERAL>
+  > #FloatingPointLiteral
+  |
+  < #DECIMAL_FLOATING_POINT_LITERAL:
+        <DECIMAL_LITERAL> "." (<DECIMAL_LITERAL>)? (<DECIMAL_EXPONENT>)? (["f","F","d","D"])?
+      | "." <DECIMAL_LITERAL> (<DECIMAL_EXPONENT>)? (["f","F","d","D"])?
+      | <DECIMAL_LITERAL> <DECIMAL_EXPONENT> (["f","F","d","D"])?
+      | <DECIMAL_LITERAL> (<DECIMAL_EXPONENT>)? ["f","F","d","D"]
+  >
+  |
+  < #DECIMAL_EXPONENT: ["e","E"] (["+","-"])? (<DECIMAL_LITERAL>)+ >
+  |
+  < #HEXADECIMAL_FLOATING_POINT_LITERAL:
+        <HEX_LITERAL> (".")? <HEXADECIMAL_EXPONENT> (["f","F","d","D"])?
+      | "0" ["x","X"] (<HEX_DIGITS>)? "." <HEX_DIGITS> <HEXADECIMAL_EXPONENT> (["f","F","d","D"])?
+  >
+  |
+  < #HEXADECIMAL_EXPONENT: ["p","P"] (["+","-"])? <DECIMAL_LITERAL> >
+  |
+  < #HEX_DIGITS: ["0"-"9","a"-"f","A"-"F"]((["0"-"9","a"-"f","A"-"F","_"])*["0"-"9","a"-"f","A"-"F"])? >
+;
+
+TOKEN #StringLiteral :
+  <SINGLE_QUOTE_STRING:
+      (["b","B"])?
+      "'"
+      (
+          ~["'","\\"]
+          |
+          "\\\\"
+          |
+          "\\'"
+      )*
+       "'"
+  > 
+  |
+  <DOUBLE_QUOTE_STRING:
+      (["b","B"])?
+      '"'
+      (   (~['"',"\\"])
+          |
+          '\\"'
+          |
+          '\\\\'
+      )*
+      '"'
+  > 
+  |
+  <#DOUBLE_QUOTE_ESCAPE :
+      "\\"
+       (
+          ['"', '\\', '$', 'e', 'f', 'n', 'r', 't', 'v']
+          |
+          (["0"-"7"]){1,3}
+          |
+          (("x" | "X") (["0"-"9", "A"-"F", "a"-"f"])){1,2}
+          |
+          ("u"  (["0"-"9", "A"-"F", "a"-"f"])+)
+       )
+  >
+;
+
+<TEXT> TOKEN :
+    < END_TEXT : "<?"> #StartTag : PHP
+;
+
+<TEXT> MORE :
+    < ANY_CHAR : ~[]>
+;    
