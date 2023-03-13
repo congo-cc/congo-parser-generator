@@ -506,7 +506,7 @@ ${is}}
 [#-- Generates code for when we don't need any scanahead routine --]
 [#macro SingleTokenCondition expansion]
    [#if expansion.hasSemanticLookahead](${globals.translateExpression(expansion.semanticLookahead)}) && [/#if][#t]
-   [#if expansion.firstSet.tokenNames?size = 0 || expansion.lookaheadAmount ==0]true[#elseif expansion.firstSet.tokenNames?size < 5][#list expansion.firstSet.tokenNames as name](NextTokenType == TokenType.${name})[#if name_has_next] || [/#if][/#list][#t][#else](${expansion.firstSetVarName}.Contains(NextTokenType))[/#if][#t]
+   [#if expansion.firstSet.tokenNames?size = 0 || expansion.lookaheadAmount ==0 || expansion.minimumSize=0]true[#elseif expansion.firstSet.tokenNames?size < 5][#list expansion.firstSet.tokenNames as name](NextTokenType == TokenType.${name})[#if name_has_next] || [/#if][/#list][#t][#else](${expansion.firstSetVarName}.Contains(NextTokenType))[/#if][#t]
 [/#macro]
 
 [#macro BuildAssertionCode assertion indent]
