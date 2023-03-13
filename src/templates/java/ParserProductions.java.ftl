@@ -487,7 +487,7 @@
    [#if expansion.hasSemanticLookahead]
       (${expansion.semanticLookahead}) &&
    [/#if]
-   [#if expansion.firstSet.tokenNames?size =0 || expansion.lookaheadAmount ==0]
+   [#if expansion.firstSet.tokenNames?size =0 || expansion.lookaheadAmount ==0 || expansion.minimumSize=0]
       true 
    [#elseif expansion.firstSet.tokenNames?size < CU.USE_FIRST_SET_THRESHOLD] 
       [#list expansion.firstSet.tokenNames as name]
