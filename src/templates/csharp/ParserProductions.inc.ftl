@@ -381,8 +381,7 @@ ${is}}
 [#macro BuildCodeZeroOrOne zoo indent]
 [#var is = ""?right_pad(indent)]
 [#-- ${is}// DBG > BuildCodeZeroOrOne ${indent} ${zoo.nestedExpansion.class.simpleName} --]
-    [#if zoo.nestedExpansion.alwaysEntered
-      || zoo.nestedExpansion.class.simpleName = "ExpansionChoice"]
+    [#if zoo.nestedExpansion.class.simpleName = "ExpansionChoice"]
 ${BuildCode(zoo.nestedExpansion, indent)}
     [#else]
 ${is}if (${ExpansionCondition(zoo.nestedExpansion)}) {
@@ -464,12 +463,6 @@ ${is}    if (pendingRecovery) throw;
 [#var is = ""?right_pad(indent)]
 [#-- ${is}// DBG > BuildCodeChoice ${indent} --]
    [#list choice.choices as expansion]
-      [#if expansion.alwaysEntered]
-${is}else {
-${BuildCode(expansion, indent + 4)}
-${is}}
-         [#return]
-      [/#if]
 ${is}${(expansion_index=0)?string("if", "else if")} (${ExpansionCondition(expansion)}) {
 ${BuildCode(expansion, indent + 4)}
 ${is}}

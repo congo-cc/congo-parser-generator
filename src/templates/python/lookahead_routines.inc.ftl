@@ -137,7 +137,7 @@ ${BuildScanCode(expansion, 12)}
 [#macro BuildScanRoutine expansion indent]
 [#var is=""?right_pad(indent)]
 [#-- ${is}# DBG > BuildScanRoutine ${indent} --]
- [#if !expansion.singleToken || expansion.requiresPredicateMethod]
+ [#if !expansion.singleTokenLookahead || expansion.requiresPredicateMethod]
 ${is}# scanahead routine for expansion at:
 ${is}# ${expansion.location}
 ${is}# BuildScanRoutine macro
@@ -500,7 +500,7 @@ ${is}    return False--]
 
 
 [#macro CheckExpansion expansion]
-   [#if expansion.singleToken && !expansion.requiresPredicateMethod]
+   [#if expansion.singleTokenLookahead && !expansion.requiresPredicateMethod]
      [#if expansion.firstSet.tokenNames?size = 1]
        [#if optimize_scan_token]
       self.scan_token_one(${expansion.firstSet.tokenNames[0]})[#t]

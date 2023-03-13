@@ -9,7 +9,8 @@ TOKEN_CHAINING;
 DEACTIVATE_TOKENS=_INCLUDE,_INJECT,_EOF;
 
 #if fault_tolerant
-//FAULT_TOLERANT=true;
+  Howdy!!!
+ FAULT_TOLERANT=true;
 #endif
 
 INJECT LEXER_CLASS : 
@@ -1370,7 +1371,8 @@ INJECT ExpansionChoice :
          if (firstSet == null) {
             firstSet = new TokenSet(getGrammar());
             for (ExpansionSequence choice : childrenOfType(ExpansionSequence.class)) {
-                firstSet.or(choice.getLookaheadExpansion().getFirstSet());
+                //firstSet.or(choice.getLookaheadExpansion().getFirstSet());
+                firstSet.or(choice.getFirstSet());
             }
          }
          return firstSet;
@@ -1383,11 +1385,6 @@ INJECT ExpansionChoice :
             finalSet.or(choice.getFinalSet());
         }
         return finalSet;
-    }
-    
-    @Override
-    public boolean isAlwaysEntered() {
-        return childrenOfType(ExpansionSequence.class).stream().anyMatch(choice->choice.isAlwaysEntered());
     }
     
     @Override
@@ -1417,10 +1414,10 @@ INJECT ExpansionChoice :
     }
 
     @Override
-    public boolean isSingleToken() {
-        if (!super.isSingleToken()) return false;
+    public boolean isSingleTokenLookahead() {
+        if (!super.isSingleTokenLookahead()) return false;
         for (ExpansionSequence exp : childrenOfType(ExpansionSequence.class)) {
-            if (!exp.isSingleToken()) return false;
+            if (!exp.isSingleTokenLookahead()) return false;
         }
         return true;
     }
@@ -1477,8 +1474,8 @@ INJECT ExpansionWithParentheses :
     }
 
     @Override 
-    public boolean isSingleToken() {
-         return super.isSingleToken() && getNestedExpansion().isSingleToken();
+    public boolean isSingleTokenLookahead() {
+         return super.isSingleTokenLookahead() && getNestedExpansion().isSingleTokenLookahead();
     }
 }
 
@@ -1881,9 +1878,6 @@ INJECT ZeroOrOne :
      extends ExpansionWithParentheses 
 {
     @Override
-    public boolean isAlwaysEntered() {return true;}
-
-    @Override
     protected int getMinimumSize(java.util.Set<String> unused) {return 0;}
 }
 
@@ -1894,9 +1888,6 @@ INJECT ZeroOrMore :
      import java.util.Set;
      extends ExpansionWithParentheses 
 {
-    @Override
-    public boolean isAlwaysEntered() {return true;}
-    
     @Override  
     protected int getMinimumSize(Set<String> unused) {return 0;}
     

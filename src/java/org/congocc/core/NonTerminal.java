@@ -52,39 +52,35 @@ public class NonTerminal extends Expansion {
 
     public TokenSet getFirstSet() {
         if (firstSet == null) {
-            firstSet = getProduction().getExpansion().getFirstSet();
+            firstSet = getNestedExpansion().getFirstSet();
         }
         return firstSet;
      }
-     private int reEntries;     
+     
      public TokenSet getFinalSet() {
-          ++reEntries;
-          TokenSet result = reEntries == 1 ? getProduction().getExpansion().getFinalSet() : new TokenSet(getGrammar());
-          --reEntries;
-          return result;
+          return getNestedExpansion().getFinalSet();
      }
      
-     @Override
-     public boolean isAlwaysEntered() {
-         return getProduction().getExpansion().isAlwaysEntered();
-     }
-
      protected int getMinimumSize(Set<String> visitedNonTerminals) {
         if (minSize >=0) return minSize;
          if (visitedNonTerminals.contains(getName())) {
-            return minSize = Integer.MAX_VALUE;
+            return Integer.MAX_VALUE;
          }
          visitedNonTerminals.add(getName());
-         return minSize = getNestedExpansion().getMinimumSize(visitedNonTerminals);
+         minSize = getNestedExpansion().getMinimumSize(visitedNonTerminals);
+         visitedNonTerminals.remove(getName());
+         return minSize;
      }
 
      protected int getMaximumSize(Set<String> visitedNonTerminals) {
         if (maxSize >= 0) return maxSize;
         if (visitedNonTerminals.contains(getName())) {
-            return maxSize = Integer.MAX_VALUE;
+            return Integer.MAX_VALUE;
         }
         visitedNonTerminals.add(getName());
-        return maxSize = getNestedExpansion().getMaximumSize(visitedNonTerminals);
+        maxSize = getNestedExpansion().getMaximumSize(visitedNonTerminals);
+        visitedNonTerminals.remove(getName());
+        return maxSize;
      }
     
      // We don't nest into NonTerminals
@@ -99,8 +95,8 @@ public class NonTerminal extends Expansion {
         return false;
      }
 
-     public boolean isSingleToken() {
-        return getNestedExpansion().isSingleToken();
+     public boolean isSingleTokenLookahead() {
+        return getNestedExpansion().isSingleTokenLookahead();
      }
 
      public boolean startsWithLexicalChange() {

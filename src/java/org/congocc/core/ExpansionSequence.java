@@ -36,30 +36,22 @@ public class ExpansionSequence extends Expansion {
 
 
     @Override
-    public boolean isAlwaysEntered() {
-        if (!isPossiblyEmpty()) return false;
-        if (allUnits().stream().anyMatch(unit->unit instanceof Assertion || unit instanceof Failure)) return false;
-        Lookahead la = getLookahead();
-        if (la != null) {
-            if (la.getSemanticLookahead() != null || la.getLookBehind() != null || la.getNestedExpansion() != null) {
-                return false;
-            }
-            return la.getAmount() == 0;
-        }
-        for (Expansion exp : childrenOfType(Expansion.class)) {
-            if (!exp.isAlwaysEntered()) return false;
-        }
-        return true;
-    }
-
-    @Override
     public TokenSet getFirstSet() {
         if (firstSet == null) {
             firstSet = new TokenSet(getGrammar());
-            for (Expansion child : childrenOfType(Expansion.class)) {
+            for (Expansion child : getUnits()) {
                 firstSet.or(child.getFirstSet());
                 if (!child.isPossiblyEmpty()) {
                     break;
+                }
+            }
+            Expansion lookaheadExpansion = getLookaheadExpansion();
+            if (lookaheadExpansion != this) {
+                if (!getLookahead().isNegated()) {
+                    firstSet.and(lookaheadExpansion.getFirstSet());
+                } 
+                else if (lookaheadExpansion.isSingleToken()) {
+                    firstSet.andNot(lookaheadExpansion.getFirstSet());
                 }
             }
         }
@@ -266,8 +258,8 @@ public class ExpansionSequence extends Expansion {
             return false;
         if (getHasSeparateSyntacticLookahead())
             return false;
-        if (this.isAlwaysEntered())
-            return false;
+//        if (this.isAlwaysEntered())
+//            return false;
         if (getHasScanLimit()) {
             return true;
         }
@@ -281,12 +273,12 @@ public class ExpansionSequence extends Expansion {
     }
 
     @Override
-    public boolean isSingleToken() {
-        if (!super.isSingleToken()) return false;
+    public boolean isSingleTokenLookahead() {
+        if (!super.isSingleTokenLookahead()) return false;
         for (Expansion exp : childrenOfType(Expansion.class)) {
             // This is mostly in order to recurse into any NonTerminals 
             // in the expansion sequence.
-            if (exp.getMaximumSize() == 1 && !exp.isSingleToken()) return false;
+            if (exp.getMaximumSize() == 1 && !exp.isSingleTokenLookahead()) return false;
         }
         return true;
     }

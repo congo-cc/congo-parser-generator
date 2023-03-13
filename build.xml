@@ -1,173 +1,189 @@
 <project name="congocc" default="compile" basedir=".">
-    <tstamp>
-        <format property="timestamp" pattern="yyyy-MM-dd HH:mm:ss" />
-    </tstamp>
+  <tstamp>
+    <format property="timestamp" pattern="yyyy-MM-dd HH:mm:ss" />
+  </tstamp>
 
   <target name="init">
     <echo>Join the Discussion forum at: https://discuss.congocc.org/</echo>
-	  <echo>Send any bug report to bugs@congocc.org and include the following information.</echo>
-	  <echo>JDK Version: ${java.version} on ${os.name}</echo>
-	  <uptodate property="parser.uptodate" 
-              targetfile="src/java/org/congocc/parser/CongoCCParser.java" 
-              srcfile="src/grammars/CongoCC.ccc" />
+    <echo>Send any bug report to bugs@congocc.org and include the following information.</echo>
+    <echo>JDK Version: ${java.version} on ${os.name}</echo>
+    <uptodate property="parser.uptodate" targetfile="src/java/org/congocc/parser/CongoCCParser.java">
+      <srcfiles dir=".">
+        <filename name="src/grammars/CongoCC.ccc" />
+        <filename name="examples/java/Java.ccc" />
+        <filename name="examples/java/JavaLexer.ccc" />
+      </srcfiles>
+    </uptodate>
     <uptodate property="preprocessor.uptodate"
-    		targetfile="src/java/org/congocc/preprocessor/PreprocessorParser.java"
-        srcfile="examples/preprocessor/Preprocessor.ccc"
+      targetfile="src/java/org/congocc/preprocessor/PreprocessorParser.java"
+      srcfile="examples/preprocessor/Preprocessor.ccc"
     />
-    <uptodate property="python.uptodate" targetfile="src/java/org/congocc/parser/python/PythonParser.java">
+    <uptodate property="python.uptodate"
+      targetfile="src/java/org/congocc/parser/python/PythonParser.java">
       <srcfiles dir=".">
-        <filename name = "src/grammars/PythonInternal.ccc"/>
-        <filename name = "examples/python/Python.ccc"/>
-        <filename name = "examples/python/PythonLexer.ccc"/>
+        <filename name="src/grammars/PythonInternal.ccc" />
+        <filename name="examples/python/Python.ccc" />
+        <filename name="examples/python/PythonLexer.ccc" />
       </srcfiles>
     </uptodate>
-    <uptodate property="csharp.uptodate" targetfile="src/java/org/congocc/parser/csharp/CSharpParser.java">
+    <uptodate property="csharp.uptodate"
+      targetfile="src/java/org/congocc/parser/csharp/CSharpParser.java">
       <srcfiles dir=".">
-        <filename name = "src/grammars/CSharpInternal.ccc"/>
-        <filename name = "examples/csharp/CSharp.ccc"/>
-        <filename name = "examples/python/CSharpLexer.ccc"/>
+        <filename name="src/grammars/CSharpInternal.ccc" />
+        <filename name="examples/csharp/CSharp.ccc" />
+        <filename name="examples/python/CSharpLexer.ccc" />
       </srcfiles>
     </uptodate>
-    <uptodate property = "ppline.uptodate" 
-              targetfile = "src/java/org/parsers/csharp/ppline/PPDirectiveLineParser.java"
-              srcfile = "examples/csharp/PPDirectiveLine.ccc" />
-</target>
+    <uptodate property="ppline.uptodate"
+      targetfile="src/java/org/parsers/csharp/ppline/PPDirectiveLineParser.java"
+      srcfile="examples/csharp/PPDirectiveLine.ccc" />
+  </target>
 
-<target name="restore-bootstrap-jar">
-	<exec executable="git" dir="${basedir}">
-		<arg line="checkout bin/congocc.jar"/>
+  <target name="restore-bootstrap-jar">
+    <exec executable="git" dir="${basedir}">
+      <arg line="checkout bin/congocc.jar" />
     </exec>
-</target>
+  </target>
 
 
-<!--
+  <!--
      Build and test using the bootstrap jarfile, then
      drop in the newly built jarfile and build and test again
 -->
-<target name="full-test" depends="restore-bootstrap-jar,clean,jar,test">
-	<echo>Now we copy the new congocc.jar to bin to rebootstrap</echo>
-	<copy file="congocc.jar" todir="bin"/>
-	<antcall target="clean"/>
-	<antcall target="test"/>
-</target>
+  <target name="full-test" depends="restore-bootstrap-jar,clean,jar,test">
+    <echo>Now we copy the new congocc.jar to bin to rebootstrap</echo>
+    <copy file="congocc.jar" todir="bin" />
+    <antcall target="clean" />
+    <antcall target="test" />
+  </target>
 
-<target name="clean">
- 	<delete file="congocc.jar"/>
- 	<delete file="congocc-full.jar"/>
- 	<delete dir="build"/>
-	<delete dir="src/java/org/congocc/parser"/>
-	<delete dir="src/java/org/congocc/preprocessor"/>
-	<delete dir="src/java/org/parsers/csharp/ppline"/>
-  <delete dir="examples/csharp/org"/>
-  <delete dir="examples/java/org"/>
-  <delete dir="examples/freemarker/fel"/>
-  <delete dir="examples/freemarker/ftl"/>
-  <delete dir="examples/json/org"/>
-  <delete dir="examples/preprocessor/org/"/>
-  <delete dir="examples/python/org/"/>
-</target>
+  <target name="clean">
+    <delete file="congocc.jar" />
+    <delete file="congocc-full.jar" />
+    <delete dir="build" />
+    <delete dir="src/java/org/congocc/parser" />
+    <delete dir="src/java/org/congocc/preprocessor" />
+    <delete dir="src/java/org/parsers/csharp/ppline" />
+    <delete dir="examples/csharp/org" />
+    <delete dir="examples/java/org" />
+    <delete dir="examples/freemarker/fel" />
+    <delete dir="examples/freemarker/ftl" />
+    <delete dir="examples/json/org" />
+    <delete dir="examples/preprocessor/org/" />
+    <delete dir="examples/python/org/" />
+  </target>
 
 
-<target name="parser-gen" depends="init" unless="parser.uptodate">
-	<echo>Using Bootstrap congocc to regenerate congocc parser</echo>
- 	<java jar="bin/congocc.jar" fork="true" failonerror="true">
-     <assertions><enable/></assertions>
- 	   <arg line="-n -q -d ../java src/grammars/CongoCC.ccc"/>
- 	</java>
-</target>
-<target name="preprocessor-gen" depends="init" unless="preprocessor.uptodate">
-	<echo>Using Bootstrap congocc to regenerate preprocessor</echo>
- 	<java jar="bin/congocc.jar" fork="true" failonerror="true">
-     <assertions><enable/></assertions>
- 	   <arg line="-n -q -d ../../src/java examples/preprocessor/Preprocessor.ccc"/>
- 	</java>
-</target>
-<target name="ppline-gen" depends="init" unless="ppline.uptodate">
-	<echo>Using Bootstrap congocc to regenerate the PPDirectiveLine parser used for C#</echo>
- 	<java jar="bin/congocc.jar" fork="true" failonerror="true">
-     <assertions><enable/></assertions>
- 	   <arg line="-n -q -d ../../src/java examples/csharp/PPDirectiveLine.ccc"/>
- 	</java>
-</target>
-<target name="python-gen" depends="parser-gen" unless="python.uptodate">
-	<echo>Using Bootstrap congocc to regenerate internal python parser</echo>
- 	<java jar="bin/congocc.jar" fork="true" failonerror="true">
-     <assertions><enable/></assertions>
- 	   <arg line="-n -q -d ../../src/java src/grammars/PythonInternal.ccc"/>
- 	</java>
-</target>
-<target name="csharp-gen" depends="parser-gen" unless="csharp.uptodate">
-	<echo>Using Bootstrap congocc to regenerate internal C# parser</echo>
- 	<java jar="bin/congocc.jar" fork="true" failonerror="true">
-     <assertions><enable/></assertions>
- 	   <arg line="-n -q -d ../../src/java src/grammars/CSharpInternal.ccc"/>
- 	</java>
-</target>
+  <target name="parser-gen" depends="init" unless="parser.uptodate">
+    <echo>Using Bootstrap congocc to regenerate congocc parser</echo>
+    <java jar="bin/congocc.jar" fork="true" failonerror="true">
+      <assertions>
+        <enable />
+      </assertions>
+      <arg line="-n -q -d ../java src/grammars/CongoCC.ccc" />
+    </java>
+  </target>
+  <target name="preprocessor-gen" depends="init" unless="preprocessor.uptodate">
+    <echo>Using Bootstrap congocc to regenerate preprocessor</echo>
+    <java jar="bin/congocc.jar" fork="true" failonerror="true">
+      <assertions>
+        <enable />
+      </assertions>
+      <arg line="-n -q -d ../../src/java examples/preprocessor/Preprocessor.ccc" />
+    </java>
+  </target>
+  <target name="ppline-gen" depends="init" unless="ppline.uptodate">
+    <echo>Using Bootstrap congocc to regenerate the PPDirectiveLine parser used for C#</echo>
+    <java jar="bin/congocc.jar" fork="true" failonerror="true">
+      <assertions>
+        <enable />
+      </assertions>
+      <arg line="-n -q -d ../../src/java examples/csharp/PPDirectiveLine.ccc" />
+    </java>
+  </target>
+  <target name="python-gen" depends="parser-gen" unless="python.uptodate">
+    <echo>Using Bootstrap congocc to regenerate internal python parser</echo>
+    <java jar="bin/congocc.jar" fork="true" failonerror="true">
+      <assertions>
+        <enable />
+      </assertions>
+      <arg line="-n -q -d ../../src/java src/grammars/PythonInternal.ccc" />
+    </java>
+  </target>
+  <target name="csharp-gen" depends="parser-gen" unless="csharp.uptodate">
+    <echo>Using Bootstrap congocc to regenerate internal C# parser</echo>
+    <java jar="bin/congocc.jar" fork="true" failonerror="true">
+      <assertions>
+        <enable />
+      </assertions>
+      <arg line="-n -q -d ../../src/java src/grammars/CSharpInternal.ccc" />
+    </java>
+  </target>
 
-<target name="compile" depends="parser-gen,preprocessor-gen,python-gen,ppline-gen,csharp-gen">
-  	<mkdir dir="build"/>
+  <target name="compile" depends="parser-gen,preprocessor-gen,python-gen,ppline-gen,csharp-gen">
+    <mkdir dir="build" />
     <javac srcdir="src/java"
- 	       destdir="build"
- 	       deprecation="off"
- 	       debug="on"
- 	       optimize="off"
-    	   classpath="bin/freemarker.jar"
-	    failonerror="true"
-	    fork="true"
+      destdir="build"
+      deprecation="off"
+      debug="on"
+      optimize="off"
+      classpath="bin/freemarker.jar"
+      failonerror="true"
+      fork="true"
       includeantruntime="false"
-	    target="1.8" source="1.8"
+      target="1.8" source="1.8"
     />
-     <copy todir="build/templates/java">
+    <copy todir="build/templates/java">
       <fileset dir="src/templates/java">
-         <include name="*.ftl"/>
+        <include name="*.ftl" />
       </fileset>
     </copy>
     <copy todir="build/templates/python">
       <fileset dir="src/templates/python">
-         <include name="*.ftl"/>
+        <include name="*.ftl" />
       </fileset>
     </copy>
     <copy todir="build/templates/csharp">
       <fileset dir="src/templates/csharp">
-         <include name="*.ftl"/>
+        <include name="*.ftl" />
       </fileset>
     </copy>
     <copy todir="build/include/java">
       <fileset dir="examples/java">
-          <include name="*.ccc"/>
+        <include name="*.ccc" />
       </fileset>
     </copy>
     <copy todir="build/include/python">
       <fileset dir="examples/python">
-        <include name="*.ccc"/>
+        <include name="*.ccc" />
       </fileset>
     </copy>
     <copy todir="build/include/csharp">
       <fileset dir="examples/csharp">
-        <include name="*.ccc"/>
+        <include name="*.ccc" />
       </fileset>
     </copy>
     <copy todir="build/include/json">
       <fileset dir="examples/json">
-        <include name="*.ccc"/>
+        <include name="*.ccc" />
       </fileset>
     </copy>
     <copy todir="build/include/preprocessor">
       <fileset dir="examples/preprocessor">
-          <include name="*.ccc"/>
+        <include name="*.ccc" />
       </fileset>
     </copy>
     <copy todir="build/include/json">
       <fileset dir="examples/json">
-          <include name="*.ccc"/>
+        <include name="*.ccc" />
       </fileset>
     </copy>
-	<copy todir="build">
-	  <fileset dir="src/templates">
-	    <include name="*.properties"/>
-	  </fileset>
-	</copy>
- </target>
+    <copy todir="build">
+      <fileset dir="src/templates">
+        <include name="*.properties" />
+      </fileset>
+    </copy>
+  </target>
 
 
   <target name='docs'>
@@ -177,57 +193,56 @@
 
   <target name="test" depends="jar">
     <echo>Testing the JSON Parser</echo>
-    <ant antfile="build.xml" dir="examples/json" target="clean"/>
-    <ant antfile="build.xml" dir="examples/json" target="test"/>
+    <ant antfile="build.xml" dir="examples/json" target="clean" />
+    <ant antfile="build.xml" dir="examples/json" target="test" />
     <echo>Testing the Preprocessor</echo>
-    <ant antfile="build.xml" dir="examples/preprocessor" target="clean"/>
-    <ant antfile="build.xml" dir="examples/preprocessor" target="test"/>
+    <ant antfile="build.xml" dir="examples/preprocessor" target="clean" />
+    <ant antfile="build.xml" dir="examples/preprocessor" target="test" />
     <echo>Testing the CSharp parser standalone</echo>
-    <ant antfile="build.xml" dir="examples/csharp" target="clean"/>
-    <ant antfile="build.xml" dir="examples/csharp" target="test"/>
+    <ant antfile="build.xml" dir="examples/csharp" target="clean" />
+    <ant antfile="build.xml" dir="examples/csharp" target="test" />
     <echo>Testing the Java parser standalone</echo>
-    <ant antfile="build.xml" dir="examples/java" target="clean"/>
-    <ant antfile="build.xml" dir="examples/java" target="test"/>
+    <ant antfile="build.xml" dir="examples/java" target="clean" />
+    <ant antfile="build.xml" dir="examples/java" target="test" />
     <echo>Building the Python parser</echo>
-    <ant antfile="build.xml" dir="examples/python" target="clean"/>
-    <ant antfile="build.xml" dir="examples/python" target="test"/>
+    <ant antfile="build.xml" dir="examples/python" target="clean" />
+    <ant antfile="build.xml" dir="examples/python" target="test" />
     <echo>Testing the newer FreeMarker parser</echo>
-    <ant antfile="build.xml" dir="examples/freemarker" target="clean"/>
-    <ant antfile="build.xml" dir="examples/freemarker" target="test"/>
- </target>
+    <ant antfile="build.xml" dir="examples/freemarker" target="clean" />
+    <ant antfile="build.xml" dir="examples/freemarker" target="test" />
+  </target>
 
   <target name="test-java" depends="jar">
     <echo>Testing the Java parser standalone</echo>
-    <ant antfile="build.xml" dir="examples/java" target="clean"/>
-    <ant antfile="build.xml" dir="examples/java" target="test"/>
- </target>
+    <ant antfile="build.xml" dir="examples/java" target="clean" />
+    <ant antfile="build.xml" dir="examples/java" target="test" />
+  </target>
 
- <target name="jar" depends="compile">
+  <target name="jar" depends="compile">
     <echo>Creating basic jarfile, using this requires a freemarker.jar in the same directory</echo>
     <jar jarfile="congocc.jar" basedir="build" compress="true">
-        <manifest>
-            <attribute name="Main-Class" value="org.congocc.app.Main"/>
-            <attribute name="Class-Path" value="freemarker.jar bin/freemarker.jar"/>
-            <attribute name="Built-By" value="${user.name}"/>
-            <attribute name="Build-Date"   value="${timestamp}"/>
-        </manifest>
+      <manifest>
+        <attribute name="Main-Class" value="org.congocc.app.Main" />
+        <attribute name="Class-Path" value="freemarker.jar bin/freemarker.jar" />
+        <attribute name="Built-By" value="${user.name}" />
+        <attribute name="Build-Date" value="${timestamp}" />
+      </manifest>
     </jar>
-    <!--chmod file="congocc.jar" perm="+x"/-->
- </target>
+  </target>
 
- <target name="full-jar" depends="compile">
-	 <echo>Creating the "uber-jar" with all dependencies, i.e. the FreeMarker classes</echo>
+  <target name="full-jar" depends="compile">
+    <echo>Creating the "uber-jar" with all dependencies, i.e. the FreeMarker classes</echo>
     <jar jarfile="congocc-full.jar" compress="true">
-        <fileset dir="build"/>
-        <zipfileset includes="**/*.class" src="bin/freemarker.jar"/>
-        <manifest>
-            <attribute name="Main-Class" value="org.congocc.app.Main"/>
-            <attribute name="Built-By" value="${user.name}"/>
-            <attribute name="Build-Date"   value="${timestamp}"/>
-        </manifest>
+      <fileset dir="build" />
+      <zipfileset includes="**/*.class" src="bin/freemarker.jar" />
+      <manifest>
+        <attribute name="Main-Class" value="org.congocc.app.Main" />
+        <attribute name="Built-By" value="${user.name}" />
+        <attribute name="Build-Date" value="${timestamp}" />
+      </manifest>
     </jar>
-    <chmod file="congocc-full.jar" perm="+x"/>
-</target>
+    <chmod file="congocc-full.jar" perm="+x" />
+  </target>
 
   <target name="update-bootstrap">
     <!--
@@ -240,23 +255,23 @@
     <antcall target="clean"></antcall>
     <antcall target="jar"></antcall>
     <echo>Copying current jar to bootstrap location ...</echo>
-    <copy file="congocc.jar" todir="bin"/>
+    <copy file="congocc.jar" todir="bin" />
     <echo>Ensuring any generated code is up to date in the bootstrap jar ...</echo>
     <antcall target="clean"></antcall>
     <antcall target="jar"></antcall>
     <echo>Copying current jar to bootstrap location ...</echo>
-    <copy file="congocc.jar" todir="bin"/>
+    <copy file="congocc.jar" todir="bin" />
   </target>
 
   <target name="test-python" depends="jar">
     <exec executable="python3" dir="${basedir}" failonerror="true">
-      <arg line="-u python_tests.py"/>
+      <arg line="-u python_tests.py" />
     </exec>
   </target>
 
   <target name="test-csharp" depends="jar">
     <exec executable="python3" dir="${basedir}" failonerror="true">
-      <arg line="-u csharp_tests.py"/>
+      <arg line="-u csharp_tests.py" />
     </exec>
   </target>
 </project>

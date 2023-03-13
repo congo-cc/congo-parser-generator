@@ -157,11 +157,9 @@ public abstract class RegularExpression extends Expansion {
         return 1;
     }
 
-    public boolean isSingleToken() {return true;}
+    public boolean isSingleTokenLookahead() {return true;}
     
     abstract public boolean matchesEmptyString();
-
-    public boolean isAlwaysEntered() {return matchesEmptyString();}
 }
 
 
