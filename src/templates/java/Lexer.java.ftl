@@ -155,17 +155,30 @@ public class ${settings.lexerClassName} extends TokenSource
     }
 
   private final ${settings.baseTokenClassName} nextToken(int position) {
-      return nextToken(position, this, this.activeTokenTypes);
+      ${settings.baseTokenClassName} matchedToken = nextToken(position, this, this.activeTokenTypes, this.lexicalState);
+ [#if lexerData.hasLexicalStateTransitions]
+      doLexicalStateSwitch(matchedToken.getType());
+ [/#if]
+ [#if lexerData.hasTokenActions]
+      matchedToken = tokenLexicalActions(matchedToken, matchedType);
+ [/#if]
+ [#list grammar.lexerTokenHooks as tokenHookMethodName]
+    [#if tokenHookMethodName = "CommonTokenAction"]
+           ${tokenHookMethodName}(matchedToken);
+    [#else]
+            matchedToken = ${tokenHookMethodName}(matchedToken);
+    [/#if]
+ [/#list]
+      return matchedToken;
   }
 
 
 // The main method to invoke the NFA machinery
-  private final ${settings.baseTokenClassName} nextToken(int position, CharSequence input, EnumSet<TokenType> activeTokenTypes) {
+  private final ${settings.baseTokenClassName} nextToken(int position, CharSequence input, EnumSet<TokenType> activeTokenTypes, LexicalState lexicalState) {
   // The following two BitSets are used to store 
   // the current active NFA states in the core tokenization loop
       BitSet currentStates = new BitSet(${lexerData.maxNfaStates}),
              nextStates=new BitSet(${lexerData.maxNfaStates});
-      
       ${settings.baseTokenClassName} matchedToken = null;
       boolean inMore = false;
       StringBuilder invalidChars = null;
@@ -175,8 +188,9 @@ public class ${settings.lexerClassName} extends TokenSource
         int curChar=0, codePointsRead=0, matchedPos=0;
         TokenType matchedType = null;
         boolean reachedEnd = false;
-        if (input == this) {
-           position = nextUnignoredOffset(position);
+        if (input instanceof TokenSource) {
+            TokenSource ts = (TokenSource) input;
+            position = ts.nextUnignoredOffset(position);
         }
         if (!inMore) tokenBeginOffset = position;
         if (position < input.length()) {
@@ -204,8 +218,10 @@ public class ${settings.lexerClassName} extends TokenSource
                 currentStates = nextStates;
                 nextStates = temp;
                 nextStates.clear();
-                if (input == this)
-                    position = nextUnignoredOffset(position);
+                if (input instanceof TokenSource) {
+                    TokenSource ts = (TokenSource) input;
+                    position = ts.nextUnignoredOffset(position);
+                }
                 if (position < input.length()) {
                     curChar = Character.codePointAt(input, position++);
                     if (curChar > 0xFFFF) position++;
@@ -257,40 +273,34 @@ public class ${settings.lexerClassName} extends TokenSource
             matchedToken.setUnparsed(!regularTokens.contains(matchedType));
         }
      [#if lexerData.hasLexicalStateTransitions]
-       if (matchedType != null) doLexicalStateSwitch(matchedType);
-     [/#if]
-     [#if lexerData.hasTokenActions]
-       if (matchedToken !=null)
-        matchedToken = tokenLexicalActions(matchedToken, matchedType);
+       if (matchedToken == null && matchedType != null) {
+           LexicalState newState = tokenTypeToLexicalStateMap.get(matchedType);
+           if (newState !=null) lexicalState = newState;
+       }
      [/#if]
       }
- [#list grammar.lexerTokenHooks as tokenHookMethodName]
-    [#if tokenHookMethodName = "CommonTokenAction"]
-           ${tokenHookMethodName}(matchedToken);
-    [#else]
-            matchedToken = ${tokenHookMethodName}(matchedToken);
-    [/#if]
- [/#list]
       return matchedToken;
    }
 
-    private int backup(CharSequence input, int pos, int amount) {
+    private static int backup(CharSequence input, int pos, int amount) {
         for (int i = 0; i < amount; i++) {
             pos--;
-            if (input == this) {
-               while (isIgnored(pos)) pos--;
+            if (input instanceof TokenSource) {
+                TokenSource ts = (TokenSource) input;
+                while (ts.isIgnored(pos)) pos--;
             }
             if (Character.isLowSurrogate(input.charAt(pos))) pos--;
         }
         return pos;
     }
 
-    private int forward(CharSequence input, int pos, int amount) {
+    private static int forward(CharSequence input, int pos, int amount) {
         for (int i = 0; i < amount; i++) {
             if (Character.isHighSurrogate(input.charAt(pos))) pos++;
             pos++;
-            if (input == this) {
-              while (isIgnored(pos)) pos++;
+            if (input instanceof TokenSource) {
+              TokenSource ts = (TokenSource) input;
+              while (ts.isIgnored(pos)) pos++;
             }
         }
         return pos;

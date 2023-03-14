@@ -211,7 +211,7 @@ abstract public class TokenSource implements CharSequence
         return content.toString();
     }
 
-    protected final int nextUnignoredOffset(int offset) {
+    public final int nextUnignoredOffset(int offset) {
         while (offset<tokenLocationTable.length-1 && tokenLocationTable[offset] == IGNORED) {
             ++offset;
         } 
@@ -225,8 +225,8 @@ abstract public class TokenSource implements CharSequence
         }
     }
 
-    protected final boolean isIgnored(int offset) {
-      return tokenLocationTable[offset] == IGNORED;
+    public final boolean isIgnored(int offset) {
+        return tokenLocationTable[offset] == IGNORED;
     }
 
     protected final void cacheTokenAt(${BaseToken} tok, int offset) {
