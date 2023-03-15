@@ -272,7 +272,6 @@ public class LexerData {
         for (RegexpRef ref : grammar.descendants(RegexpRef.class)) {
             String label = ref.getLabel();
             if (grammar.getAppSettings().getExtraTokens().containsKey(label)) {
-                assert false;
                 continue;
             }
             RegularExpression referenced = namedTokensTable.get(label);
