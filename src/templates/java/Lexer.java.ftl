@@ -221,7 +221,7 @@ public class ${settings.lexerClassName} extends TokenSource
       // The core tokenization loop
       while (matchedToken == null) {
       [#if NFA.multipleLexicalStates]
-       // Get the NFA function table current lexical state
+       // Get the NFA function table for the current lexical state.
        // If we are in a MORE, there is some possibility that there 
        // was a lexical state change since the last iteration of this loop!
         NfaFunction[] nfaFunctions = functionTableMap.get(lexicalState);
@@ -229,10 +229,9 @@ public class ${settings.lexerClassName} extends TokenSource
         position = nextUnignoredOffset(position);
         if (!inMore) tokenBeginOffset = position;
         MatchInfo matchInfo = getMatchInfo(this, position, activeTokenTypes, nfaFunctions);
-        int matchLength = matchInfo.matchLength;
         TokenType matchedType = matchInfo.matchedType;
         inMore = moreTokens.contains(matchedType);
-        position += matchLength;
+        position += matchInfo.matchLength;
      [#if lexerData.hasLexicalStateTransitions]
         LexicalState newState = tokenTypeToLexicalStateMap.get(matchedType);
         if (newState !=null) {
@@ -244,6 +243,7 @@ public class ${settings.lexerClassName} extends TokenSource
                 invalidChars=new StringBuilder();
             } 
             int cp  = Character.codePointAt(this, tokenBeginOffset);
+            invalidChars.appendCodePoint(cp);
             ++position;
             if (cp >0xFFFF) ++position;
             continue;
