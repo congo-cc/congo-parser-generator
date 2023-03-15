@@ -220,6 +220,7 @@ public class ${settings.lexerClassName} extends TokenSource
       boolean inMore = false;
       StringBuilder invalidChars = null;
       ${TOKEN} matchedToken = null;
+      TokenType matchedType = null;
       // The core tokenization loop
       while (matchedToken == null) {
       [#if NFA.multipleLexicalStates]
@@ -231,7 +232,7 @@ public class ${settings.lexerClassName} extends TokenSource
         position = nextUnignoredOffset(position);
         if (!inMore) tokenBeginOffset = position;
         MatchInfo matchInfo = getMatchInfo(this, position, activeTokenTypes, nfaFunctions);
-        TokenType matchedType = matchInfo.matchedType;
+        matchedType = matchInfo.matchedType;
         inMore = moreTokens.contains(matchedType);
         position += matchInfo.matchLength;
      [#if lexerData.hasLexicalStateTransitions]
