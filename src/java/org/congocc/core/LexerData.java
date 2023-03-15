@@ -19,7 +19,7 @@ public class LexerData {
     private List<LexicalStateData> lexicalStates = new ArrayList<>();
     private List<RegularExpression> regularExpressions = new ArrayList<>();
 
-    private Map<String, RegularExpression> namedTokensTable = new LinkedHashMap<>();
+    private Map<String, RegularExpression> namedTokensTable = new HashMap<>();
     private Set<RegularExpression> overriddenTokens = new HashSet<>();
 
     public LexerData(Grammar grammar) {
@@ -42,7 +42,7 @@ public class LexerData {
         return lexicalStates.get(index).getName();
     }
 
-    public void addLexicalState(String name) {
+    void addLexicalState(String name) {
         lexicalStates.add(new LexicalStateData(grammar, name));
     }
 
@@ -53,10 +53,6 @@ public class LexerData {
             }
         }
         return null;
-    }
-
-    public LexicalStateData getDefaultLexicalState() {
-        return lexicalStates.get(0);
     }
 
     public int getMaxNfaStates() {
@@ -118,6 +114,34 @@ public class LexerData {
             }
         }
     }
+
+    static int compare(RegularExpression first, RegularExpression second) {
+        if (first instanceof RegexpStringLiteral && !(second instanceof RegexpStringLiteral)) {
+            return -1;
+        }
+        if (second instanceof RegexpStringLiteral && !(first instanceof RegexpStringLiteral)) {
+            return 1;
+        }
+        if (first instanceof RegexpStringLiteral && second instanceof RegexpStringLiteral) {
+            if (first.getLiteralString().equalsIgnoreCase(second.getLiteralString())) {
+                if (first.getIgnoreCase() && !second.getIgnoreCase()) {
+                    return 1;
+                }
+                if (second.getIgnoreCase() && !first.getIgnoreCase()) {
+                    return -1;
+                }
+            }
+        }
+        return first.getOrdinal() - second.getOrdinal();
+    }
+
+    void reorder() {
+        Collections.sort(regularExpressions, LexerData::compare);
+        for (int i=0; i< regularExpressions.size(); i++) {
+            regularExpressions.get(i).setOrdinal(i);
+        }
+    }
+    
 
     static public boolean isJavaIdentifier(String s) {
         return !s.isEmpty() && Character.isJavaIdentifierStart(s.codePointAt(0))
@@ -185,16 +209,7 @@ public class LexerData {
         return result;
     }
 
-    /**
-     * This is a symbol table that contains all named tokens (those that are defined
-     * with a label). The index to the table is the image of the label and the
-     * contents of the table are of type "RegularExpression".
-     */
-    public RegularExpression getNamedToken(String name) {
-        return namedTokensTable.get(name);
-    }
-
-    public void addNamedToken(String name, RegularExpression regexp) {
+    private void addNamedToken(String name, RegularExpression regexp) {
         if (namedTokensTable.containsKey(name)) {
             RegularExpression oldValue = namedTokensTable.get(name);
             namedTokensTable.replace(name, oldValue, regexp);
@@ -207,23 +222,18 @@ public class LexerData {
         return overriddenTokens.contains(regexp);
     }
 
-    /**
-     * Contains the same entries as "namedTokensTable", but this is an ordered list
-     * which is ordered by the order of appearance in the input file. (Actually, the
-     * only place where this is used is in generating the TokenType enum)
-     */
     public List<RegularExpression> getOrderedNamedTokens() {
         return new ArrayList<RegularExpression>(namedTokensTable.values());
     }
 
     // This method still really needs to be cleaned up!
-    public void buildData() {
+    void buildData() {
         for (TokenProduction tp : grammar.descendants(TokenProduction.class)) {
             for (RegexpSpec res : tp.getRegexpSpecs()) {
                 RegularExpression re = res.getRegexp();
                 if (re.hasLabel()) {
                     String label = re.getLabel();
-                    RegularExpression regexp = getNamedToken(label);
+                    RegularExpression regexp = namedTokensTable.get(label);
                     if (regexp != null) {
                         errors.addInfo(res.getRegexp(), "Token name \"" + label + " is redefined.");
                     }
@@ -256,13 +266,16 @@ public class LexerData {
                 }
             }
         }
+        //reorder();
         ensureRegexpLabels();
         resolveStringLiterals();
         for (RegexpRef ref : grammar.descendants(RegexpRef.class)) {
             String label = ref.getLabel();
-            if (grammar.getAppSettings().getExtraTokens().containsKey(label))
+            if (grammar.getAppSettings().getExtraTokens().containsKey(label)) {
+                assert false;
                 continue;
-            RegularExpression referenced = getNamedToken(label);
+            }
+            RegularExpression referenced = namedTokensTable.get(label);
             if (referenced == null) {
                 errors.addError(ref, "Undefined lexical token name \"" + label + "\".");
             } else if (ref.getTokenProduction() == null) {

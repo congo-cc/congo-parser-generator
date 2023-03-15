@@ -83,7 +83,7 @@ public abstract class RegularExpression extends Expansion {
         return id;
     }
 
-    public final void setOrdinal(int id) {
+    protected final void setOrdinal(int id) {
         this.id = id;
     }
 
