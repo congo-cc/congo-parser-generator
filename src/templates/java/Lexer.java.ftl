@@ -58,6 +58,7 @@ public class ${settings.lexerClassName} extends TokenSource
      [#if lexicalState_has_next],[/#if]
   [/#list]
  }  
+   LexicalState lexicalState = LexicalState.values()[0];
  [#if settings.lexerUsesParser]
   public ${settings.parserClassName} parser;
  [/#if]
@@ -87,22 +88,19 @@ public class ${settings.lexerClassName} extends TokenSource
   // Tokens that correspond to a MORE, i.e. that are pending 
   // additional input
   [@EnumSet "moreTokens" lexerData.moreTokens.tokenNames /]
-
-
    
-  public ${settings.lexerClassName}(CharSequence input) {
-    this("input", input);
-  }
+    public ${settings.lexerClassName}(CharSequence input) {
+        this("input", input);
+    }
 
-
-     /**
-      * @param inputSource just the name of the input source (typically the filename)
-      * that will be used in error messages and so on.
-      * @param input the input
-      */
-     public ${settings.lexerClassName}(String inputSource, CharSequence input) {
+    /**
+     * @param inputSource just the name of the input source (typically the filename)
+     * that will be used in error messages and so on.
+     * @param input the input
+     */
+    public ${settings.lexerClassName}(String inputSource, CharSequence input) {
         this(inputSource, input, LexicalState.${lexerData.lexicalStates[0].name}, 1, 1);
-     }
+    }
 
      /**
       * @param inputSource just the name of the input source (typically the filename) that 
@@ -135,7 +133,7 @@ public class ${settings.lexerClassName} extends TokenSource
    */ 
     public ${settings.baseTokenClassName} getNextToken(${settings.baseTokenClassName} tok) {
        if (tok == null) {
-          tok = nextToken(0);
+          tok = tokenAt(0);
           cacheToken(tok);
           return tok;
        }
@@ -147,98 +145,113 @@ public class ${settings.lexerClassName} extends TokenSource
            cachedToken = null;
        }
        if (cachedToken == null) {
-           ${settings.baseTokenClassName} token = nextToken(tok.getEndOffset());
+           ${settings.baseTokenClassName} token = tokenAt(tok.getEndOffset());
            cacheToken(token);
            return token;
        }
        return cachedToken;
     }
 
-  // The following two BitSets are used to store 
-  // the current active NFA states in the core tokenization loop
-  private BitSet currentStates = new BitSet(${lexerData.maxNfaStates});
-  private BitSet nextStates=new BitSet(${lexerData.maxNfaStates});
+  static class MatchInfo {
+      TokenType matchedType;
+      int matchLength;
 
+      MatchInfo(TokenType matchedType, int matchLength) {
+          this.matchedType = matchedType;
+          this.matchLength = matchLength;
+      }
+  }
 
-// The main method to invoke the NFA machinery
-  private final ${settings.baseTokenClassName} nextToken(int position) {
-      ${settings.baseTokenClassName} matchedToken = null;
-      boolean inMore = false;
-      StringBuilder invalidChars = null;
-      int tokenBeginOffset = position;
-      // The core tokenization loop
-      while (matchedToken == null) {
-        int curChar=0, codePointsRead=0, matchedPos=0;
-        TokenType matchedType = null;
-        boolean reachedEnd = false;
-        position = nextUnignoredOffset(position);
-        if (!inMore) tokenBeginOffset = position;
-        if (position < length()) {
-            curChar = codePointAt(position++);
-            if (curChar > 0xFFFF) position++;
-        } else {
-            reachedEnd = true;
-            if (!inMore && invalidChars == null) matchedType = EOF;
-            else matchedType = INVALID;
-        }
-      [#if NFA.multipleLexicalStates]
-       // Get the NFA function table current lexical state
-       // There is some possibility that there was a lexical state change
-       // since the last iteration of this loop!
-        NfaFunction[] nfaFunctions = functionTableMap.get(lexicalState);
-      [/#if]
+  /**
+   * Core tokenization method. Note that this can be called from a static context.
+   * Hence the extra parameters that need to be passed in.
+   */
+  static MatchInfo getMatchInfo(CharSequence input, int position, EnumSet<TokenType> activeTokenTypes, NfaFunction[] nfaFunctions) {
+       if (position >= input.length()) {
+          return new MatchInfo(EOF, 0);
+       }
+       int start = position, matchLength = 0;
+       TokenType matchedType = null;
+       BitSet currentStates = new BitSet(${lexerData.maxNfaStates}),
+              nextStates=new BitSet(${lexerData.maxNfaStates});
         // the core NFA loop
-        if (!reachedEnd) do {
+        do {
             // Holder for the new type (if any) matched on this iteration
-            TokenType newType = null;
-            if (codePointsRead > 0) {
+            if (position > start) {
                 // What was nextStates on the last iteration 
                 // is now the currentStates!
                 BitSet temp = currentStates;
                 currentStates = nextStates;
                 nextStates = temp;
-                position = nextUnignoredOffset(position);
-                if (position < length()) {
-                    curChar = codePointAt(position++);
-                    if (curChar > 0xFFFF) position++;
-                } else {
-                    reachedEnd = true;
-                    break;
+                nextStates.clear();
+                if (input instanceof TokenSource) {
+                    position = ((TokenSource) input).nextUnignoredOffset(position);
                 }
+            } else {
+                currentStates.set(0);
             }
-            nextStates.clear();
-            int nextActive = codePointsRead == 0 ? 0 : currentStates.nextSetBit(0);
-            do {
+            if (position >= input.length()) {
+                break;
+            }
+            int curChar = Character.codePointAt(input, position++);
+            if (curChar > 0xFFFF) position++;
+            int nextActive = currentStates.nextSetBit(0);
+            while(nextActive != -1) {
                 TokenType returnedType = nfaFunctions[nextActive].apply(curChar, nextStates, activeTokenTypes);
-                if (returnedType != null && (newType == null || returnedType.ordinal() < newType.ordinal())) {
-                    newType = returnedType;
+                if (returnedType != null && (position - start > matchLength || returnedType.ordinal() < matchedType.ordinal())) {
+                    matchedType = returnedType;
+                    matchLength = position - start;
                 }
-                nextActive = codePointsRead == 0 ? -1 : currentStates.nextSetBit(nextActive+1);
-            } while (nextActive != -1);
-            ++codePointsRead;
-            if (newType != null) {
-                matchedType = newType;
-                inMore = moreTokens.contains(matchedType);
-                matchedPos= codePointsRead;
+                nextActive = currentStates.nextSetBit(nextActive+1);
             }
-        } while (!nextStates.isEmpty());
+            if (position >= input.length()) break;
+       } while (!nextStates.isEmpty());
+       return new MatchInfo(matchedType, matchLength);
+  }
+
+  /**
+   * @param position The position at which to tokenize.
+   * @return the Token at position
+   */
+  final ${settings.baseTokenClassName} tokenAt(int position) {
+      int tokenBeginOffset = position;
+      boolean inMore = false;
+      StringBuilder invalidChars = null;
+      ${settings.baseTokenClassName} matchedToken = null;
+      // The core tokenization loop
+      while (matchedToken == null) {
+      [#if NFA.multipleLexicalStates]
+       // Get the NFA function table for the current lexical state.
+       // If we are in a MORE, there is some possibility that there 
+       // was a lexical state change since the last iteration of this loop!
+        NfaFunction[] nfaFunctions = functionTableMap.get(lexicalState);
+      [/#if]
+        position = nextUnignoredOffset(position);
+        if (!inMore) tokenBeginOffset = position;
+        MatchInfo matchInfo = getMatchInfo(this, position, activeTokenTypes, nfaFunctions);
+        TokenType matchedType = matchInfo.matchedType;
+        inMore = moreTokens.contains(matchedType);
+        position += matchInfo.matchLength;
+     [#if lexerData.hasLexicalStateTransitions]
+        LexicalState newState = tokenTypeToLexicalStateMap.get(matchedType);
+        if (newState !=null) {
+            this.lexicalState = newState;
+        }
+     [/#if]
         if (matchedType == null) {
             if (invalidChars==null) {
                 invalidChars=new StringBuilder();
             } 
-            invalidChars.appendCodePoint(codePointAt(tokenBeginOffset));
-            position = forward(tokenBeginOffset, 1);
+            int cp  = Character.codePointAt(this, tokenBeginOffset);
+            invalidChars.appendCodePoint(cp);
+            ++position;
+            if (cp >0xFFFF) ++position;
             continue;
-        }
-        if (matchedType == INVALID) {
-           return new InvalidToken(this, tokenBeginOffset, position);
         }
         if (invalidChars !=null) {
             position = tokenBeginOffset;
-            int numCodePoints = invalidChars.codePointCount(0, invalidChars.length());
-            return new InvalidToken(this, backup(tokenBeginOffset, numCodePoints), tokenBeginOffset);
+            return new InvalidToken(this, tokenBeginOffset - invalidChars.length(), tokenBeginOffset);
         }
-        position = backup(position, codePointsRead - matchedPos);
         if (skippedTokens.contains(matchedType)) {
             skipTokens(tokenBeginOffset, position);
         }
@@ -249,14 +262,13 @@ public class ${settings.lexerClassName} extends TokenSource
                                         position);
             matchedToken.setUnparsed(!regularTokens.contains(matchedType));
         }
-     [#if lexerData.hasLexicalStateTransitions]
-       if (matchedType != null) doLexicalStateSwitch(matchedType);
-     [/#if]
-     [#if lexerData.hasTokenActions]
-       if (matchedToken !=null)
-        matchedToken = tokenLexicalActions(matchedToken, matchedType);
-     [/#if]
       }
+[#if lexerData.hasLexicalStateTransitions]
+      doLexicalStateSwitch(matchedToken.getType());
+ [/#if]
+ [#if lexerData.hasTokenActions]
+      matchedToken = tokenLexicalActions(matchedToken, matchedType);
+ [/#if]
  [#list grammar.lexerTokenHooks as tokenHookMethodName]
     [#if tokenHookMethodName = "CommonTokenAction"]
            ${tokenHookMethodName}(matchedToken);
@@ -264,29 +276,9 @@ public class ${settings.lexerClassName} extends TokenSource
             matchedToken = ${tokenHookMethodName}(matchedToken);
     [/#if]
  [/#list]
-      return matchedToken;
+       return matchedToken;
    }
 
-    private int backup(int pos, int amount) {
-        for (int i = 0; i < amount; i++) {
-            pos--;
-            while (isIgnored(pos)) pos--;
-            if (Character.isLowSurrogate(charAt(pos))) pos--;
-        }
-        return pos;
-    }
-
-    private int forward(int pos, int amount) {
-        for (int i = 0; i < amount; i++) {
-            if (Character.isHighSurrogate(charAt(pos))) pos++;
-            pos++;
-            while (isIgnored(pos)) pos++;
-        }
-        return pos;
-    }
-
-
-   LexicalState lexicalState = LexicalState.values()[0];
 
 [#if lexerData.hasLexicalStateTransitions]
   // Generate the map for lexical state transitions from the various token types
