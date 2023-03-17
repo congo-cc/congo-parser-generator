@@ -191,8 +191,8 @@ public class Grammar extends BaseNode {
         return descendants(Expansion.class, exp->exp.getParent() instanceof Assertion);
     }
 
-    public List<Expansion> getExpansionsNeedingPredicate() {
-        return descendants(Expansion.class, Expansion::getRequiresPredicateMethod);
+    public List<ExpansionSequence> getExpansionsNeedingPredicate() {
+        return descendants(ExpansionSequence.class, ExpansionSequence::getRequiresPredicateMethod);
     }
 
     public List<Expansion> getExpansionsNeedingRecoverMethod() {

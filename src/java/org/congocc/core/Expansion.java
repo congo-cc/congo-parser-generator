@@ -191,16 +191,6 @@ abstract public class Expansion extends BaseNode {
 
     }
 
-    public final boolean getRequiresPredicateMethod() {
-        if (!isAtChoicePoint()) {
-            return false;
-        }
-        return getLookahead() != null 
-            || getHasImplicitSyntacticLookahead() 
-            || startsWithGlobalCodeAction() 
-            || startsWithLexicalChange();
-    }
-
     public Lookahead getLookahead() {return null;}
 
     public Expansion getLookaheadExpansion() { return this; }
@@ -223,6 +213,10 @@ abstract public class Expansion extends BaseNode {
 
     public int getLookaheadAmount() {
          return 1;
+    }
+
+    public boolean getRequiresPredicateMethod() {
+        return false;
     }
 
     public boolean getHasSemanticLookahead() {

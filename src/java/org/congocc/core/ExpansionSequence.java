@@ -39,7 +39,7 @@ public class ExpansionSequence extends Expansion {
     public TokenSet getFirstSet() {
         if (firstSet == null) {
             firstSet = new TokenSet(getGrammar());
-            for (Expansion child : getUnits()) {
+            for (Expansion child : allUnits()) {
                 firstSet.or(child.getFirstSet());
                 if (!child.isPossiblyEmpty()) {
                     break;
@@ -183,7 +183,7 @@ public class ExpansionSequence extends Expansion {
     @Override
     public boolean potentiallyStartsWith(String productionName, Set<String> alreadyVisited) {
         boolean result = false;
-        for (Expansion unit : getUnits()) {
+        for (Expansion unit : allUnits()) {
             if (unit.potentiallyStartsWith(productionName, alreadyVisited)) result = true;
             if (!unit.isPossiblyEmpty()) break;
         }
@@ -275,7 +275,7 @@ public class ExpansionSequence extends Expansion {
     @Override
     public boolean isSingleTokenLookahead() {
         if (!super.isSingleTokenLookahead()) return false;
-        for (Expansion exp : childrenOfType(Expansion.class)) {
+        for (Expansion exp : allUnits()) {
             // This is mostly in order to recurse into any NonTerminals 
             // in the expansion sequence.
             if (exp.getMaximumSize() == 1 && !exp.isSingleTokenLookahead()) return false;
@@ -300,9 +300,26 @@ public class ExpansionSequence extends Expansion {
 
     @Override
     public boolean startsWithGlobalCodeAction() {
-        for (Expansion exp : childrenOfType(Expansion.class)) {
+        for (Expansion exp : allUnits()) {
             if (exp.startsWithGlobalCodeAction()) return true;
             if (!exp.isPossiblyEmpty()) break;
+        }
+        return false;
+    }
+
+    public final boolean getRequiresPredicateMethod() {
+        if (!isAtChoicePoint()) {
+            return false;
+        }
+        return getLookahead() != null && getLookahead().getRequiresScanAhead()
+            || getHasImplicitSyntacticLookahead() 
+            || startsWithGlobalCodeAction() 
+            || startsWithLexicalChange();
+    }
+
+    public boolean isFailure() {
+        for (Expansion exp : allUnits()) {
+            if (exp instanceof Failure) return true;
         }
         return false;
     }

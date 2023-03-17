@@ -92,7 +92,7 @@ public class LexicalStateData {
             processTokenProduction(tp);
         }
         if (regularExpressions.isEmpty()) {
-            errors.addWarning("Warning: Lexical State " + getName() + " does not contain any token types!");
+//            errors.addWarning("Warning: Lexical State " + getName() + " does not contain any token types!");
         }
         generateData();
     }

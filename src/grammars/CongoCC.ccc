@@ -1390,9 +1390,10 @@ INJECT ExpansionChoice :
     protected int getMinimumSize(Set<String> usedNonTerminals) {
         int result = Integer.MAX_VALUE;
         for (ExpansionSequence choice : getChoices()) {
-           int choiceMin = choice.getMinimumSize(usedNonTerminals);
-           if (choiceMin ==0) return 0;
-           result = Math.min(result, choiceMin);
+            if (choice.isFailure()) continue; // REVISIT
+            int choiceMin = choice.getMinimumSize(usedNonTerminals);
+            if (choiceMin ==0) return 0;
+            result = Math.min(result, choiceMin);
         }
         return result;
     }
@@ -1962,12 +1963,10 @@ INJECT Failure :
    extends org.congocc.core.EmptyExpansion
 {
     @Property Expression exp;
+    
     public CodeBlock getCode() {
         return firstChildOfType(CodeBlock.class);
     }
-
-    @Override 
-    public boolean startsWithGlobalCodeAction() {return true;}    
 }
 
 LexicalStateSwitch : "LEXICAL_STATE" <IDENTIFIER> ;
