@@ -239,7 +239,7 @@ public boolean isCancelled() {return cancelled;}
     if (currentLookaheadToken == null) {
       throw new ParseException(message, parsingStack);
     }
-    this.hitFailure = true;
+    hitFailure = true;
   }
 
   private static HashMap<TokenType[], EnumSet<TokenType>> enumSetCache = new HashMap<>();
