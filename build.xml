@@ -165,15 +165,15 @@
   <target name="full-jar" depends="compile">
     <echo>Creating the "uber-jar" with all dependencies, i.e. the FreeMarker classes</echo>
     <jar jarfile="congocc-full.jar" compress="true" excludes="**/*.java">
-      <fileset dir="build" />
-      <zipfileset includes="**/*.class" src="bin/freemarker.jar" />
+      <fileset dir="build" includes="include/,org/,templates"/>
+     <zipfileset includes="**/*.class" src="bin/freemarker.jar" />
       <manifest>
         <attribute name="Main-Class" value="org.congocc.app.Main" />
         <attribute name="Built-By" value="${user.name}" />
         <attribute name="Build-Date" value="${timestamp}" />
       </manifest>
     </jar>
-  </target>
+  </target>  
 
   <target name="update-bootstrap">
     <!--
