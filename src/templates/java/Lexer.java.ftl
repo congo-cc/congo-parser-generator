@@ -186,9 +186,11 @@ public class ${settings.lexerClassName} extends TokenSource
                 currentStates = nextStates;
                 nextStates = temp;
                 nextStates.clear();
+    [#if settings.usesPreprocessor]
                 if (input instanceof TokenSource) {
                     position = ((TokenSource) input).nextUnignoredOffset(position);
                 }
+    [/#if]                
             } else {
                 currentStates.set(0);
             }
@@ -229,7 +231,9 @@ public class ${settings.lexerClassName} extends TokenSource
        // was a lexical state change since the last iteration of this loop!
         NfaFunction[] nfaFunctions = functionTableMap.get(lexicalState);
       [/#if]
+[#if settings.usesPreprocessor]      
         position = nextUnignoredOffset(position);
+[/#if]        
         if (!inMore) tokenBeginOffset = position;
         MatchInfo matchInfo = getMatchInfo(this, position, activeTokenTypes, nfaFunctions);
         matchedType = matchInfo.matchedType;

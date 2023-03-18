@@ -21,7 +21,6 @@ import org.congocc.parser.Node;
 /**
  * Class to hold the various application settings
  */
-
 public class AppSettings {
 
     private static Pattern extraTokenPattern = Pattern.compile("^(\\w+)(#\\w+)?$");
@@ -531,6 +530,7 @@ public class AppSettings {
     }
 
     public boolean getUsesPreprocessor() {
+        if (getCppContinuationLine()) return true;
         Boolean b = (Boolean) settings.get("USES_PREPROCESSOR");
         return b != null && b;
     }

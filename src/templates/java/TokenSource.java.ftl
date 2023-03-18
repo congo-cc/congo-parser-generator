@@ -30,9 +30,14 @@ abstract public class TokenSource implements CharSequence
 
    protected int getTabSize() {return tabSize;}
 
+[#if settings.usesPreprocessor]
    // Just a dummy token value that we put in the tokenLocationTable
    // to indicate that this location in the file is ignored.
-    private static final ${BaseToken} IGNORED = new ${settings.baseTokenClassName}(), SKIPPED=new ${settings.baseTokenClassName}();
+    private static final ${BaseToken} IGNORED = new ${settings.baseTokenClassName}();
+[/#if]    
+    // A dummy token value that we use to indicate that a token location is skipped.    
+    private static final ${BaseToken} SKIPPED=new ${settings.baseTokenClassName}();
+
 // Just a very simple, bloody minded approach, just store the
 // token objects in a table where the offsets are the code unit 
 // positions in the content buffer. If the token at a given offset is
@@ -180,7 +185,11 @@ abstract public class TokenSource implements CharSequence
 
     protected final void skipTokens(int begin, int end) {
       for (int i=begin; i< end; i++) {
+[#if settings.usesPreprocessor]        
           if (tokenLocationTable[i] != IGNORED) tokenLocationTable[i] = SKIPPED;
+[#else]          
+          tokenLocationTable[i] = SKIPPED;
+[/#if]          
       }
     }
 
@@ -200,6 +209,7 @@ abstract public class TokenSource implements CharSequence
         return content.toString();
     }
 
+[#if settings.usesPreprocessor]
     public final int nextUnignoredOffset(int offset) {
         while (offset<tokenLocationTable.length-1 && tokenLocationTable[offset] == IGNORED) {
             ++offset;
@@ -217,67 +227,6 @@ abstract public class TokenSource implements CharSequence
     public final boolean isIgnored(int offset) {
         return tokenLocationTable[offset] == IGNORED;
     }
-
-    protected final void cacheTokenAt(${BaseToken} tok, int offset) {
-        if (!isIgnored(offset)) {
-             tokenOffsets.set(offset);
-             tokenLocationTable[offset] = tok;
-        }
-    }
-
-    protected void uncacheTokens(${BaseToken} lastToken) {
-        int endOffset = lastToken.getEndOffset();
-        if (endOffset < tokenOffsets.length()) {
-            tokenOffsets.clear(lastToken.getEndOffset(), tokenOffsets.length());
-        }
-    }
-
-    public ${BaseToken} nextCachedToken(int offset) {
-        int nextOffset = tokenOffsets.nextSetBit(offset);
-	      return nextOffset != -1 ? tokenLocationTable[nextOffset] : null;
-    } 
-
-    public ${BaseToken} previousCachedToken(int offset) {
-        int prevOffset = tokenOffsets.previousSetBit(offset-1);
-        return prevOffset == -1 ? null : tokenLocationTable[prevOffset];
-    }
-
-    /**
-     * This is used in conjunction with having a preprocessor.
-     * We set which lines are actually parsed lines and the 
-     * unset ones are ignored. 
-     * @param parsedLines a #java.util.BitSet that holds which lines
-     * are parsed (i.e. not ignored)
-     */
-    private void setParsedLines(BitSet parsedLines, boolean reversed) {
-        for (int i=0; i < lineOffsets.length; i++) {
-            boolean turnOffLine = !parsedLines.get(i+1);
-            if (reversed) turnOffLine = !turnOffLine;
-            if (turnOffLine) {
-                int lineOffset = lineOffsets[i];
-                int nextLineOffset = i < lineOffsets.length -1 ? lineOffsets[i+1] : content.length();
-                setIgnoredRange(lineOffset, nextLineOffset);
-            }
-        }
-    }
-
-    // Just use the canned binary search to check whether the char
-    // is in one of the intervals
-    static protected boolean checkIntervals(int[] ranges, int ch) {
-      int result = Arrays.binarySearch(ranges, ch);
-      return result >=0 || result%2 == 0;
-    }
-
-    /**
-     * This is used in conjunction with having a preprocessor.
-     * We set which lines are actually parsed lines and the 
-     * unset ones are ignored. 
-     * @param parsedLines a #java.util.BitSet that holds which lines
-     * are parsed (i.e. not ignored)
-     */
-    public void setParsedLines(BitSet parsedLines) {setParsedLines(parsedLines,false);}
-
-    public void setUnparsedLines(BitSet unparsedLines) {setParsedLines(unparsedLines,true);}
 
     protected void handleCContinuationLines() {
       String input = content.toString();
@@ -298,6 +247,70 @@ abstract public class TokenSource implements CharSequence
        tok.setBeginOffset(start);
        tok.setEndOffset(end);
     }
+
+[/#if]
+
+    protected final void cacheTokenAt(${BaseToken} tok, int offset) {
+         tokenOffsets.set(offset);
+         tokenLocationTable[offset] = tok;
+    }
+
+    protected void uncacheTokens(${BaseToken} lastToken) {
+        int endOffset = lastToken.getEndOffset();
+        if (endOffset < tokenOffsets.length()) {
+            tokenOffsets.clear(lastToken.getEndOffset(), tokenOffsets.length());
+        }
+    }
+
+    public ${BaseToken} nextCachedToken(int offset) {
+        int nextOffset = tokenOffsets.nextSetBit(offset);
+	      return nextOffset != -1 ? tokenLocationTable[nextOffset] : null;
+    } 
+
+    public ${BaseToken} previousCachedToken(int offset) {
+        int prevOffset = tokenOffsets.previousSetBit(offset-1);
+        return prevOffset == -1 ? null : tokenLocationTable[prevOffset];
+    }
+
+[#if settings.usesPreprocessor]
+    /**
+     * This is used in conjunction with having a preprocessor.
+     * We set which lines are actually parsed lines and the 
+     * unset ones are ignored. 
+     * @param parsedLines a #java.util.BitSet that holds which lines
+     * are parsed (i.e. not ignored)
+     */
+    private void setParsedLines(BitSet parsedLines, boolean reversed) {
+        for (int i=0; i < lineOffsets.length; i++) {
+            boolean turnOffLine = !parsedLines.get(i+1);
+            if (reversed) turnOffLine = !turnOffLine;
+            if (turnOffLine) {
+                int lineOffset = lineOffsets[i];
+                int nextLineOffset = i < lineOffsets.length -1 ? lineOffsets[i+1] : content.length();
+                setIgnoredRange(lineOffset, nextLineOffset);
+            }
+        }
+    }
+
+    /**
+     * This is used in conjunction with having a preprocessor.
+     * We set which lines are actually parsed lines and the 
+     * unset ones are ignored. 
+     * @param parsedLines a #java.util.BitSet that holds which lines
+     * are parsed (i.e. not ignored)
+     */
+    public void setParsedLines(BitSet parsedLines) {setParsedLines(parsedLines,false);}
+
+    public void setUnparsedLines(BitSet unparsedLines) {setParsedLines(unparsedLines,true);}
+[/#if]    
+
+    // Just use the canned binary search to check whether the char
+    // is in one of the intervals
+    static protected boolean checkIntervals(int[] ranges, int ch) {
+      int result = Arrays.binarySearch(ranges, ch);
+      return result >=0 || result%2 == 0;
+    }
+
 
 
     /**
@@ -427,6 +440,9 @@ abstract public class TokenSource implements CharSequence
      * and endOffset(exclusive)
      */
     public String getText(int startOffset, int endOffset) {
+[#if !settings.usesPreprocessor]        
+        return subSequence(startOffset, endOffset).toString();
+[#else]        
         StringBuilder buf = new StringBuilder();
         for (int offset = startOffset; offset < endOffset; offset++) {
             if (!isIgnored(offset)) {
@@ -434,6 +450,7 @@ abstract public class TokenSource implements CharSequence
             }
         }
         return buf.toString();
+[/#if]        
     }
 
   // The source of the raw characters that we are scanning  
