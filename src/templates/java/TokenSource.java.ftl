@@ -228,6 +228,18 @@ abstract public class TokenSource implements CharSequence
         return tokenLocationTable[offset] == IGNORED;
     }
 
+    protected void setLineSkipped(${BaseToken} tok) {
+       int lineNum = tok.getBeginLine();
+       int start = getLineStartOffset(lineNum);
+       int end = getLineStartOffset(lineNum+1);
+       setIgnoredRange(start, end);
+       tok.setBeginOffset(start);
+       tok.setEndOffset(end);
+    }
+
+[/#if]
+
+[#if settings.cppContinuationLine]
     protected void handleCContinuationLines() {
       String input = content.toString();
       for (int offset = input.indexOf('\\'); offset >=0; offset = input.indexOf('\\', offset+1)) {
@@ -238,16 +250,6 @@ abstract public class TokenSource implements CharSequence
           } 
       }
     }
-
-    protected void setLineSkipped(${BaseToken} tok) {
-       int lineNum = tok.getBeginLine();
-       int start = getLineStartOffset(lineNum);
-       int end = getLineStartOffset(lineNum+1);
-       setIgnoredRange(start, end);
-       tok.setBeginOffset(start);
-       tok.setEndOffset(end);
-    }
-
 [/#if]
 
     protected final void cacheTokenAt(${BaseToken} tok, int offset) {

@@ -14,7 +14,7 @@
     />
     <uptodate property="python.uptodate"
       targetfile="build/generated-java/org/congocc/parser/python/PythonParser.java">
-      <srcfiles dir="src/grammars" includes="Python.ccc"/>
+      <srcfiles dir="src/grammars" includes="PythonInternal.ccc"/>
       <srcfiles dir="examples/python" includes="*.ccc"/>
     </uptodate>
     <uptodate property="csharp.uptodate"

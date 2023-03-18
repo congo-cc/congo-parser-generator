@@ -57,9 +57,9 @@ abstract public class Expansion extends BaseNode {
         return null;
     }
 
-    public boolean getIsRegexp() {
-        return this instanceof RegularExpression;
-    }
+//    public boolean getIsRegexp() {
+//        return this instanceof RegularExpression;
+//    }
 
     public TreeBuildingAnnotation getTreeNodeBehavior() {
         if (treeNodeBehavior == null) {
@@ -480,7 +480,7 @@ abstract public class Expansion extends BaseNode {
             return true;
         }
         Expansion preceding = getPreceding();
-        return preceding != null && preceding.isTolerantParsing() && !(preceding instanceof RegularExpression);
+        return preceding != null && preceding.isTolerantParsing() && !(preceding instanceof Terminal);
     }
 
     /**

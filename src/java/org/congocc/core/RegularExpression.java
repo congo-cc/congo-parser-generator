@@ -7,13 +7,14 @@ import static org.congocc.core.LexerData.isJavaIdentifier;
 import org.congocc.parser.tree.CodeBlock;
 import org.congocc.parser.tree.Name;
 import org.congocc.parser.tree.TokenProduction;
+import org.congocc.parser.tree.BaseNode;
 
 /**
  * An abstract base class from which all the AST nodes that
  * are regular expressions inherit.
  */
 
-public abstract class RegularExpression extends Expansion {
+public abstract class RegularExpression extends BaseNode {
 
     /**
      * The ordinal value assigned to the regular expression. It is used for
@@ -137,10 +138,10 @@ public abstract class RegularExpression extends Expansion {
     private String generatedClassName = "Token", generatedSuperClassName;
 
     public TokenSet getFirstSet() {
-        if (firstSet == null) {
-            firstSet = new TokenSet(getGrammar());
+//        if (firstSet == null) {
+            TokenSet firstSet = new TokenSet(getGrammar());
             firstSet.set(getOrdinal());
-        }
+//        }
         return firstSet;
     }
 

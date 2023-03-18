@@ -23,7 +23,7 @@ public class LexicalStateData {
     private Map<String, RegexpStringLiteral> caseSensitiveTokenTable = new HashMap<>();
     private Map<String, RegexpStringLiteral> caseInsensitiveTokenTable = new HashMap<>();
 
-    private HashSet<RegularExpression> regularExpressions = new HashSet<>();
+    private Set<RegularExpression> regularExpressions = new HashSet<>();
 
     private NfaState initialState;
 

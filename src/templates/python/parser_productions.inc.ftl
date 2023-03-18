@@ -205,8 +205,10 @@ ${is}self.uncache_tokens()
        [@BuildCodeSequence expansion indent /]
     [#elseif classname = "NonTerminal"]
        [@BuildCodeNonTerminal expansion indent /]
-    [#elseif expansion.isRegexp]
-       [@BuildCodeRegexp expansion indent /]
+    [#elseif classname = "Terminal"]
+       [@BuildCodeTerminal expansion indent /]
+    [#--elseif expansion.isRegexp]
+       [@BuildCodeRegexp expansion indent /--]
     [#elseif classname = "TryBlock"]
        [@BuildCodeTryBlock expansion indent /]
     [#elseif classname = "AttemptBlock"]
@@ -264,7 +266,8 @@ ${BuildCode(subexp, indent)}
 [#-- ${is}# DBG < BuildCodeSequence ${indent} --]
 [/#macro]
 
-[#macro BuildCodeRegexp regexp indent]
+[#macro BuildCodeTerminal terminal indent]
+[#var regexp = terminal.regexp]
 [#var is = ""?right_pad(indent)]
 [#-- ${is}# DBG > BuildCodeRegexp ${indent} --]
   [#var LHS = ""]
@@ -272,21 +275,21 @@ ${BuildCode(subexp, indent)}
   [#if !settings.faultTolerant]
 ${is}${LHS}self.consume_token(${regexp.label})
   [#else]
-    [#var tolerant = regexp.tolerantParsing?string("True", "False")]
-    [#var followSetVarName = "self." + regexp.followSetVarName]
-    [#if regexp.followSet.incomplete]
+    [#var tolerant = terminal.tolerantParsing?string("True", "False")]
+    [#var followSetVarName = "self." + terminal.followSetVarName]
+    [#if terminal.followSet.incomplete]
       [#set followSetVarName = "follow_set" + CU.newID()]
 ${is}${followSetVarName} = None
 ${is}if self.outer_follow_set is not None:
-${is}    ${followSetVarName} = set(self.${regexp.followSetVarName}) | self.outer_follow_set
+${is}    ${followSetVarName} = set(self.${terminal.followSetVarName}) | self.outer_follow_set
     [/#if]
 ${is}${LHS}self.consume_token(${regexp.label}, ${tolerant}, ${followSetVarName})
   [/#if]
-  [#if !regexp.childName?is_null]
+  [#if !terminal.childName?is_null]
 ${is}if self.build_tree:
 ${is}    child = self.peek_node()
-${is}    name = '${regexp.childName}'
-    [#if regexp.multipleChildren]
+${is}    name = '${terminal.childName}'
+    [#if terminal.multipleChildren]
 ${is}    ${globals.currentNodeVariableName}.add_to_named_child_list(name, child)
     [#else]
 ${is}    ${globals.currentNodeVariableName}.set_named_child(name, child)

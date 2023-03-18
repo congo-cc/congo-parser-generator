@@ -1497,7 +1497,11 @@ ExpansionSequence #org.congocc.core.ExpansionSequence :
   (
      sub=ExpansionUnit =>||
      {
-         pokeNode(sub);
+        if (false && sub instanceof Terminal) {
+            RegularExpression nested = ((Terminal) sub).getRegexp();
+//            nested.setTreeNodeBehavior(sub.getTreeNodeBehavior());
+            pokeNode(nested);
+        } else pokeNode(sub);
      }
   )+!
 ;
@@ -1744,7 +1748,7 @@ Expansion ExpansionUnit :
     "#" 
     {
         ((CodeBlock)result).setAppliesInLookahead(true);
-         //result.addChild(lastConsumedToken);
+        popNode();
     }
   ]
   |
@@ -1762,7 +1766,7 @@ Expansion ExpansionUnit :
   |
   result = ZeroOrOne 
   |
-  result=Terminal
+  result=Terminal 
   |
   result=NonTerminal
   |
@@ -1802,7 +1806,7 @@ Expansion ExpansionUnit :
   {return CURRENT_NODE;}
 ;
 
-RegularExpression Terminal# :
+#Terminal# :
 {
     Name lhs=null;
     RegularExpression result=null;
@@ -1826,40 +1830,50 @@ RegularExpression Terminal# :
       SCAN ~\...\Lookahead
       =>
       {
-          RegularExpression regexp = (RegularExpression) peekNode();
-          regexp.setTolerantParsing(true);
+          //RegularExpression regexp = (RegularExpression) peekNode();
+          //regexp.setTolerantParsing(true);
+          CURRENT_NODE.setTolerantParsing(true);
       }
-      "!" {regexp.addChild(popNode());}
+      "!" //{regexp.addChild(popNode());}
   ]
   [
-    ChildNameInfo(result)
-    {result.addChild(popNode());}
+      ChildNameInfo(CURRENT_NODE)
+//    ChildNameInfo(result)
+//    {result.addChild(popNode());}
   ] 
   [
-    UpToHere(result)
-    {result.addChild(popNode());}
+    UpToHere(CURRENT_NODE)
   ]
   {
-    //return CURRENT_NODE;
-    return result;
+    CURRENT_NODE.setRegexp(result);
+    return CURRENT_NODE;
   }
 ;
 
 INJECT Terminal :
-   import org.congocc.core.RegularExpression;
-   extends RegularExpression
+   import org.congocc.core.*;
+   import java.util.Set;
+   extends Expansion
 {
     @Property RegularExpression regexp;
 
-    public boolean isPrivate() {
-        return regexp.isPrivate(); 
+    public int getOrdinal() {
+        return regexp.getOrdinal();
     }
 
-    @Override 
-    public boolean matchesEmptyString() {
-        return regexp.matchesEmptyString();
+    public int getMinimumSize(Set<String> unused) {return 1;}
+
+    public int getMaximumSize(Set<String> unused) {return 1;}
+
+    public TokenSet getFirstSet() {
+        if (firstSet == null) {
+            firstSet = new TokenSet(getGrammar());
+            firstSet.set(getOrdinal());
+        }
+        return firstSet;
     }
 
+    public TokenSet getFinalSet() {return getFirstSet();}
 }   
 
 UpToHere(Expansion exp) #void :

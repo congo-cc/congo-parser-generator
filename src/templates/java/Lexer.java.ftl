@@ -135,7 +135,7 @@ public class ${settings.lexerClassName} extends TokenSource
    */ 
     public ${TOKEN} getNextToken(${TOKEN} tok) {
        if (tok == null) {
-          tok = tokenAt(0);
+          tok = tokenizeAt(0);
           cacheToken(tok);
           return tok;
        }
@@ -147,7 +147,7 @@ public class ${settings.lexerClassName} extends TokenSource
            cachedToken = null;
        }
        if (cachedToken == null) {
-           ${TOKEN} token = tokenAt(tok.getEndOffset());
+           ${TOKEN} token = tokenizeAt(tok.getEndOffset());
            cacheToken(token);
            return token;
        }
@@ -217,7 +217,7 @@ public class ${settings.lexerClassName} extends TokenSource
    * @param position The position at which to tokenize.
    * @return the Token at position
    */
-  final ${TOKEN} tokenAt(int position) {
+  final ${TOKEN} tokenizeAt(int position) {
       int tokenBeginOffset = position;
       boolean inMore = false;
       StringBuilder invalidChars = null;

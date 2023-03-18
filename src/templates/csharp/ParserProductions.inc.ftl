@@ -68,7 +68,7 @@ ${is}}
           javaCodePrologue = null,
           parseExceptionVar = CU.newVarName("parseException"),
           callStackSizeVar = CU.newVarName("callStackSize"),
-          canRecover = settings.faultTolerant && expansion.tolerantParsing && !expansion.isRegexp
+          canRecover = settings.faultTolerant && expansion.tolerantParsing && expansion.simpleName != "Terminal"
     ]
     [#set treeNodeBehavior = expansion.treeNodeBehavior]
     [#if expansion.parent.simpleName = "BNFProduction"]
@@ -201,8 +201,10 @@ ${globals.translateCodeBlock(expansion, indent)}
        [@BuildCodeSequence expansion indent /]
     [#elseif classname = "NonTerminal"]
        [@BuildCodeNonTerminal expansion indent /]
-    [#elseif expansion.isRegexp]
-       [@BuildCodeRegexp expansion indent /]
+    [#elseif classname = "Terminal"]
+       [@BuildCodeTerminal expansion indent /]
+    [#--elseif expansion.isRegexp]
+       [@BuildCodeRegexp expansion indent /--]
     [#elseif classname = "TryBlock"]
        [@BuildCodeTryBlock expansion indent /]
     [#elseif classname = "AttemptBlock"]
@@ -260,7 +262,8 @@ ${BuildCode(subexp, indent)}
 [#-- ${is}// DBG < BuildCodeSequence ${indent} --]
 [/#macro]
 
-[#macro BuildCodeRegexp regexp indent]
+[#macro BuildCodeTerminal terminal indent]
+[#var regexp =terminal.regexp]
 [#var is = ""?right_pad(indent)]
 [#-- ${is}// DBG > BuildCodeRegexp ${indent} --]
    [#var LHS = ""]
@@ -268,23 +271,23 @@ ${BuildCode(subexp, indent)}
    [#if !settings.faultTolerant]
 ${is}${LHS}ConsumeToken(TokenType.${regexp.label});
    [#else]
-       [#var tolerant = regexp.tolerantParsing?string("true", "false")]
-       [#var followSetVarName = regexp.followSetVarName]
-       [#if regexp.followSet.incomplete]
+       [#var tolerant = terminal.tolerantParsing?string("true", "false")]
+       [#var followSetVarName = terminal.followSetVarName]
+       [#if terminal.followSet.incomplete]
          [#set followSetVarName = "followSet" + CU.newID()]
 ${is}HashSet<TokenType> ${followSetVarName} = null;
 ${is}if (OuterFollowSet != null) {
-${is}    ${followSetVarName} = ${regexp.followSetVarName}.Clone();
+${is}    ${followSetVarName} = ${terminal.followSetVarName}.Clone();
 ${is}    ${followSetVarName}.AddAll(OuterFollowSet);
 ${is}}
        [/#if]
 ${is}${LHS}ConsumeToken(${CU.TT}${regexp.label}, ${tolerant}, ${followSetVarName});
    [/#if]
-   [#if !regexp.childName?is_null]
+   [#if !terminal.childName?is_null]
 ${is}if (BuildTree) {
 ${is}    Node child = PeekNode();
 ${is}    string name = "${regexp.childName}";
-    [#if regexp.multipleChildren]
+    [#if terminal.multipleChildren]
 ${is}    ${globals.currentNodeVariableName}.AddToNamedChildList(name, child);
     [#else]
 ${is}    ${globals.currentNodeVariableName}.SetNamedChild(name, child);

@@ -214,8 +214,10 @@
        [@BuildCodeSequence expansion/]
     [#elseif classname = "NonTerminal"]
        [@BuildCodeNonTerminal expansion/]
-    [#elseif expansion.isRegexp]
-       [@BuildCodeRegexp expansion/]
+    [#elseif classname = "Terminal"]
+       [@BuildCodeTerminal expansion /]
+    [#--elseif expansion.isRegexp]
+       [@BuildCodeRegexp expansion/--]
     [#elseif classname = "TryBlock"]
        [@BuildCodeTryBlock expansion/]
     [#elseif classname = "AttemptBlock"]
@@ -263,29 +265,30 @@
        [/#list]        
 [/#macro]
 
-[#macro BuildCodeRegexp regexp]
-   [#var LHS = ""]
+[#--macro BuildCodeRegexp regexp--]
+[#macro BuildCodeTerminal terminal]
+   [#var LHS = "", regexp=terminal.regexp]
    [#if regexp.LHS??][#set LHS = regexp.LHS + "="][/#if]
    [#if !settings.faultTolerant]
        ${LHS} consumeToken(${regexp.label});
    [#else]
-       [#var tolerant = regexp.tolerantParsing?string("true", "false")]
-       [#var followSetVarName = regexp.followSetVarName]
-       [#if regexp.followSet.incomplete]
+       [#var tolerant = terminal.tolerantParsing?string("true", "false")]
+       [#var followSetVarName = terminal.followSetVarName]
+       [#if terminal.followSet.incomplete]
          [#set followSetVarName = "followSet" + CU.newID()]
          EnumSet<TokenType> ${followSetVarName} = null;
          if (outerFollowSet != null) {
-            ${followSetVarName} = ${regexp.followSetVarName}.clone();
+            ${followSetVarName} = ${terminal.followSetVarName}.clone();
             ${followSetVarName}.addAll(outerFollowSet);
          }
        [/#if]
        ${LHS} consumeToken(${regexp.label}, ${tolerant}, ${followSetVarName});
    [/#if]
-   [#if !regexp.childName?is_null && !globals.currentNodeVariableName?is_null]
+   [#if !terminal.childName?is_null && !globals.currentNodeVariableName?is_null]
     if (buildTree) {
         Node child = peekNode();
-        String name = "${regexp.childName}";
-    [#if regexp.multipleChildren]
+        String name = "${terminal.childName}";
+    [#if regexp.parent.multipleChildren]
         ${globals.currentNodeVariableName}.addToNamedChildList(name, child);
     [#else]
         ${globals.currentNodeVariableName}.setNamedChild(name, child);

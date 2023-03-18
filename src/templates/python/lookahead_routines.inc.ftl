@@ -313,7 +313,7 @@ ${is}# at: ${expansion.location}
   --]
    [#if classname = "ExpansionWithParentheses"]
       [@BuildScanCode expansion.nestedExpansion indent /]
-   [#elseif expansion.isRegexp]
+   [#elseif expansion.singleTokenLookahead || classname="Terminal"]
 ${ScanSingleToken(expansion, indent)}
    [#elseif classname = "Assertion"]
 ${ScanCodeAssertion(expansion, indent)}
