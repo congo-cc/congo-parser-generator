@@ -134,6 +134,11 @@ class Reaper extends Node.Visitor {
         }
     }
 
+    void visit(DotName dotName) {
+        usedVarNames.add(dotName.getLastChild().toString());
+        recurse(dotName);
+    } 
+
     void visit(VariableDeclarator vd) {
         if (!isPrivate(vd.getParent()) || usedVarNames.contains(vd.getName())) {
             recurse(vd);
