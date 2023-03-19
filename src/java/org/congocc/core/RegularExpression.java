@@ -46,7 +46,7 @@ public abstract class RegularExpression extends BaseNode {
      * The LHS to which the token value of the regular expression is assigned.
      * This can be null.
      */
-    private Name lhs;
+    //private Name lhs;
 
     /**
      * This flag is set if the regular expression has a label prefixed with the #
@@ -88,13 +88,13 @@ public abstract class RegularExpression extends BaseNode {
         this.id = id;
     }
 
-    public Name getLHS() {
-        return lhs;
-    }
+//    public Name getLHS() {
+//        return lhs;
+//    }
 
-    public void setLHS(Name lhs) {
-        this.lhs = lhs;
-    }
+//    public void setLHS(Name lhs) {
+//        this.lhs = lhs;
+//    }
 
     public void setNewLexicalState(LexicalStateData newLexicalState) {
         this.newLexicalState = newLexicalState;

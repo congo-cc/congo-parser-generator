@@ -265,10 +265,9 @@
        [/#list]        
 [/#macro]
 
-[#--macro BuildCodeRegexp regexp--]
 [#macro BuildCodeTerminal terminal]
    [#var LHS = "", regexp=terminal.regexp]
-   [#if regexp.LHS??][#set LHS = regexp.LHS + "="][/#if]
+   [#if terminal.lhs??][#set LHS = terminal.lhs + "="][/#if]
    [#if !settings.faultTolerant]
        ${LHS} consumeToken(${regexp.label});
    [#else]
@@ -288,7 +287,7 @@
     if (buildTree) {
         Node child = peekNode();
         String name = "${terminal.childName}";
-    [#if regexp.parent.multipleChildren]
+    [#if terminal.multipleChildren]
         ${globals.currentNodeVariableName}.addToNamedChildList(name, child);
     [#else]
         ${globals.currentNodeVariableName}.setNamedChild(name, child);

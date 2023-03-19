@@ -267,11 +267,10 @@ ${BuildCode(subexp, indent)}
 [/#macro]
 
 [#macro BuildCodeTerminal terminal indent]
-[#var regexp = terminal.regexp]
-[#var is = ""?right_pad(indent)]
+[#var is = ""?right_pad(indent), regexp=terminal.regexp]
 [#-- ${is}# DBG > BuildCodeRegexp ${indent} --]
   [#var LHS = ""]
-  [#if regexp.LHS??][#set LHS = regexp.LHS + "="][/#if]
+  [#if terminal.lhs??][#set LHS = terminal.lhs + "="][/#if]
   [#if !settings.faultTolerant]
 ${is}${LHS}self.consume_token(${regexp.label})
   [#else]

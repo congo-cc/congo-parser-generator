@@ -267,7 +267,7 @@ ${BuildCode(subexp, indent)}
 [#var is = ""?right_pad(indent)]
 [#-- ${is}// DBG > BuildCodeRegexp ${indent} --]
    [#var LHS = ""]
-   [#if regexp.LHS??][#set LHS = regexp.LHS + " = "][/#if]
+   [#if terminal.lhs??][#set LHS = terminal.lhs + " = "][/#if]
    [#if !settings.faultTolerant]
 ${is}${LHS}ConsumeToken(TokenType.${regexp.label});
    [#else]

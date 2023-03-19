@@ -1495,14 +1495,7 @@ ExpansionSequence #org.congocc.core.ExpansionSequence :
      }
   ]
   (
-     sub=ExpansionUnit =>||
-     {
-        if (false && sub instanceof Terminal) {
-            RegularExpression nested = ((Terminal) sub).getRegexp();
-//            nested.setTreeNodeBehavior(sub.getTreeNodeBehavior());
-            pokeNode(nested);
-        } else pokeNode(sub);
-     }
+     ExpansionUnit =>||
   )+!
 ;
 
@@ -1732,54 +1725,45 @@ ChildNameInfo(Expansion expansion) : //#void :
   }
 ;
 
-Expansion ExpansionUnit :
-{
-    //Name lhs=null;
-    Expansion result=null;
-    TreeBuildingAnnotation tba = null;
-}
+ExpansionUnit #void :
  (
-  result=UncacheTokens
+  UncacheTokens
   |
-  result = Failure
+  Failure
   |
-  result=Block 
+  Block {CodeBlock block = (CodeBlock) peekNode();}
   [
     "#" 
     {
-        ((CodeBlock)result).setAppliesInLookahead(true);
+        block.setAppliesInLookahead(true);
         popNode();
     }
   ]
   |
-  result = UnparsedCodeBlock // Currently unused
+  UnparsedCodeBlock // Currently unused
   |
-  SCAN 1 ~\...\Lookahead =>
-  result=AttemptBlock
+  SCAN 1 ~\...\Lookahead => AttemptBlock
   |
-  SCAN 1 ~\...\Lookahead =>
-  result=TryBlock
+  SCAN 1 ~\...\Lookahead => TryBlock
   |
-  result = Assertion
+  Assertion
   |
-  result = ExpansionWithParentheses 
+  ExpansionWithParentheses 
   |
-  result = ZeroOrOne 
+  ZeroOrOne 
   |
-  result=Terminal 
+  Terminal 
   |
-  result=NonTerminal
+  NonTerminal
   |
   FAIL
  )
+ {Expansion result = (Expansion) peekNode();}
  [
-     SCAN 1 ~\...\Lookahead => 
-    tba=InlineTreeNodeDescriptor
+    SCAN 1 ~\...\Lookahead => 
+    InlineTreeNodeDescriptor
+    { result.setTreeNodeBehavior((TreeBuildingAnnotation) peekNode()); }
  ]
- {
-        result.setTreeNodeBehavior(tba);
-        return result;
- }
 ;
 
 #NonTerminal #org.congocc.core.NonTerminal :
@@ -1806,48 +1790,36 @@ Expansion ExpansionUnit :
   {return CURRENT_NODE;}
 ;
 
-#Terminal# :
-{
-    Name lhs=null;
-    RegularExpression result=null;
-}
+Terminal# :
   SCAN [Name "="] (<STRING_LITERAL>|"<")
   =>
   [
     SCAN ~\...\Lookahead Name "=" =>
-    lhs = Name
+    Name {CURRENT_NODE.setLhs((Name) peekNode());}
     "="
   ]
   ACTIVATE_TOKENS _EOF(RegexpStringLiteral | RegexpRef | EndOfFile ) 
   {
-      result = (RegularExpression) peekNode();
-      result.setLHS(lhs);
+      RegularExpression result = (RegularExpression) peekNode();
       if (result instanceof RegexpStringLiteral) {
             ((RegexpStringLiteral) result).setLexicalState(grammar.getDefaultLexicalState());
       }
+      CURRENT_NODE.setRegexp(result);
+      CURRENT_NODE.setLabel(result.getLabel());
   }
   [
       SCAN ~\...\Lookahead
-      =>
+      => "!"
       {
-          //RegularExpression regexp = (RegularExpression) peekNode();
-          //regexp.setTolerantParsing(true);
           CURRENT_NODE.setTolerantParsing(true);
       }
-      "!" //{regexp.addChild(popNode());}
   ]
   [
       ChildNameInfo(CURRENT_NODE)
-//    ChildNameInfo(result)
-//    {result.addChild(popNode());}
   ] 
   [
     UpToHere(CURRENT_NODE)
   ]
-  {
-    CURRENT_NODE.setRegexp(result);
-    return CURRENT_NODE;
-  }
 ;
 
 INJECT Terminal :
@@ -1856,6 +1828,8 @@ INJECT Terminal :
    extends Expansion
 {
     @Property RegularExpression regexp;
+    @Property Name lhs;
+    @Property String label;
 
     public int getOrdinal() {
         return regexp.getOrdinal();
