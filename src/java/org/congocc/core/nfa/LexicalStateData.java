@@ -137,7 +137,6 @@ public class LexicalStateData {
             if (regexpSpec.getNextLexicalState() != null && !regexpSpec.getNextLexicalState().equals(this.name)) {
                 currentRegexp.setNewLexicalState(grammar.getLexerData().getLexicalState(regexpSpec.getNextLexicalState()));
             }
-            currentRegexp.setCodeSnippet(regexpSpec.getCodeSnippet());
         }
     }
 }

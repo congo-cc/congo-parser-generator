@@ -286,7 +286,7 @@ ${is}${LHS}ConsumeToken(${CU.TT}${regexp.label}, ${tolerant}, ${followSetVarName
    [#if !terminal.childName?is_null]
 ${is}if (BuildTree) {
 ${is}    Node child = PeekNode();
-${is}    string name = "${regexp.childName}";
+${is}    string name = "${terminal.childName}";
     [#if terminal.multipleChildren]
 ${is}    ${globals.currentNodeVariableName}.AddToNamedChildList(name, child);
     [#else]

@@ -1,12 +1,11 @@
 package org.congocc.core;
 
-import java.util.*;
-
 import org.congocc.core.nfa.LexicalStateData;
 import static org.congocc.core.LexerData.isJavaIdentifier;
 import org.congocc.parser.tree.CodeBlock;
-import org.congocc.parser.tree.Name;
+import org.congocc.parser.tree.RegexpSpec;
 import org.congocc.parser.tree.TokenProduction;
+import org.congocc.parser.Node;
 import org.congocc.parser.tree.BaseNode;
 
 /**
@@ -25,14 +24,8 @@ public abstract class RegularExpression extends BaseNode {
 
     private LexicalStateData newLexicalState;
 
-    private CodeBlock codeSnippet;
-
     public CodeBlock getCodeSnippet() {
-        return codeSnippet;
-    }
-
-    public void setCodeSnippet(CodeBlock codeSnippet) {
-        this.codeSnippet = codeSnippet;
+        return (getParent() instanceof RegexpSpec) ? getParent().firstChildOfType(CodeBlock.class) : null;
     }
 
     public boolean getIgnoreCase() {
@@ -41,12 +34,6 @@ public abstract class RegularExpression extends BaseNode {
             return tp.isIgnoreCase();
         return getAppSettings().isIgnoreCase();// REVISIT
     }
-
-    /**
-     * The LHS to which the token value of the regular expression is assigned.
-     * This can be null.
-     */
-    //private Name lhs;
 
     /**
      * This flag is set if the regular expression has a label prefixed with the #
@@ -88,14 +75,6 @@ public abstract class RegularExpression extends BaseNode {
         this.id = id;
     }
 
-//    public Name getLHS() {
-//        return lhs;
-//    }
-
-//    public void setLHS(Name lhs) {
-//        this.lhs = lhs;
-//    }
-
     public void setNewLexicalState(LexicalStateData newLexicalState) {
         this.newLexicalState = newLexicalState;
     }
@@ -136,30 +115,6 @@ public abstract class RegularExpression extends BaseNode {
     }
 
     private String generatedClassName = "Token", generatedSuperClassName;
-
-    public TokenSet getFirstSet() {
-//        if (firstSet == null) {
-            TokenSet firstSet = new TokenSet(getGrammar());
-            firstSet.set(getOrdinal());
-//        }
-        return firstSet;
-    }
-
-    public TokenSet getFinalSet() {
-        return getFirstSet();
-    }
-
-    final public int getMinimumSize(Set<String> unused) {
-        return 1;
-    }
-
-    final public int getMaximumSize(Set<String> unused) {
-        return 1;
-    }
-
-    public boolean isSingleTokenLookahead() {
-        return true;
-    }
 
     abstract public boolean matchesEmptyString();
 }
