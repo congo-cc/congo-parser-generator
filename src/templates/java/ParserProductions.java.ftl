@@ -75,9 +75,11 @@
 [#-- This macro handles both tree building AND recovery. It doesn't seem right.
      It should probably be two macros. Also, it is too darned big. --]
     [#var nodeVarName, 
+          nodeTypeName,
           production, 
-          treeNodeBehavior, 
-          buildTreeNode=false, 
+          treeNodeBehavior,
+          treeNodeLHS,
+          buildTreeNode=false,
           closeCondition = "true", 
           javaCodePrologue = "",
           parseExceptionVar = CU.newVarName("parseException"),
@@ -85,6 +87,9 @@
           canRecover = settings.faultTolerant && expansion.tolerantParsing && !expansion.isRegexp
     ]
     [#set treeNodeBehavior = expansion.treeNodeBehavior]
+    [#if treeNodeBehavior?? && expansion.treeNodeBehavior.LHS??]
+      [#set treeNodeLHS = expansion.treeNodeBehavior.LHS]
+    [/#if]
     [#if expansion.parent.simpleName = "BNFProduction"]
       [#set production = expansion.parent]
       [#set javaCodePrologue = production.javaCode!]
@@ -100,6 +105,7 @@
      [#if buildTreeNode]
      [#set nodeNumbering = nodeNumbering +1]
      [#set nodeVarName = currentProduction.name + nodeNumbering] ${globals.pushNodeVariableName(nodeVarName)!}
+     [#set nodeTypeName = nodeClassName(treeNodeBehavior)]
       [#if !treeNodeBehavior?? && !production?is_null]
          [#if settings.smartNodeCreation]
             [#set treeNodeBehavior = {"name" : production.name, "condition" : "1", "gtNode" : true, "void" :false, "initialShorthand" : ">"}]
@@ -155,6 +161,13 @@
              if (${nodeVarName}!=null) {
                  if (${parseExceptionVar} == null) {
                      closeNodeScope(${nodeVarName}, ${closeCondition});
+                     [#if treeNodeLHS??]
+                     try {
+                        ${treeNodeLHS} = (${nodeTypeName}) peekNode();
+                     } catch (ClassCastException cce) {
+                        ${treeNodeLHS} = null;
+                     }
+                     [/#if]
                      [#list grammar.closeNodeHooksByClass[nodeClassName(treeNodeBehavior)]! as hook]
                         ${hook}(${nodeVarName});
                      [/#list]
