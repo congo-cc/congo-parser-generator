@@ -15,8 +15,8 @@
 	],
 	"settings": {
 		"java.project.sourcePaths": [
-			"src/generated-java",
-			"src/human-written-java",
+			"src/java",
+			"build/generated-java",
 			"examples/json",
 			"examples/java",
 			"examples/python",

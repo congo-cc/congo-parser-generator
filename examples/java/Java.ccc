@@ -14,13 +14,19 @@ NODE_PACKAGE=org.parsers.java.ast;
 DEFAULT_LEXICAL_STATE=JAVA;
 // The following tokens are only activated at key points whether
 // they are needed.
-DEACTIVATE_TOKENS=RECORD, VAR, YIELD, SEALED, NON_SEALED, PERMITS;
+DEACTIVATE_TOKENS=RECORD, VAR, YIELD, SEALED, NON_SEALED, PERMITS
+#if pattern_matching
+, WHEN
+#endif
+;
 
 //FAULT_TOLERANT;
 MINIMAL_TOKEN;
 TAB_SIZE=4;
 //PRESERVE_TABS;
 ENSURE_FINAL_EOL;
+
+#define pattern_matching // We enable the pattern-matching in switch-case
 
 INCLUDE "JavaLexer.ccc"
 
@@ -724,7 +730,7 @@ PrimitiveCastExpression#CastExpression :
    <LPAREN> PrimitiveType <RPAREN> =>|| UnaryExpression
 ;
 
-ObjectCastExpression#ObjectCastExpression :
+ObjectCastExpression# :
    <LPAREN> ReferenceType (<BIT_AND> ObjectType)* <RPAREN> =>|+1 UnaryExpressionNotPlusMinus
 ;
 
@@ -1027,12 +1033,31 @@ ClassicSwitchStatement :
 
 ClassicSwitchLabel :
   (
+#if pattern_matching
+   <CASE> TypePattern =>|| (<COMMA> TypePattern)*
+   |
+#endif
    <CASE> Expression (<COMMA> Expression)*
    |
    <_DEFAULT>
   )
   <COLON>
 ;
+
+#if pattern_matching
+TypePattern :
+  <NULL>
+  |
+  {permissibleModifiers = EnumSet.of(FINAL);}#        
+  Modifiers Type <IDENTIFIER>
+; 
+
+WhenClause :
+   SCAN 0 {getToken(1).getImage().equals("when")} 
+   =>
+   ACTIVATE_TOKENS WHEN (<WHEN>) Expression
+;   
+#endif
 
 ClassicCaseStatement :
   ClassicSwitchLabel
@@ -1052,6 +1077,10 @@ NewSwitchStatement :
 
 NewSwitchLabel :
   (
+#if pattern_matching
+   <CASE> (<NULL> | Type <IDENTIFIER>) =>||
+   |
+#endif
    <CASE> Expression (<COMMA> Expression)*
    |
    <_DEFAULT>

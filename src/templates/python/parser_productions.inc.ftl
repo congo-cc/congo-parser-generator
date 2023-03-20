@@ -207,8 +207,6 @@ ${is}self.uncache_tokens()
        [@BuildCodeNonTerminal expansion indent /]
     [#elseif classname = "Terminal"]
        [@BuildCodeTerminal expansion indent /]
-    [#--elseif expansion.isRegexp]
-       [@BuildCodeRegexp expansion indent /--]
     [#elseif classname = "TryBlock"]
        [@BuildCodeTryBlock expansion indent /]
     [#elseif classname = "AttemptBlock"]

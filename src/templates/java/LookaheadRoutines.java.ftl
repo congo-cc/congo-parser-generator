@@ -317,10 +317,6 @@
    [#if classname = "ExpansionWithParentheses"]
       [@BuildScanCode expansion.nestedExpansion /]
    [#elseif expansion.singleTokenLookahead]
-      [#--if !expansion.isRegexp]
-   // Applying single-token optimization for expansion of type ${classname}
-   // ${expansion.location}
-      [/#if--]
       ${ScanSingleToken(expansion)}
    [#elseif classname = "Assertion"]
       ${ScanCodeAssertion(expansion)} 

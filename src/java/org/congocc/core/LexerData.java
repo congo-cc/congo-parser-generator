@@ -116,6 +116,8 @@ public class LexerData {
     }
 
     static int compare(RegularExpression first, RegularExpression second) {
+        if (first instanceof EndOfFile) return -1;
+        if (second instanceof EndOfFile) return 1;
         if (first instanceof RegexpStringLiteral && !(second instanceof RegexpStringLiteral)) {
             return -1;
         }
@@ -266,9 +268,9 @@ public class LexerData {
                 }
             }
         }
-        //reorder();
         ensureRegexpLabels();
         resolveStringLiterals();
+        //reorder();
         for (RegexpRef ref : grammar.descendants(RegexpRef.class)) {
             String label = ref.getLabel();
             if (grammar.getAppSettings().getExtraTokens().containsKey(label)) {

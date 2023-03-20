@@ -5,7 +5,7 @@ import java.util.*;
 import org.congocc.app.Errors;
 import org.congocc.core.Grammar;
 import org.congocc.core.RegularExpression;
-import org.congocc.parser.tree.RegexpSpec;
+import org.congocc.core.RegexpSpec;
 import org.congocc.parser.tree.RegexpStringLiteral;
 import org.congocc.parser.tree.TokenProduction;
 

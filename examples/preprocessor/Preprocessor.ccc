@@ -37,17 +37,17 @@ BASE_SRC_DIR="../../build/generated-java";
 INJECT PARSER_CLASS :
 {
     private final BitSet lineMarkers = new BitSet();
-    private final Map<String, String> definedSymbols = new HashMap<>();
+    private Map<String, String> definedSymbols = new HashMap<>();
     private boolean currentlyOn = true;
 
     public PARSER_CLASS(Path path, Map<String, String> definedSymbols) throws IOException {
         this(path);
-        if (definedSymbols !=null) addSymbols(definedSymbols);
+        if (definedSymbols != null) this.definedSymbols = definedSymbols;
     }
 
     public PARSER_CLASS(CharSequence content, Map<String, String> definedSymbols) throws IOException {
        this(content);
-       if (definedSymbols != null) addSymbols(definedSymbols);
+       if (definedSymbols != null) this.definedSymbols = definedSymbols;
     }
 
     public BitSet getLineMarkers() {

@@ -32,7 +32,8 @@ INJECT PARSER_CLASS :
     import java.util.*;
     import org.congocc.app.*;
     import org.congocc.core.*;
-    import org.congocc.parser.tree.*;
+    import org.congocc.parser.tree.StringLiteral;
+    import org.congocc.parser.tree.IntegerLiteral;
     import org.congocc.preprocessor.PreprocessorParser;
     import org.congocc.parser.csharp.CSParser;
     import org.congocc.parser.python.PythonParser;
@@ -130,7 +131,7 @@ TOKEN :
   |
   < _ACTIVATE_TOKENS : "ACTIVATE_TOKENS"> #CongoCCKeyWord
   |
-  < _DEACTIVATE_TOKENS : "DEACTIVATE_TOKENS"> #CongoCCKeyWord
+  < _DEACTIVATE_TOKENS : "DEACTIVATE_TOKENS"> #CongoCCKeyWord  
   |
   < _ENSURE : "ASSERT"> #CongoCCKeyWord
   |
@@ -1214,6 +1215,7 @@ TokenProduction :
 
 INJECT TokenProduction :
     import java.util.*;
+    import org.congocc.core.RegexpSpec;
 {
     @Property private boolean ignoreCase;
     @Property String tokenClassName;
@@ -1283,7 +1285,7 @@ INJECT TokenProduction :
     }
 }
 
-RegexpSpec(String tokenClassName)# :
+RegexpSpec(String tokenClassName)#org.congocc.core.RegexpSpec :
 {
     RegularExpression regexp;
     boolean isPrivate = false;
@@ -1337,21 +1339,6 @@ RegexpSpec(String tokenClassName)# :
         ":" <IDENTIFIER> {CURRENT_NODE.setNextLexicalState(lastConsumedToken.getImage());}
     ]
 ;
-
-INJECT RegexpSpec : 
-   import org.congocc.core.RegularExpression;
-{
-
-    @Property String nextLexicalState;
-
-    public RegularExpression getRegexp() {
-         return firstChildOfType(RegularExpression.class);
-    }
-
-    public CodeBlock getCodeSnippet() {
-        return firstChildOfType(CodeBlock.class);
-    }
-}
 
 ExpansionChoice :
   ExpansionSequence ( "|" ExpansionSequence)*
@@ -1495,7 +1482,7 @@ ExpansionSequence #org.congocc.core.ExpansionSequence :
      }
   ]
   (
-     ExpansionUnit =>||
+     ExpansionUnit
   )+!
 ;
 
@@ -1513,7 +1500,6 @@ INJECT Assertion :
         return expansion != null || semanticLookaheadNested;
     }
 }
-
 
 Assertion :
    "ASSERT"
@@ -1536,10 +1522,10 @@ Assertion :
    [UpToHere(CURRENT_NODE)]
 ;
 
- #Lookahead# : 
+#Lookahead# : 
 {
    Token amountToken=null;
-   boolean hasSemanticLookahead = false, getHasExplicitNumericalLookahead=false;
+   boolean hasSemanticLookahead = false, hasExplicitNumericalLookahead=false;
    Expansion expansion = null;
    Expression exp=null;
    Name name = null;
@@ -1548,7 +1534,7 @@ Assertion :
 [name=Name "=" =>|| {CURRENT_NODE.setLHS(name);}]
 <_SCAN>
 [
-    <INTEGER_LITERAL> {getHasExplicitNumericalLookahead = true;}
+    <INTEGER_LITERAL> {hasExplicitNumericalLookahead = true;}
 ]
 [
     "{" 
@@ -1558,7 +1544,7 @@ Assertion :
 ]
 [LookBehind =>|| {lb = peekNode();}]
 [
-    SCAN {!getHasExplicitNumericalLookahead} => 
+    SCAN {!hasExplicitNumericalLookahead} => 
     ["~" {CURRENT_NODE.setNegated(true);}] 
     ExpansionChoice {expansion = (Expansion) peekNode();}
     <RIGHT_ARROW> =>||

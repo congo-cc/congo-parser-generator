@@ -3,9 +3,7 @@ package org.congocc.core;
 import org.congocc.core.nfa.LexicalStateData;
 import static org.congocc.core.LexerData.isJavaIdentifier;
 import org.congocc.parser.tree.CodeBlock;
-import org.congocc.parser.tree.RegexpSpec;
 import org.congocc.parser.tree.TokenProduction;
-import org.congocc.parser.Node;
 import org.congocc.parser.tree.BaseNode;
 
 /**
