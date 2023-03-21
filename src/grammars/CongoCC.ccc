@@ -1096,7 +1096,14 @@ TreeNodeDescriptor #TreeBuildingAnnotation :
 ;
 
 InlineTreeNodeDescriptor #TreeBuildingAnnotation :
-  [<BACKSLASH>] <HASH> Name
+  [ 
+      <BACKSLASH>
+    |
+      Name {CURRENT_NODE.setLHS((Name)peekNode());} "=" 
+      =>||
+  ]
+  <HASH> =>|| 
+  Name  
   (
     SCAN ~("(") => {}
     |
@@ -1124,6 +1131,7 @@ INJECT TreeBuildingAnnotation :
 {
     @Property String initialShorthand;
     @Property Expression condition;
+    @Property Name LHS;
     /**
      * Just returns whatever comes after the hash ("#") including "void", etc.
      */
@@ -1760,8 +1768,8 @@ ExpansionUnit #void :
  )
  {Expansion result = (Expansion) peekNode();}
  [
-    SCAN 1 ~\...\Lookahead => 
-    InlineTreeNodeDescriptor
+    SCAN ~\...\Lookahead => 
+    InlineTreeNodeDescriptor =>||
     { result.setTreeNodeBehavior((TreeBuildingAnnotation) peekNode()); }
  ]
 ;

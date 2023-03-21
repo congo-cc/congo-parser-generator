@@ -55,19 +55,19 @@
 [/#macro]
 
 [#macro BuildCode expansion]
-   [#if expansion.simpleName != "ExpansionSequence" && expansion.simpleName != "ExpansionWithParentheses"]
+  [#if expansion.simpleName != "ExpansionSequence" && expansion.simpleName != "ExpansionWithParentheses"]
   // Code for ${expansion.simpleName} specified at ${expansion.location}
   [/#if]
      [@CU.HandleLexicalStateChange expansion false]
-      [#if settings.faultTolerant && expansion.requiresRecoverMethod && !expansion.possiblyEmpty]
+         [#if settings.faultTolerant && expansion.requiresRecoverMethod && !expansion.possiblyEmpty]
          if (pendingRecovery) {
 //            if (debugFaultTolerant) LOGGER.info("Re-synching to expansion at: ${expansion.location?j_string}");
             ${expansion.recoverMethodName}();
          }
-      [/#if]
-       [@TreeBuildingAndRecovery expansion]
-        [@BuildExpansionCode expansion/]
-       [/@TreeBuildingAndRecovery]
+         [/#if]
+         [@TreeBuildingAndRecovery expansion]
+           [@BuildExpansionCode expansion/]
+         [/@TreeBuildingAndRecovery]
      [/@CU.HandleLexicalStateChange]
 [/#macro]
 
@@ -75,9 +75,11 @@
 [#-- This macro handles both tree building AND recovery. It doesn't seem right.
      It should probably be two macros. Also, it is too darned big. --]
     [#var nodeVarName, 
+          nodeTypeName,
           production, 
-          treeNodeBehavior, 
-          buildTreeNode=false, 
+          treeNodeBehavior,
+          treeNodeLHS,
+          buildTreeNode=false,
           closeCondition = "true", 
           javaCodePrologue = "",
           parseExceptionVar = CU.newVarName("parseException"),
@@ -85,6 +87,9 @@
           canRecover = settings.faultTolerant && expansion.tolerantParsing && !expansion.isRegexp
     ]
     [#set treeNodeBehavior = expansion.treeNodeBehavior]
+    [#if treeNodeBehavior?? && expansion.treeNodeBehavior.LHS??]
+      [#set treeNodeLHS = expansion.treeNodeBehavior.LHS]
+    [/#if]
     [#if expansion.parent.simpleName = "BNFProduction"]
       [#set production = expansion.parent]
       [#set javaCodePrologue = production.javaCode!]
@@ -97,24 +102,37 @@
       ${javaCodePrologue} 
       [#nested]
     [#else]
+     [#-- buildTreeNode || canRecover --]
      [#if buildTreeNode]
-     [#set nodeNumbering = nodeNumbering +1]
-     [#set nodeVarName = currentProduction.name + nodeNumbering] ${globals.pushNodeVariableName(nodeVarName)!}
-      [#if !treeNodeBehavior?? && !production?is_null]
+       [#if production??]
+       [#set nodeVarName = "thisProduction"] 
+       [#-- this is so that (potentially deeply nested) code blocks can easily reference the production node.
+         Instead could be a currentProduction.name with the first char lower-cased, maybe, but I don't think so. Also,
+         I didn't change CURRENT_NODE to refer to this because it would affect TBA nodes below the top level, but if
+         CURRENT_NODE is meant to refer to the current production, then it probably should be changed.  I suspect that
+         uses of CURRENT_NODE are all at the top level now anyway and the need to reference the current node just built is relatively
+         rare and could use peek(). --]
+       [#else]
+       [#set nodeNumbering = nodeNumbering +1]
+       [#set nodeVarName = currentProduction.name + nodeNumbering] 
+       [/#if]
+       ${globals.pushNodeVariableName(nodeVarName)!}
+       [#set nodeTypeName = nodeClassName(treeNodeBehavior)]
+       [#if !treeNodeBehavior?? && !production?is_null]
          [#if settings.smartNodeCreation]
             [#set treeNodeBehavior = {"name" : production.name, "condition" : "1", "gtNode" : true, "void" :false, "initialShorthand" : ">"}]
          [#else]
             [#set treeNodeBehavior = {"name" : production.name, "condition" : null, "gtNode" : false, "void" : false}]
          [/#if]
-      [/#if]
-      [#if treeNodeBehavior.condition?has_content]
+       [/#if]
+       [#if treeNodeBehavior.condition?has_content]
          [#set closeCondition = treeNodeBehavior.condition]
          [#if treeNodeBehavior.gtNode]
             [#set closeCondition = "nodeArity() " + treeNodeBehavior.initialShorthand  + closeCondition]
          [/#if]
-      [/#if]
-      [@createNode treeNodeBehavior nodeVarName false /]
-      [/#if]
+       [/#if]
+       [@createNode treeNodeBehavior nodeVarName /]
+     [/#if]
          [#-- I put this here for the hypertechnical reason
               that I want the initial code block to be able to 
               reference CURRENT_NODE. --]
@@ -122,9 +140,9 @@
          ParseException ${parseExceptionVar} = null;
          int ${callStackSizeVar} = parsingStack.size();
          try {
-[#if settings.useCheckedException]
+     [#if settings.useCheckedException]
             if (false) throw new ParseException("Never happens!");
-[/#if]
+     [/#if]
             [#nested]
          }
          catch (ParseException e) { 
@@ -147,7 +165,7 @@
                 return null;
                 [/#if]
              [/#if]
-          [/#if]
+            [/#if]
          }
          finally {
              restoreCallStack(${callStackSizeVar});
@@ -155,6 +173,13 @@
              if (${nodeVarName}!=null) {
                  if (${parseExceptionVar} == null) {
                      closeNodeScope(${nodeVarName}, ${closeCondition});
+                     [#if treeNodeLHS??]
+                     try {
+                        ${treeNodeLHS} = (${nodeTypeName}) peekNode();
+                     } catch (ClassCastException cce) {
+                        ${treeNodeLHS} = null;
+                     }
+                     [/#if]
                      [#list grammar.closeNodeHooksByClass[nodeClassName(treeNodeBehavior)]! as hook]
                         ${hook}(${nodeVarName});
                      [/#list]
@@ -175,18 +200,17 @@
 [/#macro]
 
 [#--  Boilerplate code to create the node variable --]
-[#macro createNode treeNodeBehavior nodeVarName isAbstractType]
+[#macro createNode treeNodeBehavior nodeVarName]
    [#var nodeName = nodeClassName(treeNodeBehavior)]
-   ${nodeName} ${nodeVarName} = null;
-   [#if !isAbstractType]
+   ${nodeName}
+   ${nodeVarName} = null;
    if (buildTree) {
      ${nodeVarName} = new ${nodeName}();
-  [#if settings.nodeUsesParser]
+    [#if settings.nodeUsesParser]
      ${nodeVarName}.setParser(this);
-  [/#if]
-   openNodeScope(${nodeVarName});
-  }
-  [/#if]
+    [/#if]
+        openNodeScope(${nodeVarName});
+   }
 [/#macro]
 
 [#function nodeClassName treeNodeBehavior]
