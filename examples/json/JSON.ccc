@@ -62,11 +62,16 @@ TOKEN #Literal :
     <NUMBER : ("-")?(<ZERO>|<NON_ZERO>)(<FRACTION>)?(<EXPONENT>)?> #NumberLiteral
 ;
 
+INJECT Array :
+{
+    public Values values;
+}
+
 Array :
     <OPEN_BRACKET>
     [
       Value  (<COMMA> Value)*!
-    ]
+    ] thisProduction.values = #Values
     <CLOSE_BRACKET>
 ;
 
