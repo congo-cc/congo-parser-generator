@@ -84,7 +84,7 @@
           javaCodePrologue = "",
           parseExceptionVar = CU.newVarName("parseException"),
           callStackSizeVar = CU.newVarName("callStackSize"),
-          canRecover = settings.faultTolerant && expansion.tolerantParsing && !expansion.isRegexp
+          canRecover = settings.faultTolerant && expansion.tolerantParsing && expansion.simpleName != "Terminal"
     ]
     [#set treeNodeBehavior = expansion.treeNodeBehavior]
     [#if treeNodeBehavior?? && expansion.treeNodeBehavior.LHS??]
@@ -240,8 +240,6 @@
        [@BuildCodeNonTerminal expansion/]
     [#elseif classname = "Terminal"]
        [@BuildCodeTerminal expansion /]
-    [#--elseif expansion.isRegexp]
-       [@BuildCodeRegexp expansion/--]
     [#elseif classname = "TryBlock"]
        [@BuildCodeTryBlock expansion/]
     [#elseif classname = "AttemptBlock"]
