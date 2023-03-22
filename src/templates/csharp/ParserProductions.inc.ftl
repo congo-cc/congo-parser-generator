@@ -61,8 +61,10 @@ ${is}}
 [#var is=""?right_pad(indent)]
 [#-- ${is}// DBG > TreeBuildingAndRecovery ${indent} --]
     [#var nodeVarName,
+          nodeTypeName,
           production,
           treeNodeBehavior,
+          treeNodeLHS,
           buildTreeNode=false,
           closeCondition = "true",
           javaCodePrologue = null,
@@ -71,6 +73,9 @@ ${is}}
           canRecover = settings.faultTolerant && expansion.tolerantParsing && expansion.simpleName != "Terminal"
     ]
     [#set treeNodeBehavior = expansion.treeNodeBehavior]
+    [#if treeNodeBehavior?? && expansion.treeNodeBehavior.LHS??]
+          [#set treeNodeLHS = expansion.treeNodeBehavior.LHS]
+    [/#if]
     [#if expansion.parent.simpleName = "BNFProduction"]
       [#set production = expansion.parent]
       [#set javaCodePrologue = production.javaCode]
@@ -83,11 +88,23 @@ ${is}}
 ${globals.translateCodeBlock(javaCodePrologue, indent)}[#rt]
 ${BuildExpansionCode(expansion, indent)}[#t]
     [#else]
+     [#-- buildTreeNode || canRecover --]
      [#if buildTreeNode]
-     [#set nodeNumbering = nodeNumbering +1]
-     [#set nodeVarName = currentProduction.name + nodeNumbering]
-     ${globals.pushNodeVariableName(nodeVarName)!}
-      [#if !treeNodeBehavior?? && !production?is_null]
+       [#if production??]
+       [#set nodeVarName = "thisProduction"] 
+       [#-- this is so that (potentially deeply nested) code blocks can easily reference the production node.
+         Instead could be a currentProduction.name with the first char lower-cased, maybe, but I don't think so. Also,
+         I didn't change CURRENT_NODE to refer to this because it would affect TBA nodes below the top level, but if
+         CURRENT_NODE is meant to refer to the current production, then it probably should be changed.  I suspect that
+         uses of CURRENT_NODE are all at the top level now anyway and the need to reference the current node just built is relatively
+         rare and could use peek(). --]
+       [#else]
+       [#set nodeNumbering = nodeNumbering +1]
+       [#set nodeVarName = currentProduction.name + nodeNumbering] 
+       [/#if]
+       ${globals.pushNodeVariableName(nodeVarName)!}
+       [#set nodeTypeName = nodeClassName(treeNodeBehavior)]      
+       [#if !treeNodeBehavior?? && !production?is_null]
          [#if settings.smartNodeCreation]
             [#set treeNodeBehavior = {"name" : production.name, "condition" : "1", "gtNode" : true, "void" :false, "initialShorthand" : " > "}]
          [#else]
@@ -100,7 +117,7 @@ ${BuildExpansionCode(expansion, indent)}[#t]
             [#set closeCondition = "NodeArity" + treeNodeBehavior.initialShorthand + closeCondition]
          [/#if]
       [/#if]
-      [@createNode treeNodeBehavior nodeVarName false indent /]
+      [@createNode treeNodeBehavior nodeVarName indent /]
       [/#if]
          [#-- I put this here for the hypertechnical reason
               that I want the initial code block to be able to
@@ -142,6 +159,13 @@ ${is}    RestoreCallStack(${callStackSizeVar});
 ${is}    if (${nodeVarName} != null) {
 ${is}        if (${parseExceptionVar} == null) {
 ${is}            CloseNodeScope(${nodeVarName}, ${closeCondition});
+  [#if treeNodeLHS??]
+${is}             try {
+${is}                 ${treeNodeLHS} = (${nodeTypeName}) PeekNode();
+${is}             } catch (Exception) {
+${is}                  ${treeNodeLHS} = null;
+${is}             }
+  [/#if]
   [#list grammar.closeNodeHooksByClass[nodeClassName(treeNodeBehavior)]! as hook]
 ${is}            ${hook}(${nodeVarName});
   [/#list]
@@ -164,16 +188,14 @@ ${is}}
 [/#macro]
 
 [#--  Boilerplate code to create the node variable --]
-[#macro createNode treeNodeBehavior nodeVarName isAbstractType indent]
+[#macro createNode treeNodeBehavior nodeVarName indent]
 [#var is=""?right_pad(indent)]
    [#var nodeName = nodeClassName(treeNodeBehavior)]
 ${is}${nodeName} ${nodeVarName} = null;
-   [#if !isAbstractType]
 ${is}if (BuildTree) {
 ${is}    ${nodeVarName} = new ${nodeName}([#if settings.nodeUsesParser]this[#else]tokenSource[/#if]);
 ${is}    OpenNodeScope(${nodeVarName});
 ${is}}
-  [/#if]
 [/#macro]
 
 [#function nodeClassName treeNodeBehavior]
