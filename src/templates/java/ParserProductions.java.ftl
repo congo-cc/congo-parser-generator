@@ -454,6 +454,18 @@
 
 [#macro BuildCodeChoice choice]
    [#list choice.choices as expansion]
+      [#if expansion.enteredUnconditionally]
+        {
+         ${BuildCode(expansion)}
+        }
+        [#if expansion_has_next]
+            [#var nextExpansion = choice[expansion_index+1]]
+            // Warning: choice at ${nextExpansion.location} is is ignored because the 
+            // choice at ${expansion.location} is entered unconditionally and we jump
+            // out of the loop.. 
+        [/#if]
+         [#return/]
+      [/#if]
       if (${ExpansionCondition(expansion)}) { 
          ${BuildCode(expansion)}
       }
@@ -511,7 +523,7 @@
    [#if expansion.hasSemanticLookahead]
       (${expansion.semanticLookahead}) &&
    [/#if]
-   [#if expansion.firstSet.tokenNames?size =0 || expansion.lookaheadAmount ==0 || expansion.minimumSize=0]
+   [#if expansion.enteredUnconditionally]
       true 
    [#elseif expansion.firstSet.tokenNames?size < CU.USE_FIRST_SET_THRESHOLD] 
       [#list expansion.firstSet.tokenNames as name]

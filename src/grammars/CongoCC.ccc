@@ -1406,7 +1406,11 @@ INJECT ExpansionChoice :
     
     @Override
     public boolean potentiallyStartsWith(String productionName, java.util.Set<String> alreadyVisited) {
-        return getChoices().stream().anyMatch(exp->exp.potentiallyStartsWith(productionName,alreadyVisited));
+        for (ExpansionSequence seq : getChoices()) {
+            if (seq.potentiallyStartsWith(productionName, alreadyVisited)) return true;
+            if (seq.isEnteredUnconditionally()) break;
+        }
+        return false;
     }
 
     @Override

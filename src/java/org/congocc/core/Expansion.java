@@ -339,6 +339,13 @@ abstract public class Expansion extends BaseNode {
         return getMinimumSize() == 0;
     }
 
+    public boolean isEnteredUnconditionally() {
+        if (getRequiresPredicateMethod()) return false;
+        if (getHasSemanticLookahead()) return false;
+        if (getHasNumericalLookahead() && getLookahead().getAmount() >0) return false;
+        return isPossiblyEmpty();
+    }
+
     /**
      * @return the minimum number of tokens that this expansion consumes.
      */

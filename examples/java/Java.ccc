@@ -8,6 +8,8 @@
  // features in CongoCC, so many constructs are expressed in a very clean
  // and elegant way that is simply not possible with the legacy tool.
 
+#define pattern_matching //enable the new pattern matching feature 
+
 JAVA_UNICODE_ESCAPE;
 PARSER_PACKAGE=org.parsers.java;
 NODE_PACKAGE=org.parsers.java.ast;

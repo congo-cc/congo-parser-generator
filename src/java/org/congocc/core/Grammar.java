@@ -435,6 +435,16 @@ public class Grammar extends BaseNode {
         return includeNesting >0;
     }
 
+    private boolean checkReferences() {
+        // Check that non-terminals have all been defined.
+        List<NonTerminal> undefinedNTs = descendants(NonTerminal.class, nt->nt.getProduction() == null);
+        for (NonTerminal nt : undefinedNTs) {
+            errors.addError(nt, "Non-terminal " + nt.getName() + " has not been defined.");
+        }
+        if (undefinedNTs.isEmpty()) return false;
+        return true;
+    }
+
 
     /**
      * Run over the tree and do some sanity checks
@@ -446,12 +456,7 @@ public class Grammar extends BaseNode {
         for (String lexicalState : lexicalStates) {
             lexerData.addLexicalState(lexicalState);
         }
-        // Check that non-terminals have all been defined.
-        List<NonTerminal> undefinedNTs = descendants(NonTerminal.class, nt->nt.getProduction() == null);
-        for (NonTerminal nt : undefinedNTs) {
-            errors.addError(nt, "Non-terminal " + nt.getName() + " has not been defined.");
-        }
-        if (!undefinedNTs.isEmpty()) return;
+        if (!checkReferences()) return;
         // Check whether we have any LOOKAHEADs at non-choice points 
         for (ExpansionSequence sequence : descendants(ExpansionSequence.class)) {
             if (sequence.getHasExplicitLookahead() 
@@ -509,11 +514,13 @@ public class Grammar extends BaseNode {
                 + nextLexicalState + "\" has not been defined.");
             }
         }
+
         for (RegexpSpec regexpSpec : descendants(RegexpSpec.class)) {
             if (regexpSpec.getRegexp().matchesEmptyString()) {
                 errors.addError(regexpSpec, "Regular Expression can match empty string. This is not allowed here.");
             }
         }
+        
         for (BNFProduction prod : descendants(BNFProduction.class)) {
             String lexicalStateName = prod.getLexicalState();
             if (lexicalStateName != null && lexerData.getLexicalState(lexicalStateName) == null) {
@@ -522,6 +529,32 @@ public class Grammar extends BaseNode {
             }
             if (prod.isLeftRecursive()) {
                 errors.addError(prod, "Production " + prod.getName() + " is left recursive.");
+            }
+        }
+
+        for (ExpansionChoice choice : descendants(ExpansionChoice.class)) {
+            List<ExpansionSequence> units = choice.getChoices();
+            for (int i =0; i< units.size();i++) {
+                ExpansionSequence seq = units.get(i);
+                if (seq.isEnteredUnconditionally()) {
+                    if (i < units.size() -1) {
+                        String msg = "This expansion is entered unconditionally but is not the last choice.";
+                        errors.addWarning(seq, msg);
+                        break;
+                    }
+                }
+            }
+        }
+
+        for (ZeroOrOne zoo : descendants(ZeroOrOne.class)) {
+            if (zoo.getNestedExpansion().isEnteredUnconditionally()) {
+                errors.addWarning(zoo, "The expansion inside the zero or one construct is entered unconditionally. This may not be your intention.");
+            }
+        }
+
+        for (ExpansionWithNested exp : descendants(ExpansionWithNested.class, e->e instanceof ZeroOrMore || e instanceof OneOrMore)) {
+            if (exp.getNestedExpansion().isEnteredUnconditionally()) {
+                errors.addError(exp, "The expansion inside the zero or more construct at is entered unconditionally. This is not permitted here.");
             }
         }
     }
