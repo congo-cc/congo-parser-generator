@@ -182,7 +182,7 @@ public boolean isCancelled() {return cancelled;}
      return getToken(n).getImage();
   }
 
-  private String tokenType(int n) {
+  private TokenType tokenType(int n) {
      return getToken(n).getType();
   }
 
