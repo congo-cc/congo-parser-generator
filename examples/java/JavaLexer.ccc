@@ -13,7 +13,7 @@ SKIP :
 ;
 
 <*> TOKEN :
-  <CTRL_Z : "\u001A" > //{matchedToken.setType(TokenType.EOF);}
+  <CTRL_Z : "\u001A" > {matchedToken.setType(TokenType.EOF);}
 ;  
 
 

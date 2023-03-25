@@ -720,7 +720,7 @@ ${globals.translateLexerInitializers()}
             switch (matchedType) {
         [#list lexerData.regularExpressions as regexp]
                 [#if regexp.codeSnippet?has_content]
-            case ${regexp.label}:
+            case TokenType.${regexp.label}:
 ${globals.translateCodeBlock(regexp.codeSnippet.javaCode, 16)}
                 break;
                 [/#if]
