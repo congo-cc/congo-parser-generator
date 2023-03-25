@@ -65,7 +65,11 @@ public class ${settings.lexerClassName} extends TokenSource
   public ${settings.parserClassName} parser;
  [/#if]
 
-  EnumSet<TokenType> activeTokenTypes = EnumSet.allOf(TokenType.class);
+  [#if settings.deactivatedTokens?size>0]
+    EnumSet<TokenType> activeTokenTypes = EnumSet.allOf(TokenType.class);
+  [#else]
+    EnumSet<TokenType> activeTokenTypes = null;
+  [/#if]
   [#if settings.deactivatedTokens?size>0 || settings.extraTokens?size >0]
      {
        [#list settings.deactivatedTokens as token]
@@ -142,7 +146,7 @@ public class ${settings.lexerClassName} extends TokenSource
        ${TOKEN} cachedToken = tok.nextCachedToken();
     // If the cached next token is not currently active, we
     // throw it away and go back to the XXXLexer
-       if (cachedToken != null && !activeTokenTypes.contains(cachedToken.getType())) {
+       if (cachedToken != null && activeTokenTypes != null && !activeTokenTypes.contains(cachedToken.getType())) {
            reset(tok);
            cachedToken = null;
        }

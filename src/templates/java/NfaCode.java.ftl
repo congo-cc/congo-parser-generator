@@ -84,7 +84,7 @@
         [#-- We've reached the end of the block. --]
           [#var type = state.nextStateType]
           [#if type??]
-            if (validTypes.contains(${type.label}))
+            if (validTypes == null || validTypes.contains(${type.label}))
               type = ${type.label};
           [/#if]
         }

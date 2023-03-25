@@ -182,6 +182,10 @@ public boolean isCancelled() {return cancelled;}
      return getToken(n).getImage();
   }
 
+  private String tokenType(int n) {
+     return getToken(n).getType();
+  }
+
   private boolean checkNextTokenImage(String img) {
     return tokenImage(1).equals(img);
   }
@@ -198,6 +202,7 @@ public boolean isCancelled() {return cancelled;}
   }
 
   boolean activateTokenTypes(TokenType... types) {
+    if (token_source.activeTokenTypes == null) return false;
     boolean result = false;
     for (TokenType tt : types) {
       result |= token_source.activeTokenTypes.add(tt);
@@ -224,6 +229,9 @@ public boolean isCancelled() {return cancelled;}
 
   boolean deactivateTokenTypes(TokenType... types) {
     boolean result = false;
+    if (token_source.activeTokenTypes == null) {
+      token_source.activeTokenTypes = EnumSet.allOf(TokenType.class);
+    }
     for (TokenType tt : types) {
       result |= token_source.activeTokenTypes.remove(tt);
     }
