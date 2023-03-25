@@ -716,7 +716,7 @@ ${globals.translateLexerInitializers()}
         }
 
 [#if lexerData.hasTokenActions]
-        private Token TokenLexicalActions(Token matchedToken, TokenType matchedType) {
+        private Token TokenLexicalActions(Token matchedToken, TokenType? matchedType) {
             switch (matchedType) {
         [#list lexerData.regularExpressions as regexp]
                 [#if regexp.codeSnippet?has_content]
