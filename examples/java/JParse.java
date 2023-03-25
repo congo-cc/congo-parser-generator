@@ -44,7 +44,8 @@ public class JParse {
                 continue;
             }
             Files.walk(path).forEach(p->{
-                if (!Files.isDirectory(p) &&  p.toString().endsWith(".java")&&!p.toString().endsWith("-info.java")) {
+                //if (!Files.isDirectory(p) &&  p.toString().endsWith(".java")&&!p.toString().endsWith("-info.java")) {
+                if (!Files.isDirectory(p) &&  p.toString().endsWith(".java")) {
                     paths.add(p);
                 }
             });
@@ -68,7 +69,8 @@ public class JParse {
         try {   
             JavaParser parser = new JavaParser(path);
             parser.setParserTolerant(tolerantParsing);
-            Node root = parser.CompilationUnit();
+            //Node root = parser.CompilationUnit();
+            Node root = parser.Root();
             if (retainInMemory) roots.add(root);
             if (paths.size()==1) {
                 root.dump("");

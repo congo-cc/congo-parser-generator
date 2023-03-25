@@ -143,6 +143,14 @@ public class LexerData {
             regularExpressions.get(i).setOrdinal(i);
         }
     }
+
+    public Set<String> getTokenNames() {
+        Set<String> result = new HashSet<>();
+        for (RegularExpression regexp : regularExpressions) {
+            result.add(regexp.getLabel());
+        }
+        return result;
+    }
     
 
     static public boolean isJavaIdentifier(String s) {

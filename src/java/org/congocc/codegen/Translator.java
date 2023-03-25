@@ -706,7 +706,7 @@ public class Translator {
     public Translator(Grammar grammar) {
         this.grammar = grammar;
         this.appSettings = grammar.getAppSettings();
-        tokenNames = grammar.getTemplateGlobals().getTokenNames();
+        tokenNames = grammar.getLexerData().getTokenNames();
     }
 
     public int getFieldIndent() {

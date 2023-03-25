@@ -160,7 +160,7 @@ public class ExpansionSequence extends Expansion {
                 if (unit.getHasScanLimit())
                     return true;
             }
-            if (unit.getMaximumSize() > 0)
+            if (!(unit instanceof EmptyExpansion))
                 atStart = false;
         }
         return false;

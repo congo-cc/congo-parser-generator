@@ -264,14 +264,6 @@ public class TemplateGlobals {
         }
     }
 
-    public Set<String> getTokenNames() {
-        HashSet<String> result = new HashSet<>();
-        for (RegularExpression re : grammar.getLexerData().getRegularExpressions()) {
-            result.add(re.getLabel());
-        }
-        return result;
-    }
-
     public String translateCodeBlock(String cb, int indent) {
         StringBuilder result = new StringBuilder();
         if (cb != null) {

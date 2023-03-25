@@ -347,7 +347,7 @@ ${is}    [#if !nonterminal.LHS?is_null && production.returnType != "void"]${nont
    [#if !nonterminal.LHS?is_null && production.returnType = "void"]
 ${is}    try:
 ${is}        ${nonterminal.LHS} = self.peek_node()
-${is}    catch Exception:
+${is}    except Exception:
 ${is}        ${nonterminal.LHS} = None
    [/#if]
    [#if !nonterminal.childName?is_null]

@@ -13,7 +13,7 @@ SKIP :
 ;
 
 <*> TOKEN :
-  <CTRL_Z : "\u001A" >
+  <CTRL_Z : "\u001A" > {matchedToken.setType(EOF);}
 ;  
 
 
@@ -98,6 +98,17 @@ TOKEN #KeyWord :
 | < SEALED : "sealed">
 | < NON_SEALED : "non-sealed">
 | < PERMITS : "permits">
+// Soft keywords used only in the module-info
+| <MODULE : "module">
+| <EXPORTS : "exports">
+| <OPEN : "open">
+| <OPENS : "opens">
+| <PROVIDES : "provides">
+| <REQUIRES : "requires">
+| <TO : "to">
+| <TRANSITIVE : "transitive">
+| <USES : "uses">
+| <WITH : "with">
 #if pattern_matching
 | < WHEN : "when" >
 #endif
@@ -342,7 +353,7 @@ TOKEN #Operator :
 //INCLUDE JAVA_IDENTIFIER_DEF
 INCLUDE "JavaIdentifierDef.ccc"
 
-TOKEN :
+<JAVA,JAVA_MODULE> TOKEN :
   < IDENTIFIER: <JAVA_IDENTIFIER_START> (<JAVA_IDENTIFIER_PART>)* > #Identifier
 ;
 

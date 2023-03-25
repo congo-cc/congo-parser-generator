@@ -57,10 +57,6 @@ abstract public class Expansion extends BaseNode {
         return null;
     }
 
-//    public boolean getIsRegexp() {
-//        return this instanceof RegularExpression;
-//    }
-
     public TreeBuildingAnnotation getTreeNodeBehavior() {
         if (treeNodeBehavior == null) {
             if (this.getParent() instanceof BNFProduction) {

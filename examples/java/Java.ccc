@@ -16,7 +16,8 @@ NODE_PACKAGE=org.parsers.java.ast;
 DEFAULT_LEXICAL_STATE=JAVA;
 // The following tokens are only activated at key points whether
 // they are needed.
-DEACTIVATE_TOKENS=RECORD, VAR, YIELD, SEALED, NON_SEALED, PERMITS
+DEACTIVATE_TOKENS=RECORD, VAR, YIELD, SEALED, NON_SEALED, PERMITS, MODULE, 
+                  OPEN, OPENS, PROVIDES, REQUIRES, EXPORTS, USES, WITH, TO, TRANSITIVE
 #if pattern_matching
 , WHEN
 #endif
@@ -46,6 +47,80 @@ INJECT PARSER_CLASS :
     }
 }
 #endif
+
+Node Root#void :
+   ModularCompilationUnit {return peekNode();}
+   |
+   CompilationUnit {return peekNode();}
+;
+
+ModularCompilationUnit :
+   (ImportDeclaration)*
+   (Annotation)*
+   ASSERT {getToken(1).getImage().equals("open") || getToken(1).getImage().equals("module")}#
+   =>||
+   [
+      ACTIVATE_TOKENS OPEN (<OPEN>)
+   ]
+   ACTIVATE_TOKENS MODULE (<MODULE>)
+   Name 
+   <LBRACE>
+   (SCAN ~(<RBRACE>) => ModuleDirective)*
+   <RBRACE>
+;
+
+ModuleDirective :
+   RequiresDirective
+   |
+   ExportsDirective
+   |
+   OpensDirective
+   |
+   UsesDirective
+   |
+   ProvidesDirective
+;
+
+RequiresDirective : 
+   ACTIVATE_TOKENS REQUIRES, TRANSITIVE (<REQUIRES> [<TRANSITIVE>|<STATIC>])
+   Name
+   <SEMICOLON>
+;
+
+ExportsDirective :
+   ACTIVATE_TOKENS EXPORTS (<EXPORTS>)
+   Name
+   [
+     ACTIVATE_TOKENS TO (<TO>)
+     Name (<COMMA> Name)*
+   ]
+   <SEMICOLON>
+;
+
+OpensDirective :
+   ACTIVATE_TOKENS OPENS (<OPENS>)
+   Name
+   [
+     ACTIVATE_TOKENS TO (<TO>)
+     Name (<COMMA> Name)*
+   ]
+   <SEMICOLON>
+;
+
+UsesDirective :
+    ACTIVATE_TOKENS USES (<USES>)
+    Name
+    <SEMICOLON>
+;
+
+ProvidesDirective :
+    ACTIVATE_TOKENS PROVIDES(<PROVIDES>)
+    Name
+    ACTIVATE_TOKENS WITH (<WITH>)
+    Name
+    (<COMMA> Name)*
+    <SEMICOLON>
+;
 
 #CompilationUnit# :
   [ PackageDeclaration! ]
