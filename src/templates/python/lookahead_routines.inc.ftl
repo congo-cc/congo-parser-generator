@@ -1,5 +1,4 @@
-[#ftl strict_vars=true]
- [#-- This template generates the various lookahead/predicate routines --]
+[#-- This template generates the various lookahead/predicate routines --]
 
 [#import "common_utils.inc.ftl" as CU]
 
