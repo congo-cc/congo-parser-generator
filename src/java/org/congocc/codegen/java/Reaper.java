@@ -155,6 +155,22 @@ class Reaper extends Node.Visitor {
     
     void visit(PackageDeclaration decl) {}
 
+    void visit(FieldDeclaration fd) {
+        if (isUsed(fd)) {
+            recurse(fd);
+        }
+    }
+
+    private boolean isUsed(FieldDeclaration fd) {
+        if (!isPrivate(fd)) return true;
+        for (VariableDeclarator vd : fd.childrenOfType(VariableDeclarator.class)) {
+            if (usedVarNames.contains(vd.getName())) return true;
+        }
+        return false;
+    }
+
+
+
     // Get rid of any variable declarations where the variable name
     // is not in usedVarNames. The only complicated case is if the field
     // has more than one variable declaration comma-separated
