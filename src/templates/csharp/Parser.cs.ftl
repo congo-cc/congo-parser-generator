@@ -1,4 +1,3 @@
-[#ftl strict_vars=true]
 // ReSharper disable InconsistentNaming
 [#import "CommonUtils.inc.ftl" as CU]
 [#var MULTIPLE_LEXICAL_STATE_HANDLING = (grammar.lexerData.numLexicalStates >1)]

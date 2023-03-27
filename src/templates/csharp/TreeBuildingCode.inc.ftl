@@ -1,4 +1,3 @@
-[#ftl strict_vars=true]
         //
         // the root node of the AST. It only makes sense to call
         // this after a successful parse.

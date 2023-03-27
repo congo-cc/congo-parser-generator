@@ -1,5 +1,3 @@
-[#ftl strict_vars=true]
-
 [#var MULTIPLE_LEXICAL_STATE_HANDLING = (grammar.lexerData.numLexicalStates >1)]
 
         private void PushOntoLookaheadStack(string methodName, string fileName, uint line, uint column) {

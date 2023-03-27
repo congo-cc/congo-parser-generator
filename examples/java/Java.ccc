@@ -67,6 +67,7 @@ ModularCompilationUnit :
    <LBRACE>
    (SCAN ~(<RBRACE>) => ModuleDirective)*
    <RBRACE>
+   <EOF>
 ;
 
 ModuleDirective :
@@ -126,7 +127,6 @@ ProvidesDirective :
   [ PackageDeclaration! ]
   ( ImportDeclaration )*!
   ( TypeDeclaration )*!
-  [<CTRL_Z>] // The Java spec says you can have this here, but I've never seen it!
   <EOF>
   {
     return CURRENT_NODE;
