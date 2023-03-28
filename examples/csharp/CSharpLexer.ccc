@@ -265,6 +265,8 @@ TOKEN #Literal :
   < REGULAR_INTERPOLATION_START : '$"' >  
   |
   < MULTI_INTERPOLATION_START : '$@"' | '@$"' > 
+  |
+  < INTERPOLATED_RAW_STRING_START : ("$")+ ('"'){3,}> : IN_INTERPOLATED_RAW_STRING 
 ; 
 
 <IN_REGULAR_INTERPOLATION>
@@ -314,6 +316,83 @@ UNPARSED :
     <HASH : "#">
 ;
 
+MORE : 
+   <RAW_STRING_START : ('"'){3,}> : IN_RAW_STRING
+;
+
+<IN_INTERPOLATED_RAW_STRING> TOKEN :
+   <START_INTERPOLATION : ("{")+> 
+;   
+
+<IN_RAW_STRING, IN_INTERPOLATED_RAW_STRING> MORE : 
+   <ANY_CHAR : ~[]>
+;
+
+<IN_RAW_STRING> TOKEN :
+    <RAW_STRING_LITERAL : ('"'){3,}> #StringLiteral
+;
+
+INJECT LEXER_CLASS :
+{
+   private String pendingString = "";
+   private int startingQuotes, startingDollars;
+
+   private BASE_TOKEN_CLASS TOKEN_HOOK(BASE_TOKEN_CLASS tok) {
+#if false    
+      if (tok.getType() == TokenType.INTERPOLATED_RAW_STRING_START) {
+         String image = tok.getImage();
+         startingQuotes = startingDollars = 0;
+         for (int i = 0; i < image.length(); i++) {
+             char ch = image.charAt(i);
+             if (ch == '"') startingQuotes++;
+             else if (ch == '$') startingDollars++;
+             else break;
+         }
+      }
+      else if (tok.getType() == TokenType.START_INTERPOLATION) {
+        if (tok.getImage().length()<startingDollars) {
+            tok.setUnparsed(true);
+        } else {
+        }
+      }
+      else 
+#endif      
+      
+      if (tok.getType() == TokenType.RAW_STRING_LITERAL) {
+        String image = tok.getImage();
+        if (pendingString == "" && endsWithEnoughQuotes(image)) {
+          switchTo(LexicalState.CSHARP);
+          return tok;
+        }
+        pendingString += tok.getImage();
+        if (endsWithEnoughQuotes(pendingString)) {
+            tok.setBeginOffset(tok.getEndOffset()-pendingString.length());
+            pendingString = "";
+            switchTo(LexicalState.CSHARP);
+            return tok;
+        }
+        tok.setUnparsed(true);
+      }
+      return tok;
+   }
+
+   private boolean endsWithEnoughQuotes(String img) {
+       int startingQuotes = 0, endingQuotes = 0;
+       for (int i =0; i<img.length();i++) {
+          if (img.charAt(i) == '"') startingQuotes++;
+          else break;
+       }
+       for (int i = img.length() -1; i>=0; i--) {
+          if (img.charAt(i) == '"') ++endingQuotes;
+          else break;
+       }
+       return endingQuotes >=startingQuotes;
+   }
+}   
+
+
+
+
 INJECT LEXER_CLASS :
     import java.util.HashSet;
     import java.util.Set;
@@ -341,7 +420,7 @@ INJECT LEXER_CLASS :
    private BASE_TOKEN_CLASS TOKEN_HOOK(BASE_TOKEN_CLASS tok) {
       TokenType type = tok.getType();
       if (type == TokenType.EOF) {
-        //assert ifNesting == 0 : "unclosed #if";
+        assert ifNesting == 0 : "unclosed #if";
         return tok;
       }
       String image = tok.getImage();

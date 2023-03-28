@@ -1745,6 +1745,8 @@ LiteralExpression# :
    <REGULAR_STRING_LITERAL>
    |
    <VERBATIM_STRING_LITERAL>
+   |
+   <RAW_STRING_LITERAL>
 ;
 
 Label : SCAN 2 <IDENTIFIER> <COLON> ;
@@ -2123,6 +2125,9 @@ Pattern :
    ACTIVATE_TOKENS AND, OR, NOT (OrPattern)
 ;
 
+// I'm not sure this is right. This is a new feature in C# 11.
+ListPattern : <LBRACKET> Pattern (<COMMA> Pattern)* <RBRACKET> ;
+
 OrPattern : AndPattern (<OR> AndPattern)* ;
 
 AndPattern : NotPattern (<AND> NotPattern)* ;
@@ -2131,6 +2136,8 @@ NotPattern : (<NOT>)* PrimaryPattern ;
 
 PrimaryPattern :
    <NULL> | <TRUE> | <FALSE>
+   |
+   ListPattern
    |
    RelationalPattern
    |
@@ -2280,6 +2287,12 @@ MultiStringInterpolation :
       )*
       <ENDING_QUOTE>
    )
+;
+
+// TODO
+RawStringInterpolation :
+   <INTERPOLATED_RAW_STRING_START>
+    
 ;
 
 PlaceHolder :
