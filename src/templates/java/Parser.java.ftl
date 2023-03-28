@@ -71,7 +71,7 @@ private boolean cancelled;
 public void cancel() {cancelled = true;}
 public boolean isCancelled() {return cancelled;}
   /** Generated Lexer. */
-  public ${settings.lexerClassName} token_source;
+  private ${settings.lexerClassName} token_source;
   
   public void setInputSource(String inputSource) {
       token_source.setInputSource(inputSource);
@@ -88,7 +88,7 @@ public boolean isCancelled() {return cancelled;}
    public ${settings.parserClassName}(String inputSource, CharSequence content) {
        this(new ${settings.lexerClassName}(inputSource, content));
       [#if settings.lexerUsesParser]
-      token_source.parser = this;
+      token_source.setParser(this);
       [/#if]
   }
 
@@ -120,7 +120,7 @@ public boolean isCancelled() {return cancelled;}
   public ${settings.parserClassName}(${settings.lexerClassName} lexer) {
     token_source = lexer;
       [#if settings.lexerUsesParser]
-      token_source.parser = this;
+      token_source.setParser(this);
       [/#if]
       lastConsumedToken = DUMMY_START_TOKEN;
       lastConsumedToken.setTokenSource(lexer);

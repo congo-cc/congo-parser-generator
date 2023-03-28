@@ -57,7 +57,7 @@ Node Root#void :
 ModularCompilationUnit :
    (ImportDeclaration)*
    (Annotation)*
-   ASSERT {getToken(1).getImage().equals("open") || getToken(1).getImage().equals("module")}#
+   ASSERT {checkNextTokenImage("open") || checkNextTokenImage("module")}#
    =>||
    [
       ACTIVATE_TOKENS OPEN (<OPEN>)
@@ -151,7 +151,7 @@ ImportDeclaration : <_IMPORT> [ <STATIC> ] Name [ <DOT> <STAR> ] <SEMICOLON> ;
 Modifiers :
  (
   SCAN {isParserTolerant() || permissibleModifiers == null
-       || permissibleModifiers.contains(getToken(1).getType())}#
+       || permissibleModifiers.contains(tokenType(1))}#
   =>
   (
    <PUBLIC>|<STATIC>|<PROTECTED>|<PRIVATE> |<FINAL>|<ABSTRACT>
@@ -159,7 +159,7 @@ Modifiers :
    |<_DEFAULT>)
   {
     if (permissibleModifiers !=null) {
-      TokenType tt = getToken(0).getType();
+      TokenType tt = tokenType(0);
       switch(tt) {
         case ABSTRACT :
         case FINAL :
@@ -185,11 +185,11 @@ Modifiers :
     permissibleModifiers.contains(SEALED)
     &&
     (
-       "sealed".equals(getToken(1).getImage())
+       checkNextTokenImage("sealed")
        ||
-       "non".equals(getToken(1).getImage())
-         && "-".equals(getToken(2).getImage())
-         && "sealed".equals(getToken(3).getImage())
+       checkNextTokenImage("non")
+         && "-".equals(tokenImage(2))
+         && "sealed".equals(tokenImage(3))
     )
   }# =>
   ACTIVATE_TOKENS SEALED, NON_SEALED (<SEALED>|<NON_SEALED>)
@@ -252,7 +252,7 @@ EmptyDeclaration# : <SEMICOLON> ;
 
 TypeIdentifier#void :
    <IDENTIFIER>
-   {String temp = getToken(0).getImage();}#
+   {String temp = tokenImage(0);}#
    ASSERT {!temp.equals("record")
            && !temp.equals("var")
            && !temp.equals("permits")
@@ -292,7 +292,7 @@ InterfaceDeclaration :
 ;
 
 PermitsList :
-   SCAN 0 {getToken(1).getImage().equals("permits")}# =>
+   SCAN 0 {checkNextTokenImage("permits")}# =>
    ACTIVATE_TOKENS PERMITS (<PERMITS>)
    ObjectType
    (<COMMA> ObjectType)*
@@ -348,7 +348,7 @@ RecordDeclaration :
                                      ABSTRACT, FINAL, 
                                      STATIC, STRICTFP);}
   Modifiers /modifiers/
-  ASSERT {getToken(1).getImage().equals("record") && getToken(2).getType() == IDENTIFIER}#
+  ASSERT {checkNextTokenImage("record") && tokenType(2) == IDENTIFIER}#
   =>||
   ACTIVATE_TOKENS RECORD (<RECORD>)
   TypeIdentifier
@@ -847,12 +847,12 @@ PrimaryExpression#interface :
 // For now, I'm not including a check for that. The compiler catches it, after all. Also, it is
 // still unclear to me whether this should be caught at this point or if it is better to just do
 // a post-parse tree walk that runs over the AST and checks for these things.
-//  SCAN 1 {getToken(0).getType() == IDENTIFIER && (currentLookaheadToken==null || (peekNode().getChildCount() > 1 || !getToken(0).getImage().equals("yield")))}#
-  SCAN 1 {getToken(0).getType() == IDENTIFIER}#
+//  SCAN 1 {tokenType(0) == IDENTIFIER && (currentLookaheadToken==null || (peekNode().getChildCount() > 1 || !tokenImage(0).equals("yield")))}#
+  SCAN 1 {tokenType(0) == IDENTIFIER}#
   =>
   InvocationArguments #MethodCall(+1)
  )*
- ASSERT {getToken(0).getType() != SUPER}# : "Not a valid expression here"
+ ASSERT {tokenType(0) != SUPER}# : "Not a valid expression here"
 ;
 
 LiteralExpression# : Literal ;
@@ -1051,7 +1051,7 @@ NoVarDeclaration :
 VarDeclaration :
   {permissibleModifiers = EnumSet.of(FINAL);}#
   Modifiers /modifiers/
-  ASSERT {getToken(1).getImage().equals("var") && getToken(2).getType() == IDENTIFIER} =>||
+  ASSERT {checkNextTokenImage("var") && tokenType(2) == IDENTIFIER} =>||
   ACTIVATE_TOKENS VAR (<VAR>)
   <IDENTIFIER>
   [<ASSIGN> Expression]
@@ -1130,7 +1130,7 @@ TypePattern :
 ; 
 
 WhenClause :
-   SCAN 0 {getToken(1).getImage().equals("when")} 
+   SCAN 0 {checkNextTokenImage("when")} 
    =>
    ACTIVATE_TOKENS WHEN (<WHEN>) Expression
 ;   
@@ -1138,7 +1138,7 @@ WhenClause :
 
 ClassicCaseStatement :
   ClassicSwitchLabel
-  (SCAN 1 {getToken(1).getType() != _DEFAULT}
+  (SCAN 1 {tokenType(1) != _DEFAULT}
           // We need this because we'll spuriously enter the BlockStatement
           // if the next token is "default", because "default" is in the
           // BlockStatement first set. This is really quite tricky, but maybe not my
@@ -1223,7 +1223,7 @@ BreakStatement :
 ;
 
 YieldStatement :
-   ASSERT {getToken(1).getImage().equals("yield")&&isInProduction("SwitchExpression")}#
+   ASSERT {checkNextTokenImage("yield")&&isInProduction("SwitchExpression")}#
    ACTIVATE_TOKENS YIELD (<YIELD>)
    Expression <SEMICOLON> =>||
 ;
@@ -1253,7 +1253,7 @@ ClassicTryStatement :
 TryWithResources :
    <TRY> <LPAREN> =>||
     (
-      SCAN {getToken(0).getType() == SEMICOLON}# ~(<RPAREN>) 
+      SCAN {tokenType(0) == SEMICOLON}# ~(<RPAREN>) 
       =>
        (
          LocalVariableDeclaration
@@ -1404,7 +1404,7 @@ LambdaParameter :
       Type (Annotation)* <VAR_ARGS> =>|| <IDENTIFIER>
       |
       (
-        SCAN {getToken(1).getImage().equals("var")}#
+        SCAN {checkNextTokenImage("var")}#
         => ACTIVATE_TOKENS VAR (<VAR>)
         |
         Type

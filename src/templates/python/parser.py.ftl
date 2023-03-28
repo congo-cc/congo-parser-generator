@@ -356,6 +356,9 @@ ${globals.translateParserInjections(true)}
     def token_image(self, n):
         return self.get_token(n).image
 
+    def token_type(self, n):
+        return self.get_token(n).type
+
     def check_next_token_image(self, img):
         return self.token_image(1) == img
 

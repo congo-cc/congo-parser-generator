@@ -62,7 +62,11 @@ public class ${settings.lexerClassName} extends TokenSource
  }  
    LexicalState lexicalState = LexicalState.values()[0];
  [#if settings.lexerUsesParser]
-  public ${settings.parserClassName} parser;
+  private ${settings.parserClassName} parser;
+
+  public ${settings.parserClassName} getParser() {return parser;}
+
+  public void setParser(${settings.parserClassName} parser) {this.parser = parser;}
  [/#if]
 
   [#if settings.deactivatedTokens?size>0]

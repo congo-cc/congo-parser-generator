@@ -77,7 +77,7 @@ NamespaceBody :
 ExternAliasDirective :
    <EXTERN>
    <IDENTIFIER>
-   ASSERT {getToken(0).getImage().equals("alias")}#
+   ASSERT {tokenImage(0).equals("alias")}#
    =>||
    <IDENTIFIER> <SEMICOLON>
 ;
@@ -205,7 +205,7 @@ Modifiers#void : //TODO
   (
     SCAN { permissibleModifiers == null
          ||
-         permissibleModifiers.contains(getToken(1).getType()) }#
+         permissibleModifiers.contains(tokenType(1)) }#
       =>
       (<NEW>|<PUBLIC>|<PROTECTED>|<INTERNAL>|<PRIVATE>|<ABSTRACT>
       |<SEALED>|<STATIC>|<UNSAFE>|<OVERRIDE>|<VIRTUAL>|<EXTERN>
@@ -220,7 +220,7 @@ Modifiers#void : //TODO
       )
       {
          if (permissibleModifiers != null) {
-            permissibleModifiers.remove(getToken(0).getType());
+            permissibleModifiers.remove(tokenType(0));
          }
       }
      |
@@ -819,7 +819,7 @@ InterfaceMethodDeclaration :
 ;
 #if false
 ReturnType :
-   SCAN 1 {getToken(2).getType() != TokenType.STAR}# =>
+   SCAN 1 {tokenType(2) != TokenType.STAR}# =>
    // If we have void*, we prefer to parse it as Type
    // for tree-building purposes.
    <VOID> [<STAR>]
@@ -853,7 +853,7 @@ VarArgsParameter#void :
 
 ArgListParameter# :
     <IDENTIFIER>
-    ASSERT {getToken(0).getImage().equals("__arglist")}#
+    ASSERT {tokenImage(0).equals("__arglist")}#
     =>||
 ;
 
@@ -919,7 +919,7 @@ Type :
   )*
   [
      SCAN 0 \ArrayType =>
-     ASSERT {getToken(0).getType() == TokenType.RBRACKET}#
+     ASSERT {tokenType(0) == TokenType.RBRACKET}#
   ]
   (SCAN ~\TupleType => <STAR>)*
   [
@@ -1119,7 +1119,7 @@ ImplicitAnonymousFunctionSignature :
 ;
 
 QueryExpressionLA#scan :
-   <IDENTIFIER> ASSERT {getToken(0).getImage().equals("from")}
+   <IDENTIFIER> ASSERT {tokenImage(0).equals("from")}
    (
       <IDENTIFIER> <IN>
       |
@@ -1526,7 +1526,7 @@ ArrayCreationExpression :
 ;
 
 ObjectCreationExpression :
-   <NEW> =>|+1 [SCAN 1 {getToken(1).getType() != TokenType.LPAREN} => NonArrayType] // This seems possible since C# 9
+   <NEW> =>|+1 [SCAN 1 {tokenType(1) != TokenType.LPAREN} => NonArrayType] // This seems possible since C# 9
    (
       <LPAREN> [ArgumentList] <RPAREN> [ObjectInitializer | CollectionInitializer]
       |
@@ -1822,7 +1822,7 @@ LocalVariableDeclarationLA#scan :
    [<REF>] [<READONLY>]
    (
       (
-         <IDENTIFIER> ASSERT {getToken(0).getImage().equals("var")} =>||
+         <IDENTIFIER> ASSERT {tokenImage(0).equals("var")} =>||
          (<IDENTIFIER>|Tuple) <ASSIGN>
       )
       |
@@ -1851,7 +1851,7 @@ NoVarDeclaration :
       <READONLY> //REVISIT
    ]
    Type
-   ASSERT {getToken(-1).getType() == TokenType.DOT || !getToken(0).toString().equals("await")}#
+   ASSERT {tokenType(-1) == TokenType.DOT || !tokenImage(0).equals("await")}#
    =>|+1
    LocalVariableDeclarator
    (<COMMA> LocalVariableDeclarator)*
@@ -1886,7 +1886,7 @@ StackAllocInitializer :
       |
       Type
       (
-         SCAN 0 {getToken(0).getType() != TokenType.RBRACKET}#
+         SCAN 0 {tokenType(0) != TokenType.RBRACKET}#
          => <LBRACKET> Expression <RBRACKET>
          |
          <LBRACKET> Expression <RBRACKET>
@@ -2031,7 +2031,7 @@ LockStatement : <LOCK> <LPAREN> Expression <RPAREN> EmbeddedStatement ;
 FixedStatement :
    <FIXED>
    <LPAREN> =>||
-   Type ASSERT {getToken(0).getType() == TokenType.STAR}
+   Type ASSERT {tokenType(0) == TokenType.STAR}
    FixedPointerDeclarator (<COMMA> FixedPointerDeclarator)*
    <RPAREN>
    EmbeddedStatement
@@ -2093,9 +2093,9 @@ SwitchSection :
       SCAN 0 {
          // A bit ugly. Really need to make syntactic lookahead a bit more powerful
          // in terms of negative conditions!
-                getToken(1).getType() != TokenType.RBRACE
-                && getToken(1).getType() != TokenType.CASE
-                && !(getToken(1).getType() == TokenType.DEFAULT && getToken(2).getType() == TokenType.COLON)
+                tokenType(1) != TokenType.RBRACE
+                && tokenType(1) != TokenType.CASE
+                && !(tokenType(1) == TokenType.DEFAULT && tokenType(2) == TokenType.COLON)
              }
       => Statement
    )+
@@ -2184,8 +2184,8 @@ TypePattern :
          => <DOT> <IDENTIFIER>
       ]
       {
-         TokenType lastTokType = getToken(0).getType();
-         TokenType nextTokType = getToken(1).getType();
+         TokenType lastTokType = tokenType(0);
+         TokenType nextTokType = tokenType(1);
       }#
       ASSERT
       {
@@ -2214,7 +2214,7 @@ TypePattern :
          )
       }# =>||
       |
-      NonNullableType ASSERT {getToken(1).getType() != TokenType.LPAREN}#
+      NonNullableType ASSERT {tokenType(1) != TokenType.LPAREN}#
    )
 ;
 
