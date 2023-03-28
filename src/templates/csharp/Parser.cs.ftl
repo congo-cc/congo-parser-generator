@@ -369,8 +369,8 @@ ${globals.translateParserInitializers()}
             return GetToken(n).Image;
         }
 
-        internal TokenType TokenType(int n) {
-            return getToken(n).Type;
+        internal TokenType GetTokenType(int n) {
+            return GetToken(n).Type;
         }
 
         internal bool CheckNextTokenImage(string img) {

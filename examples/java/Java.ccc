@@ -151,7 +151,7 @@ ImportDeclaration : <_IMPORT> [ <STATIC> ] Name [ <DOT> <STAR> ] <SEMICOLON> ;
 Modifiers :
  (
   SCAN {isParserTolerant() || permissibleModifiers == null
-       || permissibleModifiers.contains(tokenType(1))}#
+       || permissibleModifiers.contains(getTokenType(1))}#
   =>
   (
    <PUBLIC>|<STATIC>|<PROTECTED>|<PRIVATE> |<FINAL>|<ABSTRACT>
@@ -159,7 +159,7 @@ Modifiers :
    |<_DEFAULT>)
   {
     if (permissibleModifiers !=null) {
-      TokenType tt = tokenType(0);
+      TokenType tt = getTokenType(0);
       switch(tt) {
         case ABSTRACT :
         case FINAL :
@@ -348,7 +348,7 @@ RecordDeclaration :
                                      ABSTRACT, FINAL, 
                                      STATIC, STRICTFP);}
   Modifiers /modifiers/
-  ASSERT {checkNextTokenImage("record") && tokenType(2) == IDENTIFIER}#
+  ASSERT {checkNextTokenImage("record") && getTokenType(2) == IDENTIFIER}#
   =>||
   ACTIVATE_TOKENS RECORD (<RECORD>)
   TypeIdentifier
@@ -847,12 +847,12 @@ PrimaryExpression#interface :
 // For now, I'm not including a check for that. The compiler catches it, after all. Also, it is
 // still unclear to me whether this should be caught at this point or if it is better to just do
 // a post-parse tree walk that runs over the AST and checks for these things.
-//  SCAN 1 {tokenType(0) == IDENTIFIER && (currentLookaheadToken==null || (peekNode().getChildCount() > 1 || !tokenImage(0).equals("yield")))}#
-  SCAN 1 {tokenType(0) == IDENTIFIER}#
+//  SCAN 1 {getTokenType(0) == IDENTIFIER && (currentLookaheadToken==null || (peekNode().getChildCount() > 1 || !tokenImage(0).equals("yield")))}#
+  SCAN 1 {getTokenType(0) == IDENTIFIER}#
   =>
   InvocationArguments #MethodCall(+1)
  )*
- ASSERT {tokenType(0) != SUPER}# : "Not a valid expression here"
+ ASSERT {getTokenType(0) != SUPER}# : "Not a valid expression here"
 ;
 
 LiteralExpression# : Literal ;
@@ -1051,7 +1051,7 @@ NoVarDeclaration :
 VarDeclaration :
   {permissibleModifiers = EnumSet.of(FINAL);}#
   Modifiers /modifiers/
-  ASSERT {checkNextTokenImage("var") && tokenType(2) == IDENTIFIER} =>||
+  ASSERT {checkNextTokenImage("var") && getTokenType(2) == IDENTIFIER} =>||
   ACTIVATE_TOKENS VAR (<VAR>)
   <IDENTIFIER>
   [<ASSIGN> Expression]
@@ -1138,7 +1138,7 @@ WhenClause :
 
 ClassicCaseStatement :
   ClassicSwitchLabel
-  (SCAN 1 {tokenType(1) != _DEFAULT}
+  (SCAN 1 {getTokenType(1) != _DEFAULT}
           // We need this because we'll spuriously enter the BlockStatement
           // if the next token is "default", because "default" is in the
           // BlockStatement first set. This is really quite tricky, but maybe not my
@@ -1253,7 +1253,7 @@ ClassicTryStatement :
 TryWithResources :
    <TRY> <LPAREN> =>||
     (
-      SCAN {tokenType(0) == SEMICOLON}# ~(<RPAREN>) 
+      SCAN {getTokenType(0) == SEMICOLON}# ~(<RPAREN>) 
       =>
        (
          LocalVariableDeclaration

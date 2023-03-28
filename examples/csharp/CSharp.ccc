@@ -205,7 +205,7 @@ Modifiers#void : //TODO
   (
     SCAN { permissibleModifiers == null
          ||
-         permissibleModifiers.contains(tokenType(1)) }#
+         permissibleModifiers.contains(getTokenType(1)) }#
       =>
       (<NEW>|<PUBLIC>|<PROTECTED>|<INTERNAL>|<PRIVATE>|<ABSTRACT>
       |<SEALED>|<STATIC>|<UNSAFE>|<OVERRIDE>|<VIRTUAL>|<EXTERN>
@@ -220,7 +220,7 @@ Modifiers#void : //TODO
       )
       {
          if (permissibleModifiers != null) {
-            permissibleModifiers.remove(tokenType(0));
+            permissibleModifiers.remove(getTokenType(0));
          }
       }
      |
@@ -819,7 +819,7 @@ InterfaceMethodDeclaration :
 ;
 #if false
 ReturnType :
-   SCAN 1 {tokenType(2) != TokenType.STAR}# =>
+   SCAN 1 {getTokenType(2) != TokenType.STAR}# =>
    // If we have void*, we prefer to parse it as Type
    // for tree-building purposes.
    <VOID> [<STAR>]
@@ -919,7 +919,7 @@ Type :
   )*
   [
      SCAN 0 \ArrayType =>
-     ASSERT {tokenType(0) == TokenType.RBRACKET}#
+     ASSERT {getTokenType(0) == TokenType.RBRACKET}#
   ]
   (SCAN ~\TupleType => <STAR>)*
   [
@@ -1526,7 +1526,7 @@ ArrayCreationExpression :
 ;
 
 ObjectCreationExpression :
-   <NEW> =>|+1 [SCAN 1 {tokenType(1) != TokenType.LPAREN} => NonArrayType] // This seems possible since C# 9
+   <NEW> =>|+1 [SCAN 1 {getTokenType(1) != TokenType.LPAREN} => NonArrayType] // This seems possible since C# 9
    (
       <LPAREN> [ArgumentList] <RPAREN> [ObjectInitializer | CollectionInitializer]
       |
@@ -1851,7 +1851,7 @@ NoVarDeclaration :
       <READONLY> //REVISIT
    ]
    Type
-   ASSERT {tokenType(-1) == TokenType.DOT || !tokenImage(0).equals("await")}#
+   ASSERT {getTokenType(-1) == TokenType.DOT || !tokenImage(0).equals("await")}#
    =>|+1
    LocalVariableDeclarator
    (<COMMA> LocalVariableDeclarator)*
@@ -1886,7 +1886,7 @@ StackAllocInitializer :
       |
       Type
       (
-         SCAN 0 {tokenType(0) != TokenType.RBRACKET}#
+         SCAN 0 {getTokenType(0) != TokenType.RBRACKET}#
          => <LBRACKET> Expression <RBRACKET>
          |
          <LBRACKET> Expression <RBRACKET>
@@ -2031,7 +2031,7 @@ LockStatement : <LOCK> <LPAREN> Expression <RPAREN> EmbeddedStatement ;
 FixedStatement :
    <FIXED>
    <LPAREN> =>||
-   Type ASSERT {tokenType(0) == TokenType.STAR}
+   Type ASSERT {getTokenType(0) == TokenType.STAR}
    FixedPointerDeclarator (<COMMA> FixedPointerDeclarator)*
    <RPAREN>
    EmbeddedStatement
@@ -2093,9 +2093,9 @@ SwitchSection :
       SCAN 0 {
          // A bit ugly. Really need to make syntactic lookahead a bit more powerful
          // in terms of negative conditions!
-                tokenType(1) != TokenType.RBRACE
-                && tokenType(1) != TokenType.CASE
-                && !(tokenType(1) == TokenType.DEFAULT && tokenType(2) == TokenType.COLON)
+                getTokenType(1) != TokenType.RBRACE
+                && getTokenType(1) != TokenType.CASE
+                && !(getTokenType(1) == TokenType.DEFAULT && getTokenType(2) == TokenType.COLON)
              }
       => Statement
    )+
@@ -2184,8 +2184,8 @@ TypePattern :
          => <DOT> <IDENTIFIER>
       ]
       {
-         TokenType lastTokType = tokenType(0);
-         TokenType nextTokType = tokenType(1);
+         TokenType lastTokType = getTokenType(0);
+         TokenType nextTokType = getTokenType(1);
       }#
       ASSERT
       {
@@ -2214,7 +2214,7 @@ TypePattern :
          )
       }# =>||
       |
-      NonNullableType ASSERT {tokenType(1) != TokenType.LPAREN}#
+      NonNullableType ASSERT {getTokenType(1) != TokenType.LPAREN}#
    )
 ;
 
