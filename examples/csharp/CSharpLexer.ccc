@@ -391,8 +391,8 @@ INJECT LEXER_CLASS :
           if (img.charAt(i) == '"') startingQuotes++;
           else break;
        }
-       for (int i = img.length() -1; i>=0; i--) {
-          if (img.charAt(i) == '"') ++endingQuotes;
+       for (int j = img.length() -1; j>=0; j--) {
+          if (img.charAt(j) == '"') ++endingQuotes;
           else break;
        }
        return endingQuotes >=startingQuotes;

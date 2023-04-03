@@ -46,6 +46,8 @@ namespace ${csPackage} {
         int BeginOffset { get; set; }
         int EndOffset { get; set; }
 
+        int GetEndOffset() {return this.EndOffset;} // Should not be necessary
+
         int BeginLine {
             get {
                 return (TokenSource == null) ? 0 : TokenSource.GetLineFromOffset(BeginOffset);

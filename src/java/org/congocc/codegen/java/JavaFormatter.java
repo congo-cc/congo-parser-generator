@@ -140,7 +140,7 @@ public class JavaFormatter extends Node.Visitor {
                 outputToken(delimiter);
                 TokenType nextType = delimiter.getNext().getType();
                 if (nextType != LBRACKET && nextType != SEMICOLON && nextType != GT
-                        && nextType != RPAREN && nextType != COMMA)
+                        && nextType != RPAREN && nextType != COMMA && nextType != DOT)
                     addSpaceIfNecessary();
                 break;
             case LBRACE :
