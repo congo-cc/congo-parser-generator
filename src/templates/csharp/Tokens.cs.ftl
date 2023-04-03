@@ -46,8 +46,6 @@ namespace ${csPackage} {
         int BeginOffset { get; set; }
         int EndOffset { get; set; }
 
-        int GetEndOffset() {return this.EndOffset;} // Should not be necessary
-
         int BeginLine {
             get {
                 return (TokenSource == null) ? 0 : TokenSource.GetLineFromOffset(BeginOffset);
@@ -523,6 +521,9 @@ namespace ${csPackage} {
         public void AddChild(int i, Node n) { throw new NotSupportedException(); }
         public void RemoveChild(int i) { throw new NotSupportedException(); }
         public void ClearChildren() {}
+
+        public int GetEndOffset() {return this.EndOffset;} // Should not be necessary
+
 
         // TODO us default implementations in interface
         public int BeginLine {
