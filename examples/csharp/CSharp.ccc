@@ -6,6 +6,8 @@ TABS_TO_SPACES=4;
 ENSURE_FINAL_EOL;
 USES_PREPROCESSOR;
 
+#define raw_strings // See if this works...
+
 DEACTIVATE_TOKENS=ADD,ASSEMBLY,ASYNC,AWAIT,INTO,MODULE, NAMEOF,
                   PARTIAL, RECORD, REMOVE,VAR,WHEN,YIELD, ARGLIST,
                   GET,SET,INIT,WITH,
@@ -1745,8 +1747,10 @@ LiteralExpression# :
    <REGULAR_STRING_LITERAL>
    |
    <VERBATIM_STRING_LITERAL>
+#if raw_strings   
    |
    <RAW_STRING_LITERAL>
+#endif   
 ;
 
 Label : SCAN 2 <IDENTIFIER> <COLON> ;
@@ -2289,11 +2293,13 @@ MultiStringInterpolation :
    )
 ;
 
+#if raw_strings
 // TODO
 RawStringInterpolation :
    <INTERPOLATED_RAW_STRING_START>
     
 ;
+#endif
 
 PlaceHolder :
    <LBRACE>

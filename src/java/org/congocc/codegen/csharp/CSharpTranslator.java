@@ -821,8 +821,11 @@ public class CSharpTranslator extends Translator {
             addIndent(indent, result);
             result.append("}\n");
         }
+        else if (stmt instanceof ASTBreakStatement) {
+            result.append("break;\n");
+        }
         else {
-            throw new UnsupportedOperationException();
+            throw new UnsupportedOperationException("Cannot translate node of type " + stmt.getClass().getSimpleName());
         }
         if (addNewline) {
             result.append('\n');

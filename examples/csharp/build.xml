@@ -35,8 +35,7 @@
       <assertions>
         <enable />
       </assertions>
-      <arg value="-n" />
-      <arg value="${basedir}/CSharp.ccc" />
+      <arg line = "-n -p raw_strings ${basedir}/CSharp.ccc"/>
     </java>
   </target>
 

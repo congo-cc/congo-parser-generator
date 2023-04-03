@@ -265,8 +265,10 @@ TOKEN #Literal :
   < REGULAR_INTERPOLATION_START : '$"' >  
   |
   < MULTI_INTERPOLATION_START : '$@"' | '@$"' > 
+#if raw_strings  
   |
   < INTERPOLATED_RAW_STRING_START : ("$")+ ('"'){3,}> : IN_INTERPOLATED_RAW_STRING 
+#endif  
 ; 
 
 <IN_REGULAR_INTERPOLATION>
@@ -316,9 +318,12 @@ UNPARSED :
     <HASH : "#">
 ;
 
+#if raw_strings 
+
 MORE : 
    <RAW_STRING_START : ('"'){3,}> : IN_RAW_STRING
 ;
+
 
 <IN_INTERPOLATED_RAW_STRING> TOKEN :
    <START_INTERPOLATION : ("{")+> 
@@ -332,13 +337,15 @@ MORE :
     <RAW_STRING_LITERAL : ('"'){3,}> #StringLiteral
 ;
 
+// The transpilation machinery can't handle this injection, so it is effectively
+// commented out unless we are generating Java.
 INJECT LEXER_CLASS :
 {
    private String pendingString = "";
    private int startingQuotes, startingDollars;
 
    private BASE_TOKEN_CLASS TOKEN_HOOK(BASE_TOKEN_CLASS tok) {
-#if false    
+#if false // This is WIP!    
       if (tok.getType() == TokenType.INTERPOLATED_RAW_STRING_START) {
          String image = tok.getImage();
          startingQuotes = startingDollars = 0;
@@ -364,7 +371,9 @@ INJECT LEXER_CLASS :
           switchTo(LexicalState.CSHARP);
           return tok;
         }
-        pendingString += tok.getImage();
+        // The PythonTranslator does not seem to handle the following line
+        //pendingString += tok.getImage();
+        pendingString = pendingString + tok.getImage();
         if (endsWithEnoughQuotes(pendingString)) {
             tok.setBeginOffset(tok.getEndOffset()-pendingString.length());
             pendingString = "";
@@ -389,9 +398,7 @@ INJECT LEXER_CLASS :
        return endingQuotes >=startingQuotes;
    }
 }   
-
-
-
+#endif
 
 INJECT LEXER_CLASS :
     import java.util.HashSet;
