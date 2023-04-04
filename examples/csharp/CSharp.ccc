@@ -12,7 +12,7 @@ DEACTIVATE_TOKENS=ADD,ASSEMBLY,ASYNC,AWAIT,INTO,MODULE, NAMEOF,
                   // The following are used in patterns:
                   AND, OR, NOT,
                   // This one is tricky...
-                  END_RAW_INTERPOLATION,
+                  //END_RAW_INTERPOLATION,
                   // The following are all used in queries
                   ASCENDING,BY,DESCENDING,EQUALS,FROM,GROUP,JOIN,LET,
                   INTO, ON, ORDERBY,SELECT,WHERE;
@@ -1013,6 +1013,7 @@ INJECT RangeExpression : implements Expression
 INJECT InterpolatedString : implements Expression
 INJECT RegularStringInterpolation : extends InterpolatedString
 INJECT MultiStringInterpolation : extends InterpolatedString
+INJECT InterpolatedRawString : extends InterpolatedString
 INJECT RelationalExpression : implements Expression
 INJECT ShiftExpression : implements Expression
 INJECT StackAllocInitializer : implements Expression
@@ -2326,10 +2327,14 @@ MultiNonInterpolatedText : IN_MULTI_INTERPOLATION :
 #if interpolated_raw_strings
 InterpolatedRawString :
    <INTERPOLATED_RAW_STRING_START>
+   LEXICAL_STATE IN_INTERPOLATED_RAW_STRING
    (
+     (
       <NON_INTERPOLATED_TEXT3>
       |
       RawInterpolation
+     )*
+     <INTERPOLATED_RAW_STRING_END>
    )
 ;
 
@@ -2338,7 +2343,7 @@ RawInterpolation :
     LEXICAL_STATE CSHARP
     (
       Expression
-      ACTIVATE_TOKENS END_RAW_INTERPOLATION (<END_RAW_INTERPOLATION>)
     )
+    <END_RAW_INTERPOLATION>
 ;
 #endif

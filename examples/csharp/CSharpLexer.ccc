@@ -49,8 +49,6 @@ TOKEN #Literal :
 TOKEN #Delimiter :
   < LPAREN: "(" > 
 | < RPAREN: ")" >
-//| < LBRACE: "{" > 
-| < END_RAW_INTERPOLATION : ("}"){3,}>
 | < RBRACE: "}" > 
 | < LBRACKET: "[" > 
 | < RBRACKET: "]" > 
@@ -268,7 +266,7 @@ TOKEN #Literal :
   < MULTI_INTERPOLATION_START : '$@"' | '@$"' > 
 #if interpolated_raw_strings  
   |
-  < INTERPOLATED_RAW_STRING_START : ("$")+ ('"'){3,}> : IN_INTERPOLATED_RAW_STRING 
+  < INTERPOLATED_RAW_STRING_START : ("$")+ ('"'){3,}> 
 #endif  
 ; 
 
@@ -327,7 +325,11 @@ MORE :
 <IN_INTERPOLATED_RAW_STRING> TOKEN :
    <START_INTERPOLATION : ("{")+>
    |
-   <NON_INTERPOLATED_TEXT3 : (~['{','"'])+ | ('"' ('"')?) > 
+   <NON_INTERPOLATED_TEXT3 : (~['{', '}', '"'])+ | ('"' ('"')?) > 
+   | 
+   <END_RAW_INTERPOLATION : ("}")+>
+   |
+   <INTERPOLATED_RAW_STRING_END : ('"'){3,} >
 ;   
 
 <IN_RAW_STRING> MORE : 
@@ -356,6 +358,12 @@ INJECT LEXER_CLASS :
              else break;
          }
       }
+      else if (type == TokenType.INTERPOLATED_RAW_STRING_END) {
+        if (tok.getImage().length() < startingQuotes) {
+            tok.setType(TokenType.NON_INTERPOLATED_TEXT3);
+        } 
+        return tok;
+      }
       else if (type == TokenType.NON_INTERPOLATED_TEXT3) {
          int followingOpenBraces = 0;
          for (int k = tok.getEndOffset(); k < this.length(); k++) {
@@ -379,15 +387,13 @@ INJECT LEXER_CLASS :
             tok.setType(TokenType.NON_INTERPOLATED_TEXT3);
             return tok;
          }
-         switchTo(LexicalState.CSHARP);
          return tok;
       }
       else if (type == TokenType.END_RAW_INTERPOLATION) {
-          if (tok.getImage().length() < startingQuotes) {
+          if (tok.getImage().length() < startingDollars) {
               tok.setType(TokenType.NON_INTERPOLATED_TEXT3);
               return tok;
           }
-          switchTo(LexicalState.CSHARP);
           return tok;
       }
       else
