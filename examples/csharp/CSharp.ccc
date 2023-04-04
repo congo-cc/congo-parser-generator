@@ -8,7 +8,7 @@ USES_PREPROCESSOR;
 
 DEACTIVATE_TOKENS=ADD,ASSEMBLY,ASYNC,AWAIT,INTO,MODULE, NAMEOF,
                   PARTIAL, RECORD, REMOVE,VAR,WHEN,YIELD, ARGLIST,
-                  GET,SET,INIT,WITH,
+                  GET,SET,INIT,WITH,REQUIRED,
                   // The following are used in patterns:
                   AND, OR, NOT,
                   // This one is tricky...
@@ -296,7 +296,7 @@ StructDeclaration :
    [
       SCAN 1 {isaRecordStruct}
       =>
-      <LPAREN> FormalParameters <RPAREN>
+      <LPAREN> [FormalParameters] <RPAREN>
    ]
    [<COLON> Name (<COMMA> Name)*]
    TypeParameterConstraints
@@ -338,8 +338,8 @@ RecordDeclaration :
 
 InterfaceDeclaration :
   {
-    permissibleModifiers = EnumSet.of(TokenType.INTERNAL, TokenType.PUBLIC, TokenType.PARTIAL,
-                                      TokenType.PRIVATE);
+    permissibleModifiers = EnumSet.of(TokenType.INTERNAL, TokenType.UNSAFE, TokenType.PUBLIC, TokenType.PARTIAL,
+                                      TokenType.PRIVATE, TokenType.PROTECTED);
   }#
   (AttributeSection)*
   Modifiers
@@ -391,7 +391,7 @@ EnumDeclaration :
   {
     permissibleModifiers = EnumSet.of(TokenType.STATIC, TokenType.INTERNAL, TokenType.PUBLIC,
                                       TokenType.PRIVATE, TokenType.PROTECTED, TokenType.SEALED,
-                                      TokenType.ABSTRACT, TokenType.PARTIAL, TokenType.UNSAFE);
+                                      TokenType.ABSTRACT, TokenType.PARTIAL, TokenType.UNSAFE, TokenType.NEW);
   }#
   (AttributeSection)*
   Modifiers
@@ -806,7 +806,7 @@ MethodBody :
 InterfaceMethodDeclaration :
   {
     permissibleModifiers = EnumSet.of(TokenType.PUBLIC, TokenType.PRIVATE, TokenType.PROTECTED,
-                                      TokenType.INTERNAL, TokenType.UNSAFE);
+                                      TokenType.INTERNAL, TokenType.UNSAFE, TokenType.NEW);
   }#
    (AttributeSection)*
    Modifiers // REVISIT later.
@@ -899,6 +899,8 @@ NonTupleType : Type;
 Type :
   [<DELEGATE> <STAR> =>||]
   (
+    <DYNAMIC> // Is this right?
+    |
     <VOID> <STAR> =>||
     |
     PrimitiveType

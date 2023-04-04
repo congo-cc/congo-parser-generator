@@ -195,6 +195,7 @@ TOKEN #KeyWord :
    | < PARTIAL : "partial">
    | < RECORD : "record" >
    | < REMOVE : "remove">
+   | < REQUIRED : "required">
    | < SET : "set" >
    | < VAR : "var" > 
    | < WHEN : "when">
