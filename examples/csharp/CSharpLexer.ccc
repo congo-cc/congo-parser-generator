@@ -50,6 +50,7 @@ TOKEN #Delimiter :
   < LPAREN: "(" > 
 | < RPAREN: ")" >
 //| < LBRACE: "{" > 
+| < END_RAW_INTERPOLATION : ("}"){3,}>
 | < RBRACE: "}" > 
 | < LBRACKET: "[" > 
 | < RBRACKET: "]" > 
@@ -265,7 +266,7 @@ TOKEN #Literal :
   < REGULAR_INTERPOLATION_START : '$"' >  
   |
   < MULTI_INTERPOLATION_START : '$@"' | '@$"' > 
-#if raw_strings  
+#if interpolated_raw_strings  
   |
   < INTERPOLATED_RAW_STRING_START : ("$")+ ('"'){3,}> : IN_INTERPOLATED_RAW_STRING 
 #endif  
@@ -318,18 +319,18 @@ UNPARSED :
     <HASH : "#">
 ;
 
-#if raw_strings 
-
 MORE : 
    <RAW_STRING_START : ('"'){3,}> : IN_RAW_STRING
 ;
 
 
 <IN_INTERPOLATED_RAW_STRING> TOKEN :
-   <START_INTERPOLATION : ("{")+> 
+   <START_INTERPOLATION : ("{")+>
+   |
+   <NON_INTERPOLATED_TEXT3 : (~['{','"'])+ | ('"' ('"')?) > 
 ;   
 
-<IN_RAW_STRING, IN_INTERPOLATED_RAW_STRING> MORE : 
+<IN_RAW_STRING> MORE : 
    <ANY_CHAR : ~[]>
 ;
 
@@ -337,16 +338,15 @@ MORE :
     <RAW_STRING_LITERAL : ('"'){3,}> #StringLiteral
 ;
 
-// The transpilation machinery can't handle this injection, so it is effectively
-// commented out unless we are generating Java.
 INJECT LEXER_CLASS :
 {
    private String pendingString = "";
    private int startingQuotes, startingDollars;
 
    private BASE_TOKEN_CLASS TOKEN_HOOK(BASE_TOKEN_CLASS tok) {
-#if false // This is WIP!    
-      if (tok.getType() == TokenType.INTERPOLATED_RAW_STRING_START) {
+      TokenType type = tok.getType();
+#if interpolated_raw_strings      
+      if (type == TokenType.INTERPOLATED_RAW_STRING_START) {
          String image = tok.getImage();
          startingQuotes = startingDollars = 0;
          for (int i = 0; i < image.length(); i++) {
@@ -356,15 +356,42 @@ INJECT LEXER_CLASS :
              else break;
          }
       }
-      else if (tok.getType() == TokenType.START_INTERPOLATION) {
-        if (tok.getImage().length()<startingDollars) {
-            tok.setUnparsed(true);
-        } else {
-        }
+      else if (type == TokenType.NON_INTERPOLATED_TEXT3) {
+         int followingOpenBraces = 0;
+         for (int k = tok.getEndOffset(); k < this.length(); k++) {
+            if (!isIgnored(k)) {
+                if (charAt(k) == '{') followingOpenBraces++;
+                else break;
+            }
+         }
+         int amountToExtend = followingOpenBraces - startingDollars;
+         if (amountToExtend < 0) amountToExtend = followingOpenBraces;
+         tok.setEndOffset(tok.getEndOffset() + amountToExtend);
       }
-      else 
+      else if (type == TokenType.START_INTERPOLATION) {
+         int tokLength = tok.getImage().length();
+         if (tokLength > startingDollars) {
+            tok.setEndOffset(tok.getEndOffset() - (tokLength-startingDollars));
+            tok.setType(TokenType.NON_INTERPOLATED_TEXT3);
+            return tok;
+         }
+         if (tok.getImage().length() < startingDollars) {
+            tok.setType(TokenType.NON_INTERPOLATED_TEXT3);
+            return tok;
+         }
+         switchTo(LexicalState.CSHARP);
+         return tok;
+      }
+      else if (type == TokenType.END_RAW_INTERPOLATION) {
+          if (tok.getImage().length() < startingQuotes) {
+              tok.setType(TokenType.NON_INTERPOLATED_TEXT3);
+              return tok;
+          }
+          switchTo(LexicalState.CSHARP);
+          return tok;
+      }
+      else
 #endif      
-      
       if (tok.getType() == TokenType.RAW_STRING_LITERAL) {
         String image = tok.getImage();
         if (pendingString == "" && endsWithEnoughQuotes(image)) {
@@ -398,7 +425,6 @@ INJECT LEXER_CLASS :
        return endingQuotes >=startingQuotes;
    }
 }   
-#endif
 
 INJECT LEXER_CLASS :
     import java.util.HashSet;

@@ -1015,6 +1015,18 @@ ${globals.translateCodeBlock(regexp.codeSnippet.javaCode, 16)}
             return buf.ToString();
         }
 
+        internal char CharAt(int index) {
+            return _content[index];
+        }
+
+        internal int Length() {
+            return _content.Length;
+        }
+
+        internal bool IsIgnored(int offset) {
+            return _tokenLocationTable[offset] == Ignored;
+        }
+
         internal void CacheToken(Token tok) {
 [#if settings.tokenChaining]
             if (tok.isInserted) {

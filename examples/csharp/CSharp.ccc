@@ -6,13 +6,13 @@ TABS_TO_SPACES=4;
 ENSURE_FINAL_EOL;
 USES_PREPROCESSOR;
 
-#define raw_strings // See if this works...
-
 DEACTIVATE_TOKENS=ADD,ASSEMBLY,ASYNC,AWAIT,INTO,MODULE, NAMEOF,
                   PARTIAL, RECORD, REMOVE,VAR,WHEN,YIELD, ARGLIST,
                   GET,SET,INIT,WITH,
                   // The following are used in patterns:
                   AND, OR, NOT,
+                  // This one is tricky...
+                  END_RAW_INTERPOLATION,
                   // The following are all used in queries
                   ASCENDING,BY,DESCENDING,EQUALS,FROM,GROUP,JOIN,LET,
                   INTO, ON, ORDERBY,SELECT,WHERE;
@@ -1747,10 +1747,8 @@ LiteralExpression# :
    <REGULAR_STRING_LITERAL>
    |
    <VERBATIM_STRING_LITERAL>
-#if raw_strings   
    |
    <RAW_STRING_LITERAL>
-#endif   
 ;
 
 Label : SCAN 2 <IDENTIFIER> <COLON> ;
@@ -2265,7 +2263,15 @@ PropertySubPattern :
    <RBRACE>
 ;
 
-InterpolatedString#abstract : RegularStringInterpolation | MultiStringInterpolation ;
+InterpolatedString#abstract : 
+   RegularStringInterpolation 
+   | 
+   MultiStringInterpolation 
+#if interpolated_raw_strings   
+   |
+   InterpolatedRawString
+#endif   
+;
 
 RegularStringInterpolation :
    <REGULAR_INTERPOLATION_START>
@@ -2293,13 +2299,6 @@ MultiStringInterpolation :
    )
 ;
 
-#if raw_strings
-// TODO
-RawStringInterpolation :
-   <INTERPOLATED_RAW_STRING_START>
-    
-;
-#endif
 
 PlaceHolder :
    <LBRACE>
@@ -2323,3 +2322,23 @@ RegularNonInterpolatedText :
 MultiNonInterpolatedText : IN_MULTI_INTERPOLATION :
    <NON_INTERPOLATED_TEXT2>
 ;
+
+#if interpolated_raw_strings
+InterpolatedRawString :
+   <INTERPOLATED_RAW_STRING_START>
+   (
+      <NON_INTERPOLATED_TEXT3>
+      |
+      RawInterpolation
+   )
+;
+
+RawInterpolation :
+    <START_INTERPOLATION>
+    LEXICAL_STATE CSHARP
+    (
+      Expression
+      ACTIVATE_TOKENS END_RAW_INTERPOLATION (<END_RAW_INTERPOLATION>)
+    )
+;
+#endif
