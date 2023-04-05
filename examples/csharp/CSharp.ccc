@@ -8,7 +8,7 @@ USES_PREPROCESSOR;
 
 DEACTIVATE_TOKENS=ADD,ASSEMBLY,ASYNC,AWAIT,INTO,MODULE, NAMEOF,
                   PARTIAL, RECORD, REMOVE,VAR,WHEN,YIELD, ARGLIST,
-                  GET,SET,INIT,WITH,REQUIRED,
+                  GET,SET,INIT,WITH,REQUIRED,DYNAMIC,
                   // The following are used in patterns:
                   AND, OR, NOT,
                   // This one is tricky...
@@ -242,7 +242,7 @@ ClassDeclaration :
     permissibleModifiers = EnumSet.of(NEW,  PUBLIC, TokenType.PROTECTED,
                                       TokenType.INTERNAL, TokenType.PRIVATE, TokenType.ABSTRACT,
                                       TokenType.SEALED, TokenType.STATIC, TokenType.UNSAFE);
-  }#
+  }
   (AttributeSection)*
   Modifiers
   [SCAN {checkNextTokenImage("partial")}# => ACTIVATE_TOKENS PARTIAL ("partial")]
@@ -263,7 +263,17 @@ ClassDeclaration :
    ]
   [TypeParameterList]
   [SCAN 1 {isaRecordClass} => <LPAREN> [FormalParameters] <RPAREN>]
-  [<COLON> (Name[ SCAN 1 {isaRecordClass} => <LPAREN> ArgumentList <RPAREN>] | <OBJECT> | <DYNAMIC> | <STRING>) (<COMMA> Name[SCAN 1 {isaRecordClass} => <LPAREN> ArgumentList <RPAREN>] )*]
+  [
+     <COLON> 
+     (
+       Name
+       [ SCAN 1 {isaRecordClass} => <LPAREN> ArgumentList <RPAREN>] 
+       | <OBJECT> 
+       | <STRING>
+       | SCAN 0 {checkNextTokenImage("dynamic")}# => ACTIVATE_TOKENS DYNAMIC (<DYNAMIC>)
+     ) 
+     (<COMMA> Name[SCAN 1 {isaRecordClass} => <LPAREN> ArgumentList <RPAREN>] )*
+  ]
   TypeParameterConstraints
    (
       <LBRACE> (ClassMemberDeclaration)* <RBRACE>
@@ -278,8 +288,8 @@ StructDeclaration :
     boolean isaRecordStruct = false;
     permissibleModifiers = EnumSet.of(TokenType.STATIC, TokenType.INTERNAL, TokenType.PUBLIC,
                                       TokenType.PRIVATE, TokenType.PROTECTED, TokenType.REF,
-                                      TokenType.READONLY, TokenType.UNSAFE, TokenType.NEW);
-  }#
+                                      TokenType.READONLY, TokenType.UNSAFE, TokenType.NEW, TokenType.SEALED);
+  }
   (AttributeSection)*
   Modifiers
   [SCAN {checkNextTokenImage("partial")}# => ACTIVATE_TOKENS PARTIAL (<PARTIAL>)]
@@ -313,7 +323,7 @@ RecordDeclaration :
     permissibleModifiers = EnumSet.of(TokenType.STATIC, TokenType.INTERNAL, TokenType.PUBLIC,
                                       TokenType.PRIVATE, TokenType.PROTECTED, TokenType.SEALED,
                                       TokenType.ABSTRACT);
-  }#
+  }
   (AttributeSection)*
   Modifiers
   [SCAN {checkNextTokenImage("partial")}# => ACTIVATE_TOKENS PARTIAL (<PARTIAL>)]
@@ -340,7 +350,7 @@ InterfaceDeclaration :
   {
     permissibleModifiers = EnumSet.of(TokenType.INTERNAL, TokenType.UNSAFE, TokenType.PUBLIC, TokenType.PARTIAL,
                                       TokenType.PRIVATE, TokenType.PROTECTED);
-  }#
+  }
   (AttributeSection)*
   Modifiers
   [SCAN {checkNextTokenImage("partial")}# => ACTIVATE_TOKENS PARTIAL ("partial")]
@@ -392,13 +402,13 @@ EnumDeclaration :
     permissibleModifiers = EnumSet.of(TokenType.STATIC, TokenType.INTERNAL, TokenType.PUBLIC,
                                       TokenType.PRIVATE, TokenType.PROTECTED, TokenType.SEALED,
                                       TokenType.ABSTRACT, TokenType.PARTIAL, TokenType.UNSAFE, TokenType.NEW);
-  }#
+  }
   (AttributeSection)*
   Modifiers
   <ENUM>
   =>||
   <IDENTIFIER>
-  [<COLON> (<SBYTE>|<BYTE>|<SHORT>|<USHORT>|<INT>|<UINT>|<LONG>|<ULONG>|<CHAR>)]
+  [<COLON> (<SBYTE>|<BYTE>|<SHORT>|<USHORT>|<INT>|<UINT>|<LONG>|<ULONG>|<CHAR>|<IDENTIFIER>)]
   EnumBody
   [<SEMICOLON>]
 ;
@@ -424,7 +434,7 @@ DelegateDeclaration :
     permissibleModifiers = EnumSet.of(TokenType.PUBLIC, TokenType.PRIVATE, TokenType.PROTECTED,
                                       TokenType.INTERNAL, TokenType.UNSAFE, TokenType.VIRTUAL,
                                       TokenType.OVERRIDE, TokenType.NEW, TokenType.ABSTRACT);
-  }#
+  }
   (AttributeSection)*
   Modifiers
   <DELEGATE>
@@ -492,7 +502,7 @@ StructMemberDeclarationUnsafe :
   {
     permissibleModifiers = EnumSet.of(TokenType.STATIC, TokenType.INTERNAL, TokenType.PUBLIC,
                                       TokenType.PRIVATE, TokenType.PROTECTED, TokenType.UNSAFE);
-  }#
+  }
   (AttributeSection)*
   Modifiers
   <FIXED>
@@ -506,7 +516,7 @@ ConstantDeclaration :
   {
     permissibleModifiers = EnumSet.of(TokenType.PUBLIC, TokenType.PRIVATE, TokenType.PROTECTED,
                                       TokenType.INTERNAL);
-  }#
+  }
   (AttributeSection)*
   Modifiers
   <CONST>
@@ -591,7 +601,7 @@ EventDeclaration :
                                       TokenType.STATIC, TokenType.VIRTUAL,
                                       TokenType.OVERRIDE, TokenType.NEW, TokenType.ABSTRACT,
                                       TokenType.INTERNAL, TokenType.SEALED);
-  }#
+  }
    (AttributeSection)*
    Modifiers
    <EVENT>
@@ -616,8 +626,8 @@ IndexerDeclaration :
     permissibleModifiers = EnumSet.of(TokenType.PUBLIC, TokenType.PRIVATE, TokenType.PROTECTED,
                                       TokenType.STATIC, TokenType.VIRTUAL,
                                       TokenType.OVERRIDE, TokenType.NEW, TokenType.ABSTRACT,
-                                      TokenType.INTERNAL, TokenType.SEALED);
-  }#
+                                      TokenType.INTERNAL, TokenType.SEALED, TokenType.UNSAFE);
+  }
   (AttributeSection)*
   Modifiers
   Type
@@ -638,7 +648,7 @@ OperatorDeclaration :
   {
     permissibleModifiers = EnumSet.of(TokenType.PUBLIC, TokenType.STATIC,
                                       TokenType.EXTERN, TokenType.UNSAFE);
-  }#
+  }
   (AttributeSection)*
   Modifiers
   (Type | <IMPLICIT> | <EXPLICIT>)
@@ -659,7 +669,7 @@ OperatorDeclaration :
 DestructorDeclaration :
   {
     permissibleModifiers = EnumSet.of(TokenType.EXTERN, TokenType.UNSAFE);
-  }#
+  }
   (AttributeSection)*
   Modifiers
   <TILDE>
@@ -674,7 +684,7 @@ ConstructorDeclaration :
   {
     permissibleModifiers = EnumSet.of(TokenType.PUBLIC, TokenType.PRIVATE, TokenType.PROTECTED,
                                       TokenType.STATIC, TokenType.INTERNAL, TokenType.UNSAFE);
-  }#
+  }
   (AttributeSection)*
   Modifiers
   <IDENTIFIER>
@@ -692,7 +702,7 @@ ConstructorDeclaration :
 StaticConstructorDeclaration :
   {
     permissibleModifiers = EnumSet.of(TokenType.EXTERN, TokenType.STATIC);
-  }#
+  }
    (AttributeSection)*
    Modifiers
    <IDENTIFIER>
@@ -746,7 +756,7 @@ AccessorDeclaration :
     permissibleModifiers = EnumSet.of(TokenType.PUBLIC, TokenType.PRIVATE, TokenType.PROTECTED,
                                       TokenType.VIRTUAL, TokenType.OVERRIDE, TokenType.NEW,
                                       TokenType.ABSTRACT, TokenType.INTERNAL, TokenType.READONLY);
-  }#
+  }
    (AttributeSection)*
    Modifiers
    ACTIVATE_TOKENS GET,SET,INIT (<GET> | <SET> | <INIT>)
@@ -781,7 +791,7 @@ MethodDeclaration :
                                       TokenType.OVERRIDE, TokenType.NEW, TokenType.ABSTRACT,
                                       TokenType.EXTERN, TokenType.ASYNC, TokenType.INTERNAL,
                                       TokenType.REF, TokenType.READONLY, TokenType.SEALED);
-  }#
+  }
   (AttributeSection)*
   Modifiers
   [SCAN {checkNextTokenImage("partial")}# => ACTIVATE_TOKENS PARTIAL ("partial")]
@@ -807,7 +817,7 @@ InterfaceMethodDeclaration :
   {
     permissibleModifiers = EnumSet.of(TokenType.PUBLIC, TokenType.PRIVATE, TokenType.PROTECTED,
                                       TokenType.INTERNAL, TokenType.UNSAFE, TokenType.NEW);
-  }#
+  }
    (AttributeSection)*
    Modifiers // REVISIT later.
    ReturnType
@@ -899,7 +909,9 @@ NonTupleType : Type;
 Type :
   [<DELEGATE> <STAR> =>||]
   (
-    <DYNAMIC> // Is this right?
+    SCAN 0 {checkNextTokenImage("dynamic")}#
+    =>
+    ACTIVATE_TOKENS DYNAMIC (<DYNAMIC>) // Is this right?
     |
     <VOID> <STAR> =>||
     |
@@ -1569,7 +1581,8 @@ TupleElement :
 ;
 
 PrimitiveTypeAccess :
-   (<DYNAMIC> | PrimitiveType)
+//   (PrimitiveType | SCAN {checkNextTokenImage("dynamic")}# => ACTIVATE_TOKENS DYNAMIC (<DYNAMIC>))
+   PrimitiveType
    <DOT> =>||
    <IDENTIFIER>
    [TypeArgumentList =>||]
@@ -1625,7 +1638,7 @@ INJECT ParenthesizedExpression : implements Expression
 TypeofExpression :
     <TYPEOF> <LPAREN>
     (
-       <VOID>
+       <VOID> [<STAR>]
        |
    // The following expansion is a little bit tricky.
    // If our initial scanahead doesn't find any
@@ -2064,7 +2077,7 @@ StatementExpression#interface :
       SCAN 1 {lhs.isAssignableTo()} =>
       (AssignmentOperator [<REF>] Expression) #AssignmentExpression(+1)
       |
-      ASSERT {lhs instanceof StatementExpression} : "Not a statement."
+      ASSERT {lhs instanceof StatementExpression} : "Not a statement. " + lhs + ":" +lhs.getClass().getSimpleName() + ":" + lhs.getLocation()
    )
    |
    AssignmentExpression

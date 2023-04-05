@@ -125,7 +125,6 @@ TOKEN #KeyWord :
    | < DELEGATE : "delegate" > 
    | < DO : "do" > 
    | < DOUBLE : "double" > #PrimitiveType
-   | < DYNAMIC : "dynamic">
    | < ELSE : "else" > 
    | < ENUM : "enum" > 
    | < EVENT : "event" > 
@@ -188,6 +187,7 @@ TOKEN #KeyWord :
    | < ASSEMBLY : "assembly">
    | < ASYNC : "async" >
    | < AWAIT : "await" >
+   | < DYNAMIC : "dynamic">
    | < GET : "get" >
    | < INIT : "init" >
    | < MODULE : "module">
