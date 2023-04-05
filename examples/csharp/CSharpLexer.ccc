@@ -196,6 +196,7 @@ TOKEN #KeyWord :
    | < RECORD : "record" >
    | < REMOVE : "remove">
    | < REQUIRED : "required">
+   | < SCOPED : "scoped">
    | < SET : "set" >
    | < VAR : "var" > 
    | < WHEN : "when">
@@ -258,7 +259,7 @@ TOKEN #Literal :
                     ) 
   >                                                  
   |
-  < REGULAR_STRING_LITERAL : '"' ((~['"',"\\","\n","\r"]) | <ESCAPED_CHAR2>)* '"'> #StringLiteral
+  < REGULAR_STRING_LITERAL : '"' ((~['"',"\\","\n","\r"]) | <ESCAPED_CHAR2>)* '"' ("u8")?> #StringLiteral
   |
   < VERBATIM_STRING_LITERAL : '@"' (~['"'] | '""')* '"' > #StringLiteral
   | 
@@ -338,7 +339,7 @@ MORE :
 ;
 
 <IN_RAW_STRING> TOKEN :
-    <RAW_STRING_LITERAL : ('"'){3,}> #StringLiteral
+    <RAW_STRING_LITERAL : ('"'){3,}("u8")?> #StringLiteral
 ;
 
 INJECT LEXER_CLASS :
@@ -425,10 +426,20 @@ INJECT LEXER_CLASS :
           if (img.charAt(i) == '"') startingQuotes++;
           else break;
        }
-       for (int j = img.length() -1; j>=0; j--) {
-          if (img.charAt(j) == '"') ++endingQuotes;
-          else break;
+#if false       
+       if (img.endsWith("u8")) {
+          for (int j = img.length() -3; j>=0; j--) {
+             if (img.charAt(j) == '"') ++endingQuotes;
+             else break;
+          }
        }
+       else {
+#endif        
+          for (int k = img.length() -1; k>=0; k--) {
+             if (img.charAt(k) == '"') ++endingQuotes;
+             else break;
+          }
+//       }
        return endingQuotes >=startingQuotes;
    }
 }   

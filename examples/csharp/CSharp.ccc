@@ -8,7 +8,7 @@ USES_PREPROCESSOR;
 
 DEACTIVATE_TOKENS=ADD,ASSEMBLY,ASYNC,AWAIT,INTO,MODULE, NAMEOF,
                   PARTIAL, RECORD, REMOVE,VAR,WHEN,YIELD, ARGLIST,
-                  GET,SET,INIT,WITH,REQUIRED,DYNAMIC,
+                  GET,SET,INIT,WITH,REQUIRED,DYNAMIC,SCOPED,
                   // The following are used in patterns:
                   AND, OR, NOT,
                   // This one is tricky...
@@ -226,12 +226,18 @@ Modifiers#void : //TODO
          }
       }
      |
-     SCAN { permissibleModifiers == null
+     SCAN 0 { permissibleModifiers == null
             || permissibleModifiers.contains(TokenType.ASYNC) && checkNextTokenImage("async")
             || permissibleModifiers.contains(TokenType.RECORD) && checkNextTokenImage("record")
+            || permissibleModifiers.contains(TokenType.REQUIRED) && checkNextTokenImage("required")
           }#
-      => ACTIVATE_TOKENS ASYNC, RECORD (<ASYNC>)
-      { if (permissibleModifiers!=null) permissibleModifiers.remove(TokenType.ASYNC);}
+      => ACTIVATE_TOKENS ASYNC, RECORD, REQUIRED 
+         (
+            <ASYNC> { if (permissibleModifiers!=null) permissibleModifiers.remove(TokenType.ASYNC);}
+            |
+            <REQUIRED> {if (permissibleModifiers != null) permissibleModifiers.remove(TokenType.REQUIRED);}
+         )
+
   )*
   {permissibleModifiers = null;}#
 ;
@@ -536,7 +542,7 @@ FieldDeclaration :
                                       TokenType.EXTERN, TokenType.ASYNC, TokenType.INTERNAL,
                                       TokenType.REF, TokenType.READONLY, TokenType.SEALED,
                                       TokenType.VOLATILE);
-  }#
+  }
   (AttributeSection)*
   Modifiers
   Type
@@ -552,8 +558,8 @@ PropertyDeclaration :
                                       TokenType.OVERRIDE, TokenType.NEW, TokenType.ABSTRACT,
                                       TokenType.EXTERN, TokenType.ASYNC, TokenType.INTERNAL,
                                       TokenType.REF, TokenType.READONLY, TokenType.SEALED,
-                                      TokenType.VOLATILE);
-  }#
+                                      TokenType.VOLATILE, TokenType.REQUIRED);
+  }
   (AttributeSection)*
   Modifiers
   Type
@@ -623,10 +629,11 @@ EventDeclaration :
 
 IndexerDeclaration :
   {
-    permissibleModifiers = EnumSet.of(TokenType.PUBLIC, TokenType.PRIVATE, TokenType.PROTECTED,
-                                      TokenType.STATIC, TokenType.VIRTUAL,
-                                      TokenType.OVERRIDE, TokenType.NEW, TokenType.ABSTRACT,
-                                      TokenType.INTERNAL, TokenType.SEALED, TokenType.UNSAFE);
+    permissibleModifiers = EnumSet.of(TokenType.PUBLIC, TokenType.PRIVATE, TokenType.PROTECTED, 
+                                      TokenType.STATIC, TokenType.VIRTUAL, TokenType.OVERRIDE, 
+                                      TokenType.NEW, TokenType.ABSTRACT, TokenType.INTERNAL, 
+                                      TokenType.SEALED, TokenType.UNSAFE, TokenType.REF, 
+                                      TokenType.READONLY);
   }
   (AttributeSection)*
   Modifiers
@@ -816,7 +823,8 @@ MethodBody :
 InterfaceMethodDeclaration :
   {
     permissibleModifiers = EnumSet.of(TokenType.PUBLIC, TokenType.PRIVATE, TokenType.PROTECTED,
-                                      TokenType.INTERNAL, TokenType.UNSAFE, TokenType.NEW);
+                                      TokenType.INTERNAL, TokenType.UNSAFE, TokenType.NEW, 
+                                      TokenType.STATIC, TokenType.ABSTRACT, TokenType.VIRTUAL);
   }
    (AttributeSection)*
    Modifiers // REVISIT later.
@@ -829,16 +837,6 @@ InterfaceMethodDeclaration :
    TypeParameterConstraints
    MethodBody // since 8.0. NB. The method body can be a lone semicolon.
 ;
-#if false
-ReturnType :
-   SCAN 1 {getTokenType(2) != TokenType.STAR}# =>
-   // If we have void*, we prefer to parse it as Type
-   // for tree-building purposes.
-   <VOID> [<STAR>]
-   |
-   Type
-;
-#endif
 
 ReturnType :
    <VOID> ASSERT~(<STAR>) =>||
@@ -873,6 +871,7 @@ FixedParameter :
    (AttributeSection)*
    (<REF>| <OUT> | <THIS>
     | <IN> // since 7.2
+    | SCAN 0 {checkNextTokenImage("scoped")} => ACTIVATE_TOKENS SCOPED (<SCOPED>)
    )*
    =>|+1
    Type
@@ -893,8 +892,8 @@ TypeParameterList :
    <LT>
    (AttributeSection)*
    [<IN>|<OUT>] // Only with interfaces
-   Name
-   (<COMMA> (AttributeSection)* [<IN>|<OUT>] Name)*
+   (Name|PrimitiveType)
+   (<COMMA> (AttributeSection)* [<IN>|<OUT>] (Name|PrimitiveType))*
    <GT>
 ;
 
@@ -2358,6 +2357,7 @@ RawInterpolation :
     LEXICAL_STATE CSHARP
     (
       Expression
+      [<COLON>MultiNonInterpolatedText]
     )
     <END_RAW_INTERPOLATION>
 ;
