@@ -521,7 +521,7 @@ StructMemberDeclarationUnsafe :
 ConstantDeclaration :
   {
     permissibleModifiers = EnumSet.of(TokenType.PUBLIC, TokenType.PRIVATE, TokenType.PROTECTED,
-                                      TokenType.INTERNAL);
+                                      TokenType.INTERNAL, TokenType.NEW);
   }
   (AttributeSection)*
   Modifiers
@@ -824,12 +824,13 @@ InterfaceMethodDeclaration :
   {
     permissibleModifiers = EnumSet.of(TokenType.PUBLIC, TokenType.PRIVATE, TokenType.PROTECTED,
                                       TokenType.INTERNAL, TokenType.UNSAFE, TokenType.NEW, 
-                                      TokenType.STATIC, TokenType.ABSTRACT, TokenType.VIRTUAL);
+                                      TokenType.STATIC, TokenType.ABSTRACT, TokenType.VIRTUAL,
+                                      TokenType.ASYNC);
   }
    (AttributeSection)*
    Modifiers // REVISIT later.
    ReturnType
-   <IDENTIFIER>
+   Name //<IDENTIFIER>
    [TypeParameterList]
    <LPAREN> =>||
    [FormalParameters]
@@ -1109,8 +1110,8 @@ LambdaLHS :
   {boolean seenStatic = false;}
   [<STATIC> {seenStatic = true;}] // since 9.0
   [
-     ASSERT {checkNextTokenImage("async")}#
-     =>||
+     SCAN 0 {checkNextTokenImage("async")}#
+     =>
      ACTIVATE_TOKENS ASYNC (<ASYNC>)
      [
         SCAN {!seenStatic} => <STATIC>
@@ -1135,9 +1136,10 @@ ImplicitAnonymousFunctionSignature :
 ;
 
 QueryExpressionLA#scan :
-   <IDENTIFIER> ASSERT {tokenImage(0).equals("from")}
+   <IDENTIFIER> 
+   ASSERT {tokenImage(0).equals("from")}
    (
-      <IDENTIFIER> <IN>
+      <IDENTIFIER> <IN> =>||
       |
       Type <IDENTIFIER> <IN>
    )
@@ -1155,7 +1157,7 @@ QueryExpression :
 InQueryExpression#void :
    DEACTIVATE_TOKENS ASCENDING,BY,DESCENDING,EQUALS,FROM,
                    GROUP,JOIN,LET,INTO,
-                   ON, ORDERBY
+                   ON //, ORDERBY
    (Expression)
 ;
 
@@ -1885,7 +1887,7 @@ VarDeclaration :
    ]
    ACTIVATE_TOKENS VAR (<VAR>)
    =>||
-   (<IDENTIFIER>|Tuple) <ASSIGN> [<REF>] LocalVariableInitializer
+   (<IDENTIFIER>|Tuple) <ASSIGN> (AttributeSection)* [<REF>] LocalVariableInitializer
 ;
 
 LocalVariableDeclarator :
@@ -2143,7 +2145,28 @@ Pattern :
 ;
 
 // I'm not sure this is right. This is a new feature in C# 11.
-ListPattern : <LBRACKET> Pattern (<COMMA> Pattern)* <RBRACKET> ;
+ListPattern : 
+    <LBRACKET> 
+    {seenRange = false;}
+    [InListPattern (<COMMA> InListPattern)*] 
+    <RBRACKET> 
+;
+
+INJECT PARSER_CLASS :
+{
+   private boolean seenRange;
+}
+
+InListPattern :
+  SCAN {!seenRange} =>
+  (
+    <RANGE> {seenRange = true;} ASSERT ~(Pattern) =>||
+    |
+    [<RANGE> {seenRange = true;}] Pattern
+  )
+  |
+  Pattern
+;
 
 OrPattern : AndPattern (<OR> AndPattern)* ;
 
