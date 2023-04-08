@@ -141,6 +141,8 @@ TOKEN :
   |
   < _TOKEN: "TOKEN" | "REGULAR_TOKEN"> #CongoCCKeyWord
   |
+  < _CONTEXTUAL_KEYWORD: "CONTEXTUAL_KEYWORD" > #CongoCCKeyWord
+  |
   < _UNPARSED: "SPECIAL_TOKEN" | "UNPARSED" > #CongoCCKeyWord
   |
   < _MORE: "MORE" | "INCOMPLETE_TOKEN" > #CongoCCKeyWord
@@ -635,7 +637,7 @@ INJECT PARSER_CLASS : {
 
     private EnumSet<TokenType> CongoCCKeyWords = EnumSet.of(
        _FAIL, _ENSURE, _SCAN, _IGNORE_CASE, 
-       _TOKEN, _UNPARSED, _SKIP, _MORE,
+       _TOKEN, _CONTEXTUAL_KEYWORD, _UNPARSED, _SKIP, _MORE,
        _ATTEMPT, _RECOVER, _ON_ERROR,  
        _LEXICAL_STATE);
 
@@ -1197,7 +1199,7 @@ TokenProduction :
       ("," <IDENTIFIER> {multipleStatesSpecified = true; grammar.addLexicalState(lastConsumedToken.getImage());})*
      ">" 
   ]
-  (<_TOKEN> | <_UNPARSED> | <_SKIP> | <_MORE>)
+  (<_TOKEN> | <_UNPARSED> | <_SKIP> | <_MORE> | <_CONTEXTUAL_KEYWORD>)
   [
     "[" "IGNORE_CASE" {ignoreCase = true;} "]"
   ]
@@ -1794,7 +1796,7 @@ ExpansionUnit #void :
 ;
 
 Terminal# :
-  SCAN [Name "="] (<STRING_LITERAL>|"<")
+  SCAN [Name "="] (<STRING_LITERAL>|<CHARACTER_LITERAL>|<SINGLE_QUOTE_STRING>|"<")
   =>
   [
     SCAN ~\...\Lookahead Name "=" =>
@@ -2055,7 +2057,11 @@ INJECT CodeBlock :
 }
 
 RegexpStringLiteral# :
-   (<STRING_LITERAL>|<CHARACTER_LITERAL>|<SINGLE_QUOTE_STRING>)
+   (
+    <STRING_LITERAL>
+    |<CHARACTER_LITERAL> {CURRENT_NODE.setSingleQuoted(true);}
+    |<SINGLE_QUOTE_STRING> {CURRENT_NODE.setSingleQuoted(true);}
+   )
    {
       String image = StringLiteral.removeEscapesAndQuotes(lastConsumedToken.getImage());
       CURRENT_NODE.setLiteralString(image);
@@ -2067,6 +2073,7 @@ INJECT RegexpStringLiteral :
    extends RegularExpression;
 {
   @Property String literalString, lexicalState;
+  @Property boolean singleQuoted;
 
   public String toString() {
     return super.toString() + " - " + getLiteralString();

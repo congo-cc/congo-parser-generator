@@ -18,7 +18,11 @@ public class NonTerminal extends Expansion {
     }
 
     public Expansion getNestedExpansion() {
-        return getProduction().getExpansion();
+        BNFProduction production = getProduction();
+        if (production == null) {
+            throw new NullPointerException("Production " + getName() + " is not defined. " + getLocation());
+        }
+        return production.getExpansion();
     }
 
     public Lookahead getLookahead() {

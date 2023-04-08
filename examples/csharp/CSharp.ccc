@@ -176,7 +176,7 @@ TypeArgumentList :
       (<VOID> | Type)
       (<COMMA> (AttributeSection)* (<VOID> | Type))*
    ]
-   DEACTIVATE_TOKENS RIGHT_SHIFT, RIGHT_SHIFT_ASSIGN
+   DEACTIVATE_TOKENS RIGHT_SHIFT, UNSIGNED_RIGHT_SHIFT, RIGHT_SHIFT_ASSIGN
    (<GT>)
 ;
 

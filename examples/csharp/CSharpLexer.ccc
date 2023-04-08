@@ -93,6 +93,7 @@ TOKEN #Operator :
 | < REMASSIGN: "%=" > 
 | < LEFT_SHIFT_ASSIGN: "<<=" > 
 | < RIGHT_SHIFT: ">>" > 
+| < UNSIGNED_RIGHT_SHIFT: ">>>" > 
 | < RIGHT_SHIFT_ASSIGN: ">>=" > 
 | < ARROW : "=>"> 
 | < POINTER_ACCESS : "->"> 

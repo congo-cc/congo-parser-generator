@@ -56,6 +56,7 @@ public class Grammar extends BaseNode {
         appSettings.setJdkTarget(jdkTarget);
         appSettings.setOutputDir(outputDir);
         appSettings.setCodeLang(codeLang);
+        preprocessorSymbols.put("__"+codeLang+"__","1");
         appSettings.setQuiet(quiet);
         this.templateGlobals = new TemplateGlobals(this);
     }
