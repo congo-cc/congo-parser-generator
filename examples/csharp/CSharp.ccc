@@ -2085,7 +2085,7 @@ StatementExpression#interface :
       SCAN 1 {lhs.isAssignableTo()} =>
       (AssignmentOperator [<REF>] Expression) #AssignmentExpression(+1)
       |
-      ASSERT {lhs instanceof StatementExpression} : "Not a statement. " + lhs + ":" +lhs.getClass().getSimpleName() + ":" + lhs.getLocation()
+      ASSERT {lhs instanceof StatementExpression} : "Not a statement. "// + lhs + ":" +lhs.getClass().getSimpleName() + ":" + lhs.getLocation()
    )
    |
    AssignmentExpression
