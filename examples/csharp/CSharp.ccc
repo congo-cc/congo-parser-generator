@@ -23,7 +23,7 @@ INCLUDE "CSharpLexer.ccc"
    (ExternAliasDirective)*
    (UsingDirective)*
    (GlobalAttributeSection)*
-   CompilationUnitBody
+   [CompilationUnitBody]
    <EOF>
    {return CURRENT_NODE;}
 ;
@@ -387,8 +387,12 @@ InterfaceMemberDeclaration :
 ;
 
 InterfaceEventDeclaration :
+   {
+      permissibleModifiers = EnumSet.of(TokenType.PUBLIC, TokenType.NEW);
+   }
    (AttributeSection)*
-   [<NEW>]
+   Modifiers
+//   [<NEW>]
    <EVENT> =>||
    Type
    <IDENTIFIER>
@@ -571,8 +575,8 @@ PropertyDeclaration :
 
 InterfacePropertyDeclaration :
   {
-    permissibleModifiers = EnumSet.of(TokenType.PUBLIC, TokenType.NEW);
-  }#
+    permissibleModifiers = EnumSet.of(TokenType.PUBLIC, TokenType.NEW, TokenType.STATIC, TokenType.INTERNAL);
+  }
   (AttributeSection)*
   Modifiers
   Type
@@ -1720,6 +1724,8 @@ ObjectInitializer :
 ;
 
 MemberInitializer :
+   Expression ASSERT (<COMMA>|<RBRACE>) =>||
+   |
    (QualifiedIdentifier | <LBRACKET> ArgumentList <RBRACKET>)
    [
       // If this is really optional, it is a mistake in the spec.
@@ -2079,7 +2085,7 @@ StatementExpression#interface :
       SCAN 1 {lhs.isAssignableTo()} =>
       (AssignmentOperator [<REF>] Expression) #AssignmentExpression(+1)
       |
-      ASSERT {lhs instanceof StatementExpression} : "Not a statement. " // + lhs + ":" +lhs.getClass().getSimpleName() + ":" + lhs.getLocation()
+      ASSERT {lhs instanceof StatementExpression} : "Not a statement. " + lhs + ":" +lhs.getClass().getSimpleName() + ":" + lhs.getLocation()
    )
    |
    AssignmentExpression

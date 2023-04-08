@@ -177,7 +177,7 @@ TOKEN #KeyWord :
    | < UNCHECKED : "unchecked" >
    | < UNSAFE : "unsafe" >
    | < USHORT : "ushort" > #PrimitiveType
-   | < USING : "using" > 
+   | < USING : ("global" <WHITESPACE>)? "using" > 
    | < VIRTUAL : "virtual" > 
    | < VOID : "void" >
    | < VOLATILE : "volatile" > 
