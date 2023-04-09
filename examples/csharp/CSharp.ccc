@@ -1,4 +1,5 @@
 PARSER_PACKAGE=org.parsers.csharp;
+
 BASE_NODE_CLASS=BaseNode;
 DEFAULT_LEXICAL_STATE=CSHARP;
 PRESERVE_TABS;
@@ -174,8 +175,8 @@ TypeArgumentList :
    <LT> =>||
    [
       (AttributeSection)*
-      (<VOID> | Type)
-      (<COMMA> (AttributeSection)* (<VOID> | Type))*
+      (<VOID> [<STAR>] | [<IN>|<OUT>|<REF>] Type)
+      (<COMMA> (AttributeSection)* (<VOID> [<STAR>] | [<IN>|<OUT>|<REF>] Type))*
    ]
    DEACTIVATE_TOKENS RIGHT_SHIFT, UNSIGNED_RIGHT_SHIFT, RIGHT_SHIFT_ASSIGN
    (<GT>)
@@ -384,6 +385,8 @@ InterfaceMemberDeclaration :
    InterfaceEventDeclaration
    |
    InterfaceIndexerDeclaration
+   |
+   ConstantDeclaration
 ;
 
 InterfaceEventDeclaration :
@@ -670,7 +673,7 @@ OperatorDeclaration :
      |
      (<BANG>|<TILDE>|<INCR>|<DECR>|<TRUE>|<FALSE>) <LPAREN> [<IN>] Type <IDENTIFIER> <RPAREN>
      |
-     (<STAR>|<SLASH>|<REM>|<BIT_AND>|<BIT_OR>|<HAT>|<LEFT_SHIFT>|<RIGHT_SHIFT>|<EQ>|<NE>|<GT>|<LT>|<GE>|<LE>)
+     (<STAR>|<SLASH>|<REM>|<BIT_AND>|<BIT_OR>|<HAT>|<LEFT_SHIFT>|<RIGHT_SHIFT>|<UNSIGNED_RIGHT_SHIFT>|<EQ>|<NE>|<GT>|<LT>|<GE>|<LE>)
      <LPAREN> [<IN>] Type <IDENTIFIER> <COMMA> [<IN>] Type <IDENTIFIER> <RPAREN>
      |
      Type <LPAREN> [<IN>] Type <IDENTIFIER> [<ASSIGN> Expression] <RPAREN>
@@ -695,7 +698,7 @@ DestructorDeclaration :
 ConstructorDeclaration :
   {
     permissibleModifiers = EnumSet.of(TokenType.PUBLIC, TokenType.PRIVATE, TokenType.PROTECTED,
-                                      TokenType.STATIC, TokenType.INTERNAL, TokenType.UNSAFE);
+                                      TokenType.STATIC, TokenType.INTERNAL, TokenType.EXTERN, TokenType.UNSAFE);
   }
   (AttributeSection)*
   Modifiers
@@ -830,7 +833,7 @@ InterfaceMethodDeclaration :
     permissibleModifiers = EnumSet.of(TokenType.PUBLIC, TokenType.PRIVATE, TokenType.PROTECTED,
                                       TokenType.INTERNAL, TokenType.UNSAFE, TokenType.NEW, 
                                       TokenType.STATIC, TokenType.ABSTRACT, TokenType.VIRTUAL,
-                                      TokenType.ASYNC);
+                                      TokenType.ASYNC, TokenType.SEALED);
   }
    (AttributeSection)*
    Modifiers // REVISIT later.
@@ -898,8 +901,8 @@ TypeParameterList :
    <LT>
    (AttributeSection)*
    [<IN>|<OUT>] // Only with interfaces
-   (Name|PrimitiveType)
-   (<COMMA> (AttributeSection)* [<IN>|<OUT>] (Name|PrimitiveType))*
+   (Name|PrimitiveType) (<STAR>)*
+   (<COMMA> (AttributeSection)* [<IN>|<OUT>] (Name|PrimitiveType) (<STAR>)*)*
    <GT>
 ;
 
@@ -912,7 +915,8 @@ NonNullableType : Type;
 NonTupleType : Type;
 
 Type :
-  [<DELEGATE> <STAR> =>||]
+  {boolean delegateStar = false;}
+  [<DELEGATE> <STAR> =>|| {delegateStar = true;}]
   (
     SCAN 0 {checkNextTokenImage("dynamic")}#
     =>
@@ -923,6 +927,8 @@ Type :
     PrimitiveType
     |
     Name
+    |
+    SCAN {delegateStar} => TypeParameterList
     |
     SCAN ~\NonTupleType
     => TupleType
@@ -1301,7 +1307,7 @@ AdditiveExpression :
 ShiftExpression :
    AdditiveExpression
    (
-      (<LEFT_SHIFT> | <RIGHT_SHIFT>)
+      (<LEFT_SHIFT> | <RIGHT_SHIFT>|<UNSIGNED_RIGHT_SHIFT>)
       AdditiveExpression
    )*
 ;
@@ -1847,6 +1853,7 @@ LocalVariableDeclarationLA#scan :
       <USING>
    ]
    ASSERT {!checkNextTokenImage("await")} // Is there any possibility that a local type is named "await"?
+   [SCAN 0 {checkNextTokenImage("scoped")} => <IDENTIFIER>]
    [<REF>] [<READONLY>]
    (
       (
@@ -1862,7 +1869,6 @@ LocalVariableDeclarationLA#scan :
 
 LocalVariableDeclaration :
   SCAN LocalVariableDeclarationLA =>
-  [<REF>]
   [<USING>] // since 8.0
   (
      VarDeclaration
@@ -1872,6 +1878,7 @@ LocalVariableDeclaration :
 ;
 
 NoVarDeclaration :
+   [ ASSERT {checkNextTokenImage("scoped")}# ACTIVATE_TOKENS SCOPED (<SCOPED>) =>||]
    [
       <REF> // since C# 7.0
    ]
@@ -1886,6 +1893,7 @@ NoVarDeclaration :
 ;
 
 VarDeclaration :
+   [ ASSERT {checkNextTokenImage("scoped")}# ACTIVATE_TOKENS SCOPED (<SCOPED>) =>||]
    [
       <REF> // since C# 7.0
    ]
@@ -2085,7 +2093,10 @@ StatementExpression#interface :
       SCAN 1 {lhs.isAssignableTo()} =>
       (AssignmentOperator [<REF>] Expression) #AssignmentExpression(+1)
       |
-      ASSERT {lhs instanceof StatementExpression} : "Not a statement. "// + lhs + ":" +lhs.getClass().getSimpleName() + ":" + lhs.getLocation()
+      ASSERT {lhs instanceof StatementExpression} : "Not a statement. " 
+#if __java__      
+      + lhs.getClass().getSimpleName() + ":" + lhs.getLocation()
+#endif      
    )
    |
    AssignmentExpression
