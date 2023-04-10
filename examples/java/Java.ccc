@@ -266,7 +266,7 @@ ClassDeclaration :
   {permissibleModifiers = EnumSet.of(PUBLIC, 
                                     PROTECTED, PRIVATE, 
                                     ABSTRACT, FINAL, STATIC, 
-                                    STRICTFP, SEALED, NON_SEALED);}#
+                                    STRICTFP, SEALED, NON_SEALED);}
   Modifiers /modifiers/
   <CLASS> =>||
   TypeIdentifier /name/
@@ -475,7 +475,7 @@ ArrayInitializer :
     =>
     {permissibleModifiers = EnumSet.of(PUBLIC, PROTECTED, 
                                        PRIVATE, ABSTRACT, 
-                                       STATIC, SYNCHRONIZED, 
+                                       STATIC, SYNCHRONIZED, FINAL,
                                        NATIVE, STRICTFP, 
                                        _DEFAULT);}
     |
@@ -852,7 +852,10 @@ PrimaryExpression#interface :
   =>
   InvocationArguments #MethodCall(+1)
  )*
- ASSERT {getTokenType(0) != SUPER}# : "Not a valid expression here"
+ ASSERT {getTokenType(0) != SUPER}# : "Not a valid expression here "
+#if __java__
+   + getToken(0).getLocation()
+#endif 
 ;
 
 LiteralExpression# : Literal ;
@@ -944,8 +947,6 @@ Statement#interface  :
   |
   EmptyStatement
   |
-  ExpressionStatement
-  |
   SwitchStatement
   |
   IfStatement
@@ -967,6 +968,8 @@ Statement#interface  :
   SynchronizedStatement
   |
   TryStatement
+  |
+  ExpressionStatement
 ;
 
 INJECT AssertStatement : implements Statement;
@@ -1206,7 +1209,6 @@ BasicForStatement :
 EnhancedForStatement :
    <FOR> <LPAREN> LocalVariableDeclaration <COLON> =>|| Expression <RPAREN> Statement
 ;
-
 
 ForInit#void :
   LocalVariableDeclaration

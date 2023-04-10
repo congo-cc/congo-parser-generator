@@ -2323,7 +2323,7 @@ InterpolatedString#abstract :
    RegularStringInterpolation 
    | 
    MultiStringInterpolation 
-#if interpolated_raw_strings   
+#if __java__   
    |
    InterpolatedRawString
 #endif   
@@ -2379,7 +2379,7 @@ MultiNonInterpolatedText : IN_MULTI_INTERPOLATION :
    <NON_INTERPOLATED_TEXT2>
 ;
 
-#if interpolated_raw_strings
+#if __java__
 InterpolatedRawString :
    <INTERPOLATED_RAW_STRING_START>
    LEXICAL_STATE IN_INTERPOLATED_RAW_STRING

@@ -267,7 +267,7 @@ TOKEN #Literal :
   < REGULAR_INTERPOLATION_START : '$"' >  
   |
   < MULTI_INTERPOLATION_START : '$@"' | '@$"' > 
-#if interpolated_raw_strings  
+#if __java__  
   |
   < INTERPOLATED_RAW_STRING_START : ("$")+ ('"'){3,}> 
 #endif  
@@ -350,7 +350,7 @@ INJECT LEXER_CLASS :
 
    private BASE_TOKEN_CLASS TOKEN_HOOK(BASE_TOKEN_CLASS tok) {
       TokenType type = tok.getType();
-#if interpolated_raw_strings      
+#if __java__      
       if (type == TokenType.INTERPOLATED_RAW_STRING_START) {
          String image = tok.getImage();
          startingQuotes = startingDollars = 0;

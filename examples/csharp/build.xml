@@ -35,7 +35,7 @@
       <assertions>
         <enable />
       </assertions>
-      <arg line = "-n -p interpolated_raw_strings ${basedir}/CSharp.ccc"/>
+      <arg line = "-n ${basedir}/CSharp.ccc"/>
     </java>
   </target>
 

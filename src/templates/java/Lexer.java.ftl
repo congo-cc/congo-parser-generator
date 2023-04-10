@@ -181,7 +181,7 @@ public class ${settings.lexerClassName} extends TokenSource
           return new MatchInfo(EOF, 0);
        }
        int start = position, matchLength = 0;
-       TokenType matchedType = null;
+       TokenType matchedType = TokenType.INVALID;
        BitSet currentStates = new BitSet(${lexerData.maxNfaStates}),
               nextStates=new BitSet(${lexerData.maxNfaStates});
         // the core NFA loop
@@ -253,7 +253,7 @@ public class ${settings.lexerClassName} extends TokenSource
             this.lexicalState = newState;
         }
      [/#if]
-        if (matchedType == null) {
+        if (matchedType == TokenType.INVALID) {
             if (invalidChars==null) {
                 invalidChars=new StringBuilder();
             } 
@@ -264,7 +264,6 @@ public class ${settings.lexerClassName} extends TokenSource
             continue;
         }
         if (invalidChars !=null) {
-            position = tokenBeginOffset;
             return new InvalidToken(this, tokenBeginOffset - invalidChars.length(), tokenBeginOffset);
         }
         if (skippedTokens.contains(matchedType)) {
