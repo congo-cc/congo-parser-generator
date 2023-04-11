@@ -1385,7 +1385,7 @@ DefaultValue : <_DEFAULT> MemberValue ;
 
 LambdaExpression :
   SCAN ~\...\NewSwitchLabel =>
-  LambdaLHS =>|| (Expression | Block)
+  LambdaLHS =>|| (Block | Expression)
 ;
 
 LambdaLHS : (<IDENTIFIER> | SimpleLambdaLHS | LambdaParameters) <LAMBDA> =>|| ;

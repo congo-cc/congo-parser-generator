@@ -482,7 +482,7 @@ abstract public class TokenSource implements CharSequence
       int thirdByte = arrayLength >2 ? Byte.toUnsignedInt(bytes[2]) : 1;
       int fourthByte = arrayLength > 3 ? Byte.toUnsignedInt(bytes[3]) : 1;
       if (firstByte == 0xEF && secondByte == 0xBB && thirdByte == 0xBF) {
-         return new String(bytes, 3, bytes.length-3, Charset.forName("UTF-8"));
+         return new String(bytes, 3, bytes.length-3, UTF_8);
       }
       if (firstByte == 0 && secondByte==0 && thirdByte == 0xFE && fourthByte == 0xFF) {
          return new String(bytes, 4, bytes.length-4, Charset.forName("UTF-32BE"));
@@ -491,10 +491,10 @@ abstract public class TokenSource implements CharSequence
          return new String(bytes, 4, bytes.length-4, Charset.forName("UTF-32LE"));
       }
       if (firstByte == 0xFE && secondByte == 0xFF) {
-         return new String(bytes, 2, bytes.length-2, Charset.forName("UTF-16BE"));
+         return new String(bytes, 2, bytes.length-2, UTF_16BE);
       }
       if (firstByte == 0xFF && secondByte == 0xFE) {
-         return new String(bytes, 2, bytes.length-2, Charset.forName("UTF-16LE"));
+         return new String(bytes, 2, bytes.length-2, UTF_16LE);
       }
       charset = UTF_8;
     }
