@@ -51,6 +51,7 @@ public class Grammar extends BaseNode {
     private Errors errors;
 
     public Grammar(Path outputDir, String codeLang, int jdkTarget, boolean quiet, Map<String, String> preprocessorSymbols) {
+        if (preprocessorSymbols == null) preprocessorSymbols = new HashMap<>();
         this.preprocessorSymbols = preprocessorSymbols;
         this.appSettings = new AppSettings(this);
         appSettings.setJdkTarget(jdkTarget);
