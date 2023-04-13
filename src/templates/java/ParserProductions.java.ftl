@@ -525,6 +525,8 @@
    [/#if]
    [#if expansion.enteredUnconditionally]
       true 
+   [#elseif expansion.firstSet.tokenNames?size ==0]
+      false
    [#elseif expansion.firstSet.tokenNames?size < CU.USE_FIRST_SET_THRESHOLD] 
       [#list expansion.firstSet.tokenNames as name]
           nextTokenType [#if name_index ==0]() [/#if]
