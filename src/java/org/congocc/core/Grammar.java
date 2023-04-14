@@ -533,6 +533,8 @@ public class Grammar extends BaseNode {
             }
         }
 
+        if (errors.getErrorCount() >0) return;
+
         for (ExpansionChoice choice : descendants(ExpansionChoice.class)) {
             List<ExpansionSequence> units = choice.getChoices();
             for (int i =0; i< units.size();i++) {
