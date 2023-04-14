@@ -24,7 +24,7 @@ INCLUDE "CSharpLexer.ccc"
    (ExternAliasDirective)*
    (UsingDirective)*
    (GlobalAttributeSection)*
-   [CompilationUnitBody]
+   CompilationUnitBody
    <EOF>
    {return CURRENT_NODE;}
 ;
@@ -928,7 +928,7 @@ Type :
     |
     Name
     |
-    SCAN {delegateStar} => TypeParameterList
+    SCAN 1 {delegateStar} => TypeParameterList
     |
     SCAN ~\NonTupleType
     => TupleType
@@ -2176,7 +2176,7 @@ INJECT PARSER_CLASS :
 }
 
 InListPattern :
-  SCAN {!seenRange} =>
+  SCAN 1 {!seenRange} =>
   (
     <RANGE> {seenRange = true;} ASSERT ~(Pattern) =>||
     |
