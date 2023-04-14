@@ -443,8 +443,7 @@ public class Grammar extends BaseNode {
         for (NonTerminal nt : undefinedNTs) {
             errors.addError(nt, "Non-terminal " + nt.getName() + " has not been defined.");
         }
-        if (undefinedNTs.isEmpty()) return false;
-        return true;
+        return undefinedNTs.isEmpty();
     }
 
 
