@@ -551,7 +551,9 @@ public class Grammar extends BaseNode {
 
         for (ZeroOrOne zoo : descendants(ZeroOrOne.class)) {
             if (zoo.getNestedExpansion().isEnteredUnconditionally()) {
-                errors.addWarning(zoo, "The expansion inside the zero or one construct is entered unconditionally. This may not be your intention.");
+                if (!(zoo.getNestedExpansion() instanceof ExpansionChoice)) {
+                    errors.addWarning(zoo, "The expansion inside the zero or one construct is entered unconditionally. This may not be your intention.");
+                }
             }
         }
 
