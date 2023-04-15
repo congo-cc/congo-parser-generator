@@ -95,6 +95,7 @@ TOKEN #Operator :
 | < RIGHT_SHIFT: ">>" > 
 | < UNSIGNED_RIGHT_SHIFT: ">>>" > 
 | < RIGHT_SHIFT_ASSIGN: ">>=" > 
+| < UNSIGNED_RIGHT_SHIFT_ASSIGN: ">>>=" > 
 | < ARROW : "=>"> 
 | < POINTER_ACCESS : "->"> 
 | < ASSIGN: "=" > 
@@ -191,6 +192,8 @@ TOKEN #KeyWord :
    | < DYNAMIC : "dynamic">
    | < GET : "get" >
    | < INIT : "init" >
+   | < MANAGED : "managed">
+   | < UNMANAGED : "unmanaged">
    | < MODULE : "module">
    | < NAMEOF : "nameof">
    | < PARTIAL : "partial">

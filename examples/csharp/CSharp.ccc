@@ -10,10 +10,9 @@ USES_PREPROCESSOR;
 DEACTIVATE_TOKENS=ADD,ASSEMBLY,ASYNC,AWAIT,INTO,MODULE, NAMEOF,
                   PARTIAL, RECORD, REMOVE,VAR,WHEN,YIELD, ARGLIST,
                   GET,SET,INIT,WITH,REQUIRED,DYNAMIC,SCOPED,
+                  MANAGED,UNMANAGED,
                   // The following are used in patterns:
                   AND, OR, NOT,
-                  // This one is tricky...
-                  //END_RAW_INTERPOLATION,
                   // The following are all used in queries
                   ASCENDING,BY,DESCENDING,EQUALS,FROM,GROUP,JOIN,LET,
                   INTO, ON, ORDERBY,SELECT,WHERE;
@@ -178,7 +177,7 @@ TypeArgumentList :
       (<VOID> [<STAR>] | [<IN>|<OUT>|<REF>] Type)
       (<COMMA> (AttributeSection)* (<VOID> [<STAR>] | [<IN>|<OUT>|<REF>] Type))*
    ]
-   DEACTIVATE_TOKENS RIGHT_SHIFT, UNSIGNED_RIGHT_SHIFT, RIGHT_SHIFT_ASSIGN
+   DEACTIVATE_TOKENS RIGHT_SHIFT, UNSIGNED_RIGHT_SHIFT, RIGHT_SHIFT_ASSIGN, UNSIGNED_RIGHT_SHIFT_ASSIGN
    (<GT>)
 ;
 
@@ -579,7 +578,8 @@ PropertyDeclaration :
 InterfacePropertyDeclaration :
   {
     permissibleModifiers = EnumSet.of(TokenType.PUBLIC, TokenType.PROTECTED, TokenType.PRIVATE,
-                                      TokenType.NEW, TokenType.STATIC, TokenType.INTERNAL);
+                                      TokenType.NEW, TokenType.STATIC, TokenType.INTERNAL,
+                                      TokenType.SEALED);
   }
   (AttributeSection)*
   Modifiers
@@ -902,8 +902,8 @@ TypeParameterList :
    <LT>
    (AttributeSection)*
    [<IN>|<OUT>] // Only with interfaces
-   (Name|PrimitiveType) (<STAR>)*
-   (<COMMA> (AttributeSection)* [<IN>|<OUT>] (Name|PrimitiveType) (<STAR>)*)*
+   (<VOID>|Name|PrimitiveType) (<STAR>)*
+   (<COMMA> (AttributeSection)* [<IN>|<OUT>] (<VOID>|Name|PrimitiveType) (<STAR>)*)*
    <GT>
 ;
 
@@ -915,9 +915,19 @@ NonNullableType : Type;
 
 NonTupleType : Type;
 
+DelegateStarType :
+   <DELEGATE><STAR> =>||
+   [
+     SCAN 0 {checkNextTokenImage("managed") || checkNextTokenImage("unmanaged")}#
+     => ACTIVATE_TOKENS MANAGED, UNMANAGED (<MANAGED> | <UNMANAGED>)
+   ] 
+   (AttributeSection)*
+   TypeParameterList
+;
+
 Type :
-  {boolean delegateStar = false;}
-  [<DELEGATE> <STAR> =>|| {delegateStar = true;}]
+  DelegateStarType
+  |
   (
     SCAN 0 {checkNextTokenImage("dynamic")}#
     =>
@@ -928,8 +938,6 @@ Type :
     PrimitiveType
     |
     Name
-    |
-    SCAN 1 {delegateStar} => TypeParameterList
     |
     SCAN ~\NonTupleType
     => TupleType
@@ -1404,6 +1412,7 @@ AssignmentOperator #void :
   | <XORASSIGN>
   | <LEFT_SHIFT_ASSIGN>
   | <RIGHT_SHIFT_ASSIGN>
+  | <UNSIGNED_RIGHT_SHIFT_ASSIGN>
   | <DOUBLE_HOOK_EQUALS> // since 8.0
 ;
 
