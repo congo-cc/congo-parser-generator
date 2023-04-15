@@ -578,7 +578,8 @@ PropertyDeclaration :
 
 InterfacePropertyDeclaration :
   {
-    permissibleModifiers = EnumSet.of(TokenType.PUBLIC, TokenType.NEW, TokenType.STATIC, TokenType.INTERNAL);
+    permissibleModifiers = EnumSet.of(TokenType.PUBLIC, TokenType.PROTECTED, TokenType.PRIVATE,
+                                      TokenType.NEW, TokenType.STATIC, TokenType.INTERNAL);
   }
   (AttributeSection)*
   Modifiers
@@ -1555,7 +1556,7 @@ ArrayCreationExpression :
 ;
 
 ObjectCreationExpression :
-   <NEW> =>|+1 [SCAN 1 {getTokenType(1) != TokenType.LPAREN} => NonArrayType] // This seems possible since C# 9
+   <NEW> =>|+1 [SCAN 1 {getTokenType(1) != TokenType.LPAREN}# => NonArrayType] // This seems possible since C# 9
    (
       <LPAREN> [ArgumentList] <RPAREN> [ObjectInitializer | CollectionInitializer]
       |
