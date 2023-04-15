@@ -179,15 +179,18 @@ public boolean isCancelled() {return cancelled;}
   }
 
   private String tokenImage(int n) {
-     return getToken(n).getImage();
+    ${settings.baseTokenClassName} t = getToken(n);
+    return t == null ? null : t.getImage();
   }
 
   private String getTokenImage(int n) {
-    return getToken(n).getImage();
+    ${settings.baseTokenClassName} t = getToken(n);
+    return t == null ? null : t.getImage();
   }
 
   private TokenType getTokenType(int n) {
-     return getToken(n).getType();
+     ${settings.baseTokenClassName} t = getToken(n);
+     return t == null ? null : t.getType();
   }
 
   private boolean checkNextTokenImage(String img) {

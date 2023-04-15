@@ -579,7 +579,7 @@ InterfacePropertyDeclaration :
   {
     permissibleModifiers = EnumSet.of(TokenType.PUBLIC, TokenType.PROTECTED, TokenType.PRIVATE,
                                       TokenType.NEW, TokenType.STATIC, TokenType.INTERNAL,
-                                      TokenType.SEALED);
+                                      TokenType.SEALED,TokenType.VIRTUAL);
   }
   (AttributeSection)*
   Modifiers
@@ -605,8 +605,12 @@ InterfaceAccessor : // TODO, check that there is only one of each
     ACTIVATE_TOKENS GET,SET,INIT
     ( <GET> | <SET> | <INIT> )
     =>||
-    [<ARROW> Expression ]
-    <SEMICOLON>
+    (
+      [<ARROW> Expression ]
+      <SEMICOLON>
+      |
+      Block
+    )
 ;
 
 
@@ -901,9 +905,9 @@ VariableDeclarator : <IDENTIFIER> [<ASSIGN> (Expression|ArrayInitializer)] ;
 TypeParameterList :
    <LT>
    (AttributeSection)*
-   [<IN>|<OUT>] // Only with interfaces
+   [<IN>|<OUT>|<REF>] // Only with interfaces?
    (<VOID>|Name|PrimitiveType) (<STAR>)*
-   (<COMMA> (AttributeSection)* [<IN>|<OUT>] (<VOID>|Name|PrimitiveType) (<STAR>)*)*
+   (<COMMA> (AttributeSection)* [<IN>|<OUT>|<REF>] (<VOID>|Name|PrimitiveType) (<STAR>)*)*
    <GT>
 ;
 
@@ -1176,8 +1180,8 @@ QueryExpression :
 
 InQueryExpression#void :
    DEACTIVATE_TOKENS ASCENDING,BY,DESCENDING,EQUALS,FROM,
-                   GROUP,JOIN,LET,INTO,
-                   ON //, ORDERBY
+                   GROUP,JOIN,INTO,
+                   ON //, ORDERBY, LET
    (Expression)
 ;
 
@@ -1223,7 +1227,7 @@ WhereClause : <WHERE> InQueryExpression ;
 JoinClause :
    <JOIN>
    (
-      <IDENTIFIER> <IN>
+      <IDENTIFIER> <IN> =>||
       |
       Type <IDENTIFIER> <IN>
    )
