@@ -427,20 +427,13 @@ INJECT LEXER_CLASS :
           if (img.charAt(i) == '"') startingQuotes++;
           else break;
        }
-#if false       
-       if (img.endsWith("u8")) {
-          for (int j = img.length() -3; j>=0; j--) {
-             if (img.charAt(j) == '"') ++endingQuotes;
-             else break;
-          }
-       }
-       else {
+#if __java__
+       if (img.endsWith("u8")) img = img.substring(0, img.length() -2);
 #endif        
           for (int k = img.length() -1; k>=0; k--) {
              if (img.charAt(k) == '"') ++endingQuotes;
              else break;
           }
-//       }
        return endingQuotes >=startingQuotes;
    }
 }   
