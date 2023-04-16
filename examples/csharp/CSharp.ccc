@@ -909,7 +909,8 @@ TypeParameterList :
    <LT>
    TypeParameter 
    (<COMMA>TypeParameter)*
-   <GT>
+   DEACTIVATE_TOKENS RIGHT_SHIFT, UNSIGNED_RIGHT_SHIFT, RIGHT_SHIFT_ASSIGN, UNSIGNED_RIGHT_SHIFT_ASSIGN
+   (<GT>)
 ;
 
 TypeParameter# :
@@ -941,9 +942,9 @@ DelegateStarType :
 ;
 
 Type :
-  DelegateStarType
-  |
   (
+    DelegateStarType
+    |
     SCAN 0 {checkNextTokenImage("dynamic")}#
     =>
     ACTIVATE_TOKENS DYNAMIC (<DYNAMIC>) // Is this right?
