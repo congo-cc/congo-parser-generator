@@ -573,6 +573,7 @@ PropertyDeclaration :
   Name
   =>|+1
   PropertyBody
+  [<ASSIGN> Expression]
 ;
 
 InterfacePropertyDeclaration :
@@ -586,7 +587,7 @@ InterfacePropertyDeclaration :
   Type
   <IDENTIFIER> =>|+1
   (
-     <LBRACE> (InterfaceAccessor)+ <RBRACE>
+     <LBRACE> (InterfaceAccessor)+ <RBRACE> [<ASSIGN> Expression <SEMICOLON>]
      |
      // This seems to be another of these
      // new features not hardly documented
