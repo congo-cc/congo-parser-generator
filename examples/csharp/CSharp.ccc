@@ -386,6 +386,8 @@ InterfaceMemberDeclaration :
    InterfaceIndexerDeclaration
    |
    ConstantDeclaration
+   |
+   FieldDeclaration
 ;
 
 InterfaceEventDeclaration :
@@ -905,11 +907,19 @@ VariableDeclarator : <IDENTIFIER> [<ASSIGN> (Expression|ArrayInitializer)] ;
 
 TypeParameterList :
    <LT>
-   (AttributeSection)*
-   [<IN>|<OUT>|<REF>] // Only with interfaces?
-   (<VOID>|Name|PrimitiveType) (<STAR>)*
-   (<COMMA> (AttributeSection)* [<IN>|<OUT>|<REF>] (<VOID>|Name|PrimitiveType) (<STAR>)*)*
+   TypeParameter 
+   (<COMMA>TypeParameter)*
    <GT>
+;
+
+TypeParameter# :
+    (AttributeSection)*
+    [<IN>|<OUT>|<REF>]
+    (
+      <VOID> ASSERT ~(<STAR>|<LBRACKET>) =>||
+      |
+      Type
+    )
 ;
 
 NonArrayType#void : Type ;
