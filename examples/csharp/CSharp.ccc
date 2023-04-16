@@ -392,11 +392,10 @@ InterfaceMemberDeclaration :
 
 InterfaceEventDeclaration :
    {
-      permissibleModifiers = EnumSet.of(TokenType.PUBLIC, TokenType.NEW);
+      permissibleModifiers = EnumSet.of(TokenType.PUBLIC, TokenType.NEW, TokenType.STATIC, TokenType.VIRTUAL);
    }
    (AttributeSection)*
    Modifiers
-//   [<NEW>]
    <EVENT> =>||
    Type
    <IDENTIFIER>
@@ -741,7 +740,8 @@ Argument :
    [<IDENTIFIER> <COLON> =>||]
    (
        // Where is this specified?
-      PrimitiveType ASSERT(<COMMA>|<RPAREN>) =>||
+      //PrimitiveType ASSERT(<COMMA>|<RPAREN>) =>||
+      Type ASSERT(<COMMA>|<RPAREN>) =>||
       |
       <OUT> Type <IDENTIFIER> =>|| // since C# 7.0
       |
@@ -2243,7 +2243,8 @@ PrimaryPattern :
    PositionalPattern =>||
    |
    //Which should it be here?
-   ShiftExpression
+   DEACTIVATE_TOKENS OR, AND, NOT
+   (ShiftExpression)
    //InclusiveOrExpression
 ;
 
@@ -2251,13 +2252,21 @@ ParenthesizedPattern : <LPAREN> Pattern <RPAREN> ;
 
 DeclarationPattern :
     NonNullableType
-    ASSERT {checkNextTokenType(TokenType.IDENTIFIER)}#
-    ACTIVATE_TOKENS FROM, WHERE
+    [
+      SCAN 0 {checkNextTokenImage("from") || checkNextTokenImage("when")}#
+      =>
+      ACTIVATE_TOKENS FROM, WHEN
+      (
+         ASSERT ~(FromClause | WhenClause)
+      )
+    ]
     (
-       ASSERT ~(FromClause)
-       ASSERT ~(WhenClause)
+      <IDENTIFIER>
+      |
+      // This is some very tricky code just to get some edge case to work!
+      SCAN 0 {getToken(2).getType() == RPAREN && (checkNextTokenType(AND)||checkNextTokenType(OR)||checkNextTokenType(NOT))}#
+      => DEACTIVATE_TOKENS AND, NOT, OR (<IDENTIFIER>)
     )
-    <IDENTIFIER>
     =>||
 ;
 

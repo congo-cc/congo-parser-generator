@@ -193,12 +193,22 @@ public boolean isCancelled() {return cancelled;}
      return t == null ? null : t.getType();
   }
 
-  private boolean checkNextTokenImage(String img) {
-    return tokenImage(1).equals(img);
+  private boolean checkNextTokenImage(String img, String... additionalImages) {
+      String nextImage = getToken(1).getImage();
+      if (nextImage.equals(img)) return true;
+      for (String image : additionalImages) {
+         if (nextImage.equals(image)) return true;
+      }
+      return false;
   }
 
-  private boolean checkNextTokenType(TokenType type) {
-    return getToken(1).getType() == type;
+  private boolean checkNextTokenType(TokenType type, TokenType... additionalTypes) {
+    TokenType nextType = getToken(1).getType();
+    if (nextType == type) return true;
+    for (TokenType t : additionalTypes) {
+      if (nextType == t) return true;
+    }
+    return false;
   }
 
   private final TokenType nextTokenType() {
