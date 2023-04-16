@@ -2243,8 +2243,7 @@ PrimaryPattern :
    PositionalPattern =>||
    |
    //Which should it be here?
-   DEACTIVATE_TOKENS OR, AND, NOT
-   (ShiftExpression)
+   ShiftExpression
    //InclusiveOrExpression
 ;
 
@@ -2252,6 +2251,20 @@ ParenthesizedPattern : <LPAREN> Pattern <RPAREN> ;
 
 DeclarationPattern :
     NonNullableType
+    ASSERT {checkNextTokenType(TokenType.IDENTIFIER)}#
+    ACTIVATE_TOKENS FROM, WHEN
+    (
+       ASSERT ~(FromClause)
+       ASSERT ~(WhenClause)
+    )
+    <IDENTIFIER>
+    =>||
+;
+
+#if false
+DeclarationPattern :
+    NonNullableType
+    ASSERT (<IDENTIFIER>)
     [
       SCAN 0 {checkNextTokenImage("from") || checkNextTokenImage("when")}#
       =>
@@ -2269,6 +2282,7 @@ DeclarationPattern :
     )
     =>||
 ;
+#endif
 
 VarPattern :
     SCAN 0 {checkNextTokenImage("var")}# =>
