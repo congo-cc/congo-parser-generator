@@ -180,10 +180,11 @@ public class ${settings.lexerClassName} extends TokenSource
        if (position >= input.length()) {
           return new MatchInfo(EOF, 0);
        }
-       int start = position, matchLength = 0;
+       int start = position;
+       int matchLength = 0;
        TokenType matchedType = TokenType.INVALID;
-       BitSet currentStates = new BitSet(${lexerData.maxNfaStates}),
-              nextStates=new BitSet(${lexerData.maxNfaStates});
+       BitSet currentStates = new BitSet(${lexerData.maxNfaStates});
+       BitSet nextStates=new BitSet(${lexerData.maxNfaStates});
         // the core NFA loop
         do {
             // Holder for the new type (if any) matched on this iteration

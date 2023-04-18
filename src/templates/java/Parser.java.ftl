@@ -55,9 +55,12 @@ ${settings.baseTokenClassName} lastConsumedToken;
 private TokenType nextTokenType;
 private ${settings.baseTokenClassName} currentLookaheadToken;
 private int remainingLookahead;
-private boolean hitFailure, passedPredicate;
-private String currentlyParsedProduction, currentLookaheadProduction;
-private int lookaheadRoutineNesting, passedPredicateThreshold = -1;
+private boolean hitFailure;
+private boolean passedPredicate;
+private String currentlyParsedProduction;
+private String currentLookaheadProduction;
+private int lookaheadRoutineNesting;
+private int passedPredicateThreshold = -1;
 EnumSet<TokenType> outerFollowSet;
 
 [#if settings.legacyGlitchyLookahead]
