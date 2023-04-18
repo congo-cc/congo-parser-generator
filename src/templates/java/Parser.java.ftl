@@ -137,7 +137,7 @@ public boolean isCancelled() {return cancelled;}
 
   // If the next token is cached, it returns that
   // Otherwise, it goes to the token_source, i.e. the Lexer.
-  final private ${settings.baseTokenClassName} nextToken(final ${settings.baseTokenClassName} tok) {
+  private final ${settings.baseTokenClassName} nextToken(final ${settings.baseTokenClassName} tok) {
     ${settings.baseTokenClassName} result = token_source.getNextToken(tok);
     while (result.isUnparsed()) {
      [#list grammar.parserTokenHooks as methodName] 
@@ -155,7 +155,7 @@ public boolean isCancelled() {return cancelled;}
   /**
    * @return the next ${settings.baseTokenClassName} off the stream. This is the same as #getToken(1)
    */
-  final public ${settings.baseTokenClassName} getNextToken() {
+  public final ${settings.baseTokenClassName} getNextToken() {
     return getToken(1);
   }
 
@@ -166,7 +166,7 @@ public boolean isCancelled() {return cancelled;}
  * Otherwise, it is the lastConsumedToken. If you pass in a negative
  * number it goes backward.
  */
-  final public ${settings.baseTokenClassName} getToken(final int index) {
+  public final ${settings.baseTokenClassName} getToken(final int index) {
     ${settings.baseTokenClassName} t = currentLookaheadToken == null ? lastConsumedToken : currentLookaheadToken;
     for (int i = 0; i < index; i++) {
       t = nextToken(t);

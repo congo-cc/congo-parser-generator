@@ -15,7 +15,7 @@
     [/#if]
   [/#list]
 
-  static private void NFA_FUNCTIONS_init() {
+  private static void NFA_FUNCTIONS_init() {
     [#if multipleLexicalStates]
       NfaFunction[] functions = new NfaFunction[]
     [#else]
@@ -42,9 +42,9 @@
 [#macro GenerateMoveArray nfaState]
   [#var moveRanges = nfaState.moveRanges]
   [#var arrayName = nfaState.movesArrayName]
-    static private int[] ${arrayName} = ${arrayName}_init();
+    private static int[] ${arrayName} = ${arrayName}_init();
 
-    static private int[] ${arrayName}_init() {
+    private static int[] ${arrayName}_init() {
         return new int[]
         {
         [#list nfaState.moveRanges as char]
@@ -60,7 +60,7 @@
    that correspond to an instanceof org.congocc.core.CompositeStateSet
 --]
 [#macro GenerateNfaMethod nfaState]  
-    static private TokenType ${nfaState.methodName}(int ch, BitSet nextStates, EnumSet<TokenType> validTypes) {
+    private static TokenType ${nfaState.methodName}(int ch, BitSet nextStates, EnumSet<TokenType> validTypes) {
       TokenType type = null;
     [#var states = nfaState.orderedStates, lastBlockStartIndex=0]
     [#list states as state]

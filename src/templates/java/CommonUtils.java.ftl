@@ -13,17 +13,17 @@
 --]
 [#macro enumSet varName tokenNames]
    [#if tokenNames?size = 0]
-     static private final EnumSet<TokenType> ${varName} = EnumSet.noneOf(TokenType.class);
+     private static final EnumSet<TokenType> ${varName} = EnumSet.noneOf(TokenType.class);
    [#elseif tokenNames?size < 8]
-    static private final EnumSet<TokenType> ${varName} = tokenTypeSet(
+    private static final EnumSet<TokenType> ${varName} = tokenTypeSet(
        [#list tokenNames as type]
          [#if type_index > 0],[/#if]
          ${type}
        [/#list]
     );
    [#else]
-    static private final EnumSet<TokenType> ${varName} = ${varName}_init();
-    static private EnumSet<TokenType> ${varName}_init() {
+    private static final EnumSet<TokenType> ${varName} = ${varName}_init();
+    private static EnumSet<TokenType> ${varName}_init() {
        return tokenTypeSet(
          [#list tokenNames as type]
           [#if type_index > 0],[/#if]
