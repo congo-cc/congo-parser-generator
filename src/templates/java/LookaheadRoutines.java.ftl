@@ -434,7 +434,8 @@
 [#macro ScanCodeChoice choice]
    [@CU.newVar settings.baseTokenClassName, "currentLookaheadToken"/]
    int remainingLookahead${CU.newVarIndex} = remainingLookahead;
-   boolean hitFailure${CU.newVarIndex} = hitFailure, passedPredicate${CU.newVarIndex} = passedPredicate;
+   boolean hitFailure${CU.newVarIndex} = hitFailure;
+   boolean passedPredicate${CU.newVarIndex} = passedPredicate;
    try {
   [#list choice.choices as subseq]
      passedPredicate = false;

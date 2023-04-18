@@ -61,7 +61,8 @@ abstract public class TokenSource implements CharSequence
     // The starting line and column, usually 1,1
     // that is used to report a file position 
     // in 1-based line/column terms
-    private int startingLine, startingColumn;
+    private int startingLine;
+    private int startingColumn;
 
     /**
      * Set the starting line/column for location reporting.
@@ -220,7 +221,7 @@ abstract public class TokenSource implements CharSequence
     protected final void setIgnoredRange(int begin, int end) {
         for (int offset = begin; offset < end; offset++) {
            tokenLocationTable[offset] = IGNORED;
-           tokenOffsets.clear(begin,end);
+           tokenOffsets.clear(begin, end);
         }
     }
 
@@ -301,9 +302,9 @@ abstract public class TokenSource implements CharSequence
      * @param parsedLines a #java.util.BitSet that holds which lines
      * are parsed (i.e. not ignored)
      */
-    public void setParsedLines(BitSet parsedLines) {setParsedLines(parsedLines,false);}
+    public void setParsedLines(BitSet parsedLines) {setParsedLines(parsedLines, false);}
 
-    public void setUnparsedLines(BitSet unparsedLines) {setParsedLines(unparsedLines,true);}
+    public void setUnparsedLines(BitSet unparsedLines) {setParsedLines(unparsedLines, true);}
 [/#if]    
 
     // Just use the canned binary search to check whether the char
@@ -356,10 +357,10 @@ abstract public class TokenSource implements CharSequence
         int bsearchResult = Arrays.binarySearch(lineOffsets, pos);
         if (bsearchResult>=0) {
         [#-- REVISIT --]
-            return Math.max(startingLine,startingLine + bsearchResult);
+            return Math.max(startingLine, startingLine + bsearchResult);
         }
         [#-- REVISIT --]
-        return Math.max(startingLine,startingLine-(bsearchResult+2));
+        return Math.max(startingLine, startingLine -(bsearchResult + 2));
     }
 
     private void createLineOffsetsTable() {

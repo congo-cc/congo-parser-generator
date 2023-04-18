@@ -55,7 +55,8 @@ public class ${settings.baseTokenClassName} ${implementsNode} {
     
     private TokenType type=TokenType.DUMMY;
     
-    private int beginOffset, endOffset;
+    private int beginOffset;
+    private int endOffset;
     
     private boolean unparsed;
 
@@ -72,7 +73,8 @@ public class ${settings.baseTokenClassName} ${implementsNode} {
 
 [#if settings.tokenChaining]
 
-    private ${settings.baseTokenClassName} prependedToken, appendedToken;
+    private ${settings.baseTokenClassName} prependedToken;
+    private ${settings.baseTokenClassName} appendedToken;
 
     private boolean inserted;
 
@@ -183,7 +185,9 @@ public class ${settings.baseTokenClassName} ${implementsNode} {
 
 
 [#if settings.faultTolerant]
-    private boolean virtual, skipped, dirty;
+    private boolean virtual;
+    private boolean skipped;
+    private boolean dirty;
 
     void setVirtual(boolean virtual) {
         this.virtual = virtual;
