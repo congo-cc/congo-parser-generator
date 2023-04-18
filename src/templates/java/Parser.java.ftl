@@ -66,7 +66,7 @@ EnumSet<TokenType> outerFollowSet;
    private boolean legacyGlitchyLookahead = false;
 [/#if]
 
-private final ${settings.baseTokenClassName} DUMMY_START_TOKEN = new ${settings.baseTokenClassName}();
+private static final ${settings.baseTokenClassName} DUMMY_START_TOKEN = new ${settings.baseTokenClassName}();
 private boolean cancelled;
 public void cancel() {cancelled = true;}
 public boolean isCancelled() {return cancelled;}
