@@ -662,8 +662,8 @@ public interface Node
     }
 
  	static abstract public class Visitor {
-        static private Map<Class<? extends Node.Visitor>, Map<Class<? extends Node>, Method>> mapLookup;
-        static private final Method DUMMY_METHOD;
+        private static Map<Class<? extends Node.Visitor>, Map<Class<? extends Node>, Method>> mapLookup;
+        private static final Method DUMMY_METHOD;
         static {
             try {
                 // Use this just to represent no method found, since ConcurrentHashMap cannot contains nulls

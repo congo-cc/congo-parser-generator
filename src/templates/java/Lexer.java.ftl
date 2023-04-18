@@ -30,7 +30,7 @@ import static ${settings.parserPackage}.${TOKEN}.TokenType.*;
 
 [#macro EnumSet varName tokenNames]
    [#if tokenNames?size=0]
-       static private final EnumSet<TokenType> ${varName} = EnumSet.noneOf(TokenType.class);
+       private static final EnumSet<TokenType> ${varName} = EnumSet.noneOf(TokenType.class);
    [#else]
        static final EnumSet<TokenType> ${varName} = EnumSet.of(
        [#list tokenNames as type]
@@ -419,7 +419,7 @@ public class ${settings.lexerClassName} extends TokenSource
   private static final EnumMap<LexicalState,NfaFunction[]> functionTableMap = new EnumMap<>(LexicalState.class);
  [#else]
   [#-- We don't need the above lookup if there is only one lexical state.--]
-   static private NfaFunction[] nfaFunctions;
+   private static NfaFunction[] nfaFunctions;
  [/#if]
  
   // Initialize the various NFA method tables

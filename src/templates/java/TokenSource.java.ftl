@@ -474,7 +474,7 @@ abstract public class TokenSource implements CharSequence
     * And if no encoding was passed in and no byte-order mark was present, we assume the raw input
     * is in UTF-8.
     */
-  static public String stringFromBytes(byte[] bytes, Charset charset) throws CharacterCodingException {
+  public static String stringFromBytes(byte[] bytes, Charset charset) throws CharacterCodingException {
     int arrayLength = bytes.length;
     if (charset == null) {
       int firstByte = arrayLength>0 ? Byte.toUnsignedInt(bytes[0]) : 1;
@@ -521,7 +521,7 @@ abstract public class TokenSource implements CharSequence
     // return new String(bytes, charset);
   }
 
-  static public String stringFromBytes(byte[] bytes) throws CharacterCodingException {
+  public static String stringFromBytes(byte[] bytes) throws CharacterCodingException {
      return stringFromBytes(bytes, null);
   }
 }
