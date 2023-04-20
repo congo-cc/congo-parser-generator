@@ -64,7 +64,7 @@ public class CodeInjector {
                 interfaces.add(name);
             }
             if (!importDecls.isEmpty()) {
-                Set<ImportDeclaration> injectedImports = injectedImportsMap.computeIfAbsent(name, k -> new HashSet<>());
+                Set<ImportDeclaration> injectedImports = injectedImportsMap.computeIfAbsent(name, k -> new LinkedHashSet<>());
                 injectedImports.addAll(importDecls);
             }
             List<ObjectType> extendsList = dec.getExtendsList() == null ? new ArrayList<>() : dec.getExtendsList().getTypes();
@@ -142,11 +142,11 @@ public class CodeInjector {
             name = packageName + "." + name;
         }
         if (importDeclarations !=null && !importDeclarations.isEmpty()) {
-            Set<ImportDeclaration> existingImports = injectedImportsMap.computeIfAbsent(name, k -> new HashSet<>());
+            Set<ImportDeclaration> existingImports = injectedImportsMap.computeIfAbsent(name, k -> new LinkedHashSet<>());
             existingImports.addAll(importDeclarations);
         }
         if (annotations != null && !annotations.isEmpty()) {
-            Set<Annotation> existingAnnotations = injectedAnnotationsMap.computeIfAbsent(name, k -> new HashSet<>());
+            Set<Annotation> existingAnnotations = injectedAnnotationsMap.computeIfAbsent(name, k -> new LinkedHashSet<>());
             existingAnnotations.addAll(annotations);
         }
         if (extendsList != null) {
