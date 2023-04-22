@@ -244,9 +244,13 @@ ${globals.translateParserInjections(true)}
         self.parse_state_stack = []
 [#if settings.faultTolerant]
         self.current_follow_set = set()
+     [#if settings.faultTolerantDefault]
         self.tolerant_parsing = True
+     [#else]
+        self.tolerant_parsing = False
+     [/#if]
         self.pending_recovery = False
-        self.debug_fault_tolerant = ${CU.bool(grammar.debugFaultTolerant)}
+        self.debug_fault_tolerant = False; 
         self.parsing_problems = []
 
     def add_parsing_problem(self, problem):

@@ -111,7 +111,11 @@ void dumpLookaheadCallStack(PrintStream ps) {
 }
 
 [#if settings.faultTolerant] 
+   [#if settings.faultTolerantDefault]
     private boolean tolerantParsing = true;
+   [#else]
+    private boolean tolerantParsing = false;
+   [/#if]
     // Are we pending a recovery routine to
     // get back on the rails?
     private boolean pendingRecovery;

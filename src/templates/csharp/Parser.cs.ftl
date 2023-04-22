@@ -205,7 +205,7 @@ ${globals.translateInjectedClass(node)}
         internal NodeScope CurrentNodeScope { get; set; }
 [/#if]
 [#if settings.faultTolerant]
-        public bool DebugFaultTolerant { get; set; } =  = ${CU.bool(grammar.debugFaultTolerant)};
+        public bool DebugFaultTolerant { get; set; } =  = ${CU.bool(settings.debugFaultTolerant)};
 [/#if]
         private TokenType? _nextTokenType;
         private uint _remainingLookahead;
@@ -217,7 +217,11 @@ ${globals.translateInjectedClass(node)}
         private readonly IList<NonTerminalCall> _lookaheadStack = new List<NonTerminalCall>();
         private readonly IList<ParseState> _parseStateStack = new List<ParseState>();
 [#if settings.faultTolerant]
+   [#if settings.faultTolerantDefault]
         private bool _tolerantParsing = true;
+   [#else]
+        private bool _tolerantParsing = false;
+   [/#if]
         private bool _pendingRecovery = false;
         private readonly IList<Node> _parsingProblems = new List<Node>();
 [/#if]

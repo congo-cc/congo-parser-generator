@@ -41,8 +41,8 @@ public class AppSettings {
         this.errors = grammar.getErrors();
     }
 
-    private String booleanSettings = ",FAULT_TOLERANT,PRESERVE_TABS,PRESERVE_LINE_ENDINGS,JAVA_UNICODE_ESCAPE," 
-                                    + "IGNORE_CASE,LEXER_USES_PARSER,NODE_DEFAULT_VOID,SMART_NODE_CREATION," 
+    private String booleanSettings = ",FAULT_TOLERANT,FAULT_TOLERANT_DEFAULT,PRESERVE_TABS,PRESERVE_LINE_ENDINGS,"
+                                    + "JAVA_UNICODE_ESCAPE,IGNORE_CASE,LEXER_USES_PARSER,NODE_DEFAULT_VOID,SMART_NODE_CREATION," 
                                     + "NODE_USES_PARSER,TREE_BUILDING_DEFAULT,TREE_BUILDING_ENABLED,TOKENS_ARE_NODES," 
                                     + "SPECIAL_TOKENS_ARE_NODES,UNPARSED_TOKENS_ARE_NODES,FREEMARKER_NODES," 
                                     + "TOKEN_MANAGER_USES_PARSER,ENSURE_FINAL_EOL,MINIMAL_TOKEN,C_CONTINUATION_LINE," 
@@ -529,6 +529,11 @@ public class AppSettings {
         return b == null || b;
     }
 
+    public boolean getFaultTolerantDefault() {
+        Boolean b = (Boolean) settings.get("FAULT_TOLERANT_DEFAULT");
+        return b == null || b;
+    }
+
     public boolean getNodeDefaultVoid() {
         Boolean b = (Boolean) settings.get("NODE_DEFAULT_VOID");
         return b != null && b;
@@ -618,6 +623,10 @@ public class AppSettings {
 
     public void setQuiet(boolean quiet) {
         this.quiet = quiet;
+    }
+
+    public boolean getDebugFaultTolerant() {
+        return false;
     }
 
     public String generateUniqueIdentifier(String prefix, Node exp) {

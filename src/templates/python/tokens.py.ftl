@@ -389,7 +389,7 @@ ${globals.translateTokenInjections(true)}
     @property
     def is_virtual(self):
 [#if settings.faultTolerant]
-        return self._is_virtual || self.type == TokenType.EOF
+        return self._is_virtual or self.type == TokenType.EOF
 [#else]
         return self.type == TokenType.EOF
 [/#if]
