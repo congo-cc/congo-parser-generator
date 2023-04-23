@@ -581,18 +581,18 @@ namespace ${csPackage} {
 
         virtual public bool IsVirtual() {
 [#if settings.faultTolerant]
-           return virtual || Type == TokenType.EOF;
+           return _virtual || Type == TokenType.EOF;
 [#else]
            return Type == TokenType.EOF;
 [/#if]
         }
 
 [#if settings.faultTolerant]
-        private bool virtual, skipped, dirty;
+        private bool _virtual, skipped, dirty;
 
         internal void SetVirtual(bool value) {
-            virtual = value;
-            if (virtual) {
+            _virtual = value;
+            if (_virtual) {
                 dirty = true;
             }
         }

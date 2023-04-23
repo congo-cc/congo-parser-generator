@@ -205,7 +205,7 @@ ${globals.translateInjectedClass(node)}
         internal NodeScope CurrentNodeScope { get; set; }
 [/#if]
 [#if settings.faultTolerant]
-        public bool DebugFaultTolerant { get; set; } =  = ${CU.bool(settings.debugFaultTolerant)};
+        public bool DebugFaultTolerant { get; set; } = ${CU.bool(settings.debugFaultTolerant)};
 [/#if]
         private TokenType? _nextTokenType;
         private uint _remainingLookahead;

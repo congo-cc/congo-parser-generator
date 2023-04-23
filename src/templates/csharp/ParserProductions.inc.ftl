@@ -45,7 +45,7 @@ ${is}// Code for ${expansion.simpleName} specified at ${expansion.location}
      [@CU.HandleLexicalStateChange expansion false indent; indent]
       [#if settings.faultTolerant && expansion.requiresRecoverMethod && !expansion.possiblyEmpty]
 ${is}if (_pendingRecovery) {
-${is}    ${expansion.recoverMethodName}()
+${is}    ${expansion.recoverMethodName}();
 ${is}}
       [/#if]
        [@TreeBuildingAndRecovery expansion indent/]

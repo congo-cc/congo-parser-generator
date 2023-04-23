@@ -23,8 +23,11 @@ DEACTIVATE_TOKENS=RECORD, VAR, YIELD, SEALED, NON_SEALED, PERMITS, MODULE,
 #endif
 ;
 
+#if !__csharp__ // We need to fix the fault-tolerant part of the csharp template
 FAULT_TOLERANT;
 FAULT_TOLERANT_DEFAULT=false;
+#endif
+
 //MINIMAL_TOKEN;
 TAB_SIZE=4;
 //PRESERVE_TABS;
