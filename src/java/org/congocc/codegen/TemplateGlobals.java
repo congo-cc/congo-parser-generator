@@ -193,7 +193,7 @@ public class TemplateGlobals {
         }
         List<String> sorted = seq.steps("Token");
         sorted.remove(0);
-        HashMap<String, Object> result = new HashMap<>();
+        Map<String, Object> result = new HashMap<>();
         result.put("sortedNames", sorted);
         result.put("tokenClassMap", tokenClassMap);
         return result;

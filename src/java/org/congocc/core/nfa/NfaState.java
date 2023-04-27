@@ -13,7 +13,7 @@ public class NfaState {
     final LexicalStateData lexicalState;
     private RegularExpression type;
     private NfaState nextState;
-    private Set<NfaState> epsilonMoves = new HashSet<>();
+    private Set<NfaState> epsilonMoves = new LinkedHashSet<>();
     private String movesArrayName;
 
     // An ordered list of the ranges of characters that this 

@@ -20,9 +20,9 @@ public class CodeInjector {
     private final Map<String, List<ObjectType>> implementsLists = new HashMap<>();
     private final Map<String, TypeParameters> typeParameterLists = new HashMap<>();
     private final Map<String, List<ClassOrInterfaceBodyDeclaration>> bodyDeclarations = new HashMap<>();
-    private final Set<String> overriddenMethods = new HashSet<>();  // Not presently queried ...
-    private final Set<String> typeNames = new HashSet<>();
-    private final Set<String> interfaces = new HashSet<>();  // Not presently queried ...
+    private final Set<String> overriddenMethods = new LinkedHashSet<>();  // Not presently queried ...
+    private final Set<String> typeNames = new LinkedHashSet<>();
+    private final Set<String> interfaces = new LinkedHashSet<>();  // Not presently queried ...
     private final Grammar grammar;
     private AppSettings appSettings;
     
@@ -163,7 +163,7 @@ public class CodeInjector {
 
     public void injectCode(CompilationUnit jcu) {
         String packageName = jcu.getPackageName();
-        Set<ImportDeclaration> allInjectedImports = new HashSet<>();
+        Set<ImportDeclaration> allInjectedImports = new LinkedHashSet<>();
         for (TypeDeclaration typeDecl : jcu.getTypeDeclarations()) {
             String fullName = typeDecl.getName();
             if (packageName !=null) {

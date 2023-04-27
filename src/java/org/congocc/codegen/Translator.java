@@ -24,7 +24,7 @@ public class Translator {
     protected String currentClass;
 
     public static <T> Set<T> makeSet(T... objs) {
-        Set<T> set = new HashSet<>();
+        Set<T> set = new LinkedHashSet<>();
         Collections.addAll(set, objs);
         return set;
     }
@@ -598,7 +598,7 @@ public class Translator {
 
         private void addAnnotation(String annotation) {
             if (annotations == null) {
-                annotations = new HashSet<>();
+                annotations = new LinkedHashSet<>();
             }
             annotations.add(annotation);
         }
@@ -660,7 +660,7 @@ public class Translator {
     protected Map<String, ASTTypeExpression> properties = new HashMap<>();
     protected SymbolTable fields = new SymbolTable();
     protected Map<String, Set<String>> propertyMap = new HashMap<>();
-    protected Set<String> parameterNames = new HashSet<>();
+    protected Set<String> parameterNames = new LinkedHashSet<>();
 
     public void clearFields() { fields.clear(); properties.clear(); }
 
@@ -776,7 +776,7 @@ public class Translator {
         return (idx < n) && Character.isUpperCase(name.charAt(idx));
     }
 
-    protected Set<String> notSetters = new HashSet<>(Arrays.asList("setLineSkipped"));
+    protected Set<String> notSetters = new LinkedHashSet<>(Arrays.asList("setLineSkipped"));
 
     public boolean isSetter(String name) {
         if ((name.length() <= 3) || !name.startsWith("set") || notSetters.contains(name)) {
@@ -1834,9 +1834,9 @@ public class Translator {
         return result;
     }
 
-    protected HashMap<String, Set<String>> nestedDeclarations;
+    protected Map<String, Set<String>> nestedDeclarations;
 
-    public HashMap<String, Set<String>> getNestedDeclarations() {
+    public Map<String, Set<String>> getNestedDeclarations() {
         return nestedDeclarations;
     }
 
@@ -1846,7 +1846,7 @@ public class Translator {
         }
         Set<String> existing = nestedDeclarations.get(currentClass);
         if (existing == null) {
-            existing = new HashSet<>();
+            existing = new LinkedHashSet<>();
             nestedDeclarations.put(currentClass, existing);
         }
         existing.add(name);

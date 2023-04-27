@@ -2,16 +2,17 @@ package org.congocc.codegen;
 
 import java.util.ArrayList;
 import java.util.HashMap;
-import java.util.HashSet;
+import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 
 public class Sequencer {
-    private HashSet<String> nodes = new HashSet<>();
-    private HashMap<String, HashSet<String>> preds = new HashMap<>();
-    private HashMap<String, HashSet<String>> succs = new HashMap<>();
+    private Set<String> nodes = new LinkedHashSet<>();
+    private Map<String, Set<String>> preds = new HashMap<>();
+    private Map<String, Set<String>> succs = new HashMap<>();
 
-    private static HashSet<String> EMPTY_SET = new HashSet<>();
+    private static Set<String> EMPTY_SET = new LinkedHashSet<>();
 
     public void addNode(String node) {
         nodes.add(node);
@@ -31,12 +32,12 @@ public class Sequencer {
                 remove(node, s);
             }
             // remove empties
-            for (Map.Entry<String, HashSet<String>> entry : preds.entrySet()) {
+            for (Map.Entry<String, Set<String>> entry : preds.entrySet()) {
                 if (entry.getValue().isEmpty()) {
                     preds.remove(entry.getKey());
                 }
             }
-            for (Map.Entry<String, HashSet<String>> entry : succs.entrySet()) {
+            for (Map.Entry<String, Set<String>> entry : succs.entrySet()) {
                 if (entry.getValue().isEmpty()) {
                     succs.remove(entry.getKey());
                 }
@@ -45,18 +46,18 @@ public class Sequencer {
     }
 
     public void add(String pred, String succ) {
-        HashSet<String> set;
+        Set<String> set;
 
         if (pred.equals(succ)) {
             throw new IllegalArgumentException(String.format("predecessor & successor can't be the same: %s", pred));
         }
         if ((set = preds.get(succ)) == null) {
-            set = new HashSet<>();
+            set = new LinkedHashSet<>();
             preds.put(succ, set);
         }
         set.add(pred);
         if ((set = succs.get(pred)) == null) {
-            set = new HashSet<>();
+            set = new LinkedHashSet<>();
             succs.put(pred, set);
         }
         set.add(succ);
@@ -66,8 +67,8 @@ public class Sequencer {
         if (pred.equals(succ)) {
             throw new IllegalArgumentException(String.format("predecessor & successor can't be the same: %s", pred));
         }
-        HashSet<String> p = preds.get(succ);
-        HashSet<String> s = succs.get(pred);
+        Set<String> p = preds.get(succ);
+        Set<String> s = succs.get(pred);
         if ((p == null) || (s == null)) {
             throw new IllegalArgumentException(String.format("Not a successor of anything: %s", succ));
         }
@@ -82,7 +83,7 @@ public class Sequencer {
     public List<String> steps(String upto) {
         List<String> result = new ArrayList<>();
         List<String> todo = new ArrayList<>();
-        HashSet<String> seen = new HashSet<>();
+        Set<String> seen = new LinkedHashSet<>();
 
         todo.add(upto);
         while (!todo.isEmpty()) {
@@ -96,7 +97,7 @@ public class Sequencer {
             else {
                 seen.add(step);
                 result.add(step);
-                HashSet<String> p = preds.getOrDefault(step, EMPTY_SET);
+                Set<String> p = preds.getOrDefault(step, EMPTY_SET);
                 todo.addAll(p);
             }
         }

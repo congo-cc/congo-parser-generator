@@ -30,7 +30,7 @@ public class AppSettings {
     private Path outputDir, filename, includedFileDirectory;
     private String codeLang, parserPackage, parserClassName, lexerClassName, baseName, baseNodeClassName, baseTokenClassName;
 
-    private Set<String> usedIdentifiers = new HashSet<>();
+    private Set<String> usedIdentifiers = new LinkedHashSet<>();
     private Set<String> tokensOffByDefault = new LinkedHashSet<>();
     private Map<String, String> extraTokens = new LinkedHashMap<>();
     private boolean ignoreCase, quiet;

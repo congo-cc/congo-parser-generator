@@ -10,12 +10,12 @@ import java.util.*;
  * XXXNfaData::NfaFunction functional interface. 
  */
 public class CompositeStateSet {
-    private Set<NfaState> states = new HashSet<>();
+    private Set<NfaState> states = new LinkedHashSet<>();
     final LexicalStateData lexicalState;
     int index=-1; 
 
     CompositeStateSet(Set<NfaState> states, LexicalStateData lsd) {
-        this.states = new HashSet<>(states);
+        this.states = new LinkedHashSet<>(states);
         this.lexicalState = lsd;
     }
 
@@ -43,7 +43,7 @@ public class CompositeStateSet {
      * @return sorted list of states
      */
     public List<NfaState> getOrderedStates() {
-        ArrayList<NfaState> result = new ArrayList<>(states);
+        List<NfaState> result = new ArrayList<>(states);
         Collections.sort(result, CompositeStateSet::nfaComparator);
         return result;    
     }

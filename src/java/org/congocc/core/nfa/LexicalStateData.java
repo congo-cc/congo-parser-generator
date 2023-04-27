@@ -23,11 +23,11 @@ public class LexicalStateData {
     private Map<String, RegexpStringLiteral> caseSensitiveTokenTable = new HashMap<>();
     private Map<String, RegexpStringLiteral> caseInsensitiveTokenTable = new HashMap<>();
 
-    private Set<RegularExpression> regularExpressions = new HashSet<>();
+    private Set<RegularExpression> regularExpressions = new LinkedHashSet<>();
 
     private NfaState initialState;
 
-    private Set<NfaState> allStates = new HashSet<>();
+    private Set<NfaState> allStates = new LinkedHashSet<>();
 
     private Errors errors;
     
@@ -98,7 +98,7 @@ public class LexicalStateData {
     }
 
     private void generateData() {
-        Set<NfaState> alreadyVisited = new HashSet<>();
+        Set<NfaState> alreadyVisited = new LinkedHashSet<>();
         for (NfaState state: allStates) {
             state.doEpsilonClosure(alreadyVisited);
         }
@@ -108,9 +108,9 @@ public class LexicalStateData {
             state.setMovesArrayName(simpleStates.size());
             simpleStates.add(state);
         }
-        Set<CompositeStateSet> allComposites = new HashSet<>();
+        Set<CompositeStateSet> allComposites = new LinkedHashSet<>();
         CompositeStateSet initialComposite = initialState.getComposite();
-        initialComposite.findWhatIsUsed(new HashSet<>(), allComposites);
+        initialComposite.findWhatIsUsed(new LinkedHashSet<>(), allComposites);
         this.compositeSets = new ArrayList<>(allComposites);
         // Make sure the initial state is the first in the list.
         int indexInList = compositeSets.indexOf(initialComposite);

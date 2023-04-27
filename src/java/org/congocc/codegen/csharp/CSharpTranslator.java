@@ -19,7 +19,7 @@ public class CSharpTranslator extends Translator {
         return operator;
     }
 
-    private static final Set<String> specialPrefixes = new HashSet<>();
+    private static final Set<String> specialPrefixes = new LinkedHashSet<>();
 
     private static boolean isSpecialPrefix(String ident) {
         boolean result = false;
@@ -416,10 +416,10 @@ public class CSharpTranslator extends Translator {
         }
     }
 
-    protected static final HashSet<String> accessModifiers = new HashSet<>(Arrays.asList("public", "protected", "private"));
+    protected static final HashSet<String> accessModifiers = new LinkedHashSet<>(Arrays.asList("public", "protected", "private"));
 
     protected void translateModifiers(List<String> modifiers, StringBuilder result) {
-        HashSet<String> mods = new HashSet<>(modifiers);
+        Set<String> mods = new LinkedHashSet<>(modifiers);
         List<String> translated_mods = new ArrayList<>();
         boolean accessModifierAdded = false;
 
@@ -924,7 +924,7 @@ public class CSharpTranslator extends Translator {
             throw new UnsupportedOperationException();
         }
         javaName = javaName.substring(prefix.length());
-        ArrayList<String> parts = new ArrayList<>(Arrays.asList(javaName.split("\\.")));
+        List<String> parts = new ArrayList<>(Arrays.asList(javaName.split("\\.")));
         int n = parts.size();
         String aliasName = null;
         for (int i = 0; i < n; i++) {
