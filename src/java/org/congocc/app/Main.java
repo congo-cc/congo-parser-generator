@@ -122,7 +122,7 @@ public final class Main {
     };
 
     static void usage() {
-        ArrayList<String> validChoices = new ArrayList<>(Arrays.asList(otherSupportedLanguages));
+        List<String> validChoices = new ArrayList<>(Arrays.asList(otherSupportedLanguages));
         validChoices.add(0, "java");
         StringBuilder sb = new StringBuilder();
         int n = validChoices.size();

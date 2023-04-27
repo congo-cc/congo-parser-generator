@@ -28,8 +28,8 @@ public class FilesGenerator {
     private final AppSettings appSettings;
     private final Errors errors;
     private final CodeInjector codeInjector;
-    private final Set<String> tokenSubclassFileNames = new HashSet<>();
-    private final HashMap<String, String> superClassLookup = new HashMap<>();
+    private final Set<String> tokenSubclassFileNames = new LinkedHashSet<>();
+    private final Map<String, String> superClassLookup = new HashMap<>();
     private final String codeLang;
     private final boolean generateRootApi;
 
@@ -148,7 +148,7 @@ public class FilesGenerator {
         generate(null, outputFile);
     }
 
-    private final Set<String> nonNodeNames = new HashSet<String>() {
+    private final Set<String> nonNodeNames = new LinkedHashSet<String>() {
         {
             add("ParseException.java");
             add("ParsingProblem.java");
@@ -193,7 +193,7 @@ public class FilesGenerator {
     public void generate(String nodeName, Path outputFile) throws IOException {
         String currentFilename = outputFile.getFileName().toString();
         String templateName = getTemplateName(currentFilename);
-        HashMap<String, Object> dataModel = new HashMap<>();
+        Map<String, Object> dataModel = new HashMap<>();
         dataModel.put("filename", currentFilename);
         dataModel.put("isAbstract", grammar.nodeIsAbstract(nodeName));
         dataModel.put("isInterface", grammar.nodeIsInterface(nodeName));

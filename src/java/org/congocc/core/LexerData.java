@@ -20,7 +20,7 @@ public class LexerData {
     private List<RegularExpression> regularExpressions = new ArrayList<>();
 
     private Map<String, RegularExpression> namedTokensTable = new HashMap<>();
-    private Set<RegularExpression> overriddenTokens = new HashSet<>();
+    private Set<RegularExpression> overriddenTokens = new LinkedHashSet<>();
 
     public LexerData(Grammar grammar) {
         this.grammar = grammar;
@@ -145,7 +145,7 @@ public class LexerData {
     }
 
     public Set<String> getTokenNames() {
-        Set<String> result = new HashSet<>();
+        Set<String> result = new LinkedHashSet<>();
         for (RegularExpression regexp : regularExpressions) {
             result.add(regexp.getLabel());
         }
@@ -320,7 +320,7 @@ public class LexerData {
      */
     class RegexpVisitor extends Node.Visitor {
 
-        private HashSet<RegularExpression> alreadyVisited = new HashSet<>(), currentlyVisiting = new HashSet<>();
+        private HashSet<RegularExpression> alreadyVisited = new LinkedHashSet<>(), currentlyVisiting = new LinkedHashSet<>();
 
         void visit(RegexpRef ref) {
             RegularExpression referredTo = ref.getRegexp();

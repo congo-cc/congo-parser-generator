@@ -18,10 +18,10 @@ import static org.congocc.parser.Token.TokenType.*;
  * in inner classes, but we don't bother about that either.
  */
 class Reaper extends Node.Visitor {
-    private Set<String> usedMethodNames = new HashSet<>();
-    private Set<String> usedTypeNames = new HashSet<>();
-    private Set<String> usedVarNames = new HashSet<>();
-    private Set<String> usedImportDeclarations = new HashSet<>();
+    private Set<String> usedMethodNames = new LinkedHashSet<>();
+    private Set<String> usedTypeNames = new LinkedHashSet<>();
+    private Set<String> usedVarNames = new LinkedHashSet<>();
+    private Set<String> usedImportDeclarations = new LinkedHashSet<>();
     private CompilationUnit jcu;
     private boolean onSecondPass;
 
@@ -175,7 +175,7 @@ class Reaper extends Node.Visitor {
     // is not in usedVarNames. The only complicated case is if the field
     // has more than one variable declaration comma-separated
     private void stripUnusedVars(FieldDeclaration fd) {
-        Set<Node> toBeRemoved = new HashSet<Node>();
+        Set<Node> toBeRemoved = new LinkedHashSet<Node>();
         for (VariableDeclarator vd : fd.childrenOfType(VariableDeclarator.class)) {
             if (!usedVarNames.contains(vd.getName())) {
                 toBeRemoved.add(vd);

@@ -33,8 +33,8 @@ public class Grammar extends BaseNode {
     private Map<String,String> nodeClassNames = new HashMap<>();
     // TODO use these later for Nodes that correspond to abstract
     // classes or interfaces
-    private Set<String> abstractNodeNames = new HashSet<>();
-    private Set<String> interfaceNodeNames = new HashSet<>();
+    private Set<String> abstractNodeNames = new LinkedHashSet<>();
+    private Set<String> interfaceNodeNames = new LinkedHashSet<>();
     private Map<String, String> nodePackageNames = new HashMap<>();
     private List<Node> codeInjections = new ArrayList<>();
     private List<String> lexerTokenHooks = new ArrayList<>(),
@@ -44,7 +44,7 @@ public class Grammar extends BaseNode {
                          resetTokenHooks = new ArrayList<>();
     private Map<String, List<String>> closeNodeHooksByClass = new HashMap<>();
 
-    private Set<Path> alreadyIncluded = new HashSet<>();
+    private Set<Path> alreadyIncluded = new LinkedHashSet<>();
 
     private TemplateGlobals templateGlobals;
     private AppSettings appSettings;
@@ -198,7 +198,7 @@ public class Grammar extends BaseNode {
     }
 
     public List<Expansion> getExpansionsNeedingRecoverMethod() {
-        Set<String> alreadyAdded = new HashSet<>();
+        Set<String> alreadyAdded = new LinkedHashSet<>();
         List<Expansion> result = new ArrayList<>();
         for (Expansion exp : descendants(Expansion.class, Expansion::getRequiresRecoverMethod)) {
             String methodName = exp.getRecoverMethodName();
@@ -281,7 +281,7 @@ public class Grammar extends BaseNode {
     }
 
     private List<Expansion> getExpansionsForSet(int type) {
-        HashSet<String> usedNames = new HashSet<>();
+        Set<String> usedNames = new LinkedHashSet<>();
         List<Expansion> result = new ArrayList<>();
         for (Expansion expansion : descendants(Expansion.class)) {
             if (expansion.getParent() instanceof BNFProduction) continue; // Handle these separately
