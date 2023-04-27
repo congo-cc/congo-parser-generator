@@ -26,8 +26,8 @@ public class CompositeStateSet {
     public String getMethodName() {
         String lexicalStateName = lexicalState.getName();
         if (lexicalStateName.equals("DEFAULT")) 
-            return "NFA_" + index;
-        return "NFA_" + lexicalStateName + "_" + index; 
+            return "NfaIndex" + index;
+        return "NfaName" + lexicalStateName + "Index" + index; 
     }
 
     public boolean equals(Object other) {

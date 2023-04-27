@@ -23,7 +23,7 @@
     [/#if] 
     {
     [#list lexicalState.canonicalSets as state]
-      ${lexicalState.name}::${state.methodName}
+      ${lexicalState.name}::get${state.methodName}
       [#if state_has_next],[/#if]
     [/#list]
     };
@@ -60,7 +60,7 @@
    that correspond to an instanceof org.congocc.core.CompositeStateSet
 --]
 [#macro GenerateNfaMethod nfaState]  
-    private static TokenType ${nfaState.methodName}(int ch, BitSet nextStates, EnumSet<TokenType> validTypes) {
+    private static TokenType get${nfaState.methodName}(int ch, BitSet nextStates, EnumSet<TokenType> validTypes) {
       TokenType type = null;
     [#var states = nfaState.orderedStates, lastBlockStartIndex=0]
     [#list states as state]
