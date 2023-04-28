@@ -19,7 +19,7 @@ public class CSharpTranslator extends Translator {
         return operator;
     }
 
-    private static final Set<String> specialPrefixes = new LinkedHashSet<>();
+    private static final Set<String> specialPrefixes = new HashSet<>();
 
     private static boolean isSpecialPrefix(String ident) {
         boolean result = false;

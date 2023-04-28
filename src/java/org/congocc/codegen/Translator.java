@@ -15,7 +15,6 @@ public class Translator {
     protected Grammar grammar;
     protected AppSettings appSettings;
     protected int tempVarCounter;
-    protected Set<String> tokenNames;
     protected int fieldIndent;
     protected int methodIndent;
     protected boolean isTyped;
@@ -706,7 +705,6 @@ public class Translator {
     public Translator(Grammar grammar) {
         this.grammar = grammar;
         this.appSettings = grammar.getAppSettings();
-        tokenNames = grammar.getLexerData().getTokenNames();
     }
 
     public int getFieldIndent() {

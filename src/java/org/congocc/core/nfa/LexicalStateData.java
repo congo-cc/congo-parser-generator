@@ -98,7 +98,7 @@ public class LexicalStateData {
     }
 
     private void generateData() {
-        Set<NfaState> alreadyVisited = new LinkedHashSet<>();
+        Set<NfaState> alreadyVisited = new HashSet<>();
         for (NfaState state: allStates) {
             state.doEpsilonClosure(alreadyVisited);
         }
@@ -110,7 +110,7 @@ public class LexicalStateData {
         }
         Set<CompositeStateSet> allComposites = new LinkedHashSet<>();
         CompositeStateSet initialComposite = initialState.getComposite();
-        initialComposite.findWhatIsUsed(new LinkedHashSet<>(), allComposites);
+        initialComposite.findWhatIsUsed(new HashSet<>(), allComposites);
         this.compositeSets = new ArrayList<>(allComposites);
         // Make sure the initial state is the first in the list.
         int indexInList = compositeSets.indexOf(initialComposite);

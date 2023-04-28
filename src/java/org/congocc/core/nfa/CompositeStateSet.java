@@ -10,12 +10,12 @@ import java.util.*;
  * XXXNfaData::NfaFunction functional interface. 
  */
 public class CompositeStateSet {
-    private Set<NfaState> states = new LinkedHashSet<>();
+    private Set<NfaState> states;
     final LexicalStateData lexicalState;
     int index=-1; 
 
     CompositeStateSet(Set<NfaState> states, LexicalStateData lsd) {
-        this.states = new LinkedHashSet<>(states);
+        this.states = new HashSet<>(states);
         this.lexicalState = lsd;
     }
 

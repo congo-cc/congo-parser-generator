@@ -359,7 +359,7 @@ abstract public class Expansion extends BaseNode {
      */
     final public int getMaximumSize() {
         if (maxSize == -1) {
-            maxSize = getMaximumSize(new LinkedHashSet<>());
+            maxSize = getMaximumSize(new HashSet<>());
         }
         return maxSize;
     }
@@ -369,7 +369,7 @@ abstract public class Expansion extends BaseNode {
      */
     final public int getMinimumSize() {
         if (minSize == -1) {
-            minSize = getMinimumSize(new LinkedHashSet<>());
+            minSize = getMinimumSize(new HashSet<>());
         }
         return minSize;
     }
@@ -495,7 +495,7 @@ abstract public class Expansion extends BaseNode {
     }
 
     final public boolean potentiallyStartsWith(String productionName) {
-        return potentiallyStartsWith(productionName, new LinkedHashSet<>());
+        return potentiallyStartsWith(productionName, new HashSet<>());
     }
 
     /*

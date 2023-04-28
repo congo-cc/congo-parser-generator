@@ -2,17 +2,17 @@ package org.congocc.codegen;
 
 import java.util.ArrayList;
 import java.util.HashMap;
-import java.util.LinkedHashSet;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
 public class Sequencer {
-    private Set<String> nodes = new LinkedHashSet<>();
+    private Set<String> nodes = new HashSet<>();
     private Map<String, Set<String>> preds = new HashMap<>();
     private Map<String, Set<String>> succs = new HashMap<>();
 
-    private static Set<String> EMPTY_SET = new LinkedHashSet<>();
+    private static Set<String> EMPTY_SET = new HashSet<>();
 
     public void addNode(String node) {
         nodes.add(node);
@@ -52,12 +52,12 @@ public class Sequencer {
             throw new IllegalArgumentException(String.format("predecessor & successor can't be the same: %s", pred));
         }
         if ((set = preds.get(succ)) == null) {
-            set = new LinkedHashSet<>();
+            set = new HashSet<>();
             preds.put(succ, set);
         }
         set.add(pred);
         if ((set = succs.get(pred)) == null) {
-            set = new LinkedHashSet<>();
+            set = new HashSet<>();
             succs.put(pred, set);
         }
         set.add(succ);
@@ -83,7 +83,7 @@ public class Sequencer {
     public List<String> steps(String upto) {
         List<String> result = new ArrayList<>();
         List<String> todo = new ArrayList<>();
-        Set<String> seen = new LinkedHashSet<>();
+        Set<String> seen = new HashSet<>();
 
         todo.add(upto);
         while (!todo.isEmpty()) {

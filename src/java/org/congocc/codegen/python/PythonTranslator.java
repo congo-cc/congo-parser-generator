@@ -35,7 +35,7 @@ public class PythonTranslator extends Translator {
         return result;
     }
 
-    private static final Set<String> specialPrefixes = new LinkedHashSet<>();
+    private static final Set<String> specialPrefixes = new HashSet<>();
 
     private static boolean isSpecialPrefix(String ident) {
         boolean result = false;
@@ -272,7 +272,7 @@ public class PythonTranslator extends Translator {
         }
     }
 
-    protected static Set<String> leaveAsMethods = new LinkedHashSet<>(Arrays.asList("getIndents", "isConstant"));
+    protected static Set<String> leaveAsMethods = new HashSet<>(Arrays.asList("getIndents", "isConstant"));
 
     protected boolean treatAsProperty(String methodName) {
         return isGetter(methodName) || methodName.equals("previousCachedToken");

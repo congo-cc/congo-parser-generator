@@ -33,8 +33,8 @@ public class Grammar extends BaseNode {
     private Map<String,String> nodeClassNames = new HashMap<>();
     // TODO use these later for Nodes that correspond to abstract
     // classes or interfaces
-    private Set<String> abstractNodeNames = new LinkedHashSet<>();
-    private Set<String> interfaceNodeNames = new LinkedHashSet<>();
+    private Set<String> abstractNodeNames = new HashSet<>();
+    private Set<String> interfaceNodeNames = new HashSet<>();
     private Map<String, String> nodePackageNames = new HashMap<>();
     private List<Node> codeInjections = new ArrayList<>();
     private List<String> lexerTokenHooks = new ArrayList<>(),
@@ -44,7 +44,7 @@ public class Grammar extends BaseNode {
                          resetTokenHooks = new ArrayList<>();
     private Map<String, List<String>> closeNodeHooksByClass = new HashMap<>();
 
-    private Set<Path> alreadyIncluded = new LinkedHashSet<>();
+    private Set<Path> alreadyIncluded = new HashSet<>();
 
     private TemplateGlobals templateGlobals;
     private AppSettings appSettings;
