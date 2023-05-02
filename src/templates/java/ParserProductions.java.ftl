@@ -176,13 +176,14 @@
 [#macro buildTreeNodeEpilogue treeNodeBehavior nodeVarName parseExceptionVar]
    if (${nodeVarName}!=null) {
       if (${parseExceptionVar} == null) {
-         closeNodeScope(${nodeVarName}, ${closeCondition(treeNodeBehavior)});
    [#if treeNodeBehavior?? && treeNodeBehavior.LHS??]
-         try {
+         if (closeNodeScope(${nodeVarName}, ${closeCondition(treeNodeBehavior)})) {
             ${treeNodeBehavior.LHS} = (${nodeClassName(treeNodeBehavior)}) peekNode();
-         } catch (ClassCastException cce) {
+         } else{
             ${treeNodeBehavior.LHS} = null;
          }
+   [#else]
+         closeNodeScope(${nodeVarName}, ${closeCondition(treeNodeBehavior)}); 
    [/#if]
    [#list grammar.closeNodeHooksByClass[nodeClassName(treeNodeBehavior)]! as hook]
          ${hook}(${nodeVarName});

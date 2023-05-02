@@ -102,7 +102,7 @@
 	 * made the children of the definite node.  Then the definite node
 	 * is pushed on to the stack.
 	 */
-    private void closeNodeScope(Node n, int num) {
+    private boolean closeNodeScope(Node n, int num) {
         n.setEndOffset(lastConsumedToken.getEndOffset());
         currentNodeScope.close();
         ArrayList<Node> nodes = new ArrayList<Node>();
@@ -119,6 +119,7 @@
  [#list grammar.closeNodeScopeHooks as hook]
        ${hook}(n);
 [/#list]
+       return true;
     }
 
 	/**
@@ -128,8 +129,12 @@
 	 * on to the stack.  If the condition is false the node is not
 	 * constructed and they are left on the stack. 
 	 */
-    private void closeNodeScope(Node n, boolean condition) {
-        if (n!= null && condition) {
+    private boolean closeNodeScope(Node n, boolean condition) {
+        if (n==null || !condition) {
+            currentNodeScope.close();
+            return false;
+        }
+        else {
             n.setEndOffset(lastConsumedToken.getEndOffset());
             int a = nodeArity();
             currentNodeScope.close();
@@ -156,9 +161,8 @@
 [#list grammar.closeNodeScopeHooks as hook]
            ${hook}(n);
 [/#list]
-        } else {
-            currentNodeScope.close();
         }
+        return true; 
     }
     
     

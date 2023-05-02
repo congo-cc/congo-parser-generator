@@ -62,16 +62,21 @@ TOKEN #Literal :
     <NUMBER : ("-")?(<ZERO>|<NON_ZERO>)(<FRACTION>)?(<EXPONENT>)?> #NumberLiteral
 ;
 
+#if use_experimental_feature
 INJECT Array :
 {
     public Values values;
 }
+#endif
 
 Array :
     <OPEN_BRACKET>
     [
       Value  (<COMMA> Value)*!
-    ] thisProduction.values = #Values
+    ] 
+  #if use_experimental_feature
+    thisProduction.values = #Values
+  #endif
     <CLOSE_BRACKET>
 ;
 
