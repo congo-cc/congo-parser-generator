@@ -1,4 +1,4 @@
-<project name="congo" default="full-jar" basedir=".">
+<project name="congo" default="jar" basedir=".">
   <tstamp>
     <format property="timestamp" pattern="yyyy-MM-dd HH:mm:ss" />
   </tstamp>
@@ -150,9 +150,9 @@
     <ant antfile="build.xml" dir="examples/java" target="test" />
   </target>
 
-  <target name="jar" depends="compile">
-    <echo>Creating basic jarfile, using this requires a freemarker.jar in the same directory</echo>
-    <jar jarfile="congocc.jar" basedir="build" compress="true" excludes="**/*.java">
+  <target name="minimal-jar" depends="compile">
+    <echo>Creating minimal jarfile, using this requires a freemarker.jar in the same directory</echo>
+    <jar jarfile="congocc-minimal.jar" basedir="build" compress="true" excludes="**/*.java">
       <manifest>
         <attribute name="Main-Class" value="org.congocc.app.Main" />
         <attribute name="Class-Path" value="freemarker.jar bin/freemarker.jar" />
@@ -162,9 +162,9 @@
     </jar>
   </target>
 
-  <target name="full-jar" depends="compile">
-    <echo>Creating the "uber-jar" with all dependencies, i.e. the FreeMarker classes</echo>
-    <jar jarfile="congocc-full.jar" compress="true" excludes="**/*.java">
+  <target name="jar" depends="compile">
+    <echo>Creating jar with all dependencies included</echo>
+    <jar jarfile="congocc.jar" compress="true" excludes="**/*.java">
       <fileset dir="build" includes="include/,org/,templates/"/>
      <zipfileset includes="**/*.class" src="bin/freemarker.jar" />
       <manifest>
@@ -173,7 +173,7 @@
         <attribute name="Build-Date" value="${timestamp}" />
       </manifest>
     </jar>
-  </target>  
+  </target>
 
   <target name="update-bootstrap">
     <!--
