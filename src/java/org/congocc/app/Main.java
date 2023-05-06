@@ -4,6 +4,7 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
 import java.net.URL;
+import java.net.URI;
 import java.net.URLConnection;
 import java.nio.file.FileSystem;
 import java.nio.file.FileSystems;
@@ -71,7 +72,8 @@ public final class Main {
                     // If the current jarfile is less than an hour old, let's not bother.
                     return;
                 }
-                URL url = new URL("https://parsers.org/download/" + jarPath.getFileName());
+                //URL url = new URL("https://parsers.org/download/congocc.jar");
+                URL url = new URI("https://parsers.org/download/congocc.jar").toURL();
                 URLConnection connection = url.openConnection();
                 connection.setConnectTimeout(1000);
                 long lastUpdate = connection.getLastModified();

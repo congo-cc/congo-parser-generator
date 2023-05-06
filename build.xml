@@ -46,7 +46,7 @@
 
   <target name="clean">
     <delete file="congocc.jar" />
-    <delete file="congocc-full.jar" />
+    <delete file="congocc-minimal.jar" />
     <delete dir="build" />
     <delete><fileset dir="." includes="**/*.class"/></delete>
   </target>

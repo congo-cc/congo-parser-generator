@@ -13,8 +13,7 @@
   </target>
 
   <target name="parser-gen" depends="init" unless="luaparser.uptodate">
-    <java classpath="../../build:../../congocc.jar:../../bin/congocc.jar:../../bin/freemarker.jar"
-      classname="org.congocc.app.Main" failonerror="true" fork="true">
+    <java jar="../../congocc.jar" failonerror="true" fork="true">
       <assertions>
         <enable />
       </assertions>

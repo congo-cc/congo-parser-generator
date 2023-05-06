@@ -20,8 +20,7 @@
 
   <target name="line-directive-parser-gen" depends="init" unless="pplineparser.uptodate">
     <echo>Using Bootstrap CongoCC to regenerate preprocessor</echo>
-    <java classpath="../../build:../../congocc.jar:../../bin/congocc.jar:../../bin/freemarker.jar"
-      classname="org.congocc.app.Main" failonerror="true" fork="true">
+    <java jar="../../congocc.jar" failonerror="true" fork="true">
       <assertions>
         <enable />
       </assertions>
@@ -30,8 +29,7 @@
   </target>
 
   <target name="parser-gen" depends="init,line-directive-parser-gen" unless="csparser.uptodate">
-    <java classpath="../../build:../../congocc.jar:../../bin/congocc.jar:../../bin/freemarker.jar"
-      classname="org.congocc.app.Main" failonerror="true" fork="true">
+    <java jar="../../congocc.jar" failonerror="true" fork="true">
       <assertions>
         <enable />
       </assertions>
@@ -46,7 +44,7 @@
   </target>
 
   <target name="test" depends="compile">
-    <java fork="true" classpath=".;../../congocc.jar" failonerror="true" classname="CSParse">
+    <java fork="true" classpath="." failonerror="true" classname="CSParse">
       <assertions>
         <enable />
       </assertions>
