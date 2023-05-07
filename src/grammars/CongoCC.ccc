@@ -2074,11 +2074,26 @@ INJECT RegexpStringLiteral :
 {
   @Property String literalString, lexicalState;
   @Property boolean singleQuoted;
+  @Property RegexpStringLiteral canonicalRegexp;
 
   public String toString() {
     return super.toString() + " - " + getLiteralString();
   }
-  
+
+  public int getOrdinal() {
+      if (canonicalRegexp != null) {
+        return canonicalRegexp.getOrdinal();
+      }
+      return super.getOrdinal();
+  }  
+
+  public String getLabel() {
+     if (canonicalRegexp != null) {
+        return canonicalRegexp.getLabel();
+     }
+     return super.getLabel();
+  }
+
   //REVISIT What about different lexical states? As well as ignoreCase... 
   @Override 
   public boolean equals(Object obj) {

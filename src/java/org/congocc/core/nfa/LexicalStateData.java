@@ -4,6 +4,7 @@ import java.util.*;
 
 import org.congocc.app.Errors;
 import org.congocc.core.Grammar;
+import org.congocc.core.LexerData;
 import org.congocc.core.RegularExpression;
 import org.congocc.core.RegexpSpec;
 import org.congocc.parser.tree.RegexpStringLiteral;
@@ -37,6 +38,8 @@ public class LexicalStateData {
         this.name = name;
         initialState = new NfaState(this);
     }
+
+    public LexerData getLexerData() {return grammar.getLexerData();}
 
     public List<CompositeStateSet> getCanonicalSets() {
         return compositeSets;

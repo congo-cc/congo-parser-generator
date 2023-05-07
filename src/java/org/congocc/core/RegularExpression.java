@@ -51,7 +51,7 @@ public abstract class RegularExpression extends BaseNode {
         this.label = label;
     }
 
-    public final String getLabel() {
+    public String getLabel() {
         if (label != null && label.length() != 0) {
             return label;
         }

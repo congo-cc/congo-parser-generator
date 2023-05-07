@@ -191,9 +191,24 @@ public class LexerData {
 
     // This method still really needs to be cleaned up!
     void buildData() {
+        for (RegexpStringLiteral stringLiteral : grammar.descendants(RegexpStringLiteral.class, rsl->rsl.getParent() instanceof RegexpSpec)) {
+            if (stringLiteral.hasLabel()) {
+                String label = stringLiteral.getLabel();
+                RegularExpression regexp = namedTokensTable.get(label);
+                if (regexp != null) {
+                    errors.addInfo(stringLiteral, "Token name \"" + label + " is redefined.");
+                }
+                addNamedToken(label, stringLiteral);
+            }
+            assert stringLiteral.getOrdinal() <=0;
+            if (!stringLiteral.isPrivate() && stringLiteral.getOrdinal() <= 0) {
+                addRegularExpression(stringLiteral);
+            }
+        }
         for (TokenProduction tp : grammar.descendants(TokenProduction.class)) {
             for (RegexpSpec res : tp.getRegexpSpecs()) {
                 RegularExpression re = res.getRegexp();
+                if (re instanceof RegexpStringLiteral) continue;
                 if (re.hasLabel()) {
                     String label = re.getLabel();
                     RegularExpression regexp = namedTokensTable.get(label);
@@ -207,7 +222,7 @@ public class LexerData {
                 }
             }
         }
-        for (RegexpStringLiteral stringLiteral : grammar.descendants(RegexpStringLiteral.class, rsl->rsl.getTokenProduction() == null)) {
+        for (RegexpStringLiteral stringLiteral : grammar.descendants(RegexpStringLiteral.class, rsl->rsl.getParent() instanceof Terminal)) {
             String image = stringLiteral.getLiteralString();
             String lexicalStateName = stringLiteral.getLexicalState();
             LexicalStateData lsd = getLexicalState(lexicalStateName);
@@ -224,8 +239,9 @@ public class LexerData {
                 } else {
                     // This is now a reference to an
                     // existing StringLiteralRegexp.
-                    stringLiteral.setOrdinal(alreadyPresent.getOrdinal());
-                    stringLiteral.setLabel(alreadyPresent.getLabel());
+                    stringLiteral.setCanonicalRegexp(alreadyPresent);
+                    //stringLiteral.setOrdinal(alreadyPresent.getOrdinal());
+                    //stringLiteral.setLabel(alreadyPresent.getLabel());
                 }
             }
         }
