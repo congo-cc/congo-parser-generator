@@ -31,6 +31,10 @@ public class LexerData {
         regularExpressions.add(reof);
     }
 
+    public int getOrdinal(RegularExpression re) {
+        return regularExpressions.indexOf(re);
+    }
+
     public String getTokenName(int ordinal) {
         if (ordinal < regularExpressions.size()) {
             return regularExpressions.get(ordinal).getLabel();
@@ -90,57 +94,6 @@ public class LexerData {
                 LexicalStateData lsd = getLexicalState(lexicalStateName);
                 lsd.addStringLiteral(stringLiteral);
             }
-        }
-    }
-
-    private void resolveStringLiterals() {
-        for (RegexpStringLiteral rsl : grammar.descendants(RegexpStringLiteral.class, rsl->rsl.getTokenProduction()==null)) {
-            String label = getStringLiteralLabel(rsl.getLiteralString());
-            rsl.setLabel(label);
-        }
-    }
-
-    private void ensureRegexpLabels() {
-        for (ListIterator<RegularExpression> it = regularExpressions.listIterator(); it.hasNext();) {
-            RegularExpression regexp = it.next();
-            if (!isJavaIdentifier(regexp.getLabel())) {
-                String label = "_TOKEN_" + it.previousIndex();
-                if (regexp instanceof RegexpStringLiteral) {
-                    String s = ((RegexpStringLiteral) regexp).getLiteralString().toUpperCase();
-                    if (isJavaIdentifier(s) && !regexpLabelAlreadyUsed(s))
-                        label = s;
-                }
-                regexp.setLabel(label);
-            }
-        }
-    }
-
-    static int compare(RegularExpression first, RegularExpression second) {
-        if (first instanceof EndOfFile) return -1;
-        if (second instanceof EndOfFile) return 1;
-        if (first instanceof RegexpStringLiteral && !(second instanceof RegexpStringLiteral)) {
-            return -1;
-        }
-        if (second instanceof RegexpStringLiteral && !(first instanceof RegexpStringLiteral)) {
-            return 1;
-        }
-        if (first instanceof RegexpStringLiteral && second instanceof RegexpStringLiteral) {
-            if (first.getLiteralString().equalsIgnoreCase(second.getLiteralString())) {
-                if (first.getIgnoreCase() && !second.getIgnoreCase()) {
-                    return 1;
-                }
-                if (second.getIgnoreCase() && !first.getIgnoreCase()) {
-                    return -1;
-                }
-            }
-        }
-        return first.getOrdinal() - second.getOrdinal();
-    }
-
-    void reorder() {
-        Collections.sort(regularExpressions, LexerData::compare);
-        for (int i=0; i< regularExpressions.size(); i++) {
-            regularExpressions.get(i).setOrdinal(i);
         }
     }
 
@@ -260,9 +213,8 @@ public class LexerData {
             LexicalStateData lsd = getLexicalState(lexicalStateName);
             RegexpStringLiteral alreadyPresent = lsd.getStringLiteral(image);
             if (alreadyPresent == null) {
-                if (stringLiteral.getOrdinal() == 0) {
-                    addRegularExpression(stringLiteral);
-                }
+                assert stringLiteral.getOrdinal() <= 0;
+                addRegularExpression(stringLiteral);
             } else {
                 String kind = alreadyPresent.getTokenProduction() == null ? "TOKEN"
                         : alreadyPresent.getTokenProduction().getKind();
@@ -273,12 +225,10 @@ public class LexerData {
                     // This is now a reference to an
                     // existing StringLiteralRegexp.
                     stringLiteral.setOrdinal(alreadyPresent.getOrdinal());
+                    stringLiteral.setLabel(alreadyPresent.getLabel());
                 }
             }
         }
-        ensureRegexpLabels();
-        resolveStringLiterals();
-        //reorder();
         for (RegexpRef ref : grammar.descendants(RegexpRef.class)) {
             String label = ref.getLabel();
             if (grammar.getAppSettings().getExtraTokens().containsKey(label)) {

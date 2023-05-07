@@ -88,6 +88,7 @@ public class LexicalStateData {
     }
 
     public void process() {
+        processUnspecifiedStringLiterals();
         for (TokenProduction tp : tokenProductions) {
             processTokenProduction(tp);
         }
@@ -137,6 +138,19 @@ public class LexicalStateData {
             if (regexpSpec.getNextLexicalState() != null && !regexpSpec.getNextLexicalState().equals(this.name)) {
                 currentRegexp.setNewLexicalState(grammar.getLexerData().getLexicalState(regexpSpec.getNextLexicalState()));
             }
+        }
+    }
+
+    private void processUnspecifiedStringLiterals() {
+        for (RegexpStringLiteral rsl : caseInsensitiveTokenTable.values()) {
+            if (rsl.getTokenProduction() != null) continue;
+            regularExpressions.add(rsl);
+            new NfaBuilder(this, rsl.getIgnoreCase()).buildStates(rsl);
+        }
+        for (RegexpStringLiteral rsl : caseSensitiveTokenTable.values()) {
+            if (rsl.getTokenProduction() != null) continue;
+            regularExpressions.add(rsl);
+            new NfaBuilder(this, rsl.getIgnoreCase()).buildStates(rsl);
         }
     }
 }

@@ -42,7 +42,7 @@ public abstract class RegularExpression extends BaseNode {
 
     private String label;
 
-    protected TokenProduction getTokenProduction() {
+    public TokenProduction getTokenProduction() {
         return firstAncestorOfType(TokenProduction.class);
     }
 
@@ -55,10 +55,12 @@ public abstract class RegularExpression extends BaseNode {
         if (label != null && label.length() != 0) {
             return label;
         }
+ //       int id = getOrdinal();
         if (id == 0) {
             return "EOF";
         }
-        return String.valueOf(id);
+        return "_TOKEN_" + id;
+        //return String.valueOf(id);
     }
 
     public final boolean hasLabel() {
@@ -66,6 +68,8 @@ public abstract class RegularExpression extends BaseNode {
     }
 
     public int getOrdinal() {
+//        int id = getGrammar().getLexerData().getOrdinal(this);
+//        return Math.max(0, id);
         return id;
     }
 
