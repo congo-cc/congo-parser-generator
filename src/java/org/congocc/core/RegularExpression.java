@@ -13,13 +13,6 @@ import org.congocc.parser.tree.BaseNode;
 
 public abstract class RegularExpression extends BaseNode {
 
-    /**
-     * The ordinal value assigned to the regular expression. It is used for
-     * internal processing and passing information between the parser and the
-     * lexical analyzer.
-     */
-    private int id;
-
     private LexicalStateData newLexicalState;
 
     public CodeBlock getCodeSnippet() {
@@ -40,13 +33,13 @@ public abstract class RegularExpression extends BaseNode {
      */
     private boolean _private = false;
 
-    private String label;
+    String label;
 
     public TokenProduction getTokenProduction() {
         return firstAncestorOfType(TokenProduction.class);
     }
 
-    public final void setLabel(String label) {
+   public final void setLabel(String label) {
         assert label.equals("") || isJavaIdentifier(label);
         this.label = label;
     }
@@ -55,12 +48,18 @@ public abstract class RegularExpression extends BaseNode {
         if (label != null && label.length() != 0) {
             return label;
         }
- //       int id = getOrdinal();
+        int id = getOrdinal();
         if (id == 0) {
             return "EOF";
         }
+        String literalString = getLiteralString();
+        if (literalString != null && isJavaIdentifier(literalString)) {
+            literalString = literalString.toUpperCase();
+            if (!getGrammar().getLexerData().regexpLabelAlreadyUsed(literalString, this)) {
+                return literalString;
+            }
+        }
         return "_TOKEN_" + id;
-        //return String.valueOf(id);
     }
 
     public final boolean hasLabel() {
@@ -68,13 +67,8 @@ public abstract class RegularExpression extends BaseNode {
     }
 
     public int getOrdinal() {
-//        int id = getGrammar().getLexerData().getOrdinal(this);
-//        return Math.max(0, id);
-        return id;
-    }
-
-    protected final void setOrdinal(int id) {
-        this.id = id;
+        int id = getGrammar().getLexerData().getOrdinal(this);
+        return Math.max(0, id);
     }
 
     public void setNewLexicalState(LexicalStateData newLexicalState) {

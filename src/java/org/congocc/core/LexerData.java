@@ -27,7 +27,6 @@ public class LexerData {
         this.errors = grammar.getErrors();
         RegularExpression reof = new EndOfFile();
         reof.setGrammar(grammar);
-        reof.setLabel("EOF");
         regularExpressions.add(reof);
     }
 
@@ -86,7 +85,6 @@ public class LexerData {
     }
 
     private void addRegularExpression(RegularExpression regexp) {
-        regexp.setOrdinal(regularExpressions.size());
         regularExpressions.add(regexp);
         if (regexp instanceof RegexpStringLiteral) {
             RegexpStringLiteral stringLiteral = (RegexpStringLiteral) regexp;
@@ -111,26 +109,16 @@ public class LexerData {
                 && s.codePoints().allMatch(ch -> Character.isJavaIdentifierPart(ch));
     }
 
-    private boolean regexpLabelAlreadyUsed(String label) {
+    boolean regexpLabelAlreadyUsed(String label, RegularExpression re) {
         for (RegularExpression regexp : regularExpressions) {
-            if (label.contentEquals(regexp.getLabel()))
+            if (regexp == re || regexp.label == null) continue;
+            if (label.contentEquals(regexp.label))
                 return true;
-        }
-        return false;
-    }
-
-    public String getStringLiteralLabel(String image) {
-        for (RegularExpression regexp : regularExpressions) {
-            if (regexp instanceof RegexpStringLiteral) {
-                if (regexp.getLiteralString().equals(image)) {
-                    return regexp.getLabel();
-                }
-                if (regexp.getIgnoreCase() && regexp.getLiteralString().equalsIgnoreCase(image)) {
-                    return regexp.getLabel();
-                }
+            if (label.equalsIgnoreCase(regexp.getLiteralString())) {
+                return true;
             }
         }
-        return null;
+        return false;
     }
 
     public int getTokenCount() {
@@ -200,9 +188,26 @@ public class LexerData {
                 }
                 addNamedToken(label, stringLiteral);
             }
-            assert stringLiteral.getOrdinal() <=0;
-            if (!stringLiteral.isPrivate() && stringLiteral.getOrdinal() <= 0) {
+            if (!stringLiteral.isPrivate()) {
                 addRegularExpression(stringLiteral);
+            }
+        }
+        for (RegexpStringLiteral stringLiteral : grammar.descendants(RegexpStringLiteral.class, rsl->rsl.getParent() instanceof Terminal)) {
+            String image = stringLiteral.getLiteralString();
+            String lexicalStateName = stringLiteral.getLexicalState();
+            LexicalStateData lsd = getLexicalState(lexicalStateName);
+            RegexpStringLiteral alreadyPresent = lsd.getStringLiteral(image);
+            if (alreadyPresent == null) {
+                addRegularExpression(stringLiteral);
+            } else {
+                String kind = alreadyPresent.getTokenProduction() == null ? "TOKEN"
+                        : alreadyPresent.getTokenProduction().getKind();
+                if (!kind.equals("TOKEN")) {
+                    errors.addError(stringLiteral,
+                            "String token \"" + image + "\" has been defined as a \"" + kind + "\" token.");
+                } else {
+                    stringLiteral.setCanonicalRegexp(alreadyPresent);
+                }
             }
         }
         for (TokenProduction tp : grammar.descendants(TokenProduction.class)) {
@@ -219,29 +224,6 @@ public class LexerData {
                 }
                 if (!re.isPrivate() && re.getOrdinal() == 0) {
                     addRegularExpression(re);
-                }
-            }
-        }
-        for (RegexpStringLiteral stringLiteral : grammar.descendants(RegexpStringLiteral.class, rsl->rsl.getParent() instanceof Terminal)) {
-            String image = stringLiteral.getLiteralString();
-            String lexicalStateName = stringLiteral.getLexicalState();
-            LexicalStateData lsd = getLexicalState(lexicalStateName);
-            RegexpStringLiteral alreadyPresent = lsd.getStringLiteral(image);
-            if (alreadyPresent == null) {
-                assert stringLiteral.getOrdinal() <= 0;
-                addRegularExpression(stringLiteral);
-            } else {
-                String kind = alreadyPresent.getTokenProduction() == null ? "TOKEN"
-                        : alreadyPresent.getTokenProduction().getKind();
-                if (!kind.equals("TOKEN")) {
-                    errors.addError(stringLiteral,
-                            "String token \"" + image + "\" has been defined as a \"" + kind + "\" token.");
-                } else {
-                    // This is now a reference to an
-                    // existing StringLiteralRegexp.
-                    stringLiteral.setCanonicalRegexp(alreadyPresent);
-                    //stringLiteral.setOrdinal(alreadyPresent.getOrdinal());
-                    //stringLiteral.setLabel(alreadyPresent.getLabel());
                 }
             }
         }
@@ -263,7 +245,6 @@ public class LexerData {
                 }
             }
             if (referenced != null) {
-                ref.setOrdinal(referenced.getOrdinal());
                 ref.setRegexp(referenced);
             }
         }

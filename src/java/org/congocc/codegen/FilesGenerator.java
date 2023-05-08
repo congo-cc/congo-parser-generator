@@ -267,7 +267,6 @@ public class FilesGenerator {
     }
 
     void generateInvalidNode() throws IOException {
-//        Path outputFile = grammar.getParserOutputDirectory().resolve("InvalidNode.java");
         Path outputFile = appSettings.getNodeOutputDirectory().resolve("InvalidNode.java");
         if (regenerate(outputFile)) {
             generate(outputFile);
