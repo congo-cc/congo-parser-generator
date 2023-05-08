@@ -261,9 +261,6 @@ public class Grammar extends BaseNode {
         return getProductionTable().get(name);
     }
 
-    /**
-     * Add a new lexical state
-     */
     public void addLexicalState(String name) {
         lexicalStates.add(name);
     }

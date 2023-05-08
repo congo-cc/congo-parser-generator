@@ -222,7 +222,7 @@ public class LexerData {
                     }
                     addNamedToken(label, re);
                 }
-                if (!re.isPrivate() && re.getOrdinal() == 0) {
+                if (!re.isPrivate()) {
                     addRegularExpression(re);
                 }
             }

@@ -148,12 +148,12 @@ public class LexicalStateData {
         for (RegexpStringLiteral rsl : caseInsensitiveTokenTable.values()) {
             if (rsl.getTokenProduction() != null) continue;
             regularExpressions.add(rsl);
-            new NfaBuilder(this, rsl.getIgnoreCase()).buildStates(rsl);
+            new NfaBuilder(this, true).buildStates(rsl);
         }
         for (RegexpStringLiteral rsl : caseSensitiveTokenTable.values()) {
             if (rsl.getTokenProduction() != null) continue;
             regularExpressions.add(rsl);
-            new NfaBuilder(this, rsl.getIgnoreCase()).buildStates(rsl);
+            new NfaBuilder(this, false).buildStates(rsl);
         }
     }
 }

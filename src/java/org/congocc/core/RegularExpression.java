@@ -92,8 +92,12 @@ public abstract class RegularExpression extends BaseNode {
     }
 
     public String getGeneratedClassName() {
-        if (generatedClassName.equals("Token")) {
-            generatedClassName = getLabel();
+        if (generatedClassName==null) {
+            if (hasLabel()) {
+                generatedClassName = getLabel();
+            } else {
+                generatedClassName = getGrammar().getAppSettings().getBaseTokenClassName();
+            }
         }
         return generatedClassName;
     }
@@ -110,7 +114,7 @@ public abstract class RegularExpression extends BaseNode {
         this.generatedSuperClassName = generatedSuperClassName;
     }
 
-    private String generatedClassName = "Token", generatedSuperClassName;
+    private String generatedClassName, generatedSuperClassName;
 
     abstract public boolean matchesEmptyString();
 }
