@@ -5,6 +5,12 @@ import org.congocc.parser.Node;
 import org.congocc.parser.tree.*;
 
 public class ExpansionSequence extends Expansion {
+	
+	/**
+	 * A marker interface in order to enumerate syntax element units within a sequence.
+	 *
+	 */
+	public interface SyntaxElement extends Node {}
 
     /**
      * @return a List that includes child expansions that are
@@ -19,6 +25,10 @@ public class ExpansionSequence extends Expansion {
             } 
         }
         return result;
+    }
+    
+    public int getNumberOfSyntaxElements() {
+    	return childrenOfType(SyntaxElement.class).size();
     }
 
     Expansion firstNonEmpty() {

@@ -46,13 +46,13 @@ public class AppSettings {
                                     + "NODE_USES_PARSER,TREE_BUILDING_DEFAULT,TREE_BUILDING_ENABLED,TOKENS_ARE_NODES," 
                                     + "SPECIAL_TOKENS_ARE_NODES,UNPARSED_TOKENS_ARE_NODES,FREEMARKER_NODES," 
                                     + "TOKEN_MANAGER_USES_PARSER,ENSURE_FINAL_EOL,MINIMAL_TOKEN,C_CONTINUATION_LINE," 
-                                    + "USE_CHECKED_EXCEPTION,LEGACY_GLITCHY_LOOKAHEAD,TOKEN_CHAINING,USES_PREPROCESSOR,";
+                                    + "USE_CHECKED_EXCEPTION,LEGACY_GLITCHY_LOOKAHEAD,TOKEN_CHAINING,USES_PREPROCESSOR,X_JTB_PARSE_TREE,X_SYNTACTIC_NODES_ENABLED,";
 
     private String stringSettings = ",BASE_NAME,PARSER_PACKAGE,PARSER_CLASS,LEXER_CLASS,BASE_SRC_DIR,BASE_NODE_CLASS," 
                                     + "BASE_TOKEN_CLASS,NODE_PREFIX,NODE_CLASS,NODE_PACKAGE,DEFAULT_LEXICAL_STATE," 
                                     + "NODE_CLASS,OUTPUT_DIRECTORY,DEACTIVATE_TOKENS,EXTRA_TOKENS,ROOT_API_PACKAGE," 
                                     + "COPYRIGHT_BLURB,TERMINATING_STRING,";
-                                    
+
     private String integerSettings = ",TAB_SIZE,TABS_TO_SPACES,JDK_TARGET,";
 
     private static Map<String, String> locationAliases = new HashMap<String, String>() {
@@ -136,6 +136,13 @@ public class AppSettings {
             }
             if (settings.get("NODE_USES_PARSER") != null) {
                 errors.addWarning(null, msg.replace("OPTION_NAME", "NODE_USES_PARSER"));
+            }
+            if (settings.get("X_SYNTACTIC_NODES_ENABLED") != null) {
+                errors.addWarning(null, msg.replace("OPTION_NAME", "X_SYNTACTIC_NODES_ENABLED"));
+                if (settings.get("X_JTB_PARSE_TREE") != null) {
+                    errors.addWarning(null, msg.replace("OPTION_NAME", "X_JTB_PARSE_TREE")
+                    		         .replace("TREE_BUILDING_ENABLED", "X_SYNTACTIC_NODES_ENABLED"));
+                }
             }
         }
     }
@@ -490,6 +497,16 @@ public class AppSettings {
 
     public boolean getNodeUsesParser() {
         Boolean b = (Boolean) settings.get("NODE_USES_PARSER");
+        return b != null && b;
+    }
+
+    public boolean getJtbParseTree() {
+        Boolean b = (Boolean) settings.get("X_JTB_PARSE_TREE");
+        return b != null && b;
+    }
+
+    public boolean getSyntacticNodesEnabled() {
+        Boolean b = (Boolean) settings.get("X_SYNTACTIC_NODES_ENABLED");
         return b != null && b;
     }
 

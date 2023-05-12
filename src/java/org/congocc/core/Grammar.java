@@ -284,7 +284,7 @@ public class Grammar extends BaseNode {
         Set<String> usedNames = new LinkedHashSet<>();
         List<Expansion> result = new ArrayList<>();
         for (Expansion expansion : descendants(Expansion.class)) {
-            if (expansion.getParent() instanceof BNFProduction) continue; // Handle these separately
+            if ((expansion instanceof BNFProduction) || (expansion.getParent() instanceof BNFProduction)) continue; // Handle these separately
             if (type == 0 || type == 2) {   // follow sets
                 if (expansion instanceof CodeBlock) {
                     continue;
@@ -431,6 +431,17 @@ public class Grammar extends BaseNode {
     public void addCodeInjection(Node n) {
         checkForHooks(n, null);
         codeInjections.add(n);
+    }
+    
+    /**
+     * Adds an injected field to the specified {@link Node} dynamically (post parsing).
+     * @param nodeName is the name of the {@code Node}
+     * @param modifiers is the string of modifiers needed (if any)
+     * @param className is the type of the field
+     * @param fieldName is the name of the field to be injected
+     */
+    public void addFieldInjection(String nodeName, String modifiers, String className, String fieldName) {
+    	CodeInjection.inject(this, nodeName, "{" + modifiers + " " + className + " " + fieldName + ";}");
     }
 
     public boolean isInInclude() {

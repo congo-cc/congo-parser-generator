@@ -160,6 +160,15 @@ public class CodeInjector {
         	existingDecls.addAll(body.childrenOfType(ClassOrInterfaceBodyDeclaration.class));
         }
     }
+    
+    /**
+     * Adds a {@link CodeInjection} dynamically (post-parsing).
+     * @param ci is the {@code CodeInjection} to be added
+     */
+    public void add(CodeInjection ci) {
+        String name = ci.name;
+        add(name, ci.importDeclarations, ci.annotations, ci.extendsList, ci.implementsList, ci.body, ci.isInterface);
+    }
 
     public void injectCode(CompilationUnit jcu) {
         String packageName = jcu.getPackageName();

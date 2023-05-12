@@ -1,10 +1,11 @@
 package org.congocc.core;
 
+import org.congocc.core.ExpansionSequence.SyntaxElement;
 import org.congocc.parser.Token.TokenType;
 import org.congocc.parser.tree.*;
 import java.util.Set;
 
-public class NonTerminal extends Expansion {
+public class NonTerminal extends Expansion implements SyntaxElement {
     
     private Name LHS;
     public Name getLHS() {return LHS;}

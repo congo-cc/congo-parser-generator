@@ -3,11 +3,16 @@ package org.congocc.core;
 import org.congocc.parser.Token;
 import org.congocc.parser.Token.TokenType;
 import static org.congocc.parser.Token.TokenType.*;
+
+import java.util.Set;
+
 import org.congocc.parser.tree.*;
 
-public class BNFProduction extends BaseNode {
-    private Expansion expansion, recoveryExpansion;
-    private String lexicalState, name, leadingComments = "";
+public class BNFProduction extends Expansion {
+    private Expansion expansion;
+    private Expansion recoveryExpansion;
+    private String lexicalState, name;
+    private String leadingComments = "";
     private boolean implicitReturnType;
     
     public Expansion getExpansion() {
@@ -148,4 +153,29 @@ public class BNFProduction extends BaseNode {
     public boolean isLeftRecursive() {
         return getExpansion().potentiallyStartsWith(getName());
     }
+    
+    @Override
+    public Expansion getNestedExpansion() {
+    	return expansion;
+    }
+
+	@Override
+	public TokenSet getFirstSet() {
+		return expansion.getFirstSet();
+	}
+
+	@Override
+	public TokenSet getFinalSet() {
+		return expansion.getFinalSet();
+	}
+
+	@Override
+	protected int getMinimumSize(Set<String> visitedNonTerminals) {
+		return expansion.getMinimumSize(visitedNonTerminals);
+	}
+
+	@Override
+	protected int getMaximumSize(Set<String> visitedNonTermiinals) {
+		return expansion.getMaximumSize(visitedNonTermiinals);
+	}
 }
