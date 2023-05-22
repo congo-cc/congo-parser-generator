@@ -14,7 +14,7 @@ INCLUDE "LuaLexer.ccc"
 
 #Root : 
    [
-      SCAN <HASH> => ACTIVATE_TOKENS SHEBANG (<SHEBANG>)
+      SCAN "#" => ACTIVATE_TOKENS SHEBANG (<SHEBANG>)
    ]
    Block <EOF> {return CURRENT_NODE;}
 ;
@@ -22,7 +22,7 @@ INCLUDE "LuaLexer.ccc"
 Block#(>=0) : (Statement)* [LastStatement] ;
 
 Statement :
-   <SEMICOLON> #EmptyStatement(1)
+   ";" #EmptyStatement(1)
    |
    Assignment
    |
@@ -30,7 +30,7 @@ Statement :
    |
    Label
    |
-   <BREAK> #BreakStatement(1)
+   "break" #BreakStatement(1)
    |
    GotoStatement
    |
@@ -51,67 +51,67 @@ Statement :
    LocalAttributeAssignment
 ;
 
-Assignment : VarList <ASSIGN> =>|| ExpressionList ;
+Assignment : VarList "=" =>|| ExpressionList ;
 
-DoBlock : <DO> Block <END> ;
+DoBlock : "do" Block "end" ;
 
-GotoStatement : <GOTO> <NAME> ;
+GotoStatement : "goto" <NAME> ;
 
 ForStatement :
-   <FOR> <NAME> <ASSIGN> =>|| Expression <COMMA> Expression [<COMMA> Expression] DoBlock
+   "for" <NAME> "=" =>|| Expression "," Expression ["," Expression] DoBlock
    |
-   <FOR> NameList <IN> =>|| ExpressionList DoBlock
+   "for" NameList "in" =>|| ExpressionList DoBlock
    |
-   <FOR> FAIL "invalid for statement"
+   "for" FAIL "invalid for statement"
 ;
 
-FunctionDeclaration : <FUNCTION> FunctionName FunctionBody ;
+FunctionDeclaration : "function" FunctionName FunctionBody ;
 
-LocalFunctionDeclaration : <LOCAL> <FUNCTION> =>|| <NAME> FunctionBody ;
+LocalFunctionDeclaration : "local" "function" =>|| <NAME> FunctionBody ;
 
-LocalAttributeAssignment : <LOCAL> =>|+1 AttributeNameList [<ASSIGN> ExpressionList] ;
+LocalAttributeAssignment : "local" =>|+1 AttributeNameList ["=" ExpressionList] ;
 
-IfStatement : <IF> Expression <THEN> Block (<ELSEIF> Expression <THEN> Block)* [<ELSE> Block] <END> ;
+IfStatement : "if" Expression "then" Block ("elseif" Expression "then" Block)* ["else" Block] "end" ;
 
-RepeatStatement : <REPEAT> Block <UNTIL> Expression ;
+RepeatStatement : "repeat" Block "until" Expression ;
 
-WhileStatement : <WHILE> Expression <DO> Block <END> ;
+WhileStatement : "while" Expression "do" Block "end" ;
 
-AttributeNameList : <NAME> [Attribute] (<COMMA> <NAME> [Attribute])* ;
+AttributeNameList : <NAME> [Attribute] ("," <NAME> [Attribute])* ;
 
-Attribute : <LT> <NAME> <GT> ;
+Attribute : "<" <NAME> ">" ;
 
-LastStatement : ( <RETURN> [ExpressionList] | <BREAK> ) [<SEMICOLON>] ;
+LastStatement : ( "return" [ExpressionList] | "break" ) [";"] ;
 
-Label : <DOUBLE_COLON> <NAME> <DOUBLE_COLON> ;
+Label : "::" <NAME> "::" ;
 
-FunctionName : <NAME> (<DOT> <NAME>)* [<COLON> <NAME>] ;
+FunctionName : <NAME> ("." <NAME>)* [":" <NAME>] ;
 
-VarList : Var (<COMMA> Var)* ;
+VarList : Var ("," Var)* ;
 
-NameList : <NAME> (<COMMA> <NAME> =>||)* ;
+NameList : <NAME> ("," <NAME> =>||)* ;
 
-ExpressionList : Expression (<COMMA> Expression)* ;
+ExpressionList : Expression ("," Expression)* ;
 
-Literal#void : <NIL> | <FALSE> | <TRUE> | Number | StringLiteral | <ELLIPSIS> ; 
+Literal#void : "nil" | "false" | "true" | Number | StringLiteral | "..." ; 
 
 PrimaryExpression : Literal | FunctionDef | PrefixExp | TableConstructor ;
 
-PowerExpression : PrimaryExpression (<HAT> UnaryExpression)* ;
+PowerExpression : PrimaryExpression ("^" UnaryExpression)* ;
 
 UnaryExpression : (UnaryOperator)* PowerExpression ;
 
 MultiplicativeExpression : UnaryExpression (MultiplicativeOperator UnaryExpression)* ;
 
-AdditiveExpression : MultiplicativeExpression ((<PLUS>|<MINUS>) MultiplicativeExpression)* ;
+AdditiveExpression : MultiplicativeExpression (("+" | "-") MultiplicativeExpression)* ;
 
-StringCatExpression : AdditiveExpression (<STR_CAT> StringCatExpression)* ;
+StringCatExpression : AdditiveExpression (".." StringCatExpression)* ;
 
 ComparisonExpression : StringCatExpression (ComparisonOperator ComparisonExpression)* ;
 
-AndExpression : ComparisonExpression (<AND> ComparisonExpression)* ;
+AndExpression : ComparisonExpression ("and" ComparisonExpression)* ;
 
-OrExpression : AndExpression (<OR> AndExpression)* ;
+OrExpression : AndExpression ("or" AndExpression)* ;
 
 Expression : OrExpression (BitwiseOperator OrExpression)* ;
 
@@ -119,35 +119,35 @@ PrefixExp : VarOrExp (NameAndArgs)* ;
 
 FunctionCall : VarOrExp (NameAndArgs)+ ;
 
-VarOrExp : (<NAME> | <LPAREN> Expression <RPAREN> ) (VarSuffix)* ;
+VarOrExp : (<NAME> | "(" Expression ")" ) (VarSuffix)* ;
 
-Var : (<NAME> | <LPAREN> Expression <RPAREN> VarSuffix) (VarSuffix)* ;
+Var : (<NAME> | "(" Expression ")" VarSuffix) (VarSuffix)* ;
 
-VarSuffix : (NameAndArgs)* =>|+1 (<LBRACKET> Expression <RBRACKET> | <DOT> <NAME>) ;
+VarSuffix : (NameAndArgs)* =>|+1 ("[" Expression "]" | "." <NAME>) ;
 
-NameAndArgs : [<COLON> <NAME>] Args ;
+NameAndArgs : [":" <NAME>] Args ;
 
-Args : <LPAREN> [ExpressionList] <RPAREN> | TableConstructor | StringLiteral ;
+Args : "(" [ExpressionList] ")" | TableConstructor | StringLiteral ;
 
-FunctionDef : <FUNCTION> FunctionBody ;
+FunctionDef : "function" FunctionBody ;
 
-FunctionBody : <LPAREN> [ParamList] <RPAREN> Block <END> ;
+FunctionBody : "(" [ParamList] ")" Block "end" ;
 
-ParamList : NameList [<COMMA> <ELLIPSIS>] | <ELLIPSIS> ;
+ParamList : NameList ["," "..."] | "..." ;
 
-TableConstructor : <LBRACE> [FieldList]  <RBRACE> ;
+TableConstructor : "{" [FieldList]  "}" ;
 
-FieldList : Field ((<COMMA>|<SEMICOLON>) =>|+1 Field)* [<COMMA>|<SEMICOLON>] ;
+FieldList : Field (("," | ";") =>|+1 Field)* ["," | ";"] ;
 
-Field : <LBRACKET> Expression <RBRACKET> <ASSIGN> Expression | [<NAME> <ASSIGN> =>||] Expression ;
+Field : "[" Expression "]" "=" Expression | [<NAME> "=" =>||] Expression ;
 
-ComparisonOperator#void : <LT> | <GT> | <LE> | <GE> | <NE> | <EQ> ;
+ComparisonOperator#void : "<" | ">" | "<=" | ">=" | "~=" | "==" ;
 
-MultiplicativeOperator#void : <TIMES> | <SLASH> | <MOD> | <DOUBLE_SLASH> ;
+MultiplicativeOperator#void : "*" | "/" | "%" | "//" ;
 
-BitwiseOperator#void : <BIT_AND> | <BIT_OR> | <TILDE> | <LSHIFT> | <RSHIFT> ;
+BitwiseOperator#void : "&" | "|" | "~" | "<<" | ">>" ;
 
-UnaryOperator#void : <NOT> | <HASH> | <MINUS>| <TILDE> ;
+UnaryOperator#void : "not" | "#" | "-" | "~" ;
 
 Number#void : <INT> | <HEX> | <FLOAT> | <HEX_FLOAT> ;
 

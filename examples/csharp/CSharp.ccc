@@ -2192,7 +2192,8 @@ Pattern :
 ListPattern : 
     <LBRACKET> 
     {seenRange = false;}
-    [InListPattern (<COMMA> InListPattern)*] 
+    [InListPattern (<COMMA> =>|+1 InListPattern)*] 
+    [<COMMA>]
     <RBRACKET> 
 ;
 
