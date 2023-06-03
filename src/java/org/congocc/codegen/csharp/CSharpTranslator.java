@@ -156,7 +156,7 @@ public class CSharpTranslator extends Translator {
         }
         internalTranslateExpression(expr.getInstance(), TranslationContext.UNKNOWN, result);
         result.append(" is ");
-        internalTranslateExpression(expr.getType(), TranslationContext.UNKNOWN, result);
+        internalTranslateExpression(expr.getTypeExpression(), TranslationContext.UNKNOWN, result);
         if (parens) {
             result.append(')');
         }
@@ -496,7 +496,7 @@ public class CSharpTranslator extends Translator {
             ASTVariableOrFieldDeclaration vd = (ASTVariableOrFieldDeclaration) stmt;
             List<ASTPrimaryExpression> names = vd.getNames();
             List<ASTExpression> initializers = vd.getInitializers();
-            ASTTypeExpression type = vd.getType();
+            ASTTypeExpression type = vd.getTypeExpression();
             int n = names.size();
             boolean isProperty = vd.hasAnnotation("Property");
             boolean isField = vd.isField();
@@ -584,7 +584,7 @@ public class CSharpTranslator extends Translator {
                     ASTExpression name = names.get(i);
                     ASTExpression initializer = initializers.get(i);
                     if (initializer != null) {
-                        translateType(decl.getType(), result);
+                        translateType(decl.getTypeExpression(), result);
                         result.append(' ');
                         internalTranslateExpression(name, TranslationContext.UNKNOWN, result);
                         result.append(" = ");
