@@ -5,14 +5,20 @@ PARSER_PACKAGE=org.congocc.parser.csharp;
 ROOT_API_PACKAGE=org.congocc.parser;
 TAB_SIZE=4;
 
+#if !generate_base_node
+BASE_NODE_CLASS=org.congocc.parser.tree.BaseNode;
+#endif
+
 #define interpolated_raw_strings
 INCLUDE "../../examples/csharp/CSharp.ccc";
 
+#if generate_base_node
 INJECT BASE_NODE_CLASS :
    import org.congocc.core.Grammar;
 {
     @Property Grammar grammar;
 }
+#endif
 
 INJECT BASE_TOKEN_CLASS :
    import org.congocc.core.Grammar;
