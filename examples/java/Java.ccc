@@ -131,7 +131,11 @@ ProvidesDirective :
   [ PackageDeclaration! ]
   ( ImportDeclaration )*!
   ( TypeDeclaration )*!
-  <EOF>
+  [
+    //a bit of a kludge so that CodeInjection2 in CongoCC.ccc can work. Maybe revisit.
+    ASSERT {getToken(1).getType() != RBRACE}#
+    <EOF>
+  ]
   {
     return CURRENT_NODE;
   }
