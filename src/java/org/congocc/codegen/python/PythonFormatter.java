@@ -22,7 +22,7 @@ public class PythonFormatter extends Node.Visitor {
 //                                                              WHILE, WITH);
 
 
-    public String format(PythonNode code, int indentLevel) {
+    public String format(Node code, int indentLevel) {
         buffer = new StringBuilder();
         for (int i = 0; i < indentLevel; i++) {
             currentIndent += defaultIndent;
@@ -31,7 +31,7 @@ public class PythonFormatter extends Node.Visitor {
         return buffer.toString();
     }
 
-    public String format(PythonNode code) {
+    public String format(Node code) {
         return format(code, 0);
     }
 

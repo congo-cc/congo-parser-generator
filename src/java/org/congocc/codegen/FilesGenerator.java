@@ -347,8 +347,9 @@ public class FilesGenerator {
     	    generateNodeFile();
         }
         Map<String, Path> files = new LinkedHashMap<>();
-        files.put(appSettings.getBaseNodeClassName(), getOutputFile(appSettings.getBaseNodeClassName()));
-
+        if (appSettings.getBaseNodeClassName().indexOf('.') == -1) {
+            files.put(appSettings.getBaseNodeClassName(), getOutputFile(appSettings.getBaseNodeClassName()));
+        }
         for (RegularExpression re : lexerData.getOrderedNamedTokens()) {
             if (re.isPrivate()) continue;
             String tokenClassName = re.getGeneratedClassName();

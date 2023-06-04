@@ -131,7 +131,7 @@ public class PythonTranslator extends Translator {
 
     private boolean shouldAddSelf(ASTPrimaryExpression expr) {
         boolean result = true;
-        ASTHelperNode parent = expr.getParent();
+        Node parent = expr.getParent();
 
         if (parent != null) {
             if (parent instanceof ASTBinaryExpression) {
@@ -229,7 +229,7 @@ public class PythonTranslator extends Translator {
         result.append("isinstance(");
         internalTranslateExpression(expr.getInstance(), TranslationContext.UNKNOWN, result);
         result.append(", ");
-        internalTranslateExpression(expr.getType(), TranslationContext.UNKNOWN, result);
+        internalTranslateExpression(expr.getTypeExpression(), TranslationContext.UNKNOWN, result);
         result.append(')');
     }
 
@@ -439,7 +439,7 @@ public class PythonTranslator extends Translator {
             ASTVariableOrFieldDeclaration vd = (ASTVariableOrFieldDeclaration) stmt;
             List<ASTPrimaryExpression> names = vd.getNames();
             List<ASTExpression> initializers = vd.getInitializers();
-            ASTTypeExpression type = vd.getType();
+            ASTTypeExpression type = vd.getTypeExpression();
             int n = names.size();
             String defaultInitializer = "None";
             boolean isProperty = vd.hasAnnotation("Property");
