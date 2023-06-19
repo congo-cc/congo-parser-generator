@@ -375,11 +375,11 @@ public interface Node
       */ 
     void setUnparsed(boolean b);
      
-    default <T extends Node>T firstChildOfType(Class<T>clazz) {
+    default <T> T firstChildOfType(Class<T>clazz) {
         return firstChildOfType(clazz, null);
     }
 
-    default <T extends Node> T firstChildOfType(Class<T> clazz, Predicate<T> pred) {
+    default <T> T firstChildOfType(Class<T> clazz, Predicate<T> pred) {
         for (int i=0; i<getChildCount();i++) {
             Node child = getChild(i);
             if (clazz.isInstance(child)) {
@@ -434,7 +434,7 @@ public interface Node
         return firstDescendantOfType(clazz, null);
     }
 
-    default <T extends Node> List<T> childrenOfType(Class<T>clazz, Predicate<T> pred) {
+    default <T> List<T> childrenOfType(Class<T>clazz, Predicate<T> pred) {
         List<T>result=new java.util.ArrayList<>();
         for (int i=0; i< getChildCount(); i++) {
             Node child = getChild(i);
@@ -446,7 +446,22 @@ public interface Node
         return result;
    }
 
-   default <T extends Node> List<T> childrenOfType(Class<T> clazz) {
+   default List<Node> childrenOfType(NodeType type, Predicate<Node> pred) {
+      List<Node> result = new java.util.ArrayList<>();
+      for (int i=0; i< getChildCount(); i++) {
+          Node child = getChild(i);
+          if (child.getType() == type) {
+             if (pred==null || pred.test(child)) result.add(child);
+          }
+      }
+      return result;
+   }
+
+   default List<Node> childrenOfType(NodeType type) {
+      return childrenOfType(type, null);
+   }
+
+   default <T> List<T> childrenOfType(Class<T> clazz) {
        return childrenOfType(clazz, null);
    }
    
