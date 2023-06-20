@@ -265,9 +265,16 @@ abstract public class TokenSource implements CharSequence
         }
     }
 
+    protected void uncacheTokensFrom(int offset) {
+        if (offset<tokenOffsets.length()) {
+            tokenOffsets.clear(offset);
+        }
+    }
+
+
     public ${BaseToken} nextCachedToken(int offset) {
         int nextOffset = tokenOffsets.nextSetBit(offset);
-	      return nextOffset != -1 ? tokenLocationTable[nextOffset] : null;
+        return nextOffset != -1 ? tokenLocationTable[nextOffset] : null;
     } 
 
     public ${BaseToken} previousCachedToken(int offset) {
