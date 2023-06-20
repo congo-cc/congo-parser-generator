@@ -45,6 +45,8 @@ public class CodeInjector {
              && !classname.equals(appSettings.getLexerClassName())
              //&& !classname.equals(baseNodeClassName)
              && !classname.equals("ParseException")
+             && !classname.equals("TokenSource")
+             && !classname.equals("NonTerminalCall")
              && !classname.equals(appSettings.getBaseTokenClassName())
              && !classname.equals("InvalidToken")
              && !classname.equals("Node");
