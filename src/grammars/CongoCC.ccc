@@ -1017,7 +1017,7 @@ Setting(Map<String,Object> settings) #Setting :
         |
         <INTEGER_LITERAL> {value = ((IntegerLiteral) lastConsumedToken).getValue();}
         |
-        <STRING_LITERAL> {value = ((StringLiteral) lastConsumedToken).getString();}
+        (<STRING_LITERAL>|<TEXT_BLOCK_LITERAL>) {value = ((StringLiteral) lastConsumedToken).getString();}
         |
         SCAN <IDENTIFIER> "."
         =>Name {value = peekNode().toString();}
