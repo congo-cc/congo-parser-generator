@@ -109,7 +109,13 @@
         for (int i=0;i<num;i++) {
            nodes.add(popNode());
         }
+        if (!nodes.isEmpty()) {
+            n.setEndOffset(nodes.get(0).getEndOffset());
+        }
         Collections.reverse(nodes);
+        if (!nodes.isEmpty()) {
+            n.setBeginOffset(nodes.get(0).getBeginOffset());
+        }
         for (Node child : nodes) {
             // FIXME deal with the UNPARSED_TOKENS_ARE_NODES case
             n.addChild(child);
