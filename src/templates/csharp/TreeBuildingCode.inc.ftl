@@ -83,6 +83,9 @@
                 nodes.Add(PopNode());
             }
             nodes.Reverse();
+            if (nodes.Count > 0) {
+                n.BeginOffset = nodes[0].BeginOffset;
+            }
             foreach (var child in nodes) {
                 // FIXME deal with the UNPARSED_TOKENS_ARE_NODES case
                 n.AddChild(child);
@@ -111,6 +114,10 @@
                     nodes.Add(PopNode());
                 }
                 nodes.Reverse();
+                if (nodes.Count > 0) {
+                    n.BeginOffset = nodes[0].BeginOffset;
+                    n.EndOffset = nodes[nodes.Count-1].EndOffset;
+                }
                 foreach (var child in nodes) {
                     if (UnparsedTokensAreNodes && child is Token tok) {
                         while (tok.PreviousCachedToken != null && tok.PreviousCachedToken.IsUnparsed) {

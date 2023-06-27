@@ -109,12 +109,10 @@
         for (int i=0;i<num;i++) {
            nodes.add(popNode());
         }
-        if (!nodes.isEmpty()) {
-            n.setEndOffset(nodes.get(0).getEndOffset());
-        }
         Collections.reverse(nodes);
         if (!nodes.isEmpty()) {
             n.setBeginOffset(nodes.get(0).getBeginOffset());
+            n.setEndOffset(nodes.get(nodes.size()-1).getEndOffset());
         }
         for (Node child : nodes) {
             // FIXME deal with the UNPARSED_TOKENS_ARE_NODES case
@@ -149,6 +147,10 @@
                 nodes.add(popNode());
             }
             Collections.reverse(nodes);
+            if (!nodes.isEmpty()) {
+               n.setBeginOffset(nodes.get(0).getBeginOffset());
+               n.setEndOffset(nodes.get(nodes.size()-1).getEndOffset());
+            }
             for (Node child : nodes) {
                 if (unparsedTokensAreNodes && child instanceof ${settings.baseTokenClassName}) {
                     ${settings.baseTokenClassName} tok = (${settings.baseTokenClassName}) child;

@@ -72,6 +72,9 @@
         n.end_offset = self.last_consumed_token.end_offset
         self.current_node_scope.close()
         nodes = self.pop_nodes(num)
+        if nodes :
+            n.begin_offset = nodes[-1].begin_offset
+            n.end_offset = nodes[0].end_offset
         for child in reversed(nodes):
             n.add_child(child)
         n.close()
@@ -101,6 +104,9 @@
             a = self.node_arity
             self.current_node_scope.close()
             nodes = self.pop_nodes(a)
+            if nodes :
+                n.begin_offset = nodes[-1].begin_offset
+                n.end_offset = nodes[0].end_offset
             for child in reversed(nodes):
                 if self.unparsed_tokens_are_nodes and isinstance(child, Token):
                     tok = child
