@@ -255,6 +255,7 @@ INJECT AnnotationTypeDeclaration : implements TypeDeclaration;
 INJECT ClassDeclaration : implements TypeDeclaration;
 INJECT InterfaceDeclaration : implements TypeDeclaration;
 INJECT EnumDeclaration : implements TypeDeclaration;
+INJECT RecordDeclaration : implements TypeDeclaration;
 
 EmptyDeclaration# : <SEMICOLON> ;
 
