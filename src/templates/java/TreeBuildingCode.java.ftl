@@ -87,9 +87,14 @@
     private void openNodeScope(Node n) {
         new NodeScope();
         if (n!=null) {
-            ${settings.baseTokenClassName} next = nextToken(lastConsumedToken);
             n.setTokenSource(lastConsumedToken.getTokenSource());
-            n.setBeginOffset(next.getBeginOffset());
+            // We set the begin/end offsets based on the ending location
+            // of the last consumed token. So, we start with a Node
+            // of length zero. Typically this is overridden in the
+            // closeNodeScope() method, unless this node has no children
+            n.setBeginOffset(lastConsumedToken.getEndOffset());
+            n.setEndOffset(n.getBeginOffset());
+            n.setTokenSource(this.token_source);
             n.open();
   [#list grammar.openNodeScopeHooks as hook]
             ${hook}(n);
@@ -110,12 +115,31 @@
            nodes.add(popNode());
         }
         Collections.reverse(nodes);
-        if (!nodes.isEmpty()) {
-            n.setBeginOffset(nodes.get(0).getBeginOffset());
-            n.setEndOffset(nodes.get(nodes.size()-1).getEndOffset());
+        for (Node child : nodes) {
+            if (child.getInputSource() == n.getInputSource()) {
+                n.setBeginOffset(child.getBeginOffset());
+                break;
+            }
         }
         for (Node child : nodes) {
-            // FIXME deal with the UNPARSED_TOKENS_ARE_NODES case
+            if (unparsedTokensAreNodes && child instanceof ${settings.baseTokenClassName}) {
+                ${settings.baseTokenClassName} tok = (${settings.baseTokenClassName}) child;
+                while (tok.previousCachedToken() != null && tok.previousCachedToken().isUnparsed()) {
+                    tok = tok.previousCachedToken();
+                }
+                boolean locationSet = false;
+                while (tok.isUnparsed()) {
+                    n.addChild(tok);
+                    if (!locationSet && tok.getInputSource() == n.getInputSource() && tok.getBeginOffset() < n.getBeginOffset()) {
+                        n.setBeginOffset(tok.getBeginOffset());
+                        locationSet = true;
+                    }
+                    tok = tok.nextCachedToken();
+                }
+            }
+            if (child.getInputSource() == n.getInputSource()) {
+                n.setEndOffset(child.getEndOffset());
+            }
             n.addChild(child);
         }
         n.close();
@@ -138,39 +162,7 @@
             currentNodeScope.close();
             return false;
         }
-        else {
-            n.setEndOffset(lastConsumedToken.getEndOffset());
-            int a = nodeArity();
-            currentNodeScope.close();
-            ArrayList<Node> nodes = new ArrayList<Node>();
-            while (a-- > 0) {
-                nodes.add(popNode());
-            }
-            Collections.reverse(nodes);
-            if (!nodes.isEmpty()) {
-               n.setBeginOffset(nodes.get(0).getBeginOffset());
-               n.setEndOffset(nodes.get(nodes.size()-1).getEndOffset());
-            }
-            for (Node child : nodes) {
-                if (unparsedTokensAreNodes && child instanceof ${settings.baseTokenClassName}) {
-                    ${settings.baseTokenClassName} tok = (${settings.baseTokenClassName}) child;
-                    while (tok.previousCachedToken() != null && tok.previousCachedToken().isUnparsed()) {
-                        tok = tok.previousCachedToken();
-                    }
-                    while (tok.isUnparsed()) {
-                        n.addChild(tok);
-                        tok = tok.nextCachedToken();
-                    }
-                }
-                n.addChild(child);
-            }
-            n.close();
-            pushNode(n);
-[#list grammar.closeNodeScopeHooks as hook]
-           ${hook}(n);
-[/#list]
-        }
-        return true; 
+        return closeNodeScope(n, nodeArity());
     }
     
     
