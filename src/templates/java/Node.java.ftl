@@ -587,7 +587,9 @@ public interface Node
         String output;
 
         if (this instanceof TerminalNode) {
-            output = toString().trim();
+            if (this.getType().isEOF()) output = "EOF";
+            else if (this.getType().isInvalid()) output = "Lexically Invalid Input:" + getImage();
+            else output = toString().trim();
         }
         else {
             output = String.format("<%s (%d, %d)-(%d, %d)>",

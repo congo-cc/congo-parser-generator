@@ -376,14 +376,15 @@ public class ${settings.baseTokenClassName} ${implementsNode} {
     public void clearChildren() {}
 
     public String getNormalizedText() {
-        if (getType() == TokenType.EOF) {
-            return "EOF";
-        }
+//        if (getType() == TokenType.EOF) {
+//            return "EOF";
+//        }
         return getImage();
     }
 
     public String toString() {
-        return getNormalizedText();
+//        return getNormalizedText();
+        return getImage();
     }
 
     /**
