@@ -15,10 +15,6 @@ public class InvalidToken extends ${settings.baseTokenClassName}
 [/#if]
     }
 
-    public String getNormalizedText() {
-        return "Lexically Invalid Input:" + getImage();
-    }
-
  [#if settings.faultTolerant]
     
     private ParseException cause;

@@ -355,14 +355,8 @@ ${globals.translateTokenInjections(true)}
 
 [/#if]
 
-    @property
-    def normalized_text(self):
-        if self.type == TokenType.EOF:
-            return ''
-        return self.image
-
     def __str__(self):
-        return self.normalized_text
+        return self.image
 
     def _preceding_tokens(self):
         current = self

@@ -680,8 +680,6 @@ namespace ${csPackage} {
 [/#if]
         }
 
-        internal string NormalizedText => (Type == TokenType.EOF) ? "EOF" : Image;
-
         internal Token NextToken { get; set; }
         internal string Location {
             get {

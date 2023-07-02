@@ -1292,7 +1292,7 @@ public class Translator {
                     resultNode.returnType = (ASTTypeExpression) transformTree(child, true);
                 }
                 else if (child instanceof Identifier) {
-                    resultNode.name = ((Identifier) child).getNormalizedText();
+                    resultNode.name = child.toString();
                 }
                 else if (child instanceof FormalParameters) {
                     int m;
