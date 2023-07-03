@@ -350,7 +350,7 @@ public class ${settings.baseTokenClassName} ${implements} {
     public String getSource() {
          if (type == TokenType.EOF) return "";
          ${settings.lexerClassName} flm = getTokenSource();
-         return flm == null ? image : flm.getText(getBeginOffset(), getEndOffset());
+         return flm == null ? null : flm.getText(getBeginOffset(), getEndOffset());
     }
 
     protected ${settings.baseTokenClassName}() {}
