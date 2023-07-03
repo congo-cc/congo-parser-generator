@@ -57,6 +57,12 @@ public class ParseException extends ${BASE_EXCEPTION_TYPE} {
     super(message);
     this.callStack = callStack;
   }
+
+  public ParseException(String message, ${BaseToken} token, List<NonTerminalCall> callStack) {
+     super(message);
+     this.token = token;
+     this.callStack = callStack;
+  }
   
   @Override 
   public String getMessage() {

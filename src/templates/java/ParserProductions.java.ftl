@@ -284,9 +284,9 @@
 [#macro BuildCodeFailure fail]
     [#if fail.code?is_null]
       [#if fail.exp??]
-       fail("Failure: " + ${fail.exp});
+       fail("Failure: " + ${fail.exp}, getToken(1));
       [#else]
-       fail("Failure");
+       fail("Failure", getToken(1));
       [/#if]
     [#else]
        ${fail.code}
@@ -576,13 +576,13 @@
    [#var assertionMessage = "Assertion at: " + assertion.location?j_string + " failed. "]
    [#if assertion.assertionExpression??]
       if (!(${assertion.assertionExpression})) {
-         fail("${assertionMessage}"${optionalPart});
+         fail("${assertionMessage}"${optionalPart}, getToken(1));
       }
    [/#if]
    [#if assertion.expansion??]
       if ( [#if !assertion.expansionNegated]![/#if]
       ${assertion.expansion.scanRoutineName}()) {
-         fail("${assertionMessage}"${optionalPart});
+         fail("${assertionMessage}"${optionalPart}, getToken(1));
       }
    [/#if]
 [/#macro]

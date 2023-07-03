@@ -262,10 +262,10 @@ public boolean isCancelled() {return cancelled;}
     return result;
   }
 
-  private void fail(String message) [#if settings.useCheckedException] throws ParseException [/#if] 
+  private void fail(String message, ${settings.baseTokenClassName} token) [#if settings.useCheckedException] throws ParseException [/#if] 
   {
     if (currentLookaheadToken == null) {
-      throw new ParseException(message, parsingStack);
+      throw new ParseException(message, token, parsingStack);
     }
     hitFailure = true;
   }

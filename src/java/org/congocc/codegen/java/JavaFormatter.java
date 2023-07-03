@@ -47,7 +47,7 @@ public class JavaFormatter extends Node.Visitor {
             }
             else if (alwaysPrependSpace.contains(tok.getType())) addSpaceIfNecessary();
         }
-        buf.append(tok);
+        buf.append(tok.toString());
         if (alwaysAppendSpace.contains(tok.getType())) addSpaceIfNecessary();
     }
 
