@@ -21,16 +21,16 @@ import ${settings.rootAPIPackage}.TokenSource;
 import freemarker.template.*;
 [/#if]
 
-[#var implementsNode = ""]
+[#var implements = "implements CharSequence"]
 
 [#if settings.treeBuildingEnabled]
-    [#set implementsNode ="implements Node.TerminalNode"]
+    [#set implements ="implements CharSequence, Node.TerminalNode"]
     [#if settings.rootAPIPackage?has_content]
        import ${settings.rootAPIPackage}.Node;
     [/#if]
 [/#if]
 
-public class ${settings.baseTokenClassName} ${implementsNode} {
+public class ${settings.baseTokenClassName} ${implements} {
 
     public enum TokenType 
     [#if settings.treeBuildingEnabled]
@@ -264,7 +264,7 @@ public class ${settings.baseTokenClassName} ${implementsNode} {
      */
 [#if settings.treeBuildingEnabled]@Override[/#if]
     public String getImage() {
-      [#if !settings.tokenChaining]
+      [#if settings.minimalToken]
         return getSource();
       [#else]  
         return image != null ? image : getSource();
@@ -344,17 +344,14 @@ public class ${settings.baseTokenClassName} ${implementsNode} {
 [#else]
         getTokenSource().cacheToken(result);
 [/#if]        
-
         return result;
     }
 
     public String getSource() {
          if (type == TokenType.EOF) return "";
          ${settings.lexerClassName} flm = getTokenSource();
-         return flm == null ? null : flm.getText(getBeginOffset(), getEndOffset());
+         return flm == null ? image : flm.getText(getBeginOffset(), getEndOffset());
     }
-
-
 
     protected ${settings.baseTokenClassName}() {}
 
@@ -375,9 +372,6 @@ public class ${settings.baseTokenClassName} ${implementsNode} {
 
     public void clearChildren() {}
 
-    public String toString() {
-        return getImage();
-    }
 
     /**
      * @return An iterator of the tokens preceding this one.
@@ -564,6 +558,78 @@ public class ${settings.baseTokenClassName} ${implementsNode} {
         return toString();
     }
   [/#if]
+[/#if]
 
- [/#if]
+[#if settings.usesPreprocessor]
+   private Boolean spansPPInstruction;
+   protected boolean spansPPInstruction() {
+      if (spansPPInstruction == null) {
+          spansPPInstruction = getTokenSource().spansPPInstruction(beginOffset, endOffset);
+      }
+      return spansPPInstruction;
+   }
+[/#if]
+
+   public int length() {
+      [#if !settings.minimalToken]
+         if (image !=null) return image.length();
+         image = toString();
+         return image.length();
+      [#elseif settings.usesPreprocessor]
+         if (spansPPInstruction()) return getTokenSource().length(beginOffset, endOffset);
+         return endOffset - beginOffset;
+      [#else]
+         return endOffset - beginOffset;
+      [/#if]
+   }
+
+   public CharSequence subSequence(int start, int end) {
+      [#if !settings.minimalToken]
+          if (image != null) return image.substring(start, end);
+      [/#if]
+      [#if settings.usesPreprocessor]
+         if (spansPPInstruction()) {
+            StringBuilder buf = new StringBuilder();
+            TokenSource ts = getTokenSource();
+            int scanTo = beginOffset + end;
+            for (int i = beginOffset + start; i<scanTo; i++) {
+                if (ts.isIgnored(i)) ++scanTo;
+                else buf.append(ts.charAt(i));
+            }
+            return buf; 
+         }
+      [/#if]
+      return getTokenSource().subSequence(beginOffset + start, beginOffset+end);
+   }
+
+   public char charAt(int offset) {
+      [#if !settings.minimalToken]
+          if (image != null) return image.charAt(offset);
+          image = toString();
+          return image.charAt(offset);
+      [#elseif settings.usesPreprocessor]
+          TokenSource ts = getTokenSource();
+          int scanTo = beginOffset + offset;
+          if (spansPPInstruction()) {
+             int index = beginOffset;
+             while (index < scanTo) {
+                if (ts.isIgnored(index)) ++scanTo;
+                ++index;
+             }
+          }
+          return ts.charAt(scanTo);
+      [#else]          
+          return getTokenSource().charAt(beginOffset + offset);
+      [/#if]
+   }
+
+    @Override
+    public String toString() {
+      [#if !settings.minimalToken]
+        if (image != null) {
+            return image;
+        }
+      [/#if]
+      return getSource();
+    }
 }

@@ -229,6 +229,21 @@ abstract public class TokenSource implements CharSequence
         return tokenLocationTable[offset] == IGNORED;
     }
 
+    public final boolean spansPPInstruction(int start, int end) {
+        for (int i = start; i <end; i++) {
+            if (isIgnored(i)) return true;
+        }
+        return false;
+    }
+
+    public final int length(int start, int end) {
+        int result = 0;
+        for (int i =start; i<end; i++) {
+            if (!isIgnored(i)) ++result;
+        }
+        return result;
+    }
+
     protected void setLineSkipped(${BaseToken} tok) {
        int lineNum = tok.getBeginLine();
        int start = getLineStartOffset(lineNum);
