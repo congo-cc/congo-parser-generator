@@ -23,6 +23,7 @@ public class CodeInjector {
     private final Set<String> overriddenMethods = new LinkedHashSet<>();  // Not presently queried ...
     private final Set<String> typeNames = new LinkedHashSet<>();
     private final Set<String> interfaces = new LinkedHashSet<>();  // Not presently queried ...
+    private final Set<String> finalClasses = new LinkedHashSet<>();  // Not presently queried ...
     private final Grammar grammar;
     private AppSettings appSettings;
     
@@ -35,7 +36,7 @@ public class CodeInjector {
             } else if (n instanceof CodeInjection) {
                 CodeInjection ci = (CodeInjection) n;
                 String name = ci.name;
-                add(name, ci.importDeclarations, ci.annotations, ci.extendsList, ci.implementsList, ci.body, ci.isInterface);
+                add(name, ci.importDeclarations, ci.annotations, ci.extendsList, ci.implementsList, ci.body, ci.isInterface, ci.isMarkedFinal());
             } 
         } 
     }
@@ -50,6 +51,10 @@ public class CodeInjector {
              && !classname.equals(appSettings.getBaseTokenClassName())
              && !classname.equals("InvalidToken")
              && !classname.equals("Node");
+    }
+
+    public boolean isFinal(String classname) {
+        return finalClasses.contains(classname);
     }
     
     private void add(CompilationUnit jcu) {
@@ -133,11 +138,15 @@ public class CodeInjector {
     }
 
     private void add(String name, List<ImportDeclaration> importDeclarations, List<Annotation> annotations, List<ObjectType> extendsList,
-            List<ObjectType> implementsList, ClassOrInterfaceBody body, boolean isInterface) 
+            List<ObjectType> implementsList, ClassOrInterfaceBody body, boolean isInterface, boolean isFinal) 
     {
         typeNames.add(name);
         if (isInterface) {
+            assert !isFinal;
             interfaces.add(name);
+        }
+        if (isFinal) {
+            finalClasses.add(name);
         }
         String packageName = isInNodePackage(name) ? appSettings.getNodePackage() : appSettings.getParserPackage();
         if (packageName.length() >0) {

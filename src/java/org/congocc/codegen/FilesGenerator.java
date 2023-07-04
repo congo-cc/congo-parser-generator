@@ -197,6 +197,7 @@ public class FilesGenerator {
         dataModel.put("filename", currentFilename);
         dataModel.put("isAbstract", grammar.nodeIsAbstract(nodeName));
         dataModel.put("isInterface", grammar.nodeIsInterface(nodeName));
+        dataModel.put("isFinal", codeInjector.isFinal(nodeName));
         String classname = currentFilename.substring(0, currentFilename.length() - 5);
         String superClassName = superClassLookup.get(classname);
         if (superClassName == null) superClassName = appSettings.getBaseTokenClassName();

@@ -21,6 +21,8 @@ public interface ${classname} extends Node {}
 import ${settings.parserPackage}.${settings.baseTokenClassName}.TokenType;
 import static ${settings.parserPackage}.${settings.baseTokenClassName}.TokenType.*;
 
+public 
 [#if isAbstract]abstract[/#if]
-public class ${classname} extends ${settings.baseNodeClassName} {}
+[#if isFinal]final[/#if]
+class ${classname} extends ${settings.baseNodeClassName} {}
 [/#if]

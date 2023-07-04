@@ -904,16 +904,16 @@ CodeInjection :
     Annotation ann;
     ClassOrInterfaceBody coib;
 }   
-        ACTIVATE_TOKENS _INJECT (<_INJECT>) ["(" {usingParentheses = true;}]
+        ACTIVATE_TOKENS _INJECT (<_INJECT>) 
+        [
+            <FINAL>
+        ]
         [
             "class"
             |
             "interface" {isInterface = true;}
         ]
         <IDENTIFIER> {CURRENT_NODE.name = lastConsumedToken.toString();} 
-        [
-            SCAN {usingParentheses} => ")"
-        ]
         ":"
         =>|+1
         [
@@ -963,6 +963,7 @@ INJECT CodeInjection :
 
    public void addExtendsType(ObjectType type) {extendsList.add(type);}
    public void addImplementsType(ObjectType type) {implementsList.add(type);}
+   public boolean isMarkedFinal() {return firstChildOfType(FINAL)!=null;}
 }
 
 CodeInjection2 :
