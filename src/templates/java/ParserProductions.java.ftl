@@ -1,6 +1,7 @@
 [#-- This template contains the core logic for generating the various parser routines. --]
 
 [#var nodeNumbering = 0]
+[#var choiceOrdinal = 0]
 [#var NODE_USES_PARSER = settings.nodeUsesParser]
 [#var NODE_PREFIX = grammar.nodePrefix]
 [#var currentProduction]
@@ -8,6 +9,16 @@
                               an expansion immediately below the BNF production expansion, 
                               ignoring an ExpansionSequence that might be there. 
                           --]
+[#var jtbNameMap = {
+   "Terminal" : "nodeToken",
+   "Sequence" : "nodeSequence",
+   "Choice" : "nodeChoice",
+   "ZeroOrOne" : "nodeOptional",
+   "ZeroOrMore" : "nodeListOptional",
+   "OneOrMore" : "nodeList" }]
+[#var nodeFieldOrdinal = {}]
+[#var syntacticNodesEnabled = settings.syntacticNodesEnabled && settings.treeBuildingEnabled]
+[#var jtbParseTree = syntacticNodesEnabled && settings.jtbParseTree]
 
 [#macro Productions] 
  //=================================
@@ -16,6 +27,7 @@
  //=================================
   [#list grammar.parserProductions as production]
    [#set nodeNumbering = 0]
+   [#set nodeFieldOrdinal = {}]
    [@CU.firstSetVar production.expansion/]
    [#if !production.onlyForLookahead]
     [#set currentProduction = production]
@@ -150,11 +162,76 @@
    [/#if]
 [/#macro]
 
+[#function imputedFieldName nodeClass]
+   [#if nodeClass?? && jtbParseTree && topLevelExpansion]
+      [#var fieldName = nodeClass?uncap_first]
+      [#var fieldOrdinal]
+      [#if jtbParseTree && jtbNameMap[nodeClass]??] 
+         [#-- Allow for JTB-style syntactic node names (but excluding Token and <non-terminal> ). --]
+         [#set fieldName = jtbNameMap[nodeClass]/]
+      [/#if]
+      [#set fieldOrdinal = nodeFieldOrdinal[nodeClass]!null]
+      [#if fieldOrdinal?is_null]
+         [#set nodeFieldOrdinal = nodeFieldOrdinal + {nodeClass : 1}]
+      [#else]
+         [#set nodeFieldOrdinal = nodeFieldOrdinal + {nodeClass : fieldOrdinal + 1}]
+      [/#if]
+      [#var nodeFieldName = fieldName + fieldOrdinal!""]
+      [#-- INJECT <production-node> : { public <field-type> <unique-field-name> } --]
+      ${grammar.addFieldInjection(currentProduction.nodeName, "public", nodeClass, nodeFieldName)}
+      [#return nodeFieldName/]
+   [/#if]
+   [#return null/]
+[/#function]
+
 [#function resolveTreeNodeBehavior expansion]
    [#var treeNodeBehavior = expansion.treeNodeBehavior]
    [#var isProduction = false]
    [#if expansion.simpleName = "BNFProduction"]
       [#set isProduction = true]
+   [#else]
+      [#if syntacticNodesEnabled && 
+           !treeNodeBehavior?? && 
+           isProductionInstantiatingNode(expansion) && 
+           expansion.parent.simpleName != "ExpansionWithParentheses"
+      ]
+         [#-- Syntactic tree is enabled and no in-line annotation; synthesize a parser node for the expansion type being built, if needed. --]
+         [#var nodeName = syntacticNodeName(expansion)]
+         [#if nodeName??]
+            [#var nodeFieldName = imputedFieldName(nodeName)]
+            [#var gtNode = false]
+            [#var condition = null]
+            [#var initialShorthand = null]
+            [#if nodeName == "Choice"]
+               [#set gtNode = true]
+               [#set condition = "0"]
+               [#set initialShorthand = " > "]
+            [/#if]
+            [#if nodeFieldName??]
+               [#-- We need to provide a synthetic LHS 
+                    to save the syntactic node in a synthetic field 
+                    injected into the actual production node. 
+               --]
+               [#set treeNodeBehavior = {
+                                          'nodeName' : nodeName!"nemo", 
+                                          'condition' : condition, 
+                                          'gtNode' : gtNode, 
+                                          'initialShorthand' : initialShorthand,
+                                          'void' : false, 
+                                          'LHS' : "thisProduction.${nodeFieldName}"
+                                        } /]
+            [#else]
+               [#-- Just provide the syntactic node with no LHS needed --]
+               [#set treeNodeBehavior = {
+                                          'nodeName' : nodeName!"nemo",  
+                                          'condition' : condition, 
+                                          'gtNode' : gtNode, 
+                                          'initialShorthand' : initialShorthand,
+                                          'void' : false
+                                        } /]
+            [/#if]
+         [/#if]
+      [/#if]
    [/#if]
    [#if !treeNodeBehavior??] 
       [#if isProduction && !settings.nodeDefaultVoid]
@@ -204,6 +281,15 @@
 [/#macro]
 
 [#function isProductionInstantiatingNode expansion] 
+[#-- REVISIT[jb]: this is really not right, I think. 
+     Syntactic nodes should probably be produced, even if
+     the BNFProduction node is not.  But if so, then I would
+     think there should be the option to suppress the node
+     with an inline notation like "#void" instead of "#name'.
+     I'm not doing it now because the syntax in that area is
+     already so complicated due to the ambiguity resolution of "#" in
+     that position.  Maybe later if it becomes important.
+     --]
    [#if expansion.containingProduction.treeNodeBehavior?? && 
         expansion.containingProduction.treeNodeBehavior.neverInstantiated!false]
       [#return false/]
@@ -233,6 +319,42 @@
       [/#if]
    [/#if]
    [#return cc/]
+[/#function]
+
+[#function syntacticNodeName expansion]
+      [#var classname = expansion.simpleName]
+      [#if classname = "ZeroOrOne"]
+         [#return classname/]
+      [#elseif classname = "ZeroOrMore"]
+         [#return classname/]
+      [#elseif classname = "OneOrMore"]
+         [#return classname/]
+      [#elseif classname = "Terminal"]
+         [#return classname/]
+      [#elseif classname = "ExpansionChoice"]
+         [#return "Choice"/]
+      [#elseif classname = "ExpansionWithParentheses" || classname = "BNFProduction"]
+         [#-- the () will be skipped and the nested expansion processed, so built the tree node for it rather than this --]
+         [#var innerExpansion = expansion.nestedExpansion/]
+         [#return syntacticNodeName(innerExpansion)/]
+      [#elseif classname = "ExpansionSequence" && 
+                           expansion.parent?? &&
+                           (
+                              expansion.parent.simpleName == "ExpansionWithParentheses" ||
+                              (
+                                 expansion.parent.simpleName == "ZeroOrOne" ||
+                                 expansion.parent.simpleName == "OneOrMore" ||
+                                 expansion.parent.simpleName == "ZeroOrMore" ||
+                                 expansion.parent.simpleName == "ExpansionChoice"
+                              ) && expansion.essentialSequence
+                           )]
+         [#return "Sequence"/]
+      [/#if]
+      [#return null/]
+[/#function]
+
+[#function jtbFieldDeclPrefix production fieldClassName]
+   [#return "${fieldClassName} ${fieldClassName?uncap_first}" /]
 [/#function]
 
 [#--  Boilerplate code to create the node variable --]
@@ -350,6 +472,13 @@
    [#var LHS = "", regexp=terminal.regexp]
    [#if terminal.lhs??]
       [#set LHS = terminal.lhs + "="]
+   [#else]
+      [#--]
+      [#if jtbParseTree && isProductionInstantiatingNode(terminal) && topLevelExpansion]
+         [#var nodeClass = "Terminal"]
+         [#set LHS = "thisProduction.${imputedFieldName(nodeClass)} = "]
+      [/#if]
+      --]
    [/#if]
    [#if !settings.faultTolerant]
        ${LHS} consumeToken(${regexp.label});
@@ -430,6 +559,9 @@
 [#macro AcceptNonTerminal nonterminal]
    [#var expressedLHS = nonterminal.LHS]
    [#var impliedLHS = null]
+   [#if jtbParseTree && isProductionInstantiatingNode(nonterminal.nestedExpansion) && topLevelExpansion]
+      [#set impliedLHS = "thisProduction.${imputedFieldName(nonterminal.production.nodeName)}"]
+   [/#if]
    [#if nonterminal.production.returnType != "void"]
       [#if expressedLHS??]
          ${expressedLHS} = 
@@ -539,6 +671,9 @@
         {
          // choice for ${globals.currentNodeVariableName} index ${expansion_index}
          ${BuildCode(expansion)}
+         [#if jtbParseTree && isProductionInstantiatingNode(expansion)]
+            ${globals.currentNodeVariableName}.setChoice(${expansion_index});
+         [/#if]
         }
         [#if expansion_has_next]
             [#var nextExpansion = choice[expansion_index+1]]
@@ -551,7 +686,11 @@
       if (${ExpansionCondition(expansion)}) { 
          // choice for ${globals.currentNodeVariableName} index ${expansion_index}
          ${BuildCode(expansion)}
+         [#if jtbParseTree && isProductionInstantiatingNode(expansion)]
+            ${globals.currentNodeVariableName}.setChoice(${expansion_index});
+         [/#if]
       }
+
       [#if expansion_has_next] else [/#if]
    [/#list]
    [#if choice.parent.simpleName == "ZeroOrMore"]
