@@ -178,7 +178,7 @@ public class CodeInjector {
      */
     public void add(CodeInjection ci) {
         String name = ci.name;
-        add(name, ci.importDeclarations, ci.annotations, ci.extendsList, ci.implementsList, ci.body, ci.isInterface);
+        add(name, ci.importDeclarations, ci.annotations, ci.extendsList, ci.implementsList, ci.body, ci.isInterface, ci.isMarkedFinal());
     }
 
     public void injectCode(CompilationUnit jcu) {
