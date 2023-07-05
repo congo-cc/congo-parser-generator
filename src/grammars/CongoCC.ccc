@@ -893,7 +893,7 @@ GrammarInclusion throws IOException :
    }
 ;
 
-CodeInjection :
+#CodeInjection :
 {
     boolean isInterface = false;
     Annotation annotation = null;
@@ -946,12 +946,14 @@ CodeInjection :
                 if (enterIncludes) {
                     grammar.addCodeInjection(CURRENT_NODE);
                 }
+                return CURRENT_NODE;
         }
 ;
 
 INJECT CodeInjection : 
    import java.util.List;
    import java.util.ArrayList;
+   import org.congocc.core.Grammar;
 {
    public String name;
    public List<ImportDeclaration> importDeclarations = new ArrayList<ImportDeclaration>();
@@ -959,7 +961,23 @@ INJECT CodeInjection :
    public List<ObjectType> extendsList = new ArrayList<>();
    public List<ObjectType> implementsList = new ArrayList<>();
    public ClassOrInterfaceBody body; 
-   public boolean isInterface;   
+   public boolean isInterface;
+   
+   public static void inject(Grammar grammar, String nodeName, String injection) {
+        String inject = "INJECT " + nodeName + " : " + injection;
+        CongoCCParser parser;
+        try {
+            parser = new CongoCCParser(grammar, "dynamicInjection", inject);
+            parser.setEnterIncludes(true);
+            CodeInjection ci = parser.CodeInjection();
+            grammar.getInjector().add(ci);
+        } catch (Exception e) {
+            //FIXME: need something better here!
+            System.err.println("parser exception: " + e.getLocalizedMessage());
+        } finally {
+            parser = null;
+        }        
+   }
 
    public void addExtendsType(ObjectType type) {extendsList.add(type);}
    public void addImplementsType(ObjectType type) {implementsList.add(type);}
@@ -1467,8 +1485,10 @@ ExpansionWithParentheses :
 
 
 INJECT ExpansionWithParentheses : 
-   import org.congocc.core.*;
+   import org.congocc.core.*; 
+   import org.congocc.core.ExpansionSequence.*;
    extends ExpansionWithNested
+   implements SyntaxElement
 {
     @Override 
     public String getSpecifiedLexicalState() {
@@ -1831,8 +1851,10 @@ Terminal# :
 
 INJECT Terminal :
    import org.congocc.core.*;
+   import org.congocc.core.ExpansionSequence.*;
    import java.util.Set;
    extends Expansion
+   implements SyntaxElement
 {
     @Property RegularExpression regexp;
     @Property Name lhs;
