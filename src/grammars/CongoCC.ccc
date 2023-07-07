@@ -340,7 +340,7 @@ INJECT FormalParameter :
         Node last = getLastChild();
 
         if (last instanceof Identifier) {
-            result = ((Identifier) last).getImage();
+            result = ((Identifier) last).toString();
         }
         return result;
     }
@@ -695,7 +695,7 @@ INJECT Identifier :
     private String tokenHookName, resetTokenHookName, openHookName, closeHookName;
 
     public String toString() {
-        String image = getImage();
+        String image = getSource();
         if (image.equals("jjtThis") || image.equals("CURRENT_NODE")) { 
             return getGrammar().getTemplateGlobals().getCurrentNodeVariableName();
         }
@@ -1003,7 +1003,7 @@ Setting(Map<String,Object> settings) #Setting :
   )
   =>|+1
   {
-      key = name.getImage().toUpperCase();
+      key = name.getSource().toUpperCase();
   }
   [
      "="

@@ -123,11 +123,6 @@ INJECT BASE_TOKEN_CLASS : {
    public BASE_TOKEN_CLASS getPreviousToken() {
         return previousCachedToken();
     }
-
-   public void setImage(String image) {
-      this.image = image;
-   }
-
 }
 
 INJECT DedentToken : 

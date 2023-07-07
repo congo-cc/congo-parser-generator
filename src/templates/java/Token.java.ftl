@@ -65,9 +65,26 @@ public class ${settings.baseTokenClassName} ${implements} {
 [/#if]
 
 [#if !settings.minimalToken]
-    private String image;
+    private String cachedImage;
+
+    /**
+     * @deprecated use setCachedImage
+     */
     public void setImage(String image) {
-       this.image = image;
+       setCachedImage(image);
+    }
+
+    /**
+     * If cachedImage is set, then the various methods
+     * that implement #java.lang.CharSequence use that string
+     * rather than what is returned by getSource()
+     */
+    public void setCachedImage(String image) {
+        this.cachedImage = image;
+    }
+
+    public String getCachedImage() {
+        return this.cachedImage;
     }
 [/#if]
 
@@ -104,13 +121,13 @@ public class ${settings.baseTokenClassName} ${implements} {
      */
     public ${settings.baseTokenClassName}(TokenType type, String image, ${settings.lexerClassName} tokenSource) {
         this.type = type;
-        this.image = image;
+        this.cachedImage = image;
         this.tokenSource = tokenSource;
     }
 
     public static ${settings.baseTokenClassName} newToken(TokenType type, String image, ${settings.lexerClassName} tokenSource) {
         ${settings.baseTokenClassName} result = newToken(type, tokenSource, 0, 0);
-        result.setImage(image);
+        result.setCachedImage(image);
         return result;
     }
 [/#if]
@@ -263,13 +280,6 @@ public class ${settings.baseTokenClassName} ${implements} {
      * @return the string image of the token.
      */
 [#if settings.treeBuildingEnabled]@Override[/#if]
-    public String getImage() {
-      [#if settings.minimalToken]
-        return getSource();
-      [#else]  
-        return image != null ? image : getSource();
-      [/#if]
-    }
 
     /**
      * @return the next _cached_ regular (i.e. parsed) token
@@ -572,9 +582,9 @@ public class ${settings.baseTokenClassName} ${implements} {
 
    public int length() {
       [#if !settings.minimalToken]
-         if (image !=null) return image.length();
-         image = toString();
-         return image.length();
+         if (cachedImage !=null) return cachedImage.length();
+         cachedImage = toString();
+         return cachedImage.length();
       [#elseif settings.usesPreprocessor]
          if (spansPPInstruction()) return getTokenSource().length(beginOffset, endOffset);
          return endOffset - beginOffset;
@@ -585,7 +595,7 @@ public class ${settings.baseTokenClassName} ${implements} {
 
    public CharSequence subSequence(int start, int end) {
       [#if !settings.minimalToken]
-          if (image != null) return image.substring(start, end);
+          if (cachedImage != null) return cachedImage.substring(start, end);
       [/#if]
       [#if settings.usesPreprocessor]
          if (spansPPInstruction()) {
@@ -604,9 +614,9 @@ public class ${settings.baseTokenClassName} ${implements} {
 
    public char charAt(int offset) {
       [#if !settings.minimalToken]
-          if (image != null) return image.charAt(offset);
-          image = toString();
-          return image.charAt(offset);
+          if (cachedImage != null) return cachedImage.charAt(offset);
+          cachedImage = toString();
+          return cachedImage.charAt(offset);
       [#elseif settings.usesPreprocessor]
           TokenSource ts = getTokenSource();
           int scanTo = beginOffset + offset;
@@ -623,11 +633,28 @@ public class ${settings.baseTokenClassName} ${implements} {
       [/#if]
    }
 
+    /**
+[#if settings.minimalToken]
+     * @deprecated Use toString() instead
+[#else]     
+     * @deprecated Typically use just toString() or occasionally getCachedImage()
+[/#if]     
+     */    
+    public String getImage() {
+      [#if !settings.minimalToken]
+        if (cachedImage != null) {
+            return cachedImage;
+        }
+      [/#if]
+      return getSource();
+    }
+
+
     @Override
     public String toString() {
       [#if !settings.minimalToken]
-        if (image != null) {
-            return image;
+        if (cachedImage != null) {
+            return cachedImage;
         }
       [/#if]
       return getSource();

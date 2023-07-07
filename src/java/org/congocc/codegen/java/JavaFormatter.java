@@ -172,8 +172,8 @@ public class JavaFormatter extends Node.Visitor {
             case SEMICOLON:
                 if (buf.charAt(buf.length() - 1) != ' ') { // detect rogue semicolons
                     buf.append(delimiter);
-                    if (!ForStatement.class.isInstance(delimiter.getParent())
-                            && !ImportDeclaration.class.isInstance(delimiter.getParent()))
+                    if (!(delimiter.getParent() instanceof ForStatement)
+                            && !(delimiter.getParent() instanceof ImportDeclaration))
                         newLine();
                 } else for (int i = 1; i <= 6; i++) // remove rogue semicolons
                     if (buf.charAt(buf.length() - 1) == ' ' || buf.charAt(buf.length() - 1) == '\n')
