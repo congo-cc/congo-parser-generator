@@ -33,20 +33,36 @@ public interface Node extends List<Node>
             setEndOffset(newEndOffset);
         }
 
-        default void setChild(int i, Node n) {
-            throw new UnsupportedOperationException();
+        default boolean add(Node n) {
+            throw new UnsupportedOperationException("This is a terminal node. It has no child nodes.");
+        }
+
+        default void add(int i, Node n) {
+            throw new UnsupportedOperationException("This is a terminal node. It has no child nodes.");
         }
 
         default void addChild(Node n) {
-            throw new UnsupportedOperationException();
+            throw new UnsupportedOperationException("This is a terminal node. It has no child nodes.");
         }
 
         default void addChild(int i, Node n) {
-            throw new UnsupportedOperationException();
+            throw new UnsupportedOperationException("This is a terminal node. It has no child nodes.");
+        }
+
+        default Node remove(int i) {
+            throw new UnsupportedOperationException("This is a terminal node. It has no child nodes.");
         }
 
         default Node removeChild(int i) {
             throw new UnsupportedOperationException();
+        }
+        
+        default void setChild(int i, Node n) {
+            throw new UnsupportedOperationException("This is a terminal node. It has no child nodes.");
+        }
+
+        default Node set(int i, Node n) {
+            throw new UnsupportedOperationException("This is a terminal node. It has no child nodes.");
         }
 
         default int indexOf(Node n) {
@@ -61,28 +77,12 @@ public interface Node extends List<Node>
             return null;
         }
 
-        default List<Node> children() {
-            return java.util.Collections.emptyList();
-        }
-
-        default Node remove(int i) {
-            throw new UnsupportedOperationException("This is a terminal node. It has no child nodes.");
-        }
-
-        default void add(int i, Node n) {
-            throw new UnsupportedOperationException("This is a terminal node. It has no child nodes.");
-        }
-
-        default boolean add(Node n) {
-            throw new UnsupportedOperationException("This is a terminal node. It has no child nodes.");
-        }
-
         default Node get(int i) {
             throw new UnsupportedOperationException("This is a terminal node. It has no child nodes.");
         }
 
-        default Node set(int i, Node n) {
-            throw new UnsupportedOperationException("This is a terminal node. It has no child nodes.");
+        default List<Node> children() {
+            return java.util.Collections.emptyList();
         }
 
         default void clearChildren() {}
@@ -136,10 +136,10 @@ public interface Node extends List<Node>
      // delegate straightforwardly to a List object that
      // holds the child nodes
 
-     /**
-      * appends a child node to this Node
-      * @param n the Node to append
-      */ 
+    /**
+     * appends a child Node
+     * @deprecated Use #add(Node)
+     */
      void addChild(Node n);
 
      /**
@@ -147,12 +147,14 @@ public interface Node extends List<Node>
       * nodes after the index by 1.
       * @param i the (zero-based) index at which to insert the node
       * @param n the Node to insert
+      * @deprecated Use #add(int,Node)
       */
      void addChild(int i, Node n);
 
      /**
       * @return the Node at the specific offset
       * @param i the index of the Node to return
+      * @deprecated Use #get(int)
       */
      Node getChild(int i);
 
@@ -160,7 +162,8 @@ public interface Node extends List<Node>
       * Replace the node at index i
       * @param i the index
       * @param n the node  
-      */ 
+      * @deprecated Use #set(int,Node)
+      */
      void setChild(int i, Node n);
 
      /**
@@ -168,6 +171,7 @@ public interface Node extends List<Node>
       * are shifted to the left.
       * @return the removed Node
       * @param i the index at which to remove 
+      * @deprecated Use #remove(int)
       */
      Node removeChild(int i);
 
@@ -179,6 +183,7 @@ public interface Node extends List<Node>
       * Removes the Node from this node's children
       * @param n the Node to remove
       * @return whether the Node was present
+      * @deprecated Use #remove(Node)
       */ 
      default boolean removeChild(Node n) {
          int index = indexOf(n);
@@ -193,14 +198,28 @@ public interface Node extends List<Node>
       * @param current the Node to be replaced
       * @param replacement the Node to substitute
       * @return whether any replacement took place
+      * @deprecated Use #replace(Node,Node)
       */
      default boolean replaceChild(Node current, Node replacement) {
+         return replace(current, replacement);
+     }
+
+
+     /**
+      * Replaces a child node with another one. It does
+      * nothing if the first parameter is not actually a child node.
+      * @param current the Node to be replaced
+      * @param replacement the Node to substitute
+      * @return whether any replacement took place
+      */
+     default boolean replace(Node current, Node replacement) {
          int index = indexOf(current);
          if (index == -1) return false;
          setChild(index, replacement);
          current.setParent(null);
          return true;
      }
+
 
      /**
       * Insert a Node right before a given Node. It does nothing
@@ -300,7 +319,7 @@ public interface Node extends List<Node>
           return result;
       }
 
-   default public List<? extends TerminalNode> getAllTokens(boolean includeCommentTokens) {
+      default public List<? extends TerminalNode> getAllTokens(boolean includeCommentTokens) {
 		List<TerminalNode> result = new ArrayList<>();
         for (Iterator<Node> it = iterator(); it.hasNext();) {
             Node child = it.next();
@@ -683,10 +702,9 @@ public interface Node extends List<Node>
 
 [/#if]    
 
-    // NB: This is not thread-safe
+    // NB: This default implementation is not thread-safe
     // If the node's children could change out from under you,
     // you could have a problem.
-
     default public ListIterator<Node> iterator() {
         return new ListIterator<Node>() {
             private int current = -1;

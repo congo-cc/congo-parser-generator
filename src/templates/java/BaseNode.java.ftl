@@ -133,11 +133,18 @@ public class ${settings.baseNodeClassName} implements Node {
     }
 
     public void setChild(int i, Node n) {
+        children.get(i).setParent(null);
         children.set(i, n);
         n.setParent(this);
     }
     
     public Node removeChild(int i) {
+        Node n = children.remove(i);
+        n.setParent(null);
+        return n;
+    }
+
+    public Node remove(int i) {
         Node n = children.remove(i);
         n.setParent(null);
         return n;
@@ -174,14 +181,12 @@ public class ${settings.baseNodeClassName} implements Node {
         this.endOffset = endOffset;
     }
 
-    public Node remove(int i) {
-        Node n = children.remove(i);
-        n.setParent(null);
-        return n;
-    }
-
+    /**
+     * Note that, by default, the returned list 
+     * is not modifiable.
+     */
     public List<Node> subList(int from, int to) {
-        return children.subList(from, to);
+        return children().subList(from, to);
     }
 
     public List<${settings.baseTokenClassName}> getRealTokens() {
