@@ -138,7 +138,9 @@ public class ${settings.baseNodeClassName} implements Node {
     }
     
     public Node removeChild(int i) {
-        return children.remove(i);
+        Node n = children.remove(i);
+        n.setParent(null);
+        return n;
     }
 
     public void clearChildren() {
@@ -169,8 +171,36 @@ public class ${settings.baseNodeClassName} implements Node {
         this.endOffset = endOffset;
     }
 
+    public Node remove(int i) {
+        Node n = children.remove(i);
+        n.setParent(null);
+        return n;
+    }
+
     public List<${settings.baseTokenClassName}> getRealTokens() {
         return descendants(${settings.baseTokenClassName}.class, t->!t.isUnparsed());
+    }
+
+    public void add(int i, Node n) {
+        addChild(i, n);
+    }
+
+    public Node get(int i) {
+        return getChild(i);
+    }
+
+    public Node set(int i, Node n) {
+        setChild(i, n);
+        return n;
+    }
+
+    public boolean add(Node n) {
+        addChild(n);
+        return true;
+    }
+
+    public void clear() {
+        clearChildren();
     }
      
 [#if settings.freemarkerNodes]

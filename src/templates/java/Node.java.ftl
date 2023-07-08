@@ -9,9 +9,9 @@ import java.util.function.Predicate;
 import freemarker.template.*;
 [/#if]
 
-public interface Node
+public interface Node extends List<Node>
 [#if settings.freemarkerNodes]
-   extends TemplateNodeModel, TemplateScalarModel
+   , TemplateNodeModel, TemplateScalarModel
 [/#if] {
     // Marker interface for objects
     // that represent a node's type, i.e. TokenType
@@ -117,6 +117,10 @@ public interface Node
       */
      Node removeChild(int i);
 
+     default boolean remove(Object obj) {
+        return removeChild((Node) obj);
+    }
+
      /**
       * Removes the Node from this node's children
       * @param n the Node to remove
@@ -140,6 +144,7 @@ public interface Node
          int index = indexOf(current);
          if (index == -1) return false;
          setChild(index, replacement);
+         current.setParent(null);
          return true;
      }
 
@@ -676,6 +681,76 @@ public interface Node
                 setChild(current, n);
             }
         };
+    }
+
+    default List<Node> subList(int from, int to) {
+        throw new UnsupportedOperationException();
+    }
+
+    default ListIterator<Node> listIterator() {
+        return iterator();
+    }
+
+    default ListIterator<Node> listIterator(int i) {
+        throw new UnsupportedOperationException();
+    }
+
+    default int indexOf(Object obj) {
+        for (int i = 0; i< getChildCount(); i++) {
+            if (getChild(i).equals(obj)) return i;
+        }
+        return -1;
+    }
+
+    default int lastIndexOf(Object obj) {
+        for (int i = getChildCount() -1; i>=0; i--) {
+            if (getChild(i).equals(obj)) return i;
+        }
+        return -1;
+    }
+
+    default boolean addAll(Collection<? extends Node> nodes) {
+        throw new UnsupportedOperationException();
+    }
+
+    default boolean addAll(int i, Collection<? extends Node> nodes) {
+        throw new UnsupportedOperationException();
+    }
+
+    default boolean containsAll(Collection<?> nodes) {
+        throw new UnsupportedOperationException();
+    }
+
+    default boolean retainAll(Collection<?> nodes) {
+        throw new UnsupportedOperationException();
+    }
+
+    default boolean removeAll(Collection<?> nodes) {
+        throw new UnsupportedOperationException();
+    }
+
+    default <T> T[] toArray(T[] nodes) {
+        return children().toArray(nodes);
+    }
+
+    default Object[] toArray() {
+        return children().toArray();
+    }
+
+    default boolean contains(Object obj) {
+        return indexOf(obj) >= 0;
+    }
+
+    default boolean isEmpty() {
+        return getChildCount() == 0;
+    }
+
+    default int size() {
+        return getChildCount();
+    }
+
+    default void clear() {
+        clearChildren();
     }
 
  	static abstract public class Visitor {

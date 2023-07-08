@@ -380,7 +380,6 @@ public class ${settings.baseTokenClassName} ${implements} {
         this.unparsed = unparsed;
     }
 
-    public void clearChildren() {}
 
 
     /**
@@ -542,6 +541,35 @@ public class ${settings.baseTokenClassName} ${implements} {
     public final List<Node> children() {
         return java.util.Collections.emptyList();
     }
+
+    public Node remove(int i) {
+        throw new UnsupportedOperationException("This is a terminal node. It has no child nodes.");
+    }
+
+    public void add(int i, Node n) {
+        throw new UnsupportedOperationException("This is a terminal node. It has no child nodes.");
+    }
+
+    public boolean add(Node n) {
+        throw new UnsupportedOperationException("This is a terminal node. It has no child nodes.");
+    }
+
+    public Node get(int i) {
+        throw new UnsupportedOperationException("This is a terminal node. It has no child nodes.");
+    }
+
+    public Node set(int i, Node n) {
+        throw new UnsupportedOperationException("This is a terminal node. It has no child nodes.");
+    }
+
+    public void clearChildren() {}
+    
+    //public void clear() {}
+
+    public boolean isEmpty() {
+        return length() == 0;
+    }
+
 
    [#if settings.freemarkerNodes]
     public TemplateNodeModel getParentNode() {
