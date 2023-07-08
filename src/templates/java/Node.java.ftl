@@ -32,6 +32,60 @@ public interface Node extends List<Node>
             int newEndOffset = Math.max(getBeginOffset(), getEndOffset()-amount);
             setEndOffset(newEndOffset);
         }
+
+        default void setChild(int i, Node n) {
+            throw new UnsupportedOperationException();
+        }
+
+        default void addChild(Node n) {
+            throw new UnsupportedOperationException();
+        }
+
+        default void addChild(int i, Node n) {
+            throw new UnsupportedOperationException();
+        }
+
+        default Node removeChild(int i) {
+            throw new UnsupportedOperationException();
+        }
+
+        default int indexOf(Node n) {
+            return -1;
+        }
+
+        default int getChildCount() {
+            return 0;
+        }
+
+        default Node getChild(int i) {
+            return null;
+        }
+
+        default List<Node> children() {
+            return java.util.Collections.emptyList();
+        }
+
+        default Node remove(int i) {
+            throw new UnsupportedOperationException("This is a terminal node. It has no child nodes.");
+        }
+
+        default void add(int i, Node n) {
+            throw new UnsupportedOperationException("This is a terminal node. It has no child nodes.");
+        }
+
+        default boolean add(Node n) {
+            throw new UnsupportedOperationException("This is a terminal node. It has no child nodes.");
+        }
+
+        default Node get(int i) {
+            throw new UnsupportedOperationException("This is a terminal node. It has no child nodes.");
+        }
+
+        default Node set(int i, Node n) {
+            throw new UnsupportedOperationException("This is a terminal node. It has no child nodes.");
+        }
+
+        default void clearChildren() {}
     }
 
     default NodeType getType() { return null; }

@@ -144,6 +144,9 @@ public class ${settings.baseNodeClassName} implements Node {
     }
 
     public void clearChildren() {
+        for (Node child : children) {
+            child.setParent(null);
+        }
         children.clear();
     }
 
@@ -175,6 +178,10 @@ public class ${settings.baseNodeClassName} implements Node {
         Node n = children.remove(i);
         n.setParent(null);
         return n;
+    }
+
+    public List<Node> subList(int from, int to) {
+        return children.subList(from, to);
     }
 
     public List<${settings.baseTokenClassName}> getRealTokens() {

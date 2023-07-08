@@ -11,6 +11,7 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Iterator;
 import java.util.List;
+import java.util.ListIterator;
 
 [#if settings.rootAPIPackage?has_content]
 import ${settings.rootAPIPackage}.Node;
@@ -502,26 +503,6 @@ public class ${settings.baseTokenClassName} ${implements} {
 
 [#if settings.treeBuildingEnabled]
 
-    public void setChild(int i, Node n) {
-        throw new UnsupportedOperationException();
-    }
-
-    public void addChild(Node n) {
-        throw new UnsupportedOperationException();
-    }
-
-    public void addChild(int i, Node n) {
-        throw new UnsupportedOperationException();
-    }
-
-    public Node removeChild(int i) {
-        throw new UnsupportedOperationException();
-    }
-
-    public final int indexOf(Node n) {
-        return -1;
-    }
-
     public Node getParent() {
         return parent;
     }
@@ -529,42 +510,6 @@ public class ${settings.baseTokenClassName} ${implements} {
     public void setParent(Node parent) {
         this.parent = parent;
     }
-
-    public final int getChildCount() {
-        return 0;
-    }
-
-    public final Node getChild(int i) {
-        return null;
-    }
-
-    public final List<Node> children() {
-        return java.util.Collections.emptyList();
-    }
-
-    public Node remove(int i) {
-        throw new UnsupportedOperationException("This is a terminal node. It has no child nodes.");
-    }
-
-    public void add(int i, Node n) {
-        throw new UnsupportedOperationException("This is a terminal node. It has no child nodes.");
-    }
-
-    public boolean add(Node n) {
-        throw new UnsupportedOperationException("This is a terminal node. It has no child nodes.");
-    }
-
-    public Node get(int i) {
-        throw new UnsupportedOperationException("This is a terminal node. It has no child nodes.");
-    }
-
-    public Node set(int i, Node n) {
-        throw new UnsupportedOperationException("This is a terminal node. It has no child nodes.");
-    }
-
-    public void clearChildren() {}
-    
-    //public void clear() {}
 
     public boolean isEmpty() {
         return length() == 0;
