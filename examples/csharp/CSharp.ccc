@@ -1670,7 +1670,7 @@ ParenthesizedExpression : <LPAREN> Expression <RPAREN> ;
 INJECT ParenthesizedExpression : implements Expression
 {
    public boolean isAssignableTo() {
-      return ((Expression) get(1)).isAssignableTo();
+      return ((Expression) getChild(1)).isAssignableTo();
    }
 }
 

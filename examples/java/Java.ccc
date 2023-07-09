@@ -856,7 +856,7 @@ PrimaryExpression#interface :
 // For now, I'm not including a check for that. The compiler catches it, after all. Also, it is
 // still unclear to me whether this should be caught at this point or if it is better to just do
 // a post-parse tree walk that runs over the AST and checks for these things.
-//  SCAN 1 {getTokenType(0) == IDENTIFIER && (currentLookaheadToken==null || (peekNode().size() > 1 || !tokenImage(0).equals("yield")))}#
+//  SCAN 1 {getTokenType(0) == IDENTIFIER && (currentLookaheadToken==null || (peekNode().getChildCount() > 1 || !tokenImage(0).equals("yield")))}#
   SCAN 1 {getTokenType(0) == IDENTIFIER}#
   =>
   InvocationArguments #MethodCall(+1)
@@ -1032,7 +1032,7 @@ BlockStatement#void :
   RecordDeclaration
   |
   LocalVariableDeclaration { Node varDecl = peekNode(); }
-  <SEMICOLON> {varDecl.add(popNode());}
+  <SEMICOLON> {varDecl.addChild(popNode());}
   |
   ClassDeclaration
   |

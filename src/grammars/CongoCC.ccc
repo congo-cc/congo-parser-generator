@@ -297,7 +297,7 @@ INJECT CompilationUnit :
         if (firstTypeDeclaration == null) {
           firstTypeDeclaration = firstChildOfType(Delimiter.class); //lone semicolon, I suppose
         }
-        add(indexOf(firstTypeDeclaration), decl);
+        addChild(indexOf(firstTypeDeclaration), decl);
     }
 }
 
@@ -476,7 +476,7 @@ INJECT TypeDeclaration :
        int index = parent.indexOf(this);
        //REVISIT. fix token chaining
        for (Annotation annotation : annotations) {
-           parent.add(index, annotation);
+           parent.addChild(index, annotation);
        }
     } 
     
@@ -525,7 +525,7 @@ INJECT ExtendsList :
     
       public void addType(ObjectType type, boolean isInterface) {
         if (!isInterface) {
-            clear();
+            clearChildren();
         }
         ListIterator<Node> iterator = iterator();
         if (!iterator.hasNext()) {
@@ -886,7 +886,7 @@ GrammarInclusion throws IOException :
       if (enterIncludes) {
           Node included = grammar.include(locations, includeToken);
           if (included!=null) {
-              CURRENT_NODE.add(included);
+              CURRENT_NODE.addChild(included);
           } else {
               getErrors().addWarning(CURRENT_NODE, "File is already included.");
           }
@@ -1321,7 +1321,7 @@ RegexpSpec(String tokenClassName)#org.congocc.core.RegexpSpec :
             regexp = (RegularExpression) peekNode();
             if (regexp instanceof RegexpRef) {
                 RegexpSequence seq = new RegexpSequence();
-                seq.add(regexp);
+                seq.addChild(regexp);
                 pokeNode(seq);
                 regexp = seq;
             } 
@@ -1660,11 +1660,11 @@ import java.util.*;
     @Property boolean negated;
 
     public boolean isBackward() {
-        return get(0) instanceof Backslash || get(1) instanceof Backslash;
+        return getChild(0) instanceof Backslash || getChild(1) instanceof Backslash;
     }
 
     public boolean getHasFinalEllipsis() {
-        Token t = (Token) get(size() -1);
+        Token t = (Token) getChild(getChildCount() -1);
         return t.getImage().equals("...");
     }
 
@@ -1695,7 +1695,7 @@ import java.util.*;
     }
 
     public boolean getHasEndingSlash() {
-        Token lastToken = (Token) get(size()-1);
+        Token lastToken = (Token) getChild(getChildCount()-1);
         String img = lastToken.getImage();
         return img.equals("\\") || img.equals("/");
     }
@@ -1932,7 +1932,7 @@ INJECT AttemptBlock :
    extends org.congocc.core.ExpansionWithNested;
 {
     public Expansion getRecoveryExpansion() {
-       return (Expansion) get(3);
+       return (Expansion) getChild(3);
     }
 }
 
@@ -2289,9 +2289,9 @@ INJECT ZeroOrMoreRegexp :
    public void setRegexp(RegularExpression regexp) {
       RegularExpression current = getRegexp();
       if (current != null) {
-          replace(current, regexp);
+          replaceChild(current, regexp);
       } else {
-          add(0, regexp);
+          addChild(0, regexp);
       }
    }
 
@@ -2313,10 +2313,10 @@ INJECT ZeroOrOneRegexp :
    public void setRegexp(RegularExpression regexp) {
       RegularExpression current = getRegexp();
       if (current != null) {
-          add(indexOf(current), regexp);
-          remove(current);
+          addChild(indexOf(current), regexp);
+          removeChild(current);
       } else {
-          add(0, regexp);
+          addChild(0, regexp);
       }
    }
 
