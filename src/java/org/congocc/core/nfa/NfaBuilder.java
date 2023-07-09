@@ -149,19 +149,19 @@ class NfaBuilder extends Node.Visitor {
     void visit(RepetitionRange repRange) {
         RegexpSequence seq = new RegexpSequence();
         for (int i=0; i < repRange.getMin(); i++) {
-            seq.addChild(repRange.getRegexp());
+            seq.add(repRange.getRegexp());
         }
         if (repRange.hasMax() && repRange.getMax() == -1) { // Unlimited
             ZeroOrMoreRegexp zom = new ZeroOrMoreRegexp();
             zom.setGrammar(grammar);
             zom.setRegexp(repRange.getRegexp());
-            seq.addChild(zom);
+            seq.add(zom);
         }
         else for (int i = repRange.getMin(); i< repRange.getMax(); i++) {
             ZeroOrOneRegexp zoo = new ZeroOrOneRegexp();
             zoo.setGrammar(grammar);
             zoo.setRegexp(repRange.getRegexp());
-            seq.addChild(zoo);
+            seq.add(zoo);
         }
         visit(seq);
     }

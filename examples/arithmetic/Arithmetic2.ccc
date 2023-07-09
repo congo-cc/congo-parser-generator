@@ -14,10 +14,10 @@ INJECT NUMBER :
 INJECT AdditiveExpression :
 {
     public double evaluate() {
-        double result = getChild(0).evaluate();
-        for (int i=1; i< getChildCount(); i+=2) {
-            boolean subtract = getChild(i) instanceof MINUS;
-            double nextOperand = getChild(i+1).evaluate();
+        double result = get(0).evaluate();
+        for (int i=1; i< size(); i+=2) {
+            boolean subtract = get(i) instanceof MINUS;
+            double nextOperand = get(i+1).evaluate();
             if (subtract) result -= nextOperand;
             else result += nextOperand;
         }
@@ -28,10 +28,10 @@ INJECT AdditiveExpression :
 INJECT MultiplicativeExpression :
 {
     public double evaluate() {
-        double result = getChild(0).evaluate();
-        for (int i=1; i< getChildCount(); i+=2) {
-            boolean divide = getChild(i) instanceof DIVIDE;
-            double nextOperand = getChild(i+1).evaluate();
+        double result = get(0).evaluate();
+        for (int i=1; i< size(); i+=2) {
+            boolean divide = get(i) instanceof DIVIDE;
+            double nextOperand = get(i+1).evaluate();
             if (divide) result /= nextOperand;
             else result *= nextOperand;
         }
@@ -42,13 +42,13 @@ INJECT MultiplicativeExpression :
 INJECT ParentheticalExpression : 
 {
     public double evaluate() {
-        return getChild(1).evaluate();
+        return get(1).evaluate();
     }
 }
 
 INJECT Root :
 {
     public double evaluate() {
-        return getChild(0).evaluate();
+        return get(0).evaluate();
     }
 }

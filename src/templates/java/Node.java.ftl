@@ -117,7 +117,7 @@ public interface Node extends List<Node>
      *         <code>false</code> otherwise.
      */
     default boolean hasChildNodes() {
-       return getChildCount() > 0;
+       return size() > 0;
     }
 
     /**
@@ -262,8 +262,8 @@ public interface Node extends List<Node>
       * @param child the Node to get the index of
       */
      default int indexOf(Node child) {
-         for (int i=0; i<getChildCount(); i++) {
-             if (child == getChild(i)) {
+         for (int i=0; i<size(); i++) {
+             if (child == get(i)) {
                  return i;
              }
          }
@@ -275,25 +275,29 @@ public interface Node extends List<Node>
          if (parent == null) return null;
          int idx = parent.indexOf(this);
          if (idx <=0) return null;
-         return parent.getChild(idx-1);
+         return parent.get(idx-1);
      }
 
      default Node nextSibling() {
          Node parent = getParent();
          if (parent == null) return null;
          int idx = parent.indexOf(this);
-         if (idx >= parent.getChildCount() -1) return null;
-         return parent.getChild(idx+1);
+         if (idx >= parent.size() -1) return null;
+         return parent.get(idx+1);
      }
 
      /**
       * Remove all the child nodes
+      * @deprecated Use clear()
       */
+    @Deprecated
      void clearChildren();
 
      /**
       * @return the number of child nodes
+      * @deprecated Use size()
       */
+     @Deprecated
      int getChildCount();
      
      /**
@@ -305,8 +309,8 @@ public interface Node extends List<Node>
       */
       default List<Node> children(boolean includeUnparsedTokens) {
          List<Node> result = new ArrayList<>();
-         for (int i = 0; i < getChildCount(); i++) {
-             Node child = getChild(i);
+         for (int i = 0; i < size(); i++) {
+             Node child = get(i);
              if (includeUnparsedTokens && child instanceof TerminalNode) {
                  TerminalNode tok = (TerminalNode) child;
                  if (!tok.isUnparsed()) {
@@ -320,8 +324,8 @@ public interface Node extends List<Node>
 
       default List<Node> children() {
           List<Node> result = new ArrayList<>();
-          for (int i =0; i<getChildCount(); i++) {
-              result.add(getChild(i));
+          for (int i =0; i<size(); i++) {
+              result.add(get(i));
           }
           return result;
       }
@@ -340,7 +344,7 @@ public interface Node extends List<Node>
                 }
                 result.add(tn);
             } 
-            else if (child.getChildCount() >0) {
+            else if (child.size() >0) {
                result.addAll(child.getAllTokens(includeCommentTokens));
             }
         }
@@ -465,8 +469,8 @@ public interface Node extends List<Node>
     }
 
     default <T> T firstChildOfType(Class<T> clazz, Predicate<T> pred) {
-        for (int i=0; i<getChildCount();i++) {
-            Node child = getChild(i);
+        for (int i=0; i<size();i++) {
+            Node child = get(i);
             if (clazz.isInstance(child)) {
                 T t = clazz.cast(child);
                 if (pred == null || pred.test(t)) return t;
@@ -476,8 +480,8 @@ public interface Node extends List<Node>
     }
 
     default Node firstDescendantOfType(NodeType type, Predicate<Node> pred) {
-         for (int i=0; i<getChildCount(); i++) {
-             Node child = getChild(i);
+         for (int i=0; i<size(); i++) {
+             Node child = get(i);
              if (child.getType() == type) {
                 if (pred == null || pred.test(child)) return child;
              } else {
@@ -493,16 +497,16 @@ public interface Node extends List<Node>
     }
 
     default Node firstChildOfType(NodeType type) {
-        for (int i=0; i<getChildCount();i++) {
-            Node child = getChild(i);
+        for (int i=0; i<size();i++) {
+            Node child = get(i);
             if (child.getType() == type) return child;
         }
         return null;
     }
 
     default <T extends Node>T firstDescendantOfType(Class<T> clazz, Predicate<T> pred) {
-         for (int i=0; i<getChildCount();i++) {
-             Node child = getChild(i);
+         for (int i=0; i<size();i++) {
+             Node child = get(i);
              if (clazz.isInstance(child)) {
                 T t = clazz.cast(child);
                 if (pred==null || pred.test(t)) return t;
@@ -521,8 +525,8 @@ public interface Node extends List<Node>
 
     default <T> List<T> childrenOfType(Class<T>clazz, Predicate<T> pred) {
         List<T>result=new java.util.ArrayList<>();
-        for (int i=0; i< getChildCount(); i++) {
-            Node child = getChild(i);
+        for (int i=0; i< size(); i++) {
+            Node child = get(i);
             if (clazz.isInstance(child)) {
                 T t = clazz.cast(child);
                 if (pred == null || pred.test(t)) result.add(t);
@@ -533,8 +537,8 @@ public interface Node extends List<Node>
 
    default List<Node> childrenOfType(NodeType type, Predicate<Node> pred) {
       List<Node> result = new java.util.ArrayList<>();
-      for (int i=0; i< getChildCount(); i++) {
-          Node child = getChild(i);
+      for (int i=0; i< size(); i++) {
+          Node child = get(i);
           if (child.getType() == type) {
              if (pred==null || pred.test(child)) result.add(child);
           }
@@ -617,7 +621,7 @@ public interface Node extends List<Node>
      *         <code>null</code>.
      */
     default Node getFirstChild() {
-        return getChildCount() > 0 ? getChild(0) : null;
+        return size() > 0 ? get(0) : null;
     }
     
     
@@ -629,8 +633,8 @@ public interface Node extends List<Node>
      *         returns <code>null</code>.
      */ 
     default Node getLastChild() {
-        int count = getChildCount();
-        return count>0 ? getChild(count-1): null;
+        int count = size();
+        return count>0 ? get(count-1): null;
     }
 
     default Node getRoot() {
@@ -655,8 +659,8 @@ public interface Node extends List<Node>
 
     default <T extends Node> List<T> descendants(Class<T> clazz, Predicate<? super T> predicate) {
        List<T> result = new ArrayList<>();
-       for (int i=0; i< getChildCount(); i++) {
-           Node child = getChild(i);
+       for (int i=0; i< size(); i++) {
+           Node child = get(i);
            if (clazz.isInstance(child)) {
                T t = clazz.cast(child);
                if (predicate == null || predicate.test(t)) {
@@ -718,17 +722,17 @@ public interface Node extends List<Node>
             private boolean justModified;
             
             public boolean hasNext() {
-                return current+1 < getChildCount();
+                return current+1 < size();
             }
             
             public Node next() {
                 justModified = false;
-                return getChild(++current);
+                return get(++current);
             }
             
             public Node previous() {
                 justModified = false;
-                return getChild(--current);
+                return get(--current);
             }
             
             public void remove() {
@@ -775,15 +779,15 @@ public interface Node extends List<Node>
     }
 
     default int indexOf(Object obj) {
-        for (int i = 0; i< getChildCount(); i++) {
-            if (getChild(i).equals(obj)) return i;
+        for (int i = 0; i< size(); i++) {
+            if (get(i).equals(obj)) return i;
         }
         return -1;
     }
 
     default int lastIndexOf(Object obj) {
-        for (int i = getChildCount() -1; i>=0; i--) {
-            if (getChild(i).equals(obj)) return i;
+        for (int i = size() -1; i>=0; i--) {
+            if (get(i).equals(obj)) return i;
         }
         return -1;
     }
@@ -821,7 +825,7 @@ public interface Node extends List<Node>
     }
 
     default boolean isEmpty() {
-        return getChildCount() == 0;
+        return size() == 0;
     }
 
     default int size() {

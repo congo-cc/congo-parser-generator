@@ -40,7 +40,7 @@ class Reaper extends Node.Visitor {
         } while (nameCount > prevNameCount);
         // If the name of the method is not in usedMethodNames, we delete it.
         for (MethodDeclaration md : jcu.descendants(MethodDeclaration.class, md->!usedMethodNames.contains(md.getName()))) {
-            md.getParent().removeChild(md);
+            md.getParent().remove(md);
         }
         // We go through all the private FieldDeclarations and get rid of any variables that
         // are not in usedVarNames
@@ -50,7 +50,7 @@ class Reaper extends Node.Visitor {
 
         for (TypeDeclaration td : jcu.descendants(TypeDeclaration.class, td->isPrivate(td))) {
             if (!usedTypeNames.contains(td.getName())) {
-                td.getParent().removeChild(td);
+                td.getParent().remove(td);
             }
         }
 
@@ -63,7 +63,7 @@ class Reaper extends Node.Visitor {
         // Now get rid of unused and repeated imports.
         for (ImportDeclaration imp : jcu.childrenOfType(ImportDeclaration.class)) {
             if (!usedImportDeclarations.add(getKey(imp))) {
-                jcu.removeChild(imp);
+                jcu.remove(imp);
                 continue;
             }
             if (imp.firstChildOfType(STAR) == null) {
@@ -72,7 +72,7 @@ class Reaper extends Node.Visitor {
                 // Note that a static import can import methods.
                 if (imp.firstChildOfType(STATIC) != null && usedMethodNames.contains(name)) continue;
                 if (!usedTypeNames.contains(name)) {
-                    jcu.removeChild(imp);
+                    jcu.remove(imp);
                 }
             }
         }
@@ -128,9 +128,9 @@ class Reaper extends Node.Visitor {
     }
 
     void visit(Name name) {
-        if (name.getChildCount() > 1 || !(name.getParent() instanceof MethodCall)) {
-            usedVarNames.add(name.getChild(0).toString());
-            usedTypeNames.add(name.getChild(0).toString());
+        if (name.size() > 1 || !(name.getParent() instanceof MethodCall)) {
+            usedVarNames.add(name.get(0).toString());
+            usedTypeNames.add(name.get(0).toString());
         }
     }
 
@@ -190,10 +190,10 @@ class Reaper extends Node.Visitor {
             }
         }
         for (Node n : toBeRemoved) {
-            fd.removeChild(n);
+            fd.remove(n);
         }
         if (fd.firstChildOfType(VariableDeclarator.class) == null) {
-            fd.getParent().removeChild(fd);
+            fd.getParent().remove(fd);
         }
     }
 }

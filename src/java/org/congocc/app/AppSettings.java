@@ -670,6 +670,6 @@ public class AppSettings {
 
     private boolean checkForMethodName(String methodName) {
         return grammar.firstDescendantOfType(MethodCall.class, 
-            mc->mc.getChild(0).getLastChild().toString().equals(methodName)) != null;
+            mc->mc.get(0).getLastChild().toString().equals(methodName)) != null;
     }
 }

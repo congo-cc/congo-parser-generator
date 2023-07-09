@@ -101,7 +101,7 @@ public class Grammar extends BaseNode {
         GrammarFile rootNode = parser.Root();
         appSettings.setIncludedFileDirectory(prevIncludedFileDirectory);
         if (!isInInclude()) {
-            addChild(rootNode);
+            add(rootNode);
         }
         return rootNode;
     }
@@ -507,7 +507,7 @@ public class Grammar extends BaseNode {
         for (RegexpSpec res : descendants(RegexpSpec.class)) {
             String nextLexicalState = res.getNextLexicalState();
             if (nextLexicalState != null && lexerData.getLexicalState(nextLexicalState) == null) {
-                Node lastChild = res.getChild(res.getChildCount()-1);
+                Node lastChild = res.get(res.size()-1);
                 errors.addError(lastChild, "Lexical state \""
                 + nextLexicalState + "\" has not been defined.");
             }

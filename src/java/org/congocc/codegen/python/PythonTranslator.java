@@ -757,9 +757,9 @@ public class PythonTranslator extends Translator {
             parser.InvocationArguments();
             Node node = parser.rootNode();
             StringBuilder result = new StringBuilder();
-            int n = node.getChildCount();
+            int n = node.size();
             for (int i = 0; i < n; i++) {
-                Node child = node.getChild(i);
+                Node child = node.get(i);
                 if (child instanceof Expression) {
                     ASTExpression expr = (ASTExpression) transformTree(child);
                     internalTranslateExpression(expr, TranslationContext.UNKNOWN, result);

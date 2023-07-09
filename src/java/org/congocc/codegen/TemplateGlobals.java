@@ -254,8 +254,8 @@ public class TemplateGlobals {
         if (node instanceof Statement) {
             translator.translateStatement(node, indent, result);
         } else {
-            for (int i = 0; i < node.getChildCount(); i++) {
-                Node child = node.getChild(i);
+            for (int i = 0; i < node.size(); i++) {
+                Node child = node.get(i);
                 if (child instanceof Delimiter) {
                     continue; // could put in more checks here
                 }
@@ -470,7 +470,7 @@ public class TemplateGlobals {
     protected void processImports(Set<ImportDeclaration> imports, StringBuilder result) {
         String prefix = String.format("%s.", appSettings.getNodePackage());
         for (ImportDeclaration decl : imports) {
-            String name = decl.getChild(1).toString();
+            String name = decl.get(1).toString();
             if (name.startsWith("java.") || name.startsWith(prefix)) {
                 continue;
             }

@@ -22,7 +22,7 @@ public class JavaCodeUtils {
             for (Annotation annotation : getAnnotations(fd)) {
                 if (annotation.getName().equals("Property")) {
                     addGetterSetter(fd);
-                    annotation.getParent().removeChild(annotation);
+                    annotation.getParent().remove(annotation);
                 }
             }
         }
@@ -60,14 +60,14 @@ public class JavaCodeUtils {
                 return; // Nothing to do!
             }
             else if (type == PROTECTED || type == PUBLIC) {
-                tok.getParent().removeChild(tok);
+                tok.getParent().remove(tok);
                 break;
             }
         }
         Type type = fd.firstChildOfType(Type.class);
         Token privateToken = Token.newToken(PRIVATE, "private", fd.getTokenSource());
-        if (mods !=null) mods.addChild(privateToken);
-        else fd.addChild(fd.indexOf(type), privateToken);
+        if (mods !=null) mods.add(privateToken);
+        else fd.add(fd.indexOf(type), privateToken);
     }
 
     static private void insertGetterSetter(Node context, String fieldType, String fieldName, int index) {
@@ -85,8 +85,8 @@ public class JavaCodeUtils {
         MethodDeclaration getterMethod = null, setterMethod=null;
         getterMethod = new CongoCCParser(getter).MethodDeclaration();
         setterMethod = new CongoCCParser(setter).MethodDeclaration();
-        context.addChild(index +1, setterMethod);
-        context.addChild(index +1, getterMethod);
+        context.add(index +1, setterMethod);
+        context.add(index +1, getterMethod);
     }
 
     static public void removeWrongJDKElements(Node context, int target) {
@@ -106,13 +106,13 @@ public class JavaCodeUtils {
             }
             boolean removeElement = specifiesMax ? target > specifiedVersion : target < specifiedVersion;
             Node parent = annotation.getParent();
-            parent.removeChild(annotation);
+            parent.remove(annotation);
             if (parent instanceof Modifiers) {
                 parent = parent.getParent();
             }
             Node grandparent = parent.getParent();
             if (removeElement) {
-                grandparent.removeChild(parent);
+                grandparent.remove(parent);
             } 
         }
     }
