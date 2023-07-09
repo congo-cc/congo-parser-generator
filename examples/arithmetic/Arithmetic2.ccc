@@ -1,5 +1,6 @@
 PARSER_PACKAGE=ex2;
 PARSER_CLASS=Calc;
+MINIMAL_TOKEN;
 
 INCLUDE "Arithmetic1.ccc"
 

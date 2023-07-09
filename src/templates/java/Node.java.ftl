@@ -140,6 +140,7 @@ public interface Node extends List<Node>
      * appends a child Node
      * @deprecated Use #add(Node)
      */
+     @Deprecated
      void addChild(Node n);
 
      /**
@@ -149,6 +150,7 @@ public interface Node extends List<Node>
       * @param n the Node to insert
       * @deprecated Use #add(int,Node)
       */
+     @Deprecated
      void addChild(int i, Node n);
 
      /**
@@ -156,6 +158,7 @@ public interface Node extends List<Node>
       * @param i the index of the Node to return
       * @deprecated Use #get(int)
       */
+     @Deprecated
      Node getChild(int i);
 
      /**
@@ -164,6 +167,7 @@ public interface Node extends List<Node>
       * @param n the node  
       * @deprecated Use #set(int,Node)
       */
+     @Deprecated
      void setChild(int i, Node n);
 
      /**
@@ -173,6 +177,7 @@ public interface Node extends List<Node>
       * @param i the index at which to remove 
       * @deprecated Use #remove(int)
       */
+     @Deprecated
      Node removeChild(int i);
 
      default boolean remove(Object obj) {
@@ -185,6 +190,7 @@ public interface Node extends List<Node>
       * @return whether the Node was present
       * @deprecated Use #remove(Node)
       */ 
+     @Deprecated
      default boolean removeChild(Node n) {
          int index = indexOf(n);
          if (index == -1) return false;
@@ -200,6 +206,7 @@ public interface Node extends List<Node>
       * @return whether any replacement took place
       * @deprecated Use #replace(Node,Node)
       */
+     @Deprecated
      default boolean replaceChild(Node current, Node replacement) {
          return replace(current, replacement);
      }

@@ -1,6 +1,6 @@
 PARSER_PACKAGE="ftl";
 DEFAULT_LEXICAL_STATE="TEMPLATE_TEXT";
-TOKEN_CHAINING;
+MINIMAL_TOKEN;
 
 INJECT PARSER_CLASS :
     import java.io.*;
@@ -84,7 +84,7 @@ INJECT LEXER_CLASS :
                 int idx = img.indexOf('\n');
                 if (idx <0) idx = img.indexOf('\r');
                 if (idx >=0) {
-                    tok.setImage(img.substring(++idx));
+                    //tok.setImage(img.substring(++idx));
                     tok.setBeginOffset(tok.getBeginOffset()+idx);
                 }
             }
@@ -133,8 +133,9 @@ INJECT LEXER_CLASS :
                  if (parenthesisNesting == 0 && olderSyntax) {
                      tok.setType(TokenType.CLOSE_TAG);
                      if (tok.getType() == TokenType.GTE) {
-                          tok.setImage(">");
-                          tok.setEndOffset(tok.getEndOffset()-1);
+                        tok.truncate(1);
+                          //tok.setImage(">");
+                          //tok.setEndOffset(tok.getEndOffset()-1);
                       //bufferPosition = backup(bufferPosition,1);
                       //bufferPosition = tok.getEndOffset();
                      }

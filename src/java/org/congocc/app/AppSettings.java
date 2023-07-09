@@ -18,6 +18,8 @@ import org.congocc.core.Grammar;
 import org.congocc.core.LexerData;
 import org.congocc.parser.Node;
 
+import org.congocc.parser.tree.MethodCall;
+
 /**
  * Class to hold the various application settings
  */
@@ -479,13 +481,15 @@ public class AppSettings {
 
     public boolean getTokenChaining() {
         Boolean b = (Boolean) settings.get("TOKEN_CHAINING");
-        return b!= null && b;
+        if (b != null) return b;
+        return checkForMethodName("preInsert");
     }
 
     public boolean getMinimalToken() {
         if (getTokenChaining()) return false;
         Boolean b = (Boolean) settings.get("MINIMAL_TOKEN");
-        return b!=null && b;
+        if (b != null) return b;
+        return !checkForMethodName("setImage");
     }
 
     public boolean getNodeUsesParser() {
@@ -662,5 +666,10 @@ public class AppSettings {
             if (ch == '.') buf.appendCodePoint('_');
         }
         return buf.toString();
+    }
+
+    private boolean checkForMethodName(String methodName) {
+        return grammar.firstDescendantOfType(MethodCall.class, 
+            mc->mc.getChild(0).getLastChild().toString().equals(methodName)) != null;
     }
 }

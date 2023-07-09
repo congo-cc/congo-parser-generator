@@ -71,6 +71,7 @@ public class ${settings.baseTokenClassName} ${implements} {
     /**
      * @deprecated use setCachedImage
      */
+    @Deprecated
     public void setImage(String image) {
        setCachedImage(image);
     }
@@ -111,6 +112,7 @@ public class ${settings.baseTokenClassName} ${implements} {
         prependedToken.beginOffset = prependedToken.endOffset = this.beginOffset;
         this.prependedToken = prependedToken;
     }
+
     void unsetAppendedToken() {
         this.appendedToken = null;
     }
@@ -612,7 +614,8 @@ public class ${settings.baseTokenClassName} ${implements} {
 [#else]     
      * @deprecated Typically use just toString() or occasionally getCachedImage()
 [/#if]     
-     */    
+     */  
+    @Deprecated  
     public String getImage() {
       [#if !settings.minimalToken]
         if (cachedImage != null) {

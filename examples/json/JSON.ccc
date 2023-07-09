@@ -17,6 +17,7 @@
 PARSER_PACKAGE="org.parsers.json";
 NODE_PACKAGE="org.parsers.json.ast";
 DEFAULT_LEXICAL_STATE=JSON;
+MINIMAL_TOKEN;
 
 SKIP : <WHITESPACE : (" "| "\t"| "\n"| "\r")+>; 
 

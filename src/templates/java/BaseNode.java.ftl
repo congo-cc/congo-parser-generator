@@ -20,6 +20,7 @@ import java.util.List;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.Collection;
 import java.util.Collections;
 import java.util.Iterator;
 
@@ -181,12 +182,8 @@ public class ${settings.baseNodeClassName} implements Node {
         this.endOffset = endOffset;
     }
 
-    /**
-     * Note that, by default, the returned list 
-     * is not modifiable.
-     */
     public List<Node> subList(int from, int to) {
-        return children().subList(from, to);
+        return children.subList(from, to);
     }
 
     public List<${settings.baseTokenClassName}> getRealTokens() {
@@ -213,6 +210,26 @@ public class ${settings.baseNodeClassName} implements Node {
 
     public void clear() {
         clearChildren();
+    }
+
+    public boolean addAll(Collection<? extends Node> nodes) {
+        return children.addAll(nodes);
+    }
+
+    public boolean addAll(int i, Collection<? extends Node> nodes) {
+        return children.addAll(i, nodes);
+    }
+
+    public boolean containsAll(Collection<?> nodes) {
+        return children.containsAll(nodes);
+    }
+
+    public boolean retainAll(Collection<?> nodes) {
+        return children.containsAll(nodes);
+    }
+
+    public boolean removeAll(Collection<?> nodes) {
+        return children.removeAll(nodes);
     }
      
 [#if settings.freemarkerNodes]

@@ -1,5 +1,6 @@
 PARSER_PACKAGE=ex1;
 PARSER_CLASS=Calc;
+MINIMAL_TOKEN;
 
 SKIP : " " | "\t" | "\n" | "\r" ;
 
