@@ -693,58 +693,50 @@ INJECT ThrowsList :
 
 INJECT Identifier : 
 {
-    private String tokenHookName, resetTokenHookName, openHookName, closeHookName;
-
     public String toString() {
+        String cachedImage = getCachedImage();
+        if (cachedImage != null) return cachedImage;
         String image = getSource();
         if (image.equals("jjtThis") || image.equals("CURRENT_NODE")) { 
-            return getGrammar().getTemplateGlobals().getCurrentNodeVariableName();
+            image = getGrammar().getTemplateGlobals().getCurrentNodeVariableName();
         }
-        if (image.equals("PARSER_CLASS")) {
-            return getAppSettings().getParserClassName();
+        else if (image.equals("PARSER_CLASS")) {
+            image = getAppSettings().getParserClassName();
         }
-        if (image.equals("LEXER_CLASS")) {
-            return getAppSettings().getLexerClassName();
+        else if (image.equals("LEXER_CLASS")) {
+            image = getAppSettings().getLexerClassName();
         }
-        if (image.equals("BASE_NODE_CLASS")) {
-            return getAppSettings().getBaseNodeClassName();
+        else if (image.equals("BASE_NODE_CLASS")) {
+            image = getAppSettings().getBaseNodeClassName();
         }
-        if (image.equals("BASE_TOKEN_CLASS")) {
-            return getAppSettings().getBaseTokenClassName();
+        else if (image.equals("BASE_TOKEN_CLASS")) {
+            image = getAppSettings().getBaseTokenClassName();
         }
-        if (image.equals("NODE_PACKAGE")) {
-            return getAppSettings().getNodePackage();
+        else if (image.equals("NODE_PACKAGE")) {
+            image =  getAppSettings().getNodePackage();
         }
-        if (image.equals("PARSER_PACKAGE")) {
-            return getAppSettings().getParserPackage();
+        else if (image.equals("PARSER_PACKAGE")) {
+            image = getAppSettings().getParserPackage();
         }
-        if (image.equals("TOKEN_HOOK")) {
-            if (tokenHookName ==null) {
-                String prefix = getAppSettings().generateIdentifierPrefix("tokenHook");
-                tokenHookName = getAppSettings().generateUniqueIdentifier(prefix, this);
-            }
-            return tokenHookName;
+        else if (image.equals("TOKEN_HOOK")) {
+            String prefix = getAppSettings().generateIdentifierPrefix("tokenHook");
+            image = getAppSettings().generateUniqueIdentifier(prefix, this);
+            setCachedImage(image);
         }
-        if (image.equals("RESET_TOKEN_HOOK")) {
-            if (resetTokenHookName == null) {
-                String prefix = getAppSettings().generateIdentifierPrefix("resetTokenHook");
-                resetTokenHookName = getAppSettings().generateUniqueIdentifier(prefix, this);
-            }
-            return resetTokenHookName;
+        else if (image.equals("RESET_TOKEN_HOOK")) {
+            String prefix = getAppSettings().generateIdentifierPrefix("resetTokenHook");
+            image = getAppSettings().generateUniqueIdentifier(prefix, this);
+            setCachedImage(image);
         }
-        if (image.equals("OPEN_NODE_HOOK")) {
-            if (openHookName == null) {
-                String prefix = getAppSettings().generateIdentifierPrefix("openNodeHook");
-                openHookName = getAppSettings().generateUniqueIdentifier(prefix, this);
-            }
-            return openHookName;
+        else if (image.equals("OPEN_NODE_HOOK")) {
+            String prefix = getAppSettings().generateIdentifierPrefix("openNodeHook");
+            image = getAppSettings().generateUniqueIdentifier(prefix, this);
+            setCachedImage(image);
         }
-        if (image.equals("CLOSE_NODE_HOOK")) {
-            if (closeHookName == null) {
-                String prefix = getAppSettings().generateIdentifierPrefix("closeNodeHook");
-                closeHookName = getAppSettings().generateUniqueIdentifier(prefix, this);
-            }
-            return closeHookName;
+        else if (image.equals("CLOSE_NODE_HOOK")) {
+            String prefix = getAppSettings().generateIdentifierPrefix("closeNodeHook");
+            image = getAppSettings().generateUniqueIdentifier(prefix, this);
+            setCachedImage(image);
         }
         return image;
    }
@@ -959,6 +951,10 @@ INJECT CodeInjection :
       if (firstChildOfType(FINAL)!=null) return true;
       Modifiers mods = firstChildOfType(Modifiers.class);
       return mods != null && mods.firstChildOfType(FINAL) != null;
+   }
+
+   public PermitsList getPermitsList() {
+      return firstChildOfType(PermitsList.class);
    }
 
    @Property String name;
