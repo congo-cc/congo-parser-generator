@@ -47,7 +47,9 @@ import static ${settings.parserPackage}.${settings.baseTokenClassName}.TokenType
   [/#list]
 [/#if]
 
-public class ${settings.parserClassName} {
+public
+[#if isFinal]final[/#if]
+class ${settings.parserClassName} {
 
 static final int UNLIMITED = Integer.MAX_VALUE;    
 // The last token successfully "consumed"

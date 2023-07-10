@@ -51,7 +51,9 @@ import java.util.EnumSet;
 import ${settings.rootAPIPackage}.TokenSource;
 [/#if]
 
-public class ${settings.lexerClassName} extends TokenSource
+public 
+[#if isFinal]final[/#if]
+class ${settings.lexerClassName} extends TokenSource
 {
 
  public enum LexicalState {

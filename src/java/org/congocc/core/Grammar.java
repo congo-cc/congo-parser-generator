@@ -341,11 +341,11 @@ public class Grammar extends BaseNode {
     }
 
     public boolean nodeIsInterface(String nodeName) {
-        return interfaceNodeNames.contains(nodeName);
+        return interfaceNodeNames.contains(nodeName) || getInjector().isDeclaredInterface(getNodeClassName(nodeName));
     }
 
     public boolean nodeIsAbstract(String nodeName) {
-        return abstractNodeNames.contains(nodeName);
+        return abstractNodeNames.contains(nodeName) || getInjector().isDeclaredAbstract(getNodeClassName(nodeName));
     }
 
     public String getNodeClassName(String nodeName) {

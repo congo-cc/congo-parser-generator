@@ -10,7 +10,17 @@ import ${settings.parserPackage}.*;
 
 import static ${settings.parserPackage}.${settings.baseTokenClassName}.TokenType.*;
 
-public class ${classname} extends ${superclass} {
+public 
+[#if isAbstract]abstract[/#if]
+[#if isFinal]final[/#if]
+[#if isSealed]sealed[/#if]
+[#if isNonSealed]non-sealed[/#if]
+class ${classname} extends ${superclass} 
+   [#list permitsList as item]
+     [#if item_index==0]permits[/#if]
+     ${item}[#if item_has_next],[/#if]
+   [/#list]
+{
     public ${classname}(TokenType type, ${settings.lexerClassName} tokenSource, int beginOffset, int endOffset) {
         super(type, tokenSource, beginOffset, endOffset);
     }

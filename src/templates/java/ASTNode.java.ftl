@@ -13,8 +13,16 @@ import ${settings.rootAPIPackage}.Node;
 [/#if]
 
 [#if isInterface]
-
-public interface ${classname} extends Node {}
+public
+[#if isAbstract]abstract[/#if]
+[#if isSealed]sealed[/#if]
+[#if isNonSealed]non-sealed[/#if]
+interface ${classname} extends Node 
+   [#list permitsList as item]
+     [#if item_index==0]permits[/#if]
+     ${item}[#if item_has_next],[/#if]
+   [/#list]
+{}
 
 [#else]
 
@@ -24,5 +32,12 @@ import static ${settings.parserPackage}.${settings.baseTokenClassName}.TokenType
 public 
 [#if isAbstract]abstract[/#if]
 [#if isFinal]final[/#if]
-class ${classname} extends ${settings.baseNodeClassName} {}
+[#if isSealed]sealed[/#if]
+[#if isNonSealed]non-sealed[/#if]
+class ${classname} extends ${settings.baseNodeClassName} 
+   [#list permitsList as item]
+     [#if item_index==0]permits[/#if]
+     ${item}[#if item_has_next],[/#if]
+   [/#list]
+{}
 [/#if]

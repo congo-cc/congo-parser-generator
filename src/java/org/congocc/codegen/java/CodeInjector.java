@@ -18,12 +18,17 @@ public class CodeInjector {
     private final Map<String, Set<Annotation>> injectedAnnotationsMap = new HashMap<>();
     private final Map<String, Set<ObjectType>> extendsLists = new HashMap<>();
     private final Map<String, Set<ObjectType>> implementsLists = new HashMap<>();
+    private final Map<String, Set<ObjectType>> permitsLists = new HashMap<>();
     private final Map<String, TypeParameters> typeParameterLists = new HashMap<>();
     private final Map<String, List<ClassOrInterfaceBodyDeclaration>> bodyDeclarations = new HashMap<>();
     private final Set<String> overriddenMethods = new LinkedHashSet<>();  // Not presently queried ...
     private final Set<String> typeNames = new LinkedHashSet<>();
-    private final Set<String> interfaces = new LinkedHashSet<>();  // Not presently queried ...
-    private final Set<String> finalClasses = new LinkedHashSet<>();  // Not presently queried ...
+    private final Set<String> interfaces = new LinkedHashSet<>();  
+    private final Set<String> abstractClasses = new LinkedHashSet<>();  
+    private final Set<String> finalClasses = new LinkedHashSet<>();
+    private final Set<String> sealedClasses = new LinkedHashSet<>();
+    private final Set<String> nonsealedClasses = new LinkedHashSet<>();
+
     private final Grammar grammar;
     private AppSettings appSettings;
 
@@ -54,7 +59,19 @@ public class CodeInjector {
     public boolean isFinal(String classname) {
         return finalClasses.contains(classname);
     }
-    
+
+    public boolean isSealed(String classname) {
+        return sealedClasses.contains(classname);
+    } 
+
+    public boolean isNonSealed(String classname) {
+        return nonsealedClasses.contains(classname);
+    }
+
+    public Set<ObjectType> getPermitsList(String classname) {
+        return permitsLists.get(classname);
+    }
+   
     private void inject(CompilationUnit jcu) {
         List<ImportDeclaration> importDecls = new ArrayList<>(jcu.getImportDeclarations());
         for (TypeDeclaration dec : jcu.getTypeDeclarations()) {
@@ -120,14 +137,20 @@ public class CodeInjector {
         }
     }
 
+    public boolean isDeclaredAbstract(String name) {
+        return abstractClasses.contains(name);
+    }
+
+    public boolean isDeclaredInterface(String name) {
+        return interfaces.contains(name);
+    }
+
     private void addToDependencies(String name, List<ObjectType> listToAdd, Map<String, Set<ObjectType>> mapOfExistingLists) {
         Set<ObjectType> existingList = mapOfExistingLists.get(name);
         if (existingList == null) {
             mapOfExistingLists.put(name, new LinkedHashSet<ObjectType>(listToAdd));
         } else {
             for (ObjectType ot : listToAdd) {
-                // Don't add duplicates. Maybe it should be a set rather than a list,
-                // but order sensitivity might apply
                 if (!existingList.contains(ot)) {
                     existingList.add(ot);
                 }
@@ -144,8 +167,18 @@ public class CodeInjector {
             assert !injection.isMarkedFinal();
             interfaces.add(name);
         }
+        if (injection.isMarkedAbstract()) {
+            assert !injection.isMarkedFinal();
+            abstractClasses.add(name);
+        }
         if (injection.isMarkedFinal()) {
             finalClasses.add(name);
+        }
+        if (injection.isSealed()) {
+            sealedClasses.add(name);
+        }
+        if (injection.isNonSealed()) {
+            nonsealedClasses.add(name);
         }
         String packageName = isInNodePackage(name) ? appSettings.getNodePackage() : appSettings.getParserPackage();
         if (packageName.length() >0) {
@@ -170,6 +203,9 @@ public class CodeInjector {
         }
         if (injection.implementsList != null) {
             addToDependencies(name, injection.implementsList, implementsLists);
+        }
+        if (injection.getPermitsList() != null) {
+            addToDependencies(name, injection.getPermitsList().childrenOfType(ObjectType.class), permitsLists);
         }
         List<ClassOrInterfaceBodyDeclaration> existingDecls = bodyDeclarations.computeIfAbsent(name, k -> new ArrayList<>());
         if (injection.body != null) {

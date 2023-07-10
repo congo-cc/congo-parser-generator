@@ -15,6 +15,7 @@ import org.congocc.core.RegularExpression;
 import org.congocc.codegen.java.*;
 import org.congocc.parser.*;
 import org.congocc.parser.tree.CompilationUnit;
+import org.congocc.parser.tree.ObjectType;
 
 import freemarker.template.*;
 import freemarker.cache.*;
@@ -197,7 +198,16 @@ public class FilesGenerator {
         dataModel.put("filename", currentFilename);
         dataModel.put("isAbstract", grammar.nodeIsAbstract(nodeName));
         dataModel.put("isInterface", grammar.nodeIsInterface(nodeName));
+        String key = appSettings.getNodePackage() + "." + nodeName;
         dataModel.put("isFinal", codeInjector.isFinal(nodeName));
+        dataModel.put("isSealed", codeInjector.isSealed(nodeName));
+        dataModel.put("isNonSealed", codeInjector.isNonSealed(nodeName));
+        Set<ObjectType> permitsList = codeInjector.getPermitsList(key);
+        if (permitsList == null) {
+            dataModel.put("permitsList", new ArrayList<Object>());
+        } else {
+           dataModel.put("permitsList", codeInjector.getPermitsList(key));
+        }
         String classname = currentFilename.substring(0, currentFilename.length() - 5);
         String superClassName = superClassLookup.get(classname);
         if (superClassName == null) superClassName = appSettings.getBaseTokenClassName();

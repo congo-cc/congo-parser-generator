@@ -323,6 +323,10 @@ INJECT TypeDeclaration :
     default ImplementsList getImplementsList() {
         return firstChildOfType(ImplementsList.class);
     }
+
+    default PermitsList getPermitsList() {
+        return firstChildOfType(PermitsList.class);
+    }
     
     default CompilationUnit getCompilationUnit() {
         return firstAncestorOfType(CompilationUnit.class);
@@ -924,7 +928,7 @@ CodeInjection :
              ("," ot=ObjectType {CURRENT_NODE.addImplementsType(ot);})*
              [";"]
         ]
-        [PermitsList]
+        [PermitsList [";"]]
         [
            SCAN 0 {foundOptionalInitialBrace} => "}"
         ]
@@ -947,10 +951,29 @@ INJECT CodeInjection :
 
    public void addExtendsType(ObjectType type) {extendsList.add(type);}
    public void addImplementsType(ObjectType type) {implementsList.add(type);}
+
    public boolean isMarkedFinal() {
       if (firstChildOfType(FINAL)!=null) return true;
       Modifiers mods = firstChildOfType(Modifiers.class);
       return mods != null && mods.firstChildOfType(FINAL) != null;
+   }
+
+   public boolean isMarkedAbstract() {
+      if (firstChildOfType(ABSTRACT)!=null) return true;
+      Modifiers mods = firstChildOfType(Modifiers.class);
+      return mods != null && mods.firstChildOfType(ABSTRACT) != null;
+   }
+
+   public boolean isSealed() {
+      if (firstChildOfType(SEALED)!=null) return true;
+      Modifiers mods = firstChildOfType(Modifiers.class);
+      return mods != null && mods.firstChildOfType(SEALED) != null;
+   }
+   
+   public boolean isNonSealed() {
+      if (firstChildOfType(NON_SEALED)!=null) return true;
+      Modifiers mods = firstChildOfType(Modifiers.class);
+      return mods != null && mods.firstChildOfType(NON_SEALED) != null;
    }
 
    public PermitsList getPermitsList() {
