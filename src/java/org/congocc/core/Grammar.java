@@ -365,10 +365,10 @@ public class Grammar extends BaseNode {
         }
         if (node instanceof CodeInjection) {
             CodeInjection ci = (CodeInjection) node;
-            if (ci.name.equals(appSettings.getLexerClassName())) {
+            if (ci.getName().equals(appSettings.getLexerClassName())) {
                 checkForHooks(ci.body, appSettings.getLexerClassName());
             }
-            else if (ci.name.equals(appSettings.getParserClassName())) {
+            else if (ci.getName().equals(appSettings.getParserClassName())) {
                 checkForHooks(ci.body, appSettings.getParserClassName());
             }
         }

@@ -8,7 +8,7 @@ TOKEN_CHAINING;
 
 USES_PREPROCESSOR;
 
-DEACTIVATE_TOKENS=_INCLUDE,_INJECT,_EOF;
+DEACTIVATE_TOKENS=_INCLUDE,_INJECT,_EOF, RECORD, VAR, YIELD, SEALED, NON_SEALED, PERMITS;
 
 #if fault_tolerant
   Howdy!!!
@@ -900,33 +900,26 @@ CodeInjection :
     Annotation annotation = null;
     boolean foundOptionalInitialBrace = false;
     boolean usingParentheses = false;
-    ImportDeclaration id;
     ObjectType ot;
-    Annotation ann;
     ClassOrInterfaceBody coib;
 }   
         ACTIVATE_TOKENS _INJECT (<_INJECT>) 
-        [
-            <FINAL>
-        ]
+        {permissibleModifiers = EnumSet.of(ABSTRACT,FINAL,STRICTFP,SEALED,NON_SEALED);}
+        Modifiers
         [
             "class"
             |
             "interface" {isInterface = true;}
         ]
-        <IDENTIFIER> {CURRENT_NODE.name = lastConsumedToken.toString();} 
+        <IDENTIFIER> {CURRENT_NODE.setName(lastConsumedToken.toString());}
         ":"
         =>|+1
         [
           SCAN "{" ("}" | "import" | "extends" | "implements" | (Annotation)* "}") => "{"
           {foundOptionalInitialBrace=true;}
         ]
-        (
-            id=ImportDeclaration {CURRENT_NODE.importDeclarations.add(id);}
-        )*
-        (
-            ann=Annotation {CURRENT_NODE.annotations.add(ann);}
-        )*
+        (ImportDeclaration)*
+        (Annotation)*
         [
              "extends" 
              ot=ObjectType {CURRENT_NODE.addExtendsType(ot);}
@@ -939,6 +932,7 @@ CodeInjection :
              ("," ot=ObjectType {CURRENT_NODE.addImplementsType(ot);})*
              [";"]
         ]
+        [PermitsList]
         [
            SCAN 0 {foundOptionalInitialBrace} => "}"
         ]
@@ -954,9 +948,6 @@ INJECT CodeInjection :
    import java.util.List;
    import java.util.ArrayList;
 {
-   public String name;
-   public List<ImportDeclaration> importDeclarations = new ArrayList<ImportDeclaration>();
-   public List<Annotation> annotations = new ArrayList<>();
    public List<ObjectType> extendsList = new ArrayList<>();
    public List<ObjectType> implementsList = new ArrayList<>();
    public ClassOrInterfaceBody body; 
@@ -964,7 +955,13 @@ INJECT CodeInjection :
 
    public void addExtendsType(ObjectType type) {extendsList.add(type);}
    public void addImplementsType(ObjectType type) {implementsList.add(type);}
-   public boolean isMarkedFinal() {return firstChildOfType(FINAL)!=null;}
+   public boolean isMarkedFinal() {
+      if (firstChildOfType(FINAL)!=null) return true;
+      Modifiers mods = firstChildOfType(Modifiers.class);
+      return mods != null && mods.firstChildOfType(FINAL) != null;
+   }
+
+   @Property String name;
 }
 
 CodeInjection2 :

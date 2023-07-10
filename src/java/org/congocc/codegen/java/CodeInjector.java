@@ -32,11 +32,9 @@ public class CodeInjector {
         this.appSettings = grammar.getAppSettings();
         for (Node n : codeInjections) {
             if (n instanceof CompilationUnit) {
-                add((CompilationUnit) n);
+                inject((CompilationUnit) n);
             } else if (n instanceof CodeInjection) {
-                CodeInjection ci = (CodeInjection) n;
-                String name = ci.name;
-                add(name, ci.importDeclarations, ci.annotations, ci.extendsList, ci.implementsList, ci.body, ci.isInterface, ci.isMarkedFinal());
+                inject((CodeInjection) n);
             } 
         } 
     }
@@ -57,7 +55,7 @@ public class CodeInjector {
         return finalClasses.contains(classname);
     }
     
-    private void add(CompilationUnit jcu) {
+    private void inject(CompilationUnit jcu) {
         List<ImportDeclaration> importDecls = new ArrayList<>(jcu.getImportDeclarations());
         for (TypeDeclaration dec : jcu.getTypeDeclarations()) {
             String name = dec.getName();
@@ -137,40 +135,47 @@ public class CodeInjector {
         }
     }
 
-    private void add(String name, List<ImportDeclaration> importDeclarations, List<Annotation> annotations, List<ObjectType> extendsList,
-            List<ObjectType> implementsList, ClassOrInterfaceBody body, boolean isInterface, boolean isFinal) 
+    void inject(CodeInjection injection) 
     {
+        String name = injection.getName();
+        Modifiers mods = injection.firstChildOfType(Modifiers.class);
         typeNames.add(name);
-        if (isInterface) {
-            assert !isFinal;
+        if (injection.isInterface) {
+            assert !injection.isMarkedFinal();
             interfaces.add(name);
         }
-        if (isFinal) {
+        if (injection.isMarkedFinal()) {
             finalClasses.add(name);
         }
         String packageName = isInNodePackage(name) ? appSettings.getNodePackage() : appSettings.getParserPackage();
         if (packageName.length() >0) {
             name = packageName + "." + name;
         }
+        List<ImportDeclaration> importDeclarations = injection.childrenOfType(ImportDeclaration.class);
         if (importDeclarations !=null && !importDeclarations.isEmpty()) {
             Set<ImportDeclaration> existingImports = injectedImportsMap.computeIfAbsent(name, k -> new LinkedHashSet<>());
             existingImports.addAll(importDeclarations);
         }
-        if (annotations != null && !annotations.isEmpty()) {
+        List<Annotation> annotations = new ArrayList<>();
+        if (mods != null){
+            annotations.addAll(mods.childrenOfType(Annotation.class));
+        }
+        annotations.addAll(injection.childrenOfType(Annotation.class));
+        if (!annotations.isEmpty()) {
             Set<Annotation> existingAnnotations = injectedAnnotationsMap.computeIfAbsent(name, k -> new LinkedHashSet<>());
             existingAnnotations.addAll(annotations);
         }
-        if (extendsList != null) {
-            addToDependencies(name, extendsList, extendsLists);
+        if (injection.extendsList != null) {
+            addToDependencies(name, injection.extendsList, extendsLists);
         }
-        if (implementsList != null) {
-            addToDependencies(name, implementsList, implementsLists);
+        if (injection.implementsList != null) {
+            addToDependencies(name, injection.implementsList, implementsLists);
         }
         List<ClassOrInterfaceBodyDeclaration> existingDecls = bodyDeclarations.computeIfAbsent(name, k -> new ArrayList<>());
-        if (body != null) {
-        	existingDecls.addAll(body.childrenOfType(ClassOrInterfaceBodyDeclaration.class));
+        if (injection.body != null) {
+        	existingDecls.addAll(injection.body.childrenOfType(ClassOrInterfaceBodyDeclaration.class));
         }
-    }
+    }    
 
     public void injectCode(CompilationUnit jcu) {
         String packageName = jcu.getPackageName();

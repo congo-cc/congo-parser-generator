@@ -30,7 +30,6 @@ FAULT_TOLERANT_DEFAULT=false;
 
 MINIMAL_TOKEN;
 TAB_SIZE=4;
-//PRESERVE_TABS;
 ENSURE_FINAL_EOL;
 
 #define pattern_matching // We enable the pattern-matching in switch-case
@@ -156,7 +155,7 @@ INJECT PackageDeclaration :
 
 ImportDeclaration : <_IMPORT> [ <STATIC> ] Name [ <DOT> <STAR> ] <SEMICOLON> ;
 
-Modifiers :
+Modifiers# :
  (
   SCAN {isParserTolerant() || permissibleModifiers == null
        || permissibleModifiers.contains(getTokenType(1))}#
