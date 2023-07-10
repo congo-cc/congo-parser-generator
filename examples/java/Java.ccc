@@ -155,7 +155,7 @@ INJECT PackageDeclaration :
 
 ImportDeclaration : <_IMPORT> [ <STATIC> ] Name [ <DOT> <STAR> ] <SEMICOLON> ;
 
-Modifiers# :
+Modifiers :
  (
   SCAN {isParserTolerant() || permissibleModifiers == null
        || permissibleModifiers.contains(getTokenType(1))}#
