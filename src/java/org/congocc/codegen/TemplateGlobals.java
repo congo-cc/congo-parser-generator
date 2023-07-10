@@ -174,12 +174,12 @@ public class TemplateGlobals {
         String pkg = appSettings.getNodePackage();
         for (String key : superClassMap.keySet()) {
             String qualifiedName = String.format("%s.%s", pkg, key);
-            List<ObjectType> extendsList = grammar.getInjector().getExtendsList(qualifiedName);
+            Set<ObjectType> extendsList = grammar.getInjector().getExtendsList(qualifiedName);
 
             if ((extendsList == null) || (extendsList.size() == 0)) {
                 superClassMap.put(key, "Token");
             } else {
-                superClassMap.put(key, extendsList.get(0).toString());
+                superClassMap.put(key, extendsList.iterator().next().toString());
             }
         }
         tokenClassMap.putAll(superClassMap);
@@ -510,8 +510,8 @@ public class TemplateGlobals {
         seq.addNode(bnn);
         for (String cn : grammar.getNodeNames()) {
             String qn = String.format("%s.%s", pkg, cn);
-            List<ObjectType> elist = grammar.getInjector().getExtendsList(qn);
-            List<ObjectType> ilist = grammar.getInjector().getImplementsList(qn);
+            Set<ObjectType> elist = grammar.getInjector().getExtendsList(qn);
+            Set<ObjectType> ilist = grammar.getInjector().getImplementsList(qn);
             List<String> preds = new ArrayList<>();
             if (elist != null) {
                 for (ObjectType ot : elist) {

@@ -16,8 +16,8 @@ public class CodeInjector {
     private final Map<String, TypeDeclaration> types = new HashMap<>();  // Not presently queried ...
     private final Map<String, Set<ImportDeclaration>> injectedImportsMap = new HashMap<>();
     private final Map<String, Set<Annotation>> injectedAnnotationsMap = new HashMap<>();
-    private final Map<String, List<ObjectType>> extendsLists = new HashMap<>();
-    private final Map<String, List<ObjectType>> implementsLists = new HashMap<>();
+    private final Map<String, Set<ObjectType>> extendsLists = new HashMap<>();
+    private final Map<String, Set<ObjectType>> implementsLists = new HashMap<>();
     private final Map<String, TypeParameters> typeParameterLists = new HashMap<>();
     private final Map<String, List<ClassOrInterfaceBodyDeclaration>> bodyDeclarations = new HashMap<>();
     private final Set<String> overriddenMethods = new LinkedHashSet<>();  // Not presently queried ...
@@ -26,7 +26,7 @@ public class CodeInjector {
     private final Set<String> finalClasses = new LinkedHashSet<>();  // Not presently queried ...
     private final Grammar grammar;
     private AppSettings appSettings;
-    
+
     public CodeInjector(Grammar grammar, List<Node> codeInjections) {
         this.grammar = grammar;
         this.appSettings = grammar.getAppSettings();
@@ -72,15 +72,15 @@ public class CodeInjector {
                 Set<ImportDeclaration> injectedImports = injectedImportsMap.computeIfAbsent(name, k -> new LinkedHashSet<>());
                 injectedImports.addAll(importDecls);
             }
-            List<ObjectType> extendsList = dec.getExtendsList() == null ? new ArrayList<>() : dec.getExtendsList().getTypes();
-            List<ObjectType> existingOne = extendsLists.get(name);
+            Set<ObjectType> extendsList = dec.getExtendsList() == null ? new LinkedHashSet<>() : new LinkedHashSet<>(dec.getExtendsList().getTypes());
+            Set<ObjectType> existingOne = extendsLists.get(name);
             if (existingOne == null) {
                 extendsLists.put(name, extendsList);
             } else {
                 existingOne.addAll(extendsList);
             }
-            List<ObjectType> implementsList = dec.getImplementsList() == null ? new ArrayList<>() : dec.getImplementsList().getTypes();
-            List<ObjectType> existing = implementsLists.get(name);
+            Set<ObjectType> implementsList = dec.getImplementsList() == null ? new LinkedHashSet<>() : new LinkedHashSet<>(dec.getImplementsList().getTypes());
+            Set<ObjectType> existing = implementsLists.get(name);
             if (existing == null) {
                 implementsLists.put(name, implementsList);
             } else {
@@ -120,10 +120,10 @@ public class CodeInjector {
         }
     }
 
-    private void addToDependencies(String name, List<ObjectType> listToAdd, Map<String, List<ObjectType>> mapOfExistingLists) {
-        List<ObjectType> existingList = mapOfExistingLists.get(name);
+    private void addToDependencies(String name, List<ObjectType> listToAdd, Map<String, Set<ObjectType>> mapOfExistingLists) {
+        Set<ObjectType> existingList = mapOfExistingLists.get(name);
         if (existingList == null) {
-            mapOfExistingLists.put(name, listToAdd);
+            mapOfExistingLists.put(name, new LinkedHashSet<ObjectType>(listToAdd));
         } else {
             for (ObjectType ot : listToAdd) {
                 // Don't add duplicates. Maybe it should be a set rather than a list,
@@ -189,13 +189,13 @@ public class CodeInjector {
             if (injectedImports != null) {
                 allInjectedImports.addAll(injectedImports);
             }
-            List<ObjectType> injectedExtends = extendsLists.get(fullName);
+            Set<ObjectType> injectedExtends = extendsLists.get(fullName);
             if (injectedExtends != null) {
                 for (ObjectType type : injectedExtends) {
                     typeDecl.addExtends(type);
                 }
             }
-            List<ObjectType> injectedImplements = implementsLists.get(fullName);
+            Set<ObjectType> injectedImplements = implementsLists.get(fullName);
             if (injectedImplements != null) {
                 for (ObjectType type : injectedImplements) {
                     typeDecl.addImplements(type);
@@ -235,11 +235,11 @@ public class CodeInjector {
      * Helper methods
      */
 
-    public List<ObjectType> getExtendsList(String qualifiedName) {
+    public Set<ObjectType> getExtendsList(String qualifiedName) {
         return extendsLists.get(qualifiedName);
     }
 
-    public List<ObjectType> getImplementsList(String qualifiedName) {
+    public Set<ObjectType> getImplementsList(String qualifiedName) {
         return implementsLists.get(qualifiedName);
     }
 
@@ -257,8 +257,8 @@ public class CodeInjector {
 
     public List<String> getParentClasses(String qualifiedName) {
         List<String> result = new ArrayList<>();
-        List<ObjectType> extendsList = getExtendsList(qualifiedName);
-        List<ObjectType> implementsList = getImplementsList(qualifiedName);
+        Set<ObjectType> extendsList = getExtendsList(qualifiedName);
+        Set<ObjectType> implementsList = getImplementsList(qualifiedName);
         String name = qualifiedName.substring(qualifiedName.lastIndexOf('.')+1);
         if (extendsList.isEmpty() && implementsList.isEmpty()) {
             if (grammar.nodeIsInterface(name)) {
