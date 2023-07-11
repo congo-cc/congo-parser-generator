@@ -154,7 +154,9 @@
       [#set production = expansion.parent]
    [/#if]
    [#if !treeNodeBehavior??] 
-      [#if production?? && !settings.nodeDefaultVoid]
+      [#if production?? && !settings.nodeDefaultVoid 
+                        && !grammar.nodeIsInterface(production.name)
+                        && !grammar.nodeIsAbstract(production.name)]
          [#if settings.smartNodeCreation]
             [#set treeNodeBehavior = {"nodeName" : production.name!"nemo", "condition" : "1", "gtNode" : true, "void" :false, "initialShorthand" : ">"}]
          [#else]

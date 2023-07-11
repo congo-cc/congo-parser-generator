@@ -198,10 +198,10 @@ public class FilesGenerator {
         dataModel.put("filename", currentFilename);
         dataModel.put("isAbstract", grammar.nodeIsAbstract(nodeName));
         dataModel.put("isInterface", grammar.nodeIsInterface(nodeName));
-        String key = appSettings.getNodePackage() + "." + nodeName;
         dataModel.put("isFinal", codeInjector.isFinal(nodeName));
         dataModel.put("isSealed", codeInjector.isSealed(nodeName));
         dataModel.put("isNonSealed", codeInjector.isNonSealed(nodeName));
+        String key = appSettings.getNodePackage() + "." + nodeName;
         Set<ObjectType> permitsList = codeInjector.getPermitsList(key);
         if (permitsList == null) {
             dataModel.put("permitsList", new ArrayList<Object>());

@@ -163,9 +163,12 @@ public class CodeInjector {
         String name = injection.getName();
         Modifiers mods = injection.firstChildOfType(Modifiers.class);
         typeNames.add(name);
-        if (injection.isInterface) {
+        if (injection.isMarkedInterface()) {
             assert !injection.isMarkedFinal();
             interfaces.add(name);
+        }
+        if (injection.isMarkedClass()) {
+            interfaces.remove(name);
         }
         if (injection.isMarkedAbstract()) {
             assert !injection.isMarkedFinal();

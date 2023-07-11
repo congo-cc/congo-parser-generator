@@ -893,7 +893,7 @@ GrammarInclusion throws IOException :
 CodeInjection :
 {
     boolean isInterface = false;
-    Annotation annotation = null;
+    boolean isSealed=false;
     boolean foundOptionalInitialBrace = false;
     boolean usingParentheses = false;
     ObjectType ot;
@@ -902,6 +902,7 @@ CodeInjection :
         ACTIVATE_TOKENS _INJECT (<_INJECT>) 
         {permissibleModifiers = EnumSet.of(ABSTRACT,FINAL,STRICTFP,SEALED,NON_SEALED);}
         Modifiers
+        {isSealed = peekNode().getType()==SEALED || peekNode().firstChildOfType(SEALED)!=null;}
         [
             "class"
             |
@@ -928,6 +929,7 @@ CodeInjection :
              ("," ot=ObjectType {CURRENT_NODE.addImplementsType(ot);})*
              [";"]
         ]
+        ASSERT {!isSealed || checkNextTokenImage("permits")} : "Expecting 'permits' here" :
         [PermitsList [";"]]
         [
            SCAN 0 {foundOptionalInitialBrace} => "}"
@@ -947,7 +949,6 @@ INJECT CodeInjection :
    public List<ObjectType> extendsList = new ArrayList<>();
    public List<ObjectType> implementsList = new ArrayList<>();
    public ClassOrInterfaceBody body; 
-   public boolean isInterface;   
 
    public void addExtendsType(ObjectType type) {extendsList.add(type);}
    public void addImplementsType(ObjectType type) {implementsList.add(type);}
@@ -962,6 +963,14 @@ INJECT CodeInjection :
       if (firstChildOfType(ABSTRACT)!=null) return true;
       Modifiers mods = firstChildOfType(Modifiers.class);
       return mods != null && mods.firstChildOfType(ABSTRACT) != null;
+   }
+
+   public boolean isMarkedInterface() {
+      return firstChildOfType(INTERFACE) != null;
+   }
+
+   public boolean isMarkedClass() {
+      return firstChildOfType(CLASS) != null;
    }
 
    public boolean isSealed() {
@@ -1173,7 +1182,9 @@ INJECT TreeBuildingAnnotation :
     }
 
     public boolean isNeverInstantiated() {
-        return isVoid() || isAbstract() || isInterface();
+        return isVoid() || isAbstract() || isInterface()
+        || getGrammar().nodeIsInterface(getNodeName())
+        || getGrammar().nodeIsAbstract(getNodeName());
     }
     
     public boolean getGtNode() {
