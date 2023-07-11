@@ -489,7 +489,7 @@ public class AppSettings {
         if (getTokenChaining()) return false;
         Boolean b = (Boolean) settings.get("MINIMAL_TOKEN");
         if (b != null) return b;
-        return !checkForMethodName("setImage");
+        return !checkForMethodName("setImage") && !checkForMethodName("setCachedImage");
     }
 
     public boolean getNodeUsesParser() {
