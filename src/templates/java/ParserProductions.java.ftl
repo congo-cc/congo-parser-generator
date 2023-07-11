@@ -4,6 +4,10 @@
 [#var NODE_USES_PARSER = settings.nodeUsesParser]
 [#var NODE_PREFIX = grammar.nodePrefix]
 [#var currentProduction]
+[#var topLevelExpansion] [#-- A "one-shot" indication that we are processing 
+                              an expansion immediately below the BNF production expansion, 
+                              ignoring an ExpansionSequence that might be there. 
+                          --]
 
 [#macro Productions] 
  //=================================
@@ -53,7 +57,8 @@
        we want the prologue java code block to be able to refer to 
        CURRENT_NODE.
      --]
-     [@BuildCode production.expansion /]
+     [#set topLevelExpansion = false]
+     [@BuildCode production /]
     }   
 [/#macro]
 
@@ -68,14 +73,12 @@
             ${expansion.recoverMethodName}();
          }
          [/#if]
-         [@TreeBuildingAndRecovery expansion]
-           [@BuildExpansionCode expansion/]
-         [/@TreeBuildingAndRecovery]
+         [@BuildExpansionCode expansion/]
      [/@CU.HandleLexicalStateChange]
 [/#macro]
 
 [#macro TreeBuildingAndRecovery expansion]
-   [#var production = expansion.containingProduction, 
+   [#var production = null, 
          treeNodeBehavior,
          buildingTreeNode=false,
          nodeVarName,
@@ -85,10 +88,9 @@
          canRecover = settings.faultTolerant && expansion.tolerantParsing && expansion.simpleName != "Terminal"
    ]
    [#set treeNodeBehavior = resolveTreeNodeBehavior(expansion)]
-   [#if expansion.parent != production] 
-      [#set production = null]
-   [#else]
-      [#set javaCodePrologue = production.javaCode!]
+   [#if expansion == currentProduction]
+      [#set production = currentProduction]
+      [#set javaCodePrologue = production.javaCode!] 
    [/#if]
    [#if treeNodeBehavior??]
       [#if settings.treeBuildingEnabled]
@@ -106,7 +108,7 @@
          [#-- Build the tree node (part 1). --]
          [@buildTreeNode production treeNodeBehavior nodeVarName /]
       [/#if]
-      [#--  The prologue code can refer to CURRENT_NODE at this point. --]
+      [#-- The prologue code can refer to CURRENT_NODE at this point. --]
       ${javaCodePrologue}
       ParseException ${parseExceptionVar} = null;
       int ${callStackSizeVar} = parsingStack.size();
@@ -151,18 +153,19 @@
 [/#macro]
 
 [#function resolveTreeNodeBehavior expansion]
-   [#var treeNodeBehavior = expansion.treeNodeBehavior, production ]
-   [#if expansion.parent.simpleName = "BNFProduction"]
-      [#set production = expansion.parent]
+   [#var treeNodeBehavior = expansion.treeNodeBehavior]
+   [#var isProduction = false]
+   [#if expansion.simpleName = "BNFProduction"]
+      [#set isProduction = true]
    [/#if]
    [#if !treeNodeBehavior??] 
-      [#if production?? && !settings.nodeDefaultVoid 
-                        && !grammar.nodeIsInterface(production.name)
-                        && !grammar.nodeIsAbstract(production.name)]
+      [#if isProduction && !settings.nodeDefaultVoid 
+                        && !grammar.nodeIsInterface(expansion.name)
+                        && !grammar.nodeIsAbstract(expansion.name)]
          [#if settings.smartNodeCreation]
-            [#set treeNodeBehavior = {"nodeName" : production.name!"nemo", "condition" : "1", "gtNode" : true, "void" :false, "initialShorthand" : ">"}]
+            [#set treeNodeBehavior = {"nodeName" : expansion.name!"nemo", "condition" : "1", "gtNode" : true, "void" :false, "initialShorthand" : ">"}]
          [#else]
-            [#set treeNodeBehavior = {"nodeName" : production.name!"nemo", "condition" : null, "gtNode" : false, "void" : false}]
+            [#set treeNodeBehavior = {"nodeName" : expansion.name!"nemo", "condition" : null, "gtNode" : false, "void" : false}]
          [/#if]
       [/#if]
    [/#if]
@@ -203,6 +206,14 @@
    }
    ${globals.popNodeVariableName()!}
 [/#macro]
+
+[#function isProductionInstantiatingNode expansion] 
+   [#if expansion.containingProduction.treeNodeBehavior?? && 
+        expansion.containingProduction.treeNodeBehavior.neverInstantiated!false]
+      [#return false/]
+   [/#if]
+   [#return true/]
+[/#function]
 
 [#function nodeVar isProduction]
    [#var nodeVarName]
@@ -250,39 +261,63 @@
 
 
 [#macro BuildExpansionCode expansion]
-    [#var classname=expansion.simpleName]
-    [#var prevLexicalStateVar = CU.newVarName("previousLexicalState")]
-    [#if classname = "ExpansionWithParentheses"]
-       [@BuildExpansionCode expansion.nestedExpansion/]
-    [#elseif classname = "CodeBlock"]
-       ${expansion}
-    [#elseif classname = "UncacheTokens"]
+   [#var classname=expansion.simpleName]
+   [#var prevLexicalStateVar = CU.newVarName("previousLexicalState")]
+   [#-- take care of the non-tree-building classes --]
+   [#if classname = "CodeBlock"]
+      ${expansion}
+   [#elseif classname = "UncacheTokens"]
          uncacheTokens();
-    [#elseif classname = "Failure"]
-       [@BuildCodeFailure expansion/]
-    [#elseif classname = "TokenTypeActivation"]
-       [@BuildCodeTokenTypeActivation expansion/]
-    [#elseif classname = "ExpansionSequence"]
-       [@BuildCodeSequence expansion/]
-    [#elseif classname = "NonTerminal"]
-       [@BuildCodeNonTerminal expansion/]
-    [#elseif classname = "Terminal"]
-       [@BuildCodeTerminal expansion /]
-    [#elseif classname = "TryBlock"]
-       [@BuildCodeTryBlock expansion/]
-    [#elseif classname = "AttemptBlock"]
-       [@BuildCodeAttemptBlock expansion /]
-    [#elseif classname = "ZeroOrOne"]
-       [@BuildCodeZeroOrOne expansion/]
-    [#elseif classname = "ZeroOrMore"]
-       [@BuildCodeZeroOrMore expansion/]
-    [#elseif classname = "OneOrMore"]
-        [@BuildCodeOneOrMore expansion/]
-    [#elseif classname = "ExpansionChoice"]
-        [@BuildCodeChoice expansion/]
-    [#elseif classname = "Assertion"]
-        [@BuildAssertionCode expansion/]
-    [/#if]
+   [#elseif classname = "Failure"]
+      [@BuildCodeFailure expansion/]
+   [#elseif classname = "Assertion"]
+      [@BuildAssertionCode expansion/]
+   [#elseif classname = "TokenTypeActivation"]
+      [@BuildCodeTokenTypeActivation expansion/]
+   [#elseif classname = "TryBlock"]
+      [@BuildCodeTryBlock expansion/]
+   [#elseif classname = "AttemptBlock"]
+      [@BuildCodeAttemptBlock expansion /]
+   [#else]
+      [#-- take care of the tree node (if any) --]
+      [@TreeBuildingAndRecovery expansion]
+         [#if classname = "BNFProduction"]
+            [#-- The tree node having been built, now build the actual top-level expansion --]
+            [#set topLevelExpansion = true]
+            // top-level expansion ${expansion.nestedExpansion.simpleName}
+            [@BuildCode expansion.nestedExpansion/]
+         [#else]
+            [#-- take care of terminal and non-terminal expansions; they cannot contain child expansions --]
+            [#if classname = "NonTerminal"]
+               [@BuildCodeNonTerminal expansion/]
+            [#elseif classname = "Terminal"]
+               [@BuildCodeTerminal expansion /]
+            [#else]
+               [#-- take care of the syntactical expansions (which can contain child expansions) --]
+               [#-- capture the top-level indication in order to restore when bubbling up --]
+               [#var stackedTopLevel = topLevelExpansion]
+               [#if topLevelExpansion && classname != "ExpansionSequence"]
+                  [#-- turn off top-level indication unless an expansion sequence (the tree node has already been determined when this nested template is expanded) --]
+                  [#set topLevelExpansion = false]
+               [/#if]
+               [#if classname = "ZeroOrOne"]
+                  [@BuildCodeZeroOrOne expansion/]
+               [#elseif classname = "ZeroOrMore"]
+                  [@BuildCodeZeroOrMore expansion/]
+               [#elseif classname = "OneOrMore"]
+                  [@BuildCodeOneOrMore expansion/]
+               [#elseif classname = "ExpansionChoice"]
+                  [@BuildCodeChoice expansion/]
+               [#elseif classname = "ExpansionWithParentheses"]
+                  [@BuildExpansionCode expansion.nestedExpansion/]
+               [#elseif classname = "ExpansionSequence"]
+                  [@BuildCodeSequence expansion/] [#-- leave the topLevelExpansion one-shot alone (see above) --]
+               [/#if]
+               [#set topLevelExpansion = stackedTopLevel]
+            [/#if]
+         [/#if]
+      [/@TreeBuildingAndRecovery]
+   [/#if]
 [/#macro]
 
 [#macro BuildCodeFailure fail]
@@ -371,7 +406,6 @@
 [/#macro]
 
 [#macro BuildCodeNonTerminal nonterminal]
-   [#var production = nonterminal.production, LHS]
    pushOntoCallStack("${nonterminal.containingProduction.name}", "${nonterminal.inputSource?j_string}", ${nonterminal.beginLine}, ${nonterminal.beginColumn});
    [#if settings.faultTolerant]
       [#var followSet = nonterminal.followSet]
@@ -390,37 +424,55 @@
       [/#if]
    [/#if]
    try {
-   [#if nonterminal.LHS??]
-      [#set LHS = nonterminal.LHS]
-   [/#if]
-   [#if LHS?? && production.returnType != "void"]
-       ${LHS} = 
-   [/#if]
-      ${nonterminal.name}(${nonterminal.args!});
-   [#if LHS?? && production.returnType = "void"]
-      try {
-         ${LHS} = (${production.nodeName}) peekNode();
-      } catch (ClassCastException cce) {
-         ${LHS} = null;
-      }
-   [/#if]
-   [#if !nonterminal.childName?is_null]
-        if (buildTree) {
-            Node child = peekNode();
-            String name = "${nonterminal.childName}";
-    [#if nonterminal.multipleChildren]
-            ${globals.currentNodeVariableName}.addToNamedChildList(name, child);
-    [#else]
-            ${globals.currentNodeVariableName}.setNamedChild(name, child);
-    [/#if]
-        }
-   [/#if]
+      [@AcceptNonTerminal nonterminal /]
    } 
    finally {
        popCallStack();
    }
 [/#macro]
 
+[#macro AcceptNonTerminal nonterminal]
+   [#var expressedLHS = nonterminal.LHS]
+   [#var impliedLHS = null]
+   [#if nonterminal.production.returnType != "void"]
+      [#if expressedLHS??]
+         ${expressedLHS} = 
+         [#set expressedLHS = null]
+      [/#if]   
+   [/#if]
+   [#-- Accept the non-terminal expansion --]
+   ${nonterminal.name}(${nonterminal.args!});   
+   [#if expressedLHS?? || impliedLHS??]
+      try {
+         [#if expressedLHS??]
+            ${expressedLHS} =
+         [/#if]
+         [#if impliedLHS??]
+            ${impliedLHS} =
+         [/#if]
+         (${nonterminal.production.nodeName}) peekNode(); [#-- There had better be a node here! --]
+      } catch (ClassCastException cce) {
+         [#if expressedLHS??]
+            ${expressedLHS} =
+         [/#if]
+         [#if impliedLHS??]
+            ${impliedLHS} =
+         [/#if] 
+            null;
+      }
+   [/#if]
+   [#if nonterminal.childName??]
+      if (buildTree) {
+         Node child = peekNode();
+         String name = "${nonterminal.childName}";
+      [#if nonterminal.multipleChildren]
+         ${globals.currentNodeVariableName}.addToNamedChildList(name, child);
+      [#else]
+         ${globals.currentNodeVariableName}.setNamedChild(name, child);
+      [/#if]
+      }
+   [/#if] 
+[/#macro]
 
 [#macro BuildCodeZeroOrOne zoo]
     [#if zoo.nestedExpansion.class.simpleName = "ExpansionChoice"]
@@ -489,6 +541,7 @@
    [#list choice.choices as expansion]
       [#if expansion.enteredUnconditionally]
         {
+         // choice for ${globals.currentNodeVariableName} index ${expansion_index}
          ${BuildCode(expansion)}
         }
         [#if expansion_has_next]
@@ -500,6 +553,7 @@
          [#return/]
       [/#if]
       if (${ExpansionCondition(expansion)}) { 
+         // choice for ${globals.currentNodeVariableName} index ${expansion_index}
          ${BuildCode(expansion)}
       }
       [#if expansion_has_next] else [/#if]
@@ -571,7 +625,6 @@
    [/#if]
 [/#macro]
 
-
 [#macro BuildAssertionCode assertion]
    [#var optionalPart = ""]
    [#if assertion.messageExpression??]
@@ -590,7 +643,6 @@
       }
    [/#if]
 [/#macro]
-
 
 [#--
    Macro to build routines that scan up to the start of an expansion
