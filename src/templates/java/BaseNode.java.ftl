@@ -119,46 +119,46 @@ public class ${settings.baseNodeClassName} implements Node {
         return parent;
     }
 
-    public void addChild(Node n) {
-        children.add(n);
+    public boolean add(Node n) {
         n.setParent(this);
+        return children.add(n);
     }
     
-    public void addChild(int i, Node n) {
+    public void add(int i, Node n) {
         children.add(i, n);
         n.setParent(this);
     }
 
-    public Node getChild(int i) {
+    public Node get(int i) {
         return children.get(i);
     }
 
-    public void setChild(int i, Node n) {
+    public Node set(int i, Node n) {
         children.get(i).setParent(null);
-        children.set(i, n);
         n.setParent(this);
+        return children.set(i, n);
     }
     
-    public Node removeChild(int i) {
-        Node n = children.remove(i);
-        n.setParent(null);
-        return n;
-    }
-
     public Node remove(int i) {
         Node n = children.remove(i);
         n.setParent(null);
         return n;
     }
 
-    public void clearChildren() {
+    public boolean remove(Object obj) {
+       Node n = (Node) obj;
+       n.setParent(null);
+       return children.remove(n);
+    }
+
+    public void clear() {
         for (Node child : children) {
             child.setParent(null);
         }
         children.clear();
     }
 
-    public int getChildCount() {
+    public int size() {
         return children.size();
     }
     
@@ -188,28 +188,6 @@ public class ${settings.baseNodeClassName} implements Node {
 
     public List<${settings.baseTokenClassName}> getRealTokens() {
         return descendants(${settings.baseTokenClassName}.class, t->!t.isUnparsed());
-    }
-
-    public void add(int i, Node n) {
-        addChild(i, n);
-    }
-
-    public Node get(int i) {
-        return getChild(i);
-    }
-
-    public Node set(int i, Node n) {
-        setChild(i, n);
-        return n;
-    }
-
-    public boolean add(Node n) {
-        addChild(n);
-        return true;
-    }
-
-    public void clear() {
-        clearChildren();
     }
 
     public boolean addAll(Collection<? extends Node> nodes) {

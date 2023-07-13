@@ -41,23 +41,11 @@ public interface Node extends List<Node>
             throw new UnsupportedOperationException("This is a terminal node. It has no child nodes.");
         }
 
-        default void addChild(Node n) {
-            throw new UnsupportedOperationException("This is a terminal node. It has no child nodes.");
-        }
-
-        default void addChild(int i, Node n) {
-            throw new UnsupportedOperationException("This is a terminal node. It has no child nodes.");
-        }
-
         default Node remove(int i) {
             throw new UnsupportedOperationException("This is a terminal node. It has no child nodes.");
         }
 
-        default Node removeChild(int i) {
-            throw new UnsupportedOperationException();
-        }
-        
-        default void setChild(int i, Node n) {
+        default boolean remove(Object obj) {
             throw new UnsupportedOperationException("This is a terminal node. It has no child nodes.");
         }
 
@@ -69,12 +57,8 @@ public interface Node extends List<Node>
             return -1;
         }
 
-        default int getChildCount() {
+        default int size() {
             return 0;
-        }
-
-        default Node getChild(int i) {
-            return null;
         }
 
         default Node get(int i) {
@@ -141,7 +125,9 @@ public interface Node extends List<Node>
      * @deprecated Use #add(Node)
      */
      @Deprecated
-     void addChild(Node n);
+     default void addChild(Node n) {
+        add(n);
+     }
 
      /**
       * inserts a child Node at a specific index, displacing the 
@@ -151,7 +137,9 @@ public interface Node extends List<Node>
       * @deprecated Use #add(int,Node)
       */
      @Deprecated
-     void addChild(int i, Node n);
+     default void addChild(int i, Node n) {
+        add(i, n);
+     }
 
      /**
       * @return the Node at the specific offset
@@ -159,7 +147,9 @@ public interface Node extends List<Node>
       * @deprecated Use #get(int)
       */
      @Deprecated
-     Node getChild(int i);
+     default Node getChild(int i) {
+        return get(i);
+     }
 
      /**
       * Replace the node at index i
@@ -168,7 +158,7 @@ public interface Node extends List<Node>
       * @deprecated Use #set(int,Node)
       */
      @Deprecated
-     void setChild(int i, Node n);
+     default void setChild(int i, Node n) {set(i,n);}
 
      /**
       * Remove the node at index i. Any Nodes after i
@@ -178,11 +168,7 @@ public interface Node extends List<Node>
       * @deprecated Use #remove(int)
       */
      @Deprecated
-     Node removeChild(int i);
-
-     default boolean remove(Object obj) {
-        return removeChild((Node) obj);
-    }
+     default Node removeChild(int i) {return remove(i);}
 
      /**
       * Removes the Node from this node's children
@@ -192,10 +178,7 @@ public interface Node extends List<Node>
       */ 
      @Deprecated
      default boolean removeChild(Node n) {
-         int index = indexOf(n);
-         if (index == -1) return false;
-         removeChild(index);
-         return true;
+         return remove(n);
      }
 
      /**
@@ -290,15 +273,15 @@ public interface Node extends List<Node>
       * Remove all the child nodes
       * @deprecated Use clear()
       */
-    @Deprecated
-     void clearChildren();
+     @Deprecated
+     default void clearChildren() {clear();}
 
      /**
       * @return the number of child nodes
-      * @deprecated Use size()
+      * @deprecated Use #size()
       */
      @Deprecated
-     int getChildCount();
+     default int getChildCount() {return size();}
      
      /**
       * @return a List containing this node's child nodes
