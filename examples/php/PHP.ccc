@@ -1,3 +1,220 @@
 DEFAULT_LEXICAL_STATE=PHP;
+PARSER_PACKAGE="org.parsers.php";
+ENSURE_FINAL_EOL;
 
 INCLUDE "PHPLexer.ccc"
+
+Root : LEXICAL_STATE PHP_OUTER (Scriptlet | <TEXT>)* <EOF> ;
+
+Scriptlet : <SCRIPTLET_START> (Statement)* <SCRIPTLET_END> ;
+
+Statement : 
+   CompoundStatement
+   |
+   NamedLabelStatement
+   |
+   IfStatement
+   |
+   SwitchStatement
+;   
+
+CompoundStatement : <LBRACE> (Statement)* <RBRACE> ;
+
+NamedLabelStatement : <NAME> <COLON> ; 
+
+ExpressionStatement : [Expression] <COLON> ;
+
+IfStatement : 
+   <IF> 
+   <LPAREN> 
+   Expression 
+   <RPAREN> 
+   (
+     <COLON>
+     (Statement)+
+     (
+        <ELSEIF>
+        <LPAREN>
+        Expression
+        <RPAREN>
+        <COLON>
+        (Statement)+
+     )*
+     [
+        <ELSE>
+        <COLON>
+        <LPAREN>
+        Expression
+        <RPAREN>
+        (Statement)+
+     ]
+     |
+     Statement
+     (
+        <ELSEIF>
+        <LPAREN>
+        Expression
+        <RPAREN>
+        Statement
+     )*
+     [
+         <ELSEIF>
+         <LPAREN>
+         Expression
+         <RPAREN>
+         Statement
+     ]
+   )
+;   
+
+SwitchStatement : 
+   <SWITCH> 
+   <LPAREN>
+   Expression
+   <RPAREN>
+   (
+      <LBRACE>
+      (CaseStatement)*
+      <RBRACE>
+      |
+      <COLON>
+      (CaseStatement)*
+      <END_SWITCH>
+      <SEMICOLON>
+   )
+;
+
+CaseStatement :
+   <CASE>
+   Expression
+   (<COLON>|<SEMICOLON>)
+   (Statement)*
+   |
+   <DEFAULT>
+   (<COLON>|<SEMICOLON>)
+   (Statement)*
+;
+
+WhileStatement :
+   <WHILE> 
+   <LPAREN>
+   Expression
+   <RPAREN>
+   (
+       Statement
+       |
+       <COLON>
+       (Statement)+
+       <ENDWHILE>
+       <SEMICOLON>
+   )
+;
+
+DoStatement :
+   <DO>
+   Statement
+   <WHILE>
+   <LPAREN>
+   Expression
+   <RPAREN>
+   <SEMICOLON>
+;
+
+ForStatement :
+   <FOR> 
+   <LPAREN>
+   [
+     Expression 
+     (<COMMA> Expression)*
+   ]
+   <SEMICOLON>
+   [
+      Expression
+      (<COMMA> Expression)*
+   ]
+   <SEMICOLON>
+   [
+     Expression
+     (<COMMA> Expression)*
+   ]
+   <RPAREN>
+   (
+     <COLON> (Statement)+
+     |
+     Statement
+   )
+;
+
+ForeachStatement :
+   <FOREACH>
+   <LPAREN>
+   Expression
+   <RPAREN>
+   <AS>
+   [Expression <RIGHT_ARROW>]
+   (
+      [<BIT_AND>] Expression
+      |
+      <LIST> <LPAREN> ListExpressionList <RPAREN>
+   )
+   <RPAREN>
+   (
+      Statement
+      |
+      <COLON> (Statement)+
+   )
+;
+
+GotoStatement : <GOTO> <NAME> ;
+
+ContinueStatement# : 
+    <CONTINUE> 
+    [ BreakoutLevel ]
+;
+
+BreakStatement# : 
+    <BREAK>
+    [BreakoutLevel]
+;    
+
+BreakoutLevel# :
+   <INTEGER_LITERAL>
+   |
+   <LPAREN> [BreakoutLevel] <RPAREN>
+;   
+
+ReturnStatement# : <RETURN> [Expression] ;
+
+ThrowStatement# : <THROW> Expression ;
+
+TryStatement : 
+   <TRY> 
+   CompoundStatement
+   (
+     FinallyClause
+     |
+     (CatchClause)+ [FinallyClause]
+   )
+;
+
+CatchClause :
+   <CATCH>
+   (QualifiedName)+
+;
+
+FinallyClause :
+    <FINALLY>
+    CompoundStatement
+;
+
+QualifiedName# :
+  (
+   <BACKSLASH> ASSERT ~(<NAME>|<NAMESPACE>) =>||
+   |
+   [<BACKSLASH>]  <NAME> (<BACKSLASH> <NAME>)*
+   |
+   <NAMESPACE> <BACKSLASH> [<NAME> (<BACKSLASH> <NAME>)* <BACKSLASH>]
+  )
+  <NAME>
+;   
+

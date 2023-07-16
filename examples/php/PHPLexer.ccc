@@ -10,7 +10,7 @@ SKIP :
    <WHITESPACE : ([" ", "\t", "\r", "\n"])+ > #Whitespace
 ;
 
-TOKEN #Keyword :
+TOKEN [IGNORE_CASE] #Keyword :
      <ABSTRACT : "abstract">
    | <AND : "and">
    | <ARRAY : "array">
@@ -75,11 +75,11 @@ TOKEN #Keyword :
    | <WHILE : "while">
    | <XOR : "xor">
    | <YIELD : "yield">
-   | <YIELD_FROM : "yield from">
+   | <YIELD_FROM : "yield" <WHITESPACE> "from">
 ;
 
 TOKEN :
-   <NAME : ["a"-"z","A"-"Z","\u0080"-"\u00FF"] ([a"-"z","A"-"Z","\u0080"-"\u00FF","0"-"9"])*> #Name
+   <NAME : ["a"-"z","A"-"Z","\u0080"-"\u00FF"] (["a"-"z","A"-"Z","\u0080"-"\u00FF","0"-"9"])*> #Name
    |
    <VARNAME : "$" <NAME>> #VarName
 ;
@@ -105,8 +105,8 @@ TOKEN #Operator :
    | <LE : "<=">
    | <GE : ">=">
    | <EQUALS : "==">
-   | <TRIPLE_EQUALS : "==="
-   | <NE  "!=">
+   | <TRIPLE_EQUALS : "===">
+   | <NE :  "!=">
    | <DOUBLE_NE : "!==">
    | <HAT : "^">
    | <BIT_OR : "|">
@@ -121,7 +121,7 @@ TOKEN #Operator :
    | <STAR_ASSIGN : "*=">
    | <SLASH_ASSIGN : "/=">
    | <PERCENT_ASSIGN : "%=">
-   | <PLUS_ASSIGN : "+='>
+   | <PLUS_ASSIGN : "+=">
    | <MINUS_ASSIGN : "-=">
    | <DOT_ASSIGN : ".=">
    | <LEFT_SHIFT_ASSIGN : "<<=">
@@ -133,6 +133,7 @@ TOKEN #Operator :
    | <DOUBLE_ARROW : "<==>" >
    | <ELLIPSIS : "...">
    | <BACKSLASH : "\\">
+   | <RIGHT_ARROW : "=>">
 ;
 
 TOKEN #Delimiter :
@@ -231,10 +232,13 @@ TOKEN #StringLiteral :
   >
 ;
 
-<TEXT> TOKEN :
-    < END_TEXT : "<?"> #StartTag : PHP
+<PHP_OUTER> TOKEN : 
+  <TEXT : (~["<"] | "<" ~["?"])+ > : PHP
+  |
+  <SCRIPTLET_START :  "<?" ("php" <WHITESPACE>)? > : PHP
 ;
 
-<TEXT> MORE :
-    < ANY_CHAR : ~[]>
-;    
+TOKEN : 
+  <SCRIPTLET_END : "?>" > : PHP_OUTER
+;  
+    
