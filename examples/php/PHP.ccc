@@ -208,13 +208,13 @@ FinallyClause :
 ;
 
 QualifiedName# :
-  (
-   <BACKSLASH> ASSERT ~(<NAME>|<NAMESPACE>) =>||
+  [
+   <BACKSLASH> ASSERT ~(<NAME>)# =>||
    |
-   [<BACKSLASH>]  <NAME> (<BACKSLASH> <NAME>)*
+   [<BACKSLASH>]  <NAME> (<BACKSLASH> <NAME>)* <BACKSLASH>
    |
    <NAMESPACE> <BACKSLASH> [<NAME> (<BACKSLASH> <NAME>)* <BACKSLASH>]
-  )
+  ]
   <NAME>
 ;   
 
