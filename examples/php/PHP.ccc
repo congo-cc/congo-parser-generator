@@ -20,48 +20,48 @@ Statement :
 
 CompoundStatement : <LBRACE> (Statement)* <RBRACE> ;
 
-NamedLabelStatement : <NAME> <COLON> ; 
+NamedLabelStatement : <NAME> ":" ; 
 
-ExpressionStatement : [Expression] <COLON> ;
+ExpressionStatement : [Expression] ":" ;
 
 IfStatement : 
    <IF> 
-   <LPAREN> 
+   "(" 
    Expression 
-   <RPAREN> 
+   ")" 
    (
-     <COLON>
+     ":"
      (Statement)+
      (
         <ELSEIF>
-        <LPAREN>
+        "("
         Expression
-        <RPAREN>
-        <COLON>
+        ")"
+        ":"
         (Statement)+
      )*
      [
         <ELSE>
-        <COLON>
-        <LPAREN>
+        ":"
+        "("
         Expression
-        <RPAREN>
+        ")"
         (Statement)+
      ]
      |
      Statement
      (
         <ELSEIF>
-        <LPAREN>
+        "("
         Expression
-        <RPAREN>
+        ")"
         Statement
      )*
      [
          <ELSEIF>
-         <LPAREN>
+         "("
          Expression
-         <RPAREN>
+         ")"
          Statement
      ]
    )
@@ -69,44 +69,44 @@ IfStatement :
 
 SwitchStatement : 
    <SWITCH> 
-   <LPAREN>
+   "("
    Expression
-   <RPAREN>
+   ")"
    (
       <LBRACE>
       (CaseStatement)*
       <RBRACE>
       |
-      <COLON>
+      ":"
       (CaseStatement)*
-      <END_SWITCH>
-      <SEMICOLON>
+      <ENDSWITCH>
+      ";"
    )
 ;
 
 CaseStatement :
    <CASE>
    Expression
-   (<COLON>|<SEMICOLON>)
+   (":"|";")
    (Statement)*
    |
    <DEFAULT>
-   (<COLON>|<SEMICOLON>)
+   (":"|";")
    (Statement)*
 ;
 
 WhileStatement :
    <WHILE> 
-   <LPAREN>
+   "("
    Expression
-   <RPAREN>
+   ")"
    (
        Statement
        |
-       <COLON>
+       ":"
        (Statement)+
        <ENDWHILE>
-       <SEMICOLON>
+       ";"
    )
 ;
 
@@ -114,32 +114,32 @@ DoStatement :
    <DO>
    Statement
    <WHILE>
-   <LPAREN>
+   "("
    Expression
-   <RPAREN>
-   <SEMICOLON>
+   ")"
+   ";"
 ;
 
 ForStatement :
    <FOR> 
-   <LPAREN>
+   "("
    [
      Expression 
-     (<COMMA> Expression)*
+     ("," Expression)*
    ]
-   <SEMICOLON>
+   ";"
    [
       Expression
-      (<COMMA> Expression)*
+      ("," Expression)*
    ]
-   <SEMICOLON>
+   ";"
    [
      Expression
-     (<COMMA> Expression)*
+     ("," Expression)*
    ]
-   <RPAREN>
+   ")"
    (
-     <COLON> (Statement)+
+     ":" (Statement)+
      |
      Statement
    )
@@ -147,21 +147,21 @@ ForStatement :
 
 ForeachStatement :
    <FOREACH>
-   <LPAREN>
+   "("
    Expression
-   <RPAREN>
+   ")"
    <AS>
-   [Expression <RIGHT_ARROW>]
+   [Expression "=>"]
    (
       [<BIT_AND>] Expression
       |
-      <LIST> <LPAREN> ListExpressionList <RPAREN>
+      <LIST> "(" ListExpressionList ")"
    )
-   <RPAREN>
+   ")"
    (
       Statement
       |
-      <COLON> (Statement)+
+      ":" (Statement)+
    )
 ;
 
@@ -180,7 +180,7 @@ BreakStatement# :
 BreakoutLevel# :
    <INTEGER_LITERAL>
    |
-   <LPAREN> [BreakoutLevel] <RPAREN>
+   "(" [BreakoutLevel] ")"
 ;   
 
 ReturnStatement# : <RETURN> [Expression] ;
@@ -209,7 +209,7 @@ FinallyClause :
 
 QualifiedName# :
   [
-   <BACKSLASH> ASSERT ~(<NAME>)# =>||
+   <BACKSLASH> ASSERT ~(<NAME>) =>||
    |
    [<BACKSLASH>]  <NAME> (<BACKSLASH> <NAME>)* <BACKSLASH>
    |
@@ -217,4 +217,207 @@ QualifiedName# :
   ]
   <NAME>
 ;   
+
+ListExpressionList : UnkeyedListExpressionList | KeyedListExpressionList ;
+
+UnkeyedListExpressionList :
+   "," ASSERT ~(ListOrVariable) =>||
+   |
+   [","] ListOrVariable (SCAN 2 "," ListOrVariable)* [","]
+;
+
+KeyedListExpressionList :
+   Expression "=>" ListOrVariable
+   ("," Expression "=>" ListOrVariable)*
+;
+
+Expression :
+   IncludeExpression
+   |
+   IncludeOnceExpression
+   |
+   RequireExpression
+   |
+   RequireOnceExpression
+;
+
+RequireExpression :
+   "require" Expression
+;
+
+RequireOnceExpression :
+   "require_once" Expression
+; 
+
+IncludeOnceExpression :
+   "include_once" Expression
+;
+
+IncludeExpression :
+   "include" Expression
+;
+
+ListOrVariable :
+   <LIST> ListExpressionList
+   |
+   [<BIT_AND>] Variable
+;
+
+Variable :
+   CallableVariable
+   |
+   ScopedPropertyAccessExpression
+//   |
+//   MemberAccessExpression
+;   
+
+CallableVariable#void :
+   SimpleVariable
+//   |
+//   SubscriptExpression
+//   |
+//   MemberCallExpression
+//   |
+//   ScopedCallExpression
+//   |
+//   FunctionCallExpression
+;
+
+FunctionCallExpression :
+    (QualifiedName|CallableExpression)
+    "("
+    [
+        ArgumentExpression
+        (SCAN 2 "," ArgumentExpression)*
+        [","]
+    ]
+    ")"
+;
+
+ArgumentExpression : 
+   [<ELLIPSIS>]
+   Expression
+;
+
+CallableExpression :
+   CallableVariable
+   |
+   "(" Expression ")"
+   |
+   ArrayCreationExpression
+   |
+   StringLiteral
+;
+
+StringLiteral :
+   <SINGLE_QUOTE_STRING>
+   |
+   <DOUBLE_QUOTE_STRING>
+   |
+   <HEREDOC_STRING_LITERAL>
+   |
+   <NOWDOC_STRING_LITERAL>
+;
+
+ArrayCreationExpression :
+   <ARRAY> "(" [ArrayInitializer] ")"
+   |
+   <LBRACKET> [ArrayInitializer] <RBRACKET>
+;
+
+ArrayInitializer :
+   ArrayElementInitializer
+   (SCAN 2 "," ArrayElementInitializer)*
+   [","]
+;
+
+ArrayElementInitializer :
+   [Expression "=>" =>||]
+   ["&"] Expression
+;
+
+ScopedCallExpression :
+  (
+   <SELF>
+   |
+   <PARENT>
+   |
+   <STATIC>
+   |
+   QualifiedName
+   |
+   DereferencableExpression
+  )
+  "::"
+  MemberName
+  "("
+  [
+    ArgumentExpression (SCAN 2 "," ArgumentExpression)* [","]
+  ]
+  ")"
+;
+
+MemberName :
+   <NAME>
+   |
+   SimpleVariable
+;   
+
+SimpleVariable :
+  ("$")+ 
+  (
+    <NAME>
+    |
+    "{" Expression "}"
+  )
+;
+
+DereferencableExpression :
+   Variable
+   |
+   "(" Expression ")"
+   |
+   ArrayCreationExpression
+   |
+   StringLiteral
+;
+
+MemberCallExpression :
+   DereferencableExpression
+   "->"
+   MemberName
+   "("
+   [
+     ArgumentExpression (SCAN 2 "," ArgumentExpression)* [","]
+   ]
+   ")"
+;
+
+SubscriptExpression :
+   DereferencableExpression
+   (
+     "[" [Expression] "]"
+     |
+     "{" Expression "}" // deprecated form
+   )
+;
+
+MemberAccessExpression :
+   DereferencableExpression "->" MemberName
+;
+
+ScopedPropertyAccessExpression :
+   (
+    "self" | "parent" | "static"
+    | QualifiedName //| DereferencableExpression
+   )
+   "::"
+   MemberName
+   "("
+   [
+      ArgumentExpression (SCAN 2 "," ArgumentExpression)* [","]
+   ]
+   ")"
+;
+
 

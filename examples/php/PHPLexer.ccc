@@ -26,6 +26,7 @@ TOKEN [IGNORE_CASE] #Keyword :
    | <DECLARE : "declare">
    | <DEFAULT : "default">
    | <DIE : "die">
+   | <DO : "do">
    | <ECHO : "echo">
    | <ELSE : "else">
    | <ELSEIF : "elseif">
@@ -76,6 +77,8 @@ TOKEN [IGNORE_CASE] #Keyword :
    | <XOR : "xor">
    | <YIELD : "yield">
    | <YIELD_FROM : "yield" <WHITESPACE> "from">
+   | <SELF : "self" >
+   | <PARENT : "parent">
 ;
 
 TOKEN :
@@ -133,7 +136,7 @@ TOKEN #Operator :
    | <DOUBLE_ARROW : "<==>" >
    | <ELLIPSIS : "...">
    | <BACKSLASH : "\\">
-   | <RIGHT_ARROW : "=>">
+   | <THICK_RIGHT_ARROW : "=>">
 ;
 
 TOKEN #Delimiter :
