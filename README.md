@@ -12,7 +12,7 @@ Congo contains complete, up-to-date grammars for:
 - [Python](https://github.com/congo-cc/congo-parser-generator/tree/main/examples/python)
 - [C#](https://github.com/congo-cc/congo-parser-generator/tree/main/examples/csharp)
 - [Lua](https://github.com/congo-cc/congo-parser-generator/tree/main/examples/lua)
-- [JSON](https://github.com/congo-cc/congo-parser-generator/blob/main/examples/java/Java.ccc)
+- [JSON](https://github.com/congo-cc/congo-parser-generator/tree/main/examples/json)
 
 Any of these grammars may be freely used in your own projects, though it would be *nice* if you acknowledge the use and provide a link to this project. The above-linked grammars also can be studied as examples. (Best would be to start with the JSON grammar, move on to Lua, then Python, Java, and C# in order of complexity.)
 
