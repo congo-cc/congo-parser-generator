@@ -32,8 +32,6 @@ MINIMAL_TOKEN;
 TAB_SIZE=4;
 ENSURE_FINAL_EOL;
 
-#define pattern_matching // We enable the pattern-matching in switch-case
-
 INCLUDE "JavaLexer.ccc"
 
 #if use_token_hook

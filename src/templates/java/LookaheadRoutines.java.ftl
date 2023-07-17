@@ -95,6 +95,7 @@
 [#macro BuildPredicateRoutine expansion] 
   [#var lookaheadAmount = expansion.lookaheadAmount]
   [#if lookaheadAmount = 2147483647][#set lookaheadAmount = "UNLIMITED"][/#if]
+  [#set newVarIndex = 0 in CU] 
   // BuildPredicateRoutine: expansion at ${expansion.location}
    private final boolean ${expansion.predicateMethodName}() {
      remainingLookahead= ${lookaheadAmount};
@@ -120,6 +121,7 @@
   // scanahead routine for expansion at: 
   // ${expansion.location}
   // BuildScanRoutine macro
+[#set newVarIndex = 0 in CU] 
   private final boolean ${expansion.scanRoutineName}(boolean scanToEnd) {
     [#if expansion.hasScanLimit]
        int prevPassedPredicateThreshold = this.passedPredicateThreshold;
@@ -161,6 +163,7 @@
   // BuildAssertionRoutine macro
   [#var storeCurrentLookaheadVar = CU.newVarName("currentLookahead")
         storeRemainingLookahead = CU.newVarName("remainingLookahead")]
+  [#set newVarIndex = 0 in CU] 
     private final boolean ${expansion.scanRoutineName}() {
        final boolean scanToEnd = true;
        int ${storeRemainingLookahead} = remainingLookahead;
@@ -218,6 +221,7 @@
 [#macro BuildLookaheadRoutine lookahead]
      // lookahead routine for lookahead at: 
      // ${lookahead.location}
+  [#set newVarIndex = 0 in CU] 
      private final boolean ${lookahead.nestedExpansion.scanRoutineName}(boolean scanToEnd) {
         int prevRemainingLookahead = remainingLookahead;
         boolean prevHitFailure = hitFailure;
@@ -237,6 +241,7 @@
 [/#macro]
 
 [#macro BuildLookBehindRoutine lookBehind]
+  [#set newVarIndex = 0 in CU] 
     private final boolean ${lookBehind.routineName}() {
        ListIterator<NonTerminalCall> stackIterator = ${lookBehind.backward?string("stackIteratorBackward", "stackIteratorForward")}();
        NonTerminalCall ntc = null;
@@ -286,6 +291,7 @@
 
 [#macro BuildProductionLookaheadMethod production]
    // BuildProductionLookaheadMethod macro
+  [#set newVarIndex = 0 in CU] 
    private final boolean ${production.lookaheadMethodName}(boolean scanToEnd) {
       [#if production.javaCode?? && production.javaCode.appliesInLookahead]
           ${production.javaCode}

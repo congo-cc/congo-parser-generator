@@ -372,7 +372,7 @@ class ${settings.lexerClassName} extends TokenSource
             return;
         }
 [/#if]        
-        cacheTokenAt(tok, tok.getBeginOffset());
+        cacheTokenAt(tok, tok.getBeginOffset(), tok.getEndOffset());
     }
 
 [#if settings.tokenChaining]

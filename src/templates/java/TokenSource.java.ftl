@@ -268,9 +268,14 @@ abstract public class TokenSource implements CharSequence
     }
 [/#if]
 
-    protected final void cacheTokenAt(${BaseToken} tok, int offset) {
-         tokenOffsets.set(offset);
-         tokenLocationTable[offset] = tok;
+    protected final void cacheTokenAt(${BaseToken} tok, int startOffset, int endOffset) {
+         tokenOffsets.set(startOffset);
+         if (endOffset>startOffset+1) {
+            // This handles some weird usage cases where token locations
+            // have been adjusted.
+            tokenOffsets.clear(startOffset+1, endOffset);
+         }
+         tokenLocationTable[startOffset] = tok;
     }
 
     protected void uncacheTokens(${BaseToken} lastToken) {
