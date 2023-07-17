@@ -244,4 +244,41 @@ TOKEN #StringLiteral :
 TOKEN : 
   <SCRIPTLET_END : "?>" > : PHP_OUTER
 ;  
-    
+
+UNPARSED :
+   <HEREDOC_START : ("b"|"B")? "<<<" (<NAME> | ('"' <NAME> '"') | ("'" <NAME> "'")) "\n"> : IN_HEREDOC
+;
+
+<IN_HEREDOC> TOKEN :
+   <HEREDOC_STRING_LITERAL : (~["\n"])* "\n">
+;
+
+INJECT LEXER_CLASS :
+{
+   private int heredocStartOffset;
+   private String endingString1, endingString2;
+
+   private BASE_TOKEN_CLASS TOKEN_HOOK(BASE_TOKEN_CLASS tok)  {
+    if (tok.getType() == HEREDOC_START) {
+      heredocStartOffset = tok.getBeginOffset();
+      String img = tok.toString();
+      int nameIndex = img.indexOf("<<<") + 1;
+      if (img.charAt(nameIndex) == '"' || img.charAt(nameIndex) == '\'') nameIndex++;
+      StringBuilder buf = new StringBuilder(); 
+      while (Character.isLetterOrDigit(img.charAt(nameIndex))) {
+        buf.append(img.charAt(nameIndex++));
+      }
+      endingString1 = buf.toString() + "\n";
+      endingString2 = buf.toString() + ";\n";
+    }
+    else if (tok.getType() == HEREDOC_STRING_LITERAL) {
+      String img = tok.toString();
+      if (img.endsWith(endingString1) || img.endsWith(endingString2)) {
+         tok.setBeginOffset(heredocStartOffset);
+      } else {
+        tok.setUnparsed(true);
+      }
+    }
+    return tok;
+   }
+}

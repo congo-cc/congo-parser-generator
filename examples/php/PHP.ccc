@@ -22,7 +22,7 @@ CompoundStatement : <LBRACE> (Statement)* <RBRACE> ;
 
 NamedLabelStatement : <NAME> ":" ; 
 
-ExpressionStatement : [Expression] ":" ;
+ExpressionStatement : [Expression] ";" ;
 
 IfStatement : 
    <IF> 
@@ -309,14 +309,12 @@ CallableExpression :
    StringLiteral
 ;
 
-StringLiteral :
+StringLiteral#void :
    <SINGLE_QUOTE_STRING>
    |
    <DOUBLE_QUOTE_STRING>
    |
    <HEREDOC_STRING_LITERAL>
-   |
-   <NOWDOC_STRING_LITERAL>
 ;
 
 ArrayCreationExpression :
