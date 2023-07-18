@@ -268,14 +268,15 @@ abstract public class TokenSource implements CharSequence
     }
 [/#if]
 
-    protected final void cacheTokenAt(${BaseToken} tok, int startOffset, int endOffset) {
-         tokenOffsets.set(startOffset);
-         if (endOffset>startOffset+1) {
-            // This handles some weird usage cases where token locations
-            // have been adjusted.
-            tokenOffsets.clear(startOffset+1, endOffset);
-         }
-         tokenLocationTable[startOffset] = tok;
+    protected void cacheTokenAt(${BaseToken} tok) {
+        int beginOffset=tok.getBeginOffset(), endOffset =tok.getEndOffset();
+        tokenOffsets.set(beginOffset);
+        if (endOffset>beginOffset+1) {
+           // This handles some weird usage cases where token locations
+           // have been adjusted.
+           tokenOffsets.clear(beginOffset+1, endOffset);
+        }
+        tokenLocationTable[beginOffset] = tok;
     }
 
     protected void uncacheTokens(${BaseToken} lastToken) {
@@ -283,24 +284,6 @@ abstract public class TokenSource implements CharSequence
         if (endOffset < tokenOffsets.length()) {
             tokenOffsets.clear(lastToken.getEndOffset(), tokenOffsets.length());
         }
-    }
-
-    protected void uncacheTokensFrom(int offset) {
-        if (offset<tokenOffsets.length()) {
-            tokenOffsets.clear(offset);
-        }
-    }
-
-    protected void uncacheTokensFromTo(int fromOffset, int toOffset) {
-        int tokenOffsetsLength = tokenOffsets.length();
-        if (fromOffset < tokenOffsetsLength) {
-            if (toOffset < tokenOffsetsLength) {
-                tokenOffsets.clear(fromOffset, toOffset);
-            } 
-            else {
-                tokenOffsets.clear(fromOffset);
-            }
-         }
     }
 
     public ${BaseToken} nextCachedToken(int offset) {
