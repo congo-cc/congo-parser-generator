@@ -13,6 +13,7 @@ import org.congocc.core.Grammar;
 import org.congocc.core.LexerData;
 import org.congocc.core.RegularExpression;
 import org.congocc.codegen.java.*;
+import org.congocc.codegen.csharp.CSharpFormatter;
 import org.congocc.parser.*;
 import org.congocc.parser.tree.CompilationUnit;
 import org.congocc.parser.tree.ObjectType;
@@ -223,8 +224,31 @@ public class FilesGenerator {
         }
         if (outputFile.getFileName().toString().endsWith(".java")) {
             outputJavaFile(code, outputFile);
-        } else try (Writer outfile = Files.newBufferedWriter(outputFile)) {
+        } 
+        else if (outputFile.getFileName().toString().endsWith(".cs")) {
+            outputCSharpFile(code, outputFile);
+        }
+        else try (Writer outfile = Files.newBufferedWriter(outputFile)) {
             outfile.write(code);
+        }
+    }
+
+    void outputCSharpFile(String code, Path outputFile) throws IOException {
+        org.congocc.parser.csharp.ast.CompilationUnit cscu;
+        Writer out = Files.newBufferedWriter(outputFile);
+        try {        
+           cscu = CongoCCParser.parseCSharpFile(outputFile.getFileName().toString(), code);
+        } catch (Exception e) {
+            out.write(code);
+            return;
+        } finally {
+            out.flush();
+            out.close();
+        }
+        try (Writer output = Files.newBufferedWriter(outputFile)) {
+            CSharpFormatter formatter = new CSharpFormatter();
+            formatter.visit(cscu);
+            output.write(formatter.getText());
         }
     }
 

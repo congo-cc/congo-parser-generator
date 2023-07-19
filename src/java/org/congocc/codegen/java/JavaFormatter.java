@@ -24,7 +24,7 @@ public class JavaFormatter extends Node.Visitor {
     private EnumSet<TokenType> alwaysAppendSpace = EnumSet.of(ASSIGN, COLON, DO, CATCH, CASE, FOR, IF, WHILE, THROWS, EXTENDS, EQ, NE, LE, GE, PLUS, SLASH, SC_AND, SC_OR, BIT_AND, BIT_OR, XOR, REM, LSHIFT, PLUSASSIGN, MINUSASSIGN, STARASSIGN, SLASHASSIGN, ANDASSIGN, ORASSIGN, XORASSIGN, REMASSIGN, LSHIFTASSIGN, RSIGNEDSHIFT, RUNSIGNEDSHIFT, RSIGNEDSHIFTASSIGN, RUNSIGNEDSHIFTASSIGN, LAMBDA, INSTANCEOF);
     private static final int MAX_LINE_LENGTH = 80;
     
-    public String format(BaseNode code, int indentLevel) {
+    public String format(Node code, int indentLevel) {
         buf = new StringBuilder();
         for (int i = 0; i < indentLevel; i++) {
             currentIndent += indent;
@@ -33,13 +33,13 @@ public class JavaFormatter extends Node.Visitor {
         return buf.toString();
     }
 
-    public String format(BaseNode code) {
+    public String format(Node code) {
         return format(code, 0);
     }
 
     private void outputToken(Token tok) {
         if (buf.length() > 0) {
-            int nextChar = tok.getImage().codePointAt(0);
+            int nextChar = tok.toString().codePointAt(0);
             int prevChar = buf.codePointBefore(buf.length());
             if ((Character.isJavaIdentifierPart(prevChar) || prevChar == ';')
                     && Character.isJavaIdentifierPart(nextChar)) {

@@ -45,7 +45,7 @@ public class ${settings.baseNodeClassName} implements Node {
         this.tokenSource = (${settings.lexerClassName}) tokenSource;
     }
     
-    private static Class<? extends List> listClass;
+    private static Class<? extends List<Node>> listClass;
 
     /**
      * Sets the List class that is used to store child nodes. By default,
@@ -55,17 +55,16 @@ public class ${settings.baseNodeClassName} implements Node {
      * @param listClass the #java.util.List implementation to use internally 
      * for the child nodes. By default #java.util.ArrayList is used.
      */
-	public static void setListClass(Class<? extends List> listClass) {
+	public static void setListClass(Class<? extends List<Node>> listClass) {
         ${settings.baseNodeClassName}.listClass = listClass;
     }
 
-    @SuppressWarnings("unchecked")
     private List<Node> newList() {
         if (listClass == null) {
             return new ArrayList<>();
         }
         try {
-           return (List<Node>) listClass.getDeclaredConstructor().newInstance();
+           return listClass.getDeclaredConstructor().newInstance();
         } catch (Exception e) {
            throw new RuntimeException(e);
         }
