@@ -364,20 +364,20 @@ class ${settings.lexerClassName} extends TokenSource
   }
  [/#if]
 
-    void cacheToken(${TOKEN} tok) {
 [#if settings.tokenChaining]        
-        if (tok.isInserted()) {
-            ${TOKEN} next = tok.nextCachedToken();
+    @Override
+    public void cacheToken(${BaseToken} tok) {
+        ${TOKEN} token = (${TOKEN}) tok;
+        if (token.isInserted()) {
+            ${TOKEN} next = token.nextCachedToken();
             if (next != null) cacheToken(next);
             return;
         }
-[/#if]        
-        cacheTokenAt(tok);
+        super.cacheToken(tok);
     }
-
-[#if settings.tokenChaining]
+    
     @Override
-    protected void uncacheTokens(${BaseToken} lastToken) {
+    public void uncacheTokens(${BaseToken} lastToken) {
         super.uncacheTokens(lastToken);
         ((${TOKEN})lastToken).unsetAppendedToken();
     }

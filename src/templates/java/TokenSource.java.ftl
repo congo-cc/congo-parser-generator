@@ -268,7 +268,7 @@ abstract public class TokenSource implements CharSequence
     }
 [/#if]
 
-    protected void cacheTokenAt(${BaseToken} tok) {
+    public void cacheToken(${BaseToken} tok) {
         int beginOffset=tok.getBeginOffset(), endOffset =tok.getEndOffset();
         tokenOffsets.set(beginOffset);
         if (endOffset>beginOffset+1) {
@@ -279,7 +279,7 @@ abstract public class TokenSource implements CharSequence
         tokenLocationTable[beginOffset] = tok;
     }
 
-    protected void uncacheTokens(${BaseToken} lastToken) {
+    public void uncacheTokens(${BaseToken} lastToken) {
         int endOffset = lastToken.getEndOffset();
         if (endOffset < tokenOffsets.length()) {
             tokenOffsets.clear(lastToken.getEndOffset(), tokenOffsets.length());
