@@ -225,9 +225,9 @@ public class FilesGenerator {
         if (outputFile.getFileName().toString().endsWith(".java")) {
             outputJavaFile(code, outputFile);
         } 
-        else if (outputFile.getFileName().toString().endsWith(".cs")) {
-            outputCSharpFile(code, outputFile);
-        }
+        //else if (outputFile.getFileName().toString().endsWith(".cs")) {
+        //    outputCSharpFile(code, outputFile);
+        //}
         else try (Writer outfile = Files.newBufferedWriter(outputFile)) {
             outfile.write(code);
         }
