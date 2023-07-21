@@ -183,7 +183,6 @@ TypeArgumentList :
 ;
 
 
-//TypeDeclaration :
 TypeDeclaration#interface :
   SCAN 0 {!checkNextTokenType(TokenType.RBRACE) && !checkNextTokenType(TokenType.EOF)}# =>
   (
@@ -201,14 +200,12 @@ TypeDeclaration#interface :
   )
 ;
 
-#if true
 INJECT ClassDeclaration : implements TypeDeclaration 
 INJECT StructDeclaration : implements TypeDeclaration 
 INJECT RecordDeclaration : implements TypeDeclaration 
 INJECT InterfaceDeclaration : implements TypeDeclaration 
 INJECT EnumDeclaration: implements TypeDeclaration 
 INJECT DelegateDeclaration: implements TypeDeclaration 
-#endif
 
 INJECT PARSER_CLASS :
 {
@@ -384,7 +381,7 @@ InterfaceDeclaration :
   [<SEMICOLON>]
 ;
 
-InterfaceMemberDeclaration :
+InterfaceMemberDeclaration#interface :
    SCAN TypeDeclarationLA =>
    TypeDeclaration
    |
@@ -400,6 +397,14 @@ InterfaceMemberDeclaration :
    |
    FieldDeclaration
 ;
+
+INJECT TypeDeclaration : extends InterfaceMemberDeclaration
+INJECT InterfacePropertyDeclaration : implements InterfaceMemberDeclaration
+INJECT InterfaceMethodDeclaration : implements InterfaceMemberDeclaration
+INJECT InterfaceEventDeclaration : implements InterfaceMemberDeclaration
+INJECT InterfaceIndexerDeclaration : implements InterfaceMemberDeclaration
+INJECT ConstantDeclaration : implements InterfaceMemberDeclaration
+INJECT FieldDeclaration : implements InterfaceMemberDeclaration
 
 InterfaceEventDeclaration :
    {
@@ -494,7 +499,7 @@ TypeParameterConstraint :
    )
 ;
 
-ClassMemberDeclaration :
+ClassMemberDeclaration#interface :
   ConstantDeclaration
   |
   SCAN TypeDeclarationLA =>
@@ -522,6 +527,19 @@ ClassMemberDeclaration :
   |
   StaticConstructorDeclaration
 ;
+
+INJECT TypeDeclaration : extends ClassMemberDeclaration
+INJECT ConstantDeclaration : implements ClassMemberDeclaration
+INJECT MethodDeclaration : implements ClassMemberDeclaration
+INJECT FieldDeclaration : implements ClassMemberDeclaration
+INJECT PropertyDeclaration : implements ClassMemberDeclaration
+INJECT EventDeclaration : implements ClassMemberDeclaration
+INJECT IndexerDeclaration : implements ClassMemberDeclaration
+INJECT OperatorDeclaration : implements ClassMemberDeclaration
+INJECT ConstructorDeclaration : implements ClassMemberDeclaration
+INJECT DestructorDeclaration : implements ClassMemberDeclaration
+INJECT StructMemberDeclarationUnsafe : implements ClassMemberDeclaration
+INJECT StaticConstructorDeclaration : implements ClassMemberDeclaration
 
 StructMemberDeclarationUnsafe :
   {
@@ -952,7 +970,7 @@ DelegateStarType :
    TypeParameterList
 ;
 
-Type :
+Type# :
   (
     DelegateStarType
     |
@@ -1838,7 +1856,7 @@ Statement :
 
 EmptyStatement : <SEMICOLON> ;
 
-EmbeddedStatement :
+EmbeddedStatement#interface :
     Block
     |
     EmptyStatement
@@ -1884,6 +1902,29 @@ EmbeddedStatement :
     |
     ExpressionStatement
 ;
+
+INJECT Block : implements EmbeddedStatement
+INJECT EmptyStatement : implements EmbeddedStatement
+INJECT IfStatement : implements EmbeddedStatement
+INJECT WhileStatement : implements EmbeddedStatement
+INJECT DoStatement : implements EmbeddedStatement
+INJECT YieldStatement : implements EmbeddedStatement
+INJECT CheckedStatement : implements EmbeddedStatement
+INJECT UncheckedStatement : implements EmbeddedStatement
+INJECT TryStatement : implements EmbeddedStatement
+INJECT BreakStatement : implements EmbeddedStatement
+INJECT ContinueStatement : implements EmbeddedStatement
+INJECT GotoStatement : implements EmbeddedStatement
+INJECT ReturnStatement : implements EmbeddedStatement
+INJECT ThrowStatement : implements EmbeddedStatement
+INJECT UnsafeStatement : implements EmbeddedStatement
+INJECT UsingStatement : implements EmbeddedStatement
+INJECT LockStatement : implements EmbeddedStatement
+INJECT FixedStatement : implements EmbeddedStatement
+INJECT SwitchStatement : implements EmbeddedStatement
+INJECT ForStatement : implements EmbeddedStatement
+INJECT ForeachStatement : implements EmbeddedStatement
+INJECT ExpressionStatement : implements EmbeddedStatement
 
 LocalVariableDeclarationLA#scan :
    [

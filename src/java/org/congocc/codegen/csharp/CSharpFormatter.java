@@ -2,17 +2,24 @@ package org.congocc.codegen.csharp;
 
 import org.congocc.parser.*;
 import org.congocc.parser.csharp.CSToken;
+import org.congocc.parser.csharp.ast.ClassMemberDeclaration;
+import org.congocc.parser.csharp.ast.Comment;
+import org.congocc.parser.csharp.ast.ConstantDeclaration;
+import org.congocc.parser.csharp.ast.InterfaceMemberDeclaration;
 import org.congocc.parser.csharp.ast.Delimiter;
+import org.congocc.parser.csharp.ast.EmbeddedStatement;
+import org.congocc.parser.csharp.ast.FieldDeclaration;
 import org.congocc.parser.csharp.ast.ForStatement;
 import org.congocc.parser.csharp.ast.Identifier;
 import org.congocc.parser.csharp.ast.InterpolatedString;
 import org.congocc.parser.csharp.ast.KeyWord;
 import org.congocc.parser.csharp.ast.Literal;
 import org.congocc.parser.csharp.ast.Operator;
+import org.congocc.parser.csharp.ast.Type;
 import org.congocc.parser.csharp.ast.TypeDeclaration;
 import org.congocc.parser.csharp.ast.TypeParameterList;
-import org.congocc.parser.csharp.ast.UnaryExpression;
 import org.congocc.parser.csharp.ast.TypeArgumentList;
+import org.congocc.parser.csharp.ast.UnaryExpression;
 
 import static org.congocc.parser.csharp.CSToken.TokenType.*;
 
@@ -40,42 +47,42 @@ public class CSharpFormatter extends Node.Visitor {
         newLine(true);
     }
 
-    void visit(CSToken tok) {
-        CSToken.TokenType type = tok.getType();
-        if (type == SINGLE_LINE_COMMENT) {
-            buffer.append(tok.toString());
-            newLine();
-        }
-        else if (type == LBRACE) {
-            addSpaceIfNecessary();
-            buffer.append('{');
-            indent();
-        }
-        else if (type == RBRACE) {
-            dedent();
-            buffer.append('}');
-        }
-        else if (type == COMMA) {
-            trimTrailingWhitespace();
-            buffer.append(", ");
-        }
-        else if (type == RPAREN) {
-            trimTrailingWhitespace();
-            buffer.append(')');
-        }
-        else if (type == SEMICOLON) {
-            buffer.append(';');
-            if (!(tok.getParent() instanceof ForStatement)) {
-                newLine();
-            } else {
-                buffer.append(' ');
-            }
-        }
-        else {
-            buffer.append(tok.toString());
-        }
+    void visit(ClassMemberDeclaration decl) {
+        newLine(true);
+        recurse(decl);
+        newLine(true);
     }
 
+    void visit(InterfaceMemberDeclaration decl) {
+        newLine(true);
+        recurse(decl);
+        newLine(true);
+    }
+
+    void visit(EmbeddedStatement stmt) {
+        recurse(stmt);
+        newLine();
+    }
+
+    void visit(FieldDeclaration fd) {
+        recurse(fd);
+        newLine();
+    }
+
+    void visit(ConstantDeclaration fd) {
+        recurse(fd);
+        newLine();
+    }
+
+    void visit(Type type)  {
+        recurse(type);
+        addSpaceIfNecessary();
+    }
+
+
+    void visit(CSToken tok) {
+        buffer.append(tok.toString());
+    }
 
     void visit(Delimiter delimiter) {
         CSToken.TokenType type = delimiter.getType();
@@ -87,6 +94,10 @@ public class CSharpFormatter extends Node.Visitor {
         else if (type == RBRACE) {
             dedent();
             buffer.append('}');
+        }
+        else if (type == LBRACKET) {
+            trimTrailingWhitespace();
+            buffer.append('[');
         }
         else if (type == COMMA) {
             trimTrailingWhitespace();
@@ -137,6 +148,11 @@ public class CSharpFormatter extends Node.Visitor {
             buffer.append(op.toString());
             buffer.append(' ');
         }
+    }
+
+    void visit(Comment comment) {
+        buffer.append(comment.toString());
+        newLine();
     }
 
     void visit(KeyWord kw) {

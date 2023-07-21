@@ -42,7 +42,7 @@ ${BuildCode(production.expansion, 12)}
   [#if expansion.simpleName != "ExpansionSequence" && expansion.simpleName != "ExpansionWithParentheses"]
 ${is}// Code for ${expansion.simpleName} specified at ${expansion.location}
   [/#if]
-     [@CU.HandleLexicalStateChange expansion false indent; indent]
+     [@CU.HandleLexicalStateChange expansion false]
       [#if settings.faultTolerant && expansion.requiresRecoverMethod && !expansion.possiblyEmpty]
 ${is}if (_pendingRecovery) {
 ${is}    ${expansion.recoverMethodName}();
