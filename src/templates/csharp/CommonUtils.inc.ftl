@@ -4,16 +4,15 @@
 [#var TT = "TokenType."]
 
 [#macro enumSet varName tokenNames indent=0]
-[#var is = ""?right_pad(indent)]
 [#var size = tokenNames?size]
 [#if size = 0]
-${is}private static readonly HashSet<TokenType> ${varName} = Utils.GetOrMakeSet();
+private static readonly HashSet<TokenType> ${varName} = Utils.GetOrMakeSet();
 [#else]
-${is}private static readonly HashSet<TokenType> ${varName} = Utils.GetOrMakeSet(
+private static readonly HashSet<TokenType> ${varName} = Utils.GetOrMakeSet(
 [#list tokenNames as type]
-${is}    TokenType.${type}[#if type_has_next],[/#if]
+    TokenType.${type}[#if type_has_next],[/#if]
 [/#list]
-${is});
+);
 [/#if]
 
 [/#macro]
@@ -68,60 +67,59 @@ ${prefix}${newID()}[#rt]
 [/#function]
 
 [#macro HandleLexicalStateChange expansion inLookahead indent]
-[#var is=""?right_pad(indent)]
-[#-- ${is}# DBG > HandleLexicalStateChange ${indent} ${expansion.simpleName} --]
+[#-- # DBG > HandleLexicalStateChange ${indent} ${expansion.simpleName} --]
 [#var resetToken = inLookahead?string("currentLookaheadToken", "LastConsumedToken")]
 [#if expansion.specifiedLexicalState??]
   [#var prevLexicalStateVar = newVarName("previousLexicalState")]
-${is}LexicalState ${prevLexicalStateVar} = tokenSource.LexicalState;
-${is}tokenSource.Reset(${resetToken}, LexicalState.${expansion.specifiedLexicalState});
-${is}try {
+LexicalState ${prevLexicalStateVar} = tokenSource.LexicalState;
+tokenSource.Reset(${resetToken}, LexicalState.${expansion.specifiedLexicalState});
+try {
 [#nested indent + 8 /]
-${is}}
-${is}finally {
-${is}    if (${prevLexicalStateVar} != LexicalState.${expansion.specifiedLexicalState}) {
-${is}        if (${resetToken}.Next != null) {
-${is}            tokenSource.Reset(${resetToken}, ${prevLexicalStateVar});
-${is}        }
-${is}        else {
-${is}            tokenSource.SwitchTo(${prevLexicalStateVar});
-${is}        }
-${is}        _nextTokenType = null;
-${is}    }
-${is}}
+}
+finally {
+    if (${prevLexicalStateVar} != LexicalState.${expansion.specifiedLexicalState}) {
+        if (${resetToken}.Next != null) {
+            tokenSource.Reset(${resetToken}, ${prevLexicalStateVar});
+        }
+        else {
+            tokenSource.SwitchTo(${prevLexicalStateVar});
+        }
+        _nextTokenType = null;
+    }
+}
 [#elseif expansion.tokenActivation??]
   [#var tokenActivation = expansion.tokenActivation]
   [#var prevActives = newVarName("previousActives")]
   [#var somethingChanged = newVarName("somethingChanged")]
-${is}var ${prevActives} = new HashSet<TokenType>(tokenSource.ActiveTokenTypes);
-${is}var ${somethingChanged} = false;
+var ${prevActives} = new HashSet<TokenType>(tokenSource.ActiveTokenTypes);
+var ${somethingChanged} = false;
 [#if tokenActivation.activatedTokens?size > 0]
-${is}${somethingChanged} = ActivateTokenTypes(
+${somethingChanged} = ActivateTokenTypes(
   [#list tokenActivation.activatedTokens as tokenName]
-${is}    ${TT}${tokenName}[#if tokenName_has_next],[/#if]
+    ${TT}${tokenName}[#if tokenName_has_next],[/#if]
   [/#list]
-${is});
+);
 [/#if]
 [#if tokenActivation.deactivatedTokens?size > 0]
-${is}${somethingChanged} = ${somethingChanged} || DeactivateTokenTypes(
+${somethingChanged} = ${somethingChanged} || DeactivateTokenTypes(
   [#list tokenActivation.deactivatedTokens as tokenName]
-${is}    ${TT}${tokenName}[#if tokenName_has_next],[/#if]
+    ${TT}${tokenName}[#if tokenName_has_next],[/#if]
   [/#list]
-${is});
+);
 [/#if]
-${is}try {
+try {
   [#nested indent + 4 /]
-${is}}
-${is}finally {
-${is}    tokenSource.ActiveTokenTypes = ${prevActives};
-${is}    if (${somethingChanged}) {
-${is}        tokenSource.Reset(GetToken(0));
-${is}        _nextTokenType = null;
-${is}    }
-${is}}
+}
+finally {
+    tokenSource.ActiveTokenTypes = ${prevActives};
+    if (${somethingChanged}) {
+        tokenSource.Reset(GetToken(0));
+        _nextTokenType = null;
+    }
+}
 [#else]
   [#nested indent /]
 [/#if]
-[#-- ${is}# DBG < HandleLexicalStateChange ${indent} ${expansion.simpleName} --]
+[#-- # DBG < HandleLexicalStateChange ${indent} ${expansion.simpleName} --]
 [/#macro]
 

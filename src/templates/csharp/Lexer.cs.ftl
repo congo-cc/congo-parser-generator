@@ -14,15 +14,14 @@
  ]
 
 [#macro EnumSet varName tokenNames indent=0]
-[#var is = ""?right_pad(indent)]
 [#if tokenNames?size=0]
-${is}private static HashSet<TokenType> ${varName} = Utils.GetOrMakeSet();
+private static HashSet<TokenType> ${varName} = Utils.GetOrMakeSet();
 [#else]
-${is}private static HashSet<TokenType> ${varName} = Utils.GetOrMakeSet(
+private static HashSet<TokenType> ${varName} = Utils.GetOrMakeSet(
 [#list tokenNames as type]
-${is}    TokenType.${type}[#if type_index < (tokenNames?size - 1)],[/#if]
+    TokenType.${type}[#if type_index < (tokenNames?size - 1)],[/#if]
 [/#list]
-${is});
+);
 [/#if]
 [/#macro]
 

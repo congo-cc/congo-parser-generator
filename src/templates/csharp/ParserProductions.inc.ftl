@@ -38,26 +38,26 @@ ${BuildCode(production.expansion, 12)}
 
 [#macro BuildCode expansion indent]
 [#var is=""?right_pad(indent)]
-[#-- ${is}// DBG > BuildCode ${indent} ${expansion.simpleName} --]
+[#-- // DBG > BuildCode ${indent} ${expansion.simpleName} --]
   [#if expansion.simpleName != "ExpansionSequence" && expansion.simpleName != "ExpansionWithParentheses"]
-${is}// Code for ${expansion.simpleName} specified at ${expansion.location}
+// Code for ${expansion.simpleName} specified at ${expansion.location}
   [/#if]
      [@CU.HandleLexicalStateChange expansion false indent; indent]
       [#if settings.faultTolerant && expansion.requiresRecoverMethod && !expansion.possiblyEmpty]
-${is}if (_pendingRecovery) {
-${is}    ${expansion.recoverMethodName}();
-${is}}
+if (_pendingRecovery) {
+    ${expansion.recoverMethodName}();
+}
       [/#if]
        [@TreeBuildingAndRecovery expansion indent/]
      [/@CU.HandleLexicalStateChange]
-[#-- ${is}// DBG < BuildCode ${indent} ${expansion.simpleName} --]
+[#-- // DBG < BuildCode ${indent} ${expansion.simpleName} --]
 [/#macro]
 
 [#macro TreeBuildingAndRecovery expansion indent]
 [#-- This macro handles both tree building AND recovery. It doesn't seem right.
      It should probably be two macros. Also, it is too darned big. --]
 [#var is=""?right_pad(indent)]
-[#-- ${is}// DBG > TreeBuildingAndRecovery ${indent} --]
+[#-- // DBG > TreeBuildingAndRecovery ${indent} --]
     [#var nodeVarName,
           nodeTypeName,
           production,
@@ -121,79 +121,79 @@ ${BuildExpansionCode(expansion, indent)}[#t]
               that I want the initial code block to be able to
               reference CURRENT_NODE. --]
 ${globals.translateCodeBlock(javaCodePrologue, indent)}
-${is}ParseException ${parseExceptionVar} = null;
-${is}var ${callStackSizeVar} = ParsingStack.Count;
-${is}try {
-[#-- ${is}    pass  # in case there's nothing else in the try clause! --]
-[#-- ${is}    # nested code starts, passing indent of ${indent + 4} --]
+ParseException ${parseExceptionVar} = null;
+var ${callStackSizeVar} = ParsingStack.Count;
+try {
+[#--     pass  # in case there's nothing else in the try clause! --]
+[#--     # nested code starts, passing indent of ${indent + 4} --]
 ${BuildExpansionCode(expansion, indent + 4)}[#t]
-[#-- ${is}    # nested code ends --]
-${is}}
-${is}catch (ParseException e) {
-${is}    ${parseExceptionVar} = e;
+[#--     # nested code ends --]
+}
+catch (ParseException e) {
+    ${parseExceptionVar} = e;
             [#if !canRecover]
               [#if settings.faultTolerant]
-${is}    if (IsTolerant) _pendingRecovery = true;
+    if (IsTolerant) _pendingRecovery = true;
               [/#if]
-${is}    throw;
+    throw;
             [#else]
-${is}    if (!IsTolerant) throw;
-${is}    _pendingRecovery = true;
+    if (!IsTolerant) throw;
+    _pendingRecovery = true;
          ${expansion.customErrorRecoveryBlock!}
              [#if !production?is_null && production.returnType != "void"]
                 [#var rt = production.returnType]
                 [#-- We need a return statement here or the code won't compile! --]
                 [#if rt = "int" || rt="char" || rt=="byte" || rt="short" || rt="long" || rt="float"|| rt="double"]
-${is}       return 0;
+       return 0;
                 [#else]
-${is}       return null;
+       return null;
                 [/#if]
              [/#if]
           [/#if]
-${is}}
-${is}finally {
-${is}    RestoreCallStack(${callStackSizeVar});
+}
+finally {
+    RestoreCallStack(${callStackSizeVar});
 [#if buildTreeNode]
-${is}    if (${nodeVarName} != null) {
-${is}        if (${parseExceptionVar} == null) {
-${is}            CloseNodeScope(${nodeVarName}, ${closeCondition});
+    if (${nodeVarName} != null) {
+        if (${parseExceptionVar} == null) {
+            CloseNodeScope(${nodeVarName}, ${closeCondition});
   [#if treeNodeLHS??]
-${is}             try {
-${is}                 ${treeNodeLHS} = (${nodeTypeName}) PeekNode();
-${is}             } catch (Exception) {
-${is}                  ${treeNodeLHS} = null;
-${is}             }
+             try {
+                 ${treeNodeLHS} = (${nodeTypeName}) PeekNode();
+             } catch (Exception) {
+                  ${treeNodeLHS} = null;
+             }
   [/#if]
   [#list grammar.closeNodeHooksByClass[nodeClassName(treeNodeBehavior)]! as hook]
-${is}            ${hook}(${nodeVarName});
+            ${hook}(${nodeVarName});
   [/#list]
-${is}        }
-${is}        else {
+        }
+        else {
     [#if settings.faultTolerant]
-${is}            CloseNodeScope(${nodeVarName}, true);
-${is}            ${nodeVarName}.dirty = true;
+            CloseNodeScope(${nodeVarName}, true);
+            ${nodeVarName}.dirty = true;
     [#else]
-${is}            ClearNodeScope();
+            ClearNodeScope();
     [/#if]
                 ${globals.popNodeVariableName()!}
-${is}        }
+        }
 [/#if]
-${is}        _currentlyParsedProduction = prevProduction;
-${is}    }
-${is}}
+        _currentlyParsedProduction = prevProduction;
+    }
+}
 [/#if]
-[#-- ${is}// DBG < TreeBuildingAndRecovery ${indent} --]
+[#-- // DBG < TreeBuildingAndRecovery ${indent} --]
 [/#macro]
 
 [#--  Boilerplate code to create the node variable --]
 [#macro createNode treeNodeBehavior nodeVarName indent]
 [#var is=""?right_pad(indent)]
    [#var nodeName = nodeClassName(treeNodeBehavior)]
-${is}${nodeName} ${nodeVarName} = null;
-${is}if (BuildTree) {
-${is}    ${nodeVarName} = new ${nodeName}([#if settings.nodeUsesParser]this[#else]tokenSource[/#if]);
-${is}    OpenNodeScope(${nodeVarName});
-${is}}
+${nodeName} ${nodeVarName} = null;
+if (BuildTree) {
+    ${nodeVarName} = new ${nodeName}([#if settings.nodeUsesParser]this[#else]tokenSource[/#if]);
+    OpenNodeScope(${nodeVarName});
+}
 [/#macro]
 
 [#function nodeClassName treeNodeBehavior]
@@ -207,7 +207,7 @@ ${is}}
 [#macro BuildExpansionCode expansion indent]
 [#var is=""?right_pad(indent)]
 [#var classname=expansion.simpleName]
-[#-- ${is}// DBG > BuildExpansionCode ${indent} ${classname} --]
+[#-- // DBG > BuildExpansionCode ${indent} ${classname} --]
     [#var prevLexicalStateVar = CU.newVarName("previousLexicalState")]
     [#if classname = "ExpansionWithParentheses"]
 ${BuildExpansionCode(expansion.nestedExpansion, indent)}[#t]
@@ -238,275 +238,275 @@ ${globals.translateCodeBlock(expansion, indent)}
     [#elseif classname = "Assertion"]
         [@BuildAssertionCode expansion indent /]
     [/#if]
-[#-- ${is}// DBG < BuildExpansionCode ${indent} ${classname} --]
+[#-- // DBG < BuildExpansionCode ${indent} ${classname} --]
 [/#macro]
 
 [#macro BuildCodeFailure fail indent]
 [#var is = ""?right_pad(indent)]
-[#-- ${is}// DBG > BuildCodeFailure ${indent} --]
+[#-- // DBG > BuildCodeFailure ${indent} --]
     [#if fail.code?is_null]
       [#if fail.exp??]
-${is}Fail("Failure: " + ${fail.exp});
+Fail("Failure: " + ${fail.exp});
       [#else]
-${is}Fail("Failure");
+Fail("Failure");
       [/#if]
     [#else]
 ${globals.translateCodeBlock(fail.code, indent)}
     [/#if]
-[#-- ${is}// DBG < BuildCodeFailure ${indent} --]
+[#-- // DBG < BuildCodeFailure ${indent} --]
 [/#macro]
 
 [#macro BuildCodeTokenTypeActivation activation indent]
 [#var is = ""?right_pad(indent)]
-[#-- ${is}// DBG > BuildCodeTokenTypeActivation ${indent} --]
+[#-- // DBG > BuildCodeTokenTypeActivation ${indent} --]
 [#if activation.deactivate]
-${is}DeactivateTokenTypes(
+DeactivateTokenTypes(
 [#else]
-${is}ActivateTokenTypes(
+ActivateTokenTypes(
 [/#if]
 [#list activation.tokenNames as name]
-${is}    ${name}[#if name_has_next],[/#if]
+    ${name}[#if name_has_next],[/#if]
 [/#list]
-${is});
-[#-- ${is}// DBG < BuildCodeTokenTypeActivation ${indent} --]
+);
+[#-- // DBG < BuildCodeTokenTypeActivation ${indent} --]
 [/#macro]
 
 [#macro BuildCodeSequence expansion indent]
 [#var is = ""?right_pad(indent)]
-[#-- ${is}// DBG > BuildCodeSequence ${indent} --]
+[#-- // DBG > BuildCodeSequence ${indent} --]
   [#list expansion.units as subexp]
 ${BuildCode(subexp, indent)}
   [/#list]
-[#-- ${is}// DBG < BuildCodeSequence ${indent} --]
+[#-- // DBG < BuildCodeSequence ${indent} --]
 [/#macro]
 
 [#macro BuildCodeTerminal terminal indent]
 [#var regexp =terminal.regexp]
 [#var is = ""?right_pad(indent)]
-[#-- ${is}// DBG > BuildCodeRegexp ${indent} --]
+[#-- // DBG > BuildCodeRegexp ${indent} --]
    [#var LHS = ""]
    [#if terminal.lhs??][#set LHS = terminal.lhs + " = "][/#if]
    [#if !settings.faultTolerant]
-${is}${LHS}ConsumeToken(TokenType.${regexp.label});
+${LHS}ConsumeToken(TokenType.${regexp.label});
    [#else]
        [#var tolerant = terminal.tolerantParsing?string("true", "false")]
        [#var followSetVarName = terminal.followSetVarName]
        [#if terminal.followSet.incomplete]
          [#set followSetVarName = "followSet" + CU.newID()]
-${is}HashSet<TokenType> ${followSetVarName} = null;
-${is}if (OuterFollowSet != null) {
-${is}    ${followSetVarName} = ${terminal.followSetVarName}.Clone();
-${is}    ${followSetVarName}.AddAll(OuterFollowSet);
-${is}}
+HashSet<TokenType> ${followSetVarName} = null;
+if (OuterFollowSet != null) {
+    ${followSetVarName} = ${terminal.followSetVarName}.Clone();
+    ${followSetVarName}.AddAll(OuterFollowSet);
+}
        [/#if]
-${is}${LHS}ConsumeToken(${CU.TT}${regexp.label}, ${tolerant}, ${followSetVarName});
+${LHS}ConsumeToken(${CU.TT}${regexp.label}, ${tolerant}, ${followSetVarName});
    [/#if]
    [#if !terminal.childName?is_null]
-${is}if (BuildTree) {
-${is}    Node child = PeekNode();
-${is}    string name = "${terminal.childName}";
+if (BuildTree) {
+    Node child = PeekNode();
+    string name = "${terminal.childName}";
     [#if terminal.multipleChildren]
-${is}    ${globals.currentNodeVariableName}.AddToNamedChildList(name, child);
+    ${globals.currentNodeVariableName}.AddToNamedChildList(name, child);
     [#else]
-${is}    ${globals.currentNodeVariableName}.SetNamedChild(name, child);
+    ${globals.currentNodeVariableName}.SetNamedChild(name, child);
     [/#if]
-${is}}
+}
    [/#if]
 
-[#-- ${is}// DBG < BuildCodeRegexp ${indent} --]
+[#-- // DBG < BuildCodeRegexp ${indent} --]
 [/#macro]
 
 [#macro BuildCodeTryBlock tryblock indent]
 [#var is = ""?right_pad(indent)]
-${is}// DBG > BuildCodeTryBlock ${indent}
-${is}try:
+// DBG > BuildCodeTryBlock ${indent}
+try:
 ${BuildCode(tryblock.nestedExpansion, indent + 4)}
    [#list tryblock.catchBlocks as catchBlock]
    # TODO verify indentation
-${is}${catchBlock}
+${catchBlock}
    [/#list]
    # TODO verify indentation
-${is}${tryblock.finallyBlock!}
-${is}// DBG < BuildCodeTryBlock ${indent}
+${tryblock.finallyBlock!}
+// DBG < BuildCodeTryBlock ${indent}
 [/#macro]
 
 
 [#macro BuildCodeAttemptBlock attemptBlock indent]
 [#var is = ""?right_pad(indent)]
-${is}// DBG > BuildCodeAttemptBlock ${indent}
-${is}try {
-${is}    StashParseState();
+// DBG > BuildCodeAttemptBlock ${indent}
+try {
+    StashParseState();
 ${BuildCode(attemptBlock.nestedExpansion, indent + 4)}
-${is}    PopParseState();
-${is}}
-${is}catch (ParseException) {
-${is}    RestoreStashedParseState();
+    PopParseState();
+}
+catch (ParseException) {
+    RestoreStashedParseState();
 ${BuildCode(attemptBlock.recoveryExpansion, indent + 4)}
-${is}}
-${is}// DBG < BuildCodeAttemptBlock ${indent}
+}
+// DBG < BuildCodeAttemptBlock ${indent}
 [/#macro]
 
 [#macro BuildCodeNonTerminal nonterminal indent]
 [#var is = ""?right_pad(indent)]
-[#-- ${is}// DBG > BuildCodeNonTerminal ${indent} ${nonterminal.production.name} --]
+[#-- // DBG > BuildCodeNonTerminal ${indent} ${nonterminal.production.name} --]
    [#var production = nonterminal.production]
-${is}PushOntoCallStack("${nonterminal.containingProduction.name}", "${nonterminal.inputSource?j_string}", ${nonterminal.beginLine}, ${nonterminal.beginColumn});
+PushOntoCallStack("${nonterminal.containingProduction.name}", "${nonterminal.inputSource?j_string}", ${nonterminal.beginLine}, ${nonterminal.beginColumn});
    [#var followSet = nonterminal.followSet]
    [#if !followSet.incomplete]
       [#if !nonterminal.beforeLexicalStateSwitch]
-${is}OuterFollowSet = ${nonterminal.followSetVarName};
+OuterFollowSet = ${nonterminal.followSetVarName};
       [#else]
-${is}OuterFollowSet = null;
+OuterFollowSet = null;
       [/#if]
    [#else]
      [#if !followSet.isEmpty()]
-${is}if (OuterFollowSet != null) {
-${is}    var newFollowSet = new HashSet<TokenType>(${nonterminal.followSetVarName});
-${is}    newFollowSet.UnionWith(OuterFollowSet);
-${is}    OuterFollowSet = newFollowSet;
-${is}}
+if (OuterFollowSet != null) {
+    var newFollowSet = new HashSet<TokenType>(${nonterminal.followSetVarName});
+    newFollowSet.UnionWith(OuterFollowSet);
+    OuterFollowSet = newFollowSet;
+}
      [/#if]
    [/#if]
-${is}try {
+try {
    [#if !nonterminal.LHS?is_null && production.returnType != "void"]
-${is}    ${nonterminal.LHS} =
+    ${nonterminal.LHS} =
    [/#if]
-${is}    Parse${nonterminal.name}(${globals.translateNonterminalArgs(nonterminal.args)});
+    Parse${nonterminal.name}(${globals.translateNonterminalArgs(nonterminal.args)});
    [#if !nonterminal.LHS?is_null && production.returnType = "void"]
-${is}    try {
-${is}        ${nonterminal.LHS} = PeekNode();
-${is}    }
-${is}    catch (Exception) {
-${is}        ${nonterminal.LHS} = null;
-${is}    }
+    try {
+        ${nonterminal.LHS} = PeekNode();
+    }
+    catch (Exception) {
+        ${nonterminal.LHS} = null;
+    }
    [/#if]
    [#if !nonterminal.childName?is_null]
-${is}    if (BuildTree) {
-${is}        Node child = PeekNode();
-${is}        String name = "${nonterminal.childName}";
+    if (BuildTree) {
+        Node child = PeekNode();
+        String name = "${nonterminal.childName}";
     [#if nonterminal.multipleChildren]
-${is}        ${globals.currentNodeVariableName}.AddToNamedChildList(name, child);
+        ${globals.currentNodeVariableName}.AddToNamedChildList(name, child);
     [#else]
-${is}        ${globals.currentNodeVariableName}.SetNamedChild(name, child);
+        ${globals.currentNodeVariableName}.SetNamedChild(name, child);
     [/#if]
-${is}    }
+    }
    [/#if]
-${is}}
-${is}finally {
-${is}    PopCallStack();
-${is}}
-[#-- ${is}// DBG < BuildCodeNonTerminal ${indent} ${nonterminal.production.name} --]
+}
+finally {
+    PopCallStack();
+}
+[#-- // DBG < BuildCodeNonTerminal ${indent} ${nonterminal.production.name} --]
 [/#macro]
 
 
 [#macro BuildCodeZeroOrOne zoo indent]
 [#var is = ""?right_pad(indent)]
-[#-- ${is}// DBG > BuildCodeZeroOrOne ${indent} ${zoo.nestedExpansion.class.simpleName} --]
+[#-- // DBG > BuildCodeZeroOrOne ${indent} ${zoo.nestedExpansion.class.simpleName} --]
     [#if zoo.nestedExpansion.class.simpleName = "ExpansionChoice"]
 ${BuildCode(zoo.nestedExpansion, indent)}
     [#else]
-${is}if (${ExpansionCondition(zoo.nestedExpansion)}) {
+if (${ExpansionCondition(zoo.nestedExpansion)}) {
 ${BuildCode(zoo.nestedExpansion, indent + 4)}
-${is}}
+}
     [/#if]
-[#-- ${is}// DBG < BuildCodeZeroOrOne ${indent} ${zoo.nestedExpansion.class.simpleName} --]
+[#-- // DBG < BuildCodeZeroOrOne ${indent} ${zoo.nestedExpansion.class.simpleName} --]
 [/#macro]
 
 [#var inFirstVarName = "", inFirstIndex =0]
 
 [#macro BuildCodeOneOrMore oom indent]
 [#var is = ""?right_pad(indent)]
-[#-- ${is}// DBG > BuildCodeOneOrMore ${indent} --]
+[#-- // DBG > BuildCodeOneOrMore ${indent} --]
 [#var nestedExp=oom.nestedExpansion, prevInFirstVarName = inFirstVarName/]
    [#if nestedExp.simpleName = "ExpansionChoice"]
      [#set inFirstVarName = "inFirst" + inFirstIndex, inFirstIndex = inFirstIndex +1 /]
-${is}var ${inFirstVarName} = true;
+var ${inFirstVarName} = true;
    [/#if]
-${is}while (true) {
+while (true) {
 ${RecoveryLoop(oom, indent + 4)}
       [#if nestedExp.simpleName = "ExpansionChoice"]
-${is}    ${inFirstVarName} = false;
+    ${inFirstVarName} = false;
       [#else]
-${is}    if (!(${ExpansionCondition(oom.nestedExpansion)})) break;
+    if (!(${ExpansionCondition(oom.nestedExpansion)})) break;
       [/#if]
-${is}}
+}
    [#set inFirstVarName = prevInFirstVarName /]
-[#-- ${is}// DBG < BuildCodeOneOrMore ${indent} --]
+[#-- // DBG < BuildCodeOneOrMore ${indent} --]
 [/#macro]
 
 [#macro BuildCodeZeroOrMore zom indent]
 [#var is = ""?right_pad(indent)]
-[#-- ${is}// DBG > BuildCodeZeroOrMore ${indent} --]
-${is}while (true) {
+[#-- // DBG > BuildCodeZeroOrMore ${indent} --]
+while (true) {
        [#if zom.nestedExpansion.class.simpleName != "ExpansionChoice"]
-${is}    if (!(${ExpansionCondition(zom.nestedExpansion)})) break;
+    if (!(${ExpansionCondition(zom.nestedExpansion)})) break;
        [/#if]
        [@RecoveryLoop zom indent + 4 /]
-${is}}
-[#-- ${is}// DBG < BuildCodeZeroOrMore ${indent} --]
+}
+[#-- // DBG < BuildCodeZeroOrMore ${indent} --]
 [/#macro]
 
 [#macro RecoveryLoop loopExpansion indent]
 [#var is = ""?right_pad(indent)]
-[#-- ${is}// DBG > RecoveryLoop ${indent} --]
+[#-- // DBG > RecoveryLoop ${indent} --]
 [#if !settings.faultTolerant || !loopExpansion.requiresRecoverMethod]
 ${BuildCode(loopExpansion.nestedExpansion, indent)}
 [#else]
 [#var initialTokenVarName = "initialToken" + CU.newID()]
-${is}${initialTokenVarName} = LastConsumedToken;
-${is}try {
+${initialTokenVarName} = LastConsumedToken;
+try {
 ${BuildCode(loopExpansion.nestedExpansion, indent + 4)}
-${is}}
-${is}catch (ParseException pe) {
-${is}    if (!IsTolerant) throw;
-${is}    if (debugFaultTolerant) {
-${is}        // logger.info('Handling exception. Last consumed token: %s at: %s', lastConsumedToken.image, lastConsumedToken.location)
-${is}    }
-${is}    if (${initialTokenVarName} == LastConsumedToken) {
-${is}        LastConsumedToken = NextToken(LastConsumedToken);
-${is}        // We have to skip a token in this spot or
-${is}        // we'll be stuck in an infinite loop!
-${is}        LastConsumedToken.skipped = true;
-${is}        if (debugFaultTolerant) {
-${is}            // logger.info('Skipping token %s at: %s', lastConsumedToken.image, lastConsumedToken.location)
-${is}        }
-${is}    }
-${is}    if (debugFaultTolerant) {
-${is}        // logger.info('Repeat re-sync for expansion at: ${loopExpansion.location?j_string}');
-${is}    }
-${is}    ${loopExpansion.recoverMethodName}();
-${is}    if (pendingRecovery) throw;
+}
+catch (ParseException pe) {
+    if (!IsTolerant) throw;
+    if (debugFaultTolerant) {
+        // logger.info('Handling exception. Last consumed token: %s at: %s', lastConsumedToken.image, lastConsumedToken.location)
+    }
+    if (${initialTokenVarName} == LastConsumedToken) {
+        LastConsumedToken = NextToken(LastConsumedToken);
+        // We have to skip a token in this spot or
+        // we'll be stuck in an infinite loop!
+        LastConsumedToken.skipped = true;
+        if (debugFaultTolerant) {
+            // logger.info('Skipping token %s at: %s', lastConsumedToken.image, lastConsumedToken.location)
+        }
+    }
+    if (debugFaultTolerant) {
+        // logger.info('Repeat re-sync for expansion at: ${loopExpansion.location?j_string}');
+    }
+    ${loopExpansion.recoverMethodName}();
+    if (pendingRecovery) throw;
    [/#if]
-[#-- ${is}// DBG < RecoveryLoop ${indent} --]
+[#-- // DBG < RecoveryLoop ${indent} --]
 [/#macro]
 
 [#macro BuildCodeChoice choice indent]
 [#var is = ""?right_pad(indent)]
-[#-- ${is}// DBG > BuildCodeChoice ${indent} --]
+[#-- // DBG > BuildCodeChoice ${indent} --]
    [#list choice.choices as expansion]
-${is}${(expansion_index=0)?string("if", "else if")} (${ExpansionCondition(expansion)}) {
+${(expansion_index=0)?string("if", "else if")} (${ExpansionCondition(expansion)}) {
 ${BuildCode(expansion, indent + 4)}
-${is}}
+}
    [/#list]
    [#if choice.parent.simpleName == "ZeroOrMore"]
-${is}else {
-${is}    break;
-${is}}
+else {
+    break;
+}
    [#elseif choice.parent.simpleName = "OneOrMore"]
-${is}else if (${inFirstVarName}) {
-${is}    PushOntoCallStack("${currentProduction.name}", "${choice.inputSource?j_string}", ${choice.beginLine}, ${choice.beginColumn});
-${is}    throw new ParseException(this, ${choice.firstSetVarName});
-${is}}
-${is}else {
-${is}    break;
-${is}}
+else if (${inFirstVarName}) {
+    PushOntoCallStack("${currentProduction.name}", "${choice.inputSource?j_string}", ${choice.beginLine}, ${choice.beginColumn});
+    throw new ParseException(this, ${choice.firstSetVarName});
+}
+else {
+    break;
+}
    [#elseif choice.parent.simpleName != "ZeroOrOne"]
-${is}else {
-${is}    PushOntoCallStack("${currentProduction.name}", "${choice.inputSource?j_string}", ${choice.beginLine}, ${choice.beginColumn});
-${is}    throw new ParseException(this, ${choice.firstSetVarName});
-${is}}
+else {
+    PushOntoCallStack("${currentProduction.name}", "${choice.inputSource?j_string}", ${choice.beginLine}, ${choice.beginColumn});
+    throw new ParseException(this, ${choice.firstSetVarName});
+}
    [/#if]
-[#-- ${is}// DBG < BuildCodeChoice ${indent} --]
+[#-- // DBG < BuildCodeChoice ${indent} --]
 [/#macro]
 
 [#--
@@ -538,14 +538,14 @@ ${is}}
 [/#if]
    [#var assertionMessage = "Assertion at: " + assertion.location?j_string + " failed. "]
    [#if assertion.assertionExpression??]
-${is}if (!(${globals.translateExpression(assertion.assertionExpression)})) {
-${is}    Fail("${assertionMessage}"${optionalPart});
-${is}}
+if (!(${globals.translateExpression(assertion.assertionExpression)})) {
+    Fail("${assertionMessage}"${optionalPart});
+}
    [/#if]
    [#if assertion.expansion??]
-${is}if ([#if !assertion.expansionNegated]![/#if]${assertion.expansion.scanRoutineName}()) {
-${is}    Fail("${assertionMessage}"${optionalPart});
-${is}}
+if ([#if !assertion.expansionNegated]![/#if]${assertion.expansion.scanRoutineName}()) {
+    Fail("${assertionMessage}"${optionalPart});
+}
    [/#if]
 [/#macro]
 
