@@ -183,8 +183,8 @@ TypeArgumentList :
 ;
 
 
-//TypeDeclaration#interface :
-TypeDeclaration :
+//TypeDeclaration :
+TypeDeclaration#interface :
   SCAN 0 {!checkNextTokenType(TokenType.RBRACE) && !checkNextTokenType(TokenType.EOF)}# =>
   (
    ClassDeclaration
@@ -201,7 +201,7 @@ TypeDeclaration :
   )
 ;
 
-#if false
+#if true
 INJECT ClassDeclaration : implements TypeDeclaration 
 INJECT StructDeclaration : implements TypeDeclaration 
 INJECT RecordDeclaration : implements TypeDeclaration 
