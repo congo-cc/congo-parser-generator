@@ -3,30 +3,31 @@
 
 [#var TT = "TokenType."]
 
-[#macro enumSet varName tokenNames]
+[#macro enumSet varName tokenNames indent=0]
+[#var is = ""?right_pad(indent)]
 [#var size = tokenNames?size]
 [#if size = 0]
-  private static readonly HashSet<TokenType> ${varName} = Utils.GetOrMakeSet();
+${is}private static readonly HashSet<TokenType> ${varName} = Utils.GetOrMakeSet();
 [#else]
-  private static readonly HashSet<TokenType> ${varName} = Utils.GetOrMakeSet(
+${is}private static readonly HashSet<TokenType> ${varName} = Utils.GetOrMakeSet(
 [#list tokenNames as type]
-    TokenType.${type}[#if type_has_next],[/#if]
+${is}    TokenType.${type}[#if type_has_next],[/#if]
 [/#list]
-  );
+${is});
 [/#if]
 
 [/#macro]
 
 [#macro firstSetVar expansion]
-    [@enumSet expansion.firstSetVarName expansion.firstSet.tokenNames /]
+    [@enumSet expansion.firstSetVarName expansion.firstSet.tokenNames 8 /]
 [/#macro]
 
 [#macro finalSetVar expansion]
-    [@enumSet expansion.finalSetVarName expansion.finalSet.tokenNames /]
+    [@enumSet expansion.finalSetVarName expansion.finalSet.tokenNames 8 /]
 [/#macro]
 
 [#macro followSetVar expansion]
-    [@enumSet expansion.followSetVarName expansion.followSet.tokenNames /]
+    [@enumSet expansion.followSetVarName expansion.followSet.tokenNames 8 /]
 [/#macro]
 
 
@@ -66,59 +67,61 @@ ${prefix}${newID()}[#rt]
 [#return val?string("true", "false")/]
 [/#function]
 
-[#macro HandleLexicalStateChange expansion inLookahead]
-[#-- # DBG > HandleLexicalStateChange  ${expansion.simpleName} --]
+[#macro HandleLexicalStateChange expansion inLookahead indent]
+[#var is=""?right_pad(indent)]
+[#-- ${is}# DBG > HandleLexicalStateChange ${indent} ${expansion.simpleName} --]
 [#var resetToken = inLookahead?string("currentLookaheadToken", "LastConsumedToken")]
 [#if expansion.specifiedLexicalState??]
   [#var prevLexicalStateVar = newVarName("previousLexicalState")]
-  LexicalState ${prevLexicalStateVar} = tokenSource.LexicalState;
-  tokenSource.Reset(${resetToken}, LexicalState.${expansion.specifiedLexicalState});
-  try {
-[#nested /]
-  finally {
-    if (${prevLexicalStateVar} != LexicalState.${expansion.specifiedLexicalState}) {
-        if (${resetToken}.Next != null) {
-            tokenSource.Reset(${resetToken}, ${prevLexicalStateVar});
-        }
-        else {
-            tokenSource.SwitchTo(${prevLexicalStateVar});
-        }
-        _nextTokenType = null;
-    }
-}
+${is}LexicalState ${prevLexicalStateVar} = tokenSource.LexicalState;
+${is}tokenSource.Reset(${resetToken}, LexicalState.${expansion.specifiedLexicalState});
+${is}try {
+[#nested indent + 8 /]
+${is}}
+${is}finally {
+${is}    if (${prevLexicalStateVar} != LexicalState.${expansion.specifiedLexicalState}) {
+${is}        if (${resetToken}.Next != null) {
+${is}            tokenSource.Reset(${resetToken}, ${prevLexicalStateVar});
+${is}        }
+${is}        else {
+${is}            tokenSource.SwitchTo(${prevLexicalStateVar});
+${is}        }
+${is}        _nextTokenType = null;
+${is}    }
+${is}}
 [#elseif expansion.tokenActivation??]
   [#var tokenActivation = expansion.tokenActivation]
   [#var prevActives = newVarName("previousActives")]
   [#var somethingChanged = newVarName("somethingChanged")]
-var ${prevActives} = new HashSet<TokenType>(tokenSource.ActiveTokenTypes);
-var ${somethingChanged} = false;
+${is}var ${prevActives} = new HashSet<TokenType>(tokenSource.ActiveTokenTypes);
+${is}var ${somethingChanged} = false;
 [#if tokenActivation.activatedTokens?size > 0]
-${somethingChanged} = ActivateTokenTypes(
+${is}${somethingChanged} = ActivateTokenTypes(
   [#list tokenActivation.activatedTokens as tokenName]
-    ${TT}${tokenName}[#if tokenName_has_next],[/#if]
+${is}    ${TT}${tokenName}[#if tokenName_has_next],[/#if]
   [/#list]
-);
+${is});
 [/#if]
 [#if tokenActivation.deactivatedTokens?size > 0]
-${somethingChanged} = ${somethingChanged} || DeactivateTokenTypes(
+${is}${somethingChanged} = ${somethingChanged} || DeactivateTokenTypes(
   [#list tokenActivation.deactivatedTokens as tokenName]
-    ${TT}${tokenName}[#if tokenName_has_next],[/#if]
+${is}    ${TT}${tokenName}[#if tokenName_has_next],[/#if]
   [/#list]
-);
+${is});
 [/#if]
-try {
-  [#nested /]
-}
-finally {
-    tokenSource.ActiveTokenTypes = ${prevActives};
-    if (${somethingChanged}) {
-        tokenSource.Reset(GetToken(0));
-        _nextTokenType = null;
-    }
-}
+${is}try {
+  [#nested indent + 4 /]
+${is}}
+${is}finally {
+${is}    tokenSource.ActiveTokenTypes = ${prevActives};
+${is}    if (${somethingChanged}) {
+${is}        tokenSource.Reset(GetToken(0));
+${is}        _nextTokenType = null;
+${is}    }
+${is}}
 [#else]
-  [#nested /]
+  [#nested indent /]
 [/#if]
-[#-- # DBG < HandleLexicalStateChange ${expansion.simpleName} --]
+[#-- ${is}# DBG < HandleLexicalStateChange ${indent} ${expansion.simpleName} --]
 [/#macro]
 

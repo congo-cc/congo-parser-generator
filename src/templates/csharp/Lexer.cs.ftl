@@ -13,15 +13,16 @@
       PRESERVE_TABS = settings.preserveTabs?string("true", "false")
  ]
 
-[#macro EnumSet varName tokenNames]
+[#macro EnumSet varName tokenNames indent=0]
+[#var is = ""?right_pad(indent)]
 [#if tokenNames?size=0]
-  private static HashSet<TokenType> ${varName} = Utils.GetOrMakeSet();
+${is}private static HashSet<TokenType> ${varName} = Utils.GetOrMakeSet();
 [#else]
-  private static HashSet<TokenType> ${varName} = Utils.GetOrMakeSet(
+${is}private static HashSet<TokenType> ${varName} = Utils.GetOrMakeSet(
 [#list tokenNames as type]
-    TokenType.${type}[#if type_index < (tokenNames?size - 1)],[/#if]
+${is}    TokenType.${type}[#if type_index < (tokenNames?size - 1)],[/#if]
 [/#list]
-  );
+${is});
 [/#if]
 [/#macro]
 
@@ -222,15 +223,15 @@ ${globals.translateLexerImports()}
 
         // Token types that are "regular" tokens that participate in parsing,
         // i.e. declared as TOKEN
-        [@EnumSet "regularTokens" lexerData.regularTokens.tokenNames /]
+        [@EnumSet "regularTokens" lexerData.regularTokens.tokenNames 8 /]
         // Token types that do not participate in parsing 
         // i.e. declared as UNPARSED (or SPECIAL_TOKEN)
-        [@EnumSet "unparsedTokens" lexerData.unparsedTokens.tokenNames /]
+        [@EnumSet "unparsedTokens" lexerData.unparsedTokens.tokenNames 8 /]
         [#-- // Tokens that are skipped, i.e. SKIP --]
-        [@EnumSet "skippedTokens" lexerData.skippedTokens.tokenNames /]
+        [@EnumSet "skippedTokens" lexerData.skippedTokens.tokenNames 8 /]
         // Tokens that correspond to a MORE, i.e. that are pending
         // additional input
-        [@EnumSet "moreTokens" lexerData.moreTokens.tokenNames /]
+        [@EnumSet "moreTokens" lexerData.moreTokens.tokenNames 8 /]
 
         // NFA code and data
 
