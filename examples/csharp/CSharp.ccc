@@ -183,7 +183,7 @@ TypeArgumentList :
 ;
 
 
-TypeDeclaration :
+TypeDeclaration#interface :
   SCAN 0 {!checkNextTokenType(TokenType.RBRACE) && !checkNextTokenType(TokenType.EOF)}# =>
   (
    ClassDeclaration
@@ -199,6 +199,13 @@ TypeDeclaration :
    DelegateDeclaration
   )
 ;
+
+INJECT ClassDeclaration : implements TypeDeclaration 
+INJECT StructDeclaration : implements TypeDeclaration 
+INJECT RecordDeclaration : implements TypeDeclaration 
+INJECT InterfaceDeclaration : implements TypeDeclaration 
+INJECT EnumDeclaration: implements TypeDeclaration 
+INJECT DelegateDeclaration: implements TypeDeclaration 
 
 INJECT PARSER_CLASS :
 {
