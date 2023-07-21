@@ -381,7 +381,7 @@ InterfaceDeclaration :
   [<SEMICOLON>]
 ;
 
-InterfaceMemberDeclaration#interface :
+InterfaceMemberDeclaration :
    SCAN TypeDeclarationLA =>
    TypeDeclaration
    |
@@ -397,14 +397,6 @@ InterfaceMemberDeclaration#interface :
    |
    FieldDeclaration
 ;
-
-INJECT TypeDeclaration : extends InterfaceMemberDeclaration
-INJECT InterfacePropertyDeclaration : implements InterfaceMemberDeclaration
-INJECT InterfaceMethodDeclaration : implements InterfaceMemberDeclaration
-INJECT InterfaceEventDeclaration : implements InterfaceMemberDeclaration
-INJECT InterfaceIndexerDeclaration : implements InterfaceMemberDeclaration
-INJECT ConstantDeclaration : implements InterfaceMemberDeclaration
-INJECT FieldDeclaration : implements InterfaceMemberDeclaration
 
 InterfaceEventDeclaration :
    {
@@ -499,7 +491,7 @@ TypeParameterConstraint :
    )
 ;
 
-ClassMemberDeclaration#interface :
+ClassMemberDeclaration :
   ConstantDeclaration
   |
   SCAN TypeDeclarationLA =>
@@ -527,19 +519,6 @@ ClassMemberDeclaration#interface :
   |
   StaticConstructorDeclaration
 ;
-
-INJECT TypeDeclaration : extends ClassMemberDeclaration
-INJECT ConstantDeclaration : implements ClassMemberDeclaration
-INJECT MethodDeclaration : implements ClassMemberDeclaration
-INJECT FieldDeclaration : implements ClassMemberDeclaration
-INJECT PropertyDeclaration : implements ClassMemberDeclaration
-INJECT EventDeclaration : implements ClassMemberDeclaration
-INJECT IndexerDeclaration : implements ClassMemberDeclaration
-INJECT OperatorDeclaration : implements ClassMemberDeclaration
-INJECT ConstructorDeclaration : implements ClassMemberDeclaration
-INJECT DestructorDeclaration : implements ClassMemberDeclaration
-INJECT StructMemberDeclarationUnsafe : implements ClassMemberDeclaration
-INJECT StaticConstructorDeclaration : implements ClassMemberDeclaration
 
 StructMemberDeclarationUnsafe :
   {
@@ -970,7 +949,7 @@ DelegateStarType :
    TypeParameterList
 ;
 
-Type# :
+Type :
   (
     DelegateStarType
     |
@@ -1856,7 +1835,7 @@ Statement :
 
 EmptyStatement : <SEMICOLON> ;
 
-EmbeddedStatement#interface :
+EmbeddedStatement :
     Block
     |
     EmptyStatement
@@ -1902,29 +1881,6 @@ EmbeddedStatement#interface :
     |
     ExpressionStatement
 ;
-
-INJECT Block : implements EmbeddedStatement
-INJECT EmptyStatement : implements EmbeddedStatement
-INJECT IfStatement : implements EmbeddedStatement
-INJECT WhileStatement : implements EmbeddedStatement
-INJECT DoStatement : implements EmbeddedStatement
-INJECT YieldStatement : implements EmbeddedStatement
-INJECT CheckedStatement : implements EmbeddedStatement
-INJECT UncheckedStatement : implements EmbeddedStatement
-INJECT TryStatement : implements EmbeddedStatement
-INJECT BreakStatement : implements EmbeddedStatement
-INJECT ContinueStatement : implements EmbeddedStatement
-INJECT GotoStatement : implements EmbeddedStatement
-INJECT ReturnStatement : implements EmbeddedStatement
-INJECT ThrowStatement : implements EmbeddedStatement
-INJECT UnsafeStatement : implements EmbeddedStatement
-INJECT UsingStatement : implements EmbeddedStatement
-INJECT LockStatement : implements EmbeddedStatement
-INJECT FixedStatement : implements EmbeddedStatement
-INJECT SwitchStatement : implements EmbeddedStatement
-INJECT ForStatement : implements EmbeddedStatement
-INJECT ForeachStatement : implements EmbeddedStatement
-INJECT ExpressionStatement : implements EmbeddedStatement
 
 LocalVariableDeclarationLA#scan :
    [

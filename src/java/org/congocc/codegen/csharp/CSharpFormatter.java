@@ -2,12 +2,10 @@ package org.congocc.codegen.csharp;
 
 import org.congocc.parser.*;
 import org.congocc.parser.csharp.CSToken;
-import org.congocc.parser.csharp.ast.ClassMemberDeclaration;
+import org.congocc.parser.csharp.ast.Block;
 import org.congocc.parser.csharp.ast.Comment;
 import org.congocc.parser.csharp.ast.ConstantDeclaration;
-import org.congocc.parser.csharp.ast.InterfaceMemberDeclaration;
 import org.congocc.parser.csharp.ast.Delimiter;
-import org.congocc.parser.csharp.ast.EmbeddedStatement;
 import org.congocc.parser.csharp.ast.FieldDeclaration;
 import org.congocc.parser.csharp.ast.ForStatement;
 import org.congocc.parser.csharp.ast.Identifier;
@@ -15,6 +13,8 @@ import org.congocc.parser.csharp.ast.InterpolatedString;
 import org.congocc.parser.csharp.ast.KeyWord;
 import org.congocc.parser.csharp.ast.Literal;
 import org.congocc.parser.csharp.ast.Operator;
+import org.congocc.parser.csharp.ast.PropertyBody;
+import org.congocc.parser.csharp.ast.PropertyDeclaration;
 import org.congocc.parser.csharp.ast.Type;
 import org.congocc.parser.csharp.ast.TypeDeclaration;
 import org.congocc.parser.csharp.ast.TypeParameterList;
@@ -24,8 +24,13 @@ import org.congocc.parser.csharp.ast.UnaryExpression;
 import static org.congocc.parser.csharp.CSToken.TokenType.*;
 
 /**
- * The beginnings of a Node.Visitor subclass for pretty-printing C# source code.
- * It does nothing right now, except echo the text.
+ * A fairly effective CSharp pretty printer. It is far from perfect and 
+ * will doubtless be refined over the coming while. But it is good enough
+ * for now. There are so many things to do. It allows us to get rid of all 
+ * the messiness in the templates relating to keeping track of indentation.
+ * There may be a possibility of merging this with the JavaFormatter and
+ * eventually the (as yet unwritten) Python formatter. But this is still
+ * only 200 LOC.
  * @author revusky
  */
 public class CSharpFormatter extends Node.Visitor {
@@ -47,31 +52,24 @@ public class CSharpFormatter extends Node.Visitor {
         newLine(true);
     }
 
-    void visit(ClassMemberDeclaration decl) {
-        newLine(true);
-        recurse(decl);
-        newLine(true);
-    }
-
-    void visit(InterfaceMemberDeclaration decl) {
-        newLine(true);
-        recurse(decl);
-        newLine(true);
-    }
-
-    void visit(EmbeddedStatement stmt) {
-        recurse(stmt);
-        newLine();
-    }
-
     void visit(FieldDeclaration fd) {
         recurse(fd);
-        newLine();
+        if (!(fd.nextSibling() instanceof FieldDeclaration)) {
+            newLine(true);
+        }
     }
 
-    void visit(ConstantDeclaration fd) {
-        recurse(fd);
-        newLine();
+    void visit(ConstantDeclaration cd) {
+        recurse(cd);
+        if (!(cd.nextSibling() instanceof ConstantDeclaration))
+        newLine(true);
+    }
+    
+    void visit(PropertyDeclaration pd) {
+        recurse(pd);
+        if (!(pd.nextSibling() instanceof PropertyDeclaration)) {
+            newLine(true);
+        }
     }
 
     void visit(Type type)  {
@@ -84,6 +82,13 @@ public class CSharpFormatter extends Node.Visitor {
         buffer.append(tok.toString());
     }
 
+    void visit(Block block) {
+        recurse(block);
+        if (block.getParent().getParent() instanceof TypeDeclaration) {
+            newLine(true);
+        }
+    }
+
     void visit(Delimiter delimiter) {
         CSToken.TokenType type = delimiter.getType();
         if (type == LBRACE) {
@@ -94,6 +99,9 @@ public class CSharpFormatter extends Node.Visitor {
         else if (type == RBRACE) {
             dedent();
             buffer.append('}');
+            if (delimiter.getParent().getParent() instanceof TypeDeclaration || delimiter.getParent() instanceof PropertyBody) {
+                newLine(true);
+            }
         }
         else if (type == LBRACKET) {
             trimTrailingWhitespace();
