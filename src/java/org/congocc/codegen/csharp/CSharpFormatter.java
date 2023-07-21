@@ -5,6 +5,7 @@ import org.congocc.parser.csharp.CSToken;
 import org.congocc.parser.csharp.ast.Delimiter;
 import org.congocc.parser.csharp.ast.ForStatement;
 import org.congocc.parser.csharp.ast.Identifier;
+import org.congocc.parser.csharp.ast.InterpolatedString;
 import org.congocc.parser.csharp.ast.KeyWord;
 import org.congocc.parser.csharp.ast.Literal;
 import org.congocc.parser.csharp.ast.Operator;
@@ -163,6 +164,9 @@ public class CSharpFormatter extends Node.Visitor {
         buffer.append(id.toString());
     }
 
+    void visit(InterpolatedString irs) {
+        buffer.append(irs.getSource());
+    }
 
     private void addSpaceIfNecessary() {
         if (buffer.length()==0) return;
