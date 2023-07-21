@@ -649,7 +649,7 @@ INJECT PARSER_CLASS : {
     private Token TOKEN_HOOK(Token t) {
         if (CongoCCKeyWords.contains(t.getType())) {
             if (isInProduction("CompilationUnit", "ClassOrInterfaceBody", "BlockStatement", "TreeBuildingAnnotation")) {
-                Token id = Token.newToken(IDENTIFIER, t.getImage(), token_source);
+                Token id = Token.newToken(IDENTIFIER, t.toString(), token_source);
                 id.copyLocationInfo(t);
                 return id;
             }
@@ -682,7 +682,7 @@ INJECT MethodDeclaration :
 
 INJECT VariableDeclarator : {
    public String getName() {
-       return firstDescendantOfType(Identifier.class).getImage();
+       return firstDescendantOfType(Identifier.class).toString();
    }
 }
 
@@ -861,7 +861,7 @@ GrammarInclusion throws IOException :
        (
            <STRING_LITERAL> {locations.add(((StringLiteral)lastConsumedToken).getString());}
            |
-           <IDENTIFIER> {locations.add(lastConsumedToken.getImage());}
+           <IDENTIFIER> {locations.add(lastConsumedToken.toString());}
        )
        (
          "!" 
@@ -870,7 +870,7 @@ GrammarInclusion throws IOException :
            if (lastConsumedToken instanceof StringLiteral) {
               locations.add(((StringLiteral) lastConsumedToken).getString());
            } else {
-               locations.add(lastConsumedToken.getImage());
+               locations.add(lastConsumedToken.toString());
            }
          }
        )*
@@ -1045,11 +1045,11 @@ Setting(Map<String,Object> settings) #Setting :
         SCAN <IDENTIFIER> "."
         =>Name {value = peekNode().toString();}
         |
-        <IDENTIFIER> {value = lastConsumedToken.getImage();}
-        [ <HASH> <IDENTIFIER> { value += "#" + lastConsumedToken.getImage();} ]
+        <IDENTIFIER> {value = lastConsumedToken.toString();}
+        [ <HASH> <IDENTIFIER> { value += "#" + lastConsumedToken.toString();} ]
         ("," {value+=",";}
-            <IDENTIFIER> {value+=lastConsumedToken.getImage();}
-            [ <HASH> <IDENTIFIER> { value += "#" + lastConsumedToken.getImage();} ]
+            <IDENTIFIER> {value+=lastConsumedToken.toString();}
+            [ <HASH> <IDENTIFIER> { value += "#" + lastConsumedToken.toString();} ]
         )* 
      )
   ]
@@ -1073,7 +1073,7 @@ BNFProduction #org.congocc.core.BNFProduction :
        |
        "#" {CURRENT_NODE.setImplicitReturnType(true);}
     ]
-    id=<IDENTIFIER> {CURRENT_NODE.setName(id.getImage());}
+    id=<IDENTIFIER> {CURRENT_NODE.setName(id.toString());}
     [FormalParameters]
     [
       ThrowsList
@@ -1093,7 +1093,7 @@ BNFProduction #org.congocc.core.BNFProduction :
     ":"
     [
         SCAN 2 => <IDENTIFIER> 
-        {CURRENT_NODE.setLexicalState(lastConsumedToken.getImage());}
+        {CURRENT_NODE.setLexicalState(lastConsumedToken.toString());}
         ":"
     ]
     [
@@ -1119,7 +1119,7 @@ TreeNodeDescriptor #TreeBuildingAnnotation :
        "("
           [
             (">" | ">=" | "<" | "<=" | "+" | "-")
-            {CURRENT_NODE.setInitialShorthand(lastConsumedToken.getImage());}  
+            {CURRENT_NODE.setInitialShorthand(lastConsumedToken.toString());}  
           ]
           Expression {CURRENT_NODE.setCondition((Expression) peekNode());}
        ")"
@@ -1139,7 +1139,7 @@ InlineTreeNodeDescriptor #TreeBuildingAnnotation :
     SCAN ~("(") => {}
     |
     "(" (">" | ">=" | "<" | "<=" | "+" | "-") =>||
-    {CURRENT_NODE.setInitialShorthand(lastConsumedToken.getImage());}
+    {CURRENT_NODE.setInitialShorthand(lastConsumedToken.toString());}
     [Expression {CURRENT_NODE.setCondition((Expression) peekNode());}] 
     ")"
     |
@@ -1178,7 +1178,7 @@ INJECT TreeBuildingAnnotation :
         if (nextType != ABSTRACT 
             && nextType != INTERFACE 
             && nextType != VOID) return null;
-        return nextToken.getImage();
+        return nextToken.toString();
     }
 
     public boolean isNeverInstantiated() {
@@ -1223,10 +1223,10 @@ TokenProduction :
     |
     "<" <IDENTIFIER>
       {
-          firstSpecifiedLexicalState = lastConsumedToken.getImage();
+          firstSpecifiedLexicalState = lastConsumedToken.toString();
           grammar.addLexicalState(firstSpecifiedLexicalState);
       }
-      ("," <IDENTIFIER> {multipleStatesSpecified = true; grammar.addLexicalState(lastConsumedToken.getImage());})*
+      ("," <IDENTIFIER> {multipleStatesSpecified = true; grammar.addLexicalState(lastConsumedToken.toString());})*
      ">" 
   ]
   (<_TOKEN> | <_UNPARSED> | <_SKIP> | <_MORE> | <_CONTEXTUAL_KEYWORD>)
@@ -1234,7 +1234,7 @@ TokenProduction :
     "[" "IGNORE_CASE" {ignoreCase = true;} "]"
   ]
   ["#" <IDENTIFIER> {
-    tokenClassName=lastConsumedToken.getImage();
+    tokenClassName=lastConsumedToken.toString();
     CURRENT_NODE.setTokenClassName(tokenClassName);
     }
   ] 
@@ -1285,7 +1285,7 @@ INJECT TokenProduction :
         for (Token t : childrenOfType(Token.class)) {
             if (t.getType() == HASH) break;
             if (t.getType() == IDENTIFIER) {
-                states.add(t.getImage());
+                states.add(t.toString());
             }
         }
         if (states.isEmpty()) {
@@ -1340,7 +1340,7 @@ RegexpSpec(String tokenClassName)#org.congocc.core.RegexpSpec :
         <LT>
         [
             ["#" {isPrivate = true;}]
-            <IDENTIFIER> {image = lastConsumedToken.getImage();}
+            <IDENTIFIER> {image = lastConsumedToken.toString();}
             ":"
         ]
         RegexpChoice 
@@ -1367,7 +1367,7 @@ RegexpSpec(String tokenClassName)#org.congocc.core.RegexpSpec :
         "#"<IDENTIFIER>
         {
             regexp.setGeneratedSuperClassName(tokenClassName);
-            regexp.setGeneratedClassName(lastConsumedToken.getImage());
+            regexp.setGeneratedClassName(lastConsumedToken.toString());
         }
     ]
     [
@@ -1376,7 +1376,7 @@ RegexpSpec(String tokenClassName)#org.congocc.core.RegexpSpec :
     ]
     [ 
         SCAN 1 {!regexp.isPrivate()} =>
-        ":" <IDENTIFIER> {CURRENT_NODE.setNextLexicalState(lastConsumedToken.getImage());}
+        ":" <IDENTIFIER> {CURRENT_NODE.setNextLexicalState(lastConsumedToken.toString());}
     ]
 ;
 
@@ -1692,14 +1692,14 @@ import java.util.*;
 
     public boolean getHasFinalEllipsis() {
         Token t = (Token) getChild(getChildCount() -1);
-        return t.getImage().equals("...");
+        return t.toString().equals("...");
     }
 
     public List<String> getPath() {
         ArrayList<String> result = new ArrayList<>();
         boolean negated = false;
         for (Token t : childrenOfType(Token.class)) {
-            String img = t.getImage();
+            String img = t.toString();
             if (img.charAt(0) == '\\' || img.charAt(0)=='/') {
                 negated = false;
                 continue;
@@ -1723,7 +1723,7 @@ import java.util.*;
 
     public boolean getHasEndingSlash() {
         Token lastToken = (Token) getChild(getChildCount()-1);
-        String img = lastToken.getImage();
+        String img = lastToken.toString();
         return img.equals("\\") || img.equals("/");
     }
 
@@ -1747,10 +1747,10 @@ ChildNameInfo(Expansion expansion) : //#void :
   // TODO these delimiters are provisional - agreement needed on final form
   "/"
   (
-    <IDENTIFIER> { name = ((Token) peekNode()).getImage(); }
+    <IDENTIFIER> { name = ((Token) peekNode()).toString(); }
     |
     ( "["
-      <IDENTIFIER> { name = ((Token) peekNode()).getImage(); multiple = true; }
+      <IDENTIFIER> { name = ((Token) peekNode()).toString(); multiple = true; }
     "]" )
   )
   "/"
@@ -1888,7 +1888,7 @@ INJECT Terminal :
 UpToHere(Expansion exp) #void :
    <UP_TO_HERE>
    {
-       String img = lastConsumedToken.getImage();
+       String img = lastConsumedToken.toString();
        exp.setScanLimit(true);
        int lastChar = img.codePointBefore(img.length());
        if (Character.isDigit(lastChar)) {
@@ -1997,7 +1997,7 @@ LexicalStateSwitch : "LEXICAL_STATE" <IDENTIFIER> ;
 
 INJECT LexicalStateSwitch : {
    public String getLexicalStateName() {
-       return firstChildOfType(Identifier.class).getImage();
+       return firstChildOfType(Identifier.class).toString();
    }
 }
 
@@ -2015,7 +2015,7 @@ INJECT TokenActivation :
     public List<String> getTokenNames() {
         List<String> result = new ArrayList<>();
         for (Identifier id : childrenOfType(Identifier.class)) {
-            result.add(id.getImage());
+            result.add(id.toString());
         }
         return result;
     }
@@ -2024,10 +2024,10 @@ INJECT TokenActivation :
         List<String> result = new ArrayList<>();
         for (Identifier id : childrenOfType(Identifier.class)) {
             if (id.getPrevious().getType() == MINUS) {
-                result.add(id.getImage());
+                result.add(id.toString());
             }
             else if (isDeactivate() && id.getPrevious().getType() != PLUS) {
-                result.add(id.getImage());
+                result.add(id.toString());
             }
         }
         return result;
@@ -2037,10 +2037,10 @@ INJECT TokenActivation :
         List<String> result = new ArrayList<>();
         for (Identifier id : childrenOfType(Identifier.class)) {
             if (id.getPrevious().getType() == PLUS) {
-                result.add(id.getImage());
+                result.add(id.toString());
             }
             else if (!isDeactivate() && id.getPrevious().getType() != MINUS) {
-                result.add(id.getImage());
+                result.add(id.toString());
             }
         }
         return result;
@@ -2093,7 +2093,7 @@ RegexpStringLiteral# :
     |<SINGLE_QUOTE_STRING> {CURRENT_NODE.setSingleQuoted(true);}
    )
    {
-      String image = StringLiteral.removeEscapesAndQuotes(lastConsumedToken.getImage());
+      String image = StringLiteral.removeEscapesAndQuotes(lastConsumedToken.toString());
       CURRENT_NODE.setLiteralString(image);
    }
 ;
@@ -2147,7 +2147,7 @@ INJECT RegexpStringLiteral :
     t=<IDENTIFIER> =>||
     DEACTIVATE_TOKENS RSIGNEDSHIFT, RUNSIGNEDSHIFT (">") 
     {
-       CURRENT_NODE.setLabel(t.getImage());
+       CURRENT_NODE.setLabel(t.toString());
        return CURRENT_NODE;
     }
 ;
@@ -2426,10 +2426,10 @@ INJECT CharacterRange :
             if (n instanceof CharacterLiteral) bounds.add((Token) n);
             if (bounds.size() >1) break;
         }
-        String leftBound = StringLiteral.removeEscapesAndQuotes(bounds.get(0).getImage());
+        String leftBound = StringLiteral.removeEscapesAndQuotes(bounds.get(0).toString());
         String rightBound = leftBound;
         if (bounds.size() >1) {
-            rightBound = StringLiteral.removeEscapesAndQuotes(bounds.get(1).getImage());
+            rightBound = StringLiteral.removeEscapesAndQuotes(bounds.get(1).toString());
         }
         if (!isSingleChar(leftBound)) {
             getErrors().addError(bounds.get(0),
@@ -2443,7 +2443,7 @@ INJECT CharacterRange :
             }
         }
         if (bounds.size()>1) {
-            String right = StringLiteral.removeEscapesAndQuotes(bounds.get(1).getImage());
+            String right = StringLiteral.removeEscapesAndQuotes(bounds.get(1).toString());
             if (!isSingleChar(right)) {
                 getErrors().addError(bounds.get(1),
                         "String in character list may contain only one character.");

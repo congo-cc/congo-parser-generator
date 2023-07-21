@@ -8,7 +8,7 @@ import org.congocc.parser.csharp.ast.Identifier;
 import org.congocc.parser.csharp.ast.KeyWord;
 import org.congocc.parser.csharp.ast.Literal;
 import org.congocc.parser.csharp.ast.Operator;
-import org.congocc.parser.csharp.ast.TypeDeclaration;
+//import org.congocc.parser.csharp.ast.TypeDeclaration;
 import org.congocc.parser.csharp.ast.TypeParameterList;
 import org.congocc.parser.csharp.ast.UnaryExpression;
 import org.congocc.parser.csharp.ast.TypeArgumentList;
@@ -32,13 +32,14 @@ public class CSharpFormatter extends Node.Visitor {
         if (buffer.charAt(buffer.length()-1) != '\n') buffer.append('\n');
         return buffer.toString();
     }
-
+    
+/*
     void visit(TypeDeclaration decl) {
         newLine(true);
         recurse(decl);
         newLine(true);
     }
-
+*/
     void visit(CSToken tok) {
         CSToken.TokenType type = tok.getType();
         if (type == SINGLE_LINE_COMMENT) {
