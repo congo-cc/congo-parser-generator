@@ -172,7 +172,7 @@ public class CSharpFormatter extends Node.Visitor {
         }
         buffer.append(kw.toString());
         CSToken.TokenType type = kw.getType();
-        if (type == IF || type == WHILE || type == FOR || type == FOREACH) {
+        if (type == IF || type == WHILE || type == FOR || type == FOREACH || type == WHEN) {
             buffer.append(' ');
         }
     }
@@ -226,8 +226,19 @@ public class CSharpFormatter extends Node.Visitor {
         while (Character.isWhitespace(lastChar)) {
             buffer.setLength(buffer.length()-1);
             if (lastChar > 0xFFFF) buffer.setLength(buffer.length()-1);
+            if (buffer.length() == 0) break;
             lastChar = buffer.codePointBefore(buffer.length());
         }
+    }
+
+    private boolean atLineStart() {
+        int pos = buffer.length() -1;
+        while (pos >= 0) {
+            char ch = buffer.charAt(pos--);
+            if (ch == '\n') return true;
+            if (!Character.isWhitespace(ch)) return false;
+        }
+        return true;
     }
 
     private int currentLineLength() {

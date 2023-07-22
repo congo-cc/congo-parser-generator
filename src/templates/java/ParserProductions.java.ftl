@@ -26,7 +26,6 @@
 [#macro ParserProduction production]
     [#set nodeNumbering = 0]
     [#set newVarIndex = 0 in CU] 
-    // ${CU.newVarName("FUCK")}
     ${production.leadingComments}
 // ${production.location}
     final ${production.accessModifier}

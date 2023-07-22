@@ -22,7 +22,6 @@ SKIP :
       <MULTI_LINE_COMMENT: "*/" > #MultiLineComment : JAVA
 ;
 
-
 MORE :
   <SINGLE_LINE_COMMENT_START: "//"> : IN_SINGLE_LINE_COMMENT
   |
@@ -36,6 +35,25 @@ MORE :
 
 <IN_SINGLE_LINE_COMMENT, IN_MULTI_LINE_COMMENT>
 MORE : < ANY_CHAR : ~[] >;
+
+#if false
+// This is an alternative (and probably cleaner) way of specifying the comments, 
+// but it doesn't work with the transpilation to python
+UNPARSED #Comment : 
+  <MULTI_LINE_COMMENT : "/*" > #MultiLineComment {
+    int pos = matchedToken.getEndOffset();
+    try { 
+        while (charAt(pos) != '*' || charAt(pos+1) != '/') ++pos;
+    } catch (IndexOutOfBoundsException e) {
+        matchedToken.setType(INVALID);
+        matchedToken.setUnparsed(false); // optional
+    }
+    matchedToken.setEndOffset(pos+2);
+  } 
+  |
+  <SINGLE_LINE_COMMENT : "//" (~["\n"])* "\n" > #SingleLineComment
+;
+#endif
 
 TOKEN #KeyWord :
   <UNDERSCORE : "_">

@@ -107,7 +107,7 @@ public class JavaFormatter extends Node.Visitor {
                 if (op.getPrevious().getType() == RPAREN || op.getPrevious() instanceof Identifier)
                     addSpaceIfNecessary();
                 buf.append(op);
-                int nextChar = op.getNext().getImage().codePointAt(0);
+                int nextChar = op.getNext().toString().codePointAt(0);
                 if (op.getPrevious() instanceof Identifier // for -1 or 2 - 1
                         || op.getPrevious() instanceof Delimiter
                         || !Character.isDigit(nextChar))
@@ -185,21 +185,18 @@ public class JavaFormatter extends Node.Visitor {
 
     void visit(MultiLineComment comment) {
         startNewLineIfNecessary();
-        buf.append(indentText(comment.getImage()));
+        buf.append(indentText(comment.toString()));
         newLine();
     }
 
     void visit(SingleLineComment comment) {
         if (startsNewLine(comment)) {
             newLine();
-        } else if (comment.getPrevious().getType() == SEMICOLON) {
-            if (buf.charAt(buf.length()-1) == '\n') {
-                buf.setLength(buf.length()-1);
-                buf.append(' ');
-            }
+        } 
+        else {
+            addSpaceIfNecessary();
         }
-        buf.append(comment.getImage().trim());
-        newLine(); // comments may have trailing whitespace
+        buf.append(comment.toString());
     }
 
     void visit(Whitespace ws) {}

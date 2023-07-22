@@ -126,7 +126,7 @@ namespace ${csPackage} {
             return true;
         }
 
-        bool ReplaceChld(Node current, Node replacement) {
+        bool ReplaceChild(Node current, Node replacement) {
             int i = IndexOf(current);
             if (i < 0) {
                 return false;
