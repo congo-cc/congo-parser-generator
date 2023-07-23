@@ -811,10 +811,6 @@ public interface Node extends List<Node>
         return size() == 0;
     }
 
-    default int size() {
-        return getChildCount();
-    }
-
     default void clear() {
         clearChildren();
     }
@@ -824,7 +820,7 @@ public interface Node extends List<Node>
         private static final Method DUMMY_METHOD;
         static {
             try {
-                // Use this just to represent no method found, since ConcurrentHashMap cannot contains nulls
+                // Use this just to represent no method found, since ConcurrentHashMap cannot contain nulls
                 DUMMY_METHOD = Object.class.getMethod("toString");
             } catch (Exception e) {throw new RuntimeException(e);} // Never happens anyway.
             mapLookup = Collections.synchronizedMap(new HashMap<Class<? extends Node.Visitor>, Map<Class<? extends Node>, Method>>());

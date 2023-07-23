@@ -10,10 +10,75 @@ USES_PREPROCESSOR;
 
 DEACTIVATE_TOKENS=_INCLUDE,_INJECT,_EOF, RECORD, VAR, YIELD, SEALED, NON_SEALED, PERMITS;
 
-#if fault_tolerant
-  Howdy!!!
- FAULT_TOLERANT=true;
-#endif
+
+/* congocc RESERVED WORDS: These are the only tokens in congocc but not in Java */
+
+TOKEN :
+  < _INJECT: "INJECT" > #CongoCCKeyWord
+  |
+  < _INCLUDE : "INCLUDE" | "INCLUDE_GRAMMAR"> #CongoCCKeyWord
+  |
+  < _FAIL : "FAIL" > #CongoCCKeyWord
+  |
+  < _UNCACHE_TOKENS : "UNCACHE_TOKENS"> #CongoCCKeyWord
+  |
+  < _ACTIVE_TOKENS : "ACTIVE_TOKENS"> #CongoCCKeyWord
+  |
+  < _ACTIVATE_TOKENS : "ACTIVATE_TOKENS"> #CongoCCKeyWord
+  |
+  < _DEACTIVATE_TOKENS : "DEACTIVATE_TOKENS"> #CongoCCKeyWord  
+  |
+  < _ENSURE : "ASSERT"> #CongoCCKeyWord
+  |
+  < _SCAN : "SCAN" > #CongoCCKeyWord
+  |
+  < _IGNORE_CASE: "IGNORE_CASE" > #CongoCCKeyWord
+  |
+  < _TOKEN: "TOKEN" | "REGULAR_TOKEN"> #CongoCCKeyWord
+  |
+  < _CONTEXTUAL_KEYWORD: "CONTEXTUAL_KEYWORD" > #CongoCCKeyWord
+  |
+  < _UNPARSED: "SPECIAL_TOKEN" | "UNPARSED" > #CongoCCKeyWord
+  |
+  < _MORE: "MORE" | "INCOMPLETE_TOKEN" > #CongoCCKeyWord
+  |
+  < _SKIP: "SKIP" > #CongoCCKeyWord
+  |
+  <_EOF : "EOF"> #CongoCCKeyWord
+  |
+  < _ATTEMPT: "ATTEMPT"> #CongoCCKeyWord
+  |
+  < _RECOVER : "RECOVER"> #CongoCCKeyWord
+  |
+  < _RECOVER_TO : "RECOVER_TO"> #CongoCCKeyWord
+  |
+  < _ON_ERROR : "ON_ERROR"> #CongoCCKeyWord
+  |
+  <HASH : "#">
+  |
+  <BACKSLASH : "\\"> #Backslash
+  |
+  <RIGHT_ARROW : "=>"> #RightArrow
+  |
+  <UP_TO_HERE : "=>|" ("|" | ("+" ["0"-"9"]))> 
+  |
+  <_LEXICAL_STATE : "LEXICAL_STATE"> #CongoCCKeyWord
+  |
+  <SINGLE_QUOTE_STRING:
+      "'"
+      (
+          ~["'","\\","\n","\r"]
+          |
+          <STRING_ESCAPE>
+      ){2,}
+       "'"
+  > #StringLiteral
+  |
+  <START_UNPARSED : "{$" >
+;
+
+INCLUDE "Lexical.inc.ccc"
+INCLUDE "JavaInternal.ccc"
 
 INJECT LEXER_CLASS : 
 {
@@ -117,72 +182,6 @@ INJECT PARSER_CLASS :
 
 }
 
-/* congocc RESERVED WORDS: These are the only tokens in congocc but not in Java */
-
-TOKEN :
-  < _INJECT: "INJECT" > #CongoCCKeyWord
-  |
-  < _INCLUDE : "INCLUDE" | "INCLUDE_GRAMMAR"> #CongoCCKeyWord
-  |
-  < _FAIL : "FAIL" > #CongoCCKeyWord
-  |
-  < _UNCACHE_TOKENS : "UNCACHE_TOKENS"> #CongoCCKeyWord
-  |
-  < _ACTIVE_TOKENS : "ACTIVE_TOKENS"> #CongoCCKeyWord
-  |
-  < _ACTIVATE_TOKENS : "ACTIVATE_TOKENS"> #CongoCCKeyWord
-  |
-  < _DEACTIVATE_TOKENS : "DEACTIVATE_TOKENS"> #CongoCCKeyWord  
-  |
-  < _ENSURE : "ASSERT"> #CongoCCKeyWord
-  |
-  < _SCAN : "SCAN" > #CongoCCKeyWord
-  |
-  < _IGNORE_CASE: "IGNORE_CASE" > #CongoCCKeyWord
-  |
-  < _TOKEN: "TOKEN" | "REGULAR_TOKEN"> #CongoCCKeyWord
-  |
-  < _CONTEXTUAL_KEYWORD: "CONTEXTUAL_KEYWORD" > #CongoCCKeyWord
-  |
-  < _UNPARSED: "SPECIAL_TOKEN" | "UNPARSED" > #CongoCCKeyWord
-  |
-  < _MORE: "MORE" | "INCOMPLETE_TOKEN" > #CongoCCKeyWord
-  |
-  < _SKIP: "SKIP" > #CongoCCKeyWord
-  |
-  <_EOF : "EOF"> #CongoCCKeyWord
-  |
-  < _ATTEMPT: "ATTEMPT"> #CongoCCKeyWord
-  |
-  < _RECOVER : "RECOVER"> #CongoCCKeyWord
-  |
-  < _RECOVER_TO : "RECOVER_TO"> #CongoCCKeyWord
-  |
-  < _ON_ERROR : "ON_ERROR"> #CongoCCKeyWord
-  |
-  <HASH : "#">
-  |
-  <BACKSLASH : "\\"> #Backslash
-  |
-  <RIGHT_ARROW : "=>"> #RightArrow
-  |
-  <UP_TO_HERE : "=>|" ("|" | ("+" ["0"-"9"]))> 
-  |
-  <_LEXICAL_STATE : "LEXICAL_STATE"> #CongoCCKeyWord
-  |
-  <SINGLE_QUOTE_STRING:
-      "'"
-      (
-          ~["'","\\","\n","\r"]
-          |
-          <STRING_ESCAPE>
-      ){2,}
-       "'"
-  > #StringLiteral
-  |
-  <START_UNPARSED : "{$" >
-;
-
 <IN_UNPARSED_CODE_BLOCK> TOKEN : 
   <UNPARSED_CONTENT : (~["$"] | (("$")+ ~["}"]))+ > #UnparsedContent
   |
@@ -271,136 +270,21 @@ INJECT BASE_NODE_CLASS :
     }
 }
 
-INJECT CompilationUnit : 
-    import java.util.*;
-{
-    public String getPackageName() {
-        PackageDeclaration jpd = getPackageDeclaration();
-        return jpd == null ?  null : jpd.getPackageName().toString();
-    }
-    
-    
-    public PackageDeclaration getPackageDeclaration() {
-        return firstChildOfType(PackageDeclaration.class);
-    }
-    
-    public List<ImportDeclaration> getImportDeclarations() {
-        return childrenOfType(ImportDeclaration.class);
-    }
-    
-    public List<TypeDeclaration> getTypeDeclarations() {
-        return childrenOfType(TypeDeclaration.class);
-    }
-
-    public void addImportDeclaration(ImportDeclaration decl) {
-        Node firstTypeDeclaration = firstChildOfType(TypeDeclaration.class);
-        if (firstTypeDeclaration == null) {
-          firstTypeDeclaration = firstChildOfType(Delimiter.class); //lone semicolon, I suppose
-        }
-        addChild(indexOf(firstTypeDeclaration), decl);
-    }
-}
-
-INJECT TypeDeclaration : 
-    import java.util.*;
-{
-    default String getName() {
-        return firstChildOfType(Identifier.class).toString();
-    }
-    
-    default TypeParameters getTypeParameters() {
-        return firstChildOfType(TypeParameters.class);
-    }
-    
-    default ClassOrInterfaceBody getBody() {
-        return firstChildOfType(ClassOrInterfaceBody.class);
-    }
-    
-    default ExtendsList getExtendsList() {
-        return firstChildOfType(ExtendsList.class);
-    }
-    
-    default ImplementsList getImplementsList() {
-        return firstChildOfType(ImplementsList.class);
-    }
-
-    default PermitsList getPermitsList() {
-        return firstChildOfType(PermitsList.class);
-    }
-    
-    default CompilationUnit getCompilationUnit() {
-        return firstAncestorOfType(CompilationUnit.class);
-    }
-    
-    default List<ImportDeclaration> getImportDeclarations() {
-        CompilationUnit jcu = getCompilationUnit();
-        return jcu==null ? new ArrayList<ImportDeclaration>() : jcu.getImportDeclarations();
-    }
-}
-
-INJECT FormalParameter : 
-{
-    public String getName() {
-        String result = null;
-        Node last = getLastChild();
-
-        if (last instanceof Identifier) {
-            result = ((Identifier) last).toString();
-        }
-        return result;
-    }
-}
-
-INJECT FormalParameters : 
-   import java.util.List;
-{
-    public List<FormalParameter> getParams() {
-        return childrenOfType(FormalParameter.class);
-    }
-    
-    public String toString() {
-        StringBuilder buf = new StringBuilder();
-        List<FormalParameter> params = getParams();
-        boolean first = true;
-        for (FormalParameter param : params) {
-            if (!first) {
-                buf.append(", ");
-            }
-            buf.append(param.toString());
-            first = false;
-        }
-        return buf.toString();
-    }
-}
-
-INJECT ImplementsList : 
-   import java.util.*;
-{    
-    public List<ObjectType> getTypes() {
-        return childrenOfType(ObjectType.class);
-    }
-    //REVISIT. fix token chaining?    
-    public void addType(ObjectType type) {
-        ListIterator<Node> iterator = iterator();
-        if (!iterator.hasNext()) {
-            iterator.add(Token.newToken(IMPLEMENTS, "implements", this.getTokenSource()));
-            iterator.next();
-            iterator.add(type);
-        } else {
-            while (iterator.hasNext()) {
-                if (type.equals(iterator.next())) 
-                    return;
-            }
-            iterator.add(Token.newToken(COMMA, ",", this.getTokenSource()));
-            iterator.next();
-            iterator.add(type);
-        }
-    }
-}
-
 INJECT CodeBlock :
   import java.util.List;
+   extends org.congocc.core.EmptyExpansion;
 {
+    @Property boolean appliesInLookahead;
+
+    public CodeBlock getJavaCode() {
+        return this;
+    }
+
+    @Override 
+    public boolean startsWithGlobalCodeAction() {
+        return isAppliesInLookahead();
+    }
+
     public String toString() {
         StringBuilder buf = new StringBuilder();
         List<? extends TerminalNode> tokens = getAllTokens(true);
@@ -422,220 +306,6 @@ INJECT CodeBlock :
     }
 }
 
-INJECT InvocationArguments : 
-    import java.util.*;
-{
-    public List<Expression> getArgs() {
-        return childrenOfType(Expression.class);
-    }
-
-    public String toString() {
-        StringBuilder buf = new StringBuilder();
-        List<Expression> args = getArgs();
-        boolean first = true;
-        for (Expression arg : args) {
-            if (!first) {
-                buf.append(", ");
-            }
-            buf.append(arg.toString());
-            first = false;
-        }
-        return buf.toString();
-    }
-}
-
-// In general usage, it is probably better to INCLUDE the (more stable) Java grammar
-// that is in the bootstrap jarfile.
-//INCLUDE JAVA
-INCLUDE "../../examples/java/Java.ccc"
-
-VariableDeclarator# : VariableDeclaratorId [ "=" VariableInitializer ] ;
-
-INJECT TypeDeclaration : 
-    import java.util.*;
-    import PARSER_PACKAGE.Token.TokenType;
-{
-    default void addElements(List<ClassOrInterfaceBodyDeclaration> elements) {
-        Set<String> keys = new HashSet<String>();
-        for (ClassOrInterfaceBodyDeclaration decl : elements) {
-            if (decl instanceof MethodDeclaration) {
-                keys.add(((MethodDeclaration)decl).getFullSignature());
-            }
-        }
-        //REVISIT. fix token chaining
-        for (Iterator<Node> it = getBody().iterator(); it.hasNext();) {
-            Node n = it.next();
-            if (n instanceof MethodDeclaration) {
-                String s = ((MethodDeclaration) n).getFullSignature();
-                if (keys.contains(s)) {
-                    it.remove();
-                }
-            }
-        }
-        getBody().prepend(elements);
-    }
-    
-    default void addAnnotations(Set<Annotation> annotations) {
-       Node parent = this.getParent();
-       int index = parent.indexOf(this);
-       //REVISIT. fix token chaining
-       for (Annotation annotation : annotations) {
-           parent.addChild(index, annotation);
-       }
-    } 
-    
-    default boolean isClass() {
-        return firstChildOfType(TokenType.CLASS) != null;
-    }
-    
-    default void addImplements(ObjectType type) {
-        ImplementsList implementsList = getImplementsList();
-        if (implementsList == null) {
-           implementsList = new ImplementsList();
-           ListIterator<Node> iterator = iterator();
-           while (iterator.hasNext()) {
-              Node node = iterator.next();
-              if (node instanceof ClassOrInterfaceBody || node instanceof EnumBody)
-                  break; 
-           }
-           iterator.previous();
-           iterator.add(implementsList);
-        }
-        implementsList.addType(type);
-    }
-
-    default void addExtends(ObjectType type) {
-        ExtendsList extendsList = getExtendsList();
-        if (extendsList == null) {
-            extendsList = new ExtendsList();
-            ListIterator<Node> iterator = iterator();
-            while (iterator.hasNext()) {
-                Node node = iterator.next();
-                if (node instanceof ImplementsList || node instanceof ClassOrInterfaceBody) {
-                    break;
-                }
-            }
-            iterator.previous();
-            iterator.add(extendsList);
-        }
-        extendsList.addType(type, this instanceof InterfaceDeclaration);
-    }
-}
-
-INJECT ExtendsList : 
-     import java.util.*;
-{
-    //REVISIT. fix token chaining 
-    
-      public void addType(ObjectType type, boolean isInterface) {
-        if (!isInterface) {
-            clearChildren();
-        }
-        ListIterator<Node> iterator = iterator();
-        if (!iterator.hasNext()) {
-            iterator.add(Token.newToken(EXTENDS, "extends", this.getTokenSource()));
-            iterator.next();
-            iterator.add(type);
-        } else {
-            while (iterator.hasNext()) {
-                if (type.equals(iterator.next())) 
-                    return;
-            }
-            iterator.add(Token.newToken(COMMA, ",", this.getTokenSource()));
-            iterator.next();
-            iterator.add(type);
-        }
-    }
-}
-
-INJECT TypeParameters : 
-    import java.util.*;
-{
-    // REVISIT. fix token chaining?
-    public void add(TypeParameter param) {
-        if (!getParameters().contains(param)) {
-            ListIterator<Node> iterator = iterator();
-            while(iterator.hasNext()) {
-                iterator.next();
-            }
-            iterator.previous();
-            iterator.add(Token.newToken(COMMA, ",", this.getTokenSource()));
-            iterator.next();
-            iterator.add(param);
-        }
-    }
-
-    // REVISIT. fix token chaining 
-    public void add(TypeParameters params) {
-        for (TypeParameter param : params.getParameters()) {
-            add(param);
-        }
-    }
-}
-
-INJECT ClassOrInterfaceBody : 
-    import java.util.*;
-{
-    
-    // REVISIT. fix token chaining?
-    public void prepend(List<ClassOrInterfaceBodyDeclaration> elements) {
-        ListIterator<Node> iterator = iterator();
-        Node n = null;
-        while (iterator.hasNext()) {
-            n = iterator.next();
-              if (n instanceof Token) {
-              Token t = (Token) n;
-               if (t.getType() == LBRACE) {
-                   break;
-               }
-              }
-        }
-        for (ClassOrInterfaceBodyDeclaration elem : elements) {
-            iterator.add(elem);
-            iterator.next();
-        }
-    }
-    
-    // REVISIT. fix token chaining 
-    public void removeDuplicateMethods() {
-        Set<String> sigs = new HashSet<String>();
-        ListIterator<Node> decls = iterator();
-        while (decls.hasNext()) {
-           Node n = decls.next();
-           if (n instanceof MethodDeclaration) {
-               MethodDeclaration decl = (MethodDeclaration) n;
-               String sig = decl.getFullSignature();
-               if (sig != null) {
-                    if (sigs.contains(sig)) {
-                        decls.remove();
-                    } else {
-                        sigs.add(sig);
-                    }
-               }
-           }
-        }
-    }
-}
-
-INJECT FieldDeclaration : 
-   import java.util.*;
-{
-
-  /**
-   * @return the Identifier nodes that correspond to the 
-   *          declaration of an instance variable. 
-   */
-  public List<Identifier> getVariableIds() {
-     return descendants(Identifier.class, FieldDeclaration::isVariableDeclarator);
-  }
-
-  static boolean isVariableDeclarator(Identifier id) {
-      Node parent = id.getParent();
-      return parent instanceof VariableDeclaratorId || 
-             parent instanceof VariableDeclarator ||
-             parent instanceof FieldDeclaration;
-  }
-}
 
 
 INJECT PARSER_CLASS : {
@@ -659,41 +329,6 @@ INJECT PARSER_CLASS : {
     }
 }
 
-INJECT MethodDeclaration : 
-{
-    public String getName() {
-        return firstChildOfType(Identifier.class).toString();
-    }
-    
-    public FormalParameters getFormalParameters() {
-        return firstChildOfType(FormalParameters.class);
-    }
-    
-    public String getFullSignature() {
-        StringBuilder buf = new StringBuilder();
-        buf.append(getName());
-        for (Type type : getFormalParameters().childrenOfType(Type.class)) {
-            buf.append("#");
-            buf.append(type);
-        }
-        return buf.toString();
-    }
-}
-
-INJECT VariableDeclarator : {
-   public String getName() {
-       return firstDescendantOfType(Identifier.class).toString();
-   }
-}
-
-INJECT ThrowsList : 
-    import java.util.List;
-    import java.util.ArrayList;
-{
-    public List<Node> getTypes() {
-        return new ArrayList<Node>(childrenOfType(ObjectType.class));
-    }    
-}
 
 INJECT Identifier : 
 {
@@ -1209,176 +844,6 @@ INJECT TreeBuildingAnnotation :
     }
 }
 
-
-TokenProduction :
-{
-    Token t = null;
-    String tokenClassName = null;
-    String firstSpecifiedLexicalState = null;
-    boolean multipleStatesSpecified = false;
-    boolean ignoreCase = false;
-}
-  [
-    "<" "*" =>|| ">" {multipleStatesSpecified = true;} 
-    |
-    "<" <IDENTIFIER>
-      {
-          firstSpecifiedLexicalState = lastConsumedToken.toString();
-          grammar.addLexicalState(firstSpecifiedLexicalState);
-      }
-      ("," <IDENTIFIER> {multipleStatesSpecified = true; grammar.addLexicalState(lastConsumedToken.toString());})*
-     ">" 
-  ]
-  (<_TOKEN> | <_UNPARSED> | <_SKIP> | <_MORE> | <_CONTEXTUAL_KEYWORD>)
-  [
-    "[" "IGNORE_CASE" {ignoreCase = true;} "]"
-  ]
-  ["#" <IDENTIFIER> {
-    tokenClassName=lastConsumedToken.toString();
-    CURRENT_NODE.setTokenClassName(tokenClassName);
-    }
-  ] 
-  ":"
-   RegexpSpec(tokenClassName)
-   ( "|" RegexpSpec(tokenClassName) )*
-   ";"
-   {
-      if (!multipleStatesSpecified) {
-          if (firstSpecifiedLexicalState == null) {
-              firstSpecifiedLexicalState = grammar.getDefaultLexicalState();
-          }
-          CURRENT_NODE.setImplicitLexicalState(firstSpecifiedLexicalState);
-      }
-      CURRENT_NODE.setIgnoreCase(ignoreCase || grammar.getAppSettings().isIgnoreCase());
-   }
-;
-
-INJECT TokenProduction :
-    import java.util.*;
-    import org.congocc.core.RegexpSpec;
-{
-    @Property private boolean ignoreCase;
-    @Property String tokenClassName;
-
-    private String implicitLexicalState;
-    
-    public void setImplicitLexicalState(String implicitLexicalState) {
-        this.implicitLexicalState = implicitLexicalState;
-    }
-
-    public List<RegexpSpec> getRegexpSpecs() {
-        return childrenOfType(RegexpSpec.class);
-    }
-
-    /**
-     * The states in which this regular expression production exists.
-     */
-    public String[] getLexicalStateNames() {
-    
-        if (implicitLexicalState != null) {
-            return new String[] {implicitLexicalState};
-        }        
-        if (isInAllLexStates()) {
-             return getGrammar().getLexicalStates();
-        }
-        Set<String> states = new LinkedHashSet<String>();
-        for (Token t : childrenOfType(Token.class)) {
-            if (t.getType() == HASH) break;
-            if (t.getType() == IDENTIFIER) {
-                states.add(t.toString());
-            }
-        }
-        if (states.isEmpty()) {
-           return new String[] {getGrammar().getDefaultLexicalState()};
-        }
-        String[] lexStates = new String[states.size()];
-        int i=0;
-        for (String s : states) {
-           lexStates[i++] = s;
-        } 
-        return lexStates;
-    }
-
-    private boolean isInAllLexStates() {
-       for (Node n : children()) {
-          if (n instanceof Token) {
-          Token t = (Token) n;
-              if (t.getType() == STAR) {
-                  return true;
-              }
-          }
-       }
-       return false;
-    }
-
-    public String getKind() {
-       for (Token t : childrenOfType(Token.class)) {
-           switch (t.getType()) {
-              case _MORE : return "MORE";
-              case _UNPARSED : return "UNPARSED";
-              case _SKIP : return "SKIP";
-              case _TOKEN : return "TOKEN";
-              default: 
-           }
-      }
-      return "TOKEN";
-    }
-}
-
-RegexpSpec(String tokenClassName)#org.congocc.core.RegexpSpec :
-{
-    RegularExpression regexp;
-    boolean isPrivate = false;
-    String image = "";
-}
-    (
-        RegexpStringLiteral 
-        {   regexp = (RegularExpression) peekNode(); 
-            ((RegexpStringLiteral) regexp).setLexicalState(getGrammar().getDefaultLexicalState());
-        }
-        |
-        <LT>
-        [
-            ["#" {isPrivate = true;}]
-            <IDENTIFIER> {image = lastConsumedToken.toString();}
-            ":"
-        ]
-        RegexpChoice 
-        {
-            regexp = (RegularExpression) peekNode();
-            if (regexp instanceof RegexpRef) {
-                RegexpSequence seq = new RegexpSequence();
-                seq.addChild(regexp);
-                pokeNode(seq);
-                regexp = seq;
-            } 
-            regexp.setLabel(image);
-            regexp.setGeneratedClassName(image);
-            regexp.setPrivate(isPrivate); 
-        }
-        <GT>
-    )
-    {
-        if (tokenClassName != null) {
-            regexp.setGeneratedClassName(tokenClassName);
-        }
-    }
-    [
-        "#"<IDENTIFIER>
-        {
-            regexp.setGeneratedSuperClassName(tokenClassName);
-            regexp.setGeneratedClassName(lastConsumedToken.toString());
-        }
-    ]
-    [
-        SCAN 1 {!regexp.isPrivate()} =>
-        Block
-    ]
-    [ 
-        SCAN 1 {!regexp.isPrivate()} =>
-        ":" <IDENTIFIER> {CURRENT_NODE.setNextLexicalState(lastConsumedToken.toString());}
-    ]
-;
 
 ExpansionChoice :
   ExpansionSequence ( "|" ExpansionSequence)*
@@ -2058,6 +1523,7 @@ TryBlock :
     ]
 ;
 
+
 INJECT TryBlock  : 
     extends org.congocc.core.ExpansionWithNested;
 {
@@ -2071,387 +1537,4 @@ INJECT TryBlock  :
     
 }
 
-INJECT CodeBlock :
-   extends org.congocc.core.EmptyExpansion;
-{
-    @Property boolean appliesInLookahead;
 
-    public CodeBlock getJavaCode() {
-        return this;
-    }
-
-    @Override 
-    public boolean startsWithGlobalCodeAction() {
-        return isAppliesInLookahead();
-    }
-}
-
-RegexpStringLiteral# :
-   (
-    <STRING_LITERAL>
-    |<CHARACTER_LITERAL> {CURRENT_NODE.setSingleQuoted(true);}
-    |<SINGLE_QUOTE_STRING> {CURRENT_NODE.setSingleQuoted(true);}
-   )
-   {
-      String image = StringLiteral.removeEscapesAndQuotes(lastConsumedToken.toString());
-      CURRENT_NODE.setLiteralString(image);
-   }
-;
-
-INJECT RegexpStringLiteral : 
-   import org.congocc.core.*;
-   extends RegularExpression;
-{
-  @Property String literalString, lexicalState;
-  @Property boolean singleQuoted;
-  @Property RegexpStringLiteral canonicalRegexp;
-
-  public String toString() {
-    return super.toString() + " - " + getLiteralString();
-  }
-
-  public int getOrdinal() {
-      if (canonicalRegexp != null) {
-        return canonicalRegexp.getOrdinal();
-      }
-      return super.getOrdinal();
-  }  
-
-  public String getLabel() {
-     if (canonicalRegexp != null) {
-        return canonicalRegexp.getLabel();
-     }
-     return super.getLabel();
-  }
-  
-  public int hashCode() {
-      return literalString.hashCode();
-  }
-
-  @Override 
-  public boolean matchesEmptyString() {
-      return literalString.length() == 0;
-  }
-
-  public String[] getLexicalStateNames() {
-     TokenProduction tp = getTokenProduction();
-     return tp != null ? tp.getLexicalStateNames() : new String[]{lexicalState};
-  }
-}
-
-#RegexpRef : 
-{
-   Token t;
-}
-    "<"
-    t=<IDENTIFIER> =>||
-    DEACTIVATE_TOKENS RSIGNEDSHIFT, RUNSIGNEDSHIFT (">") 
-    {
-       CURRENT_NODE.setLabel(t.toString());
-       return CURRENT_NODE;
-    }
-;
-
-INJECT RegexpRef : 
-    import org.congocc.core.*;
-    extends RegularExpression;
-{
-    @Property RegularExpression regexp;
-
-    public boolean isPrivate() {
-        return regexp!= null && regexp.isPrivate(); 
-    }
-
-    @Override 
-    public boolean matchesEmptyString() {
-        return regexp != null && regexp.matchesEmptyString();
-    }
-
-    @Override 
-    public int getOrdinal() {
-        if (regexp == null) {
-            // This is the case if this RegexpRef refers to a token type
-            // specified in the EXTRA_TOKENS
-            int extraTokensIndex = getGrammar().getAppSettings().getExtraTokenNames().indexOf(getLabel());
-            assert extraTokensIndex >=0;
-            return extraTokensIndex + getGrammar().getLexerData().getRegularExpressions().size();
-        }
-        return regexp.getOrdinal();
-    }
-}
-
-EndOfFile : "<" <_EOF> =>|| ">" ;
-
-INJECT EndOfFile : extends org.congocc.core.RegularExpression
-{
-    @Override 
-    public boolean matchesEmptyString() {return true;}
-}
-
-RegexpChoice :
-    RegexpSequence 
-    ("|" RegexpSequence)*
-;
-
-RegexpChoiceInParen #RegexpChoice : 
-   "(" RegexpSequence ("|" RegexpSequence)* ")"
-;
-
-INJECT RegexpChoice : 
-    import java.util.List;
-    import org.congocc.core.RegularExpression;
-    extends RegularExpression;
-{
-    public List<RegularExpression> getChoices() {
-        return childrenOfType(RegularExpression.class);
-    }
-
-    @Override 
-    public boolean matchesEmptyString() {
-        for (RegularExpression choice: getChoices()) {
-            if (choice.matchesEmptyString()) {
-                return true;
-            }
-        }
-        return false;
-    }
-}
-
-RegexpSequence :
-   (
-      RegexpStringLiteral
-      |
-      RegexpRef
-      |
-      CharacterList
-      |
-      RepeatedRegexp
-   )+
-;
-
-INJECT RegexpSequence : 
-   import java.util.*;
-   import org.congocc.core.RegularExpression;
-   extends RegularExpression;
-{
-
-   public List<RegularExpression> getUnits() {
-       return childrenOfType(RegularExpression.class);
-   }
-
-   @Override 
-   public boolean matchesEmptyString() {
-       for (RegularExpression child : getUnits()) {
-           if (!child.matchesEmptyString()) return false;
-       }
-       return true;
-   }
-}
-
-RepeatedRegexp #void : 
-{
-     int r1 = 0, r2 = -1;
-}
-  RegexpChoiceInParen
-  (  "+" #OneOrMoreRegexp(2) 
-   | "*" #ZeroOrMoreRegexp(2)
-   | "?" #ZeroOrOneRegexp(2) 
-   | (
-      "{" <INTEGER_LITERAL> {r1 = ((IntegerLiteral)lastConsumedToken).getValue();}
-           [ "," [ <INTEGER_LITERAL> {r2=((IntegerLiteral)lastConsumedToken).getValue();} ] ]
-       "}"
-     ) #RepetitionRange(+1) 
-     {
-         RepetitionRange range = (RepetitionRange) peekNode();
-         range.setMin(r1);
-         range.setMax(r2);
-     }
-  )?
-;
-
-INJECT RepetitionRange : 
-   import org.congocc.core.RegularExpression;
-   extends RegularExpression;
-{
-    @Property int min = 0, max = -1;
-
-    public boolean hasMax() {
-        return firstChildOfType(COMMA) != null;
-    }
-    
-    public RegularExpression getRegexp() { 
-        return firstChildOfType(RegularExpression.class);
-    }
-
-    @Override
-    public boolean matchesEmptyString() {
-        return min==0 || getRegexp().matchesEmptyString();
-    }
-}
-
-INJECT OneOrMoreRegexp : 
-   import org.congocc.core.RegularExpression;
-   extends RegularExpression;
-{
-   public RegularExpression getRegexp() 
-   {
-      return firstChildOfType(RegularExpression.class);
-   }
-
-   @Override
-   public boolean matchesEmptyString() {
-       return getRegexp().matchesEmptyString(); 
-   }
-}
-
-INJECT ZeroOrMoreRegexp : 
-   import org.congocc.core.RegularExpression;
-   extends RegularExpression;
-{
-   public RegularExpression getRegexp() 
-   {
-      return firstChildOfType(RegularExpression.class);
-   }
-   
-   public void setRegexp(RegularExpression regexp) {
-      RegularExpression current = getRegexp();
-      if (current != null) {
-          replaceChild(current, regexp);
-      } else {
-          addChild(0, regexp);
-      }
-   }
-
-   @Override
-   public boolean matchesEmptyString() {
-       return true;
-   }
-}
-
-INJECT ZeroOrOneRegexp : 
-   import org.congocc.core.RegularExpression;
-   extends RegularExpression;
-{
-   public RegularExpression getRegexp() 
-   {
-      return firstChildOfType(RegularExpression.class);
-   }
-   
-   public void setRegexp(RegularExpression regexp) {
-      RegularExpression current = getRegexp();
-      if (current != null) {
-          addChild(indexOf(current), regexp);
-          removeChild(current);
-      } else {
-          addChild(0, regexp);
-      }
-   }
-
-   @Override
-   public boolean matchesEmptyString() {
-       return true;
-   }
-}
-
-CharacterList :
-  ["~"]
-  "[" [CharacterRange
-        ( "," CharacterRange)*
-      ]
-  "]"
-;
-
-INJECT CharacterList : 
-   import java.util.*;
-   import org.congocc.core.*;
-   extends RegularExpression;
-{
-    public List<CharacterRange> getDescriptors() {
-        return childrenOfType(CharacterRange.class);
-    }
-
-    public boolean isNegated() {
-        return firstChildOfType(TILDE) != null;
-    }
-
-    @Override
-    public boolean matchesEmptyString() {
-            return false;
-        }
-    }
-
-CharacterRange# :
-    (<STRING_LITERAL>|<CHARACTER_LITERAL>)
-    [ 
-    "-"
-    (<STRING_LITERAL>|<CHARACTER_LITERAL>)
-   ]
-;
-
-INJECT CharacterRange :
-  import java.util.ArrayList;
-{
-    @Property int left, right;
-    
-    public CharacterRange() {} 
-    
-    public CharacterRange(int left, int right) {
-        setRange(left, right);
-    }
-    
-    public void setRange(int left, int right) {
-        if (left > right) {
-            throw new ArrayIndexOutOfBoundsException();
-        }
-        this.left = left;
-        this.right = right;
-    }
-
-    public boolean isSingleChar() {
-       return left == right;
-    }
-
-    static private boolean isSingleChar(String s) {
-       if (s.length() == 1) return true;
-       if (s.length() == 2) {
-           return Character.isSurrogatePair(s.charAt(0), s.charAt(1));
-       }
-       return false;
-    }
-
-    public void close() {
-        java.util.List<Token> bounds = new ArrayList<>();
-        for (Node n : children()) {
-            if (n instanceof StringLiteral) bounds.add((Token) n);
-            if (n instanceof CharacterLiteral) bounds.add((Token) n);
-            if (bounds.size() >1) break;
-        }
-        String leftBound = StringLiteral.removeEscapesAndQuotes(bounds.get(0).toString());
-        String rightBound = leftBound;
-        if (bounds.size() >1) {
-            rightBound = StringLiteral.removeEscapesAndQuotes(bounds.get(1).toString());
-        }
-        if (!isSingleChar(leftBound)) {
-            getErrors().addError(bounds.get(0),
-                    "String in character list may contain only one character.");
-        }
-        this.left = this.right = leftBound.codePointAt(0);
-        if (!leftBound.equals(rightBound)) {
-            if (!isSingleChar(rightBound)) {
-                getErrors().addError(bounds.get(1),
-                        "String in character list may contain only one character.");
-            }
-        }
-        if (bounds.size()>1) {
-            String right = StringLiteral.removeEscapesAndQuotes(bounds.get(1).toString());
-            if (!isSingleChar(right)) {
-                getErrors().addError(bounds.get(1),
-                        "String in character list may contain only one character.");
-            }
-            this.right = right.codePointAt(0);
-        }
-        if (this.left>this.right) {
-            getErrors().addError(this, "The left side of the character range must be a lower ordinal (in Unicode) value than the right side.");
-        }
-    }
-}
