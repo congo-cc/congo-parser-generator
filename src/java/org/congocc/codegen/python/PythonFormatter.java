@@ -53,7 +53,7 @@ public class PythonFormatter extends Node.Visitor {
     void visit(PythonToken tok) {
 //        if (alwaysPrependSpace.contains(tok.getType())) addSpaceIfNecessary();
         addSpaceIfNecessary();
-        buffer.append(tok.getImage());
+        buffer.append(tok.toString());
 //        if (alwaysAppendSpace.contains(tok.getType())) addSpaceIfNecessary();
         addSpaceIfNecessary();
     }

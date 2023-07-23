@@ -44,7 +44,7 @@ public class JavaCodeUtils {
         String fieldType = fd.firstChildOfType(Type.class).toString();
         for (Identifier id : fd.getVariableIds()) {
             ensurePrivate(fd);
-            insertGetterSetter(context, fieldType, id.getImage(), index);
+            insertGetterSetter(context, fieldType, id.toString(), index);
         }
     }
 

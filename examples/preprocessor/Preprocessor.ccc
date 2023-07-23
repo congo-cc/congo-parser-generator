@@ -7,7 +7,6 @@
 DEFAULT_LEXICAL_STATE = PP_SCAN_LINES;
 TREE_BUILDING_ENABLED=false;
 ENSURE_FINAL_EOL;
-MINIMAL_TOKEN;
 USES_PREPROCESSOR;
 #if localtest
 PARSER_PACKAGE=org.parsers.preprocessor;
@@ -197,19 +196,19 @@ PP_DefStatement#void :
   [
     <PP_ASSIGN>
     <PP_SYMBOL> {
-      value = lastConsumedToken.getImage();
+      value = lastConsumedToken.toString();
     }
   ]
   {
     if (currentlyOn) {
-      definedSymbols.put(lastConsumedToken.getImage(), value);
+      definedSymbols.put(lastConsumedToken.toString(), value);
     }
   }
 ;
 
 PP_UndefStatement#void : 
     <PP_UNDEF> <PP_SYMBOL> 
-    {if (currentlyOn) definedSymbols.remove(lastConsumedToken.getImage());}
+    {if (currentlyOn) definedSymbols.remove(lastConsumedToken.toString());}
 ;    
 
 Expression PP_Expression#void :
@@ -297,7 +296,7 @@ Expression PP_PrimaryExpression#void :
       |
       <PP_SYMBOL> 
       {
-        result.symbol = lastConsumedToken.getImage();
+        result.symbol = lastConsumedToken.toString();
         result.booleanValue = definedSymbols.containsKey(result.symbol);
       }
       |

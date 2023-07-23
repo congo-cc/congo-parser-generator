@@ -127,13 +127,13 @@ boolean IfDirective :
 DefineDirective : 
     <DEFINE> 
     <IDENTIFIER> 
-    {symbols.add(lastConsumedToken.getImage());}
+    {symbols.add(lastConsumedToken.toString());}
 ;
 
 UndefDirective : 
     <DEFINE>
     <IDENTIFIER> 
-    {symbols.remove(lastConsumedToken.getImage());}
+    {symbols.remove(lastConsumedToken.toString());}
 ;
 
 boolean ElifDirective :
@@ -190,7 +190,7 @@ boolean NotExpression :
 boolean PrimaryExpression :
     {boolean result = false;}
     (
-      <IDENTIFIER> {result = symbols.contains(lastConsumedToken.getImage());}
+      <IDENTIFIER> {result = symbols.contains(lastConsumedToken.toString());}
       |
       <TRUE> {result = true;}
       |

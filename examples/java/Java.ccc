@@ -242,7 +242,7 @@ TypeDeclarationLA#scan :
      | <ENUM>
      | <AT> <INTERFACE>
      | <IDENTIFIER>
-       ASSERT {currentLookaheadToken.getImage().equals("record")}
+       ASSERT {currentLookaheadToken.toString().equals("record")}
        <IDENTIFIER>
    )
 ;
@@ -1073,7 +1073,7 @@ LocalVariableDeclarationLA#scan :
      Type
      |
      <IDENTIFIER>
-     ASSERT {currentLookaheadToken.getImage().equals("var")}
+     ASSERT {currentLookaheadToken.toString().equals("var")}
    )
    <IDENTIFIER>
 ;

@@ -377,6 +377,7 @@ INJECT Identifier :
             image = getAppSettings().generateUniqueIdentifier(prefix, this);
             setCachedImage(image);
         }
+        assert image != null;
         return image;
    }
 }

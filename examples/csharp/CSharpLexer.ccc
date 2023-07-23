@@ -355,7 +355,7 @@ INJECT LEXER_CLASS :
       TokenType type = tok.getType();
 #if __java__      
       if (type == TokenType.INTERPOLATED_RAW_STRING_START) {
-         String image = tok.getImage();
+         String image = tok.toString();
          startingQuotes = startingDollars = 0;
          for (int i = 0; i < image.length(); i++) {
              char ch = image.charAt(i);
@@ -365,7 +365,7 @@ INJECT LEXER_CLASS :
          }
       }
       else if (type == TokenType.INTERPOLATED_RAW_STRING_END) {
-        if (tok.getImage().length() < startingQuotes) {
+        if (tok.toString().length() < startingQuotes) {
             tok.setType(TokenType.NON_INTERPOLATED_TEXT3);
         } 
         return tok;
@@ -383,20 +383,20 @@ INJECT LEXER_CLASS :
          tok.setEndOffset(tok.getEndOffset() + amountToExtend);
       }
       else if (type == TokenType.START_INTERPOLATION) {
-         int tokLength = tok.getImage().length();
+         int tokLength = tok.toString().length();
          if (tokLength > startingDollars) {
             tok.setEndOffset(tok.getEndOffset() - (tokLength-startingDollars));
             tok.setType(TokenType.NON_INTERPOLATED_TEXT3);
             return tok;
          }
-         if (tok.getImage().length() < startingDollars) {
+         if (tok.toString().length() < startingDollars) {
             tok.setType(TokenType.NON_INTERPOLATED_TEXT3);
             return tok;
          }
          return tok;
       }
       else if (type == TokenType.END_RAW_INTERPOLATION) {
-          if (tok.getImage().length() < startingDollars) {
+          if (tok.toString().length() < startingDollars) {
               tok.setType(TokenType.NON_INTERPOLATED_TEXT3);
               return tok;
           }
@@ -405,14 +405,14 @@ INJECT LEXER_CLASS :
       else
 #endif      
       if (tok.getType() == TokenType.RAW_STRING_LITERAL) {
-        String image = tok.getImage();
+        String image = tok.toString();
         if (pendingString == "" && endsWithEnoughQuotes(image)) {
           switchTo(LexicalState.CSHARP);
           return tok;
         }
         // The PythonTranslator does not seem to handle the following line
         //pendingString += tok.getImage();
-        pendingString = pendingString + tok.getImage();
+        pendingString = pendingString + tok.toString();
         if (endsWithEnoughQuotes(pendingString)) {
             tok.setBeginOffset(tok.getEndOffset()-pendingString.length());
             pendingString = "";

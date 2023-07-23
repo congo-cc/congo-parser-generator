@@ -184,7 +184,7 @@ INJECT StringLiteral :
    * @return the literal string unescaped without the quotes
    */
   public String getString() {
-    return removeEscapesAndQuotes(getImage());
+    return removeEscapesAndQuotes(toString());
   }
 
   @MinJDK15
@@ -288,7 +288,7 @@ INJECT NumericalLiteral : extends Literal
 INJECT IntegerLiteral :
 {
    public int getValue() {
-     String image = removeUnderscores(getImage());
+     String image = removeUnderscores(toString());
      if (image.equals("0")) return 0;
      if (image.charAt(0) != '0') return Integer.parseInt(image);
      int secondChar = image.charAt(1);

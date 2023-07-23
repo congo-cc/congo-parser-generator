@@ -1,6 +1,5 @@
 PARSER_PACKAGE="ftl";
 DEFAULT_LEXICAL_STATE="TEMPLATE_TEXT";
-MINIMAL_TOKEN;
 
 INJECT PARSER_CLASS :
     import java.io.*;
@@ -63,7 +62,7 @@ INJECT LEXER_CLASS :
     Token tokenHook(Token tok) {
         if (tok.getType() == TokenType.EOF) return tok;
         if (noWhitespaceInExpression && parenthesisNesting ==0 && braceNesting==0 && tok.getPreviousToken() != null && tok.getPreviousToken().isUnparsed()) {
-            if (tok.getPreviousToken().getImage().trim().length() == 0) {
+            if (tok.getPreviousToken().toString().trim().length() == 0) {
                 Token copy = cloneToken(tok);
                 tok.copyLocationInfo(tok.getPreviousToken());
                 tok.setType(TokenType.BLANK);
@@ -73,18 +72,17 @@ INJECT LEXER_CLASS :
                 return tok;
             }
         }
-        int firstChar = tok.getImage().codePointAt(0);
-        int lastChar = tok.getImage().codePointAt(tok.getImage().length() -1);
+        int firstChar = tok.toString().codePointAt(0);
+        int lastChar = tok.toString().codePointAt(tok.toString().length() -1);
         boolean hasPointyDelimiter = firstChar == '<' || lastChar == '>';
         if (rightAfterHeader) {
             // chop off the newline after a <#ftl ...> header
             rightAfterHeader = false;
             if (tok.getType() == TokenType.WHITESPACE) {
-                String img = tok.getImage();
+                String img = tok.toString();
                 int idx = img.indexOf('\n');
                 if (idx <0) idx = img.indexOf('\r');
                 if (idx >=0) {
-                    //tok.setImage(img.substring(++idx));
                     tok.setBeginOffset(tok.getBeginOffset()+idx);
                 }
             }
@@ -163,7 +161,7 @@ INJECT LEXER_CLASS :
               else switchTo(LexicalState.TEMPLATE_TEXT);
               break;
               default :
-              if (lastMatchedTokenType == TokenType.DOT && possibleIdentifier(tok.getImage())) {
+              if (lastMatchedTokenType == TokenType.DOT && possibleIdentifier(tok.toString())) {
                   tok.setType(TokenType.IDENTIFIER);
               }
         }
@@ -367,7 +365,7 @@ Assignment :
           [<IN> Expression]
          <CLOSE_TAG>
          Block
-         DirectiveEnd(t.getImage())
+         DirectiveEnd(t.toString())
       )
     )
 ;
@@ -675,7 +673,7 @@ MacroDefinition :
     [<CLOSE_PAREN>]
     <CLOSE_TAG>
     Block
-    DirectiveEnd(t.getImage())
+    DirectiveEnd(t.toString())
 ;
 
 ParameterList :
@@ -705,7 +703,7 @@ LooseTagEnd :
 DirectiveEnd(String name) :
     <END_DIRECTIVE1>|<END_DIRECTIVE2>
     {
-        String tag = lastConsumedToken.getImage();
+        String tag = lastConsumedToken.toString();
         tag=tag.substring(3);
         tag=tag.substring(0, tag.length() -1).trim();
         if (tag.length() !=0 && !name.equals(tag)) {

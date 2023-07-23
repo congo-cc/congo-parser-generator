@@ -475,7 +475,7 @@ MatchStatementLA#scan :
    <MATCH>
    |
    <NAME> 
-   ASSERT {getToken(0).getImage().equals("match")}
+   ASSERT {getToken(0).toString().equals("match")}
    SubjectExpression
    <COLON>
 ;   

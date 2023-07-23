@@ -68,7 +68,7 @@ INJECT LEXER_CLASS :
        int dedentIndex = indentationStack.indexOf(offset);
        if (dedentIndex <0) {
           BASE_TOKEN_CLASS invalidDedent = new InvalidToken(this, 0,0);
-          invalidDedent.setImage("Invalid Dedent");
+          invalidDedent.setCachedImage("Invalid Dedent");
           tok.preInsert(invalidDedent);
           return invalidDedent;
        }

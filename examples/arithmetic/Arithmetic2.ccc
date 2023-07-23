@@ -7,7 +7,7 @@ INCLUDE "Arithmetic1.ccc"
 INJECT NUMBER :
 {
     public double evaluate() {
-        return Double.parseDouble(getImage());
+        return Double.parseDouble(toString());
     }
 }
 

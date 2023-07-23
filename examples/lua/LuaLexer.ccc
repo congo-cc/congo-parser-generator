@@ -14,7 +14,7 @@ INJECT LEXER_CLASS :
       TokenType type = tok.getType();
       if (type == LONGSTRING || type == MULTILINE_COMMENT) {
          boolean isComment = type == MULTILINE_COMMENT;
-         String image = tok.getImage();
+         String image = tok.toString();
          if (!hasPendingMultiLine) {
             desiredEnd = getDesiredEnd(image);
             if (!image.endsWith(desiredEnd)) {

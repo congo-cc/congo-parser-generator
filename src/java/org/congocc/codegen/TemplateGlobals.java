@@ -375,13 +375,13 @@ public class TemplateGlobals {
                     ArrayList<String> names = new ArrayList<>();
                     for (Node child : decl.children()) {
                         if (child instanceof Identifier) {
-                            names.add(((Identifier) child).getImage());
+                            names.add(((Identifier) child).toString());
                         } else if (child instanceof VariableDeclarator) {
                             Identifier ident = child.firstChildOfType(Identifier.class);
                             if (ident == null) {
                                 throw new UnsupportedOperationException();
                             }
-                            names.add(ident.getImage());
+                            names.add(ident.toString());
                         }
                     }
                     if (names.size() == 0) {

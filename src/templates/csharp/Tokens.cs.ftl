@@ -570,6 +570,9 @@ namespace ${csPackage} {
 [#else]
         public string Image => Source;
 [/#if]
+        public string ToString() {
+            return Image;
+        }
 
         virtual public bool IsSkipped() {
 [#if settings.faultTolerant]
