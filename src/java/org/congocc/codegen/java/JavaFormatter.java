@@ -197,6 +197,7 @@ public class JavaFormatter extends Node.Visitor {
             addSpaceIfNecessary();
         }
         buf.append(comment.toString());
+        newLine();
     }
 
     void visit(Whitespace ws) {}
