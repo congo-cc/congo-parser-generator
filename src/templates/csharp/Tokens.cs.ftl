@@ -567,10 +567,17 @@ namespace ${csPackage} {
             }
             set { _image = value; }
         }
+
+        public string CachedImage {
+            get {
+                return _image != null ? _image: Source;
+            }
+            set { _image = value; }
+        }
 [#else]
         public string Image => Source;
 [/#if]
-        public string ToString() {
+        override public string ToString() {
             return Image;
         }
 
