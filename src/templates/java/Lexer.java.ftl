@@ -72,22 +72,7 @@ class ${settings.lexerClassName} extends TokenSource
   public void setParser(${settings.parserClassName} parser) {this.parser = parser;}
  [/#if]
 
-  [#if settings.deactivatedTokens?size>0]
-    EnumSet<TokenType> activeTokenTypes = EnumSet.allOf(TokenType.class);
-  [#else]
-    EnumSet<TokenType> activeTokenTypes = null;
-  [/#if]
-  [#if settings.deactivatedTokens?size>0 || settings.extraTokens?size >0]
-     {
-       [#list settings.deactivatedTokens as token]
-          activeTokenTypes.remove(${token});
-       [/#list]
-       [#list settings.extraTokenNames as token]
-          regularTokens.add(${token});
-       [/#list]
-     }
-  [/#if]
-
+ 
   // A lookup for lexical state transitions triggered by a certain token type
   private static EnumMap<TokenType, LexicalState> tokenTypeToLexicalStateMap = new EnumMap<>(TokenType.class);
   // ${TOKEN} types that are "regular" tokens that participate in parsing,
@@ -101,7 +86,14 @@ class ${settings.lexerClassName} extends TokenSource
   // Tokens that correspond to a MORE, i.e. that are pending 
   // additional input
   [@EnumSet "moreTokens" lexerData.moreTokens.tokenNames /]
-   
+  [#if settings.extraTokens?size >0]
+     static {
+     [#list settings.extraTokenNames as token]
+         regularTokens.add(${token});
+     [/#list]
+     }
+  [/#if]
+  
     public ${settings.lexerClassName}(CharSequence input) {
         this("input", input);
     }
@@ -144,9 +136,9 @@ class ${settings.lexerClassName} extends TokenSource
    * the token after this one. If not, it finally goes 
    * to the NFA machinery
    */ 
-    public ${TOKEN} getNextToken(${TOKEN} tok) {
+    public ${TOKEN} getNextToken(${TOKEN} tok, EnumSet<TokenType> activeTokenTypes) {
        if (tok == null) {
-          tok = tokenizeAt(0);
+          tok = tokenizeAt(0, null, activeTokenTypes);
           cacheToken(tok);
           return tok;
        }
@@ -158,7 +150,7 @@ class ${settings.lexerClassName} extends TokenSource
            cachedToken = null;
        }
        if (cachedToken == null) {
-           ${TOKEN} token = tokenizeAt(tok.getEndOffset());
+           ${TOKEN} token = tokenizeAt(tok.getEndOffset(), null, activeTokenTypes);
            cacheToken(token);
            return token;
        }
@@ -231,9 +223,12 @@ class ${settings.lexerClassName} extends TokenSource
 
   /**
    * @param position The position at which to tokenize.
+   * @param lexicalState The lexical state in which to tokenize. If this is null, it is the instance variable #lexicalState
+   * @param activeTokenTypes The active token types. If this is null, they are all active.
    * @return the Token at position
    */
-  final ${TOKEN} tokenizeAt(int position) {
+  final ${TOKEN} tokenizeAt(int position, LexicalState lexicalState, EnumSet<TokenType> activeTokenTypes) {
+      if (lexicalState == null) lexicalState = this.lexicalState;
       int tokenBeginOffset = position;
       boolean inMore = false;
       StringBuilder invalidChars = null;
@@ -261,7 +256,7 @@ class ${settings.lexerClassName} extends TokenSource
      [#if lexerData.hasLexicalStateTransitions]
         LexicalState newState = tokenTypeToLexicalStateMap.get(matchedType);
         if (newState !=null) {
-            this.lexicalState = newState;
+            lexicalState = this.lexicalState = newState;
         }
      [/#if]
         if (matchedType == TokenType.INVALID) {

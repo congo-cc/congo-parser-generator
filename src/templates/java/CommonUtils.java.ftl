@@ -107,7 +107,7 @@
       [#var tokenActivation = expansion.tokenActivation]
       [#var prevActives = newVarName("previousActives")]
       [#var somethingChanged = newVarName("somethingChanged")]
-      EnumSet<TokenType> ${prevActives} = EnumSet.copyOf(token_source.activeTokenTypes);
+      EnumSet<TokenType> ${prevActives} = EnumSet.copyOf(activeTokenTypes);
       boolean ${somethingChanged} = false;
       [#if tokenActivation.activatedTokens?size>0]
          ${somethingChanged} = activateTokenTypes(
@@ -127,7 +127,7 @@
          [#nested/]
       }
       finally {
-         token_source.activeTokenTypes = ${prevActives};
+         activeTokenTypes = ${prevActives};
          if (${somethingChanged}) {
              token_source.reset(${resetToken});
              nextTokenType= null;

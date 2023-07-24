@@ -56,7 +56,7 @@ public class JLex {
        Token t = null;
        int numTokens = 0;
        do {
-           t = lexer.getNextToken(t);
+           t = lexer.getNextToken(t, null);
            if (t instanceof InvalidToken) {
                throw new ParseException(t);
            }
