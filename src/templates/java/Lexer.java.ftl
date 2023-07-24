@@ -168,6 +168,8 @@ class ${settings.lexerClassName} extends TokenSource
       TokenType matchedType;
       int matchLength;
 
+      MatchInfo() {}
+
       MatchInfo(TokenType matchedType, int matchLength) {
           this.matchedType = matchedType;
           this.matchLength = matchLength;
@@ -178,15 +180,23 @@ class ${settings.lexerClassName} extends TokenSource
    * Core tokenization method. Note that this can be called from a static context.
    * Hence the extra parameters that need to be passed in.
    */
-  static MatchInfo getMatchInfo(CharSequence input, int position, EnumSet<TokenType> activeTokenTypes, NfaFunction[] nfaFunctions) {
+  static MatchInfo getMatchInfo(CharSequence input, int position, EnumSet<TokenType> activeTokenTypes, NfaFunction[] nfaFunctions, BitSet currentStates, BitSet nextStates, MatchInfo matchInfo) {
+       if (matchInfo == null) {
+        matchInfo = new MatchInfo();
+       }
        if (position >= input.length()) {
-          return new MatchInfo(EOF, 0);
+           matchInfo.matchedType = EOF;
+           matchInfo.matchLength = 0;
+           return matchInfo;
+          //return new MatchInfo(EOF, 0);
        }
        int start = position;
        int matchLength = 0;
        TokenType matchedType = TokenType.INVALID;
-       BitSet currentStates = new BitSet(${lexerData.maxNfaStates});
-       BitSet nextStates=new BitSet(${lexerData.maxNfaStates});
+       if (currentStates == null) currentStates = new BitSet(${lexerData.maxNfaStates});
+       else currentStates.clear();
+       if (nextStates == null) nextStates=new BitSet(${lexerData.maxNfaStates});
+       else nextStates.clear();
         // the core NFA loop
         do {
             // Holder for the new type (if any) matched on this iteration
@@ -221,7 +231,10 @@ class ${settings.lexerClassName} extends TokenSource
             }
             if (position >= input.length()) break;
        } while (!nextStates.isEmpty());
-       return new MatchInfo(matchedType, matchLength);
+       matchInfo.matchedType = matchedType;
+       matchInfo.matchLength = matchLength;
+       return matchInfo;
+//       return new MatchInfo(matchedType, matchLength);
   }
 
   /**
@@ -235,6 +248,9 @@ class ${settings.lexerClassName} extends TokenSource
       ${TOKEN} matchedToken = null;
       TokenType matchedType = null;
       // The core tokenization loop
+      MatchInfo matchInfo = new MatchInfo();
+      BitSet currentStates = new BitSet(${lexerData.maxNfaStates});
+      BitSet nextStates = new BitSet(${lexerData.maxNfaStates});
       while (matchedToken == null) {
       [#if NFA.multipleLexicalStates]
        // Get the NFA function table for the current lexical state.
@@ -246,7 +262,7 @@ class ${settings.lexerClassName} extends TokenSource
         position = nextUnignoredOffset(position);
 [/#if]        
         if (!inMore) tokenBeginOffset = position;
-        MatchInfo matchInfo = getMatchInfo(this, position, activeTokenTypes, nfaFunctions);
+        matchInfo = getMatchInfo(this, position, activeTokenTypes, nfaFunctions, currentStates, nextStates, matchInfo);
         matchedType = matchInfo.matchedType;
         inMore = moreTokens.contains(matchedType);
         position += matchInfo.matchLength;
@@ -285,7 +301,7 @@ class ${settings.lexerClassName} extends TokenSource
  [/#if]
  [#if lexerData.hasTokenActions]
       matchedToken = tokenLexicalActions(matchedToken, matchedType);
- [/#if]
+ [/#if  ]
  [#list grammar.lexerTokenHooks as tokenHookMethodName]
     [#if tokenHookMethodName = "CommonTokenAction"]
            ${tokenHookMethodName}(matchedToken);

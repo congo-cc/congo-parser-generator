@@ -16,7 +16,8 @@ SKIP :
   <CTRL_Z : "\u001A" > {matchedToken.setType(TokenType.EOF);}
 ;  
 
-
+//#define alt_comments
+#if !alt_comments
 <IN_MULTI_LINE_COMMENT>
    UNPARSED #Comment :  
       <MULTI_LINE_COMMENT: "*/" > #MultiLineComment : JAVA
@@ -36,9 +37,10 @@ MORE :
 <IN_SINGLE_LINE_COMMENT, IN_MULTI_LINE_COMMENT>
 MORE : < ANY_CHAR : ~[] >;
 
-#if false
-// This is an alternative (and probably cleaner) way of specifying the comments, 
+#else
+// This is an alternative, fasterway of specifying the comments, 
 // but it doesn't work with the transpilation to python
+// and since it drops into Java code, it may not be really worth it.
 UNPARSED #Comment : 
   <MULTI_LINE_COMMENT : "/*" > #MultiLineComment {
     int pos = matchedToken.getEndOffset();
@@ -46,10 +48,11 @@ UNPARSED #Comment :
         while (charAt(pos) != '*' || charAt(pos+1) != '/') ++pos;
     } catch (IndexOutOfBoundsException e) {
         matchedToken.setType(INVALID);
-        matchedToken.setUnparsed(false); // optional
+        matchedToken.setUnparsed(false); 
     }
     matchedToken.setEndOffset(pos+2);
   } 
+  //< MULTI_LINE_COMMENT : "/*" (~["*"])* "*" (~["*","/"] (~["*"])* "*" | "*")* "/"> #MultiLineComment
   |
   <SINGLE_LINE_COMMENT : "//" (~["\n"])* "\n" > #SingleLineComment
 ;
