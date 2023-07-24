@@ -63,6 +63,7 @@ class ${settings.lexerClassName} extends TokenSource
   [/#list]
  }  
    LexicalState lexicalState = LexicalState.values()[0];
+
  [#if settings.lexerUsesParser]
   private ${settings.parserClassName} parser;
 
@@ -167,13 +168,6 @@ class ${settings.lexerClassName} extends TokenSource
   static class MatchInfo {
       TokenType matchedType;
       int matchLength;
-
-      MatchInfo() {}
-
-      MatchInfo(TokenType matchedType, int matchLength) {
-          this.matchedType = matchedType;
-          this.matchLength = matchLength;
-      }
   }
 
   /**
@@ -182,13 +176,12 @@ class ${settings.lexerClassName} extends TokenSource
    */
   static MatchInfo getMatchInfo(CharSequence input, int position, EnumSet<TokenType> activeTokenTypes, NfaFunction[] nfaFunctions, BitSet currentStates, BitSet nextStates, MatchInfo matchInfo) {
        if (matchInfo == null) {
-        matchInfo = new MatchInfo();
+           matchInfo = new MatchInfo();
        }
        if (position >= input.length()) {
            matchInfo.matchedType = EOF;
            matchInfo.matchLength = 0;
            return matchInfo;
-          //return new MatchInfo(EOF, 0);
        }
        int start = position;
        int matchLength = 0;
@@ -234,7 +227,6 @@ class ${settings.lexerClassName} extends TokenSource
        matchInfo.matchedType = matchedType;
        matchInfo.matchLength = matchLength;
        return matchInfo;
-//       return new MatchInfo(matchedType, matchLength);
   }
 
   /**
