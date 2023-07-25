@@ -51,18 +51,6 @@ public
 [#if isFinal]final[/#if]
 class ${settings.parserClassName} {
 
-  [#if settings.deactivatedTokens?size>0]
-    EnumSet<TokenType> activeTokenTypes = EnumSet.allOf(TokenType.class);
-  [#else]
-    EnumSet<TokenType> activeTokenTypes = null;
-  [/#if]
-  [#if settings.deactivatedTokens?size>0]
-     {
-       [#list settings.deactivatedTokens as token]
-          activeTokenTypes.remove(${token});
-       [/#list]
-     }
-  [/#if]
 
 static final int UNLIMITED = Integer.MAX_VALUE;    
 // The last token successfully "consumed"
@@ -156,12 +144,12 @@ public boolean isCancelled() {return cancelled;}
   // If the next token is cached, it returns that
   // Otherwise, it goes to the token_source, i.e. the Lexer.
   private final ${settings.baseTokenClassName} nextToken(final ${settings.baseTokenClassName} tok) {
-    ${settings.baseTokenClassName} result = token_source.getNextToken(tok, activeTokenTypes);
+    ${settings.baseTokenClassName} result = token_source.getNextToken(tok);
     while (result.isUnparsed()) {
      [#list grammar.parserTokenHooks as methodName] 
       result = ${methodName}(result);
      [/#list]
-      result = token_source.getNextToken(result, activeTokenTypes);
+      result = token_source.getNextToken(result);
     }
 [#list grammar.parserTokenHooks as methodName] 
     result = ${methodName}(result);
@@ -237,10 +225,10 @@ public boolean isCancelled() {return cancelled;}
   }
 
   boolean activateTokenTypes(TokenType... types) {
-    if (activeTokenTypes == null) return false;
+    if (token_source.activeTokenTypes == null) return false;
     boolean result = false;
     for (TokenType tt : types) {
-      result |= activeTokenTypes.add(tt);
+      result |= token_source.activeTokenTypes.add(tt);
     }
     if (result) {
       token_source.reset(getToken(0));
@@ -264,11 +252,11 @@ public boolean isCancelled() {return cancelled;}
 
   boolean deactivateTokenTypes(TokenType... types) {
     boolean result = false;
-    if (activeTokenTypes == null) {
-      activeTokenTypes = EnumSet.allOf(TokenType.class);
+    if (token_source.activeTokenTypes == null) {
+      token_source.activeTokenTypes = EnumSet.allOf(TokenType.class);
     }
     for (TokenType tt : types) {
-      result |= activeTokenTypes.remove(tt);
+      result |= token_source.activeTokenTypes.remove(tt);
     }
     if (result) {
         token_source.reset(getToken(0));

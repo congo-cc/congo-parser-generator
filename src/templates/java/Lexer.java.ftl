@@ -72,6 +72,19 @@ class ${settings.lexerClassName} extends TokenSource
   public void setParser(${settings.parserClassName} parser) {this.parser = parser;}
  [/#if]
 
+   [#if settings.deactivatedTokens?size>0]
+    EnumSet<TokenType> activeTokenTypes = EnumSet.allOf(TokenType.class);
+  [#else]
+    EnumSet<TokenType> activeTokenTypes = null;
+  [/#if]
+  [#if settings.deactivatedTokens?size>0]
+     {
+       [#list settings.deactivatedTokens as token]
+          activeTokenTypes.remove(${token});
+       [/#list]
+     }
+  [/#if]
+
  
   // A lookup for lexical state transitions triggered by a certain token type
   private static EnumMap<TokenType, LexicalState> tokenTypeToLexicalStateMap = new EnumMap<>(TokenType.class);
@@ -128,6 +141,10 @@ class ${settings.lexerClassName} extends TokenSource
      [#if settings.cppContinuationLine]
         handleCContinuationLines();
      [/#if]
+     }
+
+     public ${TOKEN} getNextToken(${TOKEN} tok) {
+        return getNextToken(tok, this.activeTokenTypes);
      }
 
   /**
