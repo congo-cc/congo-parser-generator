@@ -161,7 +161,6 @@ def ${nfaState.methodName}(ch, next_states, valid_types):
         next_states.set(${nextState.index})
       [/#if]
    [#if isLastOfGroup]
-      [#--if type??--]
       [#if nfaState.nextState.final]
         if ${TT}${type.label} in valid_types:
             type = ${TT}${type.label}

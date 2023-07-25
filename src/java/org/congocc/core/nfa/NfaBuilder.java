@@ -28,9 +28,11 @@ class NfaBuilder extends Node.Visitor {
     private boolean ignoreCase;
     private LexicalStateData lexicalState;
     final Grammar grammar;
+    private RegularExpression type;
 
-    NfaBuilder(LexicalStateData lexicalState, boolean ignoreCase) {
+    NfaBuilder(LexicalStateData lexicalState, RegularExpression type, boolean ignoreCase) {
         this.lexicalState = lexicalState;
+        this.type = type;
         this.grammar = lexicalState.grammar;
         this.ignoreCase = ignoreCase;
     }
@@ -41,9 +43,9 @@ class NfaBuilder extends Node.Visitor {
      * then added as an "epsilon move" to the lexical state's
      * initial state.
      */
-    void buildStates(RegularExpression regularExpression) {
-        visit(regularExpression);
-        end.setType(regularExpression);
+    void buildStates() {
+        visit(type);
+        end.setType(type);
         end.setFinal(true);
         lexicalState.getInitialState().addEpsilonMove(start);
     }

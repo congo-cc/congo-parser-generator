@@ -137,7 +137,7 @@ public class LexicalStateData {
                 continue;
             }
             regularExpressions.add(currentRegexp);
-            new NfaBuilder(this, ignore).buildStates(currentRegexp);
+            new NfaBuilder(this, currentRegexp, ignore).buildStates();
             if (regexpSpec.getNextLexicalState() != null && !regexpSpec.getNextLexicalState().equals(this.name)) {
                 currentRegexp.setNewLexicalState(grammar.getLexerData().getLexicalState(regexpSpec.getNextLexicalState()));
             }
@@ -148,12 +148,12 @@ public class LexicalStateData {
         for (RegexpStringLiteral rsl : caseInsensitiveTokenTable.values()) {
             if (rsl.getTokenProduction() != null) continue;
             regularExpressions.add(rsl);
-            new NfaBuilder(this, true).buildStates(rsl);
+            new NfaBuilder(this, rsl, true).buildStates();
         }
         for (RegexpStringLiteral rsl : caseSensitiveTokenTable.values()) {
             if (rsl.getTokenProduction() != null) continue;
             regularExpressions.add(rsl);
-            new NfaBuilder(this, false).buildStates(rsl);
+            new NfaBuilder(this, rsl, false).buildStates();
         }
     }
 }

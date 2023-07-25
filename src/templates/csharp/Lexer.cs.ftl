@@ -132,7 +132,7 @@ private static HashSet<TokenType> ${varName} = Utils.GetOrMakeSet(
                 nextStates.Set(${nextState.index});
   [/#if]
   [#if isLastOfGroup]
-    [#if type??]
+    [#if nfaState.nextState.final]
                 if (validTypes.Contains(${TT}${type.label})) {
                     type = ${TT}${type.label};
                 }
