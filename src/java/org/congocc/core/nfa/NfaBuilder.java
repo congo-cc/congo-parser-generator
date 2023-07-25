@@ -44,6 +44,7 @@ class NfaBuilder extends Node.Visitor {
     void buildStates(RegularExpression regularExpression) {
         visit(regularExpression);
         end.setType(regularExpression);
+        end.setFinal(true);
         lexicalState.getInitialState().addEpsilonMove(start);
     }
 

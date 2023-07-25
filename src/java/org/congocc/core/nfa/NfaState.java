@@ -15,6 +15,7 @@ public class NfaState {
     private NfaState nextState;
     private Set<NfaState> epsilonMoves = new HashSet<>();
     private String movesArrayName;
+    private boolean isFinal;
 
     // An ordered list of the ranges of characters that this 
     // NfaState "accepts". A single character is stored as a 
@@ -27,6 +28,12 @@ public class NfaState {
         this.lexicalState = lexicalState;
         lexicalState.addState(this);
     }
+
+    void setFinal(boolean isFinal) {
+        this.isFinal = isFinal;
+    }
+
+    public boolean isFinal() {return isFinal;}
 
     void setMovesArrayName(int index) {
         String lexicalStateName = lexicalState.getName();
@@ -131,8 +138,10 @@ public class NfaState {
         // Recursively do closure
         for (NfaState state : new ArrayList<>(epsilonMoves)) {
             state.doEpsilonClosure(alreadyVisited);
-            assert type == null || state.type == null || type == state.type;
+            //assert type == null || state.type == null || type == state.type;
             if (type == null) type = state.type;
+            if (isFinal) state.isFinal = true;
+            if (state.isFinal) isFinal = true;
             for (NfaState otherState : state.epsilonMoves) {
                 addEpsilonMove(otherState);
                 otherState.doEpsilonClosure(alreadyVisited);

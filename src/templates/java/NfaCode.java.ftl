@@ -83,7 +83,7 @@
       [#if !state_has_next || !state.moveRanges.equals(states[state_index+1].moveRanges)]
         [#-- We've reached the end of the block. --]
           [#var type = state.nextStateType]
-          [#if type??]
+          [#if state.nextState.final]
             if (validTypes == null || validTypes.contains(${type.label}))
               type = ${type.label};
           [/#if]

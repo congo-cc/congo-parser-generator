@@ -148,7 +148,8 @@ class ${settings.lexerClassName} extends TokenSource
      }
 
   /**
-   * The public method for getting the next token.
+   * The public method for getting the next token, that is
+   * called by ${settings.parserClassName}.
    * It checks whether we have already cached
    * the token after this one. If not, it finally goes 
    * to the NFA machinery
@@ -161,7 +162,7 @@ class ${settings.lexerClassName} extends TokenSource
        }
        ${TOKEN} cachedToken = tok.nextCachedToken();
     // If the cached next token is not currently active, we
-    // throw it away and go back to the XXXLexer
+    // throw it away and go back to the ${settings.lexerClassName} 
        if (cachedToken != null && activeTokenTypes != null && !activeTokenTypes.contains(cachedToken.getType())) {
            reset(tok);
            cachedToken = null;
