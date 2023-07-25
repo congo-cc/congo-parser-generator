@@ -45,15 +45,15 @@ class NfaBuilder extends Node.Visitor {
      */
     void buildStates() {
         visit(type);
-        end.setType(type);
+        end.setType(type    );
         end.setFinal(true);
         lexicalState.getInitialState().addEpsilonMove(start);
     }
 
     void visit(CharacterList charList) {
         List<CharacterRange> ranges = orderedRanges(charList, ignoreCase);
-        start = new NfaState(lexicalState);
-        end = new NfaState(lexicalState);
+        start = new NfaState(lexicalState, type);
+        end = new NfaState(lexicalState, type);
         for (CharacterRange cr : ranges) {
             start.addRange(cr.getLeft(), cr.getRight());
         }
@@ -61,8 +61,8 @@ class NfaBuilder extends Node.Visitor {
     }
 
     void visit(OneOrMoreRegexp oom) {
-        NfaState startState = new NfaState(lexicalState);
-        NfaState finalState = new NfaState(lexicalState);
+        NfaState startState = new NfaState(lexicalState, type);
+        NfaState finalState = new NfaState(lexicalState, type);
         visit(oom.getRegexp());
         startState.addEpsilonMove(this.start);
         this.end.addEpsilonMove(this.start);
@@ -77,8 +77,8 @@ class NfaBuilder extends Node.Visitor {
             visit(choices.get(0));
             return;
         }
-        NfaState startState = new NfaState(lexicalState);
-        NfaState finalState = new NfaState(lexicalState);
+        NfaState startState = new NfaState(lexicalState, type);
+        NfaState finalState = new NfaState(lexicalState, type);
         for (RegularExpression curRE : choices) {
             visit(curRE);
             startState.addEpsilonMove(this.start);
@@ -89,18 +89,18 @@ class NfaBuilder extends Node.Visitor {
     }
 
     void visit(RegexpStringLiteral stringLiteral) {
-        NfaState state = end = start = new NfaState(lexicalState);
+        NfaState state = end = start = new NfaState(lexicalState, type);
         for (int ch : stringLiteral.getLiteralString().codePoints().toArray()) {
             state.setCharMove(ch, ignoreCase || grammar.getAppSettings().isIgnoreCase());
-            this.end = new NfaState(lexicalState);
+            this.end = new NfaState(lexicalState, type);
             state.setNextState(this.end);
             state = this.end;
         }
     }
 
     void visit(ZeroOrMoreRegexp zom) {
-        NfaState startState = new NfaState(lexicalState);
-        NfaState finalState = new NfaState(lexicalState);
+        NfaState startState = new NfaState(lexicalState, type);
+        NfaState finalState = new NfaState(lexicalState, type);
         visit(zom.getRegexp());
         startState.addEpsilonMove(this.start);
         startState.addEpsilonMove(finalState);
@@ -111,8 +111,8 @@ class NfaBuilder extends Node.Visitor {
     }
 
     void visit(ZeroOrOneRegexp zoo) {
-        NfaState startState = new NfaState(lexicalState);
-        NfaState finalState = new NfaState(lexicalState);
+        NfaState startState = new NfaState(lexicalState, type);
+        NfaState finalState = new NfaState(lexicalState, type);
         visit(zoo.getRegexp());
         startState.addEpsilonMove(this.start);
         startState.addEpsilonMove(finalState);
@@ -130,8 +130,8 @@ class NfaBuilder extends Node.Visitor {
             visit(sequence.getUnits().get(0));
             return;
         }
-        NfaState startState = new NfaState(lexicalState);
-        NfaState finalState = new NfaState(lexicalState);
+        NfaState startState = new NfaState(lexicalState, type);
+        NfaState finalState = new NfaState(lexicalState, type);
         NfaState prevStartState = null;
         NfaState prevEndState = null;
         for (RegularExpression re : sequence.getUnits()) {

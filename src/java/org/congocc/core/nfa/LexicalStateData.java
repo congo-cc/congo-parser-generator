@@ -36,7 +36,7 @@ public class LexicalStateData {
         this.grammar = grammar;
         this.errors = grammar.getErrors();
         this.name = name;
-        initialState = new NfaState(this);
+        initialState = new NfaState(this, null);
     }
 
     public LexerData getLexerData() {return grammar.getLexerData();}

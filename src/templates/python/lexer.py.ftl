@@ -153,7 +153,6 @@ def ${nfaState.methodName}(ch, next_states, valid_types):
 --]
 [#macro GenerateStateMove nfaState isFirstOfGroup isLastOfGroup useElif=false]
   [#var nextState = nfaState.nextState.composite]
-  [#var type = nfaState.nextState.type]
     [#if isFirstOfGroup]
     [#if useElif]elif[#else]if[/#if] [@NfaStateCondition nfaState /]:
     [/#if]
@@ -162,6 +161,7 @@ def ${nfaState.methodName}(ch, next_states, valid_types):
       [/#if]
    [#if isLastOfGroup]
       [#if nfaState.nextState.final]
+        [#var type = nfaState.type]
         if ${TT}${type.label} in valid_types:
             type = ${TT}${type.label}
      [/#if]

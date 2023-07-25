@@ -99,8 +99,8 @@ private static HashSet<TokenType> ${varName} = Utils.GetOrMakeSet(
       [/#if]
       [#if !state_has_next || !state.moveRanges.equals(states[state_index+1].moveRanges)]
         [#-- We've reached the end of the block. --]
-          [#var type = state.nextStateType]
           [#if state.nextState.final]
+                [#var type = state.type]
                 if (validTypes.Contains(${TT}${type.label})) {
                     type = ${TT}${type.label};
                 }
@@ -124,7 +124,7 @@ private static HashSet<TokenType> ${varName} = Utils.GetOrMakeSet(
 --]
 [#macro GenerateStateMove nfaState isFirstOfGroup isLastOfGroup useElif=false]
   [#var nextState = nfaState.nextState.composite]
-  [#var type = nfaState.nextState.type]
+  [#var type = nfaState.type]
   [#if isFirstOfGroup]
             [#if useElif]else if[#else]if[/#if] ([@NfaStateCondition nfaState /]) {
   [/#if]

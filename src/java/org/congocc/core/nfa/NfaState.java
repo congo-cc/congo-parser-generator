@@ -24,8 +24,9 @@ public class NfaState {
     // '$','$','A','Z','_','_',a','z'
     private List<Integer> moveRanges = new ArrayList<>();
 
-    NfaState(LexicalStateData lexicalState) {
+    NfaState(LexicalStateData lexicalState, RegularExpression type) {
         this.lexicalState = lexicalState;
+        this.type = type;
         lexicalState.addState(this);
     }
 
@@ -72,16 +73,13 @@ public class NfaState {
 
     public boolean getHasNonAsciiMoves() {
         return moveRanges.get(moveRanges.size()-1) >= 128;
-
     }
 
-    public RegularExpression getType() {return type;}
+    public RegularExpression getType() { return type; }
 
     public LexicalStateData getLexicalState() {return lexicalState;}
 
     public NfaState getNextState() {return nextState;}
-
-    public RegularExpression getNextStateType() {return nextState.getType();}
 
     public int getNextStateIndex() {
         return nextState.getComposite().getIndex();
@@ -99,7 +97,7 @@ public class NfaState {
 
     boolean isMoveCodeNeeded() {
         if (nextState == null) return false;
-        return nextState.type != null || !nextState.epsilonMoves.isEmpty();
+        return nextState.isFinal() || !nextState.epsilonMoves.isEmpty();
     }
 
     void setType(RegularExpression type) {
@@ -138,10 +136,8 @@ public class NfaState {
         // Recursively do closure
         for (NfaState state : new ArrayList<>(epsilonMoves)) {
             state.doEpsilonClosure(alreadyVisited);
-            //assert type == null || state.type == null || type == state.type;
-            if (type == null) type = state.type;
-            if (isFinal) state.isFinal = true;
-            if (state.isFinal) isFinal = true;
+            if (this.isFinal) state.isFinal = true;
+            if (state.isFinal) this.isFinal = true;
             for (NfaState otherState : state.epsilonMoves) {
                 addEpsilonMove(otherState);
                 otherState.doEpsilonClosure(alreadyVisited);

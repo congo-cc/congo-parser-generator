@@ -60,8 +60,7 @@ public class CompositeStateSet {
     }    
     
     static private int getOrdinal(NfaState state) {
-        return state.getType() == null ? Integer.MAX_VALUE : state.getType().getOrdinal();
-//        return state.getType() == null ? Integer.MAX_VALUE : LexerData.getOrdinal(state.getType());
+        return !state.isFinal() ? Integer.MAX_VALUE : state.getType().getOrdinal();
     }
 
     // Recursive method to figure out which composite state sets are actually used.
