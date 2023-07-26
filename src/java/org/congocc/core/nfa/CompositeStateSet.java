@@ -23,11 +23,38 @@ public class CompositeStateSet {
 
     void setIndex(int index) {this.index = index;}
 
+    public String getLabel() {
+        for (NfaState state : states) {
+            return state.getType().getLabel();
+        }
+        return null;
+    }
+
+    public int getNumStates() {
+        return states.size();
+    }
+
+    public NfaState getSingleState() {
+        return states.iterator().next();
+    }
+
+    public boolean getHasFinalState() {
+        return states.stream().anyMatch(state->state.getNextState().isFinal());
+    }
+
     public String getMethodName() {
         String lexicalStateName = lexicalState.getName();
         if (lexicalStateName.equals("DEFAULT")) 
             return "NfaIndex" + index;
         return "NfaName" + lexicalStateName + "Index" + index; 
+    }
+
+    public String checkAllSameType() {
+        String label = getLabel();
+        for (NfaState state : states) {
+            assert state.getType().getLabel().equals(label);
+        }
+        return "";
     }
 
     public boolean equals(Object other) {

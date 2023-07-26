@@ -15,7 +15,7 @@ public class NfaState {
     private NfaState nextState;
     private Set<NfaState> epsilonMoves = new HashSet<>();
     private String movesArrayName;
-    private boolean isFinal;
+    private boolean isFinal, possiblyAtStart=true;
 
     // An ordered list of the ranges of characters that this 
     // NfaState "accepts". A single character is stored as a 
@@ -32,6 +32,18 @@ public class NfaState {
 
     void setFinal(boolean isFinal) {
         this.isFinal = isFinal;
+    }
+
+    void setPossiblyAtStart(boolean possiblyAtStart) {
+        this.possiblyAtStart = possiblyAtStart;
+    }
+    
+    public boolean isPossiblyAtStart() {
+        return possiblyAtStart;
+    }
+    
+    public String getMethodName() {
+        return getComposite().getMethodName();
     }
 
     public boolean isFinal() {return isFinal;}

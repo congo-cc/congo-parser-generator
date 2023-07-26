@@ -6,7 +6,11 @@
 --]
 [#macro GenerateStateCode lexicalState]
   [#list lexicalState.canonicalSets as state]
-     [@NFA.GenerateNfaMethod state/]
+     [#if state.numStates = 1]
+       [@NFA.SimpleNfaMethod state.singleState /]
+     [#else]
+       [@NFA.GenerateNfaMethod state/]
+     [/#if]
   [/#list]
 
   [#list lexicalState.allNfaStates as state]
@@ -60,6 +64,7 @@
    that correspond to an instanceof org.congocc.core.CompositeStateSet
 --]
 [#macro GenerateNfaMethod nfaState]  
+    [#var isInitialState = nfaState.index==0]
     private static TokenType get${nfaState.methodName}(int ch, BitSet nextStates, EnumSet<TokenType> validTypes) {
       TokenType type = null;
     [#var states = nfaState.orderedStates, lastBlockStartIndex=0]
@@ -75,7 +80,9 @@
          [#else]
                else if
          [/#if]    
-           ([@NFA.NfaStateCondition state /]) {
+           (
+              [@NFA.NfaStateCondition state /]
+           ) {
       [/#if]
       [#if state.nextStateIndex >= 0]
          nextStates.set(${state.nextStateIndex});
@@ -90,6 +97,24 @@
       [/#if]
     [/#list]
       return type;
+    }
+[/#macro]
+
+[#-- 
+   Generate a method for a single, i.e. non-composite NFA state 
+--]
+[#macro SimpleNfaMethod state]
+    private static TokenType get${state.getMethodName()}(int ch, BitSet nextStates, EnumSet<TokenType> validTypes) {
+      if ([@NFA.NfaStateCondition state /]) {
+         [#if state.nextStateIndex >= 0]
+           nextStates.set(${state.nextStateIndex});
+         [/#if]
+         [#if state.nextState.final]
+            if (validTypes == null || validTypes.contains(${state.type.label}))
+              return ${state.type.label};
+         [/#if]
+      }
+      return null;
     }
 [/#macro]
 

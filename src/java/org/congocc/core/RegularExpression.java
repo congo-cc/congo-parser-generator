@@ -4,7 +4,9 @@ import org.congocc.core.nfa.LexicalStateData;
 import static org.congocc.core.LexerData.isJavaIdentifier;
 import org.congocc.parser.tree.CodeBlock;
 import org.congocc.parser.tree.TokenProduction;
+import org.congocc.parser.Node;
 import org.congocc.parser.tree.BaseNode;
+import org.congocc.parser.tree.RegexpSequence;
 
 /**
  * An abstract base class from which all the AST nodes that
@@ -117,4 +119,21 @@ public abstract class RegularExpression extends BaseNode {
     private String generatedClassName, generatedSuperClassName;
 
     abstract public boolean matchesEmptyString();
+
+    public boolean isPossiblyAtStart() {
+        Node parent = getParent();
+        if (!(parent instanceof RegularExpression)) return true;
+        if (parent instanceof RegexpSequence) {
+            RegexpSequence parentSequence = (RegexpSequence) parent;
+            for (RegularExpression re : parentSequence.childrenOfType(RegularExpression.class)) {
+                if (re == this) break;
+                if (!re.matchesEmptyString()) return false;
+            }
+        }
+        return ((RegularExpression) parent).isPossiblyAtStart();
+    }
+
+
+    /** in code points */
+    abstract public int maximumLength();
 }
