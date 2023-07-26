@@ -54,6 +54,8 @@ TOKEN :
   |
   < _ON_ERROR : "ON_ERROR"> #CongoCCKeyWord
   |
+  < _LAZY : "LAZY" > #CongoCCKeyWord
+  |
   <HASH : "#">
   |
   <BACKSLASH : "\\"> #Backslash

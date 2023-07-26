@@ -16,6 +16,7 @@ import org.congocc.parser.tree.RegexpSequence;
 public abstract class RegularExpression extends BaseNode {
 
     private LexicalStateData newLexicalState;
+    private boolean lazy;
 
     public CodeBlock getCodeSnippet() {
         return (getParent() instanceof RegexpSpec) ? getParent().firstChildOfType(CodeBlock.class) : null;
@@ -132,6 +133,10 @@ public abstract class RegularExpression extends BaseNode {
         }
         return ((RegularExpression) parent).isPossiblyAtStart();
     }
+
+    public void setLazy(boolean lazy) {this.lazy = lazy;}
+    
+    public boolean isLazy() {return this.lazy;}
 
 
     /** in code points */

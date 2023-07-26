@@ -105,12 +105,13 @@
 --]
 [#macro SimpleNfaMethod state]
     private static TokenType get${state.getMethodName()}(int ch, BitSet nextStates, EnumSet<TokenType> validTypes) {
+      if (validTypes != null && !validTypes.contains(${state.type.label})) return null;
       if ([@NFA.NfaStateCondition state /]) {
          [#if state.nextStateIndex >= 0]
            nextStates.set(${state.nextStateIndex});
          [/#if]
          [#if state.nextState.final]
-            if (validTypes == null || validTypes.contains(${state.type.label}))
+[#--            if (validTypes == null || validTypes.contains(${state.type.label}))--]
               return ${state.type.label};
          [/#if]
       }

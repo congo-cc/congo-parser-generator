@@ -130,7 +130,7 @@ RegexpSpec(String tokenClassName)#org.congocc.core.RegexpSpec :
         |
         <LT>
         [
-            ["#" {isPrivate = true;}]
+            ["LAZY" | "#" {isPrivate = true;}]
             <IDENTIFIER> {image = lastConsumedToken.toString();}
             ":"
         ]

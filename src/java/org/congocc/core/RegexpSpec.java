@@ -3,6 +3,7 @@ package org.congocc.core;
 import org.congocc.parser.tree.BaseNode;
 import org.congocc.parser.tree.CodeBlock;
 import org.congocc.parser.tree.TokenProduction;
+import org.congocc.parser.Token;
 
 
 public class RegexpSpec extends BaseNode {
@@ -26,6 +27,10 @@ public class RegexpSpec extends BaseNode {
 
     public boolean isImplicit() {
         return !(getParent() instanceof TokenProduction);
+    }
+
+    public boolean isLazy() {
+        return firstChildOfType(Token.TokenType._LAZY) != null;
     }
 }
 

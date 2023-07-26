@@ -30,7 +30,7 @@ import static ${settings.parserPackage}.${TOKEN}.TokenType.*;
 
 [#macro EnumSet varName tokenNames]
    [#if tokenNames?size=0]
-       private static final EnumSet<TokenType> ${varName} = EnumSet.noneOf(TokenType.class);
+       static final EnumSet<TokenType> ${varName} = EnumSet.noneOf(TokenType.class);
    [#else]
        static final EnumSet<TokenType> ${varName} = EnumSet.of(
        [#list tokenNames as type]
@@ -105,6 +105,9 @@ class ${settings.lexerClassName} extends TokenSource
          regularTokens.add(${token});
      [/#list]
      }
+  [/#if]
+  [#if settings.hasLazyLexing]
+   [@EnumSet "lazyTokens" lexerData.lazyTokens /]
   [/#if]
   
     public ${settings.lexerClassName}(CharSequence input) {

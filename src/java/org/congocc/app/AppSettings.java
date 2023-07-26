@@ -17,7 +17,7 @@ import java.util.regex.Pattern;
 import org.congocc.core.Grammar;
 import org.congocc.core.LexerData;
 import org.congocc.parser.Node;
-
+import org.congocc.parser.Token;
 import org.congocc.parser.tree.MethodCall;
 
 /**
@@ -568,6 +568,10 @@ public class AppSettings {
             }
         }
         return terminatingString == null ? "" : terminatingString;
+    }
+
+    public boolean getHasLazyLexing() {
+        return grammar.firstDescendantOfType(Token.TokenType._LAZY) != null;
     }
 
 
