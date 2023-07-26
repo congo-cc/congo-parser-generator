@@ -271,6 +271,10 @@ public class LexerData {
         return result;
     }
 
+    public boolean isLazyMatched(RegularExpression type) {
+        return lazilyScannedTokens.contains(type);
+    }
+
     /**
      * A visitor that checks whether there is a self-referential loop in a Regexp
      * reference.

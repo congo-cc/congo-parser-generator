@@ -20,6 +20,7 @@ import static ${settings.parserPackage}.${TOKEN}.TokenType.*;
 [#import "NfaCode.java.ftl" as NFA]
 
 [#var lexerData=grammar.lexerData]
+[#var lazyLexing = settings.hasLazyLexing]
 
 [#var PRESERVE_LINE_ENDINGS=settings.preserveLineEndings?string("true", "false")
       JAVA_UNICODE_ESCAPE= settings.javaUnicodeEscape?string("true", "false")
@@ -106,7 +107,7 @@ class ${settings.lexerClassName} extends TokenSource
      [/#list]
      }
   [/#if]
-  [#if settings.hasLazyLexing]
+  [#if lazyLexing]
    [@EnumSet "lazyTokens" lexerData.lazyTokens /]
   [/#if]
   
@@ -232,6 +233,16 @@ class ${settings.lexerClassName} extends TokenSource
                 if (returnedType != null && (position - start > matchLength || returnedType.ordinal() < matchedType.ordinal())) {
                     matchedType = returnedType;
                     matchLength = position - start;
+                    [#if lazyLexing]
+                    if (lazyTokens.contains(returnedType)) {
+                        if (activeTokenTypes == null) {
+                            activeTokenTypes = EnumSet.allOf(TokenType.class);
+                        } else {
+                            activeTokenTypes = activeTokenTypes.copyOf(activeTokenTypes);
+                        }
+                        activeTokenTypes.remove(returnedType);
+                    }
+                    [/#if]
                 }
                 nextActive = currentStates.nextSetBit(nextActive+1);
             }
