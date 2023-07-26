@@ -103,6 +103,11 @@
 --]
 [#macro CompositeNfaMethod nfaState]  
     private static TokenType get${nfaState.methodName}(int ch, BitSet nextStates, EnumSet<TokenType> validTypes) {
+      [#if settings.hasLazyLexing && lexerData.isLazyMatched(state.type)]
+           if (validTypes != null && !validTypes.contains(${state.type.label})) {
+             return null;
+           }
+      [/#if]
     [#if nfaState.hasFinalState]
       TokenType type = null;
     [/#if]

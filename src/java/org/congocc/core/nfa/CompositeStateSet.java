@@ -2,6 +2,8 @@ package org.congocc.core.nfa;
 
 import java.util.*;
 
+import org.congocc.core.RegularExpression;
+
 /**
  * A class representing a composite state set, i.e. 
  * a set of one or more NfaState objects.
@@ -28,6 +30,11 @@ public class CompositeStateSet {
             return state.getType().getLabel();
         }
         return null;
+    }
+
+    public RegularExpression getType() {
+        assert index != 0;
+        return states.iterator().next().getType();
     }
 
     public int getNumStates() {
