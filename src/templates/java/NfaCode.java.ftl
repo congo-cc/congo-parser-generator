@@ -6,16 +6,18 @@
 --]
 [#macro GenerateStateCode lexicalState]
   [#list lexicalState.canonicalSets as state]
-     [#if state.numStates = 1]
-       [@NFA.SimpleNfaMethod state.singleState /]
+     [#if state_index=0]
+       [@GenerateInitialComposite state/]
+     [#elseif state.numStates = 1]
+       [@SimpleNfaMethod state.singleState /]
      [#else]
-       [@NFA.GenerateNfaMethod state/]
+       [@CompositeNfaMethod state/]
      [/#if]
   [/#list]
 
   [#list lexicalState.allNfaStates as state]
     [#if state.moveRanges.size() >= NFA_RANGE_THRESHOLD]
-      [@NFA.GenerateMoveArray state/]
+      [@GenerateMoveArray state/]
     [/#if]
   [/#list]
 
@@ -59,12 +61,7 @@
     }
 [/#macro] 
 
-[#--
-   Generate the method that represents the transitions
-   that correspond to an instanceof org.congocc.core.CompositeStateSet
---]
-[#macro GenerateNfaMethod nfaState]  
-    [#var isInitialState = nfaState.index==0]
+[#macro GenerateInitialComposite nfaState]
     private static TokenType get${nfaState.methodName}(int ch, BitSet nextStates, EnumSet<TokenType> validTypes) {
       TokenType type = null;
     [#var states = nfaState.orderedStates, lastBlockStartIndex=0]
@@ -80,9 +77,49 @@
          [#else]
                else if
          [/#if]    
-           (
-              [@NFA.NfaStateCondition state /]
-           ) {
+           ( [@NFA.NfaStateCondition state /]) {
+      [/#if]
+      if (validTypes == null || validTypes.contains(${state.type.label})) {
+      [#if state.nextStateIndex >= 0]
+         nextStates.set(${state.nextStateIndex});
+      [/#if]
+      [#if !state_has_next || !state.moveRanges.equals(states[state_index+1].moveRanges)]
+        [#-- We've reached the end of the block. --]
+          [#if state.nextState.final]
+            [#--if (validTypes == null || validTypes.contains(${state.type.label}))--]
+              type = ${state.type.label};
+          [/#if]
+        }
+      [/#if]
+       }
+    [/#list]
+      return type;
+    }
+[/#macro]
+
+[#--
+   Generate the method that represents the transitions
+   that correspond to an instanceof org.congocc.core.CompositeStateSet
+--]
+[#macro CompositeNfaMethod nfaState]  
+    private static TokenType get${nfaState.methodName}(int ch, BitSet nextStates, EnumSet<TokenType> validTypes) {
+    [#if nfaState.hasFinalState]
+      TokenType type = null;
+    [/#if]
+    [#var states = nfaState.orderedStates, lastBlockStartIndex=0]
+    [#list states as state]
+      [#if state_index ==0 || !state.moveRanges.equals(states[state_index-1].moveRanges)]
+          [#-- In this case we need a new if or possibly else if --]
+         [#if state_index == 0 || state.overlaps(states.subList(lastBlockStartIndex, state_index))]
+           [#-- If there is overlap between this state and any of the states
+                 handled since the last lone if, we start a new if-else 
+                 If not, we continue in the same if-else block as before. --]
+           [#set lastBlockStartIndex = state_index]
+               if
+         [#else]
+               else if
+         [/#if]    
+           ([@NFA.NfaStateCondition state /]) {
       [/#if]
       [#if state.nextStateIndex >= 0]
          nextStates.set(${state.nextStateIndex});
@@ -90,13 +127,16 @@
       [#if !state_has_next || !state.moveRanges.equals(states[state_index+1].moveRanges)]
         [#-- We've reached the end of the block. --]
           [#if state.nextState.final]
-            if (validTypes == null || validTypes.contains(${state.type.label}))
               type = ${state.type.label};
           [/#if]
         }
       [/#if]
     [/#list]
+    [#if nfaState.hasFinalState]
       return type;
+    [#else]
+      return  null;
+    [/#if]
     }
 [/#macro]
 
@@ -105,13 +145,11 @@
 --]
 [#macro SimpleNfaMethod state]
     private static TokenType get${state.getMethodName()}(int ch, BitSet nextStates, EnumSet<TokenType> validTypes) {
-      if (validTypes != null && !validTypes.contains(${state.type.label})) return null;
       if ([@NFA.NfaStateCondition state /]) {
          [#if state.nextStateIndex >= 0]
            nextStates.set(${state.nextStateIndex});
          [/#if]
          [#if state.nextState.final]
-[#--            if (validTypes == null || validTypes.contains(${state.type.label}))--]
               return ${state.type.label};
          [/#if]
       }

@@ -12,7 +12,7 @@ import java.util.*;
 public class CompositeStateSet {
     private Set<NfaState> states;
     final LexicalStateData lexicalState;
-    int index=-1; 
+    private int index=-1; 
 
     CompositeStateSet(Set<NfaState> states, LexicalStateData lsd) {
         this.states = new HashSet<>(states);
@@ -71,11 +71,11 @@ public class CompositeStateSet {
      */
     public List<NfaState> getOrderedStates() {
         List<NfaState> result = new ArrayList<>(states);
-        Collections.sort(result, CompositeStateSet::nfaComparator);
+        Collections.sort(result, this::nfaComparator);
         return result;    
     }
 
-    static private int nfaComparator(NfaState state1, NfaState state2) {
+    private int nfaComparator(NfaState state1, NfaState state2) {
         int result = getOrdinal(state2.getNextState()) - getOrdinal(state1.getNextState());
         if (result == 0)
            result = (state1.getMoveRanges().get(0) - state2.getMoveRanges().get(0));
