@@ -16,8 +16,7 @@ SKIP :
   <CTRL_Z : "\u001A" > {matchedToken.setType(TokenType.EOF);}
 ;  
 
-//#define alt_comments
-#if !alt_comments
+#if !__java__
 <IN_MULTI_LINE_COMMENT>
    UNPARSED #Comment :  
       <MULTI_LINE_COMMENT: "*/" > #MultiLineComment : JAVA
@@ -42,6 +41,7 @@ MORE : < ANY_CHAR : ~[] >;
 // but it doesn't work with the transpilation to python
 // and since it drops into Java code, it may not be really worth it.
 UNPARSED #Comment : 
+  /*
   <MULTI_LINE_COMMENT : "/*" > #MultiLineComment {
     int pos = matchedToken.getEndOffset();
     try { 
@@ -51,7 +51,8 @@ UNPARSED #Comment :
         matchedToken.setUnparsed(false); 
     }
     matchedToken.setEndOffset(pos+2);
-  } 
+  }*/ 
+  < LAZY MULTI_LINE_COMMENT : "/*" (~[])* "*/" > #MultiLineComment
   //< MULTI_LINE_COMMENT : "/*" (~["*"])* "*" (~["*","/"] (~["*"])* "*" | "*")* "/"> #MultiLineComment
   |
   <SINGLE_LINE_COMMENT : "//" (~["\n"])* "\n" > #SingleLineComment
