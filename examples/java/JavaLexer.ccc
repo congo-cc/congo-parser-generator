@@ -169,6 +169,13 @@ TOKEN #Literal :
       '"'
   > #StringLiteral
   |
+#if __java__  
+  < LAZY TEXT_BLOCK_LITERAL:
+     '"""' (<HORIZONTAL_WHITESPACE>)* <LINE_TERMINATOR>
+     (~[])*
+     '"""'
+  > #StringLiteral
+#else  
   < TEXT_BLOCK_LITERAL:
      '"""' (<HORIZONTAL_WHITESPACE>)* <LINE_TERMINATOR>
      // This was slightly broken until recently (2022-12-10) 
@@ -176,6 +183,7 @@ TOKEN #Literal :
         (('"'){0,2} ((~['"', '\\']) | <STRING_ESCAPE> | ("\\" <LINE_TERMINATOR>)))*
      '"""'
   > #StringLiteral
+#endif  
 ;
 
 INJECT CharacterLiteral :
