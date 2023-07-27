@@ -121,7 +121,7 @@
                else if
          [/#if]
          [#if state.lazyLooping]
-           (!alreadyMatchedTypes.contains(${state.type.label}) && ([@NFA.NfaStateCondition state /])) {
+           (([@NFA.NfaStateCondition state /] && !alreadyMatchedTypes.contains(${state.type.label}))) {
          [#else]
            ([@NFA.NfaStateCondition state /]) {
          [/#if]

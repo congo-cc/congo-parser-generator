@@ -122,11 +122,37 @@ public class LexicalStateData {
             compositeSets.clear();
             compositeSets.add(initialComposite);
         }
-        else Collections.swap(compositeSets, indexInList, 0);
+        //else Collections.swap(compositeSets, indexInList, 0);
+        Collections.sort(compositeSets, this::comparator);
         // Set the index on the various composites
         for (int i =0; i< compositeSets.size();i++) {
             compositeSets.get(i).setIndex(i);
         }
+    }
+
+    // We need the states that reach a final state (i.e. identify a token)
+    // to come before the ones that do lazy looping! Otherwise there are 
+    // issues.
+    private int comparator(CompositeStateSet set1, CompositeStateSet set2) {
+        if (set1 == initialState.getComposite()) {
+            return -1;
+        }
+        if (set2 == initialState.getComposite()) {
+            return 1;
+        }
+        if (set1.getHasFinalState() && !set2.getHasFinalState()) {
+            return -1;
+        }
+        if (set2.getHasFinalState() && !set1.getHasFinalState()) {
+            return 1;
+        }
+        if (set1.isLazyLooping() && !set2.isLazyLooping()) {
+            return 1;
+        }
+        if (set2.isLazyLooping() && !set1.isLazyLooping()) {
+            return -1;
+        }
+        return 0;
     }
 
     private void processTokenProduction(TokenProduction tp) {
