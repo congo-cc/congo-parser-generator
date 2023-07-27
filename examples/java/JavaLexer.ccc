@@ -52,7 +52,7 @@ UNPARSED #Comment :
     }
     matchedToken.setEndOffset(pos+2);
   }*/ 
-  < LAZY MULTI_LINE_COMMENT : "/*" (~[])* "*/" > #MultiLineComment
+   < MULTI_LINE_COMMENT : "/*" (~[])*? "*/" > #MultiLineComment
   //< MULTI_LINE_COMMENT : "/*" (~["*"])* "*" (~["*","/"] (~["*"])* "*" | "*")* "/"> #MultiLineComment
   |
   <SINGLE_LINE_COMMENT : "//" (~["\n"])* "\n" > #SingleLineComment
@@ -169,13 +169,6 @@ TOKEN #Literal :
       '"'
   > #StringLiteral
   |
-#if __java__  
-  < LAZY TEXT_BLOCK_LITERAL:
-     '"""' (<HORIZONTAL_WHITESPACE>)* <LINE_TERMINATOR>
-     (~[])*
-     '"""'
-  > #StringLiteral
-#else  
   < TEXT_BLOCK_LITERAL:
      '"""' (<HORIZONTAL_WHITESPACE>)* <LINE_TERMINATOR>
      // This was slightly broken until recently (2022-12-10) 
@@ -183,7 +176,6 @@ TOKEN #Literal :
         (('"'){0,2} ((~['"', '\\']) | <STRING_ESCAPE> | ("\\" <LINE_TERMINATOR>)))*
      '"""'
   > #StringLiteral
-#endif  
 ;
 
 INJECT CharacterLiteral :
@@ -374,6 +366,8 @@ TOKEN #Operator :
 | < REMASSIGN: "%=" > 
 | < LSHIFTASSIGN: "<<=" > 
 | < RSIGNEDSHIFT: ">>" > 
+// | < RUNSIGNEDSHIFT: ">>>" (">")*? > 
+// | < RUNSIGNEDSHIFT: ">>" (">")+? > 
 | < RUNSIGNEDSHIFT: ">>>" > 
 | < RSIGNEDSHIFTASSIGN: ">>=" > 
 | < RUNSIGNEDSHIFTASSIGN: ">>>=" > 

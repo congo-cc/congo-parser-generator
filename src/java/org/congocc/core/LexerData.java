@@ -21,7 +21,6 @@ public class LexerData {
 
     private Map<String, RegularExpression> namedTokensTable = new HashMap<>();
     private Set<RegularExpression> overriddenTokens = new HashSet<>();
-    private Set<RegularExpression> lazilyScannedTokens = new HashSet<>();
 
     public LexerData(Grammar grammar) {
         this.grammar = grammar;
@@ -214,7 +213,6 @@ public class LexerData {
         for (TokenProduction tp : grammar.descendants(TokenProduction.class)) {
             for (RegexpSpec res : tp.getRegexpSpecs()) {
                 RegularExpression re = res.getRegexp();
-                if (res.isLazy()) lazilyScannedTokens.add(re);
                 if (re instanceof RegexpStringLiteral) continue;
                 if (re.hasLabel()) {
                     String label = re.getLabel();
@@ -261,18 +259,6 @@ public class LexerData {
         for (LexicalStateData lexState : lexicalStates) {
             lexState.process();
         }
-    }
-
-    public List<String> getLazyTokens() {
-        List<String> result = new ArrayList<>();
-        for (RegularExpression re : lazilyScannedTokens) {
-            result.add(re.getLabel());
-        }
-        return result;
-    }
-
-    public boolean isLazyMatched(RegularExpression type) {
-        return lazilyScannedTokens.contains(type);
     }
 
     /**

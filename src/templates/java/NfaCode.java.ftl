@@ -62,7 +62,8 @@
 [/#macro] 
 
 [#macro GenerateInitialComposite nfaState]
-    private static TokenType get${nfaState.methodName}(int ch, BitSet nextStates, EnumSet<TokenType> validTypes) {
+// ${nfaState.numStates}
+    private static TokenType get${nfaState.methodName}(int ch, BitSet nextStates, EnumSet<TokenType> validTypes, EnumSet<TokenType> alreadyMatchedTypes) {
       TokenType type = null;
     [#var states = nfaState.orderedStates, lastBlockStartIndex=0]
     [#list states as state]
@@ -102,12 +103,7 @@
    that correspond to an instanceof org.congocc.core.CompositeStateSet
 --]
 [#macro CompositeNfaMethod nfaState]  
-    private static TokenType get${nfaState.methodName}(int ch, BitSet nextStates, EnumSet<TokenType> validTypes) {
-      [#if settings.hasLazyLexing && lexerData.isLazyMatched(nfaState.type)]
-           if (validTypes != null && !validTypes.contains(${nfaState.type.label})) {
-             return null;
-           }
-      [/#if]
+    private static TokenType get${nfaState.methodName}(int ch, BitSet nextStates, EnumSet<TokenType> validTypes, EnumSet<TokenType> alreadyMatchedTypes) {
     [#if nfaState.hasFinalState]
       TokenType type = null;
     [/#if]
@@ -123,8 +119,12 @@
                if
          [#else]
                else if
-         [/#if]    
+         [/#if]
+         [#if state.lazyLooping]
+           (!alreadyMatchedTypes.contains(${state.type.label}) && ([@NFA.NfaStateCondition state /])) {
+         [#else]
            ([@NFA.NfaStateCondition state /]) {
+         [/#if]
       [/#if]
       [#if state.nextStateIndex >= 0]
          nextStates.set(${state.nextStateIndex});
@@ -149,13 +149,12 @@
    Generate a method for a single, i.e. non-composite NFA state 
 --]
 [#macro SimpleNfaMethod state]
-    private static TokenType get${state.getMethodName()}(int ch, BitSet nextStates, EnumSet<TokenType> validTypes) {
-      [#if settings.hasLazyLexing && lexerData.isLazyMatched(state.type)]
-           if (validTypes != null && !validTypes.contains(${state.type.label})) {
-             return null;
-           }
-      [/#if]
+    private static TokenType get${state.getMethodName()}(int ch, BitSet nextStates, EnumSet<TokenType> validTypes, EnumSet<TokenType> alreadyMatchedTypes) {
+     [#if state.lazyLooping]      
+      if (([@NFA.NfaStateCondition state /]) && !alreadyMatchedTypes.contains(${state.type.label})) {
+     [#else]   
       if ([@NFA.NfaStateCondition state /]) {
+     [/#if]
          [#if state.nextStateIndex >= 0]
            nextStates.set(${state.nextStateIndex});
          [/#if]

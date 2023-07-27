@@ -19,6 +19,8 @@ import org.congocc.core.LexerData;
 import org.congocc.parser.Node;
 import org.congocc.parser.Token;
 import org.congocc.parser.tree.MethodCall;
+import org.congocc.parser.tree.ZeroOrMoreRegexp;
+import org.congocc.parser.tree.ZeroOrOneRegexp;
 
 /**
  * Class to hold the various application settings
@@ -570,8 +572,9 @@ public class AppSettings {
         return terminatingString == null ? "" : terminatingString;
     }
 
-    public boolean getHasLazyLexing() {
-        return grammar.firstDescendantOfType(Token.TokenType._LAZY) != null;
+    public boolean getHasLazyLooping() {
+        return grammar.firstDescendantOfType(ZeroOrMoreRegexp.class, zom->zom.isLazy()) != null
+             || grammar.firstDescendantOfType(ZeroOrOneRegexp.class, zoo->zoo.isLazy()) != null;
     }
 
 

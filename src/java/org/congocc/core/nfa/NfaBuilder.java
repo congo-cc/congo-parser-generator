@@ -53,20 +53,30 @@ class NfaBuilder extends Node.Visitor {
         List<CharacterRange> ranges = orderedRanges(charList, ignoreCase);
         start = new NfaState(lexicalState, type);
         end = new NfaState(lexicalState, type);
-        start.setPossiblyAtStart(charList.isPossiblyAtStart());
-        end.setPossiblyAtStart(false);
         for (CharacterRange cr : ranges) {
             start.addRange(cr.getLeft(), cr.getRight());
         }
         start.setNextState(end);
     }
 
+    void visit(ZeroOrMoreRegexp zom) {
+        final NfaState startState = new NfaState(lexicalState, type);
+        final NfaState finalState = new NfaState(lexicalState, type);
+        visit(zom.getRegexp());
+        startState.addEpsilonMove(this.start);
+        startState.addEpsilonMove(finalState);
+        this.end.addEpsilonMove(finalState);
+        this.end.addEpsilonMove(this.start);
+        if (zom.isLazyLoop()) startState.setLazyLooping(true);
+        this.start = startState;
+        this.end = finalState;
+    }
+
     void visit(OneOrMoreRegexp oom) {
-        NfaState startState = new NfaState(lexicalState, type);
-        NfaState finalState = new NfaState(lexicalState, type);
-        startState.setPossiblyAtStart(oom.isPossiblyAtStart());
-        finalState.setPossiblyAtStart(false);
+        final NfaState startState = new NfaState(lexicalState, type);
+        final NfaState finalState = new NfaState(lexicalState, type);
         visit(oom.getRegexp());
+        if (oom.isLazyLoop()) this.end.setLazyLooping(true);
         startState.addEpsilonMove(this.start);
         this.end.addEpsilonMove(this.start);
         this.end.addEpsilonMove(finalState);
@@ -82,8 +92,6 @@ class NfaBuilder extends Node.Visitor {
         }
         NfaState startState = new NfaState(lexicalState, type);
         NfaState finalState = new NfaState(lexicalState, type);
-        startState.setPossiblyAtStart(choice.isPossiblyAtStart());
-        finalState.setPossiblyAtStart(false);
         for (RegularExpression curRE : choices) {
             visit(curRE);
             startState.addEpsilonMove(this.start);
@@ -95,35 +103,17 @@ class NfaBuilder extends Node.Visitor {
 
     void visit(RegexpStringLiteral stringLiteral) {
         NfaState state = end = start = new NfaState(lexicalState, type);
-        state.setPossiblyAtStart(stringLiteral.isPossiblyAtStart());
         for (int ch : stringLiteral.getLiteralString().codePoints().toArray()) {
             state.setCharMove(ch, ignoreCase || grammar.getAppSettings().isIgnoreCase());
             this.end = new NfaState(lexicalState, type);
-            end.setPossiblyAtStart(false);
             state.setNextState(this.end);
             state = this.end;
         }
     }
 
-    void visit(ZeroOrMoreRegexp zom) {
-        NfaState startState = new NfaState(lexicalState, type);
-        NfaState finalState = new NfaState(lexicalState, type);
-        startState.setPossiblyAtStart(zom.isPossiblyAtStart());
-        finalState.setPossiblyAtStart(startState.isPossiblyAtStart());
-        visit(zom.getRegexp());
-        startState.addEpsilonMove(this.start);
-        startState.addEpsilonMove(finalState);
-        this.end.addEpsilonMove(finalState);
-        this.end.addEpsilonMove(this.start);
-        this.start = startState;
-        this.end = finalState;
-    }
-
     void visit(ZeroOrOneRegexp zoo) {
         NfaState startState = new NfaState(lexicalState, type);
         NfaState finalState = new NfaState(lexicalState, type);
-        startState.setPossiblyAtStart(zoo.isPossiblyAtStart());
-        finalState.setPossiblyAtStart(startState.isPossiblyAtStart());
         visit(zoo.getRegexp());
         startState.addEpsilonMove(this.start);
         startState.addEpsilonMove(finalState);
@@ -143,8 +133,6 @@ class NfaBuilder extends Node.Visitor {
         }
         NfaState startState = new NfaState(lexicalState, type);
         NfaState finalState = new NfaState(lexicalState, type);
-        startState.setPossiblyAtStart(sequence.isPossiblyAtStart());
-        finalState.setPossiblyAtStart(startState.isPossiblyAtStart() && sequence.matchesEmptyString());
         NfaState prevStartState = null;
         NfaState prevEndState = null;
         for (RegularExpression re : sequence.getUnits()) {

@@ -45,6 +45,8 @@ public class CompositeStateSet {
         return states.iterator().next();
     }
 
+    public boolean isLazyLooping() {return states.iterator().next().isLazyLooping();}
+
     public boolean getHasFinalState() {
         return states.stream().anyMatch(state->state.getNextState().isFinal());
     }

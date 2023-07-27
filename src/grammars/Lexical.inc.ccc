@@ -130,7 +130,7 @@ RegexpSpec(String tokenClassName)#org.congocc.core.RegexpSpec :
         |
         <LT>
         [
-            ["LAZY" | "#" {isPrivate = true;}]
+            ["#" {isPrivate = true;}]
             <IDENTIFIER> {image = lastConsumedToken.toString();}
             ":"
         ]
@@ -373,8 +373,8 @@ RepeatedRegexp #void :
      int r1 = 0, r2 = -1;
 }
   RegexpChoiceInParen
-  (  "+" #OneOrMoreRegexp(2) 
-   | "*" #ZeroOrMoreRegexp(2)
+  (  ("+" ["?"]) #OneOrMoreRegexp(+1) 
+   | ("*" ["?"]) #ZeroOrMoreRegexp(+1)
    | "?" #ZeroOrOneRegexp(2) 
    | (
       "{" <INTEGER_LITERAL> {r1 = ((IntegerLiteral)lastConsumedToken).getValue();}
@@ -436,6 +436,10 @@ INJECT OneOrMoreRegexp :
    public int maximumLength() {
       return Integer.MAX_VALUE;
    }
+
+   public boolean isLazyLoop() {
+      return getLastChild().getType() == HOOK;
+   }
 }
 
 INJECT ZeroOrMoreRegexp : 
@@ -464,6 +468,10 @@ INJECT ZeroOrMoreRegexp :
    @Override
    public int maximumLength() {
       return Integer.MAX_VALUE;
+   }
+   
+   public boolean isLazyLoop() {
+      return getLastChild().getType() == HOOK;
    }
 }
 

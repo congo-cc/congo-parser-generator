@@ -15,7 +15,7 @@ public class NfaState {
     private NfaState nextState;
     private Set<NfaState> epsilonMoves = new HashSet<>();
     private String movesArrayName;
-    private boolean isFinal, possiblyAtStart=true;
+    private boolean isFinal, lazyLooping;
 
     // An ordered list of the ranges of characters that this 
     // NfaState "accepts". A single character is stored as a 
@@ -34,14 +34,10 @@ public class NfaState {
         this.isFinal = isFinal;
     }
 
-    void setPossiblyAtStart(boolean possiblyAtStart) {
-        this.possiblyAtStart = possiblyAtStart;
-    }
-    
-    public boolean isPossiblyAtStart() {
-        return possiblyAtStart;
-    }
-    
+    void setLazyLooping(boolean lazyLooping) {this.lazyLooping = true;}
+
+    public boolean isLazyLooping() {return this.lazyLooping;}
+
     public String getMethodName() {
         return getComposite().getMethodName();
     }
@@ -97,7 +93,10 @@ public class NfaState {
         return nextState.getComposite().getIndex();
     }
 
-    void setNextState(NfaState nextState) {this.nextState = nextState;}
+    void setNextState(NfaState nextState) {
+        assert nextState != this;
+        this.nextState = nextState;
+    }
 
     /**
      * @return the CompositeStateSet object that this NfaState is
@@ -150,6 +149,8 @@ public class NfaState {
             state.doEpsilonClosure(alreadyVisited);
             if (this.isFinal) state.isFinal = true;
             if (state.isFinal) this.isFinal = true;
+            if (this.lazyLooping) state.lazyLooping = true;
+            if (state.lazyLooping) this.lazyLooping = true;
             for (NfaState otherState : state.epsilonMoves) {
                 addEpsilonMove(otherState);
                 otherState.doEpsilonClosure(alreadyVisited);

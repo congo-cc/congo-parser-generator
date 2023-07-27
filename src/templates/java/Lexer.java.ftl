@@ -20,7 +20,7 @@ import static ${settings.parserPackage}.${TOKEN}.TokenType.*;
 [#import "NfaCode.java.ftl" as NFA]
 
 [#var lexerData=grammar.lexerData]
-[#var lazyLexing = settings.hasLazyLexing]
+[#var lazyLooping = settings.hasLazyLooping]
 
 [#var PRESERVE_LINE_ENDINGS=settings.preserveLineEndings?string("true", "false")
       JAVA_UNICODE_ESCAPE= settings.javaUnicodeEscape?string("true", "false")
@@ -106,9 +106,6 @@ class ${settings.lexerClassName} extends TokenSource
          regularTokens.add(${token});
      [/#list]
      }
-  [/#if]
-  [#if lazyLexing]
-   [@EnumSet "lazyTokens" lexerData.lazyTokens /]
   [/#if]
   
     public ${settings.lexerClassName}(CharSequence input) {
@@ -200,6 +197,7 @@ class ${settings.lexerClassName} extends TokenSource
        int start = position;
        int matchLength = 0;
        TokenType matchedType = TokenType.INVALID;
+       EnumSet<TokenType> alreadyMatchedTypes = EnumSet.noneOf(TokenType.class);
        if (currentStates == null) currentStates = new BitSet(${lexerData.maxNfaStates});
        else currentStates.clear();
        if (nextStates == null) nextStates=new BitSet(${lexerData.maxNfaStates});
@@ -229,20 +227,11 @@ class ${settings.lexerClassName} extends TokenSource
             if (curChar > 0xFFFF) position++;
             int nextActive = currentStates.nextSetBit(0);
             while(nextActive != -1) {
-                TokenType returnedType = nfaFunctions[nextActive].apply(curChar, nextStates, activeTokenTypes);
+                TokenType returnedType = nfaFunctions[nextActive].apply(curChar, nextStates, activeTokenTypes, alreadyMatchedTypes);
                 if (returnedType != null && (position - start > matchLength || returnedType.ordinal() < matchedType.ordinal())) {
                     matchedType = returnedType;
                     matchLength = position - start;
-                    [#if lazyLexing]
-                    if (lazyTokens.contains(returnedType)) {
-                        if (activeTokenTypes == null) {
-                            activeTokenTypes = EnumSet.allOf(TokenType.class);
-                        } else {
-                            activeTokenTypes = activeTokenTypes.copyOf(activeTokenTypes);
-                        }
-                        activeTokenTypes.remove(returnedType);
-                    }
-                    [/#if]
+                    alreadyMatchedTypes.add(returnedType);
                 }
                 nextActive = currentStates.nextSetBit(nextActive+1);
             }
@@ -449,7 +438,7 @@ class ${settings.lexerClassName} extends TokenSource
   // The functional interface that represents 
   // the acceptance method of an NFA state
   static interface NfaFunction {
-      TokenType apply(int ch, BitSet bs, EnumSet<TokenType> validTypes);
+      TokenType apply(int ch, BitSet bs, EnumSet<TokenType> validTypes, EnumSet<TokenType> alreadyMatchedTypes);
   }
 
  [#if NFA.multipleLexicalStates]
