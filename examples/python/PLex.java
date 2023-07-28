@@ -68,7 +68,7 @@ public class PLex {
            }
            if (!quiet) {
                String s = String.format("%s: %s %d %d %d %d", t.getType(),
-                                        t.getImage(),
+                                        t.toString(),
                                         t.getBeginLine(), t.getBeginColumn(),
                                         t.getEndLine(), t.getEndColumn());
                System.out.println(s);
@@ -82,7 +82,7 @@ public class PLex {
                }
                if (!quiet) {
                    String s = String.format("%s: %s %d %d %d %d", nt.getType(),
-                                            nt.getImage(),
+                                            nt.toString(),
                                             nt.getBeginLine(), nt.getBeginColumn(),
                                             nt.getEndLine(), nt.getEndColumn());
                    System.out.println(s);

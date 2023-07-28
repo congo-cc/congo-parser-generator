@@ -103,9 +103,9 @@
 --]
 [#macro CompositeNfaMethod nfaState]  
     private static TokenType get${nfaState.methodName}(int ch, BitSet nextStates, EnumSet<TokenType> validTypes, EnumSet<TokenType> alreadyMatchedTypes) {
-      [#if nfaState.lazyLooping]
-        if (alreadyMatchedTypes.contains(${nfaState.type.label})) return null;
-      [/#if]
+     [#if lexerData.isLazy(nfaState.type)]
+      if (alreadyMatchedTypes.contains(${nfaState.type.label})) return null;
+     [/#if]
     [#if nfaState.hasFinalState]
       TokenType type = null;
     [/#if]
@@ -148,11 +148,10 @@
 --]
 [#macro SimpleNfaMethod state]
     private static TokenType get${state.getMethodName()}(int ch, BitSet nextStates, EnumSet<TokenType> validTypes, EnumSet<TokenType> alreadyMatchedTypes) {
-     [#if state.lazyLooping]      
-      if (([@NFA.NfaStateCondition state /]) && !alreadyMatchedTypes.contains(${state.type.label})) {
-     [#else]   
-      if ([@NFA.NfaStateCondition state /]) {
+     [#if lexerData.isLazy(state.type)]
+      if (alreadyMatchedTypes.contains(${state.type.label})) return null;
      [/#if]
+      if ([@NfaStateCondition state /]) {
          [#if state.nextStateIndex >= 0]
            nextStates.set(${state.nextStateIndex});
          [/#if]

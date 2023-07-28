@@ -20,7 +20,6 @@ import static ${settings.parserPackage}.${TOKEN}.TokenType.*;
 [#import "NfaCode.java.ftl" as NFA]
 
 [#var lexerData=grammar.lexerData]
-[#var lazyLooping = settings.hasLazyLooping]
 
 [#var PRESERVE_LINE_ENDINGS=settings.preserveLineEndings?string("true", "false")
       JAVA_UNICODE_ESCAPE= settings.javaUnicodeEscape?string("true", "false")

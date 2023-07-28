@@ -15,11 +15,11 @@ PARSER_PACKAGE=org.parsers.csharplexer;
 ;
 
 UNPARSED #Comment :
-#if __java__
-  < MULTI_LINE_COMMENT : "/*" (~[])*? "*/" >
-#else  
+ #if __java__
+  < ?MULTI_LINE_COMMENT : "/*" (~[])* "*/">
+ #else  
   < MULTI_LINE_COMMENT : "/*" (~["*"])* "*" (~["*","/"] (~["*"])* "*" | "*")* "/">
-#endif  
+ #endif
   |
   < SINGLE_LINE_COMMENT : "//" (~["\n"])* > 
 ;

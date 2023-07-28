@@ -63,12 +63,10 @@ class NfaBuilder extends Node.Visitor {
         final NfaState startState = new NfaState(lexicalState, type);
         final NfaState finalState = new NfaState(lexicalState, type);
         visit(zom.getRegexp());
-        if (zom.isLazyLoop()) this.start.setLazyLooping(true);
         startState.addEpsilonMove(this.start);
         startState.addEpsilonMove(finalState);
         this.end.addEpsilonMove(finalState);
         this.end.addEpsilonMove(this.start);
-        //if (zom.isLazyLoop()) startState.setLazyLooping(true);
         this.start = startState;
         this.end = finalState;
     }
@@ -77,7 +75,6 @@ class NfaBuilder extends Node.Visitor {
         final NfaState startState = new NfaState(lexicalState, type);
         final NfaState finalState = new NfaState(lexicalState, type);
         visit(oom.getRegexp());
-        if (oom.isLazyLoop()) this.end.setLazyLooping(true);
         startState.addEpsilonMove(this.start);
         this.end.addEpsilonMove(this.start);
         this.end.addEpsilonMove(finalState);

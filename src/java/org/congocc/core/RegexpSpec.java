@@ -30,7 +30,7 @@ public class RegexpSpec extends BaseNode {
     }
 
     public boolean isLazy() {
-        return firstChildOfType(Token.TokenType._LAZY) != null;
+        return firstChildOfType(Token.TokenType.HOOK) != null;
     }
 }
 

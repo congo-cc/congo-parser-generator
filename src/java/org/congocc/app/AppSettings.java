@@ -16,6 +16,7 @@ import java.util.regex.Pattern;
 
 import org.congocc.core.Grammar;
 import org.congocc.core.LexerData;
+import org.congocc.core.RegexpSpec;
 import org.congocc.parser.Node;
 import org.congocc.parser.Token;
 import org.congocc.parser.tree.MethodCall;
@@ -572,9 +573,8 @@ public class AppSettings {
         return terminatingString == null ? "" : terminatingString;
     }
 
-    public boolean getHasLazyLooping() {
-        return grammar.firstDescendantOfType(ZeroOrMoreRegexp.class, zom->zom.isLazy()) != null
-             || grammar.firstDescendantOfType(ZeroOrOneRegexp.class, zoo->zoo.isLazy()) != null;
+    public boolean getHasLazyTokens() {
+        return grammar.firstDescendantOfType(RegexpSpec.class, regexp->regexp.isLazy()) != null;
     }
 
 

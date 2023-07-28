@@ -8,7 +8,8 @@ DEFAULT_LEXICAL_STATE=JSON;
 UNPARSED #Comment :
     <SINGLE_LINE_COMMENT : "//" (~["\n"])* >
     |
-    <MULTI_LINE_COMMENT: "/*" (~[])*? "/">
+    //< MULTI_LINE_COMMENT : "/*" (~["*"])* "*" (~["*","/"] (~["*"])* "*" | "*")* "/">
+    < ?MULTI_LINE_COMMENT : "/*" (~[])* "*/">
 ;
 
 INCLUDE "/include/json/JSON.ccc"

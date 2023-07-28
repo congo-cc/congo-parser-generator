@@ -146,12 +146,6 @@ public class LexicalStateData {
         if (set2.getHasFinalState() && !set1.getHasFinalState()) {
             return 1;
         }
-        if (set1.isLazyLooping() && !set2.isLazyLooping()) {
-            return 1;
-        }
-        if (set2.isLazyLooping() && !set1.isLazyLooping()) {
-            return -1;
-        }
         return 0;
     }
 
