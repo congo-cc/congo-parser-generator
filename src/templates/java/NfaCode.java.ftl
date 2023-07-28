@@ -62,7 +62,6 @@
 [/#macro] 
 
 [#macro GenerateInitialComposite nfaState]
-// ${nfaState.numStates}
     private static TokenType get${nfaState.methodName}(int ch, BitSet nextStates, EnumSet<TokenType> validTypes, EnumSet<TokenType> alreadyMatchedTypes) {
       TokenType type = null;
     [#var states = nfaState.orderedStates, lastBlockStartIndex=0]
@@ -104,6 +103,9 @@
 --]
 [#macro CompositeNfaMethod nfaState]  
     private static TokenType get${nfaState.methodName}(int ch, BitSet nextStates, EnumSet<TokenType> validTypes, EnumSet<TokenType> alreadyMatchedTypes) {
+      [#if nfaState.lazyLooping]
+        if (alreadyMatchedTypes.contains(${nfaState.type.label})) return null;
+      [/#if]
     [#if nfaState.hasFinalState]
       TokenType type = null;
     [/#if]
@@ -120,11 +122,7 @@
          [#else]
                else if
          [/#if]
-         [#if state.lazyLooping]
-           (([@NFA.NfaStateCondition state /] && !alreadyMatchedTypes.contains(${state.type.label}))) {
-         [#else]
            ([@NFA.NfaStateCondition state /]) {
-         [/#if]
       [/#if]
       [#if state.nextStateIndex >= 0]
          nextStates.set(${state.nextStateIndex});
