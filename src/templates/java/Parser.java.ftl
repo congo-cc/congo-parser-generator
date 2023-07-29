@@ -150,6 +150,13 @@ public boolean isCancelled() {return cancelled;}
       result = ${methodName}(result);
      [/#list]
       result = token_source.getNextToken(result);
+     [#if settings.faultTolerant]
+      if (result.getType().isInvalid()) {
+        if (isParserTolerant()) {
+          result.setUnparsed(true);
+        }
+      }
+     [/#if]
     }
 [#list grammar.parserTokenHooks as methodName] 
     result = ${methodName}(result);

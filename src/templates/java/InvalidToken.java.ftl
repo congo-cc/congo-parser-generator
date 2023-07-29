@@ -10,7 +10,6 @@ public class InvalidToken extends ${settings.baseTokenClassName}
     public InvalidToken(${settings.lexerClassName} tokenSource, int beginOffset, int endOffset) {
         super(TokenType.INVALID, tokenSource, beginOffset, endOffset);
 [#if settings.faultTolerant]
-        super.setUnparsed(true);
         this.setDirty(true);
 [/#if]
     }
