@@ -319,13 +319,15 @@ abstract public class Expansion extends BaseNode {
     }
 
     /**
-     * @return Can we do a short-cut and scan this expansion as a single token (using the scanToken method)
+     * @return Can we do a short-cut and scan this expansion 
+     * as a single token (using the scanToken method)
      */
     public boolean isSingleTokenLookahead() {
-        // Uncomment the following line to turn off this optimization.
-         //if (true) return false;
-        return !isPossiblyEmpty() && getMaximumSize() == 1 && !getHasScanLimit() && getLookahead() == null 
-               && !hasGlobalSemanticActions() && !startsWithLexicalChange();
+        return !isPossiblyEmpty() 
+            && getMaximumSize() == 1 
+            && !getHasScanLimit() && getLookahead() == null 
+            && !hasGlobalSemanticActions() 
+            && !startsWithLexicalChange();
     }
 
     /**

@@ -9,8 +9,6 @@ import org.parsers.java.Token.TokenType;
  * the command line.
  */
 public class JLex {
-   static public ArrayList<Node> roots= new ArrayList<>();
-
    static public void main(String args[]) {
       List<File> failures = new ArrayList<File>();
       List<File> successes = new ArrayList<File>();    
@@ -30,7 +28,6 @@ public class JLex {
       int numTokens =0;
       for (File file : files) {
           try {
-//              for (int i=0;i<10;i++)
               numTokens+=tokenizeFile(file);
           } 
           catch (Exception e) {
@@ -57,6 +54,7 @@ public class JLex {
        int numTokens = 0;
        do {
            t = lexer.getNextToken(t, null);
+           //dumpToken(t);
            if (t instanceof InvalidToken) {
                throw new ParseException(t);
            }
@@ -81,5 +79,12 @@ public class JLex {
    static public void usage() {
        System.out.println("Usage: java JLex <sourcefiles or directories>");
        System.exit(-1);
+   }
+
+   static void dumpToken(Token tok) {
+       System.out.println(tok);
+       System.out.println("Parsed: " + !tok.isUnparsed());
+       System.out.println("" + tok.getClass().getName() + " : " + tok.getType());
+       System.out.println(tok.getLocation());
    }
 }

@@ -393,7 +393,7 @@ CompactConstructorDeclaration :
   TypeIdentifier
   <LBRACE> =>||
   [ ExplicitConstructorInvocation =>|| ]
-  ( BlockStatement /[statements]/ )*!
+  ( SCAN ~(<RBRACE>) => BlockStatement /[statements]/ )*!
   <RBRACE>
 ;
 
@@ -513,7 +513,7 @@ ConstructorDeclaration :
   [ ThrowsList ]
   <LBRACE>
   [ ExplicitConstructorInvocation =>||]
-  ( BlockStatement /[statements]/ )*!
+  ( SCAN ~(<RBRACE>) => BlockStatement /[statements]/ )*!
   <RBRACE>
 ;
 
@@ -1016,7 +1016,7 @@ TryStatement #abstract :
 
 AssertStatement : <_ASSERT> Expression [ <COLON> Expression ] <SEMICOLON> ;
 
-Block #CodeBlock : <LBRACE> (BlockStatement)*! <RBRACE> ;
+Block #CodeBlock : <LBRACE> (SCAN ~(<RBRACE>) => BlockStatement)*! <RBRACE> ;
 
 BlockStatement#void :
  ASSERT ~((<FINAL>|Annotation)* (<PUBLIC>|<PRIVATE>|<PROTECTED>|<STATIC>)) : "Cannot declare anything to be public, private, protected, or static  in a local context"
@@ -1147,12 +1147,7 @@ WhenClause :
 
 ClassicCaseStatement :
   ClassicSwitchLabel
-  (SCAN 1 {getTokenType(1) != _DEFAULT}
-          // We need this because we'll spuriously enter the BlockStatement
-          // if the next token is "default", because "default" is in the
-          // BlockStatement first set. This is really quite tricky, but maybe not my
-          // fault, but the Java designers for re-using keywords!
-  => BlockStatement)*
+  (SCAN ~(<CASE>|<_DEFAULT>|<RBRACE>) => BlockStatement)*
 ;
 
 NewSwitchStatement :
@@ -1184,6 +1179,7 @@ NewCaseStatement :
      SCAN 0 \.\.\SwitchExpression
      => Expression <SEMICOLON> 
      |
+     SCAN ~(<RBRACE>) =>
      BlockStatement
    )
 ;
