@@ -1005,7 +1005,7 @@ PrimitiveType#void :
 
 Block :
   <LBRACE>
-   ( Statement )*
+   ( SCAN ~(<RBRACE>) => Statement )*
   <RBRACE>
 ;
 
@@ -2166,9 +2166,9 @@ SwitchSection :
       SCAN 0 {
          // A bit ugly. Really need to make syntactic lookahead a bit more powerful
          // in terms of negative conditions!
-                getTokenType(1) != TokenType.RBRACE
-                && getTokenType(1) != TokenType.CASE
-                && !(getTokenType(1) == TokenType.DEFAULT && getTokenType(2) == TokenType.COLON)
+                getTokenType(1) != RBRACE
+                && getTokenType(1) != CASE
+                && !(getTokenType(1) == DEFAULT && getTokenType(2) == TokenType.COLON)
              }
       => Statement
    )+
@@ -2269,29 +2269,6 @@ DeclarationPattern :
     <IDENTIFIER>
     =>||
 ;
-
-#if false
-DeclarationPattern :
-    NonNullableType
-    ASSERT (<IDENTIFIER>)
-    [
-      SCAN 0 {checkNextTokenImage("from") || checkNextTokenImage("when")}#
-      =>
-      ACTIVATE_TOKENS FROM, WHEN
-      (
-         ASSERT ~(FromClause | WhenClause)
-      )
-    ]
-    (
-      <IDENTIFIER>
-      |
-      // This is some very tricky code just to get some edge case to work!
-      SCAN 0 {getToken(2).getType() == RPAREN && (checkNextTokenType(AND)||checkNextTokenType(OR)||checkNextTokenType(NOT))}#
-      => DEACTIVATE_TOKENS AND, NOT, OR (<IDENTIFIER>)
-    )
-    =>||
-;
-#endif
 
 VarPattern :
     SCAN 0 {checkNextTokenImage("var")}# =>

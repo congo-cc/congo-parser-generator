@@ -324,6 +324,12 @@
       [@BuildScanCode expansion.nestedExpansion /]
    [#elseif expansion.singleTokenLookahead]
       ${ScanSingleToken(expansion)}
+   [#elseif expansion.terminal]
+      [#-- This is actually dead code since this is 
+      caught by the previous case. I have it here because
+      sometimes I like to comment out the previous condition 
+      for testing purposes.--]
+      ${ScanSingleToken(expansion)}
    [#elseif classname = "Assertion"]
       ${ScanCodeAssertion(expansion)} 
    [#elseif classname = "LexicalStateSwitch"]

@@ -1037,7 +1037,7 @@ Assertion :
    [UpToHere(CURRENT_NODE)]
 ;
 
-#Lookahead# : 
+Lookahead# : 
 {
    Token amountToken=null;
    boolean hasSemanticLookahead = false, hasExplicitNumericalLookahead=false;
@@ -1072,7 +1072,6 @@ Assertion :
     |
     SCAN {expansion != null || (exp ==null && lb == null)} => {}
 )
-{return CURRENT_NODE;}
 ;
 
 INJECT Lookahead :

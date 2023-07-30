@@ -500,6 +500,10 @@ abstract public class Expansion extends BaseNode {
         return potentiallyStartsWith(productionName, new HashSet<>());
     }
 
+    final public boolean isTerminal() {
+        return this instanceof Terminal;
+    }
+
     /*
      * This section indicates whether this expansion has a child name associated with it,
      * and whether that relates to a single value or a list of values.
