@@ -68,7 +68,8 @@ public class PythonTranslator extends Translator {
             result = "self";
         }
         else if (ident.equals("currentLookaheadToken") ||
-                 ident.equals("lastConsumedToken")) {
+                 ident.equals("lastConsumedToken") ||
+                 ident.equals("thisProduction")) {
             result = String.format("self.%s", camelToSnake(ident));
         }
         else if (ident.equals("toString")) {
