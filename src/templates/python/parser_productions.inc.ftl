@@ -97,7 +97,7 @@ ${BuildExpansionCode(expansion, indent)}[#t]
     [#else]
      [#if buildTreeNode]
        [#if production??]
-       [#set nodeVarName = "this_Production"] 
+       [#set nodeVarName = "thisProduction"] 
        [#-- this is so that (potentially deeply nested) code blocks can easily reference the production node.
          Instead could be a currentProduction.name with the first char lower-cased, maybe, but I don't think so. Also,
          I didn't change CURRENT_NODE to refer to this because it would affect TBA nodes below the top level, but if
