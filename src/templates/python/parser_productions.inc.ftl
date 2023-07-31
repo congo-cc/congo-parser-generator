@@ -108,7 +108,7 @@ ${BuildExpansionCode(expansion, indent)}[#t]
        [#set nodeNumbering = nodeNumbering +1]
        [#set nodeVarName = currentProduction.name + nodeNumbering] 
        [/#if]
-       ${globals.pushNodeVariableName(nodeVarName)!}
+${globals.pushNodeVariableName(nodeVarName)!}
        [#set nodeTypeName = nodeClassName(treeNodeBehavior)]      
        [#if !treeNodeBehavior?? && !production?is_null]
          [#if settings.smartNodeCreation]
@@ -164,10 +164,10 @@ ${is}    if ${nodeVarName}:
 ${is}        if ${parseExceptionVar} is None:
 ${is}            self.close_node_scope(${nodeVarName}, ${closeCondition})
                      [#if treeNodeLHS??]
-${is}             try:
-${is}                 ${treeNodeLHS} = self.peek_node()
-${is}             catch Exception:
-${is}                  ${treeNodeLHS} = None
+${is}            try:
+${is}                ${treeNodeLHS} = self.peek_node()
+${is}            except Exception:
+${is}                ${treeNodeLHS} = None
                      [/#if]
                      [#list grammar.closeNodeHooksByClass[nodeClassName(treeNodeBehavior)]! as hook]
 ${is}            ${hook}(${nodeVarName})
