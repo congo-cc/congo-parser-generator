@@ -657,7 +657,7 @@ ${globals.translateLexerInitializers()}
                 // since the last iteration of this loop!
 [/#if]
                 NfaFunction[] functions = GetFunctionTable(_lexicalState);
-                AlreadyMatchedTypes = new HashSet<TokenType>();
+                HashSet<TokenType> AlreadyMatchedTypes = new HashSet<TokenType>();
                 // the core NFA loop
                 if (!reachedEnd) do {
                     // Holder for the new type (if any) matched on this iteration
