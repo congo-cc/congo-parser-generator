@@ -120,7 +120,7 @@ private static HashSet<TokenType> ${varName} = Utils.GetOrMakeSet(
 [#macro GenerateNfaMethod nfaState]
         static TokenType? ${nfaState.methodName}(int ch, BitSet nextStates, HashSet<TokenType> validTypes, HashSet<TokenType> AlreadyMatchedTypes) {
   [#if lexerData.isLazy(nfaState.type)]
-    if (AlreadyMatchedTypes.contains(${TT}${nfaState.type.label})) {
+    if (AlreadyMatchedTypes.Contains(${TT}${nfaState.type.label})) {
         return null;
     }
   [/#if]
