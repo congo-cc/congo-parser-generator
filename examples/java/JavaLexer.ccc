@@ -16,25 +16,15 @@ SKIP :
   <CTRL_Z : "\u001A" > {matchedToken.setType(TokenType.EOF);}
 ;  
 
+UNPARSED : <SINGLE_LINE_COMMENT : "//" (~["\n"])* "\n" > #SingleLineComment ;
+
 #if !__java__
-<IN_MULTI_LINE_COMMENT>
-   UNPARSED #Comment :  
-      <MULTI_LINE_COMMENT: "*/" > #MultiLineComment : JAVA
-;
 
-MORE :
-  <SINGLE_LINE_COMMENT_START: "//"> : IN_SINGLE_LINE_COMMENT
-  |
-  <MULTI_LINE_COMMENT_START : "/*"> : IN_MULTI_LINE_COMMENT
-;
+MORE : <MULTI_LINE_COMMENT_START : "/*"> : IN_MULTI_LINE_COMMENT ;
 
-<IN_SINGLE_LINE_COMMENT>
-  UNPARSED #Comment :
-     <SINGLE_LINE_COMMENT: "\n" | "\r" | "\r\n" > #SingleLineComment : JAVA
-;
+<IN_MULTI_LINE_COMMENT> MORE : < ANY_CHAR : ~[] >;
 
-<IN_SINGLE_LINE_COMMENT, IN_MULTI_LINE_COMMENT>
-MORE : < ANY_CHAR : ~[] >;
+<IN_MULTI_LINE_COMMENT> UNPARSED #Comment :  <MULTI_LINE_COMMENT: "*/" > #MultiLineComment : JAVA ;
 
 #else
 // This is an alternative, fasterway of specifying the comments, 
@@ -54,8 +44,6 @@ UNPARSED #Comment :
   }*/ 
   < ?MULTI_LINE_COMMENT : "/*" (~[])* "*/" > #MultiLineComment
   //< MULTI_LINE_COMMENT : "/*" (~["*"])* "*" (~["*","/"] (~["*"])* "*" | "*")* "/"> #MultiLineComment
-  |
-  <SINGLE_LINE_COMMENT : "//" (~["\n"])* "\n" > #SingleLineComment
 ;
 #endif
 
