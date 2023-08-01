@@ -78,7 +78,11 @@ def check_intervals(ranges, ch):
 [/#list]
 
 [#list lexicalState.canonicalSets as state]
-[@GenerateNfaStateMethod state/]
+[#if state_index == 0]
+[@GenerateInitialStateMethod state/]
+[#else]
+[@GenerateNfaStateMethod state /]
+[/#if]
 [/#list]
 
 def NFA_FUNCTIONS_${lexicalState.name}_init():
@@ -121,8 +125,41 @@ ${arrayName} = [
    Generate the method that represents the transitions
    that correspond to an instanceof org.congocc.core.CompositeStateSet
 --]
+[#macro GenerateInitialStateMethod nfaState]
+def ${nfaState.methodName}(ch, next_states, valid_types, already_matched_types):
+    [#var states = nfaState.orderedStates]
+    [#-- sometimes set in the code below --]
+    type = None
+    [#var useElif = false]
+    [#list states as state]
+      [#var isFirstOfGroup=true, isLastOfGroup=true]
+      [#if state_index!=0]
+         [#set isFirstOfGroup = !states[state_index-1].moveRanges.equals(state.moveRanges)]
+      [/#if]
+      [#if state_has_next]
+         [#set isLastOfGroup = !states[state_index+1].moveRanges.equals(state.moveRanges)]
+      [/#if]
+      [@GenerateStateMove state isFirstOfGroup isLastOfGroup useElif /]
+      [#if state_has_next && isLastOfGroup && !states[state_index+1].overlaps(states.subList(0, state_index+1))]
+        [#set useElif = true]
+      [#else]
+        [#set useElif = false]
+      [/#if]
+    [/#list]
+    return type
+[/#macro]
+
+
+[#--
+   Generate the method that represents the transitions
+   that correspond to an instanceof org.congocc.core.CompositeStateSet
+--]
 [#macro GenerateNfaStateMethod nfaState]
 def ${nfaState.methodName}(ch, next_states, valid_types, already_matched_types):
+  [#if lexerData.isLazy(nfaState.type)]
+    if ${TT}${nfaState.type.label} in already_matched_types : 
+        return None
+  [/#if]
     [#var states = nfaState.orderedStates]
     [#-- sometimes set in the code below --]
     type = None
@@ -497,7 +534,7 @@ ${globals.translateLexerInjections(true)}
             # since the last iteration of this loop!
 [/#if]
             nfa_functions = get_function_table_map(self.lexical_state)
-            already_matched_types = set(TokenType)
+            already_matched_types = set()
             # the core NFA loop
             if not reached_end:
                 while True:
@@ -517,14 +554,16 @@ ${globals.translateLexerInjections(true)}
                             break
                     self.next_states.clear()
                     if code_units_read == 0:
-                        returned_type = nfa_functions[0](cur_char, self.next_states, self.active_token_types, already_matched_types)
+                        returned_type = nfa_functions[0](cur_char, self.next_states, self.active_token_types, None)
                         if returned_type and (new_type is None or returned_type.value < new_type.value):
+                            already_matched_types.add(returned_type)
                             new_type = returned_type
                     else:
                         next_active = self.current_states.next_set_bit(0)
                         while next_active != -1:
                             returned_type = nfa_functions[next_active](cur_char, self.next_states, self.active_token_types, already_matched_types)
                             if returned_type and (new_type is None or returned_type.value < new_type.value):
+                                already_matched_types.add(returned_type)
                                 new_type = returned_type
                             next_active = self.current_states.next_set_bit(next_active + 1)
                     code_units_read += 1

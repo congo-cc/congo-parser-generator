@@ -31,7 +31,11 @@ private static HashSet<TokenType> ${varName} = Utils.GetOrMakeSet(
 --]
 [#macro GenerateStateCode lexicalState]
   [#list lexicalState.canonicalSets as state]
-    [@GenerateNfaMethod state /]
+    [#if state_index = 0]
+     [@GenerateInitialStateMethod state /]
+    [#else]
+     [@GenerateNfaMethod state /]
+    [/#if]
   [/#list]
 
   [#list lexicalState.allNfaStates as nfaState]
@@ -74,12 +78,53 @@ private static HashSet<TokenType> ${varName} = Utils.GetOrMakeSet(
 
 [/#macro]
 
+[#macro GenerateInitialStateMethod nfaState]
+        static TokenType? ${nfaState.methodName}(int ch, BitSet nextStates, HashSet<TokenType> validTypes, HashSet<TokenType> AlreadyMatchedTypes) {
+            TokenType? type = null;
+    [#var states = nfaState.orderedStates, lastBlockStartIndex=0, useIf=false]
+    [#list states as state]
+      [#if state_index ==0 || !state.moveRanges.equals(states[state_index-1].moveRanges)]
+          [#-- In this case we need a new if or possibly else if --]
+         [#if state_index == 0 || state.overlaps(states.subList(lastBlockStartIndex, state_index))]
+           [#-- If there is overlap between this state and any of the states
+                 handled since the last lone if, we start a new if-else
+                 If not, we continue in the same if-else block as before. --]
+           [#set lastBlockStartIndex = state_index]
+           [#set useIf = true]
+         [/#if]
+            [#if useIf]if[#else]else if[/#if] ([@NfaStateCondition state /]) {
+      [/#if]
+      [#if state.nextStateIndex >= 0]
+                nextStates.Set(${state.nextStateIndex});
+      [/#if]
+      [#if !state_has_next || !state.moveRanges.equals(states[state_index+1].moveRanges)]
+        [#-- We've reached the end of the block. --]
+          [#if state.nextState.final]
+                [#var type = state.type]
+                if (validTypes.Contains(${TT}${type.label})) {
+                    type = ${TT}${type.label};
+                }
+          [/#if]
+            }
+      [/#if]
+    [/#list]
+            return type;
+        }
+[/#macro]
+
+
 [#--
    Generate the method that represents the transitions
    that correspond to an instanceof org.congocc.core.CompositeNfaState
 --]
 [#macro GenerateNfaMethod nfaState]
-        static TokenType? ${nfaState.methodName}(int ch, BitSet nextStates, HashSet<TokenType> validTypes) {
+        static TokenType? ${nfaState.methodName}(int ch, BitSet nextStates, HashSet<TokenType> validTypes, HashSet<TokenType> AlreadyMatchedTypes) {
+  [#if lexerData.isLazy(nfaState.type)]
+    if (AlreadyMatchedTypes.contains(${TT}${nfaState.type.label})) {
+        return null;
+    }
+  [/#if]
+
             TokenType? type = null;
     [#var states = nfaState.orderedStates, lastBlockStartIndex=0, useIf=false]
     [#list states as state]
@@ -236,7 +281,7 @@ ${globals.translateLexerImports()}
 
         // The functional interface that represents
         // the acceptance method of an NFA state
-        private delegate TokenType? NfaFunction(int ch, BitSet bs, HashSet<TokenType> validTypes);
+        private delegate TokenType? NfaFunction(int ch, BitSet bs, HashSet<TokenType> validTypes, HashSet<TokenType> AlreadyMatchedTypes);
 
 [#if multipleLexicalStates]
         // A lookup of the NFA function tables for the respective lexical states.
@@ -612,6 +657,7 @@ ${globals.translateLexerInitializers()}
                 // since the last iteration of this loop!
 [/#if]
                 NfaFunction[] functions = GetFunctionTable(_lexicalState);
+                AlreadyMatchedTypes = new HashSet<TokenType>();
                 // the core NFA loop
                 if (!reachedEnd) do {
                     // Holder for the new type (if any) matched on this iteration
@@ -631,16 +677,18 @@ ${globals.translateLexerInitializers()}
                     }
                     _nextStates.Clear();
                     if (codeUnitsRead == 0) {
-                        TokenType? returnedType = functions[0](curChar, _nextStates, ActiveTokenTypes);
+                        TokenType? returnedType = functions[0](curChar, _nextStates, ActiveTokenTypes, AlreadyMatchedTypes);
                         if (returnedType != null) {
+                            AlreadyMatchedTypes.add(returnedType);
                             newType = returnedType;
                         }
                     }
                     else {
                         int nextActive = _currentStates.NextSetBit(0);
                         while (nextActive != -1) {
-                            TokenType? returnedType = functions[nextActive](curChar, _nextStates, ActiveTokenTypes);
+                            TokenType? returnedType = functions[nextActive](curChar, _nextStates, ActiveTokenTypes, AlreadyMatchedTypes);
                             if ((returnedType != null) && ((newType == null) || ((int) returnedType.Value < (int) newType.Value))) {
+                                AlreadyMatchedTypes.add(returnedType);
                                 newType = returnedType;
                             }
                             nextActive = _currentStates.NextSetBit(nextActive + 1);
