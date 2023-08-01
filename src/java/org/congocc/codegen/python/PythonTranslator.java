@@ -74,7 +74,7 @@ public class PythonTranslator extends Translator {
         else if (ident.equals("toString")) {
             result = "__str__";
         }
-        else if (Character.isLowerCase(ident.charAt(0)) && !isSpecialPrefix(ident)) {
+        else if (Character.isLowerCase(ident.charAt(0)) && !isSpecialPrefix(ident) && !ident.equals("thisProduction")) {
             result = camelToSnake(result);
         }
         else if (ident.equals("LEXER_CLASS")) {
