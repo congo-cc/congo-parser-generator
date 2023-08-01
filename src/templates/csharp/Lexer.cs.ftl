@@ -149,11 +149,11 @@ it just generates the inline conditional expression
 --]
 [#macro NfaStateCondition nfaState]
     [#if nfaState.moveRanges?size < NFA_RANGE_THRESHOLD]
-      [@RangesCondition nfaState.moveRanges /][#t]
+      [@RangesCondition nfaState.moveRanges /]
     [#elseif nfaState.hasAsciiMoves && nfaState.hasNonAsciiMoves]
-      ([@RangesCondition nfaState.asciiMoveRanges/]) || ((ch >= (char) 128) && CheckIntervals(${nfaState.movesArrayName}, ch))[#t]
+      ([@RangesCondition nfaState.asciiMoveRanges/]) || ((ch >= (char) 128) && CheckIntervals(${nfaState.movesArrayName}, ch))
     [#else]
-      CheckIntervals(${nfaState.movesArrayName}, ch)[#t]
+      CheckIntervals(${nfaState.movesArrayName}, ch)
     [/#if]
 [/#macro]
 
@@ -169,19 +169,19 @@ if NFA state's moveRanges array is smaller than NFA_RANGE_THRESHOLD
     [#var singleChar = left == right]
     [#if moveRanges?size==2]
        [#if singleChar]
-          ch == ${displayLeft}[#t]
+          ch == ${displayLeft}
        [#elseif left +1 == right]
-          ch == ${displayLeft} || ch == ${displayRight}[#t]
+          ch == ${displayLeft} || ch == ${displayRight}
        [#elseif left > 0]
-          ch >= ${displayLeft}[#t]
+          ch >= ${displayLeft}
           [#if right < 1114111]
- && ch <= ${displayRight} [#rt]
+ && ch <= ${displayRight}
           [/#if]
        [#else]
-           ch <= ${displayRight} [#t]
+           ch <= ${displayRight} 
        [/#if]
     [#else]
-       ([@RangesCondition moveRanges[0..1]/]) || ([@RangesCondition moveRanges[2..moveRanges?size-1]/])[#t]
+       ([@RangesCondition moveRanges[0..1]/]) || ([@RangesCondition moveRanges[2..moveRanges?size-1]/])
     [/#if]
 [/#macro]
 

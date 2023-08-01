@@ -151,7 +151,7 @@ public boolean isCancelled() {return cancelled;}
      [/#list]
       result = token_source.getNextToken(result);
      [#if settings.faultTolerant]
-      if (result.getType().isInvalid()) {
+      if (result.isInvalid()) {
         if (isParserTolerant()) {
           result.setUnparsed(true);
         }

@@ -524,12 +524,12 @@ if (!(${CheckExpansion(oom.nestedExpansion)})) {
 [#macro CheckExpansion expansion]
    [#if expansion.singleTokenLookahead && !expansion.requiresPredicateMethod]
      [#if expansion.firstSet.tokenNames?size = 1]
-      ScanToken(${CU.TT}${expansion.firstSet.tokenNames[0]})[#t]
+      ScanToken(${CU.TT}${expansion.firstSet.tokenNames[0]})
      [#else]
-      ScanToken(${expansion.firstSetVarName})[#t]
+      ScanToken(${expansion.firstSetVarName})
      [/#if]
    [#else]
-      ${expansion.scanRoutineName}()[#t]
+      ${expansion.scanRoutineName}()
    [/#if]
 [/#macro]
 

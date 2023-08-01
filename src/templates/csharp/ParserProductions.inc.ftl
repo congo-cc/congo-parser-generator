@@ -84,7 +84,7 @@ if (_pendingRecovery) {
     [/#if]
     [#if !buildTreeNode && !canRecover]
 ${globals.translateCodeBlock(javaCodePrologue, indent)}[#rt]
-${BuildExpansionCode(expansion, indent)}[#t]
+${BuildExpansionCode(expansion, indent)}
     [#else]
      [#-- buildTreeNode || canRecover --]
      [#if buildTreeNode]
@@ -126,7 +126,7 @@ var ${callStackSizeVar} = ParsingStack.Count;
 try {
 [#--     pass  # in case there's nothing else in the try clause! --]
 [#--     # nested code starts, passing indent of ${indent + 4} --]
-${BuildExpansionCode(expansion, indent + 4)}[#t]
+${BuildExpansionCode(expansion, indent + 4)}
 [#--     # nested code ends --]
 }
 catch (ParseException e) {
@@ -210,7 +210,7 @@ if (BuildTree) {
 [#-- // DBG > BuildExpansionCode ${indent} ${classname} --]
     [#var prevLexicalStateVar = CU.newVarName("previousLexicalState")]
     [#if classname = "ExpansionWithParentheses"]
-${BuildExpansionCode(expansion.nestedExpansion, indent)}[#t]
+${BuildExpansionCode(expansion.nestedExpansion, indent)}
     [#elseif classname = "CodeBlock"]
 ${globals.translateCodeBlock(expansion, indent)}
     [#elseif classname = "Failure"]
@@ -514,20 +514,20 @@ else {
      including the default single-token lookahead
 --]
 [#macro ExpansionCondition expansion]
-[#if expansion.requiresPredicateMethod]${ScanAheadCondition(expansion)}[#else]${SingleTokenCondition(expansion)}[/#if][#t]
+[#if expansion.requiresPredicateMethod]${ScanAheadCondition(expansion)}[#else]${SingleTokenCondition(expansion)}[/#if]
 [/#macro]
 
 
 [#-- Generates code for when we need a scanahead --]
 [#macro ScanAheadCondition expansion]
-[#if expansion.lookahead?? && expansion.lookahead.LHS??](${expansion.lookahead.LHS} = [/#if][#if expansion.hasSemanticLookahead && !expansion.lookahead.semanticLookaheadNested](${globals.translateExpression(expansion.semanticLookahead)}) && [/#if]${expansion.predicateMethodName}()[#if expansion.lookahead?? && expansion.lookahead.LHS??])[/#if][#t]
+[#if expansion.lookahead?? && expansion.lookahead.LHS??](${expansion.lookahead.LHS} = [/#if][#if expansion.hasSemanticLookahead && !expansion.lookahead.semanticLookaheadNested](${globals.translateExpression(expansion.semanticLookahead)}) && [/#if]${expansion.predicateMethodName}()[#if expansion.lookahead?? && expansion.lookahead.LHS??])[/#if]
 [/#macro]
 
 
 [#-- Generates code for when we don't need any scanahead routine --]
 [#macro SingleTokenCondition expansion]
-   [#if expansion.hasSemanticLookahead](${globals.translateExpression(expansion.semanticLookahead)}) && [/#if][#t]
-   [#if expansion.firstSet.tokenNames?size = 0 || expansion.lookaheadAmount ==0 || expansion.minimumSize=0]true[#elseif expansion.firstSet.tokenNames?size < 5][#list expansion.firstSet.tokenNames as name](NextTokenType == TokenType.${name})[#if name_has_next] || [/#if][/#list][#t][#else](${expansion.firstSetVarName}.Contains(NextTokenType))[/#if][#t]
+   [#if expansion.hasSemanticLookahead](${globals.translateExpression(expansion.semanticLookahead)}) && [/#if]
+   [#if expansion.firstSet.tokenNames?size = 0 || expansion.lookaheadAmount ==0 || expansion.minimumSize=0]true[#elseif expansion.firstSet.tokenNames?size < 5][#list expansion.firstSet.tokenNames as name](NextTokenType == TokenType.${name})[#if name_has_next] || [/#if][/#list][#else](${expansion.firstSetVarName}.Contains(NextTokenType))[/#if]
 [/#macro]
 
 [#macro BuildAssertionCode assertion indent]

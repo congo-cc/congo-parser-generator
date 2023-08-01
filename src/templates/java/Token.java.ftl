@@ -88,6 +88,23 @@ public class ${settings.baseTokenClassName} ${implements} {
     public String getCachedImage() {
         return this.cachedImage;
     }
+
+    /**
+     * @param type the #TokenType of the token being constructed
+     * @param image the String content of the token
+     * @param tokenSource the object that vended this token.
+     */
+    public ${settings.baseTokenClassName}(TokenType type, String image, ${settings.lexerClassName} tokenSource) {
+        this.type = type;
+        this.cachedImage = image;
+        this.tokenSource = tokenSource;
+    }
+
+    public static ${settings.baseTokenClassName} newToken(TokenType type, String image, ${settings.lexerClassName} tokenSource) {
+        ${settings.baseTokenClassName} result = newToken(type, tokenSource, 0, 0);
+        result.setCachedImage(image);
+        return result;
+    }
 [/#if]
 
 [#if settings.tokenChaining]
@@ -117,22 +134,6 @@ public class ${settings.baseTokenClassName} ${implements} {
         this.appendedToken = null;
     }
 
-    /**
-     * @param type the #TokenType of the token being constructed
-     * @param image the String content of the token
-     * @param tokenSource the object that vended this token.
-     */
-    public ${settings.baseTokenClassName}(TokenType type, String image, ${settings.lexerClassName} tokenSource) {
-        this.type = type;
-        this.cachedImage = image;
-        this.tokenSource = tokenSource;
-    }
-
-    public static ${settings.baseTokenClassName} newToken(TokenType type, String image, ${settings.lexerClassName} tokenSource) {
-        ${settings.baseTokenClassName} result = newToken(type, tokenSource, 0, 0);
-        result.setCachedImage(image);
-        return result;
-    }
 [/#if]
 
     /**
@@ -167,6 +168,10 @@ public class ${settings.baseTokenClassName} ${implements} {
      */
     public void setTokenSource(TokenSource tokenSource) {
         this.tokenSource = (${settings.lexerClassName}) tokenSource;
+    }
+
+    public boolean isInvalid() {
+        return getType().isInvalid();
     }
 
     /**

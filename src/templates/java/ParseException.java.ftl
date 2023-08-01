@@ -87,7 +87,7 @@ public class ParseException extends ${BASE_EXCEPTION_TYPE} {
              buf.append(type);
          }
      }
-     String content = token.getImage();
+     String content = token.toString();
      if (content == null) content = "";
      if (content.length() > 32) content = content.substring(0, 32) + "...";
      buf.append("\nFound string \"" + addEscapes(content) + "\" of type " + token.getType());

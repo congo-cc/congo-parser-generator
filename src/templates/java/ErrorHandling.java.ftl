@@ -188,8 +188,6 @@ void dumpLookaheadCallStack(PrintStream ps) {
             ${settings.baseTokenClassName} nextNext = nextToken(nextToken);
             if (followSet.contains(nextNext.getType())) {
                nextToken.setSkipped(true);
-//               if (debugFaultTolerant) LOGGER.info("Skipping token " + nextToken.getType() + " at: " + nextToken.getLocation());
-               //lastConsumedToken.setNext(nextNext);
             }
          }
       }
@@ -213,22 +211,16 @@ void dumpLookaheadCallStack(PrintStream ps) {
              [#-- REVISIT. Here we skip one token (as well as any InvalidToken) but maybe (probably!) this behavior
              should be configurable. But we need to experiment, because this is really a heuristic question, no?--]
              nextToken.setSkipped(true);
-//             if (debugFaultTolerant) LOGGER.info("Skipping token of type: " + nextToken.getType() + " at: " + nextToken.getLocation());
 [#if settings.treeBuildingEnabled]             
              pushNode(nextToken);
 [/#if]             
-             //lastConsumedToken.setNext(nextNext);
              return nextNext;
        }
          [#-- Since skipping the next token did not work, we will insert a virtual token --]
        if (tolerant || followSet==null || followSet.contains(nextToken.getType())) {
            ${settings.baseTokenClassName} virtualToken = ${settings.baseTokenClassName}.newToken(expectedType, token_source, 0,0);
-//           virtualToken.setImage("VIRTUAL " + expectedType);
            virtualToken.setVirtual(true);
            virtualToken.copyLocationInfo(nextToken);
-           //virtualToken.setNext(nextToken);
-           //lastConsumedToken.setNext(virtualToken);
-//           if (debugFaultTolerant) LOGGER.info("Inserting virtual token of type: " + expectedType + " at " + virtualToken.getLocation());
 [#if MULTIPLE_LEXICAL_STATE_HANDLING]
            if (token_source.doLexicalStateSwitch(expectedType)) {
               token_source.reset(virtualToken);
