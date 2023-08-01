@@ -679,7 +679,7 @@ ${globals.translateLexerInitializers()}
                     if (codeUnitsRead == 0) {
                         TokenType? returnedType = functions[0](curChar, _nextStates, ActiveTokenTypes, AlreadyMatchedTypes);
                         if (returnedType != null) {
-                            AlreadyMatchedTypes.add(returnedType);
+                            AlreadyMatchedTypes.Add(returnedType);
                             newType = returnedType;
                         }
                     }
@@ -688,7 +688,7 @@ ${globals.translateLexerInitializers()}
                         while (nextActive != -1) {
                             TokenType? returnedType = functions[nextActive](curChar, _nextStates, ActiveTokenTypes, AlreadyMatchedTypes);
                             if ((returnedType != null) && ((newType == null) || ((int) returnedType.Value < (int) newType.Value))) {
-                                AlreadyMatchedTypes.add(returnedType);
+                                AlreadyMatchedTypes.Add(returnedType);
                                 newType = returnedType;
                             }
                             nextActive = _currentStates.NextSetBit(nextActive + 1);
