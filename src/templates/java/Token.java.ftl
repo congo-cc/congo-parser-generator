@@ -18,10 +18,6 @@ import ${settings.rootAPIPackage}.Node;
 import ${settings.rootAPIPackage}.TokenSource;
 [/#if]
 
-[#if settings.freemarkerNodes]
-import freemarker.template.*;
-[/#if]
-
 [#var implements = "implements CharSequence"]
 
 [#if settings.treeBuildingEnabled]
@@ -522,32 +518,6 @@ public class ${settings.baseTokenClassName} ${implements} {
         return length() == 0;
     }
 
-
-   [#if settings.freemarkerNodes]
-    public TemplateNodeModel getParentNode() {
-        return parent;
-    }
-
-    public TemplateSequenceModel getChildNodes() {
-        return null;
-    }
-
-    public String getNodeName() {
-        return getType().toString();
-    }
-
-    public String getNodeType() {
-        return getClass().getSimpleName();
-    }
-
-    public String getNodeNamespace() {
-        return null;
-    }
-
-    public String getAsString() {
-        return toString();
-    }
-  [/#if]
 [/#if]
 
 [#if settings.usesPreprocessor]

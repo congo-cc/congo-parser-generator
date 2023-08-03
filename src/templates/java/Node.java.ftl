@@ -5,14 +5,9 @@ import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
 import java.lang.reflect.*;
 import java.util.function.Predicate;
-[#if settings.freemarkerNodes]
-import freemarker.template.*;
-[/#if]
 
-public interface Node extends List<Node>
-[#if settings.freemarkerNodes]
-   , TemplateNodeModel, TemplateScalarModel
-[/#if] {
+public interface Node extends List<Node> {
+    
     // Marker interface for objects
     // that represent a node's type, i.e. TokenType
     public interface NodeType { 

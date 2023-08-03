@@ -12,10 +12,6 @@ import ${settings.rootAPIPackage}.Node;
 import ${settings.rootAPIPackage}.TokenSource;
 [/#if]
 
-[#if settings.freemarkerNodes]
-import freemarker.template.*;
-[/#if]
-
 import java.util.List;
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -208,43 +204,6 @@ public class ${settings.baseNodeClassName} implements Node {
     public boolean removeAll(Collection<?> nodes) {
         return children.removeAll(nodes);
     }
-     
-[#if settings.freemarkerNodes]
-    public TemplateSequenceModel getChildNodes() {
-        SimpleSequence seq = new SimpleSequence();
-        for (Node child : children) {
-            seq.add(child);
-        }
-        return seq;
-    }
-    
-    public TemplateNodeModel getParentNode() {
-        return this.parent;
-    }
-    
-    public String getNodeName() {
-         return this.getClass().getSimpleName();
-    }
-    
-    public String getNodeType() {
-        return "";
-    }
-    
-    public String getNodeNamespace() {
-        return null;
-    }
-    
-    public String getAsString() throws TemplateModelException {
-        StringBuilder buf = new StringBuilder();
-        if (children != null) {
-	        for (Node child : children) {
-	            buf.append(child.getAsString());
-	            buf.append(" ");
-	        }
-	    }
-        return buf.toString();
-    }
-[/#if]    
     
     public String toString() {
         return getSource();

@@ -5,7 +5,8 @@
 
   <target name="init">
     <uptodate property="parser.uptodate" targetfile="build/generated-java/org/congocc/parser/CongoCCParser.java">
-      <srcfiles dir="." includes="src/grammars/CongoCC.ccc"/>
+      <srcfiles dir="src/grammars" includes="CongoCC.ccc"/>
+      <srcfiles dir="src/grammars" includes="Lexical.inc.ccc"/>
       <srcfiles dir="examples/java" includes="*.ccc"/>
     </uptodate>
     <uptodate property="preprocessor.uptodate"

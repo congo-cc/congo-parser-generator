@@ -49,7 +49,7 @@ public class AppSettings {
     private String booleanSettings = ",FAULT_TOLERANT,FAULT_TOLERANT_DEFAULT,PRESERVE_TABS,PRESERVE_LINE_ENDINGS,"
                                     + "JAVA_UNICODE_ESCAPE,IGNORE_CASE,LEXER_USES_PARSER,NODE_DEFAULT_VOID,SMART_NODE_CREATION," 
                                     + "NODE_USES_PARSER,TREE_BUILDING_DEFAULT,TREE_BUILDING_ENABLED,TOKENS_ARE_NODES," 
-                                    + "SPECIAL_TOKENS_ARE_NODES,UNPARSED_TOKENS_ARE_NODES,FREEMARKER_NODES," 
+                                    + "SPECIAL_TOKENS_ARE_NODES,UNPARSED_TOKENS_ARE_NODES," 
                                     + "TOKEN_MANAGER_USES_PARSER,ENSURE_FINAL_EOL,MINIMAL_TOKEN,C_CONTINUATION_LINE," 
                                     + "USE_CHECKED_EXCEPTION,LEGACY_GLITCHY_LOOKAHEAD,TOKEN_CHAINING,USES_PREPROCESSOR,";
 
@@ -519,11 +519,6 @@ public class AppSettings {
         Boolean b = (Boolean) settings.get("TOKENS_ARE_NODES");
         if (b == null) b = (Boolean) settings.get("SPECIAL_TOKENS_ARE_NODES");
         return b != null;
-    }
-
-    public boolean getFreemarkerNodes() {
-        Boolean b = (Boolean) settings.get("FREEMARKER_NODES");
-        return b != null && b;
     }
 
     public boolean getSmartNodeCreation() {
