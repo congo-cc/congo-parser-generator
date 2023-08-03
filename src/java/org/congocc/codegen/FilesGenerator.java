@@ -20,7 +20,6 @@ import org.congocc.parser.tree.ObjectType;
 
 import freemarker.template.*;
 import freemarker.cache.*;
-import freemarker.ext.beans.BeansWrapper;
 
 public class FilesGenerator {
 
@@ -58,7 +57,7 @@ public class FilesGenerator {
         templateLoader = new MultiTemplateLoader(loaders.toArray(new TemplateLoader[0]));
 
         fmConfig.setTemplateLoader(templateLoader);
-        fmConfig.setObjectWrapper(new BeansWrapper());
+        //fmConfig.setObjectWrapper(new BeansWrapper());
         fmConfig.setNumberFormat("computer");
         fmConfig.setArithmeticEngine(freemarker.core.ast.ArithmeticEngine.CONSERVATIVE_ENGINE);
         fmConfig.setStrictVariableDefinition(true);

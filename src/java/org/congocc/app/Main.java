@@ -161,13 +161,6 @@ public final class Main {
      * The main program.
      */
     public static void main(String[] args) throws Exception {
-        try {
-            Class.forName("freemarker.core.Scope");
-        } catch (ClassNotFoundException e) {
-            System.err.println(
-                    "You must have an appropriate (V3 or later) freemarker.jar on your classpath to run congocc");
-            System.exit(-1);
-        }
         if (args.length == 0) {
             bannerLine();
             usage();
@@ -301,7 +294,7 @@ public final class Main {
      * @throws Exception
      */
     public static int mainProgram(Path grammarFile, Path outputDir, String codeLang, int jdkTarget, boolean quiet, Map<String, String> symbols)
-      throws IOException, ParseException, TemplateException {
+      throws IOException {
         if (!quiet) bannerLine();
         Grammar grammar = new Grammar(outputDir, codeLang, jdkTarget, quiet, symbols);
         grammar.parse(grammarFile, true);
