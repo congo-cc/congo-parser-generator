@@ -21,6 +21,7 @@ abstract public class Expansion extends BaseNode {
     }
 
     public final BNFProduction getContainingProduction() {
+    	if (this instanceof BNFProduction) return (BNFProduction) this;
         return firstAncestorOfType(BNFProduction.class);
     }
 
@@ -54,13 +55,11 @@ abstract public class Expansion extends BaseNode {
         return null;
     }
 
-    public TreeBuildingAnnotation getTreeNodeBehavior() {
-        if (treeNodeBehavior == null) {
-            if (this.getParent() instanceof BNFProduction) {
-                return ((BNFProduction) getParent()).getTreeNodeBehavior();
-            }
+    public TreeBuildingAnnotation getTreeNodeBehavior() { //NOTE: removed "pull-down" of BNFProduction TBA
+        if (this.getParent() instanceof ExpansionWithParentheses) {
+            return null;
         }
-        return treeNodeBehavior;
+    	return treeNodeBehavior;
     }
 
     public void setTreeNodeBehavior(TreeBuildingAnnotation treeNodeBehavior) {
