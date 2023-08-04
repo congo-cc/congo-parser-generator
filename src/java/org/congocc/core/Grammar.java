@@ -280,8 +280,9 @@ public class Grammar extends BaseNode {
     private List<Expansion> getExpansionsForSet(int type) {
         Set<String> usedNames = new LinkedHashSet<>();
         List<Expansion> result = new ArrayList<>();
-        for (Expansion expansion : descendants(Expansion.class)) {
-            if (expansion.getParent() instanceof BNFProduction) continue; // Handle these separately
+        for (Expansion expansion : descendants(Expansion.class)) { // | is this one necessary now that BNFProduction is an Expansion? [jb]
+        														  //  V
+            if ((expansion instanceof BNFProduction) || (expansion.getParent() instanceof BNFProduction)) continue; // Handle these separately
             if (type == 0 || type == 2) {   // follow sets
                 if (expansion instanceof CodeBlock) {
                     continue;
