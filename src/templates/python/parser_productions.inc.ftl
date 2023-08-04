@@ -3,9 +3,18 @@
 [#import "common_utils.inc.ftl" as CU]
 
 [#var nodeNumbering = 0]
+[#--
 [#var NODE_USES_PARSER = settings.nodeUsesParser]
 [#var NODE_PREFIX = grammar.nodePrefix]
+--]
 [#var currentProduction]
+[#var topLevelExpansion] [#-- A "one-shot" indication that we are processing 
+                              an expansion immediately below the BNF production expansion, 
+                              ignoring an ExpansionSequence that might be there. This is
+                              primarily, if not exclusively, for allowing JTB-compatible
+                              syntactic trees to be built. While seemingly silly (and perhaps could be done differently), 
+                              it is also a bit tricky, so treat it like the Holy Hand-grenade in that respect. 
+                          --]
 
 [#macro Productions]
 # ===================================================================
@@ -25,116 +34,150 @@
 [/#macro]
 
 [#macro ParserProduction production]
-[#if production.leadingComments?has_content]
-    # ${production.leadingComments}
-[/#if]
-    # ${production.location}
-    ${globals.startProduction()}def parse_${production.name}(self[#if production.parameterList?has_content], ${globals.translateParameters(production.parameterList)}[/#if]):
-        # import pdb; pdb.set_trace()
-        prev_production = self.currently_parsed_production
-        self.currently_parsed_production = '${production.name}'
-     [#--${production.javaCode!}
-       This is actually inserted further down because
-       we want the prologue java code block to be able to refer to
-       CURRENT_NODE.
-     --]
-${BuildCode(production.expansion, 8)}
-        self.currently_parsed_production = prev_production
+   [#set nodeNumbering = 0]
+   [#set newVarIndex = 0 in CU] 
+   [#-- Generate the method modifiers and header --]
+   [#if production.leadingComments?has_content]
+   # ${production.leadingComments}
+   [/#if]
+   # ${production.location}
+   ${globals.startProduction()}def parse_${production.name}(self[#if production.parameterList?has_content], ${globals.translateParameters(production.parameterList)}[/#if]):
+   [#-- Now generate the body --]
+      # import pdb; pdb.set_trace()
+   [#-- OMITTED: "if (cancelled) throw new CancellationException();" --]
+      prev_production = self.currently_parsed_production
+      self.currently_parsed_production = '${production.name}'
+   [#--${production.javaCode!}
+      This is actually inserted further down because
+      we want the prologue java code block to be able to refer to
+      CURRENT_NODE.
+   --]
+   [#set topLevelExpansion = false]
+      ${BuildCode(production, 8)}
+      self.currently_parsed_production = prev_production
     # end of parse_${production.name}${globals.endProduction()}
+[/#macro]
 
+[#--
+   Macro to build routines that scan up to the start of an expansion
+   as part of a recovery routine
+--]
+[#macro BuildRecoverRoutines]
+   [#list grammar.expansionsNeedingRecoverMethod as expansion]
+    def ${expansion.recoverMethodName}(self):
+        initial_token = self.last_consumed_token
+        skipped_tokens = []
+        success = False
+        while self.last_consumed_token.type != EOF:
+         [#if expansion.simpleName = "OneOrMore" || expansion.simpleName = "ZeroOrMore"]
+            if (${ExpansionCondition(expansion.nestedExpansion)}):
+         [#else]
+            if (${ExpansionCondition(expansion)}):
+         [/#if]
+                success = True
+                break
+         [#if expansion.simpleName = "ZeroOrMore" || expansion.simpleName = "OneOrMore"]
+            [#var followingExpansion = expansion.followingExpansion]
+            [#list 1..1000000 as unused]
+               [#if followingExpansion?is_null][#break][/#if]
+                  [#if followingExpansion.maximumSize >0]
+                     [#if followingExpansion.simpleName = "OneOrMore" || followingExpansion.simpleName = "ZeroOrOne" || followingExpansion.simpleName = "ZeroOrMore"]
+            if (${ExpansionCondition(followingExpansion.nestedExpansion)}):
+                     [#else]
+               if (${ExpansionCondition(followingExpansion)}):
+                     [/#if]
+                  success = True
+                  break
+                  [/#if]
+                  [#if !followingExpansion.possiblyEmpty][#break][/#if]
+                     [#if followingExpansion.followingExpansion?is_null]
+               if self.outer_follow_set is not None:
+                  if self.next_token_type() in self.outer_follow_set:
+                     success = True
+                     break
+                     [#break/]
+                  [/#if]
+               [#set followingExpansion = followingExpansion.followingExpansion]
+            [/#list]
+         [/#if]
+            self.last_consumed_token = self.next_token(self.last_consumed_token)
+            skipped_tokens.append(self.last_consumed_token)
+        if not success and skipped_tokens:
+             self.last_consumed_token = initial_token
+        if success and skipped_tokens:
+            iv = InvalidNode(self)
+            [#-- OMITTED: "iv.copyLocationInfo(skippedTokens.get(0));" --]
+            for tok in skipped_tokens:
+                iv.add_child(tok)
+            [#-- OMITTED: "iv.setEndOffset(tok.getEndOffset());" --]
+        #   if self.debug_fault_tolerant:
+        #       logger.info('Skipping %s tokens starting at: %s', len(skipped_tokens), skipped_tokens[0].location)
+            self.push_node(iv)
+        self.pending_recovery = not success
+
+   [/#list]
 [/#macro]
 
 [#macro BuildCode expansion indent]
-[#var is=""?right_pad(indent)]
-[#-- ${is}# DBG > BuildCode ${indent} ${expansion.simpleName} --]
+   [#var is=""?right_pad(indent)]
+   [#-- ${is}# DBG > BuildCode ${indent} ${expansion.simpleName} --]
    [#if expansion.simpleName != "ExpansionSequence" && expansion.simpleName != "ExpansionWithParentheses"]
 ${is}# Code for ${expansion.simpleName} specified at ${expansion.location}
-  [/#if]
-     [@CU.HandleLexicalStateChange expansion false indent; indent]
-      [#if settings.faultTolerant && expansion.requiresRecoverMethod && !expansion.possiblyEmpty]
+   [/#if]
+      [@CU.HandleLexicalStateChange expansion false indent]
+         [#if settings.faultTolerant && expansion.requiresRecoverMethod && !expansion.possiblyEmpty]
 ${is}if self.pending_recovery:
-${is}    if self.debug_fault_tolerant:
-${is}        logger.info('Re-synching to expansion at: ${expansion.location?j_string}')
-${is}    self.${expansion.recoverMethodName}()
+${is}#   if self.debug_fault_tolerant:
+${is}#       logger.info('Re-synching to expansion at: ${expansion.location?j_string}')
+${is}   self.${expansion.recoverMethodName}()
       [/#if]
-       [@TreeBuildingAndRecovery expansion indent/]
-     [/@CU.HandleLexicalStateChange]
-[#-- ${is}# DBG < BuildCode ${indent} ${expansion.simpleName} --]
+         [@TreeBuildingAndRecovery expansion indent/]
+      [/@CU.HandleLexicalStateChange]
+   [#-- ${is}# DBG < BuildCode ${indent} ${expansion.simpleName} --]
 [/#macro]
 
 [#macro TreeBuildingAndRecovery expansion indent]
-[#-- This macro handles both tree building AND recovery. It doesn't seem right.
-     It should probably be two macros. Also, it is too darned big. --]
 [#var is=""?right_pad(indent)]
 [#-- ${is}# DBG > TreeBuildingAndRecovery ${indent} --]
-    [#var nodeVarName,
-          nodeTypeName,
-          production,
-          treeNodeBehavior,
-          treeNodeLHS,
-          buildTreeNode=false,
-          closeCondition = "True",
-          javaCodePrologue = null,
-          parseExceptionVar = CU.newVarName("parseException"),
-          callStackSizeVar = CU.newVarName("callStackSize"),
-          canRecover = settings.faultTolerant && expansion.tolerantParsing && expansion.simpleName != "Terminal"
-    ]
-    [#set treeNodeBehavior = expansion.treeNodeBehavior]
-    [#if treeNodeBehavior?? && expansion.treeNodeBehavior.LHS??]
-          [#set treeNodeLHS = expansion.treeNodeBehavior.LHS]
-    [/#if]
-    [#if expansion.parent.simpleName = "BNFProduction"]
-      [#set production = expansion.parent]
+   [#var production = null,
+         treeNodeBehavior,
+         buildingTreeNode=false, 
+         nodeVarName,
+         javaCodePrologue = null,
+         parseExceptionVar = CU.newVarName("parseException"),
+         callStackSizeVar = CU.newVarName("callStackSize"),
+         canRecover = settings.faultTolerant && expansion.tolerantParsing && expansion.simpleName != "Terminal"
+   ]
+   [#set treeNodeBehavior = resolveTreeNodeBehavior(expansion)]
+   [#if expansion == currentProduction]
+      [#set production = currentProduction]
       [#set javaCodePrologue = production.javaCode]
-    [/#if]
-    [#if settings.treeBuildingEnabled]
-      [#set buildTreeNode = (treeNodeBehavior?is_null && production?? && !settings.nodeDefaultVoid)
-                        || (treeNodeBehavior?? && !treeNodeBehavior.neverInstantiated)]
-    [/#if]
-    [#if !buildTreeNode && !canRecover]
+   [/#if]
+   [#if treeNodeBehavior??]
+      [#if settings.treeBuildingEnabled]
+         [#set buildingTreeNode = true]
+         [#set nodeVarName = nodeVar(production??)]
+      [/#if]
+   [/#if]
+   [#if !buildingTreeNode && !canRecover]
+       [#-- We need neither tree nodes nor recovery code; do the simple one. --]
 ${globals.translateCodeBlock(javaCodePrologue, indent)}[#rt]
-${BuildExpansionCode(expansion, indent)}[#t]
-    [#else]
-     [#if buildTreeNode]
-       [#if production??]
-       [#set nodeVarName = "thisProduction"] 
-       [#-- this is so that (potentially deeply nested) code blocks can easily reference the production node.
-         Instead could be a currentProduction.name with the first char lower-cased, maybe, but I don't think so. Also,
-         I didn't change CURRENT_NODE to refer to this because it would affect TBA nodes below the top level, but if
-         CURRENT_NODE is meant to refer to the current production, then it probably should be changed.  I suspect that
-         uses of CURRENT_NODE are all at the top level now anyway and the need to reference the current node just built is relatively
-         rare and could use peek(). --]
-       [#else]
-       [#set nodeNumbering = nodeNumbering +1]
-       [#set nodeVarName = currentProduction.name + nodeNumbering] 
-       [/#if]
-${globals.pushNodeVariableName(nodeVarName)!}
-       [#set nodeTypeName = nodeClassName(treeNodeBehavior)]      
-       [#if !treeNodeBehavior?? && !production?is_null]
-         [#if settings.smartNodeCreation]
-            [#set treeNodeBehavior = {"name" : production.name, "condition" : "1", "gtNode" : true, "void" :false, "initialShorthand" : " > "}]
-         [#else]
-            [#set treeNodeBehavior = {"name" : production.name, "condition" : null, "gtNode" : false, "void" : false}]
-         [/#if]
+${BuildExpansionCode(expansion, indent)}
+   [#else]
+      [#-- We need tree nodes and/or recovery code. --] 
+      [#if buildingTreeNode]
+         [#-- Build the tree node (part 1). --]
+         [@buildTreeNode production treeNodeBehavior nodeVarName /]
       [/#if]
-      [#if treeNodeBehavior.condition?has_content]
-         [#set closeCondition = globals.translateString(treeNodeBehavior.condition)]
-         [#if treeNodeBehavior.gtNode]
-            [#set closeCondition = "self.node_arity" + treeNodeBehavior.initialShorthand + closeCondition]
-         [/#if]
-      [/#if]
-      [@createNode treeNodeBehavior nodeVarName indent /]
-      [/#if]
-         [#-- I put this here for the hypertechnical reason
-              that I want the initial code block to be able to
-              reference CURRENT_NODE. --]
+   [/#if]
+   [#-- The prologue code can refer to CURRENT_NODE at this point. --]
 ${globals.translateCodeBlock(javaCodePrologue, indent)}
 ${is}${parseExceptionVar} = None
 ${is}${callStackSizeVar} = len(self.parsing_stack)
 ${is}try:
 ${is}    pass  # in case there's nothing else in the try clause!
 [#-- ${is}    # nested code starts, passing indent of ${indent + 4} --]
-${BuildExpansionCode(expansion, indent + 4)}[#t]
+${BuildExpansionCode(expansion, indent + 4)}
 [#-- ${is}    # nested code ends --]
 ${is}except ParseException as e:
 ${is}    ${parseExceptionVar} = e
@@ -157,44 +200,106 @@ ${is}       return None
                 [/#if]
              [/#if]
           [/#if]
-${is}finally:
-${is}    self.restore_call_stack(${callStackSizeVar})
-             [#if buildTreeNode]
+${is}finally:         
+      [#if buildingTreeNode]
+      [#-- Build the tree node (part 2). --]
+${is}    [@buildTreeNodeEpilogue treeNodeBehavior nodeVarName parseExceptionVar indent /]
+      [/#if]
+   [#-- ${is}# DBG < TreeBuildingAndRecovery ${indent} --]
+[/#macro]
+
+[#macro buildTreeNodeEpilogue treeNodeBehavior nodeVarName parseExceptionVar indent]
+   [#var is=""?right_pad(indent)]
 ${is}    if ${nodeVarName}:
-${is}        if ${parseExceptionVar} is None:
-${is}            self.close_node_scope(${nodeVarName}, ${closeCondition})
-                     [#if treeNodeLHS??]
-${is}            try:
-${is}                ${treeNodeLHS} = self.peek_node()
-${is}            except Exception:
-${is}                ${treeNodeLHS} = None
-                     [/#if]
-                     [#list grammar.closeNodeHooksByClass[nodeClassName(treeNodeBehavior)]! as hook]
-${is}            ${hook}(${nodeVarName})
-                     [/#list]
-${is}        else:
-                  [#if settings.faultTolerant]
+${is}       if ${parseExceptionVar} is None:
+${is}          self.close_node_scope(${nodeVarName}, ${closeCondition(treeNodeBehavior)})
+      [#if treeNodeBehavior?? && treeNodeBehavior.LHS??]
+         [#-- LHS should be built --]
+${is}          try:
+${is}             ${treeNodeBehavior.LHS} = self.peek_node()
+${is}          except Exception:
+${is}             ${treeNodeBehavior.LHS} = None
+      [/#if]
+      [#list grammar.closeNodeHooksByClass[nodeClassName(treeNodeBehavior)]! as hook]
+${is}          ${hook}(${nodeVarName})
+      [/#list]
+${is}    else:
+   [#if settings.faultTolerant]
 ${is}            self.close_node_scope(${nodeVarName}, True)
 ${is}            ${nodeVarName}.dirty = True
-                  [#else]
+   [#else]
 ${is}            self.clear_node_scope()
-                  [/#if]
+   [/#if]
 ${globals.popNodeVariableName()!}
-             [/#if]
+   [#-- ${is}# DBG < TreeBuildingAndRecovery ${indent} --]
+[/#macro]
 
-    [/#if]
-[#-- ${is}# DBG < TreeBuildingAndRecovery ${indent} --]
+[#function closeCondition treeNodeBehavior]
+   [#var cc = "true"]
+   [#if treeNodeBehavior??]
+      [#if treeNodeBehavior.condition?has_content]
+         [#set cc = treeNodeBehavior.condition]
+         [#if treeNodeBehavior.gtNode]
+            [#set cc = "nodeArity() " + treeNodeBehavior.initialShorthand  + cc]
+         [/#if]
+      [/#if]
+   [/#if]
+   [#return cc/]
+[/#function]
+
+[#function nodeClassName treeNodeBehavior]
+   [#if treeNodeBehavior?? && treeNodeBehavior.nodeName??] 
+      [#return NODE_PREFIX + treeNodeBehavior.nodeName]
+   [/#if]
+   [#return NODE_PREFIX + currentProduction.name/]
+[/#function]
+
+[#function resolveTreeNodeBehavior expansion]
+   [#var treeNodeBehavior = expansion.treeNodeBehavior]
+   [#var isProduction = false]
+   [#if expansion.simpleName = "BNFProduction"]
+      [#set isProduction = true]
+   [/#if]
+   [#if !treeNodeBehavior??] 
+      [#if isProduction && !settings.nodeDefaultVoid 
+                        && !grammar.nodeIsInterface(expansion.name)
+                        && !grammar.nodeIsAbstract(expansion.name)]
+         [#if settings.smartNodeCreation]
+            [#set treeNodeBehavior = {"nodeName" : expansion.name!"nemo", "condition" : "1", "gtNode" : true, "void" :false, "initialShorthand" : ">"}]
+         [#else]
+            [#set treeNodeBehavior = {"nodeName" : expansion.name!"nemo", "condition" : null, "gtNode" : false, "void" : false}]
+         [/#if]
+      [/#if]
+   [/#if]
+   [#if treeNodeBehavior?? && treeNodeBehavior.neverInstantiated?? && treeNodeBehavior.neverInstantiated]
+      [#return null/]
+   [/#if]
+   [#return treeNodeBehavior]
+[/#function]
+
+[#function nodeVar isProduction]
+   [#var nodeVarName]
+   [#if isProduction]
+      [#set nodeVarName = "thisProduction"] [#-- [JB] maybe should be "CURRENT_PRODUCTION" or "THIS_PRODUCTION" to match "CURRENT_NODE"? --]
+   [#else]
+      [#set nodeNumbering = nodeNumbering +1]
+      [#set nodeVarName = currentProduction.name + nodeNumbering] 
+   [/#if]
+   [#return nodeVarName/]
+[/#function]
+
+[#macro buildTreeNode production treeNodeBehavior nodeVarName indent]
+   ${globals.pushNodeVariableName(nodeVarName)!}
+   [@createNode nodeClassName(treeNodeBehavior) nodeVarName indent /]
 [/#macro]
 
 [#--  Boilerplate code to create the node variable --]
-[#macro createNode treeNodeBehavior nodeVarName indent]
+[#macro createNode nodeName nodeVarName indent]
 [#var is=""?right_pad(indent)]
-   [#var nodeName = nodeClassName(treeNodeBehavior)]
 ${is}${nodeVarName} = None
 ${is}if self.build_tree:
 ${is}    ${nodeVarName} = ${nodeName}([#if settings.nodeUsesParser]self[#else]self.input_source[/#if])
 ${is}    self.open_node_scope(${nodeVarName})
-
 [/#macro]
 
 [#function nodeClassName treeNodeBehavior]
@@ -204,45 +309,70 @@ ${is}    self.open_node_scope(${nodeVarName})
    [#return NODE_PREFIX + currentProduction.name]
 [/#function]
 
-
 [#macro BuildExpansionCode expansion indent]
 [#var is=""?right_pad(indent)]
 [#var classname=expansion.simpleName]
 [#-- ${is}# DBG > BuildExpansionCode ${indent} ${classname} --]
     [#var prevLexicalStateVar = CU.newVarName("previousLexicalState")]
-    [#if classname = "ExpansionWithParentheses"]
-${BuildExpansionCode(expansion.nestedExpansion, indent)}[#t]
-    [#elseif classname = "CodeBlock"]
-${globals.translateCodeBlock(expansion, indent)}
-    [#elseif classname = "UncacheTokens"]
+   [#-- take care of the non-tree-building classes --]
+   [#if classname = "CodeBlock"]
+${BuildExpansionCode(expansion.nestedExpansion, indent)}
+   [#elseif classname = "UncacheTokens"]
 ${is}self.uncache_tokens()
-    [#elseif classname = "Failure"]
-       [@BuildCodeFailure expansion indent /]
-    [#elseif classname = "TokenTypeActivation"]
-       [@BuildCodeTokenTypeActivation expansion indent /]
-    [#elseif classname = "ExpansionSequence"]
-       [@BuildCodeSequence expansion indent /]
-    [#elseif classname = "NonTerminal"]
-       [@BuildCodeNonTerminal expansion indent /]
-    [#elseif classname = "Terminal"]
-       [@BuildCodeTerminal expansion indent /]
-    [#elseif classname = "TryBlock"]
-       [@BuildCodeTryBlock expansion indent /]
-    [#elseif classname = "AttemptBlock"]
-       [@BuildCodeAttemptBlock expansion indent /]
-    [#elseif classname = "ZeroOrOne"]
-       [@BuildCodeZeroOrOne expansion indent /]
-    [#elseif classname = "ZeroOrMore"]
-       [@BuildCodeZeroOrMore expansion indent /]
-    [#elseif classname = "OneOrMore"]
-        [@BuildCodeOneOrMore expansion indent /]
-    [#elseif classname = "ExpansionChoice"]
-        [@BuildCodeChoice expansion indent /]
-    [#elseif classname = "Assertion"]
-        [@BuildAssertionCode expansion indent /]
-    [/#if]
+   [#elseif classname = "Failure"]
+      [@BuildCodeFailure expansion indent /]
+   [#elseif classname = "Assertion"]
+      [@BuildAssertionCode expansion indent /]
+   [#elseif classname = "TokenTypeActivation"]
+      [@BuildCodeTokenTypeActivation expansion indent /]
+   [#elseif classname = "TryBlock"]
+      [@BuildCodeTryBlock expansion indent /]
+   [#elseif classname = "AttemptBlock"]
+      [@BuildCodeAttemptBlock expansion indent /]
+   [#else]
+      [#-- take care of the tree node (if any) --]
+      [@TreeBuildingAndRecovery expansion]
+         [#if classname = "BNFProduction"]
+            [#-- The tree node having been built, now build the actual top-level expansion --]
+            [#set topLevelExpansion = true]
+            // top-level expansion ${expansion.nestedExpansion.simpleName}
+            [@BuildCode expansion.nestedExpansion indent /]
+         [#else]
+            [#-- take care of terminal and non-terminal expansions; they cannot contain child expansions --]
+            [#if classname = "NonTerminal"]
+               [@BuildCodeNonTerminal expansion indent /]
+            [#elseif classname = "Terminal"]
+               [@BuildCodeTerminal expansion indent /]
+            [#else]
+               [#-- take care of the syntactical expansions (which can contain child expansions) --]
+               [#-- capture the top-level indication in order to restore when bubbling up --]
+               [#var stackedTopLevel = topLevelExpansion]
+               [#if topLevelExpansion && classname != "ExpansionSequence"]
+                  [#-- turn off top-level indication unless an expansion sequence (the tree node has already been determined when this nested template is expanded) --]
+                  [#set topLevelExpansion = false]
+               [/#if]
+               [#if classname = "ZeroOrOne"]
+                  [@BuildCodeZeroOrOne expansion indent /]
+               [#elseif classname = "ZeroOrMore"]
+                  [@BuildCodeZeroOrMore expansion indent /]
+               [#elseif classname = "OneOrMore"]
+                  [@BuildCodeOneOrMore expansion indent /]
+               [#elseif classname = "ExpansionChoice"]
+                  [@BuildCodeChoice expansion indent /]
+               [#elseif classname = "ExpansionWithParentheses"]
+                  [@BuildExpansionCode(expansion.nestedExpansion, indent) /]
+               [#elseif classname = "ExpansionSequence"]
+                  [@BuildCodeSequence expansion indent /] [#-- leave the topLevelExpansion one-shot alone (see above) --]
+               [/#if]
+               [#set topLevelExpansion = stackedTopLevel]
+            [/#if]
+         [/#if]
+      [/@TreeBuildingAndRecovery]
+   [/#if]
 [#-- ${is}# DBG < BuildExpansionCode ${indent} ${classname} --]
 [/#macro]
+
+[#-- The following macros build expansions that never build tree nodes. --]
 
 [#macro BuildCodeFailure fail indent]
 [#var is = ""?right_pad(indent)]
@@ -257,6 +387,23 @@ ${is}self.fail('Failure')
 ${globals.translateCodeBlock(fail.code, indent)}
     [/#if]
 [#-- ${is}# DBG < BuildCodeFailure ${indent} --]
+[/#macro]
+
+[#macro BuildAssertionCode assertion indent]
+[#var is = ""?right_pad(indent)]
+[#var optionalPart = ""]
+[#if assertion.messageExpression??]
+  [#set optionalPart = " + " + globals.translateExpression(assertion.messageExpression)]
+[/#if]
+[#var assertionMessage = "Assertion at: " + assertion.location?j_string + " failed."]
+[#if assertion.assertionExpression??]
+${is}if not (${globals.translateExpression(assertion.assertionExpression)}):
+${is}    self.fail("${assertionMessage}"${optionalPart})
+[/#if]
+[#if assertion.expansion??]
+${is}if [#if !assertion.expansionNegated]not [/#if]self.${assertion.expansion.scanRoutineName}():
+${is}    self.fail("${assertionMessage}"${optionalPart})
+[/#if]
 [/#macro]
 
 [#macro BuildCodeTokenTypeActivation activation indent]
@@ -274,46 +421,6 @@ ${is})
 [#-- ${is}# DBG < BuildCodeTokenTypeActivation ${indent} --]
 [/#macro]
 
-[#macro BuildCodeSequence expansion indent]
-[#var is = ""?right_pad(indent)]
-[#-- ${is}# DBG > BuildCodeSequence ${indent} --]
-  [#list expansion.units as subexp]
-${BuildCode(subexp, indent)}
-  [/#list]
-[#-- ${is}# DBG < BuildCodeSequence ${indent} --]
-[/#macro]
-
-[#macro BuildCodeTerminal terminal indent]
-[#var is = ""?right_pad(indent), regexp=terminal.regexp]
-[#-- ${is}# DBG > BuildCodeRegexp ${indent} --]
-  [#var LHS = ""]
-  [#if terminal.lhs??][#set LHS = terminal.lhs + "="][/#if]
-  [#if !settings.faultTolerant]
-${is}${LHS}self.consume_token(${regexp.label})
-  [#else]
-    [#var tolerant = terminal.tolerantParsing?string("True", "False")]
-    [#var followSetVarName = "self." + terminal.followSetVarName]
-    [#if terminal.followSet.incomplete]
-      [#set followSetVarName = "follow_set" + CU.newID()]
-${is}${followSetVarName} = None
-${is}if self.outer_follow_set is not None:
-${is}    ${followSetVarName} = set(self.${terminal.followSetVarName}) | self.outer_follow_set
-    [/#if]
-${is}${LHS}self.consume_token(${regexp.label}, ${tolerant}, ${followSetVarName})
-  [/#if]
-  [#if !terminal.childName?is_null]
-${is}if self.build_tree:
-${is}    child = self.peek_node()
-${is}    name = '${terminal.childName}'
-    [#if terminal.multipleChildren]
-${is}    ${globals.currentNodeVariableName}.add_to_named_child_list(name, child)
-    [#else]
-${is}    ${globals.currentNodeVariableName}.set_named_child(name, child)
-    [/#if]
-  [/#if]
-[#-- ${is}# DBG < BuildCodeRegexp ${indent} --]
-[/#macro]
-
 [#macro BuildCodeTryBlock tryblock indent]
 [#var is = ""?right_pad(indent)]
 ${is}# DBG > BuildCodeTryBlock ${indent}
@@ -328,7 +435,6 @@ ${is}${tryblock.finallyBlock!}
 ${is}# DBG < BuildCodeTryBlock ${indent}
 [/#macro]
 
-
 [#macro BuildCodeAttemptBlock attemptBlock indent]
 [#var is = ""?right_pad(indent)]
 ${is}# DBG > BuildCodeAttemptBlock ${indent}
@@ -341,6 +447,8 @@ ${is}    self.restore_stashed_parse_state()
 ${BuildCode(attemptBlock.recoveryExpansion, indent + 4)}
 ${is}# DBG < BuildCodeAttemptBlock ${indent}
 [/#macro]
+
+[#-- The following macros build expansions that might build tree nodes (could be called "syntactic" nodes). --]
 
 [#macro BuildCodeNonTerminal nonterminal indent]
 [#var is = ""?right_pad(indent)]
@@ -384,6 +492,36 @@ ${is}    self.pop_call_stack()
 [#-- ${is}# DBG < BuildCodeNonTerminal ${indent} ${nonterminal.production.name} --]
 [/#macro]
 
+[#macro BuildCodeTerminal terminal indent]
+[#var is = ""?right_pad(indent), regexp=terminal.regexp]
+[#-- ${is}# DBG > BuildCodeRegexp ${indent} --]
+  [#var LHS = ""]
+  [#if terminal.lhs??][#set LHS = terminal.lhs + "="][/#if]
+  [#if !settings.faultTolerant]
+${is}${LHS}self.consume_token(${regexp.label})
+  [#else]
+    [#var tolerant = terminal.tolerantParsing?string("True", "False")]
+    [#var followSetVarName = "self." + terminal.followSetVarName]
+    [#if terminal.followSet.incomplete]
+      [#set followSetVarName = "follow_set" + CU.newID()]
+${is}${followSetVarName} = None
+${is}if self.outer_follow_set is not None:
+${is}    ${followSetVarName} = set(self.${terminal.followSetVarName}) | self.outer_follow_set
+    [/#if]
+${is}${LHS}self.consume_token(${regexp.label}, ${tolerant}, ${followSetVarName})
+  [/#if]
+  [#if !terminal.childName?is_null]
+${is}if self.build_tree:
+${is}    child = self.peek_node()
+${is}    name = '${terminal.childName}'
+    [#if terminal.multipleChildren]
+${is}    ${globals.currentNodeVariableName}.add_to_named_child_list(name, child)
+    [#else]
+${is}    ${globals.currentNodeVariableName}.set_named_child(name, child)
+    [/#if]
+  [/#if]
+[#-- ${is}# DBG < BuildCodeRegexp ${indent} --]
+[/#macro]
 
 [#macro BuildCodeZeroOrOne zoo indent]
 [#var is = ""?right_pad(indent)]
@@ -398,7 +536,6 @@ ${BuildCode(zoo.nestedExpansion, indent + 4)}
 [/#macro]
 
 [#var inFirstVarName = "", inFirstIndex =0]
-
 [#macro BuildCodeOneOrMore oom indent]
 [#var is = ""?right_pad(indent)]
 [#-- ${is}# DBG > BuildCodeOneOrMore ${indent} --]
@@ -432,10 +569,10 @@ ${is}    if not (${ExpansionCondition(zom.nestedExpansion)}): break
 [#macro RecoveryLoop loopExpansion indent]
 [#var is = ""?right_pad(indent)]
 [#-- ${is}# DBG > RecoveryLoop ${indent} --]
-[#if !settings.faultTolerant || !loopExpansion.requiresRecoverMethod]
+   [#if !settings.faultTolerant || !loopExpansion.requiresRecoverMethod]
 ${BuildCode(loopExpansion.nestedExpansion, indent)}
-[#else]
-[#var initialTokenVarName = "initialToken" + CU.newID()]
+   [#else]
+   [#var initialTokenVarName = "initialToken" + CU.newID()]
 ${is}${initialTokenVarName} = self.last_consumed_token
 ${is}try:
 ${BuildCode(loopExpansion.nestedExpansion, indent + 4)}
@@ -483,99 +620,34 @@ ${is}    raise ParseException(self, expected=self.${choice.firstSetVarName})
 [#-- ${is}# DBG < BuildCodeChoice ${indent} --]
 [/#macro]
 
+[#macro BuildCodeSequence expansion indent]
+[#var is = ""?right_pad(indent)]
+[#-- ${is}# DBG > BuildCodeSequence ${indent} --]
+   [#list expansion.units as subexp]
+${BuildCode(subexp, indent)}
+   [/#list]
+[#-- ${is}# DBG < BuildCodeSequence ${indent} --]
+[/#macro]
+
+[#-- The following is a set of utility macros used in multiple expansions. --]
+
 [#--
      Macro to generate the condition for entering an expansion
      including the default single-token lookahead
 --]
 [#macro ExpansionCondition expansion]
-[#if expansion.requiresPredicateMethod]${ScanAheadCondition(expansion)}[#else]${SingleTokenCondition(expansion)}[/#if][#t]
+[#if expansion.requiresPredicateMethod]${ScanAheadCondition(expansion)}[#else]${SingleTokenCondition(expansion)}[/#if]
 [/#macro]
 
 
 [#-- Generates code for when we need a scanahead --]
 [#macro ScanAheadCondition expansion]
-[#if expansion.lookahead?? && expansion.lookahead.LHS??](${expansion.lookahead.LHS} = [/#if][#if expansion.hasSemanticLookahead && !expansion.lookahead.semanticLookaheadNested](${globals.translateExpression(expansion.semanticLookahead)}) and [/#if]self.${expansion.predicateMethodName}()[#if expansion.lookahead?? && expansion.lookahead.LHS??])[/#if][#t]
+[#if expansion.lookahead?? && expansion.lookahead.LHS??](${expansion.lookahead.LHS} = [/#if][#if expansion.hasSemanticLookahead && !expansion.lookahead.semanticLookaheadNested](${globals.translateExpression(expansion.semanticLookahead)}) and [/#if]self.${expansion.predicateMethodName}()[#if expansion.lookahead?? && expansion.lookahead.LHS??])[/#if]
 [/#macro]
 
 
 [#-- Generates code for when we don't need any scanahead routine --]
 [#macro SingleTokenCondition expansion]
-   [#if expansion.hasSemanticLookahead](${globals.translateExpression(expansion.semanticLookahead)}) and [/#if][#t]
-   [#if expansion.firstSet.tokenNames?size =0 || expansion.lookaheadAmount ==0 || expansion.minimumSize=0]True[#elseif expansion.firstSet.tokenNames?size < 5][#list expansion.firstSet.tokenNames as name](self.next_token_type == ${name})[#if name_has_next] or [/#if][/#list][#t][#else](self.next_token_type in self.${expansion.firstSetVarName})[/#if][#t]
-[/#macro]
-
-[#macro BuildAssertionCode assertion indent]
-[#var is = ""?right_pad(indent)]
-[#var optionalPart = ""]
-[#if assertion.messageExpression??]
-  [#set optionalPart = " + " + globals.translateExpression(assertion.messageExpression)]
-[/#if]
-[#var assertionMessage = "Assertion at: " + assertion.location?j_string + " failed."]
-[#if assertion.assertionExpression??]
-${is}if not (${globals.translateExpression(assertion.assertionExpression)}):
-${is}    self.fail("${assertionMessage}"${optionalPart})
-[/#if]
-[#if assertion.expansion??]
-${is}if [#if !assertion.expansionNegated]not [/#if]self.${assertion.expansion.scanRoutineName}():
-${is}    self.fail("${assertionMessage}"${optionalPart})
-[/#if]
-[/#macro]
-
-[#--
-   Macro to build routines that scan up to the start of an expansion
-   as part of a recovery routine
---]
-[#macro BuildRecoverRoutines]
-   [#list grammar.expansionsNeedingRecoverMethod as expansion]
-    def ${expansion.recoverMethodName}(self):
-        initial_token = self.last_consumed_token
-        skipped_tokens = []
-        success = False
-
-        while self.last_consumed_token.type != EOF:
-[#if expansion.simpleName = "OneOrMore" || expansion.simpleName = "ZeroOrMore"]
-            if (${ExpansionCondition(expansion.nestedExpansion)}):
-[#else]
-            if (${ExpansionCondition(expansion)}):
-[/#if]
-                success = True
-                break
-             [#if expansion.simpleName = "ZeroOrMore" || expansion.simpleName = "OneOrMore"]
-               [#var followingExpansion = expansion.followingExpansion]
-               [#list 1..1000000 as unused]
-                [#if followingExpansion?is_null][#break][/#if]
-                [#if followingExpansion.maximumSize >0]
-                 [#if followingExpansion.simpleName = "OneOrMore" || followingExpansion.simpleName = "ZeroOrOne" || followingExpansion.simpleName = "ZeroOrMore"]
-                if (${ExpansionCondition(followingExpansion.nestedExpansion)}):
-                 [#else]
-                if (${ExpansionCondition(followingExpansion)}):
-                 [/#if]
-                    success = True
-                    break
-                [/#if]
-                [#if !followingExpansion.possiblyEmpty][#break][/#if]
-                [#if followingExpansion.followingExpansion?is_null]
-                if self.outer_follow_set is not None:
-                    if self.next_token_type() in self.outer_follow_set:
-                        success = True
-                        break
-                 [#break/]
-                [/#if]
-                [#set followingExpansion = followingExpansion.followingExpansion]
-               [/#list]
-             [/#if]
-            self.last_consumed_token = self.next_token(self.last_consumed_token)
-            skipped_tokens.append(self.last_consumed_token)
-        if not success and skipped_tokens:
-             self.last_consumed_token = initial_token
-        if success and skipped_tokens:
-            iv = InvalidNode(self)
-            for tok in skipped_tokens:
-                iv.add_child(tok)
-            if self.debug_fault_tolerant:
-                logger.info('Skipping %s tokens starting at: %s', len(skipped_tokens), skipped_tokens[0].location)
-            self.push_node(iv)
-        self.pending_recovery = not success
-
-   [/#list]
+[#if expansion.hasSemanticLookahead](${globals.translateExpression(expansion.semanticLookahead)}) and [/#if]
+[#if expansion.firstSet.tokenNames?size =0 || expansion.lookaheadAmount ==0 || expansion.minimumSize=0]True[#elseif expansion.firstSet.tokenNames?size < 5][#list expansion.firstSet.tokenNames as name](self.next_token_type == ${name})[#if name_has_next] or [/#if][/#list][#else](self.next_token_type in self.${expansion.firstSetVarName})[/#if]
 [/#macro]
