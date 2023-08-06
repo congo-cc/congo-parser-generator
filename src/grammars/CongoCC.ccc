@@ -43,7 +43,7 @@ TOKEN :
   |
   < _SKIP: "SKIP" > #CongoCCKeyWord
   |
-  <_EOF : "EOF"> #CongoCCKeyWord
+  < _EOF : "EOF"> #CongoCCKeyWord
   |
   < _ATTEMPT: "ATTEMPT"> #CongoCCKeyWord
   |
@@ -105,6 +105,10 @@ INJECT PARSER_CLASS :
     import org.congocc.parser.python.ast.Module;
 {
     Grammar grammar;
+
+    void OPEN_NODE_HOOK(Node n) {
+        n.setGrammar(grammar);
+    }
     
     public PARSER_CLASS(Grammar grammar, Path path, Map<String, String> definedSymbols) throws IOException{
         this(path.toString(), path);
@@ -198,22 +202,22 @@ INJECT BASE_NODE_CLASS :
         this.children = children;
     }
 
-    private Grammar grammar;
+    Grammar grammar;
 
     public Grammar getGrammar() {
-        if (grammar == null) {
-            if (parent != null) {
-               grammar = parent.getGrammar();
-            }
-            if (grammar==null && !children.isEmpty()) {
-               grammar = children.get(0).getGrammar();
+        if (grammar == null) { // temporary kludge
+            BASE_NODE_CLASS parent = (BASE_NODE_CLASS) getParent();
+            while (grammar == null && parent != null) {
+                grammar = ((BaseNode)getParent()).grammar;
+                if (grammar != null) break;
+                parent = (BASE_NODE_CLASS) getParent();
             }
         }
         return grammar;
     }
 
     public void setGrammar(Grammar grammar) {
-         this.grammar = grammar;
+        this.grammar = grammar;
     }
 
     public AppSettings getAppSettings() {
