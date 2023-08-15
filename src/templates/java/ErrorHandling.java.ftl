@@ -247,7 +247,6 @@ void dumpLookaheadCallStack(PrintStream ps) {
   private class ParseState {
        ${settings.baseTokenClassName} lastConsumed;
        ArrayList<NonTerminalCall> parsingStack;
-       EnumSet<TokenType> activeTokenTypes; 
    [#if MULTIPLE_LEXICAL_STATE_HANDLING]
        LexicalState lexicalState;
    [/#if]
@@ -259,9 +258,6 @@ void dumpLookaheadCallStack(PrintStream ps) {
           @SuppressWarnings("unchecked")
            ArrayList<NonTerminalCall> parsingStack = (ArrayList<NonTerminalCall>) ${settings.parserClassName}.this.parsingStack.clone();
            this.parsingStack = parsingStack;
-           if (${settings.parserClassName}.this.activeTokenTypes != null) {
-               this.activeTokenTypes = ${settings.parserClassName}.this.activeTokenTypes.clone();
-           }
 [#if grammar.lexerData.numLexicalStates > 1]
            this.lexicalState = token_source.lexicalState;
 [/#if]
@@ -287,7 +283,6 @@ void dumpLookaheadCallStack(PrintStream ps) {
      currentNodeScope = state.nodeScope;
 [/#if]
      ${settings.parserClassName}.this.parsingStack = state.parsingStack;
-     ${settings.parserClassName}.activeTokenTypes = state.activeTokenTypes;
     if (state.lastConsumed != null) {
         //REVISIT
          lastConsumedToken = state.lastConsumed;

@@ -42,10 +42,7 @@ import static ${settings.parserPackage}.${TOKEN}.TokenType.*;
 [/#macro]
 
 import java.io.IOException;
-import java.util.Arrays;
-import java.util.BitSet;
-import java.util.EnumMap;
-import java.util.EnumSet;
+import java.util.*;
 
 [#if settings.rootAPIPackage?has_content]
 import ${settings.rootAPIPackage}.TokenSource;
@@ -55,14 +52,16 @@ public
 [#if isFinal]final[/#if]
 class ${settings.lexerClassName} extends TokenSource
 {
+    
+  private static MatcherHook MATCHER_HOOK; // this cannot be initialize here, since hook must be set afterwards
 
- public enum LexicalState {
+  public enum LexicalState {
   [#list lexerData.lexicalStates as lexicalState]
      ${lexicalState.name}
      [#if lexicalState_has_next],[/#if]
   [/#list]
- }  
-   LexicalState lexicalState = LexicalState.values()[0];
+  }  
+  LexicalState lexicalState = LexicalState.values()[0];
 
  [#if settings.lexerUsesParser]
   private ${settings.parserClassName} parser;
@@ -178,6 +177,27 @@ class ${settings.lexerClassName} extends TokenSource
   static class MatchInfo {
       TokenType matchedType;
       int matchLength;
+        
+      @Override
+      public int hashCode() {
+          return Objects.hash(matchLength, matchedType);
+      }
+      @Override
+      public boolean equals(Object obj) {
+          if (this == obj)
+              return true;
+          if (obj == null)
+              return false;
+          if (getClass() != obj.getClass())
+              return false;
+          MatchInfo other = (MatchInfo) obj;
+          return matchLength == other.matchLength && matchedType == other.matchedType;
+      }
+  }
+    
+  @FunctionalInterface
+    private static interface MatcherHook {
+      MatchInfo apply(LexicalState lexicalState, CharSequence input, int position, EnumSet<TokenType> activeTokenTypes, NfaFunction[] nfaFunctions, BitSet currentStates, BitSet nextStates, MatchInfo matchInfo);
   }
 
   /**
@@ -269,7 +289,14 @@ class ${settings.lexerClassName} extends TokenSource
         position = nextUnignoredOffset(position);
 [/#if]        
         if (!inMore) tokenBeginOffset = position;
-        matchInfo = getMatchInfo(this, position, activeTokenTypes, nfaFunctions, currentStates, nextStates, matchInfo);
+        if (MATCHER_HOOK != null) {
+            matchInfo = MATCHER_HOOK.apply(lexicalState, this, position, activeTokenTypes, nfaFunctions, currentStates, nextStates, matchInfo);
+            if (matchInfo == null) {
+                matchInfo = getMatchInfo(this, position, activeTokenTypes, nfaFunctions, currentStates, nextStates, matchInfo);
+            }
+        } else {
+            matchInfo = getMatchInfo(this, position, activeTokenTypes, nfaFunctions, currentStates, nextStates, matchInfo);
+        }
         matchedType = matchInfo.matchedType;
         inMore = moreTokens.contains(matchedType);
         position += matchInfo.matchLength;
