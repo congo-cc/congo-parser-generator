@@ -21,6 +21,7 @@ import org.congocc.parser.tree.*;
  * This object is the root Node of the data structure that contains all the
  * information regarding a congocc processing job.
  */
+//@freemarker.annotations.Pojo
 public class Grammar extends BaseNode {
     private String defaultLexicalState;
     private LexerData lexerData = new LexerData(this);

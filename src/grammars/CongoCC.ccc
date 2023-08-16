@@ -192,8 +192,7 @@ UnparsedCodeBlock #org.congocc.core.UnparsedCodeBlock :
    )
 ;
 
-INJECT Node : @SuppressWarnings("unused")
-//INJECT Node : @freemarker.annotations.Pojo 
+INJECT Node : @freemarker.annotations.Pojo 
 
 INJECT BASE_NODE_CLASS :
     import org.congocc.app.*;

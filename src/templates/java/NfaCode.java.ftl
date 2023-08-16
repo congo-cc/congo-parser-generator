@@ -1,5 +1,5 @@
 [#var NFA_RANGE_THRESHOLD = 16]
-[#var multipleLexicalStates = grammar.lexerData.lexicalStates.size()>1]
+[#var multipleLexicalStates = grammar.lexerData.lexicalStates?size >1]
 [#--
   Generate all the NFA transition code
   for the given lexical state
