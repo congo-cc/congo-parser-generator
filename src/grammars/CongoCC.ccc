@@ -192,10 +192,14 @@ UnparsedCodeBlock #org.congocc.core.UnparsedCodeBlock :
    )
 ;
 
+INJECT Node : @SuppressWarnings("unused")
+//INJECT Node : @freemarker.annotations.Pojo 
+
 INJECT BASE_NODE_CLASS :
     import org.congocc.app.*;
     import org.congocc.core.Grammar;
     import PARSER_PACKAGE.Token.TokenType;
+    @SuppressWarnings("unused")
     implements Node; 
 {
     protected void setChildren(List<Node> children) {

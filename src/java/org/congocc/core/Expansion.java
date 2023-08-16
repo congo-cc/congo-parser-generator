@@ -20,9 +20,6 @@ abstract public class Expansion extends BaseNode {
         return getParent().indexOf(this);
     }
 
-    public Expansion() {
-    }
-
     public final BNFProduction getContainingProduction() {
         return firstAncestorOfType(BNFProduction.class);
     }

@@ -186,10 +186,12 @@ public class ${settings.baseNodeClassName} implements Node {
     }
 
     public boolean addAll(Collection<? extends Node> nodes) {
+        for (Node n : nodes) n.setParent(this);
         return children.addAll(nodes);
     }
 
     public boolean addAll(int i, Collection<? extends Node> nodes) {
+        for (Node n : nodes) n.setParent(this);
         return children.addAll(i, nodes);
     }
 
