@@ -180,10 +180,11 @@
    if (${nodeVarName}!=null) {
       if (${parseExceptionVar} == null) {
    [#if treeNodeBehavior?? && treeNodeBehavior.LHS??]
+      [#var LHS = getLhsPattern(treeNodeBehavior)]
          if (closeNodeScope(${nodeVarName}, ${closeCondition(treeNodeBehavior)})) {
-            ${treeNodeBehavior.LHS} = (${nodeClassName(treeNodeBehavior)}) peekNode();
+            ${LHS?replace("@", "(" + nodeClassName(treeNodeBehavior) + ") peekNode()")};
          } else{
-            ${treeNodeBehavior.LHS} = null;
+            ${LHS?replace("@", "null")};
          }
    [#else]
          closeNodeScope(${nodeVarName}, ${closeCondition(treeNodeBehavior)}); 
@@ -315,12 +316,9 @@
 [/#macro]
 
 [#macro BuildCodeTerminal terminal]
-   [#var LHS = "", regexp=terminal.regexp]
-   [#if terminal.lhs??]
-      [#set LHS = terminal.lhs + "="]
-   [/#if]
+   [#var LHS = getLhsPattern(terminal), regexp=terminal.regexp]
    [#if !settings.faultTolerant]
-       ${LHS} consumeToken(${regexp.label});
+       ${LHS?replace("@", "consumeToken(" + regexp.label + ")")};
    [#else]
        [#var tolerant = terminal.tolerantParsing?string("true", "false")]
        [#var followSetVarName = terminal.followSetVarName]
@@ -332,7 +330,7 @@
             ${followSetVarName}.addAll(outerFollowSet);
          }
        [/#if]
-       ${LHS} consumeToken(${regexp.label}, ${tolerant}, ${followSetVarName});
+       ${LHS?replace("@", "consumeToken(" + regexp.label + ", " + tolerant + ", " + followSetVarName + ")")};
    [/#if]
    [#if !terminal.childName?is_null && !globals.currentNodeVariableName?is_null]
     if (buildTree) {
@@ -346,6 +344,21 @@
     }
    [/#if]
 [/#macro]
+
+[#function getLhsPattern expansion]
+   [#if expansion.LHS??]
+      [#var LHS = expansion.LHS]
+      [#if expansion.isLhsProperty?? && expansion.isLhsProperty()]
+         [#set LHS = LHS?cap_first]
+         [#-- It a property setter --]
+         [#return "thisProduction.set" + LHS + "(@)" /]
+      [/#if]
+      [#-- It needs simple assignment --]
+      [#return LHS + " = @" /]
+   [/#if]
+   [#-- There is no LHS --]
+   [#return "@" /]
+[/#function]
 
 [#macro BuildCodeTryBlock tryblock]
      try {
@@ -389,37 +402,43 @@
       [/#if]
    [/#if]
    try {
-   [#if nonterminal.LHS??]
-      [#set LHS = nonterminal.LHS]
-   [/#if]
-   [#if LHS?? && production.returnType != "void"]
-       ${LHS} = 
-   [/#if]
-      ${nonterminal.name}(${nonterminal.args!});
-   [#if LHS?? && production.returnType = "void"]
-      try {
-         ${LHS} = (${production.nodeName}) peekNode();
-      } catch (ClassCastException cce) {
-         ${LHS} = null;
-      }
-   [/#if]
-   [#if !nonterminal.childName?is_null]
-        if (buildTree) {
-            Node child = peekNode();
-            String name = "${nonterminal.childName}";
-    [#if nonterminal.multipleChildren]
-            ${globals.currentNodeVariableName}.addToNamedChildList(name, child);
-    [#else]
-            ${globals.currentNodeVariableName}.setNamedChild(name, child);
-    [/#if]
-        }
-   [/#if]
+      [@AcceptNonTerminal nonterminal /]
    } 
    finally {
        popCallStack();
    }
 [/#macro]
 
+[#macro AcceptNonTerminal nonterminal]
+   [#var expressedLHS = getLhsPattern(nonterminal)]
+   [#-- Accept the non-terminal expansion --]
+   [#if nonterminal.production.returnType != "void" && expressedLHS != "@"]
+      [#-- Not a void production, so accept and clear the expressedLHS, it has already been applied. --]
+      ${expressedLHS?replace("@", nonterminal.name + "(" + nonterminal.args! + ")")};
+      [#set expressedLHS = "@"]
+   [#else]
+      ${nonterminal.name}(${nonterminal.args!});
+   [/#if]
+   [#if expressedLHS != "@"]
+      try {
+         [#-- There had better be a node here! --]
+         ${expressedLHS?replace("@", "(" + nonterminal.production.nodeName + ") peekNode()")};
+      } catch (ClassCastException cce) {
+         ${expressedLHS?replace("@", "null")};
+      }
+   [/#if]
+   [#if nonterminal.childName??]
+      if (buildTree) {
+         Node child = peekNode();
+         String name = "${nonterminal.childName}";
+      [#if nonterminal.multipleChildren]
+         ${globals.currentNodeVariableName}.addToNamedChildList(name, child);
+      [#else]
+         ${globals.currentNodeVariableName}.setNamedChild(name, child);
+      [/#if]
+      }
+   [/#if] 
+[/#macro]
 
 [#macro BuildCodeZeroOrOne zoo]
     [#if zoo.nestedExpansion.class.simpleName = "ExpansionChoice"]

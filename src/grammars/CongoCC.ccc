@@ -765,7 +765,7 @@ InlineTreeNodeDescriptor #TreeBuildingAnnotation :
   [ 
       <BACKSLASH>
     |
-      Name {CURRENT_NODE.setLHS((Name)peekNode());} "=" 
+      [ "@" {CURRENT_NODE.setLhsProperty(true);} ] Name {CURRENT_NODE.setLHS((Name)peekNode());} "=" 
       =>||
   ]
   <HASH> =>|| 
@@ -798,6 +798,7 @@ INJECT TreeBuildingAnnotation :
     @Property String initialShorthand;
     @Property Expression condition;
     @Property Name LHS;
+    @Property boolean lhsProperty = false;
     /**
      * Just returns whatever comes after the hash ("#") including "void", etc.
      */
@@ -1267,6 +1268,7 @@ ExpansionUnit #void :
 
 #NonTerminal #org.congocc.core.NonTerminal :
   [
+    ["@" {CURRENT_NODE.setLhsProperty(true);} ] 
     Name {CURRENT_NODE.setLHS((Name)peekNode());} "=" 
     =>||
   ]
@@ -1290,11 +1292,12 @@ ExpansionUnit #void :
 ;
 
 Terminal# :
-  SCAN [Name "="] (<STRING_LITERAL>|<CHARACTER_LITERAL>|<SINGLE_QUOTE_STRING>|"<")
+  SCAN ["@"] [Name "="] (<STRING_LITERAL>|<CHARACTER_LITERAL>|<SINGLE_QUOTE_STRING>|"<")
   =>
   [
-    SCAN ~\...\Lookahead Name "=" =>
-    Name {CURRENT_NODE.setLhs((Name) peekNode());}
+    SCAN ~\...\Lookahead ["@"] Name "=" =>
+    ["@" {CURRENT_NODE.setLhsProperty(true);} ]
+    Name {CURRENT_NODE.setLHS((Name) peekNode());}
     "="
   ]
   ACTIVATE_TOKENS _EOF(RegexpStringLiteral | RegexpRef | EndOfFile ) 
@@ -1327,7 +1330,8 @@ INJECT Terminal :
    extends Expansion
 {
     @Property RegularExpression regexp;
-    @Property Name lhs;
+    @Property Name LHS;
+    @Property boolean lhsProperty;
     @Property String label;
 
     public int getOrdinal() {
