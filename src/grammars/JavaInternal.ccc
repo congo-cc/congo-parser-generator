@@ -34,11 +34,8 @@ INJECT CompilationUnit :
     }
 
     public void addImportDeclaration(ImportDeclaration decl) {
-        Node firstTypeDeclaration = firstChildOfType(TypeDeclaration.class);
-        if (firstTypeDeclaration == null) {
-          firstTypeDeclaration = firstChildOfType(Delimiter.class); //lone semicolon, I suppose
-        }
-        addChild(indexOf(firstTypeDeclaration), decl);
+        PackageDeclaration pd = firstChildOfType(PackageDeclaration.class);
+        add(1+indexOf(pd), decl);
     }
 }
 
