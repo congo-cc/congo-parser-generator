@@ -62,23 +62,33 @@ TOKEN #Literal :
     <NUMBER : ("-")?(<ZERO>|<NON_ZERO>)(<FRACTION>)?(<EXPONENT>)?> #NumberLiteral
 ;
 
-#if use_experimental_feature
+#if use_experimental_feature && __java__
 INJECT Array :
 {
-    public Values values;
+    @Property Values values;
+    @Property Token lastComma;
+    @Property Value firstValue;
+    @Property Value lastValue;
 }
-#endif
 
 Array :
     <OPEN_BRACKET>
     [
-      Value  (<COMMA> Value)*!
-    ] 
-  #if use_experimental_feature
-    thisProduction.values = #Values
-  #endif
+      @firstValue = Value  ( @lastComma = <COMMA> @lastValue = Value)*!
+    ]
+    @values = #Values
     <CLOSE_BRACKET>
 ;
+#else
+
+Array :
+    <OPEN_BRACKET>
+    [
+      Value  ( <COMMA> Value)*!
+    ]
+    <CLOSE_BRACKET>
+;
+#endif
 
 Value :
     <TRUE>
