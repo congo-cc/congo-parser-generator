@@ -142,7 +142,11 @@ PackageDeclaration :
     (Annotation)*
     <PACKAGE>
     =>||
-    Name {CURRENT_NODE.setPackageName((Name) peekNode());} 
+#if __java__
+    @packageName = Name
+#else
+    Name {CURRENT_NODE.setPackageName((Name) peekNode());}
+#endif    
     <SEMICOLON>
 ;
 
@@ -868,7 +872,11 @@ LiteralExpression# : Literal ;
 
 Parentheses :
     <LPAREN>
+#if __java__
+    @nestedExpression = Expression
+#else
     Expression {CURRENT_NODE.setNestedExpression((Expression) peekNode());}
+#endif    
     <RPAREN>
 ;
 

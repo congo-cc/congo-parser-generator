@@ -7,8 +7,12 @@ import java.util.Set;
 public class NonTerminal extends Expansion {
     
     private Name LHS;
+    private boolean lhsProperty;
+    
     public Name getLHS() {return LHS;}
     public void setLHS(Name LHS) {this.LHS=LHS;}
+    public boolean isLhsProperty() {return lhsProperty;}
+    public void setLhsProperty(boolean lhsProperty) {this.lhsProperty=lhsProperty;}
 
     /**
      * The production this non-terminal corresponds to.
