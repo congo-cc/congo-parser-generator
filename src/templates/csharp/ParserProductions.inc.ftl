@@ -47,7 +47,7 @@
             CURRENT_NODE.
             --]
             [#set topLevelExpansion = false]
-            ${BuildCode(production, 12)}
+            ${BuildCode(production)}
         }
         // end of Parse${production.name}${globals.endProduction()}
 
