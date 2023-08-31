@@ -342,7 +342,7 @@ ${globals.translateCodeBlock(expansion, indent)}
       [@BuildCodeAttemptBlock expansion indent/]
    [#else]
       [#-- take care of the tree node (if any) --]
-      [@TreeBuildingAndRecovery expansion]
+      [@TreeBuildingAndRecovery expansion indent; indent]
          [#if classname = "BNFProduction"]
             [#-- The tree node having been built, now build the actual top-level expansion --]
             [#set topLevelExpansion = true]
