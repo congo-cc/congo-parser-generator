@@ -593,7 +593,7 @@ while (true) {
 [#-- // DBG < BuildCodeZeroOrMore --]
 [/#macro]
 
-[#macro RecoveryLoop loopExpansion
+[#macro RecoveryLoop loopExpansion]
 [#-- // DBG > RecoveryLoop --]
 [#if !settings.faultTolerant || !loopExpansion.requiresRecoverMethod]
 ${BuildCode(loopExpansion.nestedExpansion)}
