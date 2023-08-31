@@ -322,7 +322,7 @@ if (BuildTree) {
    [#return NODE_PREFIX + currentProduction.name]
 [/#function]
 
-[#macro BuildExpansionCode expansion]
+[#macro BuildExpansionCode expansion indent]
    [#var classname=expansion.simpleName]
    [#var prevLexicalStateVar = CU.newVarName("previousLexicalState")]
    [#-- take care of the non-tree-building classes --]
