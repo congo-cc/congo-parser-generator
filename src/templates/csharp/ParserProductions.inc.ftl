@@ -486,9 +486,7 @@ if (OuterFollowSet != null) {
      [/#if]
    [/#if]
 try {
-   [/#if]
-   try {
-      [@AcceptNonTerminal nonterminal /]
+    [@AcceptNonTerminal nonterminal /]
 }
 finally {
     PopCallStack();
