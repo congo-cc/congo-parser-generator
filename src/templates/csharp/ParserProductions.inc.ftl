@@ -157,7 +157,7 @@ if (_pendingRecovery) {
             [#set nodeVarName = nodeVar(production??)]
         [/#if]
     [/#if]
-    [#if !buildTreeNode && !canRecover]
+    [#if !buildingTreeNode && !canRecover]
 ${globals.translateCodeBlock(javaCodePrologue, indent)}[#rt]
         [#nested indent]
     [#else]
