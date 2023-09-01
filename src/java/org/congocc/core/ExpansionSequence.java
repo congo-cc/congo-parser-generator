@@ -5,6 +5,12 @@ import org.congocc.parser.Node;
 import org.congocc.parser.tree.*;
 
 public class ExpansionSequence extends Expansion {
+	
+	/**
+	 * A marker interface in order to enumerate syntax element units within a sequence.
+	 *
+	 */
+	public interface SyntaxElement extends Node {}
 
     /**
      * @return a List that includes child expansions that are
@@ -19,6 +25,19 @@ public class ExpansionSequence extends Expansion {
             } 
         }
         return result;
+    }
+    
+    final int getNumberOfSyntaxElements() {
+    	return childrenOfType(SyntaxElement.class).size();
+    }
+    
+    /**
+     * Indicates that this {@link ExpansionSequence} is essential. That is, this
+     * represents a sequence of more than one syntactical elements.
+     * @return {@code true} iff the number of syntactical child elements > 1
+     */
+    public boolean isEssentialSequence() {
+    	return getNumberOfSyntaxElements() > 1;
     }
 
     Expansion firstNonEmpty() {
