@@ -143,7 +143,7 @@ PackageDeclaration :
     <PACKAGE>
     =>||
 #if __java__
-    @packageName = Name
+    Name {CURRENT_NODE.setPackageName((Name) peekNode());} // TODO: change to @packageName after jar refresh
 #else
     Name {CURRENT_NODE.setPackageName((Name) peekNode());}
 #endif    
@@ -152,7 +152,7 @@ PackageDeclaration :
 
 INJECT PackageDeclaration :
 {
-  @Property Name packageName;
+  @Property Name packageName;  // TODO: remove this injection after jar refresh
 }
 
 ImportDeclaration : <_IMPORT> [ <STATIC> ] Name [ <DOT> <STAR> ] <SEMICOLON> ;
@@ -873,7 +873,7 @@ LiteralExpression# : Literal ;
 Parentheses :
     <LPAREN>
 #if __java__
-    @nestedExpression = Expression
+    Expression {CURRENT_NODE.setNestedExpression((Expression) peekNode());} // TODO: change to @nestedExpression after jar refresh
 #else
     Expression {CURRENT_NODE.setNestedExpression((Expression) peekNode());}
 #endif    
@@ -881,7 +881,7 @@ Parentheses :
 ;
 
 INJECT Parentheses : implements PrimaryExpression {
-  @Property Expression nestedExpression;
+  @Property Expression nestedExpression; // TODO: remove this @Property after jar refresh
   public boolean isAssignableTo() {return nestedExpression.isAssignableTo();}
 }
 

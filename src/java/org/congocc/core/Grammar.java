@@ -430,6 +430,17 @@ public class Grammar extends BaseNode {
         checkForHooks(n, null);
         codeInjections.add(n);
     }
+    
+    /**
+     * Adds an injected field to the specified {@link Node} dynamically (post parsing).
+     * @param nodeName is the name of the {@code Node}
+     * @param modifiers is the string of modifiers needed (if any)
+     * @param className is the type of the field
+     * @param fieldName is the name of the field to be injected
+     */
+    public void addFieldInjection(String nodeName, String modifiers, String className, String fieldName) {
+    	CodeInjection.inject(this, nodeName, "{" + modifiers + " " + className + " " + fieldName + ";}");
+    }
 
     public boolean isInInclude() {
         return includeNesting >0;
