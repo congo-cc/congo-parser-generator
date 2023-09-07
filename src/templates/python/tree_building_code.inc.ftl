@@ -98,7 +98,7 @@
         if not isinstance(condition_or_num, bool):
             assert isinstance(condition_or_num, int)
             self.close_node_scope_numbered(n, condition_or_num)
-            return
+            return True
         if n and condition_or_num:
             n.end_offset = self.last_consumed_token.end_offset
             a = self.node_arity
@@ -123,3 +123,6 @@
 [/#list]
         else:
             self.current_node_scope.close()
+            return False
+        return True
+        
