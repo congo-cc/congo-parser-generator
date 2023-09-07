@@ -75,7 +75,7 @@
         * made the children of the definite node.  Then the definite node
         * is pushed on to the stack.
         */
-        private void CloseNodeScope(Node n, int num) {
+        private boolean CloseNodeScope(Node n, int num) {
             n.EndOffset = LastConsumedToken.EndOffset;
             CurrentNodeScope.Close();
             var nodes = new List<Node>();
@@ -95,6 +95,7 @@
     [#list grammar.closeNodeScopeHooks as hook]
             ${hook}(n);
     [/#list]
+            return true;
         }
 
         /*
@@ -104,7 +105,7 @@
         * on to the stack.  If the condition is false the node is not
         * constructed and they are left on the stack.
         */
-        private void CloseNodeScope(Node n, bool condition) {
+        private boolean CloseNodeScope(Node n, bool condition) {
             if (n!= null && condition) {
                 n.EndOffset = LastConsumedToken.EndOffset;
                 var a = NodeArity;
@@ -138,5 +139,7 @@
             }
             else {
                 CurrentNodeScope.Close();
+                return false;
             }
+            return true;
         }

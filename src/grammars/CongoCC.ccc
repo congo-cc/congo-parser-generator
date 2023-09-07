@@ -581,14 +581,11 @@ GrammarInclusion throws IOException :
 INJECT CodeInjection : 
    import java.util.List;
    import java.util.ArrayList;
-#if __java__
    import org.congocc.core.Grammar;
-#endif
 {
    public List<ObjectType> extendsList = new ArrayList<>();
    public List<ObjectType> implementsList = new ArrayList<>();
    public ClassOrInterfaceBody body;
-#if __java__
    public static void inject(Grammar grammar, String nodeName, String injection) {
         String inject = "INJECT " + nodeName + " : " + injection;
         CongoCCParser parser;
@@ -603,8 +600,7 @@ INJECT CodeInjection :
         } finally {
             parser = null;
         }        
-   }    
-#endif
+   }  
 
    public void addExtendsType(ObjectType type) {extendsList.add(type);}
    public void addImplementsType(ObjectType type) {implementsList.add(type);}
