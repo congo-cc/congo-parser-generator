@@ -9,11 +9,16 @@ public class NonTerminal extends Expansion implements SyntaxElement {
     
     private Name LHS;
     private boolean lhsProperty;
+    private boolean suppressInjection;
     
     public Name getLHS() {return LHS;}
     public void setLHS(Name LHS) {this.LHS=LHS;}
     public boolean isLhsProperty() {return lhsProperty;}
     public void setLhsProperty(boolean lhsProperty) {this.lhsProperty=lhsProperty;}
+    public boolean isSuppressInjection() {return suppressInjection;}
+    public void setSuppressInjection(boolean suppressInjection) {this.suppressInjection=suppressInjection;}
+    
+    //REVISIT: why are the above properties coded here instead of being injected as is the case for Expansion?
 
     /**
      * The production this non-terminal corresponds to.

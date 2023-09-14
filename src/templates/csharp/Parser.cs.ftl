@@ -165,28 +165,6 @@ ${globals.translateParserImports()}
         }
     }
 
-[#if settings.treeBuildingEnabled]
-    //
-    // AST nodes
-    //
-[#list globals.sortedNodeClassNames as node]
-  [#if !injector.hasInjectedCode(node)]
-    [#if globals.nodeIsInterface(node)]
-    public interface ${node} : Node {}
-    [#else]
-    public class ${node} : BaseNode {
-        public ${node}(Lexer tokenSource) : base(tokenSource) {}
-    }
-    [/#if]
-
-  [#else]
-${globals.translateInjectedClass(node)}
-
-  [/#if]
-[/#list]
-[/#if]
-
-
     public class Parser[#if unwanted!false] : IObservable<LogInfo>[/#if] {
 
         private const uint UNLIMITED = (1U << 31) - 1;
@@ -470,6 +448,26 @@ ${globals.translateParserInitializers()}
 
 [#embed "ErrorHandling.inc.ftl"]
 
+[#if settings.treeBuildingEnabled]
+    //
+    // AST nodes
+    //
+[#list globals.sortedNodeClassNames as node]
+  [#if !injector.hasInjectedCode(node)]
+    [#if globals.nodeIsInterface(node)]
+    public interface ${node} : Node {}
+    [#else]
+    public class ${node} : BaseNode {
+        public ${node}(Lexer tokenSource) : base(tokenSource) {}
+    }
+    [/#if]
+
+  [#else]
+${globals.translateInjectedClass(node)}
+
+  [/#if]
+[/#list]
+[/#if]
 
 ${globals.translateParserInjections(true)}
 ${globals.translateParserInjections(false)}
