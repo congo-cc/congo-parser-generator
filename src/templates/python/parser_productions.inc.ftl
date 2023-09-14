@@ -462,13 +462,12 @@ ${globals.popNodeVariableName()!}[#rt]
    [#if expansion.LHS??]
       [#var LHS = expansion.LHS]
       [#if expansion.lhsProperty?? && expansion.lhsProperty]
-         [#set LHS = LHS?cap_first]
          [#-- It a property setter --]
          [#if lhsType??]
             [#-- Type name specified; inject required property --]
             ${grammar.addFieldInjection(currentProduction.nodeName, "@Property", lhsType, expansion.LHS)}
          [/#if]
-         [#return "thisProduction.set" + LHS + "(@)" /]
+         [#return "thisProduction." + LHS + " = @" /]
       [/#if]
       [#-- It needs simple assignment --]
       [#return LHS + " = @" /]
@@ -684,11 +683,11 @@ ${is}${expressedLHS?replace("@", "self.parse_" + nonterminal.name + "(" + global
 ${is}${"self.parse_" + nonterminal.name + "(" + globals.translateNonterminalArgs(nonterminal.args) + ")"}
    [/#if]
    [#if expressedLHS != "@" || impliedLHS != "@"]
-${is}    try:
-         [#-- There had better be a node here! --]
-${is}        ${expressedLHS?replace("@", impliedLHS?replace("@", "self.peek_node()"))}
-${is}    except Exception:
-${is}        ${expressedLHS?replace("@", impliedLHS?replace("@", "None"))}
+${is}try:
+      [#-- There had better be a node here! --]
+${is}    ${expressedLHS?replace("@", impliedLHS?replace("@", "self.peek_node()"))}
+${is}except Exception:
+${is}    ${expressedLHS?replace("@", impliedLHS?replace("@", "None"))}
    [/#if]
    [#if !nonterminal.childName?is_null]
 ${is}if self.build_tree:

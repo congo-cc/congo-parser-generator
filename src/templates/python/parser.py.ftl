@@ -156,25 +156,8 @@ class ParseState:
         self.node_scope = parser.current_node_scope.clone()
 [/#if]
 
-[#if settings.treeBuildingEnabled]
-#
-# AST definitions
-#
-# Parser nodes
-#
-  [#list globals.sortedNodeClassNames as node]
-    [#if !injector.hasInjectedCode(node)]
-class ${node}(BaseNode): pass
-    [#else]
-${globals.translateInjectedClass(node)}
-    [/#if]
-
-
-  [/#list]
-[/#if]
 class InvalidNode(BaseNode):
     pass
-
 
 class Parser:
 
@@ -458,4 +441,22 @@ ${globals.translateParserInjections(true)}
         return False
 
 [/#if]
+
+[#if settings.treeBuildingEnabled]
+#
+# AST definitions
+#
+# Parser nodes
+#
+  [#list globals.sortedNodeClassNames as node]
+    [#if !injector.hasInjectedCode(node)]
+class ${node}(BaseNode): pass
+    [#else]
+${globals.translateInjectedClass(node)}
+    [/#if]
+
+
+  [/#list]
+[/#if]
+
 ${globals.translateParserInjections(false)}
