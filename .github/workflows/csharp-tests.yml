@@ -2,7 +2,7 @@ name: CSharp Generation Tests
 
 on:
   push:
-    branches: [ main ]
+    branches: [ main, lua-tests ]
     paths:
         - '**'
         - '!**/*.md'
