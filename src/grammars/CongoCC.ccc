@@ -524,7 +524,7 @@ GrammarInclusion throws IOException :
    }
 ;
 
-CodeInjection :
+#CodeInjection :
 {
     boolean isInterface = false;
     boolean isSealed=false;
@@ -573,16 +573,33 @@ CodeInjection :
                 if (enterIncludes) {
                     grammar.addCodeInjection(CURRENT_NODE);
                 }
+                return CURRENT_NODE;
         }
 ;
 
 INJECT CodeInjection : 
    import java.util.List;
    import java.util.ArrayList;
+   import org.congocc.core.Grammar;
 {
    public List<ObjectType> extendsList = new ArrayList<>();
    public List<ObjectType> implementsList = new ArrayList<>();
-   public ClassOrInterfaceBody body; 
+   public ClassOrInterfaceBody body;
+   public static void inject(Grammar grammar, String nodeName, String injection) {
+        String inject = "INJECT " + nodeName + " : " + injection;
+        CongoCCParser parser;
+        try {
+            parser = new CongoCCParser(grammar, "dynamicInjection", inject);
+            parser.setEnterIncludes(true);
+            CodeInjection ci = parser.CodeInjection();
+            grammar.getInjector().add(ci);
+        } catch (Exception e) {
+            //FIXME: need something better here!
+            System.err.println("parser exception: " + e.getLocalizedMessage());
+        } finally {
+            parser = null;
+        }        
+   }  
 
    public void addExtendsType(ObjectType type) {extendsList.add(type);}
    public void addImplementsType(ObjectType type) {implementsList.add(type);}
@@ -930,8 +947,15 @@ ExpansionWithParentheses :
 {
     Token lparen = null;
     LexicalStateSwitch lss=null;
+    Name LHS = null;
+    Token atPrefix = null;
 }
    [lss=LexicalStateSwitch | TokenActivation]
+   [
+       [ atPrefix = "@" ] 
+       LHS = Name "=" 
+       =>||
+   ]
    lparen ="(" =>|| ExpansionChoice {Expansion nested = (Expansion) peekNode();} ")"
    [
        "*" {CURRENT_NODE = new ZeroOrMore();}
@@ -940,6 +964,10 @@ ExpansionWithParentheses :
        |
        "+" {CURRENT_NODE = new OneOrMore();}
    ]
+   {
+        CURRENT_NODE.setLHS(LHS);
+        CURRENT_NODE.setLhsProperty(atPrefix != null);
+   }
    [
        SCAN ~\...\Lookahead => 
        "!" 
@@ -960,9 +988,14 @@ ExpansionWithParentheses :
 
 
 INJECT ExpansionWithParentheses : 
-   import org.congocc.core.*;
+   import org.congocc.core.*; 
+   import org.congocc.core.ExpansionSequence.*;
    extends ExpansionWithNested
+   implements SyntaxElement
 {
+    @Property Name LHS;
+    @Property boolean lhsProperty;
+    
     @Override 
     public String getSpecifiedLexicalState() {
         LexicalStateSwitch lss = firstChildOfType(LexicalStateSwitch.class);
@@ -1325,8 +1358,10 @@ Terminal# :
 
 INJECT Terminal :
    import org.congocc.core.*;
+   import org.congocc.core.ExpansionSequence.*;
    import java.util.Set;
    extends Expansion
+   implements SyntaxElement
 {
     @Property RegularExpression regexp;
     @Property Name LHS;
@@ -1376,6 +1411,11 @@ OneOrMore : "(" ExpansionChoice ")" "+";
 // The (...)? syntax is handled by ExpansionWithParentheses
 ZeroOrOne : 
     [LexicalStateSwitch | TokenActivation]
+    [
+        ["@" {CURRENT_NODE.setLhsProperty(true);} ] 
+        Name {CURRENT_NODE.setLHS((Name)peekNode());} "=" 
+        =>||
+    ]
     "[" =>|| ExpansionChoice {Expansion exp = (Expansion) peekNode();} "]"
      ["!" {exp.setTolerantParsing(true);}]
      [UpToHere(CURRENT_NODE)]
