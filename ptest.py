@@ -141,9 +141,12 @@ else:
 
 
 def main():
-    fn = os.path.expanduser('~/logs/ptest.log')
-    logging.basicConfig(level=logging.DEBUG, filename=fn, filemode='w',
-                        format='%(message)s')
+    fn = os.path.basename(__file__)
+    fn = os.path.splitext(fn)[0]
+    lfn = os.path.expanduser('~/logs/%s.log' % fn)
+    if os.path.isdir(os.path.dirname(lfn)):
+        logging.basicConfig(level=logging.DEBUG, filename=lfn, filemode='w',
+                            format='%(message)s')
     adhf = argparse.ArgumentDefaultsHelpFormatter
     ap = argparse.ArgumentParser(formatter_class=adhf)
     aa = ap.add_argument
@@ -293,9 +296,9 @@ def main():
                             done = t.Type == TokenType.EOF
                         else:
                             done = t.type == TokenType.EOF
-            except Exception as e:
+            except Exception:
                 import traceback
-                traceback.print_exc(e)
+                traceback.print_exc()
             finally:
                 try:
                     if f:

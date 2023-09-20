@@ -1,10 +1,11 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 #
-# Copyright (C) 2021-2022 Vinay Sajip (vinay_sajip@yahoo.co.uk)
+# Copyright (C) 2021-2023 Vinay Sajip (vinay_sajip@yahoo.co.uk)
 #
 import argparse
 import glob
+import logging
 import os
 import re
 import shutil
@@ -18,6 +19,8 @@ DEBUGGING = 'PY_DEBUG' in os.environ
 
 JYTHON_PATH = None
 VERSION_PATTERN = re.compile(r'\((\d+), (\d+), (\d+).*\)')
+
+logger = logging.getLogger(__name__)
 
 def check_jython(options):
     # First check for Java and Java compiler being available
@@ -76,7 +79,7 @@ def copy_files(srcdir, destdir, patterns):
             # print('%s -> %s' % (p, dp))
 
 def run_command(cmd, **kwargs):
-    # print(' '.join(cmd))
+    logger.debug('Running: %s', ' '.join(cmd))
     return subprocess.run(cmd, **kwargs)
 
 def test_grammar(gdata, options):
@@ -87,10 +90,9 @@ def test_grammar(gdata, options):
     print(s)
     print(line)
 
-    # Create a temp directory and copy files into it.
+    # Copy files into working directory
 
-    workdir = tempfile.mkdtemp(prefix='congocc-python-test-')
-    gdata.workdir = workdir
+    workdir = gdata.workdir
     print('Working directory: %s' % workdir)
     if hasattr(gdata, 'srcdir'):
         sd = gdata.srcdir
@@ -178,6 +180,17 @@ def test_grammar(gdata, options):
         raise ValueError('Parser generation in Python failed')
     print('Python version of lexer and parser created.')
 
+    # Compare differences between the directories
+
+    def compare_diffs():
+        cmd = ['diff', os.path.join('testfiles', 'results', 'java'),
+               os.path.join('testfiles', 'results', 'python')]
+        if os.name == 'nt':
+            cmd.insert(1, '-b')
+        p = run_command(cmd, cwd=dd)
+        if p.returncode:
+            raise ValueError('Test results differ - should be identical')
+
     # Run Python to create the Python test result files
     # For C#, you can't run the lexer standalone, because the parser switches lexical
     # states during e.g. string parsing
@@ -202,17 +215,7 @@ def test_grammar(gdata, options):
         raise ValueError('Python parser test run failed')
     elapsed = time.time() - start
     print('Python parser run completed (%.2f secs).' % elapsed)
-
-    # Compare differences between the directories
-
-    cmd = ['diff', os.path.join('testfiles', 'results', 'java'),
-           os.path.join('testfiles', 'results', 'python')]
-    if os.name == 'nt':
-        cmd.insert(1, '-b')
-    p = run_command(cmd, cwd=dd)
-    if p.returncode:
-        raise ValueError('Test results differ - '
-                         'should be identical')
+    compare_diffs()
     print('Results for Python & Java '
           'lexers & parsers are identical - yay!')
 
@@ -274,13 +277,26 @@ def main():
                             jparser='org.parsers.python.PythonParser',
                             ppackage='pythonparser', ext='.py',
                             production='Module'),
+        'lua': Namespace(name='Lua', dir='lua',
+                            grammar='Lua.ccc',
+                            files=['*.ccc', 'testfiles'],
+                            jlexer='org.parsers.lua.LuaLexer',
+                            jparser='org.parsers.lua.LuaParser',
+                            ppackage='luaparser', ext='.lua',
+                            production='Root'),
     }
     try:
         langs = options.langs.split(',')
         for lang, gdata in languages.items():
             if options.langs == 'all' or lang in langs:
+                # For now, skip lua tests unless invoked explicitly
+                # (as they don't work yet)
+                if options.langs == 'all' and lang == 'lua':
+                    continue
+                workdir = tempfile.mkdtemp(prefix='congocc-python-test-')
+                workdirs.append(workdir)
+                gdata.workdir = workdir
                 test_grammar(gdata, options)
-                workdirs.append(gdata.workdir)
 
     except Exception as e:
         print('Failed: %s.' % e)
@@ -298,6 +314,12 @@ def main():
 
 if __name__ == '__main__':
     try:
+        fn = os.path.basename(__file__)
+        fn = os.path.splitext(fn)[0]
+        lfn = os.path.expanduser('~/logs/%s.log' % fn)
+        if os.path.isdir(os.path.dirname(lfn)):
+            logging.basicConfig(level=logging.DEBUG, filename=lfn, filemode='w',
+                                format='%(message)s')
         rc = main()
     except KeyboardInterrupt:
         rc = 2
