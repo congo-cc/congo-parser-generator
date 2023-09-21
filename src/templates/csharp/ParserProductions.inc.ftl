@@ -269,7 +269,7 @@ finally {
             [#-- We do need to insert a node --]
             [#if !jtbParseTree]
                [#-- Use BASE_NODE type for type for assignment rather than syntactic type --][#-- (jb) is there a reason to use the syntactic type always?  I don't think so. --]
-               [#set nodeName = settings.baseNodeClassName]
+               [#set nodeName = "Node"]
             [/#if]
             [#set treeNodeBehavior = {
                                        'nodeName' : nodeName, 
@@ -277,9 +277,10 @@ finally {
                                        'gtNode' : false,
                                        'void' : false, 
                                        'LHS' : expansion.LHS,
-                                       'lhsProperty' : expansion.lhsProperty
+                                       'lhsProperty' : expansion.lhsProperty,
+                                       'suppressInjection' : expansion.suppressInjection
                                     } /]
-            [#if expansion.lhsProperty]
+            [#if expansion.lhsProperty && !expansion.suppressInjection]
                [#-- Inject the receiving property --]
                ${grammar.addFieldInjection(currentProduction.nodeName, "@Property", nodeName, expansion.LHS)}
             [/#if]
@@ -288,7 +289,7 @@ finally {
                treeNodeBehavior.LHS?? &&
                isProductionInstantiatingNode(expansion)]
          [#-- There is an explicit tree node annotation; make sure a property is injected if needed. --]
-         [#if treeNodeBehavior.lhsProperty]
+         [#if treeNodeBehavior.lhsProperty && !treeNodeBehavior.suppressInjection]
             ${grammar.addFieldInjection(currentProduction.nodeName, "@Property", treeNodeBehavior.nodeName, treeNodeBehavior.LHS)}
          [/#if]
       [#elseif jtbParseTree && expansion.parent.simpleName != "ExpansionWithParentheses" && isProductionInstantiatingNode(expansion)]
@@ -316,7 +317,8 @@ finally {
                                           'initialShorthand' : initialShorthand,
                                           'void' : false, 
                                           'LHS' : "thisProduction.${nodeFieldName}",
-                                          'lhsProperty' : false
+                                          'lhsProperty' : false,
+                                          'suppressInjection' : false
                                        } /]
             [#else]
                [#-- Just provide the syntactic node with no LHS needed --]
@@ -462,11 +464,11 @@ if (BuildTree) {
       [#if expansion.lhsProperty?? && expansion.lhsProperty]
          [#set LHS = LHS?cap_first]
          [#-- It a property setter --]
-         [#if lhsType??]
+         [#if lhsType?? && (!expansion.suppressInjection?? || !expansion.suppressInjection)]
             [#-- Type name specified; inject required property --]
             ${grammar.addFieldInjection(currentProduction.nodeName, "@Property", lhsType, expansion.LHS)}
          [/#if]
-         [#return "thisProduction.set" + LHS + "(@)" /]
+         [#return "thisProduction." + LHS + " = @" /]
       [/#if]
       [#-- It needs simple assignment --]
       [#return LHS + " = @" /]
@@ -677,7 +679,7 @@ finally {
       try {
          [#-- There had better be a node here! --]
          ${expressedLHS?replace("@", impliedLHS?replace("@", "(" + nonterminal.production.nodeName + ") PeekNode()"))};
-      } catch (ClassCastException cce) {
+      } catch (InvalidCastException) {
          ${expressedLHS?replace("@", impliedLHS?replace("@", "null"))};
       }
    [/#if]

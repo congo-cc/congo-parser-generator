@@ -781,7 +781,10 @@ InlineTreeNodeDescriptor #TreeBuildingAnnotation :
   [ 
       <BACKSLASH>
     |
-      [ "@" {CURRENT_NODE.setLhsProperty(true);} ] Name {CURRENT_NODE.setLHS((Name)peekNode());} "=" 
+      [ "@" {CURRENT_NODE.setLhsProperty(true);} ] 
+      @LHS^ = Name 
+      [ "^" {CURRENT_NODE.setSuppressInjection(true);} ] 
+      "=" 
       =>||
   ]
   <HASH> =>|| 
@@ -815,6 +818,7 @@ INJECT TreeBuildingAnnotation :
     @Property Expression condition;
     @Property Name LHS;
     @Property boolean lhsProperty = false;
+    @Property boolean suppressInjection = false;
     /**
      * Just returns whatever comes after the hash ("#") including "void", etc.
      */
@@ -949,11 +953,14 @@ ExpansionWithParentheses :
     LexicalStateSwitch lss=null;
     Name LHS = null;
     Token atPrefix = null;
+    Token caret = null;
 }
    [lss=LexicalStateSwitch | TokenActivation]
    [
        [ atPrefix = "@" ] 
-       LHS = Name "=" 
+       LHS = Name 
+       [ caret = "^" ] 
+       "=" 
        =>||
    ]
    lparen ="(" =>|| ExpansionChoice {Expansion nested = (Expansion) peekNode();} ")"
@@ -967,6 +974,7 @@ ExpansionWithParentheses :
    {
         CURRENT_NODE.setLHS(LHS);
         CURRENT_NODE.setLhsProperty(atPrefix != null);
+        CURRENT_NODE.setSuppressInjection(caret != null);
    }
    [
        SCAN ~\...\Lookahead => 
@@ -995,6 +1003,7 @@ INJECT ExpansionWithParentheses :
 {
     @Property Name LHS;
     @Property boolean lhsProperty;
+    @Property boolean suppressInjection;
     
     @Override 
     public String getSpecifiedLexicalState() {
@@ -1078,7 +1087,7 @@ Lookahead# :
    Name name = null;
    Node lb = null;
 }
-[name=Name "=" =>|| {CURRENT_NODE.setLHS(name);}]
+[name=Name "=" =>|| {CURRENT_NODE.setLHS(name);}] //FIXME: should this have lhsProperty and suppressInjection?  It seems to do nothing right now.
 <_SCAN>
 [
     <INTEGER_LITERAL> {hasExplicitNumericalLookahead = true;}
@@ -1301,7 +1310,9 @@ ExpansionUnit #void :
 #NonTerminal #org.congocc.core.NonTerminal :
   [
     ["@" {CURRENT_NODE.setLhsProperty(true);} ] 
-    Name {CURRENT_NODE.setLHS((Name)peekNode());} "=" 
+    @LHS^ = Name
+    [ "^" {CURRENT_NODE.setSuppressInjection(true);} ]
+    "=" 
     =>||
   ]
   <IDENTIFIER>
@@ -1330,6 +1341,7 @@ Terminal# :
     SCAN ~\...\Lookahead ["@"] Name "=" =>
     ["@" {CURRENT_NODE.setLhsProperty(true);} ]
     Name {CURRENT_NODE.setLHS((Name) peekNode());}
+    [ "^" {CURRENT_NODE.setSuppressInjection(true);} ] 
     "="
   ]
   ACTIVATE_TOKENS _EOF(RegexpStringLiteral | RegexpRef | EndOfFile ) 
@@ -1366,6 +1378,7 @@ INJECT Terminal :
     @Property RegularExpression regexp;
     @Property Name LHS;
     @Property boolean lhsProperty;
+    @Property boolean suppressInjection;
     @Property String label;
 
     public int getOrdinal() {
@@ -1412,8 +1425,10 @@ OneOrMore : "(" ExpansionChoice ")" "+";
 ZeroOrOne : 
     [LexicalStateSwitch | TokenActivation]
     [
-        ["@" {CURRENT_NODE.setLhsProperty(true);} ] 
-        Name {CURRENT_NODE.setLHS((Name)peekNode());} "=" 
+        [ "@" {CURRENT_NODE.setLhsProperty(true);} ] 
+        @LHS^ = Name
+        [ "^" {CURRENT_NODE.setSuppressInjection(true);} ] 
+        "=" 
         =>||
     ]
     "[" =>|| ExpansionChoice {Expansion exp = (Expansion) peekNode();} "]"

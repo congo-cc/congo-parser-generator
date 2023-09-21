@@ -281,9 +281,10 @@ ${is}    self.currently_parsed_production = prev_production
                                        'gtNode' : false,
                                        'void' : false, 
                                        'LHS' : expansion.LHS,
-                                       'lhsProperty' : expansion.lhsProperty
+                                       'lhsProperty' : expansion.lhsProperty,
+                                       'suppressInjection' : expansion.suppressInjection
                                     } /]
-            [#if expansion.lhsProperty]
+            [#if expansion.lhsProperty && !expansion.suppressInjection]
                [#-- Inject the receiving property --]
 ${grammar.addFieldInjection(currentProduction.nodeName, "@Property", nodeName, expansion.LHS)}[#t]
             [/#if]
@@ -292,7 +293,7 @@ ${grammar.addFieldInjection(currentProduction.nodeName, "@Property", nodeName, e
                treeNodeBehavior.LHS?? &&
                isProductionInstantiatingNode(expansion)]
          [#-- There is an explicit tree node annotation; make sure a property is injected if needed. --]
-         [#if treeNodeBehavior.lhsProperty]
+         [#if treeNodeBehavior.lhsProperty && !treeNodeBehavior.suppressInjection]
 ${grammar.addFieldInjection(currentProduction.nodeName, "@Property", treeNodeBehavior.nodeName, treeNodeBehavior.LHS)}[#t]
          [/#if]
       [#elseif jtbParseTree && expansion.parent.simpleName != "ExpansionWithParentheses" && isProductionInstantiatingNode(expansion)]
@@ -320,7 +321,8 @@ ${grammar.addFieldInjection(currentProduction.nodeName, "@Property", treeNodeBeh
                                           'initialShorthand' : initialShorthand,
                                           'void' : false, 
                                           'LHS' : "thisProduction.${nodeFieldName}",
-                                          'lhsProperty' : false
+                                          'lhsProperty' : false,
+                                          'suppressInjection' : false
                                        } /]
             [#else]
                [#-- Just provide the syntactic node with no LHS needed --]
@@ -462,13 +464,12 @@ ${globals.popNodeVariableName()!}[#rt]
    [#if expansion.LHS??]
       [#var LHS = expansion.LHS]
       [#if expansion.lhsProperty?? && expansion.lhsProperty]
-         [#set LHS = LHS?cap_first]
          [#-- It a property setter --]
-         [#if lhsType??]
+         [#if lhsType?? && (!expansion.suppressInjection?? || !expansion.suppressInjection)]
             [#-- Type name specified; inject required property --]
             ${grammar.addFieldInjection(currentProduction.nodeName, "@Property", lhsType, expansion.LHS)}
          [/#if]
-         [#return "thisProduction.set" + LHS + "(@)" /]
+         [#return "thisProduction." + LHS + " = @" /]
       [/#if]
       [#-- It needs simple assignment --]
       [#return LHS + " = @" /]
@@ -684,11 +685,11 @@ ${is}${expressedLHS?replace("@", "self.parse_" + nonterminal.name + "(" + global
 ${is}${"self.parse_" + nonterminal.name + "(" + globals.translateNonterminalArgs(nonterminal.args) + ")"}
    [/#if]
    [#if expressedLHS != "@" || impliedLHS != "@"]
-${is}    try:
-         [#-- There had better be a node here! --]
-${is}        ${expressedLHS?replace("@", impliedLHS?replace("@", "self.peek_node()"))}
-${is}    except Exception:
-${is}        ${expressedLHS?replace("@", impliedLHS?replace("@", "None"))}
+${is}try:
+      [#-- There had better be a node here! --]
+${is}    ${expressedLHS?replace("@", impliedLHS?replace("@", "self.peek_node()"))}
+${is}except Exception:
+${is}    ${expressedLHS?replace("@", impliedLHS?replace("@", "None"))}
    [/#if]
    [#if !nonterminal.childName?is_null]
 ${is}if self.build_tree:

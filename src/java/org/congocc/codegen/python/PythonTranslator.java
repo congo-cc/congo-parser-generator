@@ -369,7 +369,13 @@ public class PythonTranslator extends Translator {
                 renderReceiver(receiver, result);
                 result.append('.');
             }
-            String ident = translateIdentifier(methodName, TranslationContext.METHOD);
+            String ident;
+            if ((nargs == 1) && (methodName.equals("startsWith") || methodName.equals("endsWith"))) {
+                ident = methodName.toLowerCase();
+            }
+            else {
+                ident = translateIdentifier(methodName, TranslationContext.METHOD);
+            }
             result.append(ident);
             translateArguments(expr.getArguments(), true, result);
         }
