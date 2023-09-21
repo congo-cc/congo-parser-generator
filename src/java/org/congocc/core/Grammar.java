@@ -75,7 +75,11 @@ public class Grammar extends BaseNode {
     }
 
     public void setSettings(Map<String, Object> settings) {
-        appSettings.setSettings((settings));
+        appSettings.setSettings((settings));        
+        if (appSettings.getSyntheticNodesEnabled() && appSettings.getCodeLang().equals("java")) {
+        	addNodeType(null, appSettings.getBaseNodeClassName());
+        }
+
     }
 
     public Map<String,String> getPreprocessorSymbols() {
