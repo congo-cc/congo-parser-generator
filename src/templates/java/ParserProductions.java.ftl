@@ -490,7 +490,7 @@
       [#if expansion.lhsProperty?? && expansion.lhsProperty]
          [#set LHS = LHS?cap_first]
          [#-- It a property setter --]
-         [#if lhsType?? && (!expansion.suppressInjection?? || !expansion.suppressInjection)]
+         [#if lhsType?? && (!expansion.suppressInjection?? || !expansion.suppressInjection)][!-- FIXME: when is expansion.suppressInjection not defined? --]
             [#-- Type name specified; inject required property --]
             ${grammar.addFieldInjection(currentProduction.nodeName, "@Property", lhsType, expansion.LHS)}
          [/#if]
