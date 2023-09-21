@@ -281,9 +281,10 @@ ${is}    self.currently_parsed_production = prev_production
                                        'gtNode' : false,
                                        'void' : false, 
                                        'LHS' : expansion.LHS,
-                                       'lhsProperty' : expansion.lhsProperty
+                                       'lhsProperty' : expansion.lhsProperty,
+                                       'suppressInjection' : expansion.suppressInjection
                                     } /]
-            [#if expansion.lhsProperty]
+            [#if expansion.lhsProperty && !expansion.suppressInjection]
                [#-- Inject the receiving property --]
 ${grammar.addFieldInjection(currentProduction.nodeName, "@Property", nodeName, expansion.LHS)}[#t]
             [/#if]
@@ -292,7 +293,7 @@ ${grammar.addFieldInjection(currentProduction.nodeName, "@Property", nodeName, e
                treeNodeBehavior.LHS?? &&
                isProductionInstantiatingNode(expansion)]
          [#-- There is an explicit tree node annotation; make sure a property is injected if needed. --]
-         [#if treeNodeBehavior.lhsProperty]
+         [#if treeNodeBehavior.lhsProperty && !treeNodeBehavior.suppressInjection]
 ${grammar.addFieldInjection(currentProduction.nodeName, "@Property", treeNodeBehavior.nodeName, treeNodeBehavior.LHS)}[#t]
          [/#if]
       [#elseif jtbParseTree && expansion.parent.simpleName != "ExpansionWithParentheses" && isProductionInstantiatingNode(expansion)]
@@ -320,7 +321,8 @@ ${grammar.addFieldInjection(currentProduction.nodeName, "@Property", treeNodeBeh
                                           'initialShorthand' : initialShorthand,
                                           'void' : false, 
                                           'LHS' : "thisProduction.${nodeFieldName}",
-                                          'lhsProperty' : false
+                                          'lhsProperty' : false,
+                                          'suppressInjection' : false
                                        } /]
             [#else]
                [#-- Just provide the syntactic node with no LHS needed --]
@@ -463,7 +465,7 @@ ${globals.popNodeVariableName()!}[#rt]
       [#var LHS = expansion.LHS]
       [#if expansion.lhsProperty?? && expansion.lhsProperty]
          [#-- It a property setter --]
-         [#if lhsType??]
+         [#if lhsType?? && (!expansion.suppressInjection?? || !expansion.suppressInjection)]
             [#-- Type name specified; inject required property --]
             ${grammar.addFieldInjection(currentProduction.nodeName, "@Property", lhsType, expansion.LHS)}
          [/#if]
