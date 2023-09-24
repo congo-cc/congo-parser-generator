@@ -63,20 +63,13 @@ TOKEN #Literal :
 ;
 
 #if use_experimental_feature && __java__
-INJECT Array :
-{
-    @Property Values values;
-    @Property Token lastComma;
-    @Property Value firstValue;
-    @Property Value lastValue;
-}
 
 Array :
     <OPEN_BRACKET>
     [
-      @firstValue = Value  ( @lastComma = <COMMA> @lastValue = Value)*!
+      @firstValue := Value  ( @lastComma := <COMMA> @lastValue := Value)*!
     ]
-    @values = #Values
+    @values := #Values
     <CLOSE_BRACKET>
 ;
 #else

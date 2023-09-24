@@ -596,7 +596,8 @@ INJECT CodeInjection :
             grammar.getInjector().add(ci);
         } catch (Exception e) {
             //FIXME: need something better here!
-            System.err.println("parser exception: " + e.getLocalizedMessage());
+            System.err.println("parser exception injecting '" + inject + "': ");
+            throw new RuntimeException("Unable to dynamically inject code into " + nodeName);
         } finally {
             parser = null;
         }        
@@ -723,9 +724,10 @@ BNFProduction #org.congocc.core.BNFProduction :
     [
        SCAN ReturnType <IDENTIFIER> => ReturnType
        |
-       "#" {CURRENT_NODE.setImplicitReturnType(true);}
+       @implicitReturnType =? "#" 
     ]
     id=<IDENTIFIER> {CURRENT_NODE.setName(id.toString());}
+    // @name =$ <IDENTIFIER>
     [FormalParameters]
     [
       ThrowsList
@@ -739,12 +741,12 @@ BNFProduction #org.congocc.core.BNFProduction :
         }
     ]
     [
-        "RECOVER_TO" ExpansionChoice
-        {CURRENT_NODE.setRecoveryExpansion((Expansion)peekNode());} 
+        "RECOVER_TO" @recoveryExpansion = ExpansionChoice
     ]
     ":"
     [
         SCAN 2 => <IDENTIFIER> 
+        // SCAN 2 => @lexicalState =$ <IDENTIFIER> 
         {CURRENT_NODE.setLexicalState(lastConsumedToken.toString());}
         ":"
     ]
@@ -782,11 +784,7 @@ InlineTreeNodeDescriptor #TreeBuildingAnnotation :
   [ 
       <BACKSLASH>
     |
-      [ "@" {CURRENT_NODE.setLhsProperty(true);} ] 
-      @LHS^ = Name 
-      [ "^" {CURRENT_NODE.setSuppressInjection(true);} ] 
-      "=" 
-      =>||
+      @assignment := Assignment  =>||
   ]
   <HASH> =>|| 
   Name  
@@ -817,9 +815,7 @@ INJECT TreeBuildingAnnotation :
 {
     @Property String initialShorthand;
     @Property Expression condition;
-    @Property Name LHS;
-    @Property boolean lhsProperty = false;
-    @Property boolean suppressInjection = false;
+    
     /**
      * Just returns whatever comes after the hash ("#") including "void", etc.
      */
@@ -947,22 +943,33 @@ INJECT ExpansionChoice :
     }    
 }
 
+Assignment :
+    [ @propertyAssignment :=? "@" ] 
+    @name := Name 
+    [ @noAutoDefinition :=? "^" ]
+    ( 
+        @noAutoDefinition =? "="
+    |   
+        @declarationOf :=? ":="
+    | 
+        (@existenceOf :=? "=?" {CURRENT_NODE.setNoAutoDefinition(true);} | @existenceOf =? ":=?" {CURRENT_NODE.setDeclarationOf(true);})       
+    |
+        (@stringOf :=? "=$" {CURRENT_NODE.setNoAutoDefinition(true);} | @stringOf =? ":=$" {CURRENT_NODE.setDeclarationOf(true);}) //NOP
+    |
+        @addTo :=? "+=" //NOP
+    )
+;
 
 ExpansionWithParentheses :
 {
     Token lparen = null;
     LexicalStateSwitch lss=null;
-    Name LHS = null;
+    Assignment assignment = null;
     Token atPrefix = null;
-    Token caret = null;
 }
    [lss=LexicalStateSwitch | TokenActivation]
    [
-       [ atPrefix = "@" ] 
-       LHS = Name 
-       [ caret = "^" ] 
-       "=" 
-       =>||
+       assignment = Assignment =>||
    ]
    lparen ="(" =>|| ExpansionChoice {Expansion nested = (Expansion) peekNode();} ")"
    [
@@ -973,9 +980,7 @@ ExpansionWithParentheses :
        "+" {CURRENT_NODE = new OneOrMore();}
    ]
    {
-        CURRENT_NODE.setLHS(LHS);
-        CURRENT_NODE.setLhsProperty(atPrefix != null);
-        CURRENT_NODE.setSuppressInjection(caret != null);
+        CURRENT_NODE.setAssignment(assignment);
    }
    [
        SCAN ~\...\Lookahead => 
@@ -1002,9 +1007,7 @@ INJECT ExpansionWithParentheses :
    extends ExpansionWithNested
    implements SyntaxElement
 {
-    @Property Name LHS;
-    @Property boolean lhsProperty;
-    @Property boolean suppressInjection;
+    @Property Assignment assignment;
     
     @Override 
     public String getSpecifiedLexicalState() {
@@ -1051,7 +1054,7 @@ INJECT Assertion :
     @Property Expansion expansion;
     @Property boolean expansionNegated, semanticLookaheadNested;
 
-
+    
     @Override 
     public boolean startsWithGlobalCodeAction() {
         return expansion != null || semanticLookaheadNested;
@@ -1067,7 +1070,7 @@ Assertion :
     "}"
     ["#" {CURRENT_NODE.setSemanticLookaheadNested(true);}]
     |
-    ["~" {CURRENT_NODE.setExpansionNegated(true);}] 
+    ["~" {CURRENT_NODE.setExpansionNegated(true);}]
     "(" 
     ExpansionChoice {CURRENT_NODE.setExpansion((Expansion) peekNode());}
     ")"
@@ -1088,7 +1091,7 @@ Lookahead# :
    Name name = null;
    Node lb = null;
 }
-[name=Name "=" =>|| {CURRENT_NODE.setLHS(name);}] //FIXME: should this have lhsProperty and suppressInjection?  It seems to do nothing right now.
+[ @assignment := Assignment ] //FIXME: should this have assignment?  It seems to do nothing right now.
 <_SCAN>
 [
     <INTEGER_LITERAL> {hasExplicitNumericalLookahead = true;}
@@ -1119,7 +1122,6 @@ Lookahead# :
 INJECT Lookahead :
     import org.congocc.core.Expansion;
 {
-    @Property Name LHS;
     @Property Expansion expansion, nestedExpansion;
     @Property boolean negated, semanticLookaheadNested;
     @Property Expression semanticLookahead;
@@ -1310,11 +1312,7 @@ ExpansionUnit #void :
 
 #NonTerminal #org.congocc.core.NonTerminal :
   [
-    ["@" {CURRENT_NODE.setLhsProperty(true);} ] 
-    @LHS^ = Name
-    [ "^" {CURRENT_NODE.setSuppressInjection(true);} ]
-    "=" 
-    =>||
+    @assignment = Assignment =>||
   ]
   <IDENTIFIER>
   =>||
@@ -1336,14 +1334,11 @@ ExpansionUnit #void :
 ;
 
 Terminal# :
-  SCAN ["@"] [Name "="] (<STRING_LITERAL>|<CHARACTER_LITERAL>|<SINGLE_QUOTE_STRING>|"<")
+  SCAN [ Assignment ] (<STRING_LITERAL>|<CHARACTER_LITERAL>|<SINGLE_QUOTE_STRING>|"<")
   =>
   [
-    SCAN ~\...\Lookahead ["@"] Name "=" =>
-    ["@" {CURRENT_NODE.setLhsProperty(true);} ]
-    Name {CURRENT_NODE.setLHS((Name) peekNode());}
-    [ "^" {CURRENT_NODE.setSuppressInjection(true);} ] 
-    "="
+    SCAN ~\...\Lookahead Assignment =>
+    @assignment := Assignment
   ]
   ACTIVATE_TOKENS _EOF(RegexpStringLiteral | RegexpRef | EndOfFile ) 
   {
@@ -1377,9 +1372,6 @@ INJECT Terminal :
    implements SyntaxElement
 {
     @Property RegularExpression regexp;
-    @Property Name LHS;
-    @Property boolean lhsProperty;
-    @Property boolean suppressInjection;
     @Property String label;
 
     public int getOrdinal() {
@@ -1426,11 +1418,7 @@ OneOrMore : "(" ExpansionChoice ")" "+";
 ZeroOrOne : 
     [LexicalStateSwitch | TokenActivation]
     [
-        [ "@" {CURRENT_NODE.setLhsProperty(true);} ] 
-        @LHS^ = Name
-        [ "^" {CURRENT_NODE.setSuppressInjection(true);} ] 
-        "=" 
-        =>||
+        @assignment = Assignment =>||
     ]
     "[" =>|| ExpansionChoice {Expansion exp = (Expansion) peekNode();} "]"
      ["!" {exp.setTolerantParsing(true);}]
