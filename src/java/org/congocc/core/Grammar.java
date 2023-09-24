@@ -439,11 +439,11 @@ public class Grammar extends BaseNode {
      * Adds an injected field to the specified {@link Node} dynamically (post parsing).
      * @param nodeName is the name of the {@code Node}
      * @param modifiers is the string of modifiers needed (if any)
-     * @param className is the type of the field
+     * @param typeName is the type of the field
      * @param fieldName is the name of the field to be injected
      */
-    public void addFieldInjection(String nodeName, String modifiers, String className, String fieldName) {
-    	CodeInjection.inject(this, nodeName, "{" + modifiers + " " + className + " " + fieldName + ";}");
+    public void addFieldInjection(String nodeName, String modifiers, String typeName, String fieldName) {
+    	CodeInjection.inject(this, nodeName, "{" + modifiers + " " + typeName + " " + fieldName + ";}");
     }
 
     public boolean isInInclude() {

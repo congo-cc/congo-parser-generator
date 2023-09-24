@@ -6,19 +6,16 @@ import org.congocc.parser.tree.*;
 import java.util.Set;
 
 public class NonTerminal extends Expansion implements SyntaxElement {
+	
+    private Assignment assignment = null;
     
-    private Name LHS;
-    private boolean lhsProperty;
-    private boolean suppressInjection;
+    public void setAssignment(Assignment assignment) {
+    	this.assignment = assignment;
+    }
     
-    public Name getLHS() {return LHS;}
-    public void setLHS(Name LHS) {this.LHS=LHS;}
-    public boolean isLhsProperty() {return lhsProperty;}
-    public void setLhsProperty(boolean lhsProperty) {this.lhsProperty=lhsProperty;}
-    public boolean isSuppressInjection() {return suppressInjection;}
-    public void setSuppressInjection(boolean suppressInjection) {this.suppressInjection=suppressInjection;}
-    
-    //REVISIT: why are the above properties coded here instead of being injected as is the case for Expansion?
+    public Assignment getAssignment() {
+    	return this.assignment;
+    }
 
     /**
      * The production this non-terminal corresponds to.
