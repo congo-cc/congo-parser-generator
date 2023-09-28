@@ -725,7 +725,7 @@ finally {
          try {
             [#-- There had better be a node here! --]
             ${expressedLHS?replace("@", impliedLHS?replace("@", "(" + nonterminal.production.nodeName + ") PeekNode()"))};
-         } catch (ClassCastException cce) {
+         } catch (InvalidCastException) {
             ${expressedLHS?replace("@", impliedLHS?replace("@", "null"))};
          }
       [/#if]
