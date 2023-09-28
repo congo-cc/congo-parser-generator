@@ -273,41 +273,45 @@
    [#else]
       [#var nodeName = syntacticNodeName(expansion)] [#-- This maps ExpansionSequence containing more than one syntax element to "Sequence", otherwise to the element itself --]
       [#if !treeNodeBehavior?? &&
-           syntheticNodesEnabled &&
-           expansion.assignment?? &&
-           isProductionInstantiatingNode(expansion)
+           expansion.assignment??
       ]
-         [#-- Assignment is explicitly provided and synthetic nodes are enabled --]
-         [#-- NOTE: An explicit assignment will take precedence over a synthetic JTB node. 
-              I.e., it will not create a field in the production node.  It WILL, however, 
-              use the syntactic node type for the natural assignment value, as seen below.  
-         --]
-         [#-- This expansion has an explicit assignment; check if we need to synthesize a definite node --]
-         [#if nodeName?? && (
-            nodeName == "ZeroOrOne" ||
-            nodeName == "ZeroOrMore" ||
-            nodeName == "OneOrMore" ||
-            nodeName == "Choice" ||
-            nodeName == "Sequence"
-            )
-         ]
-            [#-- We do need to create a definite node --]
-            [#if !jtbParseTree]
-               [#-- It's not a JTB tree, so use the BASE_NODE type for type for assignment rather than syntactic type --][#-- (jb) is there a reason to use the syntactic type always?  Perhaps, but I can't think of one. --]
-               [#set nodeName = settings.baseNodeClassName]
+         [#if syntheticNodesEnabled && isProductionInstantiatingNode(expansion)]
+            [#-- Assignment is explicitly provided and synthetic nodes are enabled --]
+            [#-- NOTE: An explicit assignment will take precedence over a synthetic JTB node. 
+               I.e., it will not create a field in the production node.  It WILL, however, 
+               use the syntactic node type for the natural assignment value, as seen below.  
+            --]
+            [#-- This expansion has an explicit assignment; check if we need to synthesize a definite node --]
+            [#if nodeName?? && (
+               nodeName == "ZeroOrOne" ||
+               nodeName == "ZeroOrMore" ||
+               nodeName == "OneOrMore" ||
+               nodeName == "Choice" ||
+               nodeName == "Sequence"
+               )
+            ]
+               [#-- We do need to create a definite node --]
+               [#if !jtbParseTree]
+                  [#-- It's not a JTB tree, so use the BASE_NODE type for type for assignment rather than syntactic type --][#-- (jb) is there a reason to use the syntactic type always?  Perhaps, but I can't think of one. --]
+                  [#set nodeName = settings.baseNodeClassName]
+               [/#if]
+               [#-- Make a new node to wrap the current expansion with the expansion's assignment. --]
+               [#set treeNodeBehavior = {
+                                          'nodeName' : nodeName, 
+                                          'condition' : null, 
+                                          'gtNode' : false,
+                                          'void' : false,
+                                          'assignment' : expansion.assignment
+                                       } /]
+               [#if expansion.assignment.propertyAssignment && !expansion.assignment.noAutoDefinition]
+                  [#-- Inject the receiving property --]
+                  ${injectDeclaration(nodeName, expansion.assignment.name, expansion.assignment)}
+               [/#if]
             [/#if]
-            [#-- Make a new node to wrap the current expansion with the expansion's assignment. --]
-            [#set treeNodeBehavior = {
-                                       'nodeName' : nodeName, 
-                                       'condition' : null, 
-                                       'gtNode' : false,
-                                       'void' : false,
-                                       'assignment' : expansion.assignment
-                                    } /]
-            [#if expansion.assignment.propertyAssignment && !expansion.assignment.noAutoDefinition]
-               [#-- Inject the receiving property --]
-               ${injectDeclaration(nodeName, expansion.assignment.name, expansion.assignment)}
-            [/#if]
+         [#elseif nodeName??]
+            [#-- We are attempting to do assignment of a syntactic node value, but synthetic nodes are not enabled --]
+            [#-- FIXME: we should probably create treeNodeBehavior that signals this error to somebody that can report it to the user --]
+            [#return null /]
          [/#if]
       [#elseif treeNodeBehavior?? &&
                treeNodeBehavior.assignment?? &&
@@ -426,16 +430,7 @@
       [#return null/]
 [/#function]
 
-[#function isProductionInstantiatingNode expansion] 
-[#-- REVISIT[jb]: this is really not right, I think. 
-     Syntactic nodes should probably be produced, even if
-     the BNFProduction node is not.  But if so, then I would
-     think there should be the option to suppress the node
-     with an inline notation like "#void" instead of "#name'.
-     I'm not doing it now because the syntax in that area is
-     already so complicated due to the ambiguity resolution of "#" in
-     that position.  Maybe later if it becomes important.
-     --]
+[#function isProductionInstantiatingNode expansion]
    [#if expansion.containingProduction.treeNodeBehavior?? && 
         expansion.containingProduction.treeNodeBehavior.neverInstantiated!false]
       [#return false/]
@@ -506,6 +501,9 @@
    [#if assignment.existenceOf]
       [#-- replace "@" with "((@ != null) ? true : false)" --]
       [#return "((@ != null) ? true : false)" /]
+   [#elseif assignment.stringOf]
+      [#-- replace "@" with the string value of the node --]
+      [#return "@.toString()"]
    [/#if]
    [#return "@" /]
 [/#function]
@@ -514,15 +512,29 @@
    [#if assignment??]
       [#var lhsName = assignment.name]
       [#if assignment.propertyAssignment]
+         [#-- This is the assignment of the current node's effective value to a property of the production node --]
          [#set lhsName = lhsName?cap_first]
-         [#-- It a property setter --]
          [#if lhsType?? && !assignment.noAutoDefinition][!-- FIXME: I don't like the double negative --]
-            [#-- Type name specified; inject required property --]
+            [#-- This is a declaration assignment; inject required property --]
             ${injectDeclaration(lhsType, assignment.name, assignment)}
          [/#if]
-         [#return "thisProduction.set" + lhsName + "(" + getRhsAssignmentPattern(assignment) + ")" /]
+         [#if assignment.addTo]
+            [#-- This is the addition of the current node as a child of the specified property's node value --]
+            [#return "thisProduction.get" + lhsName + "().add(" + getRhsAssignmentPattern(assignment) + ")" /]
+         [#else]
+            [#-- This is an assignment of the current node's effective value to the specified property of the production node --]
+            [#return "thisProduction.set" + lhsName + "(" + getRhsAssignmentPattern(assignment) + ")" /]
+         [/#if]
+      [#elseif assignment.namedAssignment]
+         [#if assignment.addTo]
+            [#-- This is the addition of the current node to the named child list of the production node --]
+            [#return "thisProduction.addToNamedChildList(\"" + lhsName + "\", " + getRhsAssignmentPattern(assignment) + ")" /]
+         [#else]
+            [#-- This is an assignment of the current node to a named child of the production node --]
+            [#return "thisProduction.setNamedChild(\"" + lhsName + "\", " + getRhsAssignmentPattern(assignment) + ")" /]
+         [/#if]
       [/#if]
-      [#-- It needs simple assignment --]
+      [#-- This is the assignment of the current node or it's returned value to an arbitrary LHS "name" (i.e., the legacy JavaCC assignment) --]
       [#return lhsName + " = " + getRhsAssignmentPattern(assignment) /]
    [/#if]
    [#-- There is no LHS --]
@@ -538,6 +550,8 @@
    [/#if]
    [#if assignment?? && assignment.existenceOf] 
       [#set type = "boolean"]
+   [#elseif assignment?? && assignment.stringOf]
+      [#set type = "String"]
    [/#if]
    ${grammar.addFieldInjection(currentProduction.nodeName, modifier, type, field)}
    [#return "" /]
@@ -735,12 +749,18 @@
       ${nonterminal.name}(${nonterminal.args!});
    [/#if]
    [#if expressedLHS != "@" || impliedLHS != "@"]
-      try {
-         [#-- There had better be a node here! --]
-         ${expressedLHS?replace("@", impliedLHS?replace("@", "(" + nonterminal.production.nodeName + ") peekNode()"))};
-      } catch (ClassCastException cce) {
-         ${expressedLHS?replace("@", impliedLHS?replace("@", "null"))};
-      }
+      [#if nonterminal.assignment.addTo]
+         if (buildTree) {
+            ${expressedLHS?replace("@", impliedLHS?replace("@", "peekNode()"))};
+         }
+      [#else]
+         try {
+            [#-- There had better be a node here! --]
+            ${expressedLHS?replace("@", impliedLHS?replace("@", "(" + nonterminal.production.nodeName + ") peekNode()"))};
+         } catch (ClassCastException cce) {
+            ${expressedLHS?replace("@", impliedLHS?replace("@", "null"))};
+         }
+      [/#if]
    [/#if]
    [#if nonterminal.childName??]
       if (buildTree) {
