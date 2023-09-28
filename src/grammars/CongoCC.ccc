@@ -944,20 +944,27 @@ INJECT ExpansionChoice :
 }
 
 Assignment :
-    [ @propertyAssignment :=? "@" ] 
-    @name := Name 
-    [ @noAutoDefinition :=? "^" ]
-    ( 
-        @noAutoDefinition =? "="
-    |   
-        @declarationOf :=? ":="
-    | 
-        (@existenceOf :=? "=?" {CURRENT_NODE.setNoAutoDefinition(true);} | @existenceOf =? ":=?" {CURRENT_NODE.setDeclarationOf(true);})       
-    |
-        (@stringOf :=? "=$" {CURRENT_NODE.setNoAutoDefinition(true);} | @stringOf =? ":=$" {CURRENT_NODE.setDeclarationOf(true);}) //NOP
-    |
-        @addTo :=? "+=" //NOP
+    (
+            [ @propertyAssignment :=? "@" ] 
+            @name := Name
+        |
+            @namedAssignment :=? 
+            "/" 
+            @name = Name
+            "/"
     )
+    ( 
+            @noAutoDefinition :=? "="
+        |   
+            @declarationOf :=? ":="
+        | 
+            (@existenceOf :=? "=?" {CURRENT_NODE.setNoAutoDefinition(true);} | @existenceOf =? ":=?" {CURRENT_NODE.setDeclarationOf(true);})       
+        |
+            (@stringOf :=? "=$" {CURRENT_NODE.setNoAutoDefinition(true);} | @stringOf =? ":=$" {CURRENT_NODE.setDeclarationOf(true);})
+        |
+            @addTo :=? "+=" {CURRENT_NODE.setNoAutoDefinition(true);}
+    )
+    =>||
 ;
 
 ExpansionWithParentheses :

@@ -397,12 +397,12 @@ RecordBody :
 
 CompactConstructorDeclaration :
   {permissibleModifiers = EnumSet.of(PUBLIC, PROTECTED, PRIVATE);}#
-  @modifiers^ = 
+  @modifiers = 
   Modifiers /modifiers/
   TypeIdentifier
   <LBRACE> =>||
   [ ExplicitConstructorInvocation =>|| ]
-  @statements^ = ( SCAN ~(<RBRACE>) => BlockStatement /[statements]/ )*!
+  @statements = ( SCAN ~(<RBRACE>) => BlockStatement /[statements]/ )*!
   <RBRACE>
 ;
 
