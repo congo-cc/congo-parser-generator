@@ -275,7 +275,7 @@ ${is}    self.currently_parsed_production = prev_production
                [#-- We do need to create a definite node --]
                [#if !jtbParseTree]
                   [#-- It's not a JTB tree, so use the BASE_NODE type for type for assignment rather than syntactic type --][#-- (jb) is there a reason to use the syntactic type always?  Perhaps, but I can't think of one. --]
-                  [#set nodeName = settings.baseNodeClassName]
+                  [#set nodeName = "Node"]
                [/#if]
                [#-- Make a new node to wrap the current expansion with the expansion's assignment. --]
                [#set treeNodeBehavior = {
@@ -491,7 +491,7 @@ ${globals.popNodeVariableName()!}[#rt]
          [#-- This is the assignment of the current node's effective value to a property of the production node --]
          [#if lhsType?? && !assignment.noAutoDefinition]
             [#-- This is a declaration assignment; inject required property --]
-            ${injectDeclaration(lhsType, assignment.name, assignment)}
+            ${injectDeclaration("Node", assignment.name, assignment)}
          [/#if]
          [#if assignment.addTo]
             [#-- This is the addition of the current node as a child of the specified property's node value --]
@@ -503,10 +503,10 @@ ${globals.popNodeVariableName()!}[#rt]
       [#elseif assignment.namedAssignment]
          [#if assignment.addTo]
             [#-- This is the addition of the current node to the named child list of the production node --]
-            [#return "thisProduction.addToNamedChildList(\"" + lhsName + "\", " + getRhsAssignmentPattern(assignment) + ")" /]
+            [#return "thisProduction.add_to_named_child_list(\"" + lhsName + "\", " + getRhsAssignmentPattern(assignment) + ")" /]
          [#else]
             [#-- This is an assignment of the current node to a named child of the production node --]
-            [#return "thisProduction.setNamedChild(\"" + lhsName + "\", " + getRhsAssignmentPattern(assignment) + ")" /]
+            [#return "thisProduction.set_named_child(\"" + lhsName + "\", " + getRhsAssignmentPattern(assignment) + ")" /]
          [/#if]
       [/#if]
       [#-- This is the assignment of the current node or it's returned value to an arbitrary LHS "name" (i.e., the legacy JavaCC assignment) --]
@@ -743,11 +743,16 @@ ${is}${"self.parse_" + nonterminal.name + "(" + globals.translateNonterminalArgs
 ${is}if self.build_tree:
 ${is}    ${expressedLHS?replace("@", impliedLHS?replace("@", "self.peek_node()"))}
       [#else]
+         [#if !nonterminal.assignment.namedAssignment!false ]
 ${is}try:
       [#-- There had better be a node here! --]
 ${is}    ${expressedLHS?replace("@", impliedLHS?replace("@", "self.peek_node()"))}
 ${is}except Exception:
 ${is}    ${expressedLHS?replace("@", impliedLHS?replace("@", "None"))}
+         [#else]
+${is}if self.build_tree:
+${is}    ${expressedLHS?replace("@", impliedLHS?replace("@", "self.peek_node()"))};
+         [/#if]
       [/#if]
    [/#if]
    [#if !nonterminal.childName?is_null]

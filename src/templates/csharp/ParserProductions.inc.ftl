@@ -271,7 +271,7 @@ finally {
                [#-- We do need to create a definite node --]
                [#if !jtbParseTree]
                   [#-- It's not a JTB tree, so use the BASE_NODE type for type for assignment rather than syntactic type --][#-- (jb) is there a reason to use the syntactic type always?  Perhaps, but I can't think of one. --]
-                  [#set nodeName = settings.baseNodeClassName]
+                  [#set nodeName = "Node"]
                [/#if]
                [#-- Make a new node to wrap the current expansion with the expansion's assignment. --]
                [#set treeNodeBehavior = {
@@ -477,7 +477,7 @@ if (BuildTree) {
          [#set lhsName = lhsName?cap_first]
          [#if lhsType?? && !assignment.noAutoDefinition]
             [#-- This is a declaration assignment; inject required property --]
-            ${injectDeclaration(lhsType, assignment.name, assignment)}
+            ${injectDeclaration("Node", assignment.name, assignment)}
          [/#if]
          [#if assignment.addTo]
             [#-- This is the addition of the current node as a child of the specified property's node value --]
@@ -722,12 +722,18 @@ finally {
             ${expressedLHS?replace("@", impliedLHS?replace("@", "PeekNode()"))};
          }
       [#else]
-         try {
-            [#-- There had better be a node here! --]
-            ${expressedLHS?replace("@", impliedLHS?replace("@", "(" + nonterminal.production.nodeName + ") PeekNode()"))};
-         } catch (InvalidCastException) {
-            ${expressedLHS?replace("@", impliedLHS?replace("@", "null"))};
-         }
+         [#if !nonterminal.assignment.namedAssignment!false ]
+            try {
+               [#-- There had better be a node here! --]
+               ${expressedLHS?replace("@", impliedLHS?replace("@", "(" + nonterminal.production.nodeName + ") PeekNode()"))};
+            } catch (InvalidCastException) {
+               ${expressedLHS?replace("@", impliedLHS?replace("@", "null"))};
+            }
+         [#else]
+            if (buildTree) {
+               ${expressedLHS?replace("@", impliedLHS?replace("@", "PeekNode()"))};
+            }
+         [/#if]
       [/#if]
    [/#if]
    [#if nonterminal.childName??]
