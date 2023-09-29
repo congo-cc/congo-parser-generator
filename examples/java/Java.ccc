@@ -1145,7 +1145,7 @@ ClassicSwitchLabel :
 
 #if pattern_matching
 TypePattern :
-  <NULL>
+  <NULL> [<COMMA> <_DEFAULT>]
   |
   {permissibleModifiers = EnumSet.of(FINAL);}#        
   Modifiers Type <IDENTIFIER>
