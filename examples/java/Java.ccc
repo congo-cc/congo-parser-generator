@@ -14,7 +14,7 @@ JAVA_UNICODE_ESCAPE;
 PARSER_PACKAGE=org.parsers.java;
 NODE_PACKAGE=org.parsers.java.ast;
 DEFAULT_LEXICAL_STATE=JAVA;
-X_SYNTHETIC_NODES_ENABLED=false;
+//X_SYNTHETIC_NODES_ENABLED;
 // The following tokens are only activated at key points whether
 // they are needed.
 DEACTIVATE_TOKENS=RECORD, VAR, YIELD, SEALED, NON_SEALED, PERMITS, MODULE, 
@@ -278,9 +278,8 @@ ClassDeclaration :
                                     PROTECTED, PRIVATE, 
                                     ABSTRACT, FINAL, STATIC, 
                                     STRICTFP, SEALED, NON_SEALED);}
-  @modifiers := Modifiers /modifiers/
+  (/modifiers/=Modifiers)
   <CLASS> =>||
-  // @name := FIXME: TypeIdentifier is not instantiatable, so it can't have a property (use BaseNode? probably)!
   TypeIdentifier /name/
   [ TypeParameters ]
   [ ExtendsList ]
@@ -339,18 +338,16 @@ EnumDeclaration :
    {permissibleModifiers = EnumSet.of(PUBLIC, PROTECTED, 
                                       PRIVATE, ABSTRACT, 
                                       FINAL, STATIC, STRICTFP);}#
-   @modifiers := Modifiers /modifiers/
+   /modifiers/=Modifiers
    <ENUM> =>||
-   //@name := FIXME: see previous ...
-   TypeIdentifier /name/
+   /name/=TypeIdentifier
    [ImplementsList]
-   EnumBody
+   /body/=EnumBody
 ;
 
 EnumBody :
    <LBRACE>
-   // FIXME: another case that is not equivalent; perhaps allow @values += ... notation?
-   [ @value := EnumConstant /[values]/ @values := ( SCAN 2 <COMMA> EnumConstant /[values]/ )* ]
+   [ /values/+=EnumConstant ( SCAN 2 <COMMA> (/values/+=EnumConstant) )* ]
    [ <COMMA> ]
    [ <SEMICOLON> ( ClassOrInterfaceBodyDeclaration )*! ]
    <RBRACE>
@@ -397,12 +394,11 @@ RecordBody :
 
 CompactConstructorDeclaration :
   {permissibleModifiers = EnumSet.of(PUBLIC, PROTECTED, PRIVATE);}#
-  @modifiers = 
-  Modifiers /modifiers/
+  @modifiers = Modifiers /modifiers/
   TypeIdentifier
   <LBRACE> =>||
   [ ExplicitConstructorInvocation =>|| ]
-  @statements = ( SCAN ~(<RBRACE>) => BlockStatement /[statements]/ )*!
+  @statements = ( SCAN ~(<RBRACE>) => /statements/+=BlockStatement )*!
   <RBRACE>
 ;
 
@@ -436,7 +432,7 @@ TypeBound :
    <EXTENDS> ObjectType ( <BIT_AND> ObjectType )*
 ;
 
-ClassOrInterfaceBody : <LBRACE> @decls := (SCAN ~(<RBRACE>) => ClassOrInterfaceBodyDeclaration /[decls]/ )*! <RBRACE> ;
+ClassOrInterfaceBody : <LBRACE> (SCAN ~(<RBRACE>) => /decls/+=ClassOrInterfaceBodyDeclaration )*! <RBRACE> ;
 
 ClassOrInterfaceBodyDeclaration#interface :
   Initializer
@@ -500,13 +496,13 @@ ArrayInitializer :
                                       SYNCHRONIZED, NATIVE,
                                       STRICTFP);}
   )
-  @modifiers := Modifiers /modifiers/
+  @modifiers := Modifiers
   [ TypeParameters ]
   ReturnType
-  @methodName := <IDENTIFIER> /methodName/
+  @methodName := <IDENTIFIER>
   =>|+1 @formals := FormalParameters /formals/ ( (Annotation)* <LBRACKET><RBRACKET> )*
   [ ThrowsList ]
-  ( @statements := Block /statements/ | <SEMICOLON> )
+  ( @statements := Block | <SEMICOLON> )
   {return CURRENT_NODE;}
 ;
 
@@ -516,13 +512,13 @@ FormalParameter : {permissibleModifiers = EnumSet.of(FINAL);}# @modifiers := Mod
 
 ConstructorDeclaration :
   {permissibleModifiers = EnumSet.of(PUBLIC, PROTECTED, PRIVATE);}#
-  @modifiers := Modifiers /modifiers/
+  @modifiers := Modifiers
   [ TypeParameters ]
-  TypeIdentifier @formals := FormalParameters /formals/ =>||
+  TypeIdentifier @formals := FormalParameters =>||
   [ ThrowsList ]
   <LBRACE>
   [ ExplicitConstructorInvocation =>||]
-  @statements := ( SCAN ~(<RBRACE>) => BlockStatement /[statements]/ )*!
+  @statements := ( SCAN ~(<RBRACE>) => BlockStatement )*!
   <RBRACE>
 ;
 
@@ -1198,7 +1194,7 @@ NewCaseStatement :
 ;
 
 IfStatement :
-  <IF> <LPAREN> @condition := Expression /condition/ <RPAREN> @thenBlock := Statement /thenBlock/ [ <ELSE> @elseBlock := Statement /elseBlock/ ]
+  <IF> <LPAREN> @condition := Expression <RPAREN> @thenBlock := Statement [ <ELSE> @elseBlock := Statement ]
 ;
 
 WhileStatement :
@@ -1256,14 +1252,13 @@ SynchronizedStatement : <SYNCHRONIZED> <LPAREN> Expression <RPAREN> Block ;
 ClassicTryStatement :
   <TRY>
   =>|+1
-  @block := Block /block/
+  /block/=Block
   (
-     // @finallyBlock := FIXME: need to suppress multiple injections of LHS here
-     FinallyBlock /finallyBlock/
+     /finallyBlock/=FinallyBlock
      |
      (
-        @catchBlocks := ( CatchBlock /[catchBlocks]/ )+
-        [ @finallyBlock := FinallyBlock /finallyBlock/ ] 
+        ( /catchBlocks/+=CatchBlock )+
+        [ /finallyBlock/=FinallyBlock ] 
      )
   )
 ;
@@ -1284,18 +1279,16 @@ TryWithResources :
        [<SEMICOLON>]
     )+
     <RPAREN>
-    @block := Block /block/
-    @catchBlocks := ( CatchBlock /[catchBlocks]/ )*
-    [ @finallyBlock := FinallyBlock /finallyBlock/ ]
+    (/block/=Block)
+    ( /catchBlock/+=CatchBlock )*
+    [ /finallyBlock/=FinallyBlock ]
 ;
 
 CatchBlock :
     <CATCH>
     <LPAREN>
     [<FINAL>]
-    // FIXME: @exceptionTypes below does not eliminate the token ----------V
-    //@exceptionTypes += FIXME: this perhaps?
-    ObjectType /[exceptionTypes]/ @exceptionTypes := (<BIT_OR> ObjectType /[exceptionTypes]/ )* @varDecl := VariableDeclaratorId /varDecl/
+    /exceptionTypes/+=ObjectType (<BIT_OR> (/exceptionTypes/+=ObjectType) )* /varDecl/=VariableDeclaratorId
     <RPAREN>
     Block
 ;
