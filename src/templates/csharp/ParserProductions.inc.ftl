@@ -459,12 +459,12 @@ if (BuildTree) {
 [/#macro]
 
 [#function getRhsAssignmentPattern assignment] 
-   [#if assignment.existenceOf]
+   [#if assignment.existenceOf!false]
       [#-- replace "@" with "((@ != null) ? true : false)" --]
       [#return "((@ != null) ? true : false)" /]
-   [#elseif assignment.stringOf]
+   [#elseif assignment.stringOf!false]
       [#-- replace "@" with the string value of the node --]
-      [#return "@.ToString()"]
+      [#return "((@ != null) ? @.ToString() : null)"]
    [/#if]
    [#return "@" /]
 [/#function]
@@ -479,14 +479,14 @@ if (BuildTree) {
             [#-- This is a declaration assignment; inject required property --]
             ${injectDeclaration(lhsType, assignment.name, assignment)}
          [/#if]
-         [#if assignment.addTo]
+         [#if assignment.addTo!false]
             [#-- This is the addition of the current node as a child of the specified property's node value --]
             [#return "thisProduction." + lhsName + ".AddChild(" + getRhsAssignmentPattern(assignment) + ")" /]
          [#else]
             [#-- This is an assignment of the current node's effective value to the specified property of the production node --]
             [#return "thisProduction." + lhsName + " = " + getRhsAssignmentPattern(assignment) /]
          [/#if]
-      [#elseif assignment.namedAssignment]
+      [#elseif assignment.namedAssignment!false]
          [#if assignment.addTo]
             [#-- This is the addition of the current node to the named child list of the production node --]
             [#return "thisProduction.AddToNamedChildList(\"" + lhsName + "\", " + getRhsAssignmentPattern(assignment) + ")" /]
@@ -717,8 +717,8 @@ finally {
       Parse${nonterminal.name}(${globals.translateNonterminalArgs(nonterminal.args)!});
    [/#if]
    [#if expressedLHS != "@" || impliedLHS != "@"]
-      [#if nonterminal.assignment.addTo]
-         if (buildTree) {
+      [#if nonterminal.assignment?? && (nonterminal.assignment.addTo!false || nonterminal.assignment.namedAssignment)]
+         if (BuildTree) {
             ${expressedLHS?replace("@", impliedLHS?replace("@", "PeekNode()"))};
          }
       [#else]

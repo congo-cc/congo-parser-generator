@@ -292,7 +292,7 @@
             ]
                [#-- We do need to create a definite node --]
                [#if !jtbParseTree]
-                  [#-- It's not a JTB tree, so use the BASE_NODE type for type for assignment rather than syntactic type --][#-- (jb) is there a reason to use the syntactic type always?  Perhaps, but I can't think of one. --]
+                  [#-- It's not a JTB tree but it is a syntactic node with a LHS assignment, so use the BASE_NODE type --][#-- (jb) is there a reason to use the syntactic type always?  Perhaps, but I can't think of one. --]
                   [#set nodeName = settings.baseNodeClassName]
                [/#if]
                [#-- Make a new node to wrap the current expansion with the expansion's assignment. --]
@@ -498,12 +498,12 @@
 [/#macro]
 
 [#function getRhsAssignmentPattern assignment] 
-   [#if assignment.existenceOf]
+   [#if assignment.existenceOf!false]
       [#-- replace "@" with "((@ != null) ? true : false)" --]
       [#return "((@ != null) ? true : false)" /]
-   [#elseif assignment.stringOf]
+   [#elseif assignment.stringOf!false]
       [#-- replace "@" with the string value of the node --]
-      [#return "@.toString()"]
+      [#return "((@ != null) ? @.toString() : null)"]
    [/#if]
    [#return "@" /]
 [/#function]
@@ -518,14 +518,14 @@
             [#-- This is a declaration assignment; inject required property --]
             ${injectDeclaration(lhsType, assignment.name, assignment)}
          [/#if]
-         [#if assignment.addTo]
+         [#if assignment.addTo!false]
             [#-- This is the addition of the current node as a child of the specified property's node value --]
             [#return "thisProduction.get" + lhsName + "().add(" + getRhsAssignmentPattern(assignment) + ")" /]
          [#else]
             [#-- This is an assignment of the current node's effective value to the specified property of the production node --]
             [#return "thisProduction.set" + lhsName + "(" + getRhsAssignmentPattern(assignment) + ")" /]
          [/#if]
-      [#elseif assignment.namedAssignment]
+      [#elseif assignment.namedAssignment!false]
          [#if assignment.addTo]
             [#-- This is the addition of the current node to the named child list of the production node --]
             [#return "thisProduction.addToNamedChildList(\"" + lhsName + "\", " + getRhsAssignmentPattern(assignment) + ")" /]
@@ -749,7 +749,7 @@
       ${nonterminal.name}(${nonterminal.args!});
    [/#if]
    [#if expressedLHS != "@" || impliedLHS != "@"]
-      [#if nonterminal.assignment.addTo]
+      [#if nonterminal.assignment?? && (nonterminal.assignment.addTo!false || nonterminal.assignment.namedAssignment)]
          if (buildTree) {
             ${expressedLHS?replace("@", impliedLHS?replace("@", "peekNode()"))};
          }

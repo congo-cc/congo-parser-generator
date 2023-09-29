@@ -18,6 +18,10 @@ PARSER_PACKAGE="org.parsers.json";
 NODE_PACKAGE="org.parsers.json.ast";
 DEFAULT_LEXICAL_STATE=JSON;
 
+#if use_experimental_feature
+X_SYNTHETIC_NODES_ENABLED;
+#endif
+
 SKIP : <WHITESPACE : (" "| "\t"| "\n"| "\r")+>; 
 
 // Delimiters
@@ -62,14 +66,18 @@ TOKEN #Literal :
     <NUMBER : ("-")?(<ZERO>|<NON_ZERO>)(<FRACTION>)?(<EXPONENT>)?> #NumberLiteral
 ;
 
-#if use_experimental_feature && __java__
+#if use_experimental_feature
 
 Array :
     <OPEN_BRACKET>
     [
-      @firstValue := Value  ( @lastComma := <COMMA> @lastValue := Value)*!
+//    Illustrative alternatives using experimental features and achieving approximately the same result.
+//    Value (<COMMA> Value)*!
+//    Value /[values]/ (<COMMA> Value /[values]/)*!
+//    /values/ += Value (<COMMA> (/values/ += Value))*!  // note the disambiguation required after <COMMA>
+//    @values:=[{}] @values += Value =>|| (<COMMA> @values += Value)*!
+      @values := (Value) (<COMMA> @values += Value)*! // Requires X_SYNTHETIC_NODES_ENABLED option. 
     ]
-    @values := #Values
     <CLOSE_BRACKET>
 ;
 #else
@@ -77,14 +85,14 @@ Array :
 Array :
     <OPEN_BRACKET>
     [
-      Value  ( <COMMA> Value)*!
+      Value (<COMMA> Value)*!
     ]
     <CLOSE_BRACKET>
 ;
 #endif
 
 Value :
-    <TRUE>
+    ( <TRUE>
     |
     <FALSE>
     |
@@ -96,7 +104,8 @@ Value :
     |
     Array
     |
-    JSONObject
+    JSONObject )
+    
 ;
 
 KeyValuePair : <STRING_LITERAL> <COLON> Value;
