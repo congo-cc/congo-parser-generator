@@ -1159,11 +1159,11 @@ public class Translator {
         }
         else if (node instanceof IfStatement) {
             ASTIfStatement resultNode = new ASTIfStatement();
-            Node child = node.getNamedChild("condition");
+            Node child = ((IfStatement)node).getCondition();
             resultNode.condition = (ASTExpression) transformTree(child);
-            child = node.getNamedChild("thenBlock");
+            child = ((IfStatement)node).getThenBlock();
             resultNode.thenStmts = (ASTStatement) transformTree(child);
-            child = node.getNamedChild("elseBlock");
+            child = ((IfStatement)node).getElseBlock();
             if (child != null) {
                 resultNode.elseStmts = (ASTStatement) transformTree(child);
             }
@@ -1323,17 +1323,19 @@ public class Translator {
 */
             }
             if (node instanceof MethodDeclaration) {
-                resultNode.statements = (ASTStatementList) transformTree(node.getLastChild());
+                resultNode.statements = (ASTStatementList) transformTree(((MethodDeclaration)node).getStatements());
             }
             else {
-                List<Node> stmts = node.getNamedChildList("statements");
-                if (stmts != null) {
+            	// it's a ConstructorDeclaration (alternative using property)
+                BaseNode statements = ((ConstructorDeclaration)node).getStatements();
+                if (statements != null) {
                     resultNode.statements = new ASTStatementList();
-                    for (Node child : stmts) {
+                    for (Node child : statements) {
                         ASTStatement stmt = (ASTStatement) transformTree(child);
                         resultNode.statements.add(stmt);
                     }
                 }
+                
 /*
                 for (int i = 0; i < (n - 1); i++) {
                     Node child = node.get(i);
@@ -1418,7 +1420,7 @@ public class Translator {
 
             resultNode.name = ((Token) node.getNamedChild("name")).getImage();
             addNestedDeclaration(resultNode.name);
-            List<Node> values = node.getLastChild().getNamedChildList("values");
+            List<Node> values = node.getNamedChild("body").getNamedChildList("values");
             for (Node child: values) {
                 resultNode.addValue(((Token) child).getImage());
             }
