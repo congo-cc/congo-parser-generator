@@ -271,7 +271,7 @@ finally {
                [#-- We do need to create a definite node --]
                [#if !jtbParseTree]
                   [#-- It's not a JTB tree, so use the BASE_NODE type for type for assignment rather than syntactic type --][#-- (jb) is there a reason to use the syntactic type always?  Perhaps, but I can't think of one. --]
-                  [#set nodeName = "Node"]
+                  [#set nodeName = settings.baseNodeClassName]
                [/#if]
                [#-- Make a new node to wrap the current expansion with the expansion's assignment. --]
                [#set treeNodeBehavior = {
