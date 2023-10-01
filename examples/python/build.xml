@@ -20,7 +20,7 @@
     </target>
     <target name="compile" depends="parser-check,parser-gen">
         <javac classpath="." srcdir="." includeantruntime="off" failonerror="true" debug="on"
-            target="1.8" source="1.8"
+            release="17"
             fork="true" />
         <echo>
             test harness via: java PyTest &lt;filename&gt;

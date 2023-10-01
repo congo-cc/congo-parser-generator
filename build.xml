@@ -100,7 +100,7 @@
       classpath="bin/freemarker.jar"
       failonerror="true"
       includeantruntime="false"
-      target="1.8" source="1.8">
+      release="17">
       <src path="src/java"/>
       <src path="build/generated-java"/>
     </javac>
