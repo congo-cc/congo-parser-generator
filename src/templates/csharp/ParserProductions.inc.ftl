@@ -464,7 +464,7 @@ if (BuildTree) {
       [#return "((@ != null) ? true : false)" /]
    [#elseif assignment.stringOf!false]
       [#-- replace "@" with the string value of the node --]
-      [#return "((@ != null) ? @.ToString() : null)"]
+      [#return "((@ != null) ? String.ValueOf(@) : null)"]
    [/#if]
    [#return "@" /]
 [/#function]
