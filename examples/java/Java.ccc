@@ -14,7 +14,7 @@ JAVA_UNICODE_ESCAPE;
 PARSER_PACKAGE=org.parsers.java;
 NODE_PACKAGE=org.parsers.java.ast;
 DEFAULT_LEXICAL_STATE=JAVA;
-//X_SYNTHETIC_NODES_ENABLED;
+X_SYNTHETIC_NODES_ENABLED;
 // The following tokens are only activated at key points whether
 // they are needed.
 DEACTIVATE_TOKENS=RECORD, VAR, YIELD, SEALED, NON_SEALED, PERMITS, MODULE, 
@@ -126,8 +126,12 @@ ProvidesDirective :
 ;
 
 #CompilationUnit# :
-  [ PackageDeclaration! ]
-  ( ImportDeclaration )*!
+  [ @packageDeclaration := PackageDeclaration! ]
+  @importDeclarations := ( ImportDeclaration )*!
+//@typeDeclarations := 
+//  REVISIT: Why does the above not work here? It works fine in the ImportDeclaration case. 
+//           When used, the phase 2 building of CongoCC in build.xml just "goes away".  
+//           Maybe something to do with the fact that it's an interface?
   ( TypeDeclaration )*!
   [
     //a bit of a kludge so that CodeInjection2 in CongoCC.ccc can work. Maybe revisit.
@@ -143,18 +147,9 @@ PackageDeclaration :
     (Annotation)*
     <PACKAGE>
     =>||
-#if __java__
-    Name {CURRENT_NODE.setPackageName((Name) peekNode());} // TODO: change to @packageName after jar refresh
-#else
-    Name {CURRENT_NODE.setPackageName((Name) peekNode());}
-#endif    
+    @name :=$ Name
     <SEMICOLON>
 ;
-
-INJECT PackageDeclaration :
-{
-  @Property Name packageName;  // TODO: remove this injection after jar refresh
-}
 
 ImportDeclaration : <_IMPORT> [ <STATIC> ] Name [ <DOT> <STAR> ] <SEMICOLON> ;
 
@@ -280,7 +275,7 @@ ClassDeclaration :
                                     STRICTFP, SEALED, NON_SEALED);}
   (/modifiers/=Modifiers)
   <CLASS> =>||
-  TypeIdentifier /name/
+  /name/=TypeIdentifier
   [ TypeParameters ]
   [ ExtendsList ]
   [ ImplementsList ]
@@ -295,7 +290,7 @@ InterfaceDeclaration :
                                      NON_SEALED);}#
   @modifiers := Modifiers /modifiers/
   <INTERFACE> =>||
-  TypeIdentifier
+  /name/=TypeIdentifier
   [ TypeParameters ]
   [ ExtendsList ]
   [ PermitsList ]
@@ -340,8 +335,13 @@ EnumDeclaration :
                                       FINAL, STATIC, STRICTFP);}#
    /modifiers/=Modifiers
    <ENUM> =>||
+// @name:=TypeIdentifier 
+//  REVISIT: The above can't be used because TypeIdentifier#void so the property can't be typed 
+//           and the node can't be cast (currently). 
+//           Is this something we should try to fix, or is this just an atypical case?
    /name/=TypeIdentifier
    [ImplementsList]
+// @body:=EnumBody REVISIT: This can't be used because the property can't override the default in JavaInternal.ccc.
    /body/=EnumBody
 ;
 
@@ -362,7 +362,7 @@ RecordDeclaration :
   ASSERT {checkNextTokenImage("record") && getTokenType(2) == IDENTIFIER}#
   =>||
   ACTIVATE_TOKENS RECORD (<RECORD>)
-  TypeIdentifier
+  /name/=TypeIdentifier
   [TypeParameters]
   RecordHeader
   [ImplementsList]
@@ -395,7 +395,7 @@ RecordBody :
 CompactConstructorDeclaration :
   {permissibleModifiers = EnumSet.of(PUBLIC, PROTECTED, PRIVATE);}#
   @modifiers = Modifiers /modifiers/
-  TypeIdentifier
+  /name/=TypeIdentifier
   <LBRACE> =>||
   [ ExplicitConstructorInvocation =>|| ]
   @statements = ( SCAN ~(<RBRACE>) => /statements/+=BlockStatement )*!
@@ -426,7 +426,7 @@ INJECT TypeParameters :
     }
 }
 
-TypeParameter: (Annotation)* TypeIdentifier =>|| [TypeBound];
+TypeParameter: (Annotation)* /name/=TypeIdentifier =>|| [TypeBound];
 
 TypeBound :
    <EXTENDS> ObjectType ( <BIT_AND> ObjectType )*
@@ -514,7 +514,7 @@ ConstructorDeclaration :
   {permissibleModifiers = EnumSet.of(PUBLIC, PROTECTED, PRIVATE);}#
   @modifiers := Modifiers
   [ TypeParameters ]
-  TypeIdentifier @formals := FormalParameters =>||
+  /name/=TypeIdentifier @formals := FormalParameters =>||
   [ ThrowsList ]
   <LBRACE>
   [ ExplicitConstructorInvocation =>||]
@@ -553,7 +553,7 @@ ReferenceType :
 
 ObjectType# :
     (Annotation)*
-    TypeIdentifier [ TypeArguments ]
+    /name/=TypeIdentifier [ TypeArguments ]
     ( <DOT> (Annotation)* <IDENTIFIER> =>|| [ TypeArguments ] )*
 ;
 
@@ -1363,7 +1363,7 @@ AnnotationTypeDeclaration :
                                     PRIVATE, ABSTRACT, 
                                     STATIC, STRICTFP);}#
   @modifiers := Modifiers /modifiers/
-  <AT> <INTERFACE> =>|| TypeIdentifier AnnotationTypeBody
+  <AT> <INTERFACE> =>|| /name/=TypeIdentifier AnnotationTypeBody
 ;
 
 AnnotationTypeBody :

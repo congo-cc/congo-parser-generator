@@ -17,16 +17,7 @@ INJECT CompilationUnit :
 {
     public String getPackageName() {
         PackageDeclaration jpd = getPackageDeclaration();
-        return jpd == null ?  null : jpd.getPackageName().toString();
-    }
-    
-    
-    public PackageDeclaration getPackageDeclaration() {
-        return firstChildOfType(PackageDeclaration.class);
-    }
-    
-    public List<ImportDeclaration> getImportDeclarations() {
-        return childrenOfType(ImportDeclaration.class);
+        return jpd.getName();
     }
     
     public List<TypeDeclaration> getTypeDeclarations() {
@@ -291,7 +282,8 @@ INJECT TypeDeclaration :
     import java.util.*;
 {
     default String getName() {
-        return firstChildOfType(Identifier.class).toString();
+        Node thisNode = getNamedChild("name");
+        return (thisNode != null) ? thisNode.toString() : firstChildOfType(Identifier.class).toString();
     }
     
     default TypeParameters getTypeParameters() {
@@ -320,7 +312,7 @@ INJECT TypeDeclaration :
     
     default List<ImportDeclaration> getImportDeclarations() {
         CompilationUnit jcu = getCompilationUnit();
-        return jcu==null ? new ArrayList<ImportDeclaration>() : jcu.getImportDeclarations();
+        return (List<ImportDeclaration>)(List)jcu.getImportDeclarations();
     }
 }
 
