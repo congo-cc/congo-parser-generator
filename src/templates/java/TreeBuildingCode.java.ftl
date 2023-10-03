@@ -108,6 +108,7 @@
 	 * is pushed on to the stack.
 	 */
     private boolean closeNodeScope(Node n, int num) {
+        n.setBeginOffset(lastConsumedToken.getEndOffset());
         n.setEndOffset(lastConsumedToken.getEndOffset());
         currentNodeScope.close();
         ArrayList<Node> nodes = new ArrayList<Node>();
