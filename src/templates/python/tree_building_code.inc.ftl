@@ -100,6 +100,7 @@
             self.close_node_scope_numbered(n, condition_or_num)
             return True
         if n and condition_or_num:
+            n.begin_offset = self.last_consumed_token.end_offset
             n.end_offset = self.last_consumed_token.end_offset
             a = self.node_arity
             self.current_node_scope.close()
