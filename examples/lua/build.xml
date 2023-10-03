@@ -23,7 +23,7 @@
   </target>
 
   <target name="compile" depends="init,parser-gen">
-    <javac srcdir="." failonerror="true" source="1.8" target="1.8"
+    <javac srcdir="." failonerror="true" release="8"
       classpath="." debug="on" optimize="off" includeantruntime="no" fork="true" />
   </target>
 
