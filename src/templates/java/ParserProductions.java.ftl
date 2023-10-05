@@ -503,7 +503,7 @@
       [#return "((@ != null) ? true : false)" /]
    [#elseif assignment.stringOf!false]
       [#-- replace "@" with the string value of the node --]
-      [#return "((@ != null) ? String.valueOf(@) : null)"]
+      [#return "Objects.toString(@, \"\").trim()"]
    [/#if]
    [#return "@" /]
 [/#function]

@@ -18,6 +18,7 @@ import java.util.HashMap;
 import java.util.Iterator;
 import java.util.ListIterator;
 import java.util.Map;
+import java.util.Objects;
 import java.util.concurrent.CancellationException;
 import ${settings.parserPackage}.${settings.lexerClassName}.LexicalState;
 import ${settings.parserPackage}.${settings.baseTokenClassName}.TokenType;

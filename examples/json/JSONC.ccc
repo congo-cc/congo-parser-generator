@@ -5,7 +5,7 @@ PARSER_PACKAGE=org.parsers.jsonc;
 PARSER_CLASS=JSONCParser;
 DEFAULT_LEXICAL_STATE=JSON;
 
-#if use_experimental_feature
+#if !regression_testing
 X_SYNTHETIC_NODES_ENABLED;
 #endif
 

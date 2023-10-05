@@ -240,7 +240,7 @@ INJECT BASE_NODE_CLASS :
     public String toString() {
         StringBuilder buf = new StringBuilder();
         TerminalNode prevToken = null;
-        for (TerminalNode t : getAllTokens(true)) {
+        for (TerminalNode t : getAllTokens(false)) {
             if (prevToken != null && prevToken.getEndOffset() != t.getBeginOffset()) {
                 buf.append(" ");
             }
@@ -946,12 +946,12 @@ INJECT ExpansionChoice :
 Assignment : 
     (
             [ @propertyAssignment :=? "@" ] 
-            @name := Name
+            @name :=$ Name
         |
             DEACTIVATE_TOKENS SLASHASSIGN (
                 @namedAssignment :=? 
                 "/" 
-                @name = Name
+                @name =$ Name
                 "/"
             )
     )
