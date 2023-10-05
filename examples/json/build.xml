@@ -17,7 +17,7 @@
             <assertions>
                 <enable />
             </assertions>
-            <arg line="-n -q ${basedir}/JSON.ccc" />
+            <arg line=" -p localtest -n -q ${basedir}/JSON.ccc" />
         </java>
     </target>
     <target name="parser2-gen" depends="parser1-gen" unless="parser2.uptodate">
@@ -25,7 +25,7 @@
             <assertions>
                 <enable />
             </assertions>
-            <arg line="${basedir}/JSONC.ccc -q -n" />
+            <arg line=" -q -n ${basedir}/JSONC.ccc" />
         </java>
     </target>
     <target name="compile" depends="parser1-gen, parser2-gen">

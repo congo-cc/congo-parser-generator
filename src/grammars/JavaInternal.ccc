@@ -336,6 +336,10 @@ INJECT FormalParameters :
         return childrenOfType(FormalParameter.class);
     }
     
+//  public String getName() {
+//      return ((VariableDeclaratorId)getParameterId()).getName();
+//  }
+    
     public String toString() {
         StringBuilder buf = new StringBuilder();
         List<FormalParameter> params = getParams();

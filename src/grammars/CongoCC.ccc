@@ -240,7 +240,7 @@ INJECT BASE_NODE_CLASS :
     public String toString() {
         StringBuilder buf = new StringBuilder();
         TerminalNode prevToken = null;
-        for (TerminalNode t : getAllTokens(true)) {
+        for (TerminalNode t : getAllTokens(false)) { //REVISIT true -> false here [jb] Is this OK?  It fixes uparsed tokens (such as comments) "bleeding" into the string value of nonterminals. 
             if (prevToken != null && prevToken.getEndOffset() != t.getBeginOffset()) {
                 buf.append(" ");
             }
@@ -946,12 +946,12 @@ INJECT ExpansionChoice :
 Assignment : 
     (
             [ @propertyAssignment :=? "@" ] 
-            @name := Name
+            @name :=$ Name
         |
             DEACTIVATE_TOKENS SLASHASSIGN (
                 @namedAssignment :=? 
                 "/" 
-                @name = Name
+                @name =$ Name
                 "/"
             )
     )
@@ -960,11 +960,11 @@ Assignment :
         |   
             @declarationOf :=? ":="
         | 
-            (@existenceOf :=? "=?" {CURRENT_NODE.setNoAutoDefinition(true);} | @existenceOf =? ":=?" {CURRENT_NODE.setDeclarationOf(true);})       
+            (@existenceOf :=? "=?" {CURRENT_NODE.setNoAutoDefinition(true);} | @existenceOf :=? ":=?" {CURRENT_NODE.setDeclarationOf(true);})       
         |
-            (@stringOf :=? "=$" {CURRENT_NODE.setNoAutoDefinition(true);} | @stringOf =? ":=$" {CURRENT_NODE.setDeclarationOf(true);})
+            (@stringOf :=? "=$" {CURRENT_NODE.setNoAutoDefinition(true);} | @stringOf :=? ":=$" {CURRENT_NODE.setDeclarationOf(true);})
         |
-            @addTo :=? "+=" {CURRENT_NODE.setNoAutoDefinition(true);}
+            (@addTo :=? "+=" {CURRENT_NODE.setNoAutoDefinition(true);} | @addTo :=? ":+=" {CURRENT_NODE.setDeclarationOf(true);})
     )
     =>||
 ;
