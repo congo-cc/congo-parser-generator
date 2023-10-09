@@ -17,8 +17,9 @@
 PARSER_PACKAGE="org.parsers.json";
 NODE_PACKAGE="org.parsers.json.ast";
 DEFAULT_LEXICAL_STATE=JSON;
+USES_PREPROCESSOR;
 
-#if !regression_testing
+#if localtest
 X_SYNTHETIC_NODES_ENABLED;
 #endif
 
@@ -68,44 +69,7 @@ TOKEN #Literal :
 
 Root : Value! <EOF>! ;
 
-#if regression_testing
-
-Array :
-    <OPEN_BRACKET>
-    [
-      Value (<COMMA> Value)*!
-    ]
-    <CLOSE_BRACKET>
-;
-
-Value :
-    ( <TRUE>
-    |
-    <FALSE>
-    |
-    <NULL>
-    |
-    <STRING_LITERAL>
-    |
-    <NUMBER>
-    |
-    Array
-    |
-    JSONObject )
-    
-;
-
-KeyValuePair : <STRING_LITERAL> <COLON> Value;
-
-JSONObject : 
-    <OPEN_BRACE>!
-    [
-        KeyValuePair ("," KeyValuePair)*!
-    ]
-    <CLOSE_BRACE>!
-;
-
-#else
+#if localtest
 
 /***
  *  The following parses the same input as the previous productions, but uses extended Congo tree-node-building features and
@@ -233,6 +197,43 @@ KeyValuePair :
     <COLON> 
     @value := Value
 ;
+
+JSONObject : 
+    <OPEN_BRACE>!
+    [
+        KeyValuePair ("," KeyValuePair)*!
+    ]
+    <CLOSE_BRACE>!
+;
+
+#else
+
+Array :
+    <OPEN_BRACKET>
+    [
+      Value (<COMMA> Value)*!
+    ]
+    <CLOSE_BRACKET>
+;
+
+Value :
+    ( <TRUE>
+    |
+    <FALSE>
+    |
+    <NULL>
+    |
+    <STRING_LITERAL>
+    |
+    <NUMBER>
+    |
+    Array
+    |
+    JSONObject )
+    
+;
+
+KeyValuePair : <STRING_LITERAL> <COLON> Value;
 
 JSONObject : 
     <OPEN_BRACE>!
