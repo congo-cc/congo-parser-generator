@@ -21,6 +21,7 @@
    "ZeroOrMore" : "nodeListOptional",
    "OneOrMore" : "nodeList" }]
 [#var nodeFieldOrdinal = {}]
+[#var injectedFields = {}]
 [#var syntheticNodesEnabled = settings.syntheticNodesEnabled && settings.treeBuildingEnabled]
 [#var jtbParseTree = syntheticNodesEnabled && settings.jtbParseTree]
 
@@ -45,6 +46,7 @@
 [#macro ParserProduction production]
     [#set nodeNumbering = 0]
     [#set nodeFieldOrdinal = {}]
+    [#set injectedFields = {}]
     [#set newVarIndex = 0 in CU]
     [#-- Generate the method modifiers and header --] 
         ${production.leadingComments}
@@ -514,7 +516,10 @@ if (BuildTree) {
    [#elseif assignment?? && assignment.stringOf]
       [#set type = "string"]
    [/#if]
-   ${grammar.addFieldInjection(currentProduction.nodeName, modifier, type, field)}
+   [#if (injectedFields[field])?is_null]
+      [#set injectedFields = injectedFields + {field : type}]
+      ${grammar.addFieldInjection(currentProduction.nodeName, modifier, type, field)}
+   [/#if]
    [#return "" /]
 [/#function]
 
