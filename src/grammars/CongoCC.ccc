@@ -1059,10 +1059,7 @@ INJECT Assertion :
    import org.congocc.core.Expansion;
    extends org.congocc.core.EmptyExpansion 
 {
-    @Property Expression assertionExpression, messageExpression;
     @Property Expansion expansion;
-    @Property boolean expansionNegated, semanticLookaheadNested;
-
     
     @Override 
     public boolean startsWithGlobalCodeAction() {
@@ -1074,18 +1071,17 @@ Assertion :
    "ASSERT"
    (
     "{" 
-       Expression 
-       {CURRENT_NODE.setAssertionExpression((Expression) peekNode());}
+       @assertionExpression := Expression
     "}"
-    ["#" {CURRENT_NODE.setSemanticLookaheadNested(true);}]
+    [ @semanticLookaheadNested :=? "#" ]
     |
-    ["~" {CURRENT_NODE.setExpansionNegated(true);}]
+    [ @expansionNegated :=? "~" ]
     "(" 
-    ExpansionChoice {CURRENT_NODE.setExpansion((Expansion) peekNode());}
+        ExpansionChoice {CURRENT_NODE.setExpansion((Expansion) peekNode());}
     ")"
    )
    [
-       ":" Expression {CURRENT_NODE.setMessageExpression((Expression)peekNode());}
+       ":" @messageExpression := Expression
        [":"]
    ]
    [UpToHere(CURRENT_NODE)]
