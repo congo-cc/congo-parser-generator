@@ -603,7 +603,7 @@ PrimitiveArrayType : PrimitiveType ((Annotation)* <LBRACKET><RBRACKET> =>||)+ ;
 
 ReturnType# : <VOID> | Type ;
 
-Name# : <IDENTIFIER> (<DOT> <IDENTIFIER> =>||)* ;
+Name# : @ids :+= <IDENTIFIER> (<DOT> @ids += <IDENTIFIER> =>||)* ;
 
 ThrowsList : <THROWS> ExceptionType ( <COMMA> ExceptionType )* ;
 

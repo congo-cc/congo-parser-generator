@@ -946,7 +946,7 @@ INJECT ExpansionChoice :
 Assignment : 
     (
             [ @propertyAssignment :=? "@" ] 
-            @name :=$ Name
+            @name :=$ Name //REVISIT: [jb] What if this is a dotted name?
         |
             DEACTIVATE_TOKENS SLASHASSIGN (
                 @namedAssignment :=? 
@@ -1167,8 +1167,8 @@ INJECT Lookahead :
 }
 
 LookBehind : 
-   [<TILDE> {CURRENT_NODE.setNegated(true);}] 
-   (LookBehindForward | LookBehindBackward)
+   [ @negated :=? <TILDE> ] 
+   (LookBehindForward | LookBehindBackward(thisProduction)) // I did this just to see if I could
 ;
 
 LookBehindForward #void :
@@ -1183,9 +1183,9 @@ LookBehindForward #void :
    [<BACKSLASH>]
 ;
 
-LookBehindBackward #void :
+LookBehindBackward(LookBehind thisProduction) #void :
    (
-       <BACKSLASH>
+       @backward =? <BACKSLASH>
        (
           ([<TILDE>]<IDENTIFIER>)
           |
@@ -1198,11 +1198,7 @@ LookBehindBackward #void :
 INJECT LookBehind :
 import java.util.*;
 {
-    @Property boolean negated;
-
-    public boolean isBackward() {
-        return getChild(0) instanceof Backslash || getChild(1) instanceof Backslash;
-    }
+    @Property boolean backward;
 
     public boolean getHasFinalEllipsis() {
         Token t = (Token) getChild(getChildCount() -1);
