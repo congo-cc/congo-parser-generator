@@ -240,7 +240,7 @@ INJECT BASE_NODE_CLASS :
     public String toString() {
         StringBuilder buf = new StringBuilder();
         TerminalNode prevToken = null;
-        for (TerminalNode t : getAllTokens(true)) {
+        for (TerminalNode t : getAllTokens(false)) { //REVISIT true -> false here [jb] Is this OK?  It fixes uparsed tokens (such as comments) "bleeding" into the string value of nonterminals. 
             if (prevToken != null && prevToken.getEndOffset() != t.getBeginOffset()) {
                 buf.append(" ");
             }
@@ -946,12 +946,12 @@ INJECT ExpansionChoice :
 Assignment : 
     (
             [ @propertyAssignment :=? "@" ] 
-            @name := Name
+            @name :=$ Name //REVISIT: [jb] What if this is a dotted name?
         |
             DEACTIVATE_TOKENS SLASHASSIGN (
                 @namedAssignment :=? 
                 "/" 
-                @name = Name
+                @name =$ Name
                 "/"
             )
     )
@@ -960,11 +960,11 @@ Assignment :
         |   
             @declarationOf :=? ":="
         | 
-            (@existenceOf :=? "=?" {CURRENT_NODE.setNoAutoDefinition(true);} | @existenceOf =? ":=?" {CURRENT_NODE.setDeclarationOf(true);})       
+            (@existenceOf :=? "=?" {CURRENT_NODE.setNoAutoDefinition(true);} | @existenceOf :=? ":=?" {CURRENT_NODE.setDeclarationOf(true);})       
         |
-            (@stringOf :=? "=$" {CURRENT_NODE.setNoAutoDefinition(true);} | @stringOf =? ":=$" {CURRENT_NODE.setDeclarationOf(true);})
+            (@stringOf :=? "=$" {CURRENT_NODE.setNoAutoDefinition(true);} | @stringOf :=? ":=$" {CURRENT_NODE.setDeclarationOf(true);})
         |
-            @addTo :=? "+=" {CURRENT_NODE.setNoAutoDefinition(true);}
+            (@addTo :=? "+=" {CURRENT_NODE.setNoAutoDefinition(true);} | @addTo :=? ":+=" {CURRENT_NODE.setDeclarationOf(true);})
     )
     =>||
 ;
@@ -1059,10 +1059,7 @@ INJECT Assertion :
    import org.congocc.core.Expansion;
    extends org.congocc.core.EmptyExpansion 
 {
-    @Property Expression assertionExpression, messageExpression;
     @Property Expansion expansion;
-    @Property boolean expansionNegated, semanticLookaheadNested;
-
     
     @Override 
     public boolean startsWithGlobalCodeAction() {
@@ -1074,18 +1071,17 @@ Assertion :
    "ASSERT"
    (
     "{" 
-       Expression 
-       {CURRENT_NODE.setAssertionExpression((Expression) peekNode());}
+       @assertionExpression := Expression
     "}"
-    ["#" {CURRENT_NODE.setSemanticLookaheadNested(true);}]
+    [ @semanticLookaheadNested :=? "#" ]
     |
-    ["~" {CURRENT_NODE.setExpansionNegated(true);}]
+    [ @expansionNegated :=? "~" ]
     "(" 
-    ExpansionChoice {CURRENT_NODE.setExpansion((Expansion) peekNode());}
+        ExpansionChoice {CURRENT_NODE.setExpansion((Expansion) peekNode());}
     ")"
    )
    [
-       ":" Expression {CURRENT_NODE.setMessageExpression((Expression)peekNode());}
+       ":" @messageExpression := Expression
        [":"]
    ]
    [UpToHere(CURRENT_NODE)]
@@ -1171,8 +1167,8 @@ INJECT Lookahead :
 }
 
 LookBehind : 
-   [<TILDE> {CURRENT_NODE.setNegated(true);}] 
-   (LookBehindForward | LookBehindBackward)
+   [ @negated :=? <TILDE> ] 
+   (LookBehindForward | LookBehindBackward(thisProduction)) // I did this just to see if I could
 ;
 
 LookBehindForward #void :
@@ -1187,9 +1183,9 @@ LookBehindForward #void :
    [<BACKSLASH>]
 ;
 
-LookBehindBackward #void :
+LookBehindBackward(LookBehind thisProduction) #void :
    (
-       <BACKSLASH>
+       @backward =? <BACKSLASH>
        (
           ([<TILDE>]<IDENTIFIER>)
           |
@@ -1202,11 +1198,7 @@ LookBehindBackward #void :
 INJECT LookBehind :
 import java.util.*;
 {
-    @Property boolean negated;
-
-    public boolean isBackward() {
-        return getChild(0) instanceof Backslash || getChild(1) instanceof Backslash;
-    }
+    @Property boolean backward;
 
     public boolean getHasFinalEllipsis() {
         Token t = (Token) getChild(getChildCount() -1);

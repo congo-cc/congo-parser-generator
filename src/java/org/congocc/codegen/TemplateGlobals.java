@@ -228,6 +228,7 @@ public class TemplateGlobals {
         CongoCCParser parser = new CongoCCParser(sb);
         parser.FormalParameters();
         List<FormalParameter> parameters = ((FormalParameters) parser.rootNode()).getParams();
+//      List<FormalParameter> parameters = (List<FormalParameter>)(List)((FormalParameters) parser.rootNode()).getParameters();
         // Now build the result
         sb.setLength(0);
         translator.translateFormals(parameters, null, sb);

@@ -1405,7 +1405,7 @@ public class Translator {
                 for (Node et: excTypes) {
                     info.addExceptionType((ASTTypeExpression) transformTree(et, true));
                 }
-                info.variable = ((Token) cb.getNamedChild("varDecl")).getImage();
+                info.variable = ((Token) cb.getNamedChild("varDecl")).toString();
                 info.block = (ASTStatement) transformTree(cb.getLastChild());
                 resultNode.addCatchBlock(info);
             }
@@ -1418,18 +1418,18 @@ public class Translator {
         else if (node instanceof EnumDeclaration) {
             ASTEnumDeclaration resultNode = new ASTEnumDeclaration();
 
-            resultNode.name = ((Token) node.getNamedChild("name")).getImage();
+            resultNode.name = ((Token) node.getNamedChild("name")).toString();
             addNestedDeclaration(resultNode.name);
             List<Node> values = node.getNamedChild("body").getNamedChildList("values");
             for (Node child: values) {
-                resultNode.addValue(((Token) child).getImage());
+                resultNode.addValue(((Token) child).toString());
             }
             return resultNode;
         }
         else if (node instanceof ClassDeclaration) {
             ASTClassDeclaration resultNode = new ASTClassDeclaration();
 
-            resultNode.name = ((Token) node.getNamedChild("name")).getImage();
+            resultNode.name = ((Token) node.getNamedChild("name")).toString();
             addNestedDeclaration(resultNode.name);
             List<Node> decls = node.getLastChild().getNamedChildList("decls");
             for (Node decl: decls) {

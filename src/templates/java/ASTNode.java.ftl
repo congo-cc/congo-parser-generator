@@ -7,6 +7,7 @@
 package ${settings.nodePackage};
 
 import ${settings.parserPackage}.*;
+import java.util.*;
 
 [#if settings.rootAPIPackage?has_content]
 import ${settings.rootAPIPackage}.Node;

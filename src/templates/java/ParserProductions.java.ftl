@@ -19,6 +19,7 @@
    "ZeroOrMore" : "nodeListOptional",
    "OneOrMore" : "nodeList" }]
 [#var nodeFieldOrdinal = {}]
+[#var injectedFields = {}]
 [#var syntheticNodesEnabled = settings.syntheticNodesEnabled && settings.treeBuildingEnabled]
 [#var jtbParseTree = syntheticNodesEnabled && settings.jtbParseTree]
 
@@ -43,6 +44,7 @@
 [#macro ParserProduction production]
     [#set nodeNumbering = 0]
     [#set nodeFieldOrdinal = {}]
+    [#set injectedFields = {}]
     [#set newVarIndex = 0 in CU]
     [#-- Generate the method modifiers and header --] 
     ${production.leadingComments}
@@ -503,7 +505,7 @@
       [#return "((@ != null) ? true : false)" /]
    [#elseif assignment.stringOf!false]
       [#-- replace "@" with the string value of the node --]
-      [#return "((@ != null) ? String.valueOf(@) : null)"]
+      [#return "Objects.toString(@, \"\").trim()"]
    [/#if]
    [#return "@" /]
 [/#function]
@@ -552,8 +554,14 @@
       [#set type = "boolean"]
    [#elseif assignment?? && assignment.stringOf]
       [#set type = "String"]
+   [#elseif assignment?? && assignment.addTo]
+      [#set type = "List<Node>"]
+      [#set field = field + " = new ArrayList<Node>()"]
    [/#if]
-   ${grammar.addFieldInjection(currentProduction.nodeName, modifier, type, field)}
+   [#if (injectedFields[field])?is_null]
+      [#set injectedFields = injectedFields + {field : type}]
+      ${grammar.addFieldInjection(currentProduction.nodeName, modifier, type, field)}
+   [/#if]
    [#return "" /]
 [/#function]
 
