@@ -59,7 +59,7 @@ public class FilesGenerator {
         fmConfig.setTemplateLoader(templateLoader);
         //fmConfig.setObjectWrapper(new BeansWrapper());
         fmConfig.setNumberFormat("computer");
-        fmConfig.setArithmeticEngine(freemarker.core.ast.ArithmeticEngine.CONSERVATIVE_ENGINE);
+        fmConfig.setArithmeticEngine(freemarker.core.ArithmeticEngine.CONSERVATIVE_ENGINE);
         fmConfig.setStrictVariableDefinition(true);
         fmConfig.setSharedVariable("grammar", grammar);
         fmConfig.setSharedVariable("globals", grammar.getTemplateGlobals());
