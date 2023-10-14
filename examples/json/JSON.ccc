@@ -17,6 +17,11 @@
 PARSER_PACKAGE="org.parsers.json";
 NODE_PACKAGE="org.parsers.json.ast";
 DEFAULT_LEXICAL_STATE=JSON;
+USES_PREPROCESSOR;
+
+#if localtest
+X_SYNTHETIC_NODES_ENABLED;
+#endif
 
 SKIP : <WHITESPACE : (" "| "\t"| "\n"| "\r")+>; 
 
@@ -62,29 +67,111 @@ TOKEN #Literal :
     <NUMBER : ("-")?(<ZERO>|<NON_ZERO>)(<FRACTION>)?(<EXPONENT>)?> #NumberLiteral
 ;
 
-#if use_experimental_feature && __java__
+Root : Value! <EOF>! ;
+
+#if localtest
+
+/***
+ *  The following parses the same input as the previous productions, but uses extended Congo tree-node-building features and
+ *  Java actions to assert the expected behavior.  The may also be used as examples of the use of these features.
+ */
+
+INJECT PARSER_CLASS :
+{
+    import NODE_PACKAGE.Delimiter;
+    import java.util.List;
+}
+{}
+
+INJECT Array :
+{
+    @Property Token aCommaToken = null;
+}
 
 Array :
-    <OPEN_BRACKET>
-    [
-      @firstValue := Value  ( @lastComma := <COMMA> @lastValue := Value)*!
-    ]
-    @values := #Values
-    <CLOSE_BRACKET>
-;
-#else
-
-Array :
-    <OPEN_BRACKET>
-    [
-      Value  ( <COMMA> Value)*!
-    ]
-    <CLOSE_BRACKET>
-;
+{   
+    Token openBracket = null;
+    ACommaNode aCommaNode = null;
+}
+    /**
+     * The "[" token is assigned to local variable "openBracket" and the token is wrapped in the tree node "AnOpenBracket".
+     */
+    openBracket = <OPEN_BRACKET> #AnOpenBracket 
+        {
+#if __java__ 
+            assert((openBracket instanceof Delimiter) && openBracket.toString().equals("[")) : "openBracket local variable not assigned to '['";           
+            assert(peekNode().get(0).equals(openBracket)) : "unconditional tree node AnOpenBracket does not have a child = to '['";
+#endif
+#if __python__
+            assert(/*DOESN'T WORK FOR PYTHON:(openBracket instanceof Delimiter) && */openBracket.toString().equals("[")) : "openBracket local variable not assigned to \"[\"";
+            assert(peekNode().getChild(0).equals(openBracket)) : "unconditional tree node AnOpenBracket does not have a child = to '['";
+#endif
+#if __csharp__
+            assert((openBracket instanceof Delimiter) && openBracket.toString().equals("[")) : "openBracket local variable not assigned to '['";
+            assert(peekNode().getChild(0).equals(openBracket)) : "unconditional tree node AnOpenBracket does not have a child = to '['";
+#endif
+        }
+    @optionalArrayElements :=$ [
+        /**
+         * The "Value" node is added (as the first element) to a child list named "values" in the "Array" node
+         * and the "Value" node is then wrapped in a "BaseNode" which is assigned to a list property named "values" 
+         * automatically defined in the "Array" node.
+         *
+         * Illustrative alternatives using other features and achieving approximately the same result are:
+         *  Value (<COMMA> Value)*!
+         *  Value /[values]/ (<COMMA> Value /[values]/)*!
+         *  /values/ += Value (<COMMA> (/values/ += Value))*!  // note the disambiguation required after <COMMA>
+         */
+        @values :+= ( /values/ += Value )
+        {
+#if __java__
+            assert(thisProduction.getValues() instanceof List) : "values property not type List";
+            // Can't access a property in a manner compatible with both Java and CSharp? 
+            // But can with Python, however, the instanceof does not recognize "List".
+#endif
+            assert(thisProduction.getNamedChildList("values").size() == 1) : "named child list 'values' should have 1 node at this point";            
+        } 
+        /**
+         * A boolean property named "moreThanOne" is automatically injected into the "Array" node and a ZeroOrMore expansion is parsed and, 
+         * iff it exists (has one or more elements), the "moreThanOne" property is set to true.
+         */
+        @moreThanOne :=? (
+            /**
+             * The token "," is added to an explicitly injected @Property named "commaTokens" in the "Array" node, and
+             * an unconditional tree node called "ACommaNode" is built and wraps the "," token.
+             */
+            @commaTokens :+= <COMMA> aCommaNode = #ACommaNode 
+                {
+#if __java__
+                    assert(aCommaNode.get(0).toString().equals(thisProduction.getCommaTokens().get(0).toString())) : "the ACommaNode does not have a child token that is = the property commaTokens[0] in the Array node";
+                    // can't access a property in a manner compatible with CSharp and Python?
+#endif
+                }
+            /**
+             * A "Value" node is built and a reference to it is added as a child of the "Array" property named "values", and
+             * a reference to the same "Value" node is added to the named child list "values" of the anonymous BaseNode added by the 'moreThanOne' property assignment.
+             * N.B., This illustrates a significant semantic difference between the behavior of the "/name/ += ..." construct and the "... /name/" construct.  The former
+             * ALWAYS references the properties of the production node instance (i.e. the node that is open before parsing the first expansion), whereas the latter references the named child or list
+             * of the node last closed. 
+             */
+            @values += Value /[values]/ 
+                {
+#if __java__
+                    assert(thisProduction.getValues().size() == CURRENT_NODE.getNamedChildList("values").size() + 1) : "the List<Node> property 'values' size is not one more than the child list named 'values' in the 'moreThanOne' node added previously";
+                    // can't access a property in a manner compatible with both Java and CSharp?
+#endif
+#if __python__
+                    assert(thisProduction.getValues().size() == CURRENT_NODE.getNamedChildList("values").size() + 1) : "the BaseNode property 'values' size is not one more than the child list named 'values' in the 'moreThanOne' node added previously";
 #endif
 
+                }
+        )*! 
+    ]
+    <CLOSE_BRACKET>
+;
+
 Value :
-    <TRUE>
+    ( <TRUE>
     |
     <FALSE>
     |
@@ -96,7 +183,49 @@ Value :
     |
     Array
     |
-    JSONObject
+    JSONObject )
+    
+;
+
+KeyValuePair : 
+    @key :=$ <STRING_LITERAL> 
+    <COLON> 
+    @value := Value
+;
+
+JSONObject : 
+    <OPEN_BRACE>!
+    [
+        KeyValuePair ("," KeyValuePair)*!
+    ]
+    <CLOSE_BRACE>!
+;
+
+#else
+
+Array :
+    <OPEN_BRACKET>
+    [
+      Value (<COMMA> Value)*!
+    ]
+    <CLOSE_BRACKET>
+;
+
+Value :
+    ( <TRUE>
+    |
+    <FALSE>
+    |
+    <NULL>
+    |
+    <STRING_LITERAL>
+    |
+    <NUMBER>
+    |
+    Array
+    |
+    JSONObject )
+    
 ;
 
 KeyValuePair : <STRING_LITERAL> <COLON> Value;
@@ -109,4 +238,4 @@ JSONObject :
     <CLOSE_BRACE>!
 ;
 
-Root : Value! <EOF>! ;
+#endif

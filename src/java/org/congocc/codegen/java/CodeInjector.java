@@ -73,8 +73,8 @@ public class CodeInjector {
     }
    
     private void inject(CompilationUnit jcu) {
-        List<ImportDeclaration> importDecls = new ArrayList<>(jcu.getImportDeclarations());
-        for (TypeDeclaration dec : jcu.getTypeDeclarations()) {
+        List<ImportDeclaration> importDecls = new ArrayList<>((List<ImportDeclaration>)(List)jcu.getImportDeclarations());
+        for (TypeDeclaration dec : (List<TypeDeclaration>)(List)jcu.getTypeDeclarations()) {
             String name = dec.getName();
             typeNames.add(name);
             String packageName = isInNodePackage(name) ? appSettings.getNodePackage() : appSettings.getParserPackage();
@@ -227,7 +227,7 @@ public class CodeInjector {
     public void injectCode(CompilationUnit jcu) {
         String packageName = jcu.getPackageName();
         Set<ImportDeclaration> allInjectedImports = new LinkedHashSet<>();
-        for (TypeDeclaration typeDecl : jcu.getTypeDeclarations()) {
+        for (TypeDeclaration typeDecl : (List<TypeDeclaration>)(List)jcu.getTypeDeclarations()) {
             String fullName = typeDecl.getName();
             if (packageName !=null) {
                 fullName = packageName + "." + fullName;
@@ -266,7 +266,7 @@ public class CodeInjector {
     }
     
     private void injectImportDeclarations(CompilationUnit jcu, Collection<ImportDeclaration> importDecls) {
-        List<ImportDeclaration> importDeclarations = jcu.getImportDeclarations();
+        List<ImportDeclaration> importDeclarations = (List<ImportDeclaration>)(List)jcu.getImportDeclarations();
         for (ImportDeclaration importDecl : importDecls) {
             if (!importDeclarations.contains(importDecl)) {
                 jcu.addImportDeclaration(importDecl);

@@ -18,7 +18,7 @@
     </target>
     <target name="compile" depends="parser-gen">
         <javac classpath="." srcdir="." includeantruntime="off" failonerror="true" debug="on"
-            target="1.8" source="1.8"
+            release="8"
             fork="true" />
         <echo>
             test harness via: java PPTest &lt;filename&gt;

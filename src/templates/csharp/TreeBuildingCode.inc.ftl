@@ -107,6 +107,7 @@
         */
         private bool CloseNodeScope(Node n, bool condition) {
             if (n!= null && condition) {
+                n.BeginOffset = LastConsumedToken.EndOffset;
                 n.EndOffset = LastConsumedToken.EndOffset;
                 var a = NodeArity;
                 CurrentNodeScope.Close();

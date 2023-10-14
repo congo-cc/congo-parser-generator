@@ -21,6 +21,7 @@
    "ZeroOrMore" : "nodeListOptional",
    "OneOrMore" : "nodeList" }]
 [#var nodeFieldOrdinal = {}]
+[#var injectedFields = {}]
 [#var syntheticNodesEnabled = settings.syntheticNodesEnabled && settings.treeBuildingEnabled]
 [#var jtbParseTree = syntheticNodesEnabled && settings.jtbParseTree]
 
@@ -45,6 +46,7 @@
 [#macro ParserProduction production]
     [#set nodeNumbering = 0]
     [#set nodeFieldOrdinal = {}]
+    [#set injectedFields = {}]
     [#set newVarIndex = 0 in CU]
     [#-- Generate the method modifiers and header --] 
         ${production.leadingComments}
@@ -459,12 +461,12 @@ if (BuildTree) {
 [/#macro]
 
 [#function getRhsAssignmentPattern assignment] 
-   [#if assignment.existenceOf]
+   [#if assignment.existenceOf!false]
       [#-- replace "@" with "((@ != null) ? true : false)" --]
       [#return "((@ != null) ? true : false)" /]
-   [#elseif assignment.stringOf]
+   [#elseif assignment.stringOf!false]
       [#-- replace "@" with the string value of the node --]
-      [#return "@.ToString()"]
+      [#return "Convert.ToString(@).Trim()"]
    [/#if]
    [#return "@" /]
 [/#function]
@@ -479,14 +481,14 @@ if (BuildTree) {
             [#-- This is a declaration assignment; inject required property --]
             ${injectDeclaration(lhsType, assignment.name, assignment)}
          [/#if]
-         [#if assignment.addTo]
-            [#-- This is the addition of the current node as a child of the specified property's node value --]
-            [#return "thisProduction." + lhsName + ".AddChild(" + getRhsAssignmentPattern(assignment) + ")" /]
+         [#if assignment.addTo!false]
+            [#-- This is the addition of the current node as an element of the specified list property --]
+            [#return "thisProduction." + lhsName + ".Add(" + getRhsAssignmentPattern(assignment) + ")" /]
          [#else]
             [#-- This is an assignment of the current node's effective value to the specified property of the production node --]
             [#return "thisProduction." + lhsName + " = " + getRhsAssignmentPattern(assignment) /]
          [/#if]
-      [#elseif assignment.namedAssignment]
+      [#elseif assignment.namedAssignment!false]
          [#if assignment.addTo]
             [#-- This is the addition of the current node to the named child list of the production node --]
             [#return "thisProduction.AddToNamedChildList(\"" + lhsName + "\", " + getRhsAssignmentPattern(assignment) + ")" /]
@@ -513,8 +515,14 @@ if (BuildTree) {
       [#set type = "bool"]
    [#elseif assignment?? && assignment.stringOf]
       [#set type = "string"]
+   [#elseif assignment?? && assignment.addTo]
+      [#set type = "List<Node>"]
+      [#set field = field + " = new ArrayList<Node>()"]
    [/#if]
-   ${grammar.addFieldInjection(currentProduction.nodeName, modifier, type, field)}
+   [#if (injectedFields[field])?is_null]
+      [#set injectedFields = injectedFields + {field : type}]
+      ${grammar.addFieldInjection(currentProduction.nodeName, modifier, type, field)}
+   [/#if]
    [#return "" /]
 [/#function]
 
@@ -544,6 +552,7 @@ if (BuildTree) {
    [#-- take care of the non-tree-building classes --]
    [#if classname = "CodeBlock"]
 ${globals.translateCodeBlock(expansion, 1)}
+[#-- FIXME: for some reason a CodeBlock consisting only of a "// ..." line throws a ParseException on previous template line (for CSharp, not Java). --]
    [#-- OMITTED: [#elseif classname = "UncacheTokens"]
          uncacheTokens(); --]
    [#elseif classname = "Failure"]
@@ -717,8 +726,8 @@ finally {
       Parse${nonterminal.name}(${globals.translateNonterminalArgs(nonterminal.args)!});
    [/#if]
    [#if expressedLHS != "@" || impliedLHS != "@"]
-      [#if nonterminal.assignment.addTo]
-         if (buildTree) {
+      [#if nonterminal.assignment?? && (nonterminal.assignment.addTo!false || nonterminal.assignment.namedAssignment)]
+         if (BuildTree) {
             ${expressedLHS?replace("@", impliedLHS?replace("@", "PeekNode()"))};
          }
       [#else]
