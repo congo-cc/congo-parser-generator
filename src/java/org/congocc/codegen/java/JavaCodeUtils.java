@@ -123,7 +123,6 @@ public class JavaCodeUtils {
      */
     static public void stripUnused(CompilationUnit jcu) {
         new Reaper(jcu).stripUnused();
-//        new DeadCodeEliminator(jcu).stripUnused();
     }
 
     static private final String capitalizeFirstLetter(String s) {

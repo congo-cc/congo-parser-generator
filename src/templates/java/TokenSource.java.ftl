@@ -275,6 +275,12 @@ abstract public class TokenSource implements CharSequence
            // This handles some weird usage cases where token locations
            // have been adjusted.
            tokenOffsets.clear(beginOffset+1, endOffset);
+           for (int i = beginOffset+1; i<endOffset; i++) {
+              [#if settings.usesPreprocessor]
+              if (tokenLocationTable[i] != IGNORED)
+              [/#if]
+                 tokenLocationTable[i] = null;
+           }
         }
         tokenLocationTable[beginOffset] = tok;
     }
