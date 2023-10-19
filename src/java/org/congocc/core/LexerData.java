@@ -51,7 +51,9 @@ public class LexerData {
     }
 
     void addLexicalState(String name) {
-        lexicalStates.add(new LexicalStateData(grammar, name));
+        if (getLexicalState(name) == null) {
+            lexicalStates.add(new LexicalStateData(grammar, name));
+        }
     }
 
     public LexicalStateData getLexicalState(String name) {

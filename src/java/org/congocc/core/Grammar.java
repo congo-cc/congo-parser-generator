@@ -467,6 +467,7 @@ public class Grammar extends BaseNode {
     public void doSanityChecks() {
         if (defaultLexicalState == null) {
             setDefaultLexicalState("DEFAULT");
+            lexerData.addLexicalState("DEFAULT");
         }
         for (String lexicalState : lexicalStates) {
             lexerData.addLexicalState(lexicalState);
