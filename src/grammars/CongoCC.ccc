@@ -338,6 +338,9 @@ INJECT Identifier :
         if (image.equals("jjtThis") || image.equals("CURRENT_NODE")) { 
             image = getGrammar().getTemplateGlobals().getCurrentNodeVariableName();
         }
+        else if (image.equals("THIS_PRODUCTION")) {
+            image = "thisProduction";
+        }
         else if (image.equals("PARSER_CLASS")) {
             image = getAppSettings().getParserClassName();
         }
@@ -1168,7 +1171,10 @@ INJECT Lookahead :
 
 LookBehind : 
    [ @negated :=? <TILDE> ] 
-   (LookBehindForward | LookBehindBackward(thisProduction)) // I did this just to see if I could
+   (
+    LookBehindForward 
+    | 
+    LookBehindBackward(THIS_PRODUCTION, CURRENT_NODE)) #NeverInTheTree(false) // I did this just to see if it works
 ;
 
 LookBehindForward #void :
@@ -1183,9 +1189,9 @@ LookBehindForward #void :
    [<BACKSLASH>]
 ;
 
-LookBehindBackward(LookBehind thisProduction) #void :
+LookBehindBackward(LookBehind THIS_PRODUCTION, NeverInTheTree neverInTheTree) #void :
    (
-       @backward =? <BACKSLASH>
+       @backward =? <BACKSLASH> // This actually refers to the LookBehind production because of the node argument passed to this one
        (
           ([<TILDE>]<IDENTIFIER>)
           |
@@ -1193,7 +1199,20 @@ LookBehindBackward(LookBehind thisProduction) #void :
        )
    )+
    [<SLASH>]
+   { neverInTheTree.touch(); }
 ;
+
+INJECT NeverInTheTree :
+{
+    @Override
+    public void close() {
+        assert(false) : "Why am I being closed?";
+    }
+    
+    public void touch() {
+        // nothing to see here
+    }
+}
 
 INJECT LookBehind :
 import java.util.*;
