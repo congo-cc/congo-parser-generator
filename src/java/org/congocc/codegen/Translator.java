@@ -191,7 +191,7 @@ public class Translator {
                     node = ((ASTBinaryExpression) node).rhs;
                 }
                 else {
-                    throw new UnsupportedOperationException();
+                    throw new UnsupportedOperationException("node is '" + node + "' class " + node.getClass().getSimpleName());
                 }
             }
             return result;
@@ -813,7 +813,7 @@ public class Translator {
     // Called when a node's last child is a MethodCall instance.
     ASTInvocation transformMethodCall(Node node) {
         if (node.size() != 2) {
-            throw new UnsupportedOperationException();
+            throw new UnsupportedOperationException("node is '" + node + "' class " + node.getClass().getSimpleName());
         }
         ASTInvocation result = new ASTInvocation();
         result.receiver = (ASTExpression) transformTree(node.getFirstChild());
@@ -904,7 +904,7 @@ public class Translator {
         else if (node instanceof PrimitiveType) {
             ASTTypeExpression resultNode = new ASTTypeExpression();
             if (node.size() != 1) {
-                throw new UnsupportedOperationException();
+                throw new UnsupportedOperationException("node is '" + node + "' class " + node.getClass().getSimpleName());
             }
             Node child = node.getFirstChild();
             return transformTree(child, forType);
@@ -921,7 +921,7 @@ public class Translator {
                     resultNode.name = ((Identifier) child).getImage();
                 }
                 else {
-                    throw new UnsupportedOperationException();
+                    throw new UnsupportedOperationException("node is '" + child + "' class " + child.getClass().getSimpleName());
                 }
             }
             else {
@@ -940,12 +940,12 @@ public class Translator {
                                 resultNode.add(tp);
                             }
                             else {
-                                throw new UnsupportedOperationException();
+                                throw new UnsupportedOperationException("node is '" + gc + "' class " + gc.getClass().getSimpleName());
                             }
                         }
                     }
                     else {
-                        throw new UnsupportedOperationException();
+                        throw new UnsupportedOperationException("node is '" + child + "' class " + child.getClass().getSimpleName());
                     }
                 }
                 resultNode.name = sb.toString();
@@ -1093,7 +1093,7 @@ public class Translator {
                     return transformTree(child, forType);
                 }
                 else {
-                    throw new UnsupportedOperationException();
+                    throw new UnsupportedOperationException("node is '" + child + "' class " + child.getClass().getSimpleName());
                 }
             }
             return resultNode;
@@ -1145,7 +1145,7 @@ public class Translator {
                     }
                 }
                 else {
-                    throw new UnsupportedOperationException();
+                    throw new UnsupportedOperationException("node is '" + child + "' class " + child.getClass().getSimpleName());
                 }
             }
             return resultNode;
@@ -1273,7 +1273,7 @@ public class Translator {
                         currentCase = null;
                     }
                     else {
-                        throw new UnsupportedOperationException();
+                        throw new UnsupportedOperationException("node is '" + child + "' class " + child.getClass().getSimpleName());
                     }
                 }
             }
@@ -1376,7 +1376,7 @@ public class Translator {
                 return transformTree(child);
             }
             else {
-                throw new UnsupportedOperationException();
+                throw new UnsupportedOperationException("node is '" + child + "' class " + child.getClass().getSimpleName());
             }
         }
         else if (node instanceof AssertStatement) {
@@ -1438,7 +1438,7 @@ public class Translator {
             return resultNode;
         }
         if (result == null) {
-            throw new UnsupportedOperationException();
+            throw new UnsupportedOperationException("node is '" + node + "' class " + node.getClass().getSimpleName());
         }
         return result;
     }
@@ -1526,7 +1526,7 @@ public class Translator {
             internalTranslateExpression(((ASTMethodReference) expr).getIdentifier(), TranslationContext.UNKNOWN, result);
         }
         else {
-            throw new UnsupportedOperationException();
+            throw new UnsupportedOperationException("node is '" + expr + "' class " + expr.getClass().getSimpleName());
         }
         if (isTyped && (cast != null)) {
             result.append(')');

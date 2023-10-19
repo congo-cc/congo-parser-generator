@@ -235,7 +235,7 @@ TypeDeclaration #interface :
 TypeDeclarationLA#scan :
    <SEMICOLON>
    |
-   @modifiers := Modifiers /modifiers/
+   Modifiers
    (
      <CLASS>
      | <INTERFACE>
@@ -273,7 +273,7 @@ ClassDeclaration :
                                     PROTECTED, PRIVATE, 
                                     ABSTRACT, FINAL, STATIC, 
                                     STRICTFP, SEALED, NON_SEALED);}
-  (/modifiers/=Modifiers)
+  Modifiers
   <CLASS> =>||
   /name/=TypeIdentifier
   [ TypeParameters ]
@@ -288,9 +288,9 @@ InterfaceDeclaration :
                                      PRIVATE, ABSTRACT, 
                                      STATIC, STRICTFP, SEALED, 
                                      NON_SEALED);}#
-  @modifiers := Modifiers /modifiers/
+  Modifiers
   <INTERFACE> =>||
-  /name/=TypeIdentifier
+  /name/=TypeIdentifier // used in Translator?
   [ TypeParameters ]
   [ ExtendsList ]
   [ PermitsList ]
@@ -333,7 +333,7 @@ EnumDeclaration :
    {permissibleModifiers = EnumSet.of(PUBLIC, PROTECTED, 
                                       PRIVATE, ABSTRACT, 
                                       FINAL, STATIC, STRICTFP);}#
-   /modifiers/=Modifiers
+   Modifiers
    <ENUM> =>||
 // @name:=TypeIdentifier 
 //  REVISIT: The above can't be used because TypeIdentifier#void so the property can't be typed 
@@ -347,7 +347,7 @@ EnumDeclaration :
 
 EnumBody :
    <LBRACE>
-   [ /values/+=EnumConstant ( SCAN 2 <COMMA> (/values/+=EnumConstant) )* ]
+   [ /values/+=EnumConstant ( SCAN 2 <COMMA> (/values/+=EnumConstant) )* ] 
    [ <COMMA> ]
    [ <SEMICOLON> ( ClassOrInterfaceBodyDeclaration )*! ]
    <RBRACE>
@@ -358,11 +358,11 @@ RecordDeclaration :
                                      PROTECTED, PRIVATE, 
                                      ABSTRACT, FINAL, 
                                      STATIC, STRICTFP);}
-  @modifiers := Modifiers /modifiers/
+  Modifiers
   ASSERT {checkNextTokenImage("record") && getTokenType(2) == IDENTIFIER}#
   =>||
   ACTIVATE_TOKENS RECORD (<RECORD>)
-  /name/=TypeIdentifier
+  /name/=TypeIdentifier //used in Translator?
   [TypeParameters]
   RecordHeader
   [ImplementsList]
@@ -394,11 +394,11 @@ RecordBody :
 
 CompactConstructorDeclaration :
   {permissibleModifiers = EnumSet.of(PUBLIC, PROTECTED, PRIVATE);}#
-  @modifiers = Modifiers /modifiers/
-  /name/=TypeIdentifier
+  (Modifiers)
+  /name/=TypeIdentifier //used in Translator?
   <LBRACE> =>||
   [ ExplicitConstructorInvocation =>|| ]
-  @statements = ( SCAN ~(<RBRACE>) => /statements/+=BlockStatement )*!
+  @statements = ( SCAN ~(<RBRACE>) => BlockStatement )*!
   <RBRACE>
 ;
 
@@ -426,13 +426,13 @@ INJECT TypeParameters :
     }
 }
 
-TypeParameter: (Annotation)* /name/=TypeIdentifier =>|| [TypeBound];
+TypeParameter: (Annotation)* TypeIdentifier =>|| [TypeBound];
 
 TypeBound :
    <EXTENDS> ObjectType ( <BIT_AND> ObjectType )*
 ;
 
-ClassOrInterfaceBody : <LBRACE> (SCAN ~(<RBRACE>) => /decls/+=ClassOrInterfaceBodyDeclaration )*! <RBRACE> ;
+ClassOrInterfaceBody : <LBRACE> (SCAN ~(<RBRACE>) => /decls/+=ClassOrInterfaceBodyDeclaration )*! <RBRACE> ; 
 
 ClassOrInterfaceBodyDeclaration#interface :
   Initializer
@@ -456,13 +456,13 @@ FieldDeclaration :
   {permissibleModifiers = EnumSet.of(PUBLIC, PROTECTED, 
                                      PRIVATE, STATIC, FINAL, 
                                      TRANSIENT, VOLATILE);}#
-  @modifiers := Modifiers /modifiers/
+  Modifiers
   Type VariableDeclarator ( <COMMA> VariableDeclarator )* <SEMICOLON>
 ;
 
 VariableDeclarator# : VariableDeclaratorId [ <ASSIGN> VariableInitializer ] ;
 
-VariableDeclaratorId : @varName := <IDENTIFIER> /varName/ ( (Annotation)* <LBRACKET> <RBRACKET> )* ;
+VariableDeclaratorId : @varName := <IDENTIFIER> ( (Annotation)* <LBRACKET> <RBRACKET> )* ; // why can't I make this a VariableDeclaratorId# node? (test-parser fails)
 
 VariableInitializer#void : ArrayInitializer | Expression ;
 
@@ -496,23 +496,23 @@ ArrayInitializer :
                                       SYNCHRONIZED, NATIVE,
                                       STRICTFP);}
   )
-  @modifiers := Modifiers
+  @modifiers:=Modifiers
   [ TypeParameters ]
   ReturnType
-  @methodName := <IDENTIFIER>
-  =>|+1 @formals := FormalParameters /formals/ ( (Annotation)* <LBRACKET><RBRACKET> )*
+  @methodName:=<IDENTIFIER>
+  =>|+1 @formals:=FormalParameters ( (Annotation)* <LBRACKET><RBRACKET> )*
   [ ThrowsList ]
-  ( @statements := Block | <SEMICOLON> )
+  ( @statements:=Block | <SEMICOLON> )
   {return CURRENT_NODE;}
 ;
 
 FormalParameters : <LPAREN> [ FormalParameter ( <COMMA> FormalParameter )* ] <RPAREN> ;
 
-FormalParameter : {permissibleModifiers = EnumSet.of(FINAL);}# @modifiers := Modifiers /modifiers/ Type [ (Annotation)* <VAR_ARGS> ] VariableDeclaratorId ;
+FormalParameter : {permissibleModifiers = EnumSet.of(FINAL);}# @modifiers:=Modifiers Type [ (Annotation)* <VAR_ARGS> ] VariableDeclaratorId ;
 
 ConstructorDeclaration :
   {permissibleModifiers = EnumSet.of(PUBLIC, PROTECTED, PRIVATE);}#
-  @modifiers := Modifiers
+  @modifiers:=Modifiers
   [ TypeParameters ]
   /name/=TypeIdentifier @formals := FormalParameters =>||
   [ ThrowsList ]
@@ -1068,7 +1068,7 @@ NoVarDeclaration :
 
 VarDeclaration :
   {permissibleModifiers = EnumSet.of(FINAL);}#
-  @modifiers := Modifiers /modifiers/
+  @modifiers:=Modifiers
   ASSERT {checkNextTokenImage("var") && getTokenType(2) == IDENTIFIER} =>||
   ACTIVATE_TOKENS VAR (<VAR>)
   <IDENTIFIER>
@@ -1077,7 +1077,7 @@ VarDeclaration :
 
 LocalVariableDeclarationLA#scan :
    {permissibleModifiers = EnumSet.of(FINAL);}
-   @modifiers := Modifiers /modifiers/
+   Modifiers
    (
      Type
      |
@@ -1252,18 +1252,18 @@ SynchronizedStatement : <SYNCHRONIZED> <LPAREN> Expression <RPAREN> Block ;
 ClassicTryStatement :
   <TRY>
   =>|+1
-  /block/=Block
+  /block/=Block 
   (
-     /finallyBlock/=FinallyBlock
+     /finallyBlock/=FinallyBlock 
      |
      (
-        ( /catchBlocks/+=CatchBlock )+
-        [ /finallyBlock/=FinallyBlock ] 
+        ( /catchBlocks/+=CatchBlock )+ 
+        [ /finallyBlock/=FinallyBlock ]  
      )
   )
 ;
 
-TryWithResources :
+TryWithResources : // not processed by Translator
    <TRY> <LPAREN> =>||
     (
       SCAN {getTokenType(0) == SEMICOLON}# ~(<RPAREN>) 
@@ -1279,9 +1279,9 @@ TryWithResources :
        [<SEMICOLON>]
     )+
     <RPAREN>
-    (/block/=Block)
-    ( /catchBlock/+=CatchBlock )*
-    [ /finallyBlock/=FinallyBlock ]
+    (/block/=Block) // not used in Translator (but should be?)
+    ( /catchBlock/+=CatchBlock )* // not used in Translator (but should be?)
+    [ /finallyBlock/=FinallyBlock ] // not used in Translator (but should be?)
 ;
 
 CatchBlock :
@@ -1362,8 +1362,8 @@ AnnotationTypeDeclaration :
   {permissibleModifiers = EnumSet.of(PUBLIC, PROTECTED, 
                                     PRIVATE, ABSTRACT, 
                                     STATIC, STRICTFP);}#
-  @modifiers := Modifiers /modifiers/
-  <AT> <INTERFACE> =>|| /name/=TypeIdentifier AnnotationTypeBody
+  @modifiers:=Modifiers
+  <AT> <INTERFACE> =>|| /name/=TypeIdentifier AnnotationTypeBody // used in Translator?
 ;
 
 AnnotationTypeBody :
@@ -1372,7 +1372,7 @@ AnnotationTypeBody :
 
 AnnotationMethodDeclaration :
    {permissibleModifiers = EnumSet.of(PUBLIC, ABSTRACT);}#
-   @modifiers := Modifiers /modifiers/
+   @modifiers:=Modifiers
    Type <IDENTIFIER> <LPAREN> =>|| <RPAREN> [ DefaultValue ] <SEMICOLON> 
 ;
 
@@ -1412,7 +1412,7 @@ LambdaParameters : <LPAREN> [ LambdaParameter ( <COMMA> LambdaParameter )* ] <RP
 
 LambdaParameter :
     {permissibleModifiers = EnumSet.of(FINAL);}#
-    @modifiers := Modifiers /modifiers/
+    @modifiers := Modifiers
     (
       Type (Annotation)* <VAR_ARGS> =>|| <IDENTIFIER>
       |

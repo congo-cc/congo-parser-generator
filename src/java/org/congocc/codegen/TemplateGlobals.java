@@ -378,7 +378,7 @@ public class TemplateGlobals {
                         if (child instanceof Identifier) {
                             names.add(((Identifier) child).toString());
                         } else if (child instanceof VariableDeclarator) {
-                            Identifier ident = child.firstChildOfType(Identifier.class);
+                            Identifier ident = child.firstDescendantOfType(Identifier.class);
                             if (ident == null) {
                                 throw new UnsupportedOperationException();
                             }
