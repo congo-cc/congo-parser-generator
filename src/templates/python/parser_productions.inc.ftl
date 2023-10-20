@@ -505,10 +505,10 @@ ${globals.popNodeVariableName()!}[#rt]
       [#elseif assignment.namedAssignment!false]
          [#if assignment.addTo]
             [#-- This is the addition of the current node to the named child list of the production node --]
-            [#return "thisProduction.add_to_named_child_list(\"" + globals.translateIdentifier(lhsName) + "\", " + getRhsAssignmentPattern(assignment) + ")" /]
+            [#return "${globals.currentNodeVariableName}" + ".add_to_named_child_list(\"" + globals.translateIdentifier(lhsName) + "\", " + getRhsAssignmentPattern(assignment) + ")" /]
          [#else]
             [#-- This is an assignment of the current node to a named child of the production node --]
-            [#return "thisProduction.set_named_child(\"" + globals.translateIdentifier(lhsName) + "\", " + getRhsAssignmentPattern(assignment) + ")" /]
+            [#return "${globals.currentNodeVariableName}" + ".set_named_child(\"" + globals.translateIdentifier(lhsName) + "\", " + getRhsAssignmentPattern(assignment) + ")" /]
          [/#if]
       [/#if]
       [#-- This is the assignment of the current node or it's returned value to an arbitrary LHS "name" (i.e., the legacy JavaCC assignment) --]
@@ -757,16 +757,6 @@ ${is}    ${expressedLHS?replace("@", impliedLHS?replace("@", "self.peek_node()")
 ${is}except Exception:
 ${is}    ${expressedLHS?replace("@", impliedLHS?replace("@", "None"))}
       [/#if]
-   [/#if]
-   [#if !nonterminal.childName?is_null]
-${is}if self.build_tree:
-${is}    child = self.peek_node()
-${is}    name = '${nonterminal.childName}'
-     [#if nonterminal.multipleChildren]
-${is}    ${globals.currentNodeVariableName}.add_to_named_child_list(name, child)
-     [#else]
-${is}    ${globals.currentNodeVariableName}.set_named_child(name, child)
-     [/#if]
    [/#if] 
 [/#macro]
 
@@ -787,16 +777,6 @@ ${is}if self.outer_follow_set is not None:
 ${is}    ${followSetVarName} = set(self.${terminal.followSetVarName}) | self.outer_follow_set
       [/#if]
 ${is}${LHS?replace("@", "self.consume_token(" + regexp.label + ", " + tolerant + ", " + followSetVarName + ")")}
-   [/#if]
-   [#if !terminal.childName?is_null]
-${is}if self.build_tree:
-${is}    child = self.peek_node()
-${is}    name = '${terminal.childName}'
-      [#if terminal.multipleChildren]
-${is}    ${globals.currentNodeVariableName}.add_to_named_child_list(name, child)
-      [#else]
-${is}    ${globals.currentNodeVariableName}.set_named_child(name, child)
-      [/#if]
    [/#if]
 [#--${is}# DBG < BuildCodeRegexp ${indent} --]
 [/#macro]

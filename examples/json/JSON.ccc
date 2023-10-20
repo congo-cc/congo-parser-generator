@@ -125,11 +125,11 @@ Array :
         @values :+= ( /values/ += Value )
         {
 #if __java__
-            assert(thisProduction.getValues() instanceof List) : "values property not type List";
+            assert(THIS_PRODUCTION.getValues() instanceof List) : "values property not type List";
             // Can't access a property in a manner compatible with both Java and CSharp? 
             // But can with Python, however, the instanceof does not recognize "List".
 #endif
-            assert(thisProduction.getNamedChildList("values").size() == 1) : "named child list 'values' should have 1 node at this point";            
+            assert(THIS_PRODUCTION.getNamedChildList("values").size() == 1) : "named child list 'values' should have 1 node at this point";            
         } 
         /**
          * A boolean property named "moreThanOne" is automatically injected into the "Array" node and a ZeroOrMore expansion is parsed and, 
@@ -143,7 +143,7 @@ Array :
             @commaTokens :+= <COMMA> aCommaNode = #ACommaNode 
                 {
 #if __java__
-                    assert(aCommaNode.get(0).toString().equals(thisProduction.getCommaTokens().get(0).toString())) : "the ACommaNode does not have a child token that is = the property commaTokens[0] in the Array node";
+                    assert(aCommaNode.get(0).toString().equals(THIS_PRODUCTION.getCommaTokens().get(0).toString())) : "the ACommaNode does not have a child token that is = the property commaTokens[0] in the Array node";
                     // can't access a property in a manner compatible with CSharp and Python?
 #endif
                 }
@@ -154,14 +154,14 @@ Array :
              * ALWAYS references the properties of the production node instance (i.e. the node that is open before parsing the first expansion), whereas the latter references the named child or list
              * of the node last closed. 
              */
-            @values += Value /[values]/ 
+            (@values += Value) /values/+=#VValue
                 {
 #if __java__
-                    assert(thisProduction.getValues().size() == CURRENT_NODE.getNamedChildList("values").size() + 1) : "the List<Node> property 'values' size is not one more than the child list named 'values' in the 'moreThanOne' node added previously";
+                    assert(THIS_PRODUCTION.getValues().size() == CURRENT_NODE.getNamedChildList("values").size() + 1) : "the List<Node> property 'values' size is not one more than the child list named 'values' in the 'VValue' definite node added";
                     // can't access a property in a manner compatible with both Java and CSharp?
 #endif
 #if __python__
-                    assert(thisProduction.getValues().size() == CURRENT_NODE.getNamedChildList("values").size() + 1) : "the BaseNode property 'values' size is not one more than the child list named 'values' in the 'moreThanOne' node added previously";
+                    assert(THIS_PRODUCTION.getValues().size() == CURRENT_NODE.getNamedChildList("values").size() + 1) : "the BaseNode property 'values' size is not one more than the child list named 'values' in the 'moreThanOne' node added previously";
 #endif
 
                 }

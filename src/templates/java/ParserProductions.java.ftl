@@ -530,10 +530,10 @@
       [#elseif assignment.namedAssignment!false]
          [#if assignment.addTo]
             [#-- This is the addition of the current node to the named child list of the production node --]
-            [#return "thisProduction.addToNamedChildList(\"" + lhsName + "\", " + getRhsAssignmentPattern(assignment) + ")" /]
+            [#return "${globals.currentNodeVariableName}" + ".addToNamedChildList(\"" + lhsName + "\", " + getRhsAssignmentPattern(assignment) + ")" /]
          [#else]
             [#-- This is an assignment of the current node to a named child of the production node --]
-            [#return "thisProduction.setNamedChild(\"" + lhsName + "\", " + getRhsAssignmentPattern(assignment) + ")" /]
+            [#return "${globals.currentNodeVariableName}" + ".setNamedChild(\"" + lhsName + "\", " + getRhsAssignmentPattern(assignment) + ")" /]
          [/#if]
       [/#if]
       [#-- This is the assignment of the current node or it's returned value to an arbitrary LHS "name" (i.e., the legacy JavaCC assignment) --]
@@ -770,17 +770,6 @@
          }
       [/#if]
    [/#if]
-   [#if nonterminal.childName??]
-      if (buildTree) {
-         Node child = peekNode();
-         String name = "${nonterminal.childName}";
-      [#if nonterminal.multipleChildren]
-         ${globals.currentNodeVariableName}.addToNamedChildList(name, child);
-      [#else]
-         ${globals.currentNodeVariableName}.setNamedChild(name, child);
-      [/#if]
-      }
-   [/#if] 
 [/#macro]
 
 [#macro BuildCodeTerminal terminal]
@@ -799,17 +788,6 @@
          }
        [/#if]
        ${LHS?replace("@", "consumeToken(" + regexp.label + ", " + tolerant + ", " + followSetVarName + ")")};
-   [/#if]
-   [#if !terminal.childName?is_null && !globals.currentNodeVariableName?is_null]
-    if (buildTree) {
-        Node child = peekNode();
-        String name = "${terminal.childName}";
-    [#if terminal.multipleChildren]
-        ${globals.currentNodeVariableName}.addToNamedChildList(name, child);
-    [#else]
-        ${globals.currentNodeVariableName}.setNamedChild(name, child);
-    [/#if]
-    }
    [/#if]
 [/#macro]
 

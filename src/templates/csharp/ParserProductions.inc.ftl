@@ -491,10 +491,10 @@ if (BuildTree) {
       [#elseif assignment.namedAssignment!false]
          [#if assignment.addTo]
             [#-- This is the addition of the current node to the named child list of the production node --]
-            [#return "thisProduction.AddToNamedChildList(\"" + lhsName + "\", " + getRhsAssignmentPattern(assignment) + ")" /]
+            [#return "${globals.currentNodeVariableName}" + ".AddToNamedChildList(\"" + lhsName + "\", " + getRhsAssignmentPattern(assignment) + ")" /]
          [#else]
             [#-- This is an assignment of the current node to a named child of the production node --]
-            [#return "thisProduction.SetNamedChild(\"" + lhsName + "\", " + getRhsAssignmentPattern(assignment) + ")" /]
+            [#return "${globals.currentNodeVariableName}" + ".SetNamedChild(\"" + lhsName + "\", " + getRhsAssignmentPattern(assignment) + ")" /]
          [/#if]
       [/#if]
       [#-- This is the assignment of the current node or it's returned value to an arbitrary LHS "name" (i.e., the legacy JavaCC assignment) --]
@@ -738,17 +738,6 @@ finally {
             ${expressedLHS?replace("@", impliedLHS?replace("@", "null"))};
          }
       [/#if]
-   [/#if]
-   [#if nonterminal.childName??]
-      if (BuildTree) {
-         Node child = PeekNode();
-         String name = "${nonterminal.childName}";
-      [#if nonterminal.multipleChildren]
-         ${globals.currentNodeVariableName}.AddToNamedChildList(name, child);
-      [#else]
-         ${globals.currentNodeVariableName}.SetNamedChild(name, child);
-      [/#if]
-      }
    [/#if] 
 [/#macro]
 
@@ -769,17 +758,6 @@ if (OuterFollowSet != null) {
 }
        [/#if]
 ${LHS?replace("@", "ConsumeToken(" + CU.TT + regexp.label + ", " + tolerant + ", " + followSetVarName + ")")};
-   [/#if]
-   [#if !terminal.childName?is_null && !globals.currentNodeVariableName?is_null]
-if (BuildTree) {
-    Node child = PeekNode();
-    string name = "${terminal.childName}";
-    [#if terminal.multipleChildren]
-    ${globals.currentNodeVariableName}.AddToNamedChildList(name, child);
-    [#else]
-    ${globals.currentNodeVariableName}.SetNamedChild(name, child);
-    [/#if]
-}
    [/#if]
 [#-- // DBG < BuildCodeRegexp --]
 [/#macro]
