@@ -1062,7 +1062,7 @@ LocalVariableDeclaration#abstract :
 
 NoVarDeclaration :
    {permissibleModifiers = EnumSet.of(FINAL);}#
-   @modifiers := Modifiers /modifiers/
+   @modifiers := Modifiers
    Type =>|| VariableDeclarator ( <COMMA> VariableDeclarator )*
 ;
 

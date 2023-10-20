@@ -1283,6 +1283,7 @@ ChildNameInfo(Expansion expansion) : //#void :
     "]" )
   )
   "/"
+  FAIL "Postfix form not supported; use \"=\" or \"+=\" LHS assignment form"
   {
     expansion.setChildName(name);
     expansion.setMultipleChildren(multiple);
