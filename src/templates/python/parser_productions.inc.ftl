@@ -736,10 +736,10 @@ ${is}    self.pop_call_stack()
    [#var expressedLHS = getLhsPattern(nonterminal.assignment, lhsClassName)]
    [#var impliedLHS = "@"]
    [#if jtbParseTree && isProductionInstantiatingNode(nonterminal.nestedExpansion) && topLevelExpansion]
-      [#set impliedLHS = "thisProduction.${imputedJtbFieldName(nonterminal.production.nodeName)} = @"]
+      [#set impliedLHS = "thisProduction." + imputedJtbFieldName(nonterminal.production.nodeName) + " = @"]
    [/#if]
    [#-- Accept the non-terminal expansion --]
-   [#if nonterminal.production.returnType != "void" && expressedLHS != "@"]
+   [#if nonterminal.production.returnType != "void" && expressedLHS != "@" && !nonterminal.assignment.namedAssignment && !nonterminal.assignment.propertyAssignment]
       [#-- Not a void production, so accept and clear the expressedLHS, it has already been applied. --]
 ${is}${expressedLHS?replace("@", "self.parse_" + nonterminal.name + "(" + globals.translateNonterminalArgs(nonterminal.args) + ")")}
       [#set expressedLHS = "@"]

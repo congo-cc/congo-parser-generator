@@ -1273,8 +1273,9 @@ ChildNameInfo(Expansion expansion) : //#void :
     String name;
     boolean multiple = false;
 }
+  ASSERT ~(Assignment)
   // TODO these delimiters are provisional - agreement needed on final form
-  "/"
+  "/" =>||
   (
     <IDENTIFIER> { name = ((Token) peekNode()).toString(); }
     |
@@ -1283,6 +1284,7 @@ ChildNameInfo(Expansion expansion) : //#void :
     "]" )
   )
   "/"
+  =>||
   FAIL "Postfix form not supported; use \"=\" or \"+=\" LHS assignment form"
   {
     expansion.setChildName(name);
