@@ -715,10 +715,10 @@ finally {
    [#var expressedLHS = getLhsPattern(nonterminal.assignment, lhsClassName)]
    [#var impliedLHS = "@"]
    [#if jtbParseTree && isProductionInstantiatingNode(nonterminal.nestedExpansion) && topLevelExpansion]
-      [#set impliedLHS = "thisProduction.${imputedJtbFieldName(nonterminal.production.nodeName)} = @"]
+      [#set impliedLHS = "thisProduction." + imputedJtbFieldName(nonterminal.production.nodeName) + " = @"]
    [/#if]
    [#-- Accept the non-terminal expansion --]
-   [#if nonterminal.production.returnType != "void" && expressedLHS != "@"]
+   [#if nonterminal.production.returnType != "void" && expressedLHS != "@" && !nonterminal.assignment.namedAssignment && !nonterminal.assignment.propertyAssignment]
       [#-- Not a void production, so accept and clear the expressedLHS, it has already been applied. --]
       ${expressedLHS?replace("@", "Parse" + nonterminal.name + "(" + globals.translateNonterminalArgs(nonterminal.args)! + ")")};
       [#set expressedLHS = "@"]
@@ -728,7 +728,11 @@ finally {
    [#if expressedLHS != "@" || impliedLHS != "@"]
       [#if nonterminal.assignment?? && (nonterminal.assignment.addTo!false || nonterminal.assignment.namedAssignment)]
          if (BuildTree) {
-            ${expressedLHS?replace("@", impliedLHS?replace("@", "PeekNode()"))};
+            [#if impliedLHS == "@"]
+               ${expressedLHS?replace("@", impliedLHS?replace("@", "PeekNode()"))};
+            [#else]
+               ${expressedLHS?replace("@", impliedLHS?replace("@", "(" + nonterminal.production.nodeName + ") PeekNode()"))};
+            [/#if]
          }
       [#else]
          try {
