@@ -387,14 +387,17 @@ public class FilesGenerator {
         for (RegularExpression re : lexerData.getOrderedNamedTokens()) {
             if (re.isPrivate()) continue;
             String tokenClassName = re.getGeneratedClassName();
+            if (tokenClassName.indexOf('.') != -1) continue;
             Path outputFile = getOutputFile(tokenClassName);
             files.put(tokenClassName, outputFile);
             tokenSubclassFileNames.add(outputFile.getFileName().toString());
             String superClassName = re.getGeneratedSuperClassName();
             if (superClassName != null) {
-                outputFile = getOutputFile(superClassName);
-                files.put(superClassName, outputFile);
-                tokenSubclassFileNames.add(outputFile.getFileName().toString());
+                if (superClassName.indexOf('.') == -1) {
+                    outputFile = getOutputFile(superClassName);
+                    files.put(superClassName, outputFile);
+                    tokenSubclassFileNames.add(outputFile.getFileName().toString());
+                }
                 superClassLookup.put(tokenClassName, superClassName);
             }
         }

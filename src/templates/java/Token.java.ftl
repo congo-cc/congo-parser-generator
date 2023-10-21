@@ -486,7 +486,11 @@ public class ${settings.baseTokenClassName} ${implements} {
            switch(type) {
            [#list lexerData.orderedNamedTokens as re]
             [#if re.generatedClassName != "${settings.baseTokenClassName}" && !re.private]
-              case ${re.label} : return new ${grammar.nodePrefix}${re.generatedClassName}(TokenType.${re.label}, tokenSource, beginOffset, endOffset);
+              [#var generatedClassName = re.generatedClassName]
+              [#if generatedClassName?index_of('.')<0]
+                 [#set generatedClassName = grammar.nodePrefix + generatedClassName]
+              [/#if]
+              case ${re.label} : return new ${generatedClassName}(TokenType.${re.label}, tokenSource, beginOffset, endOffset);
             [/#if]
            [/#list]
            [#list settings.extraTokenNames as tokenName]

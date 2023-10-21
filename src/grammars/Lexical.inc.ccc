@@ -24,8 +24,8 @@ TokenProduction :
   [
     "[" "IGNORE_CASE" {ignoreCase = true;} "]"
   ]
-  ["#" <IDENTIFIER> {
-    tokenClassName=lastConsumedToken.toString();
+  ["#" Name {
+    tokenClassName=peekNode().toString();
     CURRENT_NODE.setTokenClassName(tokenClassName);
     }
   ] 
@@ -155,10 +155,10 @@ RegexpSpec(String tokenClassName)#org.congocc.core.RegexpSpec :
         }
     }
     [
-        "#"<IDENTIFIER>
+        "#" Name
         {
             regexp.setGeneratedSuperClassName(tokenClassName);
-            regexp.setGeneratedClassName(lastConsumedToken.toString());
+            regexp.setGeneratedClassName(peekNode().toString());
         }
     ]
     [

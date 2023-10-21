@@ -446,14 +446,11 @@ INJECT Token :
 }    
 
 #Root throws IOException #GrammarFile :
-{
-    TokenProduction tp;
-}
    [
       Options
    ]!
    (
-      tp=TokenProduction 
+      TokenProduction 
       |
       CodeInjection2 
       |
