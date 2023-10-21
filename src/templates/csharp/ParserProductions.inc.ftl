@@ -121,7 +121,7 @@
             iv = InvalidNode(self);
             [#-- OMITTED: iv.copyLocationInfo(skippedTokens.get(0));--]
             foreach (var tok in skippedTokens) {
-                iv.AddChild(tok);
+                iv.Add(tok);
                 [#-- OMITTED: iv.setEndOffset(tok.getEndOffset()); --]
             }
             PushNode(iv);

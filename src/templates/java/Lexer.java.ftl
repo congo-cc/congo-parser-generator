@@ -438,9 +438,11 @@ class ${settings.lexerClassName} extends TokenSource
   // Utility methods. Having them here makes it easier to handle things
   // more uniformly in other generation languages.
 
+   /* REMOVE
    private void setRegionIgnore(int start, int end) {
      setIgnoredRange(start, end);
    }
+   */
 
    private boolean atLineStart(${TOKEN} tok) {
       int offset = tok.getBeginOffset();

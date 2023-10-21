@@ -142,7 +142,7 @@
              InvalidNode iv = new InvalidNode();
              iv.copyLocationInfo(skippedTokens.get(0));
              for (${settings.baseTokenClassName} tok : skippedTokens) {
-                iv.addChild(tok);
+                iv.add(tok);
                 iv.setEndOffset(tok.getEndOffset());
              }
              pushNode(iv);

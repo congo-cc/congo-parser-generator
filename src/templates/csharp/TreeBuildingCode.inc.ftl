@@ -88,7 +88,7 @@
             }
             foreach (var child in nodes) {
                 // FIXME deal with the UNPARSED_TOKENS_ARE_NODES case
-                n.AddChild(child);
+                n.Add(child);
             }
             n.Close();
             PushNode(n);
@@ -126,11 +126,11 @@
                             tok = tok.PreviousCachedToken;
                         }
                         while (tok.IsUnparsed) {
-                            n.AddChild(tok);
+                            n.Add(tok);
                             tok = tok.NextCachedToken;
                         }
                     }
-                    n.AddChild(child);
+                    n.Add(child);
                 }
                 n.Close();
                 PushNode(n);

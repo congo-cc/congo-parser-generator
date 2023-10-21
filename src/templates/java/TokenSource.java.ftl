@@ -254,7 +254,6 @@ abstract public class TokenSource implements CharSequence
     }
 
 [/#if]
-
 [#if settings.cppContinuationLine]
     protected void handleCContinuationLines() {
       String input = content.toString();
@@ -262,12 +261,13 @@ abstract public class TokenSource implements CharSequence
           int nlIndex = input.indexOf('\n', offset);
           if (nlIndex < 0) break;
           if (input.substring(offset+1, nlIndex).trim().isEmpty()) {
-              for (int i=offset; i<=nlIndex; i++) setIgnoredRange(i, i+1);
+              setIgnoredRange(offset, nlIndex + 1);
+              // for (int i=offset; i<=nlIndex; i++) setIgnoredRange(i, i+1);
           } 
       }
     }
-[/#if]
 
+[/#if]
     public void cacheToken(${BaseToken} tok) {
         int beginOffset=tok.getBeginOffset(), endOffset =tok.getEndOffset();
         tokenOffsets.set(beginOffset);
@@ -458,7 +458,7 @@ abstract public class TokenSource implements CharSequence
 
     /**
      * @return the line length in code _units_
-     */ 
+     */
     int getLineLength(int lineNumber) {
         int startOffset = getLineStartOffset(lineNumber);
         int endOffset = getLineEndOffset(lineNumber);
@@ -470,9 +470,9 @@ abstract public class TokenSource implements CharSequence
      * and endOffset(exclusive)
      */
     public String getText(int startOffset, int endOffset) {
-[#if !settings.usesPreprocessor]        
+[#if !settings.usesPreprocessor]
         return subSequence(startOffset, endOffset).toString();
-[#else]        
+[#else]
         StringBuilder buf = new StringBuilder();
         for (int offset = startOffset; offset < endOffset; offset++) {
             if (!isIgnored(offset)) {
@@ -480,7 +480,7 @@ abstract public class TokenSource implements CharSequence
             }
         }
         return buf.toString();
-[/#if]        
+[/#if]
     }
 
   // The source of the raw characters that we are scanning  

@@ -451,7 +451,7 @@ namespace ${csPackage} {
   "a = b ? c : d",
   "currentLookaheadToken || lastConsumedToken",
   "TokenType.STRICTFP",
-  "!(getToken(1).getImage().equals(\"yield\")&&isInProduction(\"SwitchExpression\"))",
+  "!(getToken(1).toString().equals(\"yield\")&&isInProduction(\"SwitchExpression\"))",
   "foo.toString()",
   "lhs.isAssignableTo()",
   "lhs.isMethodCall()||lhs.isConstructorInvocation()||lhs.isAllocation()",

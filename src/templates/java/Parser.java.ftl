@@ -194,12 +194,12 @@ public boolean isCancelled() {return cancelled;}
 
   private String tokenImage(int n) {
     ${settings.baseTokenClassName} t = getToken(n);
-    return t == null ? null : t.getImage();
+    return t == null ? null : t.toString();
   }
 
   private String getTokenImage(int n) {
     ${settings.baseTokenClassName} t = getToken(n);
-    return t == null ? null : t.getImage();
+    return t == null ? null : t.toString();
   }
 
   private TokenType getTokenType(int n) {
@@ -208,7 +208,7 @@ public boolean isCancelled() {return cancelled;}
   }
 
   private boolean checkNextTokenImage(String img, String... additionalImages) {
-      String nextImage = getToken(1).getImage();
+      String nextImage = getToken(1).toString();
       if (nextImage.equals(img)) return true;
       for (String image : additionalImages) {
          if (nextImage.equals(image)) return true;

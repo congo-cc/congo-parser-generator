@@ -130,7 +130,7 @@
                 }
                 boolean locationSet = false;
                 while (tok.isUnparsed()) {
-                    n.addChild(tok);
+                    n.add(tok);
                     if (!locationSet && tok.getInputSource() == n.getInputSource() && tok.getBeginOffset() < n.getBeginOffset()) {
                         n.setBeginOffset(tok.getBeginOffset());
                         locationSet = true;
@@ -141,7 +141,7 @@
             if (child.getInputSource() == n.getInputSource()) {
                 n.setEndOffset(child.getEndOffset());
             }
-            n.addChild(child);
+            n.add(child);
         }
         n.close();
         pushNode(n);
