@@ -1,16 +1,17 @@
 [#-- This template contains the core logic for generating the various parser routines. --]
 
-[#var nodeNumbering = 0]
-[#var NODE_USES_PARSER = settings.nodeUsesParser]
-[#var NODE_PREFIX = grammar.nodePrefix]
-[#var currentProduction]
-[#var topLevelExpansion] [#-- A "one-shot" indication that we are processing 
+#var nodeNumbering = 0
+#var NODE_USES_PARSER = settings.nodeUsesParser
+#var NODE_PREFIX = grammar.nodePrefix
+#var currentProduction
+#var topLevelExpansion [#-- A "one-shot" indication that we are processing 
                               an expansion immediately below the BNF production expansion, 
                               ignoring an ExpansionSequence that might be there. This is
                               primarily, if not exclusively, for allowing JTB-compatible
                               syntactic trees to be built. While seemingly silly (and perhaps could be done differently), 
                               it is also a bit tricky, so treat it like the Holy Hand-grenade in that respect. 
                           --]
+                          
 [#var jtbNameMap = {
    "Terminal" : "nodeToken",
    "Sequence" : "nodeSequence",
@@ -267,17 +268,15 @@
    [#return null/]
 [/#function]
 
-[#function resolveTreeNodeBehavior expansion]
-   [#var treeNodeBehavior = expansion.treeNodeBehavior]
-   [#var isProduction = false]
-   [#if expansion.simpleName = "BNFProduction"]
-      [#set isProduction = true]
-   [#else]
-      [#var nodeName = syntacticNodeName(expansion)] [#-- This maps ExpansionSequence containing more than one syntax element to "Sequence", otherwise to the element itself --]
-      [#if !treeNodeBehavior?? &&
-           expansion.assignment??
-      ]
-         [#if syntheticNodesEnabled && isProductionInstantiatingNode(expansion)]
+#function resolveTreeNodeBehavior expansion
+   #var treeNodeBehavior = expansion.treeNodeBehavior
+   #var isProduction = false
+   #if expansion.simpleName = "BNFProduction"
+      #set isProduction = true
+   #else
+      #var nodeName = syntacticNodeName(expansion) [#-- This maps ExpansionSequence containing more than one syntax element to "Sequence", otherwise to the element itself --]
+      #if !treeNodeBehavior?? && expansion.assignment??
+         #if syntheticNodesEnabled && isProductionInstantiatingNode(expansion)
             [#-- Assignment is explicitly provided and synthetic nodes are enabled --]
             [#-- NOTE: An explicit assignment will take precedence over a synthetic JTB node. 
                I.e., it will not create a field in the production node.  It WILL, however, 
@@ -293,10 +292,10 @@
                )
             ]
                [#-- We do need to create a definite node --]
-               [#if !jtbParseTree]
+               #if !jtbParseTree
                   [#-- It's not a JTB tree but it is a syntactic node with a LHS assignment, so use the BASE_NODE type --][#-- (jb) is there a reason to use the syntactic type always?  Perhaps, but I can't think of one. --]
-                  [#set nodeName = settings.baseNodeClassName]
-               [/#if]
+                  #set nodeName = settings.baseNodeClassName
+               /#if
                [#-- Make a new node to wrap the current expansion with the expansion's assignment. --]
                [#set treeNodeBehavior = {
                                           'nodeName' : nodeName, 
@@ -305,39 +304,39 @@
                                           'void' : false,
                                           'assignment' : expansion.assignment
                                        } /]
-               [#if expansion.assignment.propertyAssignment && !expansion.assignment.noAutoDefinition]
+               #if expansion.assignment.propertyAssignment && !expansion.assignment.noAutoDefinition
                   [#-- Inject the receiving property --]
                   ${injectDeclaration(nodeName, expansion.assignment.name, expansion.assignment)}
-               [/#if]
-            [/#if]
-         [#elseif nodeName??]
+               /#if
+            /#if
+         #elseif nodeName??
             [#-- We are attempting to do assignment of a syntactic node value, but synthetic nodes are not enabled --]
             [#-- FIXME: we should probably create treeNodeBehavior that signals this error to somebody that can report it to the user --]
-            [#return null /]
-         [/#if]
+            #return null
+         /#if
       [#elseif treeNodeBehavior?? &&
                treeNodeBehavior.assignment?? &&
                isProductionInstantiatingNode(expansion)]
          [#-- There is an explicit tree node annotation with assignment; make sure a property is injected if needed. --]
-         [#if !treeNodeBehavior.assignment.noAutoDefinition]
+         #if !treeNodeBehavior.assignment.noAutoDefinition
             ${injectDeclaration(treeNodeBehavior.nodeName, treeNodeBehavior.assignment.name, treeNodeBehavior.assignment)}
-         [/#if]
-      [#elseif jtbParseTree && expansion.parent.simpleName != "ExpansionWithParentheses" && isProductionInstantiatingNode(expansion)]
+         /#if
+      #elseif jtbParseTree && expansion.parent.simpleName != "ExpansionWithParentheses" && isProductionInstantiatingNode(expansion)
          [#-- No in-line definite node annotation; synthesize a parser node for the expansion type being built, if needed. --]
-         [#if nodeName??]
+         #if nodeName??
             [#-- Determine the node name depending on syntactic type --]
-            [#var nodeFieldName = imputedJtbFieldName(nodeName)] [#-- Among other things this injects the node field into the generated node if result is non-nullv--]
+            #var nodeFieldName = imputedJtbFieldName(nodeName) [#-- Among other things this injects the node field into the generated node if result is non-nullv--]
             [#-- Default to always produce a node even if no child nodes --]
-            [#var gtNode = false]
-            [#var condition = null]
-            [#var initialShorthand = null]
-            [#if nodeName == "Choice"]
+            #var gtNode = false
+            #var condition = null
+            #var initialShorthand = null
+            #if nodeName == "Choice"
                [#-- Generate a Choice node only if at least one child node --]
-               [#set gtNode = true]
-               [#set condition = "0"]
-               [#set initialShorthand = " > "]
-            [/#if]
-            [#if nodeFieldName??]
+               #set gtNode = true
+               #set condition = "0"
+               #set initialShorthand = " > "
+            /#if
+            #if nodeFieldName??
                [#-- Provide an assignment to save the syntactic node in a 
                synthetic field injected into the actual production node per JTB behavior. --]
                [#set treeNodeBehavior = {
@@ -352,7 +351,7 @@
                                                'noAutoDefinition' : false,
                                                'existenceOf' : false }
                                        } /]
-            [#else]
+            #else
                [#-- Just provide the syntactic node with no LHS needed --]
                [#set treeNodeBehavior = {
                                           'nodeName' : nodeName!"nemo",  
@@ -362,16 +361,16 @@
                                           'void' : false,
                                           'assignment' : null
                                        } /]
-            [/#if]
-         [/#if]
-      [/#if]
-   [/#if]
-   [#if !treeNodeBehavior??]
+            /#if
+         /#if
+      /#if
+   /#if
+   #if !treeNodeBehavior??
       [#-- There is still no treeNodeBehavior determined; supply the default if this is a BNF production node. No assignment is needed. --] 
       [#if isProduction && !settings.nodeDefaultVoid 
                         && !grammar.nodeIsInterface(expansion.name)
                         && !grammar.nodeIsAbstract(expansion.name)]
-         [#if settings.smartNodeCreation]
+         #if settings.smartNodeCreation
             [#set treeNodeBehavior = {
                                        "nodeName" : expansion.name!"nemo", 
                                        "condition" : "1", 
@@ -380,7 +379,7 @@
                                        "initialShorthand" : ">",
                                        'assignment' : null
                                      }]
-         [#else]
+         #else
             [#set treeNodeBehavior = {
                                        "nodeName" : expansion.name!"nemo", 
                                        "condition" : null, 
@@ -388,16 +387,16 @@
                                        "void" : false,
                                        'assignment' : null
                                      }]
-         [/#if]
-      [/#if]
-   [/#if]
-   [#if treeNodeBehavior?? && treeNodeBehavior.neverInstantiated?? && treeNodeBehavior.neverInstantiated]
+         /#if
+      /#if
+   /#if
+   #if treeNodeBehavior?? && treeNodeBehavior.neverInstantiated?? && treeNodeBehavior.neverInstantiated
       [#-- Now, if the treeNodeBehavior says it will never be instantiated, throw it all away --]
-      [#return null/]
-   [/#if]
+      #return null
+   /#if
    [#-- This is the actual treeNodeBehavior for this node --]
-   [#return treeNodeBehavior]
-[/#function]
+   #return treeNodeBehavior
+/#function
 
 [#-- This is primarily to distinguish sequences of syntactic elements from effectively single elements --]
 [#function syntacticNodeName expansion]
@@ -432,13 +431,13 @@
       [#return null/]
 [/#function]
 
-[#function isProductionInstantiatingNode expansion]
+#function isProductionInstantiatingNode expansion
    [#if expansion.containingProduction.treeNodeBehavior?? && 
         expansion.containingProduction.treeNodeBehavior.neverInstantiated!false]
-      [#return false/]
-   [/#if]
-   [#return true/]
-[/#function]
+      #return false
+   /#if
+   #return true
+/#function
 
 [#function nodeVar isProduction]
    [#var nodeVarName]
@@ -448,7 +447,7 @@
       [#set nodeNumbering = nodeNumbering +1]
       [#set nodeVarName = currentProduction.name + nodeNumbering] 
    [/#if]
-   [#return nodeVarName/]
+   #return nodeVarName
 [/#function]
 
 [#macro buildTreeNode production treeNodeBehavior nodeVarName] [#-- FIXME: production is not used here --]
@@ -499,49 +498,49 @@
    ${globals.popNodeVariableName()!}
 [/#macro]
 
-[#function getRhsAssignmentPattern assignment] 
-   [#if assignment.existenceOf!false]
+#function getRhsAssignmentPattern assignment 
+   #if assignment.existenceOf!false
       [#-- replace "@" with "((@ != null) ? true : false)" --]
-      [#return "((@ != null) ? true : false)" /]
-   [#elseif assignment.stringOf!false]
+      #return "((@ != null) ? true : false)" 
+   #elseif assignment.stringOf!false
       [#-- replace "@" with the string value of the node --]
-      [#return "Objects.toString(@, \"\").trim()"]
-   [/#if]
-   [#return "@" /]
-[/#function]
+      #return "Objects.toString(@, \"\").trim()"
+   /#if
+   #return "@" 
+/#function
 
-[#function getLhsPattern assignment, lhsType]
-   [#if assignment??]
-      [#var lhsName = assignment.name]
-      [#if assignment.propertyAssignment]
+#function getLhsPattern assignment, lhsType
+   #if assignment??
+      #var lhsName = assignment.name
+      #if assignment.propertyAssignment
          [#-- This is the assignment of the current node's effective value to a property of the production node --]
-         [#set lhsName = lhsName?cap_first]
+         #set lhsName = lhsName?cap_first
          [#if lhsType?? && !assignment.noAutoDefinition][!-- FIXME: I don't like the double negative --]
             [#-- This is a declaration assignment; inject required property --]
             ${injectDeclaration(lhsType, assignment.name, assignment)}
-         [/#if]
-         [#if assignment.addTo!false]
+         /#if
+         #if assignment.addTo!false
             [#-- This is the addition of the current node as a child of the specified property's node value --]
-            [#return "thisProduction.get" + lhsName + "().add(" + getRhsAssignmentPattern(assignment) + ")" /]
-         [#else]
+            #return "thisProduction.get" + lhsName + "().add(" + getRhsAssignmentPattern(assignment) + ")" 
+         #else
             [#-- This is an assignment of the current node's effective value to the specified property of the production node --]
-            [#return "thisProduction.set" + lhsName + "(" + getRhsAssignmentPattern(assignment) + ")" /]
-         [/#if]
-      [#elseif assignment.namedAssignment!false]
-         [#if assignment.addTo]
+            #return "thisProduction.set" + lhsName + "(" + getRhsAssignmentPattern(assignment) + ")" 
+         /#if
+      #elseif assignment.namedAssignment!false
+         #if assignment.addTo
             [#-- This is the addition of the current node to the named child list of the production node --]
-            [#return "${globals.currentNodeVariableName}" + ".addToNamedChildList(\"" + lhsName + "\", " + getRhsAssignmentPattern(assignment) + ")" /]
-         [#else]
+            #return "${globals.currentNodeVariableName}" + ".addToNamedChildList(\"" + lhsName + "\", " + getRhsAssignmentPattern(assignment) + ")" 
+         #else
             [#-- This is an assignment of the current node to a named child of the production node --]
-            [#return "${globals.currentNodeVariableName}" + ".setNamedChild(\"" + lhsName + "\", " + getRhsAssignmentPattern(assignment) + ")" /]
-         [/#if]
-      [/#if]
+            #return "${globals.currentNodeVariableName}" + ".setNamedChild(\"" + lhsName + "\", " + getRhsAssignmentPattern(assignment) + ")" 
+         /#if
+      /#if
       [#-- This is the assignment of the current node or it's returned value to an arbitrary LHS "name" (i.e., the legacy JavaCC assignment) --]
-      [#return lhsName + " = " + getRhsAssignmentPattern(assignment) /]
-   [/#if]
+      #return lhsName + " = " + getRhsAssignmentPattern(assignment) 
+   /#if
    [#-- There is no LHS --]
-   [#return "@" /]
-[/#function]
+   #return "@" 
+/#function
 
 [#function injectDeclaration typeName, fieldName, assignment]
    [#var modifier = "public"]

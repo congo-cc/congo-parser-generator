@@ -13,8 +13,7 @@ X_SYNTHETIC_NODES_ENABLED;
 UNPARSED #Comment :
     <SINGLE_LINE_COMMENT : "//" (~["\n"])* >
     |
-    //< MULTI_LINE_COMMENT : "/*" (~["*"])* "*" (~["*","/"] (~["*"])* "*" | "*")* "/">
-    < ?MULTI_LINE_COMMENT : "/*" (~[])* "*/">
+    <?MULTI_LINE_COMMENT : "/*" (~[])* "*/">
 ;
 
 INCLUDE "/include/json/JSON.ccc"
