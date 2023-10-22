@@ -1,4 +1,4 @@
-[#var MULTIPLE_LEXICAL_STATE_HANDLING = (grammar.lexerData.numLexicalStates >1)]
+#var MULTIPLE_LEXICAL_STATE_HANDLING = (grammar.lexerData.numLexicalStates >1)
     def stack_iterator_forward(self):
 
         class ForwardIterator:
@@ -64,17 +64,17 @@
             next_token = self.handle_unexpected_token_type(expected_type, next_token[#if settings.faultTolerant], tolerant, follow_set[/#if])
         self.last_consumed_token = next_token
         self._next_token_type = None
-[#if settings.treeBuildingEnabled]
+#if settings.treeBuildingEnabled
         if self.build_tree and self.tokens_are_nodes:
-  [#list grammar.openNodeScopeHooks as hook]
+  #list grammar.openNodeScopeHooks as hook
             ${hook}(self.last_consumed_token)
-  [/#list]
+  /#list
             self.push_node(self.last_consumed_token)
-  [#list grammar.closeNodeScopeHooks as hook]
+  #list grammar.closeNodeScopeHooks as hook
             ${hook}(self.last_consumed_token)
-  [/#list]
-[/#if]
-[#if settings.faultTolerant]
+  /#list
+/#if
+#if settings.faultTolerant
         # Check whether the very next token is in the follow set of the last consumed token
         # and if it is not, we check one token ahead to see if skipping the next token remedies
         # the problem.
@@ -87,13 +87,13 @@
                     if self.debug_fault_tolerant:
                         logger.info('Skipping token %s at: %s', next_token.type, next_token.location)
                      # self.last_consumed_token.next = next_next
-[/#if]
+/#if
         return self.last_consumed_token
 
     def handle_unexpected_token_type(self, expected_type, next_token[#if settings.faultTolerant], tolerant, follow_set[/#if]):
-      [#if !settings.faultTolerant]
+      #if !settings.faultTolerant
         raise ParseException(self, token=next_token, expected=set([expected_type]))
-      [#else]
+      #else
         if not self.tolerant_parsing:
             raise ParseException(self, token=next_token, expected=set([expected_type]))
 
@@ -104,9 +104,9 @@
             next_token.skipped = True
             if self.debug_fault_tolerant:
                 logger.info('Skipping token of type: %s at: %s', next_token.type, next_token.location)
-[#if settings.treeBuildingEnabled]
+#if settings.treeBuildingEnabled
             self.push_node(next_token)
-[/#if]
+/#if
             # self.last_consumed_token.next = next_next
             return next_next
 
@@ -120,10 +120,10 @@
             # self.last_consumed_token.next = virtual_token
             if self.debug_fault_tolerant:
                 logger.info('Inserting virtual token of type: %s at: %s', expected_type, virtual_token.location)
-[#if MULTIPLE_LEXICAL_STATE_HANDLING]
+#if MULTIPLE_LEXICAL_STATE_HANDLING
             if self.token_source.do_lexical_state_switch(expected_type):
                 self.token_source.reset(virtual_token)
-[/#if]
+/#if
             return virtual_token
         raise ParseException(self, token=next_token, expected=set([expected_type]))
-      [/#if]
+      /#if
