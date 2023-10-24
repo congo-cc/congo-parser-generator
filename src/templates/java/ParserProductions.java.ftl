@@ -1,10 +1,10 @@
 [#-- This template contains the core logic for generating the various parser routines. --]
 
-#var nodeNumbering = 0
-#var NODE_USES_PARSER = settings.nodeUsesParser
-#var NODE_PREFIX = grammar.nodePrefix
-#var currentProduction
-#var topLevelExpansion [#-- A "one-shot" indication that we are processing 
+#var nodeNumbering = 0,
+     NODE_USES_PARSER = settings.nodeUsesParser,
+     NODE_PREFIX = grammar.nodePrefix,
+     currentProduction,
+     topLevelExpansion [#-- A "one-shot" indication that we are processing 
                               an expansion immediately below the BNF production expansion, 
                               ignoring an ExpansionSequence that might be there. This is
                               primarily, if not exclusively, for allowing JTB-compatible
@@ -12,17 +12,18 @@
                               it is also a bit tricky, so treat it like the Holy Hand-grenade in that respect. 
                           --]
                           
-[#var jtbNameMap = {
+#var jtbNameMap = {
    "Terminal" : "nodeToken",
    "Sequence" : "nodeSequence",
    "Choice" : "nodeChoice",
    "ZeroOrOne" : "nodeOptional",
    "ZeroOrMore" : "nodeListOptional",
-   "OneOrMore" : "nodeList" }]
-[#var nodeFieldOrdinal = {}]
-[#var injectedFields = {}]
-[#var syntheticNodesEnabled = settings.syntheticNodesEnabled && settings.treeBuildingEnabled]
-[#var jtbParseTree = syntheticNodesEnabled && settings.jtbParseTree]
+   "OneOrMore" : "nodeList" },
+   nodeFieldOrdinal = {}
+
+#var injectedFields = {},
+     syntheticNodesEnabled = settings.syntheticNodesEnabled && settings.treeBuildingEnabled,
+     jtbParseTree = syntheticNodesEnabled && settings.jtbParseTree
 
 [#macro Productions] 
  //====================================================================//

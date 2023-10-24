@@ -26,11 +26,11 @@ except ImportError:
 
 ${globals.translateLexerImports()}
 
-#var NFA_RANGE_THRESHOLD = 16
-#var MAX_INT=2147483647
-#var lexerData=grammar.lexerData
-#var multipleLexicalStates = lexerData.lexicalStates.size() > 1
-#var TT = "TokenType."
+#var NFA_RANGE_THRESHOLD = 16,
+     MAX_INT=2147483647,
+     lexerData=grammar.lexerData,
+     multipleLexicalStates = lexerData.lexicalStates.size() > 1,
+     TT = "TokenType."
 
 logger = logging.getLogger(__name__)
 
