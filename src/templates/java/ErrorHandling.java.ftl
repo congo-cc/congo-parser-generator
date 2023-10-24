@@ -169,10 +169,12 @@ void dumpLookaheadCallStack(PrintStream ps) {
         this.nextTokenType = null;
 [#if settings.treeBuildingEnabled]
       if (buildTree && tokensAreNodes) {
+      lastConsumedToken.open();
   [#list grammar.openNodeScopeHooks as hook]
      ${hook}(lastConsumedToken);
   [/#list]
           pushNode(lastConsumedToken);
+     lastConsumedToken.close();
   [#list grammar.closeNodeScopeHooks as hook]
      ${hook}(lastConsumedToken);
   [/#list]

@@ -413,7 +413,7 @@ public class FilesGenerator {
             if (tokenSubclassFileNames.contains(outputFile.getFileName().toString())) {
                 String name = outputFile.getFileName().toString();
                 name = name.substring(0, name.length() -5);
-                errors.addError("The name " + name + " is already used as a Token subclass.");
+                errors.addError("The name " + name + " is already used as a Node type.");
             }
             files.put(nodeName, outputFile);
         }
