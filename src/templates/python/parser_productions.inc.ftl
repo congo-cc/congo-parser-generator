@@ -125,7 +125,7 @@ ${is}        if success and skipped_tokens:
 ${is}            iv = InvalidNode(self)
          [#-- OMITTED: "iv.copyLocationInfo(skippedTokens.get(0));" --]
 ${is}        for tok in skipped_tokens:
-${is}            iv.add_child(tok)
+${is}            iv.add(tok)
          [#-- OMITTED: "iv.setEndOffset(tok.getEndOffset());" --]
 ${is}        #   if self.debug_fault_tolerant:
 ${is}        #       logger.info('Skipping %s tokens starting at: %s', len(skipped_tokens), skipped_tokens[0].location)

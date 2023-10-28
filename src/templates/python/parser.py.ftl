@@ -165,6 +165,7 @@ class Parser:
         'token_source',
         'last_consumed_token',
         '_next_token_type',
+        '_dummy_start_token',
         'current_lookahead_token',
         'remaining_lookahead',
         'scan_to_end',
@@ -205,7 +206,8 @@ ${globals.translateParserInjections(true)}
 [#if settings.lexerUsesParser]
         self.token_source.parser = self
 [/#if]
-        self.last_consumed_token = self.token_source._dummy_start_token
+        self._dummy_start_token = InvalidToken(self.token_source, 0, 0)
+        self.last_consumed_token = self._dummy_start_token
         self._next_token_type = None
         self.current_lookahead_token = None
         self.remaining_lookahead = 0
@@ -310,9 +312,9 @@ ${globals.translateParserInjections(true)}
         ts = self.token_source
         result = ts.get_next_token(tok)
         while result.is_unparsed:
-     [#list grammar.parserTokenHooks as methodName]
+[#list grammar.parserTokenHooks as methodName]
             result = self.${methodName}(result)
-     [/#list]
+[/#list]
             result = ts.get_next_token(result)
 [#list grammar.parserTokenHooks as methodName]
         result = self.${methodName}(result)

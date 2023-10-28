@@ -1217,7 +1217,7 @@ import java.util.*;
     @Property boolean backward;
 
     public boolean getHasFinalEllipsis() {
-        Token t = (Token) getChild(getChildCount() -1);
+        Token t = (Token) get(size() - 1);
         return t.toString().equals("...");
     }
 
@@ -1248,7 +1248,7 @@ import java.util.*;
     }
 
     public boolean getHasEndingSlash() {
-        Token lastToken = (Token) getChild(getChildCount()-1);
+        Token lastToken = (Token) get(size() - 1);
         String img = lastToken.toString();
         return img.equals("\\") || img.equals("/");
     }
@@ -1490,7 +1490,7 @@ INJECT AttemptBlock :
    extends org.congocc.core.ExpansionWithNested;
 {
     public Expansion getRecoveryExpansion() {
-       return (Expansion) getChild(3);
+       return (Expansion) get(3);
     }
 }
 

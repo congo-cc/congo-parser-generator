@@ -771,24 +771,24 @@ public class Translator {
             // just a name
             ASTPrimaryExpression resultNode = new ASTPrimaryExpression();
             result = resultNode;
-            resultNode.name = ((Identifier) name.getFirstChild()).getImage();
+            resultNode.name = ((Identifier) name.getFirstChild()).toString();
         }
         else {
             // dotted name
             ASTBinaryExpression lhs = new ASTBinaryExpression();
             lhs.op = ".";
             ASTPrimaryExpression pe = new ASTPrimaryExpression(lhs);
-            pe.name = ((Identifier) name.get(0)).getImage();
+            pe.name = ((Identifier) name.get(0)).toString();
             lhs.setLhs(pe);
             pe = new ASTPrimaryExpression(lhs);
-            pe.name = ((Identifier) name.get(2)).getImage();
+            pe.name = ((Identifier) name.get(2)).toString();
             lhs.setRhs(pe);
             result = lhs;
             for (int j = 4; j < m; j += 2) {
                 ASTBinaryExpression newNode = new ASTBinaryExpression();
                 newNode.setLhs(lhs);
                 pe = new ASTPrimaryExpression();
-                pe.name = ((Identifier) name.get(j)).getImage();
+                pe.name = ((Identifier) name.get(j)).toString();
                 newNode.op = ".";
                 newNode.setRhs(pe);
                 lhs = newNode;
@@ -836,7 +836,7 @@ public class Translator {
         ASTFormalParameter result = new ASTFormalParameter();
         // A "final" modifier is allowed
         Node ac = fp.getFirstChild();
-        result.isFinal = (ac instanceof Token) && ((Token) ac).getImage().equals("final");
+        result.isFinal = (ac instanceof Token) && ((Token) ac).toString().equals("final");
         if (result.isFinal) {
             ac = fp.get(1);
         }
@@ -888,17 +888,17 @@ public class Translator {
         }
         else if (node instanceof Identifier) {
             ASTPrimaryExpression resultNode = forType ? new ASTTypeExpression() : new ASTPrimaryExpression();
-            resultNode.name = ((Token) node).getImage();
+            resultNode.name = ((Token) node).toString();
             return resultNode;
         }
         else if (node instanceof Token) {
             ASTPrimaryExpression resultNode = forType ? new ASTTypeExpression() : new ASTPrimaryExpression();
-            resultNode.literal = ((Token) node).getImage();
+            resultNode.literal = ((Token) node).toString();
             return resultNode;
         }
         else if (node instanceof LiteralExpression) {
             ASTPrimaryExpression resultNode = forType ? new ASTTypeExpression() : new ASTPrimaryExpression();
-            resultNode.literal = ((Token) node.getFirstChild()).getImage();
+            resultNode.literal = ((Token) node.getFirstChild()).toString();
             return resultNode;
         }
         else if (node instanceof PrimitiveType) {
@@ -918,7 +918,7 @@ public class Translator {
                     return transformTree(child, forType);
                 }
                 else if (child instanceof Identifier) {
-                    resultNode.name = ((Identifier) child).getImage();
+                    resultNode.name = ((Identifier) child).toString();
                 }
                 else {
                     throw new UnsupportedOperationException("node is '" + child + "' class " + child.getClass().getSimpleName());
@@ -928,7 +928,7 @@ public class Translator {
                 StringBuilder sb = new StringBuilder();
                 for (Node child : node.children()) {
                     if (child instanceof Token) {
-                        sb.append(((Token) child).getImage());
+                        sb.append(((Token) child).toString());
                     }
                     else if (child instanceof TypeArguments) {
                         for (Node gc : child.children()) {
@@ -958,7 +958,7 @@ public class Translator {
         else if (node instanceof UnaryExpressionNotPlusMinus || node instanceof UnaryExpression) {
             ASTUnaryExpression resultNode = new ASTUnaryExpression();
             result = resultNode;
-            resultNode.op = ((Operator) node.get(0)).getImage();
+            resultNode.op = ((Operator) node.get(0)).toString();
             resultNode.setOperand((ASTExpression) transformTree(node.get(1)));
         }
         else if (node instanceof PostfixExpression) {
@@ -1016,13 +1016,13 @@ public class Translator {
             int n = node.size();
             ASTBinaryExpression lhs = new ASTBinaryExpression();
             result = lhs;
-            lhs.op = ((Operator) node.get(1)).getImage();
+            lhs.op = ((Operator) node.get(1)).toString();
             lhs.setLhs((ASTExpression) transformTree(node.get(0)));
             lhs.setRhs((ASTExpression) transformTree(node.get(2)));
             if (n > 3) {
                 for (int i = 3; i < n; i += 2) {
                     ASTBinaryExpression newNode = new ASTBinaryExpression();
-                    newNode.op = ((Operator) node.get(i)).getImage();
+                    newNode.op = ((Operator) node.get(i)).toString();
                     newNode.setRhs((ASTExpression) transformTree(node.get(i + 1)));
                     newNode.setLhs(lhs);
                     lhs = newNode;
