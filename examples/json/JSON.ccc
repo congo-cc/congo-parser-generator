@@ -104,11 +104,11 @@ Array :
 #endif
 #if __python__
             assert(/*DOESN'T WORK FOR PYTHON:(openBracket instanceof Delimiter) && */openBracket.toString().equals("[")) : "openBracket local variable not assigned to \"[\"";
-            assert(peekNode().getChild(0).equals(openBracket)) : "unconditional tree node AnOpenBracket does not have a child = to '['";
+            assert(peekNode().get(0).equals(openBracket)) : "unconditional tree node AnOpenBracket does not have a child = to '['";
 #endif
 #if __csharp__
             assert((openBracket instanceof Delimiter) && openBracket.toString().equals("[")) : "openBracket local variable not assigned to '['";
-            assert(peekNode().getChild(0).equals(openBracket)) : "unconditional tree node AnOpenBracket does not have a child = to '['";
+            assert(peekNode().get(0).equals(openBracket)) : "unconditional tree node AnOpenBracket does not have a child = to '['";
 #endif
         }
     @optionalArrayElements :=$ [

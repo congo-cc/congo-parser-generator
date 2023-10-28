@@ -53,7 +53,7 @@ public class PythonTranslator extends Translator {
         String result = ident;
 
         if (specialPrefixes.isEmpty()) {
-            specialPrefixes.add(grammar.getAppSettings().generateIdentifierPrefix("tokenHook"));
+            specialPrefixes.add(appSettings.generateIdentifierPrefix("tokenHook"));
         }
         if (ident.equals("null")) {
             result = "None";
@@ -74,16 +74,20 @@ public class PythonTranslator extends Translator {
         else if (ident.equals("toString")) {
             result = "__str__";
         }
+        else if (ident.startsWith(appSettings.getNodePackage().concat("."))) {
+            int prefixLength = appSettings.getNodePackage().length() + 1;
+            result = ident.substring(prefixLength);
+        }
         else if (Character.isLowerCase(ident.charAt(0)) && !isSpecialPrefix(ident) && !ident.equals("thisProduction")) {
             result = camelToSnake(result);
         }
-        else if (ident.equals("LEXER_CLASS")) {
+        else if (ident.equals("LEXER_CLASS") || (ident.equals(appSettings.getLexerClassName()))) {
             result = "Lexer";
         }
-        else if (ident.equals("PARSER_CLASS")) {
+        else if (ident.equals("PARSER_CLASS") || (ident.equals(appSettings.getParserClassName()))) {
             result = "Parser";
         }
-        else if (ident.equals("BASE_TOKEN_CLASS")) {
+        else if (ident.equals("BASE_TOKEN_CLASS") || (ident.equals(appSettings.getBaseTokenClassName()))) {
             result = "Token";
         }
         else if (ident.startsWith("NODE_PACKAGE.")) {
@@ -848,7 +852,7 @@ public class PythonTranslator extends Translator {
     }
 
     @Override public void translateImport(String javaName, StringBuilder result) {
-        String prefix = String.format("%s.", grammar.getAppSettings().getParserPackage());
+        String prefix = String.format("%s.", appSettings.getParserPackage());
         if (!javaName.startsWith(prefix)) {
             throw new UnsupportedOperationException();
         }

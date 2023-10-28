@@ -12,6 +12,11 @@
       TERMINATING_STRING = "\"" + settings.terminatingString?j_string + "\""
       PRESERVE_TABS = settings.preserveTabs?string("true", "false")
  ]
+[#var BaseToken = settings.baseTokenClassName]
+[#-- if settings.treeBuildingEnabled || settings.rootAPIPackage?has_content]
+  [#set BaseToken = "Node.TerminalNode"]
+[/#if --]
+[#var TOKEN = settings.baseTokenClassName]
 
 [#macro EnumSet varName tokenNames indent=0]
 [#if tokenNames?size=0]
@@ -223,7 +228,7 @@ if NFA state's moveRanges array is smaller than NFA_RANGE_THRESHOLD
  && ch <= ${displayRight}
           [/#if]
        [#else]
-           ch <= ${displayRight} 
+           ch <= ${displayRight}
        [/#if]
     [#else]
        ([@RangesCondition moveRanges[0..1]/]) || ([@RangesCondition moveRanges[2..moveRanges?size-1]/])
@@ -240,129 +245,41 @@ namespace ${csPackage} {
     using System.Text.RegularExpressions;
 ${globals.translateLexerImports()}
 
-    public class Lexer[#if useLogging!false] : IObservable<LogInfo>[/#if] {
-        // Lexer fields and properties (non-NFA-related)
+    public class TokenSource {
+        internal const int DEFAULT_TAB_SIZE = ${settings.tabSize};
 
-        const int DEFAULT_TAB_SIZE = ${settings.tabSize};
-
-        internal static readonly Token DummyStartToken, Ignored, Skipped;
-
+        internal static readonly Token DummyStartToken[#if settings.usesPreprocessor], Ignored[/#if], Skipped;
         public string InputSource { get; internal set; }
-        private readonly string _content;
-        private readonly int _contentLength;
-
-[#if settings.lexerUsesParser]
-        internal Parser Parser { get; internal set; }
-[/#if]
-
+        internal readonly string _content;
+        internal readonly int _contentLength;
         // The starting line and column, usually 1,1
         // that is used to report a file position
         // in 1-based line/column terms
-        private int startingLine, startingColumn;
+        internal int startingLine, startingColumn;
 
-[#if lexerData.hasLexicalStateTransitions]
-        // A lookup for lexical state transitions triggered by a certain token type
-        private static Dictionary<TokenType, LexicalState> tokenTypeToLexicalStateMap = new Dictionary<TokenType, LexicalState>();
-[/#if]
-
-        // Token types that are "regular" tokens that participate in parsing,
-        // i.e. declared as TOKEN
-        [@EnumSet "regularTokens" lexerData.regularTokens.tokenNames 8 /]
-        // Token types that do not participate in parsing 
-        // i.e. declared as UNPARSED (or SPECIAL_TOKEN)
-        [@EnumSet "unparsedTokens" lexerData.unparsedTokens.tokenNames 8 /]
-        [#-- // Tokens that are skipped, i.e. SKIP --]
-        [@EnumSet "skippedTokens" lexerData.skippedTokens.tokenNames 8 /]
-        // Tokens that correspond to a MORE, i.e. that are pending
-        // additional input
-        [@EnumSet "moreTokens" lexerData.moreTokens.tokenNames 8 /]
-
-        // NFA code and data
-
-        // The functional interface that represents
-        // the acceptance method of an NFA state
-        private delegate TokenType? NfaFunction(int ch, BitSet bs, HashSet<TokenType> validTypes, HashSet<TokenType> AlreadyMatchedTypes);
-
-[#if multipleLexicalStates]
-        // A lookup of the NFA function tables for the respective lexical states.
-        private static Dictionary<LexicalState, NfaFunction[]> functionTableMap = new Dictionary<LexicalState, NfaFunction[]>();
-[#else]
-        [#-- We don't need the above lookup if there is only one lexical state.--]
-        private static NfaFunction[] nfaFunctions;
-[/#if]
-
-        // Just use the canned binary search to check whether the char
-        // is in one of the intervals
-        private static bool CheckIntervals(int[] ranges, int ch) {
-            var temp = System.Array.BinarySearch(ranges, ch);
-            return temp >=0 || temp % 2 == 0;
-        }
-
-[#list lexerData.lexicalStates as lexicalState]
-[@GenerateStateCode lexicalState/]
-[/#list]
-
-        [#-- Compute the maximum size of state bitsets --]
-[#if !multipleLexicalStates]
-            private const int MaxStates = ${lexerData.lexicalStates.get(0).allNfaStates.size()};
-[#else]
-            private static int MaxStates = Utils.MaxOf(
-[#list lexerData.lexicalStates as state]
-                ${state.allNfaStates.size()}[#if state_has_next],[/#if]
-[/#list]
-            );
-[/#if]
-
-        // The following two BitSets are used to store
-        // the current active NFA states in the core tokenization loop
-        private BitSet _nextStates = new BitSet(MaxStates), _currentStates = new BitSet(MaxStates);
-
-        internal HashSet<TokenType> ActiveTokenTypes = Utils.EnumSet(
-[#list grammar.lexerData.regularExpressions as regexp]
-            TokenType.${regexp.label}[#if regexp_has_next],[/#if]
-[/#list]
-        );
-
-        private LexicalState _lexicalState;
-        private readonly int[] _lineOffsets;   // offsets to the beginnings of lines
-        private readonly Token[] _tokenLocationTable;
-        private int _bufferPosition;
-        private readonly BitSet _tokenOffsets;
+        internal readonly int[] _lineOffsets;   // offsets to the beginnings of lines
+        internal readonly Token[] _tokenLocationTable;
+        internal readonly BitSet _tokenOffsets;
 
         //  A Bitset that stores the line numbers that
         // contain either hard tabs or extended (beyond 0xFFFF) unicode
         // characters.
-        private readonly BitSet _needToCalculateColumns;
+        internal readonly BitSet _needToCalculateColumns;
 
-        public LexicalState LexicalState => _lexicalState;
-
-        // constructors
-
-        static Lexer() {
-[#list lexerData.lexicalStates as lexicalState]
-            NFA_FUNCTIONS_${lexicalState.name}Init();
-[/#list]
-[#if lexerData.hasLexicalStateTransitions]
-            // Generate the map for lexical state transitions from the various token types
-  [#list grammar.lexerData.regularExpressions as regexp]
-    [#if !regexp.newLexicalState?is_null]
-            tokenTypeToLexicalStateMap[TokenType.${regexp.label}] = LexicalState.${regexp.newLexicalState.name};
-    [/#if]
-  [/#list]
-[/#if]
+        static TokenSource() {
             DummyStartToken = new InvalidToken(null, 0, 0);
+[#if settings.usesPreprocessor]
             Ignored = new InvalidToken(null, 0, 0);
-            Skipped = new InvalidToken(null, 0, 0);
             Ignored.IsUnparsed = true;
+[/#if]
+            Skipped = new InvalidToken(null, 0, 0);
             Skipped.IsUnparsed = true;
         }
 
-[#if useLogging!false]
-        private readonly IList<IObserver<LogInfo>> observers = new List<IObserver<LogInfo>>();
-[/#if]
-
-        public Lexer(string inputSource, LexicalState lexState = LexicalState.${lexerData.lexicalStates[0].name}, int line = 1, int column = 1) {
+        protected TokenSource(string inputSource, int startLine, int startColumn) {
             InputSource = inputSource;
+            startingLine = startLine;
+            startingColumn = startColumn;
             var input = InputText(inputSource);
             _content = MungeContent(input, ${PRESERVE_TABS}, ${PRESERVE_LINE_ENDINGS}, ${JAVA_UNICODE_ESCAPE}, ${TERMINATING_STRING});
             _contentLength = _content.Length;
@@ -370,18 +287,11 @@ ${globals.translateLexerImports()}
             _lineOffsets = CreateLineOffsetsTable(_content);
             _tokenLocationTable = new Token[_contentLength + 1];
             _tokenOffsets = new BitSet(_contentLength + 1);
+        }
+
+        public void SetStartingPos(int line, int col) {
             startingLine = line;
-            startingColumn = column;
-[#if settings.deactivatedTokens?size>0 || settings.extraTokens?size >0]
-  [#list settings.deactivatedTokens as token]
-            ActiveTokenTypes.Remove(${CU.TT}${token});
-  [/#list]
-  [#list settings.extraTokenNames as token]
-            regularTokens.Add(${CU.TT}${token});
-  [/#list]
-[/#if]
-${globals.translateLexerInitializers()}
-            SwitchTo(lexState);
+            startingColumn = col;
         }
 
         private static readonly Regex PythonCodingPattern = new Regex(@"^[ \t\f]*#.*\bcoding[:=][ \t]*([-_.a-zA-Z0-9]+)");
@@ -400,33 +310,6 @@ ${globals.translateLexerInitializers()}
             return true;
         }
 
-/*
-        private static string TryDecode(Encoding encoding, byte[] bytes)
-        {
-            var byteIndex = 0;
-            var byteCount = bytes.Length;
-            var chars = new char[byteCount];
-            var charIndex = 0;
-            var charCount = byteCount;
-            int bytesUsed, charsUsed;
-            bool completed;
-
-            var decoder = encoding.GetDecoder();
-            while (true)
-            {
-                decoder.Convert(bytes, byteIndex, byteCount,
-                        chars, charIndex, charCount,
-                        false, out bytesUsed, out charsUsed, out completed);
-                if (completed)
-                {
-                    break;
-                }
-
-                throw new ArgumentException();
-            }
-            return new string(chars, 0, charsUsed);
-        }
- */
         private String InputText(string path) {
             FileStream fs;
 
@@ -498,284 +381,8 @@ ${globals.translateLexerInitializers()}
                 }
             }
             var rest = (foundBom == null) ? allBytes : allBytes[bomLen..];
-            //return TryDecode(encoding, rest.ToArray());
             return encoding.GetString(rest);
         }
-
-        private static readonly int[] EmptyInt = new int[] { 0 };
-
-        private int[] CreateLineOffsetsTable(string content) {
-            if (content.Length == 0) {
-                return EmptyInt;
-            }
-            var lineCount = 0;
-            var length = content.Length;
-            for (var i = 0; i < length; i++) {
-                var ch = content[i];
-                if (ch == '\t' || char.IsHighSurrogate(ch)) {
-                    _needToCalculateColumns.Set(lineCount);
-                }
-                if (ch == '\n') {
-                    lineCount++;
-                }
-            }
-            if (content[^1] != '\n') {
-                lineCount++;
-            }
-            var lineOffsets = new int[lineCount];
-            lineOffsets[0] = 0;
-            var index = 1;
-            for (var i = 0; i < length; i++) {
-                var ch = content[i];
-                if (ch == '\n') {
-                    if (i + 1 == length)
-                        break;
-                    lineOffsets[index++] = i + 1;
-                }
-            }
-            return lineOffsets;
-        }
-
-[#if useLogging!false]
-        public IDisposable Subscribe(IObserver<LogInfo> observer)
-        {
-            if (!observers.Contains(observer)) {
-                observers.Add(observer);
-            }
-            return new Unsubscriber<LogInfo>(observers, observer);
-        }
-
-        internal void Log(LogLevel level, string message, params object[] arguments) {
-            var info = new LogInfo(level, message, arguments);
-            foreach (var observer in observers) {
-                observer.OnNext(info);
-            }
-        }
-[/#if]
-        //
-        // Switch to specified lexical state.
-        //
-        public bool SwitchTo(LexicalState lexState) {
-            if (_lexicalState != lexState) {
-                _lexicalState = lexState;
-                return true;
-            }
-            return false;
-        }
-
-[#if lexerData.hasLexicalStateTransitions]
-        bool DoLexicalStateSwitch(TokenType tokenType) {
-            if (!tokenTypeToLexicalStateMap.ContainsKey(tokenType)) {
-                return false;
-            }
-            LexicalState newState = tokenTypeToLexicalStateMap[tokenType];
-            return SwitchTo(newState);
-        }
-[/#if]
-
-        private Token GetNextToken() {
-            Token invalidToken = null;
-            Token token = NextToken();
-
-            while (token is InvalidToken) {
-                if (invalidToken == null) {
-                    invalidToken = token;
-                }
-                else {
-                    invalidToken.EndOffset = token.EndOffset;
-                }
-                token = NextToken();
-            }
-            if (invalidToken != null) {
-                CacheToken(invalidToken);
-            }
-            CacheToken(token);
-            return (invalidToken != null) ? invalidToken : token;
-        }
-
-        /**
-        * The public method for getting the next token.
-        * If the tok parameter is null, it just tokenizes
-        * starting at the internal _bufferPosition
-        * Otherwise, it checks whether we have already cached
-        * the token after this one. If not, it finally goes
-        * to the NFA machinery
-        */
-        public Token GetNextToken(Token tok) {
-            if(tok == null) {
-                return GetNextToken();
-            }
-            Token cachedToken = tok.NextCachedToken;
-            // If the cached next token is not currently active, we
-            // throw it away and go back to the lexer
-            if (cachedToken != null && !ActiveTokenTypes.Contains(cachedToken.Type)) {
-                Reset(tok);
-                cachedToken = null;
-            }
-            return cachedToken != null ? cachedToken : GetNextToken(tok.EndOffset);
-        }
-
-        /**
-        * A lower level method to tokenize, that takes the absolute
-        * offset into the _content buffer as a parameter
-        * @param offset where to start
-        * @return the token that results from scanning from the given starting point
-        */
-        public Token GetNextToken(int offset) {
-            GoTo(offset);
-            return GetNextToken();
-        }
-
-        // The main method to invoke the NFA machinery
-        private Token NextToken() {
-            Token matchedToken = null;
-            var inMore = false;
-            var tokenBeginOffset = _bufferPosition;
-            var firstChar = 0;
-            // The core tokenization loop
-            while (matchedToken == null) {
-                var codeUnitsRead = 0;
-                var matchedPos = 0;
-                int curChar;
-                TokenType? matchedType = null;
-                var reachedEnd = false;
-                if (inMore) {
-                    curChar = ReadChar();
-                    if (curChar < 0) reachedEnd = true;
-                }
-                else {
-                    tokenBeginOffset = _bufferPosition;
-                    firstChar = curChar = ReadChar();
-                    if (curChar < 0) {
-                        matchedType = TokenType.EOF;
-                        reachedEnd = true;
-                    }
-                }
-[#if multipleLexicalStates]
-                // Get the NFA function table current lexical state
-                // There is some possibility that there was a lexical state change
-                // since the last iteration of this loop!
-[/#if]
-                NfaFunction[] functions = GetFunctionTable(_lexicalState);
-                HashSet<TokenType> AlreadyMatchedTypes = new HashSet<TokenType>();
-                // the core NFA loop
-                if (!reachedEnd) do {
-                    // Holder for the new type (if any) matched on this iteration
-                    TokenType? newType = null;
-                    if (codeUnitsRead > 0) {
-                        // What was _nextStates on the last iteration
-                        // is now the _currentStates!
-                        (_currentStates, _nextStates) = (_nextStates, _currentStates);
-                        var c = ReadChar();
-                        if (c >= 0) {
-                            curChar = c;
-                        }
-                        else {
-                            // reachedEnd = true;
-                            break;
-                        }
-                    }
-                    _nextStates.Clear();
-                    if (codeUnitsRead == 0) {
-                        TokenType? returnedType = functions[0](curChar, _nextStates, ActiveTokenTypes, AlreadyMatchedTypes);
-                        if (returnedType != null) {
-                            AlreadyMatchedTypes.Add((TokenType) returnedType);
-                            newType = returnedType;
-                        }
-                    }
-                    else {
-                        int nextActive = _currentStates.NextSetBit(0);
-                        while (nextActive != -1) {
-                            TokenType? returnedType = functions[nextActive](curChar, _nextStates, ActiveTokenTypes, AlreadyMatchedTypes);
-                            if ((returnedType != null) && ((newType == null) || ((int) returnedType.Value < (int) newType.Value))) {
-                                AlreadyMatchedTypes.Add((TokenType) returnedType);
-                                newType = returnedType;
-                            }
-                            nextActive = _currentStates.NextSetBit(nextActive + 1);
-                        }
-                    }
-                    ++codeUnitsRead;
-                    if (curChar >= 0xFFFF) {
-                        ++codeUnitsRead;
-                    }
-                    if (newType != null) {
-                        matchedType = newType;
-                        inMore = moreTokens.Contains(matchedType.Value);
-                        matchedPos = codeUnitsRead;
-                    }
-                } while (!_nextStates.IsEmpty);
-                if (matchedType == null) {
-                    _bufferPosition = tokenBeginOffset + 1;
-                    if (firstChar > 0xFFFF) {
-                        ++_bufferPosition;
-                    }
-                    return new InvalidToken(this, tokenBeginOffset, _bufferPosition);
-                }
-                _bufferPosition -= (codeUnitsRead - matchedPos);
-                if (skippedTokens.Contains((TokenType) matchedType)) {
-                    for (int i = tokenBeginOffset; i < _bufferPosition; i++) {
-                        if (_tokenLocationTable[i] != Ignored) {
-                            _tokenLocationTable[i] = Skipped;
-                        }
-                    }
-                }
-                if (regularTokens.Contains((TokenType) matchedType) || unparsedTokens.Contains((TokenType) matchedType)) {
-                    matchedToken = Token.NewToken((TokenType) matchedType,
-                                                  this,
-                                                  tokenBeginOffset,
-                                                  _bufferPosition);
-                    matchedToken.IsUnparsed = !regularTokens.Contains((TokenType) matchedType);
-                }
-     [#if lexerData.hasTokenActions]
-                matchedToken = TokenLexicalActions(matchedToken, matchedType);
-     [/#if]
-     [#if lexerData.hasLexicalStateTransitions]
-                DoLexicalStateSwitch(matchedType.Value);
-     [/#if]
-            }
- [#list grammar.lexerTokenHooks as tokenHookMethodName]
-    [#if tokenHookMethodName = "CommonTokenAction"]
-                ${tokenHookMethodName}(matchedToken);
-    [#else]
-                matchedToken = ${tokenHookMethodName}(matchedToken);
-    [/#if]
- [/#list]
-            return matchedToken;
-        }
-
-        // Reset the token source input
-        // to just after the Token passed in.
-        internal void Reset(Token t, LexicalState? state = null) {
-[#list grammar.resetTokenHooks as resetTokenHookMethodName]
-            ${globals.translateIdentifier(resetTokenHookMethodName)}(t);
-[/#list]
-            GoTo(t.EndOffset);
-            UncacheTokens(t);
-            if (state != null) {
-                SwitchTo(state.Value);
-            }
-[#if lexerData.hasLexicalStateTransitions]
-            else {
-                DoLexicalStateSwitch(t.Type);
-            }
-[/#if]
-        }
-
-[#if lexerData.hasTokenActions]
-        private Token TokenLexicalActions(Token matchedToken, TokenType? matchedType) {
-            switch (matchedType) {
-        [#list lexerData.regularExpressions as regexp]
-                [#if regexp.codeSnippet?has_content]
-            case TokenType.${regexp.label}:
-${globals.translateCodeBlock(regexp.codeSnippet.javaCode, 16)}
-                break;
-                [/#if]
-        [/#list]
-            default: break;
-            }
-            return matchedToken;
-        }
-[/#if]
 
         private string MungeContent(string content, bool preserveTabs, bool preserveLines,
                       bool unicodeEscape, string terminatingString)
@@ -789,7 +396,7 @@ ${globals.translateCodeBlock(regexp.codeSnippet.javaCode, 16)}
                 }
                 else {
                     if (content.EndsWith(terminatingString)) {
-                       return content; 
+                       return content;
                     }
                     buf = new StringBuilder(content);
                     buf.Append(terminatingString);
@@ -902,51 +509,146 @@ ${globals.translateCodeBlock(regexp.codeSnippet.javaCode, 16)}
             return buf.ToString();
         }
 
-        private void GoTo(int offset) {
-            while (_tokenLocationTable[offset] == Ignored && offset < _contentLength) {
+        private static readonly int[] EmptyInt = new int[] { 0 };
+
+        private int[] CreateLineOffsetsTable(string content) {
+            if (content.Length == 0) {
+                return EmptyInt;
+            }
+            var lineCount = 0;
+            var length = content.Length;
+            for (var i = 0; i < length; i++) {
+                var ch = content[i];
+                if (ch == '\t' || char.IsHighSurrogate(ch)) {
+                    _needToCalculateColumns.Set(lineCount);
+                }
+                if (ch == '\n') {
+                    lineCount++;
+                }
+            }
+            if (content[^1] != '\n') {
+                lineCount++;
+            }
+            var lineOffsets = new int[lineCount];
+            lineOffsets[0] = 0;
+            var index = 1;
+            for (var i = 0; i < length; i++) {
+                var ch = content[i];
+                if (ch == '\n') {
+                    if (i + 1 == length)
+                        break;
+                    lineOffsets[index++] = i + 1;
+                }
+            }
+            return lineOffsets;
+        }
+
+        protected void SkipTokens(int begin, int end) {
+            for (int i = begin; i < end; i++) {
+[#if settings.usesPreprocessor]
+                if (_tokenLocationTable[i] != Ignored) {
+                    _tokenLocationTable[i] = Skipped;
+                }
+[#else]
+                _tokenLocationTable[i] = Skipped;
+[/#if]
+            }
+        }
+
+[#if settings.usesPreprocessor]
+        public int NextUnignoredOffset(int offset) {
+            while (offset < _tokenLocationTable.Length - 1  && _tokenLocationTable[offset] == Ignored) {
                 ++offset;
             }
-            _bufferPosition = offset;
+            return offset;
+        }
+
+        protected void SetIgnoredRange(int begin, int end) {
+            for (int offset = begin; offset < end; offset++) {
+                _tokenLocationTable[offset] = Ignored;
+                _tokenOffsets.Clear(begin, end);
+            }
+        }
+
+        public bool IsIgnored(int offset) {
+            return _tokenLocationTable[offset] == Ignored;
+        }
+
+        public bool SpansPPInstruction(int start, int end) {
+            for (int i = start; i < end; i++) {
+                if (IsIgnored(i)) {
+                    return true;
+                }
+            }
+            return false;
+        }
+
+        public int Length(int start, int end) {
+            int result = 0;
+            for (int i =start; i< end; i++) {
+                if (!IsIgnored(i)) {
+                    ++result;
+                }
+            }
+            return result;
+        }
+
+        protected void SetLineSkipped(${BaseToken} tok) {
+            int lineNum = tok.BeginLine;
+            int start = GetLineStartOffset(lineNum);
+            int end = GetLineStartOffset(lineNum + 1);
+            SetIgnoredRange(start, end);
+            tok.BeginOffset = start;
+            tok.EndOffset = end;
+        }
+
+[/#if]
+[#if settings.cppContinuationLine]
+    protected void HandleCContinuationLines() {
+      for (int offset = _content.IndexOf('\\'); offset >= 0; offset = _content.IndexOf('\\', offset + 1)) {
+          int nlIndex = _content.IndexOf('\n', offset);
+          if (nlIndex < 0) break;
+          if (_content.Substring(offset + 1, nlIndex).Trim().IsEmpty) {
+              SetIgnoredRange(offset, nlIndex + 1);
+              // for (int i=offset; i<=nlIndex; i++) SetIgnoredRange(i, i+1);
+          }
+      }
+    }
+
+[/#if]
+        virtual public void CacheToken(Token tok) {
+            int beginOffset = tok.BeginOffset;
+            int endOffset = tok.EndOffset;
+
+            _tokenOffsets.Set(beginOffset);
+            if (endOffset > beginOffset + 1) {
+                // This handles some weird usage cases where token locations
+                // have been adjusted.
+                _tokenOffsets.Clear(beginOffset + 1, endOffset);
+                for (int i = beginOffset + 1; i < endOffset; i++) {
+[#if settings.usesPreprocessor]
+                    if (_tokenLocationTable[i] != Ignored)
+[/#if]
+                        _tokenLocationTable[i] = null;
+                }
+            }
+            _tokenLocationTable[beginOffset] = tok;
+        }
+
+        virtual public void UncacheTokens(Token lastToken) {
+            int endOffset = lastToken.EndOffset;
+            if (endOffset < _tokenOffsets.Length) {
+                _tokenOffsets.Clear(lastToken.EndOffset, _tokenOffsets.Length);
+            }
         }
 
         /**
         * return the line length in code _units_
         */
-        private int GetLineLength(int lineNumber) {
+        public int GetLineLength(int lineNumber) {
             int startOffset = GetLineStartOffset(lineNumber);
             int endOffset = GetLineEndOffset(lineNumber);
             return 1 + endOffset - startOffset;
-        }
-
-        /*
-         * The offset of the start of the given line. This is in code units
-         */
-        private int GetLineStartOffset(int lineNumber) {
-            int realLineNumber = lineNumber - startingLine;
-            if (realLineNumber <= 0) {
-                return 0;
-            }
-            if (realLineNumber >= _lineOffsets.Length) {
-                return _contentLength;
-            }
-            return _lineOffsets[realLineNumber];
-        }
-
-        /*
-         * The offset of the end of the given line. This is in code units.
-         */
-        private int GetLineEndOffset(int lineNumber) {
-            int realLineNumber = lineNumber - startingLine;
-            if (realLineNumber < 0) {
-                return 0;
-            }
-            if (realLineNumber >= _lineOffsets.Length) {
-                return _contentLength;
-            }
-            if (realLineNumber == _lineOffsets.Length - 1) {
-                return _contentLength - 1;
-            }
-            return _lineOffsets[realLineNumber + 1] - 1;
         }
 
         /**
@@ -966,61 +668,7 @@ ${globals.translateCodeBlock(regexp.codeSnippet.javaCode, 16)}
             return result;
         }
 
-        private int ReadChar() {
-            while (_tokenLocationTable[_bufferPosition] == Ignored && _bufferPosition < _contentLength) {
-                ++_bufferPosition;
-            }
-            if (_bufferPosition >= _contentLength) {
-                return -1;
-            }
-            char ch = _content[_bufferPosition++];
-            if (char.IsHighSurrogate(ch) && _bufferPosition < _contentLength) {
-                char nextChar = _content[_bufferPosition];
-                if (char.IsLowSurrogate(nextChar)) {
-                    ++_bufferPosition;
-                    return char.ConvertToUtf32(ch, nextChar);
-                }
-            }
-            return ch;
-        }
-
-        /**
-        * This is used in conjunction with having a preprocessor.
-        * We set which lines are actually parsed lines and the
-        * unset ones are ignored.
-        * @param parsedLines a #java.util.BitSet that holds which lines
-        * are parsed (i.e. not ignored)
-        */
-        public void SetParsedLines(BitSet parsedLines) {
-            for (int i = 0; i < _lineOffsets.Length; i++) {
-                if (!parsedLines[i + 1]) {
-                    int lineOffset = _lineOffsets[i];
-                    int nextLineOffset = i < _lineOffsets.Length -1 ? _lineOffsets[i+1] : _contentLength;
-                    for (int offset = lineOffset; offset < nextLineOffset; offset++) {
-                        _tokenLocationTable[offset] = Ignored;
-                    }
-                }
-            }
-        }
-
-        /**
-        * @return the line number from the absolute offset passed in as a parameter
-        */
-        internal int GetLineFromOffset(int pos) {
-            if (pos >= _contentLength) {
-                if (_content[_contentLength - 1] == '\n') {
-                    return startingLine + _lineOffsets.Length;
-                }
-                return startingLine + _lineOffsets.Length - 1;
-            }
-            int bsearchResult = System.Array.BinarySearch(_lineOffsets, pos);
-            if (bsearchResult >= 0) {
-                return startingLine + bsearchResult;
-            }
-            return startingLine -(bsearchResult + 2);
-        }
-
-        internal int GetCodePointColumnFromOffset(int pos) {
+        public int GetCodePointColumnFromOffset(int pos) {
             if (pos >= _contentLength) return 1;
             if (pos == 0) return startingColumn;
             var line = GetLineFromOffset(pos) - startingLine;
@@ -1052,7 +700,10 @@ ${globals.translateCodeBlock(regexp.codeSnippet.javaCode, 16)}
         * @return the text between startOffset (inclusive)
         * and endOffset(exclusive)
         */
-        internal string GetText(int startOffset, int endOffset) {
+        public string GetText(int startOffset, int endOffset) {
+[#if !settings.usesPreprocessor]
+            return _content.Substring(startOffset, endOffset - startOffset);
+[#else]
             StringBuilder buf = new StringBuilder();
             for (int offset = startOffset; offset < endOffset; offset++) {
                 if (_tokenLocationTable[offset] != Ignored) {
@@ -1060,6 +711,634 @@ ${globals.translateCodeBlock(regexp.codeSnippet.javaCode, 16)}
                 }
             }
             return buf.ToString();
+[/#if]
+        }
+
+        public ${BaseToken} NextCachedToken(int offset) {
+            int nextOffset = _tokenOffsets.NextSetBit(offset);
+            return nextOffset == -1 ? null : _tokenLocationTable[nextOffset];
+        }
+
+        public ${BaseToken} PreviousCachedToken(int offset) {
+            int prevOffset = _tokenOffsets.PreviousSetBit(offset - 1);
+            return prevOffset == -1 ? null : _tokenLocationTable[prevOffset];
+        }
+
+[#if settings.usesPreprocessor]
+        /**
+        * This is used in conjunction with having a preprocessor.
+        * We set which lines are actually parsed lines and the
+        * unset ones are ignored.
+        * @param parsedLines a #java.util.BitSet that holds which lines
+        * are parsed (i.e. not ignored)
+        */
+        private void SetParsedLines(BitSet parsedLines, bool reversed) {
+            for (int i = 0; i < _lineOffsets.Length; i++) {
+                bool turnOffLine = !parsedLines[i + 1];
+                if (reversed) turnOffLine = !turnOffLine;
+                if (turnOffLine) {
+                    int lineOffset = _lineOffsets[i];
+                    int nextLineOffset = i < _lineOffsets.Length -1 ? _lineOffsets[i+1] : _contentLength;
+                    SetIgnoredRange(lineOffset, nextLineOffset);
+                }
+            }
+        }
+
+        /**
+        * This is used in conjunction with having a preprocessor.
+        * We set which lines are actually parsed lines and the
+        * unset ones are ignored.
+        * @param parsedLines a #java.util.BitSet that holds which lines
+        * are parsed (i.e. not ignored)
+        */
+        public void SetParsedLines(BitSet parsedLines) {SetParsedLines(parsedLines, false);}
+
+        public void SetUnparsedLines(BitSet unparsedLines) {SetParsedLines(unparsedLines, true);}
+
+[/#if]
+        /*
+         * The offset of the start of the given line. This is in code units
+         */
+        public int GetLineStartOffset(int lineNumber) {
+            int realLineNumber = lineNumber - startingLine;
+            if (realLineNumber <= 0) {
+                return 0;
+            }
+            if (realLineNumber >= _lineOffsets.Length) {
+                return _contentLength;
+            }
+            return _lineOffsets[realLineNumber];
+        }
+
+        /*
+         * The offset of the end of the given line. This is in code units.
+         */
+        public int GetLineEndOffset(int lineNumber) {
+            int realLineNumber = lineNumber - startingLine;
+            if (realLineNumber < 0) {
+                return 0;
+            }
+            if (realLineNumber >= _lineOffsets.Length) {
+                return _contentLength;
+            }
+            if (realLineNumber == _lineOffsets.Length - 1) {
+                return _contentLength - 1;
+            }
+            return _lineOffsets[realLineNumber + 1] - 1;
+        }
+
+        /**
+        * @return the line number from the absolute offset passed in as a parameter
+        */
+        public int GetLineFromOffset(int pos) {
+            if (pos >= _contentLength) {
+                if (_content[_contentLength - 1] == '\n') {
+                    return startingLine + _lineOffsets.Length;
+                }
+                return startingLine + _lineOffsets.Length - 1;
+            }
+            int bsearchResult = System.Array.BinarySearch(_lineOffsets, pos);
+            if (bsearchResult >= 0) {
+                return startingLine + bsearchResult;
+            }
+            return startingLine -(bsearchResult + 2);
+        }
+
+    }
+
+    internal class MatchInfo {
+        internal TokenType matchedType;
+        internal int matchLength;
+
+        override public int GetHashCode() {
+            return matchLength.GetHashCode() + matchedType.GetHashCode();
+        }
+
+        override public bool Equals(Object obj) {
+            if (this == obj)
+                return true;
+            if (obj == null)
+                return false;
+            if (GetType() != obj.GetType())
+                return false;
+            MatchInfo other = (MatchInfo) obj;
+            return matchLength == other.matchLength && matchedType == other.matchedType;
+        }
+    }
+
+    public class Lexer : TokenSource[#if useLogging!false], IObservable<LogInfo>[/#if] {
+
+[#if settings.lexerUsesParser]
+        internal Parser Parser { get; internal set; }
+[/#if]
+
+
+[#if lexerData.hasLexicalStateTransitions]
+        // A lookup for lexical state transitions triggered by a certain token type
+        private static Dictionary<TokenType, LexicalState> tokenTypeToLexicalStateMap = new Dictionary<TokenType, LexicalState>();
+[/#if]
+
+        // Token types that are "regular" tokens that participate in parsing,
+        // i.e. declared as TOKEN
+        [@EnumSet "regularTokens" lexerData.regularTokens.tokenNames 8 /]
+        // Token types that do not participate in parsing
+        // i.e. declared as UNPARSED (or SPECIAL_TOKEN)
+        [@EnumSet "unparsedTokens" lexerData.unparsedTokens.tokenNames 8 /]
+        [#-- // Tokens that are skipped, i.e. SKIP --]
+        [@EnumSet "skippedTokens" lexerData.skippedTokens.tokenNames 8 /]
+        // Tokens that correspond to a MORE, i.e. that are pending
+        // additional input
+        [@EnumSet "moreTokens" lexerData.moreTokens.tokenNames 8 /]
+
+        // NFA code and data
+
+        // The functional interface that represents
+        // the acceptance method of an NFA state
+        private delegate TokenType? NfaFunction(int ch, BitSet bs, HashSet<TokenType> validTypes, HashSet<TokenType> AlreadyMatchedTypes);
+        private delegate MatchInfo? MatcherHook(LexicalState lexicalState, string source, int position, HashSet<TokenType> activeTokenTypes, NfaFunction[] nfaFunctions, BitSet currentStates, BitSet nextStates, MatchInfo matchInfo);
+
+[#if multipleLexicalStates]
+        // A lookup of the NFA function tables for the respective lexical states.
+        private static Dictionary<LexicalState, NfaFunction[]> functionTableMap = new Dictionary<LexicalState, NfaFunction[]>();
+[#else]
+        [#-- We don't need the above lookup if there is only one lexical state.--]
+        private static NfaFunction[] nfaFunctions;
+[/#if]
+
+        // Just use the canned binary search to check whether the char
+        // is in one of the intervals
+        private static bool CheckIntervals(int[] ranges, int ch) {
+            var temp = System.Array.BinarySearch(ranges, ch);
+            return temp >=0 || temp % 2 == 0;
+        }
+
+[#list lexerData.lexicalStates as lexicalState]
+[@GenerateStateCode lexicalState/]
+[/#list]
+
+        [#-- Compute the maximum size of state bitsets --]
+[#if !multipleLexicalStates]
+            private const int MaxStates = ${lexerData.lexicalStates.get(0).allNfaStates.size()};
+[#else]
+            private static int MaxStates = Utils.MaxOf(
+[#list lexerData.lexicalStates as state]
+                ${state.allNfaStates.size()}[#if state_has_next],[/#if]
+[/#list]
+            );
+[/#if]
+
+        private static MatcherHook MATCHER_HOOK;
+
+        // The following two BitSets are used to store
+        // the current active NFA states in the core tokenization loop
+        private BitSet _nextStates = new BitSet(MaxStates), _currentStates = new BitSet(MaxStates);
+
+        internal HashSet<TokenType> ActiveTokenTypes = Utils.EnumSet(
+[#list grammar.lexerData.regularExpressions as regexp]
+            TokenType.${regexp.label}[#if regexp_has_next],[/#if]
+[/#list]
+        );
+
+        private LexicalState _lexicalState;
+        public LexicalState LexicalState => _lexicalState;
+
+        // constructors
+
+        static Lexer() {
+[#list lexerData.lexicalStates as lexicalState]
+            NFA_FUNCTIONS_${lexicalState.name}Init();
+[/#list]
+[#if lexerData.hasLexicalStateTransitions]
+            // Generate the map for lexical state transitions from the various token types
+  [#list grammar.lexerData.regularExpressions as regexp]
+    [#if !regexp.newLexicalState?is_null]
+            tokenTypeToLexicalStateMap[TokenType.${regexp.label}] = LexicalState.${regexp.newLexicalState.name};
+    [/#if]
+  [/#list]
+[/#if]
+        }
+
+[#if useLogging!false]
+        private readonly IList<IObserver<LogInfo>> observers = new List<IObserver<LogInfo>>();
+[/#if]
+
+        public Lexer(string inputSource, LexicalState lexState = LexicalState.${lexerData.lexicalStates[0].name}, int line = 1, int column = 1) : base(inputSource, line, column) {
+[#if settings.deactivatedTokens?size>0 || settings.extraTokens?size >0]
+  [#list settings.deactivatedTokens as token]
+            ActiveTokenTypes.Remove(${CU.TT}${token});
+  [/#list]
+  [#list settings.extraTokenNames as token]
+            regularTokens.Add(${CU.TT}${token});
+  [/#list]
+[/#if]
+${globals.translateLexerInitializers()}
+            SwitchTo(lexState);
+        }
+
+[#if useLogging!false]
+        public IDisposable Subscribe(IObserver<LogInfo> observer)
+        {
+            if (!observers.Contains(observer)) {
+                observers.Add(observer);
+            }
+            return new Unsubscriber<LogInfo>(observers, observer);
+        }
+
+        internal void Log(LogLevel level, string message, params object[] arguments) {
+            var info = new LogInfo(level, message, arguments);
+            foreach (var observer in observers) {
+                observer.OnNext(info);
+            }
+        }
+[/#if]
+        //
+        // Switch to specified lexical state.
+        //
+        public bool SwitchTo(LexicalState lexState) {
+            if (_lexicalState != lexState) {
+                _lexicalState = lexState;
+                return true;
+            }
+            return false;
+        }
+
+[#if lexerData.hasLexicalStateTransitions]
+        bool DoLexicalStateSwitch(TokenType tokenType) {
+            if (!tokenTypeToLexicalStateMap.ContainsKey(tokenType)) {
+                return false;
+            }
+            LexicalState newState = tokenTypeToLexicalStateMap[tokenType];
+            return SwitchTo(newState);
+        }
+[/#if]
+
+        public Token GetNextToken(${TOKEN} tok) {
+            return GetNextToken(tok, ActiveTokenTypes);
+        }
+
+        /**
+        * The public method for getting the next token.
+        * If the tok parameter is null, it just tokenizes
+        * starting at the internal _bufferPosition
+        * Otherwise, it checks whether we have already cached
+        * the token after this one. If not, it finally goes
+        * to the NFA machinery
+        */
+        public ${TOKEN} GetNextToken(${TOKEN} tok, HashSet<TokenType> activeTokenTypes) {
+            if(tok == null) {
+                tok = TokenizeAt(0, null, activeTokenTypes);
+                CacheToken(tok);
+                return tok;
+            }
+            ${TOKEN} cachedToken = tok.NextCachedToken;
+            // If the cached next token is not currently active, we
+            // throw it away and go back to the lexer
+            if (cachedToken != null && (activeTokenTypes != null) && !activeTokenTypes.Contains(cachedToken.Type)) {
+                Reset(tok);
+                cachedToken = null;
+            }
+            if (cachedToken == null) {
+                ${TOKEN} token = TokenizeAt(tok.EndOffset, null, activeTokenTypes);
+                CacheToken(token);
+                return token;
+            }
+            return cachedToken;
+        }
+
+        static private int ReadChar(string content, int length, ref int position) {
+            char ch = content[position++];
+            if (char.IsHighSurrogate(ch) && position < length) {
+                char nextChar = content[position];
+                if (char.IsLowSurrogate(nextChar)) {
+                    ++position;
+                    return char.ConvertToUtf32(ch, nextChar);
+                }
+            }
+            return ch;
+        }
+
+        /**
+        * Core tokenization method. Note that this can be called from a static context.
+        * Hence the extra parameters that need to be passed in.
+        */
+        static MatchInfo GetMatchInfo(TokenSource input, int position, HashSet<TokenType> activeTokenTypes, NfaFunction[] nfaFunctions, BitSet? currentStates, BitSet? nextStates, MatchInfo? matchInfo) {
+            if (matchInfo == null) {
+                matchInfo = new MatchInfo();
+            }
+            if (position >= input._contentLength) {
+                matchInfo.matchedType = TokenType.EOF;
+                matchInfo.matchLength = 0;
+                return matchInfo;
+            }
+            int start = position;
+            int matchLength = 0;
+            TokenType matchedType = TokenType.INVALID;
+            HashSet<TokenType> alreadyMatchedTypes = new HashSet<TokenType>();
+            if (currentStates == null)
+                currentStates = new BitSet(MaxStates);
+            else
+                currentStates.Clear();
+            if (nextStates == null)
+                nextStates = new BitSet(MaxStates);
+            else
+                nextStates.Clear();
+            // the core NFA loop
+            do {
+                // Holder for the new type (if any) matched on this iteration
+                if (position > start) {
+                    // What was nextStates on the last iteration 
+                    // is now the currentStates!
+                    BitSet temp = currentStates;
+                    currentStates = nextStates;
+                    nextStates = temp;
+                    nextStates.Clear();
+[#if settings.usesPreprocessor]
+                    position = input.NextUnignoredOffset(position);
+[/#if]                
+                } else {
+                    currentStates.Set(0);
+                }
+                if (position >= input._contentLength) {
+                    break;
+                }
+                int curChar = ReadChar(input._content, input._contentLength, ref position);
+                int nextActive = currentStates.NextSetBit(0);
+                while(nextActive != -1) {
+                    TokenType? returnedType = nfaFunctions[nextActive](curChar, nextStates, activeTokenTypes, alreadyMatchedTypes);
+                    if (returnedType != null && ((position - start > matchLength) || (returnedType < matchedType))) {
+                        matchedType = (TokenType) returnedType;
+                        matchLength = position - start;
+                        alreadyMatchedTypes.Add((TokenType) returnedType);
+                    }
+                    nextActive = currentStates.NextSetBit(nextActive + 1);
+                }
+                if (position >= input._contentLength) break;
+            } while (!nextStates.IsEmpty);
+            matchInfo.matchedType = matchedType;
+            matchInfo.matchLength = matchLength;
+            return matchInfo;
+        }
+
+        /**
+        * @param position The position at which to tokenize.
+        * @param lexicalState The lexical state in which to tokenize. If this is null, it is the instance variable #lexicalState
+        * @param activeTokenTypes The active token types. If this is null, they are all active.
+        * @return the Token at position
+        */
+        private ${TOKEN} TokenizeAt(int position, LexicalState? lexicalState, HashSet<TokenType> activeTokenTypes) {
+            if (lexicalState == null) lexicalState = this._lexicalState;
+            int tokenBeginOffset = position;
+            bool inMore = false;
+            StringBuilder invalidChars = null;
+            ${TOKEN} matchedToken = null;
+            TokenType? matchedType = null;
+            // The core tokenization loop
+            MatchInfo matchInfo = new MatchInfo();
+            BitSet currentStates = new BitSet(MaxStates);
+            BitSet nextStates = new BitSet(MaxStates);
+            while (matchedToken == null) {
+[#if multipleLexicalStates]
+            // Get the NFA function table for the current lexical state.
+            // If we are in a MORE, there is some possibility that there
+            // was a lexical state change since the last iteration of this loop!
+                NfaFunction[] nfaFunctions = GetFunctionTable(_lexicalState);
+[/#if]
+[#if settings.usesPreprocessor]
+                position = NextUnignoredOffset(position);
+[/#if]
+                if (!inMore) {
+                    tokenBeginOffset = position;
+                }
+                if (MATCHER_HOOK != null) {
+                    matchInfo = MATCHER_HOOK((LexicalState) lexicalState, _content, position, activeTokenTypes, nfaFunctions, currentStates, nextStates, matchInfo);
+                    if (matchInfo == null) {
+                        matchInfo = GetMatchInfo(this, position, activeTokenTypes, nfaFunctions, currentStates, nextStates, matchInfo);
+                    }
+                } else {
+                    matchInfo = GetMatchInfo(this, position, activeTokenTypes, nfaFunctions, currentStates, nextStates, matchInfo);
+                }
+                matchedType = matchInfo.matchedType;
+                inMore = moreTokens.Contains((TokenType) matchedType);
+                position += matchInfo.matchLength;
+[#if lexerData.hasLexicalStateTransitions]
+                LexicalState newState;
+
+                if (tokenTypeToLexicalStateMap.TryGetValue((TokenType) matchedType, out newState)) {
+                    lexicalState = this._lexicalState = newState;
+                }
+                [#--  LexicalState newState = tokenTypeToLexicalStateMap[(TokenType) matchedType];
+                if (newState !=null) {
+                    lexicalState = this._lexicalState = newState;
+                }  --]
+[/#if]
+                if (matchedType == TokenType.INVALID) {
+                    if (invalidChars == null) {
+                        invalidChars = new StringBuilder();
+                    }
+                    char cp  = _content[tokenBeginOffset];
+                    invalidChars.Append(cp);
+                    ++position;
+                    if (cp > 0xFFFF) {
+                        ++position;
+                    }
+                    continue;
+                }
+                if (invalidChars != null) {
+                    return new InvalidToken(this, tokenBeginOffset - invalidChars.Length, tokenBeginOffset);
+                }
+                if (skippedTokens.Contains((TokenType) matchedType)) {
+                    SkipTokens(tokenBeginOffset, position);
+                }
+                else if (regularTokens.Contains((TokenType) matchedType) || unparsedTokens.Contains((TokenType) matchedType)) {
+                    matchedToken = ${TOKEN}.NewToken((TokenType) matchedType,
+                                                  this,
+                                                  tokenBeginOffset,
+                                                  position);
+                    matchedToken.IsUnparsed = !regularTokens.Contains((TokenType) matchedType);
+                }
+            }
+[#if lexerData.hasLexicalStateTransitions]
+            DoLexicalStateSwitch(matchedToken.Type);
+[/#if]
+[#if lexerData.hasTokenActions]
+            matchedToken = TokenLexicalActions(matchedToken, matchedType);
+[/#if  ]
+[#list grammar.lexerTokenHooks as tokenHookMethodName]
+  [#if tokenHookMethodName = "CommonTokenAction"]
+                ${tokenHookMethodName}(matchedToken);
+  [#else]
+                    matchedToken = ${tokenHookMethodName}(matchedToken);
+  [/#if]
+[/#list]
+            return matchedToken;
+        }
+
+        /* The main method to invoke the NFA machinery
+        private Token NextToken() {
+            Token matchedToken = null;
+            var inMore = false;
+            var tokenBeginOffset = _bufferPosition;
+            var firstChar = 0;
+            // The core tokenization loop
+            while (matchedToken == null) {
+                var codeUnitsRead = 0;
+                var matchedPos = 0;
+                int curChar;
+                TokenType? matchedType = null;
+                var reachedEnd = false;
+                if (inMore) {
+                    curChar = ReadChar();
+                    if (curChar < 0) reachedEnd = true;
+                }
+                else {
+                    tokenBeginOffset = _bufferPosition;
+                    firstChar = curChar = ReadChar();
+                    if (curChar < 0) {
+                        matchedType = TokenType.EOF;
+                        reachedEnd = true;
+                    }
+                }
+[#if multipleLexicalStates]
+                // Get the NFA function table current lexical state
+                // There is some possibility that there was a lexical state change
+                // since the last iteration of this loop!
+[/#if]
+                NfaFunction[] functions = GetFunctionTable(_lexicalState);
+                HashSet<TokenType> AlreadyMatchedTypes = new HashSet<TokenType>();
+                // the core NFA loop
+                if (!reachedEnd) do {
+                    // Holder for the new type (if any) matched on this iteration
+                    TokenType? newType = null;
+                    if (codeUnitsRead > 0) {
+                        // What was _nextStates on the last iteration
+                        // is now the _currentStates!
+                        (_currentStates, _nextStates) = (_nextStates, _currentStates);
+                        var c = ReadChar();
+                        if (c >= 0) {
+                            curChar = c;
+                        }
+                        else {
+                            // reachedEnd = true;
+                            break;
+                        }
+                    }
+                    _nextStates.Clear();
+                    if (codeUnitsRead == 0) {
+                        TokenType? returnedType = functions[0](curChar, _nextStates, ActiveTokenTypes, AlreadyMatchedTypes);
+                        if (returnedType != null) {
+                            AlreadyMatchedTypes.Add((TokenType) returnedType);
+                            newType = returnedType;
+                        }
+                    }
+                    else {
+                        int nextActive = _currentStates.NextSetBit(0);
+                        while (nextActive != -1) {
+                            TokenType? returnedType = functions[nextActive](curChar, _nextStates, ActiveTokenTypes, AlreadyMatchedTypes);
+                            if ((returnedType != null) && ((newType == null) || (returnedType.Value < (int) newType.Value))) {
+                                AlreadyMatchedTypes.Add((TokenType) returnedType);
+                                newType = returnedType;
+                            }
+                            nextActive = _currentStates.NextSetBit(nextActive + 1);
+                        }
+                    }
+                    ++codeUnitsRead;
+                    if (curChar >= 0xFFFF) {
+                        ++codeUnitsRead;
+                    }
+                    if (newType != null) {
+                        matchedType = newType;
+                        inMore = moreTokens.Contains(matchedType.Value);
+                        matchedPos = codeUnitsRead;
+                    }
+                } while (!_nextStates.IsEmpty);
+                if (matchedType == null) {
+                    _bufferPosition = tokenBeginOffset + 1;
+                    if (firstChar > 0xFFFF) {
+                        ++_bufferPosition;
+                    }
+                    return new InvalidToken(this, tokenBeginOffset, _bufferPosition);
+                }
+                _bufferPosition -= (codeUnitsRead - matchedPos);
+                if (skippedTokens.Contains((TokenType) matchedType)) {
+                    for (int i = tokenBeginOffset; i < _bufferPosition; i++) {
+                        if (_tokenLocationTable[i] != Ignored) {
+                            _tokenLocationTable[i] = Skipped;
+                        }
+                    }
+                }
+                if (regularTokens.Contains((TokenType) matchedType) || unparsedTokens.Contains((TokenType) matchedType)) {
+                    matchedToken = Token.NewToken((TokenType) matchedType,
+                                                  this,
+                                                  tokenBeginOffset,
+                                                  _bufferPosition);
+                    matchedToken.IsUnparsed = !regularTokens.Contains((TokenType) matchedType);
+                }
+     [#if lexerData.hasTokenActions]
+                matchedToken = TokenLexicalActions(matchedToken, matchedType);
+     [/#if]
+     [#if lexerData.hasLexicalStateTransitions]
+                DoLexicalStateSwitch(matchedType.Value);
+     [/#if]
+            }
+ [#list grammar.lexerTokenHooks as tokenHookMethodName]
+    [#if tokenHookMethodName = "CommonTokenAction"]
+                ${tokenHookMethodName}(matchedToken);
+    [#else]
+                matchedToken = ${tokenHookMethodName}(matchedToken);
+    [/#if]
+ [/#list]
+            return matchedToken;
+        }
+*/
+        // Reset the token source input
+        // to just after the ${TOKEN} passed in.
+        internal void Reset(${TOKEN} t, LexicalState? state = null) {
+[#list grammar.resetTokenHooks as resetTokenHookMethodName]
+            ${globals.translateIdentifier(resetTokenHookMethodName)}(t);
+[/#list]
+            UncacheTokens(t);
+            if (state != null) {
+                SwitchTo(state.Value);
+            }
+[#if lexerData.hasLexicalStateTransitions]
+            else {
+                DoLexicalStateSwitch(t.Type);
+            }
+[/#if]
+        }
+
+[#if lexerData.hasTokenActions]
+        private Token TokenLexicalActions(Token matchedToken, TokenType? matchedType) {
+            switch (matchedType) {
+        [#list lexerData.regularExpressions as regexp]
+                [#if regexp.codeSnippet?has_content]
+            case TokenType.${regexp.label}:
+${globals.translateCodeBlock(regexp.codeSnippet.javaCode, 16)}
+                break;
+                [/#if]
+        [/#list]
+            default: break;
+            }
+            return matchedToken;
+        }
+[/#if]
+/*
+        private int ReadChar() {
+            while (_tokenLocationTable[_bufferPosition] == Ignored && _bufferPosition < _contentLength) {
+                ++_bufferPosition;
+            }
+            if (_bufferPosition >= _contentLength) {
+                return -1;
+            }
+            char ch = _content[_bufferPosition++];
+            if (char.IsHighSurrogate(ch) && _bufferPosition < _contentLength) {
+                char nextChar = _content[_bufferPosition];
+                if (char.IsLowSurrogate(nextChar)) {
+                    ++_bufferPosition;
+                    return char.ConvertToUtf32(ch, nextChar);
+                }
+            }
+            return ch;
         }
 
         internal char CharAt(int index) {
@@ -1069,63 +1348,26 @@ ${globals.translateCodeBlock(regexp.codeSnippet.javaCode, 16)}
         internal int Length() {
             return _content.Length;
         }
+ */
 
-        internal bool IsIgnored(int offset) {
-            return _tokenLocationTable[offset] == Ignored;
-        }
-
-        internal void CacheToken(Token tok) {
 [#if settings.tokenChaining]
-            if (tok.isInserted) {
-                Token next = tok.NextCachedToken;
+        override public void CacheToken(${BaseToken} tok) {
+            ${TOKEN} token = (${TOKEN}) tok;
+            if (token.isInserted) {
+                ${TOKEN} next = tok.NextCachedToken;
                 if (next != null) CacheToken(next);
                 return;
             }
+            base.CacheToken(tok);
+        }
+
+        override public void UncacheTokens(${BaseToken} lastToken) {
+            base.UncacheTokens(lastToken);
+            ((${TOKEN}) lastToken).UnsetAppendedToken();
+        }
 [/#if]
-            int offset = tok.BeginOffset;
-            if (_tokenLocationTable[offset] != Ignored) {
-                _tokenOffsets.Set(offset);
-                _tokenLocationTable[offset] = tok;
-            }
-        }
 
-        void UncacheTokens(Token lastToken) {
-            int endOffset = lastToken.EndOffset;
-            if (endOffset < _tokenOffsets.Length) {
-                _tokenOffsets.Clear(lastToken.EndOffset, _tokenOffsets.Length);
-            }
-[#if settings.tokenChaining]
-            lastToken.UnsetAppendedToken();
-[/#if]
-        }
-
-        internal Token NextCachedToken(int offset) {
-            int nextOffset = _tokenOffsets.NextSetBit(offset);
-            return nextOffset == -1 ? null : _tokenLocationTable[nextOffset];
-        }
-
-        internal Token PreviousCachedToken(int offset) {
-            int prevOffset = _tokenOffsets.PreviousSetBit(offset - 1);
-            return prevOffset == -1 ? null : _tokenLocationTable[prevOffset];
-        }
-
-        private static NfaFunction[] GetFunctionTable(LexicalState lexicalState) {
-[#if multipleLexicalStates]
-            return functionTableMap[lexicalState];
-[#else]
-            // We only have one lexical state in this case, so we return that!
-            return nfaFunctions;
-[/#if]
-        }
-
-        protected void SetRegionIgnore(int start, int end) {
-            for (int i = start; i< end; i++) {
-                _tokenLocationTable[i] = Ignored;
-            }
-            _tokenOffsets.Clear(start, end);
-        }
-
-        protected bool AtLineStart(Token tok) {
+        protected bool AtLineStart(${TOKEN} tok) {
             int offset = tok.BeginOffset;
             while (offset > 0) {
                 --offset;
@@ -1136,18 +1378,18 @@ ${globals.translateCodeBlock(regexp.codeSnippet.javaCode, 16)}
             return true;
         }
 
-        protected string GetLine(Token tok) {
+        protected string GetLine(${TOKEN} tok) {
             int lineNum = tok.BeginLine;
             return GetText(GetLineStartOffset(lineNum), GetLineEndOffset(lineNum) + 1);
         }
 
-        protected void SetLineSkipped(Token tok) {
-            int lineNum = tok.BeginLine;
-            int start = GetLineStartOffset(lineNum);
-            int end = GetLineStartOffset(lineNum+1);
-            SetRegionIgnore(start, end);
-            tok.BeginOffset = start;
-            tok.EndOffset = end;
+        private static NfaFunction[] GetFunctionTable(LexicalState lexicalState) {
+[#if multipleLexicalStates]
+            return functionTableMap[lexicalState];
+[#else]
+            // We only have one lexical state in this case, so we return that!
+            return nfaFunctions;
+[/#if]
         }
 
 ${globals.translateLexerInjections(true)}

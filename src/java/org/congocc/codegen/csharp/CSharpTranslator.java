@@ -63,17 +63,21 @@ public class CSharpTranslator extends Translator {
         else if (ident.equals("isUnparsed")) {
             result = "IsUnparsed";
         }
-        else if (ident.equals("LEXER_CLASS")) {
+        else if (ident.equals("LEXER_CLASS") || ident.equals(appSettings.getLexerClassName())) {
             result = "Lexer";
         }
-        else if (ident.equals("PARSER_CLASS")) {
+        else if (ident.equals("PARSER_CLASS") || ident.equals(appSettings.getParserClassName())) {
             result = "Parser";
         }
-        else if (ident.equals("BASE_TOKEN_CLASS")) {
+        else if (ident.equals("BASE_TOKEN_CLASS") || ident.equals(appSettings.getBaseTokenClassName())) {
             result = "Token";
         }
         else if (ident.startsWith("NODE_PACKAGE.")) {
             result = ident.substring(13);
+        }
+        else if (ident.startsWith(appSettings.getNodePackage().concat("."))) {
+            int prefixLength = appSettings.getNodePackage().length() + 1;
+            result = ident.substring(prefixLength);
         }
         else if ((kind != TranslationContext.VARIABLE || propertyIdentifiers.contains(ident)) && kind != TranslationContext.PARAMETER && Character.isLowerCase(ident.charAt(0)) && !isSpecialPrefix(ident)) {
             result = Character.toUpperCase(ident.charAt(0)) + ident.substring(1);
@@ -269,7 +273,8 @@ public class CSharpTranslator extends Translator {
             }
             result.append("PreviousCachedToken");
         }
-        else if (methodName.equals("get") && (nargs == 1)) {
+        else if (methodName.equals("get") && (nargs == 1) && !(receiver instanceof ASTPrimaryExpression)) {
+            // get(X) -> Get(x), but a.get(x) -> a[x]
             renderReceiver(receiver, result);
             result.append('[');
             internalTranslateExpression(firstArg, TranslationContext.UNKNOWN, result);
@@ -389,6 +394,21 @@ public class CSharpTranslator extends Translator {
                 break;
             case "PARSER_CLASS":
                 result = "Parser";
+                break;
+            default:
+                if (name.equals(appSettings.getLexerClassName())) {
+                    result = "Lexer";
+                }
+                else if (name.equals(appSettings.getParserClassName())) {
+                    result = "Parser";
+                }
+                else if (name.equals(appSettings.getBaseTokenClassName())) {
+                    result = "Token";
+                }
+                else if (name.startsWith(appSettings.getNodePackage().concat("."))) {
+                    int prefixLength = appSettings.getNodePackage().length() + 1;
+                    result = name.substring(prefixLength);
+                }
                 break;
         }
         return result;

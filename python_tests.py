@@ -112,7 +112,7 @@ def test_grammar(gdata, options):
                     shutil.copy(f, dd)
                     copied += 1
             if copied:
-                print('BitSet speedup files copied to working directory.')
+                print('%d BitSet speedup files copied to working directory.' % copied)
     print('Test files copied to working directory.')
 
     # Run congocc to create the Java lexer and parser
@@ -293,7 +293,7 @@ def main():
                 # (as they don't work yet)
                 if options.langs == 'all' and lang == 'lua':
                     continue
-                workdir = tempfile.mkdtemp(prefix='congocc-python-test-')
+                workdir = tempfile.mkdtemp(prefix='congocc-test-python-%s-' % lang)
                 workdirs.append(workdir)
                 gdata.workdir = workdir
                 test_grammar(gdata, options)

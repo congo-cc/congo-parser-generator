@@ -27,13 +27,13 @@ namespace ${csPackage} {
         void Close() {}
         Lexer TokenSource { get; set; }
         Node Parent { get; set; }
-        int ChildCount { get; }
-        Node GetChild(int i);
-        void SetChild(int i, Node n);
-        void AddChild(int i, Node n);
-        void AddChild(Node n);
-        void RemoveChild(int i);
-        void ClearChildren();
+        int Size { get; }
+        Node Get(int i);
+        void Set(int i, Node n);
+        void Add(int i, Node n);
+        void Add(Node n);
+        void Remove(int i);
+        void Clear();
 
         // default implementations
 
@@ -72,11 +72,11 @@ namespace ${csPackage} {
 
         bool IsUnparsed { get => false; }
 
-        bool HasChildNodes { get { return ChildCount > 0; } }
+        bool HasChildNodes { get { return Size > 0; } }
 
         int IndexOf(Node child) {
-            for (int i = 0; i < ChildCount; i++) {
-                if (child == GetChild(i)) {
+            for (int i = 0; i < Size; i++) {
+                if (child == Get(i)) {
                     return i;
                 }
             }
@@ -85,14 +85,14 @@ namespace ${csPackage} {
 
         Node FirstChild {
             get {
-                return (ChildCount > 0) ? GetChild(0) : null;
+                return (Size > 0) ? Get(0) : null;
             }
         }
 
         Node LastChild {
             get {
-                int n = ChildCount;
-                return (n > 0) ? GetChild(n - 1) : null;
+                int n = Size;
+                return (n > 0) ? Get(n - 1) : null;
             }
         }
 
@@ -110,19 +110,19 @@ namespace ${csPackage} {
             get {
                 ListAdapter<Node> result = new ListAdapter<Node>();
 
-                for (int i = 0; i < ChildCount; i++) {
-                    result.Add(GetChild(i));
+                for (int i = 0; i < Size; i++) {
+                    result.Add(Get(i));
                 }
                 return result;
             }
         }
 
-        bool RemoveChild(Node n) {
+        bool Remove(Node n) {
             int i = IndexOf(n);
             if (i < 0) {
                 return false;
             }
-            RemoveChild(i);
+            Remove(i);
             return true;
         }
 
@@ -131,7 +131,7 @@ namespace ${csPackage} {
             if (i < 0) {
                 return false;
             }
-            SetChild(i, replacement);
+            Set(i, replacement);
             return true;
         }
 
@@ -140,7 +140,7 @@ namespace ${csPackage} {
             if (i < 0) {
                 return false;
             }
-            AddChild(i, inserted);
+            Add(i, inserted);
             return true;
         }
 
@@ -149,15 +149,15 @@ namespace ${csPackage} {
             if (i < 0) {
                 return false;
             }
-            AddChild(i + 1, inserted);
+            Add(i + 1, inserted);
             return true;
         }
 
         T FirstChildOfType<T>(System.Type t) where T : Node {
             var result = default(T);
 
-            for (int i = 0; i < ChildCount; i++) {
-                Node child = GetChild(i);
+            for (int i = 0; i < Size; i++) {
+                Node child = Get(i);
                 if (t.IsInstanceOfType(child)) {
                     result = (T) child;
                     break;
@@ -169,8 +169,8 @@ namespace ${csPackage} {
         T FirstChildOfType<T>(System.Type t, Predicate<T> pred) where T : Node {
             var result = default(T);
 
-            for (int i = 0; i < ChildCount; i++) {
-                Node child = GetChild(i);
+            for (int i = 0; i < Size; i++) {
+                Node child = Get(i);
                 if (t.IsInstanceOfType(child)) {
                     T c = (T) child;
                     if (pred(c)) {
@@ -199,14 +199,14 @@ namespace ${csPackage} {
             Node parent = toBeReplaced.Parent;
             if (parent != null) {
                 int index = parent.IndexOf(toBeReplaced);
-                parent.SetChild(index, this);
+                parent.Set(index, this);
             }
         }
 
 [#if settings.tokensAreNodes]
         Token FirstDescendantOfType(TokenType tt) {
-            for (int i = 0; i < ChildCount; i++) {
-                Node child = GetChild(i);
+            for (int i = 0; i < Size; i++) {
+                Node child = Get(i);
                 Token tok;
 
                 if (child is Token) {
@@ -226,8 +226,8 @@ namespace ${csPackage} {
         }
 
         Token FirstChildOfType(TokenType tt) {
-            for (int i = 0; i < ChildCount; i++) {
-                Node child = GetChild(i);
+            for (int i = 0; i < Size; i++) {
+                Node child = Get(i);
                 if (child is Token) {
                     Token tok = (Token) child;
                     if (tt == tok.Type) {
@@ -241,8 +241,8 @@ namespace ${csPackage} {
         ListAdapter<T> ChildrenOfType<T>(System.Type t) where T : Node {
             var result = new ListAdapter<T>();
 
-            for (int i = 0; i < ChildCount; i++) {
-                Node child = GetChild(i);
+            for (int i = 0; i < Size; i++) {
+                Node child = Get(i);
                 if (t.IsInstanceOfType(child)) {
                     result.Add((T) child);
                 }
@@ -253,8 +253,8 @@ namespace ${csPackage} {
         ListAdapter<T> DescendantsOfType<T>(System.Type t) where T : Node {
             var result = new ListAdapter<T>();
 
-            for (int i = 0; i < ChildCount; i++) {
-                Node child = GetChild(i);
+            for (int i = 0; i < Size; i++) {
+                Node child = Get(i);
                 if (t.IsInstanceOfType(child)) {
                     result.Add((T) child);
                 }
@@ -266,8 +266,8 @@ namespace ${csPackage} {
         ListAdapter<T> Descendants<T>(System.Type t, Predicate<T> predicate) where T : Token {
             var result = new ListAdapter<T>();
 
-            for (int i = 0; i < ChildCount; i++) {
-                Node child = GetChild(i);
+            for (int i = 0; i < Size; i++) {
+                Node child = Get(i);
                 if (t.IsInstanceOfType(child)) {
                     T c = (T) child;
                     if ((predicate == null) || predicate(c)) {
@@ -353,8 +353,8 @@ namespace ${csPackage} {
         public T FirstChildOfType<T>(System.Type t) where T : Node {
             var result = default(T);
 
-            for (int i = 0; i < ChildCount; i++) {
-                Node child = GetChild(i);
+            for (int i = 0; i < Size; i++) {
+                Node child = Get(i);
                 if (t.IsInstanceOfType(child)) {
                     result = (T) child;
                     break;
@@ -366,8 +366,8 @@ namespace ${csPackage} {
         public ListAdapter<T> ChildrenOfType<T>(System.Type t) where T : Node {
             var result = new ListAdapter<T>();
 
-            for (int i = 0; i < ChildCount; i++) {
-                Node child = GetChild(i);
+            for (int i = 0; i < Size; i++) {
+                Node child = Get(i);
                 if (t.IsInstanceOfType(child)) {
                     result.Add((T) child);
                 }
@@ -397,26 +397,26 @@ namespace ${csPackage} {
 
         public ListAdapter<Node> Children {get => new ListAdapter<Node>(children); }
 
-        public Node GetChild(int i) {
+        public Node Get(int i) {
             return children[i];
         }
 
-        public void SetChild(int i, Node n) {
+        public void Set(int i, Node n) {
             children[i] = n;
             n.Parent = this;
         }
 
-        public void AddChild(Node n) {
+        public void Add(Node n) {
             children.Add(n);
             n.Parent = this;
         }
 
-        public void AddChild(int i, Node n) {
+        public void Add(int i, Node n) {
             children.Insert(i, n);
             n.Parent = this;
         }
 
-        public void ClearChildren() => children.Clear();
+        public void Clear() => children.Clear();
 
 [#if settings.nodeUsesParser]
         internal Parser parser;
@@ -433,11 +433,11 @@ namespace ${csPackage} {
             this.tokenSource = tokenSource;
         }
 
-        public void AddChild(BaseNode node) {
-            AddChild(node, -1);
+        public void Add(BaseNode node) {
+            Add(node, -1);
         }
 
-        public void AddChild(BaseNode node, int index) {
+        public void Add(BaseNode node, int index) {
             if (index < 0) {
                 children.Add(node);
             }
@@ -447,11 +447,11 @@ namespace ${csPackage} {
             node.Parent = this;
         }
 
-        public void RemoveChild(int index) {
+        public void Remove(int index) {
             children.RemoveAt(index);
         }
 
-        public int ChildCount {
+        public int Size {
             get => children.Count;
         }
 
@@ -513,14 +513,14 @@ namespace ${csPackage} {
         public int BeginOffset { get; set; }
         public int EndOffset { get; set; }
         public Node Parent { get; set; }
-        public int ChildCount => 0;
-        public Node GetChild(int i) => null;
+        public int Size => 0;
+        public Node Get(int i) => null;
         public ListAdapter<Node> Children => new ListAdapter<Node>();
-        public void SetChild(int i, Node n) { throw new NotSupportedException(); }
-        public void AddChild(Node n) { throw new NotSupportedException(); }
-        public void AddChild(int i, Node n) { throw new NotSupportedException(); }
-        public void RemoveChild(int i) { throw new NotSupportedException(); }
-        public void ClearChildren() {}
+        public void Set(int i, Node n) { throw new NotSupportedException(); }
+        public void Add(Node n) { throw new NotSupportedException(); }
+        public void Add(int i, Node n) { throw new NotSupportedException(); }
+        public void Remove(int i) { throw new NotSupportedException(); }
+        public void Clear() {}
 
         public int GetEndOffset() {return this.EndOffset;} // Should not be necessary
 

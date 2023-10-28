@@ -4,9 +4,9 @@ PARSER_PACKAGE=org.parsers.csharplexer;
 <CSHARP> SKIP :
   <WHITESPACE : (<WS_CHAR>)+> #Whitespace
   |
-  <#WS_CHAR : 
+  <#WS_CHAR :
        [
-         " ", "\t", "\n", "\r", 
+         " ", "\t", "\n", "\r",
          "\u000b", "\u00a0", "\u1680",
          "\u2000"-"\u200a",
          "\u202f", "\u205f", "\u3000"
@@ -17,11 +17,11 @@ PARSER_PACKAGE=org.parsers.csharplexer;
 UNPARSED #Comment :
  #if true
   < ?MULTI_LINE_COMMENT : "/*" (~[])* "*/">
- #else  
+ #else
   < MULTI_LINE_COMMENT : "/*" (~["*"])* "*" (~["*","/"] (~["*"])* "*" | "*")* "/">
  #endif
   |
-  < SINGLE_LINE_COMMENT : "//" (~["\n"])* > 
+  < SINGLE_LINE_COMMENT : "//" (~["\n"])* >
 ;
 
 TOKEN #Literal :
@@ -36,7 +36,7 @@ TOKEN #Literal :
   < #HEX_LITERAL: "0" ["x","X"] <HEX_DIGITS>>
   |
   < #BINARY_LITERAL : "0b" (["0", "1", "_"])+ (["0","1"])?>
-  | 
+  |
   < #INTEGER_TYPE_SUFFIX : "U" | "u" | "L" | "l" | "UL" | "Ul" | "uL" | "ul"| "LU" | "Lu" | "lU" | "lu">
   |
   < #HEX_DIGITS: (["0"-"9","a"-"f","A"-"F","_"])* ["0"-"9","a"-"f","A"-"F"] >
@@ -46,108 +46,108 @@ TOKEN #Literal :
   < FALSE : "false" > #BooleanLiteral
   |
   < TRUE : "true"> #BooleanLiteral
-  | 
+  |
   < NULL : "null" > #NullLiteral
 ;
 
 TOKEN #Delimiter :
-  < LPAREN: "(" > 
+  < LPAREN: "(" >
 | < RPAREN: ")" >
-| < RBRACE: "}" > 
-| < LBRACKET: "[" > 
-| < RBRACKET: "]" > 
-| < SEMICOLON: ";" > 
-| < COMMA: "," > 
+| < RBRACE: "}" >
+| < LBRACKET: "[" >
+| < RBRACKET: "]" >
+| < SEMICOLON: ";" >
+| < COMMA: "," >
 ;
 
-TOKEN #Operator : 
- < GT: ">" > 
-| < LT: "<" > 
-| < BANG: "!" > 
-| < TILDE: "~" > 
+TOKEN #Operator :
+ < GT: ">" >
+| < LT: "<" >
+| < BANG: "!" >
+| < TILDE: "~" >
 | < HOOK: "?" >
 // The following two since 8.0
 | < DOUBLE_HOOK: "??">
 | < DOUBLE_HOOK_EQUALS : "??=">
-| < COLON: ":" > 
-| < EQ: "==" > 
-| < LE: "<=" > 
-| < GE: ">=" > 
-| < NE: "!=" > 
-| < SC_OR: "||" > 
-| < SC_AND: "&&" > 
-| < INCR: "++" > 
-| < DECR: "--" > 
-| < PLUS: "+" > 
-| < MINUS: "-" > 
-| < STAR: "*" > 
-| < SLASH: "/" > 
-| < BIT_AND: "&" > 
-| < BIT_OR: "|" > 
-| < HAT: "^" > 
-| < REM: "%" > 
-| < LEFT_SHIFT: "<<" > 
-| < PLUSASSIGN: "+=" > 
-| < MINUSASSIGN: "-=" > 
-| < STARASSIGN: "*=" > 
-| < SLASHASSIGN: "/=" > 
-| < ANDASSIGN: "&=" > 
-| < ORASSIGN: "|=" > 
-| < XORASSIGN: "^=" > 
-| < REMASSIGN: "%=" > 
-| < LEFT_SHIFT_ASSIGN: "<<=" > 
-| < RIGHT_SHIFT: ">>" > 
-| < UNSIGNED_RIGHT_SHIFT: ">>>" > 
-| < RIGHT_SHIFT_ASSIGN: ">>=" > 
-| < UNSIGNED_RIGHT_SHIFT_ASSIGN: ">>>=" > 
-| < ARROW : "=>"> 
-| < POINTER_ACCESS : "->"> 
-| < ASSIGN: "=" > 
-| < DOUBLE_COLON: "::" > 
-| < DOT: "." > 
-| < RANGE : ".." > 
-| < VAR_ARGS: "..." > 
-| < AT : "@"> 
+| < COLON: ":" >
+| < EQ: "==" >
+| < LE: "<=" >
+| < GE: ">=" >
+| < NE: "!=" >
+| < SC_OR: "||" >
+| < SC_AND: "&&" >
+| < INCR: "++" >
+| < DECR: "--" >
+| < PLUS: "+" >
+| < MINUS: "-" >
+| < STAR: "*" >
+| < SLASH: "/" >
+| < BIT_AND: "&" >
+| < BIT_OR: "|" >
+| < HAT: "^" >
+| < REM: "%" >
+| < LEFT_SHIFT: "<<" >
+| < PLUSASSIGN: "+=" >
+| < MINUSASSIGN: "-=" >
+| < STARASSIGN: "*=" >
+| < SLASHASSIGN: "/=" >
+| < ANDASSIGN: "&=" >
+| < ORASSIGN: "|=" >
+| < XORASSIGN: "^=" >
+| < REMASSIGN: "%=" >
+| < LEFT_SHIFT_ASSIGN: "<<=" >
+| < RIGHT_SHIFT: ">>" >
+| < UNSIGNED_RIGHT_SHIFT: ">>>" >
+| < RIGHT_SHIFT_ASSIGN: ">>=" >
+| < UNSIGNED_RIGHT_SHIFT_ASSIGN: ">>>=" >
+| < ARROW : "=>">
+| < POINTER_ACCESS : "->">
+| < ASSIGN: "=" >
+| < DOUBLE_COLON: "::" >
+| < DOT: "." >
+| < RANGE : ".." >
+| < VAR_ARGS: "..." >
+| < AT : "@">
 ;
 
 // C# Keywords
 
-TOKEN #KeyWord : 
-   <ABSTRACT : "abstract" > 
-   | < AS : "as" > 
-   | < BASE : "base" > 
+TOKEN #KeyWord :
+   <ABSTRACT : "abstract" >
+   | < AS : "as" >
+   | < BASE : "base" >
    | < BOOL : "bool" > #PrimitiveType
    | < BREAK : "break" >
    | < BYTE : "byte" > #PrimitiveType
-   |  <CASE : "case" > 
-   | < CATCH : "catch" > 
+   |  <CASE : "case" >
+   | < CATCH : "catch" >
    | < CHAR : "char" > #PrimitiveType
-   | < CHECKED : "checked" > 
-   | < CLASS : "class" > 
-   | < CONST : "const" > 
-   | < CONTINUE : "continue" > 
+   | < CHECKED : "checked" >
+   | < CLASS : "class" >
+   | < CONST : "const" >
+   | < CONTINUE : "continue" >
    | < DECIMAL : "decimal" > #PrimitiveType
-   | < DEFAULT : "default" > 
-   | < DELEGATE : "delegate" > 
-   | < DO : "do" > 
+   | < DEFAULT : "default" >
+   | < DELEGATE : "delegate" >
+   | < DO : "do" >
    | < DOUBLE : "double" > #PrimitiveType
-   | < ELSE : "else" > 
-   | < ENUM : "enum" > 
-   | < EVENT : "event" > 
-   | < EXPLICIT : "explicit" > 
-   | < EXTERN : "extern" > 
-   | < FINALLY : "finally" > 
-   | < FIXED : "fixed" > 
+   | < ELSE : "else" >
+   | < ENUM : "enum" >
+   | < EVENT : "event" >
+   | < EXPLICIT : "explicit" >
+   | < EXTERN : "extern" >
+   | < FINALLY : "finally" >
+   | < FIXED : "fixed" >
    | < FLOAT : "float" > #PrimitiveType
-   | < FOR : "for" > 
-   | < FOREACH : "foreach" > 
-   | < GOTO : "goto" > 
-   | < IF : "if" > 
-   | < IMPLICIT : "implicit" > 
-   | < IN : "in" > 
+   | < FOR : "for" >
+   | < FOREACH : "foreach" >
+   | < GOTO : "goto" >
+   | < IF : "if" >
+   | < IMPLICIT : "implicit" >
+   | < IN : "in" >
    | < INT : "int" > #PrimitiveType
-   | < INTERFACE : "interface" > 
-   | < INTERNAL : "internal" > 
+   | < INTERFACE : "interface" >
+   | < INTERNAL : "internal" >
    | < IS : "is">
    | < LOCK : "lock" >
    | < LONG : "long" > #PrimitiveType
@@ -158,23 +158,23 @@ TOKEN #KeyWord :
    | < OUT : "out" >
    | < OVERRIDE : "override" >
    | < PARAMS : "params">
-   | < PRIVATE : "private" > 
-   | < PROTECTED : "protected" > 
-   | < PUBLIC : "public" > 
-   | < READONLY : "readonly" > 
-   | < REF : "ref" > 
-   | < RETURN : "return" > 
+   | < PRIVATE : "private" >
+   | < PROTECTED : "protected" >
+   | < PUBLIC : "public" >
+   | < READONLY : "readonly" >
+   | < REF : "ref" >
+   | < RETURN : "return" >
    | < SBYTE : "sbyte" > #PrimitiveType
-   | < SEALED : "sealed" > 
+   | < SEALED : "sealed" >
    | < SHORT : "short" > #PrimitiveType
-   | < SIZEOF : "sizeof" > 
-   | < STACKALLOC : "stackalloc" > 
-   | < STATIC : "static" > 
+   | < SIZEOF : "sizeof" >
+   | < STACKALLOC : "stackalloc" >
+   | < STATIC : "static" >
    | < STRING : "string" > #PrimitiveType
-   | < STRUCT : "struct" > 
-   | < SWITCH : "switch" > 
-   | < THIS : "this" > 
-   | < THROW : "throw" > 
+   | < STRUCT : "struct" >
+   | < SWITCH : "switch" >
+   | < THIS : "this" >
+   | < THROW : "throw" >
    | < TRY : "try" >
    | < TYPEOF : "typeof" >
    | < UINT : "uint" > #PrimitiveType
@@ -182,11 +182,11 @@ TOKEN #KeyWord :
    | < UNCHECKED : "unchecked" >
    | < UNSAFE : "unsafe" >
    | < USHORT : "ushort" > #PrimitiveType
-   | < USING : ("global" <WHITESPACE>)? "using" > 
-   | < VIRTUAL : "virtual" > 
+   | < USING : ("global" <WHITESPACE>)? "using" >
+   | < VIRTUAL : "virtual" >
    | < VOID : "void" >
-   | < VOLATILE : "volatile" > 
-   | < WHILE : "while" > 
+   | < VOLATILE : "volatile" >
+   | < WHILE : "while" >
 // Now contextual Keywords
    | < ARGLIST : "__arglist">
    | < ADD : "add">
@@ -206,14 +206,14 @@ TOKEN #KeyWord :
    | < REQUIRED : "required">
    | < SCOPED : "scoped">
    | < SET : "set" >
-   | < VAR : "var" > 
+   | < VAR : "var" >
    | < WHEN : "when">
    | < YIELD : "yield" >
    | < AND : "and">
    | < OR  : "or" >
    | < NOT : "not">
    | < WITH : "with" >
-// Here are the soft keywords used in queries 
+// Here are the soft keywords used in queries
    | <ASCENDING : "ascending">
    | <BY : "by">
    | <DESCENDING : "descending">
@@ -226,15 +226,15 @@ TOKEN #KeyWord :
    | <ON : "on">
    | <ORDERBY : "orderby" >
    | <SELECT : "select">
-   | <WHERE : "where">  
+   | <WHERE : "where">
 ;
 
 INCLUDE "CSharpIdentifierDef.ccc"
 
 TOKEN :
   <IDENTIFIER : ("@")? (<CSHARP_IDENTIFIER_START>|<UNICODE_ESCAPE>) (<CSHARP_IDENTIFIER_PART>|<UNICODE_ESCAPE>)*> #Identifier
-  |   
-  <#UNICODE_ESCAPE : "\\" 
+  |
+  <#UNICODE_ESCAPE : "\\"
                     (
                       "u" (["0"-"9", "a"-"f", "A"-"F"]){4}
                       |
@@ -252,9 +252,9 @@ TOKEN #Literal :
                       "x" (["0"-"9", "a"-"f", "A"-"F"]){1,4}
                       |
                       "u" (["0"-"9", "a"-"f", "A"-"F"]){4}
-                    ) 
+                    )
   >
-  |                                                  
+  |
   < #ESCAPED_CHAR2 :  "\\"
                     (
                       (["0","a","b","f","n", "r","t","v","\\","'",'"'])
@@ -264,21 +264,21 @@ TOKEN #Literal :
                       "u" (["0"-"9", "a"-"f", "A"-"F"]){4}
                       |
                       "U" (["0"-"9", "a"-"f", "A"-"F"]){8}
-                    ) 
-  >                                                  
+                    )
+  >
   |
   < REGULAR_STRING_LITERAL : '"' ((~['"',"\\","\n","\r"]) | <ESCAPED_CHAR2>)* '"' ("u8")?> #StringLiteral
   |
   < VERBATIM_STRING_LITERAL : '@"' (~['"'] | '""')* '"' > #StringLiteral
-  | 
-  < REGULAR_INTERPOLATION_START : '$"' >  
   |
-  < MULTI_INTERPOLATION_START : '$@"' | '@$"' > 
-#if __java__  
+  < REGULAR_INTERPOLATION_START : '$"' >
   |
-  < INTERPOLATED_RAW_STRING_START : ("$")+ ('"'){3,}> 
-#endif  
-; 
+  < MULTI_INTERPOLATION_START : '$@"' | '@$"' >
+#if __java__
+  |
+  < INTERPOLATED_RAW_STRING_START : ("$")+ ('"'){3,}>
+#endif
+;
 
 <IN_REGULAR_INTERPOLATION>
 TOKEN :
@@ -292,20 +292,20 @@ TOKEN :
   < NON_INTERPOLATED_TEXT2 : ((~['"',"{","}"] | '""') | "{{" | "}}")+ >
 ;
 
-<CSHARP, IN_REGULAR_INTERPOLATION, IN_MULTI_INTERPOLATION > 
+<CSHARP, IN_REGULAR_INTERPOLATION, IN_MULTI_INTERPOLATION >
 TOKEN #Delimiter :
-   <LBRACE : "{" >  
+   <LBRACE : "{" >
 ;
 
 <IN_REGULAR_INTERPOLATION,IN_MULTI_INTERPOLATION >
 TOKEN :
-  < ENDING_QUOTE : '"' >  
-;  
+  < ENDING_QUOTE : '"' >
+;
 
 <IN_IGNORED_SECTION> UNPARSED :
-    <#HORIZONTAL_WHITESPACE : 
+    <#HORIZONTAL_WHITESPACE :
        [
-         " ", "\t",  
+         " ", "\t",
          "\u000b", "\u00a0", "\u1680",
          "\u2000"-"\u200a",
          "\u202f", "\u205f", "\u3000"
@@ -327,7 +327,7 @@ UNPARSED :
     <HASH : "#">
 ;
 
-MORE : 
+MORE :
    <RAW_STRING_START : ('"'){3,}> : IN_RAW_STRING
 ;
 
@@ -335,14 +335,14 @@ MORE :
 <IN_INTERPOLATED_RAW_STRING> TOKEN :
    <START_INTERPOLATION : ("{")+>
    |
-   <NON_INTERPOLATED_TEXT3 : (~['{', '}', '"'])+ | ('"' ('"')?) > 
-   | 
+   <NON_INTERPOLATED_TEXT3 : (~['{', '}', '"'])+ | ('"' ('"')?) >
+   |
    <END_RAW_INTERPOLATION : ("}")+>
    |
    <INTERPOLATED_RAW_STRING_END : ('"'){3,} >
-;   
+;
 
-<IN_RAW_STRING> MORE : 
+<IN_RAW_STRING> MORE :
    <ANY_CHAR : ~[]>
 ;
 
@@ -353,11 +353,13 @@ MORE :
 INJECT LEXER_CLASS :
 {
    private String pendingString = "";
+#if __java__
    private int startingQuotes, startingDollars;
+#endif
 
    private BASE_TOKEN_CLASS TOKEN_HOOK(BASE_TOKEN_CLASS tok) {
       TokenType type = tok.getType();
-#if __java__      
+#if __java__
       if (type == TokenType.INTERPOLATED_RAW_STRING_START) {
          String image = tok.toString();
          startingQuotes = startingDollars = 0;
@@ -371,7 +373,7 @@ INJECT LEXER_CLASS :
       else if (type == TokenType.INTERPOLATED_RAW_STRING_END) {
         if (tok.toString().length() < startingQuotes) {
             tok.setType(TokenType.NON_INTERPOLATED_TEXT3);
-        } 
+        }
         return tok;
       }
       else if (type == TokenType.NON_INTERPOLATED_TEXT3) {
@@ -407,7 +409,7 @@ INJECT LEXER_CLASS :
           return tok;
       }
       else
-#endif      
+#endif
       if (tok.getType() == TokenType.RAW_STRING_LITERAL) {
         String image = tok.toString();
         if (pendingString == "" && endsWithEnoughQuotes(image)) {
@@ -415,7 +417,7 @@ INJECT LEXER_CLASS :
           return tok;
         }
         // The PythonTranslator does not seem to handle the following line
-        //pendingString += tok.getImage();
+        //pendingString += tok.toString();
         pendingString = pendingString + tok.toString();
         if (endsWithEnoughQuotes(pendingString)) {
             tok.setBeginOffset(tok.getEndOffset()-pendingString.length());
@@ -436,14 +438,14 @@ INJECT LEXER_CLASS :
        }
 #if __java__
        if (img.endsWith("u8")) img = img.substring(0, img.length() -2);
-#endif        
+#endif
           for (int k = img.length() -1; k>=0; k--) {
              if (img.charAt(k) == '"') ++endingQuotes;
              else break;
           }
        return endingQuotes >=startingQuotes;
    }
-}   
+}
 
 INJECT LEXER_CLASS :
     import java.util.HashSet;
@@ -456,7 +458,7 @@ INJECT LEXER_CLASS :
 
    private BitSet parsingOnStack = new BitSet(1000), seenElseStack = new BitSet(1000), alreadyHandledStack = new BitSet(1000);
    private Set<String> ppSymbols = new HashSet<String>();
-   
+
    {
      // We start with parsing on, of course
      parsingOn = true;
@@ -475,7 +477,7 @@ INJECT LEXER_CLASS :
         assert ifNesting == 0 : "unclosed #if";
         return tok;
       }
-      String image = tok.getImage();
+      String image = tok.toString();
       if (image.length() == 0 || image.charAt(0) != '#')
       {
          return tok;
@@ -490,16 +492,16 @@ INJECT LEXER_CLASS :
       String line = getLine(tok);
       PPDirectiveLineParser.Info info = PPDirectiveLineParser.evaluate(line, ppSymbols);
       DirectiveType directiveType = info.directiveType;
-      
+
       setLineSkipped(tok);
 
       if (directiveType == DirectiveType.UNKNOWN) {
          tok.setType(TokenType.INVALID);
          return tok;
       }
-      if (ifNesting == 0 
-           && (directiveType == DirectiveType.ELIF 
-               || directiveType == DirectiveType.ELSE 
+      if (ifNesting == 0
+           && (directiveType == DirectiveType.ELIF
+               || directiveType == DirectiveType.ELSE
                || directiveType == DirectiveType.ENDIF)) {
           tok.setType(TokenType.INVALID);
           return tok;
@@ -540,7 +542,7 @@ INJECT LEXER_CLASS :
        if (turnedOn) {
          switchTo(LexicalState.CSHARP);
          int endRegion = getLineEndOffset(tok.getEndLine()) +1 ;
-         setRegionIgnore(turnedOffPoint, endRegion);
+         setIgnoredRange(turnedOffPoint, endRegion);
        }
        if (turnedOff) {
          turnedOffPoint = getLineStartOffset(tok.getBeginLine());

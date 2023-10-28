@@ -106,7 +106,7 @@ class ${settings.baseNodeClassName}:
         ts = self.token_source
         return "input" if not ts else ts.input_source
 
-    def add_child(self, node, index=-1):
+    def add(self, node, index=-1):
         if index < 0:
             self.children.append(node)
         else:
