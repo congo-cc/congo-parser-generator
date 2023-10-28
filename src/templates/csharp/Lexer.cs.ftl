@@ -1126,10 +1126,10 @@ ${globals.translateLexerInitializers()}
                 if (tokenTypeToLexicalStateMap.TryGetValue((TokenType) matchedType, out newState)) {
                     lexicalState = this._lexicalState = newState;
                 }
-                <#--  LexicalState newState = tokenTypeToLexicalStateMap[(TokenType) matchedType];
+                [#--  LexicalState newState = tokenTypeToLexicalStateMap[(TokenType) matchedType];
                 if (newState !=null) {
                     lexicalState = this._lexicalState = newState;
-                }  -->
+                }  --]
 [/#if]
                 if (matchedType == TokenType.INVALID) {
                     if (invalidChars == null) {
