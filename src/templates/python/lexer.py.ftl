@@ -74,7 +74,7 @@ def check_intervals(ranges, ch):
     #list lexicalState.allNfaStates as nfaState
         #if nfaState.moveRanges.size() >= NFA_RANGE_THRESHOLD
 [@GenerateMoveArray nfaState/]
-       /#if
+        /#if
     /#list
 
     #list lexicalState.canonicalSets as state
@@ -201,8 +201,8 @@ def ${nfaState.methodName}(ch, next_states, valid_types, already_matched_types):
         #var type = nfaState.type
         if ${TT}${type.label} in valid_types:
             type = ${TT}${type.label}
-     /#if
-   /#if
+      /#if
+  /#if
 /#macro
 
 [#--
@@ -273,7 +273,7 @@ ${is}self.${varName} = {
 ${is}    TokenType.${type}[#if type_has_next],[/#if]
    /#list
 ${is}}
-/#if
+    /#if
 /#macro
 
     #if multipleLexicalStates
