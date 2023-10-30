@@ -126,6 +126,7 @@ namespace ${csPackage} {
             return true;
         }
 
+
         bool ReplaceChild(Node current, Node replacement) {
             int i = IndexOf(current);
             if (i < 0) {
@@ -524,6 +525,11 @@ namespace ${csPackage} {
 
         public int GetEndOffset() {return this.EndOffset;} // Should not be necessary
 
+
+        public void Truncate(int amount) {
+            int newEndOffset = Math.Max(BeginOffset, EndOffset - amount);
+            EndOffset = newEndOffset;
+        }
 
         // TODO us default implementations in interface
         public int BeginLine {

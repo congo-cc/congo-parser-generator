@@ -164,6 +164,7 @@ private static HashSet<TokenType> ${varName} = Utils.GetOrMakeSet(
 [/#macro]
 
 [#--
+  REVISIT
   Generates the code for an NFA state transition
   within a composite state. This code is a bit tricky
   because it consolidates more than one condition in
@@ -855,7 +856,8 @@ ${globals.translateLexerImports()}
         // The functional interface that represents
         // the acceptance method of an NFA state
         private delegate TokenType? NfaFunction(int ch, BitSet bs, HashSet<TokenType> validTypes, HashSet<TokenType> AlreadyMatchedTypes);
-        private delegate MatchInfo? MatcherHook(LexicalState lexicalState, string source, int position, HashSet<TokenType> activeTokenTypes, NfaFunction[] nfaFunctions, BitSet currentStates, BitSet nextStates, MatchInfo matchInfo);
+        
+[#--        private delegate MatchInfo? MatcherHook(LexicalState lexicalState, string source, int position, HashSet<TokenType> activeTokenTypes, NfaFunction[] nfaFunctions, BitSet currentStates, BitSet nextStates, MatchInfo matchInfo); --]
 
 [#if multipleLexicalStates]
         // A lookup of the NFA function tables for the respective lexical states.
@@ -887,7 +889,7 @@ ${globals.translateLexerImports()}
             );
 [/#if]
 
-        private static MatcherHook MATCHER_HOOK;
+[#--        private static MatcherHook MATCHER_HOOK; --]
 
         // The following two BitSets are used to store
         // the current active NFA states in the core tokenization loop
@@ -1109,6 +1111,7 @@ ${globals.translateLexerInitializers()}
                 if (!inMore) {
                     tokenBeginOffset = position;
                 }
+[#--                
                 if (MATCHER_HOOK != null) {
                     matchInfo = MATCHER_HOOK((LexicalState) lexicalState, _content, position, activeTokenTypes, nfaFunctions, currentStates, nextStates, matchInfo);
                     if (matchInfo == null) {
@@ -1117,6 +1120,8 @@ ${globals.translateLexerInitializers()}
                 } else {
                     matchInfo = GetMatchInfo(this, position, activeTokenTypes, nfaFunctions, currentStates, nextStates, matchInfo);
                 }
+--]                
+                matchInfo = GetMatchInfo(this, position, activeTokenTypes, nfaFunctions, currentStates, nextStates, matchInfo);
                 matchedType = matchInfo.matchedType;
                 inMore = moreTokens.Contains((TokenType) matchedType);
                 position += matchInfo.matchLength;
@@ -1126,10 +1131,6 @@ ${globals.translateLexerInitializers()}
                 if (tokenTypeToLexicalStateMap.TryGetValue((TokenType) matchedType, out newState)) {
                     lexicalState = this._lexicalState = newState;
                 }
-                [#--  LexicalState newState = tokenTypeToLexicalStateMap[(TokenType) matchedType];
-                if (newState !=null) {
-                    lexicalState = this._lexicalState = newState;
-                }  --]
 [/#if]
                 if (matchedType == TokenType.INVALID) {
                     if (invalidChars == null) {

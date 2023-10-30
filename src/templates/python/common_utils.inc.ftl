@@ -33,9 +33,11 @@
     [@enumSet expansion.firstSetVarName expansion.firstSet.tokenNames /]
 [/#macro]
 
+[#--
 [#macro finalSetVar expansion]
     [@enumSet expansion.finalSetVarName expansion.finalSet.tokenNames /]
 [/#macro]
+--]
 
 [#macro followSetVar expansion]
     [@enumSet expansion.followSetVarName expansion.followSet.tokenNames /]
@@ -45,7 +47,7 @@
 [#var newVarIndex=0]
 [#-- Just to generate a new unique variable name
   All it does is tack an integer (that is incremented)
-  onto the type name, and optionally initializes it to some value--]
+  onto the type name, and optionally initializes it to some value
 [#macro newVar type init=null]
    [#set newVarIndex = newVarIndex+1]
    ${type} ${type?lower_case}${newVarIndex}
@@ -54,6 +56,7 @@
    [/#if]
    ;
 [/#macro]
+--]
 
 [#macro newVarName prefix]
 ${prefix}${newID()}[#rt]
@@ -64,7 +67,7 @@ ${prefix}${newID()}[#rt]
     [#return newVarIndex]
 [/#function]
 
-[#-- A macro to use at one's convenience to comment out a block of code --]
+[#-- A macro to use at one's convenience to comment out a block of code
 [#macro comment]
 [#var content, lines]
 [#set content][#nested/][/#set]
@@ -73,6 +76,7 @@ ${prefix}${newID()}[#rt]
 // ${line}
 [/#list]
 [/#macro]
+ --]
 
 [#function bool val]
 [#return val?string("True", "False")/]

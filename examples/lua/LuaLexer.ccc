@@ -12,8 +12,8 @@ INJECT LEXER_CLASS :
    // which are admittedly quite funky in Lua.
    private Token TOKEN_HOOK(Token tok) {
       TokenType type = tok.getType();
-      if (type == LONGSTRING || type == MULTILINE_COMMENT) {
-         boolean isComment = type == MULTILINE_COMMENT;
+      if (type == TokenType.LONGSTRING || type == TokenType.MULTILINE_COMMENT) {
+         boolean isComment = type == TokenType.MULTILINE_COMMENT;
          String image = tok.toString();
          if (!hasPendingMultiLine) {
             desiredEnd = getDesiredEnd(image);
@@ -27,7 +27,7 @@ INJECT LEXER_CLASS :
                 // we pick up a trailing ] character, if there is one.
                 // Tricky...
                 tok.truncate(1);
-                // We store the starting offset 
+                // We store the starting offset
                 // so that we can make the necessary
                 // adjustment on a later iteration.
                 // Also quite tricky!
@@ -40,7 +40,7 @@ INJECT LEXER_CLASS :
             // This seems to be unnecessary in this spot, but, in principle,
             // we should be unsetting any cached tokens after this one
             // at this spot, just in case.
-            reset(tok);            
+            reset(tok);
          }
          else {
              if (isComment) switchTo(LexicalState.IN_MULTI_LINE);
@@ -109,10 +109,10 @@ TOKEN #Operator :
  | <LSHIFT : "<<">
  | <RSHIFT  : ">>">
  | <HASH : "#">
- | <OR: "or"> 
+ | <OR: "or">
  | <AND: "and">
  | <NOT : "not">
-;  
+;
 
 TOKEN #Literal :
   <NORMALSTRING : '"' ( <ESCAPE_SEQUENCE> | (~['\\', '"']) )* '"'>
@@ -125,7 +125,7 @@ TOKEN #Literal :
   |
   <HEX : "0" ["x", "X"] (<HEX_DIGIT>)+ >
   |
-  <FLOAT : 
+  <FLOAT :
       (<INT> "." (<DIGIT>)* (<EXPONENT_PART>)?)
       |
       ("." <INT> (<EXPONENT_PART>)?)
@@ -136,7 +136,7 @@ TOKEN #Literal :
   <HEX_FLOAT :
       ("0" ["x", "X"] (<HEX_DIGIT>)+ "." (<HEX_DIGIT>)* (<HEX_EXPONENT_PART>)?)
       |
-      ( "0" ["x", "X"] "." (<HEX_DIGIT>)+ (<HEX_EXPONENT_PART>)?) 
+      ( "0" ["x", "X"] "." (<HEX_DIGIT>)+ (<HEX_EXPONENT_PART>)?)
       |
       ( "0" ["x", "X"] (<HEX_DIGIT>)+ <HEX_EXPONENT_PART>)
   >
@@ -145,7 +145,7 @@ TOKEN #Literal :
   |
   <#HEX_EXPONENT_PART : ["p", "P"] (["+","-"])? <INT> >
   |
-  <#ESCAPE_SEQUENCE : 
+  <#ESCAPE_SEQUENCE :
      ("\\" ["a","b","f","n","r","t","v","z","'", '"', "|", "$", "#", "\\"])
      |
      ("\\" (["\r"])? "\n")
@@ -157,7 +157,7 @@ TOKEN #Literal :
      <UTF_ESCAPE>
   >
   |
-  <#DECIMAL_ESCAPE : 
+  <#DECIMAL_ESCAPE :
      "\\"
      (
         (["0"-"2"] <DIGIT> <DIGIT>)
@@ -196,8 +196,8 @@ TOKEN #KeyWord :
  | <WHILE : "while" >
 ;
 
-TOKEN : 
-    <NAME : ["a"-"z","A"-"Z", "_"](["a"-"z","A"-"Z","0"-"9","_"])*> #Name 
+TOKEN :
+    <NAME : ["a"-"z","A"-"Z", "_"](["a"-"z","A"-"Z","0"-"9","_"])*> #Name
     |
     <SHEBANG : "#" (<SINGLE_LINE_INPUT_CHARACTER>)*>
     |
@@ -217,7 +217,7 @@ MORE :
  <LONGSTRING_START : "[" ("=")* "[" > : IN_LONGSTRING
 ;
 
-<IN_SINGLE_LINE_COMMENT> 
+<IN_SINGLE_LINE_COMMENT>
 UNPARSED :
   < LINE_COMMENT : "\n" | "\r" | "\r\n" > #SingleLineComment : LUA
 ;
