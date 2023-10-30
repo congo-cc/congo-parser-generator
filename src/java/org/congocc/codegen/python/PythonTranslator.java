@@ -122,7 +122,7 @@ public class PythonTranslator extends Translator {
         }
         else if (expr instanceof ASTBinaryExpression) {
             String op = ((ASTBinaryExpression) expr).getOp();
-            if (op.equals(".") || op.equals("=")) {
+            if (op.equals(".") || op.equals("=") || (op.endsWith("=") && ("+-*/|&".indexOf(op.charAt(0)) >= 0))) {
                 result = false;
             }
             // Operator precedence might be different, so generally prefer to parenthesize
