@@ -29,7 +29,7 @@ ${globals.translateLexerImports()}
 #var NFA_RANGE_THRESHOLD = 16,
      MAX_INT=2147483647,
      lexerData=grammar.lexerData,
-     multipleLexicalStates = lexerData.lexicalStates.size() > 1,
+     multipleLexicalStates = lexerData.lexicalStates?size > 1,
      TT = "TokenType."
 
 logger = logging.getLogger(__name__)
@@ -72,7 +72,7 @@ def check_intervals(ranges, ch):
 --]
 #macro GenerateStateCode lexicalState
     #list lexicalState.allNfaStates as nfaState
-        #if nfaState.moveRanges.size() >= NFA_RANGE_THRESHOLD
+        #if nfaState.moveRanges?size >= NFA_RANGE_THRESHOLD
 [@GenerateMoveArray nfaState/]
         /#if
     /#list
@@ -134,13 +134,13 @@ def ${nfaState.methodName}(ch, next_states, valid_types, already_matched_types):
     #list states as state
       #var isFirstOfGroup=true, isLastOfGroup=true
       #if state_index!=0
-         #set isFirstOfGroup = !states[state_index-1].moveRanges.equals(state.moveRanges)
+         #set isFirstOfGroup = !states[state_index-1].moveRanges::equals(state.moveRanges)
       /#if
       #if state_has_next
-         #set isLastOfGroup = !states[state_index+1].moveRanges.equals(state.moveRanges)
+         #set isLastOfGroup = !states[state_index+1].moveRanges::equals(state.moveRanges)
       /#if
       [@GenerateStateMove state isFirstOfGroup isLastOfGroup useElif /]
-      #if state_has_next && isLastOfGroup && !states[state_index+1].overlaps(states.subList(0, state_index+1))
+      #if state_has_next && isLastOfGroup && !states[state_index+1]::overlaps(states::subList(0, state_index+1))
         #set useElif = true
       #else
         #set useElif = false
@@ -167,13 +167,13 @@ def ${nfaState.methodName}(ch, next_states, valid_types, already_matched_types):
     #list states as state
       #var isFirstOfGroup=true, isLastOfGroup=true
       #if state_index!=0
-         #set isFirstOfGroup = !states[state_index-1].moveRanges.equals(state.moveRanges)
+         #set isFirstOfGroup = !states[state_index-1].moveRanges::equals(state.moveRanges)
       /#if
       #if state_has_next
-         #set isLastOfGroup = !states[state_index+1].moveRanges.equals(state.moveRanges)
+         #set isLastOfGroup = !states[state_index+1].moveRanges::equals(state.moveRanges)
       /#if
       [@GenerateStateMove state isFirstOfGroup isLastOfGroup useElif /]
-      #if state_has_next && isLastOfGroup && !states[state_index+1].overlaps(states.subList(0, state_index+1))
+      #if state_has_next && isLastOfGroup && !states[state_index+1]::overlaps(states::subList(0, state_index+1))
         #set useElif = true
       #else
         #set useElif = false
@@ -252,11 +252,11 @@ if NFA state's moveRanges array is smaller than NFA_RANGE_THRESHOLD
 # Compute the maximum size of state bitsets
 
     #if !multipleLexicalStates
-MAX_STATES = ${lexerData.lexicalStates.get(0).allNfaStates.size()}
+MAX_STATES = ${lexerData.lexicalStates[0].allNfaStates?size}
     #else
 MAX_STATES = max(
       #list lexerData.lexicalStates as state
-    ${state.allNfaStates.size()}[#if state_has_next],[/#if]
+    ${state.allNfaStates?size}[#if state_has_next],[/#if]
       /#list
 )
     /#if

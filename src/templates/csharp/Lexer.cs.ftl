@@ -4,7 +4,7 @@
 [#var NFA_RANGE_THRESHOLD = 16]
 [#var MAX_INT=2147483647]
 [#var lexerData=grammar.lexerData]
-[#var multipleLexicalStates = lexerData.lexicalStates.size() > 1]
+[#var multipleLexicalStates = lexerData.lexicalStates?size > 1]
 [#var TT = "TokenType."]
 [#var PRESERVE_LINE_ENDINGS=settings.preserveLineEndings?string("true", "false")
       JAVA_UNICODE_ESCAPE= settings.javaUnicodeEscape?string("true", "false")
@@ -44,7 +44,7 @@ private static HashSet<TokenType> ${varName} = Utils.GetOrMakeSet(
   [/#list]
 
   [#list lexicalState.allNfaStates as nfaState]
-    [#if nfaState.moveRanges.size() >= NFA_RANGE_THRESHOLD]
+    [#if nfaState.moveRanges?size >= NFA_RANGE_THRESHOLD]
       [@GenerateMoveArray nfaState /]
     [/#if]
   [/#list]
@@ -88,9 +88,9 @@ private static HashSet<TokenType> ${varName} = Utils.GetOrMakeSet(
             TokenType? type = null;
     [#var states = nfaState.orderedStates, lastBlockStartIndex=0, useIf=false]
     [#list states as state]
-      [#if state_index ==0 || !state.moveRanges.equals(states[state_index-1].moveRanges)]
+      [#if state_index ==0 || !state.moveRanges::equals(states[state_index-1].moveRanges)]
           [#-- In this case we need a new if or possibly else if --]
-         [#if state_index == 0 || state.overlaps(states.subList(lastBlockStartIndex, state_index))]
+         [#if state_index == 0 || state::overlaps(states::subList(lastBlockStartIndex, state_index))]
            [#-- If there is overlap between this state and any of the states
                  handled since the last lone if, we start a new if-else
                  If not, we continue in the same if-else block as before. --]
@@ -102,7 +102,7 @@ private static HashSet<TokenType> ${varName} = Utils.GetOrMakeSet(
       [#if state.nextStateIndex >= 0]
                 nextStates.Set(${state.nextStateIndex});
       [/#if]
-      [#if !state_has_next || !state.moveRanges.equals(states[state_index+1].moveRanges)]
+      [#if !state_has_next || !state.moveRanges::equals(states[state_index+1].moveRanges)]
         [#-- We've reached the end of the block. --]
           [#if state.nextState.final]
                 [#var type = state.type]
@@ -133,9 +133,9 @@ private static HashSet<TokenType> ${varName} = Utils.GetOrMakeSet(
             TokenType? type = null;
     [#var states = nfaState.orderedStates, lastBlockStartIndex=0, useIf=false]
     [#list states as state]
-      [#if state_index ==0 || !state.moveRanges.equals(states[state_index-1].moveRanges)]
+      [#if state_index ==0 || !state.moveRanges::equals(states[state_index-1].moveRanges)]
           [#-- In this case we need a new if or possibly else if --]
-         [#if state_index == 0 || state.overlaps(states.subList(lastBlockStartIndex, state_index))]
+         [#if state_index == 0 || state::overlaps(states::subList(lastBlockStartIndex, state_index))]
            [#-- If there is overlap between this state and any of the states
                  handled since the last lone if, we start a new if-else
                  If not, we continue in the same if-else block as before. --]
@@ -147,7 +147,7 @@ private static HashSet<TokenType> ${varName} = Utils.GetOrMakeSet(
       [#if state.nextStateIndex >= 0]
                 nextStates.Set(${state.nextStateIndex});
       [/#if]
-      [#if !state_has_next || !state.moveRanges.equals(states[state_index+1].moveRanges)]
+      [#if !state_has_next || !state.moveRanges::equals(states[state_index+1].moveRanges)]
         [#-- We've reached the end of the block. --]
           [#if state.nextState.final]
                 [#var type = state.type]
@@ -878,11 +878,11 @@ ${globals.translateLexerImports()}
 
         [#-- Compute the maximum size of state bitsets --]
 [#if !multipleLexicalStates]
-            private const int MaxStates = ${lexerData.lexicalStates.get(0).allNfaStates.size()};
+            private const int MaxStates = ${lexerData.lexicalStates.get(0).allNfaStates?size};
 [#else]
             private static int MaxStates = Utils.MaxOf(
 [#list lexerData.lexicalStates as state]
-                ${state.allNfaStates.size()}[#if state_has_next],[/#if]
+                ${state.allNfaStates?size}[#if state_has_next],[/#if]
 [/#list]
             );
 [/#if]

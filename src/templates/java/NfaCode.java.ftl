@@ -16,7 +16,7 @@
   [/#list]
 
   [#list lexicalState.allNfaStates as state]
-    [#if state.moveRanges.size() >= NFA_RANGE_THRESHOLD]
+    [#if state.moveRanges?size >= NFA_RANGE_THRESHOLD]
       [@GenerateMoveArray state/]
     [/#if]
   [/#list]
@@ -66,9 +66,9 @@
       TokenType type = null;
     [#var states = nfaState.orderedStates, lastBlockStartIndex=0]
     [#list states as state]
-      [#if state_index ==0 || !state.moveRanges.equals(states[state_index-1].moveRanges)]
+      [#if state_index ==0 || !state.moveRanges::equals(states[state_index-1].moveRanges)]
           [#-- In this case we need a new if or possibly else if --]
-         [#if state_index == 0 || state.overlaps(states.subList(lastBlockStartIndex, state_index))]
+         [#if state_index == 0 || state::overlaps(states::subList(lastBlockStartIndex, state_index))]
            [#-- If there is overlap between this state and any of the states
                  handled since the last lone if, we start a new if-else 
                  If not, we continue in the same if-else block as before. --]
@@ -83,7 +83,7 @@
       [#if state.nextStateIndex >= 0]
          nextStates.set(${state.nextStateIndex});
       [/#if]
-      [#if !state_has_next || !state.moveRanges.equals(states[state_index+1].moveRanges)]
+      [#if !state_has_next || !state.moveRanges::equals(states[state_index+1].moveRanges)]
         [#-- We've reached the end of the block. --]
           [#if state.nextState.final]
             [#--if (validTypes == null || validTypes.contains(${state.type.label}))--]
@@ -111,9 +111,9 @@
     [/#if]
     [#var states = nfaState.orderedStates, lastBlockStartIndex=0]
     [#list states as state]
-      [#if state_index ==0 || !state.moveRanges.equals(states[state_index-1].moveRanges)]
+      [#if state_index ==0 || !state.moveRanges::equals(states[state_index-1].moveRanges)]
           [#-- In this case we need a new if or possibly else if --]
-         [#if state_index == 0 || state.overlaps(states.subList(lastBlockStartIndex, state_index))]
+         [#if state_index == 0 || state::overlaps(states::subList(lastBlockStartIndex, state_index))]
            [#-- If there is overlap between this state and any of the states
                  handled since the last lone if, we start a new if-else 
                  If not, we continue in the same if-else block as before. --]
@@ -127,7 +127,7 @@
       [#if state.nextStateIndex >= 0]
          nextStates.set(${state.nextStateIndex});
       [/#if]
-      [#if !state_has_next || !state.moveRanges.equals(states[state_index+1].moveRanges)]
+      [#if !state_has_next || !state.moveRanges::equals(states[state_index+1].moveRanges)]
         [#-- We've reached the end of the block. --]
           [#if state.nextState.final]
               type = ${state.type.label};

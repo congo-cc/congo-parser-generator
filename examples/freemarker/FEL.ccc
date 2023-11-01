@@ -113,6 +113,8 @@ TOKEN :
     |
     <COLON : ":">
     |
+    <DOUBLE_COLON : "::">
+    |
     <SEMICOLON : ";">
     |
     <EXCLAM : "!">
@@ -283,6 +285,8 @@ PrimaryExpression :
   (
       DotKey
       |
+      MethodReference
+      |
       DynamicKey
       |
       MethodInvoke
@@ -317,6 +321,11 @@ BaseExpression :
 DotKey #void :
     <DOT>
     (<IDENTIFIER>|<TIMES>)
+;
+
+MethodReference#void :
+    <DOUBLE_COLON>
+    <IDENTIFIER>
 ;
 
 DynamicKey #void :

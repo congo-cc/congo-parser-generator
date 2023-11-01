@@ -560,7 +560,7 @@
    [/#if]
    [#if (injectedFields[field])?is_null]
       [#set injectedFields = injectedFields + {field : type}]
-      ${grammar.addFieldInjection(currentProduction.nodeName, modifier, type, field)}
+      ${grammar.addFieldInjection(currentProduction.nodeName, modifier, type, field)!}
    [/#if]
    [#return "" /]
 [/#function]
