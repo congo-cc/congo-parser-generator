@@ -878,7 +878,7 @@ ${globals.translateLexerImports()}
 
         [#-- Compute the maximum size of state bitsets --]
 [#if !multipleLexicalStates]
-            private const int MaxStates = ${lexerData.lexicalStates.get(0).allNfaStates?size};
+            private const int MaxStates = ${lexerData.lexicalStates[0].allNfaStates?size};
 [#else]
             private static int MaxStates = Utils.MaxOf(
 [#list lexerData.lexicalStates as state]
