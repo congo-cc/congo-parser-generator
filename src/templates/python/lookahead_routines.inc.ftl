@@ -25,6 +25,7 @@
     [/#list]
 [/#macro]
 
+[#--
 [#macro finalSetVars]
     # ==================================================================
     # EnumSets that represent the various expansions' final set (i.e. the set of tokens with which the expansion can end)
@@ -33,7 +34,7 @@
           [@finalSetVar expansion/]
     [/#list]
 [/#macro]
-
+--]
 
 [#macro followSetVars]
     # ==================================================================
@@ -316,8 +317,6 @@ ${is}# at: ${expansion.location}
 ${ScanSingleToken(expansion, indent)}
    [#elseif classname = "Assertion"]
 ${ScanCodeAssertion(expansion, indent)}
-   [#elseif classname = "LexicalStateSwitch"]
-       ${ScanCodeLexicalStateSwitch(expansion)}
    [#elseif classname = "Failure"]
 ${ScanCodeError(expansion, indent)}
    [#elseif classname = "UncacheTokens"]

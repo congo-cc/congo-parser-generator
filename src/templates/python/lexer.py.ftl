@@ -49,6 +49,8 @@ globals().update(TokenType.__members__)
 function_table_map = {}
 /#if
 
+# The nitty-gritty of the NFA code follows
+
 #list lexerData.lexicalStates as lexicalState
 [@GenerateStateCode lexicalState/]
 /#list
@@ -71,19 +73,21 @@ def check_intervals(ranges, ch):
   for the given lexical state
 --]
 #macro GenerateStateCode lexicalState
-    #list lexicalState.allNfaStates as nfaState
-        #if nfaState.moveRanges?size >= NFA_RANGE_THRESHOLD
-[@GenerateMoveArray nfaState/]
-        /#if
-    /#list
+#list lexicalState.canonicalSets as state
+  #if state_index = 0
+[@GenerateInitialComposite state/]
+  #elseif state.numStates = 1
+[@SimpleNfaMethod state.singleState /]
+  #else
+[@CompositeNfaMethod state /]
+  /#if
+/#list
 
-    #list lexicalState.canonicalSets as state
-        #if state_index == 0
-[@GenerateInitialStateMethod state/]
-        #else
-[@GenerateNfaStateMethod state /]
-        /#if
-    /#list
+#list lexicalState.allNfaStates as nfaState
+  #if nfaState.moveRanges?size >= NFA_RANGE_THRESHOLD
+[@GenerateMoveArray nfaState/]
+  /#if
+/#list
 
 def NFA_FUNCTIONS_${lexicalState.name}_init():
     functions = [
@@ -121,88 +125,100 @@ ${arrayName} = [
 ]
 /#macro
 
-[#--
-   Generate the method that represents the transitions
-   that correspond to an instanceof org.congocc.core.CompositeStateSet
---]
-#macro GenerateInitialStateMethod nfaState
+#macro GenerateInitialComposite nfaState
 def ${nfaState.methodName}(ch, next_states, valid_types, already_matched_types):
-    #var states = nfaState.orderedStates
-    [#-- sometimes set in the code below --]
     type = None
-    #var useElif = false
-    #list states as state
-      #var isFirstOfGroup=true, isLastOfGroup=true
-      #if state_index!=0
-         #set isFirstOfGroup = !states[state_index-1].moveRanges::equals(state.moveRanges)
-      /#if
-      #if state_has_next
-         #set isLastOfGroup = !states[state_index+1].moveRanges::equals(state.moveRanges)
-      /#if
-      [@GenerateStateMove state isFirstOfGroup isLastOfGroup useElif /]
-      #if state_has_next && isLastOfGroup && !states[state_index+1]::overlaps(states::subList(0, state_index+1))
-        #set useElif = true
-      #else
-        #set useElif = false
-      /#if
-    /#list
+    [#var states = nfaState.orderedStates, lastBlockStartIndex=0]
+    [#list states as state]
+      [#if state_index ==0 || !state.moveRanges::equals(states[state_index-1].moveRanges)]
+          [#-- In this case we need a new if or possibly else if --]
+         [#var useElif = true]
+         [#if state_index == 0 || state::overlaps(states::subList(lastBlockStartIndex, state_index))]
+           [#-- If there is overlap between this state and any of the states
+                 handled since the last lone if, we start a new if-else 
+                 If not, we continue in the same if-else block as before. --]
+           [#set lastBlockStartIndex = state_index, useElif=false]
+         [/#if]    
+    [#if useElif]elif[#else]if[/#if] [@NfaStateCondition state /]:
+      [/#if]
+        if valid_types is None or ${state.type.label} in valid_types:
+      [#if state.nextStateIndex >= 0]
+            next_states.set(${state.nextStateIndex})
+      [/#if]
+      [#if !state_has_next || !state.moveRanges::equals(states[state_index+1].moveRanges)]
+        [#-- We've reached the end of the block. --]
+          [#if state.nextState.final]
+            [#--if (validTypes == null || validTypes.contains(${state.type.label}))--]
+            type = ${state.type.label}
+          [/#if]
+      [/#if]
+    [/#list]
     return type
+
 /#macro
 
-
 [#--
    Generate the method that represents the transitions
    that correspond to an instanceof org.congocc.core.CompositeStateSet
 --]
-#macro GenerateNfaStateMethod nfaState
+#macro CompositeNfaMethod nfaState
 def ${nfaState.methodName}(ch, next_states, valid_types, already_matched_types):
 #if lexerData.isLazy(nfaState.type)
-    if ${TT}${nfaState.type.label} in already_matched_types : 
+    if ${nfaState.type.label} in already_matched_types:
         return None
 /#if
-    #var states = nfaState.orderedStates
-    [#-- sometimes set in the code below --]
+#if nfaState.hasFinalState
     type = None
-    #var useElif = false
-    #list states as state
-      #var isFirstOfGroup=true, isLastOfGroup=true
-      #if state_index!=0
-         #set isFirstOfGroup = !states[state_index-1].moveRanges::equals(state.moveRanges)
-      /#if
-      #if state_has_next
-         #set isLastOfGroup = !states[state_index+1].moveRanges::equals(state.moveRanges)
-      /#if
-      [@GenerateStateMove state isFirstOfGroup isLastOfGroup useElif /]
-      #if state_has_next && isLastOfGroup && !states[state_index+1]::overlaps(states::subList(0, state_index+1))
-        #set useElif = true
-      #else
-        #set useElif = false
-      /#if
-    /#list
+/#if
+#var states = nfaState.orderedStates, lastBlockStartIndex = 0
+#list states as state
+  [#if state_index ==0 || !state.moveRanges::equals(states[state_index-1].moveRanges)]
+        [#-- In this case we need a new if or possibly else if --]
+        #var useElif = true
+         [#if state_index == 0 || state::overlaps(states::subList(lastBlockStartIndex, state_index))]
+        [#-- If there is overlap between this state and any of the states
+                handled since the last lone if, we start a new if-else 
+                If not, we continue in the same if-else block as before. --]
+          #set lastBlockStartIndex = state_index, useElif = false
+        /#if
+    [#if useElif]elif[#else]if[/#if] [@NfaStateCondition state /]:
+  /#if
+  #if state.nextStateIndex >= 0
+        next_states.set(${state.nextStateIndex})
+  /#if
+  #if !state_has_next || !state.moveRanges::equals(states[state_index+1].moveRanges)
+    [#-- We've reached the end of the block. --]
+    #if state.nextState.final
+        type = ${state.type.label}
+    /#if
+  /#if
+/#list
+#if nfaState.hasFinalState
     return type
+#else
+    # return None
+/#if
+
 /#macro
 
-[#--
-  Generates the code for an NFA state transition
-  within a composite state. This code is a bit tricky
-  because it consolidates more than one condition in
-  a single conditional block.
+[#-- 
+   Generate a method for a single, i.e. non-composite NFA state 
 --]
-#macro GenerateStateMove nfaState isFirstOfGroup isLastOfGroup useElif=false
-  #var nextState = nfaState.nextState.composite
-  #if isFirstOfGroup
-    [#if useElif]elif[#else]if[/#if] [@NfaStateCondition nfaState /]:
-  /#if
-  #if nextState.index >= 0
-        next_states.set(${nextState.index})
-  /#if
-  #if isLastOfGroup
-      #if nfaState.nextState.final
-        #var type = nfaState.type
-        if ${TT}${type.label} in valid_types:
-            type = ${TT}${type.label}
-      /#if
-  /#if
+#macro SimpleNfaMethod state
+def ${state.getMethodName()}(ch, next_states, valid_yypes, already_matched_types):
+#if lexerData.isLazy(state.type)
+    if ${state.type.label} in already_matched_types:
+        return None
+/#if
+    if [@NfaStateCondition state /]:
+#if state.nextStateIndex >= 0
+        next_states.set(${state.nextStateIndex})
+/#if
+#if state.nextState.final
+        return ${state.type.label}
+/#if
+    # return None
+
 /#macro
 
 [#--
@@ -603,7 +619,6 @@ class TokenSource:
             if sr >= 0:
                 result = sr
             else:
-                # import pdb; pdb.set_trace()
                 result = sr + 1
         return self.starting_line + result
 
@@ -635,7 +650,6 @@ class TokenSource:
             return 1
         if pos == 0:
             return self.starting_column
-        # import pdb; pdb.set_trace()
         line = self.get_line_from_offset(pos) - self.starting_line
         line_start = self._line_offsets[line]
         start_col_adjustment = 1 if line > 0 else self.starting_column
@@ -716,6 +730,7 @@ def _get_match_info(source, pos, active_token_types, nfa_functions,
         next_active = current_states.next_set_bit(0)
         while next_active != -1:
             returned_type = nfa_functions[next_active](cur_char, next_states, active_token_types, already_matched_types)
+            # logger.debug('%5d %s %s %s %s', pos, cur_char, returned_type, current_states, next_states)
             if returned_type and (((pos - start) > match_length) or returned_type.value < matched_type.value):
                 matched_type = returned_type
                 match_length = pos - start
@@ -742,7 +757,7 @@ class ${lexerClassName}(TokenSource):
         'skipped_tokens',
         'more_tokens',
         'lexical_state',
-        '_matcher_hook',
+[#--        '_matcher_hook', --]
 #var injectedFields = globals.injectedLexerFieldNames()
 #if injectedFields?size > 0
         # injected fields
@@ -761,7 +776,7 @@ ${globals.translateLexerInjections(true)}
 #if settings.lexerUsesParser
         self.parser = None
 /#if
-        self._matcher_hook = None
+[#--        self._matcher_hook = None --]
         # The following two BitSets are used to store the current active
         # NFA states in the core tokenization loop
         self.next_states = BitSet(MAX_STATES)
@@ -800,7 +815,7 @@ ${globals.translateLexerInjections(true)}
         if lex_state is not None:
             self.switch_to(lex_state)
 #if settings.cppContinuationLine
-        self.handle_c_continuation_lines();
+        self.handle_c_continuation_lines()
 /#if
 
     #
@@ -846,6 +861,8 @@ ${globals.translateLexerInjections(true)}
             # Get the NFA function table current lexical state.
             # If we are in a MORE, there is some possibility that there 
             # was a lexical state change since the last iteration of this loop!
+            # if there aren't multiple lexical states, there should be a
+            # module-level nfa_functions list.
             nfa_functions = get_function_table_map(lex_state)
 /#if
 #if settings.usesPreprocessor
@@ -853,12 +870,15 @@ ${globals.translateLexerInjections(true)}
 /#if
             if not in_more:
                 token_begin_offset = pos
+[#--                
             if self._matcher_hook:
                 match_info = self._matcher_hook(self, pos, active_token_types, nfa_functions, current_states, next_states, match_info)
                 if match_info is None:
                     match_info = _get_match_info(self, pos, active_token_types, nfa_functions, current_states, next_states, match_info)
             else:
                 match_info = _get_match_info(self, pos, active_token_types, nfa_functions, current_states, next_states, match_info)
+--]
+            match_info = _get_match_info(self, pos, active_token_types, nfa_functions, current_states, next_states, match_info)
             matched_type = match_info[0]
             in_more = matched_type in self.more_tokens
             pos += match_info[1]

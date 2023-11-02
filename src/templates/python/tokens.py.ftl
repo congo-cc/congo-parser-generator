@@ -113,9 +113,13 @@ class ${settings.baseNodeClassName}:
             self.children.insert(index, node)
         node.parent = self
 
-    def remove_child(self, index):
+    def remove(self, index):
         assert index >= 0
         self.children.pop(index)
+
+    def truncate(self, amount):
+        new_end_offset = max(self.begin_offset, self.end_offset - amount)
+        self.end_offset = new_end_offset
 
 [#if include_unwanted!false]
     def set_child(self, node, index):

@@ -1368,7 +1368,7 @@ public class Translator {
             else if (child instanceof AssignmentExpression) {
                 ASTBinaryExpression resultNode = new ASTBinaryExpression();
                 result = resultNode;
-                resultNode.op = "=";
+                resultNode.op = child.get(1).toString();
                 resultNode.setLhs((ASTExpression) transformTree(child.getFirstChild()));
                 resultNode.setRhs((ASTExpression) transformTree(child.getLastChild()));
             }
