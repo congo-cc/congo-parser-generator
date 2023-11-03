@@ -37,9 +37,10 @@ public class CSharpFormatter extends Node.Visitor {
 
     {this.visitUnparsedTokens = true;}
 
-    private StringBuilder buffer = new StringBuilder();
-    private int currentIndentation, indentAmount = 4;
-    private String eol = "\n";
+    private final StringBuilder buffer = new StringBuilder();
+    private int currentIndentation;
+    private final int indentAmount = 4;
+    private final String eol = "\n";
 
     public String getText() {
         if (buffer.charAt(buffer.length()-1) != '\n') buffer.append('\n');
@@ -124,7 +125,7 @@ public class CSharpFormatter extends Node.Visitor {
             }
         }
         else {
-            buffer.append(delimiter.toString());
+            buffer.append(delimiter);
         }
     }
 
@@ -146,14 +147,14 @@ public class CSharpFormatter extends Node.Visitor {
         }
         else if ((type == LT || type == GT) && (op.getParent() instanceof TypeParameterList || op.getParent() instanceof TypeArgumentList)) {
             trimTrailingWhitespace();
-            buffer.append(op.toString());
+            buffer.append(op);
         }
         else if (op.getParent() instanceof UnaryExpression) {
-            buffer.append(op.toString());
+            buffer.append(op);
         }
         else {
             addSpaceIfNecessary();
-            buffer.append(op.toString());
+            buffer.append(op);
             buffer.append(' ');
         }
     }

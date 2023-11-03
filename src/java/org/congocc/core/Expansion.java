@@ -199,7 +199,7 @@ abstract public class Expansion extends BaseNode {
     // be okay.
     private boolean hasGlobalSemanticActions() {
         assert this.getMaximumSize() <= 1;
-        return descendants(CodeBlock.class).stream().anyMatch(cb->cb.isAppliesInLookahead())
+        return descendants(CodeBlock.class).stream().anyMatch(CodeBlock::isAppliesInLookahead)
             || descendants(NonTerminal.class).stream().anyMatch(nt->nt.getNestedExpansion().hasGlobalSemanticActions());
     }
 

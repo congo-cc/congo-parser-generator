@@ -13,7 +13,7 @@ public class NfaState {
     final LexicalStateData lexicalState;
     private RegularExpression type;
     private NfaState nextState;
-    private Set<NfaState> epsilonMoves = new HashSet<>();
+    private final Set<NfaState> epsilonMoves = new HashSet<>();
     private String movesArrayName;
     private boolean isFinal;
 
@@ -22,7 +22,7 @@ public class NfaState {
     // range in which the left side is the same as the right side.
     // Thus, for example, the (ASCII) characters that can start an identifier would be:
     // '$','$','A','Z','_','_',a','z'
-    private List<Integer> moveRanges = new ArrayList<>();
+    private final List<Integer> moveRanges = new ArrayList<>();
 
     NfaState(LexicalStateData lexicalState, RegularExpression type) {
         this.lexicalState = lexicalState;
@@ -155,7 +155,7 @@ public class NfaState {
     }
 
     public boolean overlaps(Collection<NfaState> states) {
-        return states.stream().anyMatch(state->overlaps(state));
+        return states.stream().anyMatch(this::overlaps);
     }
 
     private boolean overlaps(NfaState other) {

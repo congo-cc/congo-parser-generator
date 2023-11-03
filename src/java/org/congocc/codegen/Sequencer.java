@@ -8,11 +8,11 @@ import java.util.Map;
 import java.util.Set;
 
 public class Sequencer {
-    private Set<String> nodes = new HashSet<>();
-    private Map<String, Set<String>> preds = new HashMap<>();
-    private Map<String, Set<String>> succs = new HashMap<>();
+    private final Set<String> nodes = new HashSet<>();
+    private final Map<String, Set<String>> preds = new HashMap<>();
+    private final Map<String, Set<String>> succs = new HashMap<>();
 
-    private static Set<String> EMPTY_SET = new HashSet<>();
+    private static final Set<String> EMPTY_SET = new HashSet<>();
 
     public void addNode(String node) {
         nodes.add(node);

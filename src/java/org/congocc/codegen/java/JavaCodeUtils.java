@@ -29,8 +29,7 @@ public class JavaCodeUtils {
     }
 
     static private List<Annotation> getAnnotations(Node node) {
-        List<Annotation> result = new ArrayList<>();
-        result.addAll(node.childrenOfType(Annotation.class));
+        List<Annotation> result = new ArrayList<>(node.childrenOfType(Annotation.class));
         Modifiers mods = node.firstChildOfType(Modifiers.class);
         if (mods != null) {
             result.addAll(mods.childrenOfType(Annotation.class));
@@ -82,7 +81,7 @@ public class JavaCodeUtils {
         String setter = "//Inserted setter for " + fieldName 
                         + "\npublic void " + setterMethodName 
                         + "(" + fieldType + " " +  fieldName + ") {this." + fieldName + " = " + fieldName + ";}";
-        MethodDeclaration getterMethod = null, setterMethod=null;
+        MethodDeclaration getterMethod, setterMethod;
         getterMethod = new CongoCCParser(getter).MethodDeclaration();
         setterMethod = new CongoCCParser(setter).MethodDeclaration();
         context.add(index +1, setterMethod);
@@ -95,9 +94,9 @@ public class JavaCodeUtils {
         for (Annotation annotation : annotations) {
             boolean specifiesMax = annotation.getName().toLowerCase().startsWith("max");
             String intPart = annotation.getName().substring(6);
-            int specifiedVersion = target;
+            int specifiedVersion;
             try {
-                specifiedVersion = Integer.valueOf(intPart);
+                specifiedVersion = Integer.parseInt(intPart);
             }
             catch (NumberFormatException nfe) {
                 //okay, do nothing here. Just leave the annotation there and let the 
@@ -125,7 +124,7 @@ public class JavaCodeUtils {
         new Reaper(jcu).stripUnused();
     }
 
-    static private final String capitalizeFirstLetter(String s) {
+    static private String capitalizeFirstLetter(String s) {
         return s.substring(0, 1).toUpperCase() + s.substring(1);
     }
 }

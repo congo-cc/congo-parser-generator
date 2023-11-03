@@ -12,7 +12,7 @@ import org.congocc.core.RegularExpression;
  * XXXNfaData::NfaFunction functional interface. 
  */
 public class CompositeStateSet {
-    private Set<NfaState> states;
+    private final Set<NfaState> states;
     final LexicalStateData lexicalState;
     private int index=-1; 
 
@@ -78,7 +78,7 @@ public class CompositeStateSet {
      */
     public List<NfaState> getOrderedStates() {
         List<NfaState> result = new ArrayList<>(states);
-        Collections.sort(result, this::nfaComparator);
+        result.sort(this::nfaComparator);
         return result;    
     }
 

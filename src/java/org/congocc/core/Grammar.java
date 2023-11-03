@@ -1,9 +1,9 @@
 package org.congocc.core;
 
+import java.nio.charset.StandardCharsets;
 import java.util.*;
 import java.io.FileNotFoundException;
 import java.io.IOException;
-import java.nio.charset.Charset;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
@@ -24,31 +24,31 @@ import org.congocc.parser.tree.*;
 //@freemarker.annotations.Pojo
 public class Grammar extends BaseNode {
     private String defaultLexicalState;
-    private LexerData lexerData = new LexerData(this);
+    private final LexerData lexerData = new LexerData(this);
     private int includeNesting;
 
     private Map<String, BNFProduction> productionTable;
-    private Set<String> lexicalStates = new LinkedHashSet<>();
+    private final Set<String> lexicalStates = new LinkedHashSet<>();
     private Map<String, String> preprocessorSymbols = new HashMap<>();
-    private Set<String> nodeNames = new LinkedHashSet<>();
-    private Map<String,String> nodeClassNames = new HashMap<>();
+    private final Set<String> nodeNames = new LinkedHashSet<>();
+    private final Map<String,String> nodeClassNames = new HashMap<>();
     // TODO use these later for Nodes that correspond to abstract
     // classes or interfaces
-    private Set<String> abstractNodeNames = new HashSet<>();
-    private Set<String> interfaceNodeNames = new HashSet<>();
-    private Map<String, String> nodePackageNames = new HashMap<>();
-    private List<Node> codeInjections = new ArrayList<>();
-    private List<String> lexerTokenHooks = new ArrayList<>(),
-                         parserTokenHooks = new ArrayList<>(),
-                         openNodeScopeHooks = new ArrayList<>(),
-                         closeNodeScopeHooks = new ArrayList<>(),
-                         resetTokenHooks = new ArrayList<>();
-    private Map<String, List<String>> closeNodeHooksByClass = new HashMap<>();
+    private final Set<String> abstractNodeNames = new HashSet<>();
+    private final Set<String> interfaceNodeNames = new HashSet<>();
+    private final Map<String, String> nodePackageNames = new HashMap<>();
+    private final List<Node> codeInjections = new ArrayList<>();
+    private final List<String> lexerTokenHooks = new ArrayList<>();
+    private final List<String> parserTokenHooks = new ArrayList<>();
+    private final List<String> openNodeScopeHooks = new ArrayList<>();
+    private final List<String> closeNodeScopeHooks = new ArrayList<>();
+    private final List<String> resetTokenHooks = new ArrayList<>();
+    private final Map<String, List<String>> closeNodeHooksByClass = new HashMap<>();
 
-    private Set<Path> alreadyIncluded = new HashSet<>();
+    private final Set<Path> alreadyIncluded = new HashSet<>();
 
     private TemplateGlobals templateGlobals;
-    private AppSettings appSettings;
+    private final AppSettings appSettings;
     private Errors errors;
 
     public Grammar(Path outputDir, String codeLang, int jdkTarget, boolean quiet, Map<String, String> preprocessorSymbols) {
@@ -120,7 +120,7 @@ public class Grammar extends BaseNode {
         String location = path.toString();
         if (location.toLowerCase().endsWith(".java") || location.toLowerCase().endsWith(".jav")) {
             Path includeFile = Paths.get(location);
-            String content = new String(Files.readAllBytes(path),Charset.forName("UTF-8"));
+            String content = new String(Files.readAllBytes(path), StandardCharsets.UTF_8);
             CompilationUnit cu = CongoCCParser.parseJavaFile(includeFile.normalize().toString(), content);
             codeInjections.add(cu);
             return cu;
@@ -240,12 +240,7 @@ public class Grammar extends BaseNode {
     }
 
     private List<String> getCloseNodeScopeHooks(String className) {
-        List<String> result = closeNodeHooksByClass.get(className);
-        if (result == null) {
-            result = new ArrayList<>();
-            closeNodeHooksByClass.put(className, result);
-        }
-        return result;
+        return closeNodeHooksByClass.computeIfAbsent(className, k -> new ArrayList<>());
     }
 
 
@@ -382,13 +377,13 @@ public class Grammar extends BaseNode {
             TypeDeclaration typeDecl = (TypeDeclaration) node;
             String typeName = typeDecl.getName();
             if (typeName.equals(appSettings.getLexerClassName()) || typeName.endsWith("." + appSettings.getLexerClassName())) {
-                for (Iterator<Node> it = typeDecl.iterator(); it.hasNext();) {
-                    checkForHooks(it.next(), appSettings.getLexerClassName());
+                for (Node value : typeDecl) {
+                    checkForHooks(value, appSettings.getLexerClassName());
                 }
             }
             else if (typeName.equals(appSettings.getParserClassName()) || typeName.endsWith("." + appSettings.getParserClassName())) {
-                for (Iterator<Node> it = typeDecl.iterator(); it.hasNext();) {
-                    checkForHooks(it.next(), appSettings.getParserClassName());
+                for (Node value : typeDecl) {
+                    checkForHooks(value, appSettings.getParserClassName());
                 }
             }
         }
@@ -425,8 +420,8 @@ public class Grammar extends BaseNode {
             }
         }
         else {
-            for (Iterator<Node> it= node.iterator();  it.hasNext();) {
-                checkForHooks(it.next(), className);
+            for (Node value : node) {
+                checkForHooks(value, className);
             }
         }
     }

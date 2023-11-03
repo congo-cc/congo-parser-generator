@@ -33,7 +33,7 @@ public class CSharpTranslator extends Translator {
         return result;
     }
 
-    private static Set<String> propertyIdentifiers = makeSet("image", "lastConsumedToken");
+    private static final Set<String> propertyIdentifiers = makeSet("image", "lastConsumedToken");
 
     @Override public String translateIdentifier(String ident, TranslationContext kind) {
         // TODO proper method name translation
@@ -219,7 +219,7 @@ public class CSharpTranslator extends Translator {
         }
     }
 
-    private static Set<String> propertyNames = makeSet("getImage", "getType", "getBeginLine", "getBeginColumn",
+    private static final Set<String> propertyNames = makeSet("getImage", "getType", "getBeginLine", "getBeginColumn",
                                                        "getEndLine", "getEndColumn", "getBeginOffset", "getEndOffset");
 
     @Override protected void translateInvocation(ASTInvocation expr, StringBuilder result) {

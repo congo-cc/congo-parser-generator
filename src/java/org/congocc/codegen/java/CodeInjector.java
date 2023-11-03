@@ -30,7 +30,7 @@ public class CodeInjector {
     private final Set<String> nonsealedClasses = new LinkedHashSet<>();
 
     private final Grammar grammar;
-    private AppSettings appSettings;
+    private final AppSettings appSettings;
 
     public CodeInjector(Grammar grammar, List<Node> codeInjections) {
         this.grammar = grammar;
@@ -74,7 +74,7 @@ public class CodeInjector {
    
     private void inject(CompilationUnit jcu) {
         List<ImportDeclaration> importDecls = new ArrayList<>((List<ImportDeclaration>)(List)jcu.getImportDeclarations());
-        for (TypeDeclaration dec : (List<TypeDeclaration>)(List)jcu.getTypeDeclarations()) {
+        for (TypeDeclaration dec : jcu.getTypeDeclarations()) {
             String name = dec.getName();
             typeNames.add(name);
             String packageName = isInNodePackage(name) ? appSettings.getNodePackage() : appSettings.getParserPackage();
@@ -113,10 +113,9 @@ public class CodeInjector {
                 }
             }
             List<ClassOrInterfaceBodyDeclaration> injectedCode = new ArrayList<>();
-            for (Iterator<Node> it = dec.getBody().iterator(); it.hasNext();) {
-                Node n = it.next();
+            for (Node n : dec.getBody()) {
                 if (n instanceof ClassOrInterfaceBodyDeclaration) {
-                    injectedCode.add((ClassOrInterfaceBodyDeclaration)n);
+                    injectedCode.add((ClassOrInterfaceBodyDeclaration) n);
                 }
             }
             List<ClassOrInterfaceBodyDeclaration> existingCode = bodyDeclarations.get(name);
@@ -148,13 +147,9 @@ public class CodeInjector {
     private void addToDependencies(String name, List<ObjectType> listToAdd, Map<String, Set<ObjectType>> mapOfExistingLists) {
         Set<ObjectType> existingList = mapOfExistingLists.get(name);
         if (existingList == null) {
-            mapOfExistingLists.put(name, new LinkedHashSet<ObjectType>(listToAdd));
+            mapOfExistingLists.put(name, new LinkedHashSet<>(listToAdd));
         } else {
-            for (ObjectType ot : listToAdd) {
-                if (!existingList.contains(ot)) {
-                    existingList.add(ot);
-                }
-            }
+            existingList.addAll(listToAdd);
         }
     }
 
@@ -227,7 +222,7 @@ public class CodeInjector {
     public void injectCode(CompilationUnit jcu) {
         String packageName = jcu.getPackageName();
         Set<ImportDeclaration> allInjectedImports = new LinkedHashSet<>();
-        for (TypeDeclaration typeDecl : (List<TypeDeclaration>)(List)jcu.getTypeDeclarations()) {
+        for (TypeDeclaration typeDecl : jcu.getTypeDeclarations()) {
             String fullName = typeDecl.getName();
             if (packageName !=null) {
                 fullName = packageName + "." + fullName;

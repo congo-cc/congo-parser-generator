@@ -276,7 +276,7 @@ public class PythonTranslator extends Translator {
         }
     }
 
-    protected static Set<String> leaveAsMethods = new HashSet<>(Arrays.asList("getIndents", "isConstant"));
+    protected static final Set<String> leaveAsMethods = new HashSet<>(Arrays.asList("getIndents", "isConstant"));
 
     protected boolean treatAsProperty(String methodName) {
         return isGetter(methodName) || methodName.equals("previousCachedToken");
@@ -767,9 +767,8 @@ public class PythonTranslator extends Translator {
             parser.InvocationArguments();
             Node node = parser.rootNode();
             StringBuilder result = new StringBuilder();
-            int n = node.size();
-            for (int i = 0; i < n; i++) {
-                Node child = node.get(i);
+
+            for (Node child : node) {
                 if (child instanceof Expression) {
                     ASTExpression expr = (ASTExpression) transformTree(child);
                     internalTranslateExpression(expr, TranslationContext.UNKNOWN, result);

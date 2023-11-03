@@ -15,9 +15,6 @@ import java.util.*;
 import java.util.regex.*;
 
 import org.congocc.core.Grammar;
-import org.congocc.parser.ParseException;
-
-import freemarker.template.TemplateException;
 
 
 /**
@@ -29,7 +26,7 @@ public final class Main {
     public static final String URL = "Go to https://discuss.congocc.org for more information.";
     private static String manifestContent = "", jarFileName = "congocc.jar";
     private static Path jarPath;
-    private static FileSystem fileSystem = FileSystems.getDefault();
+    private static final FileSystem fileSystem = FileSystems.getDefault();
     private static final Pattern symbolPattern = Pattern.compile("^(\\w+(\\.\\w+)*)(=(\\w+(\\.\\w+)*))?$");
 
     static {
@@ -43,7 +40,7 @@ public final class Main {
                 is.read(bytes);
                 is.close();
                 String content = new String(bytes);
-                if (content.indexOf("congocc.app.Main") >= 0) {
+                if (content.contains("congocc.app.Main")) {
                     String path = url.getFile();
                     if (path.startsWith("file:")) {
                         path = path.substring(5);
@@ -99,7 +96,7 @@ public final class Main {
                         System.out.println("Updating jarfile...");
                         InputStream inputStream = url.openStream();
                         OutputStream fileOS = Files.newOutputStream(jarPath);
-                        byte data[] = new byte[1024];
+                        byte[] data = new byte[1024];
                         int byteContent;
                         while ((byteContent = inputStream.read(data, 0, 1024)) != -1) {
                             fileOS.write(data, 0, byteContent);
@@ -118,7 +115,7 @@ public final class Main {
             }
     }
 
-    private static String [] otherSupportedLanguages = new String[] {
+    private static final String [] otherSupportedLanguages = new String[] {
         "python",
         "csharp"
     };
@@ -147,7 +144,7 @@ public final class Main {
         System.out.println("   For example:   -d ../../src/generated");
         System.out.println("   If this is unset, files are generated relative to the grammar file location.");
         System.out.println(" -lang <language>  Specify the language to generate code in (the default is 'java')");
-        System.out.println("                     (valid choices are currently " + sb.toString() + ")");
+        System.out.println("                     (valid choices are currently " + sb + ")");
         System.out.println(" -jdkN             Specify the target JDK version. N is a number from 8 to 19. (Default is 8)");
         System.out.println("                     (this is only useful when the code generation is in Java)");
         System.out.println(" -n                Suppress the check for a newer version");
@@ -187,7 +184,7 @@ public final class Main {
                         String s = st.nextToken().trim();
                         Matcher m = symbolPattern.matcher(s);
                         if (!m.find()) {
-                            System.err.println(String.format("-p flag with invalid argument '%s'", s));
+                            System.err.printf("-p flag with invalid argument '%s'%n", s);
                             System.exit(-1);
                         }
                         String name = m.group(1);
@@ -211,12 +208,12 @@ public final class Main {
                 else if (arg.equalsIgnoreCase("-q") || arg.equalsIgnoreCase("-quiet")) {
                     quiet = true;
                 }
-                else if (arg.toLowerCase().equals("-lang")) {
+                else if (arg.equalsIgnoreCase("-lang")) {
                     String candidate = args[++i];
 
                     if (!candidate.equals("java")) {
                         if (!Arrays.asList(otherSupportedLanguages).contains(candidate.toLowerCase())) {
-                            System.err.println(String.format("Not a supported code generation language: '%s'", candidate));
+                            System.err.printf("Not a supported code generation language: '%s'%n", candidate);
                             System.exit(-1);
                         }
                         codeLang = candidate.toLowerCase();
@@ -233,7 +230,7 @@ public final class Main {
                     }
                     String number = arg.substring(4);
                     try {
-                       jdkTarget = Integer.valueOf(number);
+                       jdkTarget = Integer.parseInt(number);
                     } catch (NumberFormatException nfe) {
                         System.err.println("Expecting a number after 'jdk', like -jdk11");
                     }
@@ -291,7 +288,6 @@ public final class Main {
      * @param outputDir The output directory, if this is null, just use the directory where the input file is.
      * @param quiet Whether to be silent (or quiet). Currently does nothing!
      * @return error code
-     * @throws Exception
      */
     public static int mainProgram(Path grammarFile, Path outputDir, String codeLang, int jdkTarget, boolean quiet, Map<String, String> symbols)
       throws IOException {
@@ -348,7 +344,7 @@ public final class Main {
 
 
     static private String getBuiltOnString() {
-    	if (manifestContent == "") {
+    	if (manifestContent.equals("")) {
     		return "";
     	}
     	String buildDate = "unknown date";

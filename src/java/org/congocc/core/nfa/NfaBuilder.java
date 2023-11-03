@@ -25,10 +25,10 @@ class NfaBuilder extends Node.Visitor {
     // the starting and ending NfaState objects
     // of the last regexp that we "visited"
     private NfaState start, end;
-    private boolean ignoreCase;
-    private LexicalStateData lexicalState;
+    private final boolean ignoreCase;
+    private final LexicalStateData lexicalState;
     final Grammar grammar;
-    private RegularExpression type;
+    private final RegularExpression type;
 
     NfaBuilder(LexicalStateData lexicalState, RegularExpression type, boolean ignoreCase) {
         this.lexicalState = lexicalState;
@@ -185,9 +185,9 @@ class NfaBuilder extends Node.Visitor {
     }
 
     // BitSet that holds which characters are not the same in lower case
-    static private BitSet lowerCaseDiffSet = caseDiffSetInit(false);
+    static private final BitSet lowerCaseDiffSet = caseDiffSetInit(false);
     // BitSet that holds which characters are not the same in upper case
-    static private BitSet upperCaseDiffSet = caseDiffSetInit(true);
+    static private final BitSet upperCaseDiffSet = caseDiffSetInit(true);
 
     static private BitSet caseDiffSetInit(boolean upper) {
         BitSet result = new BitSet();

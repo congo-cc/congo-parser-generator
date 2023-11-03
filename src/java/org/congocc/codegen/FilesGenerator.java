@@ -204,7 +204,7 @@ public class FilesGenerator {
         String key = appSettings.getNodePackage() + "." + nodeName;
         Set<ObjectType> permitsList = codeInjector.getPermitsList(key);
         if (permitsList == null) {
-            dataModel.put("permitsList", new ArrayList<Object>());
+            dataModel.put("permitsList", new ArrayList<>());
         } else {
            dataModel.put("permitsList", codeInjector.getPermitsList(key));
         }

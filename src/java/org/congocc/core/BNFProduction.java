@@ -12,7 +12,7 @@ public class BNFProduction extends Expansion {
     private Expansion expansion;
     private Expansion recoveryExpansion;
     private String lexicalState, name;
-    private String leadingComments = "";
+    private final String leadingComments = "";
     private boolean implicitReturnType;
     
     public Expansion getExpansion() {

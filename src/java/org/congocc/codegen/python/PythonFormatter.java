@@ -1,10 +1,7 @@
 package org.congocc.codegen.python;
 
-import java.util.EnumSet;
 import org.congocc.parser.Node;
 import org.congocc.parser.python.PythonToken;
-import org.congocc.parser.python.PythonToken.TokenType;
-import static org.congocc.parser.python.PythonToken.TokenType.*;
 import org.congocc.parser.python.ast.*;
 
 public class PythonFormatter extends Node.Visitor {

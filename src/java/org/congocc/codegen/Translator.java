@@ -12,8 +12,8 @@ import org.congocc.parser.Token;
 import org.congocc.parser.tree.*;
 
 public class Translator {
-    protected Grammar grammar;
-    protected AppSettings appSettings;
+    protected final Grammar grammar;
+    protected final AppSettings appSettings;
     protected int tempVarCounter;
     protected int fieldIndent;
     protected int methodIndent;
@@ -464,7 +464,7 @@ public class Translator {
 
         protected void addCatchBlock(ASTExceptionInfo info) {
             if (catchBlocks == null) {
-                catchBlocks = new ArrayList<ASTExceptionInfo>();
+                catchBlocks = new ArrayList<>();
             }
             catchBlocks.add(info);
         }
@@ -635,12 +635,12 @@ public class Translator {
 
     }
 
-    protected List<SymbolTable> symbolStack = new ArrayList<>();
+    protected final List<SymbolTable> symbolStack = new ArrayList<>();
 
-    protected Map<String, ASTTypeExpression> properties = new HashMap<>();
-    protected SymbolTable fields = new SymbolTable();
-    protected Map<String, Set<String>> propertyMap = new HashMap<>();
-    protected Set<String> parameterNames = new LinkedHashSet<>();
+    protected final Map<String, ASTTypeExpression> properties = new HashMap<>();
+    protected final SymbolTable fields = new SymbolTable();
+    protected final Map<String, Set<String>> propertyMap = new HashMap<>();
+    protected final Set<String> parameterNames = new LinkedHashSet<>();
 
     public void clearFields() { fields.clear(); properties.clear(); }
 
@@ -755,7 +755,7 @@ public class Translator {
         return (idx < n) && Character.isUpperCase(name.charAt(idx));
     }
 
-    protected Set<String> notSetters = new LinkedHashSet<>(Arrays.asList("setLineSkipped"));
+    protected final Set<String> notSetters = new LinkedHashSet<>(Collections.singletonList("setLineSkipped"));
 
     public boolean isSetter(String name) {
         if ((name.length() <= 3) || !name.startsWith("set") || notSetters.contains(name)) {
@@ -928,7 +928,7 @@ public class Translator {
                 StringBuilder sb = new StringBuilder();
                 for (Node child : node.children()) {
                     if (child instanceof Token) {
-                        sb.append(((Token) child).toString());
+                        sb.append(((Token) child));
                     }
                     else if (child instanceof TypeArguments) {
                         for (Node gc : child.children()) {
@@ -1067,9 +1067,7 @@ public class Translator {
 
             ASTVariableOrFieldDeclaration resultNode = new ASTVariableOrFieldDeclaration();
 
-            for (int i = 0; i < n; i++) {
-                Node child = node.get(i);
-
+            for (Node child : node) {
                 if (child instanceof Delimiter) {
                     continue;
                 }
@@ -1079,20 +1077,16 @@ public class Translator {
 
                 if (child instanceof Primitive || child instanceof PrimitiveType || child instanceof ObjectType) {
                     resultNode.typeExpression = (ASTTypeExpression) transformTree(child, true);
-                }
-                else if (child instanceof Identifier) {
+                } else if (child instanceof Identifier) {
                     name = (ASTPrimaryExpression) transformTree(child);
                     resultNode.addNameAndInitializer(name, null);
-                }
-                else if (child instanceof VariableDeclarator) {
+                } else if (child instanceof VariableDeclarator) {
                     name = (ASTPrimaryExpression) transformTree(child.getFirstChild());
                     initializer = (child.size() == 1) ? null : (ASTExpression) transformTree(child.getLastChild());
                     resultNode.addNameAndInitializer(name, initializer);
-                }
-                else if (child instanceof LocalVariableDeclaration) {
+                } else if (child instanceof LocalVariableDeclaration) {
                     return transformTree(child, forType);
-                }
-                else {
+                } else {
                     throw new UnsupportedOperationException("node is '" + child + "' class " + child.getClass().getSimpleName());
                 }
             }
@@ -1101,50 +1095,41 @@ public class Translator {
         else if (node instanceof CodeBlock) {
             ASTStatementList resultNode = new ASTStatementList();
             int n = node.size();
-            for (int i = 0; i < n; i++) {
-                Node child = node.get(i);
+            for (Node child : node) {
                 if (!(child instanceof Delimiter)) {
                     resultNode.add((ASTStatement) transformTree(child));
                 }
             }
             return resultNode;
         }
-        else if (node instanceof LocalVariableDeclaration || node instanceof FieldDeclaration) {
+        else if (node instanceof FieldDeclaration) {
             ASTVariableOrFieldDeclaration resultNode = new ASTVariableOrFieldDeclaration();
-            resultNode.field = node instanceof FieldDeclaration;
-            int n = node.size();
-            for (int i = 0; i < n; i++) {
+            resultNode.field = true;
+            for (Node child : node) {
                 ASTPrimaryExpression name;
                 ASTExpression initializer;
-                Node child = node.get(i);
 
                 if (child instanceof Delimiter) {
                     continue;
                 }
                 if (child instanceof Primitive || child instanceof PrimitiveType || child instanceof ObjectType) {
                     resultNode.typeExpression = (ASTTypeExpression) transformTree(child, true);
-                }
-                else if (child instanceof KeyWord) {
+                } else if (child instanceof KeyWord) {
                     resultNode.addModifier(child.toString());
-                }
-                else if (child instanceof Identifier) {
+                } else if (child instanceof Identifier) {
                     name = (ASTPrimaryExpression) transformTree(child);
                     resultNode.addNameAndInitializer(name, null);
-                }
-                else if (child instanceof VariableDeclarator) {
+                } else if (child instanceof VariableDeclarator) {
                     name = (ASTPrimaryExpression) transformTree(child.getFirstChild());
                     initializer = (child.size() == 1) ? null : (ASTExpression) transformTree(child.getLastChild());
                     resultNode.addNameAndInitializer(name, initializer);
-                }
-                else if (child instanceof MarkerAnnotation) {
+                } else if (child instanceof MarkerAnnotation) {
                     resultNode.addAnnotation(child.getLastChild().toString());
-                }
-                else if (child instanceof Modifiers) {
-                    for (Node gc: child.children()) {
+                } else if (child instanceof Modifiers) {
+                    for (Node gc : child.children()) {
                         resultNode.addModifier(gc.toString());
                     }
-                }
-                else {
+                } else {
                     throw new UnsupportedOperationException("node is '" + child + "' class " + child.getClass().getSimpleName());
                 }
             }
@@ -1313,7 +1298,7 @@ public class Translator {
                     }
                 }
                 else if (child instanceof Delimiter) {
-                    continue;
+                    // continue; // implicit, as last statement in loop
                 }
 /*
                 ConstructorDeclararions can contain other stuff
@@ -1825,11 +1810,7 @@ public class Translator {
         if (nestedDeclarations == null) {
             nestedDeclarations = new HashMap<>();
         }
-        Set<String> existing = nestedDeclarations.get(currentClass);
-        if (existing == null) {
-            existing = new LinkedHashSet<>();
-            nestedDeclarations.put(currentClass, existing);
-        }
+        Set<String> existing = nestedDeclarations.computeIfAbsent(currentClass, k -> new LinkedHashSet<>());
         existing.add(name);
     }
 
