@@ -319,8 +319,6 @@ if (_hitFailure || _remainingLookahead <= 0) {
 ${ScanSingleToken(expansion, indent)}
    [#elseif classname = "Assertion"]
 ${ScanCodeAssertion(expansion, indent)}
-   [#elseif classname = "LexicalStateSwitch"]
-       ${ScanCodeLexicalStateSwitch(expansion)}
    [#elseif classname = "Failure"]
 ${ScanCodeError(expansion, indent)}
    [#elseif classname = "TokenTypeActivation"]
