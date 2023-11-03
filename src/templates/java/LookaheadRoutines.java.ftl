@@ -331,9 +331,7 @@
       for testing purposes.--]
       ${ScanSingleToken(expansion)}
    [#elseif classname = "Assertion"]
-      ${ScanCodeAssertion(expansion)} 
-   [#elseif classname = "LexicalStateSwitch"]
-       ${ScanCodeLexicalStateSwitch(expansion)}
+      ${ScanCodeAssertion(expansion)}
    [#elseif classname = "Failure"]
          ${ScanCodeError(expansion)}
    [#elseif classname = "UncacheTokens"]

@@ -33,7 +33,7 @@ private static readonly HashSet<TokenType> ${varName} = Utils.GetOrMakeSet(
 [#var newVarIndex=0]
 [#-- Just to generate a new unique variable name
   All it does is tack an integer (that is incremented)
-  onto the type name, and optionally initializes it to some value--]
+  onto the type name, and optionally initializes it to some value
 [#macro newVar type init=null]
    [#set newVarIndex = newVarIndex+1]
    ${type} ${type?lower_case}${newVarIndex}
@@ -42,7 +42,7 @@ private static readonly HashSet<TokenType> ${varName} = Utils.GetOrMakeSet(
    [/#if]
    ;
 [/#macro]
-
+--]
 [#macro newVarName prefix]
 ${prefix}${newID()}[#rt]
 [/#macro]

@@ -164,35 +164,6 @@ private static HashSet<TokenType> ${varName} = Utils.GetOrMakeSet(
 [/#macro]
 
 [#--
-  REVISIT
-  Generates the code for an NFA state transition
-  within a composite state. This code is a bit tricky
-  because it consolidates more than one condition in
-  a single conditional block. The jumpOut parameter says
-  whether we can just jump out of the method.
-  (This is based on whether any of the moveRanges
-  for later states overlap. If not, we can jump out.)
---]
-[#macro GenerateStateMove nfaState isFirstOfGroup isLastOfGroup useElif=false]
-  [#var nextState = nfaState.nextState.composite]
-  [#var type = nfaState.type]
-  [#if isFirstOfGroup]
-            [#if useElif]else if[#else]if[/#if] ([@NfaStateCondition nfaState /]) {
-  [/#if]
-  [#if nextState.index >= 0]
-                nextStates.Set(${nextState.index});
-  [/#if]
-  [#if isLastOfGroup]
-    [#if nfaState.nextState.final]
-                if (validTypes.Contains(${TT}${type.label})) {
-                    type = ${TT}${type.label};
-                }
-    [/#if]
-            }
-  [/#if]
-[/#macro]
-
-[#--
 Generate the condition part of the NFA state transition
 If the size of the moveRanges vector is greater than NFA_RANGE_THRESHOLD
 it uses the canned binary search routine. For the smaller moveRanges
@@ -655,7 +626,7 @@ ${globals.translateLexerImports()}
         /**
         * The number of supplementary unicode characters in the specified
         * offset range. The range is expressed in code units
-        */
+
         private int NumSupplementaryCharactersInRange(int start, int end) {
             int result = 0;
             while (start < end - 1) {
@@ -668,6 +639,7 @@ ${globals.translateLexerImports()}
             }
             return result;
         }
+        */
 
         public int GetCodePointColumnFromOffset(int pos) {
             if (pos >= _contentLength) return 1;
