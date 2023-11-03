@@ -7,9 +7,9 @@ public class Errors {
 	private int parseErrorCount;
     private int warningCount;
 
-    private List<String> errorMessages = new ArrayList<>(), 
-                         warningMessages = new ArrayList<>(), 
-                         infoMessages = new ArrayList<>();
+    private final List<String> errorMessages = new ArrayList<>();
+    private final List<String> warningMessages = new ArrayList<>();
+    private final List<String> infoMessages = new ArrayList<>();
 
 
 	/**

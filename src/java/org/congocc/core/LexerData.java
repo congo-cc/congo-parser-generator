@@ -14,14 +14,14 @@ import org.congocc.parser.tree.*;
  * states.
  */
 public class LexerData {
-    private Grammar grammar;
-    private Errors errors;
-    private List<LexicalStateData> lexicalStates = new ArrayList<>();
-    private List<RegularExpression> regularExpressions = new ArrayList<>();
+    private final Grammar grammar;
+    private final Errors errors;
+    private final List<LexicalStateData> lexicalStates = new ArrayList<>();
+    private final List<RegularExpression> regularExpressions = new ArrayList<>();
 
-    private Map<String, RegularExpression> namedTokensTable = new HashMap<>();
-    private Set<RegularExpression> overriddenTokens = new HashSet<>();
-    private Set<RegularExpression> lazyTokens = new HashSet<>();
+    private final Map<String, RegularExpression> namedTokensTable = new HashMap<>();
+    private final Set<RegularExpression> overriddenTokens = new HashSet<>();
+    private final Set<RegularExpression> lazyTokens = new HashSet<>();
 
     public LexerData(Grammar grammar) {
         this.grammar = grammar;
@@ -71,7 +71,7 @@ public class LexerData {
 
     public List<RegularExpression> getRegularExpressions() {
         List<RegularExpression> result = new ArrayList<>(regularExpressions);
-        result.removeIf(re -> isOverridden(re));
+        result.removeIf(this::isOverridden);
         return result;
     }
 
@@ -113,7 +113,7 @@ public class LexerData {
 
     static public boolean isJavaIdentifier(String s) {
         return !s.isEmpty() && Character.isJavaIdentifierStart(s.codePointAt(0))
-                && s.codePoints().allMatch(ch -> Character.isJavaIdentifierPart(ch));
+                && s.codePoints().allMatch(Character::isJavaIdentifierPart);
     }
 
     boolean regexpLabelAlreadyUsed(String label, RegularExpression re) {
@@ -181,7 +181,7 @@ public class LexerData {
     }
 
     public List<RegularExpression> getOrderedNamedTokens() {
-        return new ArrayList<RegularExpression>(namedTokensTable.values());
+        return new ArrayList<>(namedTokensTable.values());
     }
 
     // This method still really needs to be cleaned up!
@@ -277,7 +277,8 @@ public class LexerData {
      */
     class RegexpVisitor extends Node.Visitor {
 
-        private Set<RegularExpression> alreadyVisited = new HashSet<>(), currentlyVisiting = new HashSet<>();
+        private final Set<RegularExpression> alreadyVisited = new HashSet<>();
+        private final Set<RegularExpression> currentlyVisiting = new HashSet<>();
 
         void visit(RegexpRef ref) {
             RegularExpression referredTo = ref.getRegexp();

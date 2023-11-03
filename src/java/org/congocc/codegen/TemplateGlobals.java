@@ -13,12 +13,12 @@ import org.congocc.parser.tree.*;
  */
 public class TemplateGlobals {
 
-    private Grammar grammar;
-    private LexerData lexerData;
-    private AppSettings appSettings;
+    private final Grammar grammar;
+    private final LexerData lexerData;
+    private final AppSettings appSettings;
     private Translator translator;
 
-    private List<String> nodeVariableNameStack = new ArrayList<>();
+    private final List<String> nodeVariableNameStack = new ArrayList<>();
 
     public TemplateGlobals(Grammar grammar) {
         this.grammar = grammar;
@@ -72,11 +72,10 @@ public class TemplateGlobals {
                 default:
                     if (Character.isISOControl(ch)) {
                         String s = "0000" + java.lang.Integer.toString(ch, 16);
-                        retval.append("\\u" + s.substring(s.length() - 4, s.length()));
+                        retval.append("\\u").append(s.substring(s.length() - 4));
                     } else {
                         retval.appendCodePoint(ch);
                     }
-                    continue;
             }
         }
         return retval.toString();
@@ -255,8 +254,7 @@ public class TemplateGlobals {
         if (node instanceof Statement) {
             translator.translateStatement(node, indent, result);
         } else {
-            for (int i = 0; i < node.size(); i++) {
-                Node child = node.get(i);
+            for (Node child : node) {
                 if (child instanceof Delimiter) {
                     continue; // could put in more checks here
                 }
@@ -324,8 +322,7 @@ public class TemplateGlobals {
                     // ConstructorDeclarations
                     boolean process = (fields == (decl instanceof FieldDeclaration || decl instanceof Initializer));
                     if (process) {
-                        if (decl instanceof FieldDeclaration || decl instanceof CodeBlock
-                                || decl instanceof Initializer) {
+                        if (decl instanceof FieldDeclaration || decl instanceof CodeBlock) {
                             if ((decl instanceof Initializer) && !initializers) {
                                 continue;
                             }

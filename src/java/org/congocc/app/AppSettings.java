@@ -18,26 +18,23 @@ import org.congocc.core.Grammar;
 import org.congocc.core.LexerData;
 import org.congocc.core.RegexpSpec;
 import org.congocc.parser.Node;
-import org.congocc.parser.Token;
 import org.congocc.parser.tree.MethodCall;
-import org.congocc.parser.tree.ZeroOrMoreRegexp;
-import org.congocc.parser.tree.ZeroOrOneRegexp;
 
 /**
  * Class to hold the various application settings
  */
 public class AppSettings {
 
-    private static Pattern extraTokenPattern = Pattern.compile("^(\\w+)(#\\w+)?$");
-    private Grammar grammar;
-    private Errors errors;
+    private static final Pattern extraTokenPattern = Pattern.compile("^(\\w+)(#\\w+)?$");
+    private final Grammar grammar;
+    private final Errors errors;
     private Map<String, Object> settings = new HashMap<>();
     private Path outputDir, filename, includedFileDirectory;
     private String codeLang, parserPackage, parserClassName, lexerClassName, baseName, baseNodeClassName, baseTokenClassName;
 
-    private Set<String> usedIdentifiers = new HashSet<>();
-    private Set<String> tokensOffByDefault = new HashSet<>();
-    private Map<String, String> extraTokens = new LinkedHashMap<>();
+    private final Set<String> usedIdentifiers = new HashSet<>();
+    private final Set<String> tokensOffByDefault = new HashSet<>();
+    private final Map<String, String> extraTokens = new LinkedHashMap<>();
     private boolean ignoreCase, quiet;
     private int jdkTarget = 8;
 
@@ -46,21 +43,21 @@ public class AppSettings {
         this.errors = grammar.getErrors();
     }
 
-    private String booleanSettings = ",FAULT_TOLERANT,FAULT_TOLERANT_DEFAULT,PRESERVE_TABS,PRESERVE_LINE_ENDINGS,"
+    private final String booleanSettings = ",FAULT_TOLERANT,FAULT_TOLERANT_DEFAULT,PRESERVE_TABS,PRESERVE_LINE_ENDINGS,"
                                     + "JAVA_UNICODE_ESCAPE,IGNORE_CASE,LEXER_USES_PARSER,NODE_DEFAULT_VOID,SMART_NODE_CREATION," 
                                     + "NODE_USES_PARSER,TREE_BUILDING_DEFAULT,TREE_BUILDING_ENABLED,TOKENS_ARE_NODES," 
                                     + "SPECIAL_TOKENS_ARE_NODES,UNPARSED_TOKENS_ARE_NODES," 
                                     + "TOKEN_MANAGER_USES_PARSER,ENSURE_FINAL_EOL,MINIMAL_TOKEN,C_CONTINUATION_LINE," 
                                     + "USE_CHECKED_EXCEPTION,LEGACY_GLITCHY_LOOKAHEAD,TOKEN_CHAINING,USES_PREPROCESSOR,X_JTB_PARSE_TREE,X_SYNTHETIC_NODES_ENABLED,";
 
-    private String stringSettings = ",BASE_NAME,PARSER_PACKAGE,PARSER_CLASS,LEXER_CLASS,BASE_SRC_DIR,BASE_NODE_CLASS," 
+    private final String stringSettings = ",BASE_NAME,PARSER_PACKAGE,PARSER_CLASS,LEXER_CLASS,BASE_SRC_DIR,BASE_NODE_CLASS,"
                                     + "BASE_TOKEN_CLASS,NODE_PREFIX,NODE_CLASS,NODE_PACKAGE,DEFAULT_LEXICAL_STATE," 
                                     + "NODE_CLASS,OUTPUT_DIRECTORY,DEACTIVATE_TOKENS,EXTRA_TOKENS,ROOT_API_PACKAGE," 
                                     + "COPYRIGHT_BLURB,TERMINATING_STRING,";
 
-    private String integerSettings = ",TAB_SIZE,TABS_TO_SPACES,JDK_TARGET,";
+    private final String integerSettings = ",TAB_SIZE,TABS_TO_SPACES,JDK_TARGET,";
 
-    private static Map<String, String> locationAliases = new HashMap<String, String>() {
+    private static final Map<String, String> locationAliases = new HashMap<String, String>() {
         {
             put("JAVA_IDENTIFIER_DEF", "/include/java/JavaIdentifierDef.ccc");
             put("JAVA_LEXER", "/include/java/JavaLexer.ccc");
@@ -161,41 +158,45 @@ public class AppSettings {
         }
         for (String key : settings.keySet()) {
             Object value = settings.get(key);
-            if (key.equals("IGNORE_CASE")) {
-                setIgnoreCase((Boolean) value);
-            }
-            else if (key.equals("DEFAULT_LEXICAL_STATE")) {
-                grammar.setDefaultLexicalState((String) value);
-            }
-            else if (key.equals("DEACTIVATE_TOKENS")) {
-                String tokens = (String) settings.get(key);
-                for (StringTokenizer st = new StringTokenizer(tokens, ", \t\n\r"); st.hasMoreTokens();) {
-                    String tokenName = st.nextToken();
-                    tokensOffByDefault.add(tokenName);
-                }
-            }
-            else if (key.equals("EXTRA_TOKENS")) {
-                String tokens = (String) settings.get(key);
-                for (StringTokenizer st = new StringTokenizer(tokens, ",\r\n"); st.hasMoreTokens();) {
-                    String tokenNameAndMaybeClass = st.nextToken();
-                    Matcher m = extraTokenPattern.matcher(tokenNameAndMaybeClass);
-                    if (m.matches()) {
-                        MatchResult mr = m.toMatchResult();
-                        String tokenName = mr.group(1);
-                        String tokenClassName = mr.group(2);
-                        if (tokenClassName == null) {
-                            tokenClassName = tokenName + "Token";
-                        }
-                        else {
-                            tokenClassName = tokenClassName.substring(1);
-                        }
-                        extraTokens.put(tokenName, tokenClassName);
+            switch (key) {
+                case "IGNORE_CASE":
+                    setIgnoreCase((Boolean) value);
+                    break;
+                case "DEFAULT_LEXICAL_STATE":
+                    grammar.setDefaultLexicalState((String) value);
+                    break;
+                case "DEACTIVATE_TOKENS": {
+                    String tokens = (String) settings.get(key);
+                    for (StringTokenizer st = new StringTokenizer(tokens, ", \t\n\r"); st.hasMoreTokens(); ) {
+                        String tokenName = st.nextToken();
+                        tokensOffByDefault.add(tokenName);
                     }
+                    break;
                 }
-            }
-            else if (key.equals("BASE_SRC_DIR") || key.equals("OUTPUT_DIRECTORY")) {
-                if (!grammar.isInInclude() && outputDir == null)
-                    outputDir = Paths.get((String)value);
+                case "EXTRA_TOKENS": {
+                    String tokens = (String) settings.get(key);
+                    for (StringTokenizer st = new StringTokenizer(tokens, ",\r\n"); st.hasMoreTokens(); ) {
+                        String tokenNameAndMaybeClass = st.nextToken();
+                        Matcher m = extraTokenPattern.matcher(tokenNameAndMaybeClass);
+                        if (m.matches()) {
+                            MatchResult mr = m.toMatchResult();
+                            String tokenName = mr.group(1);
+                            String tokenClassName = mr.group(2);
+                            if (tokenClassName == null) {
+                                tokenClassName = tokenName + "Token";
+                            } else {
+                                tokenClassName = tokenClassName.substring(1);
+                            }
+                            extraTokens.put(tokenName, tokenClassName);
+                        }
+                    }
+                    break;
+                }
+                case "BASE_SRC_DIR":
+                case "OUTPUT_DIRECTORY":
+                    if (!grammar.isInInclude() && outputDir == null)
+                        outputDir = Paths.get((String) value);
+                    break;
             }
             if (!grammar.isInInclude() && key.equals("JDK_TARGET") && jdkTarget ==0){
                 int jdkTarget = (Integer) value;
@@ -238,45 +239,48 @@ public class AppSettings {
         }
         String packageName = getParserPackage();
         if (packageName != null  && packageName.length() >0) {
-            if (codeLang.equals("java")) {
-                packageName = packageName.replace('.', '/');
-                dir = dir.resolve(packageName);
-                if (!Files.exists(dir)) {
-                    Files.createDirectories(dir);
-                }
-            }
-            else if (codeLang.equals("python")) { // Use last part of package, append "parser"
-                int dotPosition = packageName.lastIndexOf('.');
+            int dotPosition;
 
-                if (dotPosition >= 0) {
-                    packageName = packageName.substring(dotPosition + 1);
-                }
-                packageName = packageName.concat("parser");
-                // Use a user-specified value if available
-                packageName = grammar.getPreprocessorSymbols().getOrDefault("py.package", packageName);
-                dir = dir.resolve(packageName);
-                if (!Files.exists(dir)) {
-                    Files.createDirectories(dir);
-                }
-            }
-            else if (codeLang.equals("csharp")) {
-                // Use last part of package, append "parser", prepend "cs-"
-                // only if outDir isn't specified
-                if (outputDir == null) {
-                    int dotPosition = packageName.lastIndexOf('.');
-
-                    if (dotPosition >= 0) {
-                        packageName = packageName.substring(dotPosition + 1);
-                    }
-                    packageName = "cs-".concat(packageName.concat("parser"));
+            switch (codeLang) {
+                case "java":
+                    packageName = packageName.replace('.', '/');
                     dir = dir.resolve(packageName);
                     if (!Files.exists(dir)) {
                         Files.createDirectories(dir);
                     }
-                }
-            }
-            else {
-                throw new UnsupportedOperationException(String.format("Code generation in '%s' is not currently supported.", codeLang));
+                    break;
+                case "python":  // Use last part of package, append "parser"
+                    dotPosition = packageName.lastIndexOf('.');
+
+                    if (dotPosition >= 0) {
+                        packageName = packageName.substring(dotPosition + 1);
+                    }
+                    packageName = packageName.concat("parser");
+                    // Use a user-specified value if available
+                    packageName = grammar.getPreprocessorSymbols().getOrDefault("py.package", packageName);
+                    dir = dir.resolve(packageName);
+                    if (!Files.exists(dir)) {
+                        Files.createDirectories(dir);
+                    }
+                    break;
+                case "csharp":
+                    // Use last part of package, append "parser", prepend "cs-"
+                    // only if outDir isn't specified
+                    if (outputDir == null) {
+                        dotPosition = packageName.lastIndexOf('.');
+
+                        if (dotPosition >= 0) {
+                            packageName = packageName.substring(dotPosition + 1);
+                        }
+                        packageName = "cs-".concat(packageName.concat("parser"));
+                        dir = dir.resolve(packageName);
+                        if (!Files.exists(dir)) {
+                            Files.createDirectories(dir);
+                        }
+                    }
+                    break;
+                default:
+                    throw new UnsupportedOperationException(String.format("Code generation in '%s' is not currently supported.", codeLang));
             }
         }
         return dir;
@@ -409,7 +413,7 @@ public class AppSettings {
             path = filename.toAbsolutePath().getParent().resolve(Paths.get(location).getFileName());
             if (Files.exists(path)) return path;
         }
-        URI uri = null;
+        URI uri;
         try {
             uri = getClass().getResource(location).toURI();
         } catch (Exception e) {
@@ -586,7 +590,7 @@ public class AppSettings {
     }
 
     public boolean getHasLazyTokens() {
-        return grammar.firstDescendantOfType(RegexpSpec.class, regexp->regexp.isLazy()) != null;
+        return grammar.firstDescendantOfType(RegexpSpec.class, RegexpSpec::isLazy) != null;
     }
 
 

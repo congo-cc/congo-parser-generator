@@ -18,11 +18,11 @@ import static org.congocc.parser.Token.TokenType.*;
  * in inner classes, but we don't bother about that either.
  */
 class Reaper extends Node.Visitor {
-    private Set<String> usedMethodNames = new HashSet<>();
-    private Set<String> usedTypeNames = new HashSet<>();
-    private Set<String> usedVarNames = new HashSet<>();
-    private Set<String> usedImportDeclarations = new HashSet<>();
-    private CompilationUnit jcu;
+    private final Set<String> usedMethodNames = new HashSet<>();
+    private final Set<String> usedTypeNames = new HashSet<>();
+    private final Set<String> usedVarNames = new HashSet<>();
+    private final Set<String> usedImportDeclarations = new HashSet<>();
+    private final CompilationUnit jcu;
     private boolean onSecondPass;
 
     Reaper(CompilationUnit jcu) {
@@ -44,11 +44,11 @@ class Reaper extends Node.Visitor {
         }
         // We go through all the private FieldDeclarations and get rid of any variables that
         // are not in usedVarNames
-        for (FieldDeclaration fd : jcu.descendants(FieldDeclaration.class, fd->isPrivate(fd))) {
+        for (FieldDeclaration fd : jcu.descendants(FieldDeclaration.class, this::isPrivate)) {
             stripUnusedVars(fd);
         }
 
-        for (TypeDeclaration td : jcu.descendants(TypeDeclaration.class, td->isPrivate(td))) {
+        for (TypeDeclaration td : jcu.descendants(TypeDeclaration.class, this::isPrivate)) {
             if (!usedTypeNames.contains(td.getName())) {
                 td.getParent().remove(td);
             }
@@ -79,9 +79,9 @@ class Reaper extends Node.Visitor {
     }
 
     private String getKey(ImportDeclaration decl) {
-        String result = "";
-        for (Node child : decl.descendants(Token.class)) result += child;
-        return result;
+        StringBuilder result = new StringBuilder();
+        for (Node child : decl.descendants(Token.class)) result.append(child);
+        return result.toString();
     }
 
     private boolean isPrivate(Node node) {
@@ -92,7 +92,7 @@ class Reaper extends Node.Visitor {
         if (onSecondPass) return false;
         if (node.firstChildOfType(PRIVATE) != null) return true;
         Modifiers mods = node.firstChildOfType(Modifiers.class);
-        return mods == null ? false : mods.firstChildOfType(PRIVATE) != null;
+        return mods != null && mods.firstChildOfType(PRIVATE) != null;
     }
 
     void visit(MethodDeclaration md) {
@@ -106,12 +106,12 @@ class Reaper extends Node.Visitor {
 
     void visit(ObjectType ot) {
         Identifier firstID = ot.firstChildOfType(Identifier.class);
-        usedTypeNames.add(firstID.getImage());
+        usedTypeNames.add(firstID.toString());
         recurse(ot);
     }
 
     void visit(Annotation ann) {
-        String firstID = ann.firstDescendantOfType(Identifier.class).getImage();
+        String firstID = ann.firstDescendantOfType(Identifier.class).toString();
         usedTypeNames.add(firstID);
         recurse(ann);
     }
@@ -123,7 +123,7 @@ class Reaper extends Node.Visitor {
     }
 
     void visit(MethodReference mr) {
-        usedMethodNames.add(mr.firstChildOfType(Identifier.class).getImage());
+        usedMethodNames.add(mr.firstChildOfType(Identifier.class).toString());
         recurse(mr);
     }
 
@@ -175,7 +175,7 @@ class Reaper extends Node.Visitor {
     // is not in usedVarNames. The only complicated case is if the field
     // has more than one variable declaration comma-separated
     private void stripUnusedVars(FieldDeclaration fd) {
-        Set<Node> toBeRemoved = new HashSet<Node>();
+        Set<Node> toBeRemoved = new HashSet<>();
         for (VariableDeclarator vd : fd.childrenOfType(VariableDeclarator.class)) {
             if (!usedVarNames.contains(vd.getName())) {
                 toBeRemoved.add(vd);

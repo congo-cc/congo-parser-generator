@@ -43,7 +43,7 @@ public class ExpansionSequence extends Expansion {
     Expansion firstNonEmpty() {
         for (Expansion unit : childrenOfType(Expansion.class)) {
             if (unit instanceof ExpansionWithParentheses
-                    && ((ExpansionWithParentheses) unit).superfluousParentheses()) {
+                    && unit.superfluousParentheses()) {
                 unit = unit.firstChildOfType(ExpansionSequence.class).firstNonEmpty();
                 if (unit != null)
                     return unit;

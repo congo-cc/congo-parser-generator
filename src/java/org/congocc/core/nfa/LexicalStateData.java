@@ -13,24 +13,24 @@ import org.congocc.parser.tree.TokenProduction;
 public class LexicalStateData {
 
     final Grammar grammar;
-    private String name;
+    private final String name;
 
-    private List<TokenProduction> tokenProductions = new ArrayList<>();
+    private final List<TokenProduction> tokenProductions = new ArrayList<>();
 
     private List<CompositeStateSet> compositeSets;
-    private List<NfaState> simpleStates = new ArrayList<>();
-    private Map<Set<NfaState>, CompositeStateSet> canonicalSetLookup = new HashMap<>();
+    private final List<NfaState> simpleStates = new ArrayList<>();
+    private final Map<Set<NfaState>, CompositeStateSet> canonicalSetLookup = new HashMap<>();
 
-    private Map<String, RegexpStringLiteral> caseSensitiveTokenTable = new HashMap<>();
-    private Map<String, RegexpStringLiteral> caseInsensitiveTokenTable = new HashMap<>();
+    private final Map<String, RegexpStringLiteral> caseSensitiveTokenTable = new HashMap<>();
+    private final Map<String, RegexpStringLiteral> caseInsensitiveTokenTable = new HashMap<>();
 
-    private Set<RegularExpression> regularExpressions = new LinkedHashSet<>();
+    private final Set<RegularExpression> regularExpressions = new LinkedHashSet<>();
 
-    private NfaState initialState;
+    private final NfaState initialState;
 
-    private Set<NfaState> allStates = new LinkedHashSet<>();
+    private final Set<NfaState> allStates = new LinkedHashSet<>();
 
-    private Errors errors;
+    private final Errors errors;
     
     public LexicalStateData(Grammar grammar, String name) {
         this.grammar = grammar;
@@ -123,7 +123,7 @@ public class LexicalStateData {
             compositeSets.add(initialComposite);
         }
         //else Collections.swap(compositeSets, indexInList, 0);
-        Collections.sort(compositeSets, this::comparator);
+        compositeSets.sort(this::comparator);
         // Set the index on the various composites
         for (int i =0; i< compositeSets.size();i++) {
             compositeSets.get(i).setIndex(i);

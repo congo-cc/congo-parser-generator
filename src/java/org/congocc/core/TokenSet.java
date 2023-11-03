@@ -11,7 +11,7 @@ public class TokenSet extends BitSet {
 	
 	private static final long serialVersionUID = 1L;
 	
-	private Grammar grammar;
+	private final Grammar grammar;
 
 	private boolean incomplete;
 
