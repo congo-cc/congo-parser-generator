@@ -46,7 +46,7 @@ INJECT LEXER_CLASS :
              if (isComment) switchTo(LexicalState.IN_MULTI_LINE);
              else switchTo(LexicalState.IN_LONGSTRING);
              tok.setUnparsed(true);
-             tok.setEndOffset(tok.getEndOffset()-1);
+             tok.truncate(1);
          }
       }
       return tok;
