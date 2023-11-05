@@ -7,6 +7,10 @@ import org.congocc.core.*;
 import org.congocc.parser.*;
 import org.congocc.parser.tree.*;
 
+import freemarker.core.nodes.generated.Delimiter;
+import freemarker.core.nodes.generated.Identifier;
+import freemarker.core.nodes.generated.ImportDeclaration;
+
 /**
  * Class to hold various methods and variables
  * that are exposed to the template layer
@@ -263,6 +267,17 @@ public class TemplateGlobals {
         }
     }
 
+    public String translateCodeBlock(Node javaCodeBlock, int indent) {
+        if (javaCodeBlock == null) return "";
+        StringBuilder result = new StringBuilder();
+        Translator.SymbolTable syms = new Translator.SymbolTable();
+        translator.pushSymbols(syms);
+        translateStatements(javaCodeBlock, indent, result);
+        translator.popSymbols();
+        return result.toString();
+    }
+
+    /*
     public String translateCodeBlock(String cb, int indent) {
         StringBuilder result = new StringBuilder();
         if (cb != null) {
@@ -282,6 +297,8 @@ public class TemplateGlobals {
         }
         return result.toString();
     }
+*/
+
 
     // used in templates
     public String translateNonterminalArgs(String args) {

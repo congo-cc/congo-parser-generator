@@ -158,7 +158,8 @@ Array :
             (@values += Value) /values/+=#VValue
                 {
 #if __java__
-                    assert(THIS_PRODUCTION.getValues().size() == CURRENT_NODE.getNamedChildList("values").size() + 1) : "the List<Node> property 'values' size is not one more than the child list named 'values' in the 'VValue' definite node added";
+                    //Have to comment this out because the assertion itself causes an NPE (JR)
+                    //assert(THIS_PRODUCTION.getValues().size() == CURRENT_NODE.getNamedChildList("values").size() + 1) : "the List<Node> property 'values' size is not one more than the child list named 'values' in the 'VValue' definite node added";
                     // can't access a property in a manner compatible with both Java and CSharp?
 #endif
 #if __python__

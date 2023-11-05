@@ -319,6 +319,7 @@ INJECT PARSER_CLASS : {
         if (CongoCCKeyWords.contains(t.getType())) {
             if (isInProduction("CompilationUnit", "ClassOrInterfaceBody", "BlockStatement", "TreeBuildingAnnotation")) {
                 Token id = Token.newToken(IDENTIFIER, t.toString(), token_source);
+                id.setGrammar(t.getGrammar());
                 id.copyLocationInfo(t);
                 return id;
             }
