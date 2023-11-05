@@ -4,12 +4,10 @@ import java.util.*;
 
 import org.congocc.app.*;
 import org.congocc.core.*;
-import org.congocc.parser.*;
+import org.congocc.parser.Node;
+import org.congocc.parser.CongoCCParser;
 import org.congocc.parser.tree.*;
 
-import freemarker.core.nodes.generated.Delimiter;
-import freemarker.core.nodes.generated.Identifier;
-import freemarker.core.nodes.generated.ImportDeclaration;
 
 /**
  * Class to hold various methods and variables
@@ -276,8 +274,8 @@ public class TemplateGlobals {
         translator.popSymbols();
         return result.toString();
     }
-
-    /*
+    
+/*
     public String translateCodeBlock(String cb, int indent) {
         StringBuilder result = new StringBuilder();
         if (cb != null) {
@@ -296,9 +294,7 @@ public class TemplateGlobals {
             }
         }
         return result.toString();
-    }
-*/
-
+    }*/
 
     // used in templates
     public String translateNonterminalArgs(String args) {
