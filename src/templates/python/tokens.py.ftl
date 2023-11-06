@@ -117,19 +117,31 @@ class ${settings.baseNodeClassName}:
         assert index >= 0
         self.children.pop(index)
 
+    def __delitem__(self, index):
+        n = len(self.children)
+        if index < 0:
+            index = n - index
+        assert 0 <= index < n
+        self.remove(index)
+
     def truncate(self, amount):
         new_end_offset = max(self.begin_offset, self.end_offset - amount)
         self.end_offset = new_end_offset
 
-[#if include_unwanted!false]
     def set_child(self, node, index):
         self.children[index] = node
         node.parent = self
 
+    def __setitem__(self, index, node):
+        n = len(self.children)
+        if index < 0:
+            index = n - index
+        assert 0 <= index < n
+        self.set_child(node, index)
+
     def clear_children(self):
         self.children.clear()
 
-[/#if]
     @property
     def child_count(self):
         return len(self.children)
@@ -137,6 +149,13 @@ class ${settings.baseNodeClassName}:
     def get_child(self, index):
         assert index >= 0
         return self.children[index]
+
+    def __getitem__(self, index):
+        n = len(self.children)
+        if index < 0:
+            index = n - index
+        assert 0 <= index < n
+        return self.get_child(index)
 
     @property
     def first_child(self):
