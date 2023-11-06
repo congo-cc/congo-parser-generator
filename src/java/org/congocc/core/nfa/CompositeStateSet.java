@@ -5,16 +5,16 @@ import java.util.*;
 import org.congocc.core.RegularExpression;
 
 /**
- * A class representing a composite state set, i.e. 
+ * A class representing a composite state set, i.e.
  * a set of one or more NfaState objects.
- * Each instance of this class ends up being implemented 
- * in the generated code as an instance of the 
- * XXXNfaData::NfaFunction functional interface. 
+ * Each instance of this class ends up being implemented
+ * in the generated code as an instance of the
+ * XXXNfaData::NfaFunction functional interface.
  */
 public class CompositeStateSet {
     private final Set<NfaState> states;
     final LexicalStateData lexicalState;
-    private int index=-1; 
+    private int index=-1;
 
     CompositeStateSet(Set<NfaState> states, LexicalStateData lsd) {
         this.states = new HashSet<>(states);
@@ -51,9 +51,9 @@ public class CompositeStateSet {
 
     public String getMethodName() {
         String lexicalStateName = lexicalState.getName();
-        if (lexicalStateName.equals("DEFAULT")) 
+        if (lexicalStateName.equals("DEFAULT"))
             return "NfaIndex" + index;
-        return "NfaName" + lexicalStateName + "Index" + index; 
+        return "NfaName" + lexicalStateName + "Index" + index;
     }
 
     public String checkAllSameType() {
@@ -70,8 +70,8 @@ public class CompositeStateSet {
     }
 
     /**
-     * We return the NFA states in this composite 
-     * in order (decreasing) of the ordinal of the nextState's 
+     * We return the NFA states in this composite
+     * in order (decreasing) of the ordinal of the nextState's
      * ordinal, i.e. in increasing order of its priority in
      * terms of pattern matching.
      * @return sorted list of states
@@ -79,7 +79,7 @@ public class CompositeStateSet {
     public List<NfaState> getOrderedStates() {
         List<NfaState> result = new ArrayList<>(states);
         result.sort(this::nfaComparator);
-        return result;    
+        return result;
     }
 
     private int nfaComparator(NfaState state1, NfaState state2) {
@@ -88,17 +88,17 @@ public class CompositeStateSet {
            result = (state1.getMoveRanges().get(0) - state2.getMoveRanges().get(0));
         if (result == 0)
            result = (state1.getMoveRanges().get(1) - state2.getMoveRanges().get(1));
-        if (result ==0)
-           result = state2.getMoveRanges().size() - state2.getMoveRanges().size();
+        if (result == 0)
+           result = state1.getMoveRanges().size() - state2.getMoveRanges().size();
         return result;
-    }    
-    
+    }
+
     static private int getOrdinal(NfaState state) {
         return !state.isFinal() ? Integer.MAX_VALUE : state.getType().getOrdinal();
     }
 
     // Recursive method to figure out which composite state sets are actually used.
-    // We invoke this on a lexical state's initial state. 
+    // We invoke this on a lexical state's initial state.
     void findWhatIsUsed(Set<CompositeStateSet> alreadyVisited, Set<CompositeStateSet> usedStates) {
         if (alreadyVisited.contains(this)) return;
         alreadyVisited.add(this);
