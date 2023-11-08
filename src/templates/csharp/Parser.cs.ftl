@@ -1,7 +1,7 @@
 // ReSharper disable InconsistentNaming
 [#import "CommonUtils.inc.ftl" as CU]
 [#var MULTIPLE_LEXICAL_STATE_HANDLING = (grammar.lexerData.numLexicalStates >1)]
-[#var csPackage = globals.getPreprocessorSymbol('cs.package', settings.parserPackage) ]
+[#var csPackage = globals::getPreprocessorSymbol('cs.package', settings.parserPackage) ]
 namespace ${csPackage} {
     using System;
     using System.Collections.Generic;

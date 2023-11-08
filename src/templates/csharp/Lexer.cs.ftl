@@ -207,7 +207,7 @@ if NFA state's moveRanges array is smaller than NFA_RANGE_THRESHOLD
     [/#if]
 [/#macro]
 
-[#var csPackage = globals.getPreprocessorSymbol('cs.package', settings.parserPackage) ]
+[#var csPackage = globals::getPreprocessorSymbol('cs.package', settings.parserPackage) ]
 namespace ${csPackage} {
     using System;
     using System.Collections.Generic;
