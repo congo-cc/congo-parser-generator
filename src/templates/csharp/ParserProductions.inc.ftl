@@ -51,7 +51,7 @@
     [#-- Generate the method modifiers and header --] 
         ${production.leadingComments}
         // ${production.location}
-        ${globals.startProduction()}${globals.translateModifiers(production.accessModifier)} ${globals.translateType(production.returnType)} Parse${production.name}([#if production.parameterList?has_content]${globals.translateParameters(production.parameterList)}[/#if]) {
+        ${globals::startProduction()}${globals::translateModifiers(production.accessModifier)} ${globals::translateType(production.returnType)} Parse${production.name}([#if production.parameterList?has_content]${globals::translateParameters(production.parameterList)}[/#if]) {
             var prevProduction = _currentlyParsedProduction;
             _currentlyParsedProduction = "${production.name}";
             [#--${production.javaCode!}
@@ -62,7 +62,7 @@
             [#set topLevelExpansion = false]
             ${BuildCode(production)}
         }
-        // end of Parse${production.name}${globals.endProduction()}
+        // end of Parse${production.name}${globals::endProduction()}
 
 [/#macro]
 
@@ -170,7 +170,7 @@ if (_pendingRecovery) {
         [/#if]
     [/#if]
     [#if !buildingTreeNode && !canRecover]
-${globals.translateCodeBlock(javaCodePrologue, 1)}[#rt]
+${globals::translateCodeBlock(javaCodePrologue, 1)}[#rt]
         [#nested]
     [#else]
         [#-- We need tree nodes and/or recovery code. --]      
@@ -179,7 +179,7 @@ ${globals.translateCodeBlock(javaCodePrologue, 1)}[#rt]
             [@buildTreeNode production treeNodeBehavior nodeVarName /]
         [/#if]
         [#-- Any prologue code can refer to CURRENT_NODE at this point. --][#-- REVISIT: Is this needed anymore, since thisProduction is always the reference to CURRENT_NODE (jb)? --]
-${globals.translateCodeBlock(javaCodePrologue, 1)}
+${globals::translateCodeBlock(javaCodePrologue, 1)}
 ParseException ${parseExceptionVar} = null;
 var ${callStackSizeVar} = ParsingStack.Count;
 try {
@@ -347,8 +347,8 @@ finally {
    [#if !treeNodeBehavior??]
       [#-- There is still no express treeNodeBehavior determined; supply the default if this is a BNF production node --]  
       [#if isProduction && !settings.nodeDefaultVoid 
-                        && !grammar.nodeIsInterface(expansion.name)
-                        && !grammar.nodeIsAbstract(expansion.name)]
+                        && !grammar::nodeIsInterface(expansion.name)
+                        && !grammar::nodeIsAbstract(expansion.name)]
          [#if settings.smartNodeCreation]
             [#set treeNodeBehavior = {"nodeName" : expansion.name!"nemo", "condition" : "1", "gtNode" : true, "void" :false, "initialShorthand" : ">"}]
          [#else]
@@ -417,7 +417,7 @@ finally {
 [/#function]
 
 [#macro buildTreeNode production treeNodeBehavior nodeVarName] [#-- FIXME: production is not used here --]
-   ${globals.pushNodeVariableName(nodeVarName)!}
+   #exec globals::pushNodeVariableName(nodeVarName)
    [@createNode nodeClassName(treeNodeBehavior) nodeVarName /]
 [/#macro]
 
@@ -457,7 +457,7 @@ if (BuildTree) {
    [/#if]
       }
    }
-   ${globals.popNodeVariableName()!}
+   #exec globals::popNodeVariableName()
 [/#macro]
 
 [#function getRhsAssignmentPattern assignment] 
@@ -521,7 +521,7 @@ if (BuildTree) {
    [/#if]
    [#if (injectedFields[field])?is_null]
       [#set injectedFields = injectedFields + {field : type}]
-      ${grammar.addFieldInjection(currentProduction.nodeName, modifier, type, field)}
+      ${grammar::addFieldInjection(currentProduction.nodeName, modifier, type, field)}
    [/#if]
    [#return "" /]
 [/#function]
@@ -551,7 +551,7 @@ if (BuildTree) {
    [#var prevLexicalStateVar = CU.newVarName("previousLexicalState")]
    [#-- take care of the non-tree-building classes --]
    [#if classname = "CodeBlock"]
-${globals.translateCodeBlock(expansion, 1)}
+${globals::translateCodeBlock(expansion, 1)}
 [#-- FIXME: for some reason a CodeBlock consisting only of a "// ..." line throws a ParseException on previous template line (for CSharp, not Java). --]
    [#-- OMITTED: [#elseif classname = "UncacheTokens"]
          uncacheTokens(); --]
@@ -617,7 +617,7 @@ Fail("Failure: " + ${fail.exp});
 Fail("Failure");
       [/#if]
     [#else]
-${globals.translateCodeBlock(fail.code, 1)}
+${globals::translateCodeBlock(fail.code, 1)}
     [/#if]
 [#-- // DBG < BuildCodeFailure --]
 [/#macro]
@@ -625,11 +625,11 @@ ${globals.translateCodeBlock(fail.code, 1)}
 [#macro BuildAssertionCode assertion]
 [#var optionalPart = ""]
 [#if assertion.messageExpression??]
-  [#set optionalPart = " + " + globals.translateExpression(assertion.messageExpression)]
+  [#set optionalPart = " + " + globals::translateExpression(assertion.messageExpression)]
 [/#if]
    [#var assertionMessage = "Assertion at: " + assertion.location?j_string + " failed. "]
    [#if assertion.assertionExpression??]
-if (!(${globals.translateExpression(assertion.assertionExpression)})) {
+if (!(${globals::translateExpression(assertion.assertionExpression)})) {
     Fail("${assertionMessage}"${optionalPart});
 }
    [/#if]
@@ -693,7 +693,7 @@ OuterFollowSet = ${nonterminal.followSetVarName};
 OuterFollowSet = null;
       [/#if]
    [#else]
-     [#if !followSet.isEmpty()]
+     [#if !followSet.empty]
 if (OuterFollowSet != null) {
     var newFollowSet = new HashSet<TokenType>(${nonterminal.followSetVarName});
     newFollowSet.UnionWith(OuterFollowSet);
@@ -720,10 +720,10 @@ finally {
    [#-- Accept the non-terminal expansion --]
    [#if nonterminal.production.returnType != "void" && expressedLHS != "@" && !nonterminal.assignment.namedAssignment && !nonterminal.assignment.propertyAssignment]
       [#-- Not a void production, so accept and clear the expressedLHS, it has already been applied. --]
-      ${expressedLHS?replace("@", "Parse" + nonterminal.name + "(" + globals.translateNonterminalArgs(nonterminal.args)! + ")")};
+      ${expressedLHS?replace("@", "Parse" + nonterminal.name + "(" + globals::translateNonterminalArgs(nonterminal.args)! + ")")};
       [#set expressedLHS = "@"]
    [#else]
-      Parse${nonterminal.name}(${globals.translateNonterminalArgs(nonterminal.args)!});
+      Parse${nonterminal.name}(${globals::translateNonterminalArgs(nonterminal.args)!});
    [/#if]
    [#if expressedLHS != "@" || impliedLHS != "@"]
       [#if nonterminal.assignment?? && (nonterminal.assignment.addTo!false || nonterminal.assignment.namedAssignment)]
@@ -912,12 +912,12 @@ ${BuildCode(subexp)}
 
 [#-- Generates code for when we need a scanahead --]
 [#macro ScanAheadCondition expansion]
-[#if expansion.lookahead?? && expansion.lookahead.assignment??](${expansion.lookahead.assignment.name} = [/#if][#if expansion.hasSemanticLookahead && !expansion.lookahead.semanticLookaheadNested](${globals.translateExpression(expansion.semanticLookahead)}) && [/#if]${expansion.predicateMethodName}()[#if expansion.lookahead?? && expansion.lookahead.assignment??])[/#if]
+[#if expansion.lookahead?? && expansion.lookahead.assignment??](${expansion.lookahead.assignment.name} = [/#if][#if expansion.hasSemanticLookahead && !expansion.lookahead.semanticLookaheadNested](${globals::translateExpression(expansion.semanticLookahead)}) && [/#if]${expansion.predicateMethodName}()[#if expansion.lookahead?? && expansion.lookahead.assignment??])[/#if]
 [/#macro]
 
 
 [#-- Generates code for when we don't need any scanahead routine --]
 [#macro SingleTokenCondition expansion]
-   [#if expansion.hasSemanticLookahead](${globals.translateExpression(expansion.semanticLookahead)}) && [/#if]
+   [#if expansion.hasSemanticLookahead](${globals::translateExpression(expansion.semanticLookahead)}) && [/#if]
    [#if expansion.firstSet.tokenNames?size = 0 || expansion.lookaheadAmount ==0 || expansion.minimumSize=0]true[#elseif expansion.firstSet.tokenNames?size < 5][#list expansion.firstSet.tokenNames as name](NextTokenType == TokenType.${name})[#if name_has_next] || [/#if][/#list][#else](${expansion.firstSetVarName}.Contains(NextTokenType))[/#if]
 [/#macro]

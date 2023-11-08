@@ -369,8 +369,8 @@
    #if !treeNodeBehavior??
       [#-- There is still no treeNodeBehavior determined; supply the default if this is a BNF production node. No assignment is needed. --] 
       [#if isProduction && !settings.nodeDefaultVoid 
-                        && !grammar.nodeIsInterface(expansion.name)
-                        && !grammar.nodeIsAbstract(expansion.name)]
+                        && !grammar::nodeIsInterface(expansion.name)
+                        && !grammar::nodeIsAbstract(expansion.name)]
          #if settings.smartNodeCreation
             [#set treeNodeBehavior = {
                                        "nodeName" : expansion.name!"nemo", 
@@ -452,7 +452,7 @@
 [/#function]
 
 [#macro buildTreeNode production treeNodeBehavior nodeVarName] [#-- FIXME: production is not used here --]
-   ${globals.pushNodeVariableName(nodeVarName)!}
+   #exec globals::pushNodeVariableName(nodeVarName)
    [@createNode nodeClassName(treeNodeBehavior) nodeVarName /]
 [/#macro]
 
@@ -496,7 +496,7 @@
    [/#if]
       }
    }
-   ${globals.popNodeVariableName()!}
+   #exec globals::popNodeVariableName()
 [/#macro]
 
 #function getRhsAssignmentPattern assignment 
@@ -559,8 +559,8 @@
       [#set field = field + " = new ArrayList<Node>()"]
    [/#if]
    [#if (injectedFields[field])?is_null]
-      [#set injectedFields = injectedFields + {field : type}]
-      ${grammar.addFieldInjection(currentProduction.nodeName, modifier, type, field)!}
+      #set injectedFields = injectedFields + {field : type}
+      #exec grammar::addFieldInjection(currentProduction.nodeName, modifier, type, field)
    [/#if]
    [#return "" /]
 [/#function]
@@ -725,7 +725,7 @@
          [#else]
             outerFollowSet = null;
          [/#if]
-      [#elseif !followSet.isEmpty()]
+      [#elseif !followSet.empty]
          if (outerFollowSet != null) {
             EnumSet<TokenType> newFollowSet = ${nonterminal.followSetVarName}.clone();
             newFollowSet.addAll(outerFollowSet);

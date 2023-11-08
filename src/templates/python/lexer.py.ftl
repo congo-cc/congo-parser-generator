@@ -22,7 +22,7 @@ except ImportError:
     from .utils import BitSet
     _fast_bitset = False
 
-${globals.translateLexerImports()}
+${globals::translateLexerImports()}
 
 #var NFA_RANGE_THRESHOLD = 16,
      MAX_INT=2147483647,
@@ -118,7 +118,7 @@ nfa_functions = NFA_FUNCTIONS_${lexicalState.name}_init()
   #var arrayName = nfaState.movesArrayName
 ${arrayName} = [
   #list nfaState.moveRanges as char
-    ${globals.displayChar(char)}[#if char_has_next],[/#if]
+    ${globals::displayChar(char)}[#if char_has_next],[/#if]
   /#list
 ]
 /#macro
@@ -161,7 +161,7 @@ def ${nfaState.methodName}(ch, next_states, valid_types, already_matched_types):
 --]
 #macro CompositeNfaMethod nfaState
 def ${nfaState.methodName}(ch, next_states, valid_types, already_matched_types):
-#if lexerData.isLazy(nfaState.type)
+#if lexerData::isLazy(nfaState.type)
     if ${nfaState.type.label} in already_matched_types:
         return None
 /#if
@@ -203,8 +203,8 @@ def ${nfaState.methodName}(ch, next_states, valid_types, already_matched_types):
    Generate a method for a single, i.e. non-composite NFA state 
 --]
 #macro SimpleNfaMethod state
-def ${state.getMethodName()}(ch, next_states, valid_yypes, already_matched_types):
-#if lexerData.isLazy(state.type)
+def ${state.methodName}(ch, next_states, valid_yypes, already_matched_types):
+#if lexerData::isLazy(state.type)
     if ${state.type.label} in already_matched_types:
         return None
 /#if
@@ -243,7 +243,7 @@ if NFA state's moveRanges array is smaller than NFA_RANGE_THRESHOLD
 --]
 #macro RangesCondition moveRanges
     #var left = moveRanges[0], right = moveRanges[1]
-    #var displayLeft = globals.displayChar(left), displayRight = globals.displayChar(right)
+    #var displayLeft = globals::displayChar(left), displayRight = globals::displayChar(right)
     #var singleChar = left == right
     #if moveRanges?size==2
        #if singleChar
@@ -756,7 +756,7 @@ class ${lexerClassName}(TokenSource):
         'more_tokens',
         'lexical_state',
 [#--        '_matcher_hook', --]
-#var injectedFields = globals.injectedLexerFieldNames()
+#var injectedFields = globals::injectedLexerFieldNames()
 #if injectedFields?size > 0
         # injected fields
   #list injectedFields as fieldName
@@ -766,7 +766,7 @@ class ${lexerClassName}(TokenSource):
     )
 
     def __init__(self, input_source, lex_state=LexicalState.${lexerData.lexicalStates[0].name}, line=1, column=1):
-${globals.translateLexerInjections(true)}
+${globals::translateLexerInjections(true)}
         super().__init__(
             input_source, line, column, DEFAULT_TAB_SIZE,
             ${PRESERVE_TABS}, ${PRESERVE_LINE_ENDINGS}, ${JAVA_UNICODE_ESCAPE}, ${TERMINATING_STRING}
@@ -927,7 +927,7 @@ ${globals.translateLexerInjections(true)}
     # to just after the Token passed in.
     def reset(self, t, lex_state=None):
 #list grammar.resetTokenHooks as resetTokenHookMethodName
-        self.${globals.translateIdentifier(resetTokenHookMethodName)}(t)
+        self.${globals::translateIdentifier(resetTokenHookMethodName)}(t)
 /#list
         self.uncache_tokens(t)
         if lex_state:
@@ -943,7 +943,7 @@ ${globals.translateLexerInjections(true)}
   #list lexerData.regularExpressions as regexp
     #if regexp.codeSnippet?has_content
         [#if idx > 0]el[/#if]if matched_type == TokenType.${regexp.label}:
-${globals.translateCodeBlock(regexp.codeSnippet.javaCode, 12)}
+${globals::translateCodeBlock(regexp.codeSnippet.javaCode, 12)}
       #set idx = idx + 1
     /#if
   /#list
@@ -981,7 +981,7 @@ ${globals.translateCodeBlock(regexp.codeSnippet.javaCode, 12)}
         eoff = self.get_line_end_offset(lineno)
         return self.get_text(soff, eoff + 1)
 
-${globals.translateLexerInjections(false)}
+${globals::translateLexerInjections(false)}
 
 #if lexerData.hasLexicalStateTransitions
 # Generate the map for lexical state transitions from the various token types (if necessary)

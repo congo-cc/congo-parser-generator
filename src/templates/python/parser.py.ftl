@@ -8,7 +8,7 @@ from .lexer import Lexer
 from .tokens import *
 from .utils import EMPTY_SET, ListIterator, StringBuilder, _Set, _List, make_frozenset, HashSet
 
-${globals.translateParserImports()}
+${globals::translateParserImports()}
 
 logger = logging.getLogger(__name__)
 
@@ -188,7 +188,7 @@ class Parser:
         'parsing_problems',
         'currently_parsed_production',
         'current_lookahead_production',
-[#var injectedFields = globals.injectedParserFieldNames()]
+[#var injectedFields = globals::injectedParserFieldNames()]
 [#if injectedFields?size > 0]
         # injected fields
 [#list injectedFields as fieldName]
@@ -198,7 +198,7 @@ class Parser:
     )
 
     def __init__(self, input_source_or_lexer):
-${globals.translateParserInjections(true)}
+${globals::translateParserInjections(true)}
         if not is_lexer(input_source_or_lexer):
             self.token_source = Lexer(input_source_or_lexer)
         else:
@@ -451,14 +451,14 @@ ${globals.translateParserInjections(true)}
 # Parser nodes
 #
   [#list globals.sortedNodeClassNames as node]
-    [#if !injector.hasInjectedCode(node)]
+    [#if !injector::hasInjectedCode(node)]
 class ${node}(BaseNode): pass
     [#else]
-${globals.translateInjectedClass(node)}
+${globals::translateInjectedClass(node)}
     [/#if]
 
 
   [/#list]
 [/#if]
 
-${globals.translateParserInjections(false)}
+${globals::translateParserInjections(false)}

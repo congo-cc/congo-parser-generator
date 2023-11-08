@@ -851,15 +851,15 @@ namespace ${csPackage} {
 
 [/#if]
 
-${globals.translateTokenInjections(true)}
+${globals::translateTokenInjections(true)}
 
-${globals.translateTokenInjections(false)}
+${globals::translateTokenInjections(false)}
 
     }
 
     // Token subclasses
 
-[#var tokenSubClassInfo = globals.tokenSubClassInfo()]
+[#var tokenSubClassInfo = globals::tokenSubClassInfo()]
 [#list tokenSubClassInfo.sortedNames as name]
     public class ${name} : ${tokenSubClassInfo.tokenClassMap[name]} {
         public ${name}(TokenType kind, Lexer tokenSource, int beginOffset, int endOffset) : base(kind, tokenSource, beginOffset, endOffset) {}
@@ -873,8 +873,8 @@ ${globals.translateTokenInjections(false)}
     public class ${cn} : Token {
         public ${cn}(TokenType kind, Lexer tokenSource, int beginOffset, int endOffset) : base(kind, tokenSource, beginOffset, endOffset) {}
 
-${globals.translateTokenSubclassInjections(cn, true)}
-${globals.translateTokenSubclassInjections(cn, false)}
+${globals::translateTokenSubclassInjections(cn, true)}
+${globals::translateTokenSubclassInjections(cn, false)}
     }
 
   [/#list]

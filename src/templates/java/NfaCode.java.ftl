@@ -54,7 +54,7 @@
         return new int[]
         {
         [#list nfaState.moveRanges as char]
-          ${globals.displayChar(char)}
+          ${globals::displayChar(char)}
           [#if char_has_next],[/#if]
         [/#list]
         };
@@ -103,7 +103,7 @@
 --]
 #macro CompositeNfaMethod nfaState  
     private static TokenType get${nfaState.methodName}(int ch, BitSet nextStates, EnumSet<TokenType> validTypes, EnumSet<TokenType> alreadyMatchedTypes) {
-     #if lexerData.isLazy(nfaState.type)
+     #if lexerData::isLazy(nfaState.type)
       if (alreadyMatchedTypes.contains(${nfaState.type.label})) return null;
      /#if
     #if nfaState.hasFinalState
@@ -147,8 +147,8 @@
    Generate a method for a single, i.e. non-composite NFA state 
 --]
 #macro SimpleNfaMethod state
-    private static TokenType get${state.getMethodName()}(int ch, BitSet nextStates, EnumSet<TokenType> validTypes, EnumSet<TokenType> alreadyMatchedTypes) {
-     #if lexerData.isLazy(state.type)
+    private static TokenType get${state.methodName}(int ch, BitSet nextStates, EnumSet<TokenType> validTypes, EnumSet<TokenType> alreadyMatchedTypes) {
+     #if lexerData::isLazy(state.type)
       if (alreadyMatchedTypes.contains(${state.type.label})) return null;
      /#if
       if ([@NfaStateCondition state /]) {
@@ -188,8 +188,8 @@ if NFA state's moveRanges array is smaller than NFA_RANGE_THRESHOLD
 --]
 #macro RangesCondition moveRanges
     #var left = moveRanges[0], right = moveRanges[1]
-    #var displayLeft = globals.displayChar(left), 
-         displayRight = globals.displayChar(right)
+    #var displayLeft = globals::displayChar(left), 
+         displayRight = globals::displayChar(right)
     #var singleChar = left == right
     #if moveRanges?size==2
        #if singleChar

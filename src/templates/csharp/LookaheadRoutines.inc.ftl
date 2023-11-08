@@ -170,7 +170,7 @@ ${BuildScanCode(expansion, indent + 4)}
 [#var is=""?right_pad(indent)]
 [#-- # DBG > BuildPredicateCode ${indent} --]
 [#if expansion.hasSemanticLookahead && (expansion.lookahead.semanticLookaheadNested || expansion.containingProduction.onlyForLookahead)]
-if (!(${globals.translateExpression(expansion.semanticLookahead)})) {
+if (!(${globals::translateExpression(expansion.semanticLookahead)})) {
     return false;
 }
 [/#if]
@@ -288,7 +288,7 @@ private bool ${lookBehind.routineName}() {
         // BuildProductionLookaheadMethod macro
         private bool ${production.lookaheadMethodName}() {
 [#if production.javaCode?? && production.javaCode.appliesInLookahead]
-${globals.translateCodeBlock(production.javaCode, 12)}
+${globals::translateCodeBlock(production.javaCode, 12)}
 [/#if]
 ${BuildScanCode(production.expansion, 12)}
             return true;
@@ -339,7 +339,7 @@ ${ScanCodeOneOrMore(expansion, indent)}
 ${ScanCodeChoice(expansion, indent)}
    [#elseif classname = "CodeBlock"]
       [#if expansion.appliesInLookahead || expansion.insideLookahead || expansion.containingProduction.onlyForLookahead]
-${globals.translateCodeBlock(expansion, indent)}
+${globals::translateCodeBlock(expansion, indent)}
       [/#if]
    [/#if]
   [/@CU.HandleLexicalStateChange]
@@ -414,7 +414,7 @@ if (!ScanToken(${expansion.firstSetVarName})) {
 [#var is=""?right_pad(indent)]
 [#-- # DBG > ScanCodeAssertion ${indent} --]
 [#if assertion.assertionExpression?? && (assertion.insideLookahead || assertion.semanticLookaheadNested || assertion.containingProduction.onlyForLookahead)]
-if (!(${globals.translateExpression(assertion.assertionExpression)})) {
+if (!(${globals::translateExpression(assertion.assertionExpression)})) {
     _hitFailure = true;
     return false;
 }

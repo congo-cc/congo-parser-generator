@@ -77,7 +77,7 @@ private static HashSet<TokenType> ${varName} = Utils.GetOrMakeSet(
 [#var arrayName = nfaState.movesArrayName]
         private static int[] ${arrayName} = {
 [#list nfaState.moveRanges as char]
-            ${globals.displayChar(char)}[#if char_has_next],[/#if]
+            ${globals::displayChar(char)}[#if char_has_next],[/#if]
 [/#list]
         };
 
@@ -124,7 +124,7 @@ private static HashSet<TokenType> ${varName} = Utils.GetOrMakeSet(
 --]
 [#macro GenerateNfaMethod nfaState]
         static TokenType? ${nfaState.methodName}(int ch, BitSet nextStates, HashSet<TokenType> validTypes, HashSet<TokenType> AlreadyMatchedTypes) {
-  [#if lexerData.isLazy(nfaState.type)]
+  [#if lexerData::isLazy(nfaState.type)]
     if (AlreadyMatchedTypes.Contains(${TT}${nfaState.type.label})) {
         return null;
     }
@@ -187,7 +187,7 @@ if NFA state's moveRanges array is smaller than NFA_RANGE_THRESHOLD
 --]
 [#macro RangesCondition moveRanges]
     [#var left = moveRanges[0], right = moveRanges[1]]
-    [#var displayLeft = globals.displayChar(left), displayRight = globals.displayChar(right)]
+    [#var displayLeft = globals::displayChar(left), displayRight = globals::displayChar(right)]
     [#var singleChar = left == right]
     [#if moveRanges?size==2]
        [#if singleChar]
@@ -215,7 +215,7 @@ namespace ${csPackage} {
     using System.IO;
     using System.Text;
     using System.Text.RegularExpressions;
-${globals.translateLexerImports()}
+${globals::translateLexerImports()}
 
     public class TokenSource {
         internal const int DEFAULT_TAB_SIZE = ${settings.tabSize};
@@ -905,7 +905,7 @@ ${globals.translateLexerImports()}
             regularTokens.Add(${CU.TT}${token});
   [/#list]
 [/#if]
-${globals.translateLexerInitializers()}
+${globals::translateLexerInitializers()}
             SwitchTo(lexState);
         }
 
@@ -1267,7 +1267,7 @@ ${globals.translateLexerInitializers()}
         // to just after the ${TOKEN} passed in.
         internal void Reset(${TOKEN} t, LexicalState? state = null) {
 [#list grammar.resetTokenHooks as resetTokenHookMethodName]
-            ${globals.translateIdentifier(resetTokenHookMethodName)}(t);
+            ${globals::translateIdentifier(resetTokenHookMethodName)}(t);
 [/#list]
             UncacheTokens(t);
             if (state != null) {
@@ -1286,7 +1286,7 @@ ${globals.translateLexerInitializers()}
         [#list lexerData.regularExpressions as regexp]
                 [#if regexp.codeSnippet?has_content]
             case TokenType.${regexp.label}:
-${globals.translateCodeBlock(regexp.codeSnippet.javaCode, 16)}
+${globals::translateCodeBlock(regexp.codeSnippet.javaCode, 16)}
                 break;
                 [/#if]
         [/#list]
@@ -1365,8 +1365,8 @@ ${globals.translateCodeBlock(regexp.codeSnippet.javaCode, 16)}
 [/#if]
         }
 
-${globals.translateLexerInjections(true)}
+${globals::translateLexerInjections(true)}
 
-${globals.translateLexerInjections(false)}
+${globals::translateLexerInjections(false)}
     }
 }

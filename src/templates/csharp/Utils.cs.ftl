@@ -461,7 +461,7 @@ namespace ${csPackage} {
   "getToken(1).getType()!=TokenType._DEFAULT"
 ] ]
 [#list cases as case]
-# "${case}" -> ${globals.translateString(case)}
+# "${case}" -> ${globals::translateString(case)}
 [/#list]
 [#-- list globals.sortedNodeClassNames as cn]
 # ${cn}

@@ -55,7 +55,7 @@
 ${is}# ${production.leadingComments} 
    [/#if]
 ${is}# ${production.location}
-${is}${globals.startProduction()}def parse_${production.name}(self[#if production.parameterList?has_content], ${globals.translateParameters(production.parameterList)}[/#if]):
+${is}${globals::startProduction()}def parse_${production.name}(self[#if production.parameterList?has_content], ${globals::translateParameters(production.parameterList)}[/#if]):
    [#-- Now generate the body --]
 ${is}    # import pdb; pdb.set_trace()
    [#-- OMITTED: "if (cancelled) throw new CancellationException();" --]
@@ -71,7 +71,7 @@ ${is}    ${BuildCode(production, indent + 4)}
 [#-- In the java template the following line is in the TreeBuildingAndRecovery macro (x2)
 ${is}    self.currently_parsed_production = prev_production
  --]
-${is}# end of parse_${production.name}${globals.endProduction()}
+${is}# end of parse_${production.name}${globals::endProduction()}
 [/#macro]
 
 [#--
@@ -178,7 +178,7 @@ ${is}    self.${expansion.recoverMethodName}()
    [/#if]
    [#if !buildingTreeNode && !canRecover]
       [#-- We need neither tree nodes nor recovery code; do the simple one. --]
-${globals.translateCodeBlock(javaCodePrologue, indent)}[#rt]
+${globals::translateCodeBlock(javaCodePrologue, indent)}[#rt]
       [#nested indent][#rt]
    [#else]
       [#-- We need tree nodes and/or recovery code. --] 
@@ -187,7 +187,7 @@ ${globals.translateCodeBlock(javaCodePrologue, indent)}[#rt]
          [@buildTreeNode production treeNodeBehavior nodeVarName indent/]
       [/#if]
       [#-- Any prologue code can refer to CURRENT_NODE at this point. --]
-${globals.translateCodeBlock(javaCodePrologue, indent)}[#rt]
+${globals::translateCodeBlock(javaCodePrologue, indent)}[#rt]
 ${is}${parseExceptionVar} = None
 ${is}${callStackSizeVar} = len(self.parsing_stack)
 ${is}try:
@@ -351,8 +351,8 @@ ${injectDeclaration(treeNodeBehavior.nodeName, treeNodeBehavior.assignment.name,
    [#if !treeNodeBehavior??]
       [#-- There is still no treeNodeBehavior determined; supply the default if this is a BNF production node. No assignment is needed. --] 
       [#if isProduction && !settings.nodeDefaultVoid 
-                        && !grammar.nodeIsInterface(expansion.name)
-                        && !grammar.nodeIsAbstract(expansion.name)]
+                        && !grammar::nodeIsInterface(expansion.name)
+                        && !grammar::nodeIsAbstract(expansion.name)]
          [#if settings.smartNodeCreation]
             [#set treeNodeBehavior = {
                                        "nodeName" : expansion.name!"nemo", 
@@ -436,7 +436,7 @@ ${injectDeclaration(treeNodeBehavior.nodeName, treeNodeBehavior.assignment.name,
 [#macro buildTreeNode production treeNodeBehavior nodeVarName indent]
 [#-- FIXME: production is not used here --]
 [#var is = ""?right_pad(indent)]
-${globals.pushNodeVariableName(nodeVarName)!}[#rt]
+#exec globals::pushNodeVariableName(nodeVarName)
 [@createNode nodeClassName(treeNodeBehavior) nodeVarName indent /]
 [/#macro]
 
@@ -472,7 +472,7 @@ ${is}        ${nodeVarName}.dirty = True
    [#else]
 ${is}        self.clear_node_scope()
    [/#if]
-${globals.popNodeVariableName()!}[#rt]
+#exec globals::popNodeVariableName()
 [/#macro]
 
 [#function getRhsAssignmentPattern assignment] 
@@ -497,22 +497,22 @@ ${globals.popNodeVariableName()!}[#rt]
          [/#if]
          [#if assignment.addTo!false]
             [#-- This is the addition of the current node as an element of the specified list property --]
-            [#return "thisProduction." + globals.translateIdentifier(lhsName) + ".add(" + getRhsAssignmentPattern(assignment) + ")" /]
+            [#return "thisProduction." + globals::translateIdentifier(lhsName) + ".add(" + getRhsAssignmentPattern(assignment) + ")" /]
          [#else]
             [#-- This is an assignment of the current node's effective value to the specified property of the production node --]
-            [#return "thisProduction." + globals.translateIdentifier(lhsName) + " = " + getRhsAssignmentPattern(assignment) /]
+            [#return "thisProduction." + globals::translateIdentifier(lhsName) + " = " + getRhsAssignmentPattern(assignment) /]
          [/#if]
       [#elseif assignment.namedAssignment!false]
          [#if assignment.addTo]
             [#-- This is the addition of the current node to the named child list of the production node --]
-            [#return "${globals.currentNodeVariableName}" + ".add_to_named_child_list(\"" + globals.translateIdentifier(lhsName) + "\", " + getRhsAssignmentPattern(assignment) + ")" /]
+            [#return "${globals.currentNodeVariableName}" + ".add_to_named_child_list(\"" + globals::translateIdentifier(lhsName) + "\", " + getRhsAssignmentPattern(assignment) + ")" /]
          [#else]
             [#-- This is an assignment of the current node to a named child of the production node --]
-            [#return "${globals.currentNodeVariableName}" + ".set_named_child(\"" + globals.translateIdentifier(lhsName) + "\", " + getRhsAssignmentPattern(assignment) + ")" /]
+            [#return "${globals.currentNodeVariableName}" + ".set_named_child(\"" + globals::translateIdentifier(lhsName) + "\", " + getRhsAssignmentPattern(assignment) + ")" /]
          [/#if]
       [/#if]
       [#-- This is the assignment of the current node or it's returned value to an arbitrary LHS "name" (i.e., the legacy JavaCC assignment) --]
-      [#return globals.translateIdentifier(lhsName) + " = " + getRhsAssignmentPattern(assignment) /]
+      [#return globals::translateIdentifier(lhsName) + " = " + getRhsAssignmentPattern(assignment) /]
    [/#if]
    [#-- There is no LHS --]
    [#return "@" /]
@@ -535,7 +535,7 @@ ${globals.popNodeVariableName()!}[#rt]
    [/#if]
    [#if (injectedFields[field])?is_null]
       [#set injectedFields = injectedFields + {field : type}]
-      ${grammar.addFieldInjection(currentProduction.nodeName, modifier, type, field)}
+      ${grammar::addFieldInjection(currentProduction.nodeName, modifier, type, field)}
    [/#if]
    [#return "" /]
 [/#function]
@@ -569,7 +569,7 @@ ${globals.popNodeVariableName()!}[#rt]
     [#var prevLexicalStateVar = CU.newVarName("previousLexicalState")]
    [#-- take care of the non-tree-building classes --]
    [#if classname = "CodeBlock"]
-${globals.translateCodeBlock(expansion, indent)}
+${globals::translateCodeBlock(expansion, indent)}
    [#elseif classname = "UncacheTokens"]
 ${is}self.uncache_tokens()
    [#elseif classname = "Failure"]
@@ -638,7 +638,7 @@ ${is}self.fail('Failure: %s' % "${fail.exp?j_string}")
 ${is}self.fail('Failure')
       [/#if]
     [#else]
-${globals.translateCodeBlock(fail.code, indent)}[#rt]
+${globals::translateCodeBlock(fail.code, indent)}[#rt]
     [/#if]
 [#--${is}# DBG < BuildCodeFailure ${indent} --]
 [/#macro]
@@ -647,11 +647,11 @@ ${globals.translateCodeBlock(fail.code, indent)}[#rt]
 [#var is = ""?right_pad(indent)]
 [#var optionalPart = ""]
 [#if assertion.messageExpression??]
-  [#set optionalPart = " + " + globals.translateExpression(assertion.messageExpression)]
+  [#set optionalPart = " + " + globals::translateExpression(assertion.messageExpression)]
 [/#if]
 [#var assertionMessage = "Assertion at: " + assertion.location?j_string + " failed."]
 [#if assertion.assertionExpression??]
-${is}if not (${globals.translateExpression(assertion.assertionExpression)}):
+${is}if not (${globals::translateExpression(assertion.assertionExpression)}):
 ${is}    self.fail("${assertionMessage}"${optionalPart})
 [/#if]
 [#if assertion.expansion??]
@@ -717,7 +717,7 @@ ${is}self.outer_follow_set = self.${nonterminal.followSetVarName}
       [#else]
 ${is}self.outer_follow_set = None
       [/#if]
-   [#elseif !followSet.isEmpty()]
+   [#elseif !followSet.empty]
 ${is}if self.outer_follow_set is not None:
 ${is}    new_follow_set = set(self.${nonterminal.followSetVarName}) | self.outer_follow_set
 ${is}    self.outer_follow_set = new_follow_set
@@ -741,10 +741,10 @@ ${is}    self.pop_call_stack()
    [#-- Accept the non-terminal expansion --]
    [#if nonterminal.production.returnType != "void" && expressedLHS != "@" && !nonterminal.assignment.namedAssignment && !nonterminal.assignment.propertyAssignment]
       [#-- Not a void production, so accept and clear the expressedLHS, it has already been applied. --]
-${is}${expressedLHS?replace("@", "self.parse_" + nonterminal.name + "(" + globals.translateNonterminalArgs(nonterminal.args) + ")")}
+${is}${expressedLHS?replace("@", "self.parse_" + nonterminal.name + "(" + globals::translateNonterminalArgs(nonterminal.args) + ")")}
       [#set expressedLHS = "@"]
    [#else]
-${is}${"self.parse_" + nonterminal.name + "(" + globals.translateNonterminalArgs(nonterminal.args) + ")"}
+${is}${"self.parse_" + nonterminal.name + "(" + globals::translateNonterminalArgs(nonterminal.args) + ")"}
    [/#if]
    [#if expressedLHS != "@" || impliedLHS != "@"]
       [#if nonterminal.assignment?? && (nonterminal.assignment.addTo!false || nonterminal.assignment.namedAssignment)]
@@ -923,11 +923,11 @@ ${SingleTokenCondition(expansion)}[#t]
 
 [#-- Generates code for when we need a scanahead --]
 [#macro ScanAheadCondition expansion]
-[#if expansion.lookahead?? && expansion.lookahead.assignment??](${expansion..assignment.name} = [/#if][#if expansion.hasSemanticLookahead && !expansion.lookahead.semanticLookaheadNested](${globals.translateExpression(expansion.semanticLookahead)}) and [/#if]self.${expansion.predicateMethodName}()[#if expansion.lookahead?? && expansion.lookahead.assignment??])[/#if][#t]
+[#if expansion.lookahead?? && expansion.lookahead.assignment??](${expansion..assignment.name} = [/#if][#if expansion.hasSemanticLookahead && !expansion.lookahead.semanticLookaheadNested](${globals::translateExpression(expansion.semanticLookahead)}) and [/#if]self.${expansion.predicateMethodName}()[#if expansion.lookahead?? && expansion.lookahead.assignment??])[/#if][#t]
 [/#macro]
 
 [#-- Generates code for when we don't need any scanahead routine --]
 [#macro SingleTokenCondition expansion]
-[#if expansion.hasSemanticLookahead](${globals.translateExpression(expansion.semanticLookahead)}) and [/#if][#t]
+[#if expansion.hasSemanticLookahead](${globals::translateExpression(expansion.semanticLookahead)}) and [/#if][#t]
 [#if expansion.firstSet.tokenNames?size =0 || expansion.lookaheadAmount ==0 || expansion.minimumSize=0]True[#elseif expansion.firstSet.tokenNames?size < 5][#list expansion.firstSet.tokenNames as name](self.next_token_type == ${name})[#if name_has_next] or [/#if][/#list][#else](self.next_token_type in self.${expansion.firstSetVarName})[/#if][#t]
 [/#macro]

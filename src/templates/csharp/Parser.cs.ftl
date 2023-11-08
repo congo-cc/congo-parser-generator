@@ -8,7 +8,7 @@ namespace ${csPackage} {
     using System.Diagnostics;
     using System.Text;
     using static TokenType;
-${globals.translateParserImports()}
+${globals::translateParserImports()}
 
     public class ParseException : Exception {
         public Parser Parser { get; private set; }
@@ -233,7 +233,7 @@ ${globals.translateParserImports()}
 [#if settings.treeBuildingEnabled]
             new NodeScope(this); // attaches NodeScope instance to Parser instance
 [/#if]
-${globals.translateParserInitializers()}
+${globals::translateParserInitializers()}
         }
 
 [#if settings.faultTolerant]
@@ -453,8 +453,8 @@ ${globals.translateParserInitializers()}
     // AST nodes
     //
 [#list globals.sortedNodeClassNames as node]
-  [#if !injector.hasInjectedCode(node)]
-    [#if globals.nodeIsInterface(node)]
+  [#if !injector::hasInjectedCode(node)]
+    [#if globals::nodeIsInterface(node)]
     public interface ${node} : Node {}
     [#else]
     public class ${node} : BaseNode {
@@ -463,14 +463,14 @@ ${globals.translateParserInitializers()}
     [/#if]
 
   [#else]
-${globals.translateInjectedClass(node)}
+${globals::translateInjectedClass(node)}
 
   [/#if]
 [/#list]
 [/#if]
 
-${globals.translateParserInjections(true)}
-${globals.translateParserInjections(false)}
+${globals::translateParserInjections(true)}
+${globals::translateParserInjections(false)}
 
     }
 }
