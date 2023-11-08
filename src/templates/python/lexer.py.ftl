@@ -9,11 +9,9 @@ import re
 from .tokens import (TokenType, LexicalState, InvalidToken, IgnoredToken,
                      SkippedToken, new_token)
 
-#if settings.extraTokens?size > 0
   #list settings.extraTokenNames as tokenName
 from .tokens import ${settings.extraTokens[tokenName]}
   /#list
-/#if
 from .utils import as_chr, _List, EMPTY_SET, HashSet
 
 # See if an accelerated BitSet is available.
@@ -783,11 +781,9 @@ ${globals.translateLexerInjections(true)}
         self.current_states = BitSet(MAX_STATES)
 
         self.active_token_types = set(TokenType)
-#if settings.deactivatedTokens?size>0
-  #list settings.deactivatedTokens as token
+#list settings.deactivatedTokens as token
         self.active_token_types.remove(TokenType.${token})
-  /#list
-/#if
+/#list
 
         # Just used to "bookmark" the starting location for a token
         # for when we put in the location info at the end.
@@ -798,11 +794,9 @@ ${globals.translateLexerInjections(true)}
         # i.e. declared as TOKEN
         [@EnumSet "regular_tokens" lexerData.regularTokens.tokenNames 8 /]
 
-#if settings.extraTokens?size > 0
   #list settings.extraTokenNames as tokenName
         self.regular_tokens.add(${settings.extraTokens[tokenName]})
   /#list
-/#if
         # Token types that do not participate in parsing
         # i.e. declared as UNPARSED (or SPECIAL_TOKEN)
         [@EnumSet "unparsed_tokens" lexerData.unparsedTokens.tokenNames 8 /]

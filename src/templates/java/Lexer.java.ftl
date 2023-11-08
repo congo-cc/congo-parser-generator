@@ -29,7 +29,7 @@ import static ${settings.parserPackage}.${TOKEN}.TokenType.*;
 [#var BaseToken = settings.treeBuildingEnabled?string("Node.TerminalNode", "${TOKEN}")]
 
 [#macro EnumSet varName tokenNames]
-   [#if tokenNames?size=0]
+   [#if !tokenNames]
        static final EnumSet<TokenType> ${varName} = EnumSet.noneOf(TokenType.class);
    [#else]
        static final EnumSet<TokenType> ${varName} = EnumSet.of(
@@ -71,17 +71,15 @@ class ${settings.lexerClassName} extends TokenSource
   public void setParser(${settings.parserClassName} parser) {this.parser = parser;}
  [/#if]
 
-   [#if settings.deactivatedTokens?size>0]
+  [#if settings.deactivatedTokens]
     EnumSet<TokenType> activeTokenTypes = EnumSet.allOf(TokenType.class);
-  [#else]
-    EnumSet<TokenType> activeTokenTypes = null;
-  [/#if]
-  [#if settings.deactivatedTokens?size>0]
-     {
+    {
        [#list settings.deactivatedTokens as token]
           activeTokenTypes.remove(${token});
        [/#list]
-     }
+    }
+  [#else]
+    EnumSet<TokenType> activeTokenTypes = null;
   [/#if]
 
  
@@ -98,7 +96,7 @@ class ${settings.lexerClassName} extends TokenSource
   // Tokens that correspond to a MORE, i.e. that are pending 
   // additional input
   [@EnumSet "moreTokens" lexerData.moreTokens.tokenNames /]
-  [#if settings.extraTokens?size >0]
+  [#if settings.extraTokens]
      static {
      [#list settings.extraTokenNames as token]
          regularTokens.add(${token});
