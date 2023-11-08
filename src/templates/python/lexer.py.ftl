@@ -130,7 +130,7 @@ def ${nfaState.methodName}(ch, next_states, valid_types, already_matched_types):
     type = None
     [#var states = nfaState.orderedStates, lastBlockStartIndex=0]
     [#list states as state]
-      [#if state_index ==0 || !state.moveRanges::equals(states[state_index-1].moveRanges)]
+      [#if state_index ==0 || state.moveRanges != states[state_index-1].moveRanges]
           [#-- In this case we need a new if or possibly else if --]
          [#var useElif = true]
          [#if state_index == 0 || state::overlaps(states::subList(lastBlockStartIndex, state_index))]
@@ -139,13 +139,13 @@ def ${nfaState.methodName}(ch, next_states, valid_types, already_matched_types):
                  If not, we continue in the same if-else block as before. --]
            [#set lastBlockStartIndex = state_index, useElif=false]
          [/#if]    
-    [#if useElif]elif[#else]if[/#if] [@NfaStateCondition state /]:
+    ${useElif ?: "elif" : "if"} [@NfaStateCondition state /]:
       [/#if]
         if valid_types is None or ${state.type.label} in valid_types:
       [#if state.nextStateIndex >= 0]
             next_states.set(${state.nextStateIndex})
       [/#if]
-      [#if !state_has_next || !state.moveRanges::equals(states[state_index+1].moveRanges)]
+      [#if !state_has_next || state.moveRanges != states[state_index+1].moveRanges]
         [#-- We've reached the end of the block. --]
           [#if state.nextState.final]
             [#--if (validTypes == null || validTypes.contains(${state.type.label}))--]
@@ -172,7 +172,7 @@ def ${nfaState.methodName}(ch, next_states, valid_types, already_matched_types):
 /#if
 #var states = nfaState.orderedStates, lastBlockStartIndex = 0
 #list states as state
-  [#if state_index ==0 || !state.moveRanges::equals(states[state_index-1].moveRanges)]
+  [#if state_index ==0 || state.moveRanges != states[state_index-1].moveRanges]
         [#-- In this case we need a new if or possibly else if --]
         #var useElif = true
          [#if state_index == 0 || state::overlaps(states::subList(lastBlockStartIndex, state_index))]
@@ -181,12 +181,12 @@ def ${nfaState.methodName}(ch, next_states, valid_types, already_matched_types):
                 If not, we continue in the same if-else block as before. --]
           #set lastBlockStartIndex = state_index, useElif = false
         /#if
-    [#if useElif]elif[#else]if[/#if] [@NfaStateCondition state /]:
+    ${useElif ?: "elif" : "if"} [@NfaStateCondition state /]:
   /#if
   #if state.nextStateIndex >= 0
         next_states.set(${state.nextStateIndex})
   /#if
-  #if !state_has_next || !state.moveRanges::equals(states[state_index+1].moveRanges)
+  #if !state_has_next || state.moveRanges != states[state_index+1].moveRanges
     [#-- We've reached the end of the block. --]
     #if state.nextState.final
         type = ${state.type.label}
