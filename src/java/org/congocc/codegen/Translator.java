@@ -22,6 +22,7 @@ public class Translator {
     protected boolean inInterface;
     protected String currentClass;
 
+    @SafeVarargs
     public static <T> Set<T> makeSet(T... objs) {
         Set<T> set = new LinkedHashSet<>();
         Collections.addAll(set, objs);
@@ -30,21 +31,21 @@ public class Translator {
 
     public boolean isIncludeInitializers() { return includeInitializers; }
 
-    protected class ASTExpression extends BaseNode {
+    protected static class ASTExpression extends BaseNode {
         ASTTypeExpression cast;
 
         public ASTTypeExpression getCast() {
             return cast;
         }
 
-        public ASTExpression() {super();}
+        public ASTExpression() { super(); }
 
         public ASTExpression(Node parent) {
             setParent(parent);
         }
     }
 
-    protected class ASTPrimaryExpression extends ASTExpression {
+    protected static class ASTPrimaryExpression extends ASTExpression {
         protected String name;
         protected String literal;
 
@@ -56,20 +57,21 @@ public class Translator {
             return literal;
         }
 
-        protected ASTPrimaryExpression() {super();}
+        protected ASTPrimaryExpression() { super(); }
 
         protected ASTPrimaryExpression(Node parent) {
             setParent(parent);
         }
     }
 
-    protected class ASTTypeExpression extends ASTPrimaryExpression {
+    protected static class ASTTypeExpression extends ASTPrimaryExpression {
         protected List<ASTTypeExpression> typeParameters;
 
+        private static final HashSet<String> classNames = new HashSet<>(Arrays.asList(
+                new String[] { "Integer", "Long", "Float", "Double", "BigInteger" }));
+
         public boolean isNumeric() {
-            return ((literal != null) || name.equals("Integer") ||
-                              name.equals("Long") || name.equals("Float") ||
-                              name.equals("Double") || name.equals("BigInteger"));
+            return ((literal != null) || classNames.contains(name));
         }
 
         void add(ASTTypeExpression tp) {
@@ -82,7 +84,7 @@ public class Translator {
         public List<ASTTypeExpression> getTypeParameters() { return typeParameters; }
     }
 
-    protected class ASTUnaryExpression extends ASTExpression {
+    protected static class ASTUnaryExpression extends ASTExpression {
         protected String op;
         private ASTExpression operand;
 
@@ -93,13 +95,14 @@ public class Translator {
         public ASTExpression getOperand() {
             return operand;
         }
+
         public void setOperand(ASTExpression expr) {
             operand = expr;
             expr.setParent(this);
         }
     }
 
-    protected class ASTInstanceofExpression extends ASTExpression {
+    protected static class ASTInstanceofExpression extends ASTExpression {
         private ASTExpression instance;
         private ASTTypeExpression typeExpression;
 
@@ -112,20 +115,16 @@ public class Translator {
         }
     }
 
-    protected class ASTBinaryExpression extends ASTExpression {
+    protected static class ASTBinaryExpression extends ASTExpression {
         private String op;
         private ASTExpression lhs;
         private ASTExpression rhs;
 
-        public String getOp() {
-            return op;
-        }
-        public ASTExpression getLhs() {
-            return lhs;
-        }
-        public ASTExpression getRhs() {
-            return rhs;
-        }
+        public String getOp() { return op; }
+
+        public ASTExpression getLhs() { return lhs; }
+
+        public ASTExpression getRhs() { return rhs; }
 
         private void setLhs(ASTExpression expr) {
             lhs = expr;
@@ -138,7 +137,7 @@ public class Translator {
         }
     }
 
-    protected class ASTTernaryExpression extends ASTExpression {
+    protected static class ASTTernaryExpression extends ASTExpression {
         private ASTExpression condition;
         private ASTExpression trueValue;
         private ASTExpression falseValue;
@@ -156,7 +155,7 @@ public class Translator {
         }
     }
 
-    protected class ASTInvocation extends ASTExpression {
+    protected static class ASTInvocation extends ASTExpression {
         protected ASTExpression receiver;
         protected List<ASTExpression> arguments;
 
@@ -210,17 +209,18 @@ public class Translator {
         }
     }
 
-    protected class ASTAllocation extends ASTInvocation {}
+    protected static class ASTAllocation extends ASTInvocation {}
 
+    // REVIEW can't make static, not clear why
+    // error: no enclosing instance of type Translator is in scope (Java 8)
+    // Isn't using any Translator fields!
     protected class ASTPreOrPostfixExpression extends ASTUnaryExpression {
         private boolean postfix;
 
-        public boolean isPostfix() {
-            return postfix;
-        }
+        public boolean isPostfix() { return postfix; }
     }
 
-    protected class ASTArrayAccess extends ASTExpression {
+    protected static class ASTArrayAccess extends ASTExpression {
         protected ASTExpression array;
         protected ASTExpression index;
 
@@ -233,40 +233,39 @@ public class Translator {
         }
     }
 
+    // REVIEW can't make static, not clear why
+    // error: no enclosing instance of type Translator is in scope (Java 8)
+    // Isn't using any Translator fields!
     protected class ASTMethodReference extends ASTExpression {
         protected ASTTypeExpression typeExpression;
         protected List<ASTTypeExpression> typeArguments;
         protected ASTExpression identifier;
 
-        public ASTTypeExpression getTypeExpression() {
-            return typeExpression;
-        }
+        public ASTTypeExpression getTypeExpression() { return typeExpression; }
 
-        public List<ASTTypeExpression> getTypeArguments() {
-            return typeArguments;
-        }
+        public List<ASTTypeExpression> getTypeArguments() { return typeArguments; }
 
-        public ASTExpression getIdentifier() {
-            return identifier;
-        }
+        public ASTExpression getIdentifier() { return identifier; }
     }
 
+    // REVIEW can't make static, not clear why
+    // error: no enclosing instance of type Translator is in scope (Java 8)
+    // Isn't using any Translator fields!
     protected class ASTExplicitConstructorInvocation extends ASTInvocation {
         protected List<ASTTypeExpression> typeArguments;
 
-        public List<ASTTypeExpression> getTypeArguments() {
-            return typeArguments;
-        }
+        public List<ASTTypeExpression> getTypeArguments() { return typeArguments; }
     }
 
-    protected class ASTStatement extends BaseNode {}
+    protected static class ASTStatement extends BaseNode {}
 
-    protected class ASTBreakStatement extends ASTStatement {}
-    protected class ASTContinueStatement extends ASTStatement {}
+    protected static class ASTBreakStatement extends ASTStatement {}
 
-    protected class ASTStatementList extends ASTStatement {
+    protected static class ASTContinueStatement extends ASTStatement {}
+
+    protected static class ASTStatementList extends ASTStatement {
         boolean initializer;
-        private  List<ASTStatement> statements;
+        private List<ASTStatement> statements;
 
         public List<ASTStatement> getStatements() {
             return statements;
@@ -284,7 +283,7 @@ public class Translator {
         }
     }
 
-    protected class ASTIfStatement extends ASTStatement {
+    protected static class ASTIfStatement extends ASTStatement {
         private ASTExpression condition;
         private ASTStatement thenStmts;
         private ASTStatement elseStmts;
@@ -302,25 +301,23 @@ public class Translator {
         }
     }
 
-    protected class ASTReturnStatement extends ASTStatement {
+    protected static class ASTReturnStatement extends ASTStatement {
         private ASTExpression value;
 
-        public ASTExpression getValue() {
-            return value;
-        }
+        public ASTExpression getValue() { return value; }
+
         public void setValue(ASTExpression value) { this.value = value; }
     }
 
-    protected class ASTExpressionStatement extends ASTStatement {
+    protected static class ASTExpressionStatement extends ASTStatement {
         private ASTExpression value;
 
-        public ASTExpression getValue() {
-            return value;
-        }
+        public ASTExpression getValue() { return value; }
+
         public void setValue(ASTExpression value) { this.value = value; }
     }
 
-    protected class ASTForStatement extends ASTStatement {
+    protected static class ASTForStatement extends ASTStatement {
         private ASTVariableOrFieldDeclaration variable;
         private ASTExpression iterable;
         private ASTExpression condition;
@@ -355,7 +352,7 @@ public class Translator {
         }
     }
 
-    protected class ASTWhileStatement extends ASTStatement {
+    protected static class ASTWhileStatement extends ASTStatement {
         private ASTExpression condition;
         private ASTStatement statements;
 
@@ -368,6 +365,9 @@ public class Translator {
         }
     }
 
+    // REVIEW can't make static, not clear why
+    // error: no enclosing instance of type Translator is in scope (Java 8)
+    // Isn't using any Translator fields!
     protected class ASTCaseStatement extends ASTStatement {
         private List<ASTExpression> caseLabels;
         private ASTStatementList statements;
@@ -398,7 +398,7 @@ public class Translator {
         }
     }
 
-    protected class ASTSwitchStatement extends ASTStatement {
+    protected static class ASTSwitchStatement extends ASTStatement {
         protected ASTExpression variable;
         protected List<ASTCaseStatement> cases;
 
@@ -418,7 +418,7 @@ public class Translator {
         }
     }
 
-    protected class ASTAssertStatement extends ASTStatement {
+    protected static class ASTAssertStatement extends ASTStatement {
         protected ASTExpression condition;
         protected ASTExpression message;
 
@@ -431,7 +431,7 @@ public class Translator {
         }
     }
 
-    protected class ASTExceptionInfo {
+    protected static class ASTExceptionInfo {
         protected List<ASTTypeExpression> exceptionTypes;
         protected String variable;
         protected ASTStatement block;
@@ -456,7 +456,7 @@ public class Translator {
         }
     }
 
-    protected class ASTTryStatement extends ASTStatement {
+    protected static class ASTTryStatement extends ASTStatement {
         protected List<Node> resources;
         protected ASTStatement block;
         protected List<ASTExceptionInfo> catchBlocks;
@@ -482,68 +482,17 @@ public class Translator {
         }
     }
 
-    protected class ASTFormalParameter extends BaseNode {
+    protected static class ASTFormalParameter extends BaseNode {
         protected boolean isFinal;
         protected ASTTypeExpression typeExpression;
         protected String name;
 
-        public ASTTypeExpression getTypeExpression() {
-            return typeExpression;
-        }
+        public ASTTypeExpression getTypeExpression() { return typeExpression; }
 
-        public String getName() {
-            return name;
-        }
+        public String getName() { return name; }
     }
 
-    abstract class ASTStatementWithName extends ASTStatement {
-        protected String name;
-
-        public String getName() {
-            return name;
-        }
-    }
-
-    protected class ASTMethodDeclaration extends ASTStatementWithName {
-        protected List<String> modifiers;
-
-        protected ASTTypeExpression returnType;
-        protected List<ASTFormalParameter> parameters;
-        protected ASTStatementList statements;
-        protected boolean constructor;
-
-        public List<String> getModifiers() {
-            return modifiers;
-        }
-
-        void addModifier(String modifier) {
-            if (modifiers == null) {
-                modifiers = new ArrayList<>();
-            }
-            modifiers.add(modifier);
-        }
-
-        public boolean isConstructor() {
-            return constructor;
-        }
-
-        void addParameter(ASTFormalParameter parameter) {
-            if (parameters == null) {
-                parameters = new ArrayList<>();
-            }
-            parameters.add(parameter);
-        }
-
-        public List<ASTFormalParameter> getParameters() {
-            return parameters;
-        }
-
-        public ASTStatementList getStatements() { return statements; }
-
-        public ASTTypeExpression getReturnType() { return returnType; }
-    }
-
-    protected class ASTVariableOrFieldDeclaration extends ASTStatement {
+    protected static class ASTVariableOrFieldDeclaration extends ASTStatement {
         ASTTypeExpression typeExpression;
         List<ASTPrimaryExpression> names;
         List<ASTExpression> initializers;
@@ -565,9 +514,7 @@ public class Translator {
             return (annotations != null) && annotations.contains(annotation);
         }
 
-        public List<String> getModifiers() {
-            return modifiers;
-        }
+        public List<String> getModifiers() { return modifiers; }
 
         private void addModifier(String modifier) {
             if (modifiers == null) {
@@ -605,10 +552,70 @@ public class Translator {
         }
     }
 
+    // REVIEW can't make static, not clear why
+    // error: no enclosing instance of type Translator is in scope (Java 8)
+    // Isn't using any Translator fields!
+    protected class ASTStatementWithName extends ASTStatement {
+        protected String name;
+
+        public String getName() { return name; }
+    }
+
+    // REVIEW can't make static, not clear why
+    // error: no enclosing instance of type Translator is in scope (Java 8)
+    // Isn't using any Translator fields!
+    protected class ASTMethodDeclaration extends ASTStatementWithName {
+        protected List<String> modifiers;
+
+        protected ASTTypeExpression returnType;
+        protected List<ASTFormalParameter> parameters;
+        protected ASTStatementList statements;
+        protected boolean constructor;
+
+        public List<String> getModifiers() {
+            return modifiers;
+        }
+
+        void addModifier(String modifier) {
+            if (modifiers == null) {
+                modifiers = new ArrayList<>();
+            }
+            modifiers.add(modifier);
+        }
+
+        public boolean isConstructor() {
+            return constructor;
+        }
+
+        void addParameter(ASTFormalParameter parameter) {
+            if (parameters == null) {
+                parameters = new ArrayList<>();
+            }
+            parameters.add(parameter);
+        }
+
+        public List<ASTFormalParameter> getParameters() {
+            return parameters;
+        }
+
+        public ASTStatementList getStatements() {
+            return statements;
+        }
+
+        public ASTTypeExpression getReturnType() {
+            return returnType;
+        }
+    }
+
+    // REVIEW can't make static, not clear why
+    // error: no enclosing instance of type Translator is in scope (Java 8)
+    // Isn't using any Translator fields!
     protected class ASTEnumDeclaration extends ASTStatementWithName {
         protected List<String> values;
 
-        public List<String> getValues() { return values; }
+        public List<String> getValues() {
+            return values;
+        }
 
         protected void addValue(String v) {
             if (values == null) {
@@ -618,10 +625,15 @@ public class Translator {
         }
     }
 
+    // REVIEW can't make static, not clear why
+    // error: no enclosing instance of type Translator is in scope (Java 8)
+    // Isn't using any Translator fields!
     protected class ASTClassDeclaration extends ASTStatementWithName {
         protected List<ASTStatement> declarations;
 
-        public List<ASTStatement> getDeclarations() { return declarations; }
+        public List<ASTStatement> getDeclarations() {
+            return declarations;
+        }
 
         protected void addDeclaration(ASTStatement decl) {
             if (declarations == null) {
@@ -642,7 +654,10 @@ public class Translator {
     protected final Map<String, Set<String>> propertyMap = new HashMap<>();
     protected final Set<String> parameterNames = new LinkedHashSet<>();
 
-    public void clearFields() { fields.clear(); properties.clear(); }
+    public void clearFields() {
+        fields.clear();
+        properties.clear();
+    }
 
     public void pushSymbols(SymbolTable symbols) {
         symbolStack.add(symbols);
@@ -652,7 +667,9 @@ public class Translator {
         symbolStack.remove(symbolStack.size() - 1);
     }
 
-    public SymbolTable topSymbols() { return symbolStack.get(symbolStack.size() - 1); }
+    public SymbolTable topSymbols() {
+        return symbolStack.get(symbolStack.size() - 1);
+    }
 
     // public void clearSymbols() { symbolStack.clear(); }
 
@@ -661,9 +678,11 @@ public class Translator {
         latest.put(name, typeExpression);
     }
 
+/* NOT NEEDED?
     public void addParameterName(String name) {
         parameterNames.add(name);
     }
+*/
 
     public boolean isParameterName(String name) {
         return parameterNames.contains(name);
@@ -688,13 +707,9 @@ public class Translator {
         this.appSettings = grammar.getAppSettings();
     }
 
-    public int getFieldIndent() {
-        return fieldIndent;
-    }
+    public int getFieldIndent() { return fieldIndent; }
 
-    public int getMethodIndent() {
-        return methodIndent;
-    }
+    public int getMethodIndent() { return methodIndent; }
 
     public static Translator getTranslatorFor(Grammar grammar) {
         String codeLang = grammar.getAppSettings().getCodeLang();
@@ -751,7 +766,7 @@ public class Translator {
         if ((n < 3) || !(name.startsWith("get") || name.startsWith("is"))) {
             return false;
         }
-        int idx = name.startsWith("is") ? 2: 3;
+        int idx = name.startsWith("is") ? 2 : 3;
         return (idx < n) && Character.isUpperCase(name.charAt(idx));
     }
 
@@ -902,7 +917,6 @@ public class Translator {
             return resultNode;
         }
         else if (node instanceof PrimitiveType) {
-            ASTTypeExpression resultNode = new ASTTypeExpression();
             if (node.size() != 1) {
                 throw new UnsupportedOperationException("node is '" + node + "' class " + node.getClass().getSimpleName());
             }
@@ -990,7 +1004,6 @@ public class Translator {
         }
         else if (node instanceof MethodReference) {
             ASTMethodReference resultNode = new ASTMethodReference();
-            int n = node.size();
 
             resultNode.typeExpression = (ASTTypeExpression) transformTree(node.getFirstChild(), true);
             resultNode.identifier = (ASTExpression) transformTree(node.getLastChild());
@@ -1077,16 +1090,20 @@ public class Translator {
 
                 if (child instanceof Primitive || child instanceof PrimitiveType || child instanceof ObjectType) {
                     resultNode.typeExpression = (ASTTypeExpression) transformTree(child, true);
-                } else if (child instanceof Identifier) {
+                }
+                else if (child instanceof Identifier) {
                     name = (ASTPrimaryExpression) transformTree(child);
                     resultNode.addNameAndInitializer(name, null);
-                } else if (child instanceof VariableDeclarator) {
+                }
+                else if (child instanceof VariableDeclarator) {
                     name = (ASTPrimaryExpression) transformTree(child.getFirstChild());
                     initializer = (child.size() == 1) ? null : (ASTExpression) transformTree(child.getLastChild());
                     resultNode.addNameAndInitializer(name, initializer);
-                } else if (child instanceof LocalVariableDeclaration) {
+                }
+                else if (child instanceof LocalVariableDeclaration) {
                     return transformTree(child, forType);
-                } else {
+                }
+                else {
                     throw new UnsupportedOperationException("node is '" + child + "' class " + child.getClass().getSimpleName());
                 }
             }
@@ -1094,7 +1111,7 @@ public class Translator {
         }
         else if (node instanceof CodeBlock) {
             ASTStatementList resultNode = new ASTStatementList();
-            int n = node.size();
+
             for (Node child : node) {
                 if (!(child instanceof Delimiter)) {
                     resultNode.add((ASTStatement) transformTree(child));
@@ -1114,22 +1131,28 @@ public class Translator {
                 }
                 if (child instanceof Primitive || child instanceof PrimitiveType || child instanceof ObjectType) {
                     resultNode.typeExpression = (ASTTypeExpression) transformTree(child, true);
-                } else if (child instanceof KeyWord) {
+                }
+                else if (child instanceof KeyWord) {
                     resultNode.addModifier(child.toString());
-                } else if (child instanceof Identifier) {
+                }
+                else if (child instanceof Identifier) {
                     name = (ASTPrimaryExpression) transformTree(child);
                     resultNode.addNameAndInitializer(name, null);
-                } else if (child instanceof VariableDeclarator) {
+                }
+                else if (child instanceof VariableDeclarator) {
                     name = (ASTPrimaryExpression) transformTree(child.getFirstChild());
                     initializer = (child.size() == 1) ? null : (ASTExpression) transformTree(child.getLastChild());
                     resultNode.addNameAndInitializer(name, initializer);
-                } else if (child instanceof MarkerAnnotation) {
+                }
+                else if (child instanceof MarkerAnnotation) {
                     resultNode.addAnnotation(child.getLastChild().toString());
-                } else if (child instanceof Modifiers) {
+                }
+                else if (child instanceof Modifiers) {
                     for (Node gc : child.children()) {
                         resultNode.addModifier(gc.toString());
                     }
-                } else {
+                }
+                else {
                     throw new UnsupportedOperationException("node is '" + child + "' class " + child.getClass().getSimpleName());
                 }
             }
@@ -1144,11 +1167,11 @@ public class Translator {
         }
         else if (node instanceof IfStatement) {
             ASTIfStatement resultNode = new ASTIfStatement();
-            Node child = ((IfStatement)node).getCondition();
+            Node child = ((IfStatement) node).getCondition();
             resultNode.condition = (ASTExpression) transformTree(child);
-            child = ((IfStatement)node).getThenBlock();
+            child = ((IfStatement) node).getThenBlock();
             resultNode.thenStmts = (ASTStatement) transformTree(child);
-            child = ((IfStatement)node).getElseBlock();
+            child = ((IfStatement) node).getElseBlock();
             if (child != null) {
                 resultNode.elseStmts = (ASTStatement) transformTree(child);
             }
@@ -1308,11 +1331,11 @@ public class Translator {
 */
             }
             if (node instanceof MethodDeclaration) {
-                resultNode.statements = (ASTStatementList) transformTree(((MethodDeclaration)node).getStatements());
+                resultNode.statements = (ASTStatementList) transformTree(((MethodDeclaration) node).getStatements());
             }
             else {
-            	// it's a ConstructorDeclaration (alternative using property)
-                BaseNode statements = ((ConstructorDeclaration)node).getStatements();
+                // it's a ConstructorDeclaration (alternative using property)
+                BaseNode statements = ((ConstructorDeclaration) node).getStatements();
                 if (statements != null) {
                     resultNode.statements = new ASTStatementList();
                     for (Node child : statements) {
@@ -1383,11 +1406,11 @@ public class Translator {
             ASTTryStatement resultNode = new ASTTryStatement();
             resultNode.block = (ASTStatement) transformTree(node.getNamedChild("block"));
             List<Node> catchBlocks = node.getNamedChildList("catchBlocks");
-            for (Node cb: catchBlocks) {
+            for (Node cb : catchBlocks) {
                 ASTExceptionInfo info = new ASTExceptionInfo();
                 List<Node> excTypes = cb.getNamedChildList("exceptionTypes");
 
-                for (Node et: excTypes) {
+                for (Node et : excTypes) {
                     info.addExceptionType((ASTTypeExpression) transformTree(et, true));
                 }
                 info.variable = ((Token) cb.getNamedChild("varDecl")).toString();
@@ -1406,7 +1429,7 @@ public class Translator {
             resultNode.name = ((Token) node.getNamedChild("name")).toString();
             addNestedDeclaration(resultNode.name);
             List<Node> values = node.getNamedChild("body").getNamedChildList("values");
-            for (Node child: values) {
+            for (Node child : values) {
                 resultNode.addValue(((Token) child).toString());
             }
             return resultNode;
@@ -1417,7 +1440,7 @@ public class Translator {
             resultNode.name = ((Token) node.getNamedChild("name")).toString();
             addNestedDeclaration(resultNode.name);
             List<Node> decls = node.getLastChild().getNamedChildList("decls");
-            for (Node decl: decls) {
+            for (Node decl : decls) {
                 resultNode.addDeclaration((ASTStatement) transformTree(decl));
             }
             return resultNode;
@@ -1428,10 +1451,12 @@ public class Translator {
         return result;
     }
 
-    protected Node transformTree(Node node) { return transformTree(node, false); }
+    protected Node transformTree(Node node) {
+        return transformTree(node, false);
+    }
 
     public void fail() throws UnsupportedOperationException {
-        String message = String.format("not supported by translator for the '%s' language", grammar.getAppSettings().getCodeLang());
+        String message = String.format("not supported by translator for the '%s' language", appSettings.getCodeLang());
         throw new UnsupportedOperationException(message);
     }
 
@@ -1536,7 +1561,11 @@ public class Translator {
     protected void internalTranslateStatement(ASTStatement stmt, int indent, StringBuilder result) {
         fail();
     }
-    public void translateEmptyBlock(int indent, StringBuilder result) { fail(); }
+
+    public void translateEmptyBlock(int indent, StringBuilder result) {
+        fail();
+    }
+
     public void translateStatement(Node stmt, int indent, StringBuilder result) {
         ASTStatement node = (ASTStatement) transformTree(stmt);
         internalTranslateStatement(node, indent, result);
@@ -1552,7 +1581,10 @@ public class Translator {
         return args;
     }
 
-    public String translateTypeName(String name) { fail(); return null; }
+    public String translateTypeName(String name) {
+        fail();
+        return null;
+    }
 
     protected void translateType(ASTTypeExpression expr, StringBuilder result) {
         fail();
@@ -1814,7 +1846,7 @@ public class Translator {
         existing.add(name);
     }
 
-    public void startClass(String name, boolean fields, StringBuilder result) {
+    public void startClass(String name, boolean ignoredFields, StringBuilder ignoredResult) {
         currentClass = name;
     }
 

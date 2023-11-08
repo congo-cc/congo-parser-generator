@@ -100,7 +100,8 @@ public class PythonTranslator extends Translator {
         return result;
     }
 
-    @Override public String translateGetter(String getterName) {
+    @Override
+    public String translateGetter(String getterName) {
         if (getterName.startsWith("is")) {
             return translateIdentifier(getterName, TranslationContext.METHOD);
         }
@@ -112,12 +113,13 @@ public class PythonTranslator extends Translator {
         return translateIdentifier(result, TranslationContext.METHOD);
     }
 
-    @Override protected boolean needsParentheses(ASTExpression expr) {
+    @Override
+    protected boolean needsParentheses(ASTExpression expr) {
         boolean result = true;
 
         if (expr instanceof ASTPrimaryExpression ||
-            expr instanceof ASTInstanceofExpression ||
-            expr instanceof ASTUnaryExpression) {
+                expr instanceof ASTInstanceofExpression ||
+                expr instanceof ASTUnaryExpression) {
             result = false;
         }
         else if (expr instanceof ASTBinaryExpression) {
@@ -127,7 +129,7 @@ public class PythonTranslator extends Translator {
             }
             // Operator precedence might be different, so generally prefer to parenthesize
             // else {
-                // result = (expr.getParent() != null);
+            //     result = (expr.getParent() != null);
             // }
         }
         return result;
@@ -783,7 +785,8 @@ public class PythonTranslator extends Translator {
         }
     }
 
-    @Override  public String translateInjectedClass(CodeInjector injector, String name) {
+    @Override
+    public String translateInjectedClass(CodeInjector injector, String name) {
         StringBuilder result = new StringBuilder();
         String qualifiedName = String.format("%s.%s", appSettings.getNodePackage(), name);
         List<String> nameList = injector.getParentClasses(qualifiedName);
@@ -843,14 +846,17 @@ public class PythonTranslator extends Translator {
         return result.toString();
     }
 
-    @Override protected void translateCast(ASTTypeExpression cast, StringBuilder result) {
+    @Override
+    protected void translateCast(ASTTypeExpression cast, StringBuilder result) {
     }
 
-    @Override  public void translateFormals(List<FormalParameter> formals, SymbolTable symbols, StringBuilder result) {
+    @Override
+    public void translateFormals(List<FormalParameter> formals, SymbolTable symbols, StringBuilder result) {
         translateFormals(transformFormals(formals), symbols, false, false, result);
     }
 
-    @Override public void translateImport(String javaName, StringBuilder result) {
+    @Override
+    public void translateImport(String javaName, StringBuilder result) {
         String prefix = String.format("%s.", appSettings.getParserPackage());
         if (!javaName.startsWith(prefix)) {
             throw new UnsupportedOperationException();
