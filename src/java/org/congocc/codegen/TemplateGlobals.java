@@ -275,27 +275,6 @@ public class TemplateGlobals {
         return result.toString();
     }
     
-/*
-    public String translateCodeBlock(String cb, int indent) {
-        StringBuilder result = new StringBuilder();
-        if (cb != null) {
-            cb = cb.trim();
-            if (cb.length() == 0) {
-                translator.translateEmptyBlock(indent, result);
-            } else {
-                String block = "{" + cb + "}";
-                CongoCCParser parser = new CongoCCParser(block);
-                parser.Block();
-                Node node = parser.rootNode();
-                Translator.SymbolTable syms = new Translator.SymbolTable();
-                translator.pushSymbols(syms);
-                translateStatements(node, indent, result);
-                translator.popSymbols();
-            }
-        }
-        return result.toString();
-    }*/
-
     // used in templates
     public String translateNonterminalArgs(String args) {
         // The args are passed through as a string, but need to be translated according
