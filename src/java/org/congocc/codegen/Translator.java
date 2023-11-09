@@ -211,10 +211,7 @@ public class Translator {
 
     protected static class ASTAllocation extends ASTInvocation {}
 
-    // REVIEW can't make static, not clear why
-    // error: no enclosing instance of type Translator is in scope (Java 8)
-    // Isn't using any Translator fields!
-    protected class ASTPreOrPostfixExpression extends ASTUnaryExpression {
+    protected static class ASTPreOrPostfixExpression extends ASTUnaryExpression {
         private boolean postfix;
 
         public boolean isPostfix() { return postfix; }
@@ -233,10 +230,7 @@ public class Translator {
         }
     }
 
-    // REVIEW can't make static, not clear why
-    // error: no enclosing instance of type Translator is in scope (Java 8)
-    // Isn't using any Translator fields!
-    protected class ASTMethodReference extends ASTExpression {
+    protected static class ASTMethodReference extends ASTExpression {
         protected ASTTypeExpression typeExpression;
         protected List<ASTTypeExpression> typeArguments;
         protected ASTExpression identifier;
@@ -248,10 +242,7 @@ public class Translator {
         public ASTExpression getIdentifier() { return identifier; }
     }
 
-    // REVIEW can't make static, not clear why
-    // error: no enclosing instance of type Translator is in scope (Java 8)
-    // Isn't using any Translator fields!
-    protected class ASTExplicitConstructorInvocation extends ASTInvocation {
+    protected static class ASTExplicitConstructorInvocation extends ASTInvocation {
         protected List<ASTTypeExpression> typeArguments;
 
         public List<ASTTypeExpression> getTypeArguments() { return typeArguments; }
@@ -365,10 +356,7 @@ public class Translator {
         }
     }
 
-    // REVIEW can't make static, not clear why
-    // error: no enclosing instance of type Translator is in scope (Java 8)
-    // Isn't using any Translator fields!
-    protected class ASTCaseStatement extends ASTStatement {
+    protected static class ASTCaseStatement extends ASTStatement {
         private List<ASTExpression> caseLabels;
         private ASTStatementList statements;
         private boolean defaultCase;
@@ -552,19 +540,13 @@ public class Translator {
         }
     }
 
-    // REVIEW can't make static, not clear why
-    // error: no enclosing instance of type Translator is in scope (Java 8)
-    // Isn't using any Translator fields!
-    protected class ASTStatementWithName extends ASTStatement {
+    protected static class ASTStatementWithName extends ASTStatement {
         protected String name;
 
         public String getName() { return name; }
     }
 
-    // REVIEW can't make static, not clear why
-    // error: no enclosing instance of type Translator is in scope (Java 8)
-    // Isn't using any Translator fields!
-    protected class ASTMethodDeclaration extends ASTStatementWithName {
+    protected static class ASTMethodDeclaration extends ASTStatementWithName {
         protected List<String> modifiers;
 
         protected ASTTypeExpression returnType;
@@ -607,10 +589,7 @@ public class Translator {
         }
     }
 
-    // REVIEW can't make static, not clear why
-    // error: no enclosing instance of type Translator is in scope (Java 8)
-    // Isn't using any Translator fields!
-    protected class ASTEnumDeclaration extends ASTStatementWithName {
+    protected static class ASTEnumDeclaration extends ASTStatementWithName {
         protected List<String> values;
 
         public List<String> getValues() {
@@ -625,10 +604,7 @@ public class Translator {
         }
     }
 
-    // REVIEW can't make static, not clear why
-    // error: no enclosing instance of type Translator is in scope (Java 8)
-    // Isn't using any Translator fields!
-    protected class ASTClassDeclaration extends ASTStatementWithName {
+    protected static class ASTClassDeclaration extends ASTStatementWithName {
         protected List<ASTStatement> declarations;
 
         public List<ASTStatement> getDeclarations() {
