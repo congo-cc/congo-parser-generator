@@ -13,6 +13,7 @@ import org.congocc.parser.tree.*;
  * Class to hold various methods and variables
  * that are exposed to the template layer
  */
+@SuppressWarnings("unused")
 public class TemplateGlobals {
 
     private final Grammar grammar;
@@ -66,7 +67,7 @@ public class TemplateGlobals {
                     retval.append("\\\"");
                     continue;
                 case '\'':
-                    retval.append("\\\'");
+                    retval.append("\\'");
                     continue;
                 case '\\':
                     retval.append("\\\\");
@@ -100,19 +101,19 @@ public class TemplateGlobals {
         String s;
 
         if (ch == '\'')
-            return "\'\\'\'";
+            return "'\\''";
         if (ch == '\\')
-            return "\'\\\\\'";
+            return "'\\\\'";
         if (ch == '\t')
-            return "\'\\t\'";
+            return "'\\t'";
         if (ch == '\r')
-            return "\'\\r\'";
+            return "'\\r'";
         if (ch == '\n')
-            return "\'\\n\'";
+            return "'\\n'";
         if (ch == '\f')
-            return "\'\\f\'";
+            return "'\\f'";
         if (ch == ' ')
-            return "\' \'";
+            return "' '";
         if (ch < 128 && !Character.isWhitespace(ch) && !Character.isISOControl(ch))
             return "'" + (char) ch + "'";
         s = "0x" + Integer.toHexString(ch);

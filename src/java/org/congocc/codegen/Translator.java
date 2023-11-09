@@ -40,9 +40,7 @@ public class Translator {
 
         public ASTExpression() { super(); }
 
-        public ASTExpression(Node parent) {
-            setParent(parent);
-        }
+        // public ASTExpression(Node parent) { setParent(parent); }
     }
 
     protected static class ASTPrimaryExpression extends ASTExpression {
@@ -68,7 +66,7 @@ public class Translator {
         protected List<ASTTypeExpression> typeParameters;
 
         private static final HashSet<String> classNames = new HashSet<>(Arrays.asList(
-                new String[] { "Integer", "Long", "Float", "Double", "BigInteger" }));
+                "Integer", "Long", "Float", "Double", "BigInteger"));
 
         public boolean isNumeric() {
             return ((literal != null) || classNames.contains(name));
@@ -212,9 +210,9 @@ public class Translator {
     protected static class ASTAllocation extends ASTInvocation {}
 
     protected static class ASTPreOrPostfixExpression extends ASTUnaryExpression {
-        private boolean postfix;
+        // private boolean postfix;
 
-        public boolean isPostfix() { return postfix; }
+        // public boolean isPostfix() { return postfix; }
     }
 
     protected static class ASTArrayAccess extends ASTExpression {
@@ -232,20 +230,20 @@ public class Translator {
 
     protected static class ASTMethodReference extends ASTExpression {
         protected ASTTypeExpression typeExpression;
-        protected List<ASTTypeExpression> typeArguments;
+        // protected List<ASTTypeExpression> typeArguments;
         protected ASTExpression identifier;
 
         public ASTTypeExpression getTypeExpression() { return typeExpression; }
 
-        public List<ASTTypeExpression> getTypeArguments() { return typeArguments; }
+        // public List<ASTTypeExpression> getTypeArguments() { return typeArguments; }
 
         public ASTExpression getIdentifier() { return identifier; }
     }
 
     protected static class ASTExplicitConstructorInvocation extends ASTInvocation {
-        protected List<ASTTypeExpression> typeArguments;
+        // protected List<ASTTypeExpression> typeArguments;
 
-        public List<ASTTypeExpression> getTypeArguments() { return typeArguments; }
+        // public List<ASTTypeExpression> getTypeArguments() { return typeArguments; }
     }
 
     protected static class ASTStatement extends BaseNode {}
@@ -297,7 +295,7 @@ public class Translator {
 
         public ASTExpression getValue() { return value; }
 
-        public void setValue(ASTExpression value) { this.value = value; }
+        // public void setValue(ASTExpression value) { this.value = value; }
     }
 
     protected static class ASTExpressionStatement extends ASTStatement {
@@ -377,9 +375,7 @@ public class Translator {
             statements.add(stmt);
         }
 
-        public boolean isDefaultCase() {
-            return defaultCase;
-        }
+        // public boolean isDefaultCase() { return defaultCase; }
 
         public boolean hasBreak() {
             return hasBreak;
@@ -445,7 +441,7 @@ public class Translator {
     }
 
     protected static class ASTTryStatement extends ASTStatement {
-        protected List<Node> resources;
+        // protected List<Node> resources;
         protected ASTStatement block;
         protected List<ASTExceptionInfo> catchBlocks;
         protected ASTStatement finallyBlock;
@@ -496,7 +492,7 @@ public class Translator {
 
         public List<ASTExpression> getInitializers() { return initializers; }
 
-        public Set<String> getAnnotations() { return annotations; }
+        // public Set<String> getAnnotations() { return annotations; }
 
         public boolean hasAnnotation(String annotation) {
             return (annotations != null) && annotations.contains(annotation);
@@ -704,7 +700,7 @@ public class Translator {
         return String.format("_tv_%s", ++tempVarCounter);
     }
 
-    public String translateOperator(String operator) { return operator; }
+    // public String translateOperator(String operator) { return operator; }
 
     public static String camelToSnake(String ident) {
         StringBuilder sb = new StringBuilder();
@@ -735,7 +731,7 @@ public class Translator {
 
     public String translateIdentifier(String ident, TranslationContext kind) { return ident; }
 
-    public String translateGetter(String getterName) { return getterName; }
+    // public String translateGetter(String getterName) { return getterName; }
 
     public boolean isGetter(String name) {
         int n = name.length();
@@ -960,7 +956,7 @@ public class Translator {
 
                 resultNode.op = node.getLastChild().toString();
                 resultNode.setOperand((ASTExpression) transformTree(node.getFirstChild()));
-                resultNode.postfix = true;
+                // resultNode.postfix = true;
                 return resultNode;
             }
         }
@@ -1442,9 +1438,11 @@ public class Translator {
         return (expr instanceof ASTPrimaryExpression) && ((literal = ((ASTPrimaryExpression) expr).getLiteral()) != null) && literal.equals("null");
     }
 
+/*
     public boolean isAssignment(ASTExpression expr) {
         return (expr instanceof ASTBinaryExpression) && ((ASTBinaryExpression) expr).getOp().equals("=");
     }
+*/
 
     protected void translatePrimaryExpression(ASTPrimaryExpression expr, TranslationContext ctx, StringBuilder result) {
         fail();
@@ -1668,6 +1666,7 @@ public class Translator {
         }
     }
 
+/*
     protected boolean isThis(ASTExpression expr) {
         if (!(expr instanceof ASTPrimaryExpression)) {
             return false;
@@ -1676,6 +1675,7 @@ public class Translator {
             return "this".equals(((ASTPrimaryExpression) expr).getLiteral());
         }
     }
+*/
 
     protected boolean needsParentheses(ASTExpression expr) {
         boolean result = true;
@@ -1810,9 +1810,7 @@ public class Translator {
 
     protected Map<String, Set<String>> nestedDeclarations;
 
-    public Map<String, Set<String>> getNestedDeclarations() {
-        return nestedDeclarations;
-    }
+    // public Map<String, Set<String>> getNestedDeclarations() { return nestedDeclarations; }
 
     protected void addNestedDeclaration(String name) {
         if (nestedDeclarations == null) {
