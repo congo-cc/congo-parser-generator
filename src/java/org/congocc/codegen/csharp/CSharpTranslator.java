@@ -15,7 +15,7 @@ public class CSharpTranslator extends Translator {
         isTyped = true;
     }
 
-    @Override public String translateOperator(String operator) {
+    public String translateOperator(String operator) {
         return operator;
     }
 
@@ -88,7 +88,7 @@ public class CSharpTranslator extends Translator {
         return result;
     }
 
-    @Override public String translateGetter(String getterName) {
+    public String translateGetter(String getterName) {
         if (getterName.startsWith("is")) {
             return translateIdentifier(getterName, TranslationContext.METHOD);
         }

@@ -13,6 +13,7 @@ import org.congocc.parser.tree.*;
  * hold the data related to generating the NFAs for the respective lexical
  * states.
  */
+@SuppressWarnings("unused")
 public class LexerData {
     private final Grammar grammar;
     private final Errors errors;

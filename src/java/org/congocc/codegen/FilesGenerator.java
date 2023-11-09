@@ -70,7 +70,7 @@ public class FilesGenerator {
            fmConfig.addAutoImport("CU", "CommonUtils.java.ftl");
     }
 
-    public FilesGenerator(Grammar grammar, String codeLang) {
+    public FilesGenerator(Grammar grammar) {
         this.grammar = grammar;
         this.lexerData = grammar.getLexerData();
         this.appSettings = grammar.getAppSettings();

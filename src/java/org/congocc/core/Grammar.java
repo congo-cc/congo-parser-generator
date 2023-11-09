@@ -22,6 +22,7 @@ import org.congocc.parser.tree.*;
  * information regarding a congocc processing job.
  */
 //@freemarker.annotations.Pojo
+@SuppressWarnings("unused")
 public class Grammar extends BaseNode {
     private String defaultLexicalState;
     private final LexerData lexerData = new LexerData(this);
@@ -153,7 +154,7 @@ public class Grammar extends BaseNode {
     public void generateFiles() throws IOException {
         Translator translator = Translator.getTranslatorFor(this);
         templateGlobals.setTranslator(translator);
-        new FilesGenerator(this, appSettings.getCodeLang()).generateAll();
+        new FilesGenerator(this).generateAll();
     }
 
     public LexerData getLexerData() {

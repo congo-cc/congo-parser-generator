@@ -18,7 +18,7 @@ public class PythonTranslator extends Translator {
         includeInitializers = true;
     }
 
-    @Override public String translateOperator(String operator) {
+    public String translateOperator(String operator) {
         String result = operator;
 
         switch (result) {
@@ -100,7 +100,6 @@ public class PythonTranslator extends Translator {
         return result;
     }
 
-    @Override
     public String translateGetter(String getterName) {
         if (getterName.startsWith("is")) {
             return translateIdentifier(getterName, TranslationContext.METHOD);
