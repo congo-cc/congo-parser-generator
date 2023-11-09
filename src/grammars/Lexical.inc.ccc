@@ -10,7 +10,7 @@ TokenProduction :
     boolean ignoreCase = false;
 }
   [
-    "<" "*" =>|| ">" {multipleStatesSpecified = true;} 
+    "<" "*" =>|| ">" {multipleStatesSpecified = true;}
     |
     "<" <IDENTIFIER>
       {
@@ -18,7 +18,7 @@ TokenProduction :
           grammar.addLexicalState(firstSpecifiedLexicalState);
       }
       ("," <IDENTIFIER> {multipleStatesSpecified = true; grammar.addLexicalState(lastConsumedToken.toString());})*
-     ">" 
+     ">"
   ]
   (<_TOKEN> | <_UNPARSED> | <_SKIP> | <_MORE> | <_CONTEXTUAL_KEYWORD>)
   [
@@ -28,7 +28,7 @@ TokenProduction :
     tokenClassName=peekNode().toString();
     CURRENT_NODE.setTokenClassName(tokenClassName);
     }
-  ] 
+  ]
   ":"
    RegexpSpec(tokenClassName)
    ( "|" RegexpSpec(tokenClassName) )*
@@ -52,7 +52,7 @@ INJECT TokenProduction :
     @Property String tokenClassName;
 
     private String implicitLexicalState;
-    
+
     public void setImplicitLexicalState(String implicitLexicalState) {
         this.implicitLexicalState = implicitLexicalState;
     }
@@ -65,10 +65,10 @@ INJECT TokenProduction :
      * The states in which this regular expression production exists.
      */
     public String[] getLexicalStateNames() {
-    
+
         if (implicitLexicalState != null) {
             return new String[] {implicitLexicalState};
-        }        
+        }
         if (isInAllLexStates()) {
              return getGrammar().getLexicalStates();
         }
@@ -86,7 +86,7 @@ INJECT TokenProduction :
         int i=0;
         for (String s : states) {
            lexStates[i++] = s;
-        } 
+        }
         return lexStates;
     }
 
@@ -109,7 +109,7 @@ INJECT TokenProduction :
               case _UNPARSED : return "UNPARSED";
               case _SKIP : return "SKIP";
               case _TOKEN : return "TOKEN";
-              default: 
+              default:
            }
       }
       return "TOKEN";
@@ -123,8 +123,8 @@ RegexpSpec(String tokenClassName)#org.congocc.core.RegexpSpec :
     String image = "";
 }
     (
-        RegexpStringLiteral 
-        {   regexp = (RegularExpression) peekNode(); 
+        RegexpStringLiteral
+        {   regexp = (RegularExpression) peekNode();
             ((RegexpStringLiteral) regexp).setLexicalState(getGrammar().getDefaultLexicalState());
         }
         |
@@ -134,18 +134,18 @@ RegexpSpec(String tokenClassName)#org.congocc.core.RegexpSpec :
             <IDENTIFIER> {image = lastConsumedToken.toString();}
             ":"
         ]
-        RegexpChoice 
+        RegexpChoice
         {
             regexp = (RegularExpression) peekNode();
             if (regexp instanceof RegexpRef) {
                 RegexpSequence seq = new RegexpSequence();
-                seq.addChild(regexp);
+                seq.add(regexp);
                 pokeNode(seq);
                 regexp = seq;
-            } 
+            }
             regexp.setLabel(image);
             regexp.setGeneratedClassName(image);
-            regexp.setPrivate(isPrivate); 
+            regexp.setPrivate(isPrivate);
         }
         <GT>
     )
@@ -165,7 +165,7 @@ RegexpSpec(String tokenClassName)#org.congocc.core.RegexpSpec :
         SCAN 1 {!regexp.isPrivate()} =>
         Block
     ]
-    [ 
+    [
         SCAN 1 {!regexp.isPrivate()} =>
         ":" <IDENTIFIER> {CURRENT_NODE.setNextLexicalState(lastConsumedToken.toString());}
     ]
@@ -184,7 +184,7 @@ RegexpStringLiteral# :
    }
 ;
 
-INJECT RegexpStringLiteral : 
+INJECT RegexpStringLiteral :
    import org.congocc.core.*;
    extends RegularExpression;
 {
@@ -201,7 +201,7 @@ INJECT RegexpStringLiteral :
         return canonicalRegexp.getOrdinal();
       }
       return super.getOrdinal();
-  }  
+  }
 
   public String getLabel() {
      if (canonicalRegexp != null) {
@@ -209,12 +209,12 @@ INJECT RegexpStringLiteral :
      }
      return super.getLabel();
   }
-  
+
   public int hashCode() {
       return literalString.hashCode();
   }
 
-  @Override 
+  @Override
   public boolean matchesEmptyString() {
       return literalString.length() == 0;
   }
@@ -230,35 +230,35 @@ INJECT RegexpStringLiteral :
   }
 }
 
-#RegexpRef : 
+#RegexpRef :
 {
    Token t;
 }
     "<"
     t=<IDENTIFIER> =>||
-    DEACTIVATE_TOKENS RSIGNEDSHIFT, RUNSIGNEDSHIFT (">") 
+    DEACTIVATE_TOKENS RSIGNEDSHIFT, RUNSIGNEDSHIFT (">")
     {
        CURRENT_NODE.setLabel(t.toString());
        return CURRENT_NODE;
     }
 ;
 
-INJECT RegexpRef : 
+INJECT RegexpRef :
     import org.congocc.core.*;
     extends RegularExpression;
 {
     @Property RegularExpression regexp;
 
     public boolean isPrivate() {
-        return regexp!= null && regexp.isPrivate(); 
+        return regexp!= null && regexp.isPrivate();
     }
 
-    @Override 
+    @Override
     public boolean matchesEmptyString() {
         return regexp != null && regexp.matchesEmptyString();
     }
 
-    @Override 
+    @Override
     public int getOrdinal() {
         if (regexp == null) {
             // This is the case if this RegexpRef refers to a token type
@@ -280,7 +280,7 @@ EndOfFile : "<" <_EOF> =>|| ">" ;
 
 INJECT EndOfFile : extends org.congocc.core.RegularExpression
 {
-    @Override 
+    @Override
     public boolean matchesEmptyString() {return true;}
 
     @Override
@@ -288,15 +288,15 @@ INJECT EndOfFile : extends org.congocc.core.RegularExpression
 }
 
 RegexpChoice :
-    RegexpSequence 
+    RegexpSequence
     ("|" RegexpSequence)*
 ;
 
-RegexpChoiceInParen #RegexpChoice : 
+RegexpChoiceInParen #RegexpChoice :
    "(" RegexpSequence ("|" RegexpSequence)* ")"
 ;
 
-INJECT RegexpChoice : 
+INJECT RegexpChoice :
     import java.util.List;
     import org.congocc.core.RegularExpression;
     extends RegularExpression;
@@ -305,7 +305,7 @@ INJECT RegexpChoice :
         return childrenOfType(RegularExpression.class);
     }
 
-    @Override 
+    @Override
     public boolean matchesEmptyString() {
         for (RegularExpression choice: getChoices()) {
             if (choice.matchesEmptyString()) {
@@ -338,7 +338,7 @@ RegexpSequence :
    )+
 ;
 
-INJECT RegexpSequence : 
+INJECT RegexpSequence :
    import java.util.*;
    import org.congocc.core.RegularExpression;
    extends RegularExpression;
@@ -348,7 +348,7 @@ INJECT RegexpSequence :
        return childrenOfType(RegularExpression.class);
    }
 
-   @Override 
+   @Override
    public boolean matchesEmptyString() {
        for (RegularExpression child : getUnits()) {
            if (!child.matchesEmptyString()) return false;
@@ -368,19 +368,19 @@ INJECT RegexpSequence :
     }
 }
 
-RepeatedRegexp #void : 
+RepeatedRegexp #void :
 {
      int r1 = 0, r2 = -1;
 }
   RegexpChoiceInParen
-  (  "+" #OneOrMoreRegexp(2) 
+  (  "+" #OneOrMoreRegexp(2)
    | "*" #ZeroOrMoreRegexp(2)
-   | "?" #ZeroOrOneRegexp(2) 
+   | "?" #ZeroOrOneRegexp(2)
    | (
       "{" <INTEGER_LITERAL> {r1 = ((IntegerLiteral)lastConsumedToken).getValue();}
            [ "," [ <INTEGER_LITERAL> {r2=((IntegerLiteral)lastConsumedToken).getValue();} ] ]
        "}"
-     ) #RepetitionRange(+1) 
+     ) #RepetitionRange(+1)
      {
          RepetitionRange range = (RepetitionRange) peekNode();
          range.setMin(r1);
@@ -389,7 +389,7 @@ RepeatedRegexp #void :
   )?
 ;
 
-INJECT RepetitionRange : 
+INJECT RepetitionRange :
    import org.congocc.core.RegularExpression;
    extends RegularExpression;
 {
@@ -398,8 +398,8 @@ INJECT RepetitionRange :
     public boolean hasMax() {
         return firstChildOfType(COMMA) != null;
     }
-    
-    public RegularExpression getRegexp() { 
+
+    public RegularExpression getRegexp() {
         return firstChildOfType(RegularExpression.class);
     }
 
@@ -415,44 +415,44 @@ INJECT RepetitionRange :
            return min *  getRegexp().maximumLength();
        }
        return max*getRegexp().maximumLength();
-    }    
+    }
 }
 
-INJECT OneOrMoreRegexp : 
+INJECT OneOrMoreRegexp :
    import org.congocc.core.RegularExpression;
    extends RegularExpression;
 {
-   public RegularExpression getRegexp() 
+   public RegularExpression getRegexp()
    {
       return firstChildOfType(RegularExpression.class);
    }
 
    @Override
    public boolean matchesEmptyString() {
-       return getRegexp().matchesEmptyString(); 
+       return getRegexp().matchesEmptyString();
    }
-   
+
    @Override
    public int maximumLength() {
       return Integer.MAX_VALUE;
    }
 }
 
-INJECT ZeroOrMoreRegexp : 
+INJECT ZeroOrMoreRegexp :
    import org.congocc.core.RegularExpression;
    extends RegularExpression;
 {
-   public RegularExpression getRegexp() 
+   public RegularExpression getRegexp()
    {
       return firstChildOfType(RegularExpression.class);
    }
-   
+
    public void setRegexp(RegularExpression regexp) {
       RegularExpression current = getRegexp();
       if (current != null) {
-          replaceChild(current, regexp);
+          replace(current, regexp);
       } else {
-          addChild(0, regexp);
+          add(0, regexp);
       }
    }
 
@@ -467,22 +467,22 @@ INJECT ZeroOrMoreRegexp :
    }
 }
 
-INJECT ZeroOrOneRegexp : 
+INJECT ZeroOrOneRegexp :
    import org.congocc.core.RegularExpression;
    extends RegularExpression;
 {
-   public RegularExpression getRegexp() 
+   public RegularExpression getRegexp()
    {
       return firstChildOfType(RegularExpression.class);
    }
-   
+
    public void setRegexp(RegularExpression regexp) {
       RegularExpression current = getRegexp();
       if (current != null) {
-          addChild(indexOf(current), regexp);
-          removeChild(current);
+          add(indexOf(current), regexp);
+          remove(current);
       } else {
-          addChild(0, regexp);
+          add(0, regexp);
       }
    }
 
@@ -505,7 +505,7 @@ CharacterList :
   "]"
 ;
 
-INJECT CharacterList : 
+INJECT CharacterList :
    import java.util.*;
    import org.congocc.core.*;
    extends RegularExpression;
@@ -522,7 +522,7 @@ INJECT CharacterList :
     public boolean matchesEmptyString() {
         return false;
     }
-    
+
     @Override
     public int maximumLength() {
         return 1;
@@ -531,7 +531,7 @@ INJECT CharacterList :
 
 CharacterRange# :
     (<STRING_LITERAL>|<CHARACTER_LITERAL>)
-    [ 
+    [
     "-"
     (<STRING_LITERAL>|<CHARACTER_LITERAL>)
    ]
@@ -541,13 +541,13 @@ INJECT CharacterRange :
   import java.util.ArrayList;
 {
     @Property int left, right;
-    
-    public CharacterRange() {} 
-    
+
+    public CharacterRange() {}
+
     public CharacterRange(int left, int right) {
         setRange(left, right);
     }
-    
+
     public void setRange(int left, int right) {
         if (left > right) {
             throw new ArrayIndexOutOfBoundsException();

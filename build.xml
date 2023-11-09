@@ -103,6 +103,7 @@
       release="8">
       <src path="src/java"/>
       <src path="build/generated-java"/>
+      <compilerarg value="-Xlint:deprecation" />
     </javac>
     <copy todir="build/templates">
       <fileset dir="src/templates">

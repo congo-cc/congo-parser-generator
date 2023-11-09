@@ -1,4 +1,4 @@
-// Used as an include from the CongoCC grammar though it does 
+// Used as an include from the CongoCC grammar though it does
 // work on its own. This include file contains various code
 // injections into the Java AST that are used in CongoCC.
 
@@ -12,14 +12,14 @@ INCLUDE "../../examples/java/Java.ccc"
 
 VariableDeclarator# : VariableDeclaratorId [ "=" VariableInitializer ] ;
 
-INJECT CompilationUnit : 
+INJECT CompilationUnit :
     import java.util.*;
 {
     public String getPackageName() {
         PackageDeclaration jpd = getPackageDeclaration();
         return jpd.getName();
     }
-    
+
     public List<TypeDeclaration> getTypeDeclarations() {
         return childrenOfType(TypeDeclaration.class);
     }
@@ -31,7 +31,7 @@ INJECT CompilationUnit :
 }
 
 
-INJECT TypeDeclaration : 
+INJECT TypeDeclaration :
     import java.util.*;
     import PARSER_PACKAGE.Token.TokenType;
 {
@@ -54,20 +54,20 @@ INJECT TypeDeclaration :
         }
         getBody().prepend(elements);
     }
-    
+
     default void addAnnotations(Set<Annotation> annotations) {
        Node parent = this.getParent();
        int index = parent.indexOf(this);
        //REVISIT. fix token chaining
        for (Annotation annotation : annotations) {
-           parent.addChild(index, annotation);
+           parent.add(index, annotation);
        }
-    } 
-    
+    }
+
     default boolean isClass() {
         return firstChildOfType(TokenType.CLASS) != null;
     }
-    
+
     default void addImplements(ObjectType type) {
         ImplementsList implementsList = getImplementsList();
         if (implementsList == null) {
@@ -76,7 +76,7 @@ INJECT TypeDeclaration :
            while (iterator.hasNext()) {
               Node node = iterator.next();
               if (node instanceof ClassOrInterfaceBody || node instanceof EnumBody)
-                  break; 
+                  break;
            }
            iterator.previous();
            iterator.add(implementsList);
@@ -102,14 +102,14 @@ INJECT TypeDeclaration :
     }
 }
 
-INJECT ExtendsList : 
+INJECT ExtendsList :
      import java.util.*;
 {
-    //REVISIT. fix token chaining 
-    
+    //REVISIT. fix token chaining
+
       public void addType(ObjectType type, boolean isInterface) {
         if (!isInterface) {
-            clearChildren();
+            clear();
         }
         ListIterator<Node> iterator = iterator();
         if (!iterator.hasNext()) {
@@ -118,7 +118,7 @@ INJECT ExtendsList :
             iterator.add(type);
         } else {
             while (iterator.hasNext()) {
-                if (type.equals(iterator.next())) 
+                if (type.equals(iterator.next()))
                     return;
             }
             iterator.add(Token.newToken(COMMA, ",", this.getTokenSource()));
@@ -128,7 +128,7 @@ INJECT ExtendsList :
     }
 }
 
-INJECT TypeParameters : 
+INJECT TypeParameters :
     import java.util.*;
 {
     // REVISIT. fix token chaining?
@@ -145,7 +145,7 @@ INJECT TypeParameters :
         }
     }
 
-    // REVISIT. fix token chaining 
+    // REVISIT. fix token chaining
     public void add(TypeParameters params) {
         for (TypeParameter param : params.getParameters()) {
             add(param);
@@ -153,10 +153,10 @@ INJECT TypeParameters :
     }
 }
 
-INJECT ClassOrInterfaceBody : 
+INJECT ClassOrInterfaceBody :
     import java.util.*;
 {
-    
+
     // REVISIT. fix token chaining?
     public void prepend(List<ClassOrInterfaceBodyDeclaration> elements) {
         ListIterator<Node> iterator = iterator();
@@ -175,8 +175,8 @@ INJECT ClassOrInterfaceBody :
             iterator.next();
         }
     }
-    
-    // REVISIT. fix token chaining 
+
+    // REVISIT. fix token chaining
     public void removeDuplicateMethods() {
         Set<String> sigs = new HashSet<String>();
         ListIterator<Node> decls = iterator();
@@ -197,13 +197,13 @@ INJECT ClassOrInterfaceBody :
     }
 }
 
-INJECT FieldDeclaration : 
+INJECT FieldDeclaration :
    import java.util.*;
 {
 
   /**
-   * @return the Identifier nodes that correspond to the 
-   *          declaration of an instance variable. 
+   * @return the Identifier nodes that correspond to the
+   *          declaration of an instance variable.
    */
   public List<Identifier> getVariableIds() {
      return descendants(Identifier.class, FieldDeclaration::isVariableDeclarator);
@@ -211,22 +211,22 @@ INJECT FieldDeclaration :
 
   static boolean isVariableDeclarator(Identifier id) {
       Node parent = id.getParent();
-      return parent instanceof VariableDeclaratorId || 
+      return parent instanceof VariableDeclaratorId ||
              parent instanceof VariableDeclarator ||
              parent instanceof FieldDeclaration;
   }
 }
 
-INJECT MethodDeclaration : 
+INJECT MethodDeclaration :
 {
     public String getName() {
         return firstChildOfType(Identifier.class).toString();
     }
-    
+
     public FormalParameters getFormalParameters() {
         return firstChildOfType(FormalParameters.class);
     }
-    
+
     public String getFullSignature() {
         StringBuilder buf = new StringBuilder();
         buf.append(getName());
@@ -244,22 +244,22 @@ INJECT VariableDeclarator : {
    }
 }
 
-INJECT ThrowsList : 
+INJECT ThrowsList :
     import java.util.List;
     import java.util.ArrayList;
 {
     public List<Node> getTypes() {
         return new ArrayList<Node>(childrenOfType(ObjectType.class));
-    }    
+    }
 }
 
-INJECT ImplementsList : 
+INJECT ImplementsList :
    import java.util.*;
-{    
+{
     public List<ObjectType> getTypes() {
         return childrenOfType(ObjectType.class);
     }
-    //REVISIT. fix token chaining?    
+    //REVISIT. fix token chaining?
     public void addType(ObjectType type) {
         ListIterator<Node> iterator = iterator();
         if (!iterator.hasNext()) {
@@ -268,7 +268,7 @@ INJECT ImplementsList :
             iterator.add(type);
         } else {
             while (iterator.hasNext()) {
-                if (type.equals(iterator.next())) 
+                if (type.equals(iterator.next()))
                     return;
             }
             iterator.add(Token.newToken(COMMA, ",", this.getTokenSource()));
@@ -278,26 +278,26 @@ INJECT ImplementsList :
     }
 }
 
-INJECT TypeDeclaration : 
+INJECT TypeDeclaration :
     import java.util.*;
 {
     default String getName() {
         Node thisNode = getNamedChild("name");
         return (thisNode != null) ? thisNode.toString() : firstChildOfType(Identifier.class).toString();
     }
-    
+
     default TypeParameters getTypeParameters() {
         return firstChildOfType(TypeParameters.class);
     }
-    
+
     default ClassOrInterfaceBody getBody() {
         return firstChildOfType(ClassOrInterfaceBody.class);
     }
-    
+
     default ExtendsList getExtendsList() {
         return firstChildOfType(ExtendsList.class);
     }
-    
+
     default ImplementsList getImplementsList() {
         return firstChildOfType(ImplementsList.class);
     }
@@ -305,18 +305,18 @@ INJECT TypeDeclaration :
     default PermitsList getPermitsList() {
         return firstChildOfType(PermitsList.class);
     }
-    
+
     default CompilationUnit getCompilationUnit() {
         return firstAncestorOfType(CompilationUnit.class);
     }
-    
+
     default List<ImportDeclaration> getImportDeclarations() {
         CompilationUnit jcu = getCompilationUnit();
         return (List<ImportDeclaration>)(List)jcu.getImportDeclarations();
     }
 }
 
-INJECT FormalParameter : 
+INJECT FormalParameter :
 {
     public String getName() {
         String result = null;
@@ -329,17 +329,17 @@ INJECT FormalParameter :
     }
 }
 
-INJECT FormalParameters : 
+INJECT FormalParameters :
    import java.util.List;
 {
     public List<FormalParameter> getParams() {
         return childrenOfType(FormalParameter.class);
     }
-    
+
 //  public String getName() {
 //      return ((VariableDeclaratorId)getParameterId()).getName();
 //  }
-    
+
     public String toString() {
         StringBuilder buf = new StringBuilder();
         List<FormalParameter> params = getParams();
@@ -355,7 +355,7 @@ INJECT FormalParameters :
     }
 }
 
-INJECT InvocationArguments : 
+INJECT InvocationArguments :
     import java.util.*;
 {
     public List<Expression> getArgs() {

@@ -26,7 +26,7 @@ TOKEN :
   |
   < _ACTIVATE_TOKENS : "ACTIVATE_TOKENS"> #CongoCCKeyWord
   |
-  < _DEACTIVATE_TOKENS : "DEACTIVATE_TOKENS"> #CongoCCKeyWord  
+  < _DEACTIVATE_TOKENS : "DEACTIVATE_TOKENS"> #CongoCCKeyWord
   |
   < _ENSURE : "ASSERT"> #CongoCCKeyWord
   |
@@ -60,7 +60,7 @@ TOKEN :
   |
   <RIGHT_ARROW : "=>"> #RightArrow
   |
-  <UP_TO_HERE : "=>|" ("|" | ("+" ["0"-"9"]))> 
+  <UP_TO_HERE : "=>|" ("|" | ("+" ["0"-"9"]))>
   |
   <_LEXICAL_STATE : "LEXICAL_STATE"> #CongoCCKeyWord
   |
@@ -80,7 +80,7 @@ TOKEN :
 INCLUDE "Lexical.inc.ccc"
 INCLUDE "JavaInternal.ccc"
 
-INJECT LEXER_CLASS : 
+INJECT LEXER_CLASS :
 {
   // Set whether to generate unparsed tokens for WHITESPACE
   static public void keepWhitespace(boolean b) {
@@ -110,7 +110,7 @@ INJECT PARSER_CLASS :
     void OPEN_NODE_HOOK(Node n) {
         n.setGrammar(grammar);
     }
-    
+
     public PARSER_CLASS(Grammar grammar, Path path, Map<String, String> definedSymbols) throws IOException{
         this(path.toString(), path);
         this.grammar = grammar;
@@ -127,7 +127,7 @@ INJECT PARSER_CLASS :
          lineMarkers = new PreprocessorParser(content).PP_Root();
          token_source.setParsedLines(lineMarkers);
     }
-    
+
     static public CompilationUnit parseJavaFile(String inputSource, CharSequence content) {
         PARSER_CLASS parser = new PARSER_CLASS(inputSource, content);
         return parser.CompilationUnit();
@@ -149,16 +149,16 @@ INJECT PARSER_CLASS :
 //        parser.setUseAltIndentDedent(useAltIndentDedent);
         return parser.Module();
     }
-    
+
     static public org.congocc.parser.csharp.ast.CompilationUnit parseCSharpFile(String inputSource, CharSequence content) {
         CSParser parser  = new CSParser(inputSource, content);
         return parser.CompilationUnit();
-    } 
+    }
 
     static public org.congocc.parser.csharp.ast.CompilationUnit parseCSharpFile(Path path) throws IOException {
         CSParser parser  = new CSParser(path);
         return parser.CompilationUnit();
-    } 
+    }
 
     public Grammar getGrammar() {
         return grammar;
@@ -171,21 +171,21 @@ INJECT PARSER_CLASS :
     public Errors getErrors() {
         return grammar.getErrors();
     }
-    
+
     public void openNodeScopeHook(Node n) {
         n.setGrammar(grammar);
     }
 
 }
 
-<IN_UNPARSED_CODE_BLOCK> TOKEN : 
+<IN_UNPARSED_CODE_BLOCK> TOKEN :
   <UNPARSED_CONTENT : (~["$"] | (("$")+ ~["}"]))+ > #UnparsedContent
   |
   <END_UNPARSED : "$}" >
 ;
 
-UnparsedCodeBlock #org.congocc.core.UnparsedCodeBlock : 
-   <START_UNPARSED> 
+UnparsedCodeBlock #org.congocc.core.UnparsedCodeBlock :
+   <START_UNPARSED>
    LEXICAL_STATE IN_UNPARSED_CODE_BLOCK
    (
      [<UNPARSED_CONTENT>]
@@ -193,14 +193,14 @@ UnparsedCodeBlock #org.congocc.core.UnparsedCodeBlock :
    )
 ;
 
-INJECT Node : @freemarker.annotations.Pojo 
+INJECT Node : @freemarker.annotations.Pojo
 
 INJECT BASE_NODE_CLASS :
     import org.congocc.app.*;
     import org.congocc.core.Grammar;
     import PARSER_PACKAGE.Token.TokenType;
     @SuppressWarnings("unused")
-    implements Node; 
+    implements Node;
 {
     protected void setChildren(List<Node> children) {
         this.children = children;
@@ -231,7 +231,7 @@ INJECT BASE_NODE_CLASS :
     public Errors getErrors() {
         return getGrammar().getErrors();
     }
-    
+
     public String getSimpleName() {
         String name = getClass().getName();
         return name.substring(name.lastIndexOf(".") + 1); // strip the package name
@@ -240,7 +240,7 @@ INJECT BASE_NODE_CLASS :
     public String toString() {
         StringBuilder buf = new StringBuilder();
         TerminalNode prevToken = null;
-        for (TerminalNode t : getAllTokens(false)) { //REVISIT true -> false here [jb] Is this OK?  It fixes uparsed tokens (such as comments) "bleeding" into the string value of nonterminals. 
+        for (TerminalNode t : getAllTokens(false)) { //REVISIT true -> false here [jb] Is this OK?  It fixes uparsed tokens (such as comments) "bleeding" into the string value of nonterminals.
             if (prevToken != null && prevToken.getEndOffset() != t.getBeginOffset()) {
                 buf.append(" ");
             }
@@ -279,7 +279,7 @@ INJECT CodeBlock :
         return this;
     }
 
-    @Override 
+    @Override
     public boolean startsWithGlobalCodeAction() {
         return isAppliesInLookahead();
     }
@@ -310,9 +310,9 @@ INJECT CodeBlock :
 INJECT PARSER_CLASS : {
 
     private EnumSet<TokenType> CongoCCKeyWords = EnumSet.of(
-       _FAIL, _ENSURE, _SCAN, _IGNORE_CASE, 
+       _FAIL, _ENSURE, _SCAN, _IGNORE_CASE,
        _TOKEN, _CONTEXTUAL_KEYWORD, _UNPARSED, _SKIP, _MORE,
-       _ATTEMPT, _RECOVER, _ON_ERROR,  
+       _ATTEMPT, _RECOVER, _ON_ERROR,
        _LEXICAL_STATE);
 
     private Token TOKEN_HOOK(Token t) {
@@ -330,13 +330,13 @@ INJECT PARSER_CLASS : {
 }
 
 
-INJECT Identifier : 
+INJECT Identifier :
 {
     public String toString() {
         String cachedImage = getCachedImage();
         if (cachedImage != null) return cachedImage;
         String image = getSource();
-        if (image.equals("jjtThis") || image.equals("CURRENT_NODE")) { 
+        if (image.equals("jjtThis") || image.equals("CURRENT_NODE")) {
             image = getGrammar().getTemplateGlobals().getCurrentNodeVariableName();
         }
         else if (image.equals("THIS_PRODUCTION")) {
@@ -424,11 +424,11 @@ INJECT Token :
     public Errors getErrors() {
         return getGrammar().getErrors();
     }
-    
+
     public String getNodeName() {
         return getType().toString();
     }
-    
+
     public String getLeadingComments() {
         Token specialToken = getPreviousToken() == null || !getPreviousToken().isUnparsed() ? null : getPreviousToken();
         if (specialToken == null)
@@ -444,16 +444,16 @@ INJECT Token :
         }
         return buf.toString();
     }
-}    
+}
 
 #Root throws IOException #GrammarFile :
    [
       Options
    ]!
    (
-      TokenProduction 
+      TokenProduction
       |
-      CodeInjection2 
+      CodeInjection2
       |
       CodeInjection
       |
@@ -500,7 +500,7 @@ GrammarInclusion throws IOException :
            <IDENTIFIER> {locations.add(lastConsumedToken.toString());}
        )
        (
-         "!" 
+         "!"
          (<STRING_LITERAL>|<IDENTIFIER>)
          {
            if (lastConsumedToken instanceof StringLiteral) {
@@ -511,14 +511,14 @@ GrammarInclusion throws IOException :
          }
        )*
        |
-       "(" <STRING_LITERAL> {locations.add(((StringLiteral)lastConsumedToken).getString());} ")" 
+       "(" <STRING_LITERAL> {locations.add(((StringLiteral)lastConsumedToken).getString());} ")"
    )
    [";"]
    {
       if (enterIncludes) {
           Node included = grammar.include(locations, includeToken);
           if (included!=null) {
-              CURRENT_NODE.addChild(included);
+              CURRENT_NODE.add(included);
           } else {
               getErrors().addWarning(CURRENT_NODE, "File is already included.");
           }
@@ -534,8 +534,8 @@ GrammarInclusion throws IOException :
     boolean usingParentheses = false;
     ObjectType ot;
     ClassOrInterfaceBody coib;
-}   
-        ACTIVATE_TOKENS _INJECT (<_INJECT>) 
+}
+        ACTIVATE_TOKENS _INJECT (<_INJECT>)
         {permissibleModifiers = EnumSet.of(ABSTRACT,FINAL,STRICTFP,SEALED,NON_SEALED);}
         Modifiers
         {isSealed = peekNode().getType()==SEALED || peekNode().firstChildOfType(SEALED)!=null;}
@@ -554,7 +554,7 @@ GrammarInclusion throws IOException :
         (ImportDeclaration)*
         (Annotation)*
         [
-             "extends" 
+             "extends"
              ot=ObjectType {CURRENT_NODE.addExtendsType(ot);}
              (SCAN 1 {isInterface} => "," ot=ObjectType {CURRENT_NODE.addExtendsType(ot);})*
              [";"]
@@ -579,7 +579,7 @@ GrammarInclusion throws IOException :
         }
 ;
 
-INJECT CodeInjection : 
+INJECT CodeInjection :
    import java.util.List;
    import java.util.ArrayList;
    import org.congocc.core.Grammar;
@@ -601,8 +601,8 @@ INJECT CodeInjection :
             throw new RuntimeException("Unable to dynamically inject code into " + nodeName);
         } finally {
             parser = null;
-        }        
-   }  
+        }
+   }
 
    public void addExtendsType(ObjectType type) {extendsList.add(type);}
    public void addImplementsType(ObjectType type) {implementsList.add(type);}
@@ -632,7 +632,7 @@ INJECT CodeInjection :
       Modifiers mods = firstChildOfType(Modifiers.class);
       return mods != null && mods.firstChildOfType(SEALED) != null;
    }
-   
+
    public boolean isNonSealed() {
       if (firstChildOfType(NON_SEALED)!=null) return true;
       Modifiers mods = firstChildOfType(Modifiers.class);
@@ -662,7 +662,7 @@ CodeInjection2 :
 ;
 
 Options# :
-    {HashMap<String, Object> settings = new HashMap<>();} 
+    {HashMap<String, Object> settings = new HashMap<>();}
     Setting(settings) =>||
     (Setting(settings))*
     {grammar.setSettings(settings);}
@@ -674,9 +674,9 @@ Setting(Map<String,Object> settings) #Setting :
       Token name;
       Object value = Boolean.TRUE;
 }
-  ( 
-     name = <IDENTIFIER> 
-     | 
+  (
+     name = <IDENTIFIER>
+     |
      name = <_IGNORE_CASE>
      |
      name = <_DEACTIVATE_TOKENS>
@@ -704,7 +704,7 @@ Setting(Map<String,Object> settings) #Setting :
         ("," {value+=",";}
             <IDENTIFIER> {value+=lastConsumedToken.toString();}
             [ <HASH> <IDENTIFIER> { value += "#" + lastConsumedToken.toString();} ]
-        )* 
+        )*
      )
   ]
   ";"
@@ -725,7 +725,7 @@ BNFProduction #org.congocc.core.BNFProduction :
     [
        SCAN ReturnType <IDENTIFIER> => ReturnType
        |
-       @implicitReturnType =? "#" 
+       @implicitReturnType =? "#"
     ]
     id=<IDENTIFIER> {CURRENT_NODE.setName(id.toString());}
     // @name =$ <IDENTIFIER>
@@ -734,7 +734,7 @@ BNFProduction #org.congocc.core.BNFProduction :
       ThrowsList
     ]
     [
-        tba=TreeNodeDescriptor 
+        tba=TreeNodeDescriptor
         {
             String nodeName = tba.getNodeName();
             if (nodeName == null) nodeName = CURRENT_NODE.getNodeName();
@@ -746,19 +746,19 @@ BNFProduction #org.congocc.core.BNFProduction :
     ]
     ":"
     [
-        SCAN 2 => <IDENTIFIER> 
-        // SCAN 2 => @lexicalState =$ <IDENTIFIER> 
+        SCAN 2 => <IDENTIFIER>
+        // SCAN 2 => @lexicalState =$ <IDENTIFIER>
         {CURRENT_NODE.setLexicalState(lastConsumedToken.toString());}
         ":"
     ]
     [
-        Block 
+        Block
         {CodeBlock block = (CodeBlock) peekNode();}
         ["#" {block.setAppliesInLookahead(true);}]
         ASSERT ~(";") =>||
     ]
-    ExpansionChoice 
-    {CURRENT_NODE.setExpansion((Expansion) peekNode());} 
+    ExpansionChoice
+    {CURRENT_NODE.setExpansion((Expansion) peekNode());}
     ";"
     {
         CURRENT_NODE.adjustFirstToken(firstToken);
@@ -774,7 +774,7 @@ TreeNodeDescriptor #TreeBuildingAnnotation :
        "("
           [
             (">" | ">=" | "<" | "<=" | "+" | "-")
-            {CURRENT_NODE.setInitialShorthand(lastConsumedToken.toString());}  
+            {CURRENT_NODE.setInitialShorthand(lastConsumedToken.toString());}
           ]
           Expression {CURRENT_NODE.setCondition((Expression) peekNode());}
        ")"
@@ -782,19 +782,19 @@ TreeNodeDescriptor #TreeBuildingAnnotation :
 ;
 
 InlineTreeNodeDescriptor #TreeBuildingAnnotation :
-  [ 
+  [
       <BACKSLASH>
     |
       @assignment := Assignment  =>||
   ]
-  <HASH> =>|| 
-  Name  
+  <HASH> =>||
+  Name
   (
     SCAN ~("(") => {}
     |
     "(" (">" | ">=" | "<" | "<=" | "+" | "-") =>||
     {CURRENT_NODE.setInitialShorthand(lastConsumedToken.toString());}
-    [Expression {CURRENT_NODE.setCondition((Expression) peekNode());}] 
+    [Expression {CURRENT_NODE.setCondition((Expression) peekNode());}]
     ")"
     |
     "("
@@ -802,8 +802,8 @@ InlineTreeNodeDescriptor #TreeBuildingAnnotation :
     Expression {CURRENT_NODE.setCondition((Expression) peekNode());}
     ")"
     // If any of the following tokens are after the closing parenthesesis, this must
-    // be an expansion (or the code is just invalid)  
-    ASSERT ~(<STAR>|<PLUS>|<HOOK>|<HASH>) 
+    // be an expansion (or the code is just invalid)
+    ASSERT ~(<STAR>|<PLUS>|<HOOK>|<HASH>)
     =>||
     |
     SCAN "(" ExpansionChoice ")" => {}
@@ -816,7 +816,7 @@ INJECT TreeBuildingAnnotation :
 {
     @Property String initialShorthand;
     @Property Expression condition;
-    
+
     /**
      * Just returns whatever comes after the hash ("#") including "void", etc.
      */
@@ -829,8 +829,8 @@ INJECT TreeBuildingAnnotation :
         }
         Token nextToken = hash.getNext();
         TokenType nextType = nextToken.getType();
-        if (nextType != ABSTRACT 
-            && nextType != INTERFACE 
+        if (nextType != ABSTRACT
+            && nextType != INTERFACE
             && nextType != VOID) return null;
         return nextToken.toString();
     }
@@ -840,7 +840,7 @@ INJECT TreeBuildingAnnotation :
         || getGrammar().nodeIsInterface(getNodeName())
         || getGrammar().nodeIsAbstract(getNodeName());
     }
-    
+
     public boolean getGtNode() {
          return initialShorthand !=null;
     }
@@ -852,7 +852,7 @@ INJECT TreeBuildingAnnotation :
     public boolean isInterface() {
         return "interface".equals(getNodeName());
     }
-    
+
     public boolean isVoid() {
         return "void".equals(getNodeName());
     }
@@ -876,7 +876,7 @@ INJECT ExpansionChoice :
     public java.util.List<ExpansionSequence> getChoices() {
         return childrenOfType(ExpansionSequence.class);
     }
-    
+
     @Override
     public TokenSet getFirstSet() {
          if (firstSet == null) {
@@ -888,7 +888,7 @@ INJECT ExpansionChoice :
          }
          return firstSet;
     }
-    
+
     @Override
     public TokenSet getFinalSet() {
         TokenSet finalSet = new TokenSet(getGrammar());
@@ -897,7 +897,7 @@ INJECT ExpansionChoice :
         }
         return finalSet;
     }
-    
+
     @Override
     protected int getMinimumSize(Set<String> usedNonTerminals) {
         int result = Integer.MAX_VALUE;
@@ -909,7 +909,7 @@ INJECT ExpansionChoice :
         }
         return result;
     }
- 
+
     @Override
     protected int getMaximumSize(Set<String> usedNonTerminals) {
         int result = 0;
@@ -919,7 +919,7 @@ INJECT ExpansionChoice :
         }
         return result;
     }
-    
+
     @Override
     public boolean potentiallyStartsWith(String productionName, java.util.Set<String> alreadyVisited) {
         for (ExpansionSequence seq : getChoices()) {
@@ -937,31 +937,31 @@ INJECT ExpansionChoice :
         }
         return true;
     }
-    
+
     @Override
     public boolean startsWithLexicalChange() {
         return getChoices().stream().anyMatch(ExpansionSequence::startsWithLexicalChange);
-    }    
+    }
 }
 
-Assignment : 
+Assignment :
     (
-            [ @propertyAssignment :=? "@" ] 
+            [ @propertyAssignment :=? "@" ]
             @name :=$ Name //REVISIT: [jb] What if this is a dotted name?
         |
             DEACTIVATE_TOKENS SLASHASSIGN (
-                @namedAssignment :=? 
-                "/" 
+                @namedAssignment :=?
+                "/"
                 @name =$ Name
                 "/"
             )
     )
-    ( 
+    (
             @noAutoDefinition :=? "="
-        |   
+        |
             @declarationOf :=? ":="
-        | 
-            (@existenceOf :=? "=?" {CURRENT_NODE.setNoAutoDefinition(true);} | @existenceOf :=? ":=?" {CURRENT_NODE.setDeclarationOf(true);})       
+        |
+            (@existenceOf :=? "=?" {CURRENT_NODE.setNoAutoDefinition(true);} | @existenceOf :=? ":=?" {CURRENT_NODE.setDeclarationOf(true);})
         |
             (@stringOf :=? "=$" {CURRENT_NODE.setNoAutoDefinition(true);} | @stringOf :=? ":=$" {CURRENT_NODE.setDeclarationOf(true);})
         |
@@ -993,8 +993,8 @@ ExpansionWithParentheses :
         CURRENT_NODE.setAssignment(assignment);
    }
    [
-       SCAN ~\...\Lookahead => 
-       "!" 
+       SCAN ~\...\Lookahead =>
+       "!"
        {
            if (CURRENT_NODE instanceof ZeroOrOne) {
                nested.setTolerantParsing(true);
@@ -1011,27 +1011,27 @@ ExpansionWithParentheses :
 ;
 
 
-INJECT ExpansionWithParentheses : 
-   import org.congocc.core.*; 
+INJECT ExpansionWithParentheses :
+   import org.congocc.core.*;
    import org.congocc.core.ExpansionSequence.*;
    extends ExpansionWithNested
    implements SyntaxElement
 {
     @Property Assignment assignment;
-    
-    @Override 
+
+    @Override
     public String getSpecifiedLexicalState() {
         LexicalStateSwitch lss = firstChildOfType(LexicalStateSwitch.class);
         return lss == null ? super.getSpecifiedLexicalState() : lss.getLexicalStateName();
     }
 
-    @Override 
+    @Override
     public boolean startsWithLexicalChange() {
         return firstChildOfType(LexicalStateSwitch.class) != null || firstChildOfType(TokenActivation.class) != null
               || getNestedExpansion().startsWithLexicalChange();
     }
 
-    @Override 
+    @Override
     public boolean isSingleTokenLookahead() {
          return super.isSingleTokenLookahead() && getNestedExpansion().isSingleTokenLookahead();
     }
@@ -1042,8 +1042,8 @@ ExpansionSequence #org.congocc.core.ExpansionSequence :
    Expansion sub;
    Lookahead la = null;
 }
-  [ 
-    SCAN ~\...\Lookahead 
+  [
+    SCAN ~\...\Lookahead
     =>
     la=Lookahead  =>||
     {
@@ -1058,11 +1058,11 @@ ExpansionSequence #org.congocc.core.ExpansionSequence :
 
 INJECT Assertion :
    import org.congocc.core.Expansion;
-   extends org.congocc.core.EmptyExpansion 
+   extends org.congocc.core.EmptyExpansion
 {
     @Property Expansion expansion;
-    
-    @Override 
+
+    @Override
     public boolean startsWithGlobalCodeAction() {
         return expansion != null || semanticLookaheadNested;
     }
@@ -1071,13 +1071,13 @@ INJECT Assertion :
 Assertion :
    "ASSERT"
    (
-    "{" 
+    "{"
        @assertionExpression := Expression
     "}"
     [ @semanticLookaheadNested :=? "#" ]
     |
     [ @expansionNegated :=? "~" ]
-    "(" 
+    "("
         ExpansionChoice {CURRENT_NODE.setExpansion((Expansion) peekNode());}
     ")"
    )
@@ -1088,7 +1088,7 @@ Assertion :
    [UpToHere(CURRENT_NODE)]
 ;
 
-Lookahead# : 
+Lookahead# :
 {
    Token amountToken=null;
    boolean hasSemanticLookahead = false, hasExplicitNumericalLookahead=false;
@@ -1103,15 +1103,15 @@ Lookahead# :
     <INTEGER_LITERAL> {hasExplicitNumericalLookahead = true;}
 ]
 [
-    "{" 
+    "{"
     exp=Expression {hasSemanticLookahead = true; CURRENT_NODE.setSemanticLookahead(exp);}
     "}"
     ["#" {CURRENT_NODE.setSemanticLookaheadNested(true);}]
 ]
 [LookBehind =>|| {lb = peekNode();}]
 [
-    SCAN {!hasExplicitNumericalLookahead} => 
-    ["~" {CURRENT_NODE.setNegated(true);}] 
+    SCAN {!hasExplicitNumericalLookahead} =>
+    ["~" {CURRENT_NODE.setNegated(true);}]
     ExpansionChoice {expansion = (Expansion) peekNode();}
     <RIGHT_ARROW> =>||
     {
@@ -1142,7 +1142,7 @@ INJECT Lookahead :
     public boolean hasSemanticLookahead() {
         return getSemanticLookahead() != null;
     }
-    
+
     public Expansion getLookaheadExpansion() {
         Expansion result = getNestedExpansion();
         if (result != null) {
@@ -1164,14 +1164,14 @@ INJECT Lookahead :
 
     public LookBehind getLookBehind() {
         return firstChildOfType(LookBehind.class);
-    }    
+    }
 }
 
-LookBehind : 
-   [ @negated :=? <TILDE> ] 
+LookBehind :
+   [ @negated :=? <TILDE> ]
    (
-    LookBehindForward 
-    | 
+    LookBehindForward
+    |
     LookBehindBackward(THIS_PRODUCTION, CURRENT_NODE)) #NeverInTheTree(false) // I did this just to see if it works
 ;
 
@@ -1206,7 +1206,7 @@ INJECT NeverInTheTree :
     public void close() {
         assert(false) : "Why am I being closed?";
     }
-    
+
     public void touch() {
         // nothing to see here
     }
@@ -1230,7 +1230,7 @@ import java.util.*;
             if (img.charAt(0) == '\\' || img.charAt(0)=='/') {
                 negated = false;
                 continue;
-            } 
+            }
             if (img.equals("~")) {
                 negated = true;
                 continue;
@@ -1255,7 +1255,7 @@ import java.util.*;
     }
 
     private String routineName;
-    
+
     public String getRoutineName() {
         if (routineName == null) {
             String prefix = getAppSettings().generateIdentifierPrefix("backscan");
@@ -1298,7 +1298,7 @@ ExpansionUnit #void :
   |
   Block {CodeBlock block = (CodeBlock) peekNode();}
   [
-    "#" 
+    "#"
     {
         block.setAppliesInLookahead(true);
         popNode();
@@ -1313,11 +1313,11 @@ ExpansionUnit #void :
   |
   Assertion
   |
-  ExpansionWithParentheses 
+  ExpansionWithParentheses
   |
-  ZeroOrOne 
+  ZeroOrOne
   |
-  Terminal 
+  Terminal
   |
   NonTerminal
   |
@@ -1325,7 +1325,7 @@ ExpansionUnit #void :
  )
  {Expansion result = (Expansion) peekNode();}
  [
-    SCAN ~\...\Lookahead => 
+    SCAN ~\...\Lookahead =>
     InlineTreeNodeDescriptor =>||
     { result.setTreeNodeBehavior((TreeBuildingAnnotation) peekNode()); }
  ]
@@ -1349,7 +1349,7 @@ ExpansionUnit #void :
      "!"
      {CURRENT_NODE.setTolerantParsing(true);}
   ]
-  [ChildNameInfo(CURRENT_NODE)] 
+  [ChildNameInfo(CURRENT_NODE)]
   [UpToHere(CURRENT_NODE)]
   {return CURRENT_NODE;}
 ;
@@ -1361,7 +1361,7 @@ Terminal# :
     SCAN ~\...\Lookahead Assignment =>
     @assignment := Assignment
   ]
-  ACTIVATE_TOKENS _EOF(RegexpStringLiteral | RegexpRef | EndOfFile ) 
+  ACTIVATE_TOKENS _EOF(RegexpStringLiteral | RegexpRef | EndOfFile )
   {
       RegularExpression result = (RegularExpression) peekNode();
       if (result instanceof RegexpStringLiteral) {
@@ -1379,7 +1379,7 @@ Terminal# :
   ]
   [
       ChildNameInfo(CURRENT_NODE)
-  ] 
+  ]
   [
     UpToHere(CURRENT_NODE)
   ]
@@ -1412,7 +1412,7 @@ INJECT Terminal :
     }
 
     public TokenSet getFinalSet() {return getFirstSet();}
-}   
+}
 
 UpToHere(Expansion exp) #void :
    <UP_TO_HERE>
@@ -1426,17 +1426,17 @@ UpToHere(Expansion exp) #void :
    }
 ;
 
-//The following two productions are not actually used. These constructs are now 
+//The following two productions are not actually used. These constructs are now
 // handled by ExpansionWithParentheses so the following two productions
 // are not actually used. They have to be there so that the ZeroOrMore and
 // OneOrMore types get defined. REVISIT. Need a way of defining Node subtypes
 // without creating a dummy grammar rule for them.
 ZeroOrMore : "(" ExpansionChoice ")" "*";
-OneOrMore : "(" ExpansionChoice ")" "+"; 
+OneOrMore : "(" ExpansionChoice ")" "+";
 
-//This production just matches the square bracket syntax. 
+//This production just matches the square bracket syntax.
 // The (...)? syntax is handled by ExpansionWithParentheses
-ZeroOrOne : 
+ZeroOrOne :
     [LexicalStateSwitch | TokenActivation]
     [
         @assignment = Assignment =>||
@@ -1446,45 +1446,45 @@ ZeroOrOne :
      [UpToHere(CURRENT_NODE)]
 ;
 
-INJECT ZeroOrOne : 
+INJECT ZeroOrOne :
      import org.congocc.core.Expansion;
      import org.congocc.core.TokenSet;
-     extends ExpansionWithParentheses 
+     extends ExpansionWithParentheses
 {
     @Override
     protected int getMinimumSize(java.util.Set<String> unused) {return 0;}
 }
 
 
-INJECT ZeroOrMore : 
+INJECT ZeroOrMore :
      import org.congocc.core.Expansion;
      import org.congocc.core.TokenSet;
      import java.util.Set;
-     extends ExpansionWithParentheses 
+     extends ExpansionWithParentheses
 {
-    @Override  
+    @Override
     protected int getMinimumSize(Set<String> unused) {return 0;}
-    
+
     @Override
     protected int getMaximumSize(Set<String> unused) {return Integer.MAX_VALUE;}
 }
 
 
-INJECT OneOrMore : 
+INJECT OneOrMore :
      import org.congocc.core.Expansion;
      import org.congocc.core.TokenSet;
-     extends ExpansionWithParentheses 
+     extends ExpansionWithParentheses
 {
-    @Override 
+    @Override
     protected int getMaximumSize(java.util.Set<String> unused) {return Integer.MAX_VALUE;}
 }
 
 
-AttemptBlock : 
+AttemptBlock :
  "ATTEMPT" ExpansionChoice "RECOVER"  (ExpansionWithParentheses | Block)
 ;
 
-INJECT AttemptBlock : 
+INJECT AttemptBlock :
    import java.util.List;
    import org.congocc.core.Expansion;
    import org.congocc.core.TokenSet;
@@ -1495,18 +1495,18 @@ INJECT AttemptBlock :
     }
 }
 
-UncacheTokens# : "UNCACHE_TOKENS" ;   
+UncacheTokens# : "UNCACHE_TOKENS" ;
 
 INJECT UncacheTokens : extends org.congocc.core.EmptyExpansion;
 
-Failure# : 
+Failure# :
    {
        Expression exp = null;
    }
    "FAIL"
    [
       [":"]
-      exp=Expression 
+      exp=Expression
       |
       Block
    ]
@@ -1519,7 +1519,7 @@ INJECT Failure :
    extends org.congocc.core.EmptyExpansion
 {
     @Property Expression exp;
-    
+
     public CodeBlock getCode() {
         return firstChildOfType(CodeBlock.class);
     }
@@ -1533,13 +1533,13 @@ INJECT LexicalStateSwitch : {
    }
 }
 
-TokenActivation : 
+TokenActivation :
    ("ACTIVE_TOKENS" | "ACTIVATE_TOKENS" | "DEACTIVATE_TOKENS" {CURRENT_NODE.setDeactivate(true);})
    ["+"|"-"] <IDENTIFIER>
    ([","] ["+"|"-"] <IDENTIFIER>)*
 ;
 
-INJECT TokenActivation : 
+INJECT TokenActivation :
    import java.util.List;
    import java.util.ArrayList;
 {
@@ -1580,7 +1580,7 @@ INJECT TokenActivation :
 }
 
 
-TryBlock : 
+TryBlock :
     "try" "{" ExpansionChoice "}"
     (
         CatchBlock
@@ -1591,7 +1591,7 @@ TryBlock :
 ;
 
 
-INJECT TryBlock  : 
+INJECT TryBlock  :
     extends org.congocc.core.ExpansionWithNested;
 {
     public java.util.List<CatchBlock> getCatchBlocks() {
@@ -1601,7 +1601,7 @@ INJECT TryBlock  :
     public FinallyBlock getFinallyBlock() {
         return firstChildOfType(FinallyBlock.class);
     }
-    
+
 }
 
 
