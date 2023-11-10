@@ -7,7 +7,7 @@ namespace ${csPackage} {
     using System.Diagnostics;
 
     public enum TokenType {
- [#list grammar.lexerData.regularExpressions as regexp]
+ [#list lexerData.regularExpressions as regexp]
         ${regexp.label},
  [/#list]
  [#list settings.extraTokenNames as t]
@@ -17,7 +17,7 @@ namespace ${csPackage} {
     }
 
     public enum LexicalState {
-[#list grammar.lexerData.lexicalStates as lexicalState]
+[#list lexerData.lexicalStates as lexicalState]
      ${lexicalState.name}[#if lexicalState_has_next],[/#if]
 [/#list]
     }
@@ -350,7 +350,7 @@ namespace ${csPackage} {
                 return (TokenSource == null) ? 0 : TokenSource.GetCodePointColumnFromOffset(EndOffset - 1);
             }
         }
-        
+
         public T FirstChildOfType<T>(System.Type t) where T : Node {
             var result = default(T);
 
@@ -555,7 +555,7 @@ namespace ${csPackage} {
                 return (TokenSource == null) ? 0 : TokenSource.GetCodePointColumnFromOffset(EndOffset - 1);
             }
         }
-        
+
         public TokenType Type { get; internal set; }
 
 [#if !settings.treeBuildingEnabled]
@@ -665,7 +665,7 @@ namespace ${csPackage} {
             prependedToken.BeginOffset = prependedToken.EndOffset = this.BeginOffset;
             this.prependedToken = prependedToken;
         }
-        
+
         internal void UnsetAppendedToken() {
             appendedToken = null;
         }
@@ -764,7 +764,7 @@ namespace ${csPackage} {
 
         internal Token NextCachedToken {
             get {
-[#if settings.tokenChaining]        
+[#if settings.tokenChaining]
                 if (appendedToken != null) {
                     return appendedToken;
                 }
@@ -775,11 +775,11 @@ namespace ${csPackage} {
 
         internal Token PreviousCachedToken {
             get {
-[#if settings.tokenChaining]        
+[#if settings.tokenChaining]
                 if (prependedToken !=null) {
                     return prependedToken;
                 }
-[/#if]        
+[/#if]
                 return TokenSource == null ? null : TokenSource.PreviousCachedToken(BeginOffset);
             }
         }
@@ -792,7 +792,7 @@ namespace ${csPackage} {
 
         internal Token ReplaceType(TokenType type) {
             Token result = NewToken(Type, TokenSource, BeginOffset, EndOffset);
-[#if settings.tokenChaining] 
+[#if settings.tokenChaining]
             result.prependedToken = prependedToken;
             result.appendedToken = appendedToken;
             result.isInserted = isInserted;

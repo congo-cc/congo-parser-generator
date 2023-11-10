@@ -1,6 +1,6 @@
 // ReSharper disable InconsistentNaming
 [#import "CommonUtils.inc.ftl" as CU]
-[#var MULTIPLE_LEXICAL_STATE_HANDLING = (grammar.lexerData.numLexicalStates >1)]
+[#var MULTIPLE_LEXICAL_STATE_HANDLING = (lexerData.numLexicalStates > 1)]
 [#var csPackage = globals::getPreprocessorSymbol('cs.package', settings.parserPackage) ]
 namespace ${csPackage} {
     using System;
@@ -315,12 +315,12 @@ ${globals::translateParserInitializers()}
         private Token NextToken(Token tok) {
             Token result = tokenSource.GetNextToken(tok);
             while (result.IsUnparsed) {
-[#list grammar.parserTokenHooks as methodName] 
+[#list grammar.parserTokenHooks as methodName]
                 result = ${methodName}(result);
 [/#list]
                 result = tokenSource.GetNextToken(result);
             }
-[#list grammar.parserTokenHooks as methodName] 
+[#list grammar.parserTokenHooks as methodName]
             result = ${methodName}(result);
 [/#list]
             _nextTokenType = null;
