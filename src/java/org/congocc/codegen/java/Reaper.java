@@ -61,9 +61,11 @@ class Reaper extends Node.Visitor {
         visit(jcu);
 
         // Now get rid of unused and repeated imports.
-        for (ImportDeclaration imp : jcu.childrenOfType(ImportDeclaration.class)) {
+        for (ImportDeclaration imp : jcu.descendants(ImportDeclaration.class)) {
             if (!usedImportDeclarations.add(getKey(imp))) {
-                jcu.remove(imp);
+                //jcu.remove(imp);
+                //System.out.println("Removing " + imp);
+                imp.getParent().remove(imp);
                 continue;
             }
             if (imp.firstChildOfType(STAR) == null) {
@@ -72,7 +74,8 @@ class Reaper extends Node.Visitor {
                 // Note that a static import can import methods.
                 if (imp.firstChildOfType(STATIC) != null && usedMethodNames.contains(name)) continue;
                 if (!usedTypeNames.contains(name)) {
-                    jcu.remove(imp);
+                    //System.out.println("Removing " + imp);
+                    imp.getParent().remove(imp);
                 }
             }
         }

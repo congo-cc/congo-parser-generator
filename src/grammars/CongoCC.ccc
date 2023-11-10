@@ -193,8 +193,6 @@ UnparsedCodeBlock #org.congocc.core.UnparsedCodeBlock :
    )
 ;
 
-INJECT Node : @freemarker.annotations.Pojo
-
 INJECT BASE_NODE_CLASS :
     import org.congocc.app.*;
     import org.congocc.core.Grammar;
