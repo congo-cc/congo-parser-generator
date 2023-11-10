@@ -492,12 +492,9 @@ public class PythonTranslator extends Translator {
             }
             addNewline = true;
         }
-        else if (stmt instanceof ASTBreakStatement) {
-            result.append("break");
-            addNewline = true;
-        }
-        else if (stmt instanceof ASTContinueStatement) {
-            result.append("continue");
+        else if (stmt instanceof ASTBreakOrContinueStatement) {
+            String s = ((ASTBreakOrContinueStatement) stmt).isBreak() ? "break" : "continue";
+            result.append(s);
             addNewline = true;
         }
         else if (stmt instanceof ASTIfStatement) {
@@ -914,8 +911,10 @@ public class PythonTranslator extends Translator {
         super.endClass(name, fields, result);
     }
 
-    @Override public void translateEmptyBlock(int indent, StringBuilder result) {
+/*
+    public void translateEmptyBlock(int indent, StringBuilder result) {
         addIndent(indent, result);
         result.append("pass  # empty code block\n");
     }
+*/
 }

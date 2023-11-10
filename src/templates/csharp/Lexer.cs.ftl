@@ -3,7 +3,6 @@
 [#import "CommonUtils.inc.ftl" as CU]
 [#var NFA_RANGE_THRESHOLD = 16]
 [#var MAX_INT=2147483647]
-[#var lexerData=grammar.lexerData]
 [#var multipleLexicalStates = lexerData.lexicalStates?size > 1]
 [#var TT = "TokenType."]
 [#var PRESERVE_LINE_ENDINGS=settings.preserveLineEndings?string("true", "false")
@@ -828,7 +827,7 @@ ${globals::translateLexerImports()}
         // The functional interface that represents
         // the acceptance method of an NFA state
         private delegate TokenType? NfaFunction(int ch, BitSet bs, HashSet<TokenType> validTypes, HashSet<TokenType> AlreadyMatchedTypes);
-        
+
 [#--        private delegate MatchInfo? MatcherHook(LexicalState lexicalState, string source, int position, HashSet<TokenType> activeTokenTypes, NfaFunction[] nfaFunctions, BitSet currentStates, BitSet nextStates, MatchInfo matchInfo); --]
 
 [#if multipleLexicalStates]
@@ -868,7 +867,7 @@ ${globals::translateLexerImports()}
         private BitSet _nextStates = new BitSet(MaxStates), _currentStates = new BitSet(MaxStates);
 
         internal HashSet<TokenType> ActiveTokenTypes = Utils.EnumSet(
-[#list grammar.lexerData.regularExpressions as regexp]
+[#list lexerData.regularExpressions as regexp]
             TokenType.${regexp.label}[#if regexp_has_next],[/#if]
 [/#list]
         );
@@ -884,7 +883,7 @@ ${globals::translateLexerImports()}
 [/#list]
 [#if lexerData.hasLexicalStateTransitions]
             // Generate the map for lexical state transitions from the various token types
-  [#list grammar.lexerData.regularExpressions as regexp]
+  [#list lexerData.regularExpressions as regexp]
     [#if !regexp.newLexicalState?is_null]
             tokenTypeToLexicalStateMap[TokenType.${regexp.label}] = LexicalState.${regexp.newLexicalState.name};
     [/#if]
@@ -1020,7 +1019,7 @@ ${globals::translateLexerInitializers()}
             do {
                 // Holder for the new type (if any) matched on this iteration
                 if (position > start) {
-                    // What was nextStates on the last iteration 
+                    // What was nextStates on the last iteration
                     // is now the currentStates!
                     BitSet temp = currentStates;
                     currentStates = nextStates;
@@ -1028,7 +1027,7 @@ ${globals::translateLexerInitializers()}
                     nextStates.Clear();
 [#if settings.usesPreprocessor]
                     position = input.NextUnignoredOffset(position);
-[/#if]                
+[/#if]
                 } else {
                     currentStates.Set(0);
                 }
@@ -1083,7 +1082,7 @@ ${globals::translateLexerInitializers()}
                 if (!inMore) {
                     tokenBeginOffset = position;
                 }
-[#--                
+[#--
                 if (MATCHER_HOOK != null) {
                     matchInfo = MATCHER_HOOK((LexicalState) lexicalState, _content, position, activeTokenTypes, nfaFunctions, currentStates, nextStates, matchInfo);
                     if (matchInfo == null) {
@@ -1092,7 +1091,7 @@ ${globals::translateLexerInitializers()}
                 } else {
                     matchInfo = GetMatchInfo(this, position, activeTokenTypes, nfaFunctions, currentStates, nextStates, matchInfo);
                 }
---]                
+--]
                 matchInfo = GetMatchInfo(this, position, activeTokenTypes, nfaFunctions, currentStates, nextStates, matchInfo);
                 matchedType = matchInfo.matchedType;
                 inMore = moreTokens.Contains((TokenType) matchedType);

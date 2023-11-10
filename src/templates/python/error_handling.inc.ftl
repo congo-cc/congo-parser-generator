@@ -1,4 +1,4 @@
-#var MULTIPLE_LEXICAL_STATE_HANDLING = (grammar.lexerData.numLexicalStates >1)
+#var MULTIPLE_LEXICAL_STATE_HANDLING = (lexerData.numLexicalStates > 1)
     def stack_iterator_forward(self):
 
         class ForwardIterator:

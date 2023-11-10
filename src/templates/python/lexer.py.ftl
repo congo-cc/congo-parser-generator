@@ -26,7 +26,6 @@ ${globals::translateLexerImports()}
 
 #var NFA_RANGE_THRESHOLD = 16,
      MAX_INT=2147483647,
-     lexerData=grammar.lexerData,
      multipleLexicalStates = lexerData.lexicalStates?size > 1,
      TT = "TokenType."
 
@@ -133,10 +132,10 @@ def ${nfaState.methodName}(ch, next_states, valid_types, already_matched_types):
          [#var useElif = true]
          [#if state_index == 0 || state::overlaps(states::subList(lastBlockStartIndex, state_index))]
            [#-- If there is overlap between this state and any of the states
-                 handled since the last lone if, we start a new if-else 
+                 handled since the last lone if, we start a new if-else
                  If not, we continue in the same if-else block as before. --]
            [#set lastBlockStartIndex = state_index, useElif=false]
-         [/#if]    
+         [/#if]
     ${useElif ?: "elif" : "if"} [@NfaStateCondition state /]:
       [/#if]
         if valid_types is None or ${state.type.label} in valid_types:
@@ -175,7 +174,7 @@ def ${nfaState.methodName}(ch, next_states, valid_types, already_matched_types):
         #var useElif = true
          [#if state_index == 0 || state::overlaps(states::subList(lastBlockStartIndex, state_index))]
         [#-- If there is overlap between this state and any of the states
-                handled since the last lone if, we start a new if-else 
+                handled since the last lone if, we start a new if-else
                 If not, we continue in the same if-else block as before. --]
           #set lastBlockStartIndex = state_index, useElif = false
         /#if
@@ -199,8 +198,8 @@ def ${nfaState.methodName}(ch, next_states, valid_types, already_matched_types):
 
 /#macro
 
-[#-- 
-   Generate a method for a single, i.e. non-composite NFA state 
+[#--
+   Generate a method for a single, i.e. non-composite NFA state
 --]
 #macro SimpleNfaMethod state
 def ${state.methodName}(ch, next_states, valid_yypes, already_matched_types):
@@ -853,7 +852,7 @@ ${globals::translateLexerInjections(true)}
         while matched_token is None:
 #if multipleLexicalStates
             # Get the NFA function table current lexical state.
-            # If we are in a MORE, there is some possibility that there 
+            # If we are in a MORE, there is some possibility that there
             # was a lexical state change since the last iteration of this loop!
             # if there aren't multiple lexical states, there should be a
             # module-level nfa_functions list.
@@ -864,7 +863,7 @@ ${globals::translateLexerInjections(true)}
 /#if
             if not in_more:
                 token_begin_offset = pos
-[#--                
+[#--
             if self._matcher_hook:
                 match_info = self._matcher_hook(self, pos, active_token_types, nfa_functions, current_states, next_states, match_info)
                 if match_info is None:
@@ -985,7 +984,7 @@ ${globals::translateLexerInjections(false)}
 
 #if lexerData.hasLexicalStateTransitions
 # Generate the map for lexical state transitions from the various token types (if necessary)
-  #list grammar.lexerData.regularExpressions as regexp
+  #list lexerData.regularExpressions as regexp
     #if !regexp.newLexicalState?is_null
 token_type_to_lexical_state_map[TokenType.${regexp.label}] = LexicalState.${regexp.newLexicalState.name}
     /#if

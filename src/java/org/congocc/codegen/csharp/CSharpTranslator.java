@@ -760,9 +760,6 @@ public class CSharpTranslator extends Translator {
                 result.append(");\n");
             }
         }
-        else if (stmt instanceof ASTContinueStatement) {
-            result.append("continue;\n");
-        }
         else if (stmt instanceof ASTTryStatement) {
             ASTTryStatement tryStmt = (ASTTryStatement) stmt;
             result.append("try {\n");
@@ -845,8 +842,9 @@ public class CSharpTranslator extends Translator {
             }
             closeBrace(indent, result);
         }
-        else if (stmt instanceof ASTBreakStatement) {
-            result.append("break;\n");
+        else if (stmt instanceof ASTBreakOrContinueStatement) {
+            String s = ((ASTBreakOrContinueStatement) stmt).isBreak() ? "break" : "continue";
+            result.append(s).append(";\n");
         }
         else {
             throw new UnsupportedOperationException("Cannot translate node of type " + stmt.getClass().getSimpleName());
@@ -982,8 +980,10 @@ public class CSharpTranslator extends Translator {
         result.append(prefix).append(s).append(";\n");
     }
 
-    @Override public void translateEmptyBlock(int indent, StringBuilder result) {
+/*
+    public void translateEmptyBlock(int indent, StringBuilder result) {
         addIndent(indent, result);
         result.append("// empty code block\n");
     }
+*/
 }
