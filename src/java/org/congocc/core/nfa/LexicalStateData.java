@@ -2,7 +2,6 @@ package org.congocc.core.nfa;
 
 import java.util.*;
 
-import org.congocc.app.Errors;
 import org.congocc.core.Grammar;
 import org.congocc.core.LexerData;
 import org.congocc.core.RegularExpression;

@@ -10,7 +10,6 @@ import java.util.*;
 import org.congocc.app.AppSettings;
 import org.congocc.app.Errors;
 import org.congocc.core.Grammar;
-import org.congocc.core.LexerData;
 import org.congocc.core.RegularExpression;
 import org.congocc.codegen.java.*;
 import org.congocc.codegen.csharp.CSharpFormatter;
@@ -60,7 +59,7 @@ public class FilesGenerator {
         //fmConfig.setObjectWrapper(new BeansWrapper());
         fmConfig.setNumberFormat("computer");
         fmConfig.setArithmeticEngine(freemarker.core.ArithmeticEngine.CONSERVATIVE_ENGINE);
-        fmConfig.setStrictVariableDefinition(true);
+        //fmConfig.setStrictVariableDefinition(true);
         fmConfig.setSharedVariable("grammar", grammar);
         fmConfig.setSharedVariable("globals", grammar.getTemplateGlobals());
         fmConfig.setSharedVariable("settings", grammar.getAppSettings());
