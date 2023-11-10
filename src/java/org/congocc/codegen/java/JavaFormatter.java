@@ -23,12 +23,20 @@ public class JavaFormatter extends Node.Visitor {
     private final EnumSet<TokenType> alwaysPrependSpace = EnumSet.of(ASSIGN, COLON, LBRACE, THROWS, EQ, NE, LE, GE, PLUS, MINUS, SLASH, SC_AND, SC_OR, BIT_AND, BIT_OR, XOR, REM, LSHIFT, PLUSASSIGN, MINUSASSIGN, STARASSIGN, SLASHASSIGN, ANDASSIGN, ORASSIGN, XORASSIGN, REMASSIGN, LSHIFTASSIGN, RSIGNEDSHIFT, RUNSIGNEDSHIFT, RSIGNEDSHIFTASSIGN, RUNSIGNEDSHIFTASSIGN, LAMBDA, INSTANCEOF);
     private final EnumSet<TokenType> alwaysAppendSpace = EnumSet.of(ASSIGN, COLON, DO, CATCH, CASE, FOR, IF, WHILE, THROWS, EXTENDS, EQ, NE, LE, GE, PLUS, SLASH, SC_AND, SC_OR, BIT_AND, BIT_OR, XOR, REM, LSHIFT, PLUSASSIGN, MINUSASSIGN, STARASSIGN, SLASHASSIGN, ANDASSIGN, ORASSIGN, XORASSIGN, REMASSIGN, LSHIFTASSIGN, RSIGNEDSHIFT, RUNSIGNEDSHIFT, RSIGNEDSHIFTASSIGN, RUNSIGNEDSHIFTASSIGN, LAMBDA, INSTANCEOF);
     private static final int MAX_LINE_LENGTH = 80;
-    
+
+    protected String indent(String current, String indent, int level) {
+        StringBuilder result = new StringBuilder();
+
+        result.append(current);
+        for (int i = 0; i < level; i++) {
+            result.append(indent);
+        }
+        return result.toString();
+    }
+
     public String format(Node code, int indentLevel) {
         buf = new StringBuilder();
-        for (int i = 0; i < indentLevel; i++) {
-            currentIndent += indent;
-        }
+        currentIndent = indent(currentIndent, indent, indentLevel);
         visit(code);
         return buf.toString();
     }

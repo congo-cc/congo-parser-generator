@@ -207,6 +207,7 @@ public class TemplateGlobals {
     }
 
     // Used in templates for side effects, hence returning empty string
+    @SuppressWarnings("SameReturnValue")
     public String startProduction() {
         Translator.SymbolTable symbols = new Translator.SymbolTable();
         translator.pushSymbols(symbols);
@@ -214,6 +215,7 @@ public class TemplateGlobals {
     }
 
     // Used in templates for side effects, hence returning empty string
+    @SuppressWarnings("SameReturnValue")
     public String endProduction() {
         translator.popSymbols();
         translator.clearParameterNames();

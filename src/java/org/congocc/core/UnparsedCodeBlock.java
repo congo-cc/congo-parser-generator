@@ -15,10 +15,10 @@ public class UnparsedCodeBlock extends EmptyExpansion {
     }
 
     private boolean expanded;
-    private Type type;
+    // private Type type;
     private ParseException parseException;
 
-    public void setType(Type type) {this.type = type;}
+    // public void setType(Type type) {this.type = type;}
 
     private Node parseContent(CharSequence input) {
         return null;
