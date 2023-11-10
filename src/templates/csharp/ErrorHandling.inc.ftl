@@ -1,4 +1,4 @@
-[#var MULTIPLE_LEXICAL_STATE_HANDLING = (grammar.lexerData.numLexicalStates >1)]
+[#var MULTIPLE_LEXICAL_STATE_HANDLING = (lexerData.numLexicalStates > 1)]
 
         private void PushOntoLookaheadStack(string methodName, string fileName, uint line, uint column) {
             _lookaheadStack.Add(new NonTerminalCall(this, fileName, methodName, line, column));

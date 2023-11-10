@@ -21,7 +21,7 @@ __all__ = [
 
 @unique
 class TokenType(Enum):
- [#list grammar.lexerData.regularExpressions as regexp]
+ [#list lexerData.regularExpressions as regexp]
     ${regexp.label} = auto()
  [/#list]
  [#list settings.extraTokenNames as t]
@@ -31,7 +31,7 @@ class TokenType(Enum):
 
 @unique
 class LexicalState(Enum):
-  [#list grammar.lexerData.lexicalStates as lexicalState]
+  [#list lexerData.lexicalStates as lexicalState]
     ${lexicalState.name} = auto()
   [/#list]
 

@@ -3,7 +3,7 @@
 [#import "CommonUtils.inc.ftl" as CU]
 
 [#var UNLIMITED=2147483647]
-[#var MULTIPLE_LEXICAL_STATE_HANDLING = grammar.lexerData.numLexicalStates > 1]
+[#var MULTIPLE_LEXICAL_STATE_HANDLING = lexerData.numLexicalStates > 1]
 [#set MULTIPLE_LEXICAL_STATE_HANDLING = false]
 
 
@@ -142,7 +142,7 @@ ${BuildScanCode(expansion, indent + 8)}
 
 [#macro BuildAssertionRoutine expansion indent]
 [#var is=""?right_pad(indent)]
-// scanahead routine for assertion at: 
+// scanahead routine for assertion at:
 // ${expansion.parent.location}
 // BuildAssertionRoutine macro
 private bool ${expansion.scanRoutineName}() {
