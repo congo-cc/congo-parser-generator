@@ -911,8 +911,10 @@ public class PythonTranslator extends Translator {
         super.endClass(name, fields, result);
     }
 
-    @Override public void translateEmptyBlock(int indent, StringBuilder result) {
+/*
+    public void translateEmptyBlock(int indent, StringBuilder result) {
         addIndent(indent, result);
         result.append("pass  # empty code block\n");
     }
+*/
 }

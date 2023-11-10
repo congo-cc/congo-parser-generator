@@ -980,8 +980,10 @@ public class CSharpTranslator extends Translator {
         result.append(prefix).append(s).append(";\n");
     }
 
-    @Override public void translateEmptyBlock(int indent, StringBuilder result) {
+/*
+    public void translateEmptyBlock(int indent, StringBuilder result) {
         addIndent(indent, result);
         result.append("// empty code block\n");
     }
+*/
 }

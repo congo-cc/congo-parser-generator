@@ -30,17 +30,18 @@ public class LexicalStateData {
 
     private final Set<NfaState> allStates = new LinkedHashSet<>();
 
-    private final Errors errors;
+    // private final Errors errors;
     
     public LexicalStateData(Grammar grammar, String name) {
         this.grammar = grammar;
-        this.errors = grammar.getErrors();
+        // this.errors = grammar.getErrors();
         this.name = name;
         initialState = new NfaState(this, null);
     }
 
     public LexerData getLexerData() {return grammar.getLexerData();}
 
+    @SuppressWarnings("unused")
     public List<CompositeStateSet> getCanonicalSets() {
         return compositeSets;
     }

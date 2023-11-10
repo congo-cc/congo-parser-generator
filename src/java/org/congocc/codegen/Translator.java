@@ -923,7 +923,7 @@ public class Translator {
         return result;
     }
 
-    protected Node transformFieldDeclaration(Node node, boolean forType) {
+    protected Node transformFieldDeclaration(Node node) {
         ASTVariableOrFieldDeclaration result = new ASTVariableOrFieldDeclaration();
 
         result.field = true;
@@ -1015,7 +1015,7 @@ public class Translator {
         return result;
     }
 
-    protected Node transformClassicSwitchStatement(Node node, boolean forType) {
+    protected Node transformClassicSwitchStatement(Node node) {
         int n = node.size();
         List<ASTExpression> pendingLabels = new ArrayList<>();
         ASTCaseStatement currentCase = null;
@@ -1069,7 +1069,7 @@ public class Translator {
         return result;
     }
 
-    protected Node transformMethodOrConstructor(Node node, boolean forType) {
+    protected Node transformMethodOrConstructor(Node node) {
         ASTMethodDeclaration result = new ASTMethodDeclaration();
         result.constructor = node instanceof ConstructorDeclaration;
         int n = node.size();
@@ -1106,7 +1106,7 @@ public class Translator {
                 // continue; // implicit, as last statement in loop
             }
 /*
-                ConstructorDeclararions can contain other stuff
+                ConstructorDeclarations can contain other stuff
                 else {
                     throw new UnsupportedOperationException();
                 }
@@ -1337,7 +1337,7 @@ public class Translator {
             return resultNode;
         }
         else if (node instanceof FieldDeclaration) {
-            return transformFieldDeclaration(node, forType);
+            return transformFieldDeclaration(node);
         }
         else if (node instanceof ReturnStatement) {
             ASTReturnStatement resultNode = new ASTReturnStatement();
@@ -1374,10 +1374,10 @@ public class Translator {
             return transformEnhancedForStatement(node, forType);
         }
         else if (node instanceof ClassicSwitchStatement) {
-            return transformClassicSwitchStatement(node, forType);
+            return transformClassicSwitchStatement(node);
         }
         else if (node instanceof MethodDeclaration || node instanceof ConstructorDeclaration) {
-            return transformMethodOrConstructor(node, forType);
+            return transformMethodOrConstructor(node);
         }
         else if (node instanceof StatementExpression) {
             Node child = node.getLastChild();
@@ -1572,10 +1572,6 @@ public class Translator {
     }
 
     protected void internalTranslateStatement(ASTStatement stmt, int indent, StringBuilder result) {
-        fail();
-    }
-
-    public void translateEmptyBlock(int indent, StringBuilder result) {
         fail();
     }
 
