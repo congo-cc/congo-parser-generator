@@ -459,7 +459,7 @@
         if (passedPredicate && !legacyGlitchyLookahead) return false;
      [/#if]
   [/#list]
-  [#list 1..choice.choices?size as unused] } [/#list]
+  [#list choice.choices as unused] } [/#list]
    } finally {passedPredicate = passedPredicate${CU.newVarIndex};}
 [/#macro]
 

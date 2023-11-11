@@ -258,7 +258,7 @@ if NFA state's moveRanges array is smaller than NFA_RANGE_THRESHOLD
            ch <= ${displayRight}[#t]
        /#if
     #else
-       ([@RangesCondition moveRanges[0..1]/]) or ([@RangesCondition moveRanges[2..moveRanges?size-1]/])[#t]
+       ([@RangesCondition moveRanges[0..1]/]) or ([@RangesCondition moveRanges[2..]/])[#t]
     /#if
 /#macro
 
