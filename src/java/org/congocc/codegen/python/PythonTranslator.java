@@ -273,7 +273,8 @@ public class PythonTranslator extends Translator {
             result.append("self");
         }
         else {
-            throw new UnsupportedOperationException();
+            String s = String.format("Cannot render receiver %s", getSimpleName(expr));
+            throw new UnsupportedOperationException(s);
         }
     }
 
@@ -636,7 +637,14 @@ public class PythonTranslator extends Translator {
                 translateFormals(formals, symbols, false, false, result);
             }
             result.append("):\n");
-            internalTranslateStatement(decl.getStatements(), indent + 4, result);
+            ASTStatementList statements = decl.getStatements();
+            if (statements != null) {
+                internalTranslateStatement(statements, indent + 4, result);
+            }
+            else {
+                addIndent(indent + 4, result);
+                result.append("pass\n");
+            }
             result.append('\n');
             popSymbols();
         }
@@ -720,7 +728,8 @@ public class PythonTranslator extends Translator {
             }
         }
         else {
-            throw new UnsupportedOperationException();
+            String s = String.format("Cannot translate statement %s", getSimpleName(stmt));
+            throw new UnsupportedOperationException(s);
         }
         if (addNewline) {
             result.append('\n');
@@ -834,8 +843,17 @@ public class PythonTranslator extends Translator {
                 if (decl instanceof MethodDeclaration) {
                     translateStatement(decl, 4, result);
                 }
+                else if (decl instanceof Initializer) {
+                    SymbolTable symbols = new SymbolTable();
+                    pushSymbols(symbols);
+                    for (Node stmt : decl.descendantsOfType(CodeBlock.class)) {
+                        translateStatement(stmt, 8, result);
+                    }
+                    popSymbols();
+                }
                 else {
-                    throw new UnsupportedOperationException();
+                    String s = String.format("Cannot translate %s at %s", getSimpleName(decl), decl.getLocation());
+                    throw new UnsupportedOperationException(s);
                 }
             }
         }
@@ -855,7 +873,8 @@ public class PythonTranslator extends Translator {
     public void translateImport(String javaName, StringBuilder result) {
         String prefix = String.format("%s.", appSettings.getParserPackage());
         if (!javaName.startsWith(prefix)) {
-            throw new UnsupportedOperationException();
+            String s = String.format("Cannot translate import %s", javaName);
+            throw new UnsupportedOperationException(s);
         }
         javaName = javaName.substring(prefix.length());
         List<String> parts = new ArrayList<>(Arrays.asList(javaName.split("\\.")));
@@ -867,7 +886,8 @@ public class PythonTranslator extends Translator {
         }
         int n = parts.size();
         if ((n == 0) || (n > 2)) {
-            throw new UnsupportedOperationException();
+            s = String.format("Cannot translate import %s with %d parts", javaName, n);
+            throw new UnsupportedOperationException(s);
         }
         s = parts.get(0);
         String suffix = null;

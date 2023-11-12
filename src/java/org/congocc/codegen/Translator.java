@@ -316,6 +316,8 @@ public class Translator {
         public void setValue(ASTExpression value) { this.value = value; }
     }
 
+    protected static class ASTThrowStatement extends ASTExpressionStatement {}
+
     protected static class ASTForStatement extends ASTStatement {
         private ASTVariableOrFieldDeclaration variable;
         private ASTExpression iterable;
@@ -868,7 +870,7 @@ public class Translator {
                 }
                 else {
                     for (Node gc : child.children()) {
-                        if (gc instanceof Operator) {
+                        if (gc instanceof Operator || gc instanceof Delimiter) {
                             continue;
                         }
                         if (!(gc instanceof ObjectType)) {
@@ -1113,7 +1115,10 @@ public class Translator {
 */
         }
         if (node instanceof MethodDeclaration) {
-            result.statements = (ASTStatementList) transformTree(((MethodDeclaration) node).getStatements());
+            CodeBlock statements = ((MethodDeclaration) node).getStatements();
+            if (statements != null) {
+                result.statements = (ASTStatementList) transformTree(statements);
+            }
         }
         else {
             // it's a ConstructorDeclaration (alternative using property)
@@ -1209,7 +1214,8 @@ public class Translator {
         }
         else if (node instanceof PrimitiveType) {
             if (node.size() != 1) {
-                throw new UnsupportedOperationException("node is '" + node + "' class " + getSimpleName(node));
+                String s = String.format("Cannot transform %s at %s", getSimpleName(node), node.getLocation());
+                throw new UnsupportedOperationException(s);
             }
             Node child = node.getFirstChild();
             return transformTree(child, forType);
@@ -1320,6 +1326,11 @@ public class Translator {
         }
         else if (node instanceof ExpressionStatement) {
             ASTExpressionStatement resultNode = new ASTExpressionStatement();
+            resultNode.setValue((ASTExpression) transformTree(node.get(0)));
+            return resultNode;
+        }
+        else if (node instanceof ThrowStatement) {
+            ASTThrowStatement resultNode = new ASTThrowStatement();
             resultNode.setValue((ASTExpression) transformTree(node.get(0)));
             return resultNode;
         }
@@ -1456,8 +1467,15 @@ public class Translator {
             }
             return resultNode;
         }
+        else if (node instanceof FinallyBlock) {
+            result = transformTree(node.get(1), forType);
+        }
+        else if (node instanceof EmptyStatement) {
+            result = new ASTStatementList();
+        }
         if (result == null) {
-            throw new UnsupportedOperationException("node is '" + node + "' class " + getSimpleName(node));
+            String s = String.format("Cannot transform %s at %s", getSimpleName(node), node.getLocation());
+            throw new UnsupportedOperationException(s);
         }
         return result;
     }
