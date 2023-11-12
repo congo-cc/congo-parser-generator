@@ -51,7 +51,7 @@
     [#-- Generate the method modifiers and header --] 
         ${production.leadingComments}
         // ${production.location}
-        ${globals::startProduction()}${globals::translateModifiers(production.accessModifier)} ${globals::translateType(production.returnType)} Parse${production.name}([#if production.parameterList]${globals::translateParameters(production.parameterList)}[/#if]) {
+        ${globals::startProduction()}${globals::translateModifiers(production.accessModifier)} ${globals::translateType(production.returnType)} Parse${production.name}([#if production.parameterList?has_content]${globals::translateParameters(production.parameterList)}[/#if]) {
             var prevProduction = _currentlyParsedProduction;
             _currentlyParsedProduction = "${production.name}";
             [#--${production.javaCode!}
@@ -526,18 +526,18 @@ if (BuildTree) {
    [#return "" /]
 [/#function]
 
-#function closeCondition treeNodeBehavior
-   #var cc = "true"
-   #if treeNodeBehavior??
-      #if treeNodeBehavior.condition
-         #set cc = treeNodeBehavior.condition
-         #if treeNodeBehavior.gtNode
-            #set cc = "NodeArity " + treeNodeBehavior.initialShorthand  + cc
-         /#if
-      /#if
-   /#if
-   #return cc
-/#function
+[#function closeCondition treeNodeBehavior]
+   [#var cc = "true"]
+   [#if treeNodeBehavior??]
+      [#if treeNodeBehavior.condition?has_content]
+         [#set cc = treeNodeBehavior.condition]
+         [#if treeNodeBehavior.gtNode]
+            [#set cc = "NodeArity " + treeNodeBehavior.initialShorthand  + cc]
+         [/#if]
+      [/#if]
+   [/#if]
+   [#return cc/]
+[/#function]
 
 [#function nodeClassName treeNodeBehavior]
    [#if treeNodeBehavior?? && treeNodeBehavior.nodeName??]
