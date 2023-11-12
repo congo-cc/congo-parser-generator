@@ -536,7 +536,7 @@ if (BuildTree) {
          /#if
       /#if
    /#if
-   #return cc/
+   #return cc
 /#function
 
 [#function nodeClassName treeNodeBehavior]
