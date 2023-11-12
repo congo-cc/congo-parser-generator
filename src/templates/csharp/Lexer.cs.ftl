@@ -12,7 +12,7 @@
       PRESERVE_TABS = settings.preserveTabs?string("true", "false")
  ]
 [#var BaseToken = settings.baseTokenClassName]
-[#-- if settings.treeBuildingEnabled || settings.rootAPIPackage?has_content]
+[#-- if settings.treeBuildingEnabled || settings.rootAPIPackage]
   [#set BaseToken = "Node.TerminalNode"]
 [/#if --]
 [#var TOKEN = settings.baseTokenClassName]
@@ -1283,7 +1283,7 @@ ${globals::translateLexerInitializers()}
         private Token TokenLexicalActions(Token matchedToken, TokenType? matchedType) {
             switch (matchedType) {
         [#list lexerData.regularExpressions as regexp]
-                [#if regexp.codeSnippet?has_content]
+                [#if regexp.codeSnippet??]
             case TokenType.${regexp.label}:
 ${globals::translateCodeBlock(regexp.codeSnippet.javaCode, 16)}
                 break;

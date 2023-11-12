@@ -51,7 +51,7 @@
     [#-- Generate the method modifiers and header --] 
         ${production.leadingComments}
         // ${production.location}
-        ${globals::startProduction()}${globals::translateModifiers(production.accessModifier)} ${globals::translateType(production.returnType)} Parse${production.name}([#if production.parameterList?has_content]${globals::translateParameters(production.parameterList)}[/#if]) {
+        ${globals::startProduction()}${globals::translateModifiers(production.accessModifier)} ${globals::translateType(production.returnType)} Parse${production.name}([#if production.parameterList??]${globals::translateParameters(production.parameterList)}[/#if]) {
             var prevProduction = _currentlyParsedProduction;
             _currentlyParsedProduction = "${production.name}";
             [#--${production.javaCode!}
@@ -529,7 +529,7 @@ if (BuildTree) {
 [#function closeCondition treeNodeBehavior]
    [#var cc = "true"]
    [#if treeNodeBehavior??]
-      [#if treeNodeBehavior.condition?has_content]
+      [#if treeNodeBehavior.condition??]
          [#set cc = treeNodeBehavior.condition]
          [#if treeNodeBehavior.gtNode]
             [#set cc = "NodeArity " + treeNodeBehavior.initialShorthand  + cc]
