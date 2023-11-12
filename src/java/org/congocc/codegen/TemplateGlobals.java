@@ -326,7 +326,8 @@ public class TemplateGlobals {
                                 decl instanceof EnumDeclaration || decl instanceof ClassDeclaration) {
                             translator.translateStatement(decl, methodIndent, result);
                         } else {
-                            throw new UnsupportedOperationException();
+                            String s = String.format("Unable to translate %s at %s", Translator.getSimpleName(decl), decl.getLocation());
+                            throw new UnsupportedOperationException(s);
                         }
                     }
                 }
@@ -369,23 +370,28 @@ public class TemplateGlobals {
                     for (Node child : decl.children()) {
                         if (child instanceof Identifier) {
                             names.add(((Identifier) child).toString());
-                        } else if (child instanceof VariableDeclarator) {
+                        }
+                        else if (child instanceof VariableDeclarator) {
                             Identifier ident = child.firstDescendantOfType(Identifier.class);
                             if (ident == null) {
-                                throw new UnsupportedOperationException();
+                                String s = String.format("Identifier not found for %s at %s", Translator.getSimpleName(child), child.getLocation());
+                                throw new UnsupportedOperationException(s);
                             }
                             names.add(ident.toString());
                         }
                     }
                     if (names.size() == 0) {
-                        throw new UnsupportedOperationException();
+                        String s = String.format("No names found for %s at %s", Translator.getSimpleName(decl), decl.getLocation());
+                        throw new UnsupportedOperationException(s);
                     }
                     for (String name : names) {
                         result.add(translator.translateIdentifier(name,
                                 Translator.TranslationContext.VARIABLE));
                     }
-                } else {
-                    throw new UnsupportedOperationException();
+                }
+                else {
+                    String s = String.format("Unable to process %s at %s", Translator.getSimpleName(decl), decl.getLocation());
+                    throw new UnsupportedOperationException(s);
                 }
             }
         }

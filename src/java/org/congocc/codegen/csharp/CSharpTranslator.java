@@ -197,7 +197,8 @@ public class CSharpTranslator extends Translator {
             rendered = false;
         }
         else {
-            throw new UnsupportedOperationException();
+            String s = String.format("Cannot render receiver %s", getSimpleName(expr));
+            throw new UnsupportedOperationException(s);
         }
         return rendered;
     }
@@ -460,7 +461,8 @@ public class CSharpTranslator extends Translator {
             mods.remove("static");
         }
         if (mods.size() > 0) {
-            throw new UnsupportedOperationException();
+            String s = String.format("Unable to translate modifier %s", String.join(", ", mods));
+            throw new UnsupportedOperationException(s);
         }
         for (String mod: translated_mods) {
             result.append(mod);
@@ -614,7 +616,11 @@ public class CSharpTranslator extends Translator {
                 for (int i = 0; i < n; i++) {
                     ASTExpression name = names.get(i);
                     ASTExpression initializer = initializers.get(i);
-                    if (initializer != null) {
+                    if (initializer == null) {
+                        String msg = String.format("Unexpected null initializer for %s", getSimpleName(name));
+                        throw new UnsupportedOperationException(msg);
+                    }
+                    else {
                         translateType(decl.getTypeExpression(), result);
                         result.append(' ');
                         internalTranslateExpression(name, TranslationContext.UNKNOWN, result);
@@ -623,9 +629,6 @@ public class CSharpTranslator extends Translator {
                         if (i < (n - 1)) {
                             result.append("; ");
                         }
-                    }
-                    else {
-                        throw new UnsupportedOperationException();
                     }
                 }
                 result.append(";\n");
@@ -847,7 +850,7 @@ public class CSharpTranslator extends Translator {
             result.append(s).append(";\n");
         }
         else {
-            throw new UnsupportedOperationException("Cannot translate node of type " + stmt.getClass().getSimpleName());
+            throw new UnsupportedOperationException("Cannot translate node of type " + getSimpleName(stmt));
         }
         if (addNewline) {
             result.append('\n');
@@ -913,7 +916,8 @@ public class CSharpTranslator extends Translator {
                         translateStatement(decl, indent + 4, result);
                     }
                     else {
-                        throw new UnsupportedOperationException();
+                        String s = String.format("Cannot translate %s at %s", getSimpleName(decl), decl.getLocation());
+                        throw new UnsupportedOperationException(s);
                     }
                 }
             }
@@ -935,14 +939,17 @@ public class CSharpTranslator extends Translator {
         result.append(") ");
     }
 
-    @Override  public void translateFormals(List<FormalParameter> formals, SymbolTable symbols, StringBuilder result) {
+    @Override
+    public void translateFormals(List<FormalParameter> formals, SymbolTable symbols, StringBuilder result) {
         translateFormals(transformFormals(formals), symbols, true, true, result);
     }
 
-    @Override public void translateImport(String javaName, StringBuilder result) {
+    @Override
+    public void translateImport(String javaName, StringBuilder result) {
         String prefix = String.format("%s.", grammar.getAppSettings().getParserPackage());
         if (!javaName.startsWith(prefix)) {
-            throw new UnsupportedOperationException();
+            String s = String.format("Cannot translate import %s", javaName);
+            throw new UnsupportedOperationException(s);
         }
         javaName = javaName.substring(prefix.length());
         List<String> parts = new ArrayList<>(Arrays.asList(javaName.split("\\.")));
@@ -953,7 +960,8 @@ public class CSharpTranslator extends Translator {
             if (s.endsWith("Parser")) {
                 if (i == (n - 1)) {
                     if (aliasName != null) {
-                        throw new UnsupportedOperationException();
+                        s = String.format("Unexpected alias %s", aliasName);
+                        throw new UnsupportedOperationException(s);
                     }
                     aliasName = s;
                 }
@@ -962,7 +970,8 @@ public class CSharpTranslator extends Translator {
             else if (s.endsWith("Lexer")) {
                 if (i == (n - 1)) {
                     if (aliasName != null) {
-                        throw new UnsupportedOperationException();
+                        s = String.format("Unexpected alias %s", aliasName);
+                        throw new UnsupportedOperationException(s);
                     }
                     aliasName = s;
                 }
