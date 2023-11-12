@@ -12,10 +12,10 @@ package ${settings.parserPackage};
 
 import ${settings.parserPackage}.${TOKEN}.TokenType;
 import static ${settings.parserPackage}.${TOKEN}.TokenType.*;
-[#if settings.rootAPIPackage?has_content]
+#if settings.rootAPIPackage
    import ${settings.rootAPIPackage}.Node;
    import ${settings.rootAPIPackage}.TokenSource;
-[/#if]
+/#if
 
 [#import "NfaCode.java.ftl" as NFA]
 
@@ -42,12 +42,12 @@ import static ${settings.parserPackage}.${TOKEN}.TokenType.*;
 import java.io.IOException;
 import java.util.*;
 
-[#if settings.rootAPIPackage?has_content]
+#if settings.rootAPIPackage
 import ${settings.rootAPIPackage}.TokenSource;
-[/#if]
+/#if
 
 public
-[#if isFinal]final[/#if]
+${isFinal ?: "final" : ""}
 class ${settings.lexerClassName} extends TokenSource
 {
 
@@ -398,7 +398,7 @@ class ${settings.lexerClassName} extends TokenSource
   private ${TOKEN} tokenLexicalActions(${TOKEN} matchedToken, TokenType matchedType) {
     switch(matchedType) {
    [#list lexerData.regularExpressions as regexp]
-        [#if regexp.codeSnippet?has_content]
+        [#if regexp.codeSnippet]
       case ${regexp.label} :
           ${regexp.codeSnippet.javaCode}
            break;

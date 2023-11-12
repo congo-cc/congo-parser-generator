@@ -3,7 +3,7 @@
 
 [#var USE_FIRST_SET_THRESHOLD = 5]
 
- [#--if settings.parserPackage?has_content]
+ [#--if settings.parserPackage]
    [#-- This is necessary because you can't do a static import from the unnamed or "default package" --]
    [#--set TT=""]
  [/#if--]

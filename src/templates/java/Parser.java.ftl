@@ -23,20 +23,20 @@ import java.util.concurrent.CancellationException;
 import ${settings.parserPackage}.${settings.lexerClassName}.LexicalState;
 import ${settings.parserPackage}.${settings.baseTokenClassName}.TokenType;
 import static ${settings.parserPackage}.${settings.baseTokenClassName}.TokenType.*;
-[#if settings.rootAPIPackage?has_content]
+#if settings.rootAPIPackage
    import ${settings.rootAPIPackage}.ParseException;
    import ${settings.rootAPIPackage}.TokenSource;
    import ${settings.rootAPIPackage}.NonTerminalCall;
    import ${settings.rootAPIPackage}.Node;
-[/#if]
-[#if settings.faultTolerant]
-  [#if settings.rootAPIPackage?has_content]
+/#if
+#if settings.faultTolerant
+  #if settings.rootAPIPackage
      import ${settings.rootAPIPackage}.InvalidNode;
      import ${settings.rootAPIPackage}.ParsingProblem;
-  [#else]
+  #else
      import ${settings.nodePackage}.InvalidNode;
-  [/#if]
-[/#if]
+  /#if
+/#if
 
 [#if settings.treeBuildingEnabled]
   [#list grammar.nodeNames as node]

@@ -2,15 +2,15 @@
 
 package ${settings.parserPackage};
 
-[#var BASE_EXCEPTION_TYPE = settings.useCheckedException?string("Exception", "RuntimeException")]
-[#var TOKEN_TYPE_SET = "EnumSet<TokenType>", BaseToken = settings.baseTokenClassName, BaseTokenType = "TokenType"]
-[#if settings.treeBuildingEnabled || settings.rootAPIPackage?has_content]
-  [#set TOKEN_TYPE_SET = "Set<? extends Node.NodeType>"]
-  [#set BaseToken = "Node.TerminalNode"]
-  [#set BaseTokenType = "Node.NodeType"]
-[#else]
+#var BASE_EXCEPTION_TYPE = settings.useCheckedException?string("Exception", "RuntimeException")
+#var TOKEN_TYPE_SET = "EnumSet<TokenType>", BaseToken = settings.baseTokenClassName, BaseTokenType = "TokenType"
+#if settings.treeBuildingEnabled || settings.rootAPIPackage
+  #set TOKEN_TYPE_SET = "Set<? extends Node.NodeType>"
+  #set BaseToken = "Node.TerminalNode"
+  #set BaseTokenType = "Node.NodeType"
+#else
   import ${settings.parserPackage}.${BaseToken}.TokenType;
-[/#if]
+/#if
 
 import java.util.*;
 

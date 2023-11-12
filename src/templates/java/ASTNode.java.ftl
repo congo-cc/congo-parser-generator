@@ -9,9 +9,9 @@ package ${settings.nodePackage};
 import ${settings.parserPackage}.*;
 import java.util.*;
 
-[#if settings.rootAPIPackage?has_content]
+#if settings.rootAPIPackage
 import ${settings.rootAPIPackage}.Node;
-[/#if]
+/#if
 
 [#if isInterface]
 public

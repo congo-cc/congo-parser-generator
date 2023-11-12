@@ -57,7 +57,7 @@
    [#if settings.useCheckedException]    
     throws ParseException
     [#list (production.throwsList.types)! as throw], ${throw}[/#list] 
-   [#elseif (production.throwsList.types)?has_content] 
+   [#elseif (production.throwsList.types)??] 
      [#list production.throwsList.types as throw]
         [#if throw_index == 0]
            throws ${throw}
@@ -567,13 +567,11 @@
 
 [#function closeCondition treeNodeBehavior]
    [#var cc = "true"]
-   [#if treeNodeBehavior??]
-      [#if treeNodeBehavior.condition?has_content]
+   [#if (treeNodeBehavior.condition)??]
          [#set cc = treeNodeBehavior.condition]
          [#if treeNodeBehavior.gtNode]
             [#set cc = "nodeArity() " + treeNodeBehavior.initialShorthand  + cc]
          [/#if]
-      [/#if]
    [/#if]
    [#return cc/]
 [/#function]

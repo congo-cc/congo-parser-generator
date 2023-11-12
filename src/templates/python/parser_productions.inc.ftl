@@ -51,11 +51,11 @@
    [#set injectedFields = {}]
    [#set newVarIndex = 0 in CU] 
    [#-- Generate the method modifiers and header --]
-   [#if production.leadingComments?has_content]
+   [#if production.leadingComments??]
 ${is}# ${production.leadingComments} 
    [/#if]
 ${is}# ${production.location}
-${is}${globals::startProduction()}def parse_${production.name}(self[#if production.parameterList?has_content], ${globals::translateParameters(production.parameterList)}[/#if]):
+${is}${globals::startProduction()}def parse_${production.name}(self[#if production.parameterList??], ${globals::translateParameters(production.parameterList)}[/#if]):
    [#-- Now generate the body --]
 ${is}    # import pdb; pdb.set_trace()
    [#-- OMITTED: "if (cancelled) throw new CancellationException();" --]
@@ -542,13 +542,11 @@ ${is}        self.clear_node_scope()
 
 [#function closeCondition treeNodeBehavior]
    [#var cc = "True"]
-   [#if treeNodeBehavior??]
-      [#if treeNodeBehavior.condition?has_content]
+   [#if (treeNodeBehavior.condition)??]
          [#set cc = treeNodeBehavior.condition]
          [#if treeNodeBehavior.gtNode]
             [#set cc = "self.node_arity " + treeNodeBehavior.initialShorthand  + cc]
          [/#if]
-      [/#if]
    [/#if]
    [#return cc/]
 [/#function]

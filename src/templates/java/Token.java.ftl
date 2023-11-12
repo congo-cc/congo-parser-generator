@@ -12,19 +12,19 @@ import java.util.Collections;
 import java.util.Iterator;
 import java.util.List;
 
-[#if settings.rootAPIPackage?has_content]
+#if settings.rootAPIPackage
 import ${settings.rootAPIPackage}.Node;
 import ${settings.rootAPIPackage}.TokenSource;
-[/#if]
+/#if
 
-[#var implements = "implements CharSequence"]
+#var implements = "implements CharSequence"
 
-[#if settings.treeBuildingEnabled]
-    [#set implements ="implements CharSequence, Node.TerminalNode"]
-    [#if settings.rootAPIPackage?has_content]
+#if settings.treeBuildingEnabled
+    #set implements ="implements CharSequence, Node.TerminalNode"
+    #if settings.rootAPIPackage
        import ${settings.rootAPIPackage}.Node;
-    [/#if]
-[/#if]
+    /#if
+/#if
 
 public class ${settings.baseTokenClassName} ${implements} {
 
