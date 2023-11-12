@@ -533,7 +533,7 @@ ${is}        self.clear_node_scope()
       [#set type = "List<Node>"]
       [#set field = field + " = new ArrayList<Node>()"]
    [/#if]
-   [#if (injectedFields[field])?is_null]
+   [#if !(injectedFields[field])??]
       [#set injectedFields = injectedFields + {field : type}]
       ${grammar::addFieldInjection(currentProduction.nodeName, modifier, type, field)}
    [/#if]

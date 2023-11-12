@@ -223,7 +223,7 @@
          if (!isParserTolerant()) throw e;
          this.pendingRecovery = true;
          ${expansion.customErrorRecoveryBlock!}
-         [#if !production?is_null && production.returnType != "void"]
+         [#if production?? && production.returnType != "void"]
             [#var rt = production.returnType]
             [#-- We need a return statement here or the code won't compile! --]
             [#if rt = "int" || rt="char" || rt=="byte" || rt="short" || rt="long" || rt="float"|| rt="double"]
@@ -255,7 +255,7 @@
          [#set fieldName = jtbNameMap[nodeClass]/]
       [/#if]
       [#set fieldOrdinal = nodeFieldOrdinal[nodeClass]!null]
-      [#if fieldOrdinal?is_null]
+      [#if !fieldOrdinal??]
          [#set nodeFieldOrdinal = nodeFieldOrdinal + {nodeClass : 1}]
       [#else]
          [#set nodeFieldOrdinal = nodeFieldOrdinal + {nodeClass : fieldOrdinal + 1}]
@@ -558,7 +558,7 @@
       [#set type = "List<Node>"]
       [#set field = field + " = new ArrayList<Node>()"]
    [/#if]
-   [#if (injectedFields[field])?is_null]
+   [#if !(injectedFields[field])??]
       #set injectedFields = injectedFields + {field : type}
       #exec grammar::addFieldInjection(currentProduction.nodeName, modifier, type, field)
    [/#if]
