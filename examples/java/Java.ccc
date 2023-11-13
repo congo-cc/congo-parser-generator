@@ -14,7 +14,6 @@ JAVA_UNICODE_ESCAPE;
 PARSER_PACKAGE=org.parsers.java;
 NODE_PACKAGE=org.parsers.java.ast;
 DEFAULT_LEXICAL_STATE=JAVA;
-X_SYNTHETIC_NODES_ENABLED;
 // The following tokens are only activated at key points whether
 // they are needed.
 DEACTIVATE_TOKENS=RECORD, VAR, YIELD, SEALED, NON_SEALED, PERMITS, MODULE, 
@@ -127,7 +126,7 @@ ProvidesDirective :
 
 #CompilationUnit# :
   [ @packageDeclaration := PackageDeclaration! ]
-  @importDeclarations := ( ImportDeclaration )*!
+  ( @importDeclarations :+= ImportDeclaration )*!
 //@typeDeclarations := 
 //  REVISIT: Why does the above not work here? It works fine in the ImportDeclaration case. 
 //           When used, the phase 2 building of CongoCC in build.xml just "goes away".  
@@ -398,7 +397,7 @@ CompactConstructorDeclaration :
   /name/=TypeIdentifier //used in Translator?
   <LBRACE> =>||
   [ ExplicitConstructorInvocation =>|| ]
-  @statements = ( SCAN ~(<RBRACE>) => BlockStatement )*!
+  ( SCAN ~(<RBRACE>) => @statements += BlockStatement )*!
   <RBRACE>
 ;
 
@@ -518,7 +517,7 @@ ConstructorDeclaration :
   [ ThrowsList ]
   <LBRACE>
   [ ExplicitConstructorInvocation =>||]
-  @statements := ( SCAN ~(<RBRACE>) => BlockStatement )*!
+  ( SCAN ~(<RBRACE>) => @statements :+= BlockStatement )*!
   <RBRACE>
 ;
 
