@@ -6,7 +6,8 @@
     are in the imported template NfaCode.java.ftl
  --]
 
- [#var TOKEN = settings.baseTokenClassName]
+#import "NfaCode.java.ftl" as NFA
+#var TOKEN = settings.baseTokenClassName
 
 package ${settings.parserPackage};
 
@@ -17,14 +18,12 @@ import static ${settings.parserPackage}.${TOKEN}.TokenType.*;
    import ${settings.rootAPIPackage}.TokenSource;
 /#if
 
-[#import "NfaCode.java.ftl" as NFA]
-
 [#var PRESERVE_LINE_ENDINGS=settings.preserveLineEndings?string("true", "false")
       JAVA_UNICODE_ESCAPE= settings.javaUnicodeEscape?string("true", "false")
       PRESERVE_TABS = settings.preserveTabs?string("true", "false")
       TERMINATING_STRING = "\"" + settings.terminatingString?j_string + "\""
 ]
-[#var BaseToken = settings.treeBuildingEnabled?string("Node.TerminalNode", "${TOKEN}")]
+#var BaseToken = settings.treeBuildingEnabled ?: "Node.TerminalNode" : TOKEN
 
 [#macro EnumSet varName tokenNames]
    [#if !tokenNames]
@@ -455,6 +454,7 @@ class ${settings.lexerClassName} extends TokenSource
 
   // The functional interface that represents
   // the acceptance method of an NFA state
+  @FunctionalInterface
   static interface NfaFunction {
       TokenType apply(int ch, BitSet bs, EnumSet<TokenType> validTypes, EnumSet<TokenType> alreadyMatchedTypes);
   }

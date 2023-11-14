@@ -520,8 +520,8 @@ if (BuildTree) {
       [#set field = field + " = new ArrayList<Node>()"]
    [/#if]
    [#if !(injectedFields[field])??]
-      [#set injectedFields = injectedFields + {field : type}]
-      ${grammar::addFieldInjection(currentProduction.nodeName, modifier, type, field)}
+      #set injectedFields = injectedFields + {field : type}
+      #exec grammar::addFieldInjection(currentProduction.nodeName, modifier, type, field)
    [/#if]
    [#return "" /]
 [/#function]

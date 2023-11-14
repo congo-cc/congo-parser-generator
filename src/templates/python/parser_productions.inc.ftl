@@ -535,7 +535,7 @@ ${is}        self.clear_node_scope()
    [/#if]
    [#if !(injectedFields[field])??]
       [#set injectedFields = injectedFields + {field : type}]
-      ${grammar::addFieldInjection(currentProduction.nodeName, modifier, type, field)}
+      #exec grammar::addFieldInjection(currentProduction.nodeName, modifier, type, field)
    [/#if]
    [#return "" /]
 [/#function]
