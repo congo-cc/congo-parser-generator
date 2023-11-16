@@ -169,7 +169,7 @@
 [#-- The following macro wraps expansions that might build tree nodes. --]
 
 [#macro TreeBuildingAndRecovery expansion]
-   [#var production = null,
+   [#var production,
          treeNodeBehavior,
          buildingTreeNode=false,
          nodeVarName,
