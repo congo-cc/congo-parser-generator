@@ -1122,7 +1122,7 @@ public class Translator {
         }
         else {
             // it's a ConstructorDeclaration (alternative using property)
-            BaseNode statements = ((ConstructorDeclaration) node).getStatements();
+            List<Node> statements = ((ConstructorDeclaration) node).getStatements();
             if (statements != null) {
                 result.statements = new ASTStatementList();
                 for (Node child : statements) {
