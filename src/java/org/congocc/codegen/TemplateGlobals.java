@@ -1,6 +1,7 @@
 package org.congocc.codegen;
 
 import java.util.*;
+import java.util.function.Function;
 
 import org.congocc.app.*;
 import org.congocc.core.*;
@@ -90,60 +91,34 @@ public class TemplateGlobals {
     }
 
     /**
-     * @param ch the code point. If it is not ASCII, we just display the integer in
-     *           hex.
-     * @return a String to use in generated Java code. Rather than display the
-     *         integer 97, we display 'a',
-     *         for example.
+     * @return a function that coverts a character to a displayable string
+     *         in generated Java code. Rather than display the
+     *         integer 97, we display 'a', for example.
      */
-
-    public String displayChar(int ch) {
-        String s;
-
-        if (ch == '\'')
-            return "'\\''";
-        if (ch == '\\')
-            return "'\\\\'";
-        if (ch == '\t')
-            return "'\\t'";
-        if (ch == '\r')
-            return "'\\r'";
-        if (ch == '\n')
-            return "'\\n'";
-        if (ch == '\f')
-            return "'\\f'";
-        if (ch == ' ')
-            return "' '";
-        if (ch < 128 && !Character.isWhitespace(ch) && !Character.isISOControl(ch))
-            return "'" + (char) ch + "'";
-        s = "0x" + Integer.toHexString(ch);
-        if (appSettings.getCodeLang().equals("python")) {
-            s = String.format("as_chr(%s)", s);
-        }
-        return s;
-    }
-
-    /**
-     * This method is only here to help with debugging NFA state-related logic in
-     * templates.
-     * Sometimes, you want to see ASCII rather than code points.
-     *
-     * @param char_array a list of code points.
-     * @return a String to use in generated template code.
-     */
-    public String displayChars(int[] char_array) {
-        StringBuilder sb = new StringBuilder();
-        int n = char_array.length;
-
-        sb.append('[');
-        for (int i = 0; i < n; i++) {
-            sb.append(displayChar(char_array[i]));
-            if (i < (n - 1)) {
-                sb.append(", ");
+    public Function<Integer, String> getDisplayChar() {
+        return ch->{
+            if (ch == '\'')
+                return "'\\''";
+            if (ch == '\\')
+                return "'\\\\'";
+            if (ch == '\t')
+                return "'\\t'";
+            if (ch == '\r')
+                return "'\\r'";
+            if (ch == '\n')
+                return "'\\n'";
+            if (ch == '\f')
+                return "'\\f'";
+            if (ch == ' ')
+                return "' '";
+            if (ch < 128 && !Character.isWhitespace(ch) && !Character.isISOControl(ch))
+                return "'" + (char) ch.intValue() + "'";
+            String s = "0x" + Integer.toHexString(ch);
+            if (appSettings.getCodeLang().equals("python")) {
+                s = String.format("as_chr(%s)", s);
             }
-        }
-        sb.append(']');
-        return sb.toString();
+            return s;
+        };
     }
 
     // The following methods added for supporting generation in languages other than

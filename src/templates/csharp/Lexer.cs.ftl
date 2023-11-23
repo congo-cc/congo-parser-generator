@@ -76,7 +76,7 @@ private static HashSet<TokenType> ${varName} = Utils.GetOrMakeSet(
 [#var arrayName = nfaState.movesArrayName]
         private static int[] ${arrayName} = {
 [#list nfaState.moveRanges as char]
-            ${globals::displayChar(char)}[#if char_has_next],[/#if]
+            ${globals.displayChar(char)}[#if char_has_next],[/#if]
 [/#list]
         };
 
@@ -186,7 +186,7 @@ if NFA state's moveRanges array is smaller than NFA_RANGE_THRESHOLD
 --]
 [#macro RangesCondition moveRanges]
     [#var left = moveRanges[0], right = moveRanges[1]]
-    [#var displayLeft = globals::displayChar(left), displayRight = globals::displayChar(right)]
+    [#var displayLeft = globals.displayChar(left), displayRight = globals.displayChar(right)]
     [#var singleChar = left == right]
     [#if moveRanges?size==2]
        [#if singleChar]

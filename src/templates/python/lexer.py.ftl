@@ -117,7 +117,7 @@ nfa_functions = NFA_FUNCTIONS_${lexicalState.name}_init()
   #var arrayName = nfaState.movesArrayName
 ${arrayName} = [
   #list nfaState.moveRanges as char
-    ${globals::displayChar(char)}[#if char_has_next],[/#if]
+    ${globals.displayChar(char)}[#if char_has_next],[/#if]
   /#list
 ]
 /#macro
@@ -242,7 +242,7 @@ if NFA state's moveRanges array is smaller than NFA_RANGE_THRESHOLD
 --]
 #macro RangesCondition moveRanges
     #var left = moveRanges[0], right = moveRanges[1]
-    #var displayLeft = globals::displayChar(left), displayRight = globals::displayChar(right)
+    #var displayLeft = globals.displayChar(left), displayRight = globals.displayChar(right)
     #var singleChar = left == right
     #if moveRanges?size==2
        #if singleChar
