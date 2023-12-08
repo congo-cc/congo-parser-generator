@@ -266,7 +266,7 @@ class ${settings.lexerClassName} extends TokenSource
       if (lexicalState == null) lexicalState = this.lexicalState;
       int tokenBeginOffset = position;
       boolean inMore = false;
-      StringBuilder invalidChars = null;
+      int invalidRegionStart = -1;
       ${TOKEN} matchedToken = null;
       TokenType matchedType = null;
       // The core tokenization loop
@@ -302,17 +302,16 @@ class ${settings.lexerClassName} extends TokenSource
         }
      [/#if]
         if (matchedType == TokenType.INVALID) {
-            if (invalidChars==null) {
-                invalidChars=new StringBuilder();
+            if (invalidRegionStart == -1) {
+                invalidRegionStart = tokenBeginOffset;
             }
-            int cp  = Character.codePointAt(this, tokenBeginOffset);
-            invalidChars.appendCodePoint(cp);
+            int cp  = Character.codePointAt(this, position);
             ++position;
             if (cp >0xFFFF) ++position;
             continue;
         }
-        if (invalidChars !=null) {
-            return new InvalidToken(this, tokenBeginOffset - invalidChars.length(), tokenBeginOffset);
+        if (invalidRegionStart != -1) {
+            return new InvalidToken(this, invalidRegionStart, tokenBeginOffset);
         }
         if (skippedTokens.contains(matchedType)) {
             skipTokens(tokenBeginOffset, position);
