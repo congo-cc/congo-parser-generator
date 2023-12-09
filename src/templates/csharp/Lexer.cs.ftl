@@ -1062,7 +1062,7 @@ ${globals::translateLexerInitializers()}
             if (lexicalState == null) lexicalState = this._lexicalState;
             int tokenBeginOffset = position;
             bool inMore = false;
-            StringBuilder invalidChars = null;
+            int invalidRegionStart = -1;
             ${TOKEN} matchedToken = null;
             TokenType? matchedType = null;
             // The core tokenization loop
@@ -1104,19 +1104,18 @@ ${globals::translateLexerInitializers()}
                 }
 [/#if]
                 if (matchedType == TokenType.INVALID) {
-                    if (invalidChars == null) {
-                        invalidChars = new StringBuilder();
+                    if (invalidRegionStart == -1) {
+                        invalidRegionStart = tokenBeginOffset;
                     }
-                    char cp  = _content[tokenBeginOffset];
-                    invalidChars.Append(cp);
+                    char cp  = _content[position];
                     ++position;
                     if (cp > 0xFFFF) {
                         ++position;
                     }
                     continue;
                 }
-                if (invalidChars != null) {
-                    return new InvalidToken(this, tokenBeginOffset - invalidChars.Length, tokenBeginOffset);
+                if (invalidRegionStart != -1) {
+                    return new InvalidToken(this, invalidRegionStart, tokenBeginOffset);
                 }
                 if (skippedTokens.Contains((TokenType) matchedType)) {
                     SkipTokens(tokenBeginOffset, position);

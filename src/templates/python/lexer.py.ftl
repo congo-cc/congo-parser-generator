@@ -842,7 +842,7 @@ ${globals::translateLexerInjections(true)}
             lex_state = self.lexical_state
         token_begin_offset = pos
         in_more = False
-        invalid_chars = []
+        invalid_region_start = -1
         matched_token = None
         matched_type = None
         match_info = (None, 0)
@@ -881,12 +881,13 @@ ${globals::translateLexerInjections(true)}
                 lex_state = self.lexical_state = new_state
 /#if
             if matched_type == INVALID:
-                cp = self[token_begin_offset]
-                invalid_chars.append(cp)
+                if invalid_region_start == -1:
+                    invalid_region_start = token_begin_offset
+                cp = self[pos]
                 pos += 1
                 continue
-            if invalid_chars:
-                return InvalidToken(self, token_begin_offset - len(invalid_chars), token_begin_offset)
+            if invalid_region_start != -1:
+                return InvalidToken(self, invalid_region_start, token_begin_offset)
             if matched_type in self.skipped_tokens:
                 self.skip_tokens(token_begin_offset, pos)
             elif matched_type in self.regular_tokens or matched_type in self.unparsed_tokens:
