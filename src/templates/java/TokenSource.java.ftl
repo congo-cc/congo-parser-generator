@@ -30,11 +30,11 @@ abstract public class TokenSource implements CharSequence
 
    protected int getTabSize() {return tabSize;}
 
-[#if settings.usesPreprocessor]
+#if settings.usesPreprocessor
    // Just a dummy token value that we put in the tokenLocationTable
    // to indicate that this location in the file is ignored.
     private static final ${BaseToken} IGNORED = new ${settings.baseTokenClassName}();
-[/#if]    
+/#if
     // A dummy token value that we use to indicate that a token location is skipped.    
     private static final ${BaseToken} SKIPPED=new ${settings.baseTokenClassName}();
 
@@ -45,7 +45,7 @@ abstract public class TokenSource implements CharSequence
 // whatever preprocessor logic.    
     private ${BaseToken}[] tokenLocationTable;
 // A BitSet that stores where the tokens are located.
-// This is not strictly necessary, I suppose...
+#-- This is not strictly necessary, I suppose...
    private BitSet tokenOffsets;
 
 //  A Bitset that stores the line numbers that
@@ -186,11 +186,11 @@ abstract public class TokenSource implements CharSequence
 
     protected final void skipTokens(int begin, int end) {
       for (int i=begin; i< end; i++) {
-[#if settings.usesPreprocessor]        
+#if settings.usesPreprocessor
           if (tokenLocationTable[i] != IGNORED) tokenLocationTable[i] = SKIPPED;
-[#else]          
+#else
           tokenLocationTable[i] = SKIPPED;
-[/#if]          
+/#if
       }
     }
 
@@ -210,7 +210,7 @@ abstract public class TokenSource implements CharSequence
         return content.toString();
     }
 
-[#if settings.usesPreprocessor]
+#if settings.usesPreprocessor
     public final int nextUnignoredOffset(int offset) {
         while (offset<tokenLocationTable.length-1 && tokenLocationTable[offset] == IGNORED) {
             ++offset;
@@ -253,8 +253,8 @@ abstract public class TokenSource implements CharSequence
        tok.setEndOffset(end);
     }
 
-[/#if]
-[#if settings.cppContinuationLine]
+/#if
+#if settings.cppContinuationLine
     protected void handleCContinuationLines() {
       String input = content.toString();
       for (int offset = input.indexOf('\\'); offset >=0; offset = input.indexOf('\\', offset+1)) {
@@ -267,7 +267,7 @@ abstract public class TokenSource implements CharSequence
       }
     }
 
-[/#if]
+/#if
     public void cacheToken(${BaseToken} tok) {
         int beginOffset=tok.getBeginOffset(), endOffset =tok.getEndOffset();
         tokenOffsets.set(beginOffset);
@@ -276,10 +276,10 @@ abstract public class TokenSource implements CharSequence
            // have been adjusted.
            tokenOffsets.clear(beginOffset+1, endOffset);
            for (int i = beginOffset+1; i<endOffset; i++) {
-              [#if settings.usesPreprocessor]
-              if (tokenLocationTable[i] != IGNORED)
-              [/#if]
-                 tokenLocationTable[i] = null;
+              #if settings.usesPreprocessor
+                if (tokenLocationTable[i] != IGNORED)
+              /#if
+                  tokenLocationTable[i] = null;
            }
         }
         tokenLocationTable[beginOffset] = tok;
@@ -302,7 +302,7 @@ abstract public class TokenSource implements CharSequence
         return prevOffset == -1 ? null : tokenLocationTable[prevOffset];
     }
 
-[#if settings.usesPreprocessor]
+#if settings.usesPreprocessor
     /**
      * This is used in conjunction with having a preprocessor.
      * We set which lines are actually parsed lines and the 
@@ -332,7 +332,7 @@ abstract public class TokenSource implements CharSequence
     public void setParsedLines(BitSet parsedLines) {setParsedLines(parsedLines, false);}
 
     public void setUnparsedLines(BitSet unparsedLines) {setParsedLines(unparsedLines, true);}
-[/#if]    
+/#if    
 
     // Just use the canned binary search to check whether the char
     // is in one of the intervals
@@ -383,10 +383,10 @@ abstract public class TokenSource implements CharSequence
         }
         int bsearchResult = Arrays.binarySearch(lineOffsets, pos);
         if (bsearchResult>=0) {
-        [#-- REVISIT --]
+        #-- REVISIT 
             return Math.max(startingLine, startingLine + bsearchResult);
         }
-        [#-- REVISIT --]
+        #-- REVISIT
         return Math.max(startingLine, startingLine -(bsearchResult + 2));
     }
 
@@ -470,9 +470,9 @@ abstract public class TokenSource implements CharSequence
      * and endOffset(exclusive)
      */
     public String getText(int startOffset, int endOffset) {
-[#if !settings.usesPreprocessor]
+#if !settings.usesPreprocessor
         return subSequence(startOffset, endOffset).toString();
-[#else]
+#else
         StringBuilder buf = new StringBuilder();
         for (int offset = startOffset; offset < endOffset; offset++) {
             if (!isIgnored(offset)) {
@@ -480,7 +480,7 @@ abstract public class TokenSource implements CharSequence
             }
         }
         return buf.toString();
-[/#if]
+/#if
     }
 
   // The source of the raw characters that we are scanning  

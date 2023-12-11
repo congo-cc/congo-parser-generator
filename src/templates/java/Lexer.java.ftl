@@ -18,31 +18,32 @@ import static ${settings.parserPackage}.${TOKEN}.TokenType.*;
    import ${settings.rootAPIPackage}.TokenSource;
 /#if
 
-[#var PRESERVE_LINE_ENDINGS=settings.preserveLineEndings?string("true", "false")
-      JAVA_UNICODE_ESCAPE= settings.javaUnicodeEscape?string("true", "false")
-      PRESERVE_TABS = settings.preserveTabs?string("true", "false")
-      TERMINATING_STRING = "\"" + settings.terminatingString?j_string + "\""
-]
-#var BaseToken = settings.treeBuildingEnabled ?: "Node.TerminalNode" : TOKEN
+#var PRESERVE_LINE_ENDINGS = settings.preserveLineEndings ?: "true" : "false",
+     JAVA_UNICODE_ESCAPE = settings.javaUnicodeEscape ?: "true" : "false",
+     PRESERVE_TABS = settings.preserveTabs ?: "true" : "false",
+     TERMINATING_STRING = "\"" + settings.terminatingString?j_string + "\"",
+     BaseToken = settings.treeBuildingEnabled ?: "Node.TerminalNode" : TOKEN
 
-[#macro EnumSet varName tokenNames]
-   [#if !tokenNames]
+#macro EnumSet varName tokenNames
+   #if !tokenNames
        static final EnumSet<TokenType> ${varName} = EnumSet.noneOf(TokenType.class);
-   [#else]
+   #else
        static final EnumSet<TokenType> ${varName} = EnumSet.of(
-       [#list tokenNames as type]
-          [#if type_index > 0],[/#if]
+       #list tokenNames as type
+          #if type_index > 0
+            ,
+          /#if
           ${type}
-       [/#list]
+       /#list
      );
-   [/#if]
-[/#macro]
+   /#if
+/#macro
 
 import java.io.IOException;
 import java.util.*;
 
 #if settings.rootAPIPackage
-import ${settings.rootAPIPackage}.TokenSource;
+    import ${settings.rootAPIPackage}.TokenSource;
 /#if
 
 public
@@ -53,31 +54,33 @@ class ${settings.lexerClassName} extends TokenSource
   private static MatcherHook MATCHER_HOOK; // this cannot be initialize here, since hook must be set afterwards
 
   public enum LexicalState {
-  [#list lexerData.lexicalStates as lexicalState]
+  #list lexerData.lexicalStates as lexicalState
      ${lexicalState.name}
-     [#if lexicalState_has_next],[/#if]
-  [/#list]
+     #if lexicalState_has_next
+       ,
+     /#if
+  /#list
   }
   LexicalState lexicalState = LexicalState.values()[0];
 
- [#if settings.lexerUsesParser]
+ #if settings.lexerUsesParser
   private ${settings.parserClassName} parser;
 
   public ${settings.parserClassName} getParser() {return parser;}
 
   public void setParser(${settings.parserClassName} parser) {this.parser = parser;}
- [/#if]
+ /#if
 
-  [#if settings.deactivatedTokens]
+  #if settings.deactivatedTokens
     EnumSet<TokenType> activeTokenTypes = EnumSet.allOf(TokenType.class);
     {
-       [#list settings.deactivatedTokens as token]
+       #list settings.deactivatedTokens as token
           activeTokenTypes.remove(${token});
-       [/#list]
+       /#list
     }
-  [#else]
+  #else
     EnumSet<TokenType> activeTokenTypes = null;
-  [/#if]
+  /#if
 
 
   // A lookup for lexical state transitions triggered by a certain token type
@@ -93,13 +96,13 @@ class ${settings.lexerClassName} extends TokenSource
   // Tokens that correspond to a MORE, i.e. that are pending
   // additional input
   [@EnumSet "moreTokens" lexerData.moreTokens.tokenNames /]
-  [#if settings.extraTokens]
+  #if settings.extraTokens
      static {
-     [#list settings.extraTokenNames as token]
+     #list settings.extraTokenNames as token
          regularTokens.add(${token});
-     [/#list]
+     /#list
      }
-  [/#if]
+  /#if
 
     public ${settings.lexerClassName}(CharSequence input) {
         this("input", input);
@@ -132,9 +135,9 @@ class ${settings.lexerClassName} extends TokenSource
                         ${JAVA_UNICODE_ESCAPE},
                         ${TERMINATING_STRING});
         if (lexicalState != null) switchTo(lexState);
-     [#if settings.cppContinuationLine]
+     #if settings.cppContinuationLine
         handleCContinuationLines();
-     [/#if]
+     /#if
      }
 
      public ${TOKEN} getNextToken(${TOKEN} tok) {
@@ -226,11 +229,11 @@ class ${settings.lexerClassName} extends TokenSource
                 currentStates = nextStates;
                 nextStates = temp;
                 nextStates.clear();
-    [#if settings.usesPreprocessor]
+    #if settings.usesPreprocessor
                 if (input instanceof TokenSource) {
                     position = ((TokenSource) input).nextUnignoredOffset(position);
                 }
-    [/#if]
+    /#if
             } else {
                 currentStates.set(0);
             }
@@ -274,15 +277,15 @@ class ${settings.lexerClassName} extends TokenSource
       BitSet currentStates = new BitSet(${lexerData.maxNfaStates});
       BitSet nextStates = new BitSet(${lexerData.maxNfaStates});
       while (matchedToken == null) {
-      [#if NFA.multipleLexicalStates]
+      #if NFA.multipleLexicalStates
        // Get the NFA function table for the current lexical state.
        // If we are in a MORE, there is some possibility that there
        // was a lexical state change since the last iteration of this loop!
         NfaFunction[] nfaFunctions = functionTableMap.get(lexicalState);
-      [/#if]
-[#if settings.usesPreprocessor]
+      /#if
+#if settings.usesPreprocessor
         position = nextUnignoredOffset(position);
-[/#if]
+/#if
         if (!inMore) tokenBeginOffset = position;
         if (MATCHER_HOOK != null) {
             matchInfo = MATCHER_HOOK.apply(lexicalState, this, position, activeTokenTypes, nfaFunctions, currentStates, nextStates, matchInfo);
@@ -295,12 +298,12 @@ class ${settings.lexerClassName} extends TokenSource
         matchedType = matchInfo.matchedType;
         inMore = moreTokens.contains(matchedType);
         position += matchInfo.matchLength;
-     [#if lexerData.hasLexicalStateTransitions]
+     #if lexerData.hasLexicalStateTransitions
         LexicalState newState = tokenTypeToLexicalStateMap.get(matchedType);
         if (newState !=null) {
             lexicalState = this.lexicalState = newState;
         }
-     [/#if]
+     /#if
         if (matchedType == TokenType.INVALID) {
             if (invalidRegionStart == -1) {
                 invalidRegionStart = tokenBeginOffset;
@@ -324,31 +327,31 @@ class ${settings.lexerClassName} extends TokenSource
             matchedToken.setUnparsed(!regularTokens.contains(matchedType));
         }
       }
-[#if lexerData.hasLexicalStateTransitions]
+ #if lexerData.hasLexicalStateTransitions
       doLexicalStateSwitch(matchedToken.getType());
- [/#if]
- [#if lexerData.hasTokenActions]
+ /#if
+ #if lexerData.hasTokenActions
       matchedToken = tokenLexicalActions(matchedToken, matchedType);
- [/#if  ]
- [#list grammar.lexerTokenHooks as tokenHookMethodName]
-    [#if tokenHookMethodName = "CommonTokenAction"]
+ /#if
+ #list grammar.lexerTokenHooks as tokenHookMethodName
+    #if tokenHookMethodName = "CommonTokenAction"
            ${tokenHookMethodName}(matchedToken);
-    [#else]
+    #else
             matchedToken = ${tokenHookMethodName}(matchedToken);
-    [/#if]
- [/#list]
+    /#if
+ /#list
        return matchedToken;
    }
 
 
-[#if lexerData.hasLexicalStateTransitions]
+#if lexerData.hasLexicalStateTransitions
   // Generate the map for lexical state transitions from the various token types
   static {
-    [#list lexerData.regularExpressions as regexp]
-      [#if !regexp.newLexicalState?is_null]
+    #list lexerData.regularExpressions as regexp
+      #if !regexp.newLexicalState?is_null
           tokenTypeToLexicalStateMap.put(${regexp.label}, LexicalState.${regexp.newLexicalState.name});
-      [/#if]
-    [/#list]
+      /#if
+    /#list
   }
 
   boolean doLexicalStateSwitch(TokenType tokenType) {
@@ -356,7 +359,7 @@ class ${settings.lexerClassName} extends TokenSource
        if (newState == null) return false;
        return switchTo(newState);
   }
-[/#if]
+/#if
 
     /**
      * Switch to specified lexical state.
@@ -374,41 +377,41 @@ class ${settings.lexerClassName} extends TokenSource
     // Reset the token source input
     // to just after the ${TOKEN} passed in.
     void reset(${TOKEN} t, LexicalState state) {
-[#list grammar.resetTokenHooks as resetTokenHookMethodName]
+#list grammar.resetTokenHooks as resetTokenHookMethodName
       ${resetTokenHookMethodName}(t);
-[/#list]
+/#list
       uncacheTokens(t);
       if (state != null) {
           switchTo(state);
       }
-[#if lexerData.hasLexicalStateTransitions]
+#if lexerData.hasLexicalStateTransitions
       else {
           doLexicalStateSwitch(t.getType());
       }
-[/#if]
+/#if
     }
 
   void reset(${TOKEN} t) {
       reset(t, null);
   }
 
- [#if lexerData.hasTokenActions]
+ #if lexerData.hasTokenActions
   private ${TOKEN} tokenLexicalActions(${TOKEN} matchedToken, TokenType matchedType) {
     switch(matchedType) {
-   [#list lexerData.regularExpressions as regexp]
-        [#if regexp.codeSnippet]
+   #list lexerData.regularExpressions as regexp
+        #if regexp.codeSnippet
       case ${regexp.label} :
           ${regexp.codeSnippet.javaCode}
            break;
-        [/#if]
-   [/#list]
+        /#if
+   /#list
       default : break;
     }
     return matchedToken;
   }
- [/#if]
+ /#if
 
-[#if settings.tokenChaining]
+#if settings.tokenChaining
     @Override
     public void cacheToken(${BaseToken} tok) {
         ${TOKEN} token = (${TOKEN}) tok;
@@ -425,7 +428,7 @@ class ${settings.lexerClassName} extends TokenSource
         super.uncacheTokens(lastToken);
         ((${TOKEN})lastToken).unsetAppendedToken();
     }
-[/#if]
+/#if
 
 
 
@@ -458,28 +461,28 @@ class ${settings.lexerClassName} extends TokenSource
       TokenType apply(int ch, BitSet bs, EnumSet<TokenType> validTypes, EnumSet<TokenType> alreadyMatchedTypes);
   }
 
- [#if NFA.multipleLexicalStates]
+ #if NFA.multipleLexicalStates
   // A lookup of the NFA function tables for the respective lexical states.
   private static final EnumMap<LexicalState,NfaFunction[]> functionTableMap = new EnumMap<>(LexicalState.class);
- [#else]
-  [#-- We don't need the above lookup if there is only one lexical state.--]
+ #else
+  #-- We don't need the above lookup if there is only one lexical state.
    private static NfaFunction[] nfaFunctions;
- [/#if]
+ /#if
 
   // Initialize the various NFA method tables
   static {
-    [#list lexerData.lexicalStates as lexicalState]
+    #list lexerData.lexicalStates as lexicalState
       ${lexicalState.name}.NFA_FUNCTIONS_init();
-    [/#list]
+    /#list
   }
 
  //The Nitty-gritty of the NFA code follows.
- [#list lexerData.lexicalStates as lexicalState]
+ #list lexerData.lexicalStates as lexicalState
  /**
   * Holder class for NFA code related to ${lexicalState.name} lexical state
   */
   private static class ${lexicalState.name} {
    [@NFA.GenerateStateCode lexicalState/]
   }
- [/#list]
+ /#list
 }
