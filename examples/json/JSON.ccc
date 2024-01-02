@@ -18,7 +18,6 @@ PARSER_PACKAGE="org.parsers.json";
 NODE_PACKAGE="org.parsers.json.ast";
 DEFAULT_LEXICAL_STATE=JSON;
 
-
 SKIP : <WHITESPACE : (" "| "\t"| "\n"| "\r")+>; 
 
 // Delimiters
@@ -74,7 +73,7 @@ Array :
 ;
 
 Value :
-    ( <TRUE>
+    <TRUE>
     |
     <FALSE>
     |
@@ -86,7 +85,7 @@ Value :
     |
     Array
     |
-    JSONObject )
+    JSONObject
     
 ;
 
