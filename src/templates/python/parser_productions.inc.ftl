@@ -287,7 +287,7 @@ ${is}    self.currently_parsed_production = prev_production
                                           'void' : false,
                                           'assignment' : expansion.assignment
                                        } /]
-               [#if expansion.assignment.propertyAssignment && !expansion.assignment.noAutoDefinition]
+               [#if expansion.assignment.propertyAssignment && expansion.assignment.declarationOf]
                   [#-- Inject the receiving property --]
 ${injectDeclaration(nodeName, expansion.assignment.name, expansion.assignment)}[#t]
                [/#if]
@@ -301,7 +301,7 @@ ${injectDeclaration(nodeName, expansion.assignment.name, expansion.assignment)}[
                treeNodeBehavior.assignment?? &&
                isProductionInstantiatingNode(expansion)]
          [#-- There is an explicit tree node annotation with assignment; make sure a property is injected if needed. --]
-         [#if !treeNodeBehavior.assignment.noAutoDefinition]
+         [#if treeNodeBehavior.assignment.declarationOf]
 ${injectDeclaration(treeNodeBehavior.nodeName, treeNodeBehavior.assignment.name, treeNodeBehavior.assignment)}[#t]
          [/#if]
       [#elseif jtbParseTree && expansion.parent.simpleName != "ExpansionWithParentheses" && isProductionInstantiatingNode(expansion)]
@@ -331,7 +331,7 @@ ${injectDeclaration(treeNodeBehavior.nodeName, treeNodeBehavior.assignment.name,
                                           'assignment' : 
                                              { 'name' : "thisProduction." + nodeFieldName, 
                                                'propertyAssignment' : false, 
-                                               'noAutoDefinition' : false,
+                                               'declarationOf' : true,
                                                'existenceOf' : false }
                                        } /]
             [#else]
@@ -491,7 +491,7 @@ ${is}        self.clear_node_scope()
       [#var lhsName = assignment.name]
       [#if assignment.propertyAssignment]
          [#-- This is the assignment of the current node's effective value to a property of the production node --]
-         [#if lhsType?? && !assignment.noAutoDefinition]
+         [#if lhsType?? && assignment.declarationOf]
             [#-- This is a declaration assignment; inject required property --]
             ${injectDeclaration(lhsType, assignment.name, assignment)}
          [/#if]
