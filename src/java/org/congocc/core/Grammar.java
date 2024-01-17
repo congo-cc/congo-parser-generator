@@ -542,6 +542,19 @@ public class Grammar extends BaseNode {
             if (prod.isLeftRecursive()) {
                 errors.addError(prod, "Production " + prod.getName() + " is left recursive.");
             }
+            // check here for uninstantiated production with properties assigned
+            // check here for uninstantiated nonterminals returning void but which are assigned
+        }
+        
+        for (Assignment assignment : descendants(Assignment.class)) {
+            if (assignment.isPropertyAssignment()) {
+                BNFProduction production = assignment.firstAncestorOfType(BNFProduction.class);
+                if (production.getTreeNodeBehavior() != null) {
+                    if (production.getTreeNodeBehavior().isNeverInstantiated()) {
+                        errors.addError(assignment, "Cannot assign to production node property; production node is never instantiated.");
+                    }
+                }
+            }
         }
 
         if (errors.getErrorCount() >0) return;

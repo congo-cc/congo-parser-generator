@@ -1,6 +1,7 @@
 [#-- This template contains the core logic for generating the various parser routines. --]
 
 #var nodeNumbering = 0,
+     exceptionNesting = 0,
      NODE_USES_PARSER = settings.nodeUsesParser,
      NODE_PREFIX = grammar.nodePrefix,
      currentProduction,
@@ -315,14 +316,15 @@
             [#-- FIXME: we should probably create treeNodeBehavior that signals this error to somebody that can report it to the user --]
             #return null
          /#if
-      [#elseif treeNodeBehavior?? &&
-               treeNodeBehavior.assignment?? &&
-               isProductionInstantiatingNode(expansion)]
-         [#-- There is an explicit tree node annotation with assignment; make sure a property is injected if needed. --]
+      #elseif treeNodeBehavior?? &&
+               treeNodeBehavior.assignment??
+         #-- There is an explicit tree node annotation with assignment; make sure a property is injected if needed. --
          #if treeNodeBehavior.assignment.declarationOf
             ${injectDeclaration(treeNodeBehavior.nodeName, treeNodeBehavior.assignment.name, treeNodeBehavior.assignment)}
          /#if
-      #elseif jtbParseTree && expansion.parent.simpleName != "ExpansionWithParentheses" && isProductionInstantiatingNode(expansion)
+      #elseif jtbParseTree && 
+              expansion.parent.simpleName != "ExpansionWithParentheses" && 
+              isProductionInstantiatingNode(currentProduction) [#-- TODO: make python and csharp change! --]
          [#-- No in-line definite node annotation; synthesize a parser node for the expansion type being built, if needed. --]
          #if nodeName??
             [#-- Determine the node name depending on syntactic type --]
@@ -433,23 +435,31 @@
 [/#function]
 
 #function isProductionInstantiatingNode expansion
-   [#if expansion.containingProduction.treeNodeBehavior?? && 
-        expansion.containingProduction.treeNodeBehavior.neverInstantiated!false]
-      #return false
-   /#if
-   #return true
+   #return !expansion.containingProduction.treeNodeBehavior?? || 
+           !expansion.containingProduction.treeNodeBehavior.neverInstantiated!true [#-- TODO: make python and csharp match this! --]
 /#function
 
-[#function nodeVar isProduction]
-   [#var nodeVarName]
-   [#if isProduction]
-      [#set nodeVarName = "thisProduction"] [#-- [JB] maybe should be "CURRENT_PRODUCTION" or "THIS_PRODUCTION" to match "CURRENT_NODE"? --]
-   [#else]
-      [#set nodeNumbering = nodeNumbering +1]
-      [#set nodeVarName = currentProduction.name + nodeNumbering] 
-   [/#if]
+#function nodeVar isProduction
+   #var nodeVarName
+   #if isProduction
+      #set nodeVarName = "THIS_PRODUCTION"
+   #else
+      #set nodeNumbering = nodeNumbering +1
+      #set nodeVarName = currentProduction.name + nodeNumbering 
+   /#if
    #return nodeVarName
-[/#function]
+/#function
+
+#function exceptionVar(isNesting)
+   #var exceptionVarName = "e"
+   #if exceptionNesting > 0
+      #set exceptionVarName = "e" + exceptionNesting
+   /#if
+   #if isNesting!false
+      #set exceptionNesting = exceptionNesting+1
+   /#if
+   #return exceptionVarName
+/#function
 
 [#macro buildTreeNode production treeNodeBehavior nodeVarName] [#-- FIXME: production is not used here --]
    #exec globals::pushNodeVariableName(nodeVarName)
@@ -516,7 +526,7 @@
       #if assignment.propertyAssignment
          [#-- This is the assignment of the current node's effective value to a property of the production node --]
          #set lhsName = lhsName?cap_first
-         [#if lhsType?? && assignment.declarationOf][!-- FIXME: I don't like the double negative --]
+         #if lhsType?? && assignment.declarationOf [#-- TODO: remove the comment from python and csharp --]
             [#-- This is a declaration assignment; inject required property --]
             ${injectDeclaration(lhsType, assignment.name, assignment)}
          /#if
@@ -544,21 +554,26 @@
 /#function
 
 [#function injectDeclaration typeName, fieldName, assignment]
-   [#var modifier = "public"]
-   [#var type = typeName]
-   [#var field = fieldName]
-   [#if assignment?? && assignment.propertyAssignment]
-      [#set modifier = "@Property"]
-   [/#if]
-   [#if assignment?? && assignment.existenceOf] 
-      [#set type = "boolean"]
-   [#elseif assignment?? && assignment.stringOf]
-      [#set type = "String"]
-   [#elseif assignment?? && assignment.addTo]
-      [#set type = "List<Node>"]
-      [#set field = field + " = new ArrayList<Node>()"]
-   [/#if]
-   [#if !(injectedFields[field])??]
+   #if !isProductionInstantiatingNode(currentProduction)
+      #exec grammar.errors::addWarning(currentProduction, "Attempt to inject property or field declaration " + fieldName + " into an un-instantiated production node " + currentProduction.name + "; the assignment will be ignored.")
+      #return ""
+   /#if
+   #-- TODO: add preceding check to python and csharp! -- 
+   #var modifier = "public",
+        type = typeName,
+        field = fieldName
+   #if assignment?? && assignment.propertyAssignment
+      #set modifier = "@Property"
+   /#if
+   #if assignment?? && assignment.existenceOf 
+      #set type = "boolean"
+   #elseif assignment?? && assignment.stringOf
+      #set type = "String"
+   #elseif assignment?? && assignment.addTo
+      #set type = "List<Node>"
+      #set field = field + " = new ArrayList<Node>()"
+   /#if
+   #if !(injectedFields[field])??
       #set injectedFields = injectedFields + {field : type}
       #exec grammar::addFieldInjection(currentProduction.nodeName, modifier, type, field)
    [/#if]
@@ -705,9 +720,11 @@
       [@BuildCode attemptBlock.nestedExpansion /]
       popParseState();
    }
-   catch (ParseException e) {
+   #var pe = exceptionVar(true)
+   catch (ParseException ${pe}) {
       restoreStashedParseState();
       [@BuildCode attemptBlock.recoveryExpansion /]
+      #set exceptionNesting = exceptionNesting - 1
    }
 [/#macro]
 
@@ -743,9 +760,10 @@
    [#var lhsClassName = nonterminal.production.nodeName]
    [#var expressedLHS = getLhsPattern(nonterminal.assignment, lhsClassName)]
    [#var impliedLHS = "@"]
-   [#if jtbParseTree && isProductionInstantiatingNode(nonterminal.nestedExpansion) && topLevelExpansion]
-      [#set impliedLHS = "thisProduction." + imputedJtbFieldName(nonterminal.production.nodeName) + " = @"]
-   [/#if]
+   #if jtbParseTree && isProductionInstantiatingNode(nonterminal.production) && topLevelExpansion [#-- TODO: make this change to python and csharp! --]
+      #var newName = imputedJtbFieldName(nonterminal.production.nodeName)
+      #set impliedLHS = "thisProduction." + newName + " = @"
+   /#if
    [#-- Accept the non-terminal expansion --]
    [#if nonterminal.production.returnType != "void" && expressedLHS != "@" && !nonterminal.assignment.namedAssignment && !nonterminal.assignment.propertyAssignment]
       [#-- Not a void production, so accept and clear the expressedLHS, it has already been applied. --]
