@@ -945,18 +945,8 @@ INJECT ExpansionChoice :
 Assignment :
     @name :=$ Name "=" =>||
     |
-    (
-            [ @propertyAssignment :=? "@" ]
-            @name =$ Name //REVISIT: [jb] What if this is a dotted name?
-        |
-            
-            DEACTIVATE_TOKENS SLASHASSIGN (
-                @namedAssignment :=?
-                "/"
-                @name =$ Name
-                "/"
-            )
-    )
+    @propertyAssignment :=? "@"
+    @name =$ Name //REVISIT: [jb] What if this is a dotted name?
     (
             "="
         |
@@ -967,7 +957,19 @@ Assignment :
             (@stringOf :=? "=$" | @stringOf :=? ":=$" {THIS_PRODUCTION.setDeclarationOf(true);})
         |
             (@addTo :=? "+=" | @addTo :=? ":+=" {THIS_PRODUCTION.setDeclarationOf(true);})
-    ) 
+    ) =>|| 
+    |
+    DEACTIVATE_TOKENS SLASHASSIGN (
+        @namedAssignment :=?
+        "/"
+        @name =$ Name
+        "/"
+    )
+    (
+        "="
+        |
+        @addTo :=? "+="
+    )
     =>||
 ;
 
