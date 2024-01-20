@@ -79,15 +79,24 @@ abstract public class Expansion extends BaseNode {
     public final boolean isAtChoicePoint() {
         if (!(this instanceof ExpansionChoice || this instanceof ExpansionSequence)) return false;
         Node parent = getParent();
+        // skip parent attempt block(s)
+        while (parent instanceof AttemptBlock) {
+            parent = parent.getParent();
+            if (parent instanceof ExpansionSequence) {
+                parent = parent.getParent();
+                // now we are outside the attempt block
+                break;
+            }
+        }
         if (parent instanceof ExpansionChoice 
             || parent instanceof OneOrMore 
             || parent instanceof ZeroOrMore
-            || parent instanceof ZeroOrOne 
+            || parent instanceof ZeroOrOne
             || parent instanceof BNFProduction) return true;
         if (!(parent instanceof ExpansionWithParentheses)) {
             return false;
         }
-        if (parent.getParent() instanceof AttemptBlock) return false;
+        if (parent.getParent() instanceof AttemptBlock) return false; // seems like this is similar to the above (fix), but I didn't want to touch it [JB]
         ExpansionSequence grandparent = (ExpansionSequence) parent.getParent();
         return grandparent.childrenOfType(Expansion.class).get(0) == parent && grandparent.isAtChoicePoint();
     }
