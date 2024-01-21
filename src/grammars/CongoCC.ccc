@@ -329,13 +329,21 @@ INJECT PARSER_CLASS : {
 
 
 INJECT Identifier :
+    import org.congocc.codegen.TemplateGlobals;
 {
     public String toString() {
         String cachedImage = getCachedImage();
         if (cachedImage != null) return cachedImage;
         String image = getSource();
         if (image.equals("jjtThis") || image.equals("CURRENT_NODE")) {
-            image = getGrammar().getTemplateGlobals().getCurrentNodeVariableName();
+            // If we're not doing code generation (e.g. just parsing a CCC file), we might not
+            // have template globals set. In that case, don't do any substitution.
+            //
+            TemplateGlobals tg = getGrammar().getTemplateGlobals();
+
+            if (tg != null) {
+                image = tg.getCurrentNodeVariableName();
+            }
         }
         else if (image.equals("THIS_PRODUCTION")) {
             image = "thisProduction";
@@ -957,7 +965,7 @@ Assignment :
             (@stringOf :=? "=$" | @stringOf :=? ":=$" {THIS_PRODUCTION.setDeclarationOf(true);})
         |
             (@addTo :=? "+=" | @addTo :=? ":+=" {THIS_PRODUCTION.setDeclarationOf(true);})
-    ) =>|| 
+    ) =>||
     |
     DEACTIVATE_TOKENS SLASHASSIGN (
         @namedAssignment :=?
