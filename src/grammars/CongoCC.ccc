@@ -385,23 +385,27 @@ INJECT Identifier :
             }
         }
         else if (image.equals("TOKEN_HOOK")) {
-            String prefix = getAppSettings().generateIdentifierPrefix("tokenHook");
-            image = getAppSettings().generateUniqueIdentifier(prefix, this);
+            AppSettings settings = getAppSettings();
+            String prefix = settings.generateIdentifierPrefix("tokenHook");
+            image = settings.generateUniqueIdentifier(prefix, this);
             setCachedImage(image);
         }
         else if (image.equals("RESET_TOKEN_HOOK")) {
-            String prefix = getAppSettings().generateIdentifierPrefix("resetTokenHook");
-            image = getAppSettings().generateUniqueIdentifier(prefix, this);
+            AppSettings settings = getAppSettings();
+            String prefix = settings.generateIdentifierPrefix("resetTokenHook");
+            image = settings.generateUniqueIdentifier(prefix, this);
             setCachedImage(image);
         }
         else if (image.equals("OPEN_NODE_HOOK")) {
-            String prefix = getAppSettings().generateIdentifierPrefix("openNodeHook");
-            image = getAppSettings().generateUniqueIdentifier(prefix, this);
+            AppSettings settings = getAppSettings();
+            String prefix = settings.generateIdentifierPrefix("openNodeHook");
+            image = settings.generateUniqueIdentifier(prefix, this);
             setCachedImage(image);
         }
         else if (image.equals("CLOSE_NODE_HOOK")) {
-            String prefix = getAppSettings().generateIdentifierPrefix("closeNodeHook");
-            image = getAppSettings().generateUniqueIdentifier(prefix, this);
+            AppSettings settings = getAppSettings();
+            String prefix = settings.generateIdentifierPrefix("closeNodeHook");
+            image = settings.generateUniqueIdentifier(prefix, this);
             setCachedImage(image);
         }
         assert image != null;
@@ -1242,7 +1246,8 @@ INJECT NeverInTheTree :
 }
 
 INJECT LookBehind :
-import java.util.*;
+    import java.util.*;
+    import org.congocc.app.AppSettings;
 {
     @Property boolean backward;
 
@@ -1287,8 +1292,9 @@ import java.util.*;
 
     public String getRoutineName() {
         if (routineName == null) {
-            String prefix = getAppSettings().generateIdentifierPrefix("backscan");
-            routineName = getAppSettings().generateUniqueIdentifier(prefix, this);
+            AppSettings settings = getAppSettings();
+            String prefix = settings.generateIdentifierPrefix("backscan");
+            routineName = settings.generateUniqueIdentifier(prefix, this);
         }
         return routineName;
     }
