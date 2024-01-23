@@ -326,12 +326,15 @@ INJECT PARSER_CLASS : {
 
 
 INJECT Identifier :
+    import org.congocc.app.AppSettings;
     import org.congocc.codegen.TemplateGlobals;
 {
     public String toString() {
         String cachedImage = getCachedImage();
         if (cachedImage != null) return cachedImage;
         String image = getSource();
+        String substitute;
+
         if (image.equals("jjtThis") || image.equals("CURRENT_NODE")) {
             // If we're not doing code generation (e.g. just parsing a CCC file), we might not
             // have template globals set. In that case, don't do any substitution.
@@ -346,22 +349,40 @@ INJECT Identifier :
             image = "thisProduction";
         }
         else if (image.equals("PARSER_CLASS")) {
-            image = getAppSettings().getParserClassName();
+            substitute = getAppSettings().getParserClassName();
+            if (substitute != null) {
+                image = substitute;
+            }
         }
         else if (image.equals("LEXER_CLASS")) {
-            image = getAppSettings().getLexerClassName();
+            substitute = getAppSettings().getLexerClassName();
+            if (substitute != null) {
+                image = substitute;
+            }
         }
         else if (image.equals("BASE_NODE_CLASS")) {
-            image = getAppSettings().getBaseNodeClassName();
+            substitute = getAppSettings().getBaseNodeClassName();
+            if (substitute != null) {
+                image = substitute;
+            }
         }
         else if (image.equals("BASE_TOKEN_CLASS")) {
-            image = getAppSettings().getBaseTokenClassName();
+            substitute = getAppSettings().getBaseTokenClassName();
+            if (substitute != null) {
+                image = substitute;
+            }
         }
         else if (image.equals("NODE_PACKAGE")) {
-            image =  getAppSettings().getNodePackage();
+            substitute =  getAppSettings().getNodePackage();
+            if (substitute != null) {
+                image = substitute;
+            }
         }
         else if (image.equals("PARSER_PACKAGE")) {
-            image = getAppSettings().getParserPackage();
+            substitute = getAppSettings().getParserPackage();
+            if (substitute != null) {
+                image = substitute;
+            }
         }
         else if (image.equals("TOKEN_HOOK")) {
             String prefix = getAppSettings().generateIdentifierPrefix("tokenHook");
