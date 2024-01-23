@@ -334,6 +334,7 @@ INJECT Identifier :
         if (cachedImage != null) return cachedImage;
         String image = getSource();
         String substitute;
+        AppSettings settings;  // REVISIT: initializing here with getAppSettings() leads to failures
 
         if (image.equals("jjtThis") || image.equals("CURRENT_NODE")) {
             // If we're not doing code generation (e.g. just parsing a CCC file), we might not
@@ -385,25 +386,25 @@ INJECT Identifier :
             }
         }
         else if (image.equals("TOKEN_HOOK")) {
-            AppSettings settings = getAppSettings();
+            settings = getAppSettings();
             String prefix = settings.generateIdentifierPrefix("tokenHook");
             image = settings.generateUniqueIdentifier(prefix, this);
             setCachedImage(image);
         }
         else if (image.equals("RESET_TOKEN_HOOK")) {
-            AppSettings settings = getAppSettings();
+            settings = getAppSettings();
             String prefix = settings.generateIdentifierPrefix("resetTokenHook");
             image = settings.generateUniqueIdentifier(prefix, this);
             setCachedImage(image);
         }
         else if (image.equals("OPEN_NODE_HOOK")) {
-            AppSettings settings = getAppSettings();
+            settings = getAppSettings();
             String prefix = settings.generateIdentifierPrefix("openNodeHook");
             image = settings.generateUniqueIdentifier(prefix, this);
             setCachedImage(image);
         }
         else if (image.equals("CLOSE_NODE_HOOK")) {
-            AppSettings settings = getAppSettings();
+            settings = getAppSettings();
             String prefix = settings.generateIdentifierPrefix("closeNodeHook");
             image = settings.generateUniqueIdentifier(prefix, this);
             setCachedImage(image);
