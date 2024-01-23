@@ -111,20 +111,19 @@ INJECT PARSER_CLASS :
         n.setGrammar(grammar);
     }
 
-    public PARSER_CLASS(Grammar grammar, Path path, Map<String, String> definedSymbols) throws IOException{
+    public PARSER_CLASS(Grammar grammar, Path path, Map<String, String> definedSymbols) throws IOException {
         this(path.toString(), path);
         this.grammar = grammar;
         BitSet lineMarkers = null;
-        PreprocessorParser ppp = new PreprocessorParser(path, definedSymbols);
-        lineMarkers = ppp.PP_Root();
+        lineMarkers = new PreprocessorParser(path, definedSymbols).PP_Root();
         token_source.setParsedLines(lineMarkers);
     }
 
-    public PARSER_CLASS(Grammar grammar, String inputSource, CharSequence content) {
+    public PARSER_CLASS(Grammar grammar, String inputSource, CharSequence content, Map<String, String> definedSymbols) throws IOException {
          this(inputSource, content);
          this.grammar = grammar;
          BitSet lineMarkers = null;
-         lineMarkers = new PreprocessorParser(content).PP_Root();
+         lineMarkers = new PreprocessorParser(content, definedSymbols).PP_Root();
          token_source.setParsedLines(lineMarkers);
     }
 
@@ -597,7 +596,7 @@ INJECT CodeInjection :
         String inject = "INJECT " + nodeName + " : " + injection;
         CongoCCParser parser;
         try {
-            parser = new CongoCCParser(grammar, "dynamicInjection", inject);
+            parser = new CongoCCParser(grammar, "dynamicInjection", inject, null);
             parser.setEnterIncludes(true);
             CodeInjection ci = parser.CodeInjection();
             grammar.getInjector().add(ci);
