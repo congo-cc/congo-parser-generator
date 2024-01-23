@@ -295,8 +295,9 @@ public class AppSettings {
         if (parserPackage == null) {
             parserPackage = (String) settings.get("PARSER_PACKAGE");
         }
-        if (parserPackage == null || parserPackage.length()==0) {
-            parserPackage = getParserClassName().toLowerCase();
+        if (parserPackage == null || parserPackage.length() == 0) {
+            String s = getParserClassName();
+            parserPackage = (s == null) ? null : s.toLowerCase();
         }
         return parserPackage;
     }
@@ -306,7 +307,10 @@ public class AppSettings {
             parserClassName = (String) settings.get("PARSER_CLASS");
         }
         if (parserClassName == null) {
-            parserClassName = getBaseName() + "Parser";
+            // The base name might not be set if just parsing in memory, with no code generation being done.
+            // In that case, we effectively just return null.
+            String s = getBaseName();
+            parserClassName = (s == null) ? null : (s + "Parser");
         }
         return parserClassName;
     }
@@ -316,7 +320,10 @@ public class AppSettings {
             lexerClassName = (String) settings.get("LEXER_CLASS");
         }
         if (lexerClassName == null) {
-            lexerClassName = getBaseName() + "Lexer";
+            // The base name might not be set if just parsing in memory, with no code generation being done.
+            // In that case, we effectively just return null.
+            String s = getBaseName();
+            lexerClassName = (s == null) ? null : (s + "Lexer");
         }
         return lexerClassName;
     }
@@ -325,7 +332,9 @@ public class AppSettings {
         if (baseName == null) {
             baseName = (String) settings.get("BASE_NAME");
         }
-        if (baseName == null) {
+        // The filename might not be set if just parsing in memory, with no code generation being done.
+        // In that case, we effectively just return null.
+        if ((baseName == null) && (filename != null)) {
             baseName = filename.getFileName().toString();
             int lastDot = baseName.lastIndexOf('.');
             if (lastDot >0) {
@@ -370,8 +379,9 @@ public class AppSettings {
 
     public String getNodePackage() {
         String nodePackage = (String) settings.get("NODE_PACKAGE");
-        if (nodePackage == null || nodePackage.equals(getParserPackage())) {
-            nodePackage = getParserPackage() + ".ast";
+        String s = getParserPackage();
+        if (nodePackage == null || nodePackage.equals(s)) {
+            nodePackage = (s == null) ? null : s + ".ast";
         }
         return nodePackage;
     }

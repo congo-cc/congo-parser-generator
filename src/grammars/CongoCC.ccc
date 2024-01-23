@@ -111,20 +111,17 @@ INJECT PARSER_CLASS :
         n.setGrammar(grammar);
     }
 
-    public PARSER_CLASS(Grammar grammar, Path path, Map<String, String> definedSymbols) throws IOException{
+    public PARSER_CLASS(Grammar grammar, Path path, Map<String, String> definedSymbols) throws IOException {
         this(path.toString(), path);
         this.grammar = grammar;
-        BitSet lineMarkers = null;
-        PreprocessorParser ppp = new PreprocessorParser(path, definedSymbols);
-        lineMarkers = ppp.PP_Root();
+        BitSet lineMarkers = new PreprocessorParser(path, definedSymbols).PP_Root();
         token_source.setParsedLines(lineMarkers);
     }
 
-    public PARSER_CLASS(Grammar grammar, String inputSource, CharSequence content) {
+    public PARSER_CLASS(Grammar grammar, String inputSource, CharSequence content) throws IOException {
          this(inputSource, content);
          this.grammar = grammar;
-         BitSet lineMarkers = null;
-         lineMarkers = new PreprocessorParser(content).PP_Root();
+         BitSet lineMarkers = new PreprocessorParser(content, grammar.getPreprocessorSymbols()).PP_Root();
          token_source.setParsedLines(lineMarkers);
     }
 
@@ -329,53 +326,87 @@ INJECT PARSER_CLASS : {
 
 
 INJECT Identifier :
+    import org.congocc.app.AppSettings;
+    import org.congocc.codegen.TemplateGlobals;
 {
     public String toString() {
         String cachedImage = getCachedImage();
         if (cachedImage != null) return cachedImage;
         String image = getSource();
+        String substitute;
+        AppSettings settings;  // REVISIT: initializing here with getAppSettings() leads to failures
+
         if (image.equals("jjtThis") || image.equals("CURRENT_NODE")) {
-            image = getGrammar().getTemplateGlobals().getCurrentNodeVariableName();
+            // If we're not doing code generation (e.g. just parsing a CCC file), we might not
+            // have template globals set. In that case, don't do any substitution.
+            //
+            TemplateGlobals tg = getGrammar().getTemplateGlobals();
+
+            if (tg != null) {
+                image = tg.getCurrentNodeVariableName();
+            }
         }
         else if (image.equals("THIS_PRODUCTION")) {
             image = "thisProduction";
         }
         else if (image.equals("PARSER_CLASS")) {
-            image = getAppSettings().getParserClassName();
+            substitute = getAppSettings().getParserClassName();
+            if (substitute != null) {
+                image = substitute;
+            }
         }
         else if (image.equals("LEXER_CLASS")) {
-            image = getAppSettings().getLexerClassName();
+            substitute = getAppSettings().getLexerClassName();
+            if (substitute != null) {
+                image = substitute;
+            }
         }
         else if (image.equals("BASE_NODE_CLASS")) {
-            image = getAppSettings().getBaseNodeClassName();
+            substitute = getAppSettings().getBaseNodeClassName();
+            if (substitute != null) {
+                image = substitute;
+            }
         }
         else if (image.equals("BASE_TOKEN_CLASS")) {
-            image = getAppSettings().getBaseTokenClassName();
+            substitute = getAppSettings().getBaseTokenClassName();
+            if (substitute != null) {
+                image = substitute;
+            }
         }
         else if (image.equals("NODE_PACKAGE")) {
-            image =  getAppSettings().getNodePackage();
+            substitute =  getAppSettings().getNodePackage();
+            if (substitute != null) {
+                image = substitute;
+            }
         }
         else if (image.equals("PARSER_PACKAGE")) {
-            image = getAppSettings().getParserPackage();
+            substitute = getAppSettings().getParserPackage();
+            if (substitute != null) {
+                image = substitute;
+            }
         }
         else if (image.equals("TOKEN_HOOK")) {
-            String prefix = getAppSettings().generateIdentifierPrefix("tokenHook");
-            image = getAppSettings().generateUniqueIdentifier(prefix, this);
+            settings = getAppSettings();
+            String prefix = settings.generateIdentifierPrefix("tokenHook");
+            image = settings.generateUniqueIdentifier(prefix, this);
             setCachedImage(image);
         }
         else if (image.equals("RESET_TOKEN_HOOK")) {
-            String prefix = getAppSettings().generateIdentifierPrefix("resetTokenHook");
-            image = getAppSettings().generateUniqueIdentifier(prefix, this);
+            settings = getAppSettings();
+            String prefix = settings.generateIdentifierPrefix("resetTokenHook");
+            image = settings.generateUniqueIdentifier(prefix, this);
             setCachedImage(image);
         }
         else if (image.equals("OPEN_NODE_HOOK")) {
-            String prefix = getAppSettings().generateIdentifierPrefix("openNodeHook");
-            image = getAppSettings().generateUniqueIdentifier(prefix, this);
+            settings = getAppSettings();
+            String prefix = settings.generateIdentifierPrefix("openNodeHook");
+            image = settings.generateUniqueIdentifier(prefix, this);
             setCachedImage(image);
         }
         else if (image.equals("CLOSE_NODE_HOOK")) {
-            String prefix = getAppSettings().generateIdentifierPrefix("closeNodeHook");
-            image = getAppSettings().generateUniqueIdentifier(prefix, this);
+            settings = getAppSettings();
+            String prefix = settings.generateIdentifierPrefix("closeNodeHook");
+            image = settings.generateUniqueIdentifier(prefix, this);
             setCachedImage(image);
         }
         assert image != null;
@@ -957,7 +988,7 @@ Assignment :
             (@stringOf :=? "=$" | @stringOf :=? ":=$" {THIS_PRODUCTION.setDeclarationOf(true);})
         |
             (@addTo :=? "+=" | @addTo :=? ":+=" {THIS_PRODUCTION.setDeclarationOf(true);})
-    ) =>|| 
+    ) =>||
     |
     DEACTIVATE_TOKENS SLASHASSIGN (
         @namedAssignment :=?
@@ -1216,7 +1247,8 @@ INJECT NeverInTheTree :
 }
 
 INJECT LookBehind :
-import java.util.*;
+    import java.util.*;
+    import org.congocc.app.AppSettings;
 {
     @Property boolean backward;
 
@@ -1261,8 +1293,9 @@ import java.util.*;
 
     public String getRoutineName() {
         if (routineName == null) {
-            String prefix = getAppSettings().generateIdentifierPrefix("backscan");
-            routineName = getAppSettings().generateUniqueIdentifier(prefix, this);
+            AppSettings settings = getAppSettings();
+            String prefix = settings.generateIdentifierPrefix("backscan");
+            routineName = settings.generateUniqueIdentifier(prefix, this);
         }
         return routineName;
     }
