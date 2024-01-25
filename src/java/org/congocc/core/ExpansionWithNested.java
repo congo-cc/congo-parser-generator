@@ -11,6 +11,11 @@ abstract public class ExpansionWithNested extends Expansion {
     public Expansion getNestedExpansion() {
         return firstChildOfType(Expansion.class);
     }
+    
+    @Override
+    public Grammar getGrammar() {
+        return getNestedExpansion().getGrammar();
+    }
 
     @Override
     protected int getMinimumSize(Set<String> visitedNonTerminals) {
