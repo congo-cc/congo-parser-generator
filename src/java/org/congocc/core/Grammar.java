@@ -570,7 +570,7 @@ public class Grammar extends BaseNode {
 
         for (ExpansionWithNested exp : descendants(ExpansionWithNested.class, e->e instanceof ZeroOrMore || e instanceof OneOrMore)) {
             if (exp.getNestedExpansion().isEnteredUnconditionally()) {
-                errors.addError(exp, "The expansion inside the zero or more construct at is entered unconditionally. This is not permitted here.");
+                errors.addError(exp, "The expansion inside the zero (or one) or more construct is entered unconditionally. This is not permitted here.");
             }
         }
     }
