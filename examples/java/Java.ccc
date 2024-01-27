@@ -8,7 +8,7 @@
  // features in CongoCC, so many constructs are expressed in a very clean
  // and elegant way that is simply not possible with the legacy tool.
 
-#define pattern_matching //enable the new pattern matching feature 
+#define pattern_matching //enable the new pattern matching feature
 
 JAVA_UNICODE_ESCAPE;
 PARSER_PACKAGE=org.parsers.java;
@@ -16,7 +16,7 @@ NODE_PACKAGE=org.parsers.java.ast;
 DEFAULT_LEXICAL_STATE=JAVA;
 // The following tokens are only activated at key points whether
 // they are needed.
-DEACTIVATE_TOKENS=RECORD, VAR, YIELD, SEALED, NON_SEALED, PERMITS, MODULE, 
+DEACTIVATE_TOKENS=RECORD, VAR, YIELD, SEALED, NON_SEALED, PERMITS, MODULE,
                   OPEN, OPENS, PROVIDES, REQUIRES, EXPORTS, USES, WITH, TO, TRANSITIVE
 #if pattern_matching
 , WHEN
@@ -38,7 +38,7 @@ INCLUDE "JavaLexer.ccc"
 INJECT PARSER_CLASS :
 {
     private Token TOKEN_HOOK(BASE_TOKEN_CLASS tok) {
-        if ((tok.getType() == RSIGNEDSHIFT || tok.getType() == RUNSIGNEDSHIFT) 
+        if ((tok.getType() == RSIGNEDSHIFT || tok.getType() == RUNSIGNEDSHIFT)
             && isInProduction("TypeArguments","TypeParameters")) {
             tok.setType(GT);
             tok.setEndOffset(tok.getBeginOffset()+1);
@@ -64,7 +64,7 @@ ModularCompilationUnit :
       ACTIVATE_TOKENS OPEN (<OPEN>)
    ]
    ACTIVATE_TOKENS MODULE (<MODULE>)
-   Name 
+   Name
    <LBRACE>
    (SCAN ~(<RBRACE>) => ModuleDirective)*
    <RBRACE>
@@ -83,7 +83,7 @@ ModuleDirective :
    ProvidesDirective
 ;
 
-RequiresDirective : 
+RequiresDirective :
    ACTIVATE_TOKENS REQUIRES, TRANSITIVE (<REQUIRES> [<TRANSITIVE>|<STATIC>])
    Name
    <SEMICOLON>
@@ -127,9 +127,9 @@ ProvidesDirective :
 #CompilationUnit# :
   [ @packageDeclaration := PackageDeclaration! ]
   ( @importDeclarations :+= ImportDeclaration )*!
-//@typeDeclarations := 
-//  REVISIT: Why does the above not work here? It works fine in the ImportDeclaration case. 
-//           When used, the phase 2 building of CongoCC in build.xml just "goes away".  
+//@typeDeclarations :=
+//  REVISIT: Why does the above not work here? It works fine in the ImportDeclaration case.
+//           When used, the phase 2 building of CongoCC in build.xml just "goes away".
 //           Maybe something to do with the fact that it's an interface?
   ( TypeDeclaration )*!
   [
@@ -268,9 +268,9 @@ TypeIdentifier#void :
 ;
 
 ClassDeclaration :
-  {permissibleModifiers = EnumSet.of(PUBLIC, 
-                                    PROTECTED, PRIVATE, 
-                                    ABSTRACT, FINAL, STATIC, 
+  {permissibleModifiers = EnumSet.of(PUBLIC,
+                                    PROTECTED, PRIVATE,
+                                    ABSTRACT, FINAL, STATIC,
                                     STRICTFP, SEALED, NON_SEALED);}
   Modifiers
   <CLASS> =>||
@@ -283,9 +283,9 @@ ClassDeclaration :
 ;
 
 InterfaceDeclaration :
-  {permissibleModifiers = EnumSet.of(PUBLIC, PROTECTED, 
-                                     PRIVATE, ABSTRACT, 
-                                     STATIC, STRICTFP, SEALED, 
+  {permissibleModifiers = EnumSet.of(PUBLIC, PROTECTED,
+                                     PRIVATE, ABSTRACT,
+                                     STATIC, STRICTFP, SEALED,
                                      NON_SEALED);}#
   Modifiers
   <INTERFACE> =>||
@@ -329,14 +329,14 @@ ImplementsList :
 
 
 EnumDeclaration :
-   {permissibleModifiers = EnumSet.of(PUBLIC, PROTECTED, 
-                                      PRIVATE, ABSTRACT, 
+   {permissibleModifiers = EnumSet.of(PUBLIC, PROTECTED,
+                                      PRIVATE, ABSTRACT,
                                       FINAL, STATIC, STRICTFP);}#
    Modifiers
    <ENUM> =>||
-// @name:=TypeIdentifier 
-//  REVISIT: The above can't be used because TypeIdentifier#void so the property can't be typed 
-//           and the node can't be cast (currently). 
+// @name:=TypeIdentifier
+//  REVISIT: The above can't be used because TypeIdentifier#void so the property can't be typed
+//           and the node can't be cast (currently).
 //           Is this something we should try to fix, or is this just an atypical case?
    /name/=TypeIdentifier
    [ImplementsList]
@@ -346,16 +346,16 @@ EnumDeclaration :
 
 EnumBody :
    <LBRACE>
-   [ /values/+=EnumConstant ( SCAN 2 <COMMA> (/values/+=EnumConstant) )* ] 
+   [ /values/+=EnumConstant ( SCAN 2 <COMMA> (/values/+=EnumConstant) )* ]
    [ <COMMA> ]
    [ <SEMICOLON> ( ClassOrInterfaceBodyDeclaration )*! ]
    <RBRACE>
 ;
 
 RecordDeclaration :
-  {permissibleModifiers = EnumSet.of(PUBLIC, 
-                                     PROTECTED, PRIVATE, 
-                                     ABSTRACT, FINAL, 
+  {permissibleModifiers = EnumSet.of(PUBLIC,
+                                     PROTECTED, PRIVATE,
+                                     ABSTRACT, FINAL,
                                      STATIC, STRICTFP);}
   Modifiers
   ASSERT {checkNextTokenImage("record") && getTokenType(2) == IDENTIFIER}#
@@ -382,7 +382,7 @@ RecordComponent :
 ;
 
 RecordBody :
-  <LBRACE> 
+  <LBRACE>
   (
    CompactConstructorDeclaration
    |
@@ -412,9 +412,9 @@ TypeParameters :
    TypeParameter ( <COMMA> TypeParameter )*
 #if use_token_hook
    <GT>
-#else   
+#else
    DEACTIVATE_TOKENS RSIGNEDSHIFT, RUNSIGNEDSHIFT (<GT>)
-#endif   
+#endif
 ;
 
 INJECT TypeParameters :
@@ -431,7 +431,7 @@ TypeBound :
    <EXTENDS> ObjectType ( <BIT_AND> ObjectType )*
 ;
 
-ClassOrInterfaceBody : <LBRACE> (SCAN ~(<RBRACE>) => /decls/+=ClassOrInterfaceBodyDeclaration )*! <RBRACE> ; 
+ClassOrInterfaceBody : <LBRACE> (SCAN ~(<RBRACE>) => /decls/+=ClassOrInterfaceBodyDeclaration )*! <RBRACE> ;
 
 ClassOrInterfaceBodyDeclaration#interface :
   Initializer
@@ -452,8 +452,8 @@ INJECT FieldDeclaration : implements ClassOrInterfaceBodyDeclaration
 INJECT MethodDeclaration : implements ClassOrInterfaceBodyDeclaration
 
 FieldDeclaration :
-  {permissibleModifiers = EnumSet.of(PUBLIC, PROTECTED, 
-                                     PRIVATE, STATIC, FINAL, 
+  {permissibleModifiers = EnumSet.of(PUBLIC, PROTECTED,
+                                     PRIVATE, STATIC, FINAL,
                                      TRANSIENT, VOLATILE);}#
   Modifiers
   Type VariableDeclarator ( <COMMA> VariableDeclarator )* <SEMICOLON>
@@ -483,15 +483,15 @@ ArrayInitializer :
                                // If we're not in a TypeDeclaration (most likely because we are in a CongoCC code injection)
                                // we just accept all the possible modifiers.
     =>
-    {permissibleModifiers = EnumSet.of(PUBLIC, PROTECTED, 
-                                       PRIVATE, ABSTRACT, 
+    {permissibleModifiers = EnumSet.of(PUBLIC, PROTECTED,
+                                       PRIVATE, ABSTRACT,
                                        STATIC, SYNCHRONIZED, FINAL,
-                                       NATIVE, STRICTFP, 
+                                       NATIVE, STRICTFP,
                                        _DEFAULT);}
     |
     {permissibleModifiers = EnumSet.of(PUBLIC, PROTECTED,
                                       PRIVATE, ABSTRACT,
-                                      STATIC, FINAL, 
+                                      STATIC, FINAL,
                                       SYNCHRONIZED, NATIVE,
                                       STRICTFP);}
   )
@@ -576,12 +576,12 @@ PossiblyEmptyTypeArguments #void :
 
 TypeArguments :
   SCAN 2
-  <LT> TypeArgument ( <COMMA> TypeArgument )* 
+  <LT> TypeArgument ( <COMMA> TypeArgument )*
   #if use_token_hook
     <GT>
   #else
    DEACTIVATE_TOKENS RSIGNEDSHIFT, RUNSIGNEDSHIFT (<GT>)
-  #endif   
+  #endif
 ;
 
 TypeArgument :
@@ -863,20 +863,16 @@ PrimaryExpression#interface :
   InvocationArguments #MethodCall(+1)
  )*
  ASSERT {getTokenType(0) != SUPER}# : "Not a valid expression here "
-#if __java__
+#if true
    + getToken(0).getLocation()
-#endif 
+#endif
 ;
 
 LiteralExpression# : Literal ;
 
 Parentheses :
     <LPAREN>
-#if __java__
-    Expression {CURRENT_NODE.setNestedExpression((Expression) peekNode());} // TODO: change to @nestedExpression after jar refresh
-#else
     Expression {CURRENT_NODE.setNestedExpression((Expression) peekNode());}
-#endif    
     <RPAREN>
 ;
 
@@ -1142,15 +1138,15 @@ ClassicSwitchLabel :
 TypePattern :
   <NULL> [<COMMA> <_DEFAULT>]
   |
-  {permissibleModifiers = EnumSet.of(FINAL);}#        
+  {permissibleModifiers = EnumSet.of(FINAL);}#
   Modifiers Type <IDENTIFIER>
-; 
+;
 
 WhenClause :
-   SCAN 0 {checkNextTokenImage("when")} 
+   SCAN 0 {checkNextTokenImage("when")}
    =>
    ACTIVATE_TOKENS WHEN (<WHEN>) Expression
-;   
+;
 #endif
 
 ClassicCaseStatement :
@@ -1185,7 +1181,7 @@ NewCaseStatement :
      ThrowStatement
      |
      SCAN 0 \.\.\SwitchExpression
-     => Expression <SEMICOLON> 
+     => Expression <SEMICOLON>
      |
      SCAN ~(<RBRACE>) =>
      BlockStatement
@@ -1251,13 +1247,13 @@ SynchronizedStatement : <SYNCHRONIZED> <LPAREN> Expression <RPAREN> Block ;
 ClassicTryStatement :
   <TRY>
   =>|+1
-  /block/=Block 
+  /block/=Block
   (
-     /finallyBlock/=FinallyBlock 
+     /finallyBlock/=FinallyBlock
      |
      (
-        ( /catchBlocks/+=CatchBlock )+ 
-        [ /finallyBlock/=FinallyBlock ]  
+        ( /catchBlocks/+=CatchBlock )+
+        [ /finallyBlock/=FinallyBlock ]
      )
   )
 ;
@@ -1265,7 +1261,7 @@ ClassicTryStatement :
 TryWithResources : // not processed by Translator
    <TRY> <LPAREN> =>||
     (
-      SCAN {getTokenType(0) == SEMICOLON}# ~(<RPAREN>) 
+      SCAN {getTokenType(0) == SEMICOLON}# ~(<RPAREN>)
       =>
        (
          LocalVariableDeclaration
@@ -1292,7 +1288,7 @@ CatchBlock :
     Block
 ;
 
-INJECT CatchBlock : 
+INJECT CatchBlock :
 {
     public CodeBlock getBlock() {
         return firstChildOfType(CodeBlock.class);
@@ -1351,15 +1347,15 @@ MemberValue :
 MemberValueArrayInitializer :
   <LBRACE>
   [
-     MemberValue ( <COMMA> =>|+1 MemberValue )* [<COMMA>] 
+     MemberValue ( <COMMA> =>|+1 MemberValue )* [<COMMA>]
   ]
   <RBRACE>
 ;
 
 
 AnnotationTypeDeclaration :
-  {permissibleModifiers = EnumSet.of(PUBLIC, PROTECTED, 
-                                    PRIVATE, ABSTRACT, 
+  {permissibleModifiers = EnumSet.of(PUBLIC, PROTECTED,
+                                    PRIVATE, ABSTRACT,
                                     STATIC, STRICTFP);}#
   @modifiers:=Modifiers
   <AT> <INTERFACE> =>|| /name/=TypeIdentifier AnnotationTypeBody // used in Translator?
@@ -1372,7 +1368,7 @@ AnnotationTypeBody :
 AnnotationMethodDeclaration :
    {permissibleModifiers = EnumSet.of(PUBLIC, ABSTRACT);}#
    @modifiers:=Modifiers
-   Type <IDENTIFIER> <LPAREN> =>|| <RPAREN> [ DefaultValue ] <SEMICOLON> 
+   Type <IDENTIFIER> <LPAREN> =>|| <RPAREN> [ DefaultValue ] <SEMICOLON>
 ;
 
 AnnotationTypeMemberDeclaration :

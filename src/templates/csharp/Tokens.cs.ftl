@@ -46,27 +46,33 @@ namespace ${csPackage} {
         int BeginOffset { get; set; }
         int EndOffset { get; set; }
 
-        int BeginLine {
+        public int BeginLine {
             get {
                 return (TokenSource == null) ? 0 : TokenSource.GetLineFromOffset(BeginOffset);
             }
         }
 
-        int EndLine {
+        public int EndLine {
             get {
                 return (TokenSource == null) ? 0 : TokenSource.GetLineFromOffset(EndOffset - 1);
             }
         }
 
-        int BeginColumn {
+        public int BeginColumn {
             get {
                 return (TokenSource == null) ? 0 : TokenSource.GetCodePointColumnFromOffset(BeginOffset);
             }
         }
 
-        int EndColumn {
+        public int EndColumn {
             get {
                 return (TokenSource == null) ? 0 : TokenSource.GetCodePointColumnFromOffset(EndOffset - 1);
+            }
+        }
+
+        public string Location {
+            get {
+                return string.Format("{0}:{1}:{2}", InputSource, BeginLine, BeginColumn);
             }
         }
 
@@ -326,7 +332,7 @@ namespace ${csPackage} {
         public int BeginOffset { get; set; }
         public int EndOffset { get; set; }
 
-        // TODO us default implementations in interface
+        // TODO use default implementations in interface
         public int BeginLine {
             get {
                 return (TokenSource == null) ? 0 : TokenSource.GetLineFromOffset(BeginOffset);
@@ -350,7 +356,7 @@ namespace ${csPackage} {
                 return (TokenSource == null) ? 0 : TokenSource.GetCodePointColumnFromOffset(EndOffset - 1);
             }
         }
-
+ 
         public T FirstChildOfType<T>(System.Type t) where T : Node {
             var result = default(T);
 
@@ -531,7 +537,7 @@ namespace ${csPackage} {
             EndOffset = newEndOffset;
         }
 
-        // TODO us default implementations in interface
+        // TODO use default implementations in interface
         public int BeginLine {
             get {
                 return (TokenSource == null) ? 0 : TokenSource.GetLineFromOffset(BeginOffset);
