@@ -46,31 +46,31 @@ namespace ${csPackage} {
         int BeginOffset { get; set; }
         int EndOffset { get; set; }
 
-        public int BeginLine {
+        int BeginLine {
             get {
                 return (TokenSource == null) ? 0 : TokenSource.GetLineFromOffset(BeginOffset);
             }
         }
 
-        public int EndLine {
+        int EndLine {
             get {
                 return (TokenSource == null) ? 0 : TokenSource.GetLineFromOffset(EndOffset - 1);
             }
         }
 
-        public int BeginColumn {
+        int BeginColumn {
             get {
                 return (TokenSource == null) ? 0 : TokenSource.GetCodePointColumnFromOffset(BeginOffset);
             }
         }
 
-        public int EndColumn {
+        int EndColumn {
             get {
                 return (TokenSource == null) ? 0 : TokenSource.GetCodePointColumnFromOffset(EndOffset - 1);
             }
         }
 
-        public string Location {
+        string Location {
             get {
                 return string.Format("{0}:{1}:{2}", InputSource, BeginLine, BeginColumn);
             }
