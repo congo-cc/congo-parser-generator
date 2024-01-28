@@ -1529,6 +1529,22 @@ public class Translator {
         fail();
     }
 
+    protected boolean belongsToClass(ASTInvocation expr) {
+        boolean result = false;
+        ASTExpression receiver = expr.getReceiver();
+        ASTExpression lhs, rhs;
+
+        if ((receiver instanceof ASTBinaryExpression) &&
+                ((lhs = ((ASTBinaryExpression) receiver).getLhs()) instanceof ASTInvocation) &&
+                ((receiver = ((ASTInvocation) lhs).getReceiver()) instanceof ASTBinaryExpression) &&
+                (((ASTBinaryExpression) receiver).getOp().equals(".")) &&
+                ((rhs = ((ASTBinaryExpression) receiver).getRhs()) instanceof ASTPrimaryExpression) &&
+                (((ASTPrimaryExpression) rhs).getName()).equals("getClass")) {
+            result = true;
+        }
+        return result;
+    }
+
     protected void translateInvocation(ASTInvocation expr, StringBuilder result) {
         fail();
     }
