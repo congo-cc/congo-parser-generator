@@ -5,7 +5,6 @@ PARSER_PACKAGE=org.congocc.parser.csharp;
 ROOT_API_PACKAGE=org.congocc.parser;
 TAB_SIZE=4;
 
-#define interpolated_raw_strings
 INCLUDE "../../examples/csharp/CSharp.ccc";
 
 INJECT BASE_NODE_CLASS :
@@ -20,7 +19,7 @@ INJECT BASE_TOKEN_CLASS :
     @Property Grammar grammar;
 }
 
-#InjectionBody : 
+#InjectionBody :
     (ClassMemberDeclaration)*
     <EOF>
     {

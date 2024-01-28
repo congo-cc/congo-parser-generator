@@ -662,12 +662,6 @@ public class Translator {
         latest.put(name, typeExpression);
     }
 
-/* NOT NEEDED?
-    public void addParameterName(String name) {
-        parameterNames.add(name);
-    }
-*/
-
     public boolean isParameterName(String name) {
         return parameterNames.contains(name);
     }

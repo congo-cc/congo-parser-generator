@@ -862,10 +862,7 @@ PrimaryExpression#interface :
   =>
   InvocationArguments #MethodCall(+1)
  )*
- ASSERT {getTokenType(0) != SUPER}# : "Not a valid expression here "
-#if true
-   + getToken(0).getLocation()
-#endif
+ ASSERT {getTokenType(0) != SUPER}# : "Not a valid expression here " + getToken(0).getLocation()
 ;
 
 LiteralExpression# : Literal ;
