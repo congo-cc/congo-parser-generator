@@ -311,6 +311,15 @@ public class PythonTranslator extends Translator {
             renderReceiver(receiver, result);
             result.append(')');
         }
+        else if (methodName.equals("getClass") && (nargs == 0)) {
+            result.append("type(");
+            renderReceiver(receiver, result);
+            result.append(')');
+        }
+        else if (methodName.equals("getSimpleName") && (nargs == 0) && belongsToClass(expr)) {
+            renderReceiver(receiver, result);
+            result.append(".__name__");
+        }
         else if ((methodName.equals("size") || methodName.equals("length")) && (nargs == 0)) {
             result.append("len(");
             renderReceiver(receiver, result);

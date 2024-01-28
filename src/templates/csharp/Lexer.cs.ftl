@@ -265,6 +265,16 @@ ${globals::translateLexerImports()}
             startingColumn = col;
         }
 
+        // string-like methods
+        internal int Length {
+            get { return _contentLength; }
+        }
+
+        internal char this[int index] {
+            get { return _content[index]; }
+        }
+
+
         private static readonly Regex PythonCodingPattern = new Regex(@"^[ \t\f]*#.*\bcoding[:=][ \t]*([-_.a-zA-Z0-9]+)");
         private static readonly UTF8Encoding Utf8 = new UTF8Encoding(true);
         private static readonly UnicodeEncoding Utf16Le = new UnicodeEncoding(false, true, true);
@@ -483,11 +493,11 @@ ${globals::translateLexerImports()}
         private static readonly int[] EmptyInt = new int[] { 0 };
 
         private int[] CreateLineOffsetsTable(string content) {
-            if (content.Length == 0) {
+            var length = content.Length;
+            if (length == 0) {
                 return EmptyInt;
             }
             var lineCount = 0;
-            var length = content.Length;
             for (var i = 0; i < length; i++) {
                 var ch = content[i];
                 if (ch == '\t' || char.IsHighSurrogate(ch)) {
@@ -553,7 +563,7 @@ ${globals::translateLexerImports()}
             }
             return false;
         }
-
+/*
         public int Length(int start, int end) {
             int result = 0;
             for (int i =start; i< end; i++) {
@@ -563,7 +573,7 @@ ${globals::translateLexerImports()}
             }
             return result;
         }
-
+ */
         protected void SetLineSkipped(${BaseToken} tok) {
             int lineNum = tok.BeginLine;
             int start = GetLineStartOffset(lineNum);
@@ -1310,14 +1320,6 @@ ${globals::translateCodeBlock(regexp.codeSnippet.javaCode, 16)}
                 }
             }
             return ch;
-        }
-
-        internal char CharAt(int index) {
-            return _content[index];
-        }
-
-        internal int Length() {
-            return _content.Length;
         }
  */
 

@@ -299,6 +299,10 @@ public class CSharpTranslator extends Translator {
             renderReceiver(receiver, result);
             result.append(".IsUnparsed");
         }
+        else if (methodName.equals("getSimpleName") && (nargs == 0) && belongsToClass(expr)) {
+            renderReceiver(receiver, result);
+            result.append(".Name");
+        }
         else if (methodName.equals("setUnparsed") && (nargs == 1)) {
             renderReceiver(receiver, result);
             result.append(".IsUnparsed = ");
@@ -349,6 +353,9 @@ public class CSharpTranslator extends Translator {
                 if (n < result.length()) {
                     result.append('.');
                 }
+            }
+            if (methodName.equals("getClass")) {
+                methodName = "GetType";
             }
             String ident = translateIdentifier(methodName, TranslationContext.METHOD);
             if (ident.equals("DirectiveLine")) {

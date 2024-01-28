@@ -15,11 +15,11 @@ PARSER_PACKAGE=org.parsers.csharplexer;
 ;
 
 UNPARSED #Comment :
- #if true
+#if true
   < ?MULTI_LINE_COMMENT : "/*" (~[])* "*/">
- #else
+#else
   < MULTI_LINE_COMMENT : "/*" (~["*"])* "*" (~["*","/"] (~["*"])* "*" | "*")* "/">
- #endif
+#endif
   |
   < SINGLE_LINE_COMMENT : "//" (~["\n"])* >
 ;
@@ -274,10 +274,8 @@ TOKEN #Literal :
   < REGULAR_INTERPOLATION_START : '$"' >
   |
   < MULTI_INTERPOLATION_START : '$@"' | '@$"' >
-#if __java__
   |
   < INTERPOLATED_RAW_STRING_START : ("$")+ ('"'){3,}>
-#endif
 ;
 
 <IN_REGULAR_INTERPOLATION>
@@ -353,13 +351,10 @@ MORE :
 INJECT LEXER_CLASS :
 {
    private String pendingString = "";
-#if __java__
    private int startingQuotes, startingDollars;
-#endif
 
    private BASE_TOKEN_CLASS TOKEN_HOOK(BASE_TOKEN_CLASS tok) {
       TokenType type = tok.getType();
-#if __java__
       if (type == TokenType.INTERPOLATED_RAW_STRING_START) {
          String image = tok.toString();
          startingQuotes = startingDollars = 0;
@@ -380,7 +375,7 @@ INJECT LEXER_CLASS :
          int followingOpenBraces = 0;
          for (int k = tok.getEndOffset(); k < this.length(); k++) {
             if (!isIgnored(k)) {
-                if (charAt(k) == '{') followingOpenBraces++;
+                if (this.charAt(k) == '{') followingOpenBraces++;
                 else break;
             }
          }
@@ -409,7 +404,6 @@ INJECT LEXER_CLASS :
           return tok;
       }
       else
-#endif
       if (tok.getType() == TokenType.RAW_STRING_LITERAL) {
         String image = tok.toString();
         if (pendingString == "" && endsWithEnoughQuotes(image)) {
@@ -436,9 +430,7 @@ INJECT LEXER_CLASS :
           if (img.charAt(i) == '"') startingQuotes++;
           else break;
        }
-#if __java__
        if (img.endsWith("u8")) img = img.substring(0, img.length() -2);
-#endif
           for (int k = img.length() -1; k>=0; k--) {
              if (img.charAt(k) == '"') ++endingQuotes;
              else break;

@@ -200,12 +200,12 @@ TypeDeclaration#interface :
   )
 ;
 
-INJECT ClassDeclaration : implements TypeDeclaration 
-INJECT StructDeclaration : implements TypeDeclaration 
-INJECT RecordDeclaration : implements TypeDeclaration 
-INJECT InterfaceDeclaration : implements TypeDeclaration 
-INJECT EnumDeclaration: implements TypeDeclaration 
-INJECT DelegateDeclaration: implements TypeDeclaration 
+INJECT ClassDeclaration : implements TypeDeclaration
+INJECT StructDeclaration : implements TypeDeclaration
+INJECT RecordDeclaration : implements TypeDeclaration
+INJECT InterfaceDeclaration : implements TypeDeclaration
+INJECT EnumDeclaration: implements TypeDeclaration
+INJECT DelegateDeclaration: implements TypeDeclaration
 
 INJECT PARSER_CLASS :
 {
@@ -240,7 +240,7 @@ Modifiers#void : //TODO
             || permissibleModifiers.contains(TokenType.RECORD) && checkNextTokenImage("record")
             || permissibleModifiers.contains(TokenType.REQUIRED) && checkNextTokenImage("required")
           }#
-      => ACTIVATE_TOKENS ASYNC, RECORD, REQUIRED 
+      => ACTIVATE_TOKENS ASYNC, RECORD, REQUIRED
          (
             <ASYNC> { if (permissibleModifiers!=null) permissibleModifiers.remove(TokenType.ASYNC);}
             |
@@ -279,14 +279,14 @@ ClassDeclaration :
   [TypeParameterList]
   [SCAN 1 {isaRecordClass} => <LPAREN> [FormalParameters] <RPAREN>]
   [
-     <COLON> 
+     <COLON>
      (
        Name
-       [ SCAN 1 {isaRecordClass} => <LPAREN> ArgumentList <RPAREN>] 
-       | <OBJECT> 
+       [ SCAN 1 {isaRecordClass} => <LPAREN> ArgumentList <RPAREN>]
+       | <OBJECT>
        | <STRING>
        | SCAN 0 {checkNextTokenImage("dynamic")}# => ACTIVATE_TOKENS DYNAMIC (<DYNAMIC>)
-     ) 
+     )
      (<COMMA> Name[SCAN 1 {isaRecordClass} => <LPAREN> ArgumentList <RPAREN>] )*
   ]
   TypeParameterConstraints
@@ -652,10 +652,10 @@ EventDeclaration :
 
 IndexerDeclaration :
   {
-    permissibleModifiers = EnumSet.of(TokenType.PUBLIC, TokenType.PRIVATE, TokenType.PROTECTED, 
-                                      TokenType.STATIC, TokenType.VIRTUAL, TokenType.OVERRIDE, 
-                                      TokenType.NEW, TokenType.ABSTRACT, TokenType.INTERNAL, 
-                                      TokenType.SEALED, TokenType.UNSAFE, TokenType.REF, 
+    permissibleModifiers = EnumSet.of(TokenType.PUBLIC, TokenType.PRIVATE, TokenType.PROTECTED,
+                                      TokenType.STATIC, TokenType.VIRTUAL, TokenType.OVERRIDE,
+                                      TokenType.NEW, TokenType.ABSTRACT, TokenType.INTERNAL,
+                                      TokenType.SEALED, TokenType.UNSAFE, TokenType.REF,
                                       TokenType.READONLY);
   }
   (AttributeSection)*
@@ -847,7 +847,7 @@ MethodBody :
 InterfaceMethodDeclaration :
   {
     permissibleModifiers = EnumSet.of(TokenType.PUBLIC, TokenType.PRIVATE, TokenType.PROTECTED,
-                                      TokenType.INTERNAL, TokenType.UNSAFE, TokenType.NEW, 
+                                      TokenType.INTERNAL, TokenType.UNSAFE, TokenType.NEW,
                                       TokenType.STATIC, TokenType.ABSTRACT, TokenType.VIRTUAL,
                                       TokenType.ASYNC, TokenType.SEALED);
   }
@@ -915,7 +915,7 @@ VariableDeclarator : <IDENTIFIER> [<ASSIGN> (Expression|ArrayInitializer)] ;
 
 TypeParameterList :
    <LT>
-   TypeParameter 
+   TypeParameter
    (<COMMA>TypeParameter)*
    DEACTIVATE_TOKENS RIGHT_SHIFT, UNSIGNED_RIGHT_SHIFT, RIGHT_SHIFT_ASSIGN, UNSIGNED_RIGHT_SHIFT_ASSIGN
    (<GT>)
@@ -944,7 +944,7 @@ DelegateStarType :
    [
      SCAN 0 {checkNextTokenImage("managed") || checkNextTokenImage("unmanaged")}#
      => ACTIVATE_TOKENS MANAGED, UNMANAGED (<MANAGED> | <UNMANAGED>)
-   ] 
+   ]
    (AttributeSection)*
    TypeParameterList
 ;
@@ -1180,7 +1180,7 @@ ImplicitAnonymousFunctionSignature :
 ;
 
 QueryExpressionLA#scan :
-   <IDENTIFIER> 
+   <IDENTIFIER>
    ASSERT {tokenImage(0).equals("from")}
    (
       <IDENTIFIER> <IN> =>||
@@ -2127,10 +2127,8 @@ StatementExpression#interface :
       SCAN 1 {lhs.isAssignableTo()} =>
       (AssignmentOperator [<REF>] Expression) #AssignmentExpression(+1)
       |
-      ASSERT {lhs instanceof StatementExpression} : "Not a statement. " 
-#if __java__      
+      ASSERT {lhs instanceof StatementExpression} : "Not a statement. "
       + lhs.getClass().getSimpleName() + ":" + lhs.getLocation()
-#endif      
    )
    |
    AssignmentExpression
@@ -2197,12 +2195,12 @@ Pattern :
 ;
 
 // I'm not sure this is right. This is a new feature in C# 11.
-ListPattern : 
-    <LBRACKET> 
+ListPattern :
+    <LBRACKET>
     {seenRange = false;}
-    [InListPattern (<COMMA> =>|+1 InListPattern)*] 
+    [InListPattern (<COMMA> =>|+1 InListPattern)*]
     [<COMMA>]
-    <RBRACKET> 
+    <RBRACKET>
 ;
 
 INJECT PARSER_CLASS :
@@ -2354,14 +2352,12 @@ PropertySubPattern :
    <RBRACE>
 ;
 
-InterpolatedString#abstract : 
-   RegularStringInterpolation 
-   | 
-   MultiStringInterpolation 
-#if __java__   
+InterpolatedString#abstract :
+   RegularStringInterpolation
+   |
+   MultiStringInterpolation
    |
    InterpolatedRawString
-#endif   
 ;
 
 RegularStringInterpolation :
@@ -2414,7 +2410,6 @@ MultiNonInterpolatedText : IN_MULTI_INTERPOLATION :
    <NON_INTERPOLATED_TEXT2>
 ;
 
-#if __java__
 InterpolatedRawString :
    <INTERPOLATED_RAW_STRING_START>
    LEXICAL_STATE IN_INTERPOLATED_RAW_STRING
@@ -2437,4 +2432,3 @@ RawInterpolation :
     )
     <END_RAW_INTERPOLATION>
 ;
-#endif
