@@ -18,20 +18,10 @@ SKIP :
 
 UNPARSED : <SINGLE_LINE_COMMENT : "//" (~["\n"])* "\n" > #SingleLineComment ;
 
-#if false
-
-MORE : <MULTI_LINE_COMMENT_START : "/*"> : IN_MULTI_LINE_COMMENT ;
-
-<IN_MULTI_LINE_COMMENT> MORE : < ANY_CHAR : ~[] >;
-
-<IN_MULTI_LINE_COMMENT> UNPARSED #Comment :  <MULTI_LINE_COMMENT: "*/" > #MultiLineComment : JAVA ;
-
-#else
 UNPARSED #Comment :
   < ?MULTI_LINE_COMMENT : "/*" (~[])* "*/" > #MultiLineComment
   //< MULTI_LINE_COMMENT : "/*" (~["*"])* "*" (~["*","/"] (~["*"])* "*" | "*")* "/"> #MultiLineComment
 ;
-#endif
 
 TOKEN #KeyWord :
   <UNDERSCORE : "_">
@@ -143,21 +133,11 @@ TOKEN #Literal :
       '"'
   > #StringLiteral
   |
-#if true
   < ?TEXT_BLOCK_LITERAL:
      '"""' (<HORIZONTAL_WHITESPACE>)* "\n"
         (~['\\'] | <STRING_ESCAPE> | "\\\n")*
      '"""'
   > #StringLiteral
-#else
-  < TEXT_BLOCK_LITERAL:
-     '"""' (<HORIZONTAL_WHITESPACE>)* "\n"
-     // This was slightly broken until recently (2022-12-10)
-     // I think it's okay now. (JR)
-        (('"'){0,2} ((~['"', '\\']) | <STRING_ESCAPE> | ("\\" <LINE_TERMINATOR>)))*
-     '"""'
-  > #StringLiteral
-#endif
 ;
 
 INJECT CharacterLiteral :

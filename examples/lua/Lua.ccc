@@ -1,7 +1,5 @@
-#if false
-   This is a grammar for the Lua programming language.
-   It may be used for any purpose.
-#endif
+// This is a grammar for the Lua programming language.
+// It may be used for any purpose.
 
 PARSER_PACKAGE=org.parsers.lua;
 DEFAULT_LEXICAL_STATE=LUA;
@@ -13,7 +11,7 @@ MINIMAL_TOKEN;
 INCLUDE "LuaLexer.ccc"
 
 
-#Root : 
+#Root :
    [
       SCAN "#" => ACTIVATE_TOKENS SHEBANG (<SHEBANG>)
    ]
@@ -35,9 +33,9 @@ Statement :
    |
    GotoStatement
    |
-   DoBlock 
+   DoBlock
    |
-   WhileStatement 
+   WhileStatement
    |
    RepeatStatement
    |
@@ -94,7 +92,7 @@ NameList : <NAME> ("," <NAME> =>||)* ;
 
 ExpressionList : Expression ("," Expression)* ;
 
-Literal#void : "nil" | "false" | "true" | Number | StringLiteral | "..." ; 
+Literal#void : "nil" | "false" | "true" | Number | StringLiteral | "..." ;
 
 PrimaryExpression : Literal | FunctionDef | PrefixExp | TableConstructor ;
 

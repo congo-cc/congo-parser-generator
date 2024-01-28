@@ -1303,7 +1303,7 @@ ${globals::translateCodeBlock(regexp.codeSnippet.javaCode, 16)}
             return matchedToken;
         }
 [/#if]
-/*
+#if false
         private int ReadChar() {
             while (_tokenLocationTable[_bufferPosition] == Ignored && _bufferPosition < _contentLength) {
                 ++_bufferPosition;
@@ -1321,8 +1321,8 @@ ${globals::translateCodeBlock(regexp.codeSnippet.javaCode, 16)}
             }
             return ch;
         }
- */
 
+/#if
 [#if settings.tokenChaining]
         override public void CacheToken(${BaseToken} tok) {
             ${TOKEN} token = (${TOKEN}) tok;
