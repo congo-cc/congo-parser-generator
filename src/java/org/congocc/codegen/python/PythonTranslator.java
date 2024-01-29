@@ -78,7 +78,7 @@ public class PythonTranslator extends Translator {
             int prefixLength = appSettings.getNodePackage().length() + 1;
             result = ident.substring(prefixLength);
         }
-        else if (Character.isLowerCase(ident.charAt(0)) && !isSpecialPrefix(ident) && !ident.equals("thisProduction")) {
+        else if (Character.isLowerCase(ident.charAt(0)) && !isSpecialPrefix(ident)) {
             result = camelToSnake(result);
         }
         else if (ident.equals("LEXER_CLASS") || (ident.equals(appSettings.getLexerClassName()))) {

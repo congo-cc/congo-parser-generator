@@ -4,7 +4,6 @@ PARSER_PACKAGE=org.congocc.parser;
 NODE_PACKAGE=org.congocc.parser.tree;
 DEFAULT_LEXICAL_STATE=JAVA;
 BASE_SRC_DIR="../../build/generated-java";
-X_SYNTHETIC_NODES_ENABLED;
 
 USES_PREPROCESSOR;
 

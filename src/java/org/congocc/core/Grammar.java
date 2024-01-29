@@ -543,6 +543,17 @@ public class Grammar extends BaseNode {
                 errors.addError(prod, "Production " + prod.getName() + " is left recursive.");
             }
         }
+        
+        for (Assignment assignment : descendants(Assignment.class)) {
+            if (assignment.isPropertyAssignment()) {
+                BNFProduction production = assignment.firstAncestorOfType(BNFProduction.class);
+                if (production.getTreeNodeBehavior() != null) {
+                    if (production.getTreeNodeBehavior().isNeverInstantiated()) {
+                        errors.addError(assignment, "Cannot assign to production node property; production node is never instantiated.");
+                    }
+                }
+            }
+        }
 
         if (errors.getErrorCount() >0) return;
 
@@ -570,7 +581,7 @@ public class Grammar extends BaseNode {
 
         for (ExpansionWithNested exp : descendants(ExpansionWithNested.class, e->e instanceof ZeroOrMore || e instanceof OneOrMore)) {
             if (exp.getNestedExpansion().isEnteredUnconditionally()) {
-                errors.addError(exp, "The expansion inside the zero or more construct at is entered unconditionally. This is not permitted here.");
+                errors.addError(exp, "The expansion inside the zero (or one) or more construct is entered unconditionally. This is not permitted here.");
             }
         }
     }
