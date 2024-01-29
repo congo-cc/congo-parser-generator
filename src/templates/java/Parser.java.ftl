@@ -68,9 +68,9 @@ private int passedPredicateThreshold = -1;
 EnumSet<TokenType> outerFollowSet;
 
 [#if settings.legacyGlitchyLookahead]
-   private boolean legacyGlitchyLookahead = true;
+   private final boolean legacyGlitchyLookahead = true;
 [#else]
-   private boolean legacyGlitchyLookahead = false;
+   private final boolean legacyGlitchyLookahead = false;
 [/#if]
 
 private final ${settings.baseTokenClassName} DUMMY_START_TOKEN = new ${settings.baseTokenClassName}();
@@ -144,7 +144,7 @@ public boolean isCancelled() {return cancelled;}
 
   // If the next token is cached, it returns that
   // Otherwise, it goes to the token_source, i.e. the Lexer.
-  private final ${settings.baseTokenClassName} nextToken(final ${settings.baseTokenClassName} tok) {
+  private ${settings.baseTokenClassName} nextToken(final ${settings.baseTokenClassName} tok) {
     ${settings.baseTokenClassName} result = token_source.getNextToken(tok);
     while (result.isUnparsed()) {
      [#list grammar.parserTokenHooks as methodName]
@@ -225,7 +225,7 @@ public boolean isCancelled() {return cancelled;}
     return false;
   }
 
-  private final TokenType nextTokenType() {
+  private TokenType nextTokenType() {
     if (nextTokenType == null) {
        nextTokenType = nextToken(lastConsumedToken).getType();
     }
@@ -281,7 +281,7 @@ public boolean isCancelled() {return cancelled;}
     hitFailure = true;
   }
 
-  private static HashMap<TokenType[], EnumSet<TokenType>> enumSetCache = new HashMap<>();
+  private static final HashMap<TokenType[], EnumSet<TokenType>> enumSetCache = new HashMap<>();
 
   private static EnumSet<TokenType> tokenTypeSet(TokenType first, TokenType... rest) {
     TokenType[] key = new TokenType[1 + rest.length];

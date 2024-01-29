@@ -110,37 +110,31 @@ public class NonTerminal extends Expansion implements SyntaxElement {
         return getNestedExpansion().isSingleTokenLookahead();
      }
 
+     private boolean checkNestedExpansion() {
+         Expansion nested = getNestedExpansion();
+         if (nested instanceof ExpansionSequence) {
+             for (Expansion sub : nested.childrenOfType(Expansion.class)) {
+                 if (!(sub instanceof NonTerminal)) {
+                     // KLUDGE? For now we don't nest further into nonterminals
+                     // It seems like we should, but the code blows up. I need
+                     // to revisit this! For now, it's "good enough for government work, I suppose."
+                     if (sub.startsWithLexicalChange()) return true;
+                 }
+                 if (!sub.isPossiblyEmpty()) break;
+             }
+         }
+         return false;
+     }
+
      public boolean startsWithLexicalChange() {
         if (getProduction().getLexicalState() != null) return true;
-        Expansion nested = getNestedExpansion();
-        if (nested instanceof ExpansionSequence) {
-            for (Expansion sub : nested.childrenOfType(Expansion.class)) {
-                if (!(sub instanceof NonTerminal)) {
-                    // KLUDGE? For now we don't nest further into nonterminals
-                    // It seems like we should, but the code blows up. I need
-                    // to revisit this! For now, it's "good enough for government work, I suppose."
-                    if (sub.startsWithLexicalChange()) return true;
-                }
-                if (!sub.isPossiblyEmpty()) break;
-            }
-        }
-        return false;
+        return checkNestedExpansion();
      }
 
      public boolean startsWithGlobalCodeAction() {
         CodeBlock javaCode = getProduction().getJavaCode();
         if (javaCode != null && javaCode.isAppliesInLookahead()) return true;
-        Expansion nested = getNestedExpansion();
-        if (nested instanceof ExpansionSequence) {
-            for (Expansion sub: nested.childrenOfType(Expansion.class)) {
-                if (!(sub instanceof NonTerminal)) {
-                    // We don't nest recursively into nonterminals here either.
-                    if (sub.startsWithLexicalChange()) return true;
-                }
-                if (!sub.isPossiblyEmpty()) break;
-            }
-        }
-        return false;
+        return checkNestedExpansion();
      }
 
      @Override

@@ -310,8 +310,7 @@ public interface Node extends List<Node> {
 
       default public List<? extends TerminalNode> getAllTokens(boolean includeCommentTokens) {
 		List<TerminalNode> result = new ArrayList<>();
-        for (Iterator<Node> it = iterator(); it.hasNext();) {
-            Node child = it.next();
+        for (Node child : this) {
             if (child instanceof TerminalNode) {
                 TerminalNode tn = (TerminalNode) child;
                 if (tn.isUnparsed()) {
@@ -672,8 +671,7 @@ public interface Node extends List<Node> {
         if (output.length() > 0) {
             System.out.println(prefix + output);
         }
-        for (Iterator<Node> it = iterator(); it.hasNext();) {
-            Node child = it.next();
+        for (Node child : this) {
             child.dump(prefix + "  ");
         }
     }

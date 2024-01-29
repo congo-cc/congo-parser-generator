@@ -881,12 +881,7 @@ public class PythonTranslator extends Translator {
     @Override
     public void translateImport(String javaName, StringBuilder result) {
         String prefix = String.format("%s.", appSettings.getParserPackage());
-        if (!javaName.startsWith(prefix)) {
-            String s = String.format("Cannot translate import %s", javaName);
-            throw new UnsupportedOperationException(s);
-        }
-        javaName = javaName.substring(prefix.length());
-        List<String> parts = new ArrayList<>(Arrays.asList(javaName.split("\\.")));
+        List<String> parts = getImportParts(javaName, prefix);
         String from = null;
         String s = parts.get(0);
         if (Character.isLowerCase(s.charAt(0))) {
@@ -939,11 +934,4 @@ public class PythonTranslator extends Translator {
         }
         super.endClass(name, fields, result);
     }
-
-/*
-    public void translateEmptyBlock(int indent, StringBuilder result) {
-        addIndent(indent, result);
-        result.append("pass  # empty code block\n");
-    }
-*/
 }

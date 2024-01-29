@@ -111,7 +111,7 @@
         n.setBeginOffset(lastConsumedToken.getEndOffset());
         n.setEndOffset(lastConsumedToken.getEndOffset());
         currentNodeScope.close();
-        ArrayList<Node> nodes = new ArrayList<Node>();
+        ArrayList<Node> nodes = new ArrayList<>();
         for (int i=0;i<num;i++) {
            nodes.add(popNode());
         }

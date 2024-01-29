@@ -38,7 +38,7 @@
 
 
 [#macro BuildLookaheads]
-  private final boolean scanToken(TokenType expectedType, TokenType... additionalTypes) {
+  private boolean scanToken(TokenType expectedType, TokenType... additionalTypes) {
      ${settings.baseTokenClassName} peekedToken = nextToken(currentLookaheadToken);
      TokenType type = peekedToken.getType();
      if (type != expectedType) {
@@ -56,7 +56,7 @@
      return true;
   }
 
-  private final boolean scanToken(EnumSet<TokenType> types) {
+  private boolean scanToken(EnumSet<TokenType> types) {
      ${settings.baseTokenClassName} peekedToken = nextToken(currentLookaheadToken);
      TokenType type = peekedToken.getType();
      if (!types.contains(type)) return false;
@@ -97,7 +97,7 @@
   [#if lookaheadAmount = 2147483647][#set lookaheadAmount = "UNLIMITED"][/#if]
   [#set newVarIndex = 0 in CU] 
   // BuildPredicateRoutine: expansion at ${expansion.location}
-   private final boolean ${expansion.predicateMethodName}() {
+   private boolean ${expansion.predicateMethodName}() {
      remainingLookahead= ${lookaheadAmount};
      currentLookaheadToken = lastConsumedToken;
      final boolean scanToEnd = false;
@@ -122,7 +122,7 @@
   // ${expansion.location}
   // BuildScanRoutine macro
 [#set newVarIndex = 0 in CU] 
-  private final boolean ${expansion.scanRoutineName}(boolean scanToEnd) {
+  private boolean ${expansion.scanRoutineName}(boolean scanToEnd) {
     [#if expansion.hasScanLimit]
        int prevPassedPredicateThreshold = this.passedPredicateThreshold;
        this.passedPredicateThreshold = -1;
@@ -164,7 +164,7 @@
   [#var storeCurrentLookaheadVar = CU.newVarName("currentLookahead")
         storeRemainingLookahead = CU.newVarName("remainingLookahead")]
   [#set newVarIndex = 0 in CU] 
-    private final boolean ${expansion.scanRoutineName}() {
+    private boolean ${expansion.scanRoutineName}() {
        final boolean scanToEnd = true;
        int ${storeRemainingLookahead} = remainingLookahead;
        remainingLookahead = UNLIMITED;
@@ -222,7 +222,7 @@
      // lookahead routine for lookahead at: 
      // ${lookahead.location}
   [#set newVarIndex = 0 in CU] 
-     private final boolean ${lookahead.nestedExpansion.scanRoutineName}(boolean scanToEnd) {
+     private boolean ${lookahead.nestedExpansion.scanRoutineName}(boolean scanToEnd) {
         int prevRemainingLookahead = remainingLookahead;
         boolean prevHitFailure = hitFailure;
         ${settings.baseTokenClassName} prevScanAheadToken = currentLookaheadToken;
@@ -242,7 +242,7 @@
 
 [#macro BuildLookBehindRoutine lookBehind]
   [#set newVarIndex = 0 in CU] 
-    private final boolean ${lookBehind.routineName}() {
+    private boolean ${lookBehind.routineName}() {
        ListIterator<NonTerminalCall> stackIterator = ${lookBehind.backward?string("stackIteratorBackward", "stackIteratorForward")}();
        NonTerminalCall ntc = null;
        [#list lookBehind.path as element]
@@ -292,7 +292,7 @@
 [#macro BuildProductionLookaheadMethod production]
    // BuildProductionLookaheadMethod macro
   [#set newVarIndex = 0 in CU] 
-   private final boolean ${production.lookaheadMethodName}(boolean scanToEnd) {
+   private boolean ${production.lookaheadMethodName}(boolean scanToEnd) {
       [#if production.javaCode?? && production.javaCode.appliesInLookahead]
           ${production.javaCode}
        [/#if]

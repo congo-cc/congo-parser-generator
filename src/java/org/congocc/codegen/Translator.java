@@ -1489,18 +1489,21 @@ public class Translator {
         return (expr instanceof ASTPrimaryExpression) && ((literal = ((ASTPrimaryExpression) expr).getLiteral()) != null) && literal.equals("null");
     }
 
-/*
-    public boolean isAssignment(ASTExpression expr) {
-        return (expr instanceof ASTBinaryExpression) && ((ASTBinaryExpression) expr).getOp().equals("=");
-    }
-*/
-
     protected void translatePrimaryExpression(ASTPrimaryExpression expr, TranslationContext ctx, StringBuilder result) {
         fail();
     }
 
     protected void translateUnaryExpression(ASTUnaryExpression expr, TranslationContext ctx, StringBuilder result) {
         fail();
+    }
+
+    protected List<String> getImportParts(String javaName, String prefix) {
+        if (!javaName.startsWith(prefix)) {
+            String s = String.format("Cannot translate import %s", javaName);
+            throw new UnsupportedOperationException(s);
+        }
+        javaName = javaName.substring(prefix.length());
+        return new ArrayList<>(Arrays.asList(javaName.split("\\.")));
     }
 
     public void translateImport(String javaName, StringBuilder result) {
@@ -1729,17 +1732,6 @@ public class Translator {
         }
     }
 
-/*
-    protected boolean isThis(ASTExpression expr) {
-        if (!(expr instanceof ASTPrimaryExpression)) {
-            return false;
-        }
-        else {
-            return "this".equals(((ASTPrimaryExpression) expr).getLiteral());
-        }
-    }
-*/
-
     protected boolean needsParentheses(ASTExpression expr) {
         boolean result = true;
 
@@ -1768,15 +1760,7 @@ public class Translator {
         if (parens) {
             result.append('(');
         }
-        /*
-        if (isDot && isThis(lhs)) {
-            // zap the op to empty string, don't render lhs
-            xop = "";
-        }
-        else {
-            internalTranslateExpression(lhs, result);
-        }
-         */
+
         internalTranslateExpression(lhs, TranslationContext.UNKNOWN, result);
         if (!isDot) {
             result.append(' ');

@@ -48,7 +48,7 @@
 #macro GenerateMoveArray nfaState
   #var moveRanges = nfaState.moveRanges
   #var arrayName = nfaState.movesArrayName
-    private static int[] ${arrayName} = ${arrayName}_init();
+    private static final int[] ${arrayName} = ${arrayName}_init();
 
     private static int[] ${arrayName}_init() {
         return new int[]

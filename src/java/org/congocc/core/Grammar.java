@@ -444,7 +444,7 @@ public class Grammar extends BaseNode {
     }
 
     public boolean isInInclude() {
-        return includeNesting >0;
+        return includeNesting > 0;
     }
 
     private boolean checkReferences() {

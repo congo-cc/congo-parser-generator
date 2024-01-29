@@ -73,7 +73,7 @@ public class ${settings.baseNodeClassName} implements Node {
     /**
      * the child nodes
      */
-    private List<Node> children = newList();
+    private final List<Node> children = newList();
     
     private int beginOffset, endOffset;
     private boolean unparsed;
@@ -244,11 +244,7 @@ public class ${settings.baseNodeClassName} implements Node {
         if (namedChildListMap == null) {
             namedChildListMap = new HashMap<>();
         }
-        List<Node> nodeList = namedChildListMap.get(name);
-        if (nodeList == null) {
-            nodeList = new ArrayList<>();
-            namedChildListMap.put(name, nodeList);
-        }
+        List<Node> nodeList = namedChildListMap.computeIfAbsent(name, k -> new ArrayList<>());
         nodeList.add(node);
     }
 }
