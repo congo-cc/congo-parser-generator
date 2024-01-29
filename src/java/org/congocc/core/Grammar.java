@@ -542,8 +542,6 @@ public class Grammar extends BaseNode {
             if (prod.isLeftRecursive()) {
                 errors.addError(prod, "Production " + prod.getName() + " is left recursive.");
             }
-            // check here for uninstantiated production with properties assigned
-            // check here for uninstantiated nonterminals returning void but which are assigned
         }
         
         for (Assignment assignment : descendants(Assignment.class)) {

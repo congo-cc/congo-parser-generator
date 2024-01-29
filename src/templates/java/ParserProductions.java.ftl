@@ -322,7 +322,7 @@
          /#if
       #elseif jtbParseTree && 
               expansion.parent.simpleName != "ExpansionWithParentheses" && 
-              isProductionInstantiatingNode(currentProduction) [#-- TODO: make python and csharp change! --]
+              isProductionInstantiatingNode(currentProduction)
          #-- No in-line definite node annotation; synthesize a parser node for the expansion type being built, if needed. --
          #if nodeName??
             #-- Determine the node name depending on syntactic type --
@@ -347,7 +347,7 @@
                                           'initialShorthand' : initialShorthand,
                                           'void' : false,
                                           'assignment' : 
-                                             { 'name' : "thisProduction." + nodeFieldName, 
+                                             { 'name' : "THIS_PRODUCTION." + nodeFieldName, 
                                                'propertyAssignment' : false, 
                                                'declarationOf' : true,
                                                'existenceOf' : false }
@@ -434,7 +434,7 @@
 
 #function isProductionInstantiatingNode expansion
    #return !expansion.containingProduction.treeNodeBehavior?? || 
-           !expansion.containingProduction.treeNodeBehavior.neverInstantiated!true [#-- TODO: make python and csharp match this! --]
+           !expansion.containingProduction.treeNodeBehavior.neverInstantiated!true
 /#function
 
 #function nodeVar isProduction
@@ -524,16 +524,16 @@
       #if assignment.propertyAssignment
          #-- This is the assignment of the current node's effective value to a property of the production node --
          #set lhsName = lhsName?cap_first
-         #if lhsType?? && assignment.declarationOf [#-- TODO: remove the comment from python and csharp --]
+         #if lhsType?? && assignment.declarationOf 
             #-- This is a declaration assignment; inject required property --
             ${injectDeclaration(lhsType, assignment.name, assignment)}
          /#if
          #if assignment.addTo!false
             #-- This is the addition of the current node as a child of the specified property's node value --
-            #return "thisProduction.get" + lhsName + "().add(" + getRhsAssignmentPattern(assignment) + ")" 
+            #return "THIS_PRODUCTION.get" + lhsName + "().add(" + getRhsAssignmentPattern(assignment) + ")" 
          #else
             #-- This is an assignment of the current node's effective value to the specified property of the production node --
-            #return "thisProduction.set" + lhsName + "(" + getRhsAssignmentPattern(assignment) + ")" 
+            #return "THIS_PRODUCTION.set" + lhsName + "(" + getRhsAssignmentPattern(assignment) + ")" 
          /#if
       #elseif assignment.namedAssignment!false
          #if assignment.addTo
@@ -556,7 +556,6 @@
       #exec grammar.errors::addWarning(currentProduction, "Attempt to inject property or field declaration " + fieldName + " into an un-instantiated production node " + currentProduction.name + "; the assignment will be ignored.")
       #return ""
    /#if
-   #-- TODO: add preceding check to python and csharp! -- 
    #var modifier = "public",
         type = typeName,
         field = fieldName
@@ -758,9 +757,9 @@
    #var lhsClassName = nonterminal.production.nodeName,
         expressedLHS = getLhsPattern(nonterminal.assignment,lhsClassName),
         impliedLHS = "@"
-   #if jtbParseTree && isProductionInstantiatingNode(nonterminal.production) && topLevelExpansion [#-- TODO: make this change to python and csharp! --]
+   #if jtbParseTree && isProductionInstantiatingNode(nonterminal.production) && topLevelExpansion 
       #var newName = imputedJtbFieldName(nonterminal.production.nodeName)
-      #set impliedLHS = "thisProduction." + newName + " = @"
+      #set impliedLHS = "THIS_PRODUCTION." + newName + " = @"
    /#if
    #-- Accept the non-terminal expansion --
    #if nonterminal.production.returnType != "void" && expressedLHS != "@" && !nonterminal.assignment.namedAssignment && !nonterminal.assignment.propertyAssignment

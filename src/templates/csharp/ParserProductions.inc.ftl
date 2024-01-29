@@ -3,6 +3,7 @@
 [#import "CommonUtils.inc.ftl" as CU]
 
 [#var nodeNumbering = 0]
+[#var exceptionNesting = 0]
 [#var NODE_USES_PARSER = settings.nodeUsesParser]
 [#var NODE_PREFIX = grammar.nodePrefix]
 [#var currentProduction]
@@ -178,7 +179,7 @@ ${globals::translateCodeBlock(javaCodePrologue, 1)}[#rt]
             [#-- Build the tree node (part 1). --]
             [@buildTreeNode production treeNodeBehavior nodeVarName /]
         [/#if]
-        [#-- Any prologue code can refer to CURRENT_NODE at this point. --][#-- REVISIT: Is this needed anymore, since thisProduction is always the reference to CURRENT_NODE (jb)? --]
+        [#-- Any prologue code can refer to CURRENT_NODE at this point. --][#-- REVISIT: Is this needed anymore, since THIS_PRODUCTION is always the reference to CURRENT_NODE (jb)? --]
 ${globals::translateCodeBlock(javaCodePrologue, 1)}
 ParseException ${parseExceptionVar} = null;
 var ${callStackSizeVar} = ParsingStack.Count;
@@ -187,8 +188,8 @@ try {
         [#-- Here is the "nut". --]
         [#nested]
 }
-catch (ParseException e) {
-    ${parseExceptionVar} = e;
+catch (ParseException ${exceptionVar()}) {
+    ${parseExceptionVar} = ${exceptionVar()};
         [#if !canRecover]
             [#if settings.faultTolerant]
     if (IsTolerant) _pendingRecovery = true;
@@ -294,13 +295,12 @@ finally {
             [#return null /]
          [/#if]
       [#elseif treeNodeBehavior?? &&
-               treeNodeBehavior.assignment?? &&
-               isProductionInstantiatingNode(expansion)]
+               treeNodeBehavior.assignment??]
          [#-- There is an explicit tree node annotation with assignment; make sure a property is injected if needed. --]
          [#if treeNodeBehavior.assignment.declarationOf]
             ${injectDeclaration(treeNodeBehavior.nodeName, treeNodeBehavior.assignment.name, treeNodeBehavior.assignment)}
          [/#if]
-      [#elseif jtbParseTree && expansion.parent.simpleName != "ExpansionWithParentheses" && isProductionInstantiatingNode(expansion)]
+      [#elseif jtbParseTree && expansion.parent.simpleName != "ExpansionWithParentheses" && isProductionInstantiatingNode(currentProduction)]
          [#-- No in-line definite node annotation; synthesize a parser node for the expansion type being built, if needed. --]
          [#if nodeName??]
             [#-- Determine the node name depending on syntactic type --]
@@ -325,7 +325,7 @@ finally {
                                     'initialShorthand' : initialShorthand,
                                     'void' : false,
                                     'assignment' : 
-                                       { 'name' : "thisProduction." + nodeFieldName, 
+                                       { 'name' : "THIS_PRODUCTION." + nodeFieldName, 
                                           'propertyAssignment' : false, 
                                           'declarationOf' : true,
                                           'existenceOf' : false }
@@ -397,24 +397,32 @@ finally {
       [#return null/]
 [/#function]
 
-[#function isProductionInstantiatingNode expansion] 
-   [#if expansion.containingProduction.treeNodeBehavior?? && 
-        expansion.containingProduction.treeNodeBehavior.neverInstantiated!false]
-      [#return false/]
-   [/#if]
-   [#return true/]
-[/#function]
+#function isProductionInstantiatingNode expansion
+   #return !expansion.containingProduction.treeNodeBehavior?? || 
+           !expansion.containingProduction.treeNodeBehavior.neverInstantiated!true
+/#function
 
-[#function nodeVar isProduction]
-   [#var nodeVarName]
-   [#if isProduction]
-      [#set nodeVarName = "thisProduction"] [#-- [JB] maybe should be "CURRENT_PRODUCTION" or "THIS_PRODUCTION" to match "CURRENT_NODE"? --]
-   [#else]
-      [#set nodeNumbering = nodeNumbering +1]
-      [#set nodeVarName = currentProduction.name + nodeNumbering] 
-   [/#if]
-   [#return nodeVarName/]
-[/#function]
+#function nodeVar isProduction
+   #var nodeVarName
+   #if isProduction
+      #set nodeVarName = "THIS_PRODUCTION"
+   #else
+      #set nodeNumbering = nodeNumbering +1
+      #set nodeVarName = currentProduction.name + nodeNumbering 
+   /#if
+   #return nodeVarName
+/#function
+
+#function exceptionVar(isNesting)
+   #var exceptionVarName = "e"
+   #if exceptionNesting > 0
+      #set exceptionVarName = "e" + exceptionNesting
+   /#if
+   #if isNesting!false
+      #set exceptionNesting = exceptionNesting+1
+   /#if
+   #return exceptionVarName
+/#function
 
 [#macro buildTreeNode production treeNodeBehavior nodeVarName] [#-- FIXME: production is not used here --]
    #exec globals::pushNodeVariableName(nodeVarName)
@@ -483,10 +491,10 @@ if (BuildTree) {
          [/#if]
          [#if assignment.addTo!false]
             [#-- This is the addition of the current node as an element of the specified list property --]
-            [#return "thisProduction." + lhsName + ".Add(" + getRhsAssignmentPattern(assignment) + ")" /]
+            [#return "THIS_PRODUCTION." + lhsName + ".Add(" + getRhsAssignmentPattern(assignment) + ")" /]
          [#else]
             [#-- This is an assignment of the current node's effective value to the specified property of the production node --]
-            [#return "thisProduction." + lhsName + " = " + getRhsAssignmentPattern(assignment) /]
+            [#return "THIS_PRODUCTION." + lhsName + " = " + getRhsAssignmentPattern(assignment) /]
          [/#if]
       [#elseif assignment.namedAssignment!false]
          [#if assignment.addTo]
@@ -505,6 +513,10 @@ if (BuildTree) {
 [/#function]
 
 [#function injectDeclaration typeName, fieldName, assignment]
+    #if !isProductionInstantiatingNode(currentProduction)
+      #exec grammar.errors::addWarning(currentProduction, "Attempt to inject property or field declaration " + fieldName + " into an un-instantiated production node " + currentProduction.name + "; the assignment will be ignored.")
+      #return ""
+   /#if
    [#var modifier = "public"]
    [#var type = typeName]
    [#var field = fieldName]
@@ -672,9 +684,11 @@ try {
 ${BuildCode(attemptBlock.nestedExpansion)}
     PopParseState();
 }
-catch (ParseException) {
+#var pe = exceptionVar(true)
+catch (ParseException ${pe}) {
     RestoreStashedParseState();
 ${BuildCode(attemptBlock.recoveryExpansion)}
+#set exceptionNesting = exceptionNesting - 1
 }
 // DBG < BuildCodeAttemptBlock
 [/#macro]
@@ -714,9 +728,10 @@ finally {
    [#var lhsClassName = nonterminal.production.nodeName]
    [#var expressedLHS = getLhsPattern(nonterminal.assignment, lhsClassName)]
    [#var impliedLHS = "@"]
-   [#if jtbParseTree && isProductionInstantiatingNode(nonterminal.nestedExpansion) && topLevelExpansion]
-      [#set impliedLHS = "thisProduction." + imputedJtbFieldName(nonterminal.production.nodeName) + " = @"]
-   [/#if]
+   #if jtbParseTree && isProductionInstantiatingNode(nonterminal.production) && topLevelExpansion
+      #var newName = imputedJtbFieldName(nonterminal.production.nodeName)
+      #set impliedLHS = "THIS_PRODUCTION." + newName + " = @"
+   /#if
    [#-- Accept the non-terminal expansion --]
    [#if nonterminal.production.returnType != "void" && expressedLHS != "@" && !nonterminal.assignment.namedAssignment && !nonterminal.assignment.propertyAssignment]
       [#-- Not a void production, so accept and clear the expressedLHS, it has already been applied. --]
