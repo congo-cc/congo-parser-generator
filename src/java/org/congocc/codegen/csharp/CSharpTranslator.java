@@ -82,9 +82,6 @@ public class CSharpTranslator extends Translator {
         else if ((kind != TranslationContext.VARIABLE || propertyIdentifiers.contains(ident)) && kind != TranslationContext.PARAMETER && Character.isLowerCase(ident.charAt(0)) && !isSpecialPrefix(ident)) {
             result = Character.toUpperCase(ident.charAt(0)) + ident.substring(1);
         }
-//        else if (kind == TranslationContext.VARIABLE && ident.equals("image")) {
-//            result = "Image";
-//        }
         return result;
     }
 
@@ -954,13 +951,8 @@ public class CSharpTranslator extends Translator {
 
     @Override
     public void translateImport(String javaName, StringBuilder result) {
-        String prefix = String.format("%s.", grammar.getAppSettings().getParserPackage());
-        if (!javaName.startsWith(prefix)) {
-            String s = String.format("Cannot translate import %s", javaName);
-            throw new UnsupportedOperationException(s);
-        }
-        javaName = javaName.substring(prefix.length());
-        List<String> parts = new ArrayList<>(Arrays.asList(javaName.split("\\.")));
+        String prefix = String.format("%s.", appSettings.getParserPackage());
+        List<String> parts = getImportParts(javaName, prefix);
         int n = parts.size();
         String aliasName = null;
         for (int i = 0; i < n; i++) {
@@ -996,11 +988,4 @@ public class CSharpTranslator extends Translator {
         }
         result.append(prefix).append(s).append(";\n");
     }
-
-/*
-    public void translateEmptyBlock(int indent, StringBuilder result) {
-        addIndent(indent, result);
-        result.append("// empty code block\n");
-    }
-*/
 }

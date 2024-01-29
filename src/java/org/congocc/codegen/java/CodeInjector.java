@@ -326,8 +326,9 @@ public class CodeInjector {
         }
         return result;
     }
-
+/*
     public Map<String, TypeParameters> getTypeParameterLists() {
         return typeParameterLists;
     }
+ */
 }
