@@ -49,7 +49,7 @@ TOKEN #Literal :
     |
     <#REGULAR_CHAR : ~["\u0000"-"\u001F",'"',"\\"]>
     |
-    <STRING_LITERAL : "\"" (<REGULAR_CHAR>|<ESCAPE2>|<ESCAPE1>)* "\""> #StringLiteral
+    <STRING_LITERAL : '"' (<REGULAR_CHAR>|<ESCAPE2>|<ESCAPE1>)* '"'> #StringLiteral
     |
     <#ZERO : "0">
     |

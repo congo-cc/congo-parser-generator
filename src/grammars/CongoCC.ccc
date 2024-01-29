@@ -197,10 +197,6 @@ INJECT BASE_NODE_CLASS :
     @SuppressWarnings("unused")
     implements Node;
 {
-    protected void setChildren(List<Node> children) {
-        this.children = children;
-    }
-
     Grammar grammar;
 
     public Grammar getGrammar() {
