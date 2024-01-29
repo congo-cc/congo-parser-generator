@@ -194,7 +194,7 @@ class ${settings.lexerClassName} extends TokenSource
   }
 
   @FunctionalInterface
-    private static interface MatcherHook {
+    private interface MatcherHook {
       MatchInfo apply(LexicalState lexicalState, CharSequence input, int position, EnumSet<TokenType> activeTokenTypes, NfaFunction[] nfaFunctions, BitSet currentStates, BitSet nextStates, MatchInfo matchInfo);
   }
 
@@ -457,7 +457,7 @@ class ${settings.lexerClassName} extends TokenSource
   // The functional interface that represents
   // the acceptance method of an NFA state
   @FunctionalInterface
-  static interface NfaFunction {
+  interface NfaFunction {
       TokenType apply(int ch, BitSet bs, EnumSet<TokenType> validTypes, EnumSet<TokenType> alreadyMatchedTypes);
   }
 

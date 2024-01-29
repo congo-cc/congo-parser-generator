@@ -7,7 +7,7 @@ private final ArrayList<NonTerminalCall> lookaheadStack = new ArrayList<>();
   private EnumSet<TokenType> currentFollowSet;
 [/#if]
 
-private final void pushOntoCallStack(String methodName, String fileName, int line, int column) {
+private void pushOntoCallStack(String methodName, String fileName, int line, int column) {
     [#if settings.faultTolerant]
    parsingStack.add(new NonTerminalCall("${settings.parserClassName}", token_source, fileName, methodName, line, column, currentFollowSet));
     [#else]
@@ -15,7 +15,7 @@ private final void pushOntoCallStack(String methodName, String fileName, int lin
     [/#if]
 }
 
-private final void popCallStack() {
+private void popCallStack() {
     NonTerminalCall ntc = parsingStack.remove(parsingStack.size() -1);
     this.currentlyParsedProduction = ntc.productionName;
    [#if settings.faultTolerant]
@@ -23,7 +23,7 @@ private final void popCallStack() {
    [/#if]
 }
 
-private final void restoreCallStack(int prevSize) {
+private void restoreCallStack(int prevSize) {
     while (parsingStack.size() > prevSize) {
        popCallStack();
     }
@@ -78,11 +78,11 @@ private ListIterator<NonTerminalCall> stackIteratorBackward() {
 }
 
 
-private final void pushOntoLookaheadStack(String methodName, String fileName, int line, int column) {
+private void pushOntoLookaheadStack(String methodName, String fileName, int line, int column) {
     lookaheadStack.add(new NonTerminalCall("${settings.parserClassName}", token_source, fileName, methodName, line, column, null));
 }
 
-private final void popLookaheadStack() {
+private void popLookaheadStack() {
     NonTerminalCall ntc = lookaheadStack.remove(lookaheadStack.size() -1);
     this.currentLookaheadProduction = ntc.productionName;
 }

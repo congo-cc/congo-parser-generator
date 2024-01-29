@@ -144,7 +144,7 @@ public boolean isCancelled() {return cancelled;}
 
   // If the next token is cached, it returns that
   // Otherwise, it goes to the token_source, i.e. the Lexer.
-  private final ${settings.baseTokenClassName} nextToken(final ${settings.baseTokenClassName} tok) {
+  private ${settings.baseTokenClassName} nextToken(final ${settings.baseTokenClassName} tok) {
     ${settings.baseTokenClassName} result = token_source.getNextToken(tok);
     while (result.isUnparsed()) {
      [#list grammar.parserTokenHooks as methodName]
@@ -225,7 +225,7 @@ public boolean isCancelled() {return cancelled;}
     return false;
   }
 
-  private final TokenType nextTokenType() {
+  private TokenType nextTokenType() {
     if (nextTokenType == null) {
        nextTokenType = nextToken(lastConsumedToken).getType();
     }

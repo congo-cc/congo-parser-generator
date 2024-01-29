@@ -176,7 +176,7 @@ abstract public class TokenSource implements CharSequence
     return buf.toString();
    }
 
-   private final void createTokenLocationTable() {
+   private void createTokenLocationTable() {
       int size = content.length() +1;
       tokenLocationTable = new ${BaseToken}[size];
       tokenOffsets = new BitSet(size);
