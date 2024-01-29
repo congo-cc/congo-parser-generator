@@ -51,7 +51,7 @@ abstract public class TokenSource implements CharSequence
 //  A Bitset that stores the line numbers that
 // contain either hard tabs or extended (beyond 0xFFFF) unicode
 // characters.
-   private BitSet needToCalculateColumns=new BitSet();
+   private final BitSet needToCalculateColumns = new BitSet();
 
 // A list of offsets of the beginning of lines
    private int[] lineOffsets;
@@ -104,11 +104,9 @@ abstract public class TokenSource implements CharSequence
                 int lastChar = content.charAt(content.length()-1);
                 if (lastChar != '\n' && lastChar != '\r') {
                     if (content instanceof StringBuilder) {
-                        ((StringBuilder) content).append((char) '\n');
+                        ((StringBuilder) content).append('\n');
                     } else {
-                        StringBuilder buf = new StringBuilder(content);
-                        buf.append(terminatingString);
-                        content = buf.toString();
+                        content = content + terminatingString;
                     }
                 }
             }
@@ -543,8 +541,8 @@ abstract public class TokenSource implements CharSequence
             c.put((char) 0xFFFD);
         }
     }
-    ((Buffer) c).limit(c.position());
-    ((Buffer) c).rewind();
+    c.limit(c.position());
+    c.rewind();
     return c.toString();
     // return new String(bytes, charset);
   }

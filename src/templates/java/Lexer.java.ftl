@@ -84,7 +84,7 @@ class ${settings.lexerClassName} extends TokenSource
 
 
   // A lookup for lexical state transitions triggered by a certain token type
-  private static EnumMap<TokenType, LexicalState> tokenTypeToLexicalStateMap = new EnumMap<>(TokenType.class);
+  private static final EnumMap<TokenType, LexicalState> tokenTypeToLexicalStateMap = new EnumMap<>(TokenType.class);
   // ${TOKEN} types that are "regular" tokens that participate in parsing,
   // i.e. declared as TOKEN
   [@EnumSet "regularTokens" lexerData.regularTokens.tokenNames /]

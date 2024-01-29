@@ -1,7 +1,7 @@
 #var MULTIPLE_LEXICAL_STATE_HANDLING = (lexerData.numLexicalStates > 1)
 
-private ArrayList<NonTerminalCall> parsingStack = new ArrayList<>();
-private ArrayList<NonTerminalCall> lookaheadStack = new ArrayList<>();
+private final ArrayList<NonTerminalCall> parsingStack = new ArrayList<>();
+private final ArrayList<NonTerminalCall> lookaheadStack = new ArrayList<>();
 
 [#if settings.faultTolerant]
   private EnumSet<TokenType> currentFollowSet;

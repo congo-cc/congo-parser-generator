@@ -68,9 +68,9 @@ private int passedPredicateThreshold = -1;
 EnumSet<TokenType> outerFollowSet;
 
 [#if settings.legacyGlitchyLookahead]
-   private boolean legacyGlitchyLookahead = true;
+   private final boolean legacyGlitchyLookahead = true;
 [#else]
-   private boolean legacyGlitchyLookahead = false;
+   private final boolean legacyGlitchyLookahead = false;
 [/#if]
 
 private final ${settings.baseTokenClassName} DUMMY_START_TOKEN = new ${settings.baseTokenClassName}();
@@ -281,7 +281,7 @@ public boolean isCancelled() {return cancelled;}
     hitFailure = true;
   }
 
-  private static HashMap<TokenType[], EnumSet<TokenType>> enumSetCache = new HashMap<>();
+  private static final HashMap<TokenType[], EnumSet<TokenType>> enumSetCache = new HashMap<>();
 
   private static EnumSet<TokenType> tokenTypeSet(TokenType first, TokenType... rest) {
     TokenType[] key = new TokenType[1 + rest.length];
