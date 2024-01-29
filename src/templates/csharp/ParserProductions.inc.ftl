@@ -516,7 +516,7 @@ if (BuildTree) {
     #if !isProductionInstantiatingNode(currentProduction)
       #exec grammar.errors::addWarning(currentProduction, "Attempt to inject property or field declaration " + fieldName + " into an un-instantiated production node " + currentProduction.name + "; the assignment will be ignored.")
       #return ""
-   /#if
+    /#if
    [#var modifier = "public"]
    [#var type = typeName]
    [#var field = fieldName]
