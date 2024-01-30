@@ -172,24 +172,22 @@ namespace ${csPackage} {
         }
 
         public static void AddRange<T>(this ListAdapter<T> list1, IEnumerable<T> list2) {
-            foreach (var item in list2) {
-                list1.Add(item);
-            }
+            list1.AddRange(list2);
         }
 
         public static HashSet<T> EnumSet<T>(params T[] values) where T : struct, Enum {
             var result = new HashSet<T>();
 
-            foreach(T v in values) {
+            foreach(var v in values) {
                 result.Add(v);
             }
             return result;
         }
 
         public static int MaxOf(params int[] values) {
-            int result = 0;
+            var result = 0;
 
-            foreach (int i in values) {
+            foreach (var i in values) {
                 if (result < i) {
                     result = i;
                 }
@@ -198,21 +196,32 @@ namespace ${csPackage} {
         }
 
         internal static string DisplayChar(int ch) {
-            if (ch == '\'') return "\'\\'\'";
-            if (ch == '\\') return "\'\\\\\'";
-            if (ch == '\t') return "\'\\t\'";
-            if (ch == '\r') return "\'\\r\'";
-            if (ch == '\n') return "\'\\n\'";
-            if (ch == '\f') return "\'\\f\'";
-            if (ch == ' ') return "\' \'";
-            char c = (char) ch;
-            if (c < 128 && !char.IsWhiteSpace(c) && !char.IsControl(c)) return $"\'{c}\'";
+            switch (ch)
+            {
+                case '\'':
+                    return "\'\\'\'";
+                case '\\':
+                    return "\'\\\\\'";
+                case '\t':
+                    return "\'\\t\'";
+                case '\r':
+                    return "\'\\r\'";
+                case '\n':
+                    return "\'\\n\'";
+                case '\f':
+                    return "\'\\f\'";
+                case ' ':
+                    return "\' \'";
+            }
+
+            var c = (char)ch;
+            if (c < 128 && !char.IsWhiteSpace(c) && !char.IsControl(c))return$"\'{c}\'";
             return "0x" + ch.ToString("X4");
         }
 
         internal static string AddEscapes(string str) {
-            StringBuilder result = new StringBuilder();
-            foreach (char ch in str) {
+            var result = new StringBuilder();
+            foreach (var ch in str) {
                 switch (ch) {
                 case '\b':
                     result.Append("\\b");
@@ -240,7 +249,7 @@ namespace ${csPackage} {
                     continue;
                 default:
                     if (char.IsControl(ch)) {
-                        string s = ((int) ch).ToString("X4");
+                        var s = ((int) ch).ToString("X4");
                         result.Append("\\u");
                         result.Append(s);
                     } else {
@@ -253,7 +262,7 @@ namespace ${csPackage} {
         }
 
         internal static T Pop<T>(this IList<T> list) {
-            int n = list.Count - 1;
+            var n = list.Count - 1;
             Debug.Assert(n >= 0);
             var result = list[n];
             list.RemoveAt(n);
@@ -276,7 +285,7 @@ namespace ${csPackage} {
         }
 
         public static void AddRange<T>(this HashSet<T> set, IEnumerable<T> source) {
-            foreach(T item in source) {
+            foreach(var item in source) {
                 set.Add(item);
             }
         }
@@ -396,7 +405,7 @@ namespace ${csPackage} {
     }
 
     public class GenWrapper<T> : Iterator<T> {
-        private IEnumerator<T> enumerator;
+        private readonly IEnumerator<T> enumerator;
         private bool hasNext;
 
         public GenWrapper(IEnumerable<T> e) {
@@ -413,13 +422,13 @@ namespace ${csPackage} {
         }
 
         public T Next() {
-            T result = enumerator.Current;
+            var result = enumerator.Current;
             hasNext = enumerator.MoveNext();
             return result;
         }
 
         public T Previous() {
-            return default(T);
+            return default;
         }
     }
 
