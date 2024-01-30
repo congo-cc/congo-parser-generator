@@ -4,8 +4,8 @@
 // To use this, you really need to have the Language support for Java installed.
 // (I mean this one: https://marketplace.visualstudio.com/items?itemName=redhat.java)
 // Note that, due to how VSCode works, the extension is typically only activated
-// when you first open a .java file. 
-// Note also that you need to run 'ant test' from the top-level directory or you'll be 
+// when you first open a .java file.
+// Note also that you need to run 'ant test' from the top-level directory or you'll be
 // missing files.
 {
 	"folders": [
@@ -21,11 +21,12 @@
 			"examples/java",
 			"examples/python",
 			"examples/lua",
-			"examples/csharp
+			"examples/csharp"
 		],
 		"java.project.referencedLibraries": [
 			"bin/freemarker.jar"
 		],
-		"cSpell.enabled": false
+		"cSpell.enabled": false,
+		"files.trimTrailingWhitespace": true
 	}
 }

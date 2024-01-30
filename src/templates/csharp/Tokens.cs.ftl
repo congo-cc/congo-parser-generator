@@ -4,7 +4,6 @@
 namespace ${csPackage} {
     using System;
     using System.Collections.Generic;
-    using System.Diagnostics;
 
     public enum TokenType {
  [#list lexerData.regularExpressions as regexp]
@@ -38,7 +37,7 @@ namespace ${csPackage} {
         // default implementations
 
         string InputSource { get {
-            Lexer ts = TokenSource;
+            var ts = TokenSource;
 
             return (ts == null) ? "input" : ts.InputSource;
         } }
@@ -46,42 +45,22 @@ namespace ${csPackage} {
         int BeginOffset { get; set; }
         int EndOffset { get; set; }
 
-        int BeginLine {
-            get {
-                return (TokenSource == null) ? 0 : TokenSource.GetLineFromOffset(BeginOffset);
-            }
-        }
+        int BeginLine => TokenSource?.GetLineFromOffset(BeginOffset) ?? 0;
 
-        int EndLine {
-            get {
-                return (TokenSource == null) ? 0 : TokenSource.GetLineFromOffset(EndOffset - 1);
-            }
-        }
+        int EndLine => TokenSource?.GetLineFromOffset(EndOffset - 1) ?? 0;
 
-        int BeginColumn {
-            get {
-                return (TokenSource == null) ? 0 : TokenSource.GetCodePointColumnFromOffset(BeginOffset);
-            }
-        }
+        int BeginColumn => TokenSource?.GetCodePointColumnFromOffset(BeginOffset) ?? 0;
 
-        int EndColumn {
-            get {
-                return (TokenSource == null) ? 0 : TokenSource.GetCodePointColumnFromOffset(EndOffset - 1);
-            }
-        }
+        int EndColumn => TokenSource?.GetCodePointColumnFromOffset(EndOffset - 1) ?? 0;
 
-        string Location {
-            get {
-                return string.Format("{0}:{1}:{2}", InputSource, BeginLine, BeginColumn);
-            }
-        }
+        string Location => $"{InputSource}:{BeginLine}:{BeginColumn}";
 
-        bool IsUnparsed { get => false; }
+        bool IsUnparsed => false;
 
-        bool HasChildNodes { get { return Size > 0; } }
+        bool HasChildNodes => Size > 0;
 
         int IndexOf(Node child) {
-            for (int i = 0; i < Size; i++) {
+            for (var i = 0; i < Size; i++) {
                 if (child == Get(i)) {
                     return i;
                 }
@@ -89,22 +68,18 @@ namespace ${csPackage} {
             return -1;
         }
 
-        Node FirstChild {
-            get {
-                return (Size > 0) ? Get(0) : null;
-            }
-        }
+        Node FirstChild => (Size > 0) ? Get(0) : null;
 
         Node LastChild {
             get {
-                int n = Size;
+                var n = Size;
                 return (n > 0) ? Get(n - 1) : null;
             }
         }
 
         Node Root {
             get {
-                Node n = this;
+                var n = this;
                 while(n.Parent != null) {
                     n = n.Parent;
                 }
@@ -114,9 +89,9 @@ namespace ${csPackage} {
 
         ListAdapter<Node> Children {
             get {
-                ListAdapter<Node> result = new ListAdapter<Node>();
+                var result = new ListAdapter<Node>();
 
-                for (int i = 0; i < Size; i++) {
+                for (var i = 0; i < Size; i++) {
                     result.Add(Get(i));
                 }
                 return result;
@@ -124,7 +99,7 @@ namespace ${csPackage} {
         }
 
         bool Remove(Node n) {
-            int i = IndexOf(n);
+            var i = IndexOf(n);
             if (i < 0) {
                 return false;
             }
@@ -134,7 +109,7 @@ namespace ${csPackage} {
 
 
         bool ReplaceChild(Node current, Node replacement) {
-            int i = IndexOf(current);
+            var i = IndexOf(current);
             if (i < 0) {
                 return false;
             }
@@ -143,7 +118,7 @@ namespace ${csPackage} {
         }
 
         bool PrependChild(Node where, Node inserted) {
-            int i = IndexOf(where);
+            var i = IndexOf(where);
             if (i < 0) {
                 return false;
             }
@@ -152,7 +127,7 @@ namespace ${csPackage} {
         }
 
         bool AppendChild(Node where, Node inserted) {
-            int i = IndexOf(where);
+            var i = IndexOf(where);
             if (i < 0) {
                 return false;
             }
@@ -160,31 +135,27 @@ namespace ${csPackage} {
             return true;
         }
 
-        T FirstChildOfType<T>(System.Type t) where T : Node {
+        T FirstChildOfType<T>(Type t) where T : Node {
             var result = default(T);
 
-            for (int i = 0; i < Size; i++) {
-                Node child = Get(i);
-                if (t.IsInstanceOfType(child)) {
-                    result = (T) child;
-                    break;
-                }
+            for (var i = 0; i < Size; i++) {
+                var child = Get(i);
+                if (!t.IsInstanceOfType(child)) continue;
+                result = (T)child;
             }
             return result;
         }
 
-        T FirstChildOfType<T>(System.Type t, Predicate<T> pred) where T : Node {
+        T FirstChildOfType<T>(Type t, Predicate<T> pred) where T : Node {
             var result = default(T);
 
-            for (int i = 0; i < Size; i++) {
-                Node child = Get(i);
-                if (t.IsInstanceOfType(child)) {
-                    T c = (T) child;
-                    if (pred(c)) {
-                        result = c;
-                        break;
-                    }
-                }
+            for (var i = 0; i < Size; i++) {
+                var child = Get(i);
+                if (!t.IsInstanceOfType(child)) continue;
+                var c = (T)child;
+                if (!pred(c)) continue;
+                result = c;
+                break;
             }
             return result;
         }
@@ -193,31 +164,27 @@ namespace ${csPackage} {
             TokenSource = start.TokenSource;
             BeginOffset = start.BeginOffset;
             EndOffset = start.EndOffset;
-            if (end != null) {
-                if (TokenSource == null) {
-                    TokenSource = end.TokenSource;
-                }
-                EndOffset = end.EndOffset;
-            }
+            if (end == null) return;
+            TokenSource ??= end.TokenSource;
+            EndOffset = end.EndOffset;
         }
 
         void Replace(Node toBeReplaced) {
             CopyLocationInfo(toBeReplaced);
-            Node parent = toBeReplaced.Parent;
-            if (parent != null) {
-                int index = parent.IndexOf(toBeReplaced);
-                parent.Set(index, this);
-            }
+            var parent = toBeReplaced.Parent;
+            if (parent == null) return;
+            var index = parent.IndexOf(toBeReplaced);
+            parent.Set(index, this);
         }
 
 [#if settings.tokensAreNodes]
         Token FirstDescendantOfType(TokenType tt) {
-            for (int i = 0; i < Size; i++) {
-                Node child = Get(i);
+            for (var i = 0; i < Size; i++) {
+                var child = Get(i);
                 Token tok;
 
-                if (child is Token) {
-                    tok = (Token) child;
+                if (child is Token token) {
+                    tok = token;
                     if (tt == tok.Type) {
                         return tok;
                     }
@@ -233,23 +200,21 @@ namespace ${csPackage} {
         }
 
         Token FirstChildOfType(TokenType tt) {
-            for (int i = 0; i < Size; i++) {
-                Node child = Get(i);
-                if (child is Token) {
-                    Token tok = (Token) child;
-                    if (tt == tok.Type) {
-                        return tok;
-                    }
+            for (var i = 0; i < Size; i++) {
+                var child = Get(i);
+                if (!(child is Token tok)) continue;
+                if (tt == tok.Type) {
+                    return tok;
                 }
             }
             return null;
         }
 
-        ListAdapter<T> ChildrenOfType<T>(System.Type t) where T : Node {
+        ListAdapter<T> ChildrenOfType<T>(Type t) where T : Node {
             var result = new ListAdapter<T>();
 
-            for (int i = 0; i < Size; i++) {
-                Node child = Get(i);
+            for (var i = 0; i < Size; i++) {
+                var child = Get(i);
                 if (t.IsInstanceOfType(child)) {
                     result.Add((T) child);
                 }
@@ -257,11 +222,11 @@ namespace ${csPackage} {
             return result;
         }
 
-        ListAdapter<T> DescendantsOfType<T>(System.Type t) where T : Node {
+        ListAdapter<T> DescendantsOfType<T>(Type t) where T : Node {
             var result = new ListAdapter<T>();
 
-            for (int i = 0; i < Size; i++) {
-                Node child = Get(i);
+            for (var i = 0; i < Size; i++) {
+                var child = Get(i);
                 if (t.IsInstanceOfType(child)) {
                     result.Add((T) child);
                 }
@@ -270,18 +235,18 @@ namespace ${csPackage} {
             return result;
         }
 
-        ListAdapter<T> Descendants<T>(System.Type t, Predicate<T> predicate) where T : Token {
+        ListAdapter<T> Descendants<T>(Type t, Predicate<T> predicate) where T : Token {
             var result = new ListAdapter<T>();
 
-            for (int i = 0; i < Size; i++) {
-                Node child = Get(i);
+            for (var i = 0; i < Size; i++) {
+                var child = Get(i);
                 if (t.IsInstanceOfType(child)) {
-                    T c = (T) child;
+                    var c = (T) child;
                     if ((predicate == null) || predicate(c)) {
                         result.Add(c);
                     }
                 }
-                result.AddRange(child.Descendants<T>(t, predicate));
+                result.AddRange(child.Descendants(t, predicate));
             }
             return result;
         }
@@ -297,30 +262,33 @@ namespace ${csPackage} {
         public Token FirstToken {
             get {
                 var first = FirstChild;
-                if (first == null) {
-                    return null;
-                }
-                if (first is Token) {
-                    var tok = first as Token;
-                    while ((tok.PreviousCachedToken != null) && tok.PreviousCachedToken.IsUnparsed) {
-                        tok = tok.PreviousCachedToken;
+                switch (first)
+                {
+                    case null:
+                        return null;
+                    case Token token:
+                    {
+                        var tok = token;
+                        while (tok.PreviousCachedToken is {IsUnparsed: true}) {
+                            tok = tok.PreviousCachedToken;
+                        }
+                        return tok;
                     }
-                    return tok;
+                    default:
+                        return first.FirstToken;
                 }
-                return first.FirstToken;
             }
         }
 
         public Token LastToken {
             get {
                 var last = LastChild;
-                if (last == null) {
-                    return null;
-                }
-                if (last is Token) {
-                    return last as Token;
-                }
-                return last.LastToken;
+                return last switch
+                {
+                    null => null,
+                    Token token => token,
+                    _ => last.LastToken
+                };
             }
         }
 
@@ -333,48 +301,31 @@ namespace ${csPackage} {
         public int EndOffset { get; set; }
 
         // TODO use default implementations in interface
-        public int BeginLine {
-            get {
-                return (TokenSource == null) ? 0 : TokenSource.GetLineFromOffset(BeginOffset);
-            }
-        }
+        public int BeginLine => TokenSource?.GetLineFromOffset(BeginOffset) ?? 0;
 
-        public int EndLine {
-            get {
-                return (TokenSource == null) ? 0 : TokenSource.GetLineFromOffset(EndOffset - 1);
-            }
-        }
+        public int EndLine => TokenSource?.GetLineFromOffset(EndOffset - 1) ?? 0;
 
-        public int BeginColumn {
-            get {
-                return (TokenSource == null) ? 0 : TokenSource.GetCodePointColumnFromOffset(BeginOffset);
-            }
-        }
+        public int BeginColumn => TokenSource?.GetCodePointColumnFromOffset(BeginOffset) ?? 0;
 
-        public int EndColumn {
-            get {
-                return (TokenSource == null) ? 0 : TokenSource.GetCodePointColumnFromOffset(EndOffset - 1);
-            }
-        }
- 
-        public T FirstChildOfType<T>(System.Type t) where T : Node {
+        public int EndColumn => TokenSource?.GetCodePointColumnFromOffset(EndOffset - 1) ?? 0;
+
+        public T FirstChildOfType<T>(Type t) where T : Node {
             var result = default(T);
 
-            for (int i = 0; i < Size; i++) {
-                Node child = Get(i);
-                if (t.IsInstanceOfType(child)) {
-                    result = (T) child;
-                    break;
-                }
+            for (var i = 0; i < Size; i++) {
+                var child = Get(i);
+                if (!t.IsInstanceOfType(child)) continue;
+                result = (T) child;
+                break;
             }
             return result;
         }
 
-        public ListAdapter<T> ChildrenOfType<T>(System.Type t) where T : Node {
+        public ListAdapter<T> ChildrenOfType<T>(Type t) where T : Node {
             var result = new ListAdapter<T>();
 
-            for (int i = 0; i < Size; i++) {
-                Node child = Get(i);
+            for (var i = 0; i < Size; i++) {
+                var child = Get(i);
                 if (t.IsInstanceOfType(child)) {
                     result.Add((T) child);
                 }
@@ -387,22 +338,19 @@ namespace ${csPackage} {
 
         public Lexer TokenSource {
             get {
-                if (tokenSource == null) {
-                    foreach (var child in children) {
-                        tokenSource = child.TokenSource;
-                        if (tokenSource != null) {
-                            break;
-                        }
+                if (tokenSource != null) return tokenSource;
+                foreach (var child in children) {
+                    tokenSource = child.TokenSource;
+                    if (tokenSource != null) {
+                        break;
                     }
                 }
                 return tokenSource;
             }
-            set {
-                tokenSource = value;
-            }
+            set => tokenSource = value;
         }
 
-        public ListAdapter<Node> Children {get => new ListAdapter<Node>(children); }
+        public ListAdapter<Node>Children => new ListAdapter<Node>(children);
 
         public Node Get(int i) {
             return children[i];
@@ -458,9 +406,7 @@ namespace ${csPackage} {
             children.RemoveAt(index);
         }
 
-        public int Size {
-            get => children.Count;
-        }
+        public int Size => children.Count;
 
         protected IDictionary<string, Node> NamedChildMap;
         protected IDictionary<string, IList<Node>> NamedChildListMap;
@@ -469,18 +415,13 @@ namespace ${csPackage} {
             if (NamedChildMap == null) {
                 return null;
             }
-            if (!NamedChildMap.ContainsKey(name)) {
-                return null;
-            }
-            return NamedChildMap[name];
+            return !NamedChildMap.ContainsKey(name) ? null : NamedChildMap[name];
         }
 
-        public void SetNamedChild(String name, Node node) {
-            if (NamedChildMap == null) {
-                NamedChildMap = new Dictionary<string, Node>();
-            }
+        public void SetNamedChild(string name, Node node) {
+            NamedChildMap ??= new Dictionary<string, Node>();
             if (NamedChildMap.ContainsKey(name)) {
-                string msg = @"Duplicate named child not allowed: {name}";
+                const string msg = @"Duplicate named child not allowed: {name}";
                 throw new ApplicationException(msg);
             }
             NamedChildMap[name] = node;
@@ -490,16 +431,11 @@ namespace ${csPackage} {
             if (NamedChildListMap == null) {
                 return null;
             }
-            if (!NamedChildListMap.ContainsKey(name)) {
-                return null;
-            }
-            return NamedChildListMap[name];
+            return !NamedChildListMap.ContainsKey(name) ? null : NamedChildListMap[name];
         }
 
         public void AddToNamedChildList(string name, Node node) {
-            if (NamedChildListMap == null) {
-                NamedChildListMap = new Dictionary<string, IList<Node>>();
-            }
+            NamedChildListMap ??= new Dictionary<string, IList<Node>>();
 
             IList<Node> nodeList;
 
@@ -529,38 +465,19 @@ namespace ${csPackage} {
         public void Remove(int i) { throw new NotSupportedException(); }
         public void Clear() {}
 
-        public int GetEndOffset() {return this.EndOffset;} // Should not be necessary
-
-
         public void Truncate(int amount) {
-            int newEndOffset = Math.Max(BeginOffset, EndOffset - amount);
+            var newEndOffset = Math.Max(BeginOffset, EndOffset - amount);
             EndOffset = newEndOffset;
         }
 
         // TODO use default implementations in interface
-        public int BeginLine {
-            get {
-                return (TokenSource == null) ? 0 : TokenSource.GetLineFromOffset(BeginOffset);
-            }
-        }
+        public int BeginLine => TokenSource?.GetLineFromOffset(BeginOffset) ?? 0;
 
-        public int EndLine {
-            get {
-                return (TokenSource == null) ? 0 : TokenSource.GetLineFromOffset(EndOffset - 1);
-            }
-        }
+        public int EndLine => TokenSource?.GetLineFromOffset(EndOffset - 1) ?? 0;
 
-        public int BeginColumn {
-            get {
-                return (TokenSource == null) ? 0 : TokenSource.GetCodePointColumnFromOffset(BeginOffset);
-            }
-        }
+        public int BeginColumn => TokenSource?.GetCodePointColumnFromOffset(BeginOffset) ?? 0;
 
-        public int EndColumn {
-            get {
-                return (TokenSource == null) ? 0 : TokenSource.GetCodePointColumnFromOffset(EndOffset - 1);
-            }
-        }
+        public int EndColumn => TokenSource?.GetCodePointColumnFromOffset(EndOffset - 1) ?? 0;
 
         public TokenType Type { get; internal set; }
 
@@ -589,11 +506,11 @@ namespace ${csPackage} {
 [#else]
         public string Image => Source;
 [/#if]
-        override public string ToString() {
+        public override string ToString() {
             return Image;
         }
 
-        virtual public bool IsSkipped() {
+        public virtual bool IsSkipped() {
 [#if settings.faultTolerant]
            return skipped;
 [#else]
@@ -601,7 +518,7 @@ namespace ${csPackage} {
 [/#if]
         }
 
-        virtual public bool IsVirtual() {
+        public virtual bool IsVirtual() {
 [#if settings.faultTolerant]
            return _virtual || Type == TokenType.EOF;
 [#else]
@@ -685,18 +602,18 @@ namespace ${csPackage} {
 
         internal static Token NewToken(TokenType type, Lexer tokenSource, int beginOffset, int endOffset) {
 [#if settings.treeBuildingEnabled]
-            switch(type) {
+            return type switch {
   [#list lexerData.orderedNamedTokens as re]
     [#if re.generatedClassName != "Token" && !re.private]
-            case TokenType.${re.label} : return new ${grammar.nodePrefix}${re.generatedClassName}(TokenType.${re.label}, tokenSource, beginOffset, endOffset);
+                TokenType.${re.label} => new ${grammar.nodePrefix}${re.generatedClassName}(TokenType.${re.label}, tokenSource, beginOffset, endOffset),
     [/#if]
   [/#list]
   [#list settings.extraTokenNames as tokenName]
-            case TokenType.${tokenName} : return new ${grammar.nodePrefix}${settings.extraTokens[tokenName]}(TokenType.${tokenName}, tokenSource, beginOffset, endOffset);
+                TokenType.${tokenName} => new ${grammar.nodePrefix}${settings.extraTokens[tokenName]}(TokenType.${tokenName}, tokenSource, beginOffset, endOffset),
   [/#list]
-            case TokenType.INVALID : return new InvalidToken(tokenSource, beginOffset, endOffset);
-            default : return new Token(type, tokenSource, beginOffset, endOffset);
-            }
+                TokenType.INVALID => new InvalidToken(tokenSource, beginOffset, endOffset),
+                _ => new Token(type, tokenSource, beginOffset, endOffset)
+            };
 [#else]
             return new Token(type, tokenSource, beginOffset, endOffset);
 [/#if]
@@ -705,7 +622,7 @@ namespace ${csPackage} {
         internal Token NextToken { get; set; }
         internal string Location {
             get {
-                Node n = (Node) this;
+                var n = (Node) this;
 
                 return $"{TokenSource.InputSource}:{n.BeginLine}:{n.BeginColumn}";
             }
@@ -742,16 +659,12 @@ namespace ${csPackage} {
         }
 
 [/#if]
-        internal Token Next {
-            get {
-                return NextParsedToken;
-            }
-        }
+        internal Token Next => NextParsedToken;
 
         internal Token Previous {
             get {
                 var result = PreviousCachedToken;
-                while ((result != null) && result.IsUnparsed) {
+                while (result is {IsUnparsed: true}) {
                     result = result.PreviousCachedToken;
                 }
                 return result;
@@ -761,7 +674,7 @@ namespace ${csPackage} {
         internal Token NextParsedToken {
             get {
                 var result = NextCachedToken;
-                while ((result != null) && result.IsUnparsed) {
+                while (result is {IsUnparsed: true}) {
                     result = result.NextCachedToken;
                 }
                 return result;
@@ -775,7 +688,7 @@ namespace ${csPackage} {
                     return appendedToken;
                 }
 [/#if]
-                return TokenSource == null ? null : TokenSource.NextCachedToken(EndOffset);
+                return TokenSource?.NextCachedToken(EndOffset);
             }
         }
 
@@ -786,18 +699,14 @@ namespace ${csPackage} {
                     return prependedToken;
                 }
 [/#if]
-                return TokenSource == null ? null : TokenSource.PreviousCachedToken(BeginOffset);
+                return TokenSource?.PreviousCachedToken(BeginOffset);
             }
         }
 
-        internal Token PreviousToken {
-            get {
-                return PreviousCachedToken;
-            }
-        }
+        internal Token PreviousToken => PreviousCachedToken;
 
         internal Token ReplaceType(TokenType type) {
-            Token result = NewToken(Type, TokenSource, BeginOffset, EndOffset);
+            var result = NewToken(Type, TokenSource, BeginOffset, EndOffset);
 [#if settings.tokenChaining]
             result.prependedToken = prependedToken;
             result.appendedToken = appendedToken;
@@ -817,20 +726,12 @@ namespace ${csPackage} {
             return result;
         }
 
-        public string Source {
-            get {
-                if (Type == TokenType.EOF) {
-                    return "";
-                }
-                return (TokenSource == null) ? null : TokenSource.GetText(BeginOffset, EndOffset);
-            }
-        }
+        public string Source => Type == TokenType.EOF ? "" : TokenSource?.GetText(BeginOffset, EndOffset);
 
         private IEnumerable<Token> precedingTokens() {
-            Token current = this;
-            Token t;
+            var current = this;
 
-            while ((t = current.PreviousCachedToken) != null) {
+            while (current.PreviousCachedToken is { } t) {
                 current = t;
                 yield return current;
             }
