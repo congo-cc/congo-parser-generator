@@ -509,11 +509,11 @@
 
 #function getRhsAssignmentPattern assignment 
    #if assignment.existenceOf!false
-      #-- replace "@" with "((@ != null) ? true : false)" --
-      #return "((@ != null) ? true : false)" 
+      #-- replace "@" with "(((@) != null) ? true : false)" --
+      #return "(((@) != null) ? true : false)" 
    #elseif assignment.stringOf!false
       [#-- replace "@" with the string value of the node --]
-      #return "Objects.toString(@, \"\").trim()"
+      #return "Objects.toString((@), \"\").trim()"
    /#if
    #return "@" 
 /#function
