@@ -138,7 +138,7 @@ class NonTerminalCall:
 [/#if]
 
     def create_stack_trace_element(self):
-        return (type(self.parser).__name__,  self.production_name, self.source_file, self.line)
+        return (type(self.parser).__name__, self.production_name, self.source_file, self.line)
 
 class ParseState:
 
@@ -339,7 +339,7 @@ ${globals::translateParserInjections(true)}
             for i in range(-index):
                 t = t.previous
                 if t is None:
-                   break
+                    break
         return t
 
     def token_image(self, n):
@@ -444,21 +444,18 @@ ${globals::translateParserInjections(true)}
 
 [/#if]
 
-[#if settings.treeBuildingEnabled]
+#if settings.treeBuildingEnabled
 #
 # AST definitions
 #
 # Parser nodes
 #
-  [#list globals.sortedNodeClassNames as node]
-    [#if !injector::hasInjectedCode(node)]
+  #list globals.sortedNodeClassNames as node
+    #if !injector::hasInjectedCode(node)
 class ${node}(BaseNode): pass
-    [#else]
+    #else
 ${globals::translateInjectedClass(node)}
-    [/#if]
-
-
-  [/#list]
-[/#if]
-
+    /#if
+  /#list
+/#if
 ${globals::translateParserInjections(false)}
