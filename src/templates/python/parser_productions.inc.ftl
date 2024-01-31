@@ -480,8 +480,8 @@ ${is}        self.clear_node_scope()
 
 [#function getRhsAssignmentPattern assignment]
    [#if assignment.existenceOf!false]
-      [#-- replace "@" with "((@ != null) ? true : false)" --]
-      [#return "(True if (@ != None) else False)" /]
+      [#-- replace "@" with "(((@) != null) ? true : false)" --]
+      [#return "(True if ((@) != None) else False)" /]
    [#elseif assignment.stringOf!false]
       [#-- replace "@" with the string value of the node or the empty string if None --]
       [#return "(lambda x = (@) : str(x) if x is not None else '')()" /]

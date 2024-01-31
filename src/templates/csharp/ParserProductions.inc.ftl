@@ -468,8 +468,8 @@ if (BuildTree) {
 
 [#function getRhsAssignmentPattern assignment]
    [#if assignment.existenceOf!false]
-      [#-- replace "@" with "((@ != null) ? true : false)" --]
-      [#return "((@ != null) ? true : false)" /]
+      [#-- replace "@" with "(((@) != null) ? true : false)" --]
+      [#return "(((@) != null) ? true : false)" /]
    [#elseif assignment.stringOf!false]
       [#-- replace "@" with the string value of the node --]
       [#return "Convert.ToString(@).Trim()"]

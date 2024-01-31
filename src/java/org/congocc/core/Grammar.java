@@ -545,11 +545,11 @@ public class Grammar extends BaseNode {
         }
         
         for (Assignment assignment : descendants(Assignment.class)) {
-            if (assignment.isPropertyAssignment()) {
+            if (assignment.isPropertyAssignment() || assignment.isNamedAssignment()) {
                 BNFProduction production = assignment.firstAncestorOfType(BNFProduction.class);
                 if (production.getTreeNodeBehavior() != null) {
                     if (production.getTreeNodeBehavior().isNeverInstantiated()) {
-                        errors.addError(assignment, "Cannot assign to production node property; production node is never instantiated.");
+                        errors.addError(assignment, "Cannot assign to production node property or named child list; production node is never instantiated.");
                     }
                 }
             }
