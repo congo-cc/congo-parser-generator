@@ -408,10 +408,10 @@ class TokenSource:
     def munge_content(self, content, preserve_tabs, preserve_lines,
                       java_unicode_escape, terminating_string):
         if preserve_tabs and preserve_lines and not java_unicode_escape:
-            if terminating_string :
-                if content[-len(terminating_string):] != terminating_string :
+            if terminating_string:
+                if content[-len(terminating_string):] != terminating_string:
                     return content
-        tab_size=self.tab_size
+        tab_size = self.tab_size
         buf = []
         index = 0
         # This is just to handle tabs to spaces. If you don't have that setting set, it
@@ -440,7 +440,7 @@ class TokenSource:
                     col += 1
                     continue
                 num_consecutive_us = 0
-                i  = index
+                i = index
                 while i < cplen:
                     if code_points[i] == 'u':
                         num_consecutive_us += 1
@@ -464,8 +464,8 @@ class TokenSource:
             else:
                 buf.append(ch)
                 col += 1
-        if terminating_string :
-            if content[-len(terminating_string):] != terminating_string :
+        if terminating_string:
+            if content[-len(terminating_string):] != terminating_string:
                 buf.append(terminating_string)
         return ''.join(buf)
 
@@ -826,9 +826,7 @@ ${globals::translateLexerInjections(true)}
             return tok
         cached_token = tok.next_cached_token
         # If not currently active, discard it and go back to the lexer
-        if (cached_token and
-            active_token_types is not None and
-            cached_token.type not in active_token_types):
+        if (cached_token and active_token_types is not None and cached_token.type not in active_token_types):
             self.reset(tok)
             cached_token = None
         if cached_token:
@@ -883,7 +881,7 @@ ${globals::translateLexerInjections(true)}
             if matched_type == INVALID:
                 if invalid_region_start == -1:
                     invalid_region_start = token_begin_offset
-                cp = self[pos]
+                # cp = self[pos]
                 pos += 1
                 continue
             if invalid_region_start != -1:

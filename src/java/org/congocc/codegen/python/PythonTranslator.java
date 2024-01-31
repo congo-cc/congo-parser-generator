@@ -87,6 +87,9 @@ public class PythonTranslator extends Translator {
         else if (ident.equals("PARSER_CLASS") || (ident.equals(appSettings.getParserClassName()))) {
             result = "Parser";
         }
+        else if (ident.equals("THIS_PRODUCTION")) {
+            result = "this_production";
+        }
         else if (ident.equals("BASE_TOKEN_CLASS") || (ident.equals(appSettings.getBaseTokenClassName()))) {
             result = "Token";
         }
