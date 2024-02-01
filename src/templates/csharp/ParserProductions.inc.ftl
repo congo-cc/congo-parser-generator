@@ -581,7 +581,6 @@ ${globals::translateCodeBlock(expansion, 1)}
          [#if classname = "BNFProduction"]
             [#-- The tree node having been built, now build the actual top-level expansion --]
             [#set topLevelExpansion = true]
-            // top-level expansion ${expansion.nestedExpansion.simpleName}
             [@BuildCode expansion.nestedExpansion/]
          [#else]
             [#-- take care of terminal and non-terminal expansions; they cannot contain child expansions --]
@@ -665,18 +664,18 @@ ActivateTokenTypes(
 [/#macro]
 
 [#macro BuildCodeTryBlock tryblock]
-// DBG > BuildCodeTryBlock
+#-- // DBG > BuildCodeTryBlock --
 try:
 ${BuildCode(tryblock.nestedExpansion)}
    [#list tryblock.catchBlocks as catchBlock]
 ${catchBlock}
    [/#list]
 ${tryblock.finallyBlock!}
-// DBG < BuildCodeTryBlock
+#-- // DBG < BuildCodeTryBlock --
 [/#macro]
 
 [#macro BuildCodeAttemptBlock attemptBlock]
-// DBG > BuildCodeAttemptBlock
+#-- // DBG > BuildCodeAttemptBlock --
 try {
     StashParseState();
 ${BuildCode(attemptBlock.nestedExpansion)}
@@ -688,7 +687,7 @@ catch (ParseException ${pe}) {
 ${BuildCode(attemptBlock.recoveryExpansion)}
 #set exceptionNesting = exceptionNesting - 1
 }
-// DBG < BuildCodeAttemptBlock
+#-- // DBG < BuildCodeAttemptBlock --
 [/#macro]
 
 [#-- The following macros build expansions that might build tree nodes (could be called "syntactic" nodes). --]
@@ -862,7 +861,6 @@ catch (ParseException pe) {
    [#-- OMITTED:
       [#if expansion.enteredUnconditionally]
         {
-         // choice for ${globals.currentNodeVariableName} index ${expansion_index}
          ${BuildCode(expansion)}
          [#if jtbParseTree && isProductionInstantiatingNode(expansion)]
             ${globals.currentNodeVariableName}.setChoice(${expansion_index});

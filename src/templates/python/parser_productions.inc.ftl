@@ -868,7 +868,6 @@ ${is}    if self.pending_recovery: raise
 [#-- OMITTED:
       [#if expansion.enteredUnconditionally]
         {
-         // choice for ${globals.currentNodeVariableName} index ${expansion_index}
          ${BuildCode(expansion)}
          [#if jtbParseTree && isProductionInstantiatingNode(expansion)]
             ${globals.currentNodeVariableName}.setChoice(${expansion_index});

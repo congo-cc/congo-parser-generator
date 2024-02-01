@@ -612,7 +612,6 @@
          #if classname = "BNFProduction"
             #-- The tree node having been built, now build the actual top-level expansion --
             #set topLevelExpansion = true
-            // top-level expansion ${expansion.nestedExpansion.simpleName}
             [@BuildCode expansion.nestedExpansion/]
          #else
             #-- take care of terminal and non-terminal expansions; they cannot contain child expansions --
@@ -866,7 +865,6 @@
    #list choice.choices as expansion
       #if expansion.enteredUnconditionally
         {
-         // choice for ${globals.currentNodeVariableName} index ${expansion_index}
          ${BuildCode(expansion)}
          #if jtbParseTree && isProductionInstantiatingNode(expansion)
             ${globals.currentNodeVariableName}.setChoice(${expansion_index});
@@ -881,7 +879,6 @@
          #return
       /#if
       if (${ExpansionCondition(expansion)}) {
-         // choice for ${globals.currentNodeVariableName} index ${expansion_index}
          ${BuildCode(expansion)}
          #if jtbParseTree && isProductionInstantiatingNode(expansion)
             ${globals.currentNodeVariableName}.setChoice(${expansion_index});
