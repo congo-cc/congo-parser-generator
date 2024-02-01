@@ -19,9 +19,9 @@
         </java>
     </target>
     <target name="compile" depends="parser-check,parser-gen">
-        <javac classpath="." srcdir="." includeantruntime="off" failonerror="true" debug="on"
+        <javac classpath=".:../../congocc.jar" srcdir="." includeantruntime="off" failonerror="true" debug="on"
             release="8"
-            fork="true" />
+            fork="true"/>
         <echo>
             test harness via: java PyTest &lt;filename&gt;
         </echo>
@@ -30,7 +30,7 @@
         <echo>
             Now test on a few files..
         </echo>
-        <java classname="PyTest" classpath="." failonerror="true" fork="true">
+        <java classname="PyTest" classpath=".:../../congocc.jar" failonerror="true" fork="true">
             <assertions>
                 <enable />
             </assertions>

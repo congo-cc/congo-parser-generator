@@ -1,4 +1,5 @@
 import java.io.*;
+import java.nio.file.Path;
 import java.util.*;
 
 import org.parsers.csharp.CSharpParser;
@@ -64,13 +65,21 @@ public class CSParse {
        if (!failures.isEmpty()) System.exit(-1);
     }
 
-   static public void parseFile(File file, boolean dumpTree) throws IOException {
-       CSharpParser parser = new CSharpParser(file.toPath());
-       Node root=parser.CompilationUnit();
+    static public void parseFile(File file, boolean dumpTree) throws IOException {
+       Path path = file.toPath();
+       CSharpParser parser = new CSharpParser(path);
+       Node root = parser.CompilationUnit();
 //       Node root = CongoCCParser.parseCSharpFile(file.toPath());
        if (dumpTree) {
            root.dump("");
        }
+       System.out.println(path.getFileName().toString() + " parsed successfully.");
+       //
+       // Now parse using the internal CSharp compiler. We assume that no exception
+       // means a successful parse.
+       //
+       org.congocc.parser.Node internalRoot = new org.congocc.parser.csharp.CSParser(path).CompilationUnit();
+       System.out.println(path.getFileName().toString() + " parsed successfully (internal compiler).");
    }
 
    static public void addFilesRecursively(List<File> files, File file) {

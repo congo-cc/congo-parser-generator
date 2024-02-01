@@ -2,7 +2,6 @@ DEFAULT_LEXICAL_STATE=PYTHON;
 BASE_SRC_DIR="../../build/generated-java";
 BASE_NAME=Python;
 ROOT_API_PACKAGE=org.congocc.parser;
-BASE_NODE_CLASS=org.congocc.parser.tree.BaseNode;
 PARSER_PACKAGE=org.congocc.parser.python;
 TOKEN_CHAINING;
 
