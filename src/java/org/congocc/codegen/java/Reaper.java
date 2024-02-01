@@ -1,6 +1,8 @@
 package org.congocc.codegen.java;
 
 import java.util.*;
+import java.util.logging.Logger;
+
 import org.congocc.parser.*;
 import org.congocc.parser.tree.*;
 
@@ -18,6 +20,8 @@ import static org.congocc.parser.Token.TokenType.*;
  * in inner classes, but we don't bother about that either.
  */
 class Reaper extends Node.Visitor {
+    private static Logger logger = Logger.getLogger("reaper");
+
     private final Set<String> usedMethodNames = new HashSet<>();
     private final Set<String> usedTypeNames = new HashSet<>();
     private final Set<String> usedVarNames = new HashSet<>();
@@ -36,10 +40,14 @@ class Reaper extends Node.Visitor {
         do {
             prevNameCount = usedMethodNames.size() + usedTypeNames.size() + usedVarNames.size();
             visit(jcu);
+            logger.fine(String.format("used methods: %d", usedMethodNames.size()));
+            logger.fine(String.format("used types: %d", usedTypeNames.size()));
+            logger.fine(String.format("used vars: %d", usedVarNames.size()));
             nameCount = usedMethodNames.size() + usedTypeNames.size() + usedVarNames.size();
         } while (nameCount > prevNameCount);
         // If the name of the method is not in usedMethodNames, we delete it.
         for (MethodDeclaration md : jcu.descendants(MethodDeclaration.class, md->!usedMethodNames.contains(md.getName()))) {
+            logger.fine(String.format("removing method: %s", md.getName()));
             md.getParent().remove(md);
         }
         // We go through all the private FieldDeclarations and get rid of any variables that
@@ -50,6 +58,7 @@ class Reaper extends Node.Visitor {
 
         for (TypeDeclaration td : jcu.descendants(TypeDeclaration.class, this::isPrivate)) {
             if (!usedTypeNames.contains(td.getName())) {
+                logger.fine(String.format("removing type: %s", td.getName()));
                 td.getParent().remove(td);
             }
         }
@@ -63,8 +72,8 @@ class Reaper extends Node.Visitor {
         // Now get rid of unused and repeated imports.
         for (ImportDeclaration imp : jcu.childrenOfType(ImportDeclaration.class)) {
             if (!usedImportDeclarations.add(getKey(imp))) {
+                logger.fine(String.format("removing import: %s", imp));
                 jcu.remove(imp);
-                //System.out.println("Removing " + imp);
                 continue;
             }
             if (imp.firstChildOfType(STAR) == null) {
@@ -73,7 +82,7 @@ class Reaper extends Node.Visitor {
                 // Note that a static import can import methods.
                 if (imp.firstChildOfType(STATIC) != null && usedMethodNames.contains(name)) continue;
                 if (!usedTypeNames.contains(name)) {
-                    //System.out.println("Removing " + imp);
+                    logger.fine(String.format("removing import: %s", imp));
                     jcu.remove(imp);
                 }
             }
@@ -192,9 +201,11 @@ class Reaper extends Node.Visitor {
             }
         }
         for (Node n : toBeRemoved) {
+            logger.fine(String.format("removing field: %s", n.firstChildOfType(Identifier.class)));
             fd.remove(n);
         }
         if (fd.firstChildOfType(VariableDeclarator.class) == null) {
+            logger.fine(String.format("removing field declaration: %s", fd));
             fd.getParent().remove(fd);
         }
     }

@@ -6,6 +6,7 @@ import java.io.StringWriter;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.*;
+import java.util.logging.Logger;
 
 import org.congocc.app.AppSettings;
 import org.congocc.app.Errors;
@@ -21,6 +22,7 @@ import freemarker.template.*;
 import freemarker.cache.*;
 
 public class FilesGenerator {
+    private static Logger logger = Logger.getLogger("filegen");
 
     private final Configuration fmConfig = new freemarker.template.Configuration();
     private final Grammar grammar;
@@ -145,6 +147,7 @@ public class FilesGenerator {
     }
 
     public void generate(Path outputFile) throws IOException {
+        logger.fine(String.format("Generating: %s", outputFile));
         generate(null, outputFile);
     }
 
@@ -341,38 +344,47 @@ public class FilesGenerator {
     }
 
     private boolean regenerate(Path file) throws IOException {
+        return true;
+/*
+        boolean result = false;
+
         if (!Files.exists(file)) {
-        	return true;
-        } 
-        String ourName = file.getFileName().toString();
-        String canonicalName = file.normalize().getFileName().toString();
-       	if (canonicalName.equalsIgnoreCase(ourName) && !canonicalName.equals(ourName)) {
-            String msg = "You cannot have two files that differ only in case, as in " 
-       	                          + ourName + " and "+ canonicalName 
-       	                          + "\nThis does work on a case-sensitive file system but fails on a case-insensitive one (i.e. Mac/Windows)"
-       	                          + " \nYou will need to rename something in your grammar!";
-            throw new IOException(msg);
+        	result = true;
         }
-        String filename = file.getFileName().toString();
-        // Changes here to allow different rules to be used for different
-        // languages. At the moment there are no non-Java code injections
-        String extension = codeLang.equals("java") ? ".java" : codeLang.equals("python") ? ".py" : ".cs";
-        if (filename.endsWith(extension)) {
-            String typename = filename.substring(0, filename.length()  - extension.length());
-            if (codeInjector.hasInjectedCode(typename)) {
-                return true;
+        else {
+            String ourName = file.getFileName().toString();
+            String canonicalName = file.normalize().getFileName().toString();
+            if (canonicalName.equalsIgnoreCase(ourName) && !canonicalName.equals(ourName)) {
+                String msg = "You cannot have two files that differ only in case, as in "
+                        + ourName + " and "+ canonicalName
+                        + "\nThis does work on a case-sensitive file system but fails on a case-insensitive one (i.e. Mac/Windows)"
+                        + " \nYou will need to rename something in your grammar!";
+                throw new IOException(msg);
             }
-            if (typename.equals(appSettings.getBaseTokenClassName())) {
-                // The Token class now contains the TokenType enum
-                // so we always regenerate.
-                return true;
+            String filename = file.getFileName().toString();
+            // Changes here to allow different rules to be used for different
+            // languages. At the moment there are no non-Java code injections
+            String extension = codeLang.equals("java") ? ".java" : codeLang.equals("python") ? ".py" : ".cs";
+            if (filename.endsWith(extension)) {
+                String typename = filename.substring(0, filename.length()  - extension.length());
+                if (codeInjector.hasInjectedCode(typename)) {
+                    result = true;
+                }
+                if (typename.equals(appSettings.getBaseTokenClassName())) {
+                    // The Token class now contains the TokenType enum
+                    // so we always regenerate.
+                    result = true;
+                }
             }
+            //
+            // For now regenerate() isn't called for generating Python or C# files,
+            // but I'll leave this here for the moment
+            //
+            result = extension.equals(".py") || extension.equals(".cs");    // for now, always regenerate
         }
-        //
-        // For now regenerate() isn't called for generating Python or C# files,
-        // but I'll leave this here for the moment
-        //
-        return extension.equals(".py") || extension.equals(".cs");    // for now, always regenerate
+        logger.fine(String.format("regenerate %s -> %s", file, result));
+        return result;
+ */
     }
 
     void generateTreeBuildingFiles() throws IOException {
