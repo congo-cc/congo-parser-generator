@@ -1201,7 +1201,8 @@ LookBehind :
    (
     LookBehindForward
     |
-    LookBehindBackward(THIS_PRODUCTION, CURRENT_NODE)) #NeverInTheTree(false) // I did this just to see if it works
+    LookBehindBackward(THIS_PRODUCTION)
+   )
 ;
 
 LookBehindForward #void :
@@ -1216,9 +1217,9 @@ LookBehindForward #void :
    [<BACKSLASH>]
 ;
 
-LookBehindBackward(LookBehind THIS_PRODUCTION, NeverInTheTree neverInTheTree) #void :
+LookBehindBackward(LookBehind lookBehind) #void :
    (
-       @backward =? <BACKSLASH> // This actually refers to the LookBehind production because of the node argument passed to this one
+       <BACKSLASH> {lookBehind.setBackward(true);}
        (
           ([<TILDE>]<IDENTIFIER>)
           |
@@ -1226,20 +1227,7 @@ LookBehindBackward(LookBehind THIS_PRODUCTION, NeverInTheTree neverInTheTree) #v
        )
    )+
    [<SLASH>]
-   { neverInTheTree.touch(); }
 ;
-
-INJECT NeverInTheTree :
-{
-    @Override
-    public void close() {
-        assert(false) : "Why am I being closed?";
-    }
-
-    public void touch() {
-        // nothing to see here
-    }
-}
 
 INJECT LookBehind :
     import java.util.*;
