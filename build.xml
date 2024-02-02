@@ -20,7 +20,7 @@
     </uptodate>
     <uptodate property="csharp.uptodate"
       targetfile="build/generated-java/org/congocc/parser/csharp/CSParser.java">
-      <srcfiles dir="src/grammars" includes="SharpInternal.ccc"/>
+      <srcfiles dir="src/grammars" includes="CSharpInternal.ccc"/>
       <srcfiles dir="examples/csharp" includes="*.ccc"/>
     </uptodate>
     <uptodate property="ppline.uptodate"

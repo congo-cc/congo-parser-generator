@@ -44,7 +44,7 @@
   </target>
 
   <target name="test" depends="compile">
-    <java fork="true" classpath="." failonerror="true" classname="CSParse">
+    <java fork="true" classpath=".;../../congocc.jar" failonerror="true" classname="CSParse">
       <assertions>
         <enable />
       </assertions>

@@ -11,14 +11,6 @@ import java.util.stream.Stream;
 import org.parsers.python.Node;
 import org.parsers.python.PythonParser;
 
-// The following two imports would be the ones to use
-// to test the internal Python parser inside congocc.jar
-// and you would have to comment out the previous two.
-// And you need the congocc.jar on the classpath
-// when you compile/run
-//import org.congocc.parser.Node;
-//import org.congocc.parser.python.PythonParser;
-
 /**
  * A test harness for parsing Python files from the command line.
  */
@@ -57,7 +49,7 @@ public class PyTest {
         if (paths.isEmpty()) usage();
         long startTime = System.currentTimeMillis();
         Stream<Path> stream = parallelParsing
-                               ? paths.parallelStream() 
+                               ? paths.parallelStream()
                                :  paths.stream();
         stream.forEach(path -> parseFile(path));
         for (Path path : failures) {
@@ -69,7 +61,7 @@ public class PyTest {
     }
 
     static public void parseFile(Path path) {
-        try {  
+        try {
             Node root = new PythonParser(path).Module();
             if (retainInMemory) roots.add(root);
             if (paths.size()==1) {
@@ -82,6 +74,12 @@ public class PyTest {
                 System.out.println("Successfully parsed " + successes.size() + " files.");
                 System.out.println("-----------------------------------------------");
             }
+            //
+            // Now parse using the internal Python compiler. We assume that no exception
+            // means a successful parse.
+            //
+            org.congocc.parser.Node internalRoot = new org.congocc.parser.python.PythonParser(path).Module();
+            System.out.println(path.getFileName().toString() + " parsed successfully (internal compiler).");
         }
         catch (Exception e) {
           System.err.println("Error processing file: " + path);
