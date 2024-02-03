@@ -694,24 +694,23 @@ ${BuildCode(attemptBlock.recoveryExpansion)}
 
 [#macro BuildCodeNonTerminal nonterminal]
 [#-- // DBG > BuildCodeNonTerminal ${nonterminal.production.name} --]
-   [#var production = nonterminal.production]
 PushOntoCallStack("${nonterminal.containingProduction.name}", "${nonterminal.inputSource?j_string}", ${nonterminal.beginLine}, ${nonterminal.beginColumn});
-   [#var followSet = nonterminal.followSet]
-   [#if !followSet.incomplete]
-      [#if !nonterminal.beforeLexicalStateSwitch]
+  #if settings.faultTolerant
+    #var followSet = nonterminal.followSet
+    #if !followSet.incomplete
+      #if !nonterminal.beforeLexicalStateSwitch
 OuterFollowSet = ${nonterminal.followSetVarName};
-      [#else]
+      #else
 OuterFollowSet = null;
-      [/#if]
-   [#else]
-     [#if !followSet.empty]
+      /#if
+    #elseif !followSet.empty
 if (OuterFollowSet != null) {
     var newFollowSet = new HashSet<TokenType>(${nonterminal.followSetVarName});
     newFollowSet.UnionWith(OuterFollowSet);
     OuterFollowSet = newFollowSet;
 }
-     [/#if]
-   [/#if]
+    /#if
+  /#if
 try {
     [@AcceptNonTerminal nonterminal /]
 }
