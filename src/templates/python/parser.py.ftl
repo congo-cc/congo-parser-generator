@@ -120,12 +120,12 @@ class NonTerminalCall:
         'production_name',
         'line', 'column',
         'scan_to_end',
-[#if settings.faultTolerant]
+#if settings.faultTolerant
         'follow_set',
-[/#if]
+/#if
     )
 
-    def __init__(self, parser, filename, prodname, line, column):
+    def __init__(self, parser, filename, prodname, line, column[#if settings.faultTolerant], follow_set[/#if]):
         self.parser = parser
         self.source_file = filename
         self.production_name = prodname
@@ -133,9 +133,9 @@ class NonTerminalCall:
         self.column = column
         # We actually only use this when we're working with the LookaheadStack
         self.scan_to_end = parser.scan_to_end
-[#if settings.faultTolerant]
-        self.follow_set = parser.outer_follow_set
-[/#if]
+#if settings.faultTolerant
+        self.follow_set = follow_set
+/#if
 
     def create_stack_trace_element(self):
         return (type(self.parser).__name__, self.production_name, self.source_file, self.line)
@@ -171,10 +171,10 @@ class Parser:
         'scan_to_end',
         'hit_failure',
         'lookahead_routine_nesting',
+#if settings.faultTolerant
         'outer_follow_set',
-[#if settings.faultTolerant]
         'current_follow_set',
-[/#if]
+/#if
         'parsing_stack',
         'lookahead_stack',
         'build_tree',
@@ -216,7 +216,6 @@ ${globals::translateParserInjections(true)}
         self.currently_parsed_production = ''
         self.current_lookahead_production = ''
         self.lookahead_routine_nesting = 0
-        self.outer_follow_set = set()
         self.parsing_stack = []
         self.lookahead_stack = []
 [#if settings.treeBuildingEnabled]
@@ -227,13 +226,14 @@ ${globals::translateParserInjections(true)}
         NodeScope(self)  # attaches to parser
 [/#if]
         self.parse_state_stack = []
-[#if settings.faultTolerant]
+#if settings.faultTolerant
+        self.outer_follow_set = set()
         self.current_follow_set = set()
-     [#if settings.faultTolerantDefault]
+  #if settings.faultTolerantDefault
         self.tolerant_parsing = True
-     [#else]
+  #else
         self.tolerant_parsing = False
-     [/#if]
+  /#if
         self.pending_recovery = False
         self.debug_fault_tolerant = False;
         self.parsing_problems = []
@@ -248,7 +248,7 @@ ${globals::translateParserInjections(true)}
     @is_tolerant.setter
     def set_tolerant(self, tolerant):
         self.tolerant_parsing = tolerant
-[#else]
+#else
 
     @property
     def is_tolerant(self):
@@ -258,8 +258,19 @@ ${globals::translateParserInjections(true)}
     def set_tolerant(self, tolerant):
         if tolerant:
             raise NotImplementedError('This parser was not built with fault tolerance support!')
-[/#if]
 
+/#if
+#if settings.legacyGlitchyLookahead
+    @property
+    def legacy_glitchy_lookahead(self):
+        return True
+
+#else
+    @property
+    def legacy_glitchy_lookahead(self):
+        return False
+
+/#if
     @property
     def input_source(self):
         return self.token_source.input_source
@@ -293,14 +304,14 @@ ${globals::translateParserInjections(true)}
 [/#if]
 
     def push_onto_call_stack(self, method_name, filename, line, column):
-        self.parsing_stack.append(NonTerminalCall(self, filename, method_name, line, column))
+        self.parsing_stack.append(NonTerminalCall(self, filename, method_name, line, column[#if settings.faultTolerant], self.current_follow_set[/#if]))
 
     def pop_call_stack(self):
         ntc = self.parsing_stack.pop()
         self.currently_parsed_production = ntc.production_name
-[#if settings.faultTolerant]
+#if settings.faultTolerant
         self.outer_follow_set = ntc.follow_set
-[/#if]
+/#if
 
     def restore_call_stack(self, prev_size):
         while len(self.parsing_stack) > prev_size:

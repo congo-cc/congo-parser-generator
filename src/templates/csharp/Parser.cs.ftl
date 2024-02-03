@@ -124,15 +124,20 @@ ${globals::translateParserImports()}
         public string ProductionName { get; private set; }
         public uint Line { get; private set; }
         public uint Column { get; private set; }
+        // REVISIT: Node.NodeType when tree building?
+#if settings.faultTolerant
         public ISet<TokenType> FollowSet { get; private set; }
+/#if
 
-        internal NonTerminalCall(Parser parser, string fileName, string productionName, uint line, uint column) {
+        internal NonTerminalCall(Parser parser, string fileName, string productionName, uint line, uint column[#if settings.faultTolerant], ISet<TokenType> followSet[/#if]) {
             Parser = parser;
             SourceFile = fileName;
             ProductionName = productionName;
             Line = line;
             Column = column;
-            FollowSet = parser.OuterFollowSet;
+#if settings.faultTolerant
+            FollowSet = followSet;
+/#if
         }
 /*
         private (string productionName, string sourceFile, uint line) CreateStackTraceElement() {
@@ -173,7 +178,6 @@ ${globals::translateParserImports()}
         public Token LastConsumedToken { get; private set; }
         private Token currentLookaheadToken;
         public bool ScanToEnd { get; private set; }
-        internal ISet<TokenType> OuterFollowSet { get; private set; }
         internal IList<NonTerminalCall> ParsingStack { get; private set; } = new List<NonTerminalCall>();
         internal readonly Lexer tokenSource;
 [#if settings.treeBuildingEnabled]
@@ -182,19 +186,27 @@ ${globals::translateParserImports()}
         public bool UnparsedTokensAreNodes { get; set; } = ${CU.bool(settings.unparsedTokensAreNodes)};
         internal NodeScope CurrentNodeScope { get; set; }
 [/#if]
-[#if settings.faultTolerant]
+#if settings.faultTolerant
         public bool DebugFaultTolerant { get; set; } = ${CU.bool(settings.debugFaultTolerant)};
-[/#if]
+/#if
+#if settings.legacyGlitchyLookahead
+        public bool LegacyGlitchyLookahead { get; } = true;
+#else
+        public bool LegacyGlitchyLookahead { get; } = false;
+/#if
         private TokenType? _nextTokenType;
         private uint _remainingLookahead;
         private bool _hitFailure;
         private string _currentlyParsedProduction;
         private string _currentLookaheadProduction;
         private uint _lookaheadRoutineNesting;
-        //private ISet<TokenType> _currentFollowSet;
+#if settings.faultTolerant
+        internal ISet<TokenType> OuterFollowSet { get; private set; }
+        private ISet<TokenType> _currentFollowSet;
+/#if
         private readonly IList<NonTerminalCall> _lookaheadStack = new List<NonTerminalCall>();
         private readonly IList<ParseState> _parseStateStack = new List<ParseState>();
-[#if settings.faultTolerant]
+#if settings.faultTolerant
    [#if settings.faultTolerantDefault]
         private bool _tolerantParsing = true;
    [#else]
@@ -202,7 +214,7 @@ ${globals::translateParserImports()}
    [/#if]
         private bool _pendingRecovery = false;
         private readonly IList<Node> _parsingProblems = new List<Node>();
-[/#if]
+/#if
 
 [#if unwanted!false]
         private readonly IList<IObserver<LogInfo>> observers = new List<IObserver<LogInfo>>();
@@ -295,13 +307,15 @@ ${globals::translateParserInitializers()}
 
 [/#if]
         internal void PushOntoCallStack(string methodName, string fileName, uint line, uint column) {
-            ParsingStack.Add(new NonTerminalCall(this, fileName, methodName, line, column));
+            ParsingStack.Add(new NonTerminalCall(this, fileName, methodName, line, column[#if settings.faultTolerant], _currentFollowSet[/#if]));
         }
 
         internal void PopCallStack() {
             var ntc = ParsingStack.Pop();
             _currentlyParsedProduction = ntc.ProductionName;
+#if settings.faultTolerant
             OuterFollowSet = ntc.FollowSet;
+/#if
         }
 
         internal void RestoreCallStack(int prevSize) {

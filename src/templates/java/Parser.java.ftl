@@ -65,13 +65,14 @@ private String currentlyParsedProduction;
 private String currentLookaheadProduction;
 private int lookaheadRoutineNesting;
 private int passedPredicateThreshold = -1;
-EnumSet<TokenType> outerFollowSet;
-
-[#if settings.legacyGlitchyLookahead]
+#if settings.faultTolerant
+private EnumSet<TokenType> outerFollowSet;
+/#if
+#if settings.legacyGlitchyLookahead
    private final boolean legacyGlitchyLookahead = true;
-[#else]
+#else
    private final boolean legacyGlitchyLookahead = false;
-[/#if]
+/#if
 
 private final ${settings.baseTokenClassName} DUMMY_START_TOKEN = new ${settings.baseTokenClassName}();
 private boolean cancelled;
