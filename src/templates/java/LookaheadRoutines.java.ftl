@@ -2,7 +2,9 @@
 
 [#macro Generate]
     [@firstSetVars /]
+#if settings.faultTolerant
     [@followSetVars /]
+/#if
     [#if grammar.choicePointExpansions?size !=0]
        [@BuildLookaheads /]
      [/#if]
@@ -90,12 +92,12 @@
    [#list grammar.parserProductions as production]
       ${BuildProductionLookaheadMethod(production)}
    [/#list]
-[/#macro]  
+[/#macro]
 
-[#macro BuildPredicateRoutine expansion] 
+[#macro BuildPredicateRoutine expansion]
   [#var lookaheadAmount = expansion.lookaheadAmount]
   [#if lookaheadAmount = 2147483647][#set lookaheadAmount = "UNLIMITED"][/#if]
-  [#set newVarIndex = 0 in CU] 
+  [#set newVarIndex = 0 in CU]
   // BuildPredicateRoutine: expansion at ${expansion.location}
    private boolean ${expansion.predicateMethodName}() {
      remainingLookahead= ${lookaheadAmount};
@@ -118,10 +120,10 @@
 
 [#macro BuildScanRoutine expansion]
  [#if !expansion.singleTokenLookahead]
-  // scanahead routine for expansion at: 
+  // scanahead routine for expansion at:
   // ${expansion.location}
   // BuildScanRoutine macro
-[#set newVarIndex = 0 in CU] 
+[#set newVarIndex = 0 in CU]
   private boolean ${expansion.scanRoutineName}(boolean scanToEnd) {
     [#if expansion.hasScanLimit]
        int prevPassedPredicateThreshold = this.passedPredicateThreshold;
@@ -158,12 +160,12 @@
 [/#macro]
 
 [#macro BuildAssertionRoutine expansion]
-  // scanahead routine for assertion at: 
+  // scanahead routine for assertion at:
   // ${expansion.parent.location}
   // BuildAssertionRoutine macro
   [#var storeCurrentLookaheadVar = CU.newVarName("currentLookahead")
         storeRemainingLookahead = CU.newVarName("remainingLookahead")]
-  [#set newVarIndex = 0 in CU] 
+  [#set newVarIndex = 0 in CU]
     private boolean ${expansion.scanRoutineName}() {
        final boolean scanToEnd = true;
        int ${storeRemainingLookahead} = remainingLookahead;
@@ -219,9 +221,9 @@
    that is used in a nested lookahead.
  --]
 [#macro BuildLookaheadRoutine lookahead]
-     // lookahead routine for lookahead at: 
+     // lookahead routine for lookahead at:
      // ${lookahead.location}
-  [#set newVarIndex = 0 in CU] 
+  [#set newVarIndex = 0 in CU]
      private boolean ${lookahead.nestedExpansion.scanRoutineName}(boolean scanToEnd) {
         int prevRemainingLookahead = remainingLookahead;
         boolean prevHitFailure = hitFailure;
@@ -241,7 +243,7 @@
 [/#macro]
 
 [#macro BuildLookBehindRoutine lookBehind]
-  [#set newVarIndex = 0 in CU] 
+  [#set newVarIndex = 0 in CU]
     private boolean ${lookBehind.routineName}() {
        ListIterator<NonTerminalCall> stackIterator = ${lookBehind.backward?string("stackIteratorBackward", "stackIteratorForward")}();
        NonTerminalCall ntc = null;
@@ -291,7 +293,7 @@
 
 [#macro BuildProductionLookaheadMethod production]
    // BuildProductionLookaheadMethod macro
-  [#set newVarIndex = 0 in CU] 
+  [#set newVarIndex = 0 in CU]
    private boolean ${production.lookaheadMethodName}(boolean scanToEnd) {
       [#if production.javaCode?? && production.javaCode.appliesInLookahead]
           ${production.javaCode}
@@ -325,9 +327,9 @@
    [#elseif expansion.singleTokenLookahead]
       ${ScanSingleToken(expansion)}
    [#elseif expansion.terminal]
-      [#-- This is actually dead code since this is 
+      [#-- This is actually dead code since this is
       caught by the previous case. I have it here because
-      sometimes I like to comment out the previous condition 
+      sometimes I like to comment out the previous condition
       for testing purposes.--]
       ${ScanSingleToken(expansion)}
    [#elseif classname = "Assertion"]
@@ -360,12 +362,12 @@
 
 [#--
    Generates the lookahead code for an ExpansionSequence.
-   In legacy JavaCC there was some quite complicated logic so as 
+   In legacy JavaCC there was some quite complicated logic so as
    not to generate unnecessary code. They actually had a longstanding bug
    there, which was the topic of this blog post: https://congocc.com/2020/10/28/a-bugs-life/
    I very much doubt that this kind of space optimization is worth
    the candle nowadays and it just really complicated the code. Also, the ability
-   to scan to the end of an expansion strike me as quite useful in general, 
+   to scan to the end of an expansion strike me as quite useful in general,
    particularly for fault-tolerant.
 --]
 [#macro ScanCodeSequence sequence]
@@ -387,8 +389,8 @@
 
 [#--
   Generates the lookahead code for a non-terminal.
-  It (trivially) just delegates to the code for 
-  checking the production's nested expansion 
+  It (trivially) just delegates to the code for
+  checking the production's nested expansion
 --]
 [#macro ScanCodeNonTerminal nt]
       // NonTerminal ${nt.name} at ${nt.location}
@@ -410,14 +412,14 @@
           ${name}
           [#if name_has_next],[/#if]
         [/#list]
-      )) return false; 
+      )) return false;
     [#else]
       if (!scanToken(${expansion.firstSetVarName})) return false;
     [/#if]
-[/#macro]    
+[/#macro]
 
 [#macro ScanCodeAssertion assertion]
-   [#if assertion.assertionExpression?? && 
+   [#if assertion.assertionExpression?? &&
         (assertion.insideLookahead || assertion.semanticLookaheadNested || assertion.containingProduction.onlyForLookahead)]
       if (!(${assertion.assertionExpression})) {
          hitFailure = true;
@@ -425,7 +427,7 @@
       }
    [/#if]
    [#if assertion.expansion??]
-      if ([#if !assertion.expansionNegated]![/#if] 
+      if ([#if !assertion.expansionNegated]![/#if]
          ${assertion.expansion.scanRoutineName}()
       ) {
         hitFailure = true;
@@ -476,7 +478,7 @@
    } finally {passedPredicate = passedPredicate${CU.newVarIndex};}
 [/#macro]
 
-[#-- 
+[#--
   Generates lookahead code for a ZeroOrMore construct]
 --]
 [#macro ScanCodeZeroOrMore zom]
@@ -515,7 +517,7 @@
           ${name}
           [#if name_has_next],[/#if]
         [/#list]
-      ) 
+      )
      [#else]
       scanToken(${expansion.firstSetVarName})
      [/#if]

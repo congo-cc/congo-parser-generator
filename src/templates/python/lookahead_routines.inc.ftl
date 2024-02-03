@@ -9,7 +9,9 @@
 
 [#macro Generate]
     [@firstSetVars /]
+#if settings.faultTolerant
     [@followSetVars /]
+/#if
     [#if grammar.choicePointExpansions?size !=0]
        [@BuildLookaheads 4 /]
      [/#if]
