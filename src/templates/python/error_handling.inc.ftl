@@ -50,7 +50,7 @@
         return BackwardIterator(self.parsing_stack, self.lookahead_stack)
 
     def push_onto_lookahead_stack(self, method_name, filename, line, column):
-        self.lookahead_stack.append(NonTerminalCall(self, filename, method_name, line, column))
+        self.lookahead_stack.append(NonTerminalCall(self, filename, method_name, line, column[#if settings.faultTolerant], None[/#if]))
 
     def pop_lookahead_stack(self):
         ntc = self.lookahead_stack.pop()
@@ -111,7 +111,7 @@
             return next_next
 
         [#-- Since skipping the next token did not work, we will insert a virtual token --]
-        if self.is_tolerant or self.follow_set is None or next_token.type in self.follow_set:
+        if self.is_tolerant or follow_set is None or next_token.type in follow_set:
             virtual_token = new_token(expected_type, 'VIRTUAL %s' % expected_type,
                                       self.last_consumed_token.input_source)
             virtual_token.virtual = True

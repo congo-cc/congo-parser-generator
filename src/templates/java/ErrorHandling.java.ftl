@@ -8,11 +8,7 @@ private final ArrayList<NonTerminalCall> lookaheadStack = new ArrayList<>();
 [/#if]
 
 private void pushOntoCallStack(String methodName, String fileName, int line, int column) {
-    [#if settings.faultTolerant]
-   parsingStack.add(new NonTerminalCall("${settings.parserClassName}", token_source, fileName, methodName, line, column, currentFollowSet));
-    [#else]
-   parsingStack.add(new NonTerminalCall("${settings.parserClassName}", token_source, fileName, methodName, line, column, null));
-    [/#if]
+   parsingStack.add(new NonTerminalCall("${settings.parserClassName}", token_source, fileName, methodName, line, column[#if settings.faultTolerant], currentFollowSet[/#if]));
 }
 
 private void popCallStack() {
@@ -79,7 +75,7 @@ private ListIterator<NonTerminalCall> stackIteratorBackward() {
 
 
 private void pushOntoLookaheadStack(String methodName, String fileName, int line, int column) {
-    lookaheadStack.add(new NonTerminalCall("${settings.parserClassName}", token_source, fileName, methodName, line, column, null));
+    lookaheadStack.add(new NonTerminalCall("${settings.parserClassName}", token_source, fileName, methodName, line, column[#if settings.faultTolerant], null[/#if]));
 }
 
 private void popLookaheadStack() {

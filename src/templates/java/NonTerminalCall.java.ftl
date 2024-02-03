@@ -12,16 +12,19 @@ public class NonTerminalCall {
     public final String productionName;
     final String parserClassName;
     final int line, column;
+#if settings.faultTolerant
     final Set<${BaseTokenType}> followSet;
-
-    public NonTerminalCall(String parserClassName, TokenSource lexer, String sourceFile, String productionName, int line, int column, Set<${BaseTokenType}> followSet) {
+/#if
+    public NonTerminalCall(String parserClassName, TokenSource lexer, String sourceFile, String productionName, int line, int column[#if settings.faultTolerant], Set<${BaseTokenType}> followSet[/#if]) {
         this.parserClassName = parserClassName;
         this.lexer = lexer;
         this.sourceFile = sourceFile;
         this.productionName = productionName;
         this.line = line;
         this.column = column;
+#if settings.faultTolerant
         this.followSet = followSet;
+/#if
     }
 
     final TokenSource getTokenSource() {

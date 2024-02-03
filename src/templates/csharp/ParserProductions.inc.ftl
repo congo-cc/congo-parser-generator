@@ -695,22 +695,22 @@ ${BuildCode(attemptBlock.recoveryExpansion)}
 [#macro BuildCodeNonTerminal nonterminal]
 [#-- // DBG > BuildCodeNonTerminal ${nonterminal.production.name} --]
 PushOntoCallStack("${nonterminal.containingProduction.name}", "${nonterminal.inputSource?j_string}", ${nonterminal.beginLine}, ${nonterminal.beginColumn});
-  #if settings.faultTolerant
-    #var followSet = nonterminal.followSet
-    #if !followSet.incomplete
-      #if !nonterminal.beforeLexicalStateSwitch
+#if settings.faultTolerant
+  #var followSet = nonterminal.followSet
+  #if !followSet.incomplete
+    #if !nonterminal.beforeLexicalStateSwitch
 OuterFollowSet = ${nonterminal.followSetVarName};
-      #else
+    #else
 OuterFollowSet = null;
-      /#if
-    #elseif !followSet.empty
+    /#if
+  #elseif !followSet.empty
 if (OuterFollowSet != null) {
     var newFollowSet = new HashSet<TokenType>(${nonterminal.followSetVarName});
     newFollowSet.UnionWith(OuterFollowSet);
     OuterFollowSet = newFollowSet;
 }
-    /#if
   /#if
+/#if
 try {
     [@AcceptNonTerminal nonterminal /]
 }
@@ -757,23 +757,23 @@ finally {
 [/#macro]
 
 [#macro BuildCodeTerminal terminal]
-   [#var LHS = getLhsPattern(terminal.assignment, "Token"), regexp=terminal.regexp]
+#var LHS = getLhsPattern(terminal.assignment, "Token"), regexp=terminal.regexp
 [#-- // DBG > BuildCodeRegexp --]
-   [#if !settings.faultTolerant]
+#if !settings.faultTolerant
 ${LHS?replace("@", "ConsumeToken(" + CU.TT + regexp.label + ")")};
-   [#else]
-       [#var tolerant = terminal.tolerantParsing?string("true", "false")]
-       [#var followSetVarName = terminal.followSetVarName]
-       [#if terminal.followSet.incomplete]
-         [#set followSetVarName = "followSet" + CU.newID()]
+#else
+  #var tolerant = terminal.tolerantParsing?string("true", "false")
+  #var followSetVarName = terminal.followSetVarName
+  #if terminal.followSet.incomplete
+    #set followSetVarName = "followSet" + CU.newID()
 HashSet<TokenType> ${followSetVarName} = null;
 if (OuterFollowSet != null) {
     ${followSetVarName} = ${terminal.followSetVarName}.Clone();
     ${followSetVarName}.AddAll(OuterFollowSet);
 }
-       [/#if]
+  /#if
 ${LHS?replace("@", "ConsumeToken(" + CU.TT + regexp.label + ", " + tolerant + ", " + followSetVarName + ")")};
-   [/#if]
+/#if
 [#-- // DBG < BuildCodeRegexp --]
 [/#macro]
 
