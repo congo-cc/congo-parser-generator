@@ -170,6 +170,8 @@ class Parser:
         'remaining_lookahead',
         'scan_to_end',
         'hit_failure',
+        'passed_predicate',
+        'passed_predicate_threshold',
         'lookahead_routine_nesting',
 #if settings.faultTolerant
         'outer_follow_set',
@@ -213,6 +215,8 @@ ${globals::translateParserInjections(true)}
         self.remaining_lookahead = 0
         self.scan_to_end = False
         self.hit_failure = False
+        self.passed_predicate = False
+        self.passed_predicate_threshold = -1
         self.currently_parsed_production = ''
         self.current_lookahead_production = ''
         self.lookahead_routine_nesting = 0
@@ -362,11 +366,23 @@ ${globals::translateParserInjections(true)}
     def get_token_type(self, n):
         return self.get_token(n).type
 
-    def check_next_token_image(self, img):
-        return self.token_image(1) == img
+    def check_next_token_image(self, img, *additional_images):
+        next_image = self.token_image(1)
+        if next_image == img:
+            return True
+        for ai in additional_images:
+            if next_image == ai:
+                return True
+        return False
 
-    def check_next_token_type(self, tt):
-        return self.get_token(1).type == tt
+    def check_next_token_type(self, tt, *additional_types):
+        next_type = self.get_token(1).type
+        if next_type == tt:
+            return True
+        for at in additional_types:
+            if next_type == at:
+                return True
+        return False
 
     @property
     def next_token_type(self):

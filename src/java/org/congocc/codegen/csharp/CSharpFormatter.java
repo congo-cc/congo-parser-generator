@@ -2,24 +2,7 @@ package org.congocc.codegen.csharp;
 
 import org.congocc.parser.*;
 import org.congocc.parser.csharp.CSToken;
-import org.congocc.parser.csharp.ast.Block;
-import org.congocc.parser.csharp.ast.Comment;
-import org.congocc.parser.csharp.ast.ConstantDeclaration;
-import org.congocc.parser.csharp.ast.Delimiter;
-import org.congocc.parser.csharp.ast.FieldDeclaration;
-import org.congocc.parser.csharp.ast.ForStatement;
-import org.congocc.parser.csharp.ast.Identifier;
-import org.congocc.parser.csharp.ast.InterpolatedString;
-import org.congocc.parser.csharp.ast.KeyWord;
-import org.congocc.parser.csharp.ast.Literal;
-import org.congocc.parser.csharp.ast.Operator;
-import org.congocc.parser.csharp.ast.PropertyBody;
-import org.congocc.parser.csharp.ast.PropertyDeclaration;
-import org.congocc.parser.csharp.ast.Type;
-import org.congocc.parser.csharp.ast.TypeDeclaration;
-import org.congocc.parser.csharp.ast.TypeParameterList;
-import org.congocc.parser.csharp.ast.TypeArgumentList;
-import org.congocc.parser.csharp.ast.UnaryExpression;
+import org.congocc.parser.csharp.ast.*;
 
 import static org.congocc.parser.csharp.CSToken.TokenType.*;
 
@@ -100,8 +83,15 @@ public class CSharpFormatter extends Node.Visitor {
         else if (type == RBRACE) {
             dedent();
             buffer.append('}');
-            if (delimiter.getParent().getParent() instanceof TypeDeclaration || delimiter.getParent() instanceof PropertyBody) {
-                newLine(true);
+            Node parent = delimiter.getParent();
+            Node gp = parent.getParent();
+            boolean controlStatement = (gp instanceof IfStatement || gp instanceof ForStatement ||
+                                        gp instanceof ForeachStatement || gp instanceof WhileStatement ||
+                                        gp instanceof SwitchStatement || gp instanceof TryStatement ||
+                                        gp instanceof CatchClause || gp instanceof FinallyClause);
+
+            if (gp instanceof TypeDeclaration || controlStatement || parent instanceof PropertyBody) {
+                newLine(!controlStatement);
             }
         }
         else if (type == LBRACKET) {
@@ -169,6 +159,17 @@ public class CSharpFormatter extends Node.Visitor {
             int precedingChar = buffer.codePointBefore(buffer.length());
             if (Character.isLetterOrDigit(precedingChar) || precedingChar=='}') {
                 buffer.append(' ');
+            }
+            else if (precedingChar == ')') {
+                Node parent = kw.getParent();
+                boolean space = (parent instanceof BreakStatement || parent instanceof ContinueStatement ||
+                                 parent instanceof TypeParameterConstraint || parent instanceof ReturnStatement ||
+                                 parent instanceof This ||
+                                 kw.toString().equals("is"));
+
+                if (space) {
+                    buffer.append(' ');
+                }
             }
         }
         buffer.append(kw.toString());

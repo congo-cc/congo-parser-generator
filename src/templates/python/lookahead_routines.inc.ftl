@@ -123,6 +123,7 @@ ${BuildProductionLookaheadMethod(production, indent)}
     def ${expansion.predicateMethodName}(self):
         self.remaining_lookahead = ${lookaheadAmount}
         self.current_lookahead_token = self.last_consumed_token
+        scan_to_end = False
         try:
 ${BuildPredicateCode(expansion, 12)}
       [#if !expansion.hasSeparateSyntacticLookahead && expansion.lookaheadAmount != 0]
@@ -133,26 +134,44 @@ ${BuildScanCode(expansion, 12)}
             self.lookahead_routine_nesting = 0
             self.current_lookahead_token = None
             self.hit_failure = False
-            self.scan_to_end = False
 [/#macro]
 
 [#macro BuildScanRoutine expansion indent]
 [#var is=""?right_pad(indent)]
 [#-- ${is}# DBG > BuildScanRoutine ${indent} --]
- [#if !expansion.singleTokenLookahead || expansion.requiresPredicateMethod]
+#if !expansion.singleTokenLookahead || expansion.requiresPredicateMethod
 ${is}# scanahead routine for expansion at:
 ${is}# ${expansion.location}
 ${is}# BuildScanRoutine macro
-${is}def ${expansion.scanRoutineName}(self):
+${is}def ${expansion.scanRoutineName}(self, scan_to_end):
 ${is}    # import pdb; pdb.set_trace()
+  #if expansion.hasScanLimit
+${is}    prev_passed_predicate_threshold = self.passed_predicate_threshold
+${is}    self.passed_predicate_threshold = -1
+  #else
+${is}    reached_scan_code = False
+${is}    passed_predicate_threshold = self.remaining_lookahead - ${expansion.lookaheadAmount}
+  /#if
 ${is}    try:
 ${is}        self.lookahead_routine_nesting += 1
 ${BuildPredicateCode(expansion, indent + 8)}
+  #if expansion.hasScanLimit
+${is}        reached_scan_code = True
+  /#if
 ${BuildScanCode(expansion, indent + 8)}
-${is}        return True
 ${is}    finally:
 ${is}        self.lookahead_routine_nesting -= 1
- [/#if]
+  #if expansion.hasScanLimit
+${is}    if self.remaining_lookahead <= self.passed_predicate_threshold:
+${is}        self.passed_predicate = True
+${is}        self.passed_predicate_threshold = prev_passed_predicate_threshold
+  #else
+${is}    if reached_scan_code and self.remaining_lookahead <= passed_predicate_threshold:
+${is}        self.passed_predicate = True
+  /#if
+${is}    self.passed_predicate = False
+${is}    return True
+/#if
 [#-- ${is}# DBG < BuildScanRoutine ${indent} --]
 [/#macro]
 
@@ -181,25 +200,29 @@ ${is}        self.current_lookahead_token = ${storeCurrentLookaheadVar}
 [/#macro]
 
 [#-- Build the code for checking semantic lookahead, lookbehind, and/or syntactic lookahead --]
-[#macro BuildPredicateCode expansion indent]
-[#var is=""?right_pad(indent)]
+#macro BuildPredicateCode expansion indent
+#var is=""?right_pad(indent)
 [#-- ${is}# DBG > BuildPredicateCode ${indent} --]
-[#if expansion.hasSemanticLookahead && (expansion.lookahead.semanticLookaheadNested || expansion.containingProduction.onlyForLookahead)]
+#if expansion.hasSemanticLookahead && (expansion.lookahead.semanticLookaheadNested || expansion.containingProduction.onlyForLookahead)
 ${is}if not (${globals::translateExpression(expansion.semanticLookahead)}):
 ${is}    return False
-[/#if]
-[#if expansion.hasLookBehind]
+/#if
+#if expansion.hasLookBehind
 ${is}if [#if !expansion.lookBehind.negated]not [/#if]self.${expansion.lookBehind.routineName}():
 ${is}    return False
-[/#if]
-[#if expansion.hasSeparateSyntacticLookahead]
+/#if
+#if expansion.hasSeparateSyntacticLookahead
 ${is}if self.remaining_lookahead <= 0:
-${is}    return True
-${is}if [#if !expansion.lookahead.negated]not [/#if]self.${expansion.lookaheadExpansion.scanRoutineName}():
+${is}    self.passed_predicate = True
+${is}    return not self.hit_failure
+${is}if [#if !expansion.lookahead.negated]not [/#if]self.${expansion.lookaheadExpansion.scanRoutineName}(True):
 ${is}    return False
-[/#if]
+/#if
+#if expansion.lookaheadAmount == 0
+${is}self.passed_predicate = True
+/#if
 [#-- ${is}# DBG < BuildPredicateCode ${indent} --]
-[/#macro]
+/#macro
 
 
 [#--
@@ -212,7 +235,7 @@ ${is}    return False
 [#if lookahead.nestedExpansion??]
 ${is}# lookahead routine for lookahead at:
 ${is}# ${lookahead.location}
-${is}def ${lookahead.nestedExpansion.scanRoutineName}(self):
+${is}def ${lookahead.nestedExpansion.scanRoutineName}(self, scan_to_end):
 ${is}    prev_remaining_lookahead = self.remaining_lookahead
 ${is}    prev_hit_failure = self.hit_failure
 ${is}    prev_scanahead_token = self.current_lookahead_token
@@ -283,7 +306,7 @@ ${is}    return True
 [#var is=""?right_pad(indent)]
 [#--     # DBG > BuildProductionLookaheadMethod ${indent} --]
     # BuildProductionLookaheadMethod
-    def ${production.lookaheadMethodName}(self):
+    def ${production.lookaheadMethodName}(self, scan_to_end):
         # import pdb; pdb.set_trace()
 [#if production.javaCode?? && production.javaCode.appliesInLookahead]
 ${globals::translateCodeBlock(production.javaCode, 8)}
@@ -304,8 +327,10 @@ ${BuildScanCode(production.expansion, 8)}
 [#-- ${is}# DBG > BuildScanCode ${indent} ${expansion.simpleName} --]
   [#var classname=expansion.simpleName]
   [#if classname != "ExpansionSequence" && classname != "ExpansionWithParentheses"]
-${is}if self.hit_failure or self.remaining_lookahead <= 0:
-${is}    return not self.hit_failure
+${is}if self.hit_failure:
+${is}    return False
+${is}if self.remaining_lookahead <= 0:
+${is}    return True
 ${is}# Lookahead Code for ${classname} specified at ${expansion.location}
   [/#if]
   [@CU.HandleLexicalStateChange expansion true indent; indent]
@@ -315,7 +340,7 @@ ${is}# at: ${expansion.location}
   --]
    [#if classname = "ExpansionWithParentheses"]
       [@BuildScanCode expansion.nestedExpansion indent /]
-   [#elseif expansion.singleTokenLookahead || classname="Terminal"]
+   [#elseif expansion.singleTokenLookahead]
 ${ScanSingleToken(expansion, indent)}
    [#elseif classname = "Assertion"]
 ${ScanCodeAssertion(expansion, indent)}
@@ -356,18 +381,21 @@ ${globals::translateCodeBlock(expansion, indent)}
    to scan to the end of an expansion strike me as quite useful in general,
    particularly for fault-tolerant.
 --]
-[#macro ScanCodeSequence sequence indent]
-[#var is=""?right_pad(indent)]
+#macro ScanCodeSequence sequence indent
+#var is=""?right_pad(indent)
 [#-- ${is}# DBG > ScanCodeSequence ${indent} --]
-   [#list sequence.units as sub]
+#list sequence.units as sub
        [@BuildScanCode sub indent /]
-       [#if sub.scanLimit]
-${is}if not self.scan_to_end and self.lookahead_routine_nesting == 0 and (len(self.lookahead_stack) <= 1):
-${is}    self.remaining_lookahead = ${sub.scanLimitPlus}
-       [/#if]
-   [/#list]
+  #if sub.scanLimit
+${is}if not scan_to_end and (len(self.lookahead_stack) <= 1):
+${is}    if self.lookahead_routine_nesting == 0:
+${is}        self.remaining_lookahead = ${sub.scanLimitPlus}
+${is}    elif len(self.lookahead_stack) == 1:
+${is}        self.passed_predicate_threshold = self.remaining_lookahead[#if sub.scanLimitPlus > 0] - ${sub.scanLimitPlus}[/#if]
+  /#if
+/#list
 [#-- ${is}# DBG < ScanCodeSequence ${indent} --]
-[/#macro]
+/#macro
 
 [#--
   Generates the lookahead code for a non-terminal.
@@ -378,16 +406,12 @@ ${is}    self.remaining_lookahead = ${sub.scanLimitPlus}
 [#var is=""?right_pad(indent)]
 ${is}# NonTerminal ${nt.name} at ${nt.location}
 ${is}self.push_onto_lookahead_stack('${nt.containingProduction.name}', '${nt.inputSource?j_string}', ${nt.beginLine}, ${nt.beginColumn})
-      [#var prevScanToEndVarName = "prev_scan_to_end" + CU.newID()]
-${is}${prevScanToEndVarName} = self.scan_to_end
 ${is}self.current_lookahead_production = '${nt.production.name}'
-${is}self.scan_to_end = ${CU.bool(nt.scanToEnd)}
 ${is}try:
-${is}    if not self.${nt.production.lookaheadMethodName}():
+${is}    if not self.${nt.production.lookaheadMethodName}(${CU.bool(nt.scanToEnd)}):
 ${is}        return False
 ${is}finally:
 ${is}    self.pop_lookahead_stack()
-${is}    self.scan_to_end = ${prevScanToEndVarName}
 [/#macro]
 
 [#macro ScanSingleToken expansion indent]
@@ -436,52 +460,77 @@ ${is}return False
 [#-- ${is}# DBG < ScanCodeError ${indent} --]
 [/#macro]
 
-[#macro ScanCodeChoice choice indent]
-[#var is=""?right_pad(indent)]
+#macro ScanCodeChoice choice indent
+#var is=""?right_pad(indent)
 [#-- ${is}# DBG > ScanCodeChoice ${indent} --]
 ${is}${CU.newVarName("token")} = self.current_lookahead_token
 ${is}remaining_lookahead${CU.newVarIndex} = self.remaining_lookahead
 ${is}hit_failure${CU.newVarIndex} = self.hit_failure
-  [#list choice.choices as subseq]
-${is}if not (${CheckExpansion(subseq)}):
-${is}    self.current_lookahead_token = token${CU.newVarIndex}
-${is}    self.remaining_lookahead = remaining_lookahead${CU.newVarIndex}
-${is}    self.hit_failure = hit_failure${CU.newVarIndex}
-     [#if !subseq_has_next]
-${is}    return False
-     [/#if]
+${is}passed_predicate${CU.newVarIndex} = self.passed_predicate
+${is}try:
+#list choice.choices as subseq
+${is}    self.passed_predicate = False
+${is}    if not (${CheckExpansion(subseq)}):
+${is}        self.current_lookahead_token = token${CU.newVarIndex}
+${is}        self.remaining_lookahead = remaining_lookahead${CU.newVarIndex}
+${is}        self.hit_failure = hit_failure${CU.newVarIndex}
+  #if !subseq_has_next
+${is}        return False
+  #else
+${is}        if self.passed_predicate and not self.legacy_glitchy_lookahead:
+${is}            return False
+  /#if
 [#-- bump up the indentation, as the items in the list are recursive
      levels
 --]
-[#set is = is + "    "]
-  [/#list]
+  #set is = is + "    "
+/#list
+[#list choice.choices as unused][#set is = is[4..]][/#list]
+${is}finally:
+${is}    self.passed_predicate = passed_predicate${CU.newVarIndex}
 [#-- ${is}# DBG < ScanCodeChoice ${indent} --]
-[/#macro]
+/#macro
 
-[#macro ScanCodeZeroOrOne zoo indent]
-[#var is=""?right_pad(indent)]
+#macro ScanCodeZeroOrOne zoo indent
+#var is=""?right_pad(indent)
 [#-- ${is}# DBG > ScanCodeZeroOrOne ${indent} --]
 ${is}${CU.newVarName("token")} = self.current_lookahead_token
-${is}if not (${CheckExpansion(zoo.nestedExpansion)}):
-${is}    self.current_lookahead_token = token${CU.newVarIndex}
-${is}    self.hit_failure = False
+${is}passed_predicate${CU.newVarIndex} = self.passed_predicate
+${is}self.passed_predicate = False
+${is}try:
+${is}    if not (${CheckExpansion(zoo.nestedExpansion)}):
+${is}        if self.passed_predicate and not self.legacy_glitchy_lookahead:
+${is}            return False
+${is}        self.current_lookahead_token = token${CU.newVarIndex}
+${is}        self.hit_failure = False
+${is}finally:
+${is}    self.passed_predicate = passed_predicate${CU.newVarIndex}
 [#-- ${is}# DBG < ScanCodeZeroOrOne ${indent} --]
-[/#macro]
+/#macro
 
 [#--
   Generates lookahead code for a ZeroOrMore construct]
 --]
-[#macro ScanCodeZeroOrMore zom indent]
-[#var is=""?right_pad(indent)]
+#macro ScanCodeZeroOrMore zom indent
+#var is=""?right_pad(indent)
+#var prevPassedPredicateVarName = CU.newVarName("passed_predicate")
+#var prevTokenName = CU.newVarName("token")
+${is}${prevPassedPredicateVarName} = self.passed_predicate
+${is}try:
 [#-- ${is}# DBG > ScanCodeZeroOrMore ${indent} --]
-${is}while self.remaining_lookahead > 0 and not self.hit_failure:
-${is}    ${CU.newVarName("token")} = self.current_lookahead_token
-${is}    if not (${CheckExpansion(zom.nestedExpansion)}):
-${is}        self.current_lookahead_token = token${CU.newVarIndex}
-${is}        break
-${is}    self.hit_failure = False
+${is}    while self.remaining_lookahead > 0 and not self.hit_failure:
+${is}        ${prevTokenName} = self.current_lookahead_token
+${is}        self.passed_predicate = False
+${is}        if not (${CheckExpansion(zom.nestedExpansion)}):
+${is}            if self.passed_predicate and not self.legacy_glitchy_lookahead:
+${is}                return False
+${is}            self.current_lookahead_token = ${prevTokenName}
+${is}            break
+${is}finally:
+${is}    self.passed_predicate = ${prevPassedPredicateVarName}
+${is}self.hit_failure = False
 [#-- ${is}# DBG < ScanCodeZeroOrMore ${indent} --]
-[/#macro]
+/#macro
 
 [#--
    Generates lookahead code for a OneOrMore construct
@@ -515,7 +564,7 @@ ${is}    return False--]
        [/#if]
      [/#if]
    [#else]
-      self.${expansion.scanRoutineName}()[#t]
+      self.${expansion.scanRoutineName}(False)[#t]
    [/#if]
 [/#macro]
 
