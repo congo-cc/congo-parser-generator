@@ -177,7 +177,7 @@ namespace ${csPackage} {
             parent.Set(index, this);
         }
 
-[#if settings.tokensAreNodes]
+#if settings.tokensAreNodes
         Token FirstDescendantOfType(TokenType tt) {
             for (var i = 0; i < Size; i++) {
                 var child = Get(i);
@@ -292,9 +292,16 @@ namespace ${csPackage} {
             }
         }
 
-[/#if]
+/#if
     }
 
+#if settings.faultTolerant
+    interface ParsingProblem : Node {
+        ParseException Cause { get; }
+        string ErrorMessage { get; }
+    }
+
+/#if
     public class BaseNode : Node {
         public Node Parent { get; set; }
         public int BeginOffset { get; set; }
@@ -448,6 +455,24 @@ namespace ${csPackage} {
             }
             nodeList.Add(node);
         }
+
+[#if settings.faultTolerant]
+        private bool dirty;
+
+        public bool IsDirty() {
+            return dirty;
+        }
+
+        public void SetDirty(bool value) {
+            dirty = value;
+        }
+
+[/#if]
+
+    }
+
+    public class InvalidNode : BaseNode {
+        public InvalidNode(Lexer tokenSource) : base(tokenSource) {}
     }
 
     public class Token[#if settings.treeBuildingEnabled] : Node[/#if] {
@@ -774,9 +799,9 @@ ${globals::translateTokenInjections(false)}
 
 [/#list]
 
-[#if settings.extraTokens?size > 0]
-  [#list settings.extraTokenNames as name]
-    [#var cn = settings.extraTokens[name]]
+#if settings.extraTokens?size > 0
+  #list settings.extraTokenNames as name
+    #var cn = settings.extraTokens[name]
     public class ${cn} : Token {
         public ${cn}(TokenType kind, Lexer tokenSource, int beginOffset, int endOffset) : base(kind, tokenSource, beginOffset, endOffset) {}
 
@@ -784,11 +809,28 @@ ${globals::translateTokenSubclassInjections(cn, true)}
 ${globals::translateTokenSubclassInjections(cn, false)}
     }
 
-  [/#list]
-[/#if]
+  /#list
+/#if
 
 
-    public class InvalidToken : Token {
-        public InvalidToken(Lexer tokenSource, int beginOffset, int endOffset) : base(TokenType.INVALID, tokenSource, beginOffset, endOffset) {}
+    public class InvalidToken : Token[#if settings.faultTolerant], ParsingProblem[/#if] {
+        public InvalidToken(Lexer tokenSource, int beginOffset, int endOffset) : base(TokenType.INVALID, tokenSource, beginOffset, endOffset) {
+#if settings.faultTolerant
+            SetDirty(true);
+/#if
+        }
+#if settings.faultTolerant
+
+        public ParseException Cause { get; internal set; }
+
+        private string errorMessage;
+
+        public string ErrorMessage {
+            get {
+                if (errorMessage != null) return errorMessage;
+                return "lexically invalid input"; // REVISIT
+            }
+        }
+/#if
     }
 }

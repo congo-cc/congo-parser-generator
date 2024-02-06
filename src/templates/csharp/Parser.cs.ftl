@@ -186,13 +186,10 @@ ${globals::translateParserImports()}
         public bool UnparsedTokensAreNodes { get; set; } = ${CU.bool(settings.unparsedTokensAreNodes)};
         internal NodeScope CurrentNodeScope { get; set; }
 [/#if]
-#if settings.faultTolerant
-        public bool DebugFaultTolerant { get; set; } = ${CU.bool(settings.debugFaultTolerant)};
-/#if
 #if settings.legacyGlitchyLookahead
-        private bool _legacyGlitchyLookahead = true;
+        private readonly bool _legacyGlitchyLookahead = true;
 #else
-        private bool _legacyGlitchyLookahead = false;
+        private readonly bool _legacyGlitchyLookahead = false;
 /#if
         private TokenType? _nextTokenType;
         private uint _remainingLookahead;

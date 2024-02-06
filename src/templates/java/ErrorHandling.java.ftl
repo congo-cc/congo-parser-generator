@@ -115,7 +115,6 @@ void dumpLookaheadCallStack(PrintStream ps) {
     // Are we pending a recovery routine to
     // get back on the rails?
     private boolean pendingRecovery;
-//    private boolean debugFaultTolerant = false;
 
     private java.util.List<ParsingProblem> parsingProblems = new java.util.ArrayList<>();
 
