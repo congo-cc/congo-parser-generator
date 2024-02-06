@@ -207,4 +207,10 @@
       <arg line="-u csharp_tests.py" />
     </exec>
   </target>
+
+  <target name="test-misc" depends="jar">
+    <exec executable="python3" dir="${basedir}" failonerror="true">
+      <arg line="-u misc_tests.py -v" />
+    </exec>
+  </target>
 </project>

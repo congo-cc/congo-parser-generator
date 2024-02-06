@@ -38,3 +38,4 @@ jobs:
       run: |
         ant -version
         ant full-test
+        ant test-misc
