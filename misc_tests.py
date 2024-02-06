@@ -36,6 +36,8 @@ class BaseTestCase(unittest.TestCase):
             if os.path.isdir(fn):
                 continue
             r = os.path.relpath(fn, start)
+            if os.name == 'nt':
+                r = r.replace(os.sep, '/')
             result.add(r)
         return result
 
