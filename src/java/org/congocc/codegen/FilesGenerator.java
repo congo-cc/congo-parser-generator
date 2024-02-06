@@ -97,13 +97,10 @@ public class FilesGenerator {
                     }
                     generateParser();
                 }
-                if (appSettings.getFaultTolerant() && generateRootApi) {
-                    generateInvalidNode();
-                    generateParsingProblem();
-                }
-                if (appSettings.getTreeBuildingEnabled()) {
-                    generateTreeBuildingFiles();
-                }
+                boolean wanted = appSettings.getFaultTolerant() && generateRootApi;
+                generateInvalidNode(wanted);
+                generateParsingProblem(wanted);
+                generateTreeBuildingFiles(appSettings.getTreeBuildingEnabled());
                 break;
             case "python": 
                 // Hardcoded for now, could make configurable later
@@ -147,7 +144,6 @@ public class FilesGenerator {
     }
 
     public void generate(Path outputFile) throws IOException {
-        logger.fine(String.format("Generating: %s", outputFile));
         generate(null, outputFile);
     }
 
@@ -194,6 +190,7 @@ public class FilesGenerator {
     }
 
     public void generate(String nodeName, Path outputFile) throws IOException {
+        logger.fine(String.format("Generating: %s", outputFile));
         String currentFilename = outputFile.getFileName().toString();
         String templateName = getTemplateName(currentFilename);
         Map<String, Object> dataModel = new HashMap<>();
@@ -295,18 +292,27 @@ public class FilesGenerator {
         }
     }
 
-    void generateParsingProblem() throws IOException {
-        Path outputFile = appSettings.getParserOutputDirectory().resolve("ParsingProblem.java");
-        if (regenerate(outputFile)) {
-            generate(outputFile);
+    private void generateOrDelete(String nodeName, Path outputFile, boolean wanted) throws IOException {
+        if (wanted) {
+            if (regenerate(outputFile)) {
+                generate(nodeName, outputFile);
+            }
+        }
+        else {
+            if (Files.exists(outputFile)) {
+                Files.delete(outputFile);
+            }
         }
     }
 
-    void generateInvalidNode() throws IOException {
+    void generateParsingProblem(boolean wanted) throws IOException {
+        Path outputFile = appSettings.getParserOutputDirectory().resolve("ParsingProblem.java");
+        generateOrDelete(null, outputFile, wanted);
+    }
+
+    void generateInvalidNode(boolean wanted) throws IOException {
         Path outputFile = appSettings.getNodeOutputDirectory().resolve("InvalidNode.java");
-        if (regenerate(outputFile)) {
-            generate(outputFile);
-        }
+        generateOrDelete(null, outputFile, wanted);
     }
 
     void generateToken() throws IOException {
@@ -336,11 +342,9 @@ public class FilesGenerator {
         generate(outputFile);
     }
     
-    void generateNodeFile() throws IOException {
+    void generateNodeFile(boolean wanted) throws IOException {
         Path outputFile = appSettings.getParserOutputDirectory().resolve("Node.java");
-        if (regenerate(outputFile)) {
-            generate(outputFile);
-        }
+        generateOrDelete(null, outputFile, wanted);
     }
 
     private boolean regenerate(Path file) throws IOException {
@@ -387,9 +391,9 @@ public class FilesGenerator {
  */
     }
 
-    void generateTreeBuildingFiles() throws IOException {
+    void generateTreeBuildingFiles(boolean wanted) throws IOException {
         if (generateRootApi) {
-    	    generateNodeFile();
+    	    generateNodeFile(wanted);
         }
         Map<String, Path> files = new LinkedHashMap<>();
         if (appSettings.getBaseNodeClassName().indexOf('.') == -1) {
@@ -430,7 +434,7 @@ public class FilesGenerator {
         }
         for (Map.Entry<String, Path> entry : files.entrySet()) {
             if (regenerate(entry.getValue())) {
-                generate(entry.getKey(), entry.getValue());
+                generateOrDelete(entry.getKey(), entry.getValue(), wanted);
             }
         }
     }
