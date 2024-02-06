@@ -190,15 +190,17 @@ ${globals::translateParserImports()}
         public bool DebugFaultTolerant { get; set; } = ${CU.bool(settings.debugFaultTolerant)};
 /#if
 #if settings.legacyGlitchyLookahead
-        public bool LegacyGlitchyLookahead { get; } = true;
+        private bool _legacyGlitchyLookahead = true;
 #else
-        public bool LegacyGlitchyLookahead { get; } = false;
+        private bool _legacyGlitchyLookahead = false;
 /#if
         private TokenType? _nextTokenType;
         private uint _remainingLookahead;
         private bool _hitFailure;
         private string _currentlyParsedProduction;
         private string _currentLookaheadProduction;
+        private bool _passedPredicate;
+        private int _passedPredicateThreshold = -1;
         private uint _lookaheadRoutineNesting;
 #if settings.faultTolerant
         internal ISet<TokenType> OuterFollowSet { get; private set; }
@@ -369,12 +371,32 @@ ${globals::translateParserInitializers()}
             return GetToken(n).Type;
         }
 
-        internal bool CheckNextTokenImage(string img) {
-            return TokenImage(1).Equals(img);
+        internal bool CheckNextTokenImage(string img, params string[] additionalImages) {
+            var nextImage = TokenImage(1);
+
+            if (nextImage.Equals(img)) {
+                return true;
+            }
+            foreach (var ai in additionalImages) {
+                if (nextImage.Equals(ai)) {
+                    return true;
+                }
+            }
+            return false;
         }
 
-        internal bool CheckNextTokenType(TokenType tt) {
-            return GetToken(1).Type == tt;
+        internal bool CheckNextTokenType(TokenType tt, params TokenType[] additionalTypes) {
+            var nextType = GetToken(1).Type;
+
+            if (nextType == tt) {
+                return true;
+            }
+            foreach (var at in additionalTypes) {
+                if (nextType == at) {
+                    return true;
+                }
+            }
+            return false;
         }
 
         internal TokenType NextTokenType {

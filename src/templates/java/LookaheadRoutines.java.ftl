@@ -129,14 +129,14 @@
        int prevPassedPredicateThreshold = this.passedPredicateThreshold;
        this.passedPredicateThreshold = -1;
     [#else]
-       boolean $reachedScanCode$ = false;
+       boolean reachedScanCode = false;
        int passedPredicateThreshold = remainingLookahead - ${expansion.lookaheadAmount};
     [/#if]
     try {
        lookaheadRoutineNesting++;
        ${BuildPredicateCode(expansion)}
       [#if !expansion.hasScanLimit]
-       $reachedScanCode$ = true;
+       reachedScanCode = true;
       [/#if]
        ${BuildScanCode(expansion)}
     }
@@ -148,7 +148,7 @@
          this.passedPredicateThreshold = prevPassedPredicateThreshold;
        }
    [#else]
-       if ($reachedScanCode$ && remainingLookahead <= passedPredicateThreshold) {
+       if (reachedScanCode && remainingLookahead <= passedPredicateThreshold) {
          passedPredicate = true;
        }
    [/#if]
@@ -191,29 +191,29 @@
 
 
 [#-- Build the code for checking semantic lookahead, lookbehind, and/or syntactic lookahead --]
-[#macro BuildPredicateCode expansion]
-     // BuildPredicateCode macro
-     [#if expansion.hasSemanticLookahead && (expansion.lookahead.semanticLookaheadNested || expansion.containingProduction.onlyForLookahead)]
+#macro BuildPredicateCode expansion
+    // BuildPredicateCode macro
+  #if expansion.hasSemanticLookahead && (expansion.lookahead.semanticLookaheadNested || expansion.containingProduction.onlyForLookahead)
        if (!(${expansion.semanticLookahead})) return false;
-     [/#if]
-     [#if expansion.hasLookBehind]
+  /#if
+  #if expansion.hasLookBehind
        if ([#if !expansion.lookBehind.negated]![/#if]
        ${expansion.lookBehind.routineName}()) return false;
-     [/#if]
-     [#if expansion.hasSeparateSyntacticLookahead]
-      if (remainingLookahead <=0) {
-         passedPredicate = true;
-         return !hitFailure;
-      }
-      if (
+  /#if
+  #if expansion.hasSeparateSyntacticLookahead
+       if (remainingLookahead <= 0) {
+        passedPredicate = true;
+        return !hitFailure;
+       }
+       if (
       [#if !expansion.lookahead.negated]![/#if]
         ${expansion.lookaheadExpansion.scanRoutineName}(true)) return false;
-    [/#if]
-      [#if expansion.lookaheadAmount == 0]
-         passedPredicate = true;
-      [/#if]
-     // End BuildPredicateCode macro
-[/#macro]
+  /#if
+  #if expansion.lookaheadAmount == 0
+       passedPredicate = true;
+  /#if
+    // End BuildPredicateCode macro
+/#macro
 
 
 [#--
@@ -379,8 +379,7 @@
               remainingLookahead = ${sub.scanLimitPlus};
             }
             else if (lookaheadStack.size() == 1) {
-               passedPredicateThreshold = remainingLookahead
-             [#if sub.scanLimitPlus > 0]-${sub.scanLimitPlus}[/#if];
+               passedPredicateThreshold = remainingLookahead[#if sub.scanLimitPlus > 0] - ${sub.scanLimitPlus}[/#if];
             }
          }
        [/#if]

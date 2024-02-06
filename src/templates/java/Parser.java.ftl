@@ -61,10 +61,10 @@ private ${settings.baseTokenClassName} currentLookaheadToken;
 private int remainingLookahead;
 private boolean hitFailure;
 private boolean passedPredicate;
+private int passedPredicateThreshold = -1;
 private String currentlyParsedProduction;
 private String currentLookaheadProduction;
 private int lookaheadRoutineNesting;
-private int passedPredicateThreshold = -1;
 #if settings.faultTolerant
 private EnumSet<TokenType> outerFollowSet;
 /#if

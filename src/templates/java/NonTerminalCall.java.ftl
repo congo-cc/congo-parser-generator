@@ -4,7 +4,9 @@ package ${settings.parserPackage};
 [#var BaseTokenType = settings.treeBuildingEnabled?string("? extends Node.NodeType", settings.baseTokenClassName + ".TokenType")]
 
 import java.io.PrintStream;
+#if settings.faultTolerant
 import java.util.Set;
+/#if
 
 public class NonTerminalCall {
     final TokenSource lexer;
