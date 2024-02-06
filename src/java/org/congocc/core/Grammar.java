@@ -76,8 +76,67 @@ public class Grammar extends BaseNode {
         return errors;
     }
 
+    private void convertAndSet(Map<String, Object> settings, String key, String value) {
+        if (appSettings.isABooleanSetting(key)) {
+            value = value.toLowerCase();
+            if (value.equals("true")) {
+                settings.put(key, true);
+            }
+            else if (value.equals("false")) {
+                settings.put(key, false);
+            }
+            else {
+                // Not a valid boolean value
+                // TODO warn or bail
+            }
+        }
+        else if (appSettings.isAStringSetting(key)) {
+            settings.put(key, value);
+        }
+        else if (appSettings.isAnIntegerSetting(key)) {
+            try {
+                settings.put(key, Integer.parseInt(value));
+            }
+            catch (NumberFormatException e) {
+                // Not a valid integer value
+                // TODO warn or bail
+            }
+        }
+/*
+        else {
+            // Not a known setting - ignore, as there could be other environment variables / preprocessor symbols
+            // we come across
+        }
+ */
+    }
+
+    private void addEnvironmentOverrides(Map<String, Object> settings) {
+        Map<String, String> envVars = System.getenv();
+        for (Map.Entry<String, String> entry : envVars.entrySet()) {
+            String key = entry.getKey();
+
+            if (key.startsWith("CONGOCC_")) {
+                convertAndSet(settings, key.substring(8), entry.getValue());  // after the CONGOCC_ prefix
+            }
+        }
+    }
+
+    private void addCommandLineOverrides(Map<String, Object> settings) {
+        for (Map.Entry<String, String> entry : preprocessorSymbols.entrySet()) {
+            convertAndSet(settings, entry.getKey(), entry.getValue());
+        }
+    }
+
     public void setSettings(Map<String, Object> settings) {
-        appSettings.setSettings((settings));        
+        // First, get the settings from the grammar file. Then, overwrite with any from the environment or
+        // command-line. Order of priority is grammar file < environment < command-line. For environment,
+        // look for CONGOCC_<setting name>; for command-line, look for <setting-name> in the -p argument,
+        // i.e. in the preprocessor symbols (this could be moved later to a -D setting if desired, but currently
+        // it's for internal use to facilitate testing).
+        // Sanity-checking will be done as it is now, so minimal checks are done here.
+        addEnvironmentOverrides(settings);
+        addCommandLineOverrides(settings);
+        appSettings.setSettings((settings));
         if (appSettings.getSyntheticNodesEnabled() && appSettings.getCodeLang().equals("java")) {
         	addNodeType(null, appSettings.getBaseNodeClassName());
         }
