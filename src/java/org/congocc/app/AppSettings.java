@@ -91,7 +91,19 @@ public class AppSettings {
               || stringSettings.contains("," + key + ",")
               || integerSettings.contains("," + key + ",");
     }
-    
+
+    public boolean isABooleanSetting(String key) {
+        return booleanSettings.contains("," + key + ",");
+    }
+
+    public boolean isAStringSetting(String key) {
+        return stringSettings.contains("," + key + ",");
+    }
+
+    public boolean isAnIntegerSetting(String key) {
+        return integerSettings.contains("," + key + ",");
+    }
+
     private void typeCheckSettings(Map<String, Object> settings) {
         for (String key : settings.keySet()) {
             Object value = settings.get(key);
