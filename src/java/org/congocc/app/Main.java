@@ -12,6 +12,7 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.*;
+import java.util.logging.Logger;
 import java.util.regex.*;
 
 import org.congocc.core.Grammar;
@@ -21,7 +22,7 @@ import org.congocc.core.Grammar;
  * Entry point.
  */
 public final class Main {
-
+    private static Logger logger = Logger.getLogger("congocc");
     public static final String PROG_NAME = "CongoCC Parser Generator";
     public static final String URL = "Go to https://discuss.congocc.org for more information.";
     private static String manifestContent = "", jarFileName = "congocc.jar";
@@ -164,6 +165,7 @@ public final class Main {
             checkForNewer();
             System.exit(1);
         }
+        logger.fine(String.format("CongoCC started with command line: %s", String.join(" ", args)));
         Path grammarFile = null, outputDirectory = null;
         String codeLang = "java";
         int jdkTarget = 0;
