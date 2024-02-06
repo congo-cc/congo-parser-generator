@@ -201,11 +201,12 @@ class Reaper extends Node.Visitor {
             }
         }
         for (Node n : toBeRemoved) {
-            logger.fine(String.format("removing field: %s", n.firstChildOfType(Identifier.class)));
+            logger.fine(String.format("removing field %s from declaration at %s", n.firstChildOfType(Identifier.class),
+                                      n.getLocation()));
             fd.remove(n);
         }
         if (fd.firstChildOfType(VariableDeclarator.class) == null) {
-            logger.fine(String.format("removing field declaration: %s", fd));
+            logger.fine(String.format("removing field declaration at %s", fd.getLocation()));
             fd.getParent().remove(fd);
         }
     }
