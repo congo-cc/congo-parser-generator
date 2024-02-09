@@ -70,65 +70,68 @@
    Macro to build routines that scan up to the start of an expansion
    as part of a recovery routine
 --]
-[#macro BuildRecoverRoutines]
-   [#list grammar.expansionsNeedingRecoverMethod as expansion]
-    def ${expansion.recoverMethodName}(self):
-        Token initialToken = LastConsumedToken;
+#macro BuildRecoverRoutines
+#list grammar.expansionsNeedingRecoverMethod as expansion
+    private void ${expansion.recoverMethodName}() {
+        var initialToken = LastConsumedToken;
         IList<Token> skippedTokens = new List<Token>();
-        bool success = false;
+        var success = false;
         while (LastConsumedToken.Type != TokenType.EOF) {
-[#if expansion.simpleName = "OneOrMore" || expansion.simpleName = "ZeroOrMore"]
+  #if expansion.simpleName = "OneOrMore" || expansion.simpleName = "ZeroOrMore"
             if (${ExpansionCondition(expansion.nestedExpansion)}) {
-[#else]
+  #else
             if (${ExpansionCondition(expansion)}) {
-[/#if]
+  /#if
                 success = true;
                 break;
             }
-            [#if expansion.simpleName = "ZeroOrMore" || expansion.simpleName = "OneOrMore"]
-               [#var followingExpansion = expansion.followingExpansion]
-               [#list 1..1000000 as unused]
-                [#if followingExpansion?is_null][#break][/#if]
-                [#if followingExpansion.maximumSize >0]
-                 [#if followingExpansion.simpleName = "OneOrMore" || followingExpansion.simpleName = "ZeroOrOne" || followingExpansion.simpleName = "ZeroOrMore"]
-                if (${ExpansionCondition(followingExpansion.nestedExpansion)}):
-                 [#else]
-                if (${ExpansionCondition(followingExpansion)}):
-                 [/#if]
+  #if expansion.simpleName = "ZeroOrMore" || expansion.simpleName = "OneOrMore"
+    #var followingExpansion = expansion.followingExpansion
+    #list 1..1000000 as unused
+      [#if followingExpansion?is_null][#break][/#if]
+      #if followingExpansion.maximumSize > 0
+        #if followingExpansion.simpleName = "OneOrMore" || followingExpansion.simpleName = "ZeroOrOne" || followingExpansion.simpleName = "ZeroOrMore"
+            if (${ExpansionCondition(followingExpansion.nestedExpansion)}) {
+        #else
+            if (${ExpansionCondition(followingExpansion)}) {
+        /#if
+                success = true;
+                break;
+            }
+      /#if
+      [#if !followingExpansion.possiblyEmpty][#break][/#if]
+      #if followingExpansion.followingExpansion?is_null
+            if (OuterFollowSet != null) {
+                if (OuterFollowSet.Contains(NextTokenType)) {
                     success = true;
                     break;
                 }
-                [/#if]
-                [#if !followingExpansion.possiblyEmpty][#break][/#if]
-                [#if followingExpansion.followingExpansion?is_null]
-                if (OuterFollowSet != null) {
-                    if (OuterFollowSet.Contains(NextTokenType)) {
-                        success = true;
-                        break;
-                    }
-                }
-                 [#break/]
-                [/#if]
-                [#set followingExpansion = followingExpansion.followingExpansion]
-               [/#list]
-             [/#if]
+            }
+        [#break/]
+      /#if
+      #set followingExpansion = followingExpansion.followingExpansion
+    /#list
+  /#if
             LastConsumedToken = NextToken(LastConsumedToken);
-            skippedTokens.AddLastConsumedToken);
+            skippedTokens.Add(LastConsumedToken);
+        }
         if (!success && skippedTokens.Count > 0) {
              LastConsumedToken = initialToken;
         }
         if (success && skippedTokens.Count > 0) {
-            iv = InvalidNode(self);
-            [#-- OMITTED: iv.copyLocationInfo(skippedTokens.get(0));--]
+            Node iv = new InvalidNode(tokenSource);
+            iv.CopyLocationInfo(skippedTokens[0]);
             foreach (var tok in skippedTokens) {
                 iv.Add(tok);
-                [#-- OMITTED: iv.setEndOffset(tok.getEndOffset()); --]
+                iv.EndOffset = tok.EndOffset;
             }
             PushNode(iv);
-        pendingRecovery = !success;
+        }
+        _pendingRecovery = !success;
+    }
 
-   [/#list]
-[/#macro]
+/#list
+/#macro
 
 [#macro BuildCode expansion]
 [#-- // DBG > BuildCode ${expansion.simpleName} --]
@@ -457,7 +460,7 @@ if (BuildTree) {
       } else {
    [#if settings.faultTolerant]
          CloseNodeScope(${nodeVarName}, true);
-         ${nodeVarName}.dirty = true;
+         ${nodeVarName}.SetDirty(true);
    [#else]
          ClearNodeScope();
    [/#if]
@@ -768,8 +771,8 @@ ${LHS?replace("@", "ConsumeToken(" + CU.TT + regexp.label + ")")};
     #set followSetVarName = "followSet" + CU.newID()
 HashSet<TokenType> ${followSetVarName} = null;
 if (OuterFollowSet != null) {
-    ${followSetVarName} = ${terminal.followSetVarName}.Clone();
-    ${followSetVarName}.AddAll(OuterFollowSet);
+    ${followSetVarName} = new HashSet<TokenType>(${terminal.followSetVarName});
+    ${followSetVarName}.UnionWith(OuterFollowSet);
 }
   /#if
 ${LHS?replace("@", "ConsumeToken(" + CU.TT + regexp.label + ", " + tolerant + ", " + followSetVarName + ")")};
@@ -827,29 +830,21 @@ while (true) {
 ${BuildCode(loopExpansion.nestedExpansion)}
 [#else]
 [#var initialTokenVarName = "initialToken" + CU.newID()]
-${initialTokenVarName} = LastConsumedToken;
+var ${initialTokenVarName} = LastConsumedToken;
 try {
 ${BuildCode(loopExpansion.nestedExpansion)}
 }
 catch (ParseException pe) {
     if (!IsTolerant) throw;
-    if (debugFaultTolerant) {
-        // logger.info('Handling exception. Last consumed token: %s at: %s', lastConsumedToken.image, lastConsumedToken.location)
-    }
     if (${initialTokenVarName} == LastConsumedToken) {
         LastConsumedToken = NextToken(LastConsumedToken);
         // We have to skip a token in this spot or
         // we'll be stuck in an infinite loop!
-        LastConsumedToken.skipped = true;
-        if (debugFaultTolerant) {
-            // logger.info('Skipping token %s at: %s', lastConsumedToken.image, lastConsumedToken.location)
-        }
-    }
-    if (debugFaultTolerant) {
-        // logger.info('Repeat re-sync for expansion at: ${loopExpansion.location?j_string}');
+        LastConsumedToken.SetSkipped(true);
     }
     ${loopExpansion.recoverMethodName}();
-    if (pendingRecovery) throw;
+    if (_pendingRecovery) throw;
+}
    [/#if]
 [#-- // DBG < RecoveryLoop --]
 [/#macro]
