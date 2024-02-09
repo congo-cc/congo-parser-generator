@@ -191,6 +191,12 @@ ${globals::translateParserImports()}
 #else
         private readonly bool _legacyGlitchyLookahead = false;
 /#if
+
+        // This property is for testing only
+        public bool LegacyGlitchyLookahead {
+            get { return _legacyGlitchyLookahead; }
+        }
+
         private TokenType? _nextTokenType;
         private uint _remainingLookahead;
         private bool _hitFailure;
