@@ -237,6 +237,14 @@ class BaseTestCase(unittest.TestCase):
             dp = os.path.join(wd, os.path.relpath(fn, sd))
             ensure_dir(dp)
             shutil.copy2(fn, dp)
+            # change the .NET version in the project for CI runners
+            if 'CI' in os.environ and dp.endswith('.csproj'):
+                with open(dp, encoding='utf-8') as f:
+                    s = f.read()
+                s = s.replace('net5.0', 'net7.0')
+                with open(dp, 'w', encoding='utf-8') as f:
+                    f.write(s)
+
 
         # Generate Java parser, non-glitchy
         cmd = ['java', '-jar', CONGO_JAR, '-q', '-n', 'NLA.ccc']
@@ -294,8 +302,8 @@ class BaseTestCase(unittest.TestCase):
         out = subprocess.check_output(cmd, cwd=wd).decode('utf-8').strip()
         self.assertEqual(out, 'nla-bad.txt: glitchy = true: lookahead succeeded, parse failed')
 
-        if 'CI' in os.environ:  # Temporarily don't run the tests while .NET version issues are investigated
-            return
+        # if 'CI' in os.environ:  # Temporarily don't run the tests while .NET version issues are investigated
+            # return
 
         # Generate C# parser, non-glitchy
         cmd = ['java', '-jar', CONGO_JAR, '-q', '-n', '-lang', 'csharp', 'NLA.ccc']
