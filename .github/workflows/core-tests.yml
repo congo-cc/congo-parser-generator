@@ -34,6 +34,45 @@ jobs:
       with:
         java-version: ${{ matrix.java-version }}
         distribution: 'oracle'
+    - name: Create test directories (POSIX)
+      if: ${{ matrix.os != 'windows-latest' }}
+      run: |
+        mkdir -p ~/bin ~/logs
+    - name: Create test directories (Windows)
+      if: ${{ matrix.os == 'windows-latest' }}
+      run: |
+        $dirs = "${env:USERPROFILE}/bin", "${env:USERPROFILE}/logs"
+        foreach ($d in $dirs) {
+          if (!(test-path $d)) {
+            mkdir $d
+          }
+        }
+    - name: Cache Jython (POSIX)
+      if: ${{ (matrix.os != 'windows-latest') }}
+      id: cache-jython-posix
+      uses: actions/cache@v3
+      with:
+        path: ~/bin/jython.jar
+        key: ${{ runner.os }}-jython
+    - name: Setup Jython 2.7.2 (POSIX)
+      if: ${{ (matrix.os != 'windows-latest') && (steps.cache-jython-posix.outputs.cache-hit != 'true') }}
+      run: |
+        wget https://repo1.maven.org/maven2/org/python/jython-standalone/2.7.2/jython-standalone-2.7.2.jar -O ~/bin/jython.jar
+    - name: Cache Jython (Windows)
+      if: ${{ (matrix.os == 'windows-latest') }}
+      id: cache-jython-windows
+      uses: actions/cache@v3
+      with:
+        path: ${env:USERPROFILE}/bin/jython.jar
+        key: ${{ runner.os }}-jython
+    - name: Setup Jython 2.7.2 (Windows)
+      # Windows cache check temporarily disabled, as on Windows you can't restore to the correct location
+      #if: ${{ matrix.os == 'windows-latest' && (steps.cache-jython-windows.outputs.cache-hit != 'true') }}
+      if: ${{ matrix.os == 'windows-latest' }}
+      run: |
+        $source = 'https://repo1.maven.org/maven2/org/python/jython-standalone/2.7.2/jython-standalone-2.7.2.jar'
+        $destination = "${env:USERPROFILE}/bin/jython.jar"
+        Invoke-WebRequest -Uri $source -OutFile $destination
     - name: Run core tests
       run: |
         ant -version
