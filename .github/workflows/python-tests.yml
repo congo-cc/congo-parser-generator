@@ -3,7 +3,7 @@ name: Python Generation Tests
 on:
   workflow_dispatch:
   push:
-    branches: [ main, lua-tests ]
+    branches: [ main ]
     paths:
         - '**'
         - '!**/*.md'

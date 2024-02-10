@@ -155,19 +155,19 @@ ${is}    passed_predicate_threshold = self.remaining_lookahead - ${expansion.loo
 ${is}    try:
 ${is}        self.lookahead_routine_nesting += 1
 ${BuildPredicateCode(expansion, indent + 8)}
-  #if expansion.hasScanLimit
+  #if !expansion.hasScanLimit
 ${is}        reached_scan_code = True
   /#if
 ${BuildScanCode(expansion, indent + 8)}
 ${is}    finally:
 ${is}        self.lookahead_routine_nesting -= 1
   #if expansion.hasScanLimit
-${is}    if self.remaining_lookahead <= self.passed_predicate_threshold:
-${is}        self.passed_predicate = True
-${is}        self.passed_predicate_threshold = prev_passed_predicate_threshold
+${is}        if self.remaining_lookahead <= self.passed_predicate_threshold:
+${is}            self.passed_predicate = True
+${is}            self.passed_predicate_threshold = prev_passed_predicate_threshold
   #else
-${is}    if reached_scan_code and self.remaining_lookahead <= passed_predicate_threshold:
-${is}        self.passed_predicate = True
+${is}        if reached_scan_code and self.remaining_lookahead <= passed_predicate_threshold:
+${is}            self.passed_predicate = True
   /#if
 ${is}    self.passed_predicate = False
 ${is}    return True

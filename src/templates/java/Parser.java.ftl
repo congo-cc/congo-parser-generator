@@ -142,6 +142,10 @@ public boolean isCancelled() {return cancelled;}
         token_source.setStartingPos(startingLine, startingColumn);
     }
 
+    // this method is for testing only.
+    public boolean getLegacyGlitchyLookahead() {
+        return legacyGlitchyLookahead;
+    }
 
   // If the next token is cached, it returns that
   // Otherwise, it goes to the token_source, i.e. the Lexer.

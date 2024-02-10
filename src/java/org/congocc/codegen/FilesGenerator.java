@@ -3,6 +3,7 @@ package org.congocc.codegen;
 import java.io.IOException;
 import java.io.Writer;
 import java.io.StringWriter;
+import java.lang.System;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.*;
@@ -77,11 +78,11 @@ public class FilesGenerator {
         this.appSettings = grammar.getAppSettings();
         this.codeLang = appSettings.getCodeLang();
         this.errors = grammar.getErrors();
-        this.generateRootApi = appSettings.getRootAPIPackage() == null; 
+        this.generateRootApi = appSettings.getRootAPIPackage() == null;
         this.codeInjector = grammar.getInjector();
     }
 
-    public void generateAll() throws IOException { 
+    public void generateAll() throws IOException {
         if (errors.getErrorCount() != 0) {
             throw new ParseException();
         }
@@ -102,7 +103,7 @@ public class FilesGenerator {
                 generateParsingProblem(wanted);
                 generateTreeBuildingFiles(appSettings.getTreeBuildingEnabled());
                 break;
-            case "python": 
+            case "python":
                 // Hardcoded for now, could make configurable later
                 String[] paths = new String[]{
                         "__init__.py",
@@ -119,7 +120,7 @@ public class FilesGenerator {
                     generate(outputFile);
                 }
                 break;
-            case "csharp": 
+            case "csharp":
                 // Hardcoded for now, could make configurable later
                 paths = new String[]{
                         "Utils.cs",
@@ -179,7 +180,7 @@ public class FilesGenerator {
                 if (!nonNodeNames.contains(outputFilename) && !outputFilename.equals(appSettings.getBaseTokenClassName()+".java")) {
                     result = "ASTNode.java.ftl";
                 }
-            } 
+            }
         }
         else if (codeLang.equals("csharp")) {
             if (outputFilename.endsWith(".csproj")) {
@@ -200,6 +201,7 @@ public class FilesGenerator {
         dataModel.put("isFinal", codeInjector.isFinal(nodeName));
         dataModel.put("isSealed", codeInjector.isSealed(nodeName));
         dataModel.put("isNonSealed", codeInjector.isNonSealed(nodeName));
+        dataModel.put("CI", "true".equals(System.getenv("CI")) ? true : false);
         String key = appSettings.getNodePackage() + "." + nodeName;
         Set<ObjectType> permitsList = codeInjector.getPermitsList(key);
         if (permitsList == null) {
@@ -222,7 +224,7 @@ public class FilesGenerator {
         }
         if (outputFile.getFileName().toString().endsWith(".java")) {
             outputJavaFile(code, outputFile);
-        } 
+        }
         else if (outputFile.getFileName().toString().endsWith(".cs")) {
             outputCSharpFile(code, outputFile);
         }
@@ -234,7 +236,7 @@ public class FilesGenerator {
     void outputCSharpFile(String code, Path outputFile) throws IOException {
         org.congocc.parser.csharp.ast.CompilationUnit cscu;
         Writer out = Files.newBufferedWriter(outputFile);
-        try {        
+        try {
            cscu = CongoCCParser.parseCSharpFile(outputFile.getFileName().toString(), code);
         } catch (Exception e) {
             out.write(code);
@@ -326,7 +328,7 @@ public class FilesGenerator {
             generate(outputFile);
         }
     }
-    
+
     void generateLexer() throws IOException {
         String filename = appSettings.getLexerClassName() + ".java";
         Path outputFile = appSettings.getParserOutputDirectory().resolve(filename);
@@ -341,7 +343,7 @@ public class FilesGenerator {
         Path outputFile = appSettings.getParserOutputDirectory().resolve(filename);
         generate(outputFile);
     }
-    
+
     void generateNodeFile(boolean wanted) throws IOException {
         Path outputFile = appSettings.getParserOutputDirectory().resolve("Node.java");
         generateOrDelete(null, outputFile, wanted);

@@ -179,10 +179,11 @@ def test_grammar(gdata, options):
     # Run congocc to create the C# lexer and parser
 
     if lang == 'csharp':
-        cmd = ['java', '-jar', 'congocc.jar', '-n', '-q', '-lang', 'csharp', '-d', 'cs-csharpparser/ppline', pf]
+        p = os.path.join(dd, 'cs-csharpparser', 'ppline')
+        cmd = ['java', '-jar', 'congocc.jar', '-n', '-q', '-lang', 'csharp', '-d', p, pf]
         p = run_command(cmd)
         if p.returncode:
-            raise ValueError('Preprocessor generation in Python failed')
+            raise ValueError('Preprocessor generation in C# failed')
     cmd = ['java', '-jar', 'congocc.jar', '-n', '-q', '-lang', 'csharp', gf]
     p = run_command(cmd)
     if p.returncode:

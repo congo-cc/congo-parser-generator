@@ -1,0 +1,23 @@
+PARSER_PACKAGE=nla_test;
+TREE_BUILDING_ENABLED=false;
+BASE_NAME="Test";
+
+INJECT TestParser :
+{
+    public String lookahead_status;
+    public String parse_status;
+}
+
+SKIP : " " ;
+
+NestedChoice :
+   SCAN 2 "foo" "bar" "baz"
+   |
+   "foo"
+;
+
+Root :
+    SCAN NestedChoice => {lookahead_status = "lookahead succeeded";} NestedChoice
+    |
+    {lookahead_status = "lookahead failed";}
+;
