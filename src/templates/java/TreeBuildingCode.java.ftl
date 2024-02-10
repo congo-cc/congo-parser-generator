@@ -106,6 +106,9 @@
 	 * children.  That number of nodes are popped from the stack and
 	 * made the children of the definite node.  Then the definite node
 	 * is pushed on to the stack.
+	 * @param n is the node whose scope is being closed
+	 * @param num is the number of child nodes to pop as children
+	 * @return @{code true} 
 	 */
     private boolean closeNodeScope(Node n, int num) {
         n.setBeginOffset(lastConsumedToken.getEndOffset());
