@@ -28,6 +28,7 @@ def ensure_dir(p):
 
 
 def run_command(cmd, **kwargs):
+    kwargs.setdefault('check', True)
     logger.debug('Running: %s', ' '.join(cmd))
     return subprocess.run(cmd, **kwargs)
 
@@ -64,7 +65,6 @@ class BaseTestCase(unittest.TestCase):
         # First, generate set of files
         cmd = ['java', '-jar', CONGO_JAR, '-q', '-n', 'Lua.ccc']
         p = run_command(cmd, cwd=wd)
-        self.assertEqual(p.returncode, 0)
         start = os.path.join(wd, 'org', 'parsers', 'lua')
         actual = self.collect_files(start)
         expected = {
@@ -142,7 +142,6 @@ class BaseTestCase(unittest.TestCase):
         # Now, run the same command but in fault-tolerant mode
         cmd[-1:-1] = ['-p', 'FAULT_TOLERANT=true']
         p = run_command(cmd, cwd=wd)
-        self.assertEqual(p.returncode, 0)
         actual = self.collect_files(start)
         expected2 = {
             'ast/AdditiveExpression.java',
@@ -222,7 +221,6 @@ class BaseTestCase(unittest.TestCase):
         # remove the fault tolerant spec
         cmd[-3:-1] = []
         p = run_command(cmd, cwd=wd)
-        self.assertEqual(p.returncode, 0)
         actual = self.collect_files(start)
         self.assertEqual(actual, expected)  # back to the original set
 
@@ -245,99 +243,73 @@ class BaseTestCase(unittest.TestCase):
                 with open(dp, 'w', encoding='utf-8') as f:
                     f.write(s)
 
+        GOOD = 'nla-good.txt: glitchy = false: lookahead succeeded, parse succeeded'
+        BAD = 'nla-bad.txt: glitchy = false: lookahead failed, parse succeeded'
+        GLITCHY_GOOD = 'nla-good.txt: glitchy = true: lookahead succeeded, parse succeeded'
+        GLITCHY_BAD = 'nla-bad.txt: glitchy = true: lookahead succeeded, parse failed'
+
+        def run_tester(cmd, glitchy):
+            good = GLITCHY_GOOD if glitchy else GOOD
+            bad = GLITCHY_BAD if glitchy else BAD
+            cmd = cmd.split()
+            cmd.append('nla-good.txt')
+            out = subprocess.check_output(cmd, cwd=wd).decode('utf-8').strip()
+            self.assertEqual(out, good)
+            cmd[-1] = 'nla-bad.txt'
+            out = subprocess.check_output(cmd, cwd=wd).decode('utf-8').strip()
+            self.assertEqual(out, bad)
 
         # Generate Java parser, non-glitchy
         cmd = ['java', '-jar', CONGO_JAR, '-q', '-n', 'NLA.ccc']
         p = run_command(cmd, cwd=wd)
-        self.assertEqual(p.returncode, 0)
         # Compile the files
         cmd = 'javac nla_test/TestParser.java Tester.java'.split()
         p = run_command(cmd, cwd=wd)
-        self.assertEqual(p.returncode, 0)
         # Run the tests with the Java parser
-        cmd = 'java Tester nla-good.txt'.split()
-        out = subprocess.check_output(cmd, cwd=wd).decode('utf-8').strip()
-        self.assertEqual(out, 'nla-good.txt: glitchy = false: lookahead succeeded, parse succeeded')
-        cmd = 'java Tester nla-bad.txt'.split()
-        out = subprocess.check_output(cmd, cwd=wd).decode('utf-8').strip()
-        self.assertEqual(out, 'nla-bad.txt: glitchy = false: lookahead failed, parse succeeded')
+        run_tester('java Tester', False)
 
         # Generate Java parser, glitchy
         cmd = ['java', '-jar', CONGO_JAR, '-q', '-n', '-p', 'LEGACY_GLITCHY_LOOKAHEAD=true', 'NLA.ccc']
         p = run_command(cmd, cwd=wd)
-        self.assertEqual(p.returncode, 0)
         # Compile the files (no need to recompile the tester)
         cmd = 'javac nla_test/TestParser.java'.split()
         p = run_command(cmd, cwd=wd)
-        self.assertEqual(p.returncode, 0)
         # Run the tests with the Java parser
-        cmd = 'java Tester nla-good.txt'.split()
-        out = subprocess.check_output(cmd, cwd=wd).decode('utf-8').strip()
-        self.assertEqual(out, 'nla-good.txt: glitchy = true: lookahead succeeded, parse succeeded')
-        cmd = 'java Tester nla-bad.txt'.split()
-        out = subprocess.check_output(cmd, cwd=wd).decode('utf-8').strip()
-        self.assertEqual(out, 'nla-bad.txt: glitchy = true: lookahead succeeded, parse failed')
+        run_tester('java Tester', True)
 
         # Generate Python parser, non-glitchy
         cmd = ['java', '-jar', CONGO_JAR, '-q', '-n', '-lang', 'python', 'NLA.ccc']
         p = run_command(cmd, cwd=wd)
-        self.assertEqual(p.returncode, 0)
         # Run the tests with the Python parser
-        cmd = 'python3 tester.py nla-good.txt'.split()
-        out = subprocess.check_output(cmd, cwd=wd).decode('utf-8').strip()
-        self.assertEqual(out, 'nla-good.txt: glitchy = false: lookahead succeeded, parse succeeded')
-        cmd = 'python3 tester.py nla-bad.txt'.split()
-        out = subprocess.check_output(cmd, cwd=wd).decode('utf-8').strip()
-        self.assertEqual(out, 'nla-bad.txt: glitchy = false: lookahead failed, parse succeeded')
+        run_tester('python3 tester.py', False)
 
         # Generate Python parser, glitchy
         cmd = ['java', '-jar', CONGO_JAR, '-q', '-n', '-p', 'LEGACY_GLITCHY_LOOKAHEAD=true', '-lang', 'python', 'NLA.ccc']
         p = run_command(cmd, cwd=wd)
-        self.assertEqual(p.returncode, 0)
         # Run the tests with the Python parser
-        cmd = 'python3 tester.py nla-good.txt'.split()
-        out = subprocess.check_output(cmd, cwd=wd).decode('utf-8').strip()
-        self.assertEqual(out, 'nla-good.txt: glitchy = true: lookahead succeeded, parse succeeded')
-        cmd = 'python3 tester.py nla-bad.txt'.split()
-        out = subprocess.check_output(cmd, cwd=wd).decode('utf-8').strip()
-        self.assertEqual(out, 'nla-bad.txt: glitchy = true: lookahead succeeded, parse failed')
-
-        # if 'CI' in os.environ:  # Temporarily don't run the tests while .NET version issues are investigated
-            # return
+        run_tester('python3 tester.py', True)
 
         # Generate C# parser, non-glitchy
         cmd = ['java', '-jar', CONGO_JAR, '-q', '-n', '-lang', 'csharp', 'NLA.ccc']
         p = run_command(cmd, cwd=wd)
-        self.assertEqual(p.returncode, 0)
         # Compile the files
         td = os.path.join(wd, 'cs-tester')
         tester = os.path.join(td, 'bin', 'tester')
-        cmd = 'dotnet build -o bin -v quiet --nologo'.split()
-        p = run_command(cmd, cwd=td)
-        self.assertEqual(p.returncode, 0)
+        cmd = 'dotnet build -o bin -v quiet --nologo -property:WarningLevel=0'.split()
+        p = run_command(cmd, cwd=td, stdout=subprocess.PIPE, stderr=subprocess.STDOUT)
 
         # Run the tests with the C# parser
-        cmd = [tester, 'nla-good.txt']
-        out = subprocess.check_output(cmd, cwd=wd).decode('utf-8').strip()
-        self.assertEqual(out, 'nla-good.txt: glitchy = false: lookahead succeeded, parse succeeded')
-        cmd = [tester, 'nla-bad.txt']
-        out = subprocess.check_output(cmd, cwd=wd).decode('utf-8').strip()
-        self.assertEqual(out, 'nla-bad.txt: glitchy = false: lookahead failed, parse succeeded')
+        run_tester(tester, False)
 
         # Generate C# parser, glitchy
         cmd = ['java', '-jar', CONGO_JAR, '-q', '-n', '-p', 'LEGACY_GLITCHY_LOOKAHEAD=true', '-lang', 'csharp', 'NLA.ccc']
         p = run_command(cmd, cwd=wd)
-        self.assertEqual(p.returncode, 0)
         # Compile the files
-        cmd = 'dotnet build -o bin -v quiet --nologo'.split()
-        p = run_command(cmd, cwd=td)
-        self.assertEqual(p.returncode, 0)        # Run the tests with the C# parser
-        cmd = [tester, 'nla-good.txt']
-        out = subprocess.check_output(cmd, cwd=wd).decode('utf-8').strip()
-        self.assertEqual(out, 'nla-good.txt: glitchy = true: lookahead succeeded, parse succeeded')
-        cmd = [tester, 'nla-bad.txt']
-        out = subprocess.check_output(cmd, cwd=wd).decode('utf-8').strip()
-        self.assertEqual(out, 'nla-bad.txt: glitchy = true: lookahead succeeded, parse failed')
+        cmd = 'dotnet build -o bin -v quiet --nologo -property:WarningLevel=0'.split()
+        p = run_command(cmd, cwd=td, stdout=subprocess.PIPE, stderr=subprocess.STDOUT)
+        # Run the tests with the C# parser
+        run_tester(tester, True)
+
 
 def process(options):
     unittest.main()

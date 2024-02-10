@@ -201,7 +201,7 @@ public class FilesGenerator {
         dataModel.put("isFinal", codeInjector.isFinal(nodeName));
         dataModel.put("isSealed", codeInjector.isSealed(nodeName));
         dataModel.put("isNonSealed", codeInjector.isNonSealed(nodeName));
-        dataModel.put("CI", "true".equals(System.getenv("CI")) ? true : false);
+        dataModel.put("CI", "true".equals(System.getenv("CI")));
         String key = appSettings.getNodePackage() + "." + nodeName;
         Set<ObjectType> permitsList = codeInjector.getPermitsList(key);
         if (permitsList == null) {
