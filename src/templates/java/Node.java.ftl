@@ -873,6 +873,7 @@ public interface Node extends List<Node> {
          * @param node the Node to "visit"
 		 */
 		public final void visit(Node node) {
+            if (node == null) return;
 			Method visitMethod = getVisitMethod(node);
 			if (visitMethod == DUMMY_METHOD) {
 				recurse(node);
@@ -893,10 +894,12 @@ public interface Node extends List<Node> {
          * Just recurses over (i.e. visits) the node's children
          * @param node the node we are traversing
          */
-		public void recurse(Node node) {
-            for (Node child : node.children(visitUnparsedTokens)) {
-                visit(child);
+        public void recurse(Node node) {
+            if (node != null) {
+                for (Node child : node.children(visitUnparsedTokens)) {
+                    visit(child);
+                }
             }
-		}
+        }
     }
 }
