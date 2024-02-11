@@ -71,12 +71,12 @@ public interface Node extends List<Node> {
     default NodeType getType() { return null; }
 
     /** Life-cycle hook method called after the node has been made the current
-	 *  node
-	 */
+     *  node
+     */
     default void open() {}
 
-  	/**
-  	 * Life-cycle hook method called after all the child nodes have been
+    /**
+     * Life-cycle hook method called after all the child nodes have been
      * added.
      */
     default void close() {}
@@ -310,7 +310,7 @@ public interface Node extends List<Node> {
       }
 
       default public List<? extends TerminalNode> getAllTokens(boolean includeCommentTokens) {
-		List<TerminalNode> result = new ArrayList<>();
+        List<TerminalNode> result = new ArrayList<>();
         for (Node child : this) {
             if (child instanceof TerminalNode) {
                 TerminalNode tn = (TerminalNode) child;
@@ -813,7 +813,7 @@ public interface Node extends List<Node> {
         clearChildren();
     }
 
- 	static abstract public class Visitor {
+    static abstract public class Visitor {
         private static Map<Class<? extends Node.Visitor>, Map<Class<? extends Node>, Method>> mapLookup;
         private static final Method DUMMY_METHOD;
         static {
@@ -833,15 +833,15 @@ public interface Node extends List<Node> {
         }
         protected boolean visitUnparsedTokens;
 
-		private Method getVisitMethod(Node node) {
-			Class<? extends Node> nodeClass = node.getClass();
+        private Method getVisitMethod(Node node) {
+            Class<? extends Node> nodeClass = node.getClass();
             Method method = methodCache.get(nodeClass);
             if (method == null) {
                 method = getVisitMethodImpl(nodeClass);
                 methodCache.put(nodeClass, method);
             }
             return method;
-		}
+        }
 
         // Find handler method for this node type. If there is none,
         // it checks for a handler for any explicitly marked interfaces
@@ -867,28 +867,28 @@ public interface Node extends List<Node> {
             return getVisitMethodImpl(nodeClass.getSuperclass());
         }
 
-		/**
-		 * Tries to invoke (via reflection) the appropriate visit(...) method
-		 * defined in a subclass. If there is none, it just calls the recurse() routine.
+        /**
+         * Tries to invoke (via reflection) the appropriate visit(...) method
+         * defined in a subclass. If there is none, it just calls the recurse() routine.
          * @param node the Node to "visit"
-		 */
-		public final void visit(Node node) {
+         */
+        public final void visit(Node node) {
             if (node == null) return;
-			Method visitMethod = getVisitMethod(node);
-			if (visitMethod == DUMMY_METHOD) {
-				recurse(node);
-			} else try {
-				visitMethod.invoke(this, node);
-			} catch (InvocationTargetException ite) {
-	    		Throwable cause = ite.getCause();
-	    		if (cause instanceof RuntimeException) {
-	    			throw (RuntimeException) cause;
-	    		}
-	    		throw new RuntimeException(ite);
-	 		} catch (IllegalAccessException iae) {
-	 			throw new RuntimeException(iae);
-	 		}
-		}
+            Method visitMethod = getVisitMethod(node);
+            if (visitMethod == DUMMY_METHOD) {
+                recurse(node);
+            } else try {
+                visitMethod.invoke(this, node);
+            } catch (InvocationTargetException ite) {
+                Throwable cause = ite.getCause();
+                if (cause instanceof RuntimeException) {
+                    throw (RuntimeException) cause;
+                }
+                throw new RuntimeException(ite);
+            } catch (IllegalAccessException iae) {
+                throw new RuntimeException(iae);
+            }
+        }
 
         /**
          * Just recurses over (i.e. visits) the node's children
