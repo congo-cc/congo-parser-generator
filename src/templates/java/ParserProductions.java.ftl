@@ -289,11 +289,23 @@
                   [#-- It's not a JTB tree but it is a syntactic node with a LHS assignment, so use the BASE_NODE type --][#-- (jb) is there a reason to use the syntactic type always?  Perhaps, but I can't think of one. --]
                   #set nodeName = settings.baseNodeClassName
                /#if
-               #-- Make a new node to wrap the current expansion with the expansion's assignment. --
+               #-- Make a new node to wrap the current expansion with the expansion's assignment. -- 
+               #-- Default to a definite node --
+               #var gtNode = false
+               #var condition = null
+               #var initialShorthand = null
+               #if nodeName == "ZeroOrOne" ||
+                   nodeName == "ZeroOrMore"
+                  #-- Generate an optional node only if at least one child node --
+                  #set gtNode = true
+                  #set condition = "0"
+                  #set initialShorthand = " > "
+               /#if
                #set treeNodeBehavior = {
                                           'nodeName' : nodeName,
-                                          'condition' : null,
-                                          'gtNode' : false,
+                                          'condition' : condition,
+                                          'gtNode' : gtNode,
+                                          'initialShorthand' : initialShorthand,
                                           'void' : false,
                                           'assignment' : expansion.assignment
                                        }
@@ -313,6 +325,9 @@
          #if treeNodeBehavior.assignment.declarationOf
             ${injectDeclaration(treeNodeBehavior.nodeName, treeNodeBehavior.assignment.name, treeNodeBehavior.assignment)}
          /#if
+         #if jtbParseTree
+           #exec grammar.errors::addWarning(currentProduction, "Attempt to assign " + nodeName + " in production node " + currentProduction.name + " but it is an implicit JTB syntactic node.")
+         /#if 
       #elseif jtbParseTree &&
               expansion.parent.simpleName != "ExpansionWithParentheses" &&
               isProductionInstantiatingNode(currentProduction)
@@ -320,7 +335,7 @@
          #if nodeName??
             #-- Determine the node name depending on syntactic type --
             #var nodeFieldName = imputedJtbFieldName(nodeName) [#-- Among other things this injects the node field into the generated node if result is non-nullv--]
-            #-- Default to always produce a node even if no child nodes --
+            #-- Default to a definite node --
             #var gtNode = false
             #var condition = null
             #var initialShorthand = null
