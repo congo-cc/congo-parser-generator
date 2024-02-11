@@ -162,10 +162,12 @@ public class CSharpFormatter extends Node.Visitor {
             }
             else if (precedingChar == ')') {
                 Node parent = kw.getParent();
+                String s;
                 boolean space = (parent instanceof BreakStatement || parent instanceof ContinueStatement ||
                                  parent instanceof TypeParameterConstraint || parent instanceof ReturnStatement ||
                                  parent instanceof This ||
-                                 kw.toString().equals("is"));
+                                 (s = kw.toString()).equals("is") ||
+                                 s.equals("throw"));
 
                 if (space) {
                     buffer.append(' ');
@@ -182,7 +184,7 @@ public class CSharpFormatter extends Node.Visitor {
     void visit(Identifier id) {
         if (buffer.length() > 0) {
             int precedingChar = buffer.codePointBefore(buffer.length());
-            if (Character.isLetterOrDigit(precedingChar) || precedingChar=='}') {
+            if (Character.isLetterOrDigit(precedingChar) || precedingChar == '}' || precedingChar == ')') {
                 buffer.append(' ');
             }
         }

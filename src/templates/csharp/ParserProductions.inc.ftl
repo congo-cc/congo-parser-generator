@@ -40,6 +40,7 @@
    [/#if]
 [/#list]
 [#if settings.faultTolerant]
+
   [@BuildRecoverRoutines /]
 [/#if]
 [/#macro]

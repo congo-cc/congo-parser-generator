@@ -946,7 +946,7 @@ ${globals::translateLexerInitializers()}
         }
 
 [#if lexerData.hasLexicalStateTransitions]
-        bool DoLexicalStateSwitch(TokenType tokenType) {
+        internal bool DoLexicalStateSwitch(TokenType tokenType) {
             if (!tokenTypeToLexicalStateMap.ContainsKey(tokenType)) {
                 return false;
             }

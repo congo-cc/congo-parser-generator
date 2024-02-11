@@ -171,10 +171,13 @@ private bool ${expansion.scanRoutineName}(bool scanToEnd) {
 // ${expansion.parent.location}
 // BuildAssertionRoutine macro
 private bool ${expansion.scanRoutineName}() {
-[#var storeCurrentLookaheadVar = CU.newVarName("currentLookahead")]
+[#var storeCurrentLookaheadVar = CU.newVarName("currentLookahead")
+      storeRemainingLookahead = CU.newVarName("remainingLookahead")]
+[#set newVarIndex = 0 in CU]
+    var ${storeRemainingLookahead} = _remainingLookahead;
     _remainingLookahead = UNLIMITED;
-    ScanToEnd = true;
-    Token ${storeCurrentLookaheadVar} = currentLookaheadToken;
+    var ${storeCurrentLookaheadVar} = currentLookaheadToken;
+    var prevHitFailure = _hitFailure;
     if (currentLookaheadToken == null) {
         currentLookaheadToken = LastConsumedToken;
     }
@@ -186,6 +189,8 @@ ${BuildScanCode(expansion, indent + 4)}
     finally {
         _lookaheadRoutineNesting--;
         currentLookaheadToken = ${storeCurrentLookaheadVar};
+        _remainingLookahead = ${storeRemainingLookahead};
+        _hitFailure = prevHitFailure;
     }
 }
 [/#macro]

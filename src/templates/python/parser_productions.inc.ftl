@@ -131,23 +131,22 @@ ${is}        self.pending_recovery = not success
    [/#list]
 [/#macro]
 
-[#macro BuildCode expansion indent]
-[#var is = ""?right_pad(indent)]
+#macro BuildCode expansion indent
+#var is = ""?right_pad(indent)
 [#--${is}# DBG > BuildCode ${indent} ${expansion.simpleName} --]
-   [#if expansion.simpleName != "ExpansionSequence" && expansion.simpleName != "ExpansionWithParentheses"]
+#if expansion.simpleName != "ExpansionSequence" && expansion.simpleName != "ExpansionWithParentheses"
 ${is}# Code for ${expansion.simpleName} specified at ${expansion.location}
-   [/#if]
-   [@CU.HandleLexicalStateChange expansion false indent; indent]
-      [#if settings.faultTolerant && expansion.requiresRecoverMethod && !expansion.possiblyEmpty]
-${""?right_pad(indent)}if self.pending_recovery:
-${""?right_pad(indent)}    #   if self.debug_fault_tolerant:
-${""?right_pad(indent)}    #       logger.info('Re-synching to expansion at: ${expansion.location?j_string}')
-${""?right_pad(indent)}    self.${expansion.recoverMethodName}()
-      [/#if]
-      [@BuildExpansionCode expansion indent/]
-   [/@CU.HandleLexicalStateChange][#rt]
+/#if
+[@CU.HandleLexicalStateChange expansion false indent; indent]
+  #if settings.faultTolerant && expansion.requiresRecoverMethod && !expansion.possiblyEmpty
+    [#var is = ""?right_pad(indent)][#-- needed for when passed as nested content --]
+${is}if self.pending_recovery:
+${is}    self.${expansion.recoverMethodName}()
+  /#if
+  [@BuildExpansionCode expansion indent/]
+[/@CU.HandleLexicalStateChange][#rt]
 [#--${is}# DBG < BuildCode ${indent} ${expansion.simpleName} --]
-[/#macro]
+/#macro
 
 [#macro TreeBuildingAndRecovery expansion indent]
 [#var is = ""?right_pad(indent)]
@@ -189,7 +188,7 @@ ${is}${parseExceptionVar} = None
 ${is}${callStackSizeVar} = len(self.parsing_stack)
 ${is}try:
 ${is}    pass  # in case there's nothing else in the try clause!
-[#nested indent+4]
+[#nested indent + 4]
 ${is}except ParseException as ${exceptionVar()}:
 ${is}    ${parseExceptionVar} = ${exceptionVar()}
       [#if !canRecover]
@@ -273,7 +272,7 @@ ${is}    self.restore_call_stack(${callStackSizeVar})
                   [#-- It's not a JTB tree, so use the BASE_NODE type for type for assignment rather than syntactic type --][#-- (jb) is there a reason to use the syntactic type always?  Perhaps, but I can't think of one. --]
                #set nodeName = settings.baseNodeClassName
                /#if
-               #-- Make a new node to wrap the current expansion with the expansion's assignment. -- 
+               #-- Make a new node to wrap the current expansion with the expansion's assignment. --
                #-- Default to a definite node --
                #var gtNode = false
                #var condition = null
@@ -311,7 +310,7 @@ ${injectDeclaration(treeNodeBehavior.nodeName, treeNodeBehavior.assignment.name,
          [/#if]
          #if jtbParseTree
            #exec grammar.errors::addWarning(currentProduction, "Attempt to assign " + nodeName + " in production node " + currentProduction.name + " but it is an implicit JTB syntactic node.")
-         /#if 
+         /#if
       [#elseif jtbParseTree && expansion.parent.simpleName != "ExpansionWithParentheses" && isProductionInstantiatingNode(currentProduction)]
          [#-- No in-line definite node annotation; synthesize a parser node for the expansion type being built, if needed. --]
          [#if nodeName??]
