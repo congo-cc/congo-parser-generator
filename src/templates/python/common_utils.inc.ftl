@@ -91,7 +91,7 @@ ${prefix}${newID()}[#rt]
 ${is}${prevLexicalStateVar} = self.token_source.lexical_state
 ${is}self.token_source.reset(${resetToken}, LexicalState.${expansion.specifiedLexicalState})
 ${is}try:
-  [#nested indent + 4 /]
+[#nested indent + 4 /]
 ${is}finally:
 ${is}    if ${prevLexicalStateVar} != LexicalState.${expansion.specifiedLexicalState}:
 ${is}        if ${resetToken}.next:
@@ -124,14 +124,14 @@ ${is}    ${tokenName}[#if tokenName_has_next],[/#if]
 ${is})
 [/#if]
 ${is}try:
-  [#nested indent + 4 /]
+  [#nested indent + 4]
 ${is}finally:
 ${is}    self.token_source.active_token_types = ${prevActives}
 ${is}    if ${somethingChanged}:
 ${is}        self.token_source.reset(${resetToken})
 ${is}        self._next_token_type = None
 [#else]
-  [#nested indent /]
+  [#nested indent]
 [/#if]
 [#-- ${is}# DBG < HandleLexicalStateChange ${indent} ${expansion.simpleName} --]
 [/#macro]

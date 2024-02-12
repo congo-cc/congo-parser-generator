@@ -183,10 +183,13 @@ ${is}# ${expansion.parent.location}
 ${is}# BuildAssertionRoutine macro
 ${is}def ${expansion.scanRoutineName}(self):
 ${is}    # import pdb; pdb.set_trace()
-[#var storeCurrentLookaheadVar = CU.newVarName("currentLookahead")]
+  [#var storeCurrentLookaheadVar = CU.newVarName("currentLookahead")
+        storeRemainingLookahead = CU.newVarName("remainingLookahead")]
+  [#set newVarIndex = 0 in CU]
+${is}    ${storeRemainingLookahead} = self.remaining_lookahead
 ${is}    self.remaining_lookahead = UNLIMITED
-${is}    self.scan_to_end = True
 ${is}    ${storeCurrentLookaheadVar} = self.current_lookahead_token
+${is}    prev_hit_failure = self.hit_failure
 ${is}    if self.current_lookahead_token is None:
 ${is}        self.current_lookahead_token = self.last_consumed_token
 ${is}    try:
@@ -196,6 +199,8 @@ ${is}        return True
 ${is}    finally:
 ${is}        self.lookahead_routine_nesting -= 1
 ${is}        self.current_lookahead_token = ${storeCurrentLookaheadVar}
+${is}        self.remaining_lookahead = ${storeRemainingLookahead}
+${is}        self.hit_failure = prev_hit_failure
 [#-- ${is}# DBG < BuildAssertionRoutine ${indent} --]
 [/#macro]
 

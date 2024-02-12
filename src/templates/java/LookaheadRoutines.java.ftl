@@ -175,20 +175,19 @@
        if (currentLookaheadToken == null) {
           currentLookaheadToken = lastConsumedToken;
        }
-    try {
-      lookaheadRoutineNesting++;
-      ${BuildScanCode(expansion)}
-      return true;
+       try {
+          lookaheadRoutineNesting++;
+          ${BuildScanCode(expansion)}
+          return true;
+       }
+       finally {
+          lookaheadRoutineNesting--;
+          currentLookaheadToken = ${storeCurrentLookaheadVar};
+          remainingLookahead = ${storeRemainingLookahead};
+          hitFailure = prevHitFailure;
+       }
     }
-    finally {
-       lookaheadRoutineNesting--;
-       currentLookaheadToken = ${storeCurrentLookaheadVar};
-       remainingLookahead = ${storeRemainingLookahead};
-       hitFailure = prevHitFailure;
-    }
-  }
 [/#macro]
-
 
 [#-- Build the code for checking semantic lookahead, lookbehind, and/or syntactic lookahead --]
 #macro BuildPredicateCode expansion
