@@ -269,7 +269,8 @@
       #set isProduction = true
    #else
       #var nodeName = syntacticNodeName(expansion) [#-- This maps ExpansionSequence containing more than one syntax element to "Sequence", otherwise to the element itself --]
-      #if !treeNodeBehavior?? && expansion.assignment??
+      #if !treeNodeBehavior?? && 
+          expansion.assignment??
          #if syntheticNodesEnabled && isProductionInstantiatingNode(expansion)
             #-- Assignment is explicitly provided and synthetic nodes are enabled --
             [#-- NOTE: An explicit assignment will take precedence over a synthetic JTB node.
