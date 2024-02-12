@@ -766,8 +766,7 @@
         expressedLHS = getLhsPattern(nonterminal.assignment,lhsClassName),
         impliedLHS = "@"
    #if jtbParseTree && isProductionInstantiatingNode(nonterminal.production) && topLevelExpansion
-      #var newName = imputedJtbFieldName(nonterminal.production.nodeName)
-      #set impliedLHS = globals::translateIdentifier("THIS_PRODUCTION") + "." + newName + " = @"
+      #set impliedLHS = globals::translateIdentifier("THIS_PRODUCTION") + "." + imputedJtbFieldName(nonterminal.production.nodeName) + " = @"
    /#if
    #-- Accept the non-terminal expansion --
    #if nonterminal.production.returnType != "void" && expressedLHS != "@" && !nonterminal.assignment.namedAssignment && !nonterminal.assignment.propertyAssignment
