@@ -1,71 +1,115 @@
 package org.congocc.codegen.python;
 
+import java.util.List;
+import java.util.regex.Pattern;
+
 import org.congocc.parser.Node;
-import org.congocc.parser.python.PythonToken;
 import org.congocc.parser.python.ast.*;
 
-public class PythonFormatter extends Node.Visitor {
-    {this.visitUnparsedTokens = true;}
-
+public class PythonFormatter {
+    private final Module module;
     private static final String defaultIndent = "    ";
     private String currentIndent = "";
+    private int indentLevel;
+    private int lineNumber;
     private StringBuilder buffer;
+    private final Pattern newLines = Pattern.compile("\\n{3,10000}");
 
-//    private EnumSet<TokenType> alwaysPrependSpace = EnumSet.of(AND, AS, FOR, IMPORT, LAMBDA, NOT, OR, 
-//                                                               IN, IF, ELSE, ELIF, IS, WHILE);
-//    private EnumSet<TokenType> alwaysAppendSpace = EnumSet.of(AND, AS, DEF, EXCEPT, FOR, LAMBDA, OR, 
-//                                                              EQ, CLASS, COMMA, FROM, IN, IS, IF, 
-//                                                              ELSE, ELIF, IMPORT, NOT, RETURN, 
-//                                                              WHILE, WITH);
+    public PythonFormatter(Module module) {
+        this.module = module;
+    }
 
+    protected void outputNode(Node node) {
+        List<Node> kids = node.children();
+        List<Node> grandKids;
+        String s;
+        int so, eo;
 
-    protected String indent(String current, String indent, int level) {
-        StringBuilder result = new StringBuilder();
-
-        result.append(current);
-        for (int i = 0; i < level; i++) {
-            result.append(indent);
+        if (kids.isEmpty()) {
+            // Normally, just the EOF token appears here
+            s = node.toString();
+            if (!s.isEmpty()) {
+                buffer.append(s);
+            }
         }
-        return result.toString();
+        else {
+            for (Node kid : kids) {
+                int n = kid.getBeginLine();
+                if (n != lineNumber) {
+                    assert n > lineNumber;
+                    n -= lineNumber;
+                    while (n > 0) {
+                        buffer.append('\n');
+                        --n;
+                        ++lineNumber;
+                    }
+                }
+                if (kid instanceof Newline) {
+                    buffer.append('\n');
+                    ++lineNumber;
+                }
+                else if (kid instanceof Statement || kid instanceof SimpleStatement) {
+                    s = kid.toString();
+                    buffer.append(currentIndent).append(s);
+                    lineNumber += s.chars().filter(ch -> ch == '\n').count();
+                }
+                else if (kid instanceof ClassDefinition || kid instanceof FunctionDefinition ||
+                         kid instanceof IfStatement || kid instanceof WhileStatement ||
+                         kid instanceof ForStatement || kid instanceof TryStatement) {
+                    grandKids = kid.children();
+                    so = grandKids.get(0).getBeginOffset();
+                    eo = grandKids.get(grandKids.size() - 2).getEndOffset();
+                    s = kid.getTokenSource().getText(so, eo);
+                    buffer.append(currentIndent).append(s);
+                    lineNumber += s.chars().filter(ch -> ch == '\n').count();
+                    Node block = kid.getLastChild();
+                    if (kid instanceof TryStatement) {
+                        assert block instanceof Block || block instanceof ExceptBlock || block instanceof FinallyBlock;
+                    }
+                    else {
+                        assert block instanceof Block;
+                    }
+                    if (!(block instanceof ExceptBlock)) {
+                        outputNode(block);
+                    }
+                    else {
+                        grandKids = block.children();
+                        so = grandKids.get(0).getBeginOffset();
+                        eo = grandKids.get(grandKids.size() - 2).getEndOffset();
+                        s = kid.getTokenSource().getText(so, eo);
+                        buffer.append(s);
+                        lineNumber += s.chars().filter(ch -> ch == '\n').count();
+                        outputNode(block.getLastChild());
+                    }
+                }
+                else if (kid instanceof IndentToken) {
+                    indentLevel++;
+                    currentIndent += defaultIndent;
+                }
+                else if (kid instanceof DedentToken) {
+                    assert indentLevel > 0;
+                    --indentLevel;
+                    currentIndent = currentIndent.substring(defaultIndent.length());
+                }
+                else if (kid instanceof Keyword || kid instanceof Delimiter) {
+                    s = kid.toString();
+                    buffer.append(s);
+                }
+                else {
+                    outputNode(kid);
+                }
+            }
+        }
     }
 
-    public String format(Node code, int indentLevel) {
+    public String format() {
         buffer = new StringBuilder();
-        currentIndent = indent(currentIndent, defaultIndent, indentLevel);
-        visit(code);
-        return buffer.toString();
-    }
-
-    public String format(Node code) {
-        return format(code, 0);
-    }
-
-    void visit(IndentToken it) {
-        buffer.append(defaultIndent);
-        currentIndent += defaultIndent;
-    }
-
-    void visit(DedentToken dt) {
-        currentIndent = currentIndent.substring(0, currentIndent.length()- defaultIndent.length());
-        buffer.setLength(buffer.length() - defaultIndent.length());
-    }
-
-    void visit(Newline nl) {
-        buffer.append("\n");
-        buffer.append(currentIndent);
-    }
-
-    void visit(PythonToken tok) {
-//        if (alwaysPrependSpace.contains(tok.getType())) addSpaceIfNecessary();
-        addSpaceIfNecessary();
-        buffer.append(tok.toString());
-//        if (alwaysAppendSpace.contains(tok.getType())) addSpaceIfNecessary();
-        addSpaceIfNecessary();
-    }
-
-    private void addSpaceIfNecessary() {
-        if (buffer.length()==0) return;
-        int lastChar = buffer.codePointBefore(buffer.length());
-        if (!Character.isWhitespace(lastChar)) buffer.append(' ');
+        indentLevel = 0;
+        lineNumber = 1;
+        currentIndent = "";
+        outputNode(module);
+        String result = buffer.toString();
+        result = newLines.matcher(result).replaceAll("\n\n");
+        return result;
     }
 }

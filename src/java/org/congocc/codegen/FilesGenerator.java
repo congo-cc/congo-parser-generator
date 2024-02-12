@@ -11,11 +11,14 @@ import java.util.logging.Logger;
 
 import org.congocc.app.AppSettings;
 import org.congocc.app.Errors;
+import org.congocc.codegen.python.PythonFormatter;
 import org.congocc.core.Grammar;
 import org.congocc.core.RegularExpression;
 import org.congocc.codegen.java.*;
+import org.congocc.codegen.python.Reaper;
 import org.congocc.codegen.csharp.CSharpFormatter;
 import org.congocc.parser.*;
+import org.congocc.parser.python.ast.Module;
 import org.congocc.parser.tree.CompilationUnit;
 import org.congocc.parser.tree.ObjectType;
 
@@ -228,8 +231,34 @@ public class FilesGenerator {
         else if (outputFile.getFileName().toString().endsWith(".cs")) {
             outputCSharpFile(code, outputFile);
         }
-        else try (Writer outfile = Files.newBufferedWriter(outputFile)) {
-            outfile.write(code);
+        else  {
+            outputPythonFile(code, outputFile);
+        }
+    }
+
+    void outputPythonFile(String code, Path outputFile) throws IOException {
+        Module module;
+        Writer out = Files.newBufferedWriter(outputFile);
+        try {
+            if (!outputFile.toString().endsWith("parser.py")) {
+                out.write(code);
+                return;
+            }
+            module = CongoCCParser.parsePythonFile(outputFile.getFileName().toString(), code);
+        }
+        catch (Exception e) {
+            out.write(code);
+            return;
+        }
+        finally {
+            out.flush();
+            out.close();
+        }
+        try (Writer output = Files.newBufferedWriter(outputFile)) {
+            Reaper reaper = new Reaper(module);
+            reaper.reap();
+            PythonFormatter formatter = new PythonFormatter(module);
+            output.write(formatter.format());
         }
     }
 
@@ -246,6 +275,8 @@ public class FilesGenerator {
             out.close();
         }
         try (Writer output = Files.newBufferedWriter(outputFile)) {
+            org.congocc.codegen.csharp.Reaper reaper = new org.congocc.codegen.csharp.Reaper(cscu);
+            reaper.reap();
             CSharpFormatter formatter = new CSharpFormatter();
             formatter.visit(cscu);
             output.write(formatter.getText());
