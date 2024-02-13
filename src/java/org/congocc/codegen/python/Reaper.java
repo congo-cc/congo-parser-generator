@@ -7,6 +7,8 @@ import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 
 import org.congocc.parser.Node;
+import org.congocc.parser.csharp.ast.Identifier;
+import org.congocc.parser.csharp.ast.MethodDeclaration;
 import org.congocc.parser.python.ast.*;
 
 public class Reaper {
@@ -108,6 +110,40 @@ public class Reaper {
         }
         for (FunctionDefinition fd : otherMethods.values()) {
             fd.getParent().remove(fd);
+        }
+/*
+        Now go through the wanted methods looking for unused scanToEnd variables, and remove their
+        declarations. We just look for the identifier in later statements in the method to determine
+        usage - pretty simplistic.
+*/
+        for (FunctionDefinition meth : wantedMethods.values()) {
+            block = meth.firstChildOfType(Block.class);
+            List<Node> stmts = block.children();
+            Node found = null;
+
+            for (Node statement : stmts) {
+                if (found == null) {
+                    if (statement.toString().equals("scan_to_end = False\n")) {
+                        found = statement;
+                        continue;
+                    }
+                }
+                else {
+                    List<Name> idents = statement.descendantsOfType(Name.class);
+                    for (Name ident: idents) {
+                        if (ident.toString().equals("scan_to_end")) {
+                            found = null;  // pretend we never found it, so it can't be removed
+                            break;
+                        }
+                    }
+                    if (found == null) {    // was reset above, no need to look further
+                        break;
+                    }
+                }
+            }
+            if (found != null) {
+                found.getParent().remove(found);
+            }
         }
     }
 }
