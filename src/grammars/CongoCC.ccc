@@ -134,15 +134,13 @@ INJECT PARSER_CLASS :
         return parser.CompilationUnit();
     }
 
-    static public Module parsePythonFile(String inputSource, CharSequence content, boolean useAltIndentDedent) {
+    static public Module parsePythonFile(String inputSource, CharSequence content) {
         PythonParser parser = new PythonParser(inputSource, content);
-//        parser.setUseAltIndentDedent(useAltIndentDedent);
         return parser.Module();
     }
 
-    static public Module parsePythonFile(Path path, boolean useAltIndentDedent) throws IOException {
+    static public Module parsePythonFile(Path path) throws IOException {
         PythonParser parser = new PythonParser(path);
-//        parser.setUseAltIndentDedent(useAltIndentDedent);
         return parser.Module();
     }
 
