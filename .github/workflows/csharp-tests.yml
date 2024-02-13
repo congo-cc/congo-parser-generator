@@ -27,6 +27,9 @@ jobs:
         os: [ubuntu-22.04, macos-latest, windows-latest]
         java-version: ['17', '21']
         dotnet-version: ['5.0.x', '6.0.x', '7.0.x', '8.0.x']
+        exclude:
+            - os: windows-latest
+              java-version: '17'
 
     steps:
     - uses: actions/checkout@v4
