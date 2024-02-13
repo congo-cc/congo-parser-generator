@@ -27,16 +27,16 @@ public class Reaper {
         if ("true".equals(System.getenv("CONGOCC_CSHARP_REAPER_OFF"))) {
             return;
         }
-        List<ClassDeclaration> classes = cu.descendantsOfType(ClassDeclaration.class);
-        Optional<ClassDeclaration> opc = classes.stream().filter(Reaper::isParserClass).findFirst();
 
-        if (!opc.isPresent()) {
+        List<ClassDeclaration> classes = cu.descendantsOfType(ClassDeclaration.class);
+        ClassDeclaration pc = cu.firstDescendantOfType(ClassDeclaration.class, Reaper::isParserClass);
+        if (pc == null) {
             return;
         }
-        ClassDeclaration pc = opc.get();
-        List<FieldDeclaration> fieldDecls = pc.childrenOfType(FieldDeclaration.class);
 
+        List<FieldDeclaration> fieldDecls = pc.childrenOfType(FieldDeclaration.class);
         Map<String, FieldDeclaration> parserSets = new HashMap<>();
+
         for (FieldDeclaration fd : fieldDecls) {
             List<VariableDeclarator> varDecls = fd.childrenOfType(VariableDeclarator.class);
 

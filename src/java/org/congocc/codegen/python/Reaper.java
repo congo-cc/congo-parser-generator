@@ -32,14 +32,13 @@ public class Reaper {
         if ("true".equals(System.getenv("CONGOCC_PYTHON_REAPER_OFF"))) {
             return;
         }
-        List<ClassDefinition> classes = module.descendantsOfType(ClassDefinition.class);
-        Optional<ClassDefinition> pc = classes.stream().filter(Reaper::isParserClass).findFirst();
 
-        if (!pc.isPresent()) {
+        ClassDefinition pc = module.firstDescendantOfType(ClassDefinition.class, Reaper::isParserClass);
+        if (pc == null) {
             return;
         }
 
-        Node block = pc.get().getLastChild();
+        Node block = pc.getLastChild();
         assert block instanceof Block;
         List<Statement> statements = block.childrenOfType(Statement.class);
         List<Statement> assignments = statements.stream().filter(Reaper::isAssignment).collect(Collectors.toList());
