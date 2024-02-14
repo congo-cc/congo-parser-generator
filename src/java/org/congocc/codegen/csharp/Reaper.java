@@ -3,15 +3,18 @@ package org.congocc.codegen.csharp;
 import java.util.*;
 import java.util.List;
 import java.util.Set;
+import java.util.logging.Logger;
 import java.util.regex.Pattern;
+import java.util.stream.Collectors;
 
 import org.congocc.parser.Node;
 import org.congocc.parser.csharp.ast.*;
 
 public class Reaper {
+    private static final Logger logger = Logger.getLogger("reaper");
     private final CompilationUnit cu;
     private static final Pattern parserSetPattern = Pattern.compile("(first|follow)_set", Pattern.CASE_INSENSITIVE);
-    private static final Pattern methodPattern = Pattern.compile("Parse|(backscan|scan|check|assert|recover)Σ");
+    private static final Pattern methodPattern = Pattern.compile("^(Parse|(backscan|scan|check|assert|recover)Σ)");
 
     public Reaper(CompilationUnit cu) {
         this.cu = cu;
@@ -44,6 +47,7 @@ public class Reaper {
                 String name = vd.firstChildOfType(Identifier.class).toString();
 
                 if (parserSetPattern.matcher(name).find()) {
+                    logger.fine(String.format("Adding parser set: %s", name));
                     parserSets.put(name, fd);
                 }
             }
@@ -52,6 +56,7 @@ public class Reaper {
         List<MethodDeclaration> methods = pc.childrenOfType(MethodDeclaration.class);
         Map<String, MethodDeclaration> wantedMethods = new HashMap<>();
         Map<String, MethodDeclaration> otherMethods = new HashMap<>();
+        List<String> keyList;
 
         for (MethodDeclaration m : methods) {
             List<Identifier> idents = m.childrenOfType(Identifier.class);
@@ -59,9 +64,11 @@ public class Reaper {
 
             if (methodPattern.matcher(name).find()) {
                 if (name.startsWith("Parse")) {
+                    logger.fine(String.format("Adding wanted method: %s", name));
                     wantedMethods.put(name, m);
                 }
                 else {
+                    logger.fine(String.format("Adding other method: %s", name));
                     otherMethods.put(name, m);
                 }
             }
@@ -74,12 +81,19 @@ public class Reaper {
         represents methods to be kept and which will be examined in later passes. When there are no
         more to inspect, the passes end. The methods to be examined in the next pass will be
         transferred from other_methods to an inspect_next mapping.
+
+        We don't need to sort keys before processing, but it's useful to have a deterministic order
+        when logging and comparing results on different platforms.
 */
         Map<String, MethodDeclaration> toInspect = wantedMethods;
         while (!toInspect.isEmpty()) {
             Map<String, MethodDeclaration> inspectNext = new HashMap<>();
 
-            for (MethodDeclaration method : toInspect.values()) {
+            keyList = new ArrayList<>(toInspect.keySet());
+            Collections.sort(keyList);
+            for (String key : keyList) {
+                logger.fine(String.format("Inspecting method %s", key));
+                MethodDeclaration method = toInspect.get(key);
                 Block block = method.firstChildOfType(Block.class);
 
                 Set<String> names = new HashSet<>();
@@ -88,9 +102,11 @@ public class Reaper {
                 }
                 for (String n : names) {
                     if (parserSets.containsKey(n)) {
+                        logger.fine(String.format("Found reference to parser set %s", n));
                         parserSets.remove(n);
                     }
                     else if (otherMethods.containsKey(n)) {
+                        logger.fine(String.format("Found reference to method %s", n));
                         inspectNext.put(n, otherMethods.get(n));
                         otherMethods.remove(n);
                     }
@@ -100,11 +116,19 @@ public class Reaper {
             toInspect = inspectNext;
         }
         // What's left in parserSets and otherMethods are now apparently never used
-        for (FieldDeclaration fd : parserSets.values()) {
+        keyList = new ArrayList<>(parserSets.keySet());
+        Collections.sort(keyList);
+        for (String key : keyList) {
+            FieldDeclaration fd = parserSets.get(key);
             fd.getParent().remove(fd);
+            logger.fine(String.format("Removed parser set %s", key));
         }
-        for (MethodDeclaration meth : otherMethods.values()) {
+        keyList = new ArrayList<>(otherMethods.keySet());
+        Collections.sort(keyList);
+        for (String key : keyList) {
+            MethodDeclaration meth = otherMethods.get(key);
             meth.getParent().remove(meth);
+            logger.fine(String.format("Removed method %s", key));
         }
 /*
         Now go through the wanted methods looking for unused scanToEnd variables, and remove their

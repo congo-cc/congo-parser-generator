@@ -3,18 +3,18 @@ package org.congocc.codegen.python;
 import java.util.*;
 import java.util.List;
 import java.util.Set;
+import java.util.logging.Logger;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 
 import org.congocc.parser.Node;
-import org.congocc.parser.csharp.ast.Identifier;
-import org.congocc.parser.csharp.ast.MethodDeclaration;
 import org.congocc.parser.python.ast.*;
 
 public class Reaper {
+    private static final Logger logger = Logger.getLogger("reaper");
     private final Module module;
     private static final Pattern parserSetPattern = Pattern.compile("(first|follow)_set", Pattern.CASE_INSENSITIVE);
-    private static final Pattern methodPattern = Pattern.compile("parse_|(backscan|scan|check|assert|recover)Σ");
+    private static final Pattern methodPattern = Pattern.compile("^(parse_|(backscan|scan|check|assert|recover)Σ)");
 
     public Reaper(Module module) {
         this.module = module;
@@ -44,12 +44,14 @@ public class Reaper {
         assert block instanceof Block;
         List<Statement> statements = block.childrenOfType(Statement.class);
         List<Statement> assignments = statements.stream().filter(Reaper::isAssignment).collect(Collectors.toList());
+        List<String> keyList;
 
         Map<String, Statement> parserSets = new HashMap<>();
         for (Statement a : assignments) {
             String name = a.getFirstChild().getFirstChild().toString();
 
             if (parserSetPattern.matcher(name).find()) {
+                logger.fine(String.format("Adding parser set: %s", name));
                 parserSets.put(name, a);
             }
         }
@@ -62,9 +64,11 @@ public class Reaper {
 
             if (methodPattern.matcher(name).find()) {
                 if (name.startsWith("parse_")) {
+                    logger.fine(String.format("Adding wanted method: %s", name));
                     wantedMethods.put(name, f);
                 }
                 else {
+                    logger.fine(String.format("Adding other method: %s", name));
                     otherMethods.put(name, f);
                 }
             }
@@ -77,12 +81,19 @@ public class Reaper {
         represents methods to be kept and which will be examined in later passes. When there are no
         more to inspect, the passes end. The methods to be examined in the next pass will be
         transferred from other_methods to an inspect_next mapping.
+
+        We don't need to sort keys before processing, but it's useful to have a deterministic order
+        when logging and comparing results on different platforms.
 */
         Map<String, FunctionDefinition> toInspect = wantedMethods;
         while (!toInspect.isEmpty()) {
             Map<String, FunctionDefinition> inspectNext = new HashMap<>();
 
-            for (FunctionDefinition method : toInspect.values()) {
+            keyList = new ArrayList<>(toInspect.keySet());
+            Collections.sort(keyList);
+            for (String key : keyList) {
+                logger.fine(String.format("Inspecting method %s", key));
+                FunctionDefinition method = toInspect.get(key);
                 block = method.getLastChild();
                 assert block instanceof Block;
 
@@ -91,11 +102,15 @@ public class Reaper {
                     Node last = dn.getLastChild();
                     dotNames.add(last.toString());
                 }
-                for (String dn : dotNames) {
+                keyList = new ArrayList<>(dotNames);
+                Collections.sort(keyList);
+                for (String dn : keyList) {
                     if (parserSets.containsKey(dn)) {
+                        logger.fine(String.format("Found reference to parser set %s", dn));
                         parserSets.remove(dn);
                     }
                     else if (otherMethods.containsKey(dn)) {
+                        logger.fine(String.format("Found reference to method %s", dn));
                         inspectNext.put(dn, otherMethods.get(dn));
                         otherMethods.remove(dn);
                     }
@@ -105,11 +120,19 @@ public class Reaper {
             toInspect = inspectNext;
         }
         // What's left in parserSets and otherMethods are now apparently never used
-        for (Statement stmt : parserSets.values()) {
+        keyList = new ArrayList<>(parserSets.keySet());
+        Collections.sort(keyList);
+        for (String key : keyList) {
+            Statement stmt = parserSets.get(key);
             stmt.getParent().remove(stmt);
+            logger.fine(String.format("Removed parser set %s", key));
         }
-        for (FunctionDefinition fd : otherMethods.values()) {
+        keyList = new ArrayList<>(otherMethods.keySet());
+        Collections.sort(keyList);
+        for (String key : keyList) {
+            FunctionDefinition fd = otherMethods.get(key);
             fd.getParent().remove(fd);
+            logger.fine(String.format("Removed method %s", key));
         }
 /*
         Now go through the wanted methods looking for unused scanToEnd variables, and remove their
