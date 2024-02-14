@@ -26,7 +26,7 @@ import freemarker.template.*;
 import freemarker.cache.*;
 
 public class FilesGenerator {
-    private static Logger logger = Logger.getLogger("filegen");
+    private static final Logger logger = Logger.getLogger("filegen");
 
     private final Configuration fmConfig = new freemarker.template.Configuration();
     private final Grammar grammar;
@@ -408,7 +408,7 @@ public class FilesGenerator {
                     result = true;
                 }
                 if (typename.equals(appSettings.getBaseTokenClassName())) {
-                    // The Token class now contains the TokenType enum
+                    // The Token class now contains the TokenType enum,
                     // so we always regenerate.
                     result = true;
                 }
