@@ -14,7 +14,7 @@ public class Reaper {
     private static final Logger logger = Logger.getLogger("reaper");
     private final Module module;
     private static final Pattern parserSetPattern = Pattern.compile("(first|follow)_set", Pattern.CASE_INSENSITIVE);
-    private static final Pattern methodPattern = Pattern.compile("^(parse_|(backscan|scan|check|assert|recover)Σ)");
+    private static final Pattern methodPattern = Pattern.compile("^(parse_|(backscan|scan|check|assert|recover)\u03a3)");
 
     public Reaper(Module module) {
         this.module = module;
@@ -31,12 +31,15 @@ public class Reaper {
     }
 
     public void reap() {
+        logger.fine("Reaping started");
         if ("true".equals(System.getenv("CONGOCC_PYTHON_REAPER_OFF"))) {
+            logger.fine("Reaping disabled via environment variable, aborting");
             return;
         }
 
         ClassDefinition pc = module.firstDescendantOfType(ClassDefinition.class, Reaper::isParserClass);
         if (pc == null) {
+            logger.fine("Parser class not found, aborting");
             return;
         }
 
@@ -58,8 +61,8 @@ public class Reaper {
 
         Map<String, FunctionDefinition> wantedMethods = new HashMap<>();
         Map<String, FunctionDefinition> otherMethods = new HashMap<>();
-        List<FunctionDefinition> funcs = block.childrenOfType(FunctionDefinition.class);
-        for (FunctionDefinition f : funcs) {
+        List<FunctionDefinition> functions = block.childrenOfType(FunctionDefinition.class);
+        for (FunctionDefinition f : functions) {
             String name = f.firstChildOfType(Name.class).toString();
 
             if (methodPattern.matcher(name).find()) {
@@ -73,6 +76,7 @@ public class Reaper {
                 }
             }
         }
+        logger.fine(String.format("Found %d parser sets and %d methods", parserSets.size(), functions.size()));
 /*
         We now do multiple passes to resolve dependencies. In each pass, we loop through the methods
         to be inspected (the wanted_methods, initially) and look for names of parser sets or other
@@ -120,6 +124,7 @@ public class Reaper {
             toInspect = inspectNext;
         }
         // What's left in parserSets and otherMethods are now apparently never used
+        logger.fine(String.format("Found %d parser sets and %d methods to remove", parserSets.size(), otherMethods.size()));
         keyList = new ArrayList<>(parserSets.keySet());
         Collections.sort(keyList);
         for (String key : keyList) {
@@ -148,7 +153,7 @@ public class Reaper {
                 if (found == null) {
                     if (statement.toString().equals("scan_to_end = False\n")) {
                         found = statement;
-                        continue;
+                        // continue; (implicit, comment here for clarity)
                     }
                 }
                 else {
