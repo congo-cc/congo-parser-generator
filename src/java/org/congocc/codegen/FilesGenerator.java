@@ -236,9 +236,15 @@ public class FilesGenerator {
         }
     }
 
+    private static int countChars(String s, char c) {
+        return (int) s.chars().filter(ch -> ch == c).count();
+    }
+
     void outputPythonFile(String code, Path outputFile) throws IOException {
         Module module;
         Writer out = Files.newBufferedWriter(outputFile);
+        int initialLines = countChars(code, '\n');
+
         try {
             if (!outputFile.toString().endsWith("parser.py")) {
                 out.write(code);
@@ -258,6 +264,11 @@ public class FilesGenerator {
             Reaper reaper = new Reaper(module);
             reaper.reap();
             PythonFormatter formatter = new PythonFormatter(module);
+            String s = formatter.format();
+            int finalLines = countChars(s, '\n');
+            if (initialLines != finalLines) {
+                logger.fine(String.format("Parser line count went from %d to %d", initialLines, finalLines));
+            }
             output.write(formatter.format());
         }
     }
@@ -265,6 +276,8 @@ public class FilesGenerator {
     void outputCSharpFile(String code, Path outputFile) throws IOException {
         org.congocc.parser.csharp.ast.CompilationUnit cscu;
         Writer out = Files.newBufferedWriter(outputFile);
+        int initialLines = countChars(code, '\n');
+
         try {
            cscu = CongoCCParser.parseCSharpFile(outputFile.getFileName().toString(), code);
         } catch (Exception e) {
@@ -275,11 +288,18 @@ public class FilesGenerator {
             out.close();
         }
         try (Writer output = Files.newBufferedWriter(outputFile)) {
-            org.congocc.codegen.csharp.Reaper reaper = new org.congocc.codegen.csharp.Reaper(cscu);
-            reaper.reap();
+            if (outputFile.toString().endsWith("Parser.cs")) {
+                org.congocc.codegen.csharp.Reaper reaper = new org.congocc.codegen.csharp.Reaper(cscu);
+                reaper.reap();
+            }
             CSharpFormatter formatter = new CSharpFormatter();
             formatter.visit(cscu);
-            output.write(formatter.getText());
+            String s = formatter.getText();
+            int finalLines = countChars(s, '\n');
+            if (initialLines != finalLines) {
+                logger.fine(String.format("Line count went from %d to %d", initialLines, finalLines));
+            }
+            output.write(s);
         }
     }
 

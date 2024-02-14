@@ -5,7 +5,6 @@ import java.util.List;
 import java.util.Set;
 import java.util.logging.Logger;
 import java.util.regex.Pattern;
-import java.util.stream.Collectors;
 
 import org.congocc.parser.Node;
 import org.congocc.parser.csharp.ast.*;
@@ -14,7 +13,7 @@ public class Reaper {
     private static final Logger logger = Logger.getLogger("reaper");
     private final CompilationUnit cu;
     private static final Pattern parserSetPattern = Pattern.compile("(first|follow)_set", Pattern.CASE_INSENSITIVE);
-    private static final Pattern methodPattern = Pattern.compile("^(Parse|(backscan|scan|check|assert|recover)Σ)");
+    private static final Pattern methodPattern = Pattern.compile("^(Parse|(backscan|scan|check|assert|recover)\u03a3)");
 
     public Reaper(CompilationUnit cu) {
         this.cu = cu;
@@ -27,13 +26,15 @@ public class Reaper {
     }
 
     public void reap() {
+        logger.fine("Reaping started");
         if ("true".equals(System.getenv("CONGOCC_CSHARP_REAPER_OFF"))) {
+            logger.fine("Reaping disabled via environment variable, aborting");
             return;
         }
 
-        List<ClassDeclaration> classes = cu.descendantsOfType(ClassDeclaration.class);
         ClassDeclaration pc = cu.firstDescendantOfType(ClassDeclaration.class, Reaper::isParserClass);
         if (pc == null) {
+            logger.fine("Parser class not found, aborting");
             return;
         }
 
@@ -73,6 +74,7 @@ public class Reaper {
                 }
             }
         }
+        logger.fine(String.format("Found %d parser sets and %d methods", parserSets.size(), methods.size()));
 /*
         We now do multiple passes to resolve dependencies. In each pass, we loop through the methods
         to be inspected (the wanted_methods, initially) and look for names of parser sets or other
@@ -116,6 +118,7 @@ public class Reaper {
             toInspect = inspectNext;
         }
         // What's left in parserSets and otherMethods are now apparently never used
+        logger.fine(String.format("Found %d parser sets and %d methods to remove", parserSets.size(), otherMethods.size()));
         keyList = new ArrayList<>(parserSets.keySet());
         Collections.sort(keyList);
         for (String key : keyList) {
@@ -144,7 +147,7 @@ public class Reaper {
                 if (found == null) {
                     if (statement.toString().equals("var scanToEnd = false;")) {
                         found = statement;
-                        continue;
+                        // continue; (implicit, comment here for clarity)
                     }
                 }
                 else {
