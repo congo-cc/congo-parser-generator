@@ -53,13 +53,18 @@ public class Grammar extends BaseNode {
     private Errors errors;
 
     public Grammar(Path outputDir, String codeLang, int jdkTarget, boolean quiet, Map<String, String> preprocessorSymbols) {
-        if (preprocessorSymbols == null) preprocessorSymbols = new HashMap<>();
+        if (preprocessorSymbols == null) {
+            preprocessorSymbols = new HashMap<>();
+        }
+        else {  // in case an unmodifiable map is passed - make a mutable copy.
+            preprocessorSymbols = new HashMap<>(preprocessorSymbols);
+        }
         this.preprocessorSymbols = preprocessorSymbols;
         this.appSettings = new AppSettings(this);
         appSettings.setJdkTarget(jdkTarget);
         appSettings.setOutputDir(outputDir);
         appSettings.setCodeLang(codeLang);
-        preprocessorSymbols.put("__"+codeLang+"__","1");
+        preprocessorSymbols.put("__" + codeLang + "__","1");
         appSettings.setQuiet(quiet);
         this.templateGlobals = new TemplateGlobals(this);
     }
