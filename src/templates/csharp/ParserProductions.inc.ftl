@@ -276,7 +276,7 @@ finally {
                   [#-- It's not a JTB tree, so use the BASE_NODE type for type for assignment rather than syntactic type --][#-- (jb) is there a reason to use the syntactic type always?  Perhaps, but I can't think of one. --]
                   #set nodeName = settings.baseNodeClassName
                /#if
-               #-- Make a new node to wrap the current expansion with the expansion's assignment. -- 
+               #-- Make a new node to wrap the current expansion with the expansion's assignment. --
                #-- Default to a definite node --
                #var gtNode = false
                #var condition = null
@@ -314,7 +314,7 @@ finally {
          /#if
          #if jtbParseTree
            #exec grammar.errors::addWarning(currentProduction, "Attempt to assign " + nodeName + " in production node " + currentProduction.name + " but it is an implicit JTB syntactic node.")
-         /#if 
+         /#if
       #elseif jtbParseTree && expansion.parent.simpleName != "ExpansionWithParentheses" && isProductionInstantiatingNode(currentProduction)
          #-- No in-line definite node annotation; synthesize a parser node for the expansion type being built, if needed. --
          #if nodeName??
@@ -937,6 +937,6 @@ ${BuildCode(subexp)}
 
 [#-- Generates code for when we don't need any scanahead routine --]
 [#macro SingleTokenCondition expansion]
-   [#if expansion.hasSemanticLookahead](${globals::translateExpression(expansion.semanticLookahead)}) && [/#if]
-   [#if expansion.firstSet.tokenNames?size = 0 || expansion.lookaheadAmount ==0 || expansion.minimumSize=0]true[#elseif expansion.firstSet.tokenNames?size < 5][#list expansion.firstSet.tokenNames as name](NextTokenType == TokenType.${name})[#if name_has_next] || [/#if][/#list][#else](${expansion.firstSetVarName}.Contains(NextTokenType))[/#if]
+[#if expansion.hasSemanticLookahead](${globals::translateExpression(expansion.semanticLookahead)}) && [/#if]
+[#if expansion.enteredUnconditionally]true[#elseif expansion.firstSet.tokenNames?size == 0]false[#elseif expansion.firstSet.tokenNames?size < 5][#list expansion.firstSet.tokenNames as name](NextTokenType == TokenType.${name})[#if name_has_next] || [/#if][/#list][#else]${expansion.firstSetVarName}.Contains(NextTokenType)[/#if][#t]
 [/#macro]

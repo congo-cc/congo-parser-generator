@@ -128,6 +128,7 @@ ${is}        #   if self.debug_fault_tolerant:
 ${is}        #       logger.info('Skipping %s tokens starting at: %s', len(skipped_tokens), skipped_tokens[0].location)
 ${is}        self.push_node(iv)
 ${is}        self.pending_recovery = not success
+
    [/#list]
 [/#macro]
 
@@ -873,49 +874,44 @@ ${is}    if self.pending_recovery: raise
 [#--${is}# DBG < RecoveryLoop ${indent} --]
 [/#macro]
 
-[#macro BuildCodeChoice choice indent]
-[#var is = ""?right_pad(indent)]
+#macro BuildCodeChoice choice indent
+#var is = ""?right_pad(indent)
 [#--${is}# DBG > BuildCodeChoice ${indent} --]
-   [#list choice.choices as expansion]
-[#-- OMITTED:
-      [#if expansion.enteredUnconditionally]
-        {
-         ${BuildCode(expansion)}
-         [#if jtbParseTree && isProductionInstantiatingNode(expansion)]
-            ${globals.currentNodeVariableName}.setChoice(${expansion_index});
-         [/#if]
-        }
-        [#if expansion_has_next]
-            [#var nextExpansion = choice[expansion_index+1]]
-            // Warning: choice at ${nextExpansion.location} is is ignored because the
-            // choice at ${expansion.location} is entered unconditionally and we jump
-            // out of the loop..
-        [/#if]
-         [#return/]
-      [/#if]
---]
+#list choice.choices as expansion
+  #if expansion.enteredUnconditionally
+${is}# expansion entered unconditionally
+${is}else:
+${BuildCode(expansion, indent + 4)}[#rt]
+    #if expansion_has_next
+      #var nextExpansion = choice[expansion_index+1]
+${is}# Warning: choice at ${nextExpansion.location} is is ignored because the
+${is}# choice at ${expansion.location} is entered unconditionally and we jump
+${is}# out of the loop..
+    /#if
+    #return
+  /#if
 ${is}${(expansion_index=0)?string("if", "elif")} (${ExpansionCondition(expansion)}):
 ${BuildCode(expansion, indent + 4)}[#rt]
-      [#if jtbParseTree && isProductionInstantiatingNode(expansion)]
+  #if jtbParseTree && isProductionInstantiatingNode(expansion)
 ${is}    ${globals.currentNodeVariableName}.setChoice(${expansion_index})
-      [/#if]
-   [/#list]
-   [#if choice.parent.simpleName == "ZeroOrMore"][#t]
+  /#if
+/#list
+[#if choice.parent.simpleName == "ZeroOrMore"][#t]
 ${is}else:  # *
 ${is}    break
-   [#elseif choice.parent.simpleName = "OneOrMore"][#t]
+[#elseif choice.parent.simpleName = "OneOrMore"][#t]
 ${is}elif (${inFirstVarName}): # +
 ${is}    self.push_onto_call_stack('${currentProduction.name}', '${choice.inputSource?j_string}', ${choice.beginLine}, ${choice.beginColumn})
 ${is}    raise ParseException(self, expected=self.${choice.firstSetVarName})
 ${is}else:
 ${is}    break
-   [#elseif choice.parent.simpleName != "ZeroOrOne"][#t]
+[#elseif choice.parent.simpleName != "ZeroOrOne"][#t]
 ${is}else:  # not *, +, or ?
 ${is}    self.push_onto_call_stack('${currentProduction.name}', '${choice.inputSource?j_string}', ${choice.beginLine}, ${choice.beginColumn})
 ${is}    raise ParseException(self, expected=self.${choice.firstSetVarName})
-   [/#if]
+[/#if]
 [#--${is}# DBG < BuildCodeChoice ${indent} --]
-[/#macro]
+/#macro
 
 [#macro BuildCodeSequence expansion indent]
 [#var is = ""?right_pad(indent)]
@@ -948,5 +944,5 @@ ${SingleTokenCondition(expansion)}[#t]
 [#-- Generates code for when we don't need any scanahead routine --]
 [#macro SingleTokenCondition expansion]
 [#if expansion.hasSemanticLookahead](${globals::translateExpression(expansion.semanticLookahead)}) and [/#if][#t]
-[#if expansion.firstSet.tokenNames?size =0 || expansion.lookaheadAmount ==0 || expansion.minimumSize=0]True[#elseif expansion.firstSet.tokenNames?size < 5][#list expansion.firstSet.tokenNames as name](self.next_token_type == ${name})[#if name_has_next] or [/#if][/#list][#else](self.next_token_type in self.${expansion.firstSetVarName})[/#if][#t]
+[#if expansion.enteredUnconditionally]True[#elseif expansion.firstSet.tokenNames?size == 0]False[#elseif expansion.firstSet.tokenNames?size < 5][#list expansion.firstSet.tokenNames as name](self.next_token_type == ${name})[#if name_has_next] or [/#if][/#list][#else](self.next_token_type in self.${expansion.firstSetVarName})[/#if][#t]
 [/#macro]

@@ -553,24 +553,24 @@ ${is}    return False--]
 [/#macro]
 
 
-[#macro CheckExpansion expansion]
-   [#if expansion.singleTokenLookahead && !expansion.requiresPredicateMethod]
-     [#if expansion.firstSet.tokenNames?size = 1]
-       [#if optimize_scan_token]
+#macro CheckExpansion expansion
+#if expansion.singleTokenLookahead
+  #if expansion.firstSet.tokenNames?size = 1
+    #if optimize_scan_token
       self.scan_token_one(${expansion.firstSet.tokenNames[0]})[#t]
-       [#else]
+    #else
       self.scan_token(${expansion.firstSet.tokenNames[0]})[#t]
-       [/#if]
-     [#else]
-       [#if optimize_scan_token]
+    /#if
+  #else
+    #if optimize_scan_token
       self.scan_token_many(self.${expansion.firstSetVarName})[#t]
-       [#else]
+    #else
       self.scan_token(self.${expansion.firstSetVarName})[#t]
-       [/#if]
-     [/#if]
-   [#else]
+    /#if
+  /#if
+#else
       self.${expansion.scanRoutineName}(False)[#t]
-   [/#if]
-[/#macro]
+/#if
+/#macro
 
 
