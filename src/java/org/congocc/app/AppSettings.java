@@ -560,7 +560,12 @@ public class AppSettings {
     
     public boolean getUnparsedTokensAreNodes() {
         Boolean b = (Boolean) settings.get("TOKENS_ARE_NODES");
-        if (b == null) b = (Boolean) settings.get("SPECIAL_TOKENS_ARE_NODES");
+        if (b == null) {
+            b = (Boolean) settings.get("UNPARSED_TOKENS_ARE_NODES");
+            if (b == null) {
+                b = (Boolean) settings.get("SPECIAL_TOKENS_ARE_NODES");
+            }
+        }
         return b != null;
     }
 

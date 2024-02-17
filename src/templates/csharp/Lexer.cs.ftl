@@ -574,11 +574,13 @@ ${globals::translateLexerImports()}
             return result;
         }
  */
-        protected void SetLineSkipped(${BaseToken} tok) {
+        protected void SetLineSkipped(${BaseToken} tok, bool ignore = true) {
             int lineNum = tok.BeginLine;
             int start = GetLineStartOffset(lineNum);
             int end = GetLineStartOffset(lineNum + 1);
-            SetIgnoredRange(start, end);
+            if (ignore) {
+                SetIgnoredRange(start, end);
+            }
             tok.BeginOffset = start;
             tok.EndOffset = end;
         }
