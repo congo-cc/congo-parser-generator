@@ -15,11 +15,7 @@ PARSER_PACKAGE=org.parsers.csharplexer;
 ;
 
 UNPARSED #Comment :
-#if true
   < ?MULTI_LINE_COMMENT : "/*" (~[])* "*/">
-#else
-  < MULTI_LINE_COMMENT : "/*" (~["*"])* "*" (~["*","/"] (~["*"])* "*" | "*")* "/">
-#endif
   |
   < SINGLE_LINE_COMMENT : "//" (~["\n"])* >
 ;
@@ -484,12 +480,11 @@ INJECT LEXER_CLASS :
       PPDirectiveLineParser.Info info = PPDirectiveLineParser.evaluate(line, ppSymbols);
       DirectiveType directiveType = info.directiveType;
 
-      setLineSkipped(tok);
-
       if (directiveType == DirectiveType.UNKNOWN) {
          tok.setType(TokenType.INVALID);
          return tok;
       }
+
       if (ifNesting == 0
            && (directiveType == DirectiveType.ELIF
                || directiveType == DirectiveType.ELSE
@@ -497,10 +492,15 @@ INJECT LEXER_CLASS :
           tok.setType(TokenType.INVALID);
           return tok;
       }
+
       if (seenElse && (directiveType == DirectiveType.ELIF || directiveType == DirectiveType.ELSE)) {
         tok.setType(TokenType.INVALID);
         return tok;
       }
+
+      // don't ignore for pragmas, etc. - only for if/else/elif/endif/define/undef
+      setLineSkipped(tok, directiveType != DirectiveType.IGNORED);
+
       if (directiveType == DirectiveType.ENDIF) {
         seenElse = seenElseStack.get(ifNesting);
         alreadyHandled = alreadyHandledStack.get(ifNesting);

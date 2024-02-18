@@ -83,11 +83,32 @@
                 nodes.Add(PopNode());
             }
             nodes.Reverse();
-            if (nodes.Count > 0) {
-                n.BeginOffset = nodes[0].BeginOffset;
+            foreach (var child in nodes) {
+                if (child.InputSource == n.InputSource) {
+                    n.BeginOffset = child.BeginOffset;
+                    break;
+                }
             }
             foreach (var child in nodes) {
-                // FIXME deal with the UNPARSED_TOKENS_ARE_NODES case
+                if (UnparsedTokensAreNodes && child is Token tok) {
+                    while (tok.PreviousCachedToken != null && tok.PreviousCachedToken.IsUnparsed) {
+                        tok = tok.PreviousCachedToken;
+                    }
+                    var locationSet = false;
+                    // Use child rather than tok to get access to default
+                    // implementations in the Node interface
+                    while (child.IsUnparsed) {
+                        n.Add(child);
+                        if (!locationSet && child.InputSource == n.InputSource && child.BeginOffset < n.BeginOffset) {
+                            n.BeginOffset = child.BeginOffset;
+                            locationSet = true;
+                        }
+                        tok = tok.NextCachedToken;
+                    }
+                }
+                if (child.InputSource == n.InputSource) {
+                    n.EndOffset = child.EndOffset;
+                }
                 n.Add(child);
             }
             n.Close();

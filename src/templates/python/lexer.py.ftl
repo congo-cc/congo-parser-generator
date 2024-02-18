@@ -508,11 +508,12 @@ class TokenSource:
                 result += 1
         return result
 
-    def set_line_skipped(self, tok):
+    def set_line_skipped(self, tok, ignore=True):
         lineno = tok.begin_line
         soff = self.get_line_start_offset(lineno)
         eoff = self.get_line_start_offset(lineno + 1)
-        self.set_ignored_range(soff, eoff)
+        if ignore:
+            self.set_ignored_range(soff, eoff)
         tok.begin_offset = soff
         tok.end_offset = eoff
 
