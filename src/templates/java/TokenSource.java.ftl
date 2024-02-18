@@ -101,7 +101,7 @@ abstract public class TokenSource implements CharSequence
             if (content.length() == 0) {
                 content = terminatingString;
             } else {
-                int lastChar = content.charAt(content.length()-1);
+                int lastChar = content.charAt(content.length() - 1);
                 if (lastChar != '\n' && lastChar != '\r') {
                     if (content instanceof StringBuilder) {
                         ((StringBuilder) content).append('\n');
@@ -126,7 +126,7 @@ abstract public class TokenSource implements CharSequence
         }
         else if (javaUnicodeEscape && ch == '\\' && index < contentLength && content.charAt(index)=='u') {
             int numPrecedingSlashes = 0;
-            for (int i = index-1; i >= 0; i--) {
+            for (int i = index - 1; i >= 0; i--) {
                 if (content.charAt(i) == '\\')
                     numPrecedingSlashes++;
                 else break;
@@ -210,7 +210,7 @@ abstract public class TokenSource implements CharSequence
 
 #if settings.usesPreprocessor
     public final int nextUnignoredOffset(int offset) {
-        while (offset < tokenLocationTable.length-1 && tokenLocationTable[offset] == IGNORED) {
+        while (offset < tokenLocationTable.length - 1 && tokenLocationTable[offset] == IGNORED) {
             ++offset;
         }
         return offset;
@@ -304,7 +304,7 @@ abstract public class TokenSource implements CharSequence
     }
 
     public ${BaseToken} previousCachedToken(int offset) {
-        int prevOffset = tokenOffsets.previousSetBit(offset-1);
+        int prevOffset = tokenOffsets.previousSetBit(offset - 1);
         return prevOffset == -1 ? null : tokenLocationTable[prevOffset];
     }
 
@@ -322,7 +322,7 @@ abstract public class TokenSource implements CharSequence
             if (reversed) turnOffLine = !turnOffLine;
             if (turnOffLine) {
                 int lineOffset = lineOffsets[i];
-                int nextLineOffset = i < lineOffsets.length -1 ? lineOffsets[i + 1] : content.length();
+                int nextLineOffset = i < lineOffsets.length - 1 ? lineOffsets[i + 1] : content.length();
                 setIgnoredRange(lineOffset, nextLineOffset);
             }
         }
@@ -374,10 +374,10 @@ abstract public class TokenSource implements CharSequence
         if (realLineNumber >= lineOffsets.length) {
             return content.length();
         }
-        if (realLineNumber == lineOffsets.length -1) {
-            return content.length() -1;
+        if (realLineNumber == lineOffsets.length - 1) {
+            return content.length() - 1;
         }
-        return lineOffsets[realLineNumber + 1] -1;
+        return lineOffsets[realLineNumber + 1] - 1;
     }
 
     public int getLineFromOffset(int pos) {
@@ -516,19 +516,19 @@ abstract public class TokenSource implements CharSequence
       int thirdByte = arrayLength > 2 ? Byte.toUnsignedInt(bytes[2]) : 1;
       int fourthByte = arrayLength > 3 ? Byte.toUnsignedInt(bytes[3]) : 1;
       if (firstByte == 0xEF && secondByte == 0xBB && thirdByte == 0xBF) {
-         return new String(bytes, 3, bytes.length-3, UTF_8);
+         return new String(bytes, 3, bytes.length - 3, UTF_8);
       }
       if (firstByte == 0 && secondByte == 0 && thirdByte == 0xFE && fourthByte == 0xFF) {
-         return new String(bytes, 4, bytes.length-4, Charset.forName("UTF-32BE"));
+         return new String(bytes, 4, bytes.length - 4, Charset.forName("UTF-32BE"));
       }
       if (firstByte == 0xFF && secondByte == 0xFE && thirdByte == 0 && fourthByte == 0) {
-         return new String(bytes, 4, bytes.length-4, Charset.forName("UTF-32LE"));
+         return new String(bytes, 4, bytes.length - 4, Charset.forName("UTF-32LE"));
       }
       if (firstByte == 0xFE && secondByte == 0xFF) {
-         return new String(bytes, 2, bytes.length-2, UTF_16BE);
+         return new String(bytes, 2, bytes.length - 2, UTF_16BE);
       }
       if (firstByte == 0xFF && secondByte == 0xFE) {
-         return new String(bytes, 2, bytes.length-2, UTF_16LE);
+         return new String(bytes, 2, bytes.length - 2, UTF_16LE);
       }
       charset = UTF_8;
     }

@@ -44,12 +44,12 @@
 [/#macro]
 
 
-[#var newVarIndex=0]
+[#var newVarIndex = 0]
 [#-- Just to generate a new unique variable name
   All it does is tack an integer (that is incremented)
   onto the type name, and optionally initializes it to some value
 [#macro newVar type init=null]
-   [#set newVarIndex = newVarIndex+1]
+   [#set newVarIndex = newVarIndex + 1]
    ${type} ${type?lower_case}${newVarIndex}
    [#if init??]
       = ${init}
@@ -63,7 +63,7 @@ ${prefix}${newID()}[#rt]
 [/#macro]
 
 [#function newID]
-    [#set newVarIndex = newVarIndex+1]
+    [#set newVarIndex = newVarIndex + 1]
     [#return newVarIndex]
 [/#function]
 
@@ -109,14 +109,14 @@ ${is}        self._next_token_type = None
   [#var somethingChanged = newVarName("somethingChanged")]
 ${is}${somethingChanged} = False
 ${is}${prevActives} = _Set(self.token_source.active_token_types)
-[#if expansion.tokenActivation.activatedTokens?size >0]
+[#if expansion.tokenActivation.activatedTokens?size > 0]
 ${is}${somethingChanged} = ${somethingChanged} or self.activate_token_types(
   [#list tokenActivation.activatedTokens as tokenName]
 ${is}    ${tokenName}[#if tokenName_has_next],[/#if]
   [/#list]
 ${is})
 [/#if]
-[#if expansion.tokenActivation.deactivatedTokens?size >0]
+[#if expansion.tokenActivation.deactivatedTokens?size > 0]
 ${is}${somethingChanged} = ${somethingChanged} or self.deactivate_token_types(
   [#list tokenActivation.deactivatedTokens as tokenName]
 ${is}    ${tokenName}[#if tokenName_has_next],[/#if]

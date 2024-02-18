@@ -453,27 +453,4 @@ namespace ${csPackage} {
         }
     }
  */
-/*
-
-# Any stuff below is for debugging only ... to be deleted later
-[#var cases = [
-  "a = b ? c : d",
-  "currentLookaheadToken || lastConsumedToken",
-  "TokenType.STRICTFP",
-  "!(getToken(1).toString().equals(\"yield\")&&isInProduction(\"SwitchExpression\"))",
-  "foo.toString()",
-  "lhs.isAssignableTo()",
-  "lhs.isMethodCall()||lhs.isConstructorInvocation()||lhs.isAllocation()",
-  "isParserTolerant()||permissibleModifiers.contains(getToken(1).getType())",
-  "currentLookaheadToken==null&&!((Expression)peekNode()).isAssignableTo()",
-  "currentLookaheadToken!=null||((Expression)peekNode()).isAssignableTo()",
-  "getToken(1).getType()!=TokenType._DEFAULT"
-] ]
-[#list cases as case]
-# "${case}" -> ${globals::translateString(case)}
-[/#list]
-[#-- list globals.sortedNodeClassNames as cn]
-# ${cn}
-[/#list --]
-*/
 }

@@ -105,7 +105,7 @@
      final boolean scanToEnd = false;
      try {
       ${BuildPredicateCode(expansion)}
-      [#if !expansion.hasSeparateSyntacticLookahead && expansion.lookaheadAmount >0]
+      [#if !expansion.hasSeparateSyntacticLookahead && expansion.lookaheadAmount > 0]
         ${BuildScanCode(expansion)}
       [/#if]
          return true;
@@ -255,14 +255,14 @@
               }
               stackIterator.next();
           [#elseif element = "..."]
-             [#if element_index = lookBehind.path?size-1]
+             [#if element_index = lookBehind.path?size - 1]
                  [#if lookBehind.hasEndingSlash]
                       return !stackIterator.hasNext();
                  [#else]
                       return true;
                  [/#if]
              [#else]
-                 [#var nextElement = lookBehind.path[element_index+1]]
+                 [#var nextElement = lookBehind.path[element_index + 1]]
                  [#var nextElementNegated = (nextElement[0]=="~")]
                  [#if nextElementNegated][#set nextElement=nextElement?substring(1)][/#if]
                  while (stackIterator.hasNext()) {
@@ -311,7 +311,7 @@
   [#var classname=expansion.simpleName]
   [#if classname != "ExpansionSequence" && classname != "ExpansionWithParentheses"]
       if (hitFailure) return false;
-      if (remainingLookahead<=0) {
+      if (remainingLookahead <=0 ) {
          return true;
       }
   // Lookahead Code for ${classname} specified at ${expansion.location}

@@ -237,37 +237,37 @@ public class ${settings.baseTokenClassName} ${implements} {
      * @return the (1-based) line location where this ${settings.baseTokenClassName} starts
      */
     public int getBeginLine() {
-        ${settings.lexerClassName} flm = getTokenSource();
-        return flm == null ? 0 : flm.getLineFromOffset(getBeginOffset());
+        ${settings.lexerClassName} ts = getTokenSource();
+        return ts == null ? 0 : ts.getLineFromOffset(getBeginOffset());
     };
 
     /**
      * @return the (1-based) line location where this ${settings.baseTokenClassName} ends
      */
     public int getEndLine() {
-        ${settings.lexerClassName} flm = getTokenSource();
-        return flm == null ? 0 : flm.getLineFromOffset(getEndOffset()-1);
+        ${settings.lexerClassName} ts = getTokenSource();
+        return ts == null ? 0 : ts.getLineFromOffset(getEndOffset() - 1);
     };
 
     /**
      * @return the (1-based) column where this ${settings.baseTokenClassName} starts
      */
     public int getBeginColumn() {
-        ${settings.lexerClassName} flm = getTokenSource();
-        return flm == null ? 0 : flm.getCodePointColumnFromOffset(getBeginOffset());
+        ${settings.lexerClassName} ts = getTokenSource();
+        return ts == null ? 0 : ts.getCodePointColumnFromOffset(getBeginOffset());
     };
 
     /**
      * @return the (1-based) column offset where this ${settings.baseTokenClassName} ends
      */
     public int getEndColumn() {
-        ${settings.lexerClassName} flm = getTokenSource();
-        return flm == null ? 0 : flm.getCodePointColumnFromOffset(getEndOffset());
+        ${settings.lexerClassName} ts = getTokenSource();
+        return ts == null ? 0 : ts.getCodePointColumnFromOffset(getEndOffset());
     }
 
     public String getInputSource() {
-        ${settings.lexerClassName} flm = getTokenSource();
-        return flm != null ? flm.getInputSource() : "input";
+        ${settings.lexerClassName} ts = getTokenSource();
+        return ts != null ? ts.getInputSource() : "input";
     }
 [/#if]
 
@@ -362,8 +362,8 @@ public class ${settings.baseTokenClassName} ${implements} {
 
     public String getSource() {
          if (type == TokenType.EOF) return "";
-         ${settings.lexerClassName} flm = getTokenSource();
-         return flm == null ? null : flm.getText(getBeginOffset(), getEndOffset());
+         ${settings.lexerClassName} ts = getTokenSource();
+         return ts == null ? null : ts.getText(getBeginOffset(), getEndOffset());
     }
 
     protected ${settings.baseTokenClassName}() {}
@@ -555,7 +555,7 @@ public class ${settings.baseTokenClassName} ${implements} {
             StringBuilder buf = new StringBuilder();
             TokenSource ts = getTokenSource();
             int scanTo = beginOffset + end;
-            for (int i = beginOffset + start; i<scanTo; i++) {
+            for (int i = beginOffset + start; i < scanTo; i++) {
                 if (ts.isIgnored(i)) ++scanTo;
                 else buf.append(ts.charAt(i));
             }

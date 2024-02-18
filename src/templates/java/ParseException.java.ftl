@@ -20,9 +20,9 @@ public class ParseException extends ${BASE_EXCEPTION_TYPE} {
   private ${BaseToken} token;
   //We were expecting one of these token types
   private ${TOKEN_TYPE_SET} expectedTypes;
-  
+
   private List<NonTerminalCall> callStack;
-  
+
   private boolean alreadyAdjusted;
 
   private void setInfo(${BaseToken} token, ${TOKEN_TYPE_SET} expectedTypes, List<NonTerminalCall> callStack) {
@@ -47,7 +47,7 @@ public class ParseException extends ${BASE_EXCEPTION_TYPE} {
   }
 
   public ParseException() {}
-  
+
   // Needed because of inheritance
   public ParseException(String message) {
     super(message);
@@ -63,8 +63,8 @@ public class ParseException extends ${BASE_EXCEPTION_TYPE} {
      this.token = token;
      this.callStack = callStack;
   }
-  
-  @Override 
+
+  @Override
   public String getMessage() {
      String msg = super.getMessage();
      if (token == null && expectedTypes == null) {
@@ -74,8 +74,8 @@ public class ParseException extends ${BASE_EXCEPTION_TYPE} {
      if (msg != null) buf.append(msg);
      String location = token != null ? token.getLocation() : "";
      buf.append("\nEncountered an error at (or somewhere around) " + location);
-     if  (expectedTypes != null && token!=null && expectedTypes.contains(token.getType())) {
-         [#-- //This is really screwy, have to revisit this whole case. --]
+     if  (expectedTypes != null && token != null && expectedTypes.contains(token.getType())) {
+         [#-- //This is really screwy, have to REVISIT this whole case. --]
          return buf.toString();
      }
      if (expectedTypes != null) {
@@ -93,13 +93,13 @@ public class ParseException extends ${BASE_EXCEPTION_TYPE} {
      buf.append("\nFound string \"" + addEscapes(content) + "\" of type " + token.getType());
      return buf.toString();
   }
-  
+
   @Override
   public StackTraceElement[] getStackTrace() {
       adjustStackTrace();
       return super.getStackTrace();
   }
-  
+
   @Override
   public void printStackTrace(java.io.PrintStream s) {
         adjustStackTrace();
@@ -113,7 +113,7 @@ public class ParseException extends ${BASE_EXCEPTION_TYPE} {
    public ${BaseToken} getToken() {
       return token;
    }
-  
+
    private void adjustStackTrace() {
       if (alreadyAdjusted || callStack == null || callStack.isEmpty()) return;
       List<StackTraceElement> fullTrace = new ArrayList<>();
@@ -135,7 +135,7 @@ public class ParseException extends ${BASE_EXCEPTION_TYPE} {
       setStackTrace(fullTrace.toArray(result));
       alreadyAdjusted = true;
   }
-  
+
   private StackTraceElement lastElementWithName(List<StackTraceElement> elements, String methodName) {
       for (ListIterator<StackTraceElement> it = elements.listIterator(elements.size()); it.hasPrevious();) {
            StackTraceElement elem = it.previous();

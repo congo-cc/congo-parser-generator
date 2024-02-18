@@ -104,7 +104,7 @@
                #var followingExpansion = expansion.followingExpansion
                #list 1..1000000 as unused
                 [#if followingExpansion?is_null][#break][/#if]
-                #if followingExpansion.maximumSize >0
+                #if followingExpansion.maximumSize > 0
                  #if followingExpansion.simpleName = "OneOrMore" || followingExpansion.simpleName = "ZeroOrOne" || followingExpansion.simpleName = "ZeroOrMore"
                  if (${ExpansionCondition(followingExpansion.nestedExpansion)}) {
                  #else
@@ -269,7 +269,7 @@
       #set isProduction = true
    #else
       #var nodeName = syntacticNodeName(expansion) [#-- This maps ExpansionSequence containing more than one syntax element to "Sequence", otherwise to the element itself --]
-      #if !treeNodeBehavior?? && 
+      #if !treeNodeBehavior?? &&
           expansion.assignment??
          #if syntheticNodesEnabled && isProductionInstantiatingNode(expansion)
             #-- Assignment is explicitly provided and synthetic nodes are enabled --
@@ -290,7 +290,7 @@
                   [#-- It's not a JTB tree but it is a syntactic node with a LHS assignment, so use the BASE_NODE type --][#-- (jb) is there a reason to use the syntactic type always?  Perhaps, but I can't think of one. --]
                   #set nodeName = settings.baseNodeClassName
                /#if
-               #-- Make a new node to wrap the current expansion with the expansion's assignment. -- 
+               #-- Make a new node to wrap the current expansion with the expansion's assignment. --
                #-- Default to a definite node --
                #var gtNode = false
                #var condition = null
@@ -328,7 +328,7 @@
          /#if
          #if jtbParseTree
            #exec grammar.errors::addWarning(currentProduction, "Attempt to assign " + nodeName + " in production node " + currentProduction.name + " but it is an implicit JTB syntactic node.")
-         /#if 
+         /#if
       #elseif jtbParseTree &&
               expansion.parent.simpleName != "ExpansionWithParentheses" &&
               isProductionInstantiatingNode(currentProduction)
@@ -451,7 +451,7 @@
    #if isProduction
       #set nodeVarName = globals::translateIdentifier("THIS_PRODUCTION")
    #else
-      #set nodeNumbering = nodeNumbering +1
+      #set nodeNumbering = nodeNumbering + 1
       #set nodeVarName = currentProduction.name + nodeNumbering
    /#if
    #return nodeVarName
@@ -463,7 +463,7 @@
       #set exceptionVarName = "e" + exceptionNesting
    /#if
    #if isNesting!false
-      #set exceptionNesting = exceptionNesting+1
+      #set exceptionNesting = exceptionNesting + 1
    /#if
    #return exceptionVarName
 /#function
@@ -831,7 +831,7 @@
 #macro BuildCodeOneOrMore oom
    #var nestedExp=oom.nestedExpansion, prevInFirstVarName = inFirstVarName
    #if nestedExp.simpleName = "ExpansionChoice"
-     #set inFirstVarName = "inFirst" + inFirstIndex, inFirstIndex = inFirstIndex +1
+     #set inFirstVarName = "inFirst" + inFirstIndex, inFirstIndex = inFirstIndex + 1
      boolean ${inFirstVarName} = true;
    /#if
    while (true) {
@@ -886,7 +886,7 @@
          [/#if]
         }
         #if expansion_has_next
-            #var nextExpansion = choice[expansion_index+1]
+            #var nextExpansion = choice[expansion_index + 1]
             // Warning: choice at ${nextExpansion.location} is is ignored because the
             // choice at ${expansion.location} is entered unconditionally and we jump
             // out of the loop..

@@ -6,7 +6,7 @@
 
 #macro GenerateStateCode lexicalState
   #list lexicalState.canonicalSets as state
-     #if state_index=0
+     #if state_index == 0
        [@GenerateInitialComposite state/]
      #elseif state.numStates = 1
        [@SimpleNfaMethod state.singleState /]
@@ -64,9 +64,9 @@
 #macro GenerateInitialComposite nfaState
     private static TokenType get${nfaState.methodName}(int ch, BitSet nextStates, EnumSet<TokenType> validTypes, EnumSet<TokenType> alreadyMatchedTypes) {
       TokenType type = null;
-    #var states = nfaState.orderedStates, lastBlockStartIndex=0
+    #var states = nfaState.orderedStates, lastBlockStartIndex = 0
     #list states as state
-      #if state_index ==0 || state.moveRanges != states[state_index-1].moveRanges
+      #if state_index ==0 || state.moveRanges != states[state_index - 1].moveRanges
           [#-- In this case we need a new if or possibly else if --]
          #if state_index == 0 || state::overlaps(states::subList(lastBlockStartIndex, state_index))
            [#-- If there is overlap between this state and any of the states
@@ -83,7 +83,7 @@
       #if state.nextStateIndex >= 0
          nextStates.set(${state.nextStateIndex});
       /#if
-      #if !state_has_next || state.moveRanges != states[state_index+1].moveRanges
+      #if !state_has_next || state.moveRanges != states[state_index + 1].moveRanges
         [#-- We've reached the end of the block. --]
           #if state.nextState.final
             [#--if (validTypes == null || validTypes.contains(${state.type.label}))--]
@@ -109,9 +109,9 @@
     #if nfaState.hasFinalState
       TokenType type = null;
     /#if
-    #var states = nfaState.orderedStates, lastBlockStartIndex=0
+    #var states = nfaState.orderedStates, lastBlockStartIndex = 0
     #list states as state
-      #if state_index ==0 || state.moveRanges != states[state_index-1].moveRanges
+      #if state_index == 0 || state.moveRanges != states[state_index - 1].moveRanges
           #-- In this case we need a new if or possibly else if
          #if state_index == 0 || state::overlaps(states::subList(lastBlockStartIndex, state_index))
            [#-- If there is overlap between this state and any of the states
@@ -127,7 +127,7 @@
       #if state.nextStateIndex >= 0
          nextStates.set(${state.nextStateIndex});
       /#if
-      #if !state_has_next || state.moveRanges != states[state_index+1].moveRanges
+      #if !state_has_next || state.moveRanges != states[state_index + 1].moveRanges
         #-- We've reached the end of the block.
           #if state.nextState.final
               type = ${state.type.label};
@@ -191,10 +191,10 @@ if NFA state's moveRanges array is smaller than NFA_RANGE_THRESHOLD
     #var displayLeft = globals.displayChar(left),
          displayRight = globals.displayChar(right)
     #var singleChar = left == right
-    #if moveRanges?size==2
+    #if moveRanges?size == 2
        #if singleChar
           ch == ${displayLeft}
-       #elseif left +1 == right
+       #elseif left + 1 == right
           ch == ${displayLeft} || ch == ${displayRight}
        #else
           ch >= ${displayLeft}

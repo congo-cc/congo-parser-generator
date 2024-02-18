@@ -2,30 +2,30 @@
 
 [#import "common_utils.inc.ftl" as CU]
 
-[#var UNLIMITED=2147483647]
+[#var UNLIMITED = 2147483647]
 [#-- var MULTIPLE_LEXICAL_STATE_HANDLING = lexerData.numLexicalStates > 1 --]
 [#var MULTIPLE_LEXICAL_STATE_HANDLING = false]
 
 
-[#macro Generate]
+#macro Generate
     [@firstSetVars /]
 #if settings.faultTolerant
     [@followSetVars /]
 /#if
-    [#if grammar.choicePointExpansions?size !=0]
+#if grammar.choicePointExpansions?size != 0
        [@BuildLookaheads 4 /]
-     [/#if]
-[/#macro]
+/#if
+/#macro
 
 
-[#macro firstSetVars]
+#macro firstSetVars
     # ==================================================================
     # EnumSets that represent the various expansions' first set (i.e. the set of tokens with which the expansion can begin)
     # ==================================================================
-    [#list grammar.expansionsForFirstSet as expansion]
+#list grammar.expansionsForFirstSet as expansion
           [@CU.firstSetVar expansion/]
-    [/#list]
-[/#macro]
+/#list
+/#macro
 
 [#--
 [#macro finalSetVars]
@@ -38,14 +38,14 @@
 [/#macro]
 --]
 
-[#macro followSetVars]
+#macro followSetVars
     # ==================================================================
     # EnumSets that represent the various expansions' follow set (i.e. the set of tokens that can immediately follow this)
     # ==================================================================
-    [#list grammar.expansionsForFollowSet as expansion]
+#list grammar.expansionsForFollowSet as expansion
           [@CU.followSetVar expansion/]
-    [/#list]
-[/#macro]
+/#list
+/#macro
 
 [#--
   scan_token tends to be a big source of time spent in the parser,
@@ -278,7 +278,7 @@ ${is}    return not stack_iterator.has_next
 ${is}    return True
       [/#if]
     [#else]
-      [#var nextElement = lookBehind.path[element_index+1]]
+      [#var nextElement = lookBehind.path[element_index + 1]]
       [#var nextElementNegated = (nextElement[0]=="~")]
       [#if nextElementNegated][#set nextElement=nextElement?substring(1)][/#if]
 ${is}    while stack_iterator.has_next:

@@ -231,7 +231,7 @@ public interface Node extends List<Node> {
      default boolean appendChild(Node where, Node inserted) {
          int index = indexOf(where);
          if (index == -1) return false;
-         addChild(index+1, inserted);
+         addChild(index + 1, inserted);
          return true;
      }
 
@@ -241,7 +241,7 @@ public interface Node extends List<Node> {
       * @param child the Node to get the index of
       */
      default int indexOf(Node child) {
-         for (int i=0; i<size(); i++) {
+         for (int i = 0; i < size(); i++) {
              if (child == get(i)) {
                  return i;
              }
@@ -254,15 +254,15 @@ public interface Node extends List<Node> {
          if (parent == null) return null;
          int idx = parent.indexOf(this);
          if (idx <=0) return null;
-         return parent.get(idx-1);
+         return parent.get(idx - 1);
      }
 
      default Node nextSibling() {
          Node parent = getParent();
          if (parent == null) return null;
          int idx = parent.indexOf(this);
-         if (idx >= parent.size() -1) return null;
-         return parent.get(idx+1);
+         if (idx >= parent.size() - 1) return null;
+         return parent.get(idx + 1);
      }
 
      /**
@@ -303,7 +303,7 @@ public interface Node extends List<Node> {
 
       default List<Node> children() {
           List<Node> result = new ArrayList<>();
-          for (int i =0; i<size(); i++) {
+          for (int i = 0; i < size(); i++) {
               result.add(get(i));
           }
           return result;
@@ -322,7 +322,7 @@ public interface Node extends List<Node> {
                 }
                 result.add(tn);
             }
-            else if (child.size() >0) {
+            else if (child.size() > 0) {
                result.addAll(child.getAllTokens(includeCommentTokens));
             }
         }
@@ -447,7 +447,7 @@ public interface Node extends List<Node> {
     }
 
     default <T> T firstChildOfType(Class<T> clazz, Predicate<T> pred) {
-        for (int i=0; i<size();i++) {
+        for (int i = 0; i < size(); i++) {
             Node child = get(i);
             if (clazz.isInstance(child)) {
                 T t = clazz.cast(child);
@@ -458,7 +458,7 @@ public interface Node extends List<Node> {
     }
 
     default Node firstDescendantOfType(NodeType type, Predicate<Node> pred) {
-         for (int i=0; i<size(); i++) {
+         for (int i = 0; i < size(); i++) {
              Node child = get(i);
              if (child.getType() == type) {
                 if (pred == null || pred.test(child)) return child;
@@ -475,7 +475,7 @@ public interface Node extends List<Node> {
     }
 
     default Node firstChildOfType(NodeType type) {
-        for (int i=0; i<size();i++) {
+        for (int i = 0; i < size(); i++) {
             Node child = get(i);
             if (child.getType() == type) return child;
         }
@@ -483,11 +483,11 @@ public interface Node extends List<Node> {
     }
 
     default <T extends Node>T firstDescendantOfType(Class<T> clazz, Predicate<T> pred) {
-         for (int i=0; i<size();i++) {
+         for (int i = 0; i < size(); i++) {
              Node child = get(i);
              if (clazz.isInstance(child)) {
                 T t = clazz.cast(child);
-                if (pred==null || pred.test(t)) return t;
+                if (pred == null || pred.test(t)) return t;
              }
              else {
                  T descendant = child.firstDescendantOfType(clazz, pred);
@@ -503,7 +503,7 @@ public interface Node extends List<Node> {
 
     default <T> List<T> childrenOfType(Class<T>clazz, Predicate<T> pred) {
         List<T>result=new java.util.ArrayList<>();
-        for (int i=0; i< size(); i++) {
+        for (int i = 0; i < size(); i++) {
             Node child = get(i);
             if (clazz.isInstance(child)) {
                 T t = clazz.cast(child);
@@ -515,10 +515,10 @@ public interface Node extends List<Node> {
 
    default List<Node> childrenOfType(NodeType type, Predicate<Node> pred) {
       List<Node> result = new java.util.ArrayList<>();
-      for (int i=0; i< size(); i++) {
+      for (int i = 0; i < size(); i++) {
           Node child = get(i);
           if (child.getType() == type) {
-             if (pred==null || pred.test(child)) result.add(child);
+             if (pred == null || pred.test(child)) result.add(child);
           }
       }
       return result;
@@ -612,7 +612,7 @@ public interface Node extends List<Node> {
      */
     default Node getLastChild() {
         int count = size();
-        return count>0 ? get(count-1): null;
+        return count > 0 ? get(count - 1): null;
     }
 
     default Node getRoot() {
@@ -637,7 +637,7 @@ public interface Node extends List<Node> {
 
     default <T extends Node> List<T> descendants(Class<T> clazz, Predicate<? super T> predicate) {
        List<T> result = new ArrayList<>();
-       for (int i=0; i< size(); i++) {
+       for (int i = 0; i < size(); i++) {
            Node child = get(i);
            if (clazz.isInstance(child)) {
                T t = clazz.cast(child);
@@ -703,7 +703,7 @@ public interface Node extends List<Node> {
             private boolean justModified;
 
             public boolean hasNext() {
-                return current+1 < size();
+                return current + 1 < size();
             }
 
             public Node next() {
@@ -725,12 +725,12 @@ public interface Node extends List<Node> {
 
             public void add(Node n) {
                 if (justModified) throw new IllegalStateException();
-                addChild(current+1, n);
+                addChild(current + 1, n);
                 justModified = true;
             }
 
             public boolean hasPrevious() {
-                return current >0;
+                return current > 0;
             }
 
             public int nextIndex() {

@@ -2,7 +2,7 @@
 // ReSharper disable InconsistentNaming
 [#import "CommonUtils.inc.ftl" as CU]
 [#var NFA_RANGE_THRESHOLD = 16]
-[#var MAX_INT=2147483647]
+[#var MAX_INT = 2147483647]
 [#var multipleLexicalStates = lexerData.lexicalStates?size > 1]
 [#var TT = "TokenType."]
 [#var PRESERVE_LINE_ENDINGS=settings.preserveLineEndings?string("true", "false")
@@ -17,8 +17,8 @@
 [/#if --]
 [#var TOKEN = settings.baseTokenClassName]
 
-[#macro EnumSet varName tokenNames indent=0]
-[#if tokenNames?size=0]
+[#macro EnumSet varName tokenNames indent = 0]
+[#if tokenNames?size == 0]
 private static HashSet<TokenType> ${varName} = Utils.GetOrMakeSet();
 [#else]
 private static HashSet<TokenType> ${varName} = Utils.GetOrMakeSet(
@@ -85,9 +85,9 @@ private static HashSet<TokenType> ${varName} = Utils.GetOrMakeSet(
 [#macro GenerateInitialStateMethod nfaState]
         static TokenType? ${nfaState.methodName}(int ch, BitSet nextStates, HashSet<TokenType> validTypes, HashSet<TokenType> AlreadyMatchedTypes) {
             TokenType? type = null;
-    [#var states = nfaState.orderedStates, lastBlockStartIndex=0, useIf=false]
+    [#var states = nfaState.orderedStates, lastBlockStartIndex = 0, useIf = false]
     [#list states as state]
-      [#if state_index ==0 || !state.moveRanges::equals(states[state_index-1].moveRanges)]
+      [#if state_index ==0 || !state.moveRanges::equals(states[state_index - 1].moveRanges)]
           [#-- In this case we need a new if or possibly else if --]
          [#if state_index == 0 || state::overlaps(states::subList(lastBlockStartIndex, state_index))]
            [#-- If there is overlap between this state and any of the states
@@ -101,7 +101,7 @@ private static HashSet<TokenType> ${varName} = Utils.GetOrMakeSet(
       [#if state.nextStateIndex >= 0]
                 nextStates.Set(${state.nextStateIndex});
       [/#if]
-      [#if !state_has_next || !state.moveRanges::equals(states[state_index+1].moveRanges)]
+      [#if !state_has_next || !state.moveRanges::equals(states[state_index + 1].moveRanges)]
         [#-- We've reached the end of the block. --]
           [#if state.nextState.final]
                 [#var type = state.type]
@@ -130,9 +130,9 @@ private static HashSet<TokenType> ${varName} = Utils.GetOrMakeSet(
   [/#if]
 
             TokenType? type = null;
-    [#var states = nfaState.orderedStates, lastBlockStartIndex=0, useIf=false]
+    [#var states = nfaState.orderedStates, lastBlockStartIndex = 0, useIf = false]
     [#list states as state]
-      [#if state_index ==0 || !state.moveRanges::equals(states[state_index-1].moveRanges)]
+      [#if state_index ==0 || !state.moveRanges::equals(states[state_index - 1].moveRanges)]
           [#-- In this case we need a new if or possibly else if --]
          [#if state_index == 0 || state::overlaps(states::subList(lastBlockStartIndex, state_index))]
            [#-- If there is overlap between this state and any of the states
@@ -146,7 +146,7 @@ private static HashSet<TokenType> ${varName} = Utils.GetOrMakeSet(
       [#if state.nextStateIndex >= 0]
                 nextStates.Set(${state.nextStateIndex});
       [/#if]
-      [#if !state_has_next || !state.moveRanges::equals(states[state_index+1].moveRanges)]
+      [#if !state_has_next || !state.moveRanges::equals(states[state_index + 1].moveRanges)]
         [#-- We've reached the end of the block. --]
           [#if state.nextState.final]
                 [#var type = state.type]
@@ -188,10 +188,10 @@ if NFA state's moveRanges array is smaller than NFA_RANGE_THRESHOLD
     [#var left = moveRanges[0], right = moveRanges[1]]
     [#var displayLeft = globals.displayChar(left), displayRight = globals.displayChar(right)]
     [#var singleChar = left == right]
-    [#if moveRanges?size==2]
+    [#if moveRanges?size == 2]
        [#if singleChar]
           ch == ${displayLeft}
-       [#elseif left +1 == right]
+       [#elseif left + 1 == right]
           ch == ${displayLeft} || ch == ${displayRight}
        [#elseif left > 0]
           ch >= ${displayLeft}
@@ -593,7 +593,6 @@ ${globals::translateLexerImports()}
           if (nlIndex < 0) break;
           if (_content.Substring(offset + 1, nlIndex).Trim().IsEmpty) {
               SetIgnoredRange(offset, nlIndex + 1);
-              // for (int i=offset; i<=nlIndex; i++) SetIgnoredRange(i, i+1);
           }
       }
     }
@@ -722,7 +721,7 @@ ${globals::translateLexerImports()}
                 if (reversed) turnOffLine = !turnOffLine;
                 if (turnOffLine) {
                     int lineOffset = _lineOffsets[i];
-                    int nextLineOffset = i < _lineOffsets.Length -1 ? _lineOffsets[i+1] : _contentLength;
+                    int nextLineOffset = i < _lineOffsets.Length - 1 ? _lineOffsets[i + 1] : _contentLength;
                     SetIgnoredRange(lineOffset, nextLineOffset);
                 }
             }
@@ -908,7 +907,7 @@ ${globals::translateLexerImports()}
 [/#if]
 
         public Lexer(string inputSource, LexicalState lexState = LexicalState.${lexerData.lexicalStates[0].name}, int line = 1, int column = 1) : base(inputSource, line, column) {
-[#if settings.deactivatedTokens?size>0 || settings.extraTokens?size >0]
+[#if settings.deactivatedTokens?size > 0 || settings.extraTokens?size > 0]
   [#list settings.deactivatedTokens as token]
             ActiveTokenTypes.Remove(${CU.TT}${token});
   [/#list]
