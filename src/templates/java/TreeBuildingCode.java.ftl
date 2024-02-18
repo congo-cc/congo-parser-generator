@@ -2,7 +2,7 @@
     private boolean buildTree = true;
 [#else]
     private boolean buildTree = false;
-[/#if]    
+[/#if]
 [#if settings.tokensAreNodes]
     private boolean tokensAreNodes = true;
 [#else]
@@ -21,22 +21,22 @@
     public void setUnparsedTokensAreNodes(boolean unparsedTokensAreNodes) {
         this.unparsedTokensAreNodes = unparsedTokensAreNodes;
     }
-    
+
     public void setTokensAreNodes(boolean tokensAreNodes) {
         this.tokensAreNodes = tokensAreNodes;
     }
 
     NodeScope currentNodeScope = new NodeScope();
-    
 
-	/** 
+
+	/**
 	 * @return the root node of the AST. It only makes sense to call
-	 * this after a successful parse. 
-	 */ 
+	 * this after a successful parse.
+	 */
     public Node rootNode() {
         return currentNodeScope.rootNode();
     }
-    
+
     /**
      * push a node onto the top of the node stack
      * @param n the node to push
@@ -45,17 +45,17 @@
         currentNodeScope.add(n);
     }
 
-    /** 
+    /**
      * @return the node on the top of the stack, and remove it from the
-     * stack.  
-     */ 
+     * stack.
+     */
     public Node popNode() {
        return currentNodeScope.pop();
     }
 
-    /** 
-     * @return the node currently on the top of the tree-building stack. 
-     */ 
+    /**
+     * @return the node currently on the top of the tree-building stack.
+     */
     public Node peekNode() {
         return currentNodeScope.peek();
     }
@@ -71,9 +71,9 @@
     }
 
 
-	/** 
+	/**
      * @return the number of Nodes on the tree-building stack in the current node
-	 * scope. 
+	 * scope.
 	 */
     public int nodeArity() {
         return currentNodeScope.size();
@@ -83,10 +83,10 @@
     private void clearNodeScope() {
         currentNodeScope.clear();
     }
-    
+
     private void openNodeScope(Node n) {
         new NodeScope();
-        if (n!=null) {
+        if (n != null) {
             n.setTokenSource(lastConsumedToken.getTokenSource());
             // We set the begin/end offsets based on the ending location
             // of the last consumed token. So, we start with a Node
@@ -108,14 +108,14 @@
 	 * is pushed on to the stack.
 	 * @param n is the node whose scope is being closed
 	 * @param num is the number of child nodes to pop as children
-	 * @return @{code true} 
+	 * @return @{code true}
 	 */
     private boolean closeNodeScope(Node n, int num) {
         n.setBeginOffset(lastConsumedToken.getEndOffset());
         n.setEndOffset(lastConsumedToken.getEndOffset());
         currentNodeScope.close();
         ArrayList<Node> nodes = new ArrayList<>();
-        for (int i=0;i<num;i++) {
+        for (int i = 0;i < num;i++) {
            nodes.add(popNode());
         }
         Collections.reverse(nodes);
@@ -159,21 +159,21 @@
 	 * the nodes that have been pushed since the node was opened are
 	 * made children of the conditional node, which is then pushed
 	 * on to the stack.  If the condition is false the node is not
-	 * constructed and they are left on the stack. 
+	 * constructed and they are left on the stack.
 	 */
     private boolean closeNodeScope(Node n, boolean condition) {
-        if (n==null || !condition) {
+        if (n == null || !condition) {
             currentNodeScope.close();
             return false;
         }
         return closeNodeScope(n, nodeArity());
     }
-    
-    
+
+
     public boolean getBuildTree() {
     	return buildTree;
     }
-    
+
     public void setBuildTree(boolean buildTree) {
         this.buildTree = buildTree;
     }
@@ -203,18 +203,18 @@
                 return parentScope == null ? null : parentScope.peek();
 
             }
-            return get(size()-1);
+            return get(size() - 1);
         }
 
         Node pop() {
-            return isEmpty() ? parentScope.pop() : remove(size()-1);
+            return isEmpty() ? parentScope.pop() : remove(size() - 1);
         }
 
         void poke(Node n) {
             if (isEmpty()) {
                 parentScope.poke(n);
             } else {
-                set(size()-1, n);
+                set(size() - 1, n);
             }
         }
 
@@ -222,7 +222,7 @@
             parentScope.addAll(this);
             ${settings.parserClassName}.this.currentNodeScope = parentScope;
         }
-        
+
         int nestingLevel() {
             int result = 0;
             NodeScope parent = this;
@@ -230,7 +230,7 @@
                result++;
                parent = parent.parentScope;
             }
-            return result;            
+            return result;
         }
 
         public NodeScope clone() {
@@ -239,6 +239,6 @@
                 clone.parentScope = parentScope.clone();
             }
             return clone;
-        } 
+        }
     }
 

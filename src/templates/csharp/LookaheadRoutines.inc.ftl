@@ -2,7 +2,7 @@
 
 [#import "CommonUtils.inc.ftl" as CU]
 
-[#var UNLIMITED=2147483647]
+[#var UNLIMITED = 2147483647]
 [#var MULTIPLE_LEXICAL_STATE_HANDLING = lexerData.numLexicalStates > 1]
 [#set MULTIPLE_LEXICAL_STATE_HANDLING = false]
 
@@ -277,7 +277,7 @@ private bool ${lookBehind.routineName}() {
     return true;
       [/#if]
     [#else]
-      [#var nextElement = lookBehind.path[element_index+1]]
+      [#var nextElement = lookBehind.path[element_index + 1]]
       [#var nextElementNegated = (nextElement[0]=="~")]
       [#if nextElementNegated][#set nextElement=nextElement?substring(1)][/#if]
     while (stackIterator.HasNext()) {

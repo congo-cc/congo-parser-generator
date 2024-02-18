@@ -422,7 +422,7 @@ finally {
    #if isProduction
       #set nodeVarName = globals::translateIdentifier("THIS_PRODUCTION")
    #else
-      #set nodeNumbering = nodeNumbering +1
+      #set nodeNumbering = nodeNumbering + 1
       #set nodeVarName = currentProduction.name + nodeNumbering
    /#if
    #return nodeVarName
@@ -434,7 +434,7 @@ finally {
       #set exceptionVarName = "e" + exceptionNesting
    /#if
    #if isNesting!false
-      #set exceptionNesting = exceptionNesting+1
+      #set exceptionNesting = exceptionNesting + 1
    /#if
    #return exceptionVarName
 /#function
@@ -812,7 +812,7 @@ ${BuildCode(zoo.nestedExpansion)}
 [#-- // DBG > BuildCodeOneOrMore --]
 [#var nestedExp=oom.nestedExpansion, prevInFirstVarName = inFirstVarName/]
    [#if nestedExp.simpleName = "ExpansionChoice"]
-     [#set inFirstVarName = "inFirst" + inFirstIndex, inFirstIndex = inFirstIndex +1 /]
+     [#set inFirstVarName = "inFirst" + inFirstIndex, inFirstIndex = inFirstIndex + 1 /]
 var ${inFirstVarName} = true;
    [/#if]
 while (true) {
@@ -863,38 +863,37 @@ catch (ParseException pe) {
 [#-- // DBG < RecoveryLoop --]
 [/#macro]
 
-[#macro BuildCodeChoice choice]
+#macro BuildCodeChoice choice
 [#-- // DBG > BuildCodeChoice  --]
-   [#list choice.choices as expansion]
-   [#-- OMITTED:
-      [#if expansion.enteredUnconditionally]
-        {
+#list choice.choices as expansion
+  #if expansion.enteredUnconditionally
+        [#-- // expansion entered unconditionally --]
+        else {
          ${BuildCode(expansion)}
          [#if jtbParseTree && isProductionInstantiatingNode(expansion)]
             ${globals.currentNodeVariableName}.setChoice(${expansion_index});
          [/#if]
         }
-        [#if expansion_has_next]
-            [#var nextExpansion = choice[expansion_index+1]]
+    #if expansion_has_next
+            [#var nextExpansion = choice[expansion_index + 1]]
             // Warning: choice at ${nextExpansion.location} is is ignored because the
             // choice at ${expansion.location} is entered unconditionally and we jump
             // out of the loop..
-        [/#if]
-         [#return/]
-      [/#if]
-   --]
-${(expansion_index=0)?string("if", "else if")} (${ExpansionCondition(expansion)}) {
+    /#if
+    #return
+  /#if
+${(expansion_index == 0)?string("if", "else if")} (${ExpansionCondition(expansion)}) {
 ${BuildCode(expansion)}
-      [#if jtbParseTree && isProductionInstantiatingNode(expansion)]
+  #if jtbParseTree && isProductionInstantiatingNode(expansion)
          ${globals.currentNodeVariableName}.setChoice(${expansion_index});
-      [/#if]
+  /#if
 }
-   [/#list]
-   [#if choice.parent.simpleName == "ZeroOrMore"]
+/#list
+#if choice.parent.simpleName == "ZeroOrMore"
 else {
     break;
 }
-   [#elseif choice.parent.simpleName = "OneOrMore"]
+#elseif choice.parent.simpleName = "OneOrMore"
 else if (${inFirstVarName}) {
     PushOntoCallStack("${currentProduction.name}", "${choice.inputSource?j_string}", ${choice.beginLine}, ${choice.beginColumn});
     throw new ParseException(this, ${choice.firstSetVarName});
@@ -902,14 +901,14 @@ else if (${inFirstVarName}) {
 else {
     break;
 }
-   [#elseif choice.parent.simpleName != "ZeroOrOne"]
+#elseif choice.parent.simpleName != "ZeroOrOne"
 else {
     PushOntoCallStack("${currentProduction.name}", "${choice.inputSource?j_string}", ${choice.beginLine}, ${choice.beginColumn});
     throw new ParseException(this, ${choice.firstSetVarName});
 }
-   [/#if]
+/#if
 [#-- // DBG < BuildCodeChoice --]
-[/#macro]
+/#macro
 
 [#macro BuildCodeSequence expansion]
 [#-- // DBG > BuildCodeSequence --]

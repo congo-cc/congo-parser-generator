@@ -25,9 +25,9 @@ import java.util.Iterator;
  */
 public class ${settings.baseNodeClassName} implements Node {
     private ${settings.lexerClassName} tokenSource;
-    
+
     public ${settings.lexerClassName} getTokenSource() {
-        if (tokenSource==null) {
+        if (tokenSource == null) {
             for (Node child : children()) {
                 if (child.getTokenSource() instanceof ${settings.lexerClassName})
                     tokenSource = (${settings.lexerClassName}) child.getTokenSource();
@@ -40,15 +40,15 @@ public class ${settings.baseNodeClassName} implements Node {
     public void setTokenSource(TokenSource tokenSource) {
         this.tokenSource = (${settings.lexerClassName}) tokenSource;
     }
-    
+
     private static Class<? extends List<Node>> listClass;
 
     /**
      * Sets the List class that is used to store child nodes. By default,
      * this is java.util.ArrayList. There is probably very little reason
-     * to ever use anything else, though you could use this method 
+     * to ever use anything else, though you could use this method
      * to replace this with LinkedList or your own java.util.List implementation even.
-     * @param listClass the #java.util.List implementation to use internally 
+     * @param listClass the #java.util.List implementation to use internally
      * for the child nodes. By default #java.util.ArrayList is used.
      */
 	public static void setListClass(Class<? extends List<Node>> listClass) {
@@ -67,21 +67,21 @@ public class ${settings.baseNodeClassName} implements Node {
     }
     /**
      * the parent node
-     */    
+     */
     private Node parent;
 
     /**
      * the child nodes
      */
     private final List<Node> children = newList();
-    
+
     private int beginOffset, endOffset;
     private boolean unparsed;
-    
+
     public boolean isUnparsed() {
        return this.unparsed;
     }
-    
+
     public void setUnparsed(boolean unparsed) {
         this.unparsed = unparsed;
     }
@@ -100,7 +100,7 @@ public class ${settings.baseNodeClassName} implements Node {
 
 [/#if]
 
-[#if settings.nodeUsesParser]    
+[#if settings.nodeUsesParser]
     protected ${settings.parserClassName} parser;
 
     public void setParser(${settings.parserClassName} parser) {this.parser = parser;}
@@ -118,7 +118,7 @@ public class ${settings.baseNodeClassName} implements Node {
         n.setParent(this);
         return children.add(n);
     }
-    
+
     public void add(int i, Node n) {
         children.add(i, n);
         n.setParent(this);
@@ -133,7 +133,7 @@ public class ${settings.baseNodeClassName} implements Node {
         n.setParent(this);
         return children.set(i, n);
     }
-    
+
     public Node remove(int i) {
         Node n = children.remove(i);
         n.setParent(null);
@@ -156,11 +156,11 @@ public class ${settings.baseNodeClassName} implements Node {
     public int size() {
         return children.size();
     }
-    
+
     public List<Node> children() {
         return Collections.unmodifiableList(children);
     }
-    
+
     public int getBeginOffset() {
         return beginOffset;
     }
@@ -206,7 +206,7 @@ public class ${settings.baseNodeClassName} implements Node {
     public boolean removeAll(Collection<?> nodes) {
         return children.removeAll(nodes);
     }
-    
+
     public String toString() {
         return getSource();
     }

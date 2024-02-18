@@ -250,7 +250,7 @@ class ${settings.lexerClassName} extends TokenSource
                     matchLength = position - start;
                     alreadyMatchedTypes.add(returnedType);
                 }
-                nextActive = currentStates.nextSetBit(nextActive+1);
+                nextActive = currentStates.nextSetBit(nextActive + 1);
             }
             if (position >= input.length()) break;
        } while (!nextStates.isEmpty());
@@ -310,7 +310,7 @@ class ${settings.lexerClassName} extends TokenSource
             }
             int cp  = Character.codePointAt(this, position);
             ++position;
-            if (cp >0xFFFF) ++position;
+            if (cp > 0xFFFF) ++position;
             continue;
         }
         if (invalidRegionStart != -1) {
@@ -448,7 +448,7 @@ class ${settings.lexerClassName} extends TokenSource
 
    private String getLine(${TOKEN} tok) {
        int lineNum = tok.getBeginLine();
-       return getText(getLineStartOffset(lineNum), getLineEndOffset(lineNum)+1);
+       return getText(getLineStartOffset(lineNum), getLineEndOffset(lineNum) + 1);
    }
 
 

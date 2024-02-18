@@ -94,7 +94,7 @@ ${is}            break
       [#var followingExpansion = expansion.followingExpansion]
       [#list 1..1000000 as unused]
       [#if followingExpansion?is_null][#break][/#if]
-      [#if followingExpansion.maximumSize >0]
+      [#if followingExpansion.maximumSize > 0]
          [#if followingExpansion.simpleName = "OneOrMore" || followingExpansion.simpleName = "ZeroOrOne" || followingExpansion.simpleName = "ZeroOrMore"]
 ${is}        if (${ExpansionCondition(followingExpansion.nestedExpansion)}):
          [#else]
@@ -432,7 +432,7 @@ ${injectDeclaration(treeNodeBehavior.nodeName, treeNodeBehavior.assignment.name,
    #if isProduction
       #set nodeVarName = globals::translateIdentifier("THIS_PRODUCTION")
    #else
-      #set nodeNumbering = nodeNumbering +1
+      #set nodeNumbering = nodeNumbering + 1
       #set nodeVarName = currentProduction.name + nodeNumbering
    /#if
    #return nodeVarName
@@ -444,7 +444,7 @@ ${injectDeclaration(treeNodeBehavior.nodeName, treeNodeBehavior.assignment.name,
       #set exceptionVarName = "e" + exceptionNesting
    /#if
    #if isNesting!false
-      #set exceptionNesting = exceptionNesting+1
+      #set exceptionNesting = exceptionNesting + 1
    /#if
    #return exceptionVarName
 /#function
@@ -819,7 +819,7 @@ ${BuildCode(zoo.nestedExpansion, indent + 4)}[#rt]
 [#--${is}# DBG > BuildCodeOneOrMore ${indent} --]
 [#var nestedExp=oom.nestedExpansion, prevInFirstVarName = inFirstVarName/]
    [#if nestedExp.simpleName = "ExpansionChoice"]
-     [#set inFirstVarName = "inFirst" + inFirstIndex, inFirstIndex = inFirstIndex +1 /]
+     [#set inFirstVarName = "inFirst" + inFirstIndex, inFirstIndex = inFirstIndex + 1 /]
 ${is}${inFirstVarName} = True
    [/#if]
 ${is}while True:
@@ -840,7 +840,7 @@ ${is}while True:
        [#if zom.nestedExpansion.class.simpleName != "ExpansionChoice"]
 ${is}    if not (${ExpansionCondition(zom.nestedExpansion)}): break
        [/#if]
-[@RecoveryLoop zom indent+4 /]
+[@RecoveryLoop zom indent + 4 /]
 [#--${is}# DBG < BuildCodeZeroOrMore ${indent} --]
 [/#macro]
 
@@ -879,18 +879,17 @@ ${is}    if self.pending_recovery: raise
 [#--${is}# DBG > BuildCodeChoice ${indent} --]
 #list choice.choices as expansion
   #if expansion.enteredUnconditionally
-${is}# expansion entered unconditionally
 ${is}else:
 ${BuildCode(expansion, indent + 4)}[#rt]
     #if expansion_has_next
-      #var nextExpansion = choice[expansion_index+1]
+      #var nextExpansion = choice[expansion_index + 1]
 ${is}# Warning: choice at ${nextExpansion.location} is is ignored because the
 ${is}# choice at ${expansion.location} is entered unconditionally and we jump
 ${is}# out of the loop..
     /#if
     #return
   /#if
-${is}${(expansion_index=0)?string("if", "elif")} (${ExpansionCondition(expansion)}):
+${is}${(expansion_index == 0)?string("if", "elif")} (${ExpansionCondition(expansion)}):
 ${BuildCode(expansion, indent + 4)}[#rt]
   #if jtbParseTree && isProductionInstantiatingNode(expansion)
 ${is}    ${globals.currentNodeVariableName}.setChoice(${expansion_index})

@@ -214,7 +214,7 @@ void dumpLookaheadCallStack(PrintStream ps) {
              return nextNext;
        }
          [#-- Since skipping the next token did not work, we will insert a virtual token --]
-       if (tolerant || followSet==null || followSet.contains(nextToken.getType())) {
+       if (tolerant || followSet == null || followSet.contains(nextToken.getType())) {
            ${settings.baseTokenClassName} virtualToken = ${settings.baseTokenClassName}.newToken(expectedType, token_source, 0,0);
            virtualToken.setVirtual(true);
            virtualToken.copyLocationInfo(nextToken);

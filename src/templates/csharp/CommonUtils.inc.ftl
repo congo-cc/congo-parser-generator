@@ -3,7 +3,7 @@
 
 [#var TT = "TokenType."]
 
-[#macro enumSet varName tokenNames indent=0]
+[#macro enumSet varName tokenNames indent = 0]
 [#var size = tokenNames?size]
 [#if size = 0]
 private static readonly HashSet<TokenType> ${varName} = Utils.GetOrMakeSet();
@@ -30,12 +30,12 @@ private static readonly HashSet<TokenType> ${varName} = Utils.GetOrMakeSet(
 [/#macro]
 
 
-[#var newVarIndex=0]
+[#var newVarIndex = 0]
 [#-- Just to generate a new unique variable name
   All it does is tack an integer (that is incremented)
   onto the type name, and optionally initializes it to some value
 [#macro newVar type init=null]
-   [#set newVarIndex = newVarIndex+1]
+   [#set newVarIndex = newVarIndex + 1]
    ${type} ${type?lower_case}${newVarIndex}
    [#if init??]
       = ${init}
@@ -48,7 +48,7 @@ ${prefix}${newID()}[#rt]
 [/#macro]
 
 [#function newID]
-    [#set newVarIndex = newVarIndex+1]
+    [#set newVarIndex = newVarIndex + 1]
     [#return newVarIndex]
 [/#function]
 
