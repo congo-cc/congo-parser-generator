@@ -44,16 +44,16 @@ public class AppSettings {
     }
 
     private final String booleanSettings = ",FAULT_TOLERANT,FAULT_TOLERANT_DEFAULT,PRESERVE_TABS,PRESERVE_LINE_ENDINGS,"
-                                    + "JAVA_UNICODE_ESCAPE,IGNORE_CASE,LEXER_USES_PARSER,NODE_DEFAULT_VOID,SMART_NODE_CREATION," 
-                                    + "NODE_USES_PARSER,TREE_BUILDING_DEFAULT,TREE_BUILDING_ENABLED,TOKENS_ARE_NODES," 
-                                    + "SPECIAL_TOKENS_ARE_NODES,UNPARSED_TOKENS_ARE_NODES," 
-                                    + "TOKEN_MANAGER_USES_PARSER,ENSURE_FINAL_EOL,MINIMAL_TOKEN,C_CONTINUATION_LINE," 
-                                    + "USE_CHECKED_EXCEPTION,LEGACY_GLITCHY_LOOKAHEAD,TOKEN_CHAINING,USES_PREPROCESSOR,X_JTB_PARSE_TREE,X_SYNTHETIC_NODES_ENABLED,";
+            + "JAVA_UNICODE_ESCAPE,IGNORE_CASE,LEXER_USES_PARSER,NODE_DEFAULT_VOID,SMART_NODE_CREATION,"
+            + "NODE_USES_PARSER,TREE_BUILDING_DEFAULT,TREE_BUILDING_ENABLED,TOKENS_ARE_NODES,"
+            + "SPECIAL_TOKENS_ARE_NODES,UNPARSED_TOKENS_ARE_NODES,"
+            + "TOKEN_MANAGER_USES_PARSER,ENSURE_FINAL_EOL,MINIMAL_TOKEN,C_CONTINUATION_LINE,"
+            + "USE_CHECKED_EXCEPTION,LEGACY_GLITCHY_LOOKAHEAD,TOKEN_CHAINING,USES_PREPROCESSOR,X_JTB_PARSE_TREE,X_SYNTHETIC_NODES_ENABLED,";
 
     private final String stringSettings = ",BASE_NAME,PARSER_PACKAGE,PARSER_CLASS,LEXER_CLASS,BASE_SRC_DIR,BASE_NODE_CLASS,"
-                                    + "BASE_TOKEN_CLASS,NODE_PREFIX,NODE_CLASS,NODE_PACKAGE,DEFAULT_LEXICAL_STATE," 
-                                    + "NODE_CLASS,OUTPUT_DIRECTORY,DEACTIVATE_TOKENS,EXTRA_TOKENS,ROOT_API_PACKAGE," 
-                                    + "COPYRIGHT_BLURB,TERMINATING_STRING,";
+            + "BASE_TOKEN_CLASS,NODE_PREFIX,NODE_CLASS,NODE_PACKAGE,DEFAULT_LEXICAL_STATE,"
+            + "NODE_CLASS,OUTPUT_DIRECTORY,DEACTIVATE_TOKENS,EXTRA_TOKENS,ROOT_API_PACKAGE,"
+            + "COPYRIGHT_BLURB,TERMINATING_STRING,";
 
     private final String integerSettings = ",TAB_SIZE,TABS_TO_SPACES,JDK_TARGET,";
 
@@ -75,21 +75,34 @@ public class AppSettings {
         }
     };
 
-    public String getCodeLang() {return codeLang;}
+    public String getCodeLang() {
+        return codeLang;
+    }
 
-    public void setCodeLang(String codeLang) {this.codeLang = codeLang;}
+    public void setCodeLang(String codeLang) {
+        this.codeLang = codeLang;
+    }
 
     public Set<String> getDeactivatedTokens() {
         return tokensOffByDefault;
     }
-    public Map<String,String> getExtraTokens() {return extraTokens;}
-    public List<String> getExtraTokenNames() {return new ArrayList<>(extraTokens.keySet());}
-    public Collection<String> getExtraTokenClassNames() {return extraTokens.values();}
+
+    public Map<String, String> getExtraTokens() {
+        return extraTokens;
+    }
+
+    public List<String> getExtraTokenNames() {
+        return new ArrayList<>(extraTokens.keySet());
+    }
+
+    public Collection<String> getExtraTokenClassNames() {
+        return extraTokens.values();
+    }
 
     public boolean isASetting(String key) {
         return booleanSettings.contains("," + key + ",")
-              || stringSettings.contains("," + key + ",")
-              || integerSettings.contains("," + key + ",");
+                || stringSettings.contains("," + key + ",")
+                || integerSettings.contains("," + key + ",");
     }
 
     public boolean isABooleanSetting(String key) {
@@ -155,7 +168,7 @@ public class AppSettings {
                 errors.addWarning(null, msg.replace("OPTION_NAME", "X_SYNTHETIC_NODES_ENABLED"));
                 if (settings.get("X_JTB_PARSE_TREE") != null) {
                     errors.addWarning(null, msg.replace("OPTION_NAME", "X_JTB_PARSE_TREE")
-                    		         .replace("TREE_BUILDING_ENABLED", "X_SYNTHETIC_NODES_ENABLED"));
+                            .replace("TREE_BUILDING_ENABLED", "X_SYNTHETIC_NODES_ENABLED"));
                 }
             }
         }
@@ -196,7 +209,8 @@ public class AppSettings {
                             String tokenClassName = mr.group(2);
                             if (tokenClassName == null) {
                                 tokenClassName = tokenName + "Token";
-                            } else {
+                            }
+                            else {
                                 tokenClassName = tokenClassName.substring(1);
                             }
                             extraTokens.put(tokenName, tokenClassName);
@@ -210,10 +224,10 @@ public class AppSettings {
                         outputDir = Paths.get((String) value);
                     break;
             }
-            if (!grammar.isInInclude() && key.equals("JDK_TARGET") && jdkTarget ==0){
+            if (!grammar.isInInclude() && key.equals("JDK_TARGET") && jdkTarget == 0) {
                 int jdkTarget = (Integer) value;
-                if (jdkTarget >=8 && jdkTarget <= 19) {
-                    this.jdkTarget = (Integer) value; 
+                if (jdkTarget >= 8 && jdkTarget <= 19) {
+                    this.jdkTarget = (Integer) value;
                 }
                 else {
                     this.jdkTarget = 8;
@@ -229,7 +243,9 @@ public class AppSettings {
         return jdkTarget;
     }
 
-    public void setJdkTarget(int jdkTarget) {this.jdkTarget = jdkTarget;}
+    public void setJdkTarget(int jdkTarget) {
+        this.jdkTarget = jdkTarget;
+    }
 
     //FIXME.
     public String getBaseSourceDirectory() {
@@ -242,7 +258,7 @@ public class AppSettings {
             baseSrcDir = outputDir == null ? "." : outputDir.toString();
         }
         Path dir = Paths.get(baseSrcDir);
-        if (!dir.isAbsolute()){
+        if (!dir.isAbsolute()) {
             Path inputFileDir = filename.toAbsolutePath().getParent();
             dir = inputFileDir.resolve(baseSrcDir);
         }
@@ -250,7 +266,7 @@ public class AppSettings {
             Files.createDirectories(dir);
         }
         String packageName = getParserPackage();
-        if (packageName != null  && packageName.length() >0) {
+        if (packageName != null && packageName.length() > 0) {
             int dotPosition;
 
             switch (codeLang) {
@@ -297,10 +313,10 @@ public class AppSettings {
         }
         return dir;
     }
-    
+
     public String separatorString() {
         // Temporary solution. Use capital sigma for Python / others, for now
-        return codeLang.equals("java") ? "$": "\u03A3";
+        return codeLang.equals("java") ? "$" : "\u03A3";
     }
 
     public String getParserPackage() {
@@ -315,7 +331,7 @@ public class AppSettings {
     }
 
     public String getParserClassName() {
-        if (parserClassName ==null) {
+        if (parserClassName == null) {
             parserClassName = (String) settings.get("PARSER_CLASS");
         }
         if (parserClassName == null) {
@@ -349,13 +365,13 @@ public class AppSettings {
         if ((baseName == null) && (filename != null)) {
             baseName = filename.getFileName().toString();
             int lastDot = baseName.lastIndexOf('.');
-            if (lastDot >0) {
+            if (lastDot > 0) {
                 baseName = baseName.substring(0, lastDot);
             }
             baseName = removeNonJavaIdentifierPart(baseName);
             if (Character.isLowerCase(baseName.charAt(0))) {
-                baseName = baseName.substring(0, 1).toUpperCase() 
-                                  + baseName.substring(1);
+                baseName = baseName.substring(0, 1).toUpperCase()
+                        + baseName.substring(1);
             }
         }
         return baseName;
@@ -380,10 +396,11 @@ public class AppSettings {
             }
             throw new FileNotFoundException(baseSrcDir + " is not a directory.");
         }
-        Path result = baseSource. resolve(nodePackage.replace('.', '/')).normalize();
+        Path result = baseSource.resolve(nodePackage.replace('.', '/')).normalize();
         if (!Files.exists(result)) {
             Files.createDirectories(result);
-        } else if (!Files.isDirectory(result)) {
+        }
+        else if (!Files.isDirectory(result)) {
             throw new IOException(result + " is not a directory.");
         }
         return result;
@@ -438,19 +455,21 @@ public class AppSettings {
         URI uri;
         try {
             uri = getClass().getResource(location).toURI();
-        } catch (Exception e) {
+        }
+        catch (Exception e) {
             return null;
         }
         try {
             return Paths.get(uri);
-        } catch (FileSystemNotFoundException fsne) {
-           try {
-               FileSystem fs = FileSystems.newFileSystem(uri, Collections.emptyMap());
-               return fs.getPath(location);
-           }
-           catch (Exception e) {
-               e.printStackTrace();
-           }
+        }
+        catch (FileSystemNotFoundException fsne) {
+            try {
+                FileSystem fs = FileSystems.newFileSystem(uri, Collections.emptyMap());
+                return fs.getPath(location);
+            }
+            catch (Exception e) {
+                e.printStackTrace();
+            }
         }
         return null;
     }
@@ -467,8 +486,14 @@ public class AppSettings {
         return null;
     }
 
-    public boolean isIgnoreCase() {return ignoreCase;}
-    public void setIgnoreCase(boolean ignoreCase) {this.ignoreCase = ignoreCase;}
+    public boolean isIgnoreCase() {
+        return ignoreCase;
+    }
+
+    public void setIgnoreCase(boolean ignoreCase) {
+        this.ignoreCase = ignoreCase;
+    }
+
     public boolean getTreeBuildingEnabled() {
         Boolean b = (Boolean) settings.get("TREE_BUILDING_ENABLED");
         return b == null || b;
@@ -476,10 +501,10 @@ public class AppSettings {
 
     public int getTabSize() {
         Integer i = (Integer) settings.get("TAB_SIZE");
-        if (i==null) {
+        if (i == null) {
             i = (Integer) settings.get("TABS_TO_SPACES");
         }
-        return i==null ? 1 : i;
+        return i == null ? 1 : i;
     }
 
     public boolean getUseCheckedException() {
@@ -499,10 +524,10 @@ public class AppSettings {
 
     public boolean getPreserveTabs() {
         Boolean b = (Boolean) settings.get("PRESERVE_TABS");
-        if (b!=null) return b;
-        if (settings.get("TAB_SIZE")==null && settings.get("TABS_TO_SPACES")==null)
+        if (b != null) return b;
+        if (settings.get("TAB_SIZE") == null && settings.get("TABS_TO_SPACES") == null)
             return true;
-        return getTabSize() ==0;
+        return getTabSize() == 0;
     }
 
     public boolean getPreserveLineEndings() {
@@ -551,13 +576,13 @@ public class AppSettings {
     public boolean getFaultTolerant() {
         Boolean b = (Boolean) settings.get("FAULT_TOLERANT");
         return b != null && b;
-    }  
-    
+    }
+
     public boolean getTokensAreNodes() {
         Boolean b = (Boolean) settings.get("TOKENS_ARE_NODES");
         return b == null || b;
     }
-    
+
     public boolean getUnparsedTokensAreNodes() {
         Boolean b = (Boolean) settings.get("TOKENS_ARE_NODES");
         if (b == null) {
@@ -591,7 +616,7 @@ public class AppSettings {
 
     public boolean getLegacyGlitchyLookahead() {
         Boolean b = (Boolean) settings.get("LEGACY_GLITCHY_LOOKAHEAD");
-        return b!=null && b;
+        return b != null && b;
     }
 
     public boolean getUsesPreprocessor() {
@@ -599,7 +624,7 @@ public class AppSettings {
         Boolean b = (Boolean) settings.get("USES_PREPROCESSOR");
         return b != null && b;
     }
-    
+
     public String getNodePrefix() {
         String nodePrefix = (String) settings.get("NODE_PREFIX");
         if (nodePrefix == null) nodePrefix = "";
@@ -628,7 +653,8 @@ public class AppSettings {
         if (baseNodeClassName == null) {
             if (getRootAPIPackage() == null || getBaseName().length() == 0) {
                 baseNodeClassName = "BaseNode";
-            } else {
+            }
+            else {
                 baseNodeClassName = getBaseName() + "Node";
             }
         }
@@ -651,9 +677,13 @@ public class AppSettings {
         return baseTokenClassName;
     }
 
-    public void setOutputDir(Path outputDir) {this.outputDir = outputDir;}
+    public void setOutputDir(Path outputDir) {
+        this.outputDir = outputDir;
+    }
 
-    public Path getOutputDir() {return outputDir;}
+    public Path getOutputDir() {
+        return outputDir;
+    }
 
     public Path getIncludedFileDirectory() {
         return includedFileDirectory;
@@ -689,8 +719,9 @@ public class AppSettings {
 
         if (inputSource != null) {
             int lastSlash = Math.max(inputSource.lastIndexOf('\\'), inputSource.lastIndexOf('/'));
-            if (lastSlash+1<inputSource.length()) inputSource = inputSource.substring(lastSlash+1);
-        } else {
+            if (lastSlash + 1 < inputSource.length()) inputSource = inputSource.substring(lastSlash + 1);
+        }
+        else {
             inputSource = "";
         }
         String id = prefix + inputSource + sep + exp.getBeginLine() + sep + exp.getBeginColumn();
@@ -719,7 +750,7 @@ public class AppSettings {
     }
 
     private boolean checkForMethodName(String methodName) {
-        return grammar.firstDescendantOfType(MethodCall.class, 
-            mc->mc.get(0).getLastChild().toString().equals(methodName)) != null;
+        return grammar.firstDescendantOfType(MethodCall.class,
+                mc -> mc.get(0).getLastChild().toString().equals(methodName)) != null;
     }
 }

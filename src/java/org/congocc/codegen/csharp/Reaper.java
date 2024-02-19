@@ -88,8 +88,10 @@ public class Reaper {
         when logging and comparing results on different platforms.
 */
         Map<String, MethodDeclaration> toInspect = wantedMethods;
+
         while (!toInspect.isEmpty()) {
             Map<String, MethodDeclaration> inspectNext = new HashMap<>();
+            Set<String> names = new HashSet<>();
 
             keyList = new ArrayList<>(toInspect.keySet());
             Collections.sort(keyList);
@@ -98,20 +100,21 @@ public class Reaper {
                 MethodDeclaration method = toInspect.get(key);
                 Block block = method.firstChildOfType(Block.class);
 
-                Set<String> names = new HashSet<>();
                 for (Identifier ident : block.descendantsOfType(Identifier.class)) {
                     names.add(ident.toString());
                 }
-                for (String n : names) {
-                    if (parserSets.containsKey(n)) {
-                        logger.fine(String.format("Found reference to parser set %s", n));
-                        parserSets.remove(n);
-                    }
-                    else if (otherMethods.containsKey(n)) {
-                        logger.fine(String.format("Found reference to method %s", n));
-                        inspectNext.put(n, otherMethods.get(n));
-                        otherMethods.remove(n);
-                    }
+            }
+            keyList = new ArrayList<>(names);
+            Collections.sort(keyList);
+            for (String n : keyList) {
+                if (parserSets.containsKey(n)) {
+                    logger.fine(String.format("Found reference to parser set %s", n));
+                    parserSets.remove(n);
+                }
+                else if (otherMethods.containsKey(n)) {
+                    logger.fine(String.format("Found reference to method %s", n));
+                    inspectNext.put(n, otherMethods.get(n));
+                    otherMethods.remove(n);
                 }
             }
             wantedMethods.putAll(inspectNext);
