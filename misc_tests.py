@@ -224,24 +224,39 @@ class BaseTestCase(unittest.TestCase):
         actual = self.collect_files(start)
         self.assertEqual(actual, expected)  # back to the original set
 
+    def copy_files(self, sd, dd, *, specs='**/*', special_processor=None):
+        """
+        Copy selected files from source directory to destination, and allow
+        some special processing to be done on the copies.
+        """
+        if isinstance(specs, str):
+            specs = specs.split()
+        for spec in specs:
+            p = os.path.join(sd, spec)
+            for fn in glob.glob(p, recursive=True):
+                if os.path.isdir(fn):
+                    continue
+                dp = os.path.join(dd, os.path.relpath(fn, sd))
+                ensure_dir(dp)
+                shutil.copy2(fn, dp)
+                if special_processor:
+                    special_processor(dp)
+
     def test_nested_lookahead(self):
-        # Copy test files to working directory
         wd = self.workdir
         sd = os.path.join('tests', 'nested_lookahead')
-        p = os.path.join(sd, '**/*')
-        for fn in glob.glob(p, recursive=True):
-            if os.path.isdir(fn):
-                continue
-            dp = os.path.join(wd, os.path.relpath(fn, sd))
-            ensure_dir(dp)
-            shutil.copy2(fn, dp)
-            # change the .NET version in the project for CI runners
-            if 'CI' in os.environ and dp.endswith('.csproj'):
+        if 'CI' not in os.environ:
+            special_handling = None
+        else:
+            def special_handling(dp):
+                if not dp.endswith('.csproj'):
+                    return
                 with open(dp, encoding='utf-8') as f:
                     s = f.read()
                 s = s.replace('net5.0', 'net7.0')
                 with open(dp, 'w', encoding='utf-8') as f:
                     f.write(s)
+        self.copy_files(sd, wd, special_processor=special_handling)
 
         GOOD = 'nla-good.txt: glitchy = false: lookahead succeeded, parse succeeded'
         BAD = 'nla-bad.txt: glitchy = false: lookahead failed, parse succeeded'
@@ -310,6 +325,64 @@ class BaseTestCase(unittest.TestCase):
         # Run the tests with the C# parser
         run_tester(tester, True)
 
+    def test_unparsed(self):
+        wd = self.workdir
+        sd = os.path.join('tests', 'unparsed')
+        self.copy_files(sd, wd)
+        sd = os.path.join('examples', 'csharp')
+        self.copy_files(sd, wd, specs='*.ccc')
+        # Generate Java parsers
+        gcmd = ['java', '-jar', CONGO_JAR, '-q', '-n', 'PPDirectiveLine.ccc']
+        p = run_command(gcmd, cwd=wd)
+        gcmd[-1] = 'CSharp.ccc'
+        p = run_command(gcmd, cwd=wd)
+        # Compile them
+        ccmd = 'javac org/parsers/csharp/CSharpParser.java CSParse.java'.split()
+        p = run_command(ccmd, cwd=wd)
+        # Run the C# parser
+        rcmd = 'java CSParse dummy.cs'.split()
+        out = subprocess.check_output(rcmd, cwd=wd).decode('utf-8').strip()
+        OUT = '''
+<CompilationUnit (2, 1)-(8, 2)>
+  <NamespaceDeclaration (2, 1)-(8, 1)>
+    namespace
+    <QualifiedIdentifier (2, 11)-(2, 17)>
+      foo
+      .
+      bar
+    <NamespaceBody (2, 19)-(8, 1)>
+      {
+      }
+  EOF
+'''.strip()
+        self.assertEqual(out, OUT)
+
+        # Now repeat, but with unparsed tokens as nodes.
+
+        # import pdb; pdb.set_trace()
+        gcmd[-2:-1] = '-p UNPARSED_TOKENS_ARE_NODES=true'.split()
+        p = run_command(gcmd, cwd=wd)
+        p = run_command(ccmd, cwd=wd)
+        out = subprocess.check_output(rcmd, cwd=wd).decode('utf-8').strip()
+        # REVISIT the hashes around the comment should not be there
+        OUT = '''
+<CompilationUnit (1, 1)-(8, 2)>
+  <NamespaceDeclaration (1, 1)-(8, 1)>
+    #pragma warn disable 999
+    namespace
+    <QualifiedIdentifier (2, 11)-(2, 17)>
+      foo
+      .
+      bar
+    <NamespaceBody (2, 19)-(8, 1)>
+      {
+      #
+      /* This is a comment. */
+      #
+      }
+  EOF
+'''.strip()
+        self.assertEqual(out, OUT)
 
 def process(options):
     unittest.main()
