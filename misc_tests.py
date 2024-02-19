@@ -28,9 +28,14 @@ def ensure_dir(p):
 
 
 def run_command(cmd, **kwargs):
-    kwargs.setdefault('check', True)
+    out_wanted = kwargs.pop('out', False)
     logger.debug('Running: %s', ' '.join(cmd))
-    return subprocess.run(cmd, **kwargs)
+    if out_wanted:
+        # Normalize newlines across platforms
+        return subprocess.check_output(cmd, **kwargs).decode('utf-8').strip().replace('\r\n', '\n')
+    else:
+        kwargs.setdefault('check', True)
+        return subprocess.run(cmd, **kwargs)
 
 
 class BaseTestCase(unittest.TestCase):
@@ -55,7 +60,7 @@ class BaseTestCase(unittest.TestCase):
 
     def test_file_generation(self):
         """
-        Test that the expected files are generated for a grammar.
+        Test that the expected files are generated for a grammar
         """
         wd = self.workdir
         spec = os.path.join('examples', 'lua', '*.ccc')
@@ -224,24 +229,42 @@ class BaseTestCase(unittest.TestCase):
         actual = self.collect_files(start)
         self.assertEqual(actual, expected)  # back to the original set
 
+    def copy_files(self, sd, dd, *, specs='**/*', special_processor=None):
+        """
+        Copy selected files from source directory to destination, and allow
+        some special processing to be done on the copies.
+        """
+        if isinstance(specs, str):
+            specs = specs.split()
+        for spec in specs:
+            p = os.path.join(sd, spec)
+            for fn in glob.glob(p, recursive=True):
+                if os.path.isdir(fn):
+                    continue
+                dp = os.path.join(dd, os.path.relpath(fn, sd))
+                ensure_dir(dp)
+                shutil.copy2(fn, dp)
+                if special_processor:
+                    special_processor(dp)
+
     def test_nested_lookahead(self):
-        # Copy test files to working directory
+        """
+        Test that nested lookahead works
+        """
         wd = self.workdir
         sd = os.path.join('tests', 'nested_lookahead')
-        p = os.path.join(sd, '**/*')
-        for fn in glob.glob(p, recursive=True):
-            if os.path.isdir(fn):
-                continue
-            dp = os.path.join(wd, os.path.relpath(fn, sd))
-            ensure_dir(dp)
-            shutil.copy2(fn, dp)
-            # change the .NET version in the project for CI runners
-            if 'CI' in os.environ and dp.endswith('.csproj'):
+        if 'CI' not in os.environ:
+            special_handling = None
+        else:
+            def special_handling(dp):
+                if not dp.endswith('.csproj'):
+                    return
                 with open(dp, encoding='utf-8') as f:
                     s = f.read()
                 s = s.replace('net5.0', 'net7.0')
                 with open(dp, 'w', encoding='utf-8') as f:
                     f.write(s)
+        self.copy_files(sd, wd, special_processor=special_handling)
 
         GOOD = 'nla-good.txt: glitchy = false: lookahead succeeded, parse succeeded'
         BAD = 'nla-bad.txt: glitchy = false: lookahead failed, parse succeeded'
@@ -253,10 +276,10 @@ class BaseTestCase(unittest.TestCase):
             bad = GLITCHY_BAD if glitchy else BAD
             cmd = cmd.split()
             cmd.append('nla-good.txt')
-            out = subprocess.check_output(cmd, cwd=wd).decode('utf-8').strip()
+            out = run_command(cmd, cwd=wd, out=True)
             self.assertEqual(out, good)
             cmd[-1] = 'nla-bad.txt'
-            out = subprocess.check_output(cmd, cwd=wd).decode('utf-8').strip()
+            out = run_command(cmd, cwd=wd, out=True)
             self.assertEqual(out, bad)
 
         # Generate Java parser, non-glitchy
@@ -310,6 +333,67 @@ class BaseTestCase(unittest.TestCase):
         # Run the tests with the C# parser
         run_tester(tester, True)
 
+    def test_unparsed(self):
+        """
+        Test capturing unparsed tokens in the AST
+        """
+        wd = self.workdir
+        sd = os.path.join('tests', 'unparsed')
+        self.copy_files(sd, wd)
+        sd = os.path.join('examples', 'csharp')
+        self.copy_files(sd, wd, specs='*.ccc')
+        # Generate Java parsers
+        gcmd = ['java', '-jar', CONGO_JAR, '-q', '-n', 'PPDirectiveLine.ccc']
+        p = run_command(gcmd, cwd=wd)
+        gcmd[-1] = 'CSharp.ccc'
+        p = run_command(gcmd, cwd=wd)
+        # Compile them
+        ccmd = 'javac org/parsers/csharp/CSharpParser.java CSParse.java'.split()
+        p = run_command(ccmd, cwd=wd)
+        # Run the C# parser
+        rcmd = 'java CSParse dummy.cs'.split()
+        out = run_command(rcmd, cwd=wd, out=True)
+        OUT = '''
+<CompilationUnit (2, 1)-(8, 2)>
+  <NamespaceDeclaration (2, 1)-(8, 1)>
+    namespace
+    <QualifiedIdentifier (2, 11)-(2, 17)>
+      foo
+      .
+      bar
+    <NamespaceBody (2, 19)-(8, 1)>
+      {
+      }
+  EOF
+'''.strip()
+        self.assertEqual(out, OUT)
+
+        # Now repeat, but with unparsed tokens as nodes.
+
+        # import pdb; pdb.set_trace()
+        gcmd[-2:-1] = '-p UNPARSED_TOKENS_ARE_NODES=true'.split()
+        p = run_command(gcmd, cwd=wd)
+        p = run_command(ccmd, cwd=wd)
+        out = run_command(rcmd, cwd=wd, out=True)
+        # REVISIT the hashes around the comment should not be there
+        OUT = '''
+<CompilationUnit (1, 1)-(8, 2)>
+  <NamespaceDeclaration (1, 1)-(8, 1)>
+    #pragma warn disable 999
+    namespace
+    <QualifiedIdentifier (2, 11)-(2, 17)>
+      foo
+      .
+      bar
+    <NamespaceBody (2, 19)-(8, 1)>
+      {
+      #
+      /* This is a comment. */
+      #
+      }
+  EOF
+'''.strip()
+        self.assertEqual(out, OUT)
 
 def process(options):
     unittest.main()
