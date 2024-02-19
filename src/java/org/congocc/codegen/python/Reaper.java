@@ -92,6 +92,7 @@ public class Reaper {
         Map<String, FunctionDefinition> toInspect = wantedMethods;
         while (!toInspect.isEmpty()) {
             Map<String, FunctionDefinition> inspectNext = new HashMap<>();
+            Set<String> dotNames = new HashSet<>();
 
             keyList = new ArrayList<>(toInspect.keySet());
             Collections.sort(keyList);
@@ -101,23 +102,22 @@ public class Reaper {
                 block = method.getLastChild();
                 assert block instanceof Block;
 
-                Set<String> dotNames = new HashSet<>();
                 for (DotName dn : block.descendantsOfType(DotName.class)) {
                     Node last = dn.getLastChild();
                     dotNames.add(last.toString());
                 }
-                keyList = new ArrayList<>(dotNames);
-                Collections.sort(keyList);
-                for (String dn : keyList) {
-                    if (parserSets.containsKey(dn)) {
-                        logger.fine(String.format("Found reference to parser set %s", dn));
-                        parserSets.remove(dn);
-                    }
-                    else if (otherMethods.containsKey(dn)) {
-                        logger.fine(String.format("Found reference to method %s", dn));
-                        inspectNext.put(dn, otherMethods.get(dn));
-                        otherMethods.remove(dn);
-                    }
+            }
+            keyList = new ArrayList<>(dotNames);
+            Collections.sort(keyList);
+            for (String dn : keyList) {
+                if (parserSets.containsKey(dn)) {
+                    logger.fine(String.format("Found reference to parser set %s", dn));
+                    parserSets.remove(dn);
+                }
+                else if (otherMethods.containsKey(dn)) {
+                    logger.fine(String.format("Found reference to method %s", dn));
+                    inspectNext.put(dn, otherMethods.get(dn));
+                    otherMethods.remove(dn);
                 }
             }
             wantedMethods.putAll(inspectNext);
