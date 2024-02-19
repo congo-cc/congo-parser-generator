@@ -120,7 +120,7 @@
             # self.last_consumed_token.next = virtual_token
             if self.debug_fault_tolerant:
                 logger.info('Inserting virtual token of type: %s at: %s', expected_type, virtual_token.location)
-#if MULTIPLE_LEXICAL_STATE_HANDLING
+#if lexerData.hasLexicalStateTransitions
             if self.token_source.do_lexical_state_switch(expected_type):
                 self.token_source.reset(virtual_token)
 /#if

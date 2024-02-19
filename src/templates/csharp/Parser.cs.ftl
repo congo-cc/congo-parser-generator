@@ -4,6 +4,7 @@
 [#var csPackage = globals::getPreprocessorSymbol('cs.package', settings.parserPackage) ]
 namespace ${csPackage} {
     using System;
+    using System.Linq;
     using System.Collections.Generic;
     using System.Diagnostics;
     using System.Text;
@@ -29,6 +30,15 @@ ${globals::translateParserImports()}
             Token = token;
             Expected = expected;
             callStack = new List<NonTerminalCall>(parser.ParsingStack);
+        }
+
+        public override String ToString() {
+            var oneOf = (Expected.Count == 1) ? "" : "one of ";
+            var e = new List<TokenType>(Expected);
+            var parts = e.ConvertAll<string>(e => e.ToString());
+            var s = string.Join(", ", parts.ToArray());
+
+            return $"Unexpected {Token} ({Token.Type}) at {Token.Location}: expected {oneOf}{s}";
         }
     }
 
