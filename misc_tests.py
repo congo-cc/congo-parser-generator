@@ -28,9 +28,14 @@ def ensure_dir(p):
 
 
 def run_command(cmd, **kwargs):
-    kwargs.setdefault('check', True)
+    out_wanted = kwargs.pop('out', False)
     logger.debug('Running: %s', ' '.join(cmd))
-    return subprocess.run(cmd, **kwargs)
+    if out_wanted:
+        # Normalize newlines across platforms
+        return subprocess.check_output(cmd, **kwargs).decode('utf-8').strip().replace('\r\n', '\n')
+    else:
+        kwargs.setdefault('check', True)
+        return subprocess.run(cmd, **kwargs)
 
 
 class BaseTestCase(unittest.TestCase):
@@ -55,7 +60,7 @@ class BaseTestCase(unittest.TestCase):
 
     def test_file_generation(self):
         """
-        Test that the expected files are generated for a grammar.
+        Test that the expected files are generated for a grammar
         """
         wd = self.workdir
         spec = os.path.join('examples', 'lua', '*.ccc')
@@ -243,6 +248,9 @@ class BaseTestCase(unittest.TestCase):
                     special_processor(dp)
 
     def test_nested_lookahead(self):
+        """
+        Test that nested lookahead works
+        """
         wd = self.workdir
         sd = os.path.join('tests', 'nested_lookahead')
         if 'CI' not in os.environ:
@@ -268,10 +276,10 @@ class BaseTestCase(unittest.TestCase):
             bad = GLITCHY_BAD if glitchy else BAD
             cmd = cmd.split()
             cmd.append('nla-good.txt')
-            out = subprocess.check_output(cmd, cwd=wd).decode('utf-8').strip()
+            out = run_command(cmd, cwd=wd, out=True)
             self.assertEqual(out, good)
             cmd[-1] = 'nla-bad.txt'
-            out = subprocess.check_output(cmd, cwd=wd).decode('utf-8').strip()
+            out = run_command(cmd, cwd=wd, out=True)
             self.assertEqual(out, bad)
 
         # Generate Java parser, non-glitchy
@@ -326,6 +334,9 @@ class BaseTestCase(unittest.TestCase):
         run_tester(tester, True)
 
     def test_unparsed(self):
+        """
+        Test capturing unparsed tokens in the AST
+        """
         wd = self.workdir
         sd = os.path.join('tests', 'unparsed')
         self.copy_files(sd, wd)
@@ -341,7 +352,7 @@ class BaseTestCase(unittest.TestCase):
         p = run_command(ccmd, cwd=wd)
         # Run the C# parser
         rcmd = 'java CSParse dummy.cs'.split()
-        out = subprocess.check_output(rcmd, cwd=wd).decode('utf-8').strip()
+        out = run_command(rcmd, cwd=wd, out=True)
         OUT = '''
 <CompilationUnit (2, 1)-(8, 2)>
   <NamespaceDeclaration (2, 1)-(8, 1)>
@@ -363,7 +374,7 @@ class BaseTestCase(unittest.TestCase):
         gcmd[-2:-1] = '-p UNPARSED_TOKENS_ARE_NODES=true'.split()
         p = run_command(gcmd, cwd=wd)
         p = run_command(ccmd, cwd=wd)
-        out = subprocess.check_output(rcmd, cwd=wd).decode('utf-8').strip()
+        out = run_command(rcmd, cwd=wd, out=True)
         # REVISIT the hashes around the comment should not be there
         OUT = '''
 <CompilationUnit (1, 1)-(8, 2)>
