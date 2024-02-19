@@ -67,7 +67,7 @@
                 var virtualToken = Token.NewToken(expectedType, tokenSource, 0, 0);
                 virtualToken.SetVirtual(true);
                 virtualToken.CopyLocationInfo(nextToken);
-  [#if MULTIPLE_LEXICAL_STATE_HANDLING]
+  [#if lexerData.hasLexicalStateTransitions]
                 if (tokenSource.DoLexicalStateSwitch(expectedType)) {
                     tokenSource.Reset(virtualToken);
                 }

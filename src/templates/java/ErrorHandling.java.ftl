@@ -218,7 +218,7 @@ void dumpLookaheadCallStack(PrintStream ps) {
            ${settings.baseTokenClassName} virtualToken = ${settings.baseTokenClassName}.newToken(expectedType, token_source, 0,0);
            virtualToken.setVirtual(true);
            virtualToken.copyLocationInfo(nextToken);
-[#if MULTIPLE_LEXICAL_STATE_HANDLING]
+[#if lexerData.hasLexicalStateTransitions]
            if (token_source.doLexicalStateSwitch(expectedType)) {
               token_source.reset(virtualToken);
            }
