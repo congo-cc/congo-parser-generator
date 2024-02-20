@@ -1,38 +1,48 @@
 <project name="Preprocessor" default="compile" basedir=".">
-    <uptodate property="ppparser.uptodate"
-        srcfile="Preprocessor.ccc"
-        targetfile="org/parsers/preprocessor/PreprocessorParser.java" />
-    <target name="clean">
-        <delete>
-            <fileset dir="${basedir}" includes="*.class" />
-        </delete>
-        <delete dir="${basedir}/org" />
-    </target>
-    <target name="parser-gen" unless="ppparser.uptodate">
-        <java jar="../../congocc.jar" failonerror="true" fork="true">
-            <assertions>
-                <enable />
-            </assertions>
-            <arg line="-p localtest -n ${basedir}/Preprocessor.ccc" />
-        </java>
-    </target>
-    <target name="compile" depends="parser-gen">
-        <javac classpath="." srcdir="." includeantruntime="off" failonerror="true" debug="on"
-            release="8"
-            fork="true" />
-        <echo>
-            test harness via: java PPTest &lt;filename&gt;
-        </echo>
-    </target>
-    <target name="test" depends="compile">
-        <echo>
-            Now test on a file...
-        </echo>
-        <java classname="PPTest" classpath="." failonerror="true" fork="true">
-            <assertions>
-                <enable />
-            </assertions>
-            <arg value="${basedir}/testfile" />
-        </java>
-    </target>
+  <uptodate property="ppparser.uptodate" srcfile="Preprocessor.ccc" targetfile="org/parsers/preprocessor/PreprocessorParser.java" />
+  <target name="clean">
+    <delete>
+      <fileset dir="${basedir}" includes="*.class" />
+    </delete>
+    <delete dir="${basedir}/org" />
+    <delete dir="${basedir}/preprocessorparser" />
+    <delete dir="${basedir}/cs-preprocessorparser" />
+  </target>
+  <target name="parser-gen" unless="ppparser.uptodate">
+    <java jar="../../congocc.jar" failonerror="true" fork="true">
+      <assertions>
+        <enable />
+      </assertions>
+      <arg line="-p localtest -n ${basedir}/Preprocessor.ccc" />
+    </java>
+    <java jar="../../congocc.jar" failonerror="true" fork="true">
+      <assertions>
+        <enable />
+      </assertions>
+      <arg line="-p localtest -n -lang python ${basedir}/Preprocessor.ccc" />
+    </java>
+    <java jar="../../congocc.jar" failonerror="true" fork="true">
+      <assertions>
+        <enable />
+      </assertions>
+      <arg line="-p localtest -n -lang csharp ${basedir}/Preprocessor.ccc" />
+    </java>
+  </target>
+  <target name="compile" depends="parser-gen">
+    <javac classpath="." srcdir="." includeantruntime="off" failonerror="true" debug="on" release="8" fork="true" />
+    <echo>
+      test harness via: java PPTest &lt;filename&gt;
+    </echo>
+  </target>
+  <target name="test" depends="compile">
+    <echo>
+      Now test on a file...
+    </echo>
+    <java classname="PPTest" classpath="." failonerror="true" fork="true">
+      <assertions>
+        <enable />
+      </assertions>
+      <arg value="${basedir}/testfile" />
+    </java>
+  </target>
 </project>

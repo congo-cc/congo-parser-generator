@@ -50,6 +50,13 @@
     <delete file="congocc-minimal.jar" />
     <delete dir="build" />
     <delete><fileset dir="." includes="**/*.class"/></delete>
+    <ant target="clean" dir="examples/json" />
+    <ant target="clean" dir="examples/java" />
+    <ant target="clean" dir="examples/python" />
+    <ant target="clean" dir="examples/csharp" />
+    <ant target="clean" dir="examples/lua" />
+    <ant target="clean" dir="examples/freemarker" />
+    <ant target="clean" dir="examples/preprocessor" />
   </target>
 
   <macrodef name="congocc">
@@ -124,32 +131,32 @@
 
   <target name="test" depends="jar">
     <echo>Testing the JSON Parser</echo>
-    <ant antfile="build.xml" dir="examples/json" target="clean" />
-    <ant antfile="build.xml" dir="examples/json" target="test" />
+    <ant dir="examples/json" target="clean" />
+    <ant dir="examples/json" target="test" />
     <echo>Testing the Preprocessor</echo>
-    <ant antfile="build.xml" dir="examples/preprocessor" target="clean" />
-    <ant antfile="build.xml" dir="examples/preprocessor" target="test" />
+    <ant dir="examples/preprocessor" target="clean" />
+    <ant dir="examples/preprocessor" target="test" />
     <echo>Testing the Lua parser</echo>
-    <ant antfile="build.xml" dir="examples/lua" target = "clean" />
-    <ant antfile="build.xml" dir="examples/lua" target = "test" />
+    <ant dir="examples/lua" target = "clean" />
+    <ant dir="examples/lua" target = "test" />
     <echo>Testing the CSharp parser standalone</echo>
-    <ant antfile="build.xml" dir="examples/csharp" target="clean" />
-    <ant antfile="build.xml" dir="examples/csharp" target="test" />
+    <ant dir="examples/csharp" target="clean" />
+    <ant dir="examples/csharp" target="test" />
     <echo>Testing the Java parser standalone</echo>
-    <ant antfile="build.xml" dir="examples/java" target="clean" />
-    <ant antfile="build.xml" dir="examples/java" target="test" />
+    <ant dir="examples/java" target="clean" />
+    <ant dir="examples/java" target="test" />
     <echo>Building the Python parser</echo>
-    <ant antfile="build.xml" dir="examples/python" target="clean" />
-    <ant antfile="build.xml" dir="examples/python" target="test" />
+    <ant dir="examples/python" target="clean" />
+    <ant dir="examples/python" target="test" />
     <echo>Testing the newer FreeMarker parser</echo>
-    <ant antfile="build.xml" dir="examples/freemarker" target="clean" />
-    <ant antfile="build.xml" dir="examples/freemarker" target="test" />
+    <ant dir="examples/freemarker" target="clean" />
+    <ant dir="examples/freemarker" target="test" />
   </target>
 
   <target name="test-java" depends="jar">
     <echo>Testing the Java parser standalone"</echo>
-    <ant antfile="build.xml" dir="examples/java" target="clean" />
-    <ant antfile="build.xml" dir="examples/java" target="test" />
+    <ant dir="examples/java" target="clean" />
+    <ant dir="examples/java" target="test" />
   </target>
 
   <target name="minimal-jar" depends="compile">

@@ -57,6 +57,7 @@ static final int UNLIMITED = Integer.MAX_VALUE;
 // The last token successfully "consumed"
 ${settings.baseTokenClassName} lastConsumedToken;
 private TokenType nextTokenType;
+// Normally null when parsing, populated when doing lookahead
 private ${settings.baseTokenClassName} currentLookaheadToken;
 private int remainingLookahead;
 private boolean hitFailure;
@@ -278,6 +279,14 @@ public boolean isCancelled() {return cancelled;}
     return result;
   }
 
+  /*
+   * This method generalizes the failure of an assertion, i.e. the routine
+   * works both when in lookahead and in parsing. If the current lookahead
+   * token is null, then we are not in a lookahead, i.e. we are parsing, so
+   * it just throws the exception. If we are in a lookahead routine, we set
+   * the hitFilaure flag to true, so that the lookahead routine we're in will
+   * fail at the first opportunity.
+   */
   private void fail(String message, ${settings.baseTokenClassName} token) [#if settings.useCheckedException] throws ParseException [/#if]
   {
     if (currentLookaheadToken == null) {

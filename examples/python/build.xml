@@ -1,40 +1,62 @@
 <project name="Python" default="compile" basedir=".">
-    <target name="parser-check">
-        <uptodate property="pyparser.uptodate" targetfile="org/parsers/python/PythonParser.java">
-            <srcfiles dir="." includes="*.ccc" />
-        </uptodate>
-    </target>
-    <target name="clean">
-        <delete>
-            <fileset dir="${basedir}" includes="*.class" />
-        </delete>
-        <delete dir="${basedir}/org" />
-    </target>
-    <target name="parser-gen" unless="pyparser.uptodate">
-        <java jar="../../congocc.jar" failonerror="true" fork="true">
-            <assertions>
-                <enable />
-            </assertions>
-            <arg line="-n -q ${basedir}/Python.ccc" />
-        </java>
-    </target>
-    <target name="compile" depends="parser-check,parser-gen">
-        <javac classpath=".:../../congocc.jar" srcdir="." includeantruntime="off" failonerror="true" debug="on"
-            release="8"
-            fork="true"/>
-        <echo>
-            test harness via: java PyTest &lt;filename&gt;
-        </echo>
-    </target>
-    <target name="test" depends="compile">
-        <echo>
-            Now test on a few files..
-        </echo>
-        <java classname="PyTest" classpath=".:../../congocc.jar" failonerror="true" fork="true">
-            <assertions>
-                <enable />
-            </assertions>
-            <arg value="${basedir}/testfiles" />
-        </java>
-    </target>
+  <target name="parser-check">
+    <uptodate property="pyparser.uptodate" targetfile="org/parsers/python/PythonParser.java">
+      <srcfiles dir="." includes="*.ccc" />
+    </uptodate>
+  </target>
+
+  <target name="clean">
+    <delete>
+      <fileset dir="${basedir}" includes="*.class" />
+    </delete>
+    <delete dir="${basedir}/org" />
+    <delete dir="${basedir}/pythonparser" />
+    <delete dir="${basedir}/cs-pythonparser" />
+  </target>
+
+  <target name="parser-gen" unless="pyparser.uptodate">
+    <java jar="../../congocc.jar" failonerror="true" fork="true">
+      <assertions>
+        <enable />
+      </assertions>
+      <arg line="-n ${basedir}/Python.ccc" />
+    </java>
+    <java jar="../../congocc.jar" failonerror="true" fork="true">
+      <assertions>
+        <enable />
+      </assertions>
+      <arg line="-n -lang python ${basedir}/Python.ccc" />
+    </java>
+    <java jar="../../congocc.jar" failonerror="true" fork="true">
+      <assertions>
+        <enable />
+      </assertions>
+      <arg line="-n -lang csharp ${basedir}/Python.ccc" />
+    </java>
+  </target>
+
+  <target name="compile" depends="parser-check,parser-gen">
+    <javac classpath=".:../../congocc.jar" srcdir="." includeantruntime="off" failonerror="true" debug="on" release="8" fork="true" />
+    <echo>
+      test harness via: java PyTest &lt;filename&gt;
+    </echo>
+  </target>
+
+  <target name="test" depends="compile">
+    <echo>
+      Now test on a few files..
+    </echo>
+    <java classname="PyTest" classpath=".:../../congocc.jar" failonerror="true" fork="true">
+      <assertions>
+        <enable />
+      </assertions>
+      <arg value="${basedir}/testfiles" />
+    </java>
+  </target>
+
+  <target name="test-python" depends="parser-gen">
+    <exec executable="python3" dir="${basedir}" failonerror="true">
+      <arg line="-u pyparse.py testfiles" />
+    </exec>
+  </target>
 </project>
