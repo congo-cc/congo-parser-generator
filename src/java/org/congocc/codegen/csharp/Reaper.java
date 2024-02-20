@@ -39,17 +39,35 @@ public class Reaper {
         }
 
         List<FieldDeclaration> fieldDecls = pc.childrenOfType(FieldDeclaration.class);
+        List<PropertyDeclaration> propDecls = pc.childrenOfType(PropertyDeclaration.class);
         Map<String, FieldDeclaration> parserSets = new HashMap<>();
+        Map<String, FieldDeclaration> otherFields = new HashMap<>();
 
         for (FieldDeclaration fd : fieldDecls) {
             List<VariableDeclarator> varDecls = fd.childrenOfType(VariableDeclarator.class);
+            Set<String> idents = new HashSet<>();
+            if (varDecls.size() == 0) {
+                // Get the last identifier, as there might be e.g. type-related identifiers
+                List<Identifier> identifiers = fd.childrenOfType(Identifier.class);
+                String name = identifiers.get(identifiers.size() - 1).toString();
 
-            for (VariableDeclarator vd : varDecls) {
-                String name = vd.firstChildOfType(Identifier.class).toString();
+                idents.add(name);
+            }
+            else {
+                for (VariableDeclarator vd : varDecls) {
+                    String name = vd.firstChildOfType(Identifier.class).toString();
 
+                    idents.add(name);
+                }
+            }
+            for (String name : idents) {
                 if (parserSetPattern.matcher(name).find()) {
                     logger.fine(String.format("Adding parser set: %s", name));
                     parserSets.put(name, fd);
+                }
+                else {
+                    logger.fine(String.format("Adding other field: %s", name));
+                    otherFields.put(name, fd);
                 }
             }
         }
@@ -57,13 +75,17 @@ public class Reaper {
         List<MethodDeclaration> methods = pc.childrenOfType(MethodDeclaration.class);
         Map<String, MethodDeclaration> wantedMethods = new HashMap<>();
         Map<String, MethodDeclaration> otherMethods = new HashMap<>();
+        Map<String, MethodDeclaration> internalMethods = new HashMap<>();
         List<String> keyList;
 
         for (MethodDeclaration m : methods) {
             List<Identifier> idents = m.childrenOfType(Identifier.class);
             String name = idents.get(idents.size() - 1).toString();
 
-            if (methodPattern.matcher(name).find()) {
+            if (!methodPattern.matcher(name).find()) {
+                internalMethods.put(name, m);
+            }
+            else {
                 if (name.startsWith("Parse")) {
                     logger.fine(String.format("Adding wanted method: %s", name));
                     wantedMethods.put(name, m);
@@ -88,6 +110,7 @@ public class Reaper {
         when logging and comparing results on different platforms.
 */
         Map<String, MethodDeclaration> toInspect = wantedMethods;
+        Set<String> allNames = new HashSet<>();
 
         while (!toInspect.isEmpty()) {
             Map<String, MethodDeclaration> inspectNext = new HashMap<>();
@@ -104,6 +127,7 @@ public class Reaper {
                     names.add(ident.toString());
                 }
             }
+            allNames.addAll(names);
             keyList = new ArrayList<>(names);
             Collections.sort(keyList);
             for (String n : keyList) {
@@ -119,6 +143,25 @@ public class Reaper {
             }
             wantedMethods.putAll(inspectNext);
             toInspect = inspectNext;
+        }
+        for (MethodDeclaration m : internalMethods.values()) {
+            Block block = m.firstChildOfType(Block.class);
+
+            for (Identifier ident : block.descendantsOfType(Identifier.class)) {
+                allNames.add(ident.toString());
+            }
+        }
+        for (PropertyDeclaration p : propDecls) {
+            for (Identifier ident : p.descendantsOfType(Identifier.class)) {
+                allNames.add(ident.toString());
+            }
+        }
+        for (String n : otherFields.keySet()) {
+            if (!allNames.contains(n)) {
+                FieldDeclaration fd = otherFields.get(n);
+                fd.getParent().remove(fd);
+                logger.fine(String.format("Removed unused field %s", n));
+            }
         }
         // What's left in parserSets and otherMethods are now apparently never used
         logger.fine(String.format("Found %d parser sets and %d methods to remove", parserSets.size(), otherMethods.size()));
