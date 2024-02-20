@@ -26,7 +26,7 @@
         <enable />
       </assertions>
     </java>
-    <!-- java jar="../../congocc.jar" fork="true" failonerror="true">
+    <java jar="../../congocc.jar" fork="true" failonerror="true">
       <arg line="-n -lang python ${basedir}/FEL.ccc" />
       <assertions enableSystemAssertions="true" />
     </java>
@@ -45,7 +45,7 @@
       <assertions>
         <enable />
       </assertions>
-    </java -->
+    </java>
     <javac classpath="." debug="on" srcdir="." includeantruntime="no" fork="true" failonerror="true" />
   </target>
 

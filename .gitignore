@@ -8,7 +8,11 @@ __pycache__/*
 /*.jar
 \#*
 /examples/freemarker/ftl/*
+/examples/freemarker/ftlparser/*
+/examples/freemarker/cs-ftlparser/*
 /examples/freemarker/fel/*
+/examples/freemarker/felparser/*
+/examples/freemarker/cs-felparser/*
 /examples/legacy/test.tmp/*
 /examples/java/org/*
 /examples/java/javaparser/*
@@ -25,6 +29,8 @@ __pycache__/*
 /examples/csharp/cs-csharpparser/*
 /examples/csharp/cs-pplineparser/*
 /examples/preprocessor/org/*
+/examples/preprocessor/preprocessorparser/*
+/examples/preprocessor/cs-preprocessorparser/*
 /examples/python/org/*
 /examples/python/pythonparser/*
 /examples/python/cs-pythonparser/*

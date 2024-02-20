@@ -15,7 +15,7 @@
       </assertions>
       <arg line="-p localtest -n ${basedir}/Preprocessor.ccc" />
     </java>
-    <!-- java jar="../../congocc.jar" failonerror="true" fork="true">
+    <java jar="../../congocc.jar" failonerror="true" fork="true">
       <assertions>
         <enable />
       </assertions>
@@ -26,7 +26,7 @@
         <enable />
       </assertions>
       <arg line="-p localtest -n -lang csharp ${basedir}/Preprocessor.ccc" />
-    </java -->
+    </java>
   </target>
   <target name="compile" depends="parser-gen">
     <javac classpath="." srcdir="." includeantruntime="off" failonerror="true" debug="on" release="8" fork="true" />

@@ -67,6 +67,8 @@ public class Translator {
     }
 
     protected static class ASTTypeExpression extends ASTPrimaryExpression {
+        protected boolean isArray;
+
         protected List<ASTTypeExpression> typeParameters;
 
         private static final HashSet<String> classNames = new HashSet<>(Arrays.asList(
@@ -354,8 +356,8 @@ public class Translator {
     }
 
     protected static class ASTWhileStatement extends ASTStatement {
-        private ASTExpression condition;
-        private ASTStatement statements;
+        protected ASTExpression condition;
+        protected ASTStatement statements;
 
         public ASTExpression getCondition() {
             return condition;
@@ -364,6 +366,9 @@ public class Translator {
         public ASTStatement getStatements() {
             return statements;
         }
+    }
+
+    protected static class ASTDoStatement extends ASTWhileStatement {
     }
 
     protected static class ASTCaseStatement extends ASTStatement {
@@ -890,14 +895,15 @@ public class Translator {
         ASTVariableOrFieldDeclaration result = new ASTVariableOrFieldDeclaration();
 
         for (Node child : node) {
-            if (child instanceof Delimiter) {
+            if (child instanceof Delimiter || child instanceof KeyWord) {  // can see "final" in NoVarDeclaration
                 continue;
             }
 
             ASTPrimaryExpression name;
             ASTExpression initializer;
 
-            if (child instanceof Primitive || child instanceof PrimitiveType || child instanceof ObjectType) {
+            if (child instanceof Primitive || child instanceof PrimitiveType || child instanceof ObjectType ||
+                child instanceof PrimitiveArrayType) {
                 result.typeExpression = (ASTTypeExpression) transformTree(child, true);
             }
             else if (child instanceof Identifier) {
@@ -1199,6 +1205,9 @@ public class Translator {
         else if (node instanceof Token) {
             ASTPrimaryExpression resultNode = forType ? new ASTTypeExpression() : new ASTPrimaryExpression();
             resultNode.literal = ((Token) node).toString();
+            if (forType && node.getParent() instanceof PrimitiveType && node.getParent().getParent() instanceof PrimitiveArrayType) {
+                ((ASTTypeExpression) resultNode).isArray = true;
+            }
             return resultNode;
         }
         else if (node instanceof LiteralExpression) {
@@ -1206,10 +1215,12 @@ public class Translator {
             resultNode.literal = ((Token) node.getFirstChild()).toString();
             return resultNode;
         }
-        else if (node instanceof PrimitiveType) {
-            if (node.size() != 1) {
-                String s = String.format("Cannot transform %s at %s", getSimpleName(node), node.getLocation());
-                throw new UnsupportedOperationException(s);
+        else if (node instanceof PrimitiveType || node instanceof PrimitiveArrayType) {
+            if (node instanceof PrimitiveType) {
+                if (node.size() != 1) {
+                    String s = String.format("Cannot transform %s at %s", getSimpleName(node), node.getLocation());
+                    throw new UnsupportedOperationException(s);
+                }
             }
             Node child = node.getFirstChild();
             return transformTree(child, forType);
@@ -1370,6 +1381,13 @@ public class Translator {
             resultNode.statements = (ASTStatement) transformTree(node.getLastChild());
             return resultNode;
         }
+        else if (node instanceof DoStatement) {
+            ASTDoStatement resultNode = new ASTDoStatement();
+            int n = node.size();
+            resultNode.condition = (ASTExpression) transformTree(node.get(n - 3));
+            resultNode.statements = (ASTStatement) transformTree(node.firstChildOfType(CodeBlock.class));
+            return resultNode;
+        }
         else if (node instanceof BasicForStatement) {
             // counted for loop
             return transformBasicForStatement(node, forType);
@@ -1466,6 +1484,21 @@ public class Translator {
         }
         else if (node instanceof EmptyStatement) {
             result = new ASTStatementList();
+        }
+        else if (node instanceof ReferenceType) {
+            Node child = node.firstChildOfType(PrimitiveArrayType.class);
+            if (child != null) {
+                result = transformTree(child, forType);
+            }
+            else {
+                child = node.firstChildOfType(ObjectType.class);
+                if (child != null) {
+                    result = transformTree(child, forType);
+                    if (node.toString().contains("[")) {
+                        ((ASTTypeExpression) result).isArray = true;
+                    }
+                }
+            }
         }
         if (result == null) {
             String s = String.format("Cannot transform %s at %s", getSimpleName(node), node.getLocation());
