@@ -1,13 +1,13 @@
 <project name="Lua Parser" default="compile">
-
   <target name="clean">
     <delete dir="org" />
+    <delete dir="luaparser" />
+    <delete dir="cs-luaparser" />
     <delete file="LuaParse.class" />
   </target>
 
   <target name="init">
-    <uptodate property="luaparser.uptodate"
-      targetfile="org/parsers/lua/LuaParser.java">
+    <uptodate property="luaparser.uptodate" targetfile="org/parsers/lua/LuaParser.java">
       <srcfiles dir="." includes="*.ccc" />
     </uptodate>
   </target>
@@ -20,11 +20,22 @@
       <arg value="-n" />
       <arg value="${basedir}/Lua.ccc" />
     </java>
+    <java jar="../../congocc.jar" failonerror="true" fork="true">
+      <assertions>
+        <enable />
+      </assertions>
+      <arg line="-n -lang python ${basedir}/Lua.ccc" />
+    </java>
+    <java jar="../../congocc.jar" failonerror="true" fork="true">
+      <assertions>
+        <enable />
+      </assertions>
+      <arg line="-n -lang csharp ${basedir}/Lua.ccc" />
+    </java>
   </target>
 
   <target name="compile" depends="init,parser-gen">
-    <javac srcdir="." failonerror="true" release="8"
-      classpath="." debug="on" optimize="off" includeantruntime="no" fork="true" />
+    <javac srcdir="." failonerror="true" release="8" classpath="." debug="on" optimize="off" includeantruntime="no" fork="true" />
   </target>
 
   <target name="test" depends="compile">
@@ -34,5 +45,11 @@
       </assertions>
       <arg value="testfiles" />
     </java>
+  </target>
+
+  <target name="test-python" depends="parser-gen">
+    <exec executable="python3" dir="${basedir}" failonerror="true">
+      <arg line="-u luaparse.py testfiles" />
+    </exec>
   </target>
 </project>

@@ -1,64 +1,84 @@
 <project name="JSONParser" default="compile" basedir=".">
-    <uptodate property="parser1.uptodate"
-        srcfile="JSON.ccc"
-        targetfile="${basedir}/org/parsers/json/JSONParser.java" />
-    <uptodate property="parser2.uptodate"
-        srcfile="JSONC.ccc"
-        targetfile="${basedir}/org/parsers/jsonc/JSONCParser.java" />
-    <target name="clean">
-        <delete>
-            <fileset dir="${basedir}" includes="*.class" />
-        </delete>
-        <delete dir="${basedir}/org" />
-    </target>
-    <target name="parser1-gen" unless="parser1.uptodate">
-        <mkdir dir="../../bin" />
-        <java jar="../../congocc.jar" fork="true" failonerror="true">
-            <assertions>
-                <enable />
-            </assertions>
-            <arg line=" -p localtest -n -q ${basedir}/JSON.ccc" />
-        </java>
-    </target>
-    <target name="parser2-gen" depends="parser1-gen" unless="parser2.uptodate">
-        <java jar="../../congocc.jar" failonerror="true" fork="true">
-            <assertions>
-                <enable />
-            </assertions>
-            <arg line=" -q -n ${basedir}/JSONC.ccc" />
-        </java>
-    </target>
-    <target name="compile" depends="parser1-gen, parser2-gen">
-        <javac classpath="." srcdir="." includeantruntime="off" failonerror="true" debug="on"
-            release="8"
-            fork="true" />
-        <echo>
-            test harness via: java JSONTest &lt;filename&gt;
-            OR : java JSONCTest &lt;filename&gt;
-        </echo>
-    </target>
-    <target name="test" depends="compile">
-        <echo>
-            Now test a few files I grabbed with various non-European characters
-            This might not display correctly on the terminal you are using!
-        </echo>
-        <java classname="JSONTest" classpath="." failonerror="true" fork="true">
-            <assertions>
-                <enable />
-            </assertions>
-            <arg value="${basedir}/testfiles/Mono.WebAssembly.Build.targets.buildschema.json" />
-            <arg value="${basedir}/testfiles/package.nls.ko.json" />
-            <arg value="${basedir}/testfiles/package.nls.ru.json" />
-            <arg value="${basedir}/testfiles/package.nls.zh-cn.json" />
-        </java>
-        <echo>
-            Now test the JSONC parser on a file with errors
-        </echo>
-        <java classname="JSONCTest" classpath="." failonerror="true" fork="true">
-            <assertions>
-                <enable />
-            </assertions>
-            <arg value="${basedir}/testfiles/invalid.json" />
-        </java>
-    </target>
+  <uptodate property="parser1.uptodate" srcfile="JSON.ccc" targetfile="${basedir}/org/parsers/json/JSONParser.java" />
+  <uptodate property="parser2.uptodate" srcfile="JSONC.ccc" targetfile="${basedir}/org/parsers/jsonc/JSONCParser.java" />
+  <target name="clean">
+    <delete>
+      <fileset dir="${basedir}" includes="*.class" />
+    </delete>
+    <delete dir="${basedir}/org" />
+    <delete dir="${basedir}/jsonparser" />
+    <delete dir="${basedir}/cs-jsonparser" />
+    <delete dir="${basedir}/jsoncparser" />
+    <delete dir="${basedir}/cs-jsoncparser" />
+  </target>
+  <target name="parser1-gen" unless="parser1.uptodate">
+    <mkdir dir="../../bin" />
+    <java jar="../../congocc.jar" fork="true" failonerror="true">
+      <assertions>
+        <enable />
+      </assertions>
+      <arg line=" -n ${basedir}/JSON.ccc" />
+    </java>
+    <java jar="../../congocc.jar" fork="true" failonerror="true">
+      <assertions>
+        <enable />
+      </assertions>
+      <arg line=" -n -lang python ${basedir}/JSON.ccc" />
+    </java>
+    <java jar="../../congocc.jar" fork="true" failonerror="true">
+      <assertions>
+        <enable />
+      </assertions>
+      <arg line=" -n -lang csharp ${basedir}/JSON.ccc" />
+    </java>
+  </target>
+  <target name="parser2-gen" depends="parser1-gen" unless="parser2.uptodate">
+    <java jar="../../congocc.jar" failonerror="true" fork="true">
+      <assertions>
+        <enable />
+      </assertions>
+      <arg line=" -n ${basedir}/JSONC.ccc" />
+    </java>
+    <java jar="../../congocc.jar" fork="true" failonerror="true">
+      <assertions>
+        <enable />
+      </assertions>
+      <arg line=" -n -lang python ${basedir}/JSONC.ccc" />
+    </java>
+    <java jar="../../congocc.jar" fork="true" failonerror="true">
+      <assertions>
+        <enable />
+      </assertions>
+      <arg line=" -n -lang csharp ${basedir}/JSONC.ccc" />
+    </java>
+  </target>
+  <target name="compile" depends="parser1-gen, parser2-gen">
+    <javac classpath="." srcdir="." includeantruntime="off" failonerror="true" debug="on" release="8" fork="true" />
+    <echo>
+      test harness via: java JSONTest &lt;filename&gt; OR : java JSONCTest &lt;filename&gt;
+    </echo>
+  </target>
+  <target name="test" depends="compile">
+    <echo>
+      Now test a few files I grabbed with various non-European characters This might not display correctly on the terminal you are using!
+    </echo>
+    <java classname="JSONTest" classpath="." failonerror="true" fork="true">
+      <assertions>
+        <enable />
+      </assertions>
+      <arg value="${basedir}/testfiles/Mono.WebAssembly.Build.targets.buildschema.json" />
+      <arg value="${basedir}/testfiles/package.nls.ko.json" />
+      <arg value="${basedir}/testfiles/package.nls.ru.json" />
+      <arg value="${basedir}/testfiles/package.nls.zh-cn.json" />
+    </java>
+    <echo>
+      Now test the JSONC parser on a file with errors
+    </echo>
+    <java classname="JSONCTest" classpath="." failonerror="true" fork="true">
+      <assertions>
+        <enable />
+      </assertions>
+      <arg value="${basedir}/testfiles/invalid.json" />
+    </java>
+  </target>
 </project>

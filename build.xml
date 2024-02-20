@@ -50,6 +50,13 @@
     <delete file="congocc-minimal.jar" />
     <delete dir="build" />
     <delete><fileset dir="." includes="**/*.class"/></delete>
+    <ant antfile="build.xml" dir="examples/json" target="clean" />
+    <ant antfile="build.xml" dir="examples/java" target="clean" />
+    <ant antfile="build.xml" dir="examples/python" target="clean" />
+    <ant antfile="build.xml" dir="examples/csharp" target="clean" />
+    <ant antfile="build.xml" dir="examples/lua" target="clean" />
+    <ant antfile="build.xml" dir="examples/freemarker" target="clean" />
+    <ant antfile="build.xml" dir="examples/preprocessor" target="clean" />
   </target>
 
   <macrodef name="congocc">
