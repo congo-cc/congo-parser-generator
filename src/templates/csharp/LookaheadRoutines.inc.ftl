@@ -418,7 +418,6 @@ PushOntoLookaheadStack("${nt.containingProduction.name}", "${nt.inputSource?j_st
 [#var prevScanToEndVarName = "prevScanToEnd" + CU.newID()]
 bool ${prevScanToEndVarName} = ScanToEnd;
 _currentLookaheadProduction = "${nt.production.name}";
-ScanToEnd = ${CU.bool(nt.scanToEnd)};
 try {
     if (!${nt.production.lookaheadMethodName}(${CU.bool(nt.scanToEnd)})) {
         return false;
