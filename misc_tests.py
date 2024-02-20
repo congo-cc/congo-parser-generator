@@ -282,6 +282,9 @@ class BaseTestCase(unittest.TestCase):
             out = run_command(cmd, cwd=wd, out=True)
             self.assertEqual(out, bad)
 
+        env = os.environ.copy()
+        env['CONGOCC_PYTHON_REAPER_OFF'] = 'true'
+        env['CONGOCC_CSHARP_REAPER_OFF'] = 'true'
         # Generate Java parser, non-glitchy
         cmd = ['java', '-jar', CONGO_JAR, '-q', '-n', 'NLA.ccc']
         p = run_command(cmd, cwd=wd)
@@ -302,19 +305,19 @@ class BaseTestCase(unittest.TestCase):
 
         # Generate Python parser, non-glitchy
         cmd = ['java', '-jar', CONGO_JAR, '-q', '-n', '-lang', 'python', 'NLA.ccc']
-        p = run_command(cmd, cwd=wd)
+        p = run_command(cmd, cwd=wd, env=env)
         # Run the tests with the Python parser
         run_tester('python3 tester.py', False)
 
         # Generate Python parser, glitchy
         cmd = ['java', '-jar', CONGO_JAR, '-q', '-n', '-p', 'LEGACY_GLITCHY_LOOKAHEAD=true', '-lang', 'python', 'NLA.ccc']
-        p = run_command(cmd, cwd=wd)
+        p = run_command(cmd, cwd=wd, env=env)
         # Run the tests with the Python parser
         run_tester('python3 tester.py', True)
 
         # Generate C# parser, non-glitchy
         cmd = ['java', '-jar', CONGO_JAR, '-q', '-n', '-lang', 'csharp', 'NLA.ccc']
-        p = run_command(cmd, cwd=wd)
+        p = run_command(cmd, cwd=wd, env=env)
         # Compile the files
         td = os.path.join(wd, 'cs-tester')
         tester = os.path.join(td, 'bin', 'tester')
@@ -326,7 +329,7 @@ class BaseTestCase(unittest.TestCase):
 
         # Generate C# parser, glitchy
         cmd = ['java', '-jar', CONGO_JAR, '-q', '-n', '-p', 'LEGACY_GLITCHY_LOOKAHEAD=true', '-lang', 'csharp', 'NLA.ccc']
-        p = run_command(cmd, cwd=wd)
+        p = run_command(cmd, cwd=wd, env=env)
         # Compile the files
         cmd = 'dotnet build -o bin -v quiet --nologo -property:WarningLevel=0'.split()
         p = run_command(cmd, cwd=td, stdout=subprocess.PIPE, stderr=subprocess.STDOUT)
