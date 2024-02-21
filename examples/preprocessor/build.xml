@@ -38,11 +38,11 @@
     <echo>
       Now test on a file...
     </echo>
-    <java classname="PPTest" classpath="." failonerror="true" fork="true">
+    <java classname="PPParse" classpath="." failonerror="true" fork="true">
       <assertions>
         <enable />
       </assertions>
-      <arg value="${basedir}/testfile" />
+      <arg value="${basedir}/testfiles" />
     </java>
   </target>
 </project>

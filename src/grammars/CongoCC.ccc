@@ -113,15 +113,19 @@ INJECT PARSER_CLASS :
     public PARSER_CLASS(Grammar grammar, Path path, Map<String, String> definedSymbols) throws IOException {
         this(path.toString(), path);
         this.grammar = grammar;
-        BitSet lineMarkers = new PreprocessorParser(path, definedSymbols).PP_Root();
+        PreprocessorParser parser = new PreprocessorParser(path);
+        parser.addSymbols(definedSymbols);
+        BitSet lineMarkers = parser.PP_Root();
         token_source.setParsedLines(lineMarkers);
     }
 
     public PARSER_CLASS(Grammar grammar, String inputSource, CharSequence content) throws IOException {
-         this(inputSource, content);
-         this.grammar = grammar;
-         BitSet lineMarkers = new PreprocessorParser(content, grammar.getPreprocessorSymbols()).PP_Root();
-         token_source.setParsedLines(lineMarkers);
+        this(inputSource, content);
+        this.grammar = grammar;
+        PreprocessorParser parser = new PreprocessorParser(inputSource, content);
+        parser.addSymbols(grammar.getPreprocessorSymbols());
+        BitSet lineMarkers = parser.PP_Root();
+        token_source.setParsedLines(lineMarkers);
     }
 
     static public CompilationUnit parseJavaFile(String inputSource, CharSequence content) {

@@ -12,6 +12,7 @@ namespace ${csPackage} {
  [#list settings.extraTokenNames as t]
         ${t},
  [/#list]
+        DUMMY,
         INVALID
     }
 
@@ -496,6 +497,9 @@ namespace ${csPackage} {
         }
 
         // TODO use default implementations in interface
+        // Note that you can't do this if tree building isn't enabled,
+        // as Token then doesn't inherit from Node
+
         public int BeginLine => TokenSource?.GetLineFromOffset(BeginOffset) ?? 0;
 
         public int EndLine => TokenSource?.GetLineFromOffset(EndOffset - 1) ?? 0;
@@ -504,7 +508,7 @@ namespace ${csPackage} {
 
         public int EndColumn => TokenSource?.GetCodePointColumnFromOffset(EndOffset - 1) ?? 0;
 
-        public TokenType Type { get; internal set; }
+        public TokenType Type { get; internal set; } = TokenType.DUMMY;
 
 [#if !settings.treeBuildingEnabled]
         internal bool IsUnparsed;
@@ -593,6 +597,8 @@ namespace ${csPackage} {
 [/#if]
         }
 
+        protected Token() {}
+
 [#if settings.tokenChaining]
 
         internal Token prependedToken, appendedToken;
@@ -645,11 +651,10 @@ namespace ${csPackage} {
         }
 
         internal Token NextToken { get; set; }
+
         internal string Location {
             get {
-                var n = (Node) this;
-
-                return $"{TokenSource.InputSource}:{n.BeginLine}:{n.BeginColumn}";
+                return $"{TokenSource.InputSource}:{BeginLine}:{BeginColumn}";
             }
         }
 

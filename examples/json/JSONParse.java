@@ -1,16 +1,16 @@
 import java.io.*;
-import org.parsers.jsonc.*;
+import org.parsers.json.*;
 
-public class JSONCTest {
+public class JSONParse {
     static public void parseFile(File file, boolean dumpTree) throws IOException, ParseException {
-        JSONCParser parser = new JSONCParser(file.toPath());
+        JSONParser parser = new JSONParser(file.toPath());
         parser.Root();
         Node root=parser.rootNode();
         if (dumpTree) {
             root.dump();
         }
     }
- 
+
     static public void main(String[] args) throws Exception {
       if (args.length == 0) {
         usage();
@@ -30,7 +30,7 @@ public class JSONCTest {
     }
 
     static public void usage() {
-      System.out.println("Little test harness for JSONC Parser");
-      System.out.println("java JSONCTest <filename>");
+      System.out.println("Little test harness for JSON Parser");
+      System.out.println("java JSONParse <filename>");
     }
 }

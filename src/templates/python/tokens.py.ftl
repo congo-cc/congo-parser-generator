@@ -87,14 +87,14 @@ class ${settings.baseNodeClassName}:
     @property
     def token_source(self):
         result = self._token_source
-[#if settings.tokenChaining]
+#if settings.tokenChaining
         if not result:
             if self.prepended_token:
                 result = self.prepended_token.token_source
             if not result and self.appended_token:
                 result = self.appended_token.token_source
         self._token_source = result
-[/#if]
+/#if
         return result
 
     @token_source.setter
@@ -283,58 +283,58 @@ class Token[#if settings.treeBuildingEnabled](${settings.baseNodeClassName})[/#i
 
     __slots__ = (
         'type',
-[#if settings.tokenChaining || settings.faultTolerant]
+#if settings.tokenChaining || settings.faultTolerant
         '_image',
-[/#if]
-[#if settings.tokenChaining]
+/#if
+#if settings.tokenChaining
         'prepended_token',
         'appended_token',
         'is_inserted',
-[/#if]
+/#if
         'previous_token',
         'next_token',
-[#var injectedFields = globals::injectedTokenFieldNames()]
-[#if injectedFields?size > 0]
+#var injectedFields = globals::injectedTokenFieldNames()
+#if injectedFields?size > 0
         # injected fields
-[#list injectedFields as fieldName]
+#list injectedFields as fieldName
         '${fieldName}',
-[/#list]
-[/#if]
-[#if settings.faultTolerant]
+/#list
+/#if
+#if settings.faultTolerant
         '_is_skipped',
         '_is_virtual',
         'dirty',
-[/#if]
-[#if !settings.treeBuildingEnabled]
+/#if
+#if !settings.treeBuildingEnabled
         'begin_offset',
         'end_offset',
         'is_unparsed',
         'token_source',
-[/#if]
+/#if
     )
 
     def __init__(self, type, token_source, begin_offset, end_offset):
-[#if settings.treeBuildingEnabled]
+#if settings.treeBuildingEnabled
         super().__init__(token_source, begin_offset, end_offset)
-[#else]
+#else
         self.begin_offset = begin_offset
         self.end_offset = end_offset
         self.token_source = token_source
-[/#if]
+/#if
 ${globals::translateTokenInjections(true)}
         self.type = type
         self.previous_token = None
         self.next_token = None
         self.is_unparsed = False
-[#if settings.faultTolerant]
+#if settings.faultTolerant
         self.dirty = False
         self._is_virtual = False
         self._is_skipped = False
-[/#if]
-[#if settings.tokenChaining || settings.faultTolerant]
+/#if
+#if settings.tokenChaining || settings.faultTolerant
         self._image = None
-[/#if]
-[#if settings.tokenChaining]
+/#if
+#if settings.tokenChaining
         self.prepended_token = None
         self.appended_token = None
         self.is_inserted = False
@@ -354,15 +354,15 @@ ${globals::translateTokenInjections(true)}
     def unset_appended_token(self):
         self.appended_token = None
 
-[/#if]
+/#if
 
     @property
     def image(self):
-[#if !settings.tokenChaining]
+#if !settings.tokenChaining
         return self.source
-[#else]
+#else
         return self._image if self._image else self.source
-[/#if]
+/#if
 
     @property
     def source(self):
@@ -371,12 +371,12 @@ ${globals::translateTokenInjections(true)}
         ts = self.token_source
         return None if not ts else ts.get_text(self.begin_offset, self.end_offset)
 
-[#if settings.tokenChaining || settings.faultTolerant]
+#if settings.tokenChaining || settings.faultTolerant
     @image.setter
     def image(self, value):
         self._image = value
 
-[/#if]
+/#if
 
     def __str__(self):
         return self.image
@@ -405,25 +405,25 @@ ${globals::translateTokenInjections(true)}
 
     @property
     def is_virtual(self):
-[#if settings.faultTolerant]
+#if settings.faultTolerant
         return self._is_virtual or self.type == TokenType.EOF
-[#else]
+#else
         return self.type == TokenType.EOF
-[/#if]
+/#if
 
-[#if settings.faultTolerant]
+#if settings.faultTolerant
     @is_virtual.setter
     def is_virtual(self, value):
         self._is_virtual = value
 
-[/#if]
+/#if
     @property
     def is_skipped(self):
-[#if settings.faultTolerant]
+#if settings.faultTolerant
         return self._is_skipped
-[#else]
+#else
         return False
-[/#if]
+/#if
 
     def _get_next(self):
         return self.get_next_parsed_token()
@@ -449,10 +449,10 @@ ${globals::translateTokenInjections(true)}
 
     @property
     def previous_cached_token(self):
-[#if settings.tokenChaining]
+#if settings.tokenChaining
         if self.prepended_token:
             return self.prepended_token
-[/#if]
+/#if
         ts = self.token_source
         if not ts:
             return None
@@ -460,10 +460,10 @@ ${globals::translateTokenInjections(true)}
 
     @property
     def next_cached_token(self):
-[#if settings.tokenChaining]
+#if settings.tokenChaining
         if self.appended_token:
             return self.appended_token
-[/#if]
+/#if
         ts = self.token_source
         if not ts:
             return None
@@ -479,7 +479,7 @@ ${globals::translateTokenInjections(true)}
                                                  self.end_line,
                                                  self.end_column)
 
-[#if settings.treeBuildingEnabled && settings.tokenChaining]
+#if settings.treeBuildingEnabled && settings.tokenChaining
     # Copy the location info from another node or start/end nodes
     def copy_location_info(self, start, end=None):
         super().copy_location_info(start, end)
@@ -495,26 +495,26 @@ ${globals::translateTokenInjections(true)}
             if isinstance(end, Token):
                 self.appended_token = end.appended_token
         self.token_source = start.token_source
-[#else]
+#else
     # Copy the location info from another token or start/end tokens
     def copy_location_info(self, start, end=None):
         self.token_source = start.token_source
         self.begin_offset = start.begin_offset
         if end is None:
             self.end_offset = start.end_offset
-[#if settings.tokenChaining]
+  #if settings.tokenChaining
             self.prepended_token = start.prepended_token
             self.appended_token = start.appended_token
-[/#if]
+  /#if
         else:
             if self.token_source is None:
                 self.token_source = end.token_source
             self.end_offset = end.end_offset
-[#if settings.tokenChaining]
+  #if settings.tokenChaining
             self.prepended_token = start.prepended_token
             self.appended_token = end.appended_token
-[/#if]
-[/#if]
+  /#if
+/#if
 
     @property
     def input_source(self):
@@ -525,6 +525,30 @@ ${globals::translateTokenInjections(true)}
     def location(self):
         return '%s:%s:%s' % (self.input_source, self.begin_line,
                              self.begin_column)
+
+#if !settings.treeBuildingEnabled
+[#-- Not inherited from BaseNode --]
+    @property
+    def begin_line(self):
+        ts = self.token_source
+        return 0 if not ts else ts.get_line_from_offset(self.begin_offset)
+
+    @property
+    def begin_column(self):
+        ts = self.token_source
+        return 0 if not ts else ts.get_codepoint_column_from_offset(self.begin_offset)
+
+    @property
+    def end_line(self):
+        ts = self.token_source
+        return 0 if not ts else ts.get_line_from_offset(self.end_offset - 1)
+
+    @property
+    def end_column(self):
+        ts = self.token_source
+        return 0 if not ts else ts.get_codepoint_column_from_offset(self.end_offset - 1)
+
+/#if
 
 ${globals::translateTokenInjections(false)}
 

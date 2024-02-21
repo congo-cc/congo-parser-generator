@@ -62,7 +62,7 @@
     <echo>
       Now test a few files I grabbed with various non-European characters This might not display correctly on the terminal you are using!
     </echo>
-    <java classname="JSONTest" classpath="." failonerror="true" fork="true">
+    <java classname="JSONParse" classpath="." failonerror="true" fork="true">
       <assertions>
         <enable />
       </assertions>
@@ -74,7 +74,7 @@
     <echo>
       Now test the JSONC parser on a file with errors
     </echo>
-    <java classname="JSONCTest" classpath="." failonerror="true" fork="true">
+    <java classname="JSONCParse" classpath="." failonerror="true" fork="true">
       <assertions>
         <enable />
       </assertions>

@@ -441,8 +441,8 @@ namespace ${csPackage} {
             RemoveAt(index);
         }
     }
-
 /*
+
     public class SetAdapter<T> : HashSet<T> {
         public SetAdapter() : base() {}
         public SetAdapter(IEnumerable<T> source) : base(source) {}
@@ -453,4 +453,16 @@ namespace ${csPackage} {
         }
     }
  */
+
+    public class MapAdapter<K, V> : Dictionary<K, V> {
+        public void Put(K k, V v) {
+            this[k] = v;
+        }
+
+        public void PutAll(IDictionary<K, V> source) {
+            foreach (var item in source) {
+                this[item.Key] = item.Value;
+            }
+        }
+    }
 }
