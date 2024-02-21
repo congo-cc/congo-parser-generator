@@ -74,6 +74,10 @@ public class Translator {
         private static final HashSet<String> classNames = new HashSet<>(Arrays.asList(
                 "Integer", "Long", "Float", "Double", "BigInteger"));
 
+        public boolean isBoolean() {
+            return "boolean".equals(literal);
+        }
+
         public boolean isNumeric() {
             return ((literal != null) || classNames.contains(name));
         }
@@ -1751,6 +1755,18 @@ public class Translator {
             return false;
         }
         return name.equals("HashSet");
+    }
+
+    protected boolean isMap(ASTExpression node) {
+        if (!(node instanceof ASTPrimaryExpression)) {
+            return false;
+        }
+        ASTPrimaryExpression pe = (ASTPrimaryExpression) node;
+        String name = pe.getName();
+        if (name == null) {
+            return false;
+        }
+        return name.equals("HashMap");
     }
 
     protected void processForIteration(List<ASTExpression> iteration, int indent, StringBuilder result) {

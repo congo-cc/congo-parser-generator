@@ -470,7 +470,10 @@ public class PythonTranslator extends Translator {
             boolean isField = vd.isField();
 
             if (isProperty || isField) {
-                if (type.isNumeric()) {
+                if (type.isBoolean()) {
+                    defaultInitializer = "False";
+                }
+                else if (type.isNumeric()) {
                     defaultInitializer = "0";
                 }
             }
@@ -726,16 +729,31 @@ public class PythonTranslator extends Translator {
             result.append("class ");
             result.append(classDecl.getName());
             result.append(":\n");
-            if (decls == null) {
-                addIndent(indent + 4, result);
-                result.append("pass\n");
-            }
-            else {
+            boolean addedDecl = false;
+
+            if (decls != null) {
                 for (ASTStatement decl: decls) {
                     if (decl instanceof ASTVariableOrFieldDeclaration) {
                         continue;
                     }
                     internalTranslateStatement(decl, indent + 4, result);
+                    addedDecl = true;
+                }
+            }
+            if (!addedDecl) {
+                if (decls == null) {
+                    addIndent(indent + 4, result);
+                    result.append("pass\n");
+                }
+                else {
+                    addIndent(indent + 4, result);
+                    result.append("def __init__(self):\n");
+                    for (ASTStatement decl: decls) {
+                        if (!(decl instanceof ASTVariableOrFieldDeclaration)) {
+                            continue;
+                        }
+                        internalTranslateStatement(decl, indent + 8, result);
+                    }
                 }
             }
         }

@@ -20,34 +20,24 @@ BASE_SRC_DIR="../../build/generated-java";
  * of being an implementation of the standard C# preprocessor. However, I (JR) had to
  * re-implement the C# preprocessor for the C# grammar because I had misread the spec
  * somewhat. Oh well. It is the same basic approach. Really the only thing that is supported
- * is turning on/off parts of the source file. 
+ * is turning on/off parts of the source file.
  * This implementation is very bare-bones and bloody-minded. It does not build a
  * tree or any of that. It just uses code actions to create a BitSet
  * that holds whether a line is "turned on" or not. The line offsets
  * are 1-based.
  *
- * All the naming in this file is prefixed with PP_, sort of using the 
+ * All the naming in this file is prefixed with PP_, sort of using the
  * poor man's namespace functionality. This is because I anticipate
  * this getting INCLUDEd and I don't want to stomp on other people's
- * names. It is not terribly optimal and really quite ugly. Something 
+ * names. It is not terribly optimal and really quite ugly. Something
  * should eventually be done about this.
  */
 
 INJECT PARSER_CLASS :
 {
-    private final BitSet lineMarkers = new BitSet();
-    private Map<String, String> definedSymbols = new HashMap<>();
+    private final BitSet lineMarkers = new BitSet(100000);
+    private Map<String, String> definedSymbols = new HashMap<String, String>();
     private boolean currentlyOn = true;
-
-    public PARSER_CLASS(Path path, Map<String, String> definedSymbols) throws IOException {
-        this(path);
-        if (definedSymbols != null) this.definedSymbols = definedSymbols;
-    }
-
-    public PARSER_CLASS(CharSequence content, Map<String, String> definedSymbols) throws IOException {
-       this(content);
-       if (definedSymbols != null) this.definedSymbols = definedSymbols;
-    }
 
     public BitSet getLineMarkers() {
         return lineMarkers;
@@ -76,7 +66,7 @@ INJECT PARSER_CLASS :
     }
 }
 
-TOKEN : 
+TOKEN :
  <#PP_WS : [" ", "\t", "\f",
          "\u000b", "\u00a0", "\u1680",
          "\u2000"-"\u200a",
@@ -86,13 +76,13 @@ TOKEN :
  |
  <PP_LINE : (<PP_WS>)* ((~["#", " ", "\t", "\f", "\n", "\r"]) (~["\n", "\r"])*)? <PP_EOL>>
  |
- <PP_DEFINE : <PP_START> "define" (<PP_WS>)*> : PP_DIRECTIVE 
+ <PP_DEFINE : <PP_START> "define" (<PP_WS>)*> : PP_DIRECTIVE
  |
- <PP_UNDEF : <PP_START> "undef" (<PP_WS>)*> : PP_DIRECTIVE 
+ <PP_UNDEF : <PP_START> "undef" (<PP_WS>)*> : PP_DIRECTIVE
  |
- <PP_IF : <PP_START> "if" (<PP_WS>)*> : PP_DIRECTIVE 
+ <PP_IF : <PP_START> "if" (<PP_WS>)*> : PP_DIRECTIVE
  |
- <PP_ELIF : <PP_START> "elif" (<PP_WS>)*> : PP_DIRECTIVE 
+ <PP_ELIF : <PP_START> "elif" (<PP_WS>)*> : PP_DIRECTIVE
  |
  <PP_ELSE : <PP_START> "else"> : PP_DIRECTIVE
  |
@@ -100,14 +90,14 @@ TOKEN :
 ;
 
 UNPARSED :
- <PP_IGNORED_DIRECTIVE : 
-     <PP_START> 
-// Just ignore all these for now.     
-     ("pragma" | "line" | "warning" | "error" | "region" | "endregion" | "nullable") 
-     (~["\n", "\r"])* 
+ <PP_IGNORED_DIRECTIVE :
+     <PP_START>
+// Just ignore all these for now.
+     ("pragma" | "line" | "warning" | "error" | "region" | "endregion" | "nullable")
+     (~["\n", "\r"])*
      <PP_EOL>>
 ;
- 
+
 
 MORE :
 //Anything else that looks like it starts a directive,
@@ -117,12 +107,12 @@ MORE :
 ;
 
 <PP_EAT_TO_EOL> TOKEN :
-  <PP_FALSE_ALERT : ((~["\n", "\r"])*)? <PP_EOL>> : PP_SCAN_LINES 
+  <PP_FALSE_ALERT : ((~["\n", "\r"])*)? <PP_EOL>> : PP_SCAN_LINES
 ;
 
 INCLUDE "../java/JavaIdentifierDef.ccc"
 
-<PP_DIRECTIVE> TOKEN : 
+<PP_DIRECTIVE> TOKEN :
     <PP_TRUE : "true">
     |
     <PP_FALSE : "false">
@@ -143,10 +133,10 @@ INCLUDE "../java/JavaIdentifierDef.ccc"
     |
     <PP_NOT_EQUALS : "!=">
     |
-    <PP_NOT : "!"> 
+    <PP_NOT : "!">
 ;
 
-<PP_DIRECTIVE> UNPARSED : 
+<PP_DIRECTIVE> UNPARSED :
     <PP_EOL_COMMENT : ("//" (~["\n", "\r"])*)? <PP_EOL>> : PP_SCAN_LINES
 ;
 
@@ -169,9 +159,9 @@ PP_IfBlock#void :
         if (result.booleanValue) alreadyHandled = true;
         currentlyOn = result.booleanValue && previouslyOn;
     }
-    PP_Block {if (alreadyHandled) currentlyOn = false;} 
+    PP_Block {if (alreadyHandled) currentlyOn = false;}
     (
-        <PP_ELIF> result=PP_Expression 
+        <PP_ELIF> result=PP_Expression
         {
             if (!alreadyHandled) {
                 alreadyHandled = result.booleanValue;
@@ -179,7 +169,7 @@ PP_IfBlock#void :
             }
         }
         PP_Block
-    )* 
+    )*
     [
         <PP_ELSE> {currentlyOn = !alreadyHandled && previouslyOn;}
         PP_Block
@@ -206,10 +196,10 @@ PP_DefStatement#void :
   }
 ;
 
-PP_UndefStatement#void : 
-    <PP_UNDEF> <PP_SYMBOL> 
+PP_UndefStatement#void :
+    <PP_UNDEF> <PP_SYMBOL>
     {if (currentlyOn) definedSymbols.remove(lastConsumedToken.toString());}
-;    
+;
 
 Expression PP_Expression#void :
   {
@@ -218,8 +208,8 @@ Expression PP_Expression#void :
   }
   result=PP_OrExpression
   [
-    (<PP_EQUALS>|<PP_NOT_EQUALS>{inequality=true;}) 
-    result2=PP_OrExpression 
+    (<PP_EQUALS>|<PP_NOT_EQUALS>{inequality=true;})
+    result2=PP_OrExpression
     {
       if (result.symbol == null || result2.symbol == null) {
         result.booleanValue = inequality == (result.booleanValue != result2.booleanValue);
@@ -254,17 +244,17 @@ Expression PP_Expression#void :
 
 Expression PP_OrExpression#void :
   { Expression result, result2; }
-   result=PP_AndExpression 
+   result=PP_AndExpression
   (<PP_OR> result2 = PP_AndExpression { result.booleanValue = result.booleanValue || result2.booleanValue; })*
    {return result;}
 ;
 
 Expression PP_AndExpression#void :
   { Expression result, result2; }
-   result=PP_NotExpression 
+   result=PP_NotExpression
   (<PP_AND> result2 = PP_NotExpression { result.booleanValue = result.booleanValue && result2.booleanValue; })*
    {return result;}
-;   
+;
 
 Expression PP_NotExpression#void :
   {
@@ -272,7 +262,7 @@ Expression PP_NotExpression#void :
     Expression result;
   }
    (<PP_NOT> {notFlag = !notFlag;})*
-   result=PP_PrimaryExpression 
+   result=PP_PrimaryExpression
   {
      if (notFlag) {
        result.booleanValue = !result.booleanValue;
@@ -283,9 +273,9 @@ Expression PP_NotExpression#void :
 
 Expression PP_Parentheses#void :
    { Expression result; }
-   <PP_LPAREN> 
-   result=PP_Expression 
-   <PP_RPAREN> 
+   <PP_LPAREN>
+   result=PP_Expression
+   <PP_RPAREN>
    {return result;}
 ;
 
@@ -294,7 +284,7 @@ Expression PP_PrimaryExpression#void :
     (
       result=PP_Parentheses
       |
-      <PP_SYMBOL> 
+      <PP_SYMBOL>
       {
         result.symbol = lastConsumedToken.toString();
         result.booleanValue = definedSymbols.containsKey(result.symbol);
@@ -305,4 +295,4 @@ Expression PP_PrimaryExpression#void :
       <PP_FALSE> { result.booleanValue = false; }
     )
     {return result;}
-; 
+;

@@ -12,7 +12,8 @@ __all__ = [
     'StringBuilder',
     '_Set',
     '_List',
-    'HashSet'
+    'HashSet',
+    'HashMap'
 ]
 
 CODING_PATTERN = re.compile(rb'^[ \t\f]*#.*coding[:=][ \t]*([-_.a-zA-Z0-9]+)')
@@ -376,6 +377,13 @@ class _Set(set):
             super().remove(item)
 
 HashSet = _Set
+
+class _Map(dict):
+    """
+    Adapter class for Java.util.HashMap
+    """
+
+HashMap = _Map
 
 class _List(list):
     """

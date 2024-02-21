@@ -340,6 +340,16 @@ public class CSharpTranslator extends Translator {
                 }
                 result.append(">");
             }
+            else if (isMap(receiver)) {
+                result.append("new MapAdapter<");
+                List<ASTTypeExpression> tps = ((ASTTypeExpression) receiver).getTypeParameters();
+                if (tps != null) {
+                    translateType(tps.get(0), result);
+                    result.append(", ");
+                    translateType(tps.get(1), result);
+                }
+                result.append(">");
+            }
             else {
                 result.append("new ");
                 internalTranslateExpression(receiver, TranslationContext.UNKNOWN, result);
@@ -379,6 +389,11 @@ public class CSharpTranslator extends Translator {
             case "List":
             case "java.util.List":
                 result = "ListAdapter";
+                break;
+            case "Map":
+            case "java.util.Map":
+            case "java.util.HashMap":
+                result = "MapAdapter";
                 break;
             case "Set":
             case "HashSet":

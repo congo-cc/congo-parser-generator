@@ -6,7 +6,8 @@ import logging
 
 from .lexer import Lexer
 from .tokens import *
-from .utils import EMPTY_SET, ListIterator, StringBuilder, _Set, _List, make_frozenset, HashSet
+from .utils import (EMPTY_SET, ListIterator, StringBuilder, _Set, _List,
+                    make_frozenset, HashSet, HashMap, BitSet)
 
 ${globals::translateParserImports()}
 
