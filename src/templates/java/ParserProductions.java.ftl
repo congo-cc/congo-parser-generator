@@ -87,7 +87,7 @@
 --]
 #macro BuildRecoverRoutines
    #list grammar.expansionsNeedingRecoverMethod as expansion
-       private void ${expansion.recoverMethodName}() {
+       private boolean ${expansion.recoverMethodName}(ParseException pe) {
           ${settings.baseTokenClassName} initialToken = lastConsumedToken;
           java.util.List<${settings.baseTokenClassName}> skippedTokens = new java.util.ArrayList<>();
           boolean success = false;
@@ -134,7 +134,7 @@
              lastConsumedToken = initialToken;
           }
           if (success&& !skippedTokens.isEmpty()) {
-             InvalidNode iv = new InvalidNode();
+             InvalidNode iv = new InvalidNode(pe);
              iv.copyLocationInfo(skippedTokens.get(0));
              for (${settings.baseTokenClassName} tok : skippedTokens) {
                 iv.add(tok);
@@ -142,7 +142,7 @@
              }
              pushNode(iv);
           }
-          pendingRecovery = !success;
+          return success;
        }
    /#list
 /#macro
@@ -154,7 +154,7 @@
      [@CU.HandleLexicalStateChange expansion false]
          #if settings.faultTolerant && expansion.requiresRecoverMethod && !expansion.possiblyEmpty
          if (pendingRecovery) {
-            ${expansion.recoverMethodName}();
+            pendingRecovery = !${expansion.recoverMethodName}(null);
          }
          /#if
          [@BuildExpansionCode expansion/]
@@ -870,7 +870,13 @@
              // we'll be stuck in an infinite loop!
              lastConsumedToken.setSkipped(true);
           }
-          ${loopExpansion.recoverMethodName}();
+          if (${loopExpansion.recoverMethodName}(pe)) {
+             #if loopExpansion.recoveryBlock??
+                 // Recovery code action at ${loopExpansion.recoveryBlock.location} when recovery succeeded and pushed an InvalidNode
+                 ${loopExpansion.recoveryBlock.javaCode} 
+             /#if 
+             pendingRecovery = false;
+          }
           if (pendingRecovery) throw pe;
        }
    /#if

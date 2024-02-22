@@ -28,6 +28,7 @@ abstract public class Expansion extends BaseNode {
     private String scanRoutineName, firstSetVarName;
 
     private boolean tolerantParsing;
+    private CodeBlock recoveryBlock;
 
     /**
      * If we hit a parsing error in this expansion, do we try to recover? This is
@@ -39,6 +40,18 @@ abstract public class Expansion extends BaseNode {
 
     public void setTolerantParsing(boolean tolerantParsing) {
         this.tolerantParsing = tolerantParsing;
+    }
+
+    /**
+     * If a recovery action is provided (in fault-tolerant mode), this is it.
+     * @return the recovery action {@link CodeBlock}
+     */
+    public CodeBlock getRecoveryBlock() {
+        return recoveryBlock;
+    }
+
+    public void setRecoveryBlock(CodeBlock recoveryBlock) {
+        this.recoveryBlock = recoveryBlock;
     }
 
     public String toString() {
