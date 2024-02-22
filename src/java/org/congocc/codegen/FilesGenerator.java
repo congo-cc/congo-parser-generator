@@ -158,7 +158,7 @@ public class FilesGenerator {
             add("Token.java");
             add("InvalidToken.java");
             add("Node.java");
-//            add("InvalidNode.java");
+            add("InvalidNode.java");
             add("TokenSource.java");
             add("NonTerminalCall.java");
         }
