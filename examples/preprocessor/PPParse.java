@@ -14,14 +14,14 @@ import java.util.List;
  */
 public class PPParse {
     static public void main(String[] args) throws Exception {
-        List<Path> paths = new ArrayList<Path>();
+        List<Path> paths = new ArrayList<>();
         for (String arg : args) {
             Path path = Paths.get(arg);
             if (!Files.exists(path)) {
                 System.err.println("File " + path + " does not exist.");
                 continue;
             }
-            Files.walk(path).forEach(p -> {
+            Files.walk(path, 1).forEach(p -> {
                 if (!Files.isDirectory(p)) {
                     paths.add(p);
                 }
@@ -34,9 +34,9 @@ public class PPParse {
     static public void parseFile(Path path) {
         try {
             String content = new String(Files.readAllBytes(path), StandardCharsets.UTF_8);
-            PreprocessorParser parser = new PreprocessorParser(path.toString(), content);
+            PreprocessorParser parser = new PreprocessorParser(path);
             BitSet lines = parser.PP_Root();
-            if (!path.toString().endsWith(".cs")) {
+            if (path.toString().endsWith(".cs")) {
                 outputLines(content, lines);
             }
         }
@@ -59,5 +59,4 @@ public class PPParse {
         System.out.println("The program just outputs the file applying the preprocessor logic.");
         System.exit(-1);
     }
-
 }

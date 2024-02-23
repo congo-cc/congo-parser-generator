@@ -12,7 +12,7 @@ private void pushOntoCallStack(String methodName, String fileName, int line, int
 }
 
 private void popCallStack() {
-    NonTerminalCall ntc = parsingStack.remove(parsingStack.size() -1);
+    NonTerminalCall ntc = parsingStack.remove(parsingStack.size() - 1);
     this.currentlyParsedProduction = ntc.productionName;
    [#if settings.faultTolerant]
     this.outerFollowSet = (EnumSet<TokenType>) ntc.followSet;
@@ -79,7 +79,7 @@ private void pushOntoLookaheadStack(String methodName, String fileName, int line
 }
 
 private void popLookaheadStack() {
-    NonTerminalCall ntc = lookaheadStack.remove(lookaheadStack.size() -1);
+    NonTerminalCall ntc = lookaheadStack.remove(lookaheadStack.size() - 1);
     this.currentLookaheadProduction = ntc.productionName;
 }
 
@@ -271,7 +271,7 @@ void dumpLookaheadCallStack(PrintStream ps) {
   }
 
   private ParseState popParseState() {
-      return parseStateStack.remove(parseStateStack.size() -1);
+      return parseStateStack.remove(parseStateStack.size() - 1);
   }
 
   private void restoreStashedParseState() {

@@ -374,7 +374,7 @@ class BaseTestCase(unittest.TestCase):
         # Now repeat, but with unparsed tokens as nodes.
 
         # import pdb; pdb.set_trace()
-        gcmd[-2:-1] = '-p UNPARSED_TOKENS_ARE_NODES=true'.split()
+        gcmd[-1:-1] = '-p UNPARSED_TOKENS_ARE_NODES=true'.split()
         p = run_command(gcmd, cwd=wd)
         p = run_command(ccmd, cwd=wd)
         out = run_command(rcmd, cwd=wd, out=True)

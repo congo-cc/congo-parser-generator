@@ -31,7 +31,6 @@ __pycache__/*
 /examples/preprocessor/org/*
 /examples/preprocessor/preprocessorparser/*
 /examples/preprocessor/cs-preprocessorparser/*
-/examples/preprocessor/testfiles/*.cs
 /examples/python/org/*
 /examples/python/pythonparser/*
 /examples/python/cs-pythonparser/*

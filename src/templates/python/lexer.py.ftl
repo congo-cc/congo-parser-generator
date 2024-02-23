@@ -134,7 +134,7 @@ def ${nfaState.methodName}(ch, next_states, valid_types, already_matched_types):
            [#-- If there is overlap between this state and any of the states
                  handled since the last lone if, we start a new if-else
                  If not, we continue in the same if-else block as before. --]
-           [#set lastBlockStartIndex = state_index, useElif=false]
+           [#set lastBlockStartIndex = state_index, useElif = false]
          [/#if]
     ${useElif ?: "elif" : "if"} [@NfaStateCondition state /]:
       [/#if]
@@ -302,8 +302,8 @@ def get_function_table_map(lexical_state):
     return nfa_functions
     /#if
 
-[#var PRESERVE_LINE_ENDINGS=settings.preserveLineEndings?string("True", "False")
-      JAVA_UNICODE_ESCAPE= settings.javaUnicodeEscape?string("True", "False")
+[#var PRESERVE_LINE_ENDINGS = settings.preserveLineEndings?string("True", "False")
+      JAVA_UNICODE_ESCAPE = settings.javaUnicodeEscape?string("True", "False")
       ENSURE_FINAL_EOL = settings.ensureFinalEOL?string("True", "False")
       TERMINATING_STRING = "\"" + settings.terminatingString?j_string + "\""
       PRESERVE_TABS = settings.preserveTabs?string("True", "False")

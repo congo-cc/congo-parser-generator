@@ -66,7 +66,7 @@
       TokenType type = null;
     #var states = nfaState.orderedStates, lastBlockStartIndex = 0
     #list states as state
-      #if state_index ==0 || state.moveRanges != states[state_index - 1].moveRanges
+      #if state_index == 0 || state.moveRanges != states[state_index - 1].moveRanges
           [#-- In this case we need a new if or possibly else if --]
          #if state_index == 0 || state::overlaps(states::subList(lastBlockStartIndex, state_index))
            [#-- If there is overlap between this state and any of the states
@@ -174,7 +174,7 @@ it just generates the inline conditional expression
       [@RangesCondition nfaState.moveRanges /]
     #elseif nfaState.hasAsciiMoves && nfaState.hasNonAsciiMoves
       ([@RangesCondition nfaState.asciiMoveRanges/])
-      || (ch >=128 && checkIntervals(${nfaState.movesArrayName}, ch))
+      || (ch >= 128 && checkIntervals(${nfaState.movesArrayName}, ch))
     #else
       checkIntervals(${nfaState.movesArrayName}, ch)
     /#if

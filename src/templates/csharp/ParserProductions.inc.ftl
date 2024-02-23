@@ -153,7 +153,7 @@ if (_pendingRecovery) {
 [#macro TreeBuildingAndRecovery expansion]
     [#var production,
           treeNodeBehavior,
-          buildingTreeNode=false,
+          buildingTreeNode = false,
           nodeVarName,
           javaCodePrologue = null,
           parseExceptionVar = CU.newVarName("parseException"),
@@ -205,7 +205,7 @@ catch (ParseException ${exceptionVar()}) {
             [#if !production?is_null && production.returnType != "void"]
                 [#var rt = production.returnType]
                 [#-- We need a return statement here or the code won't compile! --]
-                [#if rt = "int" || rt="char" || rt=="byte" || rt="short" || rt="long" || rt="float"|| rt="double"]
+                [#if rt = "int" || rt = "char" || rt == "byte" || rt = "short" || rt = "long" || rt = "float"|| rt = "double"]
        return 0;
                 [#else]
        return null;
@@ -456,7 +456,7 @@ if (BuildTree) {
 [/#macro]
 
 [#macro buildTreeNodeEpilogue treeNodeBehavior nodeVarName parseExceptionVar]
-   if (${nodeVarName}!=null) {
+   if (${nodeVarName} != null) {
       if (${parseExceptionVar} == null) {
    [#if treeNodeBehavior?? && treeNodeBehavior.assignment??]
       [#var LHS = getLhsPattern(treeNodeBehavior.assignment, null)]
@@ -574,7 +574,7 @@ if (BuildTree) {
 [/#function]
 
 [#macro BuildExpansionCode expansion]
-   [#var classname=expansion.simpleName]
+   [#var classname = expansion.simpleName]
    [#var prevLexicalStateVar = CU.newVarName("previousLexicalState")]
    [#-- take care of the non-tree-building classes --]
    [#if classname = "CodeBlock"]
@@ -774,7 +774,7 @@ finally {
 [/#macro]
 
 [#macro BuildCodeTerminal terminal]
-#var LHS = getLhsPattern(terminal.assignment, "Token"), regexp=terminal.regexp
+#var LHS = getLhsPattern(terminal.assignment, "Token"), regexp = terminal.regexp
 [#-- // DBG > BuildCodeRegexp --]
 #if !settings.faultTolerant
 ${LHS?replace("@", "ConsumeToken(" + CU.TT + regexp.label + ")")};
@@ -806,11 +806,11 @@ ${BuildCode(zoo.nestedExpansion)}
 [#-- // DBG < BuildCodeZeroOrOne ${zoo.nestedExpansion.class.simpleName} --]
 [/#macro]
 
-[#var inFirstVarName = "", inFirstIndex =0]
+[#var inFirstVarName = "", inFirstIndex = 0]
 
 [#macro BuildCodeOneOrMore oom]
 [#-- // DBG > BuildCodeOneOrMore --]
-[#var nestedExp=oom.nestedExpansion, prevInFirstVarName = inFirstVarName/]
+[#var nestedExp = oom.nestedExpansion, prevInFirstVarName = inFirstVarName/]
    [#if nestedExp.simpleName = "ExpansionChoice"]
      [#set inFirstVarName = "inFirst" + inFirstIndex, inFirstIndex = inFirstIndex + 1 /]
 var ${inFirstVarName} = true;

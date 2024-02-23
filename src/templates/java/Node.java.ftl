@@ -253,7 +253,7 @@ public interface Node extends List<Node> {
          Node parent = getParent();
          if (parent == null) return null;
          int idx = parent.indexOf(this);
-         if (idx <=0) return null;
+         if (idx <= 0) return null;
          return parent.get(idx - 1);
      }
 
@@ -376,7 +376,7 @@ public interface Node extends List<Node> {
      */
     default int getEndLine() {
         TokenSource tokenSource = getTokenSource();
-        return tokenSource == null ? 0 : tokenSource.getLineFromOffset(getEndOffset()-1);
+        return tokenSource == null ? 0 : tokenSource.getLineFromOffset(getEndOffset() - 1);
     };
 
     /**
@@ -392,7 +392,7 @@ public interface Node extends List<Node> {
      */
     default int getEndColumn() {
         TokenSource tokenSource = getTokenSource();
-        return tokenSource == null ? 0 : tokenSource.getCodePointColumnFromOffset(getEndOffset()-1);
+        return tokenSource == null ? 0 : tokenSource.getCodePointColumnFromOffset(getEndOffset() - 1);
     }
 
     /**
@@ -491,7 +491,7 @@ public interface Node extends List<Node> {
              }
              else {
                  T descendant = child.firstDescendantOfType(clazz, pred);
-                 if (descendant !=null) return descendant;
+                 if (descendant != null) return descendant;
              }
          }
          return null;
@@ -502,7 +502,7 @@ public interface Node extends List<Node> {
     }
 
     default <T> List<T> childrenOfType(Class<T>clazz, Predicate<T> pred) {
-        List<T>result=new java.util.ArrayList<>();
+        List<T>result = new java.util.ArrayList<>();
         for (int i = 0; i < size(); i++) {
             Node child = get(i);
             if (clazz.isInstance(child)) {
@@ -542,7 +542,7 @@ public interface Node extends List<Node> {
 
    default <T extends Node> T firstAncestorOfType(Class<T> clazz) {
         Node parent = this;
-        while (parent !=null) {
+        while (parent != null) {
            parent = parent.getParent();
            if (clazz.isInstance(parent)) {
                return clazz.cast(parent);
@@ -577,7 +577,7 @@ public interface Node extends List<Node> {
      */
     default void copyLocationInfo(Node start, Node end) {
         setTokenSource(start.getTokenSource());
-        if (getTokenSource()==null) setTokenSource(end.getTokenSource());
+        if (getTokenSource() == null) setTokenSource(end.getTokenSource());
         setBeginOffset(start.getBeginOffset());
         setEndOffset(end.getEndOffset());
     }
@@ -585,7 +585,7 @@ public interface Node extends List<Node> {
     default void replace(Node toBeReplaced) {
         copyLocationInfo(toBeReplaced);
         Node parent = toBeReplaced.getParent();
-        if (parent !=null) {
+        if (parent != null) {
            int index = parent.indexOf(toBeReplaced);
            parent.setChild(index, this);
         }
@@ -767,7 +767,7 @@ public interface Node extends List<Node> {
     }
 
     default int lastIndexOf(Object obj) {
-        for (int i = size() -1; i>=0; i--) {
+        for (int i = size() - 1; i >= 0; i--) {
             if (get(i).equals(obj)) return i;
         }
         return -1;

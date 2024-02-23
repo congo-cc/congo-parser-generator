@@ -5,6 +5,7 @@
 #
 from __future__ import print_function    # needed forIronPython
 import argparse
+import bdb
 import importlib
 import logging
 import os
@@ -36,6 +37,13 @@ if IS_JAVA:
         stream.print(s)
         for child in node.children():
             java_dump_node(stream, child, level + 1)
+
+    def dump_bitset(stream, bs):
+        pos = 0
+        bit = bs.nextSetBit(pos)
+        while bit >= 0:
+            stream.println(bit)
+            bit = bs.nextSetBit(bit + 1)
 
     def get_path(p):
         return Paths.get(p)
@@ -127,6 +135,14 @@ elif IS_DOTNET:
             if node.Children:
                 for child in node.Children:
                     csharp_dump_node(stream, child, level + 1)
+
+        def dump_bitset(stream, bs):
+            pos = 0
+            bit = bs.NextSetBit(pos)
+            while bit >= 0:
+                stream.WriteLine(bit)
+                bit = bs.NextSetBit(bit + 1)
+
     except Exception as e:
         import traceback; traceback.print_exc()
         raise
@@ -138,6 +154,13 @@ else:
         stream.write(s)
         for child in node.children:
             python_dump_node(stream, child, level + 1)
+
+    def dump_bitset(stream, bs):
+        pos = 0
+        bit = bs.next_set_bit(pos)
+        while bit >= 0:
+            stream.write('%d\n' % bit)
+            bit = bs.next_set_bit(bit + 1)
 
 
 def main():
@@ -245,18 +268,27 @@ def main():
                     try:
                         if IS_JAVA:
                             # import pdb; pdb.set_trace()
-                            getattr(parser, options.parser)()
-                            node = parser.rootNode()
-                            java_dump_node(outf, node, 0)
+                            value = getattr(parser, options.parser)()
+                            if hasattr(parser, 'rootNode'):  # preprocessor doesn't
+                                node = parser.rootNode()
+                                java_dump_node(outf, node, 0)
+                            else:
+                                dump_bitset(outf, value)
                         elif IS_DOTNET:
-                            getattr(parser, 'Parse%s' % options.parser)()
-                            node = parser.RootNode
-                            csharp_dump_node(outf, node, 0)
+                            value = getattr(parser, 'Parse%s' % options.parser)()
+                            if hasattr(parser, 'RootNode'):  # preprocessor doesn't
+                                node = parser.RootNode
+                                csharp_dump_node(outf, node, 0)
+                            else:
+                                dump_bitset(outf, value)
                         else:
                             # import pdb; pdb.set_trace()
-                            getattr(parser, 'parse_%s' % options.parser)()
-                            node = parser.root_node
-                            python_dump_node(outf, node, 0)
+                            value = getattr(parser, 'parse_%s' % options.parser)()
+                            if hasattr(parser, 'root_node'):  # preprocessor doesn't
+                                node = parser.root_node
+                                python_dump_node(outf, node, 0)
+                            else:
+                                dump_bitset(outf, value)
                     except ParseException as e:
                         print('Parse failed for %s: %s' % (fn, e))
                         logger.exception('Parse failed for %s:: %s', fn, e)
@@ -296,6 +328,8 @@ def main():
                             done = t.Type == TokenType.EOF
                         else:
                             done = t.type == TokenType.EOF
+            except bdb.BdbQuit:
+                raise
             except Exception:
                 import traceback
                 traceback.print_exc()

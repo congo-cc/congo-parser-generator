@@ -168,7 +168,7 @@ public boolean isCancelled() {return cancelled;}
 [#list grammar.parserTokenHooks as methodName]
     result = ${methodName}(result);
 [/#list]
-    nextTokenType=null;
+    nextTokenType = null;
     return result;
   }
 

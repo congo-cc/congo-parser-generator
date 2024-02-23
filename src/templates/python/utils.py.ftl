@@ -382,6 +382,11 @@ class _Map(dict):
     """
     Adapter class for Java.util.HashMap
     """
+    def put(self, key, value):
+        self[key] = value
+
+    def put_all(self, other):
+        self.update(other)
 
 HashMap = _Map
 

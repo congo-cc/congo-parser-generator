@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 #
-# Copyright (C) 2022-2023 Vinay Sajip (vinay_sajip@yahoo.co.uk)
+# Copyright (C) 2022-2024 Vinay Sajip (vinay_sajip@yahoo.co.uk)
 #
 import argparse
 import glob
@@ -124,6 +124,7 @@ def test_grammar(gdata, options):
     copy_files(sd, dd, gdata.files)
     shutil.copy('ptest.py', dd)
     print('Test files copied to working directory.')
+
     # Run congocc to create the Java lexer and parser
     if lang == 'csharp':
         pf = os.path.join(dd, 'PPDirectiveLine.ccc')
@@ -133,6 +134,8 @@ def test_grammar(gdata, options):
             raise ValueError('Preprocessor generation in Java failed')
     gf = os.path.join(dd, gdata.grammar)
     cmd = ['java', '-jar', 'congocc.jar', '-n', '-q', gf]
+    if lang == 'preprocessor':
+        cmd[-1:-1] = ['-p', 'localtest']
     p = run_command(cmd)
     if p.returncode:
         raise ValueError('Parser generation in Java failed')
@@ -185,6 +188,8 @@ def test_grammar(gdata, options):
         if p.returncode:
             raise ValueError('Preprocessor generation in C# failed')
     cmd = ['java', '-jar', 'congocc.jar', '-n', '-q', '-lang', 'csharp', gf]
+    if lang == 'preprocessor':
+        cmd[-1:-1] = ['-p', 'localtest']
     p = run_command(cmd)
     if p.returncode:
         raise ValueError('Parser generation in C# failed')
@@ -306,6 +311,14 @@ def main():
                             cspackage='org.parsers.lua', ext='.lua',
                             csdir='cs-luaparser',
                             production='Root'),
+        'preprocessor': Namespace(name='Preprocessor', dir='preprocessor',
+                            grammar='Preprocessor.ccc',
+                            files=['*.ccc', 'testfiles'],
+                            jlexer='org.parsers.preprocessor.PreprocessorLexer',
+                            jparser='org.parsers.preprocessor.PreprocessorParser',
+                            cspackage='org.parsers.preprocessor', ext='.cs',
+                            csdir='cs-preprocessorparser',
+                            production='PP_Root'),
     }
     try:
         langs = options.langs.split(',')
@@ -314,6 +327,7 @@ def main():
                 workdir = tempfile.mkdtemp(prefix='congocc-test-csharp-%s-' % lang)
                 workdirs.append(workdir)
                 gdata.workdir = workdir
+                # import pdb; pdb.set_trace()
                 test_grammar(gdata, options)
 
     except Exception as e:

@@ -257,6 +257,7 @@ ${globals::translateParserImports()}
             tokenSource.Parser = this;
 [/#if]
             LastConsumedToken = Lexer.DummyStartToken;
+            LastConsumedToken.TokenSource = tokenSource;
 [#if settings.treeBuildingEnabled]
             new NodeScope(this); // attaches NodeScope instance to Parser instance
 [/#if]
