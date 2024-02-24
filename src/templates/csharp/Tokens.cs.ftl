@@ -713,6 +713,7 @@ namespace ${csPackage} {
 
         internal Token NextCachedToken {
             get {
+                if (Type == TokenType.EOF) return null;
 [#if settings.tokenChaining]
                 if (appendedToken != null) {
                     return appendedToken;
@@ -725,7 +726,7 @@ namespace ${csPackage} {
         internal Token PreviousCachedToken {
             get {
 [#if settings.tokenChaining]
-                if (prependedToken !=null) {
+                if (prependedToken != null) {
                     return prependedToken;
                 }
 [/#if]

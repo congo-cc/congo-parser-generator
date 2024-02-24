@@ -5,8 +5,8 @@
 [#var MAX_INT = 2147483647]
 [#var multipleLexicalStates = lexerData.lexicalStates?size > 1]
 [#var TT = "TokenType."]
-[#var PRESERVE_LINE_ENDINGS=settings.preserveLineEndings?string("true", "false")
-      JAVA_UNICODE_ESCAPE= settings.javaUnicodeEscape?string("true", "false")
+[#var PRESERVE_LINE_ENDINGS = settings.preserveLineEndings?string("true", "false")
+      JAVA_UNICODE_ESCAPE = settings.javaUnicodeEscape?string("true", "false")
       ENSURE_FINAL_EOL = settings.ensureFinalEOL?string("true", "false")
       TERMINATING_STRING = "\"" + settings.terminatingString?j_string + "\""
       PRESERVE_TABS = settings.preserveTabs?string("true", "false")
@@ -87,7 +87,7 @@ private static HashSet<TokenType> ${varName} = Utils.GetOrMakeSet(
             TokenType? type = null;
     [#var states = nfaState.orderedStates, lastBlockStartIndex = 0, useIf = false]
     [#list states as state]
-      [#if state_index ==0 || !state.moveRanges::equals(states[state_index - 1].moveRanges)]
+      [#if state_index == 0 || !state.moveRanges::equals(states[state_index - 1].moveRanges)]
           [#-- In this case we need a new if or possibly else if --]
          [#if state_index == 0 || state::overlaps(states::subList(lastBlockStartIndex, state_index))]
            [#-- If there is overlap between this state and any of the states
@@ -132,7 +132,7 @@ private static HashSet<TokenType> ${varName} = Utils.GetOrMakeSet(
             TokenType? type = null;
     [#var states = nfaState.orderedStates, lastBlockStartIndex = 0, useIf = false]
     [#list states as state]
-      [#if state_index ==0 || !state.moveRanges::equals(states[state_index - 1].moveRanges)]
+      [#if state_index == 0 || !state.moveRanges::equals(states[state_index - 1].moveRanges)]
           [#-- In this case we need a new if or possibly else if --]
          [#if state_index == 0 || state::overlaps(states::subList(lastBlockStartIndex, state_index))]
            [#-- If there is overlap between this state and any of the states
@@ -428,7 +428,7 @@ ${globals::translateLexerImports()}
                                 buf.Append(current);
                                 justSawUnicodeEscape = true;
                             }
-                            // col +=6;
+                            // col += 6;
                             ++col;
                             // We're not going to be trying to track line/column information relative to the original content
                             // with tabs or unicode escape, so we just increment 1, not 6
@@ -566,7 +566,7 @@ ${globals::translateLexerImports()}
 /*
         public int Length(int start, int end) {
             int result = 0;
-            for (int i =start; i< end; i++) {
+            for (int i = start; i < end; i++) {
                 if (!IsIgnored(i)) {
                     ++result;
                 }
@@ -853,7 +853,7 @@ ${globals::translateLexerImports()}
         // is in one of the intervals
         private static bool CheckIntervals(int[] ranges, int ch) {
             var temp = System.Array.BinarySearch(ranges, ch);
-            return temp >=0 || temp % 2 == 0;
+            return temp >= 0 || temp % 2 == 0;
         }
 
 [#list lexerData.lexicalStates as lexicalState]

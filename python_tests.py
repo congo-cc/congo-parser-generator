@@ -124,6 +124,8 @@ def test_grammar(gdata, options):
             raise ValueError('Preprocessor generation in Java failed')
     gf = os.path.join(dd, gdata.grammar)
     cmd = ['java', '-jar', 'congocc.jar', '-n', '-q', gf]
+    if lang == 'preprocessor':
+        cmd[-1:-1] = ['-p', 'localtest']
     p = run_command(cmd)
     if p.returncode:
         raise ValueError('Parser generation in Java failed')
@@ -175,6 +177,8 @@ def test_grammar(gdata, options):
         if p.returncode:
             raise ValueError('Preprocessor generation in Python failed')
     cmd = ['java', '-jar', 'congocc.jar', '-n', '-q', '-lang', 'python', gf]
+    if lang == 'preprocessor':
+        cmd[-1:-1] = ['-p', 'localtest']
     p = run_command(cmd)
     if p.returncode:
         raise ValueError('Parser generation in Python failed')
@@ -284,6 +288,13 @@ def main():
                             jparser='org.parsers.lua.LuaParser',
                             ppackage='luaparser', ext='.lua',
                             production='Root'),
+        'preprocessor': Namespace(name='Preprocessor', dir='preprocessor',
+                            grammar='Preprocessor.ccc',
+                            files=['*.ccc', 'testfiles'],
+                            jlexer='org.parsers.preprocessor.PreprocessorLexer',
+                            jparser='org.parsers.preprocessor.PreprocessorParser',
+                            ppackage='preprocessorparser', ext='.cs',
+                            production='PP_Root'),
     }
     try:
         langs = options.langs.split(',')

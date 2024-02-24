@@ -165,7 +165,7 @@
 #macro TreeBuildingAndRecovery expansion
    #var production,
          treeNodeBehavior,
-         buildingTreeNode=false,
+         buildingTreeNode = false,
          nodeVarName,
          javaCodePrologue = "",
          parseExceptionVar = CU.newVarName("parseException"),
@@ -220,7 +220,7 @@
          #if production?? && production.returnType != "void"
             #var rt = production.returnType
             #-- We need a return statement here or the code won't compile! --
-            #if rt = "int" || rt="char" || rt=="byte" || rt="short" || rt="long" || rt="float"|| rt="double"
+            #if rt = "int" || rt = "char" || rt == "byte" || rt = "short" || rt = "long" || rt = "float"|| rt = "double"
          return 0;
             #else
          return null;
@@ -489,7 +489,7 @@
 /#macro
 
 #macro buildTreeNodeEpilogue treeNodeBehavior nodeVarName parseExceptionVar
-   if (${nodeVarName}!=null) {
+   if (${nodeVarName} != null) {
       if (${parseExceptionVar} == null) {
    #if treeNodeBehavior?? && treeNodeBehavior.assignment??
       #var LHS = getLhsPattern(treeNodeBehavior.assignment, null)
@@ -605,7 +605,7 @@
 /#function
 
 #macro BuildExpansionCode expansion
-   #var classname=expansion.simpleName
+   #var classname = expansion.simpleName
    #var prevLexicalStateVar = CU.newVarName("previousLexicalState")
    #-- take care of the non-tree-building classes --
    #if classname = "CodeBlock"
@@ -797,7 +797,7 @@
 /#macro
 
 #macro BuildCodeTerminal terminal
-   #var LHS = getLhsPattern(terminal.assignment, "Token"), regexp=terminal.regexp
+   #var LHS = getLhsPattern(terminal.assignment, "Token"), regexp = terminal.regexp
    #if !settings.faultTolerant
        ${LHS?replace("@", "consumeToken(" + regexp.label + ")")};
    #else
@@ -826,10 +826,10 @@
 /#macro
 
 #var inFirstVarName = "",
-     inFirstIndex =0
+     inFirstIndex = 0
 
 #macro BuildCodeOneOrMore oom
-   #var nestedExp=oom.nestedExpansion, prevInFirstVarName = inFirstVarName
+   #var nestedExp = oom.nestedExpansion, prevInFirstVarName = inFirstVarName
    #if nestedExp.simpleName = "ExpansionChoice"
      #set inFirstVarName = "inFirst" + inFirstIndex, inFirstIndex = inFirstIndex + 1
      boolean ${inFirstVarName} = true;
@@ -962,11 +962,11 @@
    /#if
    #if expansion.enteredUnconditionally
       true
-   #elseif expansion.firstSet.tokenNames?size ==0
+   #elseif expansion.firstSet.tokenNames?size == 0
       false
    #elseif expansion.firstSet.tokenNames?size < CU.USE_FIRST_SET_THRESHOLD
       #list expansion.firstSet.tokenNames as name
-          nextTokenType [#if name_index ==0]() [/#if]
+          nextTokenType [#if name_index == 0]() [/#if]
           == ${name}
          [#if name_has_next] || [/#if]
       /#list

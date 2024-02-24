@@ -20,7 +20,7 @@ import ${settings.rootAPIPackage}.TokenSource;
 #var implements = "implements CharSequence"
 
 #if settings.treeBuildingEnabled
-    #set implements ="implements CharSequence, Node.TerminalNode"
+    #set implements = "implements CharSequence, Node.TerminalNode"
     #if settings.rootAPIPackage
        import ${settings.rootAPIPackage}.Node;
     /#if
@@ -49,7 +49,7 @@ public class ${settings.baseTokenClassName} ${implements} {
 
     private ${settings.lexerClassName} tokenSource;
 
-    private TokenType type=TokenType.DUMMY;
+    private TokenType type = TokenType.DUMMY;
 
     private int beginOffset;
     private int endOffset;
@@ -178,7 +178,7 @@ public class ${settings.baseTokenClassName} ${implements} {
     }
 
     protected void setType(TokenType type) {
-        this.type=type;
+        this.type = type;
     }
 
     /**
@@ -262,7 +262,7 @@ public class ${settings.baseTokenClassName} ${implements} {
      */
     public int getEndColumn() {
         ${settings.lexerClassName} ts = getTokenSource();
-        return ts == null ? 0 : ts.getCodePointColumnFromOffset(getEndOffset());
+        return ts == null ? 0 : ts.getCodePointColumnFromOffset(getEndOffset() - 1);
     }
 
     public String getInputSource() {
@@ -329,9 +329,9 @@ public class ${settings.baseTokenClassName} ${implements} {
 
     public ${settings.baseTokenClassName} previousCachedToken() {
 [#if settings.tokenChaining]
-        if (prependedToken !=null) return prependedToken;
+        if (prependedToken != null) return prependedToken;
 [/#if]
-        if (getTokenSource()==null) return null;
+        if (getTokenSource() == null) return null;
         return (${settings.baseTokenClassName}) getTokenSource().previousCachedToken(getBeginOffset());
     }
 
@@ -426,7 +426,7 @@ public class ${settings.baseTokenClassName} ${implements} {
                 return currentPoint.nextCachedToken() != null;
             }
             public ${settings.baseTokenClassName} next() {
-                ${settings.baseTokenClassName} next= currentPoint.nextCachedToken();
+                ${settings.baseTokenClassName} next = currentPoint.nextCachedToken();
                 if (next == null) throw new java.util.NoSuchElementException("No next token!");
                 return currentPoint = next;
             }
@@ -486,7 +486,7 @@ public class ${settings.baseTokenClassName} ${implements} {
            [#list lexerData.orderedNamedTokens as re]
             [#if re.generatedClassName != "${settings.baseTokenClassName}" && !re.private]
               [#var generatedClassName = re.generatedClassName]
-              [#if generatedClassName?index_of('.')<0]
+              [#if generatedClassName?index_of('.') < 0]
                  [#set generatedClassName = grammar.nodePrefix + generatedClassName]
               [/#if]
               case ${re.label} : return new ${generatedClassName}(TokenType.${re.label}, tokenSource, beginOffset, endOffset);
@@ -535,7 +535,7 @@ public class ${settings.baseTokenClassName} ${implements} {
 
    public int length() {
       [#if !settings.minimalToken]
-         if (cachedImage !=null) return cachedImage.length();
+         if (cachedImage != null) return cachedImage.length();
          cachedImage = toString();
          return cachedImage.length();
       [#elseif settings.usesPreprocessor]

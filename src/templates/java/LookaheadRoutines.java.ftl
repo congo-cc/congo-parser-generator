@@ -5,7 +5,7 @@
 #if settings.faultTolerant
     [@followSetVars /]
 /#if
-    [#if grammar.choicePointExpansions?size !=0]
+    [#if grammar.choicePointExpansions?size != 0]
        [@BuildLookaheads /]
      [/#if]
 [/#macro]
@@ -100,7 +100,7 @@
   [#set newVarIndex = 0 in CU]
   // BuildPredicateRoutine: expansion at ${expansion.location}
    private boolean ${expansion.predicateMethodName}() {
-     remainingLookahead= ${lookaheadAmount};
+     remainingLookahead = ${lookaheadAmount};
      currentLookaheadToken = lastConsumedToken;
      final boolean scanToEnd = false;
      try {
@@ -263,8 +263,8 @@
                  [/#if]
              [#else]
                  [#var nextElement = lookBehind.path[element_index + 1]]
-                 [#var nextElementNegated = (nextElement[0]=="~")]
-                 [#if nextElementNegated][#set nextElement=nextElement?substring(1)][/#if]
+                 [#var nextElementNegated = (nextElement[0] == "~")]
+                 [#if nextElementNegated][#set nextElement = nextElement?substring(1)][/#if]
                  while (stackIterator.hasNext()) {
                     ntc = stackIterator.next();
                     [#var equalityOp = nextElementNegated?string("!=", "==")]
@@ -308,10 +308,10 @@
    based on the Expansion's class name.
 --]
 [#macro BuildScanCode expansion]
-  [#var classname=expansion.simpleName]
+  [#var classname = expansion.simpleName]
   [#if classname != "ExpansionSequence" && classname != "ExpansionWithParentheses"]
       if (hitFailure) return false;
-      if (remainingLookahead <=0 ) {
+      if (remainingLookahead <= 0 ) {
          return true;
       }
   // Lookahead Code for ${classname} specified at ${expansion.location}
@@ -347,7 +347,7 @@
       [@ScanCodeOneOrMore expansion /]
    [#elseif classname = "NonTerminal"]
       [@ScanCodeNonTerminal expansion/]
-   [#elseif classname = "TryBlock" || classname="AttemptBlock"]
+   [#elseif classname = "TryBlock" || classname = "AttemptBlock"]
       [@BuildScanCode expansion.nestedExpansion/]
    [#elseif classname = "ExpansionChoice"]
       [@ScanCodeChoice expansion /]
@@ -373,7 +373,7 @@
    [#list sequence.units as sub]
        [@BuildScanCode sub/]
        [#if sub.scanLimit]
-         if (!scanToEnd && lookaheadStack.size() <=1) {
+         if (!scanToEnd && lookaheadStack.size() <= 1) {
             if (lookaheadRoutineNesting == 0) {
               remainingLookahead = ${sub.scanLimitPlus};
             }
@@ -451,7 +451,7 @@
      passedPredicate = false;
      if (!${CheckExpansion(subseq)}) {
      currentLookaheadToken = ${settings.baseTokenClassName?lower_case}${CU.newVarIndex};
-     remainingLookahead=remainingLookahead${CU.newVarIndex};
+     remainingLookahead = remainingLookahead${CU.newVarIndex};
      hitFailure = hitFailure${CU.newVarIndex};
      [#if !subseq_has_next]
         return false;
@@ -464,7 +464,7 @@
 [/#macro]
 
 [#macro ScanCodeZeroOrOne zoo]
-   [@CU.newVar type=settings.baseTokenClassName init="currentLookaheadToken"/]
+   [@CU.newVar type = settings.baseTokenClassName init = "currentLookaheadToken"/]
    boolean passedPredicate${CU.newVarIndex} = passedPredicate;
    passedPredicate = false;
    try {
@@ -484,7 +484,7 @@
     boolean ${prevPassPredicateVarName} = passedPredicate;
     try {
       while (remainingLookahead > 0 && !hitFailure) {
-      [@CU.newVar type=settings.baseTokenClassName init="currentLookaheadToken"/]
+      [@CU.newVar type = settings.baseTokenClassName init = "currentLookaheadToken"/]
         passedPredicate = false;
         if (!${CheckExpansion(zom.nestedExpansion)}) {
             if (passedPredicate && !legacyGlitchyLookahead) return false;

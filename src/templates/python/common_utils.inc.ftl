@@ -48,7 +48,7 @@
 [#-- Just to generate a new unique variable name
   All it does is tack an integer (that is incremented)
   onto the type name, and optionally initializes it to some value
-[#macro newVar type init=null]
+[#macro newVar type init = null]
    [#set newVarIndex = newVarIndex + 1]
    ${type} ${type?lower_case}${newVarIndex}
    [#if init??]
@@ -83,7 +83,7 @@ ${prefix}${newID()}[#rt]
 [/#function]
 
 [#macro HandleLexicalStateChange expansion inLookahead indent]
-[#var is=""?right_pad(indent)]
+[#var is = ""?right_pad(indent)]
 [#-- ${is}# DBG > HandleLexicalStateChange ${indent} ${expansion.simpleName} --]
 [#var resetToken = inLookahead?string("self.current_lookahead_token", "self.last_consumed_token")]
 [#if expansion.specifiedLexicalState??]

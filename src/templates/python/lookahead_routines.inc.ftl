@@ -137,7 +137,7 @@ ${BuildScanCode(expansion, 12)}
 [/#macro]
 
 [#macro BuildScanRoutine expansion indent]
-[#var is=""?right_pad(indent)]
+[#var is = ""?right_pad(indent)]
 [#-- ${is}# DBG > BuildScanRoutine ${indent} --]
 #if !expansion.singleTokenLookahead || expansion.requiresPredicateMethod
 ${is}# scanahead routine for expansion at:
@@ -176,7 +176,7 @@ ${is}    return True
 [/#macro]
 
 [#macro BuildAssertionRoutine expansion indent]
-[#var is=""?right_pad(indent)]
+[#var is = ""?right_pad(indent)]
 [#-- ${is}# DBG > BuildAssertionRoutine ${indent} --]
 ${is}# scanahead routine for assertion at:
 ${is}# ${expansion.parent.location}
@@ -206,7 +206,7 @@ ${is}        self.hit_failure = prev_hit_failure
 
 [#-- Build the code for checking semantic lookahead, lookbehind, and/or syntactic lookahead --]
 #macro BuildPredicateCode expansion indent
-#var is=""?right_pad(indent)
+#var is = ""?right_pad(indent)
 [#-- ${is}# DBG > BuildPredicateCode ${indent} --]
 #if expansion.hasSemanticLookahead && (expansion.lookahead.semanticLookaheadNested || expansion.containingProduction.onlyForLookahead)
 ${is}if not (${globals::translateExpression(expansion.semanticLookahead)}):
@@ -235,7 +235,7 @@ ${is}self.passed_predicate = True
    that is used in a nested lookahead.
  --]
 [#macro BuildLookaheadRoutine lookahead indent]
-[#var is=""?right_pad(indent)]
+[#var is = ""?right_pad(indent)]
 [#-- ${is}# DBG > BuildLookaheadRoutine ${indent} --]
 [#if lookahead.nestedExpansion??]
 ${is}# lookahead routine for lookahead at:
@@ -258,7 +258,7 @@ ${is}        self.hit_failure = prev_hit_failure
 [/#macro]
 
 [#macro BuildLookBehindRoutine lookBehind indent]
-[#var is=""?right_pad(indent)]
+[#var is = ""?right_pad(indent)]
 [#-- ${is}# DBG > BuildLookBehindRoutine ${indent} --]
 ${is}# Look behind
 ${is}def ${lookBehind.routineName}(self):
@@ -271,7 +271,7 @@ ${is}    if not stack_iterator.has_next:
 ${is}        return False
 ${is}    stack_iterator.next
   [#elseif element = "..."]
-    [#if element_index = lookBehind.path?size-1]
+    [#if element_index = lookBehind.path?size - 1]
       [#if lookBehind.hasEndingSlash]
 ${is}    return not stack_iterator.has_next
       [#else]
@@ -280,7 +280,7 @@ ${is}    return True
     [#else]
       [#var nextElement = lookBehind.path[element_index + 1]]
       [#var nextElementNegated = (nextElement[0]=="~")]
-      [#if nextElementNegated][#set nextElement=nextElement?substring(1)][/#if]
+      [#if nextElementNegated][#set nextElement = nextElement?substring(1)][/#if]
 ${is}    while stack_iterator.has_next:
 ${is}        ntc = stack_iterator.next
       [#var equalityOp = nextElementNegated?string("!=", "==")]
@@ -308,7 +308,7 @@ ${is}    return True
 [/#macro]
 
 [#macro BuildProductionLookaheadMethod production indent]
-[#var is=""?right_pad(indent)]
+[#var is = ""?right_pad(indent)]
 [#--     # DBG > BuildProductionLookaheadMethod ${indent} --]
     # BuildProductionLookaheadMethod
     def ${production.lookaheadMethodName}(self, scan_to_end):
@@ -328,9 +328,9 @@ ${BuildScanCode(production.expansion, 8)}
    based on the Expansion's class name.
 --]
 [#macro BuildScanCode expansion indent]
-[#var is=""?right_pad(indent)]
+[#var is = ""?right_pad(indent)]
 [#-- ${is}# DBG > BuildScanCode ${indent} ${expansion.simpleName} --]
-  [#var classname=expansion.simpleName]
+  [#var classname = expansion.simpleName]
   [#if classname != "ExpansionSequence" && classname != "ExpansionWithParentheses"]
 ${is}if self.hit_failure:
 ${is}    return False
@@ -363,7 +363,7 @@ ${ScanCodeZeroOrMore(expansion, indent)}
 ${ScanCodeOneOrMore(expansion, indent)}
    [#elseif classname = "NonTerminal"]
       [@ScanCodeNonTerminal expansion indent /]
-   [#elseif classname = "TryBlock" || classname="AttemptBlock"]
+   [#elseif classname = "TryBlock" || classname = "AttemptBlock"]
       [@BuildScanCode expansion.nestedExpansion indent /]
    [#elseif classname = "ExpansionChoice"]
 ${ScanCodeChoice(expansion, indent)}
@@ -387,7 +387,7 @@ ${globals::translateCodeBlock(expansion, indent)}
    particularly for fault-tolerant.
 --]
 #macro ScanCodeSequence sequence indent
-#var is=""?right_pad(indent)
+#var is = ""?right_pad(indent)
 [#-- ${is}# DBG > ScanCodeSequence ${indent} --]
 #list sequence.units as sub
        [@BuildScanCode sub indent /]
@@ -408,7 +408,7 @@ ${is}        self.passed_predicate_threshold = self.remaining_lookahead[#if sub.
   checking the production's nested expansion
 --]
 [#macro ScanCodeNonTerminal nt indent]
-[#var is=""?right_pad(indent)]
+[#var is = ""?right_pad(indent)]
 ${is}# NonTerminal ${nt.name} at ${nt.location}
 ${is}self.push_onto_lookahead_stack('${nt.containingProduction.name}', '${nt.inputSource?j_string}', ${nt.beginLine}, ${nt.beginColumn})
 ${is}self.current_lookahead_production = '${nt.production.name}'
@@ -420,7 +420,7 @@ ${is}    self.pop_lookahead_stack()
 [/#macro]
 
 [#macro ScanSingleToken expansion indent]
-[#var is=""?right_pad(indent)]
+[#var is = ""?right_pad(indent)]
 [#var firstSet = expansion.firstSet.tokenNames]
 [#-- ${is}# DBG > ScanSingleToken ${indent} --]
 [#if firstSet?size = 1]
@@ -442,7 +442,7 @@ ${is}    return False
 [/#macro]
 
 [#macro ScanCodeAssertion assertion indent]
-[#var is=""?right_pad(indent)]
+[#var is = ""?right_pad(indent)]
 [#-- ${is}# DBG > ScanCodeAssertion ${indent} --]
 [#if assertion.assertionExpression?? && (assertion.insideLookahead || assertion.semanticLookaheadNested || assertion.containingProduction.onlyForLookahead)]
 ${is}if not (${globals::translateExpression(assertion.assertionExpression)}):
@@ -458,7 +458,7 @@ ${is}    return False
 [/#macro]
 
 [#macro ScanCodeError expansion indent]
-[#var is=""?right_pad(indent)]
+[#var is = ""?right_pad(indent)]
 [#-- ${is}# DBG > ScanCodeError ${indent} --]
 ${is}self.hit_failure = True
 ${is}return False
@@ -466,7 +466,7 @@ ${is}return False
 [/#macro]
 
 #macro ScanCodeChoice choice indent
-#var is=""?right_pad(indent)
+#var is = ""?right_pad(indent)
 [#-- ${is}# DBG > ScanCodeChoice ${indent} --]
 ${is}${CU.newVarName("token")} = self.current_lookahead_token
 ${is}remaining_lookahead${CU.newVarIndex} = self.remaining_lookahead
@@ -497,7 +497,7 @@ ${is}    self.passed_predicate = passed_predicate${CU.newVarIndex}
 /#macro
 
 #macro ScanCodeZeroOrOne zoo indent
-#var is=""?right_pad(indent)
+#var is = ""?right_pad(indent)
 [#-- ${is}# DBG > ScanCodeZeroOrOne ${indent} --]
 ${is}${CU.newVarName("token")} = self.current_lookahead_token
 ${is}passed_predicate${CU.newVarIndex} = self.passed_predicate
@@ -517,7 +517,7 @@ ${is}    self.passed_predicate = passed_predicate${CU.newVarIndex}
   Generates lookahead code for a ZeroOrMore construct]
 --]
 #macro ScanCodeZeroOrMore zom indent
-#var is=""?right_pad(indent)
+#var is = ""?right_pad(indent)
 #var prevPassedPredicateVarName = CU.newVarName("passed_predicate")
 #var prevTokenName = CU.newVarName("token")
 ${is}${prevPassedPredicateVarName} = self.passed_predicate
@@ -543,7 +543,7 @@ ${is}self.hit_failure = False
    and then the same code as a ZeroOrMore
 --]
 [#macro ScanCodeOneOrMore oom indent]
-[#var is=""?right_pad(indent)]
+[#var is = ""?right_pad(indent)]
 [#-- ${is}# DBG > ScanCodeOneOrMore ${indent} --]
 [#--${is}if not (${CheckExpansion(oom.nestedExpansion)}):
 ${is}    return False--]

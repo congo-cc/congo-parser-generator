@@ -14,7 +14,7 @@
                               syntactic trees to be built. While seemingly silly (and perhaps could be done differently),
                               it is also a bit tricky, so treat it like the Holy Hand-grenade in that respect.
                           --]
-[#var inFirstVarName = "", inFirstIndex =0]
+[#var inFirstVarName = "", inFirstIndex = 0]
 [#var jtbNameMap = {
    "Terminal" : "nodeToken",
    "Sequence" : "nodeSequence",
@@ -154,7 +154,7 @@ ${is}    self.${expansion.recoverMethodName}()
 [#--${is}# DBG > TreeBuildingAndRecovery ${indent} --]
    [#var production = null,
          treeNodeBehavior,
-         buildingTreeNode=false,
+         buildingTreeNode = false,
          nodeVarName,
          javaCodePrologue = null,
          parseExceptionVar = CU.newVarName("parseException"),
@@ -204,7 +204,7 @@ ${is}    self.pending_recovery = True
          [#if !production?is_null && production.returnType != "void"]
             [#var rt = production.returnType]
             [#-- We need a return statement here or the code won't compile! --]
-            [#if rt = "int" || rt="char" || rt=="byte" || rt="short" || rt="long" || rt="float"|| rt="double"]
+            [#if rt = "int" || rt = "char" || rt == "byte" || rt = "short" || rt = "long" || rt = "float"|| rt = "double"]
 ${is}    return 0
             [#else]
 ${is}    return None
@@ -785,7 +785,7 @@ ${is}    ${expressedLHS?replace("@", impliedLHS?replace("@", "None"))}
 [#var is = ""?right_pad(indent)]
 [#--${is}# DBG > BuildCodeRegexp ${indent} --]
    [#var LHS = getLhsPattern(terminal.assignment, "Token"),
-         regexp=terminal.regexp ]
+         regexp = terminal.regexp ]
    [#if !settings.faultTolerant]
 ${is}${LHS?replace("@", "self.consume_token(" + regexp.label + ")")}
    [#else]
@@ -817,7 +817,7 @@ ${BuildCode(zoo.nestedExpansion, indent + 4)}[#rt]
 [#macro BuildCodeOneOrMore oom indent]
 [#var is = ""?right_pad(indent)]
 [#--${is}# DBG > BuildCodeOneOrMore ${indent} --]
-[#var nestedExp=oom.nestedExpansion, prevInFirstVarName = inFirstVarName/]
+[#var nestedExp = oom.nestedExpansion, prevInFirstVarName = inFirstVarName/]
    [#if nestedExp.simpleName = "ExpansionChoice"]
      [#set inFirstVarName = "inFirst" + inFirstIndex, inFirstIndex = inFirstIndex + 1 /]
 ${is}${inFirstVarName} = True

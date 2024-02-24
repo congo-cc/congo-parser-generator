@@ -217,7 +217,7 @@ class ${settings.lexerClassName} extends TokenSource
        EnumSet<TokenType> alreadyMatchedTypes = EnumSet.noneOf(TokenType.class);
        if (currentStates == null) currentStates = new BitSet(${lexerData.maxNfaStates});
        else currentStates.clear();
-       if (nextStates == null) nextStates=new BitSet(${lexerData.maxNfaStates});
+       if (nextStates == null) nextStates = new BitSet(${lexerData.maxNfaStates});
        else nextStates.clear();
         // the core NFA loop
         do {
@@ -300,7 +300,7 @@ class ${settings.lexerClassName} extends TokenSource
         position += matchInfo.matchLength;
      #if lexerData.hasLexicalStateTransitions
         LexicalState newState = tokenTypeToLexicalStateMap.get(matchedType);
-        if (newState !=null) {
+        if (newState != null) {
             lexicalState = this.lexicalState = newState;
         }
      /#if
@@ -441,7 +441,7 @@ class ${settings.lexerClassName} extends TokenSource
         --offset;
         char c = charAt(offset);
         if (!Character.isWhitespace(c)) return false;
-        if (c=='\n') break;
+        if (c == '\n') break;
       }
       return true;
    }

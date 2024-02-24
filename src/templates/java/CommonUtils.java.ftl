@@ -130,7 +130,7 @@
          token_source.activeTokenTypes = ${prevActives};
          if (${somethingChanged}) {
              token_source.reset(${resetToken});
-             nextTokenType= null;
+             nextTokenType = null;
          }
       }
    [#else]
