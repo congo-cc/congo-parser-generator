@@ -89,9 +89,16 @@ def ensure_dir(p):
 
 def copy_files(srcdir, destdir, patterns):
     for pattern in patterns:
+        sibling = pattern.startswith('../')
+        if sibling:
+            last = os.path.split(srcdir)[-1]
         p = os.path.join(srcdir, pattern)
         for fn in glob.glob(p):
             rp = os.path.relpath(fn, srcdir)
+            if sibling:
+                parts = rp.split('/')
+                parts[1] = last
+                rp = '/'.join(parts)
             dp = os.path.join(destdir, rp)
             if os.path.isfile(fn):
                 ensure_dir(dp)
@@ -313,7 +320,7 @@ def main():
                             production='Root'),
         'preprocessor': Namespace(name='Preprocessor', dir='preprocessor',
                             grammar='Preprocessor.ccc',
-                            files=['*.ccc', 'testfiles'],
+                            files=['*.ccc', 'testfiles', '../java/Java*IdentifierDef.ccc'],
                             jlexer='org.parsers.preprocessor.PreprocessorLexer',
                             jparser='org.parsers.preprocessor.PreprocessorParser',
                             cspackage='org.parsers.preprocessor', ext='.cs',
@@ -321,7 +328,7 @@ def main():
                             production='PP_Root'),
         'freemarker': Namespace(name='Freemarker', dir='freemarker',
                             grammar='FTL.ccc',
-                            files=['*.ccc', 'testfiles'],
+                            files=['*.ccc', 'testfiles', '../java/Java*IdentifierDef.ccc'],
                             jlexer='ftl.FTLLexer',
                             jparser='ftl.FTLParser',
                             cspackage='ftl', ext='.ftl',
