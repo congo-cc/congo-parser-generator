@@ -7,8 +7,16 @@
     <delete dir="${basedir}/org" />
     <delete dir="${basedir}/preprocessorparser" />
     <delete dir="${basedir}/cs-preprocessorparser" />
+    <delete>
+      <fileset dir="${basedir}" includes="Java*IdentifierDef.ccc" />
+    </delete>
   </target>
-  <target name="parser-gen" unless="ppparser.uptodate">
+  <target name="ident-files">
+    <copy todir="${basedir}">
+      <fileset dir="${basedir}/../java" includes="Java*IdentifierDef.ccc" />
+    </copy>
+  </target>
+  <target name="parser-gen" depends="ident-files">
     <java jar="../../congocc.jar" failonerror="true" fork="true">
       <assertions>
         <enable />
