@@ -197,20 +197,9 @@ public class TemplateGlobals {
         return "";
     }
 
-    public String translateParameters(String parameterList) {
+    public String translateParameters(FormalParameters parameters) {
         StringBuilder sb = new StringBuilder();
-        // First construct the parameter list with parentheses, so
-        // that we can parse it and get the AST
-        sb.append('(');
-        sb.append(parameterList);
-        sb.append(')');
-        CongoCCParser parser = new CongoCCParser(sb);
-        parser.FormalParameters();
-        List<FormalParameter> parameters = ((FormalParameters) parser.rootNode()).getParams();
-//      List<FormalParameter> parameters = (List<FormalParameter>)(List)((FormalParameters) parser.rootNode()).getParameters();
-        // Now build the result
-        sb.setLength(0);
-        translator.translateFormals(parameters, null, sb);
+        translator.translateFormals(parameters.childrenOfType(FormalParameter.class), null, sb);
         return sb.toString();
     }
 
@@ -219,7 +208,8 @@ public class TemplateGlobals {
         translator.translateExpression(expr, result);
         return result.toString();
     }
-
+/*
+    No longer used - could be resurrected for testing
     public String translateString(String expr) {
         // For debugging. Just parse the passed string as an expression
         // and output the translation.
@@ -229,7 +219,7 @@ public class TemplateGlobals {
         translator.translateExpression(parser.rootNode(), result);
         return result.toString();
     }
-
+ */
     private void translateStatements(Node node, int indent, StringBuilder result) {
         if (node instanceof Statement) {
             translator.translateStatement(node, indent, result);
