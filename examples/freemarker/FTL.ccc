@@ -1,11 +1,11 @@
 PARSER_PACKAGE="ftl";
 DEFAULT_LEXICAL_STATE="TEMPLATE_TEXT";
 
+#if __java__
 INJECT PARSER_CLASS :
     import java.io.*;
     import java.util.*;
 {
-
     static public void main(String[] args) throws Exception {
         if (args.length == 0) {
             usage();
@@ -51,8 +51,9 @@ INJECT PARSER_CLASS :
     }
 }
 
+#endif
+
 INJECT LEXER_CLASS :
-    import java.io.Reader;
 {
     boolean syntaxEstablished, olderSyntax;
     boolean noWhitespaceInExpression, rightAfterHeader;
@@ -73,7 +74,7 @@ INJECT LEXER_CLASS :
             }
         }
         int firstChar = tok.toString().codePointAt(0);
-        int lastChar = tok.toString().codePointAt(tok.toString().length() -1);
+        int lastChar = tok.toString().codePointAt(tok.toString().length() - 1);
         boolean hasPointyDelimiter = firstChar == '<' || lastChar == '>';
         if (rightAfterHeader) {
             // chop off the newline after a <#ftl ...> header
@@ -97,7 +98,7 @@ INJECT LEXER_CLASS :
                      tok.setType(TokenType.PRINTABLE_CHARS);
                  }
                  else {
-                     if (tok.getType() == FTL_DIRECTIVE_OPEN1 || tok.getType() == FTL_DIRECTIVE_OPEN2) switchTo(LexicalState.FTL_DIRECTIVE);
+                     if (tok.getType() == TokenType.FTL_DIRECTIVE_OPEN1 || tok.getType() == TokenType.FTL_DIRECTIVE_OPEN2) switchTo(LexicalState.FTL_DIRECTIVE);
                      else {
                          noWhitespaceInExpression = true;
                          switchTo(LexicalState.FTL_EXPRESSION);
@@ -170,8 +171,12 @@ INJECT LEXER_CLASS :
     }
 
     private boolean possibleIdentifier(String s) {
-        for (int c : s.codePoints().toArray()) {
+        int i = 0;
+        int n = s.length();
+        while (i < n) {
+            char c = s.charAt(i);
             if (c < 'a' || c > 'z') return false;
+            ++i;
         }
         return true;
     }
@@ -324,7 +329,7 @@ TOKEN :
     <NOPARSE_END : ("</#noparse" (<BLANK>)* ">") | ("[/#noparse" (<BLANK>)* "]")> : TEMPLATE_TEXT
 ;
 
-IdentifierOrStringLiteral : 
+IdentifierOrStringLiteral :
     <IDENTIFIER>
     |
     StringLiteral
@@ -335,7 +340,7 @@ Interpolation :
     <INTERPOLATE>Expression<CLOSE_BRACE>
 ;
 
-NumericalInterpolation : 
+NumericalInterpolation :
     <NUMERICAL_INTERPOLATE>Expression [<SEMICOLON><IDENTIFIER>]<CLOSE_BRACE>
 ;
 
@@ -386,7 +391,7 @@ Setting #SettingInstruction :
     LooseTagEnd
 ;
 
-Attempt #AttemptRecover : 
+Attempt #AttemptRecover :
     (<FTL_DIRECTIVE_OPEN1>|<FTL_DIRECTIVE_OPEN2>)
     <_ATTEMPT><CLOSE_TAG>
     Block
@@ -450,7 +455,7 @@ Return #ReturnInstruction :
     LooseTagEnd
 ;
 
-Stop #StopInstruction : 
+Stop #StopInstruction :
     (<FTL_DIRECTIVE_OPEN1>|<FTL_DIRECTIVE_OPEN2>)
     <STOP>
     [<BLANK>Expression]
@@ -458,7 +463,7 @@ Stop #StopInstruction :
 ;
 
 
-Compress #CompressBlock : 
+Compress #CompressBlock :
     (<FTL_DIRECTIVE_OPEN1>|<FTL_DIRECTIVE_OPEN2>)
     <COMPRESS><CLOSE_TAG>
     Block
@@ -491,7 +496,7 @@ NoEscapeBlock :
     DirectiveEnd("noescape")
 ;
 
-EscapeBlock : 
+EscapeBlock :
     (<FTL_DIRECTIVE_OPEN1>|<FTL_DIRECTIVE_OPEN2>)
     <ESCAPE>
     <BLANK>
@@ -512,14 +517,14 @@ Include #IncludeInstruction :
     LooseTagEnd
 ;
 
-Embed #EmbedInstruction : 
+Embed #EmbedInstruction :
     (<FTL_DIRECTIVE_OPEN1>|<FTL_DIRECTIVE_OPEN2>)
     <EMBED><BLANK>
     Expression
     LooseTagEnd
 ;
 
-Import #ImportInstruction : 
+Import #ImportInstruction :
     (<FTL_DIRECTIVE_OPEN1>|<FTL_DIRECTIVE_OPEN2>)
     <IMPORT><BLANK>
     Expression
@@ -528,7 +533,7 @@ Import #ImportInstruction :
     LooseTagEnd
 ;
 
-Visit #VisitInstruction : 
+Visit #VisitInstruction :
     (<FTL_DIRECTIVE_OPEN1>|<FTL_DIRECTIVE_OPEN2>)
     <VISIT>
     <BLANK>
@@ -581,7 +586,7 @@ If #IfStatement :
     DirectiveEnd("if")
 ;
 
-ElseIf #ElseIfBlock : 
+ElseIf #ElseIfBlock :
     (<FTL_DIRECTIVE_OPEN1>|<FTL_DIRECTIVE_OPEN2>)
     <ELSEIF>
     =>||
@@ -591,7 +596,7 @@ ElseIf #ElseIfBlock :
     Block
 ;
 
-Else #ElseBlock : 
+Else #ElseBlock :
     (<FTL_DIRECTIVE_OPEN1>|<FTL_DIRECTIVE_OPEN2>)
     <ELSE>
     =>||
@@ -599,7 +604,7 @@ Else #ElseBlock :
     Block
 ;
 
-Switch #SwitchInstruction : 
+Switch #SwitchInstruction :
     (<FTL_DIRECTIVE_OPEN1>|<FTL_DIRECTIVE_OPEN2>)
     <SWITCH> =>||
     <BLANK>
@@ -613,7 +618,7 @@ Switch #SwitchInstruction :
     DirectiveEnd("switch")
 ;
 
-Case #CaseInstruction : 
+Case #CaseInstruction :
     (<FTL_DIRECTIVE_OPEN1>|<FTL_DIRECTIVE_OPEN2>)
     <CASE>
     =>||
@@ -621,13 +626,13 @@ Case #CaseInstruction :
     Expression <CLOSE_TAG> Block
 ;
 
-Default #DefaultInstruction : 
+Default #DefaultInstruction :
     (<FTL_DIRECTIVE_OPEN1>|<FTL_DIRECTIVE_OPEN2>)
     <DEFAUL><CLOSE_TAG>
     Block
 ;
 
-List #ListInstruction : 
+List #ListInstruction :
     (<FTL_DIRECTIVE_OPEN1>|<FTL_DIRECTIVE_OPEN2>)
     <LIST><BLANK>
     Expression
@@ -638,7 +643,7 @@ List #ListInstruction :
     DirectiveEnd("list")
 ;
 
-ForEach #ForEachInstruction : 
+ForEach #ForEachInstruction :
     (<FTL_DIRECTIVE_OPEN1>|<FTL_DIRECTIVE_OPEN2>)
     <FOREACH><BLANK>
     <IDENTIFIER>
@@ -649,7 +654,7 @@ ForEach #ForEachInstruction :
     DirectiveEnd("foreach")
 ;
 
-Nested #NestedInstruction : 
+Nested #NestedInstruction :
     (<FTL_DIRECTIVE_OPEN1>|<FTL_DIRECTIVE_OPEN2>)
     <NESTED>
     [<BLANK>PositionalArgsList]
@@ -694,7 +699,7 @@ ParameterList :
 ;
 
 
-LooseTagEnd : 
+LooseTagEnd :
     <CLOSE_TAG>
     |
     <CLOSE_EMPTY_TAG>
@@ -723,14 +728,14 @@ Text :
     )+
 ;
 
-Recover #RecoverBlock : 
+Recover #RecoverBlock :
     (<FTL_DIRECTIVE_OPEN1>|<FTL_DIRECTIVE_OPEN2>)
     <_RECOVER><CLOSE_TAG>
     Block
     DirectiveEnd("attempt")
 ;
 
-TopLevelDirective #void : 
+TopLevelDirective #void :
    (
      SCAN 2 Assignment |
      SCAN 2 Attempt |
@@ -768,7 +773,7 @@ TopLevelDirective #void :
 UserDirective :
 {
     Token startToken;
-    token_source.noWhitespaceInExpression = true;
+    this.token_source.noWhitespaceInExpression = true;
 }
     (
         startToken=<USER_DIRECTIVE_OPEN1>
@@ -776,7 +781,7 @@ UserDirective :
         startToken=<USER_DIRECTIVE_OPEN2>
     )
     Expression
-    {token_source.noWhitespaceInExpression = false;}
+    {this.token_source.noWhitespaceInExpression = false;}
     [<BLANK>]
     [ArgsList]
     [<SEMICOLON>[ParameterList]]
@@ -808,7 +813,7 @@ Block :
   )*
 ;
 
-FTLHeader : 
+FTLHeader :
     (<FTL_DIRECTIVE_OPEN1>|<FTL_DIRECTIVE_OPEN2>)
     <FTL>
     [
@@ -824,7 +829,7 @@ FTLHeader :
 
 
 
-Root : 
+Root :
     [
         SCAN [<WHITESPACE>]
         (<FTL_DIRECTIVE_OPEN1>|<FTL_DIRECTIVE_OPEN2>)

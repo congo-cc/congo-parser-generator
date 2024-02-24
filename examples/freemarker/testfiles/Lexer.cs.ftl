@@ -1147,9 +1147,9 @@ ${globals::translateLexerInitializers()}
 [/#if  ]
 [#list grammar.lexerTokenHooks as tokenHookMethodName]
   [#if tokenHookMethodName = "CommonTokenAction"]
-                ${globals::translateIdentifier(tokenHookMethodName)}(matchedToken);
+                ${tokenHookMethodName}(matchedToken);
   [#else]
-                    matchedToken = ${globals::translateIdentifier(tokenHookMethodName)}(matchedToken);
+                    matchedToken = ${tokenHookMethodName}(matchedToken);
   [/#if]
 [/#list]
             return matchedToken;
@@ -1249,7 +1249,7 @@ ${globals::translateLexerInitializers()}
                     }
                 }
                 if (regularTokens.Contains((TokenType) matchedType) || unparsedTokens.Contains((TokenType) matchedType)) {
-                    matchedToken = ${TOKEN}.NewToken((TokenType) matchedType,
+                    matchedToken = Token.NewToken((TokenType) matchedType,
                                                   this,
                                                   tokenBeginOffset,
                                                   _bufferPosition);

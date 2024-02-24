@@ -67,7 +67,7 @@
       <assertions>
         <enable />
       </assertions>
-      <arg value="../../src/templates/csharp" />
+      <arg value="testfiles" />
     </java>
   </target>
 </project>

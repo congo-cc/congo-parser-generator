@@ -7,7 +7,9 @@ import org.congocc.app.AppSettings;
 import org.congocc.codegen.csharp.CSharpTranslator;
 import org.congocc.codegen.java.CodeInjector;
 import org.congocc.codegen.python.PythonTranslator;
+import org.congocc.parser.CongoCCParser;
 import org.congocc.parser.Node;
+import org.congocc.parser.ParseException;
 import org.congocc.parser.Token;
 import org.congocc.parser.tree.*;
 
@@ -1340,7 +1342,7 @@ public class Translator {
         }
         else if (node instanceof ThrowStatement) {
             ASTThrowStatement resultNode = new ASTThrowStatement();
-            resultNode.setValue((ASTExpression) transformTree(node.get(0)));
+            resultNode.setValue((ASTExpression) transformTree(node.get(1)));
             return resultNode;
         }
         else if (node instanceof LocalVariableDeclaration) {
@@ -1654,8 +1656,18 @@ public class Translator {
         }
     }
 
-    public String translateNonterminalArgs(String args) {
-        return args;
+    public String translateNonterminalArgs(InvocationArguments args) {
+        StringBuilder result = new StringBuilder();
+
+        for (Node child : args) {
+            if (child instanceof Expression) {
+                ASTExpression expr = (ASTExpression) transformTree(child);
+                internalTranslateExpression(expr, TranslationContext.UNKNOWN, result);
+                result.append(", ");
+            }
+        }
+        result.setLength(result.length() - 2);  // lose the trailing ", "
+        return result.toString();
     }
 
     public String translateTypeName(String name) {
@@ -1883,7 +1895,7 @@ public class Translator {
                 result.append('(');
             }
             for (int i = 0; i < nargs; i++) {
-                internalTranslateExpression(arguments.get(i), TranslationContext.UNKNOWN, result);
+                internalTranslateExpression(arguments.get(i), TranslationContext.PARAMETER, result);
                 if (i < (nargs - 1))
                     result.append(", ");
             }

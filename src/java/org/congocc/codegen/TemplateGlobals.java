@@ -254,7 +254,7 @@ public class TemplateGlobals {
     }
     
     // used in templates
-    public String translateNonterminalArgs(String args) {
+    public String translateNonterminalArgs(InvocationArguments args) {
         // The args are passed through as a string, but need to be translated according
         // to the language
         // being generated. For the Java template, they don't come through this method -

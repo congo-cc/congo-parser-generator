@@ -328,7 +328,7 @@ public class PythonTranslator extends Translator {
             renderReceiver(receiver, result);
             result.append(')');
         }
-        else if (methodName.equals("charAt") && (nargs == 1)) {
+        else if ((methodName.equals("charAt") || methodName.equals("codePointAt")) && (nargs == 1)) {
             renderReceiver(receiver, result);
             result.append('[');
             internalTranslateExpression(firstArg, TranslationContext.PARAMETER, result);
@@ -444,6 +444,9 @@ public class PythonTranslator extends Translator {
             addIndent(indent, result);
         }
         if (stmt instanceof ASTExpressionStatement) {
+            if (stmt instanceof ASTThrowStatement) {
+                result.append("raise ");
+            }
             internalTranslateExpression(((ASTExpressionStatement) stmt).getValue(), TranslationContext.UNKNOWN, result);
             addNewline = true;
         }
@@ -795,28 +798,6 @@ public class PythonTranslator extends Translator {
                 result.append(" = value");
                 result.append("\n\n");
             }
-        }
-    }
-
-    @Override public String translateNonterminalArgs(String args) {
-        CongoCCParser parser = new CongoCCParser(String.format("(%s)", args));
-        try {
-            parser.InvocationArguments();
-            Node node = parser.rootNode();
-            StringBuilder result = new StringBuilder();
-
-            for (Node child : node) {
-                if (child instanceof Expression) {
-                    ASTExpression expr = (ASTExpression) transformTree(child);
-                    internalTranslateExpression(expr, TranslationContext.UNKNOWN, result);
-                    result.append(", ");
-                }
-            }
-            result.setLength(result.length() - 2);  // lose the trailing ", "
-            return result.toString();
-        } catch (ParseException e) {
-            e.printStackTrace(); // TODO handle this better
-            return "";
         }
     }
 

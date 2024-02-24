@@ -319,6 +319,14 @@ def main():
                             cspackage='org.parsers.preprocessor', ext='.cs',
                             csdir='cs-preprocessorparser',
                             production='PP_Root'),
+        'freemarker': Namespace(name='Freemarker', dir='freemarker',
+                            grammar='FTL.ccc',
+                            files=['*.ccc', 'testfiles'],
+                            jlexer='ftl.FTLLexer',
+                            jparser='ftl.FTLParser',
+                            cspackage='ftl', ext='.ftl',
+                            csdir='cs-ftlparser',
+                            production='Root'),
     }
     try:
         langs = options.langs.split(',')
