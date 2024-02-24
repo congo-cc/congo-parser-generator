@@ -1,0 +1,98 @@
+// Surprisingly, the various JDK versions I have tested have somewhat  
+// different sets of characters permissible in an identifier!
+// There is no change between jdk13 and jdk 14. 
+// Also no change between JDK15, JDK16, JDK17, and JDK18.
+// Somehow the JDK version of what an identifier is changed somewhat.
+// It seems that somewhat more extended unicode characters are included.
+// The currently chosen approach is to default to the definition
+// in JDK 19, which is, after all, the most recent version.
+// This is unlikely to affect hardly anybody admittedly
+//
+#if jdk8 || jdk9 || jdk10
+INCLUDE "Java8IdentifierDef.ccc"
+#elif jdk11 || jdk12 
+// Truth is that I didn't have a JDK12 around to test.
+// I don't know if it differs in this respect from JDK11.
+INCLUDE "Java11IdentifierDef.ccc"
+#elif jdk13 || jdk14
+// JDK13 and JDK14 have identical
+// definitions of a Java identifier
+INCLUDE "Java14IdentifierDef.ccc"
+#elif jdk15 || jdk16 || jdk17 || jdk18
+INCLUDE "Java17IdentifierDef.ccc"
+#else 
+   INCLUDE "Java19IdentifierDef.ccc"
+#endif
+
+#if false
+Below is a program to generate any of the files above. You just run it
+using the JDK in question.
+
+public class GenerateJavaIdentifierDef {
+
+	static public void main(String[] args) {
+		System.out.println("TOKEN :");
+        System.out.println("  <#JAVA_IDENTIFIER_START :");
+        System.out.println("    [");
+		outputRanges(0, 0x10ffff, true);
+		System.out.println("\n    ]");
+		System.out.println("\n  >");
+		System.out.println("  |");
+        System.out.println("  <#JAVA_IDENTIFIER_PART :");
+        System.out.println("    [");
+		outputRanges(0, 0x10ffff, false);
+		System.out.println("\n    ]");
+		System.out.println("  >");
+		System.out.println(";");
+	}
+
+	static void outputRanges(int start, int end, boolean justStart) {
+		int lhs=start;
+		boolean firstLine = true;
+		for (int ch = start+1; ch<=end ;ch++) {
+			boolean prevID = justStart ? Character.isJavaIdentifierStart(ch-1) : Character.isJavaIdentifierPart(ch-1);
+			boolean currentID = justStart ? Character.isJavaIdentifierStart(ch) : Character.isJavaIdentifierPart(ch);
+			if (prevID != currentID) {
+				if (currentID) {
+					lhs = ch;
+				} else {
+					if (!firstLine) {
+						System.out.print(",\n");
+					}
+					firstLine = false;
+					outputRange(lhs, ch-1);
+				}
+			}
+		}
+	}
+
+	static void outputRange(int left, int right) {
+		System.out.print("        ");
+		String output = toUnicodeRep(left);
+		if (left != right) {
+			output += "-";
+			output += toUnicodeRep(right);
+		}
+		System.out.print(output);
+	}
+
+	static String toUnicodeRep(int ch) {
+		if (ch <= 0xFFFF) {
+			String hex = Integer.toString(ch, 16);
+			int leadingZeros = 4-hex.length();
+			switch (leadingZeros) {
+				case 1 : hex = "0" + hex; break;
+				case 2 : hex = "00" +hex; break;
+				case 3 : hex = "000" + hex;
+			}
+			return "\"\\u" + hex + "\"";
+	    }
+		char high = Character.highSurrogate(ch);
+		char low = Character.lowSurrogate(ch);
+		String highRep = toUnicodeRep(high);
+		String lowRep = toUnicodeRep(low);
+		return highRep.substring(0, highRep.length()-1) + lowRep.substring(1, lowRep.length());
+	}
+}
+
+#endif

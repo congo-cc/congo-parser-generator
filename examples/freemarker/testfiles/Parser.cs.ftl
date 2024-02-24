@@ -32,11 +32,6 @@ ${globals::translateParserImports()}
             callStack = new List<NonTerminalCall>(parser.ParsingStack);
         }
 
-        public ParseException(string message) : base(message) {
-            // TODO REVISIT - this is only here because FTL.ccc
-            // throws with this signature
-        }
-
         public override String ToString() {
             var oneOf = (Expected.Count == 1) ? "" : "one of ";
             var e = new List<TokenType>(Expected);

@@ -63,6 +63,9 @@ public class CSharpTranslator extends Translator {
         else if (ident.equals("isUnparsed")) {
             result = "IsUnparsed";
         }
+        else if (ident.equals("token_source")) {
+            result = "tokenSource";
+        }
         else if (ident.equals("LEXER_CLASS") || ident.equals(appSettings.getLexerClassName())) {
             result = "Lexer";
         }
@@ -222,7 +225,7 @@ public class CSharpTranslator extends Translator {
 
     private static final Set<String> propertyNames = makeSet("getImage", "getType", "getBeginLine", "getBeginColumn",
                                                        "getEndLine", "getEndColumn", "getBeginOffset", "getEndOffset",
-                                                        "getLocation", "getTokenSource");
+                                                        "getLocation", "getTokenSource", "getPreviousToken");
 
     @Override protected void translateInvocation(ASTInvocation expr, StringBuilder result) {
         String methodName = expr.getMethodName();
@@ -253,7 +256,7 @@ public class CSharpTranslator extends Translator {
             }
             result.append("Children");
         }
-        else if (methodName.equals("charAt") && (nargs == 1)) {
+        else if ((methodName.equals("charAt") || methodName.equals("codePointAt")) && (nargs == 1)) {
             renderReceiver(receiver, result);
             result.append('[');
             internalTranslateExpression(firstArg, TranslationContext.UNKNOWN, result);
@@ -363,6 +366,9 @@ public class CSharpTranslator extends Translator {
                 if (n < result.length()) {
                     result.append('.');
                 }
+            }
+            else {
+                result.append("Token.");  // FIXME hardcoding
             }
             if (methodName.equals("getClass")) {
                 methodName = "GetType";
@@ -518,6 +524,9 @@ public class CSharpTranslator extends Translator {
             addIndent(indent, result);
         }
         if (stmt instanceof ASTExpressionStatement) {
+            if (stmt instanceof ASTThrowStatement) {
+                result.append("throw ");
+            }
             internalTranslateExpression(((ASTExpressionStatement) stmt).getValue(), TranslationContext.UNKNOWN, result);
             result.append(';');
             addNewline = true;
