@@ -89,7 +89,7 @@ def ensure_dir(p):
 
 def copy_files(srcdir, destdir, patterns):
     for pattern in patterns:
-        sibling = pattern.startswith('..' + os.sep)
+        sibling = pattern.startswith('../')
         if sibling:
             last = os.path.split(srcdir)[-1]
         p = os.path.join(srcdir, pattern)
@@ -100,6 +100,8 @@ def copy_files(srcdir, destdir, patterns):
                 parts[1] = last
                 rp = os.sep.join(parts)
             dp = os.path.join(destdir, rp)
+            fn = os.path.normpath(fn)
+            dp = os.path.normpath(dp)
             if os.path.isfile(fn):
                 ensure_dir(dp)
                 shutil.copy(fn, dp)
