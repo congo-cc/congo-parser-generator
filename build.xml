@@ -28,6 +28,12 @@
       srcfile="examples/csharp/PPDirectiveLine.ccc" />
   </target>
 
+  <target name="ident-files">
+    <copy todir="${basedir}/examples/preprocessor">
+      <fileset dir="${basedir}/examples/java" includes="Java*IdentifierDef.ccc" />
+    </copy>
+  </target>
+
   <target name="restore-bootstrap-jar">
     <exec executable="git" dir="${basedir}">
       <arg line="checkout bin/congocc.jar" />
@@ -72,7 +78,7 @@
   </macrodef>
 
 
-  <target name="parser-gen" unless="parser.uptodate">
+  <target name="parser-gen" unless="parser.uptodate" depends="ident-files">
     <congocc target="src/grammars/CongoCC.ccc"/>
   </target>
   <target name="preprocessor-gen" unless="preprocessor.uptodate">
@@ -205,18 +211,21 @@
 
   <target name="test-python" depends="jar">
     <exec executable="python3" dir="${basedir}" failonerror="true">
+      <env key="PY_DEBUG" value="1"/>
       <arg line="-u python_tests.py" />
     </exec>
   </target>
 
   <target name="test-csharp" depends="jar">
     <exec executable="python3" dir="${basedir}" failonerror="true">
+      <env key="PY_DEBUG" value="1"/>
       <arg line="-u csharp_tests.py" />
     </exec>
   </target>
 
   <target name="test-misc" depends="jar">
     <exec executable="python3" dir="${basedir}" failonerror="true">
+      <env key="PY_DEBUG" value="1"/>
       <arg line="-u misc_tests.py -v" />
     </exec>
   </target>

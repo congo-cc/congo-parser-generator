@@ -67,16 +67,25 @@ def ensure_dir(p):
 
 def copy_files(srcdir, destdir, patterns):
     for pattern in patterns:
+        sibling = pattern.startswith('../')
+        if sibling:
+            last = os.path.split(srcdir)[-1]
         p = os.path.join(srcdir, pattern)
         for fn in glob.glob(p):
             rp = os.path.relpath(fn, srcdir)
+            if sibling:
+                parts = rp.split(os.sep)
+                parts[1] = last
+                rp = os.sep.join(parts)
             dp = os.path.join(destdir, rp)
+            fn = os.path.normpath(fn)
+            dp = os.path.normpath(dp)
             if os.path.isfile(fn):
                 ensure_dir(dp)
                 shutil.copy(fn, dp)
             else:
                 shutil.copytree(fn, dp)
-            # print('%s -> %s' % (p, dp))
+            # print('%s -> %s' % (fn, dp))
 
 def run_command(cmd, **kwargs):
     logger.debug('Running: %s', ' '.join(cmd))
@@ -290,14 +299,14 @@ def main():
                             production='Root'),
         'preprocessor': Namespace(name='Preprocessor', dir='preprocessor',
                             grammar='Preprocessor.ccc',
-                            files=['*.ccc', 'testfiles'],
+                            files=['*.ccc', 'testfiles', '../java/Java*IdentifierDef.ccc'],
                             jlexer='org.parsers.preprocessor.PreprocessorLexer',
                             jparser='org.parsers.preprocessor.PreprocessorParser',
                             ppackage='preprocessorparser', ext='.cs',
                             production='PP_Root'),
         'freemarker': Namespace(name='Freemarker', dir='freemarker',
                             grammar='FTL.ccc',
-                            files=['*.ccc', 'testfiles'],
+                            files=['*.ccc', 'testfiles', '../java/Java*IdentifierDef.ccc'],
                             jlexer='ftl.FTLLexer',
                             jparser='ftl.FTLParser',
                             ppackage='ftlparser', ext='.ftl',

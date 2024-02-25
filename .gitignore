@@ -13,6 +13,7 @@ __pycache__/*
 /examples/freemarker/fel/*
 /examples/freemarker/felparser/*
 /examples/freemarker/cs-felparser/*
+/examples/freemarker/Java*IdentifierDef.ccc
 /examples/legacy/test.tmp/*
 /examples/java/org/*
 /examples/java/javaparser/*
@@ -29,6 +30,7 @@ __pycache__/*
 /examples/csharp/cs-csharpparser/*
 /examples/csharp/cs-pplineparser/*
 /examples/preprocessor/org/*
+/examples/preprocessor/Java*IdentifierDef.ccc
 /examples/preprocessor/preprocessorparser/*
 /examples/preprocessor/cs-preprocessorparser/*
 /examples/python/org/*
