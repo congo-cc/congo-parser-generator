@@ -28,6 +28,12 @@
       srcfile="examples/csharp/PPDirectiveLine.ccc" />
   </target>
 
+  <target name="ident-files">
+    <copy todir="${basedir}/examples/preprocessor">
+      <fileset dir="${basedir}/examples/java" includes="Java*IdentifierDef.ccc" />
+    </copy>
+  </target>
+
   <target name="restore-bootstrap-jar">
     <exec executable="git" dir="${basedir}">
       <arg line="checkout bin/congocc.jar" />
@@ -72,7 +78,7 @@
   </macrodef>
 
 
-  <target name="parser-gen" unless="parser.uptodate">
+  <target name="parser-gen" unless="parser.uptodate" depends="ident-files">
     <congocc target="src/grammars/CongoCC.ccc"/>
   </target>
   <target name="preprocessor-gen" unless="preprocessor.uptodate">
