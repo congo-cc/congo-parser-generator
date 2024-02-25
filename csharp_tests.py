@@ -107,7 +107,7 @@ def copy_files(srcdir, destdir, patterns):
                 shutil.copy(fn, dp)
             else:
                 shutil.copytree(fn, dp)
-            print('%s -> %s' % (fn, dp))
+            # print('%s -> %s' % (fn, dp))
 
 def run_command(cmd, **kwargs):
     logger.debug('Running: %s', ' '.join(cmd))
