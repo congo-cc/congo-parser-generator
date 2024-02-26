@@ -8,6 +8,15 @@
     <delete dir="ftlparser" />
     <delete dir="cs-felparser" />
     <delete dir="cs-ftlparser" />
+    <delete>
+      <fileset dir="${basedir}" includes="Java*IdentifierDef.ccc" />
+    </delete>
+  </target>
+
+  <target name="ident-files">
+    <copy todir="${basedir}">
+      <fileset dir="${basedir}/../java" includes="Java*IdentifierDef.ccc" />
+    </copy>
   </target>
 
   <target name="init">
@@ -15,7 +24,7 @@
     <mkdir dir="ftl" />
   </target>
 
-  <target name="build" depends="init">
+  <target name="build" depends="init, ident-files">
     <java jar="../../congocc.jar" fork="true" failonerror="true">
       <arg line="-n ${basedir}/FEL.ccc" />
       <assertions enableSystemAssertions="true" />
