@@ -131,7 +131,7 @@ DefineDirective :
 ;
 
 UndefDirective : 
-    <DEFINE>
+    <UNDEF>
     <IDENTIFIER> 
     {symbols.remove(lastConsumedToken.toString());}
 ;
