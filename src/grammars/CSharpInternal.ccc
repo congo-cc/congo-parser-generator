@@ -4,7 +4,6 @@ BASE_NAME=CS;
 PARSER_PACKAGE=org.congocc.parser.csharp;
 ROOT_API_PACKAGE=org.congocc.parser;
 TAB_SIZE=4;
-USES_PREPROCESSOR;
 ENSURE_FINAL_EOL;
 
 INCLUDE "../../examples/csharp/CSharp.ccc";

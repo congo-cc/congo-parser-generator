@@ -11,14 +11,20 @@ INJECT PARSER_CLASS :
    import java.util.Set;
 {
     private Set<String> symbols = new HashSet<String>();
+    private int ifNesting;
+    private boolean alreadyHandled, seenElse, parsingOn;
 
-    static public Info evaluate(String input, Set<String> symbols) {
+    static public Info evaluate(CharSequence input, Set<String> symbols, int ifNesting, boolean parsingOn, boolean alreadyHandled, boolean seenElse) {
         PARSER_CLASS parser = new PARSER_CLASS(input);
-        parser.symbols = symbols;
+        parser.symbols = new HashSet<>(symbols);
+        parser.ifNesting = ifNesting;
+        parser.alreadyHandled = alreadyHandled;
+        parser.seenElse = seenElse;
+        parser.parsingOn = parsingOn;
         try {
             return parser.DirectiveLine();
         } catch (ParseException e) {}
-        return new Info(DirectiveType.UNKNOWN, false);
+        return new Info(DirectiveType.UNKNOWN, symbols, ifNesting, false, parsingOn, alreadyHandled, seenElse);
     }
 
     public enum DirectiveType {
@@ -28,11 +34,18 @@ INJECT PARSER_CLASS :
 
     static public class Info {
         public final DirectiveType directiveType;
-        public final boolean evaluationResult;
+        public final Set<String> ppSymbols;
+        public final int ifNesting;
+        public final boolean evaluationResult, parsingOn, alreadyHandled, seenElse;
 
-        Info(DirectiveType directiveType, boolean evaluationResult) {
+        Info(DirectiveType directiveType, Set<String> ppSymbols, int ifNesting, boolean evaluationResult, boolean parsingOn, boolean alreadyHandled, boolean seenElse) {
             this.directiveType = directiveType;
+            this.ppSymbols = new HashSet<>(ppSymbols);
+            this.ifNesting = ifNesting;
             this.evaluationResult = evaluationResult;
+            this.parsingOn = parsingOn;
+            this.alreadyHandled = alreadyHandled;
+            this.seenElse= seenElse;
         }
     }
 }
@@ -110,7 +123,7 @@ Info DirectiveLine :
        <UNKNOWN_DIRECTIVE> {directiveType = DirectiveType.UNKNOWN;}
    )
    {
-       return new Info(directiveType, result);
+       return new Info(directiveType, symbols, ifNesting, result, parsingOn, alreadyHandled, seenElse);
    }
 ;
 

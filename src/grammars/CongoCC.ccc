@@ -1080,7 +1080,7 @@ ExpansionSequence #org.congocc.core.ExpansionSequence :
     {
        la.setExpansion(CURRENT_NODE);
        CURRENT_NODE.setLookahead(la);
-     }
+    }
   ]
   (
      ExpansionUnit
@@ -1341,8 +1341,6 @@ ExpansionUnit #void :
   Terminal
   |
   NonTerminal
-  |
-  FAIL
  )
  {Expansion result = (Expansion) peekNode();}
  [
