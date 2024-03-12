@@ -112,8 +112,7 @@
 
         [#-- Since skipping the next token did not work, we will insert a virtual token --]
         if self.is_tolerant or follow_set is None or next_token.type in follow_set:
-            virtual_token = new_token(expected_type, 'VIRTUAL %s' % expected_type,
-                                      self.last_consumed_token.input_source)
+            virtual_token = new_token(expected_type, self.token_source, 0, 0)
             virtual_token.virtual = True
             virtual_token.copy_location_info(next_token)
             # virtual_token.next = next_token

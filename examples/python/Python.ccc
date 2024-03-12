@@ -1,5 +1,5 @@
 /*
- * This Python grammar corresponds to the information on the 
+ * This Python grammar corresponds to the information on the
  * following two web pages:
  * https://docs.python.org/3/reference/grammar.html
  * https://docs.python.org/3/reference/lexical_analysis.html#indentation
@@ -14,20 +14,24 @@ PARSER_PACKAGE = org.parsers.python;
 DEFAULT_LEXICAL_STATE = PYTHON;
 ENSURE_FINAL_EOL;
 DEACTIVATE_TOKENS=MATCH,CASE;
+#if FT
+FAULT_TOLERANT;
+FAULT_TOLERANT_DEFAULT=false;
+#endif
 
-INCLUDE "PythonLexer.ccc" 
+INCLUDE "PythonLexer.ccc"
 
-#Module : 
-   (Statement)*! 
-   <EOF> 
+#Module :
+   (Statement)*!
+   <EOF>
    {return CURRENT_NODE;}
 ;
 
-Number#void : 
-  <HEXNUMBER> | <BINNUMBER> | <OCTNUMBER> | <DECNUMBER> | <FLOAT> | <COMPLEX> 
+Number#void :
+  <HEXNUMBER> | <BINNUMBER> | <OCTNUMBER> | <DECNUMBER> | <FLOAT> | <COMPLEX>
 ;
 
-SignedNumber : 
+SignedNumber :
   [<MINUS>]
   Number
   [(<PLUS>|<MINUS>) <COMPLEX>]
@@ -35,19 +39,19 @@ SignedNumber :
 
 Strings : (<STRING_LITERAL>)+ ;
 
-AtomicExpression#void : 
-    <NAME> 
-    | 
-    Number 
-    | 
+AtomicExpression#void :
+    <NAME>
+    |
+    Number
+    |
     Strings
-    | 
+    |
     <TRUE>
-    | 
+    |
     <FALSE>
-    | 
+    |
     <NONE>
-    | 
+    |
     <PEG_PARSER>
     |
     (Tuple | GenExp | Group)
@@ -67,24 +71,24 @@ Slice :
 
 Slices : <LBRACKET> Slice (<COMMA> =>|+1 Slice)* [<COMMA>] <RBRACKET> ;
 
-Statement : 
-   MatchStatement 
-   | 
-   SimpleStatement 
-   | 
-   CompoundStatement 
+Statement :
+   MatchStatement
+   |
+   SimpleStatement
+   |
+   CompoundStatement
 ;
 
-SimpleStatement#(>2) : SmallStatement (<SEMICOLON> =>|+1 SmallStatement)* [<SEMICOLON>] <NEWLINE> ; 
-           
-SmallStatement : 
+SimpleStatement#(>2) : SmallStatement (<SEMICOLON> =>|+1 SmallStatement)* [<SEMICOLON>] <NEWLINE> ;
+
+SmallStatement :
    Assignment
    |
    StarExpressions
    |
    ReturnStatement
    |
-   ImportStatement 
+   ImportStatement
    |
    GlobalStatement
    |
@@ -135,28 +139,28 @@ Block :
     SimpleStatement
     |
     <NEWLINE><INDENT>(Statement)+<DEDENT>
-;    
+;
 
 ElseBlock : <ELSE> <COLON> Block ;
 
 ExceptBlock : <EXCEPT> [ [<STAR>] Expression [<AS> <NAME>] ] <COLON> Block ;
 
-IfStatement : 
-    <IF> NamedExpression <COLON> Block 
-     (<ELIF> NamedExpression <COLON> Block)* 
+IfStatement :
+    <IF> NamedExpression <COLON> Block
+     (<ELIF> NamedExpression <COLON> Block)*
      [<ELSE> <COLON> Block]
-;     
+;
 
 FinallyBlock : <FINALLY> <COLON> Block ;
 
 WhileStatement : <WHILE> NamedExpression <COLON> Block [ElseBlock] ;
 
-WithStatement : 
+WithStatement :
     [<ASYNC>] <WITH> =>||
     (
         SCAN WithItemsInParentheses <COLON> => WithItemsInParentheses
         |
-        WithItem (<COMMA> WithItem)* 
+        WithItem (<COMMA> WithItem)*
     )
     <COLON> Block
 ;
@@ -165,22 +169,22 @@ WithItemsInParentheses#void : <LPAREN> WithItem (SCAN 2 <COMMA> WithItem)* [<COM
 
 WithItem : Expression [<AS> StarTarget] ;
 
-ForStatement : 
-   [<ASYNC>] <FOR> =>|| 
+ForStatement :
+   [<ASYNC>] <FOR> =>||
    StarTargets <IN> StarExpressions <COLON>
    Block [ElseBlock]
 ;
 
-TryStatement : 
-   <TRY> <COLON> Block 
+TryStatement :
+   <TRY> <COLON> Block
    (
        FinallyBlock
-       | 
+       |
        ((ExceptBlock)+ [ElseBlock] [FinallyBlock])
    )
 ;
 
-DelStatement : <DEL> PrimaryExpression (SCAN 2 <COMMA> PrimaryExpression)* [<COMMA>] ; 
+DelStatement : <DEL> PrimaryExpression (SCAN 2 <COMMA> PrimaryExpression)* [<COMMA>] ;
 
 NamedExpression : [ <NAME> <COLONEQUALS> =>||] Expression ;
 
@@ -192,9 +196,9 @@ ImportName#void : <IMPORT> DottedName [<AS> <NAME>] (<COMMA> DottedName [<AS> <N
 
 ImportFrom1#void : <FROM> (<DOT> | <ELLIPSIS>)* DottedName =>|| <IMPORT>  ImportFromTargets ;
 
-ImportFrom2#void : <FROM> (<DOT> | <ELLIPSIS>)+ <IMPORT> =>|| ImportFromTargets ; 
+ImportFrom2#void : <FROM> (<DOT> | <ELLIPSIS>)+ <IMPORT> =>|| ImportFromTargets ;
 
-ImportFromTargets : 
+ImportFromTargets :
    <STAR>
    |
    <NAME> [<AS> <NAME>] (<COMMA> <NAME> =>|| [<AS> <NAME>])* [<COMMA>]
@@ -202,10 +206,10 @@ ImportFromTargets :
    <LPAREN> <NAME> [<AS> <NAME>] (<COMMA> <NAME> =>|| [<AS> <NAME>])* [<COMMA>] <RPAREN> [<LPAREN>]
 ;
 
-StarNamedExpression : 
+StarNamedExpression :
      <STAR> BitwiseOr
      |
-     NamedExpression 
+     NamedExpression
 ;
 
 StarExpression :
@@ -234,7 +238,7 @@ UnaryExpression : Power | (<PLUS> | <MINUS> | <TILDE>) UnaryExpression ;
 
 Power : AwaitPrimary [<STAR_STAR> UnaryExpression] ;
 
-Tuple : 
+Tuple :
    SCAN <LPAREN> (<RPAREN> | StarNamedExpression <COMMA>) =>
    <LPAREN> [StarNamedExpression <COMMA> [StarNamedExpressions]] <RPAREN>
 ;
@@ -256,11 +260,11 @@ PrimaryExpression#void :
    )*
 ;
 
-YieldExpression : 
-    <YIELD> <FROM> =>|| Expression 
+YieldExpression :
+    <YIELD> <FROM> =>|| Expression
     |
     <YIELD> [StarExpressions]
-;    
+;
 
 YieldStatement# : YieldExpression ;
 
@@ -270,13 +274,13 @@ Decorators : (<AT> NamedExpression <NEWLINE>)+ ;
 
 Annotation : <COLON> Expression ;
 
-InvocationArguments : 
-   <LPAREN> 
+InvocationArguments :
+   <LPAREN>
    [
       Argument(false, false)
       {
       // Variables to keep track of what we have seen,
-      // and thus, what is permissible. These are 
+      // and thus, what is permissible. These are
       // defined locally so only apply when parsing, not
       // scanning ahead, so the lookahead is looser
       // than the parsing.
@@ -284,7 +288,7 @@ InvocationArguments :
          boolean seenDoubleStar = peekNode().firstChildOfType(TokenType.STAR_STAR) != null;
       }
       (
-         SCAN 3 
+         SCAN 3
          <COMMA>
          Argument(seenEquals, seenDoubleStar)
          {
@@ -292,33 +296,33 @@ InvocationArguments :
             seenDoubleStar |= peekNode().firstChildOfType(TokenType.STAR_STAR) != null;
          }
       )*
-      [<COMMA>] 
-   ] 
+      [<COMMA>]
+   ]
    <RPAREN>
 ;
 
-Argument(boolean seenEquals, boolean seenDoubleStar) : 
-   <NAME> 
-   ( 
+Argument(boolean seenEquals, boolean seenDoubleStar) :
+   <NAME>
+   (
       SCAN 1 {!seenEquals} =>
       <COLONEQUALS>
-      | 
+      |
       <ASSIGN>
-   ) 
-   =>|| 
+   )
+   =>||
    Expression
    |
    [
       SCAN 1 {!seenDoubleStar} => <STAR>
       |
       <STAR_STAR>
-   ] 
+   ]
    Expression
 ;
 
 KeyValuePair : Expression <COLON> Expression ;
 
-DoubleStarredKeyValuePair : 
+DoubleStarredKeyValuePair :
     <STAR_STAR> BitwiseOr
     |
     KeyValuePair
@@ -330,7 +334,7 @@ Dict :
   SCAN <LBRACE> (<RBRACE> | DoubleStarredKeyValuePair) =>
   (
     <LBRACE>
-    [DoubleStarredKeyValuePairs] 
+    [DoubleStarredKeyValuePairs]
     <RBRACE>
   )
 ;
@@ -343,7 +347,7 @@ SetComp : <LBRACE> NamedExpression =>|+2 (ForIfClause)+ <RBRACE> ;
 
 ClassDefinition :
     [Decorators] <CLASS> =>||
-    <NAME> [InvocationArguments] 
+    <NAME> [InvocationArguments]
     <COLON>
     Block
 ;
@@ -366,7 +370,7 @@ LambdaDefinition : <LAMBDA> Parameters <COLON> Expression ;
  * Expression grammar follows
  */
 
-Expression : Disjunction [<IF> Disjunction <ELSE> Expression] | LambdaDefinition ; 
+Expression : Disjunction [<IF> Disjunction <ELSE> Expression] | LambdaDefinition ;
 
 Disjunction : Conjunction (<OR> Conjunction)* ;
 
@@ -377,9 +381,9 @@ Inversion : (<NOT>)* Comparison ;
 Comparison : BitwiseOr (ComparisonOperator BitwiseOr)* ;
 
 ComparisonOperator#void :
-   <LT> | <GT> | <EQ> | <GE> | <LE> | <NE> 
-   | 
-   [<NOT>] <IN> 
+   <LT> | <GT> | <EQ> | <GE> | <LE> | <NE>
+   |
+   [<NOT>] <IN>
    |
    <IS> [<NOT>]
 ;
@@ -407,36 +411,36 @@ StarEtc :
 ParamMaybeDefault : <NAME> [<COLON> Expression] [<ASSIGN> Expression] ;
 
 KeyWords :
-   <STAR_STAR> <NAME> 
-   [ 
-       SCAN 1 ~\...\LambdaDefinition => 
+   <STAR_STAR> <NAME>
+   [
+       SCAN 1 ~\...\LambdaDefinition =>
        <COLON> Expression
    ]
 ;
 
-Parameters : 
+Parameters :
     {boolean seenDefault = false, seenSlash=false;}
     [
-      <NAME> 
-// Using a contextual predicate, we manage to use the same production 
-// for the parameters of a function def or a lambda. 
-      [SCAN 1 \FunctionDefinition => <COLON> Expression] 
-      [<ASSIGN> Expression {seenDefault = true;}]  
+      <NAME>
+// Using a contextual predicate, we manage to use the same production
+// for the parameters of a function def or a lambda.
+      [SCAN 1 \FunctionDefinition => <COLON> Expression]
+      [<ASSIGN> Expression {seenDefault = true;}]
       (<COMMA> =>|+1
         (
           // Slash can only occur once.
           SCAN 1 {!seenSlash} =>
           <SLASH> {seenSlash = true;}
-          | 
-          <NAME> [SCAN 1 \FunctionDefinition => <COLON> Expression] 
+          |
+          <NAME> [SCAN 1 \FunctionDefinition => <COLON> Expression]
           [
              // If we've already seen a param with a default value,
              // the remaining ones also have to have a default value.
              SCAN 0 {seenDefault || getToken(1).getType() == TokenType.ASSIGN}
              => <ASSIGN> Expression {seenDefault = true;}
-          ] 
+          ]
         )
-      )* 
+      )*
       [ <COMMA> ]
     ]
     [
@@ -446,9 +450,9 @@ Parameters :
 ;
 
 AugAssign#void :
-    <PLUSASSIGN> | <MINUSASSIGN> | <STARASSIGN> | <ATASSIGN> | <SLASHASSIGN> 
-    | <REMASSIGN> | <ANDASSIGN> | <ORASSIGN> | <XORASSIGN> | <LSHIFTASSIGN> 
-    | <RSHIFTASSIGN> | <STARSTARASSIGN> | <SLASHSLASHASSIGN> 
+    <PLUSASSIGN> | <MINUSASSIGN> | <STARASSIGN> | <ATASSIGN> | <SLASHASSIGN>
+    | <REMASSIGN> | <ANDASSIGN> | <ORASSIGN> | <XORASSIGN> | <LSHIFTASSIGN>
+    | <RSHIFTASSIGN> | <STARSTARASSIGN> | <SLASHSLASHASSIGN>
 ;
 
 SimpleAssignTarget :
@@ -474,17 +478,17 @@ Assignment :
 MatchStatementLA#scan :
    <MATCH>
    |
-   <NAME> 
+   <NAME>
    ASSERT {getToken(0).toString().equals("match")}
    SubjectExpression
    <COLON>
-;   
+;
 
-MatchStatement : 
+MatchStatement :
   SCAN MatchStatementLA =>
-   ACTIVATE_TOKENS MATCH (<MATCH>) 
-   SubjectExpression 
-   <COLON> 
+   ACTIVATE_TOKENS MATCH (<MATCH>)
+   SubjectExpression
+   <COLON>
    <NEWLINE>
    <INDENT>
    ACTIVATE_TOKENS CASE (CaseBlock)+
@@ -493,7 +497,7 @@ MatchStatement :
 
 CaseBlock :
     <CASE>
-    DEACTIVATE_TOKENS CASE 
+    DEACTIVATE_TOKENS CASE
     (
       Patterns
       [<IF> NamedExpression]
@@ -516,9 +520,9 @@ StarPattern :
 MaybeStarPattern#void : StarPattern | Pattern ;
 
 ClosedPattern :
-   ClassPattern 
+   ClassPattern
    |
-   LiteralPattern 
+   LiteralPattern
    |
    NameOrAttribute
    |
@@ -548,10 +552,10 @@ MappingPattern :
 DoubleStarPattern : <STAR_STAR> <NAME> ;
 
 LiteralPattern :
-   <NONE> 
-   | 
+   <NONE>
+   |
    <TRUE>
-   | 
+   |
    <FALSE>
    |
    SignedNumber
@@ -571,7 +575,7 @@ SequencePattern :
     <LBRACKET> [MaybeSequencePattern] <RBRACKET>
     |
     <LPAREN> [OpenSequencePattern] <RPAREN>
-;    
+;
 
 ClassPattern :
    NameOrAttribute
@@ -586,14 +590,14 @@ ClassPattern :
    <RPAREN>
 ;
 
-PositionalPatterns : 
-   Pattern 
+PositionalPatterns :
+   Pattern
    (
        // If the next three tokens are a comma, identifier, and =, we need to end this
        // production and go into KeywordPatterns. This has a bit of a kludgy feel to it.
        SCAN 0 {getToken(1).getType() == TokenType.COMMA && !( getToken(2).getType() == TokenType.NAME && getToken(3).getType() == TokenType.ASSIGN)}#
        => <COMMA> Pattern
-   )* 
+   )*
 ;
 
 KeywordPattern : <NAME> <ASSIGN> Pattern ;
@@ -604,7 +608,7 @@ OrPattern : ClosedPattern (<BIT_OR> ClosedPattern)* ;
 
 Pattern : OrPattern [<AS> <NAME>] ;
 
-SubjectExpression : 
+SubjectExpression :
    StarNamedExpression <COMMA> =>|| [StarNamedExpressions]
    |
    NamedExpression
