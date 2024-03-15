@@ -308,17 +308,17 @@ TOKEN :
    <PP_LINE : (<HORIZONTAL_WHITESPACE>)* "#" (<NOT_NEW_LINE>)* <NEW_LINE>> #PPLine {
       String trimmed = matchedToken.toString().trim().substring(1).trim();
       if (trimmed.startsWith("if")) {
-         matchedToken.setType(PP_IF);
+         matchedToken.setType(TokenType.PP_IF);
       } else if (trimmed.startsWith("elif")) {
-         matchedToken.setType(PP_ELIF);
+         matchedToken.setType(TokenType.PP_ELIF);
       } else if (trimmed.startsWith("else")) {
-         matchedToken.setType(PP_ELSE);
+         matchedToken.setType(TokenType.PP_ELSE);
       } else if (trimmed.startsWith("endif")) {
-         matchedToken.setType(PP_ENDIF);
+         matchedToken.setType(TokenType.PP_ENDIF);
       } else if (trimmed.startsWith("define")) {
-         matchedToken.setType(PP_DEFINE);
+         matchedToken.setType(TokenType.PP_DEFINE);
       } else if (trimmed.startsWith("undef")) {
-         matchedToken.setType(PP_UNDEF);
+         matchedToken.setType(TokenType.PP_UNDEF);
       }
    }
 ;
@@ -335,10 +335,10 @@ TOKEN :
    |
    <WHITESPACE_LINE : (<HORIZONTAL_WHITESPACE>)* <NEW_LINE>>
    |
-   <IGNORED_LINE : (<HORIZONTAL_WHITESPACE>)* 
+   <IGNORED_LINE : (<HORIZONTAL_WHITESPACE>)*
                     ~["#", " ", "\t", "\u000b", "\u00a0", "\u1680", "\u2000"-"\u200a",
-                      "\u202f", "\u205f", "\u3000", "\n", "\r", "\u0085", "\u2028", "\u2029"] 
-                    (<NOT_NEW_LINE>)* 
+                      "\u202f", "\u205f", "\u3000", "\n", "\r", "\u0085", "\u2028", "\u2029"]
+                    (<NOT_NEW_LINE>)*
                     <NEW_LINE>
    >
 ;
@@ -459,18 +459,6 @@ INJECT LEXER_CLASS :
 }
 
 INJECT LEXER_CLASS :
-{
-   private BASE_TOKEN_CLASS TOKEN_HOOK(BASE_TOKEN_CLASS tok) {
-      if (tok.getType() ==EOF && ifNesting !=0) {
-          // Oops, we have at least one unclosed #if block
-            tok.setType(INVALID);
-
-      }
-      return tok;
-   }
-}
-
-INJECT LEXER_CLASS :
     import java.util.HashSet;
     import java.util.Set;
     import NODE_PACKAGE.PPLine;
@@ -481,16 +469,16 @@ INJECT LEXER_CLASS :
    private int ifNesting;
 
    private Set<String> ppSymbols = new HashSet<String>();
-   private Map<Integer,PPDirectiveLineParser.Info> ppInfoCache = new HashMap<>();
+   private Map<Integer,PPDirectiveLineParser.Info> ppInfoCache = new HashMap<Integer,PPDirectiveLineParser.Info>();
 
    private PPDirectiveLineParser.Info findMatchingIfInfo(BASE_TOKEN_CLASS tok) {
       Iterator<BASE_TOKEN_CLASS> precedingTokens = tok.precedingTokens();
       int nesting = 0;
       while (precedingTokens.hasNext()) {
          BASE_TOKEN_CLASS prev = precedingTokens.next();
-         BASE_TOKEN_CLASS.TokenType type = prev.getType();
-         if (type == PP_ENDIF) ++nesting;
-         else if (type == PP_IF) {
+         TokenType type = prev.getType();
+         if (type == TokenType.PP_ENDIF) ++nesting;
+         else if (type == TokenType.PP_IF) {
             if (nesting == 0) return ppInfoCache.get(prev.getBeginOffset());
             --nesting;
          }
@@ -506,33 +494,36 @@ INJECT LEXER_CLASS :
 
    private BASE_TOKEN_CLASS TOKEN_HOOK(BASE_TOKEN_CLASS tok) {
       TokenType type = tok.getType();
-      if (type == EOF && ifNesting != 0) {
-         tok.setType(INVALID);
+      if (type == TokenType.EOF && ifNesting != 0) {
+         tok.setType(TokenType.INVALID);
          return tok;
       }
       if (!(tok instanceof PPLine)) return tok;
       if (!atLineStart(tok)) {
-         tok.setType(INVALID);
+         tok.setType(TokenType.INVALID);
          tok.setUnparsed(false);
          return tok;
       }
       // We let this little helper parser defined in PPDirectiveLine.ccc
       // parse the line. So we just pass it the line where the token occurs
       // and get back an info object that tells us what we need to know.
-      PPDirectiveLineParser.Info info = ppInfoCache.get(tok.getBeginOffset());
-      if (info==null) {
-         info = PPDirectiveLineParser.evaluate(tok, ppSymbols, ifNesting, parsingOn, alreadyHandled, seenElse);
-         ppInfoCache.put(tok.getBeginOffset(), info);
+      int beginOffset = tok.getBeginOffset();
+      PPDirectiveLineParser.Info info;
+      if (ppInfoCache.containsKey(beginOffset))
+         info = ppInfoCache.get(beginOffset);
+      else {
+         info = PPDirectiveLineParser.evaluate(tok.toString(), ppSymbols, ifNesting, parsingOn, alreadyHandled, seenElse);
+         ppInfoCache.put(beginOffset, info);
       }
       DirectiveType directiveType = info.directiveType;
-      if (tok.getType() == PP_ENDIF) {
+      if (tok.getType() == TokenType.PP_ENDIF) {
          info = findMatchingIfInfo(tok);
       }
       ifNesting = info.ifNesting;
       alreadyHandled = info.alreadyHandled;
       seenElse = info.seenElse;
       ppSymbols = info.ppSymbols;
-      setParsingEnabled(info.parsingOn);
+      _setParsingEnabled(info.parsingOn);
       if (directiveType == DirectiveType.UNKNOWN) {
          tok.setUnparsed(false);
          tok.setType(TokenType.INVALID);
@@ -545,24 +536,24 @@ INJECT LEXER_CLASS :
           tok.setUnparsed(false);
           return tok;
       }
-      if (type == PP_ELSE) {
+      if (type == TokenType.PP_ELSE) {
         seenElse = true;
-        setParsingEnabled(!alreadyHandled && findMatchingIfInfo(tok).parsingOn);
+        _setParsingEnabled(!alreadyHandled && findMatchingIfInfo(tok).parsingOn);
       }
-      else if (type == PP_ELIF) {
-        setParsingEnabled(!alreadyHandled && info.evaluationResult && findMatchingIfInfo(tok).parsingOn);
+      else if (type == TokenType.PP_ELIF) {
+        _setParsingEnabled(!alreadyHandled && info.evaluationResult && findMatchingIfInfo(tok).parsingOn);
         alreadyHandled |= info.evaluationResult;
       }
-      else if (type == PP_IF) {
+      else if (type == TokenType.PP_IF) {
         ++ifNesting;
         seenElse = false;
         alreadyHandled = info.evaluationResult;
-        setParsingEnabled(parsingOn && info.evaluationResult);
+        _setParsingEnabled(parsingOn && info.evaluationResult);
       }
       return tok;
    }
-   
-   void setParsingEnabled(boolean parsingOn) {
+
+   void _setParsingEnabled(boolean parsingOn) {
        if (parsingOn) {
          switchTo(LexicalState.CSHARP);
        } else {

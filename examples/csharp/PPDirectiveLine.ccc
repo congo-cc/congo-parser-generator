@@ -6,7 +6,7 @@ PARSER_PACKAGE=org.parsers.csharp.ppline;
 
 INCLUDE "CSharpIdentifierDef.ccc"
 
-INJECT PARSER_CLASS : 
+INJECT PARSER_CLASS :
    import java.util.HashSet;
    import java.util.Set;
 {
@@ -14,9 +14,9 @@ INJECT PARSER_CLASS :
     private int ifNesting;
     private boolean alreadyHandled, seenElse, parsingOn;
 
-    static public Info evaluate(CharSequence input, Set<String> symbols, int ifNesting, boolean parsingOn, boolean alreadyHandled, boolean seenElse) {
+    static public Info evaluate(String input, Set<String> symbols, int ifNesting, boolean parsingOn, boolean alreadyHandled, boolean seenElse) {
         PARSER_CLASS parser = new PARSER_CLASS(input);
-        parser.symbols = new HashSet<>(symbols);
+        parser.symbols = new HashSet<String>(symbols);
         parser.ifNesting = ifNesting;
         parser.alreadyHandled = alreadyHandled;
         parser.seenElse = seenElse;
@@ -40,7 +40,7 @@ INJECT PARSER_CLASS :
 
         Info(DirectiveType directiveType, Set<String> ppSymbols, int ifNesting, boolean evaluationResult, boolean parsingOn, boolean alreadyHandled, boolean seenElse) {
             this.directiveType = directiveType;
-            this.ppSymbols = new HashSet<>(ppSymbols);
+            this.ppSymbols = new HashSet<String>(ppSymbols);
             this.ifNesting = ifNesting;
             this.evaluationResult = evaluationResult;
             this.parsingOn = parsingOn;
@@ -86,16 +86,16 @@ TOKEN :
   |
   <DEFINE : (<WS>)* "#" (<WS>)* "define">
   |
-  <UNDEF : (<WS>)* "#" (<WS>)* "undef"> 
+  <UNDEF : (<WS>)* "#" (<WS>)* "undef">
   |
   <ELSE : (<WS>)* "#" (<WS>)* "else" <EOL>>
   |
   <ENDIF : (<WS>)* "#" (<WS>)* "endif" <EOL>>
   |
-  <IGNORED_DIRECTIVE  : (<WS>)* "#" (<WS>)* 
+  <IGNORED_DIRECTIVE  : (<WS>)* "#" (<WS>)*
      ("pragma" | "line" | "warning" | "error" | "region" | "endregion" | "nullable")
-     (~["\n"])* "\n" 
-   > 
+     (~["\n"])* "\n"
+   >
   |
   <UNKNOWN_DIRECTIVE : (<WS>)* "#" (<WS>)* <IDENTIFIER>>
 ;
@@ -104,7 +104,7 @@ Info DirectiveLine :
    {
        boolean result = false;
        DirectiveType directiveType = DirectiveType.UNKNOWN;
-   } 
+   }
    (
        result = IfDirective {directiveType = DirectiveType.IF;}
        |
@@ -129,7 +129,7 @@ Info DirectiveLine :
 
 boolean IfDirective :
     {boolean result;}
-    <IF> 
+    <IF>
     result = Expression
     <EOL>
     {
@@ -137,27 +137,27 @@ boolean IfDirective :
     }
 ;
 
-DefineDirective : 
-    <DEFINE> 
-    <IDENTIFIER> 
+DefineDirective :
+    <DEFINE>
+    <IDENTIFIER>
     {symbols.add(lastConsumedToken.toString());}
 ;
 
-UndefDirective : 
+UndefDirective :
     <UNDEF>
-    <IDENTIFIER> 
+    <IDENTIFIER>
     {symbols.remove(lastConsumedToken.toString());}
 ;
 
 boolean ElifDirective :
     {boolean result;}
-    <ELIF> 
+    <ELIF>
     result = Expression
     <EOL>
     {
         return result;
     }
-;    
+;
 
 
 boolean Expression :
@@ -173,7 +173,7 @@ boolean Expression :
 
 boolean OrExpression :
     {boolean result, result2;}
-    result=AndExpression 
+    result=AndExpression
     (
         "||"
         result2=AndExpression

@@ -6,13 +6,15 @@ from enum import Enum, auto, unique
 import logging
 import re
 
-from .tokens import (TokenType, LexicalState, InvalidToken, IgnoredToken,
-                     SkippedToken, new_token)
+# from .tokens import (TokenType, LexicalState, InvalidToken, IgnoredToken,
+#                      SkippedToken, new_token)
+
+from .tokens import *
 
   #list settings.extraTokenNames as tokenName
 from .tokens import ${settings.extraTokens[tokenName]}
   /#list
-from .utils import as_chr, _List, EMPTY_SET, HashSet
+from .utils import as_chr, _List, EMPTY_SET, HashSet, HashMap
 
 # See if an accelerated BitSet is available.
 try:

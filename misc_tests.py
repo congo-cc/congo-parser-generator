@@ -145,84 +145,14 @@ class BaseTestCase(unittest.TestCase):
         }
         self.assertEqual(actual, expected)
         # Now, run the same command but in fault-tolerant mode
-        cmd[-1:-1] = ['-p', 'FAULT_TOLERANT=true']
+        cmd[-1:-1] = ['-p', 'FT=true']
         p = run_command(cmd, cwd=wd)
         actual = self.collect_files(start)
-        expected2 = {
-            'ast/AdditiveExpression.java',
-            'ast/AndExpression.java',
-            'ast/ANY_CHAR.java',
-            'ast/Args.java',
-            'ast/Assignment.java',
-            'ast/Attribute.java',
-            'ast/AttributeNameList.java',
-            'ast/BaseNode.java',
-            'ast/Block.java',
-            'ast/BreakStatement.java',
-            'ast/ComparisonExpression.java',
-            'ast/Delimiter.java',
-            'ast/DoBlock.java',
-            'ast/EmptyStatement.java',
-            'ast/Expression.java',
-            'ast/ExpressionList.java',
-            'ast/Field.java',
-            'ast/FieldList.java',
-            'ast/ForStatement.java',
-            'ast/FunctionBody.java',
-            'ast/FunctionCall.java',
-            'ast/FunctionDeclaration.java',
-            'ast/FunctionDef.java',
-            'ast/FunctionName.java',
-            'ast/GotoStatement.java',
-            'ast/IfStatement.java',
+        expected2 = expected | {
             'ast/InvalidNode.java',
-            'ast/KeyWord.java',
-            'ast/Label.java',
-            'ast/LastStatement.java',
-            'ast/Literal.java',
-            'ast/LocalAttributeAssignment.java',
-            'ast/LocalFunctionDeclaration.java',
-            'ast/LongString.java',
-            'ast/LONGSTRING_START.java',
-            'ast/MultiLineComment.java',
-            'ast/MULTILINE_START.java',
-            'ast/MultiplicativeExpression.java',
-            'ast/NameAndArgs.java',
-            'ast/Name.java',
-            'ast/NameList.java',
-            'ast/Operator.java',
-            'ast/OrExpression.java',
-            'ast/ParamList.java',
-            'ast/PowerExpression.java',
-            'ast/PrefixExp.java',
-            'ast/PrimaryExpression.java',
-            'ast/RepeatStatement.java',
-            'ast/Root.java',
-            'ast/SHEBANG.java',
-            'ast/SingleLineComment.java',
-            'ast/SINGLE_LINE_COMMENT_START.java',
-            'ast/Statement.java',
-            'ast/StringCatExpression.java',
-            'ast/TableConstructor.java',
-            'ast/UnaryExpression.java',
-            'ast/Var.java',
-            'ast/VarList.java',
-            'ast/VarOrExp.java',
-            'ast/VarSuffix.java',
-            'ast/WhileStatement.java',
-            'ast/WS.java',
-            'InvalidToken.java',
-            'LuaLexer.java',
-            'LuaParser.java',
-            'Node.java',
-            'NonTerminalCall.java',
-            'ParseException.java',
             'ParsingProblem.java',
-            'Token.java',
-            'TokenSource.java',
         }
         self.assertEqual(actual, expected2)
-        self.assertEqual(expected2 - expected, {'ParsingProblem.java', 'ast/InvalidNode.java'})
         # remove the fault tolerant spec
         cmd[-3:-1] = []
         p = run_command(cmd, cwd=wd)
@@ -390,9 +320,11 @@ class BaseTestCase(unittest.TestCase):
       bar
     <NamespaceBody (2, 19)-(8, 1)>
       {
-      #
+      #if true
       /* This is a comment. */
-      #
+      #else
+      // This is another.
+      #endif
       }
   EOF
 '''.strip()

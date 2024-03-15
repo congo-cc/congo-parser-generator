@@ -334,6 +334,16 @@ public class PythonTranslator extends Translator {
             internalTranslateExpression(firstArg, TranslationContext.PARAMETER, result);
             result.append(']');
         }
+        else if (methodName.equals("substring") && (nargs == 1)) {
+            renderReceiver(receiver, result);
+            result.append('[');
+            internalTranslateExpression(firstArg, TranslationContext.PARAMETER, result);
+            result.append(":]");
+        }
+        else if (methodName.equals("trim") && (nargs == 0)) {
+            renderReceiver(receiver, result);
+            result.append(".strip()");
+        }
         else if (methodName.equals("isParserTolerant") && (nargs == 0)) {
             renderReceiver(receiver, result);
             result.append(".is_tolerant");

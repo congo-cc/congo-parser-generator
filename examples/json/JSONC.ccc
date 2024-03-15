@@ -1,9 +1,13 @@
 /*
- * A JSONC (JSON with comments) grammar 
+ * A JSONC (JSON with comments) grammar
  */
 PARSER_PACKAGE=org.parsers.jsonc;
 PARSER_CLASS=JSONCParser;
 DEFAULT_LEXICAL_STATE=JSON;
+#if FT
+FAULT_TOLERANT;
+FAULT_TOLERANT_DEFAULT=false;
+#endif
 
 UNPARSED #Comment :
     <SINGLE_LINE_COMMENT : "//" (~["\n"])* >

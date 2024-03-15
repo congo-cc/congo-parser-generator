@@ -12,10 +12,10 @@ __all__ = [
 [#list tokenSubClassInfo.sortedNames as name]
     '${name}',
 [/#list]
-[#if settings.tokenChaining]
     'new_token',
-[/#if]
     'InvalidToken',
+    'IgnoredToken',
+    'SkippedToken',
     'LexicalState'
 ]
 
@@ -581,18 +581,13 @@ ${globals::translateTokenSubclassInjections(cn, false)}
   [/#list]
 [/#if]
 
-def new_token(type, *args):
-[#-- list lexerData.orderedNamedTokens as re]
-  [#if re.generatedClassName != "Token" && !re.private]
+def new_token(type, token_source, begin_offset, end_offset):
+#if settings.treeBuildingEnabled
+  #list lexerData.orderedNamedTokens as re
+    #if re.generatedClassName != "Token" && !re.private
     if type == TokenType.${re.label}:
-        return ${grammar.nodePrefix}${re.generatedClassName}(type, image, input_source)
-  [/#if]
-[/#list --]
-    if isinstance(args[0], str):  # called with an image
-        # assert isinstance(args[1], ${settings.lexerClassName})
-        result = Token(type, args[1], 0, 0)
-        result.image = args[0]
-    else:
-        # assert isinstance(args[0], ${settings.lexerClassName})
-        result = Token(type, args[0], args[1], args[2])
-    return result
+        return ${re.generatedClassName}(type, token_source, begin_offset, end_offset)
+    /#if
+  /#list
+/#if
+    return Token(type, token_source, begin_offset, end_offset)

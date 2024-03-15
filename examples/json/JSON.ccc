@@ -10,15 +10,19 @@
  * still does not allow the trailing commas!
  */
 
- //N.B. The various exclam (!) markers inserted have to do with 
+ //N.B. The various exclam (!) markers inserted have to do with
  // experimental fault-tolerant parsing. Unless you set FAULT_TOLERANT=true
  // these are ignored.
 
 PARSER_PACKAGE="org.parsers.json";
 NODE_PACKAGE="org.parsers.json.ast";
 DEFAULT_LEXICAL_STATE=JSON;
+#if FT
+FAULT_TOLERANT;
+FAULT_TOLERANT_DEFAULT=false;
+#endif
 
-SKIP : <WHITESPACE : (" "| "\t"| "\n"| "\r")+>; 
+SKIP : <WHITESPACE : (" "| "\t"| "\n"| "\r")+>;
 
 // Delimiters
 TOKEN #Delimiter :
@@ -86,12 +90,12 @@ Value :
     Array
     |
     JSONObject
-    
+
 ;
 
 KeyValuePair : <STRING_LITERAL> <COLON> Value;
 
-JSONObject : 
+JSONObject :
     <OPEN_BRACE>!
     [
         KeyValuePair ("," KeyValuePair)*!
