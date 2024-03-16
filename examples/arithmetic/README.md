@@ -6,9 +6,9 @@ The `Arithmetic2.ccc` uses (via INCLUDE) the grammar defined in `Arithmetic1.ccc
 
 To build the examples:
 
-     java -jar <path_to_jar>/congocc-full.jar Arithmetic1.ccc
+     java -jar <path_to_jar>/congocc.jar Arithmetic1.ccc
      javac ex1/*.java
-     java -jar<path_to_jar>/congocc-full.jar Arithmetic2.ccc
+     java -jar<path_to_jar>/congocc.jar Arithmetic2.ccc
      javac ex2/*.java
 
 To test it:

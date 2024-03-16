@@ -14,6 +14,8 @@ __pycache__/*
 /examples/freemarker/felparser/*
 /examples/freemarker/cs-felparser/*
 /examples/freemarker/Java*IdentifierDef.ccc
+/examples/arithmetic/ex1/*
+/examples/arithmetic/ex2/*
 /examples/legacy/test.tmp/*
 /examples/java/org/*
 /examples/java/javaparser/*

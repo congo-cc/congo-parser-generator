@@ -9,7 +9,7 @@ full FTL grammar simply INCLUDE's the FEL grammar.
 
 To test the FEL grammar, simply cd into the FEL directory, and execute:
 
-java -jar congocc-full.jar FEL.ccc
+java -jar congocc.jar FEL.ccc
 
 at the command prompt. After that, do:
 
