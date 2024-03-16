@@ -231,10 +231,6 @@ abstract public class Expansion extends BaseNode {
         return null;
     }
 
-    public boolean isNegated() {
-        return false;
-    }
-
     public String getFirstSetVarName() {
         if (firstSetVarName == null) {
             if (this.getParent() instanceof BNFProduction) {

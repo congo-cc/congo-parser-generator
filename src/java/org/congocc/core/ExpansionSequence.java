@@ -235,11 +235,6 @@ public class ExpansionSequence extends Expansion {
     }
 
     @Override
-    public boolean isNegated() {
-        return getLookahead() != null && getLookahead().isNegated();
-    }
-
-    @Override
     public LookBehind getLookBehind() {
         Lookahead la = getLookahead();
         return la == null ? null : la.getLookBehind();
