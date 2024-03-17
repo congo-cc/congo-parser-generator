@@ -21,18 +21,18 @@ TOKEN :
 
 AdditiveExpression : 
     MultiplicativeExpression
-    [
+    (
       (<PLUS>|<MINUS>)
-      AdditiveExpression
-    ]
+      MultiplicativeExpression
+    )*
 ;
 
 MultiplicativeExpression :
     (<NUMBER> | ParentheticalExpression)
-    [
+    (
        (<TIMES>|<DIVIDE>)
-       MultiplicativeExpression
-    ]
+       (<NUMBER> | ParentheticalExpression)
+    )*
 ;
 
 ParentheticalExpression :
