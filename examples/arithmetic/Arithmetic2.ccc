@@ -1,6 +1,5 @@
 PARSER_PACKAGE=ex2;
 PARSER_CLASS=Calc;
-MINIMAL_TOKEN;
 
 INCLUDE "Arithmetic1.ccc"
 
@@ -13,29 +12,27 @@ INJECT NUMBER :
 
 INJECT AdditiveExpression :
 {
+    public boolean isSubtraction() {
+        return get(1) instanceof MINUS;
+    }
+
     public double evaluate() {
-        double result = get(0).evaluate();
-        for (int i=1; i< size(); i+=2) {
-            boolean subtract = get(i) instanceof MINUS;
-            double nextOperand = get(i+1).evaluate();
-            if (subtract) result -= nextOperand;
-            else result += nextOperand;
-        }
-        return result;
+        double lhs = get(0).evaluate();
+        double rhs = get(2).evaluate();
+        return isSubtraction() ? lhs-rhs : lhs+rhs;
     }
 }
 
 INJECT MultiplicativeExpression :
 {
+    public boolean isDivision() {
+        return get(1) instanceof DIVIDE;
+    }
+
     public double evaluate() {
-        double result = get(0).evaluate();
-        for (int i=1; i< size(); i+=2) {
-            boolean divide = get(i) instanceof DIVIDE;
-            double nextOperand = get(i+1).evaluate();
-            if (divide) result /= nextOperand;
-            else result *= nextOperand;
-        }
-        return result;
+        double lhs = get(0).evaluate();
+        double rhs = get(2).evaluate();
+        return isDivision() ? lhs/rhs : lhs*rhs;
     }
 }
 

@@ -1,6 +1,5 @@
 PARSER_PACKAGE=ex1;
 PARSER_CLASS=Calc;
-MINIMAL_TOKEN;
 
 SKIP : " " | "\t" | "\n" | "\r" ;
 
@@ -22,18 +21,18 @@ TOKEN :
 
 AdditiveExpression : 
     MultiplicativeExpression
-    (
+    [
       (<PLUS>|<MINUS>)
-      MultiplicativeExpression
-    )*
+      AdditiveExpression
+    ]
 ;
 
 MultiplicativeExpression :
     (<NUMBER> | ParentheticalExpression)
-    (
+    [
        (<TIMES>|<DIVIDE>)
-       (<NUMBER> | ParentheticalExpression)
-    )*
+       MultiplicativeExpression
+    ]
 ;
 
 ParentheticalExpression :
