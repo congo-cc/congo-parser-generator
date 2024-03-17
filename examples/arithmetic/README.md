@@ -4,17 +4,10 @@ The `Arithmetic1.ccc` grammar just defines a very simple grammar.
 
 The `Arithmetic2.ccc` uses (via INCLUDE) the grammar defined in `Arithmetic1.ccc` and defines via (INJECT) the routines to evaluate the various nodes in the generated tree.
 
-To build the examples:
+To build and run a simple test:
 
-     java -jar <path_to_jar>/congocc.jar Arithmetic1.ccc
-     javac ex1/*.java
-     java -jar<path_to_jar>/congocc.jar Arithmetic2.ccc
-     javac ex2/*.java
+     ant test
 
 To test it:
-
-    java ex1.Calc
-
-and:
 
     java ex2.Calc

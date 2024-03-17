@@ -48,14 +48,30 @@ INJECT PARSER_CLASS :
     import java.util.Scanner;
 {
     static public void main(String[] args) throws ParseException {
-       Scanner scanner = new Scanner(System.in);
-       String input = scanner.nextLine();
+       String input = "";
+       if (args.length > 0)
+       {
+         System.out.println("Parsing arithmetic expression from the command line");
+         input = String.join("\n", args);
+       } else {
+         System.out.println("Enter an arithmetic expression:");
+         Scanner scanner = new Scanner(System.in);
+         input = scanner.nextLine();
+       }
+
        PARSER_CLASS parser = new PARSER_CLASS(input);
        parser.Root();
        Node root = parser.rootNode();
        System.out.println("Dumping the AST...");
        root.dump();
-       System.out.println("The result is: " + root.evaluate());
+
+       try {
+         System.out.println("The result is: " + root.evaluate());
+       }
+       catch (UnsupportedOperationException e) {
+         System.err.println("Failed to evaluate expression. Are you running ex1.Calc? If so, you probably want to run ex2.Calc.");
+         System.exit(-1);
+       }
     }
 }
 
