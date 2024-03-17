@@ -5,11 +5,11 @@
   </target>
 
   <target name="init">
-    <uptodate property="javaparser.uptodate" srcfile="Arithmetic1.ccc" targetfile="ex1/Calc.java" />
-    <uptodate property="javaparser.uptodate" srcfile="Arithmetic2.ccc" targetfile="ex2/Calc.java" />
+    <uptodate property="arithmetic1.uptodate" srcfile="Arithmetic1.ccc" targetfile="ex1/Calc.java" />
+    <uptodate property="arithmetic2.uptodate" srcfile="Arithmetic2.ccc" targetfile="ex2/Calc.java" />
   </target>
 
-  <target name="parser-gen" depends="init" unless="javaparser.uptodate">
+  <target name="parser-gen-arith1" depends="init" unless="arithmetic1.uptodate">
     <java jar="../../congocc.jar" failonerror="true" fork="true">
       <assertions>
         <enable />
@@ -17,6 +17,9 @@
       <arg value="-q" />
       <arg value="${basedir}/Arithmetic1.ccc" />
     </java>
+  </target>
+
+  <target name="parser-gen-arith2" depends="parser-gen-arith1" unless="arithmetic2.uptodate">
     <java jar="../../congocc.jar" failonerror="true" fork="true">
       <assertions>
         <enable />
@@ -26,7 +29,7 @@
     </java>
   </target>
 
-  <target name="compile" depends="init, parser-gen">
+  <target name="compile" depends="parser-gen-arith2">
     <javac srcdir="${basedir}/ex1" failonerror="true" release="8" excludes="testfiles/**" classpath="." debug="on" optimize="off" includeantruntime="no" fork="true" />
     <javac srcdir="${basedir}/ex2" failonerror="true" release="8" excludes="testfiles/**" classpath="." debug="on" optimize="off" includeantruntime="no" fork="true" />
   </target>
