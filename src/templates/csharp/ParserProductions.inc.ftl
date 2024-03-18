@@ -201,7 +201,6 @@ catch (ParseException ${exceptionVar()}) {
         [#else]
     if (!IsTolerant) throw;
     _pendingRecovery = true;
-         ${expansion.customErrorRecoveryBlock!}
             [#if !production?is_null && production.returnType != "void"]
                 [#var rt = production.returnType]
                 [#-- We need a return statement here or the code won't compile! --]
