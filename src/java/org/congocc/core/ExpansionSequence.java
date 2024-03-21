@@ -299,6 +299,12 @@ public class ExpansionSequence extends Expansion {
 
     @Override
     public boolean startsWithLexicalChange() {
+        Node parent = getParent();
+        if (parent instanceof BNFProduction) {
+            if (((BNFProduction) parent).getLexicalState() != null) {
+                return true;
+            }
+        }
         for (Expansion exp : childrenOfType(Expansion.class)) {
             if (exp.startsWithLexicalChange()) return true;
             if (!exp.isPossiblyEmpty()) break;

@@ -110,15 +110,31 @@ public class NonTerminal extends Expansion implements SyntaxElement {
         return getNestedExpansion().isSingleTokenLookahead();
      }
 
+     private boolean checkNestedExpansion() {
+         Expansion nested = getNestedExpansion();
+         if (nested instanceof ExpansionSequence) {
+             for (Expansion sub : nested.childrenOfType(Expansion.class)) {
+                 if (!(sub instanceof NonTerminal)) {
+                     // KLUDGE? For now we don't nest further into nonterminals
+                     // It seems like we should, but the code blows up. I need
+                     // to revisit this! For now, it's "good enough for government work, I suppose."
+                     if (sub.startsWithLexicalChange()) return true;
+                 }
+                 if (!sub.isPossiblyEmpty()) break;
+             }
+         }
+         return false;
+     }
+
      public boolean startsWithLexicalChange() {
-        return getProduction().getLexicalState() != null
-            || getNestedExpansion().startsWithLexicalChange();
+        if (getProduction().getLexicalState() != null) return true;
+        return checkNestedExpansion();
      }
 
      public boolean startsWithGlobalCodeAction() {
         CodeBlock javaCode = getProduction().getJavaCode();
-        return javaCode != null && javaCode.isAppliesInLookahead()
-            || getNestedExpansion().startsWithGlobalCodeAction();
+        if (javaCode != null && javaCode.isAppliesInLookahead()) return true;
+        return checkNestedExpansion();
      }
 
      @Override
