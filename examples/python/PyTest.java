@@ -78,8 +78,8 @@ public class PyTest {
             // Now parse using the internal Python compiler. We assume that no exception
             // means a successful parse.
             //
-            org.congocc.parser.Node internalRoot = new org.congocc.parser.python.PythonParser(path).Module();
-            System.out.println(path.getFileName().toString() + " parsed successfully (internal compiler).");
+            //org.congocc.parser.Node internalRoot = new org.congocc.parser.python.PythonParser(path).Module();
+            //System.out.println(path.getFileName().toString() + " parsed successfully (internal compiler).");
         }
         catch (Exception e) {
           System.err.println("Error processing file: " + path);
