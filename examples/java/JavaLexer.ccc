@@ -20,7 +20,6 @@ UNPARSED : <SINGLE_LINE_COMMENT : "//" (~["\n"])* "\n" > #SingleLineComment ;
 
 UNPARSED #Comment :
   < ?MULTI_LINE_COMMENT : "/*" (~[])* "*/" > #MultiLineComment
-  //< MULTI_LINE_COMMENT : "/*" (~["*"])* "*" (~["*","/"] (~["*"])* "*" | "*")* "/"> #MultiLineComment
 ;
 
 TOKEN #KeyWord :

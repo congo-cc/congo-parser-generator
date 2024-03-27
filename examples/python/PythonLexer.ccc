@@ -23,32 +23,8 @@ TOKEN :
     <FSTRING_LONG_SINGLE_QUOTE_START : <FSTRING_PREFIX> "'''">
 ;
 
-<IN_DOUBLE_QUOTE_FSTRING> TOKEN :
-  < TEXT_IN_DOUBLE_QUOTE_FSTRING : ((~['"',"\\","\n","\r","{","}"]) | "{{" | "}}" | <STRING_ESCAPE>)+ >
-  |
-  < DOUBLE_QUOTE : '"' >
-;
-
-<IN_SINGLE_QUOTE_FSTRING> TOKEN :
-  < TEXT_IN_SINGLE_QUOTE_FSTRING : ((~["'","\\","\n","\r","{","}"]) | "{{" | "}}" | <STRING_ESCAPE>)+ >
-  |
-  < SINGLE_QUOTE : "'" >
-;
-
-<IN_LONG_DOUBLE_QUOTE_FSTRING> TOKEN :
-  < TEXT_IN_LONG_DOUBLE_QUOTE_FSTRING : (('"' ('"')? )? (<STRING_ESCAPE> | (~['"'])))+ >
-  |
-  < LONG_DOUBLE_QUOTE : '"""' >
-;
-
-<IN_LONG_SINGLE_QUOTE_FSTRING> TOKEN :
-  < TEXT_IN_LONG_SINGLE_QUOTE_FSTRING : (("'" ("'")? )? (<STRING_ESCAPE> | (~["'"])))+ >
-  |
-  < LONG_SINGLE_QUOTE : "'''" >
-;
-
-<IN_NESTED_PLACEHOLDER> TOKEN :
-  <TEXT_IN_NESTED_PLACE_HOLDER : ((~["'","\\","\n","\r","{","}"]) | <STRING_ESCAPE>)+ >
+<IN_DOUBLE_QUOTE_FSTRING,IN_SINGLE_QUOTE_FSTRING> TOKEN:
+   <BACKSLASH_LBRACE : "\\{">
 ;
 
 <IN_DOUBLE_QUOTE_FSTRING, 
@@ -59,6 +35,34 @@ TOKEN :
    <START_EXP : "{" >
    |
    <END_EXP : "}" >
+;
+
+<IN_DOUBLE_QUOTE_FSTRING> TOKEN :
+  < TEXT_IN_DOUBLE_QUOTE_FSTRING : (~['"',"\\","\n","\r","{","}"]) | "{{" | "}}" | <STRING_ESCAPE> >
+  |
+  < DOUBLE_QUOTE : '"' >
+;
+
+<IN_SINGLE_QUOTE_FSTRING> TOKEN :
+  < TEXT_IN_SINGLE_QUOTE_FSTRING : (~["'","\\","\n","\r","{","}"]) | "{{" | "}}" | <STRING_ESCAPE> >
+  |
+  < SINGLE_QUOTE : "'" >
+;
+
+<IN_LONG_DOUBLE_QUOTE_FSTRING> TOKEN :
+  < TEXT_IN_LONG_DOUBLE_QUOTE_FSTRING : (('"' ('"')? )? (<STRING_ESCAPE> | (~['"', "{", "}"]) | "{{"| "}}"))+ >
+  |
+  < LONG_DOUBLE_QUOTE : '"""' >
+;
+
+<IN_LONG_SINGLE_QUOTE_FSTRING> TOKEN :
+  < TEXT_IN_LONG_SINGLE_QUOTE_FSTRING : (("'" ("'")? )? (<STRING_ESCAPE> | (~["'", "{", "}"]) | "{{"|"}}"))+ >
+  |
+  < LONG_SINGLE_QUOTE : "'''" >
+;
+
+<IN_NESTED_PLACEHOLDER> TOKEN :
+  <TEXT_IN_NESTED_PLACE_HOLDER : ((~["'","\\","\n","\r","{","}"]) | <STRING_ESCAPE>)+ >
 ;
 
 
@@ -143,8 +147,8 @@ INJECT LEXER_CLASS :
          indentationStack = tok.getIndents();
          return;
       }
-      if (tokType == LBRACE || tokType == START_EXP) braceNesting++;
-      else if (tokType == RBRACE || tokType == END_EXP) braceNesting--;
+      if (tokType == LBRACE) braceNesting++;
+      else if (tokType == RBRACE) braceNesting--;
       else if (tokType == LPAREN) parenthesesNesting++;
       else if (tokType == RPAREN) parenthesesNesting--;
       else if (tokType == LBRACKET) bracketNesting++;
@@ -153,7 +157,7 @@ INJECT LEXER_CLASS :
          BASE_TOKEN_CLASS previous = toks.next();
          TokenType prevType = previous.getType();
          switch (prevType) {
-            case LBRACE : braceNesting++; break;
+            case LBRACE : braceNesting++; break; 
             case RBRACE : braceNesting--; break;
             case LPAREN : parenthesesNesting++; break;
             case RPAREN : parenthesesNesting--; break;
