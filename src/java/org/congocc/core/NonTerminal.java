@@ -129,12 +129,14 @@ public class NonTerminal extends Expansion implements SyntaxElement {
      public boolean startsWithLexicalChange() {
         if (getProduction().getLexicalState() != null) return true;
         return checkNestedExpansion();
+        //return getNestedExpansion().startsWithLexicalChange();
      }
 
      public boolean startsWithGlobalCodeAction() {
         CodeBlock javaCode = getProduction().getJavaCode();
         if (javaCode != null && javaCode.isAppliesInLookahead()) return true;
-        return checkNestedExpansion();
+        //return checkNestedExpansion();
+        return getNestedExpansion().startsWithGlobalCodeAction();
      }
 
      @Override
