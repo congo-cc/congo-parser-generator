@@ -1,5 +1,5 @@
 /*
- * The Python lexical grammar 
+ * The Python lexical grammar
  */
 
 PARSER_PACKAGE = org.parsers.pylexer;
@@ -27,9 +27,9 @@ TOKEN :
    <BACKSLASH_LBRACE : "\\{">
 ;
 
-<IN_DOUBLE_QUOTE_FSTRING, 
- IN_SINGLE_QUOTE_FSTRING, 
- IN_LONG_DOUBLE_QUOTE_FSTRING, 
+<IN_DOUBLE_QUOTE_FSTRING,
+ IN_SINGLE_QUOTE_FSTRING,
+ IN_LONG_DOUBLE_QUOTE_FSTRING,
  IN_LONG_SINGLE_QUOTE_FSTRING,
  IN_NESTED_PLACEHOLDER> TOKEN:
    <START_EXP : "{" >
@@ -69,13 +69,13 @@ TOKEN :
 /*
  * The following code injection implements the various indent/dedent logic.
  */
-INJECT LEXER_CLASS : 
+INJECT LEXER_CLASS :
    import java.util.List;
    import java.util.ArrayList;
    import java.util.Iterator;
    import NODE_PACKAGE.IndentToken;
    import NODE_PACKAGE.DedentToken;
-{ 
+{
    private BASE_TOKEN_CLASS danglingIndentation;
    private int bracketNesting, parenthesesNesting, braceNesting;
    private List<Integer> indentationStack = initIndentationStack();
@@ -85,9 +85,9 @@ INJECT LEXER_CLASS :
       result.add(1);
       return result;
    }
-   
+
    private BASE_TOKEN_CLASS TOKEN_HOOK(BASE_TOKEN_CLASS tok) {
-      boolean lineJoiningOn = bracketNesting >0 || parenthesesNesting > 0 || braceNesting > 0; 
+      boolean lineJoiningOn = bracketNesting >0 || parenthesesNesting > 0 || braceNesting > 0;
       TokenType type = tok.getType();
       switch (type) {
          case LBRACE : braceNesting++; break;
@@ -104,7 +104,7 @@ INJECT LEXER_CLASS :
       if (danglingIndentation != null) {
          tok.preInsert(danglingIndentation);
       }
-      if (lineJoiningOn || tok.isUnparsed() 
+      if (lineJoiningOn || tok.isUnparsed()
         || danglingIndentation == null && !tok.startsLine()) {
          return tok;
       }
@@ -136,9 +136,9 @@ INJECT LEXER_CLASS :
           BASE_TOKEN_CLASS dedent = DedentToken.makeDedentToken(tok, this, indentationStack, dedentAmount);
           if (firstDedent == null) firstDedent = dedent;
        }
-       return firstDedent; 
+       return firstDedent;
    }
- 
+
    private void RESET_TOKEN_HOOK(BASE_TOKEN_CLASS tok) {
       braceNesting = bracketNesting = parenthesesNesting = 0;
       TokenType tokType = tok.getType();
@@ -147,17 +147,17 @@ INJECT LEXER_CLASS :
          indentationStack = tok.getIndents();
          return;
       }
-      if (tokType == LBRACE) braceNesting++;
-      else if (tokType == RBRACE) braceNesting--;
-      else if (tokType == LPAREN) parenthesesNesting++;
-      else if (tokType == RPAREN) parenthesesNesting--;
-      else if (tokType == LBRACKET) bracketNesting++;
-      else if (tokType == RBRACKET) bracketNesting--;
+      if (tokType == TokenType.LBRACE) braceNesting++;
+      else if (tokType == TokenType.RBRACE) braceNesting--;
+      else if (tokType == TokenType.LPAREN) parenthesesNesting++;
+      else if (tokType == TokenType.RPAREN) parenthesesNesting--;
+      else if (tokType == TokenType.LBRACKET) bracketNesting++;
+      else if (tokType == TokenType.RBRACKET) bracketNesting--;
       for (Iterator<BASE_TOKEN_CLASS> toks = tok.precedingTokens(); toks.hasNext();) {
          BASE_TOKEN_CLASS previous = toks.next();
          TokenType prevType = previous.getType();
          switch (prevType) {
-            case LBRACE : braceNesting++; break; 
+            case LBRACE : braceNesting++; break;
             case RBRACE : braceNesting--; break;
             case LPAREN : parenthesesNesting++; break;
             case RPAREN : parenthesesNesting--; break;
@@ -189,7 +189,7 @@ INJECT BASE_TOKEN_CLASS : {
     }
 }
 
-INJECT DedentToken : 
+INJECT DedentToken :
    import java.util.List;
    import java.util.ArrayList;
 {
@@ -224,7 +224,7 @@ INJECT DedentToken :
    }
 }
 
-INJECT IndentToken : 
+INJECT IndentToken :
    import java.util.List;
    import java.util.ArrayList;
 {
@@ -257,15 +257,15 @@ INJECT IndentToken :
    }
 }
 
-SKIP : <SPACE : (' ' | "\f")+>; 
+SKIP : <SPACE : (' ' | "\f")+>;
 
-UNPARSED : 
+UNPARSED :
    <CONTINUE_LINE : "\\\n"> #Whitespace
    |
-   <COMMENT: "#" (~["\n"])* > #Comment  
+   <COMMENT: "#" (~["\n"])* > #Comment
 ;
 
-TOKEN : 
+TOKEN :
    <NEWLINE : (<SPACE>)? "\n"> #Newline
 ;
 
@@ -279,10 +279,10 @@ TOKEN #Delimiter :
    <COMMA : ",">
    |
    <EQ : "==">
-   | 
-   <LBRACE: "{" > 
-   | 
-   <RBRACE: "}" > 
+   |
+   <LBRACE: "{" >
+   |
+   <RBRACE: "}" >
    |
    <LBRACKET : "[">
    |
@@ -294,7 +294,7 @@ TOKEN #Delimiter :
    |
    <SEMICOLON : ";">
    |
-   <STAR : "*"> 
+   <STAR : "*">
    |
    <STAR_STAR : "**">
    |
@@ -340,15 +340,15 @@ TOKEN #Operator :
    |
    <ELLIPSIS : "...">
    |
-   <LE: "<=" > 
-   | 
-   <GE: ">=" > 
-   | 
-   <NE: "!=" > 
+   <LE: "<=" >
    |
-   <GT: ">" > 
-   | 
-   <LT: "<" > 
+   <GE: ">=" >
+   |
+   <NE: "!=" >
+   |
+   <GT: ">" >
+   |
+   <LT: "<" >
    |
    <MINUS : "-">
    |
@@ -436,7 +436,7 @@ TOKEN #Keyword :
    |
    <RETURN : "return">
    |
-   <TRUE : "True">   
+   <TRUE : "True">
    |
    <TRY : "try">
    |
@@ -445,9 +445,9 @@ TOKEN #Keyword :
    <WITH : "with">
    |
    <YIELD : "yield">
-;   
+;
 
-TOKEN #NumericalLiteral : 
+TOKEN #NumericalLiteral :
     <DECNUMBER:
         ["1"-"9"] ((["_"])?["0"-"9"])* (["l", "L"])?
       | ("0")+
@@ -456,9 +456,9 @@ TOKEN #NumericalLiteral :
     <BADDECNUMBER: ["0"-"9"] ((["_"])?["0"-"9"])+ (["l", "L"])? >
     |
     <HEXNUMBER: "0" ["x","X"] ((["_"])? ["0"-"9","a"-"f","A"-"F"])+ (["l","L"])? >
-    |   
+    |
     <OCTNUMBER: "0" ["o","O"] ((["_"])? ["0"-"7"])* (["l","L"])? >
-    |   
+    |
     <BINNUMBER: "0" (["b","B"])? ((["_"])? ["0"-"1"])* (["l","L"])? >
     |
     <FLOAT:
@@ -481,7 +481,7 @@ TOKEN #StringLiteral :
    <#STRING_LITERAL2 : (<STRING_PREFIX>)? "'" ((~["'", "\\", "\n"])|<STRING_ESCAPE>)* "'">
    |
    <#STRING_LITERAL3 : (<STRING_PREFIX>)? "'''" (<INSIDE_SL_3>)* "'''">
-   |  
+   |
    <#STRING_LITERAL4 : (<STRING_PREFIX>)? '"""' (<INSIDE_SL_4>)* '"""'>
    |
    <#INSIDE_SL_3 : ("'" ("'")? )? (<STRING_ESCAPE> | (~["'"]))>
@@ -501,7 +501,7 @@ TOKEN #StringLiteral :
    <#INSIDE_BL_4 : ('"' ('"')? )? (<BYTES_ESCAPE> | (~['"']))>
    |
    <#STRING_PREFIX : "r" | "u" | "R" | "U">
-   |                  
+   |
    <#BYTES_PREFIX :  "b" | "B" | "br" | "Br" | "bR" | "BR" | "rb" | "rB" | "Rb" | "RB">
    |
    <#STRING_ESCAPE: "\\" ~[] >
@@ -534,4 +534,3 @@ TOKEN :
         ]
     )* >
 ;
-
