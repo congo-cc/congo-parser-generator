@@ -618,6 +618,7 @@ Attribute : <NAME> (<DOT> <NAME>)+ ;
 
 NameOrAttribute #Attribute(>1) : <NAME> (<DOT> <NAME>)* ;
 
+/*
 // Below this the formalized F-String grammar, part of Python 3.12
 INJECT PARSER_CLASS :
 {
@@ -625,6 +626,7 @@ INJECT PARSER_CLASS :
       return t.charAt(0) == 'r' || t.charAt(0) == 'R' || t.charAt(1) == 'r' || t.charAt(1) == 'R';
    }
 }
+*/
 
 DoubleQuoteFString :
    <FSTRING_DOUBLE_QUOTE_START>
@@ -633,8 +635,8 @@ DoubleQuoteFString :
        (
          <TEXT_IN_DOUBLE_QUOTE_FSTRING>
          |
-         PlaceHolder 
-       )* 
+         PlaceHolder
+       )*
        <DOUBLE_QUOTE>
    )
 ;
@@ -646,41 +648,41 @@ SingleQuoteFString :
        (
          <TEXT_IN_SINGLE_QUOTE_FSTRING>
          |
-         PlaceHolder 
-       )* 
+         PlaceHolder
+       )*
        <SINGLE_QUOTE>
    )
 ;
 
 LongDoubleQuoteFString :
-   <FSTRING_LONG_DOUBLE_QUOTE_START> 
-   LEXICAL_STATE IN_LONG_DOUBLE_QUOTE_FSTRING 
+   <FSTRING_LONG_DOUBLE_QUOTE_START>
+   LEXICAL_STATE IN_LONG_DOUBLE_QUOTE_FSTRING
    (
        (
          <TEXT_IN_LONG_DOUBLE_QUOTE_FSTRING>
          |
-         PlaceHolder 
-       )* 
+         PlaceHolder
+       )*
        <LONG_DOUBLE_QUOTE>
    )
 ;
 
 LongSingleQuoteFString :
-   <FSTRING_LONG_SINGLE_QUOTE_START> 
-   LEXICAL_STATE IN_LONG_SINGLE_QUOTE_FSTRING 
+   <FSTRING_LONG_SINGLE_QUOTE_START>
+   LEXICAL_STATE IN_LONG_SINGLE_QUOTE_FSTRING
    (
        (
          <TEXT_IN_LONG_SINGLE_QUOTE_FSTRING>
          |
-         PlaceHolder 
-       )* 
+         PlaceHolder
+       )*
        <LONG_SINGLE_QUOTE>
    )
 ;
 
 FString :
    {
-      BASE_TOKEN_CLASS start = getToken(1);
+      String start = getToken(1).toString();
       char firstChar = start.charAt(0);
       char secondChar = start.charAt(1);
       boolean isRaw = firstChar == 'r' || firstChar == 'R' || secondChar == 'r' || secondChar == 'R';
@@ -688,25 +690,25 @@ FString :
    SCAN 0 {isRaw} =>
    ACTIVATE_TOKENS BACKSLASH_LBRACE
    (
-      DoubleQuoteFString 
-      | 
-      SingleQuoteFString 
-      | 
-      LongDoubleQuoteFString 
-      | 
+      DoubleQuoteFString
+      |
+      SingleQuoteFString
+      |
+      LongDoubleQuoteFString
+      |
       LongSingleQuoteFString
    )
    |
    DEACTIVATE_TOKENS BACKSLASH_LBRACE
    (
-      DoubleQuoteFString 
-      | 
-      SingleQuoteFString 
-      | 
-      LongDoubleQuoteFString 
-      | 
+      DoubleQuoteFString
+      |
+      SingleQuoteFString
+      |
+      LongDoubleQuoteFString
+      |
       LongSingleQuoteFString
-   )   
+   )
 ;
 
 PlaceHolder :

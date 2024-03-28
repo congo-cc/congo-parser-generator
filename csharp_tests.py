@@ -166,10 +166,10 @@ def test_grammar(gdata, options):
     # For C#, you can't run the lexer standalone, because the parser switches lexical
     # states during e.g. string parsing
 
+    quiet = ['-q'] if options.quiet else []
     if lang != 'csharp':
         # First the lexer
-        cmd = ['java', '-jar', JYTHON_PATH, 'ptest.py', '-q',
-               gdata.jlexer, gdata.ext]
+        cmd = ['java', '-jar', JYTHON_PATH, 'ptest.py'] + quiet + [gdata.jlexer, gdata.ext]
         start = time.time()
         p = run_command(cmd, cwd=dd)
         if p.returncode:
@@ -179,8 +179,7 @@ def test_grammar(gdata, options):
 
     # Then the parser
 
-    cmd = ['java', '-jar', JYTHON_PATH, 'ptest.py', '-q',
-           '--parser', gdata.production, gdata.jparser, gdata.ext]
+    cmd = ['java', '-jar', JYTHON_PATH, 'ptest.py'] + quiet + ['--parser', gdata.production, gdata.jparser, gdata.ext]
     start = time.time()
     p = run_command(cmd, cwd=dd)
     if p.returncode:
@@ -218,7 +217,7 @@ def test_grammar(gdata, options):
 
     if lang != 'csharp':
         # First the lexer
-        cmd = get_ipy_command(['-X:FullFrames',  '-X:Debug', 'ptest.py', '-q', gdata.cspackage, gdata.ext])
+        cmd = get_ipy_command(['-X:FullFrames',  '-X:Debug', 'ptest.py'] + quiet + [gdata.cspackage, gdata.ext])
         start = time.time()
         p = run_command(cmd, cwd=dd)
         if p.returncode:
@@ -228,8 +227,7 @@ def test_grammar(gdata, options):
 
     # Then the parser
 
-    cmd = get_ipy_command(['-X:FullFrames',  '-X:Debug', 'ptest.py', '-q',
-                           '--parser', gdata.production, gdata.cspackage, gdata.ext])
+    cmd = get_ipy_command(['-X:FullFrames',  '-X:Debug', 'ptest.py'] + quiet + ['--parser', gdata.production, gdata.cspackage, gdata.ext])
     start = time.time()
     p = run_command(cmd, cwd=dd)
     if p.returncode:
@@ -262,6 +260,8 @@ def main():
     aa('--jython-dir', default=jd, help='Location of jython.jar')
     aa('--no-delete', default=False, action='store_true',
        help='Don\'t delete working directory')
+    aa('-q', '--quiet', default=False, action='store_true',
+       help='pass -q to ptest.py')
     aa('--langs', default='all', metavar='LANG1,LANG2...', help='Languages to test')
     options = ap.parse_args()
     # Check that jython is available
