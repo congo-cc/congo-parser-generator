@@ -27,15 +27,25 @@ def ensure_dir(p):
         os.makedirs(d)
 
 
+def decode_and_clean(b):
+    return b.decode('utf-8').strip().replace('\r\n', '\n')
+
+
 def run_command(cmd, **kwargs):
+    if isinstance(cmd, str):
+        cmd = cmd.split()
     out_wanted = kwargs.pop('out', False)
     logger.debug('Running: %s', ' '.join(cmd))
     if out_wanted:
-        # Normalize newlines across platforms
-        return subprocess.check_output(cmd, **kwargs).decode('utf-8').strip().replace('\r\n', '\n')
-    else:
+        if kwargs.get('check', True):  # must run without errors
+            # Normalize newlines across platforms
+            return decode_and_clean(subprocess.check_output(cmd, **kwargs))
+        else:
+            kwargs.setdefault('stdout', subprocess.PIPE)
+            kwargs.setdefault('stderr', subprocess.PIPE)
+    else:  # must run without errors
         kwargs.setdefault('check', True)
-        return subprocess.run(cmd, **kwargs)
+    return subprocess.run(cmd, **kwargs)
 
 
 class BaseTestCase(unittest.TestCase):
@@ -300,6 +310,28 @@ class BaseTestCase(unittest.TestCase):
   EOF
 '''.strip()
         self.assertEqual(out, OUT)
+        p = run_command('java CSParse valid.cs', cwd=wd, out=True, check=False)
+        self.assertEqual(p.returncode, 0)
+        self.assertEqual(p.stderr, b'')
+        OUT = '''
+<CompilationUnit (3, 1)-(11, 2)>
+  <NamespaceDeclaration (3, 1)-(11, 1)>
+    namespace
+    <QualifiedIdentifier (3, 11)-(3, 17)>
+      foo
+      .
+      bar
+    <NamespaceBody (3, 19)-(11, 1)>
+      {
+      <ClassDeclaration (6, 5)-(6, 16)>
+        class
+        Foo
+        {
+        }
+      }
+  EOF
+'''.strip()
+        self.assertEqual(decode_and_clean(p.stdout), OUT)
 
         # Now repeat, but with unparsed tokens as nodes.
 
@@ -329,6 +361,23 @@ class BaseTestCase(unittest.TestCase):
   EOF
 '''.strip()
         self.assertEqual(out, OUT)
+        p = run_command('java CSParse invalid1.cs', cwd=wd, out=True, check=False)
+        self.assertEqual(p.returncode, 1)
+        self.assertEqual(p.stdout, b'')
+        self.assertIn(b'error at (or somewhere around) invalid1.cs:2:1', p.stderr)
+        p = run_command('java CSParse invalid2.cs', cwd=wd, out=True, check=False)
+        self.assertEqual(p.returncode, 1)
+        self.assertEqual(p.stdout, b'')
+        self.assertIn(b'error at (or somewhere around) invalid2.cs:3:1', p.stderr)
+        p = run_command('java CSParse invalid3.cs', cwd=wd, out=True, check=False)
+        self.assertEqual(p.returncode, 1)
+        self.assertEqual(p.stdout, b'')
+        self.assertIn(b'error at (or somewhere around) invalid3.cs:3:1', p.stderr)
+        p = run_command('java CSParse invalid4.cs', cwd=wd, out=True, check=False)
+        self.assertEqual(p.returncode, 1)
+        self.assertEqual(p.stdout, b'')
+        self.assertIn(b'error at (or somewhere around) invalid4.cs:3:1', p.stderr)
+
 
 def process(options):
     unittest.main()
