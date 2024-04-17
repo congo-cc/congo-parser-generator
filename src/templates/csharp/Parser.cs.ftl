@@ -1,3 +1,4 @@
+${"#"}pragma warning disable 414, 168, 659
 // ReSharper disable InconsistentNaming
 [#import "CommonUtils.inc.ftl" as CU]
 [#var MULTIPLE_LEXICAL_STATE_HANDLING = (lexerData.numLexicalStates > 1)]
