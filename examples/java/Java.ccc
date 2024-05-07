@@ -8,8 +8,6 @@
  // features in CongoCC, so many constructs are expressed in a very clean
  // and elegant way that is simply not possible with the legacy tool.
 
-#define pattern_matching //enable the new pattern matching feature
-
 JAVA_UNICODE_ESCAPE;
 PARSER_PACKAGE=org.parsers.java;
 NODE_PACKAGE=org.parsers.java.ast;
@@ -17,37 +15,18 @@ DEFAULT_LEXICAL_STATE=JAVA;
 // The following tokens are only activated at key points whether
 // they are needed.
 DEACTIVATE_TOKENS=RECORD, VAR, YIELD, SEALED, NON_SEALED, PERMITS, MODULE,
-                  OPEN, OPENS, PROVIDES, REQUIRES, EXPORTS, USES, WITH, TO, TRANSITIVE
-#if pattern_matching
-, WHEN
-#endif
-;
+                  OPEN, OPENS, PROVIDES, REQUIRES, EXPORTS, USES, WITH, 
+                  TO, TRANSITIVE, WHEN ;
 
 #if FT
 FAULT_TOLERANT;
 FAULT_TOLERANT_DEFAULT=false;
 #endif
 
-MINIMAL_TOKEN;
 TAB_SIZE=4;
 ENSURE_FINAL_EOL;
 
 INCLUDE "JavaLexer.ccc"
-
-#if use_token_hook
-INJECT PARSER_CLASS :
-{
-    private Token TOKEN_HOOK(BASE_TOKEN_CLASS tok) {
-        if ((tok.getType() == RSIGNEDSHIFT || tok.getType() == RUNSIGNEDSHIFT)
-            && isInProduction("TypeArguments","TypeParameters")) {
-            tok.setType(GT);
-            tok.setEndOffset(tok.getBeginOffset()+1);
-            token_source.uncacheTokens(tok);
-        }
-        return tok;
-    }
-}
-#endif
 
 Node Root#void :
    ModularCompilationUnit {return peekNode();}
@@ -410,11 +389,7 @@ EnumConstant :
 TypeParameters :
    <LT>
    TypeParameter ( <COMMA> TypeParameter )*
-#if use_token_hook
-   <GT>
-#else
    DEACTIVATE_TOKENS RSIGNEDSHIFT, RUNSIGNEDSHIFT (<GT>)
-#endif
 ;
 
 INJECT TypeParameters :
@@ -577,11 +552,7 @@ PossiblyEmptyTypeArguments #void :
 TypeArguments :
   SCAN 2
   <LT> TypeArgument ( <COMMA> TypeArgument )*
-  #if use_token_hook
-    <GT>
-  #else
    DEACTIVATE_TOKENS RSIGNEDSHIFT, RUNSIGNEDSHIFT (<GT>)
-  #endif
 ;
 
 TypeArgument :
@@ -1120,10 +1091,8 @@ ClassicSwitchStatement :
 
 ClassicSwitchLabel :
   (
-#if pattern_matching
-   <CASE> TypePattern =>|| (<COMMA> TypePattern)*
+   <CASE> CasePattern =>|| (<COMMA> CasePattern)* [WhenClause]
    |
-#endif
    <CASE> Expression (<COMMA> Expression)*
    |
    <_DEFAULT>
@@ -1131,20 +1100,43 @@ ClassicSwitchLabel :
   <COLON>
 ;
 
-#if pattern_matching
+CasePattern :
+    RecordPattern
+    |
+    TypePattern
+;
+
+RecordPattern :
+    ReferenceType 
+    <LPAREN> =>||
+    [
+      SCAN ~(<RPAREN>) =>
+      (
+        <UNDERSCORE>
+        |
+        CasePattern
+        (
+          <COMMA>
+          (<UNDERSCORE>|CasePattern)
+        )*
+      )
+    ]
+    <RPAREN>
+;
+
+
 TypePattern :
   <NULL> [<COMMA> <_DEFAULT>]
   |
   {permissibleModifiers = EnumSet.of(FINAL);}#
-  Modifiers Type <IDENTIFIER>
+  Modifiers Type (<IDENTIFIER>|<UNDERSCORE>)
 ;
 
 WhenClause :
-   SCAN 0 {checkNextTokenImage("when")}
+   SCAN 0 {checkNextTokenImage("when")}#
    =>
    ACTIVATE_TOKENS WHEN (<WHEN>) Expression
 ;
-#endif
 
 ClassicCaseStatement :
   ClassicSwitchLabel
@@ -1159,10 +1151,8 @@ NewSwitchStatement :
 
 NewSwitchLabel :
   (
-#if pattern_matching
-   <CASE> (<NULL> | Type <IDENTIFIER>) =>||
+   <CASE> CasePattern =>|| (<COMMA> CasePattern)* [WhenClause]
    |
-#endif
    <CASE> Expression (<COMMA> Expression)*
    |
    <_DEFAULT>

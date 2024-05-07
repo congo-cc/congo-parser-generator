@@ -3,7 +3,6 @@
  * the Java language. It can be used on its own if all
  * you want is to tokenize some Java code.
  */
-#define pattern_matching
 DEFAULT_LEXICAL_STATE=JAVA;
 JAVA_UNICODE_ESCAPE;
 TREE_BUILDING_ENABLED=false;
@@ -83,6 +82,7 @@ TOKEN #KeyWord :
 | < SEALED : "sealed">
 | < NON_SEALED : "non-sealed">
 | < PERMITS : "permits">
+| < WHEN : "when" >
 // Soft keywords used only in the module-info
 | <MODULE : "module">
 | <EXPORTS : "exports">
@@ -94,9 +94,6 @@ TOKEN #KeyWord :
 | <TRANSITIVE : "transitive">
 | <USES : "uses">
 | <WITH : "with">
-#if pattern_matching
-| < WHEN : "when" >
-#endif
 ;
 
 TOKEN #Literal :
@@ -327,8 +324,6 @@ TOKEN #Operator :
 | < REMASSIGN: "%=" >
 | < LSHIFTASSIGN: "<<=" >
 | < RSIGNEDSHIFT: ">>" >
-// | < RUNSIGNEDSHIFT: ">>>" (">")*? >
-// | < RUNSIGNEDSHIFT: ">>" (">")+? >
 | < RUNSIGNEDSHIFT: ">>>" >
 | < RSIGNEDSHIFTASSIGN: ">>=" >
 | < RUNSIGNEDSHIFTASSIGN: ">>>=" >

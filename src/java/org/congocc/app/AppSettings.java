@@ -226,7 +226,7 @@ public class AppSettings {
             }
             if (!grammar.isInInclude() && key.equals("JDK_TARGET") && jdkTarget == 0) {
                 int jdkTarget = (Integer) value;
-                if (jdkTarget >= 8 && jdkTarget <= 19) {
+                if (jdkTarget >= 8 && jdkTarget <= 21) {
                     this.jdkTarget = (Integer) value;
                 }
                 else {
