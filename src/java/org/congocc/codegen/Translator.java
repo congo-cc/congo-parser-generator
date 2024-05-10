@@ -7,9 +7,7 @@ import org.congocc.app.AppSettings;
 import org.congocc.codegen.csharp.CSharpTranslator;
 import org.congocc.codegen.java.CodeInjector;
 import org.congocc.codegen.python.PythonTranslator;
-import org.congocc.parser.CongoCCParser;
 import org.congocc.parser.Node;
-import org.congocc.parser.ParseException;
 import org.congocc.parser.Token;
 import org.congocc.parser.tree.*;
 

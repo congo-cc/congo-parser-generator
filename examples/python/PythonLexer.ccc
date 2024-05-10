@@ -65,7 +65,6 @@ TOKEN :
   <TEXT_IN_NESTED_PLACE_HOLDER : ((~["'","\\","\n","\r","{","}"]) | <STRING_ESCAPE>)+ >
 ;
 
-
 /*
  * The following code injection implements the various indent/dedent logic.
  */
@@ -78,6 +77,7 @@ INJECT LEXER_CLASS :
 {
    private BASE_TOKEN_CLASS danglingIndentation;
    private int bracketNesting, parenthesesNesting, braceNesting;
+   int fstringNesting;
    private List<Integer> indentationStack = initIndentationStack();
 
    private static List<Integer> initIndentationStack() {
@@ -87,7 +87,8 @@ INJECT LEXER_CLASS :
    }
 
    private BASE_TOKEN_CLASS TOKEN_HOOK(BASE_TOKEN_CLASS tok) {
-      boolean lineJoiningOn = bracketNesting >0 || parenthesesNesting > 0 || braceNesting > 0;
+      if (lexicalState != LexicalState.PYTHON) return tok;
+      boolean lineJoiningOn = bracketNesting >0 || parenthesesNesting > 0 || braceNesting > 0 || fstringNesting >0;
       TokenType type = tok.getType();
       switch (type) {
          case LBRACE : braceNesting++; break;
@@ -96,6 +97,8 @@ INJECT LEXER_CLASS :
          case RPAREN : parenthesesNesting--; break;
          case LBRACKET : bracketNesting++; break;
          case RBRACKET : bracketNesting--; break;
+         case START_EXP : fstringNesting++; break;
+         case END_EXP : fstringNesting--; break;
          case NEWLINE :  if (lineJoiningOn || tok.startsLine()) {
                              tok.setUnparsed(true);
                          }
