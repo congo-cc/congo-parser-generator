@@ -13,7 +13,7 @@
 PARSER_PACKAGE = org.parsers.python;
 DEFAULT_LEXICAL_STATE = PYTHON;
 ENSURE_FINAL_EOL;
-DEACTIVATE_TOKENS=MATCH,CASE;
+DEACTIVATE_TOKENS=MATCH,CASE,TYPE;
 #if FT
 FAULT_TOLERANT;
 FAULT_TOLERANT_DEFAULT=false;
@@ -83,6 +83,8 @@ SimpleStatement#(>2) : SmallStatement (<SEMICOLON> =>|+1 SmallStatement)* [<SEMI
 
 SmallStatement :
    Assignment
+   |
+   TypeAlias
    |
    StarExpressions
    |
@@ -347,7 +349,9 @@ SetComp : <LBRACE> NamedExpression =>|+2 (ForIfClause)+ <RBRACE> ;
 
 ClassDefinition :
     [Decorators] <CLASS> =>||
-    <NAME> [InvocationArguments]
+    <NAME> 
+    [TypeParameters]
+    [InvocationArguments]
     <COLON>
     Block
 ;
@@ -375,6 +379,16 @@ TypeParameters :
 TypeParameter :
     [<STAR> | <STAR_STAR>]
     <NAME> [<COLON> Expression]
+;
+
+TypeAlias :
+    ASSERT {checkNextTokenImage("type")}#
+    ACTIVATE_TOKENS TYPE (<TYPE>)
+    <NAME> 
+    [TypeParameters] 
+    <ASSIGN> 
+    =>||
+    Expression
 ;
 
 LambdaDefinition : <LAMBDA> Parameters <COLON> Expression ;
