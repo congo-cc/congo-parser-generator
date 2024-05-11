@@ -12,57 +12,94 @@ TABS_TO_SPACES=4;
 // <Token and lexical state definitions for F-strings
 
 TOKEN :
-    <#FSTRING_PREFIX : "f" | "F" | "fr" | "Fr" | "fR" | "FR" | "rf" | "rF" | "Rf" | "RF">
+    <#FSTRING_PREFIX : "f" | "F" >
+    |
+    <#RAW_FSTRING_PREFIX : "fr" | "Fr" | "fR" | "FR" | "rf" | "rF" | "Rf" | "RF">
     |
     <FSTRING_DOUBLE_QUOTE_START : <FSTRING_PREFIX> '"'>
     |
+    <RAW_FSTRING_DOUBLE_QUOTE_START : <RAW_FSTRING_PREFIX> '"'>
+    |
     <FSTRING_SINGLE_QUOTE_START : <FSTRING_PREFIX> "'">
+    |
+    <RAW_FSTRING_SINGLE_QUOTE_START : <RAW_FSTRING_PREFIX> "'">
     |
     <FSTRING_LONG_DOUBLE_QUOTE_START : <FSTRING_PREFIX> '"""'>
     |
+    <RAW_FSTRING_LONG_DOUBLE_QUOTE_START : <RAW_FSTRING_PREFIX> '"""'>
+    |
     <FSTRING_LONG_SINGLE_QUOTE_START : <FSTRING_PREFIX> "'''">
+    |
+    <RAW_FSTRING_LONG_SINGLE_QUOTE_START : <RAW_FSTRING_PREFIX> "'''">
 ;
-
+/*
 <IN_DOUBLE_QUOTE_FSTRING,IN_SINGLE_QUOTE_FSTRING> TOKEN:
    <BACKSLASH_LBRACE : "\\{">
-;
+;*/
 
 <IN_DOUBLE_QUOTE_FSTRING,
+ IN_RAW_DOUBLE_QUOTE_FSTRING,
  IN_SINGLE_QUOTE_FSTRING,
+ IN_RAW_SINGLE_QUOTE_FSTRING,
  IN_LONG_DOUBLE_QUOTE_FSTRING,
+ IN_RAW_LONG_DOUBLE_QUOTE_FSTRING,
  IN_LONG_SINGLE_QUOTE_FSTRING,
+ IN_RAW_LONG_SINGLE_QUOTE_FSTRING,
  IN_NESTED_PLACEHOLDER> TOKEN:
    <START_EXP : "{" >
    |
    <END_EXP : "}" >
 ;
 
+<IN_DOUBLE_QUOTE_FSTRING, IN_RAW_DOUBLE_QUOTE_FSTRING> TOKEN :
+  < DOUBLE_QUOTE : '"' >
+;
+
 <IN_DOUBLE_QUOTE_FSTRING> TOKEN :
   < TEXT_IN_FSTRING : (~['"',"\\","\n","\r","{","}"]) | "{{" | "}}" | <STRING_ESCAPE> >
-  |
-  < DOUBLE_QUOTE : '"' >
+;
+
+<IN_RAW_DOUBLE_QUOTE_FSTRING> TOKEN :
+  < (~['"',"\n","\r","{","}"]) | "{{" | "}}" > {
+     matchedToken.setType(TEXT_IN_FSTRING);
+  }
+;
+
+<IN_SINGLE_QUOTE_FSTRING, IN_RAW_SINGLE_QUOTE_FSTRING> TOKEN :
+  < SINGLE_QUOTE : "'" >
 ;
 
 <IN_SINGLE_QUOTE_FSTRING> TOKEN :
   < (~["'","\\","\n","\r","{","}"]) | "{{" | "}}" | <STRING_ESCAPE> > {
      matchedToken.setType(TEXT_IN_FSTRING);
   }
-  |
-  < SINGLE_QUOTE : "'" >
 ;
 
-<IN_LONG_DOUBLE_QUOTE_FSTRING> TOKEN :
-  < LONG_DOUBLE_QUOTE : '"""' >
+<IN_RAW_SINGLE_QUOTE_FSTRING> TOKEN :
+  < (~["'","\n","\r","{","}"]) | "{{" | "}}" | "\\\\" | "\\'" > {
+     matchedToken.setType(TEXT_IN_FSTRING);
+  }
 ;
 
-<IN_LONG_DOUBLE_QUOTE_FSTRING, IN_LONG_SINGLE_QUOTE_FSTRING> MORE :
+<IN_LONG_DOUBLE_QUOTE_FSTRING, IN_LONG_SINGLE_QUOTE_FSTRING>
+MORE :
    <'{{' | '}}' | <STRING_ESCAPE>>
    |
    < ~[]>
 ;
 
+<IN_RAW_LONG_DOUBLE_QUOTE_FSTRING, IN_RAW_LONG_SINGLE_QUOTE_FSTRING> 
+MORE :
+   <'{{' | '}}'>
+   |
+   < ~[]>
+;
 
-<IN_LONG_SINGLE_QUOTE_FSTRING> TOKEN :
+<IN_LONG_DOUBLE_QUOTE_FSTRING, IN_RAW_LONG_DOUBLE_QUOTE_FSTRING> TOKEN :
+  < LONG_DOUBLE_QUOTE : '"""' >
+;
+
+<IN_LONG_SINGLE_QUOTE_FSTRING, IN_RAW_LONG_SINGLE_QUOTE_FSTRING> TOKEN :
   < LONG_SINGLE_QUOTE : "'''" >
 ;
 
@@ -92,11 +129,7 @@ INJECT LEXER_CLASS :
 
    private BASE_TOKEN_CLASS TOKEN_HOOK(BASE_TOKEN_CLASS tok) {
       TokenType type = tok.getType();
-      if (type == LONG_DOUBLE_QUOTE && tok.length() > 3) {
-         tok.setType(TEXT_IN_FSTRING);
-         tok.truncate(3);
-      }
-      else if (type == LONG_SINGLE_QUOTE && tok.length() > 3) {
+      if ((type == LONG_DOUBLE_QUOTE || type==LONG_SINGLE_QUOTE) && tok.length() > 3) {
          tok.setType(TEXT_IN_FSTRING);
          tok.truncate(3);
       }
