@@ -38,26 +38,31 @@ TOKEN :
 ;
 
 <IN_DOUBLE_QUOTE_FSTRING> TOKEN :
-  < TEXT_IN_DOUBLE_QUOTE_FSTRING : (~['"',"\\","\n","\r","{","}"]) | "{{" | "}}" | <STRING_ESCAPE> >
+  < TEXT_IN_FSTRING : (~['"',"\\","\n","\r","{","}"]) | "{{" | "}}" | <STRING_ESCAPE> >
   |
   < DOUBLE_QUOTE : '"' >
 ;
 
 <IN_SINGLE_QUOTE_FSTRING> TOKEN :
-  < TEXT_IN_SINGLE_QUOTE_FSTRING : (~["'","\\","\n","\r","{","}"]) | "{{" | "}}" | <STRING_ESCAPE> >
+  < (~["'","\\","\n","\r","{","}"]) | "{{" | "}}" | <STRING_ESCAPE> > {
+     matchedToken.setType(TEXT_IN_FSTRING);
+  }
   |
   < SINGLE_QUOTE : "'" >
 ;
 
 <IN_LONG_DOUBLE_QUOTE_FSTRING> TOKEN :
-  < TEXT_IN_LONG_DOUBLE_QUOTE_FSTRING : (('"' ('"')? )? (<STRING_ESCAPE> | (~['"', "{", "}"]) | "{{"| "}}"))+ >
-  |
   < LONG_DOUBLE_QUOTE : '"""' >
 ;
 
+<IN_LONG_DOUBLE_QUOTE_FSTRING, IN_LONG_SINGLE_QUOTE_FSTRING> MORE :
+   <'{{' | '}}' | <STRING_ESCAPE>>
+   |
+   < ~[]>
+;
+
+
 <IN_LONG_SINGLE_QUOTE_FSTRING> TOKEN :
-  < TEXT_IN_LONG_SINGLE_QUOTE_FSTRING : (("'" ("'")? )? (<STRING_ESCAPE> | (~["'", "{", "}"]) | "{{"|"}}"))+ >
-  |
   < LONG_SINGLE_QUOTE : "'''" >
 ;
 
@@ -76,14 +81,30 @@ INJECT LEXER_CLASS :
    import NODE_PACKAGE.DedentToken;
 {
    private BASE_TOKEN_CLASS danglingIndentation;
-   private int bracketNesting, parenthesesNesting, braceNesting;
-   int fstringNesting;
+   private int bracketNesting, parenthesesNesting, braceNesting, fstringNesting;
    private List<Integer> indentationStack = initIndentationStack();
 
    private static List<Integer> initIndentationStack() {
       List<Integer> result = new ArrayList<Integer>();
       result.add(1);
       return result;
+   }
+
+   private BASE_TOKEN_CLASS TOKEN_HOOK(BASE_TOKEN_CLASS tok) {
+      TokenType type = tok.getType();
+      if (type == LONG_DOUBLE_QUOTE && tok.length() > 3) {
+         tok.setType(TEXT_IN_FSTRING);
+         tok.truncate(3);
+      }
+      else if (type == LONG_SINGLE_QUOTE && tok.length() > 3) {
+         tok.setType(TEXT_IN_FSTRING);
+         tok.truncate(3);
+      }
+      else if ((type == START_EXP || type == END_EXP) && tok.length() > 1) {
+         tok.setType(TEXT_IN_FSTRING);
+         tok.truncate(1);
+      }
+      return tok;
    }
 
    private BASE_TOKEN_CLASS TOKEN_HOOK(BASE_TOKEN_CLASS tok) {
