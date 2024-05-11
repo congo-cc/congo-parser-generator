@@ -67,6 +67,8 @@ Slice :
     [Expression] <COLON> =>|| [Expression] [<COLON> [Expression]]
     |
     [<NAME> <COLONEQUALS> =>||] Expression
+    |
+    StarExpression
 ;
 
 Slices : <LBRACKET> Slice (<COMMA> =>|+1 Slice)* [<COMMA>] <RBRACKET> ;
@@ -432,7 +434,7 @@ StarEtc :
    |
    <STAR> <COMMA> =>|| ParamMaybeDefault (<COMMA> =>|+1 ParamMaybeDefault)* [<COMMA> [KeyWords]]
    |
-   <STAR> <NAME> [SCAN 1 \.\FunctionDefinition => <COLON> Expression] (<COMMA> =>|+1 ParamMaybeDefault)* [<COMMA> [KeyWords]]
+   <STAR> <NAME> [SCAN 1 \.\FunctionDefinition => <COLON> (Expression|StarExpression)] (<COMMA> =>|+1 ParamMaybeDefault)* [<COMMA> [KeyWords]]
 ;
 
 ParamMaybeDefault : <NAME> [<COLON> Expression] [<ASSIGN> Expression] ;
@@ -451,7 +453,7 @@ Parameters :
       <NAME>
 // Using a contextual predicate, we manage to use the same production
 // for the parameters of a function def or a lambda.
-      [SCAN 1 \FunctionDefinition => <COLON> Expression]
+      [SCAN 1 \FunctionDefinition => <COLON> (Expression|StarExpression)]
       [<ASSIGN> Expression {seenDefault = true;}]
       (<COMMA> =>|+1
         (
