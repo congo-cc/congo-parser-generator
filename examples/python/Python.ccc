@@ -357,11 +357,24 @@ FunctionDefinition :
     [<ASYNC>]
     <DEF> =>||
     <NAME>
+    [TypeParameters]
     <LPAREN>
     Parameters
     <RPAREN>
     [<RARROW> Expression]
     <COLON> Block
+;
+
+TypeParameters :
+    <LBRACKET>
+    TypeParameter (<COMMA> =>|+1 TypeParameter)*
+    [<COMMA>]
+    <RBRACKET>
+;
+
+TypeParameter :
+    [<STAR> | <STAR_STAR>]
+    <NAME> [<COLON> Expression]
 ;
 
 LambdaDefinition : <LAMBDA> Parameters <COLON> Expression ;
