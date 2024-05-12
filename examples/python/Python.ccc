@@ -448,7 +448,7 @@ KeyWords :
 ;
 
 Parameters :
-    {boolean seenDefault = false, seenSlash=false;}
+    {boolean seenDefault=false, seenSlash=false;}
     [
       <NAME>
 // Using a contextual predicate, we manage to use the same production
@@ -457,16 +457,17 @@ Parameters :
       [<ASSIGN> Expression {seenDefault = true;}]
       (<COMMA> =>|+1
         (
-          // Slash can only occur once.
-          SCAN 1 {!seenSlash} =>
-          <SLASH> {seenSlash = true;}
+          <SLASH>
+          ASSERT {!seenSlash} : "The slash can only occur once in the parameters."
+          {seenSlash = true;}
           |
           <NAME> [SCAN 1 \FunctionDefinition => <COLON> Expression]
+          // If we've already seen a param with a default value,
+          // the remaining ones also have to have a default value.
+          ASSERT {!seenDefault || checkNextTokenType(ASSIGN)}
+                 : "This parameter must have a default value.":
           [
-             // If we've already seen a param with a default value,
-             // the remaining ones also have to have a default value.
-             SCAN 0 {seenDefault || getToken(1).getType() == TokenType.ASSIGN}
-             => <ASSIGN> Expression {seenDefault = true;}
+             <ASSIGN> Expression {seenDefault = true;}
           ]
         )
       )*
