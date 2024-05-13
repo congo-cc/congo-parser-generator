@@ -351,7 +351,7 @@ SetComp : <LBRACE> NamedExpression =>|+2 (ForIfClause)+ <RBRACE> ;
 
 ClassDefinition :
     [Decorators] <CLASS> =>||
-    <NAME> 
+    <NAME>
     [TypeParameters]
     [InvocationArguments]
     <COLON>
@@ -386,9 +386,9 @@ TypeParameter :
 TypeAlias :
     ASSERT {checkNextTokenImage("type")}#
     ACTIVATE_TOKENS TYPE (<TYPE>)
-    <NAME> 
-    [TypeParameters] 
-    <ASSIGN> 
+    <NAME>
+    [TypeParameters]
+    <ASSIGN>
     =>||
     Expression
 ;
@@ -781,13 +781,13 @@ RawLongSingleQuoteFString :
    )
 ;
 
-PlaceHolder : 
-   <LBRACE> 
-   LEXICAL_STATE PYTHON 
+PlaceHolder :
+   <LBRACE>
+   LEXICAL_STATE PYTHON
    (
       (YieldExpression | StarExpressions)
       [<ASSIGN>]
-      ACTIVATE_TOKENS EXCLAM 
+      ACTIVATE_TOKENS EXCLAM
       (
          [<EXCLAM><NAME>]
       )
@@ -801,6 +801,6 @@ PlaceHolder :
          |
          LEXICAL_STATE IN_NESTED_PLACEHOLDER (PlaceHolder)
       )*
-      <RBRACE> 
+      <RBRACE>
    ]
 ;
