@@ -3,7 +3,7 @@
  * following two web pages:
  * https://docs.python.org/3/reference/grammar.html
  * https://docs.python.org/3/reference/lexical_analysis.html#indentation
- * This is Python 3.10.0, which is the latest spec at this moment.
+ * This is Python 3.12.0, which is the latest spec at this moment.
  * (I do not anticipate supporting any older versions of the language.)
  * Currently, the generated parser can parse the source code of Django
  * and the Python standard library, with the exception of a few files
@@ -648,6 +648,8 @@ Attribute : <NAME> (<DOT> <NAME>)+ ;
 
 NameOrAttribute #Attribute(>1) : <NAME> (<DOT> <NAME>)* ;
 
+// Implementation of 3.12 F-strings follows.
+
 FString :
   {token_source.fstringNesting++;}
   (
@@ -788,7 +790,7 @@ PlaceHolder :
       (<COLON>|<RBRACE>)
    )
    [
-      SCAN 0 {getToken(0).getType() == COLON}# =>
+      SCAN 1 {getToken(0).getType() == COLON}# =>
       (
          <TEXT_IN_FSTRING>
          |

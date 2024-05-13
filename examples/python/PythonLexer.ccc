@@ -9,104 +9,6 @@ TOKEN_CHAINING;
 EXTRA_TOKENS = INDENT#IndentToken, DEDENT#DedentToken;
 TABS_TO_SPACES=4;
 
-// <Token and lexical state definitions for F-strings
-
-TOKEN :
-    <#FSTRING_PREFIX : "f" | "F" >
-    |
-    <#RAW_FSTRING_PREFIX : "fr" | "Fr" | "fR" | "FR" | "rf" | "rF" | "Rf" | "RF">
-    |
-    <FSTRING_DOUBLE_QUOTE_START : <FSTRING_PREFIX> '"'>
-    |
-    <RAW_FSTRING_DOUBLE_QUOTE_START : <RAW_FSTRING_PREFIX> '"'>
-    |
-    <FSTRING_SINGLE_QUOTE_START : <FSTRING_PREFIX> "'">
-    |
-    <RAW_FSTRING_SINGLE_QUOTE_START : <RAW_FSTRING_PREFIX> "'">
-    |
-    <FSTRING_LONG_DOUBLE_QUOTE_START : <FSTRING_PREFIX> '"""'>
-    |
-    <RAW_FSTRING_LONG_DOUBLE_QUOTE_START : <RAW_FSTRING_PREFIX> '"""'>
-    |
-    <FSTRING_LONG_SINGLE_QUOTE_START : <FSTRING_PREFIX> "'''">
-    |
-    <RAW_FSTRING_LONG_SINGLE_QUOTE_START : <RAW_FSTRING_PREFIX> "'''">
-;
-
-<PYTHON,
- IN_DOUBLE_QUOTE_FSTRING,
- IN_RAW_DOUBLE_QUOTE_FSTRING,
- IN_SINGLE_QUOTE_FSTRING,
- IN_RAW_SINGLE_QUOTE_FSTRING,
- IN_LONG_DOUBLE_QUOTE_FSTRING,
- IN_RAW_LONG_DOUBLE_QUOTE_FSTRING,
- IN_LONG_SINGLE_QUOTE_FSTRING,
- IN_RAW_LONG_SINGLE_QUOTE_FSTRING,
- IN_NESTED_PLACEHOLDER> TOKEN:
-   <LBRACE : "{" >
-   |
-   <RBRACE : "}" >
-;
-
-<IN_DOUBLE_QUOTE_FSTRING, IN_RAW_DOUBLE_QUOTE_FSTRING> TOKEN :
-  < DOUBLE_QUOTE : '"' >
-;
-
-<IN_DOUBLE_QUOTE_FSTRING> TOKEN :
-  < TEXT_IN_FSTRING : (~['"',"\\","\n","\r","{","}"]) | "{{" | "}}" | <STRING_ESCAPE> >
-;
-
-<IN_RAW_DOUBLE_QUOTE_FSTRING> TOKEN :
-  < (~['"',"\n","\r","{","}"]) | "{{" | "}}" > {
-     matchedToken.setType(TEXT_IN_FSTRING);
-  }
-;
-
-<IN_SINGLE_QUOTE_FSTRING, IN_RAW_SINGLE_QUOTE_FSTRING> TOKEN :
-  < SINGLE_QUOTE : "'" >
-;
-
-<IN_SINGLE_QUOTE_FSTRING> TOKEN :
-  < (~["'","\\","\n","\r","{","}"]) | "{{" | "}}" | <STRING_ESCAPE> | "\\N{" (["a"-"z","A"-"Z"," "])* "}" > {
-     matchedToken.setType(TEXT_IN_FSTRING);
-  }
-;
-
-<IN_RAW_SINGLE_QUOTE_FSTRING> TOKEN :
-  < (~["'","\n","\r","{","}"]) | "{{" | "}}" | "\\\\" | "\\'" > {
-     matchedToken.setType(TEXT_IN_FSTRING);
-  }
-;
-
-<IN_LONG_DOUBLE_QUOTE_FSTRING, IN_LONG_SINGLE_QUOTE_FSTRING>
-MORE :
-   <"\\N{" (["a"-"z","A"-"Z"," "])* "}">
-   |
-   <'{{' | '}}' | <STRING_ESCAPE>>
-   |
-   < ~[]>
-;
-
-<IN_RAW_LONG_DOUBLE_QUOTE_FSTRING, IN_RAW_LONG_SINGLE_QUOTE_FSTRING> 
-MORE :
-   <'{{' | '}}'>
-   |
-   < ~[]>
-;
-
-<IN_LONG_DOUBLE_QUOTE_FSTRING, IN_RAW_LONG_DOUBLE_QUOTE_FSTRING> TOKEN :
-  < LONG_DOUBLE_QUOTE : '"""' >
-;
-
-<IN_LONG_SINGLE_QUOTE_FSTRING, IN_RAW_LONG_SINGLE_QUOTE_FSTRING> TOKEN :
-  < LONG_SINGLE_QUOTE : "'''" >
-;
-
-<IN_NESTED_PLACEHOLDER> TOKEN :
-  <((~["'","\\","\n","\r","{","}"]) | <STRING_ESCAPE>)+ > {
-     matchedToken.setType(TEXT_IN_FSTRING);
-  }
-;
 
 /*
  * The following code injection implements the various indent/dedent logic.
@@ -137,12 +39,14 @@ INJECT LEXER_CLASS :
          }
       }
       else if ((type == LONG_DOUBLE_QUOTE || type==LONG_SINGLE_QUOTE) && tok.length() > 3) {
-         tok.setType(TEXT_IN_FSTRING);
          tok.truncate(3);
+         //tok.setType(TEXT_IN_FSTRING);
+         tok=tok.replaceType(TEXT_IN_FSTRING);
       }
-      else if (fstringNesting>0 && (type == LBRACE || type == RBRACE) && tok.length() > 1) {
-         tok.setType(TEXT_IN_FSTRING);
+      else if (fstringNesting > 0 && (type == LBRACE || type == RBRACE || type == SINGLE_QUOTE || type == DOUBLE_QUOTE) && tok.length() > 1) {
+//         tok.setType(TEXT_IN_FSTRING);
          tok.truncate(1);
+         tok=tok.replaceType(TEXT_IN_FSTRING);
       }
       return tok;
    }
@@ -599,4 +503,105 @@ TOKEN :
            "\u0080"-"\uffff"
         ]
     )* >
+;
+
+// <Token and lexical state definitions for F-strings
+
+TOKEN :
+    <#FSTRING_PREFIX : "f" | "F" >
+    |
+    <#RAW_FSTRING_PREFIX : "fr" | "Fr" | "fR" | "FR" | "rf" | "rF" | "Rf" | "RF">
+    |
+    <FSTRING_DOUBLE_QUOTE_START : <FSTRING_PREFIX> '"'>
+    |
+    <RAW_FSTRING_DOUBLE_QUOTE_START : <RAW_FSTRING_PREFIX> '"'>
+    |
+    <FSTRING_SINGLE_QUOTE_START : <FSTRING_PREFIX> "'">
+    |
+    <RAW_FSTRING_SINGLE_QUOTE_START : <RAW_FSTRING_PREFIX> "'">
+    |
+    <FSTRING_LONG_DOUBLE_QUOTE_START : <FSTRING_PREFIX> '"""'>
+    |
+    <RAW_FSTRING_LONG_DOUBLE_QUOTE_START : <RAW_FSTRING_PREFIX> '"""'>
+    |
+    <FSTRING_LONG_SINGLE_QUOTE_START : <FSTRING_PREFIX> "'''">
+    |
+    <RAW_FSTRING_LONG_SINGLE_QUOTE_START : <RAW_FSTRING_PREFIX> "'''">
+;
+
+<PYTHON,
+ IN_DOUBLE_QUOTE_FSTRING,
+ IN_RAW_DOUBLE_QUOTE_FSTRING,
+ IN_SINGLE_QUOTE_FSTRING,
+ IN_RAW_SINGLE_QUOTE_FSTRING,
+ IN_LONG_DOUBLE_QUOTE_FSTRING,
+ IN_RAW_LONG_DOUBLE_QUOTE_FSTRING,
+ IN_LONG_SINGLE_QUOTE_FSTRING,
+ IN_RAW_LONG_SINGLE_QUOTE_FSTRING,
+ IN_NESTED_PLACEHOLDER> TOKEN:
+   <LBRACE : "{" >
+   |
+   <RBRACE : "}" >
+;
+
+<IN_DOUBLE_QUOTE_FSTRING, IN_RAW_DOUBLE_QUOTE_FSTRING> TOKEN :
+  < DOUBLE_QUOTE : '"' >
+;
+
+<IN_DOUBLE_QUOTE_FSTRING> TOKEN :
+  < TEXT_IN_FSTRING : ((~['"',"\\","\n","\r","{","}"]) | "{{" | "}}" | <STRING_ESCAPE> | "\\N{" (["a"-"z","A"-"Z"," "])* "}")+ > #FStringText
+;
+
+<IN_RAW_DOUBLE_QUOTE_FSTRING> MORE :
+  <"{{"|"}}">
+  |
+  < (~['"',"\n","\r","{","}"]) > 
+;
+
+<IN_SINGLE_QUOTE_FSTRING, IN_RAW_SINGLE_QUOTE_FSTRING> TOKEN :
+  < SINGLE_QUOTE : "'" >
+;
+
+<IN_SINGLE_QUOTE_FSTRING> TOKEN :
+  < ((~["'","\\","\n","\r","{","}"]) | "{{" | "}}" | <STRING_ESCAPE> | "\\N{" (["a"-"z","A"-"Z"," "])* "}")+ > #FStringText
+  {
+     matchedToken.setType(TEXT_IN_FSTRING);
+  }
+;
+
+<IN_RAW_SINGLE_QUOTE_FSTRING> MORE :
+  < "{{" | "}}" >
+  |
+  < "\\\\" | "\\'">
+  |
+  < (~["'","\n","\r","{","}"])> 
+;
+
+<IN_LONG_DOUBLE_QUOTE_FSTRING, IN_LONG_SINGLE_QUOTE_FSTRING> MORE :
+   <"\\N{" (["a"-"z","A"-"Z"," "])* "}">
+   |
+   <'{{' | '}}' | <STRING_ESCAPE>>
+   |
+   < ~[]>
+;
+
+<IN_RAW_LONG_DOUBLE_QUOTE_FSTRING, IN_RAW_LONG_SINGLE_QUOTE_FSTRING> 
+MORE :
+   <'{{' | '}}'>
+   |
+   < ~[]>
+;
+
+<IN_LONG_DOUBLE_QUOTE_FSTRING, IN_RAW_LONG_DOUBLE_QUOTE_FSTRING> TOKEN :
+  < LONG_DOUBLE_QUOTE : '"""' >
+;
+
+<IN_LONG_SINGLE_QUOTE_FSTRING, IN_RAW_LONG_SINGLE_QUOTE_FSTRING> TOKEN :
+  < LONG_SINGLE_QUOTE : "'''" >
+;
+
+<IN_NESTED_PLACEHOLDER> TOKEN :
+  <((~["'","\\","\n","\r","{","}"]) | <STRING_ESCAPE>)+ > {
+     matchedToken.setType(TEXT_IN_FSTRING);
+  }
 ;
