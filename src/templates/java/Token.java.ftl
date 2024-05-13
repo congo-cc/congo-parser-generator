@@ -100,6 +100,15 @@ public class ${settings.baseTokenClassName} ${implements} {
         result.setCachedImage(image);
         return result;
     }
+
+    public void truncate(int amount) {
+        int newEndOffset = Math.max(getBeginOffset(), getEndOffset()-amount);
+        setEndOffset(newEndOffset);
+        if (cachedImage != null) {
+            cachedImage = cachedImage.substring(0, newEndOffset - getBeginOffset());
+        }
+    }
+
 [/#if]
 
 [#if settings.tokenChaining]
@@ -341,6 +350,9 @@ public class ${settings.baseTokenClassName} ${implements} {
 
     public ${settings.baseTokenClassName} replaceType(TokenType type) {
         ${settings.baseTokenClassName} result = newToken(type, getTokenSource(), getBeginOffset(), getEndOffset());
+[#if !settings.minimalToken]
+        result.cachedImage = this.cachedImage;
+[/#if]
 [#if settings.tokenChaining]
         result.prependedToken = this.prependedToken;
         result.appendedToken = this.appendedToken;
