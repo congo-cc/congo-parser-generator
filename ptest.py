@@ -300,7 +300,7 @@ def main():
                     while not done:
                         if IS_JAVA:
                             t = lexer.getNextToken(t)
-                            s = '%s: %s %d %d %d %d\n' % (t.type, t.image,
+                            s = '%s: %s %d %d %d %d\n' % (t.type, t.source,
                                                           t.beginLine,
                                                           t.beginColumn,
                                                           t.endLine,
@@ -308,7 +308,7 @@ def main():
                             outf.print(s)
                         elif IS_DOTNET:
                             t = lexer.GetNextToken(t)
-                            s = '%s: %s %d %d %d %d\n' % (t.Type, t.Image,
+                            s = '%s: %s %d %d %d %d\n' % (t.Type, t.Source,
                                                           t.BeginLine,
                                                           t.BeginColumn,
                                                           t.EndLine,
@@ -317,7 +317,7 @@ def main():
                         else:
                             # import pdb; pdb.set_trace()
                             t = lexer.get_next_token(t)
-                            s = '%s: %s %d %d %d %d\n' % (t.type.name, t.image,
+                            s = '%s: %s %d %d %d %d\n' % (t.type.name, t.source,
                                                           t.begin_line,
                                                           t.begin_column,
                                                           t.end_line,

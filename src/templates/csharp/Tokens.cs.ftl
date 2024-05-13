@@ -737,7 +737,7 @@ namespace ${csPackage} {
         internal Token PreviousToken => PreviousCachedToken;
 
         internal Token ReplaceType(TokenType type) {
-            var result = NewToken(Type, TokenSource, BeginOffset, EndOffset);
+            var result = NewToken(type, TokenSource, BeginOffset, EndOffset);
 [#if settings.tokenChaining]
             result.prependedToken = prependedToken;
             result.appendedToken = appendedToken;
