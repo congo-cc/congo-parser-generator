@@ -651,8 +651,6 @@ NameOrAttribute #Attribute(>1) : <NAME> (<DOT> <NAME>)* ;
 // Implementation of 3.12 F-strings follows.
 
 FString :
-  {token_source.fstringNesting++;}
-  (
    DoubleQuoteFString
    |
    RawDoubleQuoteFString
@@ -668,8 +666,6 @@ FString :
    LongSingleQuoteFString
    |
    RawLongSingleQuoteFString
-  )
-  {token_source.fstringNesting--;}
 ;
 
 DoubleQuoteFString :

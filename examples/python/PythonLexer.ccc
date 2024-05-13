@@ -22,7 +22,6 @@ INJECT LEXER_CLASS :
 {
    private BASE_TOKEN_CLASS danglingIndentation;
    private int bracketNesting, parenthesesNesting, braceNesting;
-   int fstringNesting;
    private List<Integer> indentationStack = initIndentationStack();
 
    private static List<Integer> initIndentationStack() {
@@ -33,27 +32,19 @@ INJECT LEXER_CLASS :
 
    private BASE_TOKEN_CLASS TOKEN_HOOK(BASE_TOKEN_CLASS tok) {
       TokenType type = tok.getType();
-      if (type == COMMENT) {
-         if (fstringNesting == 0 && tok.charAt(tok.length()-1) == '\n') {
-            tok.truncate(1);
-         }
+      if ((type == LBRACE || type == RBRACE || type == SINGLE_QUOTE || type == DOUBLE_QUOTE) && tok.length() > 1) {
+         tok.truncate(1);
+         tok=tok.replaceType(TEXT_IN_FSTRING);
       }
       else if ((type == LONG_DOUBLE_QUOTE || type==LONG_SINGLE_QUOTE) && tok.length() > 3) {
          tok.truncate(3);
-         //tok.setType(TEXT_IN_FSTRING);
-         tok=tok.replaceType(TEXT_IN_FSTRING);
-      }
-      else if (fstringNesting > 0 && (type == LBRACE || type == RBRACE || type == SINGLE_QUOTE || type == DOUBLE_QUOTE) && tok.length() > 1) {
-//         tok.setType(TEXT_IN_FSTRING);
-         tok.truncate(1);
          tok=tok.replaceType(TEXT_IN_FSTRING);
       }
       return tok;
    }
 
    private BASE_TOKEN_CLASS TOKEN_HOOK(BASE_TOKEN_CLASS tok) {
-      //if (lexicalState != LexicalState.PYTHON) return tok;
-      boolean lineJoiningOn = bracketNesting >0 || parenthesesNesting > 0 || braceNesting > 0 || fstringNesting >0;
+      boolean lineJoiningOn = bracketNesting >0 || parenthesesNesting > 0 || braceNesting > 0 || lexicalState != LexicalState.PYTHON;
       TokenType type = tok.getType();
       switch (type) {
          case LBRACE : braceNesting++; break;
@@ -228,7 +219,8 @@ SKIP : <SPACE : (' ' | "\f")+>;
 UNPARSED :
    <CONTINUE_LINE : "\\\n"> #Whitespace
    |
-   <COMMENT: "#" (~["\n"])* ("\n")?> #Comment
+   //<COMMENT: "#" (~["\n"])* ("\n")?> #Comment
+   <COMMENT: "#" (~["\n"])*> #Comment
 ;
 
 TOKEN :
