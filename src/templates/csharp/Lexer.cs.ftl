@@ -880,8 +880,13 @@ ${globals::translateLexerImports()}
 
         internal HashSet<TokenType> ActiveTokenTypes = Utils.EnumSet(
 [#list lexerData.regularExpressions as regexp]
-            TokenType.${regexp.label}[#if regexp_has_next],[/#if]
+            TokenType.${regexp.label},
 [/#list]
+ [#list settings.extraTokenNames as t]
+            TokenType.${t},
+ [/#list]
+            TokenType.DUMMY,
+            TokenType.INVALID
         );
 
         private LexicalState _lexicalState;
