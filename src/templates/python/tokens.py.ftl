@@ -356,6 +356,23 @@ ${globals::translateTokenInjections(true)}
 
 /#if
 
+    def replace_type(self, tt):
+        result = new_token(tt, self.token_source, self.begin_offset, self.end_offset)
+#if settings.tokenChaining
+        result.prepended_token = self.prepended_token
+        result.appended_token = self.appended_token
+        result.is_inserted = self.is_inserted
+        if result.appended_token:
+            result.appended_token.prepended_token = result
+        if result.prepended_token:
+            result.prepended_token.appended_token = result
+        if not result.is_inserted:
+            self.token_source.cache_token(result)
+#else
+        self.token_source.cache_token(result)
+/#if
+        return result
+
     @property
     def image(self):
 #if !settings.tokenChaining

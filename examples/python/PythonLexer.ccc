@@ -32,19 +32,21 @@ INJECT LEXER_CLASS :
 
    private BASE_TOKEN_CLASS TOKEN_HOOK(BASE_TOKEN_CLASS tok) {
       TokenType type = tok.getType();
-      if ((type == LBRACE || type == RBRACE || type == SINGLE_QUOTE || type == DOUBLE_QUOTE) && tok.length() > 1) {
+      int tokLen = tok.toString().length();
+
+      if ((tokLen > 1) && (type == TokenType.LBRACE || type == TokenType.RBRACE || type == TokenType.SINGLE_QUOTE || type == TokenType.DOUBLE_QUOTE)) {
          tok.truncate(1);
-         tok=tok.replaceType(TEXT_IN_FSTRING);
+         tok=tok.replaceType(TokenType.TEXT_IN_FSTRING);
       }
-      else if ((type == LONG_DOUBLE_QUOTE || type==LONG_SINGLE_QUOTE) && tok.length() > 3) {
+      else if ((tokLen > 3) && (type == TokenType.LONG_DOUBLE_QUOTE || type == TokenType.LONG_SINGLE_QUOTE)) {
          tok.truncate(3);
-         tok=tok.replaceType(TEXT_IN_FSTRING);
+         tok=tok.replaceType(TokenType.TEXT_IN_FSTRING);
       }
       return tok;
    }
 
    private BASE_TOKEN_CLASS TOKEN_HOOK(BASE_TOKEN_CLASS tok) {
-      boolean lineJoiningOn = bracketNesting >0 || parenthesesNesting > 0 || braceNesting > 0 || lexicalState != LexicalState.PYTHON;
+      boolean lineJoiningOn = bracketNesting > 0 || parenthesesNesting > 0 || braceNesting > 0 || this.lexicalState != LexicalState.PYTHON;
       TokenType type = tok.getType();
       switch (type) {
          case LBRACE : braceNesting++; break;
@@ -547,7 +549,7 @@ TOKEN :
 <IN_RAW_DOUBLE_QUOTE_FSTRING> MORE :
   <"{{"|"}}">
   |
-  < (~['"',"\n","\r","{","}"]) > 
+  < (~['"',"\n","\r","{","}"]) >
 ;
 
 <IN_SINGLE_QUOTE_FSTRING, IN_RAW_SINGLE_QUOTE_FSTRING> TOKEN :
@@ -557,7 +559,7 @@ TOKEN :
 <IN_SINGLE_QUOTE_FSTRING> TOKEN :
   < ((~["'","\\","\n","\r","{","}"]) | "{{" | "}}" | <STRING_ESCAPE> | "\\N{" (["a"-"z","A"-"Z"," "])* "}")+ > #FStringText
   {
-     matchedToken.setType(TEXT_IN_FSTRING);
+     matchedToken.setType(TokenType.TEXT_IN_FSTRING);
   }
 ;
 
@@ -566,7 +568,7 @@ TOKEN :
   |
   < "\\\\" | "\\'">
   |
-  < (~["'","\n","\r","{","}"])> 
+  < (~["'","\n","\r","{","}"])>
 ;
 
 <IN_LONG_DOUBLE_QUOTE_FSTRING, IN_LONG_SINGLE_QUOTE_FSTRING> MORE :
@@ -577,7 +579,7 @@ TOKEN :
    < ~[]>
 ;
 
-<IN_RAW_LONG_DOUBLE_QUOTE_FSTRING, IN_RAW_LONG_SINGLE_QUOTE_FSTRING> 
+<IN_RAW_LONG_DOUBLE_QUOTE_FSTRING, IN_RAW_LONG_SINGLE_QUOTE_FSTRING>
 MORE :
    <'{{' | '}}'>
    |
@@ -594,6 +596,6 @@ MORE :
 
 <IN_NESTED_PLACEHOLDER> TOKEN :
   <((~["'","\\","\n","\r","{","}"]) | <STRING_ESCAPE>)+ > {
-     matchedToken.setType(TEXT_IN_FSTRING);
+     matchedToken.setType(TokenType.TEXT_IN_FSTRING);
   }
 ;
