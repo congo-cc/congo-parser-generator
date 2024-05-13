@@ -13,7 +13,7 @@
 PARSER_PACKAGE = org.parsers.python;
 DEFAULT_LEXICAL_STATE = PYTHON;
 ENSURE_FINAL_EOL;
-DEACTIVATE_TOKENS=MATCH,CASE,TYPE;
+DEACTIVATE_TOKENS=MATCH,CASE,TYPE,EXCLAM;
 #if FT
 FAULT_TOLERANT;
 FAULT_TOLERANT_DEFAULT=false;
@@ -649,6 +649,8 @@ Attribute : <NAME> (<DOT> <NAME>)+ ;
 NameOrAttribute #Attribute(>1) : <NAME> (<DOT> <NAME>)* ;
 
 FString :
+  {token_source.fstringNesting++;}
+  (
    DoubleQuoteFString
    |
    RawDoubleQuoteFString
@@ -664,6 +666,8 @@ FString :
    LongSingleQuoteFString
    |
    RawLongSingleQuoteFString
+  )
+  {token_source.fstringNesting--;}
 ;
 
 DoubleQuoteFString :
@@ -770,28 +774,26 @@ RawLongSingleQuoteFString :
    )
 ;
 
-PlaceHolder :
-   <START_EXP>
-   LEXICAL_STATE PYTHON (Expression | YieldExpression)
+PlaceHolder : 
+   <LBRACE> 
+   LEXICAL_STATE PYTHON 
    (
-      <TEXT_IN_FSTRING>
-      |
-      NestedPlaceHolder
-   )*
-   <END_EXP>
-;
-
-
-NestedPlaceHolder : IN_NESTED_PLACEHOLDER :
-   <START_EXP>
-   LEXICAL_STATE PYTHON
-   (
-      Expression
+      (YieldExpression | StarExpressions)
+      [<ASSIGN>]
+      ACTIVATE_TOKENS EXCLAM 
+      (
+         [<EXCLAM><NAME>]
+      )
+      DEACTIVATE_TOKENS COLONEQUALS
+      (<COLON>|<RBRACE>)
    )
-   (
-      <TEXT_IN_NESTED_PLACE_HOLDER>
-      |
-      NestedPlaceHolder
-   )*
-   <END_EXP>
+   [
+      SCAN 0 {getToken(0).getType() == COLON}# =>
+      (
+         <TEXT_IN_FSTRING>
+         |
+         LEXICAL_STATE IN_NESTED_PLACEHOLDER (PlaceHolder)
+      )*
+      <RBRACE> 
+   ]
 ;

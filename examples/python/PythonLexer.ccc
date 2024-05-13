@@ -32,12 +32,9 @@ TOKEN :
     |
     <RAW_FSTRING_LONG_SINGLE_QUOTE_START : <RAW_FSTRING_PREFIX> "'''">
 ;
-/*
-<IN_DOUBLE_QUOTE_FSTRING,IN_SINGLE_QUOTE_FSTRING> TOKEN:
-   <BACKSLASH_LBRACE : "\\{">
-;*/
 
-<IN_DOUBLE_QUOTE_FSTRING,
+<PYTHON,
+ IN_DOUBLE_QUOTE_FSTRING,
  IN_RAW_DOUBLE_QUOTE_FSTRING,
  IN_SINGLE_QUOTE_FSTRING,
  IN_RAW_SINGLE_QUOTE_FSTRING,
@@ -46,9 +43,9 @@ TOKEN :
  IN_LONG_SINGLE_QUOTE_FSTRING,
  IN_RAW_LONG_SINGLE_QUOTE_FSTRING,
  IN_NESTED_PLACEHOLDER> TOKEN:
-   <START_EXP : "{" >
+   <LBRACE : "{" >
    |
-   <END_EXP : "}" >
+   <RBRACE : "}" >
 ;
 
 <IN_DOUBLE_QUOTE_FSTRING, IN_RAW_DOUBLE_QUOTE_FSTRING> TOKEN :
@@ -70,7 +67,7 @@ TOKEN :
 ;
 
 <IN_SINGLE_QUOTE_FSTRING> TOKEN :
-  < (~["'","\\","\n","\r","{","}"]) | "{{" | "}}" | <STRING_ESCAPE> > {
+  < (~["'","\\","\n","\r","{","}"]) | "{{" | "}}" | <STRING_ESCAPE> | "\\N{" (["a"-"z","A"-"Z"," "])* "}" > {
      matchedToken.setType(TEXT_IN_FSTRING);
   }
 ;
@@ -83,6 +80,8 @@ TOKEN :
 
 <IN_LONG_DOUBLE_QUOTE_FSTRING, IN_LONG_SINGLE_QUOTE_FSTRING>
 MORE :
+   <"\\N{" (["a"-"z","A"-"Z"," "])* "}">
+   |
    <'{{' | '}}' | <STRING_ESCAPE>>
    |
    < ~[]>
@@ -104,7 +103,9 @@ MORE :
 ;
 
 <IN_NESTED_PLACEHOLDER> TOKEN :
-  <TEXT_IN_NESTED_PLACE_HOLDER : ((~["'","\\","\n","\r","{","}"]) | <STRING_ESCAPE>)+ >
+  <((~["'","\\","\n","\r","{","}"]) | <STRING_ESCAPE>)+ > {
+     matchedToken.setType(TEXT_IN_FSTRING);
+  }
 ;
 
 /*
@@ -118,7 +119,8 @@ INJECT LEXER_CLASS :
    import NODE_PACKAGE.DedentToken;
 {
    private BASE_TOKEN_CLASS danglingIndentation;
-   private int bracketNesting, parenthesesNesting, braceNesting, fstringNesting;
+   private int bracketNesting, parenthesesNesting, braceNesting;
+   int fstringNesting;
    private List<Integer> indentationStack = initIndentationStack();
 
    private static List<Integer> initIndentationStack() {
@@ -138,7 +140,7 @@ INJECT LEXER_CLASS :
          tok.setType(TEXT_IN_FSTRING);
          tok.truncate(3);
       }
-      else if ((type == START_EXP || type == END_EXP) && tok.length() > 1) {
+      else if (fstringNesting>0 && (type == LBRACE || type == RBRACE) && tok.length() > 1) {
          tok.setType(TEXT_IN_FSTRING);
          tok.truncate(1);
       }
@@ -146,7 +148,7 @@ INJECT LEXER_CLASS :
    }
 
    private BASE_TOKEN_CLASS TOKEN_HOOK(BASE_TOKEN_CLASS tok) {
-      if (lexicalState != LexicalState.PYTHON) return tok;
+      //if (lexicalState != LexicalState.PYTHON) return tok;
       boolean lineJoiningOn = bracketNesting >0 || parenthesesNesting > 0 || braceNesting > 0 || fstringNesting >0;
       TokenType type = tok.getType();
       switch (type) {
@@ -156,8 +158,6 @@ INJECT LEXER_CLASS :
          case RPAREN : parenthesesNesting--; break;
          case LBRACKET : bracketNesting++; break;
          case RBRACKET : bracketNesting--; break;
-         case START_EXP : fstringNesting++; break;
-         case END_EXP : fstringNesting--; break;
          case NEWLINE :  if (lineJoiningOn || tok.startsLine()) {
                              tok.setUnparsed(true);
                          }
@@ -342,10 +342,10 @@ TOKEN #Delimiter :
    |
    <EQ : "==">
    |
-   <LBRACE: "{" >
-   |
-   <RBRACE: "}" >
-   |
+ //  <LBRACE: "{" >
+ //  |
+ //  <RBRACE: "}" >
+ //  |
    <LBRACKET : "[">
    |
    <RBRACKET : "]">
@@ -429,6 +429,8 @@ TOKEN #Operator :
    <HOOK : "? ">
    |
    <RARROW : "->">
+   |
+   <EXCLAM : "!">
 ;
 
 TOKEN #Keyword :
