@@ -650,7 +650,16 @@ NameOrAttribute #Attribute(>1) : <NAME> (<DOT> <NAME>)* ;
 
 // Implementation of 3.12 F-strings follows.
 
-FString :
+INJECT DoubleQuoteFString : extends FString
+INJECT RawDoubleQuoteFString : extends FString
+INJECT SingleQuoteFString : extends FString
+INJECT RawSingleQuoteFString : extends FString
+INJECT LongDoubleQuoteFString : extends FString
+INJECT RawLongDoubleQuoteFString : extends FString
+INJECT LongSingleQuoteFString : extends FString
+INJECT RawLongSingleQuoteFString : extends FString
+
+FString#abstract :
    DoubleQuoteFString
    |
    RawDoubleQuoteFString
