@@ -78,7 +78,7 @@ public class ${settings.baseTokenClassName} ${implements} {
 
 [#if !settings.minimalToken]
     private String cachedImage;
-
+#if false
     /**
      * @deprecated use setCachedImage
      */
@@ -86,7 +86,7 @@ public class ${settings.baseTokenClassName} ${implements} {
     public void setImage(String image) {
        setCachedImage(image);
     }
-
+/#if
     /**
      * If cachedImage is set, then the various methods
      * that implement #java.lang.CharSequence use that string

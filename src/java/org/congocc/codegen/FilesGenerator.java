@@ -313,6 +313,7 @@ public class FilesGenerator {
         try {
             jcu = CongoCCParser.parseJavaFile(outputFile.getFileName().toString(), code);
         } catch (Exception e) {
+            e.printStackTrace();
             out.write(code);
             return;
         } finally {

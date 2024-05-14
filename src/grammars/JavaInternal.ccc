@@ -2,7 +2,7 @@
 // work on its own. This include file contains various code
 // injections into the Java AST that are used in CongoCC.
 
-TOKEN_CHAINING;
+//TOKEN_CHAINING;
 
 // In general usage, it is probably better to INCLUDE the (more stable) Java grammar
 // that is in the bootstrap jarfile.
@@ -113,7 +113,7 @@ INJECT ExtendsList :
         }
         ListIterator<Node> iterator = iterator();
         if (!iterator.hasNext()) {
-            iterator.add(Token.newToken(EXTENDS, "extends", this.getTokenSource()));
+            iterator.add(Token.newToken(EXTENDS, this.getTokenSource()));
             iterator.next();
             iterator.add(type);
         } else {
@@ -121,7 +121,7 @@ INJECT ExtendsList :
                 if (type.equals(iterator.next()))
                     return;
             }
-            iterator.add(Token.newToken(COMMA, ",", this.getTokenSource()));
+            iterator.add(Token.newToken(COMMA, this.getTokenSource()));
             iterator.next();
             iterator.add(type);
         }
@@ -139,7 +139,7 @@ INJECT TypeParameters :
                 iterator.next();
             }
             iterator.previous();
-            iterator.add(Token.newToken(COMMA, ",", this.getTokenSource()));
+            iterator.add(Token.newToken(COMMA, this.getTokenSource()));
             iterator.next();
             iterator.add(param);
         }
@@ -263,7 +263,7 @@ INJECT ImplementsList :
     public void addType(ObjectType type) {
         ListIterator<Node> iterator = iterator();
         if (!iterator.hasNext()) {
-            iterator.add(Token.newToken(IMPLEMENTS, "implements", this.getTokenSource()));
+            iterator.add(Token.newToken(IMPLEMENTS, this.getTokenSource()));
             iterator.next();
             iterator.add(type);
         } else {
@@ -271,7 +271,7 @@ INJECT ImplementsList :
                 if (type.equals(iterator.next()))
                     return;
             }
-            iterator.add(Token.newToken(COMMA, ",", this.getTokenSource()));
+            iterator.add(Token.newToken(COMMA, this.getTokenSource()));
             iterator.next();
             iterator.add(type);
         }

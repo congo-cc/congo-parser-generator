@@ -4,6 +4,7 @@ PARSER_PACKAGE=org.congocc.parser;
 NODE_PACKAGE=org.congocc.parser.tree;
 DEFAULT_LEXICAL_STATE=JAVA;
 BASE_SRC_DIR="../../build/generated-java";
+MINIMAL_TOKEN=false;
 
 USES_PREPROCESSOR;
 
@@ -80,7 +81,11 @@ INCLUDE "Lexical.inc.ccc"
 INCLUDE "JavaInternal.ccc"
 
 INJECT LEXER_CLASS :
+   import org.congocc.core.Grammar;
 {
+
+  @Property Grammar grammar;
+
   // Set whether to generate unparsed tokens for WHITESPACE
   static public void keepWhitespace(boolean b) {
     if (b) {
@@ -116,6 +121,7 @@ INJECT PARSER_CLASS :
         PreprocessorParser parser = new PreprocessorParser(path);
         parser.addSymbols(definedSymbols);
         BitSet lineMarkers = parser.PP_Root();
+        token_source.setGrammar(grammar);
         token_source.setParsedLines(lineMarkers);
     }
 
@@ -125,6 +131,7 @@ INJECT PARSER_CLASS :
         PreprocessorParser parser = new PreprocessorParser(inputSource, content);
         parser.addSymbols(grammar.getPreprocessorSymbols());
         BitSet lineMarkers = parser.PP_Root();
+        token_source.setGrammar(grammar);
         token_source.setParsedLines(lineMarkers);
     }
 
@@ -325,10 +332,14 @@ INJECT PARSER_CLASS : {
 INJECT Identifier :
     import org.congocc.app.AppSettings;
     import org.congocc.codegen.TemplateGlobals;
+    import org.congocc.core.Grammar;
 {
+    private String savedImage;
+
     public String toString() {
-        String cachedImage = getCachedImage();
-        if (cachedImage != null) return cachedImage;
+        if (savedImage !=null) return savedImage;
+//        String cachedImage = getCachedImage();
+//        if (cachedImage != null) return cachedImage;
         String image = getSource();
         String substitute;
         AppSettings settings;  // REVISIT: initializing here with getAppSettings() leads to failures
@@ -337,10 +348,20 @@ INJECT Identifier :
             // If we're not doing code generation (e.g. just parsing a CCC file), we might not
             // have template globals set. In that case, don't do any substitution.
             //
-            TemplateGlobals tg = getGrammar().getTemplateGlobals();
+            assert getTokenSource() != null : "tokenSource is null";
+            Grammar grammar = getGrammar();
+            //assert grammar != null : "grammar is null";
+
+            TemplateGlobals tg = grammar == null ? null : grammar .getTemplateGlobals();
+
+            assert tg != null : "tg is null";
 
             if (tg != null) {
                 image = tg.getCurrentNodeVariableName();
+//                System.err.println("current node variable name: " + image);
+                assert image != null : "image is null";
+                //assert !image.equals("null") : "image is null string";
+                assert !image.equals("CURRENT_NODE") : "Huh?";
             }
         }
         else if (image.equals("THIS_PRODUCTION")) {
@@ -386,25 +407,29 @@ INJECT Identifier :
             settings = getAppSettings();
             String prefix = settings.generateIdentifierPrefix("tokenHook");
             image = settings.generateUniqueIdentifier(prefix, this);
-            setCachedImage(image);
+            //setCachedImage(image);
+            savedImage = image;
         }
         else if (image.equals("RESET_TOKEN_HOOK")) {
             settings = getAppSettings();
             String prefix = settings.generateIdentifierPrefix("resetTokenHook");
             image = settings.generateUniqueIdentifier(prefix, this);
-            setCachedImage(image);
+            //setCachedImage(image);
+            savedImage = image;
         }
         else if (image.equals("OPEN_NODE_HOOK")) {
             settings = getAppSettings();
             String prefix = settings.generateIdentifierPrefix("openNodeHook");
             image = settings.generateUniqueIdentifier(prefix, this);
-            setCachedImage(image);
+            //setCachedImage(image);
+            savedImage = image;
         }
         else if (image.equals("CLOSE_NODE_HOOK")) {
             settings = getAppSettings();
             String prefix = settings.generateIdentifierPrefix("closeNodeHook");
             image = settings.generateUniqueIdentifier(prefix, this);
-            setCachedImage(image);
+            //setCachedImage(image);
+            savedImage = image;
         }
         assert image != null;
         return image;
@@ -432,9 +457,7 @@ INJECT Token :
 
     public Grammar getGrammar() {
         if (grammar == null) {
-           if (parent != null) {
-              grammar = parent.getGrammar();
-           }
+            grammar = tokenSource.getGrammar();
         }
         return grammar;
     }
