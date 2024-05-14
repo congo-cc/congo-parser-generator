@@ -18,7 +18,6 @@ public class JavaCodeUtils {
     static public void addGetterSetters(Node root) {
         List<FieldDeclaration> fds = root.descendants(FieldDeclaration.class);
         for (FieldDeclaration fd : fds) {
-            //List<Annotation> annotations  = fd.childrenOfType(Annotation.class);
             for (Annotation annotation : getAnnotations(fd)) {
                 if (annotation.getName().equals("Property")) {
                     addGetterSetter(fd);
@@ -64,7 +63,8 @@ public class JavaCodeUtils {
             }
         }
         Type type = fd.firstChildOfType(Type.class);
-        Token privateToken = Token.newToken(PRIVATE, "private", fd.getTokenSource());
+        Token privateToken = Token.newToken(PRIVATE, fd.getTokenSource());
+        //Token privateToken = Token.newToken(PRIVATE, "private", fd.getTokenSource());
         if (mods !=null) mods.add(privateToken);
         else fd.add(fd.indexOf(type), privateToken);
     }

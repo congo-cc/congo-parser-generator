@@ -33,12 +33,12 @@ INJECT LEXER_CLASS :
    private BASE_TOKEN_CLASS TOKEN_HOOK(BASE_TOKEN_CLASS tok) {
       TokenType type = tok.getType();
       if ((type == LBRACE || type == RBRACE || type == SINGLE_QUOTE || type == DOUBLE_QUOTE) && tok.length() > 1) {
-         tok.truncate(1);
          tok=tok.replaceType(TEXT_IN_FSTRING);
+         tok.truncate(1);
       }
       else if ((type == LONG_DOUBLE_QUOTE || type==LONG_SINGLE_QUOTE) && tok.length() > 3) {
-         tok.truncate(3);
          tok=tok.replaceType(TEXT_IN_FSTRING);
+         tok.truncate(3);
       }
       return tok;
    }

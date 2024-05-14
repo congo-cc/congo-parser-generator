@@ -15,6 +15,9 @@ public interface Node extends List<Node> {
         boolean isUndefined();
         boolean isInvalid();
         boolean isEOF();
+        default String getLiteralString() {
+            return null; // unimplemented currently.
+        }
     }
 
     //Marker interface for tokens

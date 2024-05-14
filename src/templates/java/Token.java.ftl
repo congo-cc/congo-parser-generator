@@ -34,13 +34,29 @@ public class ${settings.baseTokenClassName} ${implements} {
     [/#if]
     {
        [#list lexerData.regularExpressions as regexp]
-          ${regexp.label},
+          ${regexp.label}
+          [#if regexp.class.simpleName == "RegexpStringLiteral" && !regexp.ignoreCase]
+            ("${regexp.literalString?j_string}")
+          [/#if]
+          ,
        [/#list]
        [#list settings.extraTokenNames as extraToken]
           ${extraToken},
        [/#list]
        DUMMY,
        INVALID;
+
+       TokenType() {}
+
+       TokenType(String literalString) {
+          this.literalString = literalString;
+       }
+
+       private String literalString;
+
+       public String getLiteralString() {
+           return literalString;
+       }
 
        public boolean isUndefined() {return this == DUMMY;}
        public boolean isInvalid() {return this == INVALID;}
@@ -94,12 +110,13 @@ public class ${settings.baseTokenClassName} ${implements} {
         this.cachedImage = image;
         this.tokenSource = tokenSource;
     }
-
+#if false
     public static ${settings.baseTokenClassName} newToken(TokenType type, String image, ${settings.lexerClassName} tokenSource) {
         ${settings.baseTokenClassName} result = newToken(type, tokenSource, 0, 0);
         result.setCachedImage(image);
         return result;
     }
+/#if    
 
     public void truncate(int amount) {
         int newEndOffset = Math.max(getBeginOffset(), getEndOffset()-amount);
@@ -375,7 +392,9 @@ public class ${settings.baseTokenClassName} ${implements} {
     public String getSource() {
          if (type == TokenType.EOF) return "";
          ${settings.lexerClassName} ts = getTokenSource();
-         return ts == null ? null : ts.getText(getBeginOffset(), getEndOffset());
+         int beginOffset = getBeginOffset();
+         int endOffset = getEndOffset();
+         return ts == null || beginOffset<=0 && endOffset <=0 ? null : ts.getText(beginOffset, endOffset);
     }
 
     protected ${settings.baseTokenClassName}() {}
@@ -492,6 +511,26 @@ public class ${settings.baseTokenClassName} ${implements} {
     }
 [/#if]
 
+    public static ${settings.baseTokenClassName} newToken(TokenType type, ${settings.lexerClassName} tokenSource) {
+        ${settings.baseTokenClassName} result = newToken(type, tokenSource, 0, 0);
+        [#if settings.tokenChaining]
+        result.inserted = true;
+        [/#if]
+        [#if settings.faultTolerant]
+        result.virtual = true;
+        [/#if]
+        return result;
+    }
+
+    public static ${settings.baseTokenClassName} newToken(TokenType type, String image, ${settings.lexerClassName} tokenSource) {
+        ${settings.baseTokenClassName} newToken = newToken(type, tokenSource);
+        [#if !settings.minimalToken]
+           newToken.setCachedImage(image);
+        [/#if]
+        return newToken;
+    }
+
+
     public static ${settings.baseTokenClassName} newToken(TokenType type, ${settings.lexerClassName} tokenSource, int beginOffset, int endOffset) {
         [#if settings.treeBuildingEnabled]
            switch(type) {
@@ -607,12 +646,7 @@ public class ${settings.baseTokenClassName} ${implements} {
      */
     @Deprecated
     public String getImage() {
-      [#if !settings.minimalToken]
-        if (cachedImage != null) {
-            return cachedImage;
-        }
-      [/#if]
-      return getSource();
+      return toString();
     }
 
 
@@ -623,6 +657,14 @@ public class ${settings.baseTokenClassName} ${implements} {
             return cachedImage;
         }
       [/#if]
+      String result = getSource();
+      if (result == null) {
+          result = getType().getLiteralString();
+      }
+      String literalString = getType().getLiteralString();
+      if (literalString != null) {
+        return literalString;
+      }
       return getSource();
     }
 }
