@@ -5,6 +5,7 @@ import static org.congocc.core.LexerData.isJavaIdentifier;
 import org.congocc.parser.tree.CodeBlock;
 import org.congocc.parser.tree.TokenProduction;
 import org.congocc.parser.Node;
+import org.congocc.parser.TokenSource;
 import org.congocc.parser.tree.BaseNode;
 import org.congocc.parser.tree.RegexpSequence;
 
@@ -14,6 +15,20 @@ import org.congocc.parser.tree.RegexpSequence;
  */
 
 public abstract class RegularExpression extends BaseNode {
+
+    private Grammar grammar;
+
+    public Grammar getGrammar() {
+        if (grammar == null) {
+            TokenSource ts = getTokenSource();
+            if (ts != null) grammar = ts.getGrammar();
+        }
+        return grammar;
+    }
+
+    public void setGrammar(Grammar grammar) {
+        this.grammar = grammar;
+    }
 
     private LexicalStateData newLexicalState;
 

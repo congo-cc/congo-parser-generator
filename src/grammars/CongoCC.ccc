@@ -111,11 +111,7 @@ INJECT PARSER_CLASS :
     import org.congocc.parser.python.PythonParser;
     import org.congocc.parser.python.ast.Module;
 {
-    Grammar grammar;
-
-    void OPEN_NODE_HOOK(Node n) {
-        n.setTokenSource(token_source);
-    }
+    private Grammar grammar;
 
     public PARSER_CLASS(Grammar grammar, Path path, Map<String, String> definedSymbols) throws IOException {
         this(path.toString(), path);
@@ -178,11 +174,6 @@ INJECT PARSER_CLASS :
     public Errors getErrors() {
         return grammar.getErrors();
     }
-
-    public void openNodeScopeHook(Node n) {
-        n.setTokenSource(token_source);
-    }
-
 }
 
 <IN_UNPARSED_CODE_BLOCK> TOKEN :
@@ -207,22 +198,6 @@ INJECT BASE_NODE_CLASS :
     @SuppressWarnings("unused")
     implements Node;
 {
-    Grammar grammar;
-
-    public Grammar getGrammar() {
-        if (grammar == null) { 
-            TokenSource ts = getTokenSource();
-            if (ts != null) {
-                grammar = ts.getGrammar();
-            }
-        }
-        return grammar;
-    }
-
-    public void setGrammar(Grammar grammar) {
-        this.grammar = grammar;
-    }
-
     public AppSettings getAppSettings() {
         return getGrammar().getAppSettings();
     }
@@ -439,9 +414,9 @@ INJECT interface Node :
    import org.congocc.core.Grammar;
 {
     default Grammar getGrammar() {
-        return getTokenSource().getGrammar();
+        TokenSource ts = getTokenSource();
+        return ts == null ? null : ts.getGrammar();
     }
-    void setGrammar(Grammar grammar);
     default Node getNamedChild(String name) { return null; }
     default void setNamedChild(String name, Node node) {}
     default List<Node> getNamedChildList(String name) { return null; }
@@ -454,19 +429,6 @@ INJECT Token :
     import org.congocc.app.Errors;
     import org.congocc.core.Grammar;
 {
-    private Grammar grammar;
-
-    public Grammar getGrammar() {
-        if (grammar == null) {
-            grammar = tokenSource.getGrammar();
-        }
-        return grammar;
-    }
-
-    public void setGrammar(Grammar grammar) {
-         this.grammar = grammar;
-    }
-
     public AppSettings getAppSettings() {
         return getGrammar().getAppSettings();
     }
