@@ -3,9 +3,9 @@
   */
 package ${settings.parserPackage};
 
-[#if settings.treeBuildingEnabled]
-import ${settings.nodePackage}.*;
-[/#if]
+#if settings.treeBuildingEnabled
+  import ${settings.nodePackage}.*;
+#endif
 
 import java.util.ArrayList;
 import java.util.Collections;
@@ -13,9 +13,9 @@ import java.util.Iterator;
 import java.util.List;
 
 #if settings.rootAPIPackage
-import ${settings.rootAPIPackage}.Node;
-import ${settings.rootAPIPackage}.TokenSource;
-/#if
+  import ${settings.rootAPIPackage}.Node;
+  import ${settings.rootAPIPackage}.TokenSource;
+#endif
 
 #var implements = "implements CharSequence"
 
@@ -23,8 +23,8 @@ import ${settings.rootAPIPackage}.TokenSource;
     #set implements = "implements CharSequence, Node.TerminalNode"
     #if settings.rootAPIPackage
        import ${settings.rootAPIPackage}.Node;
-    /#if
-/#if
+    #endif
+#endif
 
 public class ${settings.baseTokenClassName} ${implements} {
 
