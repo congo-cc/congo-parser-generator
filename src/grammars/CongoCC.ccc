@@ -80,12 +80,14 @@ TOKEN :
 INCLUDE "Lexical.inc.ccc"
 INCLUDE "JavaInternal.ccc"
 
-INJECT LEXER_CLASS :
+INJECT TokenSource :
    import org.congocc.core.Grammar;
 {
-
   @Property Grammar grammar;
+}
 
+INJECT LEXER_CLASS :
+{
   // Set whether to generate unparsed tokens for WHITESPACE
   static public void keepWhitespace(boolean b) {
     if (b) {
@@ -112,7 +114,7 @@ INJECT PARSER_CLASS :
     Grammar grammar;
 
     void OPEN_NODE_HOOK(Node n) {
-        n.setGrammar(grammar);
+        n.setTokenSource(token_source);
     }
 
     public PARSER_CLASS(Grammar grammar, Path path, Map<String, String> definedSymbols) throws IOException {
@@ -178,7 +180,7 @@ INJECT PARSER_CLASS :
     }
 
     public void openNodeScopeHook(Node n) {
-        n.setGrammar(grammar);
+        n.setTokenSource(token_source);
     }
 
 }
@@ -208,12 +210,10 @@ INJECT BASE_NODE_CLASS :
     Grammar grammar;
 
     public Grammar getGrammar() {
-        if (grammar == null) { // temporary kludge
-            BASE_NODE_CLASS parent = (BASE_NODE_CLASS) getParent();
-            while (grammar == null && parent != null) {
-                grammar = ((BaseNode)getParent()).grammar;
-                if (grammar != null) break;
-                parent = (BASE_NODE_CLASS) getParent();
+        if (grammar == null) { 
+            TokenSource ts = getTokenSource();
+            if (ts != null) {
+                grammar = ts.getGrammar();
             }
         }
         return grammar;
@@ -315,15 +315,14 @@ INJECT PARSER_CLASS : {
        _LEXICAL_STATE);
 
     private Token TOKEN_HOOK(Token t) {
-        if (CongoCCKeyWords.contains(t.getType())) {
-            if (isInProduction("CompilationUnit", "ClassOrInterfaceBody", "BlockStatement", "TreeBuildingAnnotation")) {
-                Token id = Token.newToken(IDENTIFIER, t.toString(), token_source);
-                id.setGrammar(t.getGrammar());
-                id.copyLocationInfo(t);
-                return id;
-            }
+        if (CongoCCKeyWords.contains(t.getType())
+            && isInProduction("CompilationUnit", 
+                              "ClassOrInterfaceBody", 
+                              "BlockStatement", 
+                              "TreeBuildingAnnotation")) 
+        {
+           t = t.replaceType(IDENTIFIER);
         }
-        t.setGrammar(getGrammar());
         return t;
     }
 }
@@ -439,11 +438,13 @@ INJECT Identifier :
 INJECT interface Node :
    import org.congocc.core.Grammar;
 {
-    Grammar getGrammar();
+    default Grammar getGrammar() {
+        return getTokenSource().getGrammar();
+    }
     void setGrammar(Grammar grammar);
     default Node getNamedChild(String name) { return null; }
     default void setNamedChild(String name, Node node) {}
-    default  List<Node> getNamedChildList(String name) { return null; }
+    default List<Node> getNamedChildList(String name) { return null; }
     default void addToNamedChildList(String name, Node node) {}
 }
 
