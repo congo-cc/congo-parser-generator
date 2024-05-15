@@ -272,7 +272,10 @@ abstract public class TokenSource implements CharSequence
 
 /#if
     public void cacheToken(${BaseToken} tok) {
-        int beginOffset = tok.getBeginOffset(), endOffset = tok.getEndOffset();
+        int beginOffset = tok.getBeginOffset();
+        // If the token is already cached, we just jump out. (I think this is okay...)
+        if (tokenLocationTable[beginOffset] == tok) return;
+        int endOffset = tok.getEndOffset();
         tokenOffsets.set(beginOffset);
         if (endOffset > beginOffset + 1) {
            // This handles some weird usage cases where token locations
