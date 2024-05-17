@@ -280,6 +280,7 @@ class BaseTestCase(unittest.TestCase):
         """
         Test capturing unparsed tokens in the AST
         """
+        self.maxDiff = None
         wd = self.workdir
         sd = os.path.join('tests', 'unparsed')
         self.copy_files(sd, wd)
@@ -299,15 +300,15 @@ class BaseTestCase(unittest.TestCase):
         OUT = '''
 <CompilationUnit (2, 1)-(8, 2)>
   <NamespaceDeclaration (2, 1)-(8, 1)>
-    namespace
+    KeyWord: (2, 1) - (2, 9): namespace
     <QualifiedIdentifier (2, 11)-(2, 17)>
-      foo
-      .
-      bar
+      Identifier: (2, 11) - (2, 13): foo
+      Operator: (2, 14) - (2, 14): .
+      Identifier: (2, 15) - (2, 17): bar
     <NamespaceBody (2, 19)-(8, 1)>
-      {
-      }
-  EOF
+      Delimiter: (2, 19) - (2, 19): {
+      Delimiter: (8, 1) - (8, 1): }
+  Token: (9, 1) - (8, 2): EOF
 '''.strip()
         self.assertEqual(out, OUT)
         p = run_command('java CSParse valid.cs', cwd=wd, out=True, check=False)
@@ -316,20 +317,20 @@ class BaseTestCase(unittest.TestCase):
         OUT = '''
 <CompilationUnit (3, 1)-(11, 2)>
   <NamespaceDeclaration (3, 1)-(11, 1)>
-    namespace
+    KeyWord: (3, 1) - (3, 9): namespace
     <QualifiedIdentifier (3, 11)-(3, 17)>
-      foo
-      .
-      bar
+      Identifier: (3, 11) - (3, 13): foo
+      Operator: (3, 14) - (3, 14): .
+      Identifier: (3, 15) - (3, 17): bar
     <NamespaceBody (3, 19)-(11, 1)>
-      {
+      Delimiter: (3, 19) - (3, 19): {
       <ClassDeclaration (6, 5)-(6, 16)>
-        class
-        Foo
-        {
-        }
-      }
-  EOF
+        KeyWord: (6, 5) - (6, 9): class
+        Identifier: (6, 11) - (6, 13): Foo
+        Delimiter: (6, 15) - (6, 15): {
+        Delimiter: (6, 16) - (6, 16): }
+      Delimiter: (11, 1) - (11, 1): }
+  Token: (12, 1) - (11, 2): EOF
 '''.strip()
         self.assertEqual(decode_and_clean(p.stdout), OUT)
 
@@ -344,21 +345,21 @@ class BaseTestCase(unittest.TestCase):
         OUT = '''
 <CompilationUnit (1, 1)-(8, 2)>
   <NamespaceDeclaration (1, 1)-(8, 1)>
-    #pragma warn disable 999
-    namespace
+    PPLine: (1, 1) - (1, 25): #pragma warn disable 999
+    KeyWord: (2, 1) - (2, 9): namespace
     <QualifiedIdentifier (2, 11)-(2, 17)>
-      foo
-      .
-      bar
+      Identifier: (2, 11) - (2, 13): foo
+      Operator: (2, 14) - (2, 14): .
+      Identifier: (2, 15) - (2, 17): bar
     <NamespaceBody (2, 19)-(8, 1)>
-      {
-      #if true
-      /* This is a comment. */
-      #else
-      // This is another.
-      #endif
-      }
-  EOF
+      Delimiter: (2, 19) - (2, 19): {
+      PPLine: (3, 1) - (3, 9): #if true
+      Comment: (4, 5) - (4, 28): /* This is a comment. */
+      PPLine: (5, 1) - (5, 6): #else
+      IGNORED_LINE: (6, 1) - (6, 24): // This is another.
+      PPLine: (7, 1) - (7, 7): #endif
+      Delimiter: (8, 1) - (8, 1): }
+  Token: (9, 1) - (8, 2): EOF
 '''.strip()
         self.assertEqual(out, OUT)
         p = run_command('java CSParse invalid1.cs', cwd=wd, out=True, check=False)
