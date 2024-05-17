@@ -652,19 +652,15 @@ public class ${settings.baseTokenClassName} ${implements} {
 
     @Override
     public String toString() {
-      [#if !settings.minimalToken]
+      #if !settings.minimalToken
         if (cachedImage != null) {
             return cachedImage;
         }
-      [/#if]
+      #endif
       String result = getSource();
       if (result == null) {
           result = getType().getLiteralString();
       }
-      String literalString = getType().getLiteralString();
-      if (literalString != null) {
-        return literalString;
-      }
-      return getSource();
+      return result;
     }
 }
