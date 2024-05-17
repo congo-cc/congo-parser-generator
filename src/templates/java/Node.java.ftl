@@ -657,9 +657,20 @@ public interface Node extends List<Node> {
         String output;
 
         if (this instanceof TerminalNode) {
-            if (this.getType().isEOF()) output = "EOF";
-            else if (this.getType().isInvalid()) output = "Lexically Invalid Input:" + getImage();
-            else output = toString().trim();
+            if (this.getType().isEOF()) {
+                output = "EOF";
+            }
+            else if (this.getType().isInvalid()) {
+                output = "Lexically Invalid Input:" + getImage();
+            }
+            else {
+                output = toString().trim();
+            }
+            output = String.format("%s: (%d, %d) - (%d, %d): %s",
+                                   getClass().getSimpleName(),
+                                   getBeginLine(), getBeginColumn(),
+                                   getEndLine(), getEndColumn(),
+                                   output);
         }
         else {
             output = String.format("<%s (%d, %d)-(%d, %d)>",
