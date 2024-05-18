@@ -5,6 +5,10 @@ import java.util.regex.Pattern;
 
 import org.congocc.parser.Node;
 import org.congocc.parser.python.ast.*;
+// The following import is necessary to compile 
+// against JDK>8, since otherwise, it is ambiguous whether
+// one is referring to java.lang.Module
+import org.congocc.parser.python.ast.Module;
 
 public class PythonFormatter {
     private final Module module;

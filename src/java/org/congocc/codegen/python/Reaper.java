@@ -9,6 +9,7 @@ import java.util.stream.Collectors;
 
 import org.congocc.parser.Node;
 import org.congocc.parser.python.ast.*;
+import org.congocc.parser.python.ast.Module;
 
 public class Reaper {
     private static final Logger logger = Logger.getLogger("reaper");

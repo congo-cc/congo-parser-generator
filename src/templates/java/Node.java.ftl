@@ -661,7 +661,7 @@ public interface Node extends List<Node> {
                 output = "EOF";
             }
             else if (this.getType().isInvalid()) {
-                output = "Lexically Invalid Input:" + getImage();
+                output = "Lexically Invalid Input:" + toString();
             }
             else {
                 output = toString().trim();
