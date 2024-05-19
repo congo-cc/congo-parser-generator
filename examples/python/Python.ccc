@@ -385,7 +385,11 @@ TypeParameter :
 
 TypeAlias :
     ASSERT {checkNextTokenImage("type")}#
-    ACTIVATE_TOKENS TYPE (<TYPE>)
+    (
+      <TYPE>
+      |
+      <NAME> {lastConsumedToken = lastConsumedToken.replaceType(TokenType.TYPE);}
+    )
     <NAME>
     [TypeParameters]
     <ASSIGN>
@@ -505,35 +509,33 @@ Assignment :
 // Below this point is the new pattern matching stuff
 // introduced in Python 3.10
 
-MatchStatementLA#scan :
-   <MATCH>
-   |
-   <NAME>
-   ASSERT {getToken(0).toString().equals("match")}
-   SubjectExpression
-   <COLON>
-;
-
 MatchStatement :
-  SCAN MatchStatementLA =>
-   ACTIVATE_TOKENS MATCH (<MATCH>)
+   ASSERT {checkNextTokenImage("match")}#
+   (
+      <MATCH>
+      |
+      <NAME> {lastConsumedToken = lastConsumedToken.replaceType(TokenType.MATCH);}
+   )
    SubjectExpression
    <COLON>
+   =>||
    <NEWLINE>
    <INDENT>
-   ACTIVATE_TOKENS CASE (CaseBlock)+
+   (CaseBlock)+
    <DEDENT>
 ;
 
 CaseBlock :
-    <CASE>
-    DEACTIVATE_TOKENS CASE
+    SCAN 0 {checkNextTokenImage("case")}# =>
     (
-      Patterns
-      [<IF> NamedExpression]
-      <COLON>
-      Block
+        <CASE>
+        |
+        <NAME> {lastConsumedToken = lastConsumedToken.replaceType(TokenType.CASE);}
     )
+    Patterns
+    [<IF> NamedExpression]
+    <COLON>
+    Block
 ;
 
 
@@ -795,7 +797,7 @@ PlaceHolder :
       (<COLON>|<RBRACE>)
    )
    [
-      SCAN 1 {getToken(0).getType() == COLON}# =>
+      SCAN 0 {getToken(0).getType() == COLON}# =>
       (
          <TEXT_IN_FSTRING>
          |

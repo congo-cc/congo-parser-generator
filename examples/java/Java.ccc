@@ -1,7 +1,7 @@
  // This is the Java grammar that is used (via an INCLUDE) in the CongoCC
  // tool itself but it can be used on its own, and you are free to use it
  // in your own projects. It supports the stable feature set of the Java
- // language up to JDK 2.
+ // language up to JDK 22.
  // This grammar is a forward evolution of the sample Java grammar originally
  // included in the legacy JavaCC distribution in 1997 or thereabouts, but is
  // close to being a total rewrite, and serves as a kind of showcase for the latest
@@ -15,7 +15,7 @@ DEFAULT_LEXICAL_STATE=JAVA;
 // The following tokens are only activated at key points whether
 // they are needed.
 DEACTIVATE_TOKENS=RECORD, VAR, YIELD, SEALED, NON_SEALED, PERMITS, MODULE,
-                  OPEN, OPENS, PROVIDES, REQUIRES, EXPORTS, USES, WITH, 
+                  OPEN, OPENS, PROVIDES, REQUIRES, EXPORTS, USES, WITH,
                   TO, TRANSITIVE, WHEN ;
 
 #if FT
@@ -277,7 +277,11 @@ InterfaceDeclaration :
 
 PermitsList :
    SCAN 0 {checkNextTokenImage("permits")}# =>
-   ACTIVATE_TOKENS PERMITS (<PERMITS>)
+   (
+      <PERMITS>
+      |
+      <IDENTIFIER> {lastConsumedToken = lastConsumedToken.replaceType(TokenType.PERMITS);}
+   )
    ObjectType
    (<COMMA> ObjectType)*
 ;
@@ -339,7 +343,11 @@ RecordDeclaration :
   Modifiers
   ASSERT {checkNextTokenImage("record") && getTokenType(2) == IDENTIFIER}#
   =>||
-  ACTIVATE_TOKENS RECORD (<RECORD>)
+  (
+    <RECORD>
+    |
+    <IDENTIFIER> {lastConsumedToken = lastConsumedToken.replaceType(TokenType.RECORD);}
+  )
   /name/=TypeIdentifier //used in Translator?
   [TypeParameters]
   RecordHeader
@@ -1038,8 +1046,12 @@ NoVarDeclaration :
 VarDeclaration :
   {permissibleModifiers = EnumSet.of(FINAL);}
   @modifiers:=Modifiers
-  ASSERT {checkNextTokenImage("var") && getTokenType(2) == IDENTIFIER} =>||
-  ACTIVATE_TOKENS VAR (<VAR>)
+  ASSERT {checkNextTokenImage("var") && (getTokenType(2) == IDENTIFIER||getTokenType(2)==UNDERSCORE)} =>||
+  (
+     <VAR>
+     |
+     <IDENTIFIER> {lastConsumedToken = lastConsumedToken.replaceType(TokenType.VAR);}
+  )
   (<IDENTIFIER>|<UNDERSCORE>)
   [<ASSIGN> Expression]
 ;
@@ -1114,8 +1126,6 @@ CasePattern :
     RecordPattern
     |
     TypePattern
-//    |
-//    NullPattern
 ;
 
 NullPattern# : <NULL> [<COMMA> <_DEFAULT>] ;
@@ -1147,7 +1157,12 @@ TypePattern#LocalVariableDeclaration :
 WhenClause :
    SCAN 0 {checkNextTokenImage("when")}#
    =>
-   ACTIVATE_TOKENS WHEN (<WHEN>) Expression
+   (
+      <WHEN>
+      |
+      <IDENTIFIER> {lastConsumedToken = lastConsumedToken.replaceType(TokenType.WHEN);}
+   )
+   Expression
 ;
 
 ClassicCaseStatement :
@@ -1231,7 +1246,11 @@ BreakStatement :
 
 YieldStatement :
    ASSERT {checkNextTokenImage("yield")&&isInProduction("SwitchExpression")}#
-   ACTIVATE_TOKENS YIELD (<YIELD>)
+   (
+      <YIELD>
+      |
+      <IDENTIFIER> {lastConsumedToken = lastConsumedToken.replaceType(TokenType.YIELD);}
+   )
    Expression <SEMICOLON> =>||
 ;
 
@@ -1411,8 +1430,12 @@ LambdaParameter :
       Type (Annotation)* <VAR_ARGS> =>|| <IDENTIFIER>
       |
       (
-        SCAN {checkNextTokenImage("var")}#
-        => ACTIVATE_TOKENS VAR (<VAR>)
+        SCAN {checkNextTokenImage("var")}# =>
+        (
+          <VAR>
+          |
+          <IDENTIFIER> {lastConsumedToken = lastConsumedToken.replaceType(TokenType.VAR);}
+        )
         |
         Type
       )
