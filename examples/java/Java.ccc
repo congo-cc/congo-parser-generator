@@ -1,7 +1,7 @@
  // This is the Java grammar that is used (via an INCLUDE) in the CongoCC
  // tool itself but it can be used on its own, and you are free to use it
  // in your own projects. It supports the stable feature set of the Java
- // language up to JDK 17.
+ // language up to JDK 2.
  // This grammar is a forward evolution of the sample Java grammar originally
  // included in the legacy JavaCC distribution in 1997 or thereabouts, but is
  // close to being a total rewrite, and serves as a kind of showcase for the latest
@@ -265,7 +265,7 @@ InterfaceDeclaration :
   {permissibleModifiers = EnumSet.of(PUBLIC, PROTECTED,
                                      PRIVATE, ABSTRACT,
                                      STATIC, STRICTFP, SEALED,
-                                     NON_SEALED);}#
+                                     NON_SEALED);}
   Modifiers
   <INTERFACE> =>||
   /name/=TypeIdentifier // used in Translator?
@@ -310,7 +310,7 @@ ImplementsList :
 EnumDeclaration :
    {permissibleModifiers = EnumSet.of(PUBLIC, PROTECTED,
                                       PRIVATE, ABSTRACT,
-                                      FINAL, STATIC, STRICTFP);}#
+                                      FINAL, STATIC, STRICTFP);}
    Modifiers
    <ENUM> =>||
 // @name:=TypeIdentifier
@@ -371,7 +371,7 @@ RecordBody :
 ;
 
 CompactConstructorDeclaration :
-  {permissibleModifiers = EnumSet.of(PUBLIC, PROTECTED, PRIVATE);}#
+  {permissibleModifiers = EnumSet.of(PUBLIC, PROTECTED, PRIVATE);}
   (Modifiers)
   /name/=TypeIdentifier //used in Translator?
   <LBRACE> =>||
@@ -429,14 +429,20 @@ INJECT MethodDeclaration : implements ClassOrInterfaceBodyDeclaration
 FieldDeclaration :
   {permissibleModifiers = EnumSet.of(PUBLIC, PROTECTED,
                                      PRIVATE, STATIC, FINAL,
-                                     TRANSIENT, VOLATILE);}#
+                                     TRANSIENT, VOLATILE);}
   Modifiers
   Type VariableDeclarator ( <COMMA> VariableDeclarator )* <SEMICOLON>
 ;
 
 VariableDeclarator# : VariableDeclaratorId [ <ASSIGN> VariableInitializer ] ;
 
-VariableDeclaratorId : @varName := <IDENTIFIER> ( (Annotation)* <LBRACKET> <RBRACKET> )* ; // why can't I make this a VariableDeclaratorId# node? (test-parser fails)
+VariableDeclaratorId : 
+    @varName := <IDENTIFIER> 
+    ( (Annotation)* <LBRACKET> <RBRACKET> )* 
+    |
+    SCAN ~\.\FieldDeclaration =>
+    <UNDERSCORE>
+; // why can't I make this a VariableDeclaratorId# node? (test-parser fails)
 
 VariableInitializer#void : ArrayInitializer | Expression ;
 
@@ -485,7 +491,7 @@ FormalParameters : <LPAREN> [ FormalParameter ( <COMMA> FormalParameter )* ] <RP
 FormalParameter : {permissibleModifiers = EnumSet.of(FINAL);}# @modifiers:=Modifiers Type [ (Annotation)* <VAR_ARGS> ] VariableDeclaratorId ;
 
 ConstructorDeclaration :
-  {permissibleModifiers = EnumSet.of(PUBLIC, PROTECTED, PRIVATE);}#
+  {permissibleModifiers = EnumSet.of(PUBLIC, PROTECTED, PRIVATE);}
   @modifiers:=Modifiers
   [ TypeParameters ]
   /name/=TypeIdentifier @formals := FormalParameters =>||
@@ -1024,17 +1030,17 @@ LocalVariableDeclaration#abstract :
 ;
 
 NoVarDeclaration :
-   {permissibleModifiers = EnumSet.of(FINAL);}#
+   {permissibleModifiers = EnumSet.of(FINAL);}
    @modifiers := Modifiers
    Type =>|| VariableDeclarator ( <COMMA> VariableDeclarator )*
 ;
 
 VarDeclaration :
-  {permissibleModifiers = EnumSet.of(FINAL);}#
+  {permissibleModifiers = EnumSet.of(FINAL);}
   @modifiers:=Modifiers
   ASSERT {checkNextTokenImage("var") && getTokenType(2) == IDENTIFIER} =>||
   ACTIVATE_TOKENS VAR (<VAR>)
-  <IDENTIFIER>
+  (<IDENTIFIER>|<UNDERSCORE>)
   [<ASSIGN> Expression]
 ;
 
@@ -1044,10 +1050,12 @@ LocalVariableDeclarationLA#scan :
    (
      Type
      |
+     <VAR>
+     |
      <IDENTIFIER>
      ASSERT {currentLookaheadToken.toString().equals("var")}
    )
-   <IDENTIFIER>
+   (<IDENTIFIER>|<UNDERSCORE>)
 ;
 
 EmptyStatement# : <SEMICOLON> ;
@@ -1101,10 +1109,16 @@ ClassicSwitchLabel :
 ;
 
 CasePattern :
+    NullPattern
+    |
     RecordPattern
     |
     TypePattern
+//    |
+//    NullPattern
 ;
+
+NullPattern# : <NULL> [<COMMA> <_DEFAULT>] ;
 
 RecordPattern :
     ReferenceType 
@@ -1125,9 +1139,7 @@ RecordPattern :
 ;
 
 
-TypePattern :
-  <NULL> [<COMMA> <_DEFAULT>]
-  |
+TypePattern#LocalVariableDeclaration :
   {permissibleModifiers = EnumSet.of(FINAL);}#
   Modifiers Type (<IDENTIFIER>|<UNDERSCORE>)
 ;
@@ -1385,8 +1397,8 @@ LambdaLHS : (<IDENTIFIER> | SimpleLambdaLHS | LambdaParameters) <LAMBDA> =>|| ;
 
 SimpleLambdaLHS #void :
    SCAN 3
-   <LPAREN> <IDENTIFIER>
-   (<COMMA> <IDENTIFIER>)*
+   <LPAREN> (<IDENTIFIER>|<UNDERSCORE>)
+   (<COMMA> (<IDENTIFIER>|<UNDERSCORE>))*
    <RPAREN>
 ;
 
@@ -1404,7 +1416,11 @@ LambdaParameter :
         |
         Type
       )
-      <IDENTIFIER>((Annotation)* <LBRACKET><RBRACKET>)*
+      (
+        <IDENTIFIER>((Annotation)* <LBRACKET><RBRACKET>)*
+        |
+        <UNDERSCORE>
+      )
     )
 ;
 
