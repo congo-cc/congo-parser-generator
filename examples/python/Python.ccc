@@ -388,7 +388,11 @@ TypeAlias :
     (
       <TYPE>
       |
-      <NAME> {lastConsumedToken = lastConsumedToken.replaceType(TokenType.TYPE);}
+      <NAME> 
+      {
+         lastConsumedToken = lastConsumedToken.replaceType(TokenType.TYPE);
+         pokeNode(lastConsumedToken);
+      }
     )
     <NAME>
     [TypeParameters]
@@ -514,7 +518,11 @@ MatchStatement :
    (
       <MATCH>
       |
-      <NAME> {lastConsumedToken = lastConsumedToken.replaceType(TokenType.MATCH);}
+      <NAME> 
+      {
+         lastConsumedToken = lastConsumedToken.replaceType(TokenType.MATCH);
+         pokeNode(lastConsumedToken);
+      }
    )
    SubjectExpression
    <COLON>
@@ -530,7 +538,11 @@ CaseBlock :
     (
         <CASE>
         |
-        <NAME> {lastConsumedToken = lastConsumedToken.replaceType(TokenType.CASE);}
+        <NAME> 
+        {
+            lastConsumedToken = lastConsumedToken.replaceType(TokenType.CASE);
+            pokeNode(lastConsumedToken);
+        }
     )
     Patterns
     [<IF> NamedExpression]

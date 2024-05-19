@@ -280,7 +280,11 @@ PermitsList :
    (
       <PERMITS>
       |
-      <IDENTIFIER> {lastConsumedToken = lastConsumedToken.replaceType(TokenType.PERMITS);}
+      <IDENTIFIER> 
+      {
+        lastConsumedToken = lastConsumedToken.replaceType(TokenType.PERMITS);
+        pokeNode(lastConsumedToken);
+      }
    )
    ObjectType
    (<COMMA> ObjectType)*
@@ -346,7 +350,11 @@ RecordDeclaration :
   (
     <RECORD>
     |
-    <IDENTIFIER> {lastConsumedToken = lastConsumedToken.replaceType(TokenType.RECORD);}
+    <IDENTIFIER> 
+    {
+      lastConsumedToken = lastConsumedToken.replaceType(TokenType.RECORD);
+      pokeNode(lastConsumedToken);
+    }
   )
   /name/=TypeIdentifier //used in Translator?
   [TypeParameters]
@@ -1050,7 +1058,11 @@ VarDeclaration :
   (
      <VAR>
      |
-     <IDENTIFIER> {lastConsumedToken = lastConsumedToken.replaceType(TokenType.VAR);}
+     <IDENTIFIER> 
+     {
+         lastConsumedToken = lastConsumedToken.replaceType(TokenType.VAR);
+         pokeNode(lastConsumedToken);
+     }
   )
   (<IDENTIFIER>|<UNDERSCORE>)
   [<ASSIGN> Expression]
@@ -1160,7 +1172,11 @@ WhenClause :
    (
       <WHEN>
       |
-      <IDENTIFIER> {lastConsumedToken = lastConsumedToken.replaceType(TokenType.WHEN);}
+      <IDENTIFIER> 
+      {
+        lastConsumedToken = lastConsumedToken.replaceType(TokenType.WHEN);
+        pokeNode(lastConsumedToken);
+      }
    )
    Expression
 ;
@@ -1249,7 +1265,11 @@ YieldStatement :
    (
       <YIELD>
       |
-      <IDENTIFIER> {lastConsumedToken = lastConsumedToken.replaceType(TokenType.YIELD);}
+      <IDENTIFIER> 
+      {
+        lastConsumedToken = lastConsumedToken.replaceType(TokenType.YIELD);
+        pokeNode(lastConsumedToken);
+      }
    )
    Expression <SEMICOLON> =>||
 ;
@@ -1434,7 +1454,11 @@ LambdaParameter :
         (
           <VAR>
           |
-          <IDENTIFIER> {lastConsumedToken = lastConsumedToken.replaceType(TokenType.VAR);}
+          <IDENTIFIER> 
+          {
+            lastConsumedToken = lastConsumedToken.replaceType(TokenType.VAR);
+            pokeNode(lastConsumedToken);
+          }
         )
         |
         Type
