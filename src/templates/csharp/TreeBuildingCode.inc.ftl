@@ -35,6 +35,15 @@
         }
 
         //
+        // Replace the type of the last consumed token and poke it onto the
+        // stack.
+        //
+        protected void ReplaceTokenType(TokenType tt) {
+            LastConsumedToken = LastConsumedToken.ReplaceType(tt);
+            PokeNode(LastConsumedToken);
+        }
+
+        //
         // Pop and return a number of nodes. This can be perhaps optimized
         // at the expense of encapsulation (e.g. get a slice of the underlying
         // array)

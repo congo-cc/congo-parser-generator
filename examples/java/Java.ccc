@@ -280,10 +280,9 @@ PermitsList :
    (
       <PERMITS>
       |
-      <IDENTIFIER> 
+      <IDENTIFIER>
       {
-        lastConsumedToken = lastConsumedToken.replaceType(TokenType.PERMITS);
-        pokeNode(lastConsumedToken);
+        replaceTokenType(TokenType.PERMITS);
       }
    )
    ObjectType
@@ -350,10 +349,9 @@ RecordDeclaration :
   (
     <RECORD>
     |
-    <IDENTIFIER> 
+    <IDENTIFIER>
     {
-      lastConsumedToken = lastConsumedToken.replaceType(TokenType.RECORD);
-      pokeNode(lastConsumedToken);
+      replaceTokenType(TokenType.RECORD);
     }
   )
   /name/=TypeIdentifier //used in Translator?
@@ -452,9 +450,9 @@ FieldDeclaration :
 
 VariableDeclarator# : VariableDeclaratorId [ <ASSIGN> VariableInitializer ] ;
 
-VariableDeclaratorId : 
-    @varName := <IDENTIFIER> 
-    ( (Annotation)* <LBRACKET> <RBRACKET> )* 
+VariableDeclaratorId :
+    @varName := <IDENTIFIER>
+    ( (Annotation)* <LBRACKET> <RBRACKET> )*
     |
     SCAN ~\.\FieldDeclaration =>
     <UNDERSCORE>
@@ -1058,10 +1056,9 @@ VarDeclaration :
   (
      <VAR>
      |
-     <IDENTIFIER> 
+     <IDENTIFIER>
      {
-         lastConsumedToken = lastConsumedToken.replaceType(TokenType.VAR);
-         pokeNode(lastConsumedToken);
+        replaceTokenType(TokenType.VAR);
      }
   )
   (<IDENTIFIER>|<UNDERSCORE>)
@@ -1143,7 +1140,7 @@ CasePattern :
 NullPattern# : <NULL> [<COMMA> <_DEFAULT>] ;
 
 RecordPattern :
-    ReferenceType 
+    ReferenceType
     <LPAREN> =>||
     [
       SCAN ~(<RPAREN>) =>
@@ -1172,10 +1169,9 @@ WhenClause :
    (
       <WHEN>
       |
-      <IDENTIFIER> 
+      <IDENTIFIER>
       {
-        lastConsumedToken = lastConsumedToken.replaceType(TokenType.WHEN);
-        pokeNode(lastConsumedToken);
+        replaceTokenType(TokenType.WHEN);
       }
    )
    Expression
@@ -1265,10 +1261,9 @@ YieldStatement :
    (
       <YIELD>
       |
-      <IDENTIFIER> 
+      <IDENTIFIER>
       {
-        lastConsumedToken = lastConsumedToken.replaceType(TokenType.YIELD);
-        pokeNode(lastConsumedToken);
+        replaceTokenType(TokenType.YIELD);
       }
    )
    Expression <SEMICOLON> =>||
@@ -1454,10 +1449,9 @@ LambdaParameter :
         (
           <VAR>
           |
-          <IDENTIFIER> 
+          <IDENTIFIER>
           {
-            lastConsumedToken = lastConsumedToken.replaceType(TokenType.VAR);
-            pokeNode(lastConsumedToken);
+            replaceTokenType(TokenType.VAR);
           }
         )
         |
