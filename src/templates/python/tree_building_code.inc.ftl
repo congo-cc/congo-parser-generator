@@ -33,6 +33,14 @@
         self.current_node_scope.poke(n)
 
     #
+    # Replace the type of the last consumed token and poke it onto the
+    # stack.
+    #
+    def replace_token_type(self, tt):
+        self.last_consumed_token = self.last_consumed_token.replace_type(tt)
+        self.poke_node(self.last_consumed_token)
+
+    #
     # Pop and return a number of nodes. This can be perhaps optimized
     # at the expense of encapsulation (e.g. get a slice of the underlying
     # array)

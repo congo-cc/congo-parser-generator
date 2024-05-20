@@ -70,6 +70,14 @@
       	currentNodeScope.poke(n);
     }
 
+    /**
+     * Replace the type of the last consumed token and poke it onto the
+     * stack.
+     */
+    protected void replaceTokenType(TokenType tt) {
+        lastConsumedToken = lastConsumedToken.replaceType(tt);
+        pokeNode(lastConsumedToken);
+    }
 
 	/**
      * @return the number of Nodes on the tree-building stack in the current node
