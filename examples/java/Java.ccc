@@ -389,6 +389,7 @@ CompactConstructorDeclaration :
   (Modifiers)
   /name/=TypeIdentifier //used in Translator?
   <LBRACE> =>||
+  (SCAN ~(<RBRACE>|ExplicitConstructorInvocation) => BlockStatement)* // JEP 447
   [ ExplicitConstructorInvocation =>|| ]
   ( SCAN ~(<RBRACE>) => @statements += BlockStatement )*!
   <RBRACE>
@@ -511,6 +512,7 @@ ConstructorDeclaration :
   /name/=TypeIdentifier @formals := FormalParameters =>||
   [ ThrowsList ]
   <LBRACE>
+  (SCAN ~(<RBRACE>|ExplicitConstructorInvocation) => BlockStatement)* // JEP 447
   [ ExplicitConstructorInvocation =>||]
   ( SCAN ~(<RBRACE>) => @statements :+= BlockStatement )*!
   <RBRACE>
@@ -521,7 +523,7 @@ ExplicitConstructorInvocation :
   |
   // Is this 100% correct? I think so, but it is not quite what the
   // language spec says. Maybe need to revisit this.
-  (Name [<DOT><THIS> =>||] | Parentheses)
+  (Name [<DOT><THIS> =>||] | Parentheses [<DOT> =>|+1 Name][<DOT><THIS> =>||])
   <DOT> [TypeArguments] <SUPER> =>|+1 InvocationArguments <SEMICOLON>
 ;
 
