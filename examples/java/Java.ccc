@@ -389,7 +389,7 @@ CompactConstructorDeclaration :
   (Modifiers)
   /name/=TypeIdentifier //used in Translator?
   <LBRACE> =>||
-  (SCAN ~(<RBRACE>|ExplicitConstructorInvocation) => BlockStatement)* // JEP 447
+  //(SCAN ~(<RBRACE>|ExplicitConstructorInvocation) => BlockStatement)* // JEP 447
   [ ExplicitConstructorInvocation =>|| ]
   ( SCAN ~(<RBRACE>) => @statements += BlockStatement )*!
   <RBRACE>
@@ -512,7 +512,7 @@ ConstructorDeclaration :
   /name/=TypeIdentifier @formals := FormalParameters =>||
   [ ThrowsList ]
   <LBRACE>
-  (SCAN ~(<RBRACE>|ExplicitConstructorInvocation) => BlockStatement)* // JEP 447
+  //(SCAN ~(<RBRACE>|ExplicitConstructorInvocation) => BlockStatement)* // JEP 447
   [ ExplicitConstructorInvocation =>||]
   ( SCAN ~(<RBRACE>) => @statements :+= BlockStatement )*!
   <RBRACE>
@@ -719,9 +719,9 @@ InstanceOfExpression :
   [
     <INSTANCEOF>
     (
-      RecordPattern
+      LocalVariableDeclaration // This is a stable feature in JDK 16.
       |
-      TypePattern =>||
+      RecordPattern 
       |
       ReferenceType
     )
@@ -876,10 +876,10 @@ INJECT Parentheses : implements PrimaryExpression {
 ClassLiteral : (<VOID> | Type) <DOT> <CLASS> =>|| ;
 
 MethodReference :
-    ReferenceType
-    <DOUBLE_COLON> =>||
-    [TypeArguments]
-    (<IDENTIFIER>|<NEW>)
+    (Type | <SUPER>)
+     <DOUBLE_COLON> =>||
+     [TypeArguments]
+     (<IDENTIFIER>|<NEW>)
 ;
 
 Literal #void :
@@ -1124,6 +1124,8 @@ ClassicSwitchStatement :
 
 ClassicSwitchLabel :
   (
+   <CASE> <NULL> =>|+1 [<COMMA><_DEFAULT>]
+   |
    <CASE> CasePattern =>|| (<COMMA> CasePattern)* [WhenClause]
    |
    <CASE> Expression (<COMMA> Expression)*
@@ -1134,14 +1136,10 @@ ClassicSwitchLabel :
 ;
 
 CasePattern :
-    NullPattern
-    |
     RecordPattern
     |
     TypePattern
 ;
-
-NullPattern# : <NULL> [<COMMA> <_DEFAULT>] ;
 
 RecordPattern :
     ReferenceType
@@ -1194,6 +1192,8 @@ NewSwitchStatement :
 
 NewSwitchLabel :
   (
+   <CASE> <NULL> =>|| [<COMMA><_DEFAULT>]
+   |
    <CASE> CasePattern =>|| (<COMMA> CasePattern)* [WhenClause]
    |
    <CASE> Expression (<COMMA> Expression)*
