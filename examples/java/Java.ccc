@@ -719,9 +719,11 @@ InstanceOfExpression :
   [
     <INSTANCEOF>
     (
-      LocalVariableDeclaration // This is a stable feature in JDK 16.
+      RecordPattern
       |
-      Type
+      TypePattern =>||
+      |
+      ReferenceType
     )
   ]
 ;
@@ -874,10 +876,10 @@ INJECT Parentheses : implements PrimaryExpression {
 ClassLiteral : (<VOID> | Type) <DOT> <CLASS> =>|| ;
 
 MethodReference :
-    (Type | <SUPER>)
-     <DOUBLE_COLON> =>||
-     [TypeArguments]
-     (<IDENTIFIER>|<NEW>)
+    ReferenceType
+    <DOUBLE_COLON> =>||
+    [TypeArguments]
+    (<IDENTIFIER>|<NEW>)
 ;
 
 Literal #void :
