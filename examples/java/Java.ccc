@@ -397,7 +397,7 @@ CompactConstructorDeclaration :
 
 INJECT CompactConstructorDeclaration : extends ConstructorDeclaration
 
-EnumConstant :
+EnumConstant# :
   (Annotation)* <IDENTIFIER> [ InvocationArguments ] [ ClassOrInterfaceBody ]
 ;
 

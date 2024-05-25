@@ -272,8 +272,6 @@ public class ExpansionSequence extends Expansion {
             return false;
         if (getHasSeparateSyntacticLookahead())
             return false;
-//        if (this.isAlwaysEntered())
-//            return false;
         if (getHasScanLimit()) {
             return true;
         }
