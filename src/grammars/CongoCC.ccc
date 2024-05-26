@@ -1508,7 +1508,7 @@ Failure# :
    [
       [":"]
       exp=Expression
-      [";"]
+      [":"]
       |
       Block
    ]
