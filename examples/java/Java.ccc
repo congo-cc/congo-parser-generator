@@ -168,11 +168,12 @@ Modifiers :
     permissibleModifiers.contains(SEALED)
     &&
     (
-       checkNextTokenImage("sealed")
+       checkNextTokenImage("sealed","non-sealed")
        ||
        checkNextTokenImage("non")
          && "-".equals(tokenImage(2))
          && "sealed".equals(tokenImage(3))
+         && getToken(3).getBeginOffset() == getToken(1).getEndOffset() + 1
     )
   }# =>
   ACTIVATE_TOKENS SEALED, NON_SEALED (<SEALED>|<NON_SEALED>)

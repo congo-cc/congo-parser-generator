@@ -312,6 +312,17 @@ public interface Node extends List<Node> {
           return result;
       }
 
+      default List<Node> children(Predicate<? super Node> predicate) {
+          List<Node> result = new ArrayList<>();
+          for (int i = 0; i < size(); i++) {
+               Node child = get(i);
+               if (predicate == null || predicate.test(child)) {
+                  result.add(child);
+               }
+          }
+          return result;
+      }
+
       default public List<? extends TerminalNode> getAllTokens(boolean includeCommentTokens) {
         List<TerminalNode> result = new ArrayList<>();
         for (Node child : this) {
@@ -449,7 +460,7 @@ public interface Node extends List<Node> {
         return firstChildOfType(clazz, null);
     }
 
-    default <T> T firstChildOfType(Class<T> clazz, Predicate<T> pred) {
+    default <T> T firstChildOfType(Class<T> clazz, Predicate<? super T> pred) {
         for (int i = 0; i < size(); i++) {
             Node child = get(i);
             if (clazz.isInstance(child)) {
@@ -460,7 +471,7 @@ public interface Node extends List<Node> {
         return null;
     }
 
-    default Node firstDescendantOfType(NodeType type, Predicate<Node> pred) {
+    default Node firstDescendantOfType(NodeType type, Predicate<? super Node> pred) {
          for (int i = 0; i < size(); i++) {
              Node child = get(i);
              if (child.getType() == type) {
@@ -485,7 +496,7 @@ public interface Node extends List<Node> {
         return null;
     }
 
-    default <T extends Node>T firstDescendantOfType(Class<T> clazz, Predicate<T> pred) {
+    default <T extends Node>T firstDescendantOfType(Class<T> clazz, Predicate<? super T> pred) {
          for (int i = 0; i < size(); i++) {
              Node child = get(i);
              if (clazz.isInstance(child)) {
@@ -504,7 +515,7 @@ public interface Node extends List<Node> {
         return firstDescendantOfType(clazz, null);
     }
 
-    default <T> List<T> childrenOfType(Class<T>clazz, Predicate<T> pred) {
+    default <T> List<T> childrenOfType(Class<T> clazz, Predicate<? super T> pred) {
         List<T>result = new java.util.ArrayList<>();
         for (int i = 0; i < size(); i++) {
             Node child = get(i);
@@ -516,7 +527,7 @@ public interface Node extends List<Node> {
         return result;
    }
 
-   default List<Node> childrenOfType(NodeType type, Predicate<Node> pred) {
+   default List<Node> childrenOfType(NodeType type, Predicate<? super Node> pred) {
       List<Node> result = new java.util.ArrayList<>();
       for (int i = 0; i < size(); i++) {
           Node child = get(i);
@@ -535,7 +546,7 @@ public interface Node extends List<Node> {
        return childrenOfType(clazz, null);
    }
 
-   default <T extends Node> List<T> descendantsOfType(Class<T> clazz, Predicate<T> pred) {
+   default <T extends Node> List<T> descendantsOfType(Class<T> clazz, Predicate<? super T> pred) {
         return descendants(clazz, pred);
    }
 

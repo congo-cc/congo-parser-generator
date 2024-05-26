@@ -400,13 +400,25 @@ TypeAlias :
     Expression
 ;
 
-LambdaDefinition : <LAMBDA> Parameters <COLON> Expression ;
+LambdaDefinition : 
+    <LAMBDA> 
+    Parameters 
+    <COLON> 
+    Expression 
+;
 
 /*
  * Expression grammar follows
  */
 
-Expression : Disjunction [<IF> Disjunction <ELSE> Expression] | LambdaDefinition ;
+Expression : 
+    Disjunction [<IF> Disjunction <ELSE> Expression] 
+    |
+    SCAN ~\.\.\PlaceHolder <LAMBDA> =>
+    LambdaDefinition
+    |
+    SCAN <LAMBDA> => FAIL "Lambda is not allowed here without parenthesis."
+;
 
 Disjunction : Conjunction (<OR> Conjunction)* ;
 

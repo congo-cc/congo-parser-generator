@@ -1446,12 +1446,12 @@ public class Translator {
             resultNode.block = (ASTStatement) transformTree(node.firstChildOfType(CodeBlock.class));
 //            List<Node> catchBlocks = node.getNamedChildList("catchBlocks");
             List<CatchBlock> catchBlocks = node.childrenOfType(CatchBlock.class);
-            for (Node cb : catchBlocks) {
+            for (CatchBlock cb : catchBlocks) {
                 ASTExceptionInfo info = new ASTExceptionInfo();
 //                List<Node> excTypes = cb.getNamedChildList("exceptionTypes");
                 List<ObjectType> excTypes = cb.childrenOfType(ObjectType.class);
 
-                for (Node et : excTypes) {
+                for (ObjectType et : excTypes) {
                     info.addExceptionType((ASTTypeExpression) transformTree(et, true));
                 }
 //                info.variable = ((Token) cb.getNamedChild("varDecl")).toString();
@@ -1460,7 +1460,7 @@ public class Translator {
                 resultNode.addCatchBlock(info);
             }
 //            Node fb = node.getNamedChild("finallyBlock");
-            Node fb = node.firstChildOfType(FinallyBlock.class);
+            FinallyBlock fb = node.firstChildOfType(FinallyBlock.class);
             if (fb != null) {
                 resultNode.finallyBlock = (ASTStatement) transformTree(fb);
             }
@@ -1474,9 +1474,9 @@ public class Translator {
             addNestedDeclaration(resultNode.name);
 //            List<Node> values = node.getNamedChild("body").getNamedChildList("values");
             List<EnumConstant> values = node.firstChildOfType(EnumBody.class).childrenOfType(EnumConstant.class);
-            for (Node child : values) {
+            for (EnumConstant ec : values) {
 //                resultNode.addValue(((Token) child).toString());
-                resultNode.addValue(child.firstChildOfType(Identifier.class).toString());
+                resultNode.addValue(ec.firstChildOfType(Identifier.class).toString());
             }
             return resultNode;
         }
@@ -1488,7 +1488,7 @@ public class Translator {
             addNestedDeclaration(resultNode.name);
 //            List<Node> decls = node.getLastChild().getNamedChildList("decls");
             List<ClassOrInterfaceBodyDeclaration> decls = node.getLastChild().childrenOfType(ClassOrInterfaceBodyDeclaration.class);
-            for (Node decl : decls) {
+            for (ClassOrInterfaceBodyDeclaration decl : decls) {
                 resultNode.addDeclaration((ASTStatement) transformTree(decl));
             }
             return resultNode;

@@ -312,8 +312,6 @@ INJECT Identifier :
 
     public String toString() {
         if (savedImage !=null) return savedImage;
-//        String cachedImage = getCachedImage();
-//        if (cachedImage != null) return cachedImage;
         String image = getSource();
         String substitute;
         AppSettings settings;  // REVISIT: initializing here with getAppSettings() leads to failures
@@ -332,9 +330,7 @@ INJECT Identifier :
 
             if (tg != null) {
                 image = tg.getCurrentNodeVariableName();
-//                System.err.println("current node variable name: " + image);
                 assert image != null : "image is null";
-                //assert !image.equals("null") : "image is null string";
                 assert !image.equals("CURRENT_NODE") : "Huh?";
             }
         }
@@ -418,8 +414,8 @@ INJECT interface Node :
         return ts == null ? null : ts.getGrammar();
     }
     default Node getNamedChild(String name) { return null; }
-    default void setNamedChild(String name, Node node) {}
     default List<Node> getNamedChildList(String name) { return null; }
+    default void setNamedChild(String name, Node node) {}
     default void addToNamedChildList(String name, Node node) {}
 }
 
@@ -1512,6 +1508,7 @@ Failure# :
    [
       [":"]
       exp=Expression
+      [";"]
       |
       Block
    ]
