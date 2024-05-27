@@ -40,11 +40,13 @@ public class PyTest {
                 System.err.println("File " + path + " does not exist.");
                 continue;
             }
+            addPaths(path, paths);
+/*            
             Files.walk(path).forEach(p->{
                 if (p.toString().endsWith(".py")) {
                     paths.add(p);
                 }
-            });
+            });*/
         }
         if (paths.isEmpty()) usage();
         long startTime = System.currentTimeMillis();
@@ -58,6 +60,27 @@ public class PyTest {
         System.out.println("\nParsed " + successes.size() + " files successfully");
         System.out.println("Failed on " + failures.size() + " files.");
         System.out.println("\nDuration: " + (System.currentTimeMillis() - startTime) + " milliseconds");
+    }
+
+    static void addPaths(Path path, List<Path> paths) throws IOException {
+        Files.walk(path).forEach(p->{
+            if (!Files.isDirectory(p)) {
+                if (p.toString().endsWith(".py")) {
+                    paths.add(p);
+                }
+                else if (p.toString().endsWith(".zip")) {
+                    try {
+                        FileSystem zfs = FileSystems.newFileSystem(p, (ClassLoader) null);
+                        p = zfs.getRootDirectories().iterator().next();
+                        addPaths(p, paths);
+                    }
+                    catch (IOException ioe) {
+                        ioe.printStackTrace();
+                        System.exit(1);
+                    }
+                }
+            }
+        });
     }
 
     static public void parseFile(Path path) {
