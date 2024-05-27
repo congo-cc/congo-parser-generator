@@ -22,8 +22,8 @@ public interface Node extends List<Node> {
 
     //Marker interface for tokens
     public interface TerminalNode extends Node {
-        [#-- I added this so that code compiles. Not sure
-             what I am doing with this.. --]
+        #-- I added this so that code compiles. Not sure
+        #-- what I am doing with this..
         TerminalNode getNext();
         List<? extends TerminalNode> precedingUnparsedTokens();
 
@@ -67,8 +67,6 @@ public interface Node extends List<Node> {
         default List<Node> children() {
             return java.util.Collections.emptyList();
         }
-
-        default void clearChildren() {}
     }
 
     default NodeType getType() { return null; }
@@ -105,7 +103,7 @@ public interface Node extends List<Node> {
 
     /**
      * @param n The Node to set as the parent. Mostly used internally.
-     * The various addChild or appendChild sorts of methods should use this
+     * The various add sorts of methods should use this
      * to set the node's parent.
      */
     void setParent(Node n);
@@ -118,7 +116,7 @@ public interface Node extends List<Node> {
      // The following 9 methods will typically just
      // delegate straightforwardly to a List object that
      // holds the child nodes
-
+#if false #-- Let's get rid of deprecated methods
     /**
      * appends a child Node
      * @deprecated Use #add(Node)
@@ -192,7 +190,7 @@ public interface Node extends List<Node> {
      default boolean replaceChild(Node current, Node replacement) {
          return replace(current, replacement);
      }
-
+#endif 
 
      /**
       * Replaces a child node with another one. It does
@@ -204,7 +202,7 @@ public interface Node extends List<Node> {
      default boolean replace(Node current, Node replacement) {
          int index = indexOf(current);
          if (index == -1) return false;
-         setChild(index, replacement);
+         set(index, replacement);
          current.setParent(null);
          return true;
      }
@@ -220,7 +218,7 @@ public interface Node extends List<Node> {
      default boolean prependChild(Node where, Node inserted) {
          int index = indexOf(where);
          if (index == -1) return false;
-         addChild(index, inserted);
+         add(index, inserted);
          return true;
      }
 
@@ -234,7 +232,7 @@ public interface Node extends List<Node> {
      default boolean appendChild(Node where, Node inserted) {
          int index = indexOf(where);
          if (index == -1) return false;
-         addChild(index + 1, inserted);
+         add(index + 1, inserted);
          return true;
      }
 
@@ -268,6 +266,7 @@ public interface Node extends List<Node> {
          return parent.get(idx + 1);
      }
 
+#if false
      /**
       * Remove all the child nodes
       * @deprecated Use clear()
@@ -281,6 +280,7 @@ public interface Node extends List<Node> {
       */
      @Deprecated
      default int getChildCount() {return size();}
+#endif     
 
      /**
       * @return a List containing this node's child nodes
@@ -565,6 +565,7 @@ public interface Node extends List<Node> {
         return null;
     }
 
+#if false #-- Let's comment this out and see if anybody cares.
     /**
      * @deprecated Just use #getType instead
      */
@@ -572,6 +573,7 @@ public interface Node extends List<Node> {
     default NodeType getTokenType() {
         return getType();
     }
+#endif
 
     /**
      * Copy the location info from another Node
@@ -601,7 +603,7 @@ public interface Node extends List<Node> {
         Node parent = toBeReplaced.getParent();
         if (parent != null) {
            int index = parent.indexOf(toBeReplaced);
-           parent.setChild(index, this);
+           parent.set(index, this);
         }
     }
 
@@ -743,14 +745,14 @@ public interface Node extends List<Node> {
 
             public void remove() {
                 if (justModified) throw new IllegalStateException();
-                removeChild(current);
+                Node.this.remove(current);
                 --current;
                 justModified = true;
             }
 
             public void add(Node n) {
                 if (justModified) throw new IllegalStateException();
-                addChild(current + 1, n);
+                Node.this.add(current + 1, n);
                 justModified = true;
             }
 
@@ -767,7 +769,7 @@ public interface Node extends List<Node> {
             }
 
             public void set(Node n) {
-                setChild(current, n);
+                Node.this.set(current, n);
             }
         };
     }
@@ -835,7 +837,9 @@ public interface Node extends List<Node> {
     }
 
     default void clear() {
+#if false
         clearChildren();
+#endif
     }
 
     static abstract public class Visitor {
