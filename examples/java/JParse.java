@@ -23,31 +23,44 @@ public class JParse {
 
     static public void main(String args[]) throws IOException {
         for (String arg : args) {
+            Path path = null;
             if (arg.equals("-t")) {
                 tolerantParsing = true;
                 continue;
             }
-            if (arg.equals("-p")) {
+            else if (arg.equals("-p")) {
+                System.out.println("Will parse in multiple threads.");
                 parallelParsing = true;
                 roots = Collections.synchronizedList(roots);
                 failures = Collections.synchronizedList(failures);
                 successes = Collections.synchronizedList(successes);
                 continue;
             }
-            if (arg.equals("-r")) {
+            else if (arg.equals("-r")) {
                 retainInMemory = true;
                 continue;
             }
-            Path path = fileSystem.getPath(arg);
-            if (!Files.exists(path)) {
-                System.err.println("File " + path + " does not exist.");
-                continue;
-            }
-            Files.walk(path).forEach(p->{
-                if (!Files.isDirectory(p) &&  p.toString().endsWith(".java")) {
-                    paths.add(p);
+            else if (arg.equals("-s")) {
+                String classLibLocation = System.getProperty("java.home") + "/lib/src.zip";
+                if (System.getProperty("java.version").startsWith("1.8")) {
+                    classLibLocation = System.getProperty("java.home") + "/../src.zip";
                 }
-            });
+                path = fileSystem.getPath(classLibLocation);
+                if (Files.exists(path)) {
+                    System.out.println("Parsing source in " + classLibLocation);
+                } else {
+                    System.err.println("Could not find src.zip at: " + classLibLocation);
+                    continue;
+                }
+            }
+            else {
+                path = fileSystem.getPath(arg);
+                if (!Files.exists(path)) {
+                    System.err.println("File " + path + " does not exist.");
+                    continue;
+                }
+            }
+            addPaths(path, paths);
         }
         if (paths.isEmpty()) usage();
         long startTime = System.currentTimeMillis();
@@ -63,6 +76,29 @@ public class JParse {
         if (!failures.isEmpty()) System.exit(-1);
         System.out.println("\nDuration: " + (System.currentTimeMillis() - startTime) + " milliseconds");
     }
+
+    static void addPaths(Path path, List<Path> paths) throws IOException {
+        Files.walk(path).forEach(p->{
+            if (!Files.isDirectory(p)) {
+                if (p.toString().endsWith(".java")) {
+                    paths.add(p);
+                }
+                else if (p.toString().endsWith(".jar") || p.toString().endsWith(".zip")) {
+                    try {
+                        FileSystem zfs = FileSystems.newFileSystem(p, (ClassLoader) null);
+                        p = zfs.getRootDirectories().iterator().next();
+                        addPaths(p, paths);
+                    }
+                    catch (IOException ioe) {
+                        ioe.printStackTrace();
+                        System.exit(1);
+                    }
+                }
+            }
+        });
+    }
+
+
 
     static public void parseFile(Path path) {
         try {   
@@ -95,6 +131,7 @@ public class JParse {
         System.out.println("Use the -p flag to set whether to parse in multiple threads");
         System.out.println("Use the -r flag to retain all the parsed AST's in memory");
         System.out.println("Use the -t flag to set whether to parse in tolerant mode");
+        System.out.println("Use the -s flag to parse the files in $JAVA_HOME/lib/src.zip");
         System.exit(-1);
     }
 }

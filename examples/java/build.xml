@@ -42,7 +42,7 @@
       <assertions>
         <enable />
       </assertions>
-      <arg value="org/parsers/java" />
+      <arg line = "-s -p" />
     </java>
     <echo>
       ------------------- Okay, that seems okay. Now let's dump the parse tree for a single source file -------------------
