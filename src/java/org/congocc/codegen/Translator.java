@@ -1242,17 +1242,11 @@ public class Translator {
             resultNode.setOperand((ASTExpression) transformTree(node.get(1)));
         }
         else if (node instanceof PostfixExpression) {
-            if (node.getLastChild() instanceof MethodCall) {
-                return transformMethodCall(node);
-            }
-            else {
-                ASTPreOrPostfixExpression resultNode = new ASTPreOrPostfixExpression();
-
-                resultNode.op = node.getLastChild().toString();
-                resultNode.setOperand((ASTExpression) transformTree(node.getFirstChild()));
-                // resultNode.postfix = true;
-                return resultNode;
-            }
+            ASTPreOrPostfixExpression resultNode = new ASTPreOrPostfixExpression();
+            resultNode.op = node.getLastChild().toString();
+            resultNode.setOperand((ASTExpression) transformTree(node.get(0)));
+            // resultNode.postfix = true;
+            return resultNode;
         }
         else if (node instanceof PreDecrementExpression || node instanceof PreIncrementExpression) {
             ASTPreOrPostfixExpression resultNode = new ASTPreOrPostfixExpression();
@@ -1264,7 +1258,7 @@ public class Translator {
         else if (node instanceof ArrayAccess) {
             ASTArrayAccess resultNode = new ASTArrayAccess();
 
-            resultNode.array = (ASTExpression) transformTree(node.getFirstChild());
+            resultNode.array = (ASTExpression) transformTree(node.get(0));
             resultNode.index = (ASTExpression) transformTree(node.get(2));
             return resultNode;
         }

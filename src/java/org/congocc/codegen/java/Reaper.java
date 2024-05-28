@@ -12,7 +12,7 @@ import static org.congocc.parser.Token.TokenType.*;
  * A visitor that eliminates unused code.
  * It is not absolutely correct, in the sense of catching all
  * unused methods or fields, but works for our purposes.
- * For example, it does not take account overloaded methods, so
+ * For example, it does not take account of overloaded methods, so
  * if the method name is referenced somewhere, it is assumed to be used.
  * However, it might be a reference to a method with the same name
  * with different arguments.

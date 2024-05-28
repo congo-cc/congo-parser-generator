@@ -5,9 +5,7 @@ import java.util.*;
 import org.congocc.core.Grammar;
 import org.congocc.codegen.Translator;
 import org.congocc.codegen.java.CodeInjector;
-import org.congocc.parser.CongoCCParser;
 import org.congocc.parser.Node;
-import org.congocc.parser.ParseException;
 import org.congocc.parser.tree.*;
 
 public class PythonTranslator extends Translator {

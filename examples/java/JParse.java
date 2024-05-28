@@ -18,7 +18,7 @@ public class JParse {
     static private List<Path> paths = new ArrayList<Path>(),
                               failures = new ArrayList<Path>(),
                               successes = new ArrayList<Path>();
-    static private boolean tolerantParsing, parallelParsing, retainInMemory;
+    static private boolean tolerantParsing, parallelParsing, retainInMemory, quiet;
     static private FileSystem fileSystem = FileSystems.getDefault();
 
     static public void main(String args[]) throws IOException {
@@ -28,7 +28,7 @@ public class JParse {
                 tolerantParsing = true;
                 continue;
             }
-            else if (arg.equals("-p")) {
+            if (arg.equals("-p")) {
                 System.out.println("Will parse in multiple threads.");
                 parallelParsing = true;
                 roots = Collections.synchronizedList(roots);
@@ -36,11 +36,15 @@ public class JParse {
                 successes = Collections.synchronizedList(successes);
                 continue;
             }
-            else if (arg.equals("-r")) {
+            if (arg.equals("-q")) {
+                quiet = true;
+                continue;
+            }
+            if (arg.equals("-r")) {
                 retainInMemory = true;
                 continue;
             }
-            else if (arg.equals("-s")) {
+            if (arg.equals("-s")) {
                 String classLibLocation = System.getProperty("java.home") + "/lib/src.zip";
                 if (System.getProperty("java.version").startsWith("1.8")) {
                     classLibLocation = System.getProperty("java.home") + "/../src.zip";
@@ -48,21 +52,23 @@ public class JParse {
                 path = fileSystem.getPath(classLibLocation);
                 if (Files.exists(path)) {
                     System.out.println("Parsing source in " + classLibLocation);
+                    addPaths(path, paths);
                 } else {
                     System.err.println("Could not find src.zip at: " + classLibLocation);
-                    continue;
                 }
+                continue;
             }
-            else {
-                path = fileSystem.getPath(arg);
-                if (!Files.exists(path)) {
-                    System.err.println("File " + path + " does not exist.");
-                    continue;
-                }
+            path = fileSystem.getPath(arg);
+            if (!Files.exists(path)) {
+                System.err.println("File " + path + " does not exist.");
+                continue;
             }
             addPaths(path, paths);
         }
-        if (paths.isEmpty()) usage();
+        if (paths.isEmpty()) {
+            usage();
+            return;
+        }
         long startTime = System.currentTimeMillis();
         Stream<Path> stream = parallelParsing
                                ? paths.parallelStream() 
@@ -110,12 +116,14 @@ public class JParse {
             if (paths.size()==1) {
                 root.dump("");
             }
-            System.out.println(path.getFileName().toString() + " parsed successfully.");
+            if (!quiet) {
+                System.out.println(path.getFileName().toString() + " parsed successfully.");
+            }
             successes.add(path);
             if (successes.size() % 1000 == 0) {
-                System.out.println("-----------------------------------------------");
-                System.out.println("Successfully parsed " + successes.size() + " files.");
-                System.out.println("-----------------------------------------------");
+//                System.out.println("-----------------------------------------------");
+                System.out.println("Successfully parsed " + successes.size() + " files...");
+//                System.out.println("-----------------------------------------------");
             }
         }
         catch (Exception e) {
@@ -129,6 +137,7 @@ public class JParse {
         System.out.println("Usage: java JParse <sourcefiles or directories>");
         System.out.println("If you just pass it one java source file, it dumps the AST");
         System.out.println("Use the -p flag to set whether to parse in multiple threads");
+        System.out.println("Use the -q flag for quieter output");
         System.out.println("Use the -r flag to retain all the parsed AST's in memory");
         System.out.println("Use the -t flag to set whether to parse in tolerant mode");
         System.out.println("Use the -s flag to parse the files in $JAVA_HOME/lib/src.zip");

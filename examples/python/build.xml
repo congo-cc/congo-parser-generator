@@ -50,7 +50,7 @@
       <assertions>
         <enable />
       </assertions>
-      <arg value="${basedir}/testfiles" />
+      <arg line = "-p -q ${basedir}/testfiles" />
     </java>
   </target>
 

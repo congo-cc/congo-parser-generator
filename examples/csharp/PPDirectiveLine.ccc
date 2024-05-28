@@ -1,8 +1,10 @@
 // This grammar just defines a little parser that can be passed a line
 // with a C# pre-processor directive and gives back a result
 
-TREE_BUILDING_ENABLED = false;
 PARSER_PACKAGE=org.parsers.csharp.ppline;
+TREE_BUILDING_ENABLED = false;
+//TREE_BUILDING_DEFAULT=false;
+//ROOT_API_PACKAGE=org.congocc.parser;
 
 INCLUDE "CSharpIdentifierDef.ccc"
 

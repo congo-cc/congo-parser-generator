@@ -19,16 +19,21 @@ public class PyTest {
     static private List<Path> paths = new ArrayList<Path>(),
                               failures = new ArrayList<Path>(),
                               successes = new ArrayList<Path>();
-    static private boolean parallelParsing, retainInMemory;
+    static private boolean parallelParsing, retainInMemory, quiet;
     static private FileSystem fileSystem = FileSystems.getDefault();
 
     static public void main(String args[]) throws IOException {
         for (String arg : args) {
             if (arg.equals("-p")) {
+                System.out.println("Will parse in multiple threads.");                
                 parallelParsing = true;
                 roots = Collections.synchronizedList(roots);
                 failures = Collections.synchronizedList(failures);
                 successes = Collections.synchronizedList(successes);
+                continue;
+            }
+            if (arg.equals("-q")) {
+                quiet = true;
                 continue;
             }
             if (arg.equals("-r")) {
@@ -90,12 +95,14 @@ public class PyTest {
             if (paths.size()==1) {
                 root.dump("");
             }
-            System.out.println(path.getFileName().toString() + " parsed successfully.");
+            if (!quiet) {
+                System.out.println(path.getFileName().toString() + " parsed successfully.");
+            }
             successes.add(path);
             if (successes.size() % 1000 == 0) {
-                System.out.println("-----------------------------------------------");
+//                System.out.println("-----------------------------------------------");
                 System.out.println("Successfully parsed " + successes.size() + " files.");
-                System.out.println("-----------------------------------------------");
+//                System.out.println("-----------------------------------------------");
             }
             //
             // Now parse using the internal Python compiler. We assume that no exception
