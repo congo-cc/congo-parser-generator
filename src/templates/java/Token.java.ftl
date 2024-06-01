@@ -118,15 +118,19 @@ public class ${settings.baseTokenClassName} ${implements} {
     }
 /#if    
 
+
+[/#if]
+
     public void truncate(int amount) {
         int newEndOffset = Math.max(getBeginOffset(), getEndOffset()-amount);
         setEndOffset(newEndOffset);
+   #if !settings.minimalToken        
         if (cachedImage != null) {
             cachedImage = cachedImage.substring(0, newEndOffset - getBeginOffset());
         }
+   #endif
     }
 
-[/#if]
 
 [#if settings.tokenChaining]
 

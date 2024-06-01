@@ -405,7 +405,7 @@ EnumConstant# :
 TypeParameters :
    <LT>
    TypeParameter ( <COMMA> TypeParameter )*
-   DEACTIVATE_TOKENS RSIGNEDSHIFT, RUNSIGNEDSHIFT (<GT>)
+   <GT>
 ;
 
 INJECT TypeParameters :
@@ -1057,7 +1057,8 @@ NoVarDeclaration :
 VarDeclaration :
   {permissibleModifiers = EnumSet.of(FINAL);}
   @modifiers:=Modifiers
-  ASSERT {checkNextTokenImage("var") && (getTokenType(2) == IDENTIFIER||getTokenType(2)==UNDERSCORE)} =>||
+  ASSERT {checkNextTokenImage("var") && (getTokenType(2) == IDENTIFIER||getTokenType(2)==UNDERSCORE)} 
+  =>||
   (
      <VAR>
      |

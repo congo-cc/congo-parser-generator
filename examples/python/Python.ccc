@@ -818,12 +818,14 @@ PlaceHolder :
       (<COLON>|<RBRACE>)
    )
    [
-      SCAN 0 {getToken(0).getType() == COLON}# =>
-      (
-         <TEXT_IN_FSTRING>
-         |
-         LEXICAL_STATE IN_NESTED_PLACEHOLDER (PlaceHolder)
-      )*
-      <RBRACE>
+      SCAN 0 {getToken(0).getType() == COLON}# => FormatSpecifier <RBRACE>
    ]
+;
+
+FormatSpecifier# :
+   (
+     <TEXT_IN_FSTRING> 
+     |
+     LEXICAL_STATE IN_NESTED_PLACEHOLDER (PlaceHolder)
+   )* 
 ;
