@@ -1434,7 +1434,8 @@ public class Translator {
             processArguments(resultNode, node.firstChildOfType(InvocationArguments.class));
             return resultNode;
         }
-        else if (node instanceof ClassicTryStatement) {
+        //else if (node instanceof ClassicTryStatement) {
+        else if (node instanceof TryStatement) {
             ASTTryStatement resultNode = new ASTTryStatement();
 //            resultNode.block = (ASTStatement) transformTree(node.getNamedChild("block"));
             resultNode.block = (ASTStatement) transformTree(node.firstChildOfType(CodeBlock.class));

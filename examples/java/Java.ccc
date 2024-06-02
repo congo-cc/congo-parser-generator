@@ -1000,16 +1000,6 @@ INJECT YieldStatement : implements Statement;
 
 INJECT ClassicSwitchStatement : extends SwitchStatement;
 INJECT NewSwitchStatement : extends SwitchStatement;
-INJECT ClassicTryStatement : extends TryStatement
-INJECT TryWithResources : extends TryStatement
-
-TryStatement #abstract :
-   TryWithResources
-   |
-   ClassicTryStatement
-   |
-   <TRY> FAIL "Expecting '{' or '(' after 'try'"
-;
 
 AssertStatement : <_ASSERT> Expression [ <COLON> Expression ] <SEMICOLON> ;
 
@@ -1283,22 +1273,26 @@ ThrowStatement : <THROW> Expression <SEMICOLON> ;
 
 SynchronizedStatement : <SYNCHRONIZED> <LPAREN> Expression <RPAREN> Block ;
 
-ClassicTryStatement :
+TryStatement :
   <TRY>
-  =>|+1
+  [ResourcesInTryBlock]
   /block/=Block
-  (
+  ASSERT {getToken(1).getType() == TokenType.FINALLY 
+       || getToken(1).getType() == TokenType.CATCH 
+       || currentNodeScope.get(1) instanceof ResourcesInTryBlock}
+       : "Since this is not a try-with-resources, there must be at least one catch or finally block." :
+  [
      /finallyBlock/=FinallyBlock
      |
      (
         ( /catchBlocks/+=CatchBlock )+
         [ /finallyBlock/=FinallyBlock ]
      )
-  )
+  ]
 ;
 
-TryWithResources : // not processed by Translator
-   <TRY> <LPAREN> =>||
+ResourcesInTryBlock : 
+    <LPAREN> 
     (
       SCAN {getTokenType(0) == SEMICOLON}# ~(<RPAREN>)
       =>
@@ -1313,10 +1307,7 @@ TryWithResources : // not processed by Translator
        [<SEMICOLON>]
     )+
     <RPAREN>
-    (/block/=Block) // not used in Translator (but should be?)
-    ( /catchBlock/+=CatchBlock )* // not used in Translator (but should be?)
-    [ /finallyBlock/=FinallyBlock ] // not used in Translator (but should be?)
-;
+;    
 
 CatchBlock :
     <CATCH>
