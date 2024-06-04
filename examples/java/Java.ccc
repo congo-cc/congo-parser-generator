@@ -1155,6 +1155,7 @@ SwitchStatement :
   <RBRACE>
 ;
 
+#if __congo_internal__
 INJECT SwitchStatement : 
 {
     /**
@@ -1168,7 +1169,8 @@ INJECT SwitchStatement :
     public Expression getSelectorExpression() {
       return (Expression) get(2);
     }
-}    
+}
+#endif
 
 ClassicCaseStatement# :
   ClassicSwitchLabel

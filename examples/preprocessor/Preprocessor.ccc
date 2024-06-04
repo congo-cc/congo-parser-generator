@@ -60,6 +60,10 @@ INJECT PARSER_CLASS :
         definedSymbols.putAll(symbols);
     }
 
+    public void setSymbols(Map<String,String> symbols) {
+        this.definedSymbols = symbols;
+    }
+
     private static class Expression {
         boolean booleanValue;
         String symbol;

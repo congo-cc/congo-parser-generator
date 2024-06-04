@@ -117,7 +117,8 @@ INJECT PARSER_CLASS :
         this(path.toString(), path);
         this.grammar = grammar;
         PreprocessorParser parser = new PreprocessorParser(path);
-        parser.addSymbols(definedSymbols);
+        //parser.addSymbols(definedSymbols);
+        parser.setSymbols(definedSymbols);
         BitSet lineMarkers = parser.PP_Root();
         token_source.setGrammar(grammar);
         token_source.setParsedLines(lineMarkers);
@@ -127,7 +128,8 @@ INJECT PARSER_CLASS :
         this(inputSource, content);
         this.grammar = grammar;
         PreprocessorParser parser = new PreprocessorParser(inputSource, content);
-        parser.addSymbols(grammar.getPreprocessorSymbols());
+//        parser.addSymbols(grammar.getPreprocessorSymbols());
+        parser.setSymbols(grammar.getPreprocessorSymbols());
         BitSet lineMarkers = parser.PP_Root();
         token_source.setGrammar(grammar);
         token_source.setParsedLines(lineMarkers);
