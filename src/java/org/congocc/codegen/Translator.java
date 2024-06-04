@@ -1021,6 +1021,7 @@ public class Translator {
         return result;
     }
 
+    // Currently only works for the classic switch statement, i.e. case Exp : 
     protected Node transformSwitchStatement(Node node) {
         int n = node.size();
         List<ASTExpression> pendingLabels = new ArrayList<>();
@@ -1031,6 +1032,7 @@ public class Translator {
         for (int i = 5; i < n; i++) {
             Node child = node.get(i);
             if (!(child instanceof Delimiter)) {
+//                if (child instanceof CaseOrDefault) {
                 if (child instanceof ClassicSwitchLabel) {
                     if (child.getFirstChild().toString().equals("case")) {
                         pendingLabels.add((ASTExpression) transformTree(child.get(1)));
@@ -1059,6 +1061,7 @@ public class Translator {
                     pendingLabels.clear();
                     int m = child.size();
                     for (int j = 1; j < m; j++) {
+                        if (child.get(j).getType() == Token.TokenType.COLON) continue; // temporary kludge?
                         ASTStatement s = (ASTStatement) transformTree(child.get(j));
                         if (s instanceof ASTBreakOrContinueStatement) {
                             currentCase.hasBreak = ((ASTBreakOrContinueStatement) s).isBreak();

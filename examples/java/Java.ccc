@@ -1146,10 +1146,10 @@ SwitchStatement :
   <SWITCH> <LPAREN> Expression <RPAREN> 
   <LBRACE>
   (
-    SCAN NewSwitchLabel =>
+    SCAN CaseOrDefault <LAMBDA> =>
     (NewCaseStatement)+
     |
-    SCAN ClassicSwitchLabel =>
+    SCAN CaseOrDefault <COLON> =>
     (ClassicCaseStatement)+
     |
     {}
@@ -1157,12 +1157,8 @@ SwitchStatement :
   <RBRACE>
 ;
 
-ClassicSwitchLabel :
-  CaseOrDefault
-  <COLON>
-;
-
 ClassicCaseStatement :
+  //CaseOrDefault <COLON>
   ClassicSwitchLabel
   (SCAN ~(<CASE>|<_DEFAULT>|<RBRACE>) => BlockStatement)*
 ;
@@ -1172,7 +1168,21 @@ NewSwitchLabel :
   <LAMBDA>
 ;
 
-CaseOrDefault :
+ClassicSwitchLabel# :
+  (
+   <CASE> <NULL> =>|| [<COMMA><_DEFAULT>]
+   |
+   <CASE> CasePattern =>|| (<COMMA> CasePattern)* [WhenClause]
+   |
+   <CASE> Expression (<COMMA> Expression)*
+   |
+   <_DEFAULT>
+  )
+  <COLON>
+;
+
+
+CaseOrDefault# :
    <CASE> <NULL> =>|| [<COMMA><_DEFAULT>]
    |
    <CASE> CasePattern =>|| (<COMMA> CasePattern)* [WhenClause]
@@ -1183,7 +1193,8 @@ CaseOrDefault :
 ;
 
 NewCaseStatement :
-   NewSwitchLabel
+   CaseOrDefault
+   <LAMBDA>
    (
      Block
      |
@@ -1407,7 +1418,7 @@ AnnotationTypeMemberDeclaration :
 DefaultValue : <_DEFAULT> MemberValue ;
 
 LambdaExpression :
-  SCAN ~\...\NewSwitchLabel =>
+  SCAN ~\...\CaseOrDefault =>
   LambdaLHS =>|| (Block | Expression)
 ;
 
