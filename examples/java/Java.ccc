@@ -1145,20 +1145,32 @@ WhenClause :
 SwitchStatement :
   <SWITCH> <LPAREN> Expression <RPAREN> 
   <LBRACE>
-  (
-    SCAN CaseOrDefault <LAMBDA> =>
+  [
+    SCAN NewSwitchLabel =>
     (NewCaseStatement)+
     |
-    SCAN CaseOrDefault <COLON> =>
+    SCAN ClassicSwitchLabel =>
     (ClassicCaseStatement)+
-    |
-    {}
-  )
+  ]
   <RBRACE>
 ;
 
-ClassicCaseStatement :
-  //CaseOrDefault <COLON>
+INJECT SwitchStatement : 
+{
+    /**
+     * Is this a newer style switch statement, that uses
+     * the -> arrow after case/default?
+     */
+    public boolean isNewStyle() {
+      return firstChildOfType(NewCaseStatement.class) != null;
+    }
+
+    public Expression getSelectorExpression() {
+      return (Expression) get(2);
+    }
+}    
+
+ClassicCaseStatement# :
   ClassicSwitchLabel
   (SCAN ~(<CASE>|<_DEFAULT>|<RBRACE>) => BlockStatement)*
 ;
@@ -1168,21 +1180,13 @@ NewSwitchLabel :
   <LAMBDA>
 ;
 
-ClassicSwitchLabel# :
-  (
-   <CASE> <NULL> =>|| [<COMMA><_DEFAULT>]
-   |
-   <CASE> CasePattern =>|| (<COMMA> CasePattern)* [WhenClause]
-   |
-   <CASE> Expression (<COMMA> Expression)*
-   |
-   <_DEFAULT>
-  )
+ClassicSwitchLabel :
+  CaseOrDefault
   <COLON>
 ;
 
 
-CaseOrDefault# :
+CaseOrDefault#void :
    <CASE> <NULL> =>|| [<COMMA><_DEFAULT>]
    |
    <CASE> CasePattern =>|| (<COMMA> CasePattern)* [WhenClause]
@@ -1193,8 +1197,7 @@ CaseOrDefault# :
 ;
 
 NewCaseStatement :
-   CaseOrDefault
-   <LAMBDA>
+   NewSwitchLabel
    (
      Block
      |
@@ -1274,17 +1277,17 @@ SynchronizedStatement : <SYNCHRONIZED> <LPAREN> Expression <RPAREN> Block ;
 TryStatement :
   <TRY>
   [ResourcesInTryBlock]
-  /block/=Block
+  Block
   ASSERT {getToken(1).getType() == TokenType.FINALLY 
        || getToken(1).getType() == TokenType.CATCH 
        || currentNodeScope.get(1) instanceof ResourcesInTryBlock}
        : "Since this is not a try-with-resources, there must be at least one catch or finally block." :
   [
-     /finallyBlock/=FinallyBlock
+     FinallyBlock
      |
      (
-        ( /catchBlocks/+=CatchBlock )+
-        [ /finallyBlock/=FinallyBlock ]
+        ( CatchBlock )+
+        [ FinallyBlock ]
      )
   ]
 ;
@@ -1418,7 +1421,7 @@ AnnotationTypeMemberDeclaration :
 DefaultValue : <_DEFAULT> MemberValue ;
 
 LambdaExpression :
-  SCAN ~\...\CaseOrDefault =>
+  SCAN ~\...\NewSwitchLabel =>
   LambdaLHS =>|| (Block | Expression)
 ;
 

@@ -302,8 +302,6 @@ public class JavaFormatter extends Node.Visitor {
 
     void visit(ClassicCaseStatement ccs)  {
         visit(ccs.firstChildOfType(ClassicSwitchLabel.class));
-//        visit(ccs.firstChildOfType(CaseOrDefault.class));
-//        buf.append(":");
         currentIndent += indent;
         newLine();
         for (Statement stmt : ccs.childrenOfType(Statement.class)) {

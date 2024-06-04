@@ -2,7 +2,7 @@
 // work on its own. This include file contains various code
 // injections into the Java AST that are used in CongoCC.
 
-//TOKEN_CHAINING;
+#define __congo_internal__
 
 // In general usage, it is probably better to INCLUDE the (more stable) Java grammar
 // that is in the bootstrap jarfile.

@@ -1022,57 +1022,46 @@ public class Translator {
     }
 
     // Currently only works for the classic switch statement, i.e. case Exp : 
-    protected Node transformSwitchStatement(Node node) {
-        int n = node.size();
+    protected Node transformSwitchStatement(SwitchStatement switchStatement) {
+        if (switchStatement.isNewStyle()) {
+            throw new UnsupportedOperationException("Currently can only transform the classic switch statement");
+        }
         List<ASTExpression> pendingLabels = new ArrayList<>();
         ASTCaseStatement currentCase = null;
         ASTSwitchStatement result = new ASTSwitchStatement();
-
-        result.variable = (ASTExpression) transformTree(node.get(2));
-        for (int i = 5; i < n; i++) {
-            Node child = node.get(i);
-            if (!(child instanceof Delimiter)) {
-//                if (child instanceof CaseOrDefault) {
-                if (child instanceof ClassicSwitchLabel) {
-                    if (child.getFirstChild().toString().equals("case")) {
-                        pendingLabels.add((ASTExpression) transformTree(child.get(1)));
-                    }
-                    else {
-                        // must be a default: label
-                        if (currentCase != null) {
-                            // currentCase.defaultCase = true;
-                        }
-                    }
+        result.variable = (ASTExpression) transformTree(switchStatement.getSelectorExpression());
+        for (Node child : switchStatement.childrenOfType(ClassicCaseStatement.class)) {
+            if (child.size() == 1) {
+                ClassicSwitchLabel switchLabel = (ClassicSwitchLabel) child.get(0);
+                if (switchLabel.size() > 1) {
+                    pendingLabels.add((ASTExpression) transformTree(switchLabel.get(1)));
                 }
-                else if (!(child instanceof ClassicCaseStatement)) {
-                    throw new UnsupportedOperationException("node is '" + child + "' class " + getSimpleName(child));
+            } 
+            else {
+                currentCase = new ASTCaseStatement();
+                Node label = child.get(0);
+                if (label.size() < 3) {
+                    // default case - don't add to labels
+                    // currentCase.defaultCase = true;
                 }
                 else {
-                    currentCase = new ASTCaseStatement();
-                    Node label = child.get(0);
-                    if (label.size() < 3) {
-                        // default case - don't add to labels
-                        // currentCase.defaultCase = true;
+                    pendingLabels.add((ASTExpression) transformTree(label.get(1)));
+                }
+                currentCase.caseLabels = new ArrayList<>(pendingLabels);
+                pendingLabels.clear();
+                int m = child.size();
+                for (int j = 1; j < m; j++) {
+                    if (child.get(j).getType() == Token.TokenType.COLON) continue; // temporary kludge?
+                    ASTStatement s = (ASTStatement) transformTree(child.get(j));
+                    if (s instanceof ASTBreakOrContinueStatement) {
+                        currentCase.hasBreak = ((ASTBreakOrContinueStatement) s).isBreak();
                     }
                     else {
-                        pendingLabels.add((ASTExpression) transformTree(label.get(1)));
+                        currentCase.add(s);
                     }
-                    currentCase.caseLabels = new ArrayList<>(pendingLabels);
-                    pendingLabels.clear();
-                    int m = child.size();
-                    for (int j = 1; j < m; j++) {
-                        if (child.get(j).getType() == Token.TokenType.COLON) continue; // temporary kludge?
-                        ASTStatement s = (ASTStatement) transformTree(child.get(j));
-                        if (s instanceof ASTBreakOrContinueStatement) {
-                            currentCase.hasBreak = ((ASTBreakOrContinueStatement) s).isBreak();
-                        }
-                        else {
-                            currentCase.add(s);
-                        }
-                    }
-                    result.add(currentCase);
-                    currentCase = null;
                 }
+                result.add(currentCase);
+                currentCase = null;
             }
         }
         return result;
@@ -1397,12 +1386,8 @@ public class Translator {
             // iterating for loop
             return transformEnhancedForStatement(node, forType);
         }
-/*        
-        else if (node instanceof ClassicSwitchStatement) {
-            return transformClassicSwitchStatement(node);
-        }*/
         else if (node instanceof SwitchStatement) {
-            return transformSwitchStatement(node);
+            return transformSwitchStatement((SwitchStatement) node);
         }
         else if (node instanceof MethodDeclaration || node instanceof ConstructorDeclaration) {
             return transformMethodOrConstructor(node);
@@ -1444,24 +1429,19 @@ public class Translator {
         //else if (node instanceof ClassicTryStatement) {
         else if (node instanceof TryStatement) {
             ASTTryStatement resultNode = new ASTTryStatement();
-//            resultNode.block = (ASTStatement) transformTree(node.getNamedChild("block"));
             resultNode.block = (ASTStatement) transformTree(node.firstChildOfType(CodeBlock.class));
-//            List<Node> catchBlocks = node.getNamedChildList("catchBlocks");
             List<CatchBlock> catchBlocks = node.childrenOfType(CatchBlock.class);
             for (CatchBlock cb : catchBlocks) {
                 ASTExceptionInfo info = new ASTExceptionInfo();
-//                List<Node> excTypes = cb.getNamedChildList("exceptionTypes");
                 List<ObjectType> excTypes = cb.childrenOfType(ObjectType.class);
 
                 for (ObjectType et : excTypes) {
                     info.addExceptionType((ASTTypeExpression) transformTree(et, true));
                 }
-//                info.variable = ((Token) cb.getNamedChild("varDecl")).toString();
                 info.variable = cb.firstChildOfType(Token.TokenType.RPAREN).previousSibling().toString();
                 info.block = (ASTStatement) transformTree(cb.getLastChild());
                 resultNode.addCatchBlock(info);
             }
-//            Node fb = node.getNamedChild("finallyBlock");
             FinallyBlock fb = node.firstChildOfType(FinallyBlock.class);
             if (fb != null) {
                 resultNode.finallyBlock = (ASTStatement) transformTree(fb);
@@ -1471,13 +1451,10 @@ public class Translator {
         else if (node instanceof EnumDeclaration) {
             ASTEnumDeclaration resultNode = new ASTEnumDeclaration();
 
-//            resultNode.name = ((Token) node.getNamedChild("name")).toString();
             resultNode.name = node.firstChildOfType(Identifier.class).toString();
             addNestedDeclaration(resultNode.name);
-//            List<Node> values = node.getNamedChild("body").getNamedChildList("values");
             List<EnumConstant> values = node.firstChildOfType(EnumBody.class).childrenOfType(EnumConstant.class);
             for (EnumConstant ec : values) {
-//                resultNode.addValue(((Token) child).toString());
                 resultNode.addValue(ec.firstChildOfType(Identifier.class).toString());
             }
             return resultNode;
@@ -1485,10 +1462,8 @@ public class Translator {
         else if (node instanceof ClassDeclaration) {
             ASTClassDeclaration resultNode = new ASTClassDeclaration();
 
-//            resultNode.name = ((Token) node.getNamedChild("name")).toString();
             resultNode.name = node.firstChildOfType(Identifier.class).toString();
             addNestedDeclaration(resultNode.name);
-//            List<Node> decls = node.getLastChild().getNamedChildList("decls");
             List<ClassOrInterfaceBodyDeclaration> decls = node.getLastChild().childrenOfType(ClassOrInterfaceBodyDeclaration.class);
             for (ClassOrInterfaceBodyDeclaration decl : decls) {
                 resultNode.addDeclaration((ASTStatement) transformTree(decl));
