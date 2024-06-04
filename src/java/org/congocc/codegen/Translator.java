@@ -1021,7 +1021,7 @@ public class Translator {
         return result;
     }
 
-    protected Node transformClassicSwitchStatement(Node node) {
+    protected Node transformSwitchStatement(Node node) {
         int n = node.size();
         List<ASTExpression> pendingLabels = new ArrayList<>();
         ASTCaseStatement currentCase = null;
@@ -1394,8 +1394,12 @@ public class Translator {
             // iterating for loop
             return transformEnhancedForStatement(node, forType);
         }
+/*        
         else if (node instanceof ClassicSwitchStatement) {
             return transformClassicSwitchStatement(node);
+        }*/
+        else if (node instanceof SwitchStatement) {
+            return transformSwitchStatement(node);
         }
         else if (node instanceof MethodDeclaration || node instanceof ConstructorDeclaration) {
             return transformMethodOrConstructor(node);

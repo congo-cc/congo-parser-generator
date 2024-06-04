@@ -548,6 +548,7 @@ public class Grammar extends BaseNode {
             if (sequence.getHasExplicitNumericalLookahead() && sequence.getHasExplicitScanLimit()) {
                 errors.addError(sequence, "An expansion cannot have both numerical lookahead and a scan limit.");
             }
+/*            
             if (sequence.getHasExplicitLookahead()) {
                 if (sequence.getHasExplicitLookahead()
                     && !sequence.getHasSeparateSyntacticLookahead()
@@ -556,7 +557,7 @@ public class Grammar extends BaseNode {
                     && sequence.getMaximumSize() > 1) {
                         errors.addWarning(sequence, "Expansion defaults to a lookahead of 1. In a similar spot in JavaCC 21, it would be an indefinite lookahead here, but this changed in Congo");
                     }
-            }
+            }*/
         }
         for (Expansion exp : descendants(Expansion.class, Expansion::isScanLimit)) {
             if (!((Expansion) exp.getParent()).isAtChoicePoint()) {

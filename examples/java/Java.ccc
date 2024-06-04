@@ -998,9 +998,6 @@ INJECT TryStatement : implements Statement
 INJECT WhileStatement : implements Statement
 INJECT YieldStatement : implements Statement;
 
-INJECT ClassicSwitchStatement : extends SwitchStatement;
-INJECT NewSwitchStatement : extends SwitchStatement;
-
 AssertStatement : <_ASSERT> Expression [ <COLON> Expression ] <SEMICOLON> ;
 
 Block #CodeBlock : <LBRACE> (SCAN ~(<RBRACE>) => BlockStatement)*! <RBRACE> ;
@@ -1101,32 +1098,6 @@ StatementExpression# :
 
 ExpressionStatement : StatementExpression <SEMICOLON> ;
 
-SwitchStatement#abstract :
-  SCAN <SWITCH> <LPAREN> Expression <RPAREN> <LBRACE> NewSwitchLabel
-  => NewSwitchStatement
-  |
-  ClassicSwitchStatement
-;
-
-ClassicSwitchStatement :
-  <SWITCH> <LPAREN> Expression <RPAREN> <LBRACE>
-  (ClassicCaseStatement)*
-  <RBRACE>
-;
-
-ClassicSwitchLabel :
-  (
-   <CASE> <NULL> =>|+1 [<COMMA><_DEFAULT>]
-   |
-   <CASE> CasePattern =>|| (<COMMA> CasePattern)* [WhenClause]
-   |
-   <CASE> Expression (<COMMA> Expression)*
-   |
-   <_DEFAULT>
-  )
-  <COLON>
-;
-
 CasePattern :
     RecordPattern
     |
@@ -1171,19 +1142,37 @@ WhenClause :
    Expression
 ;
 
+SwitchStatement :
+  <SWITCH> <LPAREN> Expression <RPAREN> 
+  <LBRACE>
+  (
+    SCAN NewSwitchLabel =>
+    (NewCaseStatement)+
+    |
+    SCAN ClassicSwitchLabel =>
+    (ClassicCaseStatement)+
+    |
+    {}
+  )
+  <RBRACE>
+;
+
+ClassicSwitchLabel :
+  CaseOrDefault
+  <COLON>
+;
+
 ClassicCaseStatement :
   ClassicSwitchLabel
   (SCAN ~(<CASE>|<_DEFAULT>|<RBRACE>) => BlockStatement)*
 ;
 
-NewSwitchStatement :
-  <SWITCH> <LPAREN> Expression <RPAREN> <LBRACE>
-  (NewCaseStatement)*
-  <RBRACE>
+NewSwitchLabel :
+  CaseOrDefault 
+  <LAMBDA>
 ;
 
-NewSwitchLabel :
-  (
+CaseOrDefault :
    <CASE> <NULL> =>|| [<COMMA><_DEFAULT>]
    |
    <CASE> CasePattern =>|| (<COMMA> CasePattern)* [WhenClause]
@@ -1191,8 +1180,6 @@ NewSwitchLabel :
    <CASE> Expression (<COMMA> Expression)*
    |
    <_DEFAULT>
-  )
-  <LAMBDA>
 ;
 
 NewCaseStatement :
@@ -1202,7 +1189,7 @@ NewCaseStatement :
      |
      ThrowStatement
      |
-     SCAN 0 \.\.\SwitchExpression
+     SCAN 0 \SwitchStatement\SwitchExpression
      => Expression <SEMICOLON>
      |
      SCAN ~(<RBRACE>) =>
