@@ -1223,8 +1223,12 @@ IfStatement :
 INJECT IfStatement :
 {
     public Node getElseBlock() {
+      if (size() == 7) return getLastChild();
+      return null;
+      /*
        Node elseTok = firstChildOfType(TokenType.ELSE);
        return elseTok == null ? null : elseTok.nextSibling();
+       */
     }
 }
    
