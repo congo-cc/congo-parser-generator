@@ -1256,7 +1256,7 @@ BreakStatement :
 ;
 
 YieldStatement :
-   ASSERT {checkNextTokenImage("yield")&&isInProduction("SwitchExpression")}#
+   SCAN 2 {checkNextTokenImage("yield")} \...\SwitchExpression =>
    (
       <YIELD>
       |
@@ -1265,7 +1265,8 @@ YieldStatement :
         replaceTokenType(TokenType.YIELD);
       }
    )
-   Expression <SEMICOLON> =>||
+   Expression 
+   <SEMICOLON>
 ;
 
 ContinueStatement : <CONTINUE> [ <IDENTIFIER> ] <SEMICOLON> ;

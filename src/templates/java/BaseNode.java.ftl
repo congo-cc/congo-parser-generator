@@ -7,10 +7,10 @@ import ${settings.parserPackage}.*;
 import ${settings.parserPackage}.${settings.baseTokenClassName}.TokenType;
 import static ${settings.parserPackage}.${settings.baseTokenClassName}.TokenType.*;
 
-[#if settings.rootAPIPackage]
-import ${settings.rootAPIPackage}.Node;
-import ${settings.rootAPIPackage}.TokenSource;
-[/#if]
+#if settings.rootAPIPackage
+  import ${settings.rootAPIPackage}.Node;
+  import ${settings.rootAPIPackage}.TokenSource;
+#endif
 
 import java.util.List;
 import java.util.ArrayList;
@@ -86,7 +86,7 @@ public class ${settings.baseNodeClassName} implements Node {
         this.unparsed = unparsed;
     }
 
-[#if settings.faultTolerant]
+#if settings.faultTolerant
 
     private boolean dirty;
 
@@ -97,14 +97,13 @@ public class ${settings.baseNodeClassName} implements Node {
     public void setDirty(boolean dirty) {
         this.dirty = dirty;
     }
+#endif
 
-[/#if]
-
-[#if settings.nodeUsesParser]
+#if settings.nodeUsesParser
     protected ${settings.parserClassName} parser;
 
     public void setParser(${settings.parserClassName} parser) {this.parser = parser;}
-[/#if]
+#endif
 
     public void setParent(Node n) {
         parent = n;

@@ -2,6 +2,8 @@
 // work on its own. This include file contains various code
 // injections into the Java AST that are used in CongoCC.
 
+// We can use this symbol to generate code conditionally
+// based on whether we are generating code for internal use
 #define __congo_internal__
 
 // In general usage, it is probably better to INCLUDE the (more stable) Java grammar
