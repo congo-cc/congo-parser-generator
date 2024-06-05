@@ -1223,7 +1223,9 @@ IfStatement :
 INJECT IfStatement :
 {
     public Node getElseBlock() {
-      if (size() == 7) return getLastChild();
+      Node result = getLastChild();
+      Token tok = (Token) result.previousSibling();
+      if (tok.getType() == TokenType.ELSE) return result;
       return null;
       /*
        Node elseTok = firstChildOfType(TokenType.ELSE);
