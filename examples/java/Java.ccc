@@ -109,7 +109,7 @@ ProvidesDirective :
   ( TypeDeclaration )*!
   [
     //a bit of a kludge so that CodeInjection2 in CongoCC.ccc can work. Maybe revisit.
-    ASSERT {getToken(1).getType() != RBRACE}#
+    ASSERT {getTokenType(1) != RBRACE}#
     <EOF>
   ]
   {
@@ -463,7 +463,7 @@ VariableDeclaratorId :
     |
     SCAN ~\.\FieldDeclaration =>
     <UNDERSCORE>
-; // why can't I make this a VariableDeclaratorId# node? (test-parser fails)
+;
 
 VariableInitializer#void : ArrayInitializer | Expression ;
 
@@ -1292,18 +1292,12 @@ TryStatement :
   <TRY>
   [ResourcesInTryBlock]
   Block
-  ASSERT {getToken(1).getType() == TokenType.FINALLY 
-       || getToken(1).getType() == TokenType.CATCH 
+  ASSERT {getTokenType(1) == TokenType.FINALLY 
+       || getTokenType(1) == TokenType.CATCH 
        || currentNodeScope.get(1) instanceof ResourcesInTryBlock}
        : "Since this is not a try-with-resources, there must be at least one catch or finally block." :
-  [
-     FinallyBlock
-     |
-     (
-        ( CatchBlock )+
-        [ FinallyBlock ]
-     )
-  ]
+  (CatchBlock)*
+  [FinallyBlock]
 ;
 
 ResourcesInTryBlock : 

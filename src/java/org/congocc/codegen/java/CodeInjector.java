@@ -262,10 +262,8 @@ public class CodeInjector {
     }
     
     private void injectImportDeclarations(CompilationUnit jcu, Collection<ImportDeclaration> importDecls) {
-//        List<ImportDeclaration> importDeclarations = (List<ImportDeclaration>)(List)jcu.getImportDeclarations();
-        List<ImportDeclaration> importDeclarations = jcu.childrenOfType(ImportDeclaration.class);
         for (ImportDeclaration importDecl : importDecls) {
-            if (!importDeclarations.contains(importDecl)) {
+            if (!jcu.contains(importDecl)) {
                 jcu.addImportDeclaration(importDecl);
             }
         }
