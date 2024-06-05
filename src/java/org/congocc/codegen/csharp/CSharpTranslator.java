@@ -227,8 +227,8 @@ public class CSharpTranslator extends Translator {
     }
 
     private static final Set<String> propertyNames = makeSet("getImage", "getType", "getBeginLine", "getBeginColumn",
-                                                       "getEndLine", "getEndColumn", "getBeginOffset", "getEndOffset",
-                                                        "getLocation", "getTokenSource", "getPreviousToken");
+            "getEndLine", "getEndColumn", "getBeginOffset", "getEndOffset", "getLocation", "getTokenSource",
+            "getPreviousToken", "getLastChild");
 
     @Override protected void translateInvocation(ASTInvocation expr, StringBuilder result) {
         String methodName = expr.getMethodName();

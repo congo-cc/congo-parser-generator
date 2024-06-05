@@ -69,6 +69,32 @@ namespace ${csPackage} {
             return -1;
         }
 
+        Node PreviousSibling() {
+            var parent = Parent;
+
+            if (parent == null) {
+                return null;
+            }
+            var idx = parent.IndexOf(this);
+            if (idx <= 0) {
+                return null;
+            }
+            return parent.Get(idx - 1);
+        }
+
+        Node NextSibling() {
+            var parent = Parent;
+
+            if (parent == null) {
+                return null;
+            }
+            var idx = parent.IndexOf(this);
+            if (idx >= parent.Size - 1) {
+                return null;
+            }
+            return parent.Get(idx + 1);
+        }
+
         Node FirstChild => (Size > 0) ? Get(0) : null;
 
         Node LastChild {
@@ -327,6 +353,15 @@ namespace ${csPackage} {
                 break;
             }
             return result;
+        }
+
+        public Node FirstChild => (Size > 0) ? Get(0) : null;
+
+        public Node LastChild {
+            get {
+                var n = Size;
+                return (n > 0) ? Get(n - 1) : null;
+            }
         }
 
         public ListAdapter<T> ChildrenOfType<T>(Type t) where T : Node {
