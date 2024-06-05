@@ -384,7 +384,7 @@ ${globals::translateParserInitializers()}
         }
 
         internal string TokenImage(int n) {
-            return GetToken(n).Image;
+            return GetToken(n).ToString();
         }
 
         internal TokenType GetTokenType(int n) {
