@@ -9,6 +9,7 @@ import org.congocc.codegen.java.CodeInjector;
 import org.congocc.codegen.python.PythonTranslator;
 import org.congocc.parser.Node;
 import org.congocc.parser.Token;
+import org.congocc.parser.Token.TokenType;
 import org.congocc.parser.tree.*;
 
 public class Translator {
@@ -1111,15 +1112,17 @@ public class Translator {
 */
         }
         if (node instanceof MethodDeclaration) {
-            CodeBlock statements = ((MethodDeclaration) node).getStatements();
+//            CodeBlock statements = ((MethodDeclaration) node).getStatements();
+            CodeBlock statements = node.firstChildOfType(CodeBlock.class);
             if (statements != null) {
                 result.statements = (ASTStatementList) transformTree(statements);
             }
         }
         else {
             // it's a ConstructorDeclaration (alternative using property)
-            List<Node> statements = ((ConstructorDeclaration) node).getStatements();
-            if (statements != null) {
+//            List<Node> statements = ((ConstructorDeclaration) node).getStatements();
+            List<Statement> statements = node.childrenOfType(Statement.class);
+            if (!statements.isEmpty()) {
                 result.statements = new ASTStatementList();
                 for (Node child : statements) {
                     ASTStatement stmt = (ASTStatement) transformTree(child);
@@ -1354,9 +1357,11 @@ public class Translator {
         }
         else if (node instanceof IfStatement) {
             ASTIfStatement resultNode = new ASTIfStatement();
-            Node child = ((IfStatement) node).getCondition();
+//            Node child = ((IfStatement) node).getCondition();
+            Node child = node.firstChildOfType(Expression.class);
             resultNode.condition = (ASTExpression) transformTree(child);
-            child = ((IfStatement) node).getThenBlock();
+//            child = ((IfStatement) node).getThenBlock();
+            child = node.firstChildOfType(TokenType.RPAREN).nextSibling();
             resultNode.thenStmts = (ASTStatement) transformTree(child);
             child = ((IfStatement) node).getElseBlock();
             if (child != null) {

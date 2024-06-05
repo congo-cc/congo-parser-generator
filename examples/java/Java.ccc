@@ -104,12 +104,8 @@ ProvidesDirective :
 ;
 
 #CompilationUnit# :
-  [ @packageDeclaration := PackageDeclaration! ]
-  ( @importDeclarations :+= ImportDeclaration )*!
-//@typeDeclarations :=
-//  REVISIT: Why does the above not work here? It works fine in the ImportDeclaration case.
-//           When used, the phase 2 building of CongoCC in build.xml just "goes away".
-//           Maybe something to do with the fact that it's an interface?
+  [ PackageDeclaration! ]
+  ( ImportDeclaration )*!
   ( TypeDeclaration )*!
   [
     //a bit of a kludge so that CodeInjection2 in CongoCC.ccc can work. Maybe revisit.
@@ -121,13 +117,27 @@ ProvidesDirective :
   }
 ;
 
+INJECT CompilationUnit :
+{
+    public PackageDeclaration getPackageDeclaration() {
+      return firstChildOfType(PackageDeclaration.class);
+    }
+}
+
 PackageDeclaration :
     (Annotation)*
     <PACKAGE>
     =>||
-    @name :=$ Name
+    Name
     <SEMICOLON>
 ;
+
+INJECT PackageDeclaration :
+{
+    public String getName() {
+       return firstChildOfType(Name.class).toString();
+    }
+}
 
 ImportDeclaration : <_IMPORT> [ <STATIC> ] Name [ <DOT> <STAR> ] <SEMICOLON> ;
 
@@ -254,7 +264,7 @@ ClassDeclaration :
                                     STRICTFP, SEALED, NON_SEALED);}
   Modifiers
   <CLASS> =>||
-  /name/=TypeIdentifier
+  TypeIdentifier
   [ TypeParameters ]
   [ ExtendsList ]
   [ ImplementsList ]
@@ -269,7 +279,7 @@ InterfaceDeclaration :
                                      NON_SEALED);}
   Modifiers
   <INTERFACE> =>||
-  /name/=TypeIdentifier // used in Translator?
+  TypeIdentifier // used in Translator?
   [ TypeParameters ]
   [ ExtendsList ]
   [ PermitsList ]
@@ -321,19 +331,14 @@ EnumDeclaration :
                                       FINAL, STATIC, STRICTFP);}
    Modifiers
    <ENUM> =>||
-// @name:=TypeIdentifier
-//  REVISIT: The above can't be used because TypeIdentifier#void so the property can't be typed
-//           and the node can't be cast (currently).
-//           Is this something we should try to fix, or is this just an atypical case?
-   /name/=TypeIdentifier
+   TypeIdentifier
    [ImplementsList]
-// @body:=EnumBody REVISIT: This can't be used because the property can't override the default in JavaInternal.ccc.
-   /body/=EnumBody
+   EnumBody
 ;
 
 EnumBody :
    <LBRACE>
-   [ /values/+=EnumConstant ( SCAN 2 <COMMA> (/values/+=EnumConstant) )* ]
+   [ EnumConstant ( SCAN 2 <COMMA> (EnumConstant) )* ]
    [ <COMMA> ]
    [ <SEMICOLON> ( ClassOrInterfaceBodyDeclaration )*! ]
    <RBRACE>
@@ -355,7 +360,7 @@ RecordDeclaration :
       replaceTokenType(TokenType.RECORD);
     }
   )
-  /name/=TypeIdentifier //used in Translator?
+  TypeIdentifier 
   [TypeParameters]
   RecordHeader
   [ImplementsList]
@@ -388,11 +393,11 @@ RecordBody :
 CompactConstructorDeclaration :
   {permissibleModifiers = EnumSet.of(PUBLIC, PROTECTED, PRIVATE);}
   (Modifiers)
-  /name/=TypeIdentifier //used in Translator?
+  TypeIdentifier 
   <LBRACE> =>||
   //(SCAN ~(<RBRACE>|ExplicitConstructorInvocation) => BlockStatement)* // JEP 447
   [ ExplicitConstructorInvocation =>|| ]
-  ( SCAN ~(<RBRACE>) => @statements += BlockStatement )*!
+  ( SCAN ~(<RBRACE>) => BlockStatement )*!
   <RBRACE>
 ;
 
@@ -422,7 +427,7 @@ TypeBound :
    <EXTENDS> ObjectType ( <BIT_AND> ObjectType )*
 ;
 
-ClassOrInterfaceBody : <LBRACE> (SCAN ~(<RBRACE>) => /decls/+=ClassOrInterfaceBodyDeclaration )*! <RBRACE> ;
+ClassOrInterfaceBody : <LBRACE> (SCAN ~(<RBRACE>) => ClassOrInterfaceBodyDeclaration )*! <RBRACE> ;
 
 ClassOrInterfaceBodyDeclaration#interface :
   Initializer
@@ -453,7 +458,7 @@ FieldDeclaration :
 VariableDeclarator# : VariableDeclaratorId [ <ASSIGN> VariableInitializer ] ;
 
 VariableDeclaratorId :
-    @varName := <IDENTIFIER>
+    <IDENTIFIER>
     ( (Annotation)* <LBRACKET> <RBRACKET> )*
     |
     SCAN ~\.\FieldDeclaration =>
@@ -492,30 +497,30 @@ ArrayInitializer :
                                       SYNCHRONIZED, NATIVE,
                                       STRICTFP);}
   )
-  @modifiers:=Modifiers
+  Modifiers
   [ TypeParameters ]
   ReturnType
-  @methodName:=<IDENTIFIER>
-  =>|+1 @formals:=FormalParameters ( (Annotation)* <LBRACKET><RBRACKET> )*
+  <IDENTIFIER>
+  =>|+1 FormalParameters ( (Annotation)* <LBRACKET><RBRACKET> )*
   [ ThrowsList ]
-  ( @statements:=Block | <SEMICOLON> )
+  ( Block | <SEMICOLON> )
   {return CURRENT_NODE;}
 ;
 
 FormalParameters : <LPAREN> [ FormalParameter ( <COMMA> FormalParameter )* ] <RPAREN> ;
 
-FormalParameter : {permissibleModifiers = EnumSet.of(FINAL);}# @modifiers:=Modifiers Type [ (Annotation)* <VAR_ARGS> ] VariableDeclaratorId ;
+FormalParameter : {permissibleModifiers = EnumSet.of(FINAL);}# Modifiers Type [ (Annotation)* <VAR_ARGS> ] VariableDeclaratorId ;
 
 ConstructorDeclaration :
   {permissibleModifiers = EnumSet.of(PUBLIC, PROTECTED, PRIVATE);}
-  @modifiers:=Modifiers
+  Modifiers
   [ TypeParameters ]
-  /name/=TypeIdentifier @formals := FormalParameters =>||
+  TypeIdentifier FormalParameters =>||
   [ ThrowsList ]
   <LBRACE>
   //(SCAN ~(<RBRACE>|ExplicitConstructorInvocation) => BlockStatement)* // JEP 447
   [ ExplicitConstructorInvocation =>||]
-  ( SCAN ~(<RBRACE>) => @statements :+= BlockStatement )*!
+  ( SCAN ~(<RBRACE>) => BlockStatement )*!
   <RBRACE>
 ;
 
@@ -550,7 +555,7 @@ ReferenceType :
 
 ObjectType# :
     (Annotation)*
-    /name/=TypeIdentifier [ TypeArguments ]
+    TypeIdentifier [ TypeArguments ]
     ( <DOT> (Annotation)* <IDENTIFIER> =>|| [ TypeArguments ] )*
 ;
 
@@ -596,7 +601,7 @@ PrimitiveArrayType : PrimitiveType ((Annotation)* <LBRACKET><RBRACKET> =>||)+ ;
 
 ReturnType# : <VOID> | Type ;
 
-Name# : @ids :+= <IDENTIFIER> (<DOT> @ids += <IDENTIFIER> =>||)* ;
+Name# : <IDENTIFIER> (<DOT> <IDENTIFIER> =>||)* ;
 
 ThrowsList : <THROWS> ExceptionType ( <COMMA> ExceptionType )* ;
 
@@ -1037,13 +1042,13 @@ LocalVariableDeclaration#abstract :
 
 NoVarDeclaration :
    {permissibleModifiers = EnumSet.of(FINAL);}
-   @modifiers := Modifiers
+   Modifiers
    Type =>|| VariableDeclarator ( <COMMA> VariableDeclarator )*
 ;
 
 VarDeclaration :
   {permissibleModifiers = EnumSet.of(FINAL);}
-  @modifiers:=Modifiers
+  Modifiers
   ASSERT {checkNextTokenImage("var") && (getTokenType(2) == IDENTIFIER||getTokenType(2)==UNDERSCORE)} 
   =>||
   (
@@ -1155,7 +1160,6 @@ SwitchStatement :
   <RBRACE>
 ;
 
-#if __congo_internal__
 INJECT SwitchStatement : 
 {
     /**
@@ -1170,7 +1174,6 @@ INJECT SwitchStatement :
       return (Expression) get(2);
     }
 }
-#endif
 
 ClassicCaseStatement# :
   ClassicSwitchLabel
@@ -1214,9 +1217,17 @@ NewCaseStatement :
 ;
 
 IfStatement :
-  <IF> <LPAREN> @condition := Expression <RPAREN> @thenBlock := Statement [ <ELSE> @elseBlock := Statement ]
+  <IF> <LPAREN> Expression <RPAREN> Statement [ <ELSE> Statement ]
 ;
 
+INJECT IfStatement :
+{
+    public Node getElseBlock() {
+       Node elseTok = firstChildOfType(TokenType.ELSE);
+       return elseTok == null ? null : elseTok.nextSibling();
+    }
+}
+   
 WhileStatement :
   <WHILE> <LPAREN> Expression <RPAREN> Statement
 ;
@@ -1317,7 +1328,7 @@ CatchBlock :
     <CATCH>
     <LPAREN>
     [<FINAL>]
-    /exceptionTypes/+=ObjectType (<BIT_OR> (/exceptionTypes/+=ObjectType) )* /varDecl/=VariableDeclaratorId
+    ObjectType (<BIT_OR> (ObjectType) )* VariableDeclaratorId
     <RPAREN>
     Block
 ;
@@ -1391,8 +1402,8 @@ AnnotationTypeDeclaration :
   {permissibleModifiers = EnumSet.of(PUBLIC, PROTECTED,
                                     PRIVATE, ABSTRACT,
                                     STATIC, STRICTFP);}#
-  @modifiers:=Modifiers
-  <AT> <INTERFACE> =>|| /name/=TypeIdentifier AnnotationTypeBody // used in Translator?
+  Modifiers
+  <AT> <INTERFACE> =>|| TypeIdentifier AnnotationTypeBody
 ;
 
 AnnotationTypeBody :
@@ -1401,7 +1412,7 @@ AnnotationTypeBody :
 
 AnnotationMethodDeclaration :
    {permissibleModifiers = EnumSet.of(PUBLIC, ABSTRACT);}#
-   @modifiers:=Modifiers
+   Modifiers
    Type <IDENTIFIER> <LPAREN> =>|| <RPAREN> [ DefaultValue ] <SEMICOLON>
 ;
 
@@ -1441,7 +1452,7 @@ LambdaParameters : <LPAREN> [ LambdaParameter ( <COMMA> LambdaParameter )* ] <RP
 
 LambdaParameter :
     {permissibleModifiers = EnumSet.of(FINAL);}#
-    @modifiers := Modifiers
+    Modifiers
     (
       Type (Annotation)* <VAR_ARGS> =>|| <IDENTIFIER>
       |
