@@ -1273,7 +1273,7 @@ BreakStatement :
 ;
 
 YieldStatement :
-   SCAN 2 {checkNextTokenImage("yield")} \...\SwitchExpression =>
+   SCAN 2 {checkNextTokenImage("yield")}# \...\SwitchExpression =>
    (
       <YIELD>
       |
