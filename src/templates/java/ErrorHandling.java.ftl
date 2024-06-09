@@ -3,9 +3,9 @@
 private ArrayList<NonTerminalCall> parsingStack = new ArrayList<>();
 private final ArrayList<NonTerminalCall> lookaheadStack = new ArrayList<>();
 
-[#if settings.faultTolerant]
+#if settings.faultTolerant
   private EnumSet<TokenType> currentFollowSet;
-[/#if]
+#endif
 
 private void pushOntoCallStack(String methodName, String fileName, int line, int column) {
    parsingStack.add(new NonTerminalCall("${settings.parserClassName}", token_source, fileName, methodName, line, column[#if settings.faultTolerant], currentFollowSet[/#if]));
@@ -14,9 +14,9 @@ private void pushOntoCallStack(String methodName, String fileName, int line, int
 private void popCallStack() {
     NonTerminalCall ntc = parsingStack.remove(parsingStack.size() - 1);
     this.currentlyParsedProduction = ntc.productionName;
-   [#if settings.faultTolerant]
+   #if settings.faultTolerant
     this.outerFollowSet = (EnumSet<TokenType>) ntc.followSet;
-   [/#if]
+   #endif
 }
 
 private void restoreCallStack(int prevSize) {
@@ -106,12 +106,12 @@ void dumpLookaheadCallStack(PrintStream ps) {
     dumpCallStack(ps);
 }
 
-[#if settings.faultTolerant]
-   [#if settings.faultTolerantDefault]
+#if settings.faultTolerant
+   #if settings.faultTolerantDefault
     private boolean tolerantParsing = true;
-   [#else]
+   #else
     private boolean tolerantParsing = false;
-   [/#if]
+   #endif
     // Are we pending a recovery routine to
     // get back on the rails?
     private boolean pendingRecovery;
@@ -129,24 +129,24 @@ void dumpLookaheadCallStack(PrintStream ps) {
     void addParsingProblem(ParsingProblem problem) {
         parsingProblems.add(problem);
     }
-[/#if]
+#endif
 
     public boolean isParserTolerant() {
-       [#if settings.faultTolerant]
+       #if settings.faultTolerant
         return tolerantParsing;
-       [#else]
+       #else
         return false;
-       [/#if]
+       #endif
     }
 
     public void setParserTolerant(boolean tolerantParsing) {
-        [#if settings.faultTolerant]
+        #if settings.faultTolerant
           this.tolerantParsing = tolerantParsing;
-        [#else]
+        #else
           if (tolerantParsing) {
             throw new UnsupportedOperationException("This parser was not built with that feature!");
           }
-        [/#if]
+        #endif
     }
 
       private ${settings.baseTokenClassName} consumeToken(TokenType expectedType
@@ -162,20 +162,20 @@ void dumpLookaheadCallStack(PrintStream ps) {
         }
         this.lastConsumedToken = nextToken;
         this.nextTokenType = null;
-[#if settings.treeBuildingEnabled]
+#if settings.treeBuildingEnabled
       if (buildTree && tokensAreNodes) {
       lastConsumedToken.open();
-  [#list grammar.openNodeScopeHooks as hook]
+  #list grammar.openNodeScopeHooks as hook
      ${hook}(lastConsumedToken);
-  [/#list]
+  #endlist
           pushNode(lastConsumedToken);
      lastConsumedToken.close();
-  [#list grammar.closeNodeScopeHooks as hook]
+  #list grammar.closeNodeScopeHooks as hook
      ${hook}(lastConsumedToken);
-  [/#list]
+  #endlist
       }
-[/#if]
-[#if settings.faultTolerant]
+#endif
+#if settings.faultTolerant
 // Check whether the very next token is in the follow set of the last consumed token
 // and if it is not, we check one token ahead to see if skipping the next token remedies
 // the problem.
@@ -188,7 +188,7 @@ void dumpLookaheadCallStack(PrintStream ps) {
             }
          }
       }
-[/#if]
+#endif
       return lastConsumedToken;
   }
 
@@ -197,9 +197,9 @@ void dumpLookaheadCallStack(PrintStream ps) {
       )
       [#if settings.useCheckedException] throws ParseException [/#if]
       {
-      [#if !settings.faultTolerant]
+      #if !settings.faultTolerant
        throw new ParseException(nextToken, EnumSet.of(expectedType), parsingStack);
-      [#else]
+      #else
        if (!this.tolerantParsing) {
           throw new ParseException(nextToken, EnumSet.of(expectedType), parsingStack);
        }
@@ -208,9 +208,9 @@ void dumpLookaheadCallStack(PrintStream ps) {
              [#-- REVISIT. Here we skip one token (as well as any InvalidToken) but maybe (probably!) this behavior
              should be configurable. But we need to experiment, because this is really a heuristic question, no?--]
              nextToken.setSkipped(true);
-[#if settings.treeBuildingEnabled]
+#if settings.treeBuildingEnabled
              pushNode(nextToken);
-[/#if]
+#endif
              return nextNext;
        }
          [#-- Since skipping the next token did not work, we will insert a virtual token --]
@@ -218,49 +218,49 @@ void dumpLookaheadCallStack(PrintStream ps) {
            ${settings.baseTokenClassName} virtualToken = ${settings.baseTokenClassName}.newToken(expectedType, token_source, 0, 0);
            virtualToken.setVirtual(true);
            virtualToken.copyLocationInfo(nextToken);
-[#if lexerData.hasLexicalStateTransitions]
+#if lexerData.hasLexicalStateTransitions
            if (token_source.doLexicalStateSwitch(expectedType)) {
               token_source.reset(virtualToken);
            }
-[/#if]
+#endif
            return virtualToken;
        }
        throw new ParseException(nextToken, EnumSet.of(expectedType), parsingStack);
-      [/#if]
+      #endif
   }
 
   /**
    * pushes the last token back.
    */
   private void pushLastTokenBack() {
-     [#if settings.treeBuildingEnabled]
+     #if settings.treeBuildingEnabled
         if (peekNode() == lastConsumedToken) {
             popNode();
         }
-     [/#if]
+     #endif
      lastConsumedToken = lastConsumedToken.previousCachedToken();
   }
 
   private class ParseState {
        ${settings.baseTokenClassName} lastConsumed;
        ArrayList<NonTerminalCall> parsingStack;
-   [#if MULTIPLE_LEXICAL_STATE_HANDLING]
+   #if MULTIPLE_LEXICAL_STATE_HANDLING
        LexicalState lexicalState;
-   [/#if]
-   [#if settings.treeBuildingEnabled]
+   #endif
+   #if settings.treeBuildingEnabled
        NodeScope nodeScope;
- [/#if]
+   #endif
        ParseState() {
            this.lastConsumed = ${settings.parserClassName}.this.lastConsumedToken;
           @SuppressWarnings("unchecked")
            ArrayList<NonTerminalCall> parsingStack = (ArrayList<NonTerminalCall>) ${settings.parserClassName}.this.parsingStack.clone();
            this.parsingStack = parsingStack;
-[#if MULTIPLE_LEXICAL_STATE_HANDLING]
+#if MULTIPLE_LEXICAL_STATE_HANDLING
            this.lexicalState = token_source.lexicalState;
-[/#if]
-[#if settings.treeBuildingEnabled]
+#endif
+#if settings.treeBuildingEnabled
            this.nodeScope = currentNodeScope.clone();
-[/#if]
+#endif
        }
   }
 
@@ -276,18 +276,18 @@ void dumpLookaheadCallStack(PrintStream ps) {
 
   private void restoreStashedParseState() {
      ParseState state = popParseState();
-[#if settings.treeBuildingEnabled]
+#if settings.treeBuildingEnabled
      currentNodeScope = state.nodeScope;
-[/#if]
+#endif
      ${settings.parserClassName}.this.parsingStack = state.parsingStack;
     if (state.lastConsumed != null) {
         //REVISIT
          lastConsumedToken = state.lastConsumed;
     }
-[#if MULTIPLE_LEXICAL_STATE_HANDLING]
+#if MULTIPLE_LEXICAL_STATE_HANDLING
      token_source.reset(lastConsumedToken, state.lexicalState);
-[#else]
+#else
      token_source.reset(lastConsumedToken);
-[/#if]
+#endif
   }
 

@@ -691,11 +691,11 @@ public interface Node extends List<Node> {
                                    getBeginLine(), getBeginColumn(),
                                    getEndLine(), getEndColumn());
         }
-[#if settings.faultTolerant]
+#if settings.faultTolerant
         if (this.isDirty()) {
             output += " (incomplete)";
         }
-[/#if]
+#endif
         if (output.length() > 0) {
             ps.println(prefix + output);
         }
@@ -711,7 +711,7 @@ public interface Node extends List<Node> {
     default void dump() {
         dump("");
     }
-[#if settings.faultTolerant]
+#if settings.faultTolerant
 
     default boolean isDirty() {
         return false;
@@ -719,7 +719,7 @@ public interface Node extends List<Node> {
 
     void setDirty(boolean dirty);
 
-[/#if]
+#endif
 
     // NB: This default implementation is not thread-safe
     // If the node's children could change out from under you,

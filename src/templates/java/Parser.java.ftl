@@ -28,25 +28,25 @@ import static ${settings.parserPackage}.${settings.baseTokenClassName}.TokenType
    import ${settings.rootAPIPackage}.TokenSource;
    import ${settings.rootAPIPackage}.NonTerminalCall;
    import ${settings.rootAPIPackage}.Node;
-/#if
+#endif
 #if settings.faultTolerant
   #if settings.rootAPIPackage
      import ${settings.rootAPIPackage}.InvalidNode;
      import ${settings.rootAPIPackage}.ParsingProblem;
   #else
      import ${settings.nodePackage}.InvalidNode;
-  /#if
-/#if
+  #endif
+#endif
 
-[#if settings.treeBuildingEnabled]
-  [#list grammar.nodeNames as node]
-    [#if node?index_of('.') > 0]
+#if settings.treeBuildingEnabled
+  #list grammar.nodeNames as node
+    #if node?index_of('.') > 0
       import ${node};
-    [#else]
+    #else
       import ${settings.nodePackage}.${grammar.nodePrefix}${node};
-    [/#if]
-  [/#list]
-[/#if]
+    #endif
+  #endlist
+#endif
 
 public
 [#if isFinal]final[/#if]
@@ -68,12 +68,12 @@ private String currentLookaheadProduction;
 private int lookaheadRoutineNesting;
 #if settings.faultTolerant
 private EnumSet<TokenType> outerFollowSet;
-/#if
+#endif
 #if settings.legacyGlitchyLookahead
    private final boolean legacyGlitchyLookahead = true;
 #else
    private final boolean legacyGlitchyLookahead = false;
-/#if
+#endif
 
 private final ${settings.baseTokenClassName} DUMMY_START_TOKEN = new ${settings.baseTokenClassName}();
 private boolean cancelled;
@@ -96,10 +96,10 @@ public boolean isCancelled() {return cancelled;}
 
    public ${settings.parserClassName}(String inputSource, CharSequence content) {
        this(new ${settings.lexerClassName}(inputSource, content));
-      [#if settings.lexerUsesParser]
+      #if settings.lexerUsesParser
       token_source.setParser(this);
-      [/#if]
-  }
+      #endif
+   }
 
   public ${settings.parserClassName}(CharSequence content) {
     this("input", content);
@@ -128,9 +128,9 @@ public boolean isCancelled() {return cancelled;}
   /** Constructor with user supplied Lexer. */
   public ${settings.parserClassName}(${settings.lexerClassName} lexer) {
     token_source = lexer;
-      [#if settings.lexerUsesParser]
+      #if settings.lexerUsesParser
       token_source.setParser(this);
-      [/#if]
+      #endif
       lastConsumedToken = DUMMY_START_TOKEN;
       lastConsumedToken.setTokenSource(lexer);
   }
@@ -153,21 +153,21 @@ public boolean isCancelled() {return cancelled;}
   private ${settings.baseTokenClassName} nextToken(final ${settings.baseTokenClassName} tok) {
     ${settings.baseTokenClassName} result = token_source.getNextToken(tok);
     while (result.isUnparsed()) {
-     [#list grammar.parserTokenHooks as methodName]
+     #list grammar.parserTokenHooks as methodName
       result = ${methodName}(result);
-     [/#list]
+     #endlist
       result = token_source.getNextToken(result);
-     [#if settings.faultTolerant]
+     #if settings.faultTolerant
       if (result.isInvalid()) {
         if (isParserTolerant()) {
           result.setUnparsed(true);
         }
       }
-     [/#if]
+     #endif
     }
-[#list grammar.parserTokenHooks as methodName]
+#list grammar.parserTokenHooks as methodName
     result = ${methodName}(result);
-[/#list]
+#endlist
     nextTokenType = null;
     return result;
   }
@@ -314,7 +314,7 @@ public boolean isCancelled() {return cancelled;}
   }
 
   /**
-   *Are we in the production of the given name, either scanning ahead or parsing?
+   * Are we in the production of the given name, either scanning ahead or parsing?
    */
   private boolean isInProduction(String productionName, String... prods) {
     if (currentlyParsedProduction != null) {
@@ -345,19 +345,19 @@ public boolean isCancelled() {return cancelled;}
   }
 
 
-[#import "ParserProductions.java.ftl" as ParserCode]
-[@ParserCode.Productions /]
-[#import "LookaheadRoutines.java.ftl" as LookaheadCode]
-[@LookaheadCode.Generate/]
+#import "ParserProductions.java.ftl" as ParserCode
+${ParserCode.Productions()}
+#import "LookaheadRoutines.java.ftl" as LookaheadCode
+${LookaheadCode.Generate()}
 
-[#embed "ErrorHandling.java.ftl"]
+#embed "ErrorHandling.java.ftl"
 
-[#if settings.treeBuildingEnabled]
-   [#embed "TreeBuildingCode.java.ftl"]
-[#else]
+#if settings.treeBuildingEnabled
+   #embed "TreeBuildingCode.java.ftl"
+#else
   public boolean isTreeBuildingEnabled() {
     return false;
   }
-[/#if]
+#endif
 }
 

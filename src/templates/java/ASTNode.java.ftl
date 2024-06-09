@@ -11,7 +11,7 @@ import java.util.*;
 
 #if settings.rootAPIPackage
 import ${settings.rootAPIPackage}.Node;
-/#if
+#endif
 
 [#if isInterface]
 public
@@ -19,10 +19,10 @@ public
 [#if isSealed]sealed[/#if]
 [#if isNonSealed]non-sealed[/#if]
 interface ${classname} extends Node
-   [#list permitsList as item]
+   #list permitsList as item
      [#if item_index == 0]permits[/#if]
      ${item}[#if item_has_next],[/#if]
-   [/#list]
+   #endlist
 {}
 
 [#else]
@@ -36,9 +36,9 @@ public
 [#if isSealed]sealed[/#if]
 [#if isNonSealed]non-sealed[/#if]
 class ${classname} extends ${settings.baseNodeClassName}
-   [#list permitsList as item]
+   #list permitsList as item
      [#if item_index == 0]permits[/#if]
      ${item}[#if item_has_next],[/#if]
-   [/#list]
+   #endlist
 {}
-[/#if]
+#endif

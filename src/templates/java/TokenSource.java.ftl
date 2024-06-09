@@ -36,7 +36,7 @@ abstract public class TokenSource implements CharSequence
    // Just a dummy token value that we put in the tokenLocationTable
    // to indicate that this location in the file is ignored.
     private static final ${BaseToken} IGNORED = new ${settings.baseTokenClassName}();
-/#if
+#endif
     // A dummy token value that we use to indicate that a token location is skipped.
     private static final ${BaseToken} SKIPPED = new ${settings.baseTokenClassName}();
 
@@ -190,7 +190,7 @@ abstract public class TokenSource implements CharSequence
           if (tokenLocationTable[i] != IGNORED) tokenLocationTable[i] = SKIPPED;
 #else
           tokenLocationTable[i] = SKIPPED;
-/#if
+#endif
       }
     }
 
@@ -259,7 +259,7 @@ abstract public class TokenSource implements CharSequence
         setLineSkipped(tok, true);
     }
 
-/#if
+#endif
 #if settings.cppContinuationLine
     protected void handleCContinuationLines() {
       String input = content.toString();
@@ -272,7 +272,7 @@ abstract public class TokenSource implements CharSequence
       }
     }
 
-/#if
+#endif
     public void cacheToken(${BaseToken} tok) {
         int beginOffset = tok.getBeginOffset();
         // If the token is already cached, we just jump out. (I think this is okay...)
@@ -290,7 +290,7 @@ abstract public class TokenSource implements CharSequence
                 }
 #else
                 tokenLocationTable[i] = null;
-/#if
+#endif
            }
         }
         tokenLocationTable[beginOffset] = tok;
@@ -343,7 +343,7 @@ abstract public class TokenSource implements CharSequence
     public void setParsedLines(BitSet parsedLines) {setParsedLines(parsedLines, false);}
 
     public void setUnparsedLines(BitSet unparsedLines) {setParsedLines(unparsedLines, true);}
-/#if
+#endif
 
     // Just use the canned binary search to check whether the char
     // is in one of the intervals
@@ -491,7 +491,7 @@ abstract public class TokenSource implements CharSequence
             }
         }
         return buf.toString();
-/#if
+#endif
     }
 
   // The source of the raw characters that we are scanning

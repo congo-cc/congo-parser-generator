@@ -1,18 +1,6 @@
-[#if settings.treeBuildingDefault]
-    private boolean buildTree = true;
-[#else]
-    private boolean buildTree = false;
-[/#if]
-[#if settings.tokensAreNodes]
-    private boolean tokensAreNodes = true;
-[#else]
-    private boolean tokensAreNodes = false;
-[/#if]
-[#if settings.unparsedTokensAreNodes]
-    private boolean unparsedTokensAreNodes = true;
-[#else]
-    private boolean unparsedTokensAreNodes = false;
-[/#if]
+private boolean buildTree = ${settings.treeBuildingDefault ?: "true" : "false"};
+private boolean tokensAreNodes = ${settings.tokensAreNodes ?: "true" : "false"};
+private boolean unparsedTokensAreNodes = ${settings.unparsedTokensAreNodes ?: "true" : "false"};
 
     public boolean isTreeBuildingEnabled() {
         return buildTree;
@@ -104,9 +92,9 @@
             n.setEndOffset(n.getBeginOffset());
             n.setTokenSource(this.token_source);
             n.open();
-  [#list grammar.openNodeScopeHooks as hook]
+  #list grammar.openNodeScopeHooks as hook
             ${hook}(n);
-  [/#list]
+  #endlist
         }
     }
 
@@ -156,9 +144,9 @@
         }
         n.close();
         pushNode(n);
- [#list grammar.closeNodeScopeHooks as hook]
+#list grammar.closeNodeScopeHooks as hook
        ${hook}(n);
-[/#list]
+#endlist
        return true;
     }
 

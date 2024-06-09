@@ -5,7 +5,7 @@
 #if settings.faultTolerant
     ${followSetVars()}
 #endif
-    #if grammar.choicePointExpansions?size != 0
+    #if grammar.choicePointExpansions
        ${BuildLookaheads()}
     #endif
 #endmacro
@@ -97,7 +97,7 @@
 #macro BuildPredicateRoutine expansion
   #var lookaheadAmount = expansion.lookaheadAmount
   [#if lookaheadAmount = 2147483647][#set lookaheadAmount = "UNLIMITED"][/#if]
-  #set newVarIndex = 0 in CU
+  #set CU.newVarIndex = 0
   // BuildPredicateRoutine: expansion at ${expansion.location}
    private boolean ${expansion.predicateMethodName}() {
      remainingLookahead = ${lookaheadAmount};

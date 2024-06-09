@@ -7,37 +7,37 @@
 #macro GenerateStateCode lexicalState
   #list lexicalState.canonicalSets as state
      #if state_index == 0
-       [@GenerateInitialComposite state/]
+       ${GenerateInitialComposite(state)}
      #elseif state.numStates = 1
-       [@SimpleNfaMethod state.singleState /]
+       ${SimpleNfaMethod(state.singleState)}
      #else
-       [@CompositeNfaMethod state/]
-     /#if
-  /#list
+       ${CompositeNfaMethod(state)}
+     #endif
+  #endlist
 
   #list lexicalState.allNfaStates as state
     #if state.moveRanges?size >= NFA_RANGE_THRESHOLD
-      [@GenerateMoveArray state/]
-    /#if
-  /#list
+      ${GenerateMoveArray(state)}
+    #endif
+  #endlist
 
   private static void NFA_FUNCTIONS_init() {
     #if multipleLexicalStates
       NfaFunction[] functions = new NfaFunction[]
     #else
       nfaFunctions = new NfaFunction[]
-    /#if
+    #endif
     {
     #list lexicalState.canonicalSets as state
       ${lexicalState.name}::get${state.methodName}
       [#if state_has_next],[/#if]
-    [/#list]
+    #endlist
     };
     #if multipleLexicalStates
       functionTableMap.put(LexicalState.${lexicalState.name}, functions);
-    /#if
+    #endif
   }
-/#macro
+#endmacro
 
 [#--
    Generate the array representing the characters
@@ -53,13 +53,13 @@
     private static int[] ${arrayName}_init() {
         return new int[]
         {
-        [#list nfaState.moveRanges as char]
+        #list nfaState.moveRanges as char
           ${globals.displayChar(char)}
           [#if char_has_next],[/#if]
-        [/#list]
+        #endlist
         };
     }
-/#macro
+#endmacro
 
 #macro GenerateInitialComposite nfaState
     private static TokenType get${nfaState.methodName}(int ch, BitSet nextStates, EnumSet<TokenType> validTypes, EnumSet<TokenType> alreadyMatchedTypes) {
@@ -67,7 +67,7 @@
     #var states = nfaState.orderedStates, lastBlockStartIndex = 0
     #list states as state
       #if state_index == 0 || state.moveRanges != states[state_index - 1].moveRanges
-          [#-- In this case we need a new if or possibly else if --]
+          #-- In this case we need a new if or possibly else if 
          #if state_index == 0 || state::overlaps(states::subList(lastBlockStartIndex, state_index))
            [#-- If there is overlap between this state and any of the states
                  handled since the last lone if, we start a new if-else
@@ -76,26 +76,26 @@
                if
          #else
                else if
-         /#if
-           ( [@NFA.NfaStateCondition state /]) {
-      /#if
+         #endif
+           ( ${NFA.NfaStateCondition(state)} ) {
+      #endif
       if (validTypes == null || validTypes.contains(${state.type.label})) {
       #if state.nextStateIndex >= 0
          nextStates.set(${state.nextStateIndex});
-      /#if
+      #endif
       #if !state_has_next || state.moveRanges != states[state_index + 1].moveRanges
-        [#-- We've reached the end of the block. --]
+        #-- We've reached the end of the block.
           #if state.nextState.final
             [#--if (validTypes == null || validTypes.contains(${state.type.label}))--]
               type = ${state.type.label};
-          /#if
+          #endif
         }
-      /#if
+      #endif
        }
-    /#list
+    #endlist
       return type;
     }
-/#macro
+#endmacro
 
 [#--
    Generate the method that represents the transitions
@@ -105,10 +105,10 @@
     private static TokenType get${nfaState.methodName}(int ch, BitSet nextStates, EnumSet<TokenType> validTypes, EnumSet<TokenType> alreadyMatchedTypes) {
      #if lexerData::isLazy(nfaState.type)
       if (alreadyMatchedTypes.contains(${nfaState.type.label})) return null;
-     /#if
+     #endif
     #if nfaState.hasFinalState
       TokenType type = null;
-    /#if
+    #endif
     #var states = nfaState.orderedStates, lastBlockStartIndex = 0
     #list states as state
       #if state_index == 0 || state.moveRanges != states[state_index - 1].moveRanges
@@ -121,27 +121,27 @@
                if
          #else
                else if
-         /#if
-           ([@NFA.NfaStateCondition state /]) {
-      /#if
+         #endif
+           (${NFA.NfaStateCondition(state)}) {
+      #endif
       #if state.nextStateIndex >= 0
          nextStates.set(${state.nextStateIndex});
-      /#if
+      #endif
       #if !state_has_next || state.moveRanges != states[state_index + 1].moveRanges
         #-- We've reached the end of the block.
           #if state.nextState.final
               type = ${state.type.label};
-          /#if
+          #endif
         }
-      /#if
-    /#list
+      #endif
+    #endlist
     #if nfaState.hasFinalState
       return type;
     #else
       return  null;
-    /#if
+    #endif
     }
-/#macro
+#endmacro
 
 [#--
    Generate a method for a single, i.e. non-composite NFA state
@@ -150,18 +150,18 @@
     private static TokenType get${state.methodName}(int ch, BitSet nextStates, EnumSet<TokenType> validTypes, EnumSet<TokenType> alreadyMatchedTypes) {
      #if lexerData::isLazy(state.type)
       if (alreadyMatchedTypes.contains(${state.type.label})) return null;
-     /#if
-      if ([@NfaStateCondition state /]) {
+     #endif
+      if (${NfaStateCondition(state)}) {
          #if state.nextStateIndex >= 0
            nextStates.set(${state.nextStateIndex});
-         /#if
+         #endif
          #if state.nextState.final
               return ${state.type.label};
-         /#if
+         #endif
       }
       return null;
     }
-/#macro
+#endmacro
 
 [#--
 Generate the condition part of the NFA state transition
@@ -171,14 +171,14 @@ it just generates the inline conditional expression
 --]
 #macro NfaStateCondition nfaState
     #if nfaState.moveRanges?size < NFA_RANGE_THRESHOLD
-      [@RangesCondition nfaState.moveRanges /]
+      ${RangesCondition(nfaState.moveRanges)}
     #elseif nfaState.hasAsciiMoves && nfaState.hasNonAsciiMoves
-      ([@RangesCondition nfaState.asciiMoveRanges/])
+      ${RangesCondition(nfaState.asciiMoveRanges)}
       || (ch >= 128 && checkIntervals(${nfaState.movesArrayName}, ch))
     #else
       checkIntervals(${nfaState.movesArrayName}, ch)
-    /#if
-/#macro
+    #endif
+#endmacro
 
 [#--
 This is a recursive macro that generates the code corresponding
@@ -200,10 +200,10 @@ if NFA state's moveRanges array is smaller than NFA_RANGE_THRESHOLD
           ch >= ${displayLeft}
           #if right < 1114111
              && ch <= ${displayRight}
-          /#if
-       /#if
+          #endif
+       #endif
     #else
-       ([@RangesCondition moveRanges[0..1]/])||([@RangesCondition moveRanges[2..]/])
-    /#if
-/#macro
+       ( ${RangesCondition(moveRanges[0..1])} || ${RangesCondition(moveRanges[2..])} )
+    #endif
+#endmacro
 

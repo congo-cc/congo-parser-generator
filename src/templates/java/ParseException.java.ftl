@@ -10,7 +10,7 @@ package ${settings.parserPackage};
   #set BaseTokenType = "Node.NodeType"
 #else
   import ${settings.parserPackage}.${BaseToken}.TokenType;
-/#if
+#endif
 
 import java.util.*;
 
