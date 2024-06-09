@@ -1035,29 +1035,6 @@ LocalVariableDeclaration#abstract :
    )
 ;
 
-NoVarDeclaration :
-   {permissibleModifiers = EnumSet.of(FINAL);}
-   Modifiers
-   Type =>|| VariableDeclarator ( <COMMA> VariableDeclarator )*
-;
-
-VarDeclaration :
-  {permissibleModifiers = EnumSet.of(FINAL);}
-  Modifiers
-  ASSERT {checkNextTokenImage("var") && (getTokenType(2) == IDENTIFIER||getTokenType(2)==UNDERSCORE)} 
-  =>||
-  (
-     <VAR>
-     |
-     <IDENTIFIER>
-     {
-        replaceTokenType(TokenType.VAR);
-     }
-  )
-  (<IDENTIFIER>|<UNDERSCORE>)
-  [<ASSIGN> Expression]
-;
-
 LocalVariableDeclarationLA#scan :
    {permissibleModifiers = EnumSet.of(FINAL);}
    Modifiers
@@ -1070,6 +1047,29 @@ LocalVariableDeclarationLA#scan :
      ASSERT {currentLookaheadToken.toString().equals("var")}
    )
    (<IDENTIFIER>|<UNDERSCORE>)
+;
+
+NoVarDeclaration :
+   {permissibleModifiers = EnumSet.of(FINAL);}
+   Modifiers
+   ASSERT {!checkNextTokenImage("var")}#
+   =>||
+   Type VariableDeclarator ( <COMMA> VariableDeclarator )*
+;
+
+VarDeclaration :
+  {permissibleModifiers = EnumSet.of(FINAL);}
+  Modifiers
+  ASSERT {checkNextTokenImage("var")} // This must be the case. It is just a sanity check.
+  (
+    <VAR>
+    |
+    <IDENTIFIER> 
+    {
+        replaceTokenType(TokenType.VAR);
+    }
+  )
+  VariableDeclarator
 ;
 
 EmptyStatement# : <SEMICOLON> ;

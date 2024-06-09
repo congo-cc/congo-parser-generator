@@ -87,6 +87,10 @@
    [#var resetToken = inLookahead?string("currentLookaheadToken", "lastConsumedToken")]
    [#var prevLexicalStateVar = newVarName("previousLexicalState")]
    [#if expansion.specifiedLexicalState??]
+       #if inLookahead
+         if (hitFailure) return false;
+         if (remainingLookahead <= 0 ) return true;
+       #endif
          LexicalState ${prevLexicalStateVar} = token_source.lexicalState;
          token_source.reset(${resetToken}, LexicalState.${expansion.specifiedLexicalState});
          try {
@@ -107,6 +111,10 @@
       [#var tokenActivation = expansion.tokenActivation]
       [#var prevActives = newVarName("previousActives")]
       [#var somethingChanged = newVarName("somethingChanged")]
+    #if inLookahead
+      if (hitFailure) return false;
+      if (remainingLookahead <= 0 ) return true;
+    #endif
       EnumSet<TokenType> ${prevActives} = EnumSet.copyOf(token_source.activeTokenTypes);
       boolean ${somethingChanged} = false;
       [#if tokenActivation.activatedTokens?size > 0]
