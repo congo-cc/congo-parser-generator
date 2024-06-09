@@ -8,7 +8,7 @@ MINIMAL_TOKEN=false;
 
 USES_PREPROCESSOR;
 
-DEACTIVATE_TOKENS=_INCLUDE,_INJECT,_EOF, RECORD, VAR, YIELD, SEALED, NON_SEALED, PERMITS;
+DEACTIVATE_TOKENS=_INCLUDE,_INJECT,_EOF, RECORD, VAR, YIELD, SEALED, NON_SEALED, PERMITS, TERMINATES;
 
 
 /* congocc RESERVED WORDS: These are the only tokens in congocc but not in Java */
@@ -37,6 +37,8 @@ TOKEN :
   < _TOKEN: "TOKEN" | "REGULAR_TOKEN"> #CongoCCKeyWord
   |
   < _CONTEXTUAL_KEYWORD: "CONTEXTUAL_KEYWORD" > #CongoCCKeyWord
+  |
+  < TERMINATES : "TERMINATES" > #CongoCCKeyWord
   |
   < _UNPARSED: "SPECIAL_TOKEN" | "UNPARSED" > #CongoCCKeyWord
   |
@@ -257,7 +259,7 @@ INJECT CodeBlock :
 
     @Override
     public boolean startsWithGlobalCodeAction() {
-        return isAppliesInLookahead();
+        return isAppliesInLookahead() || getContainingProduction().isOnlyForLookahead();
     }
 
     public String toString() {
@@ -291,7 +293,7 @@ INJECT PARSER_CLASS : {
        _ATTEMPT, _RECOVER, _ON_ERROR,
        _LEXICAL_STATE);
 
-    private Token TOKEN_HOOK(Token t) {
+    private BASE_TOKEN_CLASS TOKEN_HOOK(BASE_TOKEN_CLASS t) {
         if (CongoCCKeyWords.contains(t.getType())
             && isInProduction("CompilationUnit", 
                               "ClassOrInterfaceBody", 
@@ -1079,7 +1081,7 @@ INJECT Assertion :
 
     @Override
     public boolean startsWithGlobalCodeAction() {
-        return expansion != null || semanticLookaheadNested;
+        return expansion != null || semanticLookaheadNested || getContainingProduction().isOnlyForLookahead();
     }
 }
 

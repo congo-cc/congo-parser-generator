@@ -1010,21 +1010,16 @@ Block #CodeBlock : <LBRACE> (SCAN ~(<RBRACE>) => BlockStatement)*! <RBRACE> ;
 BlockStatement#void :
  ASSERT ~((<FINAL>|Annotation)* (<PUBLIC>|<PRIVATE>|<PROTECTED>|<STATIC>)) : "Cannot declare anything to be public, private, protected, or static  in a local context"
  (
-// The YieldStatement option in the Statement production will thus never
-// be matched but this doesn't seem to be a problem really.
-// We need YieldStatement up top here so it does not spuriously match LocalVariableDeclaration.
-  YieldStatement
-  |
   RecordDeclaration
-  |
-  LocalVariableDeclaration { Node varDecl = peekNode(); }
-  <SEMICOLON> {varDecl.add(popNode());}
   |
   ClassDeclaration
   |
   InterfaceDeclaration
   |
   EnumDeclaration
+  |
+  LocalVariableDeclaration { Node varDecl = peekNode(); }
+  <SEMICOLON> {varDecl.add(popNode());}
   |
   Statement
  )
@@ -1273,7 +1268,8 @@ BreakStatement :
 ;
 
 YieldStatement :
-   SCAN 2 {checkNextTokenImage("yield")}# \...\SwitchExpression =>
+   SCAN 2 {checkNextTokenImage("yield")}# => 
+   ASSERT {isInProduction("SwitchExpression")}
    (
       <YIELD>
       |

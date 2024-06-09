@@ -1,32 +1,32 @@
-[#-- This template generates the various lookahead/predicate routines --]
+#-- This template generates the various lookahead/predicate routines
 
-[#macro Generate]
+#macro Generate
     [@firstSetVars /]
 #if settings.faultTolerant
     [@followSetVars /]
-/#if
-    [#if grammar.choicePointExpansions?size != 0]
+#endif
+    #if grammar.choicePointExpansions?size != 0
        [@BuildLookaheads /]
-     [/#if]
-[/#macro]
+     #endif
+#endmacro
 
-[#macro firstSetVars]
+#macro firstSetVars
     //=================================
      // EnumSets that represent the various expansions' first set (i.e. the set of tokens with which the expansion can begin)
      //=================================
-    [#list grammar.expansionsForFirstSet as expansion]
+    #list grammar.expansionsForFirstSet as expansion
           [@CU.firstSetVar expansion/]
-    [/#list]
-[/#macro]
+    #endlist
+#endmacro
 
-[#macro finalSetVars]
+#macro finalSetVars
     //=================================
      // EnumSets that represent the various expansions' final set (i.e. the set of tokens with which the expansion can end)
      //=================================
-    [#list grammar.expansionsForFinalSet as expansion]
+    #list grammar.expansionsForFinalSet as expansion
           [@finalSetVar expansion/]
-    [/#list]
-[/#macro]
+    #endlist
+#endmacro
 
 
 [#macro followSetVars]
@@ -39,7 +39,7 @@
 [/#macro]
 
 
-[#macro BuildLookaheads]
+#macro BuildLookaheads
   private boolean scanToken(TokenType expectedType, TokenType... additionalTypes) {
      ${settings.baseTokenClassName} peekedToken = nextToken(currentLookaheadToken);
      TokenType type = peekedToken.getType();
@@ -70,29 +70,29 @@
 //====================================
  // Lookahead Routines
  //====================================
-   [#list grammar.choicePointExpansions as expansion]
-      [#if expansion.parent.class.simpleName != "BNFProduction"]
+   #list grammar.choicePointExpansions as expansion
+      #if expansion.parent.class.simpleName != "BNFProduction"
         ${BuildScanRoutine(expansion)}
-      [/#if]
-   [/#list]
-   [#list grammar.assertionExpansions as expansion]
+      #endif
+   #endlist
+   #list grammar.assertionExpansions as expansion
       ${BuildAssertionRoutine(expansion)}
-   [/#list]
-   [#list grammar.expansionsNeedingPredicate as expansion]
+   #endlist
+   #list grammar.expansionsNeedingPredicate as expansion
        ${BuildPredicateRoutine(expansion)}
-   [/#list]
-   [#list grammar.allLookaheads as lookahead]
-      [#if lookahead.nestedExpansion??]
+   #endlist
+   #list grammar.allLookaheads as lookahead
+      #if lookahead.nestedExpansion??
        ${BuildLookaheadRoutine(lookahead)}
-     [/#if]
-   [/#list]
-   [#list grammar.allLookBehinds as lookBehind]
+      #endif
+   #endlist
+   #list grammar.allLookBehinds as lookBehind
       ${BuildLookBehindRoutine(lookBehind)}
-   [/#list]
-   [#list grammar.parserProductions as production]
+   #endlist
+   #list grammar.parserProductions as production
       ${BuildProductionLookaheadMethod(production)}
-   [/#list]
-[/#macro]
+   #endlist
+#endmacro
 
 [#macro BuildPredicateRoutine expansion]
   [#var lookaheadAmount = expansion.lookaheadAmount]
@@ -194,11 +194,11 @@
     // BuildPredicateCode macro
   #if expansion.hasSemanticLookahead && (expansion.lookahead.semanticLookaheadNested || expansion.containingProduction.onlyForLookahead)
        if (!(${expansion.semanticLookahead})) return false;
-  /#if
+  #endif
   #if expansion.hasLookBehind
        if ([#if !expansion.lookBehind.negated]![/#if]
        ${expansion.lookBehind.routineName}()) return false;
-  /#if
+  #endif
   #if expansion.hasSeparateSyntacticLookahead
        if (remainingLookahead <= 0) {
         passedPredicate = true;
@@ -207,12 +207,12 @@
        if (
       [#if !expansion.lookahead.negated]![/#if]
         ${expansion.lookaheadExpansion.scanRoutineName}(true)) return false;
-  /#if
+  #endif
   #if expansion.lookaheadAmount == 0
        passedPredicate = true;
-  /#if
+  #endif
     // End BuildPredicateCode macro
-/#macro
+#endmacro
 
 
 [#--
@@ -294,7 +294,7 @@
    // BuildProductionLookaheadMethod macro
   [#set newVarIndex = 0 in CU]
    private boolean ${production.lookaheadMethodName}(boolean scanToEnd) {
-      [#if production.javaCode?? && production.javaCode.appliesInLookahead]
+      [#if production.javaCode?? && (production.javaCode.appliesInLookahead || production.onlyForLookahead)]
           ${production.javaCode}
        [/#if]
       ${BuildScanCode(production.expansion)}
