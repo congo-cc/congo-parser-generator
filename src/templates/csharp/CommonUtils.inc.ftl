@@ -71,6 +71,10 @@ ${prefix}${newID()}[#rt]
 [#var resetToken = inLookahead?string("currentLookaheadToken", "LastConsumedToken")]
 [#if expansion.specifiedLexicalState??]
   [#var prevLexicalStateVar = newVarName("previousLexicalState")]
+  #if inLookahead
+if (_hitFailure) return false;
+if (_remainingLookahead <= 0) return true;
+  #endif
 LexicalState ${prevLexicalStateVar} = tokenSource.LexicalState;
 tokenSource.Reset(${resetToken}, LexicalState.${expansion.specifiedLexicalState});
 try {
@@ -91,6 +95,10 @@ finally {
   [#var tokenActivation = expansion.tokenActivation]
   [#var prevActives = newVarName("previousActives")]
   [#var somethingChanged = newVarName("somethingChanged")]
+  #if inLookahead
+if (_hitFailure) return false;
+if (_remainingLookahead <= 0) return true;
+  #endif
 var ${prevActives} = new HashSet<TokenType>(tokenSource.ActiveTokenTypes);
 var ${somethingChanged} = false;
 [#if tokenActivation.activatedTokens?size > 0]

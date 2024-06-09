@@ -87,6 +87,12 @@ ${prefix}${newID()}[#rt]
 [#-- ${is}# DBG > HandleLexicalStateChange ${indent} ${expansion.simpleName} --]
 [#var resetToken = inLookahead?string("self.current_lookahead_token", "self.last_consumed_token")]
 [#if expansion.specifiedLexicalState??]
+  #if inLookahead
+${is}if self.hit_failure:
+${is}    return False
+${is}if self.remaining_lookahead <= 0:
+${is}    return True
+  #endif
   [#var prevLexicalStateVar = newVarName("previousLexicalState")]
 ${is}${prevLexicalStateVar} = self.token_source.lexical_state
 ${is}self.token_source.reset(${resetToken}, LexicalState.${expansion.specifiedLexicalState})
@@ -107,6 +113,12 @@ ${is}        self._next_token_type = None
   [/#if]
   [#var prevActives = newVarName("previousActives")]
   [#var somethingChanged = newVarName("somethingChanged")]
+  #if inLookahead
+${is}if self.hit_failure:
+${is}    return False
+${is}if self.remaining_lookahead <= 0:
+${is}    return True
+  #endif
 ${is}${somethingChanged} = False
 ${is}${prevActives} = _Set(self.token_source.active_token_types)
 [#if expansion.tokenActivation.activatedTokens?size > 0]
