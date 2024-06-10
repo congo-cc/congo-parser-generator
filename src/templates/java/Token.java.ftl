@@ -29,20 +29,20 @@ import java.util.List;
 public class ${settings.baseTokenClassName} ${implements} {
 
     public enum TokenType
-    [#if settings.treeBuildingEnabled]
+    #if settings.treeBuildingEnabled
        implements Node.NodeType
-    [/#if]
+    #endif
     {
-       [#list lexerData.regularExpressions as regexp]
+       #list lexerData.regularExpressions as regexp
           ${regexp.label}
-          [#if regexp.class.simpleName == "RegexpStringLiteral" && !regexp.ignoreCase]
+          #if regexp.class.simpleName == "RegexpStringLiteral" && !regexp.ignoreCase
             ("${regexp.literalString?j_string}")
-          [/#if]
+          #endif
           ,
-       [/#list]
-       [#list settings.extraTokenNames as extraToken]
+       #endlist
+       #list settings.extraTokenNames as extraToken
           ${extraToken},
-       [/#list]
+       #endlist
        DUMMY,
        INVALID;
 
@@ -72,21 +72,12 @@ public class ${settings.baseTokenClassName} ${implements} {
 
     private boolean unparsed;
 
-[#if settings.treeBuildingEnabled]
+#if settings.treeBuildingEnabled
     private Node parent;
-[/#if]
+#endif
 
-[#if !settings.minimalToken]
+#if !settings.minimalToken
     private String cachedImage;
-#if false
-    /**
-     * @deprecated use setCachedImage
-     */
-    @Deprecated
-    public void setImage(String image) {
-       setCachedImage(image);
-    }
-/#if
     /**
      * If cachedImage is set, then the various methods
      * that implement #java.lang.CharSequence use that string
@@ -110,16 +101,8 @@ public class ${settings.baseTokenClassName} ${implements} {
         this.cachedImage = image;
         this.tokenSource = tokenSource;
     }
-#if false
-    public static ${settings.baseTokenClassName} newToken(TokenType type, String image, ${settings.lexerClassName} tokenSource) {
-        ${settings.baseTokenClassName} result = newToken(type, tokenSource, 0, 0);
-        result.setCachedImage(image);
-        return result;
-    }
-/#if    
 
-
-[/#if]
+#endif
 
     public void truncate(int amount) {
         int newEndOffset = Math.max(getBeginOffset(), getEndOffset()-amount);
@@ -132,7 +115,7 @@ public class ${settings.baseTokenClassName} ${implements} {
     }
 
 
-[#if settings.tokenChaining]
+#if settings.tokenChaining
 
     private ${settings.baseTokenClassName} prependedToken;
     private ${settings.baseTokenClassName} appendedToken;
@@ -159,7 +142,7 @@ public class ${settings.baseTokenClassName} ${implements} {
         this.appendedToken = null;
     }
 
-[/#if]
+#endif
 
     /**
      * It would be extremely rare that an application
@@ -202,7 +185,9 @@ public class ${settings.baseTokenClassName} ${implements} {
     /**
      * Return the TokenType of this ${settings.baseTokenClassName} object
      */
-[#if settings.treeBuildingEnabled]@Override[/#if]
+#if settings.treeBuildingEnabled
+    @Override
+#endif
     public TokenType getType() {
         return type;
     }
@@ -215,26 +200,26 @@ public class ${settings.baseTokenClassName} ${implements} {
      * @return whether this ${settings.baseTokenClassName} represent actual input or was it inserted somehow?
      */
     public boolean isVirtual() {
-        [#if settings.faultTolerant]
+        #if settings.faultTolerant
             return virtual || type == TokenType.EOF;
-        [#else]
+        #else
             return type == TokenType.EOF;
-        [/#if]
+        #endif
     }
 
     /**
      * @return Did we skip this token in parsing?
      */
     public boolean isSkipped() {
-        [#if settings.faultTolerant]
+        #if settings.faultTolerant
            return skipped;
-        [#else]
+        #else
            return false;
-        [/#if]
+        #endif
     }
 
 
-[#if settings.faultTolerant]
+#if settings.faultTolerant
     private boolean virtual;
     private boolean skipped;
     private boolean dirty;
@@ -257,10 +242,10 @@ public class ${settings.baseTokenClassName} ${implements} {
         this.dirty = dirty;
     }
 
-[/#if]
+#endif
 
 
-[#if !settings.treeBuildingEnabled]
+#if !settings.treeBuildingEnabled
  [#-- If tree building is enabled, we can simply use the default
       implementation in the Node interface--]
     /**
@@ -299,7 +284,7 @@ public class ${settings.baseTokenClassName} ${implements} {
         ${settings.lexerClassName} ts = getTokenSource();
         return ts != null ? ts.getInputSource() : "input";
     }
-[/#if]
+#endif
 
     public int getBeginOffset() {
         return beginOffset;
@@ -310,14 +295,12 @@ public class ${settings.baseTokenClassName} ${implements} {
     }
 
     /**
-     * @return the string image of the token.
-     */
-[#if settings.treeBuildingEnabled]@Override[/#if]
-
-    /**
      * @return the next _cached_ regular (i.e. parsed) token
      * or null
      */
+#if settings.treeBuildingEnabled
+   @Override
+#endif
     public final ${settings.baseTokenClassName} getNext() {
         return getNextParsedToken();
     }
@@ -350,17 +333,17 @@ public class ${settings.baseTokenClassName} ${implements} {
      */
     public ${settings.baseTokenClassName} nextCachedToken() {
         if (getType() == TokenType.EOF) return null;
-[#if settings.tokenChaining]
+#if settings.tokenChaining
         if (appendedToken != null) return appendedToken;
-[/#if]
+#endif
         ${settings.lexerClassName} tokenSource = getTokenSource();
         return tokenSource != null ? (${settings.baseTokenClassName}) tokenSource.nextCachedToken(getEndOffset()) : null;
     }
 
     public ${settings.baseTokenClassName} previousCachedToken() {
-[#if settings.tokenChaining]
+#if settings.tokenChaining
         if (prependedToken != null) return prependedToken;
-[/#if]
+#endif
         if (getTokenSource() == null) return null;
         return (${settings.baseTokenClassName}) getTokenSource().previousCachedToken(getBeginOffset());
     }
@@ -371,10 +354,10 @@ public class ${settings.baseTokenClassName} ${implements} {
 
     public ${settings.baseTokenClassName} replaceType(TokenType type) {
         ${settings.baseTokenClassName} result = newToken(type, getTokenSource(), getBeginOffset(), getEndOffset());
-[#if !settings.minimalToken]
+#if !settings.minimalToken
         result.cachedImage = this.cachedImage;
-[/#if]
-[#if settings.tokenChaining]
+#endif
+#if settings.tokenChaining
         result.prependedToken = this.prependedToken;
         result.appendedToken = this.appendedToken;
         result.inserted = this.inserted;
@@ -387,9 +370,9 @@ public class ${settings.baseTokenClassName} ${implements} {
         if (!result.inserted) {
             getTokenSource().cacheToken(result);
         }
-[#else]
+#else
         getTokenSource().cacheToken(result);
-[/#if]
+#endif
         return result;
     }
 
@@ -468,7 +451,7 @@ public class ${settings.baseTokenClassName} ${implements} {
         };
     }
 
-[#if settings.treeBuildingEnabled && settings.tokenChaining]
+#if settings.treeBuildingEnabled && settings.tokenChaining
     /**
      * Copy the location info from a Node
      */
@@ -492,15 +475,15 @@ public class ${settings.baseTokenClassName} ${implements} {
             appendedToken = endToken.appendedToken;
         }
     }
-[#else]
+#else
     public void copyLocationInfo(${settings.baseTokenClassName} from) {
         setTokenSource(from.getTokenSource());
         setBeginOffset(from.getBeginOffset());
         setEndOffset(from.getEndOffset());
-    [#if settings.tokenChaining]
+    #if settings.tokenChaining
         appendedToken = from.appendedToken;
         prependedToken = from.prependedToken;
-    [/#if]
+    #endif
     }
 
     public void copyLocationInfo(${settings.baseTokenClassName} start, ${settings.baseTokenClassName} end) {
@@ -508,61 +491,61 @@ public class ${settings.baseTokenClassName} ${implements} {
         if (tokenSource == null) setTokenSource(end.getTokenSource());
         setBeginOffset(start.getBeginOffset());
         setEndOffset(end.getEndOffset());
-    [#if settings.tokenChaining]
+    #if settings.tokenChaining
         prependedToken = start.prependedToken;
         appendedToken = end.appendedToken;
-    [/#if]
+    #endif
     }
-[/#if]
+#endif
 
     public static ${settings.baseTokenClassName} newToken(TokenType type, ${settings.lexerClassName} tokenSource) {
         ${settings.baseTokenClassName} result = newToken(type, tokenSource, 0, 0);
-        [#if settings.tokenChaining]
+        #if settings.tokenChaining
         result.inserted = true;
-        [/#if]
-        [#if settings.faultTolerant]
+        #endif
+        #if settings.faultTolerant
         result.virtual = true;
-        [/#if]
+        #endif
         return result;
     }
 
     public static ${settings.baseTokenClassName} newToken(TokenType type, String image, ${settings.lexerClassName} tokenSource) {
         ${settings.baseTokenClassName} newToken = newToken(type, tokenSource);
-        [#if !settings.minimalToken]
+        #if !settings.minimalToken
            newToken.setCachedImage(image);
-        [/#if]
+        #endif
         return newToken;
     }
 
 
     public static ${settings.baseTokenClassName} newToken(TokenType type, ${settings.lexerClassName} tokenSource, int beginOffset, int endOffset) {
-        [#if settings.treeBuildingEnabled]
+       #if settings.treeBuildingEnabled
            switch(type) {
-           [#list lexerData.orderedNamedTokens as re]
-            [#if re.generatedClassName != "${settings.baseTokenClassName}" && !re.private]
-              [#var generatedClassName = re.generatedClassName]
-              [#if generatedClassName?index_of('.') < 0]
-                 [#set generatedClassName = grammar.nodePrefix + generatedClassName]
-              [/#if]
+           #list lexerData.orderedNamedTokens as re
+            #if re.generatedClassName != "${settings.baseTokenClassName}" && !re.private
+              #var generatedClassName = re.generatedClassName
+              #if generatedClassName?index_of('.') < 0
+                 #set generatedClassName = grammar.nodePrefix + generatedClassName
+              #endif
               case ${re.label} : return new ${generatedClassName}(TokenType.${re.label}, tokenSource, beginOffset, endOffset);
-            [/#if]
-           [/#list]
-           [#list settings.extraTokenNames as tokenName]
+            #endif
+           #endlist
+           #list settings.extraTokenNames as tokenName
               case ${tokenName} : return new ${grammar.nodePrefix}${settings.extraTokens[tokenName]}(TokenType.${tokenName}, tokenSource, beginOffset, endOffset);
-           [/#list]
+           #endlist
               case INVALID : return new InvalidToken(tokenSource, beginOffset, endOffset);
               default : return new ${settings.baseTokenClassName}(type, tokenSource, beginOffset, endOffset);
            }
-       [#else]
+       #else
          return new ${settings.baseTokenClassName}(type, tokenSource, beginOffset, endOffset);
-       [/#if]
+       #endif
     }
 
     public String getLocation() {
         return getInputSource() + ":" + getBeginLine() + ":" + getBeginColumn();
      }
 
-[#if settings.treeBuildingEnabled]
+#if settings.treeBuildingEnabled
 
     public Node getParent() {
         return parent;
@@ -576,9 +559,9 @@ public class ${settings.baseTokenClassName} ${implements} {
         return length() == 0;
     }
 
-[/#if]
+#endif
 
-[#if settings.usesPreprocessor]
+#if settings.usesPreprocessor
    private Boolean spansPPInstruction;
    protected boolean spansPPInstruction() {
       if (spansPPInstruction == null) {
@@ -586,26 +569,26 @@ public class ${settings.baseTokenClassName} ${implements} {
       }
       return spansPPInstruction;
    }
-[/#if]
+#endif
 
    public int length() {
-      [#if !settings.minimalToken]
+      #if !settings.minimalToken
          if (cachedImage != null) return cachedImage.length();
          cachedImage = toString();
          return cachedImage.length();
-      [#elseif settings.usesPreprocessor]
+      #elseif settings.usesPreprocessor
          if (spansPPInstruction()) return getTokenSource().length(beginOffset, endOffset);
          return endOffset - beginOffset;
-      [#else]
+      #else
          return endOffset - beginOffset;
-      [/#if]
+      #endif
    }
 
    public CharSequence subSequence(int start, int end) {
-      [#if !settings.minimalToken]
+      #if !settings.minimalToken
           if (cachedImage != null) return cachedImage.substring(start, end);
-      [/#if]
-      [#if settings.usesPreprocessor]
+      #endif
+      #if settings.usesPreprocessor
          if (spansPPInstruction()) {
             StringBuilder buf = new StringBuilder();
             TokenSource ts = getTokenSource();
@@ -616,16 +599,16 @@ public class ${settings.baseTokenClassName} ${implements} {
             }
             return buf;
          }
-      [/#if]
+      #endif
       return getTokenSource().subSequence(beginOffset + start, beginOffset+end);
    }
 
    public char charAt(int offset) {
-      [#if !settings.minimalToken]
+      #if !settings.minimalToken
           if (cachedImage != null) return cachedImage.charAt(offset);
           cachedImage = toString();
           return cachedImage.charAt(offset);
-      [#elseif settings.usesPreprocessor]
+      #elseif settings.usesPreprocessor
           TokenSource ts = getTokenSource();
           int scanTo = beginOffset + offset;
           if (spansPPInstruction()) {
@@ -636,17 +619,17 @@ public class ${settings.baseTokenClassName} ${implements} {
              }
           }
           return ts.charAt(scanTo);
-      [#else]
+      #else
           return getTokenSource().charAt(beginOffset + offset);
-      [/#if]
+      #endif
    }
 
     /**
-[#if settings.minimalToken]
+#if settings.minimalToken
      * @deprecated Use toString() instead
-[#else]
+#else
      * @deprecated Typically use just toString() or occasionally getCachedImage()
-[/#if]
+#endif
      */
     @Deprecated
     public String getImage() {

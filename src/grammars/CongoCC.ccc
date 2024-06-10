@@ -117,23 +117,23 @@ INJECT PARSER_CLASS :
 
     public PARSER_CLASS(Grammar grammar, Path path, Map<String, String> definedSymbols) throws IOException {
         this(path.toString(), path);
+        assert grammar != null;
         this.grammar = grammar;
+        token_source.setGrammar(grammar);
         PreprocessorParser parser = new PreprocessorParser(path);
-        //parser.addSymbols(definedSymbols);
         parser.setSymbols(definedSymbols);
         BitSet lineMarkers = parser.PP_Root();
-        token_source.setGrammar(grammar);
         token_source.setParsedLines(lineMarkers);
     }
 
     public PARSER_CLASS(Grammar grammar, String inputSource, CharSequence content) throws IOException {
         this(inputSource, content);
+        assert grammar != null;
         this.grammar = grammar;
+        token_source.setGrammar(grammar);
         PreprocessorParser parser = new PreprocessorParser(inputSource, content);
-//        parser.addSymbols(grammar.getPreprocessorSymbols());
         parser.setSymbols(grammar.getPreprocessorSymbols());
         BitSet lineMarkers = parser.PP_Root();
-        token_source.setGrammar(grammar);
         token_source.setParsedLines(lineMarkers);
     }
 
@@ -325,12 +325,12 @@ INJECT Identifier :
             // have template globals set. In that case, don't do any substitution.
             //
             assert getTokenSource() != null : "tokenSource is null";
-            Grammar grammar = getGrammar();
-            //assert grammar != null : "grammar is null";
+            Grammar grammar = getTokenSource().getGrammar();
+            assert grammar != null : "grammar is null";
 
-            TemplateGlobals tg = grammar == null ? null : grammar .getTemplateGlobals();
+            TemplateGlobals tg = grammar == null ? null : grammar.getTemplateGlobals();
 
-            assert tg != null : "tg is null";
+            //assert tg != null : "tg is null";
 
             if (tg != null) {
                 image = tg.getCurrentNodeVariableName();
