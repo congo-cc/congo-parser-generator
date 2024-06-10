@@ -110,20 +110,21 @@ public class NonTerminal extends Expansion implements SyntaxElement {
         return getNestedExpansion().isSingleTokenLookahead();
      }
 
-     public boolean startsWithLexicalChange() {
+     public boolean startsWithLexicalChange(boolean stopAtScanLimit) {
         if (getProduction().getLexicalState() != null) return true;
         for (Expansion sub : getNestedExpansion().childrenOfType(Expansion.class)) {
-            if (sub.startsWithLexicalChange()) return true;
+            if (sub.startsWithLexicalChange(false)) return true;
             if (!sub.isPossiblyEmpty()) break;
+            if (stopAtScanLimit && sub.isScanLimit()) break;
         }
         return false;
      }
 
-     public boolean startsWithGlobalCodeAction() {
+     public boolean startsWithGlobalCodeAction(boolean stopAtScanLimit) {
         CodeBlock javaCode = getProduction().getJavaCode();
         if (javaCode != null && javaCode.isAppliesInLookahead()) return true;
         //return checkNestedExpansion();
-        return getNestedExpansion().startsWithGlobalCodeAction();
+        return getNestedExpansion().startsWithGlobalCodeAction(stopAtScanLimit);
      }
 
      @Override

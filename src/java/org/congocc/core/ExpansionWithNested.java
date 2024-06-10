@@ -43,12 +43,12 @@ abstract public class ExpansionWithNested extends Expansion {
     }
 
     @Override
-    public boolean startsWithLexicalChange() {
-        return getNestedExpansion().startsWithLexicalChange();
+    public boolean startsWithLexicalChange(boolean stopAtScanLimit) {
+        return getNestedExpansion().startsWithLexicalChange(stopAtScanLimit);
     }
 
     @Override
-    public boolean startsWithGlobalCodeAction() {
-        return getNestedExpansion().startsWithGlobalCodeAction();
+    public boolean startsWithGlobalCodeAction(boolean stopAtScanLimit) {
+        return getNestedExpansion().startsWithGlobalCodeAction(stopAtScanLimit);
     }
 }

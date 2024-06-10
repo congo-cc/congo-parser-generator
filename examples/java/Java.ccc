@@ -37,12 +37,13 @@ Node Root#void :
 ModularCompilationUnit :
    (ImportDeclaration)*
    (Annotation)*
-   ASSERT {checkNextTokenImage("open") || checkNextTokenImage("module")}#
+   ASSERT {checkNextTokenImage("open","module")}#
    =>||
-   [
-      ACTIVATE_TOKENS OPEN (<OPEN>)
-   ]
-   ACTIVATE_TOKENS MODULE (<MODULE>)
+   ACTIVATE_TOKENS OPEN,MODULE
+   (
+     [<OPEN>]
+     <MODULE>
+   )
    Name
    <LBRACE>
    (SCAN ~(<RBRACE>) => ModuleDirective)*

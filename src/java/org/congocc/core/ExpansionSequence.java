@@ -296,7 +296,7 @@ public class ExpansionSequence extends Expansion {
     }
 
     @Override
-    public boolean startsWithLexicalChange() {
+    public boolean startsWithLexicalChange(boolean stopAtScanLimit) {
         Node parent = getParent();
         if (parent instanceof BNFProduction) {
             if (((BNFProduction) parent).getLexicalState() != null) {
@@ -304,17 +304,19 @@ public class ExpansionSequence extends Expansion {
             }
         }        
         for (Expansion exp : childrenOfType(Expansion.class)) {
-            if (exp.startsWithLexicalChange()) return true;
+            if (exp.startsWithLexicalChange(stopAtScanLimit && exp instanceof NonTerminal)) return true;
             if (!exp.isPossiblyEmpty()) break;
+            if (stopAtScanLimit && exp.isScanLimit()) break;
         }
         return false;
     }
 
     @Override
-    public boolean startsWithGlobalCodeAction() {
+    public boolean startsWithGlobalCodeAction(boolean stopAtScanLimit) {
         for (Expansion exp : allUnits()) {
-            if (exp.startsWithGlobalCodeAction()) return true;
+            if (exp.startsWithGlobalCodeAction(stopAtScanLimit && exp instanceof NonTerminal)) return true;
             if (!exp.isPossiblyEmpty()) break;
+            if (stopAtScanLimit && exp.isScanLimit()) break;
         }
         return false;
     }
@@ -323,16 +325,16 @@ public class ExpansionSequence extends Expansion {
         if (!isAtChoicePoint()) {
             return false;
         }
-        return getLookahead() != null && getLookahead().getRequiresScanAhead()
-            || getHasImplicitSyntacticLookahead() 
+        if (getLookahead() != null && getLookahead().getRequiresScanAhead()) {
+            return true;
+        }
+        if (getLookaheadAmount() == 0) return false;
+        return getHasImplicitSyntacticLookahead() 
             || startsWithGlobalCodeAction() 
             || startsWithLexicalChange();
     }
 
     public boolean isFailure() {
-        for (Expansion exp : allUnits()) {
-            if (exp instanceof Failure) return true;
-        }
-        return false;
+        return firstChildOfType(Failure.class) != null;
     }
 }

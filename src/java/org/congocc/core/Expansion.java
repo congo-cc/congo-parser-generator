@@ -189,8 +189,21 @@ abstract public class Expansion extends BaseNode {
 
     boolean getHasImplicitSyntacticLookahead() {return false;}
 
-    public boolean startsWithGlobalCodeAction() {return false;}
-    public boolean startsWithLexicalChange() {return false;}
+    public final boolean startsWithGlobalCodeAction() {
+        return startsWithGlobalCodeAction(true);
+    }
+
+    public final boolean startsWithLexicalChange() {
+        return startsWithLexicalChange(true);
+    }
+
+    public boolean startsWithGlobalCodeAction(boolean stopAtScanLimit) {
+        return false;
+    }
+
+    public boolean startsWithLexicalChange(boolean stopAtScanLimit) {
+        return false;
+    }
 
 
     // This should only be used if we already know the expansion consumes at most a single

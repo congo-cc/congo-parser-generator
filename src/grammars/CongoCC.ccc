@@ -258,7 +258,7 @@ INJECT CodeBlock :
     }
 
     @Override
-    public boolean startsWithGlobalCodeAction() {
+    public boolean startsWithGlobalCodeAction(boolean stopAtScanLimit) {
         return isAppliesInLookahead() || getContainingProduction().isOnlyForLookahead();
     }
 
@@ -951,7 +951,7 @@ INJECT ExpansionChoice :
     }
 
     @Override
-    public boolean startsWithLexicalChange() {
+    public boolean startsWithLexicalChange(boolean stopAtScanLimit) {
         return getChoices().stream().anyMatch(ExpansionSequence::startsWithLexicalChange);
     }
 }
@@ -1043,9 +1043,9 @@ INJECT ExpansionWithParentheses :
     }
 
     @Override
-    public boolean startsWithLexicalChange() {
+    public boolean startsWithLexicalChange(boolean stopAtScanLimit) {
         return firstChildOfType(LexicalStateSwitch.class) != null || firstChildOfType(TokenActivation.class) != null
-              || getNestedExpansion().startsWithLexicalChange();
+              || getNestedExpansion().startsWithLexicalChange(stopAtScanLimit);
     }
 
     @Override
@@ -1080,7 +1080,7 @@ INJECT Assertion :
     @Property Expansion expansion;
 
     @Override
-    public boolean startsWithGlobalCodeAction() {
+    public boolean startsWithGlobalCodeAction(boolean stopAtScanLimit) {
         return expansion != null || semanticLookaheadNested || getContainingProduction().isOnlyForLookahead();
     }
 }
