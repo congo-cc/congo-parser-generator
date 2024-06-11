@@ -311,102 +311,69 @@ INJECT Identifier :
     import org.congocc.app.AppSettings;
     import org.congocc.codegen.TemplateGlobals;
     import org.congocc.core.Grammar;
+    import java.util.HashSet;
+    import java.util.Set;
 {
     private String savedImage;
+
+    static private Set<String> aliases = new HashSet<>();
+
+    static {
+        aliases.add("jjtThis");
+        aliases.add("CURRENT_NODE");
+        aliases.add("THIS_PRODUCTION");
+        aliases.add("PARSER_CLASS");
+        aliases.add("LEXER_CLASS");
+        aliases.add("BASE_NODE_CLASS");
+        aliases.add("BASE_TOKEN_CLASS");
+        aliases.add("NODE_PACKAGE");
+        aliases.add("PARSER_PACKAGE");
+        aliases.add("TOKEN_HOOK");
+        aliases.add("RESET_TOKEN_HOOK");
+        aliases.add("OPEN_NODE_HOOK");
+        aliases.add("CLOSE_NODE_HOOK");
+    }
 
     public String toString() {
         if (savedImage !=null) return savedImage;
         String image = getSource();
-        String substitute;
-        AppSettings settings;  // REVISIT: initializing here with getAppSettings() leads to failures
-
-        if (image.equals("jjtThis") || image.equals("CURRENT_NODE")) {
-            // If we're not doing code generation (e.g. just parsing a CCC file), we might not
-            // have template globals set. In that case, don't do any substitution.
-            //
-            assert getTokenSource() != null : "tokenSource is null";
-            Grammar grammar = getTokenSource().getGrammar();
-            assert grammar != null : "grammar is null";
-
-            TemplateGlobals tg = grammar == null ? null : grammar.getTemplateGlobals();
-
-            //assert tg != null : "tg is null";
-
-            if (tg != null) {
-                image = tg.getCurrentNodeVariableName();
-                assert image != null : "image is null";
-                assert !image.equals("CURRENT_NODE") : "Huh?";
-            }
+        if (!aliases.contains(image) || firstAncestorOfType(Options.class) != null) return image;
+        String prefix;
+        switch (image) {
+            case "jjtThis" :
+            case "CURRENT_NODE" :
+               savedImage=getGrammar().getTemplateGlobals().getCurrentNodeVariableName();
+               if (!savedImage.equals("null")) return savedImage;
+               savedImage = null;
+               return image;
+            case "THIS_PRODUCTION" :
+               return savedImage = "thisProduction";
+            case "PARSER_CLASS" :
+               return savedImage = getAppSettings().getParserClassName();
+            case "LEXER_CLASS" :
+               return savedImage = getAppSettings().getLexerClassName();
+            case "BASE_NODE_CLASS" :
+               return savedImage = getAppSettings().getBaseNodeClassName();
+            case "BASE_TOKEN_CLASS" :
+               return savedImage = getAppSettings().getBaseTokenClassName();
+            case "NODE_PACKAGE" :
+               return savedImage = getAppSettings().getNodePackage();
+            case "PARSER_PACKAGE" :
+               return savedImage = getAppSettings().getParserPackage();
+            case "TOKEN_HOOK" :
+               prefix = getAppSettings().generateIdentifierPrefix("tokenHook");
+               return savedImage = getAppSettings().generateUniqueIdentifier(prefix, this);
+            case "RESET_TOKEN_HOOK" :
+               prefix = getAppSettings().generateIdentifierPrefix("resetTokenHook");
+               return savedImage = getAppSettings().generateUniqueIdentifier(prefix, this);
+            case "OPEN_NODE_HOOK" :
+               prefix = getAppSettings().generateIdentifierPrefix("openNodeHook");
+               return savedImage = getAppSettings().generateUniqueIdentifier(prefix, this);
+            case "CLOSE_NODE_HOOK" :
+               prefix = getAppSettings().generateIdentifierPrefix("closeNodeHook");
+               return savedImage = getAppSettings().generateUniqueIdentifier(prefix, this);
+            default : return image; 
         }
-        else if (image.equals("THIS_PRODUCTION")) {
-            image = "thisProduction";
-        }
-        else if (image.equals("PARSER_CLASS")) {
-            substitute = getAppSettings().getParserClassName();
-            if (substitute != null) {
-                image = substitute;
-            }
-        }
-        else if (image.equals("LEXER_CLASS")) {
-            substitute = getAppSettings().getLexerClassName();
-            if (substitute != null) {
-                image = substitute;
-            }
-        }
-        else if (image.equals("BASE_NODE_CLASS")) {
-            substitute = getAppSettings().getBaseNodeClassName();
-            if (substitute != null) {
-                image = substitute;
-            }
-        }
-        else if (image.equals("BASE_TOKEN_CLASS")) {
-            substitute = getAppSettings().getBaseTokenClassName();
-            if (substitute != null) {
-                image = substitute;
-            }
-        }
-        else if (image.equals("NODE_PACKAGE")) {
-            substitute =  getAppSettings().getNodePackage();
-            if (substitute != null) {
-                image = substitute;
-            }
-        }
-        else if (image.equals("PARSER_PACKAGE")) {
-            substitute = getAppSettings().getParserPackage();
-            if (substitute != null) {
-                image = substitute;
-            }
-        }
-        else if (image.equals("TOKEN_HOOK")) {
-            settings = getAppSettings();
-            String prefix = settings.generateIdentifierPrefix("tokenHook");
-            image = settings.generateUniqueIdentifier(prefix, this);
-            //setCachedImage(image);
-            savedImage = image;
-        }
-        else if (image.equals("RESET_TOKEN_HOOK")) {
-            settings = getAppSettings();
-            String prefix = settings.generateIdentifierPrefix("resetTokenHook");
-            image = settings.generateUniqueIdentifier(prefix, this);
-            //setCachedImage(image);
-            savedImage = image;
-        }
-        else if (image.equals("OPEN_NODE_HOOK")) {
-            settings = getAppSettings();
-            String prefix = settings.generateIdentifierPrefix("openNodeHook");
-            image = settings.generateUniqueIdentifier(prefix, this);
-            //setCachedImage(image);
-            savedImage = image;
-        }
-        else if (image.equals("CLOSE_NODE_HOOK")) {
-            settings = getAppSettings();
-            String prefix = settings.generateIdentifierPrefix("closeNodeHook");
-            image = settings.generateUniqueIdentifier(prefix, this);
-            //setCachedImage(image);
-            savedImage = image;
-        }
-        assert image != null;
-        return image;
    }
 }
 

@@ -267,7 +267,7 @@
                  [#if nextElementNegated][#set nextElement = nextElement?substring(1)][/#if]
                  while (stackIterator.hasNext()) {
                     ntc = stackIterator.next();
-                    [#var equalityOp = nextElementNegated?string("!=", "==")]
+                    #var equalityOp = nextElementNegated?string("!=", "==")
                     if (ntc.productionName ${equalityOp} "${nextElement}") {
                        stackIterator.previous();
                        break;
@@ -292,7 +292,7 @@
 
 #macro BuildProductionLookaheadMethod production
    // BuildProductionLookaheadMethod macro
-  #set newVarIndex = 0 in CU
+  #set CU.newVarIndex = 0 
    private boolean ${production.lookaheadMethodName}(boolean scanToEnd) {
       #if production.javaCode?? && (production.javaCode.appliesInLookahead || production.onlyForLookahead)
           ${production.javaCode}

@@ -64,24 +64,14 @@
     #return newVarIndex
 #endfunction
 
-[#-- A macro to use at one's convenience to comment out a block of code --]
-#macro comment
-#var content, lines
-[#set content][#nested/][/#set]
-#set lines = content?split("\n")
-#list lines as line
-// ${line}
-#endlist
-#endmacro
-
 #function bool val
    #return val ?: "true" : "false"
 #endfunction
 
 #macro HandleLexicalStateChange expansion inLookahead
-   [#var resetToken = inLookahead?string("currentLookaheadToken", "lastConsumedToken")]
-   [#var prevLexicalStateVar = newVarName("previousLexicalState")]
-   [#if expansion.specifiedLexicalState??]
+   #var resetToken = inLookahead?string("currentLookaheadToken", "lastConsumedToken")
+   #var prevLexicalStateVar = newVarName("previousLexicalState")
+   #if expansion.specifiedLexicalState??
        #if inLookahead
          if (hitFailure) return false;
          if (remainingLookahead <= 0 ) return true;
@@ -89,7 +79,7 @@
          LexicalState ${prevLexicalStateVar} = token_source.lexicalState;
          token_source.reset(${resetToken}, LexicalState.${expansion.specifiedLexicalState});
          try {
-           [#nested/]
+           #nested
          }
          finally {
             if (${prevLexicalStateVar} != LexicalState.${expansion.specifiedLexicalState}) {
@@ -102,14 +92,14 @@
                 nextTokenType = null;
             }
          }
-   [#elseif expansion.tokenActivation??]
-      [#var tokenActivation = expansion.tokenActivation]
-      [#var prevActives = newVarName("previousActives")]
-      [#var somethingChanged = newVarName("somethingChanged")]
-    #if inLookahead
+   #elseif expansion.tokenActivation??
+      #var tokenActivation = expansion.tokenActivation
+      #var prevActives = newVarName("previousActives")
+      #var somethingChanged = newVarName("somethingChanged")
+   #if inLookahead
       if (hitFailure) return false;
       if (remainingLookahead <= 0 ) return true;
-    #endif
+   #endif
       EnumSet<TokenType> ${prevActives} = EnumSet.copyOf(token_source.activeTokenTypes);
       boolean ${somethingChanged} = false;
       #if tokenActivation.activatedTokens
@@ -140,3 +130,4 @@
       #nested
    #endif
 #endmacro
+

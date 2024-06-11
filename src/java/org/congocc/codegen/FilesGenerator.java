@@ -30,7 +30,6 @@ public class FilesGenerator {
 
     private final Configuration fmConfig = new freemarker.template.Configuration();
     private final Grammar grammar;
-    // private final LexerData lexerData;
     private final AppSettings appSettings;
     private final Errors errors;
     private final CodeInjector codeInjector;
@@ -77,7 +76,6 @@ public class FilesGenerator {
 
     public FilesGenerator(Grammar grammar) {
         this.grammar = grammar;
-        // this.lexerData = grammar.getLexerData();
         this.appSettings = grammar.getAppSettings();
         this.codeLang = appSettings.getCodeLang();
         this.errors = grammar.getErrors();
