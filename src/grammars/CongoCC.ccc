@@ -850,9 +850,10 @@ ExpansionChoice :
 INJECT ExpansionChoice :
    import org.congocc.core.*;
    import java.util.Set;
+   import java.util.List;
    extends Expansion
 {
-    public java.util.List<ExpansionSequence> getChoices() {
+    public List<ExpansionSequence> getChoices() {
         return childrenOfType(ExpansionSequence.class);
     }
 
@@ -920,6 +921,11 @@ INJECT ExpansionChoice :
     @Override
     public boolean startsWithLexicalChange(boolean stopAtScanLimit) {
         return getChoices().stream().anyMatch(ExpansionSequence::startsWithLexicalChange);
+    }
+
+    @Override
+    public boolean isEnteredUnconditionally() {
+        return getChoices().stream().anyMatch(Expansion::isEnteredUnconditionally);
     }
 }
 

@@ -71,26 +71,39 @@ abstract public class Expansion extends BaseNode {
         }
     }
 
+    private Boolean atChoicePoint;
+
     /**
      * This method is a bit hairy because of the need to deal with 
      * superfluous parentheses.
      * @return Is this expansion at a choice point?
      */
     public final boolean isAtChoicePoint() {
-        if (!(this instanceof ExpansionChoice || this instanceof ExpansionSequence)) return false;
+        if (atChoicePoint != null) return atChoicePoint;
+        if (!(this instanceof ExpansionChoice || this instanceof ExpansionSequence)) {
+            return atChoicePoint = false;
+        }
         Node parent = getParent();
         if (parent instanceof ExpansionChoice 
             || parent instanceof OneOrMore 
             || parent instanceof ZeroOrMore
             || parent instanceof ZeroOrOne 
-            || parent instanceof BNFProduction) return true;
-        if (!(parent instanceof ExpansionWithParentheses)) {
-            return false;
+            || parent instanceof BNFProduction) 
+        {
+                return atChoicePoint = true;
         }
-        if (parent.getParent() instanceof AttemptBlock) return false;
+        if (!(parent instanceof ExpansionWithParentheses)) {
+            return atChoicePoint = false;
+        }
+        if (parent.getParent() instanceof AttemptBlock) {
+            return atChoicePoint = false;
+        }
         ExpansionSequence grandparent = (ExpansionSequence) parent.getParent();
-        return grandparent.childrenOfType(Expansion.class).get(0) == parent && grandparent.isAtChoicePoint();
+        return atChoicePoint = grandparent.childrenOfType(Expansion.class).get(0) == parent && grandparent.isAtChoicePoint();
     }
+
+
+    private Node nonSuperfluousParent;
 
     /**
      * @return the first ancestor that is not (directly) inside superfluous
@@ -98,14 +111,14 @@ abstract public class Expansion extends BaseNode {
      *         correct!) I really need to take a good look at all this handling of
      *         expansions inside parentheses.
      */
-
     final Node getNonSuperfluousParent() {
+        if (nonSuperfluousParent != null) return nonSuperfluousParent;
         Node parent = getParent();
         if (!(parent instanceof Expansion) || !((Expansion) parent).superfluousParentheses()) {
-            return parent;
+            return nonSuperfluousParent = parent;
         }
         ExpansionSequence grandparent = (ExpansionSequence) parent.getParent();
-        return grandparent.getNonSuperfluousParent();
+        return this.nonSuperfluousParent = grandparent.getNonSuperfluousParent();
     }
 
     /**
@@ -346,8 +359,8 @@ abstract public class Expansion extends BaseNode {
     public boolean isEnteredUnconditionally() {
         if (getRequiresPredicateMethod()) return false;
         if (getHasSemanticLookahead()) return false;
-        if (getHasNumericalLookahead() && getLookahead().getAmount() >0) return false;
-        return isPossiblyEmpty();
+        if (isPossiblyEmpty()) return true;
+        return getLookaheadAmount() == 0; 
     }
 
     /**

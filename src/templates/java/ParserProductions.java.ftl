@@ -887,11 +887,11 @@
         }
         #if expansion_has_next
             #var nextExpansion = choice[expansion_index + 1]
-            // Warning: choice at ${nextExpansion.location} is is ignored because the
+            // Warning: choice at ${nextExpansion.location} is ignored because the
             // choice at ${expansion.location} is entered unconditionally and we jump
             // out of the loop..
         #endif
-         #return
+        #return
       #endif
       if (${ExpansionCondition(expansion)}) {
          ${BuildCode(expansion)}
@@ -899,9 +899,11 @@
             ${globals.currentNodeVariableName}.setChoice(${expansion_index});
          #endif
       }
-      [#if expansion_has_next] else [/#if]
+      #if expansion_has_next
+         else 
+      #endif
    #endlist
-   #if choice.parent.simpleName == "ZeroOrMore"
+   #if choice.parent.simpleName = "ZeroOrMore"
       else {
          break;
       }

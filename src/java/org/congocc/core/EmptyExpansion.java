@@ -26,4 +26,9 @@ abstract public class EmptyExpansion extends Expansion {
     protected final int getMaximumSize(Set<String> unused) {
         return 0;
     }
+
+    @Override
+    public boolean isEnteredUnconditionally() {
+        return true;
+    }
 }

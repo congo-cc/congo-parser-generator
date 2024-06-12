@@ -122,7 +122,7 @@ public class ExpansionSequence extends Expansion {
                 NonTerminal nt = (NonTerminal) unit;
                 return nt.getLookahead();
             }
-            if (unit.superfluousParentheses()) {
+            if (unit.superfluousParentheses() || unit instanceof OneOrMore) {
                 ExpansionSequence seq = unit.firstChildOfType(ExpansionSequence.class);
                 if (seq != null) {
                     return seq.getLookahead();
@@ -134,7 +134,7 @@ public class ExpansionSequence extends Expansion {
         return null;
     }
 
-    public boolean getHasExplicitLookahead() {
+    public final boolean getHasExplicitLookahead() {
         return lookahead != null;
     }
 
@@ -215,7 +215,11 @@ public class ExpansionSequence extends Expansion {
         Lookahead la = getLookahead();
         if (la != null)
             return la.getAmount();
-        return getRequiresScanAhead() ? Integer.MAX_VALUE : 1; // A bit kludgy, REVISIT 
+        if (getRequiresScanAhead()) {
+            return Integer.MAX_VALUE;
+        }
+        return isPossiblyEmpty() ? 0 : 1;
+        //return getRequiresScanAhead() ? Integer.MAX_VALUE : 1; // A bit kludgy, REVISIT 
     }
 
     /**
@@ -328,7 +332,7 @@ public class ExpansionSequence extends Expansion {
         if (getLookahead() != null && getLookahead().getRequiresScanAhead()) {
             return true;
         }
-        if (getLookaheadAmount() == 0) return false;
+        if (getLookaheadAmount() == 0 || isPossiblyEmpty()) return false;
         return getHasImplicitSyntacticLookahead() 
             || startsWithGlobalCodeAction() 
             || startsWithLexicalChange();

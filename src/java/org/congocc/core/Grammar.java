@@ -627,7 +627,7 @@ public class Grammar extends BaseNode {
                 ExpansionSequence seq = units.get(i);
                 if (seq.isEnteredUnconditionally()) {
                     if (i < units.size() -1) {
-                        String msg = "This expansion is entered unconditionally but is not the last choice.";
+                        String msg = "This expansion is entered unconditionally but is not the last choice. That may not be your intention.";
                         errors.addWarning(seq, msg);
                         break;
                     }
@@ -635,17 +635,10 @@ public class Grammar extends BaseNode {
             }
         }
 
-        for (ZeroOrOne zoo : descendants(ZeroOrOne.class)) {
-            if (zoo.getNestedExpansion().isEnteredUnconditionally()) {
-                if (!(zoo.getNestedExpansion() instanceof ExpansionChoice)) {
-                    errors.addWarning(zoo, "The expansion inside the zero or one construct is entered unconditionally. This may not be your intention.");
-                }
-            }
-        }
-
-        for (ExpansionWithNested exp : descendants(ExpansionWithNested.class, e->e instanceof ZeroOrMore || e instanceof OneOrMore)) {
+        for (ExpansionWithNested exp : descendants(ExpansionWithNested.class, e->e instanceof ZeroOrMore || e instanceof OneOrMore || e instanceof ZeroOrOne)) {
             if (exp.getNestedExpansion().isEnteredUnconditionally()) {
-                errors.addError(exp, "The expansion inside the zero (or one) or more construct is entered unconditionally. This is not permitted here.");
+                errors.addWarning(exp, "The expansion inside this construct is entered unconditionally. That is probably not your intention.");
+                //errors.addError(exp, "The expansion inside this construct is entered unconditionally. This is not permitted here.");
             }
         }
     }

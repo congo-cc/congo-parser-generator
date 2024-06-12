@@ -186,7 +186,7 @@ TypeArgumentList :
 
 
 TypeDeclaration#interface :
-  SCAN 0 {!checkNextTokenType(TokenType.RBRACE) && !checkNextTokenType(TokenType.EOF)}# =>
+  SCAN 0 {!checkNextTokenType(TokenType.RBRACE, TokenType.EOF)}# =>
   (
    ClassDeclaration
    |
@@ -1032,16 +1032,7 @@ INJECT Expression :
     * Can this expression be evaluated at compile-time?
     */
    default boolean isConstant() {
-      for (Node child : children()) {
-        if (!(child instanceof Expression)) {
-          continue;
-        }
-        if (!((Expression) child).isConstant()) {
-          return false;
-        }
-      }
-      return true;
-      // return childrenOfType(Expression.class).stream().allMatch(Expression::isConstant);
+      return childrenOfType(Expression.class).stream().allMatch(Expression::isConstant);
    }
 }
 
