@@ -310,6 +310,8 @@
 #macro BuildScanCode expansion
   #var classname = expansion.simpleName
   #var skipCheck = classname == "ExpansionSequence" || 
+                  #-- We can skip the check if this is a semantically meaningless
+                  #-- parentheses, only there for grouping or readability
                    classname == "ExpansionWithParentheses" && !expansion::startsWithLexicalChange()
   #if !skipCheck
       if (hitFailure) return false;
