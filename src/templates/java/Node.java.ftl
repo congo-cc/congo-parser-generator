@@ -583,7 +583,6 @@ public interface Node extends List<Node> {
         setTokenSource(from.getTokenSource());
         setBeginOffset(from.getBeginOffset());
         setEndOffset(from.getEndOffset());
-        setTokenSource(from.getTokenSource());
     }
 
     /**

@@ -254,7 +254,7 @@
                  return false;
               }
               stackIterator.next();
-          #elseif element = "..."
+          #elif element = "..."
              #if element_index = lookBehind.path?size - 1
                  #if lookBehind.hasEndingSlash
                       return !stackIterator.hasNext();
@@ -309,12 +309,12 @@
 --]
 #macro BuildScanCode expansion
   #var classname = expansion.simpleName
-  #if classname != "ExpansionSequence" && classname != "ExpansionWithParentheses"
+  #var skipCheck = classname == "ExpansionSequence" || 
+                   classname == "ExpansionWithParentheses" && !expansion::startsWithLexicalChange()
+  #if !skipCheck
       if (hitFailure) return false;
-      if (remainingLookahead <= 0 ) {
-         return true;
-      }
-  // Lookahead Code for ${classname} specified at ${expansion.location}
+      if (remainingLookahead <= 0 ) return true;
+    // Lookahead Code for ${classname} specified at ${expansion.location}
   #endif
   [@CU.HandleLexicalStateChange expansion true]
    [#--
@@ -323,35 +323,35 @@
    --]
    #if classname = "ExpansionWithParentheses"
       ${BuildScanCode(expansion.nestedExpansion)}
-   #elseif expansion.singleTokenLookahead
+   #elif expansion.singleTokenLookahead
       ${ScanSingleToken(expansion)}
-   #elseif expansion.terminal
+   #elif expansion.terminal
       [#-- This is actually dead code since this is
       caught by the previous case. I have it here because
       sometimes I like to comment out the previous condition
       for testing purposes.--]
       ${ScanSingleToken(expansion)}
-   #elseif classname = "Assertion"
+   #elif classname = "Assertion"
       ${ScanCodeAssertion(expansion)}
-   #elseif classname = "Failure"
+   #elif classname = "Failure"
          ${ScanCodeError(expansion)}
-   #elseif classname = "UncacheTokens"
+   #elif classname = "UncacheTokens"
          uncacheTokens();
-   #elseif classname = "ExpansionSequence"
+   #elif classname = "ExpansionSequence"
       ${ScanCodeSequence(expansion)}
-   #elseif classname = "ZeroOrOne"
+   #elif classname = "ZeroOrOne"
       ${ScanCodeZeroOrOne(expansion)}
-   #elseif classname = "ZeroOrMore"
+   #elif classname = "ZeroOrMore"
       ${ScanCodeZeroOrMore(expansion)}
-   #elseif classname = "OneOrMore"
+   #elif classname = "OneOrMore"
       ${ScanCodeOneOrMore(expansion)}
-   #elseif classname = "NonTerminal"
+   #elif classname = "NonTerminal"
       ${ScanCodeNonTerminal(expansion)}
-   #elseif classname = "TryBlock" || classname = "AttemptBlock"
+   #elif classname = "TryBlock" || classname = "AttemptBlock"
       ${BuildScanCode(expansion.nestedExpansion)}
-   #elseif classname = "ExpansionChoice"
+   #elif classname = "ExpansionChoice"
       ${ScanCodeChoice(expansion)}
-   #elseif classname = "CodeBlock"
+   #elif classname = "CodeBlock"
       #if expansion.appliesInLookahead || expansion.insideLookahead || expansion.containingProduction.onlyForLookahead
          ${expansion}
       #endif

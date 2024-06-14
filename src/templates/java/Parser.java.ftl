@@ -284,7 +284,7 @@ public boolean isCancelled() {return cancelled;}
    * works both when in lookahead and in parsing. If the current lookahead
    * token is null, then we are not in a lookahead, i.e. we are parsing, so
    * it just throws the exception. If we are in a lookahead routine, we set
-   * the hitFilaure flag to true, so that the lookahead routine we're in will
+   * the hitFailure flag to true, so that the lookahead routine we're in will
    * fail at the first opportunity.
    */
   private void fail(String message, ${settings.baseTokenClassName} token) [#if settings.useCheckedException] throws ParseException [/#if]
