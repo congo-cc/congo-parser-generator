@@ -100,7 +100,9 @@ UsingStaticDirective :
 ;
 
 UsingAliasDirective :
-   <USING> <IDENTIFIER> <ASSIGN> =>|| Name <SEMICOLON>
+   <USING> <IDENTIFIER> <ASSIGN> =>|| 
+   Type
+   <SEMICOLON>
 ;
 
 UsingNamespaceDirective :
@@ -279,7 +281,7 @@ ClassDeclaration :
      <COLON>
      (
        Name
-       [ SCAN 1 {isaRecordClass} => <LPAREN> ArgumentList <RPAREN>]
+       [ <LPAREN> ArgumentList <RPAREN>]
        | <OBJECT>
        | <STRING>
        | SCAN 0 {checkNextTokenImage("dynamic")}# => ACTIVATE_TOKENS DYNAMIC (<DYNAMIC>)
