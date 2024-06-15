@@ -282,20 +282,19 @@ ClassDeclaration :
      <COLON>
      (
        Name
-       [ <LPAREN> ArgumentList <RPAREN>]
+       [ <LPAREN> [ArgumentList] <RPAREN>]
        | <OBJECT>
        | <STRING>
        | SCAN 0 {checkNextTokenImage("dynamic")}# => ACTIVATE_TOKENS DYNAMIC (<DYNAMIC>)
      )
-     (<COMMA> Name[SCAN 1 {isaRecordClass} => <LPAREN> ArgumentList <RPAREN>] )*
+     (<COMMA> Name [<LPAREN> ArgumentList <RPAREN>] )*
   ]
   TypeParameterConstraints
-   (
-      <LBRACE> (ClassMemberDeclaration)* <RBRACE>
+  (
+      <LBRACE> (ClassMemberDeclaration)* <RBRACE> [<SEMICOLON>]
       |
-      SCAN {isaRecordClass} => <SEMICOLON>
-   )
-  [<SEMICOLON>]
+      <SEMICOLON>
+  )
 ;
 
 StructDeclaration :
@@ -2206,17 +2205,34 @@ ForStatement :
 // C# 8 Pattern syntax follows.
 
 Pattern :
-   //ACTIVATE_TOKENS AND, OR, NOT, VAR, WHEN (OrPattern)
    ACTIVATE_TOKENS AND, OR, NOT (OrPattern)
 ;
 
-// I'm not sure this is right. This is a new feature in C# 11.
+// New in C# 11
 ListPattern :
     <LBRACKET>
     {seenRange = false;}
     [InListPattern (<COMMA> =>|+1 InListPattern)*]
     [<COMMA>]
     <RBRACKET>
+    [VariableDesignation]
+;
+
+VariableDesignation# :
+    <IDENTIFIER>
+    |
+    ParenthesizedVariableDesignation
+;
+
+ParenthesizedVariableDesignation :
+   <LPAREN>
+   [
+      VariableDesignation
+      (
+         <COMMA> VariableDesignation
+      )*
+   ]
+   <RPAREN>
 ;
 
 INJECT PARSER_CLASS :
@@ -2280,8 +2296,8 @@ DeclarationPattern :
        ASSERT ~(FromClause)
        ASSERT ~(WhenClause)
     )
-    <IDENTIFIER>
-    =>||
+    =>|+1
+    VariableDesignation
 ;
 
 VarPattern :
