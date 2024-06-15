@@ -12,7 +12,7 @@ FAULT_TOLERANT_DEFAULT=false;
 
 DEACTIVATE_TOKENS=ADD,ASSEMBLY,ASYNC,AWAIT,INTO,MODULE, NAMEOF,
                   PARTIAL, RECORD, REMOVE,VAR,WHEN,YIELD, ARGLIST,
-                  GET,SET,INIT,WITH,REQUIRED,DYNAMIC,SCOPED,
+                  GET,SET,INIT,WITH,REQUIRED,DYNAMIC,SCOPED,FILE,
                   MANAGED,UNMANAGED,
                   // The following are used in patterns:
                   AND, OR, NOT,
@@ -241,16 +241,17 @@ Modifiers#void : //TODO
      |
      SCAN 0 { permissibleModifiers == null
             || permissibleModifiers.contains(TokenType.ASYNC) && checkNextTokenImage("async")
-            || permissibleModifiers.contains(TokenType.RECORD) && checkNextTokenImage("record")
             || permissibleModifiers.contains(TokenType.REQUIRED) && checkNextTokenImage("required")
+            || permissibleModifiers.contains(TokenType.FILE) && checkNextTokenImage("file")
           }#
-      => ACTIVATE_TOKENS ASYNC, RECORD, REQUIRED
+      => ACTIVATE_TOKENS ASYNC, RECORD, REQUIRED, FILE
          (
             <ASYNC> { if (permissibleModifiers!=null) permissibleModifiers.remove(TokenType.ASYNC);}
             |
             <REQUIRED> {if (permissibleModifiers != null) permissibleModifiers.remove(TokenType.REQUIRED);}
+            |
+            <FILE> {if (permissibleModifiers != null) permissibleModifiers.remove(TokenType.FILE);}
          )
-
   )*
   {permissibleModifiers = null;}#
 ;
@@ -260,7 +261,7 @@ ClassDeclaration :
     boolean isaRecordClass = false;
     permissibleModifiers = EnumSet.of(NEW,  PUBLIC, TokenType.PROTECTED,
                                       TokenType.INTERNAL, TokenType.PRIVATE, TokenType.ABSTRACT,
-                                      TokenType.SEALED, TokenType.STATIC, TokenType.UNSAFE);
+                                      TokenType.SEALED, TokenType.STATIC, TokenType.UNSAFE, TokenType.FILE);
   }
   (AttributeSection)*
   Modifiers
@@ -302,7 +303,8 @@ StructDeclaration :
     boolean isaRecordStruct = false;
     permissibleModifiers = EnumSet.of(TokenType.STATIC, TokenType.INTERNAL, TokenType.PUBLIC,
                                       TokenType.PRIVATE, TokenType.PROTECTED, TokenType.REF,
-                                      TokenType.READONLY, TokenType.UNSAFE, TokenType.NEW, TokenType.SEALED);
+                                      TokenType.READONLY, TokenType.UNSAFE, TokenType.NEW, 
+                                      TokenType.SEALED, TokenType.FILE);
   }
   (AttributeSection)*
   Modifiers
@@ -337,7 +339,7 @@ RecordDeclaration :
   {
     permissibleModifiers = EnumSet.of(TokenType.STATIC, TokenType.INTERNAL, TokenType.PUBLIC,
                                       TokenType.PRIVATE, TokenType.PROTECTED, TokenType.SEALED,
-                                      TokenType.ABSTRACT);
+                                      TokenType.ABSTRACT, TokenType.FILE);
   }
   (AttributeSection)*
   Modifiers
@@ -364,7 +366,7 @@ RecordDeclaration :
 InterfaceDeclaration :
   {
     permissibleModifiers = EnumSet.of(TokenType.INTERNAL, TokenType.UNSAFE, TokenType.PUBLIC, TokenType.PARTIAL,
-                                      TokenType.PRIVATE, TokenType.PROTECTED);
+                                      TokenType.PRIVATE, TokenType.PROTECTED, TokenType.FILE);
   }
   (AttributeSection)*
   Modifiers
@@ -423,7 +425,7 @@ EnumDeclaration :
   {
     permissibleModifiers = EnumSet.of(TokenType.STATIC, TokenType.INTERNAL, TokenType.PUBLIC,
                                       TokenType.PRIVATE, TokenType.PROTECTED, TokenType.SEALED,
-                                      TokenType.ABSTRACT, TokenType.PARTIAL, TokenType.UNSAFE, TokenType.NEW);
+                                      TokenType.ABSTRACT, TokenType.PARTIAL, TokenType.UNSAFE, TokenType.NEW, TokenType.FILE);
   }
   (AttributeSection)*
   Modifiers
@@ -455,7 +457,7 @@ DelegateDeclaration :
   {
     permissibleModifiers = EnumSet.of(TokenType.PUBLIC, TokenType.PRIVATE, TokenType.PROTECTED,
                                       TokenType.INTERNAL, TokenType.UNSAFE, TokenType.VIRTUAL,
-                                      TokenType.OVERRIDE, TokenType.NEW, TokenType.ABSTRACT);
+                                      TokenType.OVERRIDE, TokenType.NEW, TokenType.ABSTRACT, TokenType.FILE);
   }
   (AttributeSection)*
   Modifiers

@@ -196,6 +196,7 @@ TOKEN #KeyWord :
    | < AWAIT : "await" >
    | < DYNAMIC : "dynamic">
    | < GET : "get" >
+   | < FILE : "file" > // Since C# 11
    | < INIT : "init" >
    | < MANAGED : "managed">
    | < UNMANAGED : "unmanaged">
