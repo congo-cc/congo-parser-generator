@@ -2348,7 +2348,7 @@ TypePattern :
    )
 ;
 
-RelationalPattern : (<GT>|<GE>|<LE>|<LT>) RelationalExpression ;
+RelationalPattern : (<GT>|<GE>|<LE>|<LT>|<EQ>|<NE>) RelationalExpression ;
 
 PositionalPattern :
     [NonTupleType =>||]
@@ -2361,12 +2361,12 @@ PositionalPattern :
 
 SubPatterns :
    [QualifiedIdentifier <COLON> =>||]
-   Pattern
+   Pattern [VariableDesignation]
    (
       SCAN 2
       <COMMA>
       [QualifiedIdentifier <COLON> =>||]
-      Pattern
+      Pattern [VariableDesignation]
    )*
 ;
 
