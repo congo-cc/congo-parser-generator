@@ -315,6 +315,7 @@ StructDeclaration :
    =>||
    <IDENTIFIER>
    [TypeParameterList]
+   [<LPAREN> [FormalParameters] <RPAREN>]
    [
       SCAN 1 {isaRecordStruct}
       =>
@@ -1490,7 +1491,9 @@ UnaryExpressionPlusOrMinus : (<PLUS> | <MINUS>) UnaryExpression ;
 UnaryExpressionNotPlusMinus : (<BANG> | <TILDE>) UnaryExpression ;
 
 NullConditionalOperations :
-   <HOOK> =>|+1
+   <HOOK> 
+   ASSERT ~(Expression <COLON>)
+   =>|+1
    (
       <DOT> <IDENTIFIER> [<BANG>][TypeArgumentList =>||]
       |
@@ -1769,7 +1772,10 @@ ObjectInitializer :
 ;
 
 MemberInitializer :
-   Expression ASSERT (<COMMA>|<RBRACE>) =>||
+   ASSERT ~(<LBRACKET>)
+   Expression 
+   ASSERT (<COMMA>|<RBRACE>) 
+   =>||
    |
    (QualifiedIdentifier | <LBRACKET> ArgumentList <RBRACKET>)
    [
@@ -1779,6 +1785,7 @@ MemberInitializer :
      (Expression | ObjectInitializer | CollectionInitializer)
    ]
 ;
+
 
 CollectionInitializer :
    <LBRACE>
@@ -2363,10 +2370,11 @@ CollectionExpression :
       [<RANGE>]
       Expression
       (
-         <COMMA>
+         <COMMA> =>|+1
          [<RANGE>]
          Expression
       )*
+      [<COMMA>]
    ]
    <RBRACKET>
 ;
