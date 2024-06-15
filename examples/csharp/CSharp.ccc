@@ -272,14 +272,9 @@ ClassDeclaration :
   ]
   <CLASS>
   =>||
-   <IDENTIFIER>
-   [
-      SCAN 1 {isaRecordClass}
-      =>
-      <LPAREN> FormalParameters <RPAREN>
-   ]
+  <IDENTIFIER>
   [TypeParameterList]
-  [SCAN 1 {isaRecordClass} => <LPAREN> [FormalParameters] <RPAREN>]
+  [<LPAREN> [FormalParameters] <RPAREN>]
   [
      <COLON>
      (
@@ -746,7 +741,12 @@ StaticConstructorDeclaration :
 ArgumentList : Argument (<COMMA> Argument)* ;
 
 Argument :
-   (AttributeSection)*
+   [
+      // This is necessary to disambiguate 
+      // the AttributeSection from a CollectionExpression
+      SCAN AttributeSection ASSERT ~(<COMMA>|<RPAREN>) =>
+      (AttributeSection)+
+   ]
    [<IDENTIFIER> <COLON> =>||]
    (
        // Where is this specified?
@@ -1052,6 +1052,7 @@ INJECT AnonymousMethodExpression : implements Expression
 INJECT AnonymousObjectCreationExpression : implements Expression
 INJECT AssignmentExpression : implements StatementExpression
 INJECT CheckedExpression : implements StatementExpression
+INJECT CollectionExpression : implements Expression
 INJECT ConditionalExpression : implements Expression
 INJECT ConditionalAndExpression : implements Expression
 INJECT ConditionalOrExpression : implements Expression
@@ -1512,6 +1513,8 @@ PrimaryExpression#void :
       ArrayCreationExpression
       |
       LiteralExpression
+      |
+      CollectionExpression // since C# 12
       |
       InterpolatedString
       |
@@ -2352,6 +2355,20 @@ PropertySubPattern :
    <LBRACE>
     [SubPatterns [<COMMA>]]
    <RBRACE>
+;
+
+CollectionExpression :
+   <LBRACKET>
+   [
+      [<RANGE>]
+      Expression
+      (
+         <COMMA>
+         [<RANGE>]
+         Expression
+      )*
+   ]
+   <RBRACKET>
 ;
 
 InterpolatedString#abstract :
