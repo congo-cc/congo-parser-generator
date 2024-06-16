@@ -384,7 +384,7 @@ TypeParameter :
 ;
 
 TypeAlias :
-    ASSERT {checkNextTokenImage("type")}#
+    ENSURE {checkNextTokenImage("type")}
     (
       <TYPE>
       |
@@ -525,7 +525,7 @@ Assignment :
 // introduced in Python 3.10
 
 MatchStatement :
-   ASSERT {checkNextTokenImage("match")}#
+   ENSURE {checkNextTokenImage("match")}
    (
       <MATCH>
       |

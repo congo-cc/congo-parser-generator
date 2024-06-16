@@ -1066,7 +1066,7 @@ INJECT Assertion :
 
     public boolean getAppliesInLookahead() {
          return get(0).getType() == _ENSURE 
-               || firstChildOfType(Expansion.class) != null
+               || firstChildOfType(Expansion.class) != null && getAppSettings().getAssertAppliesInLookahead()
                || firstChildOfType(HASH) != null
                || firstAncestorOfType(Lookahead.class) !=null
                || getContainingProduction().isOnlyForLookahead();

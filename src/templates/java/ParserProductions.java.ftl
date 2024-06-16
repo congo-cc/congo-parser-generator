@@ -58,7 +58,7 @@
    #if settings.useCheckedException
     throws ParseException
     [#list (production.throwsList.types)! as throw], ${throw}[/#list]
-   #elseif (production.throwsList.types)??
+   #elif (production.throwsList.types)??
      #list production.throwsList.types as throw
         #if throw_index == 0
            throws ${throw}
@@ -315,12 +315,12 @@
                   ${injectDeclaration(nodeName, expansion.assignment.name, expansion.assignment)}
                #endif
             #endif
-         #elseif nodeName??
+         #elif nodeName??
             #-- We are attempting to do assignment of a syntactic node value, but synthetic nodes are not enabled --
             #exec grammar.errors::addWarning(currentProduction, "Attempt to assign " + nodeName + " in production node " + currentProduction.name + " but either synthetic nodes are not enabled or the production is not instantiated; the assignment will be ignored.")
             #return null
          #endif
-      #elseif treeNodeBehavior?? &&
+      #elif treeNodeBehavior?? &&
                treeNodeBehavior.assignment??
          #-- There is an explicit tree node annotation with assignment; make sure a property is injected if needed. --
          #if treeNodeBehavior.assignment.declarationOf
@@ -329,7 +329,7 @@
          #if jtbParseTree
            #exec grammar.errors::addWarning(currentProduction, "Attempt to assign " + nodeName + " in production node " + currentProduction.name + " but it is an implicit JTB syntactic node.")
          #endif
-      #elseif jtbParseTree &&
+      #elif jtbParseTree &&
               expansion.parent.simpleName != "ExpansionWithParentheses" &&
               isProductionInstantiatingNode(currentProduction)
          #-- No in-line definite node annotation; synthesize a parser node for the expansion type being built, if needed. --
@@ -413,19 +413,19 @@
       #var classname = expansion.simpleName
       #if classname = "ZeroOrOne"
          #return classname
-      #elseif classname = "ZeroOrMore"
+      #elif classname = "ZeroOrMore"
          #return classname
-      #elseif classname = "OneOrMore"
+      #elif classname = "OneOrMore"
          #return classname
-      #elseif jtbParseTree && classname = "Terminal"
+      #elif jtbParseTree && classname = "Terminal"
          #return classname
-      #elseif classname = "ExpansionChoice"
+      #elif classname = "ExpansionChoice"
          #return "Choice"
-      #elseif classname = "ExpansionWithParentheses" || classname = "BNFProduction"
+      #elif classname = "ExpansionWithParentheses" || classname = "BNFProduction"
          #-- the () will be skipped and the nested expansion processed, so built the tree node for it rather than this --
          #var innerExpansion = expansion.nestedExpansion
          #return syntacticNodeName(innerExpansion)
-      #elseif classname = "ExpansionSequence" &&
+      #elif classname = "ExpansionSequence" &&
                expansion.parent?? &&
                (
                   expansion.parent.simpleName == "ExpansionWithParentheses" ||
@@ -520,7 +520,7 @@
    #if assignment.existenceOf!false
       #-- replace "@" with "(((@) != null) ? true : false)" --
       #return "(((@) != null) ? true : false)"
-   #elseif assignment.stringOf!false
+   #elif assignment.stringOf!false
       [#-- replace "@" with the string value of the node --]
       #return "Objects.toString((@), \"\").trim()"
    #endif
@@ -544,7 +544,7 @@
             #-- This is an assignment of the current node's effective value to the specified property of the production node --
             #return globals::translateIdentifier("THIS_PRODUCTION") + ".set" + lhsName + "(" + getRhsAssignmentPattern(assignment) + ")"
          #endif
-      #elseif assignment.namedAssignment!false
+      #elif assignment.namedAssignment!false
          #if assignment.addTo
             #-- This is the addition of the current node to the named child list of the production node --
             #return "${globals.currentNodeVariableName}" + ".addToNamedChildList(\"" + lhsName + "\", " + getRhsAssignmentPattern(assignment) + ")"
@@ -573,9 +573,9 @@
    #endif
    #if assignment?? && assignment.existenceOf
       #set type = "boolean"
-   #elseif assignment?? && assignment.stringOf
+   #elif assignment?? && assignment.stringOf
       #set type = "String"
-   #elseif assignment?? && assignment.addTo
+   #elif assignment?? && assignment.addTo
       #set type = "List<Node>"
       #set field = field + " = new ArrayList<Node>()"
    #endif
@@ -610,17 +610,17 @@
    #-- take care of the non-tree-building classes --
    #if classname = "CodeBlock"
       ${expansion}
-   #elseif classname = "UncacheTokens"
+   #elif classname = "UncacheTokens"
          uncacheTokens();
-   #elseif classname = "Failure"
+   #elif classname = "Failure"
       ${BuildCodeFailure(expansion)}
-   #elseif classname = "Assertion" && expansion.appliesInRegularParsing
+   #elif classname = "Assertion" && expansion.appliesInRegularParsing
       ${BuildAssertionCode(expansion)}
-   #elseif classname = "TokenTypeActivation"
+   #elif classname = "TokenTypeActivation"
       ${BuildCodeTokenTypeActivation(expansion)}
-   #elseif classname = "TryBlock"
+   #elif classname = "TryBlock"
       ${BuildCodeTryBlock(expansion)}
-   #elseif classname = "AttemptBlock"
+   #elif classname = "AttemptBlock"
       ${BuildCodeAttemptBlock(expansion)}
    #else
       #-- take care of the tree node (if any) --
@@ -633,7 +633,7 @@
             #-- take care of terminal and non-terminal expansions; they cannot contain child expansions --
             #if classname = "NonTerminal"
                ${BuildCodeNonTerminal(expansion)}
-            #elseif classname = "Terminal"
+            #elif classname = "Terminal"
                ${BuildCodeTerminal(expansion)}
             #else
                #-- take care of the syntactical expansions (which can contain child expansions) --
@@ -645,16 +645,16 @@
                #endif
                #if classname = "ZeroOrOne"
                   ${BuildCodeZeroOrOne(expansion)}
-               #elseif classname = "ZeroOrMore"
+               #elif classname = "ZeroOrMore"
                   ${BuildCodeZeroOrMore(expansion)}
-               #elseif classname = "OneOrMore"
+               #elif classname = "OneOrMore"
                   ${BuildCodeOneOrMore(expansion)}
-               #elseif classname = "ExpansionChoice"
+               #elif classname = "ExpansionChoice"
                   ${BuildCodeChoice(expansion)}
-               #elseif classname = "ExpansionWithParentheses"
+               #elif classname = "ExpansionWithParentheses"
                   #-- Recurse; the real expansion is nested within this one (but the LHS, if any, is on the parent)
                   ${BuildExpansionCode(expansion.nestedExpansion)}
-               #elseif classname = "ExpansionSequence"
+               #elif classname = "ExpansionSequence"
                   ${BuildCodeSequence(expansion)} #-- leave the topLevelExpansion one-shot alone (see above)
                #endif
                #set topLevelExpansion = stackedTopLevel
@@ -745,7 +745,7 @@
          #else
             outerFollowSet = null;
          #endif
-      #elseif !followSet.empty
+      #elif !followSet.empty
          if (outerFollowSet != null) {
             EnumSet<TokenType> newFollowSet = ${nonterminal.followSetVarName}.clone();
             newFollowSet.addAll(outerFollowSet);
@@ -907,14 +907,14 @@
       else {
          break;
       }
-   #elseif choice.parent.simpleName = "OneOrMore"
+   #elif choice.parent.simpleName = "OneOrMore"
        else if (${inFirstVarName}) {
            pushOntoCallStack("${currentProduction.name}", "${choice.inputSource?j_string}", ${choice.beginLine}, ${choice.beginColumn});
            throw new ParseException(lastConsumedToken, ${choice.firstSetVarName}, parsingStack);
        } else {
            break;
        }
-   #elseif choice.parent.simpleName != "ZeroOrOne"
+   #elif choice.parent.simpleName != "ZeroOrOne"
        else {
            pushOntoCallStack("${currentProduction.name}", "${choice.inputSource?j_string}", ${choice.beginLine}, ${choice.beginColumn});
            throw new ParseException(lastConsumedToken, ${choice.firstSetVarName}, parsingStack);
@@ -964,9 +964,9 @@
    #endif
    #if expansion.enteredUnconditionally
       true
-   #elseif expansion.firstSet.tokenNames?size == 0
+   #elif expansion.firstSet.tokenNames?size == 0
       false
-   #elseif expansion.firstSet.tokenNames?size < CU.USE_FIRST_SET_THRESHOLD
+   #elif expansion.firstSet.tokenNames?size < CU.USE_FIRST_SET_THRESHOLD
       #list expansion.firstSet.tokenNames as name
           nextTokenType [#if name_index == 0]() [/#if]
           == ${name}

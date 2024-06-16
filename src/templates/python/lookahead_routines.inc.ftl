@@ -9,23 +9,23 @@
 
 #macro Generate
     [@firstSetVars /]
-#if settings.faultTolerant
+  #if settings.faultTolerant
     [@followSetVars /]
-/#if
-#if grammar.choicePointExpansions?size != 0
-       [@BuildLookaheads 4 /]
-/#if
-/#macro
+  #endif
+  #if grammar.choicePointExpansions?size != 0
+    [@BuildLookaheads 4 /]
+  #endif
+#endmacro
 
 
 #macro firstSetVars
     # ==================================================================
     # EnumSets that represent the various expansions' first set (i.e. the set of tokens with which the expansion can begin)
     # ==================================================================
-#list grammar.expansionsForFirstSet as expansion
+  #list grammar.expansionsForFirstSet as expansion
           [@CU.firstSetVar expansion/]
-/#list
-/#macro
+  #endlist
+#endmacro
 
 [#--
 [#macro finalSetVars]
@@ -42,20 +42,20 @@
     # ==================================================================
     # EnumSets that represent the various expansions' follow set (i.e. the set of tokens that can immediately follow this)
     # ==================================================================
-#list grammar.expansionsForFollowSet as expansion
+  #list grammar.expansionsForFollowSet as expansion
           [@CU.followSetVar expansion/]
-/#list
-/#macro
+  #endlist
+#endmacro
 
 [#--
   scan_token tends to be a big source of time spent in the parser,
   so we try to optimize it into two versions if optimize_scan_token is
   true - one for one type and one for many.
  --]
-[#var optimize_scan_token = true]
+#var optimize_scan_token = true
 
 [#macro BuildLookaheads indent]
-[#if !optimize_scan_token]
+  #if !optimize_scan_token
     def scan_token(self, expected_type_or_types):
         is_set = isinstance(expected_type_or_types, (set, frozenset))
         peeked_token = self.next_token(self.current_lookahead_token)
@@ -70,7 +70,7 @@
         self.current_lookahead_token = peeked_token
         return True
 
-[#else]
+  #else
     def scan_token_one(self, expected_type):
         peeked_token = self.next_token(self.current_lookahead_token)
         tt = peeked_token.type
@@ -89,7 +89,7 @@
         self.current_lookahead_token = peeked_token
         return True
 
-[/#if]
+  #endif
 # ====================================
 # Lookahead Routines
 # ====================================

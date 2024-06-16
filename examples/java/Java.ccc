@@ -12,6 +12,7 @@ JAVA_UNICODE_ESCAPE;
 PARSER_PACKAGE=org.parsers.java;
 NODE_PACKAGE=org.parsers.java.ast;
 DEFAULT_LEXICAL_STATE=JAVA;
+ASSERT_APPLIES_IN_LOOKAHEAD=false;
 // The following tokens are only activated at key points whether
 // they are needed.
 DEACTIVATE_TOKENS=RECORD, VAR, YIELD, SEALED, NON_SEALED, PERMITS, MODULE,
@@ -110,7 +111,7 @@ ProvidesDirective :
   ( TypeDeclaration )*!
   [
     //a bit of a kludge so that CodeInjection2 in CongoCC.ccc can work. Maybe revisit.
-    ASSERT {getTokenType(1) != RBRACE}#
+    ENSURE {getTokenType(1) != RBRACE}
     <EOF>
   ]
   {
@@ -1083,7 +1084,7 @@ StatementExpression# :
   PrimaryExpression
   {Expression lhs = (Expression) peekNode();}
   (
-      SCAN 1 {lhs.isAssignableTo()}=>
+      SCAN {lhs.isAssignableTo()}=>
       (
           (<INCR> | <DECR>) #PostfixExpression(2)
           |

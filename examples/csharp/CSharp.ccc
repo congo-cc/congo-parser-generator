@@ -5,6 +5,7 @@ DEFAULT_LEXICAL_STATE=CSHARP;
 PRESERVE_TABS;
 TABS_TO_SPACES=4;
 ENSURE_FINAL_EOL;
+ASSERT_APPLIES_IN_LOOKAHEAD=false;
 #if FT
 FAULT_TOLERANT;
 FAULT_TOLERANT_DEFAULT=false;
@@ -49,7 +50,7 @@ TypeDeclarationLA#scan :
      SCAN 0 {checkNextTokenImage("partial")}
      => (<IDENTIFIER>|<PARTIAL>)
   ]
-  ASSERT ~(<DELEGATE> <STAR>)
+  ENSURE ~(<DELEGATE> <STAR>)
   (
     <STRUCT>|<CLASS>|<INTERFACE>|<ENUM>|<DELEGATE>
     |
@@ -88,7 +89,7 @@ NamespaceBody :
 ExternAliasDirective :
    <EXTERN>
    <IDENTIFIER>
-   ASSERT {tokenImage(0).equals("alias")}#
+   ENSURE {tokenImage(0).equals("alias")}
    =>||
    <IDENTIFIER> <SEMICOLON>
 ;
@@ -349,7 +350,7 @@ RecordDeclaration :
   (AttributeSection)*
   Modifiers
   [SCAN {checkNextTokenImage("partial")}# => ACTIVATE_TOKENS PARTIAL (<PARTIAL>)]
-  ASSERT {checkNextTokenImage("record")}#
+  ENSURE {checkNextTokenImage("record")}
   ACTIVATE_TOKENS RECORD (<RECORD>)
   =>||
   <IDENTIFIER>
@@ -466,7 +467,7 @@ DelegateDeclaration :
   (AttributeSection)*
   Modifiers
   <DELEGATE>
-  ASSERT ~(<STAR>)
+  ENSURE ~(<STAR>)
   =>||
   ReturnType
   <IDENTIFIER>
@@ -615,8 +616,7 @@ InterfacePropertyDeclaration :
 
 InterfaceAccessor : // TODO, check that there is only one of each
     (AttributeSection)*
-    ASSERT {checkNextTokenImage("get")||checkNextTokenImage("set")||checkNextTokenImage("init")}#
-    : "Expecting get, set, or init here"
+    ENSURE ASSERT {checkNextTokenImage("get")||checkNextTokenImage("set")||checkNextTokenImage("init")}
     ACTIVATE_TOKENS GET,SET,INIT
     ( <GET> | <SET> | <INIT> )
     =>||
@@ -752,14 +752,12 @@ Argument :
    [
       // This is necessary to disambiguate 
       // the AttributeSection from a CollectionExpression
-      SCAN AttributeSection ASSERT ~(<COMMA>|<RPAREN>) =>
+      SCAN AttributeSection ENSURE ~(<COMMA>|<RPAREN>) =>
       (AttributeSection)+
    ]
    [<IDENTIFIER> <COLON> =>||]
    (
-       // Where is this specified?
-      //PrimitiveType ASSERT(<COMMA>|<RPAREN>) =>||
-      Type ASSERT(<COMMA>|<RPAREN>) =>||
+      Type ENSURE(<COMMA>|<RPAREN>) =>||
       |
       <OUT> Type <IDENTIFIER> =>|| // since C# 7.0
       |
@@ -874,7 +872,7 @@ InterfaceMethodDeclaration :
 ;
 
 ReturnType :
-   <VOID> ASSERT~(<STAR>) =>||
+   <VOID> ENSURE ~(<STAR>) =>||
    |
    Type
 ;
@@ -898,7 +896,7 @@ VarArgsParameter#void :
 
 ArgListParameter# :
     <IDENTIFIER>
-    ASSERT {tokenImage(0).equals("__arglist")}#
+    ENSURE {tokenImage(0).equals("__arglist")}
     =>||
 ;
 
@@ -935,7 +933,7 @@ TypeParameter# :
     (AttributeSection)*
     [<IN>|<OUT>|<REF>]
     (
-      <VOID> ASSERT ~(<STAR>|<LBRACKET>) =>||
+      <VOID> ENSURE ~(<STAR>|<LBRACKET>) =>||
       |
       Type
     )
@@ -989,7 +987,7 @@ Type :
   )*
   [
      SCAN 0 \ArrayType =>
-     ASSERT {getTokenType(0) == TokenType.RBRACKET}#
+     ENSURE {getTokenType(0) == TokenType.RBRACKET}
   ]
   (SCAN ~\TupleType => <STAR>)*
   [
@@ -1001,7 +999,7 @@ Type :
 TupleType :
    <LPAREN>
    Type [<IDENTIFIER>]
-   ASSERT (<COMMA>)
+   ENSURE (<COMMA>)
    =>||
    (<COMMA> Type [<IDENTIFIER>])*
    <RPAREN>
@@ -1192,7 +1190,7 @@ ImplicitAnonymousFunctionSignature :
 
 QueryExpressionLA#scan :
    <IDENTIFIER>
-   ASSERT {tokenImage(0).equals("from")}
+   ENSURE {tokenImage(0).equals("from")}
    (
       <IDENTIFIER> <IN> =>||
       |
@@ -1499,7 +1497,7 @@ UnaryExpressionNotPlusMinus : (<BANG> | <TILDE>) UnaryExpression ;
 
 NullConditionalOperations :
    <HOOK> 
-   ASSERT ~(Expression <COLON>)
+   ENSURE ~(Expression <COLON>)
    =>|+1
    (
       <DOT> <IDENTIFIER> [<BANG>][TypeArgumentList =>||]
@@ -1634,9 +1632,9 @@ Tuple :
 TupleElement :
    [<IDENTIFIER> <COLON> =>||]
    (
-       Expression ASSERT(<COMMA> | <RPAREN>) =>||
+       Expression ENSURE(<COMMA> | <RPAREN>) =>||
        |
-       Type Expression ASSERT(<COMMA> | <RPAREN>) =>||
+       Type Expression ENSURE(<COMMA> | <RPAREN>) =>||
    )
    =>||
 ;
@@ -1664,7 +1662,7 @@ BaseAccess :
 ;
 
 NameofExpression :
-   ASSERT {checkNextTokenImage("nameof")}#
+   ENSURE {checkNextTokenImage("nameof")}
    ACTIVATE_TOKENS NAMEOF (<NAMEOF>)
    <LPAREN> =>||
    NamedEntity
@@ -1707,7 +1705,7 @@ TypeofExpression :
    // then the assertion at the end fails, and this means
    // that we go to the next choice, which is
    // a regular Type production (with no funky <,,> thingies
-       UnboundTypeName ASSERT {sawEmptyTypeArgs}# =>||
+       UnboundTypeName ENSURE {sawEmptyTypeArgs} =>||
        |
        Type
     )
@@ -1739,7 +1737,7 @@ AnonymousMethodExpression :
   {boolean seenStatic = false;}
   [<STATIC> {seenStatic = true;}] // since 9.0
   [
-     ASSERT {checkNextTokenImage("async")}#
+     ENSURE {checkNextTokenImage("async")}
      =>||
      ACTIVATE_TOKENS ASYNC (<ASYNC>)
      [
@@ -1779,9 +1777,9 @@ ObjectInitializer :
 ;
 
 MemberInitializer :
-   ASSERT ~(<LBRACKET>)
+   ENSURE ~(<LBRACKET>)
    Expression 
-   ASSERT (<COMMA>|<RBRACE>) 
+   ENSURE (<COMMA>|<RBRACE>) 
    =>||
    |
    (QualifiedIdentifier | <LBRACKET> ArgumentList <RBRACKET>)
@@ -1905,12 +1903,12 @@ LocalVariableDeclarationLA#scan :
    [
       <USING>
    ]
-   ASSERT {!checkNextTokenImage("await")} // Is there any possibility that a local type is named "await"?
+   ENSURE {!checkNextTokenImage("await")} // Is there any possibility that a local type is named "await"?
    [SCAN 0 {checkNextTokenImage("scoped")} => <IDENTIFIER>]
    [<REF>] [<READONLY>]
    (
       (
-         <IDENTIFIER> ASSERT {tokenImage(0).equals("var")} =>||
+         <IDENTIFIER> ENSURE {tokenImage(0).equals("var")} =>||
          (<IDENTIFIER>|Tuple) <ASSIGN>
       )
       |
@@ -1931,7 +1929,7 @@ LocalVariableDeclaration :
 ;
 
 NoVarDeclaration :
-   [ ASSERT {checkNextTokenImage("scoped")}# ACTIVATE_TOKENS SCOPED (<SCOPED>) =>||]
+   [ ENSURE {checkNextTokenImage("scoped")} ACTIVATE_TOKENS SCOPED (<SCOPED>) =>||]
    [
       <REF> // since C# 7.0
    ]
@@ -1939,14 +1937,14 @@ NoVarDeclaration :
       <READONLY> //REVISIT
    ]
    Type
-   ASSERT {getTokenType(-1) == TokenType.DOT || !tokenImage(0).equals("await")}#
+   ENSURE {getTokenType(-1) == TokenType.DOT || !tokenImage(0).equals("await")}
    =>|+1
    LocalVariableDeclarator
    (<COMMA> LocalVariableDeclarator)*
 ;
 
 VarDeclaration :
-   [ ASSERT {checkNextTokenImage("scoped")}# ACTIVATE_TOKENS SCOPED (<SCOPED>) =>||]
+   [ ENSURE {checkNextTokenImage("scoped")} ACTIVATE_TOKENS SCOPED (<SCOPED>) =>||]
    [
       <REF> // since C# 7.0
    ]
@@ -2247,7 +2245,7 @@ INJECT PARSER_CLASS :
 InListPattern :
   SCAN 1 {!seenRange} =>
   (
-    <RANGE> {seenRange = true;} ASSERT ~(Pattern) =>||
+    <RANGE> {seenRange = true;} ENSURE ~(Pattern) =>||
     |
     [<RANGE> {seenRange = true;}] Pattern
   )
@@ -2294,11 +2292,11 @@ ParenthesizedPattern : <LPAREN> Pattern <RPAREN> ;
 
 DeclarationPattern :
     NonNullableType
-    ASSERT {checkNextTokenType(TokenType.IDENTIFIER)}#
+    ENSURE {checkNextTokenType(TokenType.IDENTIFIER)}
     ACTIVATE_TOKENS FROM, WHEN
     (
-       ASSERT ~(FromClause)
-       ASSERT ~(WhenClause)
+       ENSURE ~(FromClause)
+       ENSURE ~(WhenClause)
     )
     =>|+1
     VariableDesignation
@@ -2321,7 +2319,7 @@ TypePattern :
          TokenType lastTokType = getTokenType(0);
          TokenType nextTokType = getTokenType(1);
       }#
-      ASSERT
+      ENSURE
       {
          // If we have a left parenthesis, this choice fails
          // and we go to PositionalPattern
@@ -2346,9 +2344,9 @@ TypePattern :
             || checkNextTokenImage("and")
             || checkNextTokenImage("or")
          )
-      }# =>||
+      } =>||
       |
-      NonNullableType ASSERT {getTokenType(1) != TokenType.LPAREN}#
+      NonNullableType ENSURE {getTokenType(1) != TokenType.LPAREN}
    )
 ;
 

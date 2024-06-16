@@ -48,7 +48,8 @@ public class AppSettings {
             + "NODE_USES_PARSER,TREE_BUILDING_DEFAULT,TREE_BUILDING_ENABLED,TOKENS_ARE_NODES,"
             + "SPECIAL_TOKENS_ARE_NODES,UNPARSED_TOKENS_ARE_NODES,"
             + "TOKEN_MANAGER_USES_PARSER,ENSURE_FINAL_EOL,MINIMAL_TOKEN,C_CONTINUATION_LINE,"
-            + "USE_CHECKED_EXCEPTION,LEGACY_GLITCHY_LOOKAHEAD,TOKEN_CHAINING,USES_PREPROCESSOR,X_JTB_PARSE_TREE,X_SYNTHETIC_NODES_ENABLED,";
+            + "USE_CHECKED_EXCEPTION,LEGACY_GLITCHY_LOOKAHEAD,TOKEN_CHAINING,USES_PREPROCESSOR,X_JTB_PARSE_TREE,X_SYNTHETIC_NODES_ENABLED,"
+            + "ASSERT_APPLIES_IN_LOOKAHEAD,";
 
     private final String stringSettings = ",BASE_NAME,PARSER_PACKAGE,PARSER_CLASS,LEXER_CLASS,BASE_SRC_DIR,BASE_NODE_CLASS,"
             + "BASE_TOKEN_CLASS,NODE_PREFIX,NODE_CLASS,NODE_PACKAGE,DEFAULT_LEXICAL_STATE,"
@@ -566,6 +567,11 @@ public class AppSettings {
     public boolean getSyntheticNodesEnabled() {
         Boolean b = (Boolean) settings.get("X_SYNTHETIC_NODES_ENABLED");
         return b != null && b;
+    }
+
+    public boolean getAssertAppliesInLookahead() {
+        Boolean b = (Boolean) settings.get("ASSERT_APPLIES_IN_LOOKAHEAD");
+        return b==null || b;
     }
 
     public boolean getLexerUsesParser() {
