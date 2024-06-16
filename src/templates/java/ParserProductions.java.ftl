@@ -614,7 +614,7 @@
          uncacheTokens();
    #elseif classname = "Failure"
       ${BuildCodeFailure(expansion)}
-   #elseif classname = "Assertion"
+   #elseif classname = "Assertion" && expansion.appliesInRegularParsing
       ${BuildAssertionCode(expansion)}
    #elseif classname = "TokenTypeActivation"
       ${BuildCodeTokenTypeActivation(expansion)}

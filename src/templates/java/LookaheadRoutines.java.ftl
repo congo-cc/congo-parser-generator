@@ -333,7 +333,7 @@
       sometimes I like to comment out the previous condition
       for testing purposes.--]
       ${ScanSingleToken(expansion)}
-   #elif classname = "Assertion"
+   #elif classname = "Assertion" && expansion.appliesInLookahead
       ${ScanCodeAssertion(expansion)}
    #elif classname = "Failure"
          ${ScanCodeError(expansion)}

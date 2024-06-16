@@ -45,10 +45,16 @@ CompilationUnitBody#void :
 TypeDeclarationLA#scan :
   (AttributeSection)*
   Modifiers
-  [SCAN {checkNextTokenImage("partial")}# => ACTIVATE_TOKENS PARTIAL (<PARTIAL>)]
+  [
+     SCAN 0 {checkNextTokenImage("partial")}
+     => (<IDENTIFIER>|<PARTIAL>)
+  ]
   ASSERT ~(<DELEGATE> <STAR>)
-  (<STRUCT>|<CLASS>|<INTERFACE>|<ENUM>|<DELEGATE>
-    |SCAN {checkNextTokenImage("record")}=>{})
+  (
+    <STRUCT>|<CLASS>|<INTERFACE>|<ENUM>|<DELEGATE>
+    |
+    SCAN {checkNextTokenImage("record")}=>(<IDENTIFIER>|<RECORD>)(<IDENTIFIER>|<STRUCT>|<CLASS>)
+  )
 ;
 
 FileScopedNamespaceDeclaration :
@@ -188,7 +194,7 @@ TypeArgumentList :
 
 
 TypeDeclaration#interface :
-  SCAN 0 {!checkNextTokenType(TokenType.RBRACE, TokenType.EOF)}# =>
+  SCAN TypeDeclarationLA =>
   (
    ClassDeclaration
    |
@@ -383,7 +389,6 @@ InterfaceDeclaration :
 ;
 
 InterfaceMemberDeclaration :
-   SCAN TypeDeclarationLA =>
    TypeDeclaration
    |
    InterfacePropertyDeclaration
@@ -495,7 +500,6 @@ TypeParameterConstraint :
 ClassMemberDeclaration :
   ConstantDeclaration
   |
-  SCAN TypeDeclarationLA =>
   TypeDeclaration
   |
   MethodDeclaration

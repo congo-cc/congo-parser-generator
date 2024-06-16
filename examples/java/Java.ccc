@@ -38,6 +38,7 @@ ModularCompilationUnit :
    (ImportDeclaration)*
    (Annotation)*
    ASSERT {checkNextTokenImage("open","module")}#
+   //ENSURE {checkNextTokenImage("open","module")}
    =>||
    ACTIVATE_TOKENS OPEN,MODULE
    (

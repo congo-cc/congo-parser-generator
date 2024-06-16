@@ -28,7 +28,9 @@ TOKEN :
   |
   < _DEACTIVATE_TOKENS : "DEACTIVATE_TOKENS"> #CongoCCKeyWord
   |
-  < _ENSURE : "ASSERT"> #CongoCCKeyWord
+  < __ASSERT : "ASSERT"> #CongoCCKeyWord
+  |
+  < _ENSURE : "ENSURE" > #CongoCCKeyWord
   |
   < _SCAN : "SCAN" > #CongoCCKeyWord
   |
@@ -288,7 +290,7 @@ INJECT CodeBlock :
 INJECT PARSER_CLASS : {
 
     private EnumSet<TokenType> CongoCCKeyWords = EnumSet.of(
-       _FAIL, _ENSURE, _SCAN, _IGNORE_CASE,
+       _FAIL, __ASSERT, _SCAN, _IGNORE_CASE,
        _TOKEN, _CONTEXTUAL_KEYWORD, _UNPARSED, _SKIP, _MORE,
        _ATTEMPT, _RECOVER, _ON_ERROR,
        _LEXICAL_STATE);
@@ -1054,17 +1056,35 @@ INJECT Assertion :
 
     @Override
     public boolean startsWithGlobalCodeAction(boolean stopAtScanLimit) {
-        return expansion != null || semanticLookaheadNested || getContainingProduction().isOnlyForLookahead();
+        return getAppliesInLookahead();
+    }
+
+    public boolean getAppliesInRegularParsing() {
+        return firstChildOfType(__ASSERT) != null
+              || firstChildOfType(HASH) != null;
+    }
+
+    public boolean getAppliesInLookahead() {
+         return get(0).getType() == _ENSURE 
+               || firstChildOfType(Expansion.class) != null
+               || firstChildOfType(HASH) != null
+               || firstAncestorOfType(Lookahead.class) !=null
+               || getContainingProduction().isOnlyForLookahead();
     }
 }
 
 Assertion :
-   "ASSERT"
+   {boolean assertKeywordPresent = false;}
+   (
+      "ASSERT" {assertKeywordPresent = true;} ["ENSURE"]
+      |
+      "ENSURE" ["ASSERT" {assertKeywordPresent = true;}]
+   )
    (
     "{"
        @assertionExpression := Expression
     "}"
-    [ @semanticLookaheadNested :=? "#" ]
+    [ SCAN {assertKeywordPresent} => @semanticLookaheadNested :=? "#" ]
     |
     [ @expansionNegated :=? "~" ]
     "("
@@ -1072,11 +1092,39 @@ Assertion :
     ")"
    )
    [
+      SCAN {assertKeywordPresent} =>
        ":" @messageExpression := Expression
        [":"]
    ]
    [UpToHere(CURRENT_NODE)]
 ;
+
+Ensure :
+   "ENSURE"
+   (
+     "{" Expression "}" 
+     |
+     ["~"] "(" ExpansionChoice ")"
+   )
+   [UpToHere(CURRENT_NODE)]
+;
+
+INJECT Ensure :
+   import org.congocc.core.*;
+   extends EmptyExpansion
+{
+    public boolean isNegated() {
+        return firstChildOfType(TILDE) != null;
+    }
+
+    public Expansion getExpansion() {
+        return firstChildOfType(Expansion.class);
+    }
+
+    public Expression getExpression() {
+        return firstChildOfType(Expression.class);
+    }
+}
 
 Lookahead# :
 {

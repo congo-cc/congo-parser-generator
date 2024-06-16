@@ -347,7 +347,7 @@ ${is}# at: ${expansion.location}
       [@BuildScanCode expansion.nestedExpansion indent /]
    [#elseif expansion.singleTokenLookahead]
 ${ScanSingleToken(expansion, indent)}
-   [#elseif classname = "Assertion"]
+   [#elseif classname = "Assertion" && expansion.appliesInLookahead]
 ${ScanCodeAssertion(expansion, indent)}
    [#elseif classname = "Failure"]
 ${ScanCodeError(expansion, indent)}
