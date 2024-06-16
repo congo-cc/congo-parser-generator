@@ -447,12 +447,12 @@ if (!ScanToken(${expansion.firstSetVarName})) {
 [#macro ScanCodeAssertion assertion indent]
 [#var is = ""?right_pad(indent)]
 [#-- # DBG > ScanCodeAssertion ${indent} --]
-[#if assertion.assertionExpression?? && (assertion.insideLookahead || assertion.semanticLookaheadNested || assertion.containingProduction.onlyForLookahead)]
+#if assertion.assertionExpression??
 if (!(${globals::translateExpression(assertion.assertionExpression)})) {
     _hitFailure = true;
     return false;
 }
-[/#if]
+#endif
 [#if assertion.expansion??]
 if ([#if !assertion.expansionNegated]![/#if]${assertion.expansion.scanRoutineName}()) {
     _hitFailure = true;

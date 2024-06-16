@@ -444,11 +444,11 @@ ${is}    return False
 [#macro ScanCodeAssertion assertion indent]
 [#var is = ""?right_pad(indent)]
 [#-- ${is}# DBG > ScanCodeAssertion ${indent} --]
-[#if assertion.assertionExpression?? && (assertion.insideLookahead || assertion.semanticLookaheadNested || assertion.containingProduction.onlyForLookahead)]
+#if assertion.assertionExpression?? 
 ${is}if not (${globals::translateExpression(assertion.assertionExpression)}):
 ${is}    self.hit_failure = True
 ${is}    return False
-[/#if]
+#endif
 [#if assertion.expansion??]
 ${is}if [#if !assertion.expansionNegated]not [/#if]self.${assertion.expansion.scanRoutineName}():
 ${is}    self.hit_failure = True

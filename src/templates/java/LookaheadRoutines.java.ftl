@@ -419,8 +419,7 @@
 #endmacro
 
 #macro ScanCodeAssertion assertion
-   #if assertion.assertionExpression?? &&
-        (assertion.insideLookahead || assertion.semanticLookaheadNested || assertion.containingProduction.onlyForLookahead)
+   #if assertion.assertionExpression??
       if (!(${assertion.assertionExpression})) {
          hitFailure = true;
          return false;

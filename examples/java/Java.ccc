@@ -37,8 +37,7 @@ Node Root#void :
 ModularCompilationUnit :
    (ImportDeclaration)*
    (Annotation)*
-   ASSERT {checkNextTokenImage("open","module")}#
-   //ENSURE {checkNextTokenImage("open","module")}
+   ENSURE {checkNextTokenImage("open","module")}
    =>||
    ACTIVATE_TOKENS OPEN,MODULE
    (
@@ -233,7 +232,7 @@ TypeDeclarationLA#scan :
      | <ENUM>
      | <AT> <INTERFACE>
      | <IDENTIFIER>
-       ASSERT {currentLookaheadToken.toString().equals("record")}
+       ENSURE {currentLookaheadToken.toString().equals("record")}
        <IDENTIFIER>
    )
 ;
@@ -250,11 +249,11 @@ EmptyDeclaration# : <SEMICOLON> ;
 TypeIdentifier#void :
    <IDENTIFIER>
    {String temp = tokenImage(0);}#
-   ASSERT {!temp.equals("record")
+   ENSURE ASSERT {!temp.equals("record")
            && !temp.equals("var")
            && !temp.equals("permits")
            && !temp.equals("sealed")
-           && !temp.equals("yield")}#
+           && !temp.equals("yield")}
           : "Illegal type name " + temp
    =>||
 ;
@@ -352,7 +351,7 @@ RecordDeclaration :
                                      ABSTRACT, FINAL,
                                      STATIC, STRICTFP);}
   Modifiers
-  ASSERT {checkNextTokenImage("record") && getTokenType(2) == IDENTIFIER}#
+  ENSURE {checkNextTokenImage("record") && getTokenType(2) == IDENTIFIER}
   =>||
   (
     <RECORD>
@@ -865,7 +864,7 @@ PrimaryExpression#interface :
   =>
   InvocationArguments #MethodCall(+1)
  )*
- ASSERT {getTokenType(0) != SUPER}# : "Not a valid expression here " + getToken(0).getLocation()
+ ASSERT {getTokenType(0) != SUPER} : "Not a valid expression here " + getToken(0).getLocation()
 ;
 
 LiteralExpression# : Literal ;
@@ -1046,7 +1045,7 @@ LocalVariableDeclarationLA#scan :
      <VAR>
      |
      <IDENTIFIER>
-     ASSERT {currentLookaheadToken.toString().equals("var")}
+     ENSURE {currentLookaheadToken.toString().equals("var")}
    )
    (<IDENTIFIER>|<UNDERSCORE>)
 ;
@@ -1054,7 +1053,7 @@ LocalVariableDeclarationLA#scan :
 NoVarDeclaration :
    {permissibleModifiers = EnumSet.of(FINAL);}
    Modifiers
-   ASSERT {!checkNextTokenImage("var")}#
+   ENSURE {!checkNextTokenImage("var")}
    =>||
    Type VariableDeclarator ( <COMMA> VariableDeclarator )*
 ;
@@ -1270,8 +1269,7 @@ BreakStatement :
 ;
 
 YieldStatement :
-   SCAN 2 {checkNextTokenImage("yield")}# => 
-   ASSERT {isInProduction("SwitchExpression")}
+   SCAN 2 {checkNextTokenImage("yield") && isInProduction("SwitchExpression")}# => 
    (
       <YIELD>
       |
