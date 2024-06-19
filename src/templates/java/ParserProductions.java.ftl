@@ -614,8 +614,12 @@
          uncacheTokens();
    #elif classname = "Failure"
       ${BuildCodeFailure(expansion)}
-   #elif classname = "Assertion" && expansion.appliesInRegularParsing
-      ${BuildAssertionCode(expansion)}
+   #elif classname = "Assertion" 
+      #if expansion.appliesInRegularParsing
+        ${BuildAssertionCode(expansion)}
+      #else
+        // No code generated since assertion does not apply in regular parsing
+      #endif
    #elif classname = "TokenTypeActivation"
       ${BuildCodeTokenTypeActivation(expansion)}
    #elif classname = "TryBlock"

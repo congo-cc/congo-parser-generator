@@ -95,8 +95,7 @@
 #endmacro
 
 #macro BuildPredicateRoutine expansion
-  #var lookaheadAmount = expansion.lookaheadAmount
-  [#if lookaheadAmount = 2147483647][#set lookaheadAmount = "UNLIMITED"][/#if]
+  #var lookaheadAmount = expansion.lookaheadAmount == 2147483647 ?: "UNLIMITED" : expansion.lookaheadAmount
   #set CU.newVarIndex = 0
   // BuildPredicateRoutine: expansion at ${expansion.location}
    private boolean ${expansion.predicateMethodName}() {
@@ -334,7 +333,11 @@
       for testing purposes.--]
       ${ScanSingleToken(expansion)}
    #elif classname = "Assertion" && expansion.appliesInLookahead
-      ${ScanCodeAssertion(expansion)}
+      #if expansion.appliesInLookahead
+         ${ScanCodeAssertion(expansion)}
+      #else
+         // No code generated since this assertion does not apply in lookahead
+      #endif
    #elif classname = "Failure"
          ${ScanCodeError(expansion)}
    #elif classname = "UncacheTokens"

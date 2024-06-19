@@ -251,7 +251,7 @@ Modifiers#void : //TODO
             || permissibleModifiers.contains(TokenType.REQUIRED) && checkNextTokenImage("required")
             || permissibleModifiers.contains(TokenType.FILE) && checkNextTokenImage("file")
           }#
-      => ACTIVATE_TOKENS ASYNC, RECORD, REQUIRED, FILE
+      => ACTIVATE_TOKENS ASYNC, REQUIRED, FILE
          (
             <ASYNC> { if (permissibleModifiers!=null) permissibleModifiers.remove(TokenType.ASYNC);}
             |
@@ -1497,7 +1497,7 @@ UnaryExpressionNotPlusMinus : (<BANG> | <TILDE>) UnaryExpression ;
 
 NullConditionalOperations :
    <HOOK> 
-   ENSURE ~(Expression <COLON>)
+   ENSURE ~(CollectionExpression <COLON>)
    =>|+1
    (
       <DOT> <IDENTIFIER> [<BANG>][TypeArgumentList =>||]

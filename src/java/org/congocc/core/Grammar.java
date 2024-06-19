@@ -641,5 +641,40 @@ public class Grammar extends BaseNode {
                 //errors.addError(exp, "The expansion inside this construct is entered unconditionally. This is not permitted here.");
             }
         }
+
+        for (Expansion exp : descendantsOfType(ExpansionSequence.class, 
+                                               exp->exp.getHasExplicitLookahead() 
+                                                 && exp.getHasNumericalLookahead())) {
+            int amount = exp.getLookaheadAmount();
+            int maxSize = exp.getMaximumSize();
+            if (amount > maxSize) {
+                int minSize = exp.getMinimumSize();
+                String message = "The expansion has a lookahead of " + amount + " tokens but consumes ";
+                if (maxSize == 0) {
+                    message += "no tokens.";
+                }
+                else if (maxSize == 1) {
+                    if (minSize == 1) {
+                       message += "just one token.";
+                    } else {
+                        message += "at most one token.";
+                    }
+                }
+                else {
+                    if (minSize != maxSize) {
+                        message += ("at most " + maxSize + " tokens.");
+                    } else {
+                        message += ("just " + maxSize + " tokens.");
+                    }
+                }
+                errors.addWarning(exp, message);
+            }
+        }
+
+        for (Token tok : descendantsOfType(Token.class, 
+                   t->t.getType() == Token.TokenType.__ASSERT 
+                   && t.firstAncestorOfType(Lookahead.class) != null)) { 
+            errors.addWarning(tok, "ASSERT keyword inside a lookahead, should really be ENSURE");
+        }
     }
 }

@@ -325,6 +325,7 @@ public class ExpansionSequence extends Expansion {
         return false;
     }
 
+    @Override
     public final boolean getRequiresPredicateMethod() {
         if (!isAtChoicePoint()) {
             return false;
