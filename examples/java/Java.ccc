@@ -1436,7 +1436,7 @@ LambdaExpression :
   LambdaLHS =>|| (Block | Expression)
 ;
 
-LambdaLHS : (<IDENTIFIER> | SimpleLambdaLHS | LambdaParameters) <LAMBDA> =>|| ;
+LambdaLHS : (<IDENTIFIER> | <UNDERSCORE> | SimpleLambdaLHS | LambdaParameters) <LAMBDA> =>|| ;
 
 SimpleLambdaLHS #void :
    SCAN 3
