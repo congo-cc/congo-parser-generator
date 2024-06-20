@@ -878,8 +878,6 @@ ReturnType :
 ;
 
 FormalParameters :
-//   SCAN 0 {checkNextTokenImage("__arglist")}#
-//   => ACTIVATE_TOKENS ARGLIST (<ARGLIST>)
    ArgListParameter
    |
    ParameterArray
@@ -895,14 +893,16 @@ VarArgsParameter#void :
 
 
 ArgListParameter# :
+    ENSURE {tokenImage(1).equals("__arglist")}
     <IDENTIFIER>
-    ENSURE {tokenImage(0).equals("__arglist")}
     =>||
 ;
 
 FixedParameter :
    (AttributeSection)*
-   (<REF>| <OUT> | <THIS>
+   (
+      // REVISIT. Allows repeated modifiers, for example
+      <REF>| <OUT> | <THIS>|<READONLY>
     | <IN> // since 7.2
     | SCAN 0 {checkNextTokenImage("scoped")} => ACTIVATE_TOKENS SCOPED (<SCOPED>)
    )*
