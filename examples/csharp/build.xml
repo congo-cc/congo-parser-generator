@@ -69,6 +69,8 @@
       <assertions>
         <enable />
       </assertions>
+      <arg value="-p" />
+      <arg value="-q" />
       <arg value="testfiles" />
     </java>
   </target>

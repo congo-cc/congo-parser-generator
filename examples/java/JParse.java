@@ -78,9 +78,9 @@ public class JParse {
             System.out.println("Parse failed on: " + path);
         }
         System.out.println("\nParsed " + successes.size() + " files successfully");
-        System.out.println("Failed on " + failures.size() + " files.");
-        if (!failures.isEmpty()) System.exit(-1);
+        System.out.println("Failed on " + failures.size() + " files");
         System.out.println("\nDuration: " + (System.currentTimeMillis() - startTime) + " milliseconds");
+        if (!failures.isEmpty()) System.exit(-1);
     }
 
     static void addPaths(Path path, List<Path> paths) throws IOException {
