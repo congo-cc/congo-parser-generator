@@ -8,7 +8,7 @@
   #list lexicalState.canonicalSets as state
      #if state_index == 0
        ${GenerateInitialComposite(state)}
-     #elseif state.numStates = 1
+     #elif state.numStates = 1
        ${SimpleNfaMethod(state.singleState)}
      #else
        ${CompositeNfaMethod(state)}
@@ -172,7 +172,7 @@ it just generates the inline conditional expression
 #macro NfaStateCondition nfaState
     #if nfaState.moveRanges?size < NFA_RANGE_THRESHOLD
       ${RangesCondition(nfaState.moveRanges)}
-    #elseif nfaState.hasAsciiMoves && nfaState.hasNonAsciiMoves
+    #elif nfaState.hasAsciiMoves && nfaState.hasNonAsciiMoves
       ${RangesCondition(nfaState.asciiMoveRanges)}
       || (ch >= 128 && checkIntervals(${nfaState.movesArrayName}, ch))
     #else
@@ -194,7 +194,7 @@ if NFA state's moveRanges array is smaller than NFA_RANGE_THRESHOLD
     #if moveRanges?size == 2
        #if singleChar
           ch == ${displayLeft}
-       #elseif left + 1 == right
+       #elif left + 1 == right
           ch == ${displayLeft} || ch == ${displayRight}
        #else
           ch >= ${displayLeft}

@@ -9,7 +9,7 @@
 #macro enumSet varName tokenNames
    #if tokenNames?size = 0
      private static final EnumSet<TokenType> ${varName} = EnumSet.noneOf(TokenType.class);
-   #elseif tokenNames?size < 8
+   #elif tokenNames?size < 8
     private static final EnumSet<TokenType> ${varName} = tokenTypeSet(
        #list tokenNames as type
          [#if type_index > 0],[/#if]
@@ -88,7 +88,7 @@
                 nextTokenType = null;
             }
          }
-   #elseif expansion.tokenActivation??
+   #elif expansion.tokenActivation??
       #var tokenActivation = expansion.tokenActivation
       #var prevActives = newVarName("previousActives")
       #var somethingChanged = newVarName("somethingChanged")

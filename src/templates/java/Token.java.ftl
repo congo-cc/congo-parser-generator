@@ -576,7 +576,7 @@ public class ${settings.baseTokenClassName} ${implements} {
          if (cachedImage != null) return cachedImage.length();
          cachedImage = toString();
          return cachedImage.length();
-      #elseif settings.usesPreprocessor
+      #elif settings.usesPreprocessor
          if (spansPPInstruction()) return getTokenSource().length(beginOffset, endOffset);
          return endOffset - beginOffset;
       #else
@@ -608,7 +608,7 @@ public class ${settings.baseTokenClassName} ${implements} {
           if (cachedImage != null) return cachedImage.charAt(offset);
           cachedImage = toString();
           return cachedImage.charAt(offset);
-      #elseif settings.usesPreprocessor
+      #elif settings.usesPreprocessor
           TokenSource ts = getTokenSource();
           int scanTo = beginOffset + offset;
           if (spansPPInstruction()) {

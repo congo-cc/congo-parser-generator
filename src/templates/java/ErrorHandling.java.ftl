@@ -150,14 +150,18 @@ void dumpLookaheadCallStack(PrintStream ps) {
     }
 
       private ${settings.baseTokenClassName} consumeToken(TokenType expectedType
-        [#if settings.faultTolerant], boolean tolerant, EnumSet<TokenType> followSet [/#if]
+        #if settings.faultTolerant
+          , boolean tolerant, EnumSet<TokenType> followSet 
+        #endif
       )
       [#if settings.useCheckedException] throws ParseException [/#if]
       {
         ${settings.baseTokenClassName} nextToken = nextToken(lastConsumedToken);
         if (nextToken.getType() != expectedType) {
             nextToken = handleUnexpectedTokenType(expectedType, nextToken
-            [#if settings.faultTolerant], tolerant, followSet[/#if]
+            #if settings.faultTolerant
+               , tolerant, followSet
+            #endif
             ) ;
         }
         this.lastConsumedToken = nextToken;
