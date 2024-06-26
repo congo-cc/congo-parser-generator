@@ -22,13 +22,13 @@ import org.congocc.parser.python.ast.Module;
 import org.congocc.parser.tree.CompilationUnit;
 import org.congocc.parser.tree.ObjectType;
 
-import freemarker.template.*;
-import freemarker.cache.*;
+import freemarker3.template.*;
+import freemarker3.cache.*;
 
 public class FilesGenerator {
     private static final Logger logger = Logger.getLogger("filegen");
 
-    private final Configuration fmConfig = new freemarker.template.Configuration();
+    private final Configuration fmConfig = new freemarker3.template.Configuration();
     private final Grammar grammar;
     private final AppSettings appSettings;
     private final Errors errors;
@@ -63,7 +63,7 @@ public class FilesGenerator {
         fmConfig.setTemplateLoader(templateLoader);
         //fmConfig.setObjectWrapper(new BeansWrapper());
         fmConfig.setNumberFormat("computer");
-        fmConfig.setArithmeticEngine(freemarker.core.ArithmeticEngine.CONSERVATIVE_ENGINE);
+        fmConfig.setArithmeticEngine(freemarker3.core.ArithmeticEngine.CONSERVATIVE_ENGINE);
         //fmConfig.setStrictVariableDefinition(true);
         fmConfig.setSharedVariable("grammar", grammar);
         fmConfig.setSharedVariable("globals", grammar.getTemplateGlobals());
