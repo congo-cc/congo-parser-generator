@@ -24,7 +24,7 @@
 			"examples/csharp"
 		],
 		"java.project.referencedLibraries": [
-			"bin/freemarker.jar"
+			"bin/freemarker3.jar"
 		],
 		"cSpell.enabled": false,
 		"files.trimTrailingWhitespace": true

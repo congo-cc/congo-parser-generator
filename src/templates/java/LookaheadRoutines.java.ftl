@@ -195,8 +195,10 @@
        if (!(${expansion.semanticLookahead})) return false;
   #endif
   #if expansion.hasLookBehind
-       if ([#if !expansion.lookBehind.negated]![/#if]
-       ${expansion.lookBehind.routineName}()) return false;
+       if (
+         ${!expansion.lookBehind.negated ?: "!"}
+         ${expansion.lookBehind.routineName}()
+       ) return false;
   #endif
   #if expansion.hasSeparateSyntacticLookahead
        if (remainingLookahead <= 0) {
@@ -204,8 +206,9 @@
         return !hitFailure;
        }
        if (
-      [#if !expansion.lookahead.negated]![/#if]
-        ${expansion.lookaheadExpansion.scanRoutineName}(true)) return false;
+         ${!expansion.lookahead.negated ?: "!"}
+         ${expansion.lookaheadExpansion.scanRoutineName}(true)
+       ) return false;
   #endif
   #if expansion.lookaheadAmount == 0
        passedPredicate = true;
@@ -332,7 +335,7 @@
       sometimes I like to comment out the previous condition
       for testing purposes.--]
       ${ScanSingleToken(expansion)}
-   #elif classname = "Assertion" && expansion.appliesInLookahead
+   #elif classname = "Assertion" 
       #if expansion.appliesInLookahead
          ${ScanCodeAssertion(expansion)}
       #else
@@ -429,7 +432,8 @@
       }
    #endif
    #if assertion.expansion??
-      if ([#if !assertion.expansionNegated]![/#if]
+      if (
+         ${!assertion.expansionNegated ?: "!"}
          ${assertion.expansion.scanRoutineName}()
       ) {
         hitFailure = true;
