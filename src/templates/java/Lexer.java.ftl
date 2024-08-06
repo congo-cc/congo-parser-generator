@@ -51,7 +51,7 @@ ${isFinal ?: "final" : ""}
 class ${settings.lexerClassName} extends TokenSource
 {
 
-  private static MatcherHook MATCHER_HOOK; // this cannot be initialize here, since hook must be set afterwards
+  private static MatcherHook MATCHER_HOOK; // this cannot be initialized here, since hook must be set afterwards
 
   public enum LexicalState {
   #list lexerData.lexicalStates as lexicalState
