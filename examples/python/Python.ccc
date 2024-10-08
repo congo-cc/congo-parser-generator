@@ -380,7 +380,7 @@ TypeParameters :
 
 TypeParameter :
     [<STAR> | <STAR_STAR>]
-    <NAME> [<COLON> Expression]
+    <NAME> [<COLON> Expression] [<ASSIGN> Expression]
 ;
 
 TypeAlias :
