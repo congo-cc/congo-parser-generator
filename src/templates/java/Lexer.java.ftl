@@ -121,11 +121,11 @@ class ${settings.lexerClassName} extends TokenSource
       * @param inputSource just the name of the input source (typically the filename) that
       * will be used in error messages and so on.
       * @param input the input
-      * @param lexicalState The starting lexical state, may be null to indicate the default
+      * @param lexState The starting lexical state, may be null to indicate the default
       * starting state
-      * @param line The line number at which we are starting for the purposes of location/error messages. In most
+      * @param startingLine The line number at which we are starting for the purposes of location/error messages. In most
       * normal usage, this is 1.
-      * @param column number at which we are starting for the purposes of location/error messages. In most normal
+      * @param startingColumn number at which we are starting for the purposes of location/error messages. In most normal
       * usages this is 1.
       */
      public ${settings.lexerClassName}(String inputSource, CharSequence input, LexicalState lexState, int startingLine, int startingColumn) {
