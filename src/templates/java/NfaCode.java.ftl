@@ -21,22 +21,53 @@
     #endif
   #endlist
 
+  #-- We break the initialization into multiple chunkSize
+  #-- if we have more than a couple of thousand NFA states in order to 
+  #-- get around the Code Too Large problem
+  #-- This is pretty rare, and I thought it never happened, except
+  #-- user ngx reported running into this with his SQL grammar
+
+  #var chunkSize = 2000 #-- arbitrary number. I think it could actually be up to a bit over 6000.
+  #var numChunks = 1 + (lexicalState.canonicalSets?size / chunkSize)?int
+  #var canonicalSets = lexicalState.canonicalSets
+
   private static void NFA_FUNCTIONS_init() {
-    #if multipleLexicalStates
-      NfaFunction[] functions = new NfaFunction[]
-    #else
-      nfaFunctions = new NfaFunction[]
-    #endif
+    NfaFunction[] functions = new NfaFunction[${numChunks > 1 ?: lexicalState.canonicalSets?size}]
+    #if numChunks == 1 
     {
-    #list lexicalState.canonicalSets as state
+     #list canonicalSets as state
       ${lexicalState.name}::get${state.methodName}
-      [#if state_has_next],[/#if]
-    #endlist
+      ${state_has_next ?: ","}
+     #endlist
     };
+    #else
+    ;
+    #list 1..numChunks as index 
+        NFA_FUNCTIONS_init${index}(functions);
+    #endlist
+    #endif
     #if multipleLexicalStates
       functionTableMap.put(LexicalState.${lexicalState.name}, functions);
+    #else
+      nfaFunctions = functions;
     #endif
   }
+
+  #if numChunks > 1
+     #list 1..numChunks as index
+     private static void NFA_FUNCTIONS_init${index}(NfaFunction[] funcArray) {
+         #list 1..chunkSize as index2
+            #var offset = index*chunkSize + index2 -chunkSize -1
+            #if offset >= canonicalSets?size
+              #break
+            #endif
+            #var state = canonicalSets[offset]
+            funcArray[${offset}] = ${lexicalState.name}::get${state.methodName};
+         #endlist
+     }
+     #endlist
+  #endif
+
 #endmacro
 
 [#--
