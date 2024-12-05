@@ -453,7 +453,7 @@ StarEtc :
    |
    <STAR> <COMMA> =>|| ParamMaybeDefault (<COMMA> =>|+1 ParamMaybeDefault)* [<COMMA> [KeyWords]]
    |
-   <STAR> <NAME> [SCAN 1 \.\FunctionDefinition => <COLON> (Expression|StarExpression)] (<COMMA> =>|+1 ParamMaybeDefault)* [<COMMA> [KeyWords]]
+   <STAR> <NAME> [SCAN 1 \.\FunctionDefinition => <COLON> (Expression|SCAN <STAR> => StarExpression)] (<COMMA> =>|+1 ParamMaybeDefault)* [<COMMA> [KeyWords]]
 ;
 
 ParamMaybeDefault : <NAME> [<COLON> Expression] [<ASSIGN> Expression] ;
@@ -472,7 +472,7 @@ Parameters :
       <NAME>
 // Using a contextual predicate, we manage to use the same production
 // for the parameters of a function def or a lambda.
-      [SCAN 1 \FunctionDefinition => <COLON> (Expression|StarExpression)]
+      [SCAN 1 \FunctionDefinition => <COLON> (Expression|SCAN <STAR> => StarExpression)]
       [<ASSIGN> Expression {seenDefault = true;}]
       (<COMMA> =>|+1
         (
@@ -506,8 +506,8 @@ AugAssign#void :
 
 SimpleAssignTarget :
    PrimaryExpression
-   |
-   <LPAREN> SimpleAssignTarget <RPAREN>
+   //|
+   //<LPAREN> SimpleAssignTarget <RPAREN>
 ;
 
 Assignment :

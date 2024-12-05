@@ -2,6 +2,7 @@ package org.congocc.core;
 
 import java.nio.charset.StandardCharsets;
 import java.util.*;
+import java.util.stream.IntStream;
 import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.nio.file.Files;
@@ -631,7 +632,7 @@ public class Grammar extends BaseNode {
                         errors.addWarning(seq, msg);
                         break;
                     }
-                }
+                } 
             }
         }
 
@@ -675,6 +676,60 @@ public class Grammar extends BaseNode {
                    t->t.getType() == Token.TokenType.__ASSERT 
                    && t.firstAncestorOfType(Lookahead.class) != null)) { 
             errors.addWarning(tok, "ASSERT keyword inside a lookahead, should really be ENSURE");
+        }
+
+    }
+
+    public void reportDeadCode() {
+        for (ExpansionChoice choice : descendants(ExpansionChoice.class)) {
+            BNFProduction prod = choice.firstAncestorOfType(BNFProduction.class);
+            if (prod.isOnlyForLookahead()) continue;
+            if (choice.firstAncestorOfType(Lookahead.class) != null) continue;
+            findDeadCode(choice);
+        }
+    }
+
+    private void findDeadCode(ExpansionChoice choice) {
+        final TokenSet matchedTokens = new TokenSet(this);
+        for (ExpansionSequence exp : choice.getChoices()) {
+            if (exp.isEnteredUnconditionally() || exp.getRequiresPredicateMethod()) break;
+            else {
+                TokenSet firstSet = exp.getFirstSet();
+                if (matchedTokens.isEmpty()) {
+                    matchedTokens.or(firstSet);
+                    continue;
+                }
+                TokenSet notMatched = firstSet.copy();
+                notMatched.andNot(matchedTokens);
+                // Now firstSetCopy contains all the tokens
+                // that are not already matched in previous
+                // choices.
+                if (notMatched.isEmpty()) {
+                    // The choice is completely unreachable.
+                    errors.addWarning(exp, "Expansion is unreachable.");
+                    continue;
+                }
+                if (notMatched.cardinality() == firstSet.cardinality()) {
+                    matchedTokens.or(firstSet);
+                    continue;
+                }
+                String msg = "The tokens";
+                TokenSet matched = firstSet.copy();
+                matched.andNot(notMatched);
+                for (String name : matched.getTokenNames()) {
+                    if (!msg.equals("The tokens")) {
+                        msg += ",";
+                    }
+                    msg += " ";
+                    msg += name;
+                }
+                if (matched.cardinality() == 1) {
+                    msg = msg.replaceFirst("tokens", "token");
+                }
+                msg += " cannot be matched at this point.";
+                errors.addWarning(exp, msg);
+                matchedTokens.or(firstSet);
+            }
         }
     }
 }

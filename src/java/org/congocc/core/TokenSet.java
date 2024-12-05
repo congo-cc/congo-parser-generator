@@ -42,4 +42,10 @@ public class TokenSet extends BitSet {
 		}
 		return names;
 	}
+
+	public TokenSet copy() {
+		TokenSet result = new TokenSet(grammar);
+		result.or(this);
+		return result;
+	}
 }
