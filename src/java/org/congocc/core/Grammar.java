@@ -687,6 +687,14 @@ public class Grammar extends BaseNode {
             if (choice.firstAncestorOfType(Lookahead.class) != null) continue;
             findDeadCode(choice);
         }
+
+        for (Node node : descendants(e->e instanceof ZeroOrMore || e instanceof OneOrMore)) {
+            ExpansionWithNested exp = (ExpansionWithNested) node;
+            Expansion nestedExp = exp.getNestedExpansion();
+            if (!nestedExp.getRequiresPredicateMethod()) {
+                findFollowingDeadCode(exp);
+            }
+        }
     }
 
     private void findDeadCode(ExpansionChoice choice) {
@@ -730,6 +738,44 @@ public class Grammar extends BaseNode {
                 errors.addWarning(exp, msg);
                 matchedTokens.or(firstSet);
             }
+        }
+    }
+
+    private void findFollowingDeadCode(ExpansionWithNested exp) {
+        TokenSet firstSet = exp.getFirstSet();
+        Expansion following = exp.getFollowingExpansion();
+        while (following != null) {
+            if (following.getMaximumSize()==0) {
+                following = following.getFollowingExpansion();
+                continue;
+            }
+            TokenSet followingSet = following.getFirstSet();
+            if (followingSet.intersects(firstSet)) {
+                TokenSet intersecting = firstSet.copy();
+                intersecting.and(firstSet);
+                if (intersecting.cardinality()==followingSet.cardinality()) {
+                    errors.addWarning(following, "Expansion is unreachable.");
+                    firstSet.or(followingSet);
+                    following = following.getFollowingExpansion();
+                    continue;
+                }
+                String msg = "The tokens";
+                for (String name : intersecting.getTokenNames()) {
+                    if (!msg.equals("The tokens")) {
+                        msg += ",";
+                    }
+                    msg += " ";
+                    msg += name;
+                }
+                if (intersecting.cardinality() == 1) {
+                    msg = msg.replaceFirst("tokens", "token");
+                }
+                msg += " cannot be matched at this point.";
+                errors.addWarning(exp, msg);
+                followingSet.or(firstSet);
+            }
+            if (!following.isPossiblyEmpty()) break;
+            following = following.getFollowingExpansion();
         }
     }
 }
