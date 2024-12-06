@@ -742,40 +742,47 @@ public class Grammar extends BaseNode {
     }
 
     private void findFollowingDeadCode(ExpansionWithNested exp) {
-        TokenSet firstSet = exp.getFirstSet();
+        TokenSet matchedTokens = exp.getFirstSet().copy();
         Expansion following = exp.getFollowingExpansion();
         while (following != null) {
             if (following.getMaximumSize()==0) {
-                following = following.getFollowingExpansion();
+                following = (Expansion) following.getFollowingExpansion();
                 continue;
             }
+            if (following.getNestedExpansion() != null) {
+                //Just exit the whole mess if lookahead or up-to-here is present
+                // We assume the grammar author knows what he's doing so the 
+                // dead code check is superfluous.
+                if (following.getNestedExpansion().getRequiresPredicateMethod()) break;
+            }
             TokenSet followingSet = following.getFirstSet();
-            if (followingSet.intersects(firstSet)) {
-                TokenSet intersecting = firstSet.copy();
-                intersecting.and(firstSet);
+            if (followingSet.intersects(matchedTokens)) {
+                TokenSet intersecting = matchedTokens.copy();
+                intersecting.and(matchedTokens);
                 if (intersecting.cardinality()==followingSet.cardinality()) {
-                    errors.addWarning(following, "Expansion is unreachable.");
-                    firstSet.or(followingSet);
-                    following = following.getFollowingExpansion();
+                    errors.addWarning(following, "Expansion may be unreachable.");
+                    matchedTokens.or(followingSet);
+                    following = (Expansion) following.getFollowingExpansion();
                     continue;
                 }
                 String msg = "The tokens";
-                for (String name : intersecting.getTokenNames()) {
+                followingSet.and(matchedTokens);
+                for (String name : followingSet.getTokenNames()) {
                     if (!msg.equals("The tokens")) {
                         msg += ",";
                     }
                     msg += " ";
                     msg += name;
                 }
-                if (intersecting.cardinality() == 1) {
+                if (followingSet.cardinality() == 1) {
                     msg = msg.replaceFirst("tokens", "token");
                 }
-                msg += " cannot be matched at this point.";
-                errors.addWarning(exp, msg);
-                followingSet.or(firstSet);
+                msg += " possibly cannot be matched at this point.";
+                errors.addWarning(following, msg);
+                followingSet.or(matchedTokens);
             }
             if (!following.isPossiblyEmpty()) break;
-            following = following.getFollowingExpansion();
+            following = (Expansion) following.getFollowingExpansion();
         }
     }
 }

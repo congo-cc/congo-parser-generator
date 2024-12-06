@@ -21,7 +21,7 @@ INCLUDE "LuaLexer.ccc"
    Block <EOF> {return CURRENT_NODE;}
 ;
 
-Block#(>=0) : (Statement)* [LastStatement] ;
+Block#(>=0) : (Statement)* [ReturnStatement] ;
 
 Statement :
    ";" #EmptyStatement(1)
@@ -83,7 +83,7 @@ AttributeNameList : <NAME> [Attribute] ("," <NAME> [Attribute])* ;
 
 Attribute : "<" <NAME> ">" ;
 
-LastStatement : ( "return" [ExpressionList] | "break" ) [";"] ;
+ReturnStatement : "return" [ExpressionList] [";"] ;
 
 Label : "::" <NAME> "::" ;
 

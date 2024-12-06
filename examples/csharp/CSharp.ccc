@@ -1613,7 +1613,7 @@ ObjectCreationExpression :
 AnonymousObjectCreationExpression :
    <NEW>
    <LBRACE> =>||
-    [MemberDeclarator (<COMMA> MemberDeclarator)* [<COMMA>]]
+    [MemberDeclarator (<COMMA> =>|+1 MemberDeclarator)* [<COMMA>]]
    <RBRACE>
 ;
 
