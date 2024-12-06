@@ -760,7 +760,7 @@ public class Grammar extends BaseNode {
                 TokenSet intersecting = matchedTokens.copy();
                 intersecting.and(matchedTokens);
                 if (intersecting.cardinality()==followingSet.cardinality()) {
-                    errors.addWarning(following, "Expansion may be unreachable.");
+                    errors.addWarning(following, "Expansion is unreachable.");
                     matchedTokens.or(followingSet);
                     following = (Expansion) following.getFollowingExpansion();
                     continue;
@@ -777,11 +777,11 @@ public class Grammar extends BaseNode {
                 if (followingSet.cardinality() == 1) {
                     msg = msg.replaceFirst("tokens", "token");
                 }
-                msg += " possibly cannot be matched at this point.";
+                msg += " cannot be matched at this point.";
                 errors.addWarning(following, msg);
                 followingSet.or(matchedTokens);
             }
-            if (!following.isPossiblyEmpty()) break;
+            if (following.getMaximumSize()>0) break;
             following = (Expansion) following.getFollowingExpansion();
         }
     }
