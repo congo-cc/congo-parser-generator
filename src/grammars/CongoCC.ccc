@@ -529,7 +529,7 @@ GrammarInclusion throws IOException :
         ":"
         =>|+1
         [
-          SCAN "{" ("}" | "import" | "extends" | "implements" | (Annotation)* "}") => "{"
+          SCAN "{" ("}" | "import" | "extends" | "implements" | (Annotation)+ "}") => "{"
           {foundOptionalInitialBrace=true;}
         ]
         (ImportDeclaration)*

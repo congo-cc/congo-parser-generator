@@ -540,9 +540,13 @@ Initializer# :
 ;
 
 Type#interface :
-   ReferenceType =>||
+  (
+   SCAN {getToken(2).getType() != LBRACKET}#
+   =>PrimitiveType
    |
-   PrimitiveType
+   ReferenceType 
+  )
+  =>||
 ;
 
 INJECT ReferenceType : implements Type

@@ -682,9 +682,6 @@ public class Grammar extends BaseNode {
 
     public void reportDeadCode() {
         for (ExpansionChoice choice : descendants(ExpansionChoice.class)) {
-            BNFProduction prod = choice.firstAncestorOfType(BNFProduction.class);
-            if (prod.isOnlyForLookahead()) continue;
-            if (choice.firstAncestorOfType(Lookahead.class) != null) continue;
             findDeadCode(choice);
         }
 
@@ -741,19 +738,30 @@ public class Grammar extends BaseNode {
         }
     }
 
+    private Expansion nextExpansion(Expansion exp) {
+        Expansion next = (Expansion) exp.nextSibling();
+        if (next == null) {
+            Expansion enclosing = (Expansion) exp.getParent().getParent();
+            if (enclosing != null && enclosing.getClass() == ExpansionWithParentheses.class) {
+                return nextExpansion(enclosing);
+            }
+        }
+        return next;
+    }
+
     private void findFollowingDeadCode(ExpansionWithNested exp) {
         TokenSet matchedTokens = exp.getFirstSet().copy();
-        Expansion following = exp.getFollowingExpansion();
-        while (following != null) {
-            if (following.getMaximumSize()==0) {
-                following = (Expansion) following.getFollowingExpansion();
-                continue;
-            }
+        Expansion following = nextExpansion(exp);
+        while (following !=null) {
+            if (following.getMaximumSize()>0) break;
+            following = nextExpansion(following);
+        }
+        if (following != null) {
             if (following.getNestedExpansion() != null) {
                 //Just exit the whole mess if lookahead or up-to-here is present
                 // We assume the grammar author knows what he's doing so the 
                 // dead code check is superfluous.
-                if (following.getNestedExpansion().getRequiresPredicateMethod()) break;
+                if (following.getNestedExpansion().getRequiresPredicateMethod()) return;
             }
             TokenSet followingSet = following.getFirstSet();
             if (followingSet.intersects(matchedTokens)) {
@@ -761,28 +769,24 @@ public class Grammar extends BaseNode {
                 intersecting.and(matchedTokens);
                 if (intersecting.cardinality()==followingSet.cardinality()) {
                     errors.addWarning(following, "Expansion is unreachable.");
-                    matchedTokens.or(followingSet);
-                    following = (Expansion) following.getFollowingExpansion();
-                    continue;
                 }
-                String msg = "The tokens";
-                followingSet.and(matchedTokens);
-                for (String name : followingSet.getTokenNames()) {
-                    if (!msg.equals("The tokens")) {
-                        msg += ",";
+                else {
+                    String msg = "The tokens";
+                    followingSet.and(matchedTokens);
+                    for (String name : followingSet.getTokenNames()) {
+                        if (!msg.equals("The tokens")) {
+                            msg += ",";
+                        }
+                        msg += " ";
+                        msg += name;
                     }
-                    msg += " ";
-                    msg += name;
+                    if (followingSet.cardinality() == 1) {
+                        msg = msg.replaceFirst("tokens", "token");
+                    }
+                    msg += " cannot be matched at this point.";
+                    errors.addWarning(following, msg);
                 }
-                if (followingSet.cardinality() == 1) {
-                    msg = msg.replaceFirst("tokens", "token");
-                }
-                msg += " cannot be matched at this point.";
-                errors.addWarning(following, msg);
-                followingSet.or(matchedTokens);
             }
-            if (following.getMaximumSize()>0) break;
-            following = (Expansion) following.getFollowingExpansion();
         }
     }
 }
