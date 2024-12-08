@@ -684,9 +684,7 @@ public class Grammar extends BaseNode {
         for (ExpansionChoice choice : descendants(ExpansionChoice.class)) {
             findDeadCode(choice);
         }
-
-        for (Node node : descendants(e->e instanceof ZeroOrMore || e instanceof OneOrMore)) {
-            ExpansionWithNested exp = (ExpansionWithNested) node;
+        for (ExpansionWithNested exp : descendants(ExpansionWithNested.class, e->e instanceof ZeroOrMore || e instanceof OneOrMore)) {
             Expansion nestedExp = exp.getNestedExpansion();
             if (!nestedExp.getRequiresPredicateMethod()) {
                 findFollowingDeadCode(exp);
