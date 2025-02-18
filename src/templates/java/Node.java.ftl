@@ -113,84 +113,6 @@ public interface Node extends List<Node> {
      */
     Node getParent();
 
-     // The following 9 methods will typically just
-     // delegate straightforwardly to a List object that
-     // holds the child nodes
-#if false #-- Let's get rid of deprecated methods
-    /**
-     * appends a child Node
-     * @deprecated Use #add(Node)
-     */
-     @Deprecated
-     default void addChild(Node n) {
-        add(n);
-     }
-
-     /**
-      * inserts a child Node at a specific index, displacing the
-      * nodes after the index by 1.
-      * @param i the (zero-based) index at which to insert the node
-      * @param n the Node to insert
-      * @deprecated Use #add(int,Node)
-      */
-     @Deprecated
-     default void addChild(int i, Node n) {
-        add(i, n);
-     }
-
-     /**
-      * @return the Node at the specific offset
-      * @param i the index of the Node to return
-      * @deprecated Use #get(int)
-      */
-     @Deprecated
-     default Node getChild(int i) {
-        return get(i);
-     }
-
-     /**
-      * Replace the node at index i
-      * @param i the index
-      * @param n the node
-      * @deprecated Use #set(int,Node)
-      */
-     @Deprecated
-     default void setChild(int i, Node n) {set(i,n);}
-
-     /**
-      * Remove the node at index i. Any Nodes after i
-      * are shifted to the left.
-      * @return the removed Node
-      * @param i the index at which to remove
-      * @deprecated Use #remove(int)
-      */
-     @Deprecated
-     default Node removeChild(int i) {return remove(i);}
-
-     /**
-      * Removes the Node from this node's children
-      * @param n the Node to remove
-      * @return whether the Node was present
-      * @deprecated Use #remove(Node)
-      */
-     @Deprecated
-     default boolean removeChild(Node n) {
-         return remove(n);
-     }
-
-     /**
-      * Replaces a child node with another one. It does
-      * nothing if the first parameter is not actually a child node.
-      * @param current the Node to be replaced
-      * @param replacement the Node to substitute
-      * @return whether any replacement took place
-      * @deprecated Use #replace(Node,Node)
-      */
-     @Deprecated
-     default boolean replaceChild(Node current, Node replacement) {
-         return replace(current, replacement);
-     }
-#endif 
 
      /**
       * Replaces a child node with another one. It does
@@ -265,22 +187,6 @@ public interface Node extends List<Node> {
          if (idx >= parent.size() - 1) return null;
          return parent.get(idx + 1);
      }
-
-#if false
-     /**
-      * Remove all the child nodes
-      * @deprecated Use clear()
-      */
-     @Deprecated
-     default void clearChildren() {clear();}
-
-     /**
-      * @return the number of child nodes
-      * @deprecated Use #size()
-      */
-     @Deprecated
-     default int getChildCount() {return size();}
-#endif     
 
      /**
       * @return a List containing this node's child nodes
@@ -564,16 +470,6 @@ public interface Node extends List<Node> {
         }
         return null;
     }
-
-#if false #-- Let's comment this out and see if anybody cares.
-    /**
-     * @deprecated Just use #getType instead
-     */
-    @Deprecated
-    default NodeType getTokenType() {
-        return getType();
-    }
-#endif
 
     /**
      * Copy the location info from another Node
