@@ -1358,7 +1358,7 @@ ${globals::translateCodeBlock(regexp.codeSnippet.javaCode, 16)}
             return true;
         }
 
-        protected string GetLine(${TOKEN} tok) {
+        public string GetLine(${TOKEN} tok) {
             int lineNum = tok.BeginLine;
             return GetText(GetLineStartOffset(lineNum), GetLineEndOffset(lineNum) + 1);
         }
