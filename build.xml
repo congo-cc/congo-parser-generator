@@ -1,4 +1,4 @@
-<project name="congo" default="jar" basedir=".">
+<project name="congocc" default="jar" basedir=".">
   <tstamp>
     <format property="timestamp" pattern="yyyy-MM-dd HH:mm:ss" />
   </tstamp>
