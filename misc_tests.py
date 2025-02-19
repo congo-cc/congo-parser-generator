@@ -201,7 +201,7 @@ class BaseTestCase(unittest.TestCase):
                     return
                 with open(dp, encoding='utf-8') as f:
                     s = f.read()
-                s = s.replace('net5.0', 'net7.0')
+                s = s.replace('net5.0', 'net8.0')
                 with open(dp, 'w', encoding='utf-8') as f:
                     f.write(s)
         self.copy_files(sd, wd, special_processor=special_handling)
