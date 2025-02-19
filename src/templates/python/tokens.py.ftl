@@ -388,6 +388,11 @@ ${globals::translateTokenInjections(true)}
         ts = self.token_source
         return None if not ts else ts.get_text(self.begin_offset, self.end_offset)
 
+    @property
+    def source_line(self):
+        ts = self.token_source
+        return None if not ts else ts.get_line(self)
+
 #if settings.tokenChaining || settings.faultTolerant
     @image.setter
     def image(self, value):
