@@ -141,7 +141,7 @@ INJECT PackageDeclaration :
     }
 }
 
-ImportDeclaration : <_IMPORT> [ <STATIC> ] Name [ <DOT> <STAR> ] <SEMICOLON> ;
+ImportDeclaration : <_IMPORT> [ <STATIC> | <MODULE>] Name [ <DOT> <STAR> ] <SEMICOLON> ;
 
 Modifiers :
  (
