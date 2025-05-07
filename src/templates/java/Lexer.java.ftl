@@ -446,7 +446,7 @@ class ${settings.lexerClassName} extends TokenSource
       return true;
    }
 
-   private String getLine(${TOKEN} tok) {
+   public String getLine(${TOKEN} tok) {
        int lineNum = tok.getBeginLine();
        return getText(getLineStartOffset(lineNum), getLineEndOffset(lineNum) + 1);
    }

@@ -107,7 +107,7 @@ public class ${settings.baseTokenClassName} ${implements} {
     public void truncate(int amount) {
         int newEndOffset = Math.max(getBeginOffset(), getEndOffset()-amount);
         setEndOffset(newEndOffset);
-   #if !settings.minimalToken        
+   #if !settings.minimalToken
         if (cachedImage != null) {
             cachedImage = cachedImage.substring(0, newEndOffset - getBeginOffset());
         }
@@ -167,7 +167,15 @@ public class ${settings.baseTokenClassName} ${implements} {
      * location info for the tokens.
      */
     public ${settings.lexerClassName} getTokenSource() {
-        return this.tokenSource;
+        return tokenSource;
+    }
+
+    /**
+     * @return the line of source which contains the token.
+     * This can be useful in error reporting.
+     */
+    public String getSourceLine() {
+        return tokenSource.getLine(this);
     }
 
     /**

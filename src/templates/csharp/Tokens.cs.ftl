@@ -794,6 +794,8 @@ namespace ${csPackage} {
 
         public string Source => Type == TokenType.EOF ? "" : TokenSource?.GetText(BeginOffset, EndOffset);
 
+        public string SourceLine => TokenSource?.GetLine(this);
+
         private IEnumerable<Token> precedingTokens() {
             var current = this;
 
