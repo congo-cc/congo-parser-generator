@@ -2,6 +2,7 @@
 
 #var nodeNumbering = 0,
      exceptionNesting = 0,
+     repetitionIndex = 0,
      NODE_USES_PARSER = settings.nodeUsesParser,
      NODE_PREFIX = grammar.nodePrefix,
      currentProduction,
@@ -12,6 +13,9 @@
                               syntactic trees to be built. While seemingly silly (and perhaps could be done differently),
                               it is also a bit tricky, so treat it like the Holy Hand-grenade in that respect.
                           --]
+
+#var inFirstVarName = "",
+     choicesVarName = ""
 
 #var jtbNameMap = {
    "Terminal" : "nodeToken",
@@ -46,6 +50,7 @@
 
 #macro ParserProduction production
     #set nodeNumbering = 0,
+         repetitionIndex = 0,
          nodeFieldOrdinal = {},
          injectedFields = {}
     #set newVarIndex = 0 in CU
@@ -85,9 +90,9 @@
    Macro to build routines that scan up to the start of an expansion
    as part of a recovery routine
 --]
-#macro BuildRecoverRoutines
+#macro BuildRecoverRoutines [#-- FIXME:JB this needs to consider cardinality --]
    #list grammar.expansionsNeedingRecoverMethod as expansion
-       private void ${expansion.recoverMethodName}() {
+       private boolean ${expansion.recoverMethodName}(ParseException pe) {
           ${settings.baseTokenClassName} initialToken = lastConsumedToken;
           java.util.List<${settings.baseTokenClassName}> skippedTokens = new java.util.ArrayList<>();
           boolean success = false;
@@ -134,7 +139,7 @@
              lastConsumedToken = initialToken;
           }
           if (success&& !skippedTokens.isEmpty()) {
-             InvalidNode iv = new InvalidNode();
+             InvalidNode iv = new InvalidNode(pe);
              iv.copyLocationInfo(skippedTokens.get(0));
              for (${settings.baseTokenClassName} tok : skippedTokens) {
                 iv.add(tok);
@@ -142,27 +147,27 @@
              }
              pushNode(iv);
           }
-          pendingRecovery = !success;
+          return success;
        }
    #endlist
 #endmacro
 
-#macro BuildCode expansion
+#macro BuildCode expansion cardinalitiesVar
   #if expansion.simpleName != "ExpansionSequence" && expansion.simpleName != "ExpansionWithParentheses"
   // Code for ${expansion.simpleName} specified at ${expansion.location}
   #endif
-     [@CU.HandleLexicalStateChange expansion false]
+     [@CU.HandleLexicalStateChange expansion false cardinalitiesVar!null]
          #if settings.faultTolerant && expansion.requiresRecoverMethod && !expansion.possiblyEmpty
          if (pendingRecovery) {
-            ${expansion.recoverMethodName}();
+            pendingRecovery = !${expansion.recoverMethodName}(null);
          }
          #endif
-         ${BuildExpansionCode(expansion)}
+         ${BuildExpansionCode(expansion cardinalitiesVar!null)}
      [/@CU.HandleLexicalStateChange]
 #endmacro
 
 #-- The following macro wraps expansions that might build tree nodes. --
-#macro TreeBuildingAndRecovery expansion
+#macro TreeBuildingAndRecovery expansion cardinalitiesVar
    #var production,
          treeNodeBehavior,
          buildingTreeNode = false,
@@ -216,7 +221,9 @@
       #else
          if (!isParserTolerant()) throw e;
          this.pendingRecovery = true;
-         ${expansion.customErrorRecoveryBlock!}
+         // recovery for ${expansion.location}
+         ${expansion.recoveryBlock!}
+         #-- REVISIT: Something needs to be done about always consuming a token if we get here, or an infinite loop can result. 
          #if production?? && production.returnType != "void"
             #var rt = production.returnType
             #-- We need a return statement here or the code won't compile! --
@@ -604,7 +611,7 @@
    #return NODE_PREFIX + currentProduction.name
 #endfunction
 
-#macro BuildExpansionCode expansion
+#macro BuildExpansionCode expansion cardinalitiesVar
    #var classname = expansion.simpleName
    #var prevLexicalStateVar = CU.newVarName("previousLexicalState")
    #-- take care of the non-tree-building classes --
@@ -616,23 +623,23 @@
       ${BuildCodeFailure(expansion)}
    #elif classname = "Assertion" 
       #if expansion.appliesInRegularParsing
-        ${BuildAssertionCode(expansion)}
+        ${BuildAssertionCode(expansion cardinalitiesVar)}
       #else
         // No code generated since assertion does not apply in regular parsing
       #endif
    #elif classname = "TokenTypeActivation"
       ${BuildCodeTokenTypeActivation(expansion)}
    #elif classname = "TryBlock"
-      ${BuildCodeTryBlock(expansion)}
+      ${BuildCodeTryBlock(expansion cardinalitiesVar)}
    #elif classname = "AttemptBlock"
-      ${BuildCodeAttemptBlock(expansion)}
+      ${BuildCodeAttemptBlock(expansion cardinalitiesVar)}
    #else
       #-- take care of the tree node (if any) --
       [@TreeBuildingAndRecovery expansion]
          #if classname = "BNFProduction"
             #-- The tree node having been built, now build the actual top-level expansion --
             #set topLevelExpansion = true
-            ${BuildCode(expansion.nestedExpansion)}
+            ${BuildCode(expansion.nestedExpansion cardinalitiesVar)}
          #else
             #-- take care of terminal and non-terminal expansions; they cannot contain child expansions --
             #if classname = "NonTerminal"
@@ -648,18 +655,18 @@
                   #set topLevelExpansion = false
                #endif
                #if classname = "ZeroOrOne"
-                  ${BuildCodeZeroOrOne(expansion)}
+                  ${BuildCodeZeroOrOne(expansion cardinalitiesVar)}
                #elif classname = "ZeroOrMore"
                   ${BuildCodeZeroOrMore(expansion)}
                #elif classname = "OneOrMore"
                   ${BuildCodeOneOrMore(expansion)}
                #elif classname = "ExpansionChoice"
-                  ${BuildCodeChoice(expansion)}
+                  ${BuildCodeChoice(expansion cardinalitiesVar)}
                #elif classname = "ExpansionWithParentheses"
                   #-- Recurse; the real expansion is nested within this one (but the LHS, if any, is on the parent)
-                  ${BuildExpansionCode(expansion.nestedExpansion)}
+                  ${BuildExpansionCode(expansion.nestedExpansion cardinalitiesVar)}
                #elif classname = "ExpansionSequence"
-                  ${BuildCodeSequence(expansion)} #-- leave the topLevelExpansion one-shot alone (see above)
+                  ${BuildCodeSequence(expansion cardinalitiesVar)} #-- leave the topLevelExpansion one-shot alone (see above)
                #endif
                #set topLevelExpansion = stackedTopLevel
             #endif
@@ -682,7 +689,7 @@
     #endif
 #endmacro
 
-#macro BuildAssertionCode assertion
+#macro BuildAssertionCode assertion cardinalitiesVar
    #var optionalPart = ""
    #if assertion.messageExpression??
       #set optionalPart = " + " + assertion.messageExpression
@@ -691,6 +698,10 @@
    #if assertion.assertionExpression??
       if (!(${assertion.assertionExpression})) {
          fail("${assertionMessage}"${optionalPart}, getToken(1));
+      }  
+   #elseif assertion.cardinalityConstraint??
+      if (!${cardinalitiesVar!"cardinalities"}.choose(${assertion.assertionIndex}, false)) {
+         fail("Maximum cardinality constraint at: ${assertion.location?j_string} exceeded.", getToken(1));
       }
    #endif
    #if assertion.expansion??
@@ -713,9 +724,9 @@
        );
 #endmacro
 
-#macro BuildCodeTryBlock tryblock
+#macro BuildCodeTryBlock tryblock cardinalitiesVar
      try {
-        ${BuildCode(tryblock.nestedExpansion)}
+        ${BuildCode(tryblock.nestedExpansion cardinalitiesVar)}
      }
    #list tryblock.catchBlocks as catchBlock
      ${catchBlock}
@@ -723,15 +734,20 @@
      ${tryblock.finallyBlock!}
 #endmacro
 
-#macro BuildCodeAttemptBlock attemptBlock
+#macro BuildCodeAttemptBlock attemptBlock cardinalitiesVar
+   #-- REVISIT: Cardinality assertions are currently not allowed (sanity check) within the ATTEMPT block, but this could be relaxed --
    try {
-      stashParseState();
-      ${BuildCode(attemptBlock.nestedExpansion)}
+      stashParseState(${cardinalitiesVar!""});
+      ${BuildCode(attemptBlock.nestedExpansion cardinalitiesVar)}
       popParseState();
    }
    #var pe = exceptionVar(true)
    catch (ParseException ${pe}) {
+      #if cardinalitiesVar??
+         ${cardinalitiesVar} =
+      #endif
       restoreStashedParseState();
+      #-- The recover block may never contain cardinality assertions!!! --
       ${BuildCode(attemptBlock.recoveryExpansion)}
       #set exceptionNesting = exceptionNesting - 1
    }
@@ -802,6 +818,7 @@
 
 #macro BuildCodeTerminal terminal
    #var LHS = getLhsPattern(terminal.assignment, "Token"), regexp = terminal.regexp
+   #var lambda = terminal.recoveryBlock!
    #if !settings.faultTolerant
        ${LHS?replace("@", "consumeToken(" + regexp.label + ")")};
    #else
@@ -815,22 +832,21 @@
             ${followSetVarName}.addAll(outerFollowSet);
          }
        #endif
-       ${LHS?replace("@", "consumeToken(" + regexp.label + ", " + tolerant + ", " + followSetVarName + ")")};
+       ${LHS?replace("@", "consumeToken(" + regexp.label + ", " + tolerant + ", " + followSetVarName + ", () -> {" + lambda + ";})")};
    #endif
 #endmacro
 
-#macro BuildCodeZeroOrOne zoo
+#macro BuildCodeZeroOrOne zoo cardinalitiesVar
     #if zoo.nestedExpansion.class.simpleName = "ExpansionChoice"
-       ${BuildCode(zoo.nestedExpansion)}
+       ${BuildCode(zoo.nestedExpansion cardinalitiesVar)}
     #else
-       if (${ExpansionCondition(zoo.nestedExpansion)}) {
-          ${BuildCode(zoo.nestedExpansion)}
+       if (${ExpansionCondition(zoo.nestedExpansion cardinalitiesVar)}) {
+          ${BuildCode(zoo.nestedExpansion cardinalitiesVar)}
        }
     #endif
 #endmacro
 
-#var inFirstVarName = "",
-     inFirstIndex = 0
+#var inFirstIndex = 0
 
 #macro BuildCodeOneOrMore oom
    #var nestedExp = oom.nestedExpansion, prevInFirstVarName = inFirstVarName
@@ -838,34 +854,62 @@
      #set inFirstVarName = "inFirst" + inFirstIndex, inFirstIndex = inFirstIndex + 1
      boolean ${inFirstVarName} = true;
    #endif
+   #var cardinalitiesVar = null
+   #if oom.cardinalityContainer
+      #set cardinalitiesVar = "cardinalities" + repetitionIndex
+      #set repetitionIndex = repetitionIndex + 1
+      RepetitionCardinality ${cardinalitiesVar} = new RepetitionCardinality(${CU.BuildCardinalities(oom.cardinalityConstraints)}, true);
+   #endif
    while (true) {
-      ${RecoveryLoop(oom)}
-      #if nestedExp.simpleName = "ExpansionChoice"
-         ${inFirstVarName} = false;
-      #else
-         if (!(${ExpansionCondition(oom.nestedExpansion)})) break;
-      #endif
+     ${RecoveryLoop(oom cardinalitiesVar)} [#-- REVISIT: recovery of cardinalities!!! --]
+     #if oom.cardinalityContainer
+       ${cardinalitiesVar}.commitIteration(true);
+     #endif
+     #if nestedExp.simpleName = "ExpansionChoice"
+       ${inFirstVarName} = false;
+     #else
+       if (!(${ExpansionCondition(oom.nestedExpansion cardinalitiesVar)})) break;
+     #endif
    }
+   #if oom.cardinalityContainer
+      if (!${cardinalitiesVar}.checkCardinality(false))  {
+         fail("Minimum cardinality constraint(s) for: ${oom.location?j_string} not met.", getToken(1));
+      } 
+   #endif
    #set inFirstVarName = prevInFirstVarName
 #endmacro
 
 #macro BuildCodeZeroOrMore zom
-    while (true) {
-       #if zom.nestedExpansion.class.simpleName != "ExpansionChoice"
-         if (!(${ExpansionCondition(zom.nestedExpansion)})) break;
-       #endif
-       ${RecoveryLoop(zom)}
-    }
+   #var cardinalitiesVar = null
+   #if zom.cardinalityContainer
+      #set cardinalitiesVar = "cardinalities" + repetitionIndex
+      #set repetitionIndex = repetitionIndex + 1
+      RepetitionCardinality ${cardinalitiesVar} = new RepetitionCardinality(${CU.BuildCardinalities(zom.cardinalityConstraints)}, true);
+   #endif
+   while (true) {
+      #if zom.nestedExpansion.class.simpleName != "ExpansionChoice"
+         if (!(${ExpansionCondition(zom.nestedExpansion cardinalitiesVar)})) break;
+      #endif
+      ${RecoveryLoop(zom cardinalitiesVar)}
+      #if zom.cardinalityContainer
+         ${cardinalitiesVar}.commitIteration(true);
+      #endif
+   }
+   #if zom.cardinalityContainer
+      if (!${cardinalitiesVar}.checkCardinality(false))  {
+         fail("Minimum cardinality constraint(s) for: ${zom.location?j_string} not met.", getToken(1));
+      } 
+   #endif
 #endmacro
 
-#macro RecoveryLoop loopExpansion
+#macro RecoveryLoop loopExpansion cardinalitiesVar
    #if !settings.faultTolerant || !loopExpansion.requiresRecoverMethod
-       ${BuildCode(loopExpansion.nestedExpansion)}
+       ${BuildCode(loopExpansion.nestedExpansion cardinalitiesVar)}
    #else
        #var initialTokenVarName = "initialToken" + CU.newID()
        ${settings.baseTokenClassName} ${initialTokenVarName} = lastConsumedToken;
        try {
-          ${BuildCode(loopExpansion.nestedExpansion)}
+          ${BuildCode(loopExpansion.nestedExpansion cardinalitiesVar)}
        } catch (ParseException pe) {
           if (!isParserTolerant()) throw pe;
           if (${initialTokenVarName} == lastConsumedToken) {
@@ -874,17 +918,23 @@
              // we'll be stuck in an infinite loop!
              lastConsumedToken.setSkipped(true);
           }
-          ${loopExpansion.recoverMethodName}();
+          if (${loopExpansion.recoverMethodName}(pe)) {
+             #if loopExpansion.recoveryBlock??
+                 // Recovery code action at ${loopExpansion.recoveryBlock.location} when recovery succeeded and pushed an InvalidNode
+                 ${loopExpansion.recoveryBlock.javaCode} 
+             /#if 
+             pendingRecovery = false;
+          }
           if (pendingRecovery) throw pe;
        }
    #endif
 #endmacro
 
-#macro BuildCodeChoice choice
+#macro BuildCodeChoice choice cardinalitiesVar
    #list choice.choices as expansion
       #if expansion.enteredUnconditionally
         {
-         ${BuildCode(expansion)}
+         ${BuildCode(expansion cardinalitiesVar)}
          #if jtbParseTree && isProductionInstantiatingNode(expansion)
             ${globals.currentNodeVariableName}.setChoice(${expansion_index});
          #endif
@@ -897,8 +947,8 @@
         #endif
         #return
       #endif
-      if (${ExpansionCondition(expansion)}) {
-         ${BuildCode(expansion)}
+      if (${ExpansionCondition(expansion cardinalitiesVar)}) {
+         ${BuildCode(expansion cardinalitiesVar)}
          #if jtbParseTree && isProductionInstantiatingNode(expansion)
             ${globals.currentNodeVariableName}.setChoice(${expansion_index});
          #endif
@@ -926,9 +976,9 @@
    #endif
 #endmacro
 
-#macro BuildCodeSequence expansion
+#macro BuildCodeSequence expansion cardinalitiesVar
        #list expansion.units as subexp
-           ${BuildCode(subexp)}
+           ${BuildCode(subexp cardinalitiesVar)}
        #endlist
 #endmacro
 
@@ -938,23 +988,27 @@
      Macro to generate the condition for entering an expansion
      including the default single-token lookahead
 --]
-#macro ExpansionCondition expansion
+#macro ExpansionCondition expansion cardinalitiesVar
     #if expansion.requiresPredicateMethod
-       ${ScanAheadCondition(expansion)}
+       ${ScanAheadCondition(expansion cardinalitiesVar!null)}
     #else
-       ${SingleTokenCondition(expansion)}
+       ${SingleTokenCondition(expansion cardinalitiesVar!null)} 
     #endif
 #endmacro
 
 #-- Generates code for when we need a scanahead --
-#macro ScanAheadCondition expansion
+#macro ScanAheadCondition expansion cardinalitiesVar
    #if expansion.lookahead?? && expansion.lookahead.assignment??
       (${expansion.lookahead.assignment.name} =
    #endif
    #if expansion.hasSemanticLookahead && !expansion.lookahead.semanticLookaheadNested
       (${expansion.semanticLookahead}) &&
    #endif
-   ${expansion.predicateMethodName}()
+   #if expansion.cardinalityConstrained && cardinalitiesVar??
+      ${expansion.predicateMethodName}(${cardinalitiesVar})
+   #else
+      ${expansion.predicateMethodName}()
+   #endif
    #if expansion.lookahead?? && expansion.lookahead.assignment??
       )
    #endif
@@ -962,7 +1016,7 @@
 
 
 #-- Generates code for when we don't need any scanahead routine. --
-#macro SingleTokenCondition expansion
+#macro SingleTokenCondition expansion cardinalitiesVar [#-- JB:REVISIT probably don't need this arg here --]
    #if expansion.hasSemanticLookahead
       (${expansion.semanticLookahead}) &&
    #endif

@@ -1,0 +1,1472 @@
+// This is a CongoCC grammar for a subset of the CICS embedded command language
+// demonstrating the use of repetition cardinality constraints, a unique feature of
+// the CongoCC parser generator.
+//
+// The subset corresponds to that used by the AWS_CARD demo application at
+// https://github.com/aws-samples/aws-mainframe-modernization-carddemo.git
+// It may be used for any purpose.
+
+PARSER_PACKAGE=org.parsers.cics;
+TAB_SIZE=4;
+ENSURE_FINAL_EOL;
+TERMINATING_STRING="";
+DEFAULT_LEXICAL_STATE=CICS_STATE;
+//#define FT
+#if FT
+FAULT_TOLERANT;
+FAULT_TOLERANT_DEFAULT=true;
+#endif
+
+<CICS_STATE, COBOL_STATE> UNPARSED : 
+    < #LINE_TERMINATOR: ( [ "\n", "\r" ] | "\r\n" ) > |
+    < #INLINE_WHITESPACE: ( [ " ", "\t", "\f" ] )+ > |
+    < WHITESPACE: <INLINE_WHITESPACE> | <LINE_TERMINATOR> > 
+;
+
+TOKEN [IGNORE_CASE] #CicsContextSensitiveKeyword :
+    <ABDUMP:            "abdump">
+|   <ABOFFSET:          "aboffset">
+|   <ABPROGRAM:         "abprogram">
+|   <ACTIVITY:          "activity">
+|   <ALTSCRNHT:         "altscrnht">
+|   <ALTSCRNWD:         "altscrnwd">
+|   <APLKYBD:           "aplkybd">
+|   <APLTEXT:           "apltext">
+|   <APPLICATION:       "application">
+|   <APPLID:            "applid">
+|   <ASRAINTRPT:        "asraintrpt">
+|   <ASRAKEY:           "asrakey">
+|   <ASRAPSW:           "asrapsw">
+|   <ASRAPSW16:         "asrapsw16">
+|   <ASRAREGS:          "asraregs">
+|   <ASRAREGS64:        "asraregs64">
+|   <ASRASPC:           "asraspc">
+|   <ASRASTG:           "asrastg">
+|   <BRIDGE:            "bridge">
+|   <BTRANS:            "btrans">
+|   <CMDSEC:            "cmdsec">
+|   <COLOR:             "color">
+|   <CWALENG:           "cwaleng">
+|   <DEFSCRNHT:         "defscrnht">
+|   <DEFSCRNWD:         "defscrnwd">
+|   <DELIMITER:         "delimiter">
+|   <DESTCOUNT:         "destcount">
+|   <DESTID:            "destid">
+|   <DESTIDLENG:        "destidleng">
+|   <DSSCS:             "dsscs">
+|   <DS3270:            "ds3270">
+|   <ERRORMSG:          "errormsg">
+|   <ERRORMSGLEN:       "errormsglen">
+|   <EWASUPP:           "ewasupp">
+|   <EXTDS:             "extds">
+|   <FACILITY:          "facility">
+|   <FCI:               "fci">
+|   <GCHARS:            "gchars">
+|   <GCODES:            "gcodes">
+|   <GMMI:              "gmmi">
+|   <HILIGHT:           "hilight">
+|   <INITPARM:          "initparm">
+|   <INITPARMLEN:       "initparmlen">
+|   <INVOKINGPROG:      "invokingprog">
+|   <KATAKANA:          "katakana">
+|   <LANGINUSE:         "langinuse">
+|   <LDCMNEM:           "ldcmnem">
+|   <LDCNUM:            "ldcnum">
+|   <LINKLEVEL:         "linklevel">
+|   <LOCALCCSID:        "localccsid">
+|   <MAJORVERSION:      "majorversion">
+|   <MAPCOLUMN:         "mapcolumn">
+|   <MAPHEIGHT:         "mapheight">
+|   <MAPLINE:           "mapline">
+|   <MAPWIDTH:          "mapwidth">
+|   <MICROVERSION:      "microversion">
+|   <MINORVERSION:      "minorversion">
+|   <MSRCONTROL:        "msrcontrol">
+|   <NATLANGINUSE:      "natlanginuse">
+|   <NETNAME:           "netname">
+|   <NEXTTRANSID:       "nexttransid">
+|   <NUMTAB:            "numtab">
+|   <OPCLASS:           "opclass">
+|   <OPERATION:         "operation">
+|   <OPERKEYS:          "operkeys">
+|   <OPID:              "opid">
+|   <OPSECURITY:        "opsecurity">
+|   <ORGABCODE:         "orgabcode">
+|   <OUTLINE:           "outline">
+|   <PAGENUM:           "pagenum">
+|   <PARTNPAGE:         "partnpage">
+|   <PARTNS:            "partns">
+|   <PARTNSET:          "partnset">
+|   <PLATFORM:          "platform">
+|   <PRINSYSID:         "prinsysid">
+|   <PS:                "ps">
+|   <QNAME:             "qname">
+|   <RESSEC:            "ressec">
+|   <RESTART:           "restart">
+|   <RETURNPROG:        "returnprog">
+|   <SCRNHT:            "scrnht">
+|   <SCRNWD:            "scrnwd">
+|   <SIGDATA:           "sigdata">
+|   <SOSI:              "sosi">
+|   <STARTCODE:         "startcode">
+|   <STATIONID:         "stationid">
+|   <TASKPRIORITY:      "taskpriority">
+|   <TCTUALENG:         "tctualeng">
+|   <TELLERID:          "tellerid">
+|   <TERMCODE:          "termcode">
+|   <TERMPRIORITY:      "termpriority">
+|   <TEXTKYBD:          "textkybd">
+|   <TEXTPRINT:         "textprint">
+|   <TNADDR:            "tnaddr">
+|   <TNIPFAMILY:        "tnipfamily">
+|   <TNPORT:            "tnport">
+|   <TRANPRIORITY:      "tranpriority">
+|   <TWALENG:           "twaleng">
+|   <UNATTEND:          "unattend">
+|   <USERID:            "userid">
+|   <USERNAME:          "username">
+|   <USERPRIORITY:      "userpriority">
+|   <VALIDATION:       "validation"> 
+;
+
+TOKEN [IGNORE_CASE] #CicsKeyword :
+    <ABEND:"abend">
+|   <HANDLE: "handle">
+|   <ABCODE:"abcode">
+|   <CANCEL: "cancel">
+|   <NODUMP:"nodump">
+|   <PROGRAM:"program">
+|   <LABEL:"label">
+|   <RESET:"reset">
+|   <ACQUIRE:"acquire">
+|   <PROCESS:"process">
+|   <PROCESSTYPE:"processtype">
+|   <ACTIVITYID:"activityid">
+|   <ADD:"add">
+|   <SUBEVENT:"subevent">
+|   <EVENT:"event">
+|   <ADDRESS:"address">
+|   <ACEE:"acee">
+|   <COMMAREA:"commarea">
+|   <CWA:"cwa">
+|   <TCTUA:"tctua">
+|   <TWA:"twa">
+|   <SET:"set">
+|   <USING:"using">
+|   <SYNCPOINT: "syncpoint">
+|   <NOHANDLE: "nohandle">
+|   <RESP: "resp">
+|   <RESP2: "resp2">
+|   <ALLOCATE: "allocate">
+|   <PARTNER: "partner">
+|   <SYSID: "sysid">
+|   <PROFILE: "profile">
+|   <NOQUEUE: "noqueue">
+|   <STATE: "state">
+|   <XCTL: "xctl">
+|   <CHANNEL: "channel">
+|   <LENGTH: "length">
+|   <INPUTMSG: "inputmsg">
+|   <INPUTMSGLEN: "inputmsglen">
+|   <TRANSID: "transid">
+|   <IMMEDIATE: "immediate">
+|   <ENDACTIVITY: "endactivity">
+|   <RECEIVE: "receive">
+|   <MAP: "map">
+|   <INTO: "into">
+|   <TERMINAL: "terminal">
+|   <ASIS: "asis">
+|   <INPARTN: "inpartn">
+|   <FROM: "from">
+|   <RETURN: "return">
+|   <SEND: "send">
+|   <MAPONLY: "maponly">
+|   <DATAONLY: "dataonly">
+|   <CURSOR: "cursor">
+|   <FORMFEED: "formfeed">
+|   <ERASE: "erase">
+|   <ALTERNATE: "alternate">
+|   <_DEFAULT: "default">
+|   <ERASEAUP: "eraseaup">
+|   <PRINT: "print">
+|   <FREEKB: "freekb">
+|   <MAPSET: "mapset">
+|   <ALARM: "alarm">
+|   <FRSET: "frset">
+|   <FILE: "file" | "dataset" /* deprecated in 3.x */>
+|   <UNCOMMITTED: "uncommitted">
+|   <CONSISTENT: "consistent">
+|   <REPEATABLE: "repeatable">
+|   <UPDATE: "update">
+|   <_TOKEN: "token">
+|   <RIDFLD: "ridfld">
+|   <KEYLENGTH: "keylength">
+|   <GENERIC: "generic">
+|   <DEBKEY: "debkey">
+|   <DEBREC: "debrec">
+|   <RBA: "rba">
+|   <RRN: "rrn">
+|   <XRBA: "xrba">
+|   <EQUAL: "equal">
+|   <GTEQ: "gteq">
+|   <NOSUSPEND: "nosuspend">
+|   <ROLLBACK: "rollback">
+|   <WAIT: "wait">
+|   <INVITE: "invite">
+|   <LAST: "last">
+|   <STRFIELD: "strfield">
+|   <CTLCHAR: "ctlchar">
+|   <DEFRESP: "defresp">
+|   <FLENGTH: "flength">
+|   <READ: "read">
+|   <REWRITE: "rewrite">
+|   <SENT: "sent">
+|   <TEXT: "text">
+|   <NLEOM: "nleom">
+|   <FMHPARM: "fmhparm">
+|   <MSR: "msr">
+|   <LDC: "ldc">
+|   <ACTPARTN: "actpartn">
+|   <OUTPARTN: "outpartn">
+|   <ASKTIME: "asktime">
+|   <ABSTIME: "abstime">
+|   <FORMATTIME: "formattime">
+|   <DATE: "date">
+|   <FULLDATE: "fulldate">
+|   <DATEFORM: "dateform">
+|   <DATESEP: "datesep">
+|   <STRINGZONE: "stringzone">
+|   <DATESTRING: "datestring">
+|   <DAYOFMONTH: "dayofmonth">
+|   <DAYCOUNT: "daycount">
+|   <DAYOFWEEK: "dayofweek">
+|   <DDMMYY: "ddmmyy">
+|   <DDMMYYYY: "ddmmyyyy">
+|   <MILLISECONDS: "milliseconds">
+|   <MMDDYY: "mmddyy">
+|   <MMDDYYYY: "mmddyyyy">
+|   <MONTHOFYEAR: "monthofyear">
+|   <STRINGFORMAT: "stringformat">
+|   <TIME: "time">
+|   <TIMESEP: "timesep">
+|   <YYDDD: "yyddd">
+|   <YYDDMM: "yyddmm">
+|   <YYMMDD: "yymmdd">
+|   <YYYYDDD: "yyyyddd">
+|   <YYYYDDMM: "yyyyddmm">
+|   <YYYYMMDD: "yyyymmdd">
+|   <YEAR: "year">
+|   <STARTBR: "startbr">
+|   <REQID: "reqid">
+|   <READPREV: "readprev">
+|   <READNEXT: "readnext">
+|   <ENDBR: "endbr">
+|   <WRITE: "write">
+|   <MASSINSERT: "massinsert">
+|   <WRITEQ: "writeq">
+|   <TD: "td">
+|   <QUEUE: "queue">
+|   <TS: "ts">
+|   <NUMITEMS: "numitems">
+|   <ITEM: "item">
+|   <AUXILIARY: "auxiliary">
+|   <MAIN: "main">
+|   <ASSIGN: "assign">
+|   <DELETE: "delete">
+|   <NUMREC: "numrec">
+|   <MAXLENGTH: "maxlength">
+|   <MAXFLENGTH: "maxflength">
+|   <NOTRUNCATE: "notruncate">
+|   <BUFFER: "buffer">
+|   <LINK: "link">
+|   <DATALENGTH: "datalength">
+|   <SYNCONRETURN: "synconreturn">
+;
+
+<CICS_STATE,COBOL_STATE> TOKEN [IGNORE_CASE]:
+    < #LETTER: [ "a"-"z" ] >
+|   < #DIGIT: [ "0"-"9" ] >
+;
+
+<COBOL_STATE> TOKEN [IGNORE_CASE]:
+    < #OF: "of">
+|   < #IN: "in"> 
+|   < #COBOL_NAME_PART: <LETTER> ( <DIGIT> | <LETTER> | <SPECIAL_NAME_CHARS> )* >
+|   < #SPECIAL_NAME_CHARS: "_" | "-" | "$" >
+|   < COBOL_NAME: 
+        <COBOL_NAME_PART> ( <WHITESPACE> (<OF> | <IN>) <WHITESPACE> <COBOL_NAME_PART> )* 
+        ( "(" <COBOL_NAME_PART> ")" )?
+        >
+|   < LITERAL: (~[")"])+ >
+;
+
+TOKEN [IGNORE_CASE]:
+    < #NATIONAL_CHAR: "@" | "$" | "#" >
+|   < #FNC: <LETTER> | <DIGIT> | <NATIONAL_CHAR> >
+|   < #FILE_NAME_TAIL: <FNC>(<FNC>(<FNC>(<FNC>(<FNC>(<FNC>(<FNC>)?)?)?)?)?)? >
+|   < #SYSTEM_NAME_TAIL: <FNC>(<FNC>(<FNC>)?)? >
+|   < FILE_NAME: (<LETTER> | <NATIONAL_CHAR>) (<FILE_NAME_TAIL>)? >
+|   < SYSTEM_NAME: (<LETTER> | <NATIONAL_CHAR>) (<SYSTEM_NAME_TAIL>)? >
+|   < ALPHA_NAME: <LETTER> ( <LETTER> )* >
+;
+
+TOKEN [IGNORE_CASE]:
+    <EXEC: "exec">
+|   <CICS: "cics">
+|   <END_EXEC: "end-exec">
+; 
+
+ 
+
+#Root :
+    (
+        <EXEC> <CICS>
+        Command
+        <END_EXEC>!
+    )+
+    <EOF> {return CURRENT_NODE;}
+;
+
+Name :
+    DataValue 
+;
+
+Label :
+    LEXICAL_STATE COBOL_STATE 
+    (<COBOL_NAME>)
+;
+
+DataValue : LEXICAL_STATE COBOL_STATE 
+    ( <COBOL_NAME> | <LITERAL> )
+;
+
+DataArea :
+    LEXICAL_STATE COBOL_STATE 
+    (<COBOL_NAME>)
+;
+
+PtrRef :
+    LEXICAL_STATE COBOL_STATE 
+    (<COBOL_NAME>)
+;
+
+SystemName :
+    <SYSTEM_NAME>
+;
+
+Cvda :
+    <ALPHA_NAME>
+;
+
+FileName :
+    LEXICAL_STATE COBOL_STATE 
+    (<COBOL_NAME>|<LITERAL>)
+;
+
+Command :
+    (
+        Abend                   |
+        HandleAbend             |
+        Acquire                 |
+        Add                     |
+        Address                 |
+        AddressSet              |
+        AllocateAPPC            |
+        SCAN 2 => 
+        SyncpointRollback       |
+        Syncpoint               |
+        Xctl                    |
+        Return                  |
+        Link                    |
+        SCAN 2 =>
+        ReceiveMap              |
+        Receive3270             |
+        SendMap                 |
+        SendText                |
+        Send3270                |
+        StartBr                 |
+        EndBr                   |
+        Read                    |
+        ReadPrev                |
+        ReadNext                |
+        Asktime                 |
+        Formattime              |
+        Write                   |
+        WriteQTd                |
+        WriteQTs                |
+        Assign                  |
+        Delete                  |
+        Rewrite
+    )
+;
+
+Abend :
+    <ABEND>
+    (
+        &<ABCODE> "(" DataValue #AbendCode(1) ")"
+        |
+        &(
+            @cancel :=? <CANCEL>  
+            |
+            @noDump :=? <NODUMP>
+        )+ #TerminationOption 
+        |
+        (
+            & @noHandle :=? <NOHANDLE>
+            |
+            & <RESP> "(" Name #ResponseName(1) ")"
+            |
+            & <RESP2> "(" Name #Response2Name(1) ")"
+        ) #CommonOptions
+    )* =>||
+;
+
+HandleAbend :
+    <HANDLE> <ABEND>
+    (
+        & <CANCEL>
+        |
+        & <PROGRAM> "(" Name ")"
+        |
+        & <LABEL> "(" Label ")"
+        |
+        & <RESET>
+        |
+        (
+            & @noHandle :=? <NOHANDLE>
+            |
+            & <RESP> "(" Name #ResponseName(1) ")"
+            |
+            & <RESP2> "(" Name #Response2Name(1) ")"
+        ) #CommonOptions
+    )* =>||
+;
+
+Acquire :
+    <ACQUIRE>
+    (
+        (
+            &1& <PROCESS> "(" DataValue ")"
+            |
+            ASSERT {&1&} <PROCESSTYPE> "(" DataValue ")" // this should only check in parsing, not lookahead
+            |
+            (
+                & @noHandle :=? <NOHANDLE>
+                |
+                & <RESP> "(" Name #ResponseName(1) ")"
+                |
+                & <RESP2> "(" Name #Response2Name(1) ")"
+            ) #CommonOptions
+        )+ =>||
+        |
+        // !!! & here gets freemarker null variable error !!!
+        <ACTIVITYID> "(" DataValue ")"
+    ) =>||
+;
+
+Add :
+    <ADD> 
+    (
+        &1& <SUBEVENT> "(" DataValue ")"
+        |
+        &1& <EVENT> "(" DataValue ")"
+        |
+        (
+            & @noHandle :=? <NOHANDLE>
+            |
+            & <RESP> "(" Name #ResponseName(1) ")"
+            |
+            & <RESP2> "(" Name #Response2Name(1) ")"
+        ) #CommonOptions
+    )+ =>||
+;
+
+Address :
+    <ADDRESS>
+    ( 
+        & <ACEE> "(" PtrRef ")"
+        |
+        & <COMMAREA> "(" PtrRef ")"
+        |
+        & <CWA> "(" PtrRef ")"
+        |
+        & <TCTUA> "(" PtrRef ")"
+        |
+        & <TWA> "(" PtrRef ")"
+        |
+        (
+            & @noHandle :=? <NOHANDLE>
+            |
+            & <RESP> "(" Name #ResponseName(1) ")"
+            |
+            & <RESP2> "(" Name #Response2Name(1) ")"
+        ) #CommonOptions
+    )* =>|| // includes any subset including empty
+;
+    
+AddressSet :
+    <ADDRESS>
+    (
+        <SET> "(" DataArea =>|| ")" <USING> "(" PtrRef ")"
+        |
+        <SET> "(" PtrRef ")" <USING> "(" DataArea ")"
+    )
+    ( 
+        (
+            & @noHandle :=? <NOHANDLE>
+            |
+            & <RESP> "(" Name #ResponseName(1) ")"
+            |
+            & <RESP2> "(" Name #Response2Name(1) ")"
+        ) #CommonOptions
+    )* =>||
+;
+
+AllocateAPPC :
+    <ALLOCATE> 
+    (
+        & <NOQUEUE>
+        | 
+        & <STATE> "(" Cvda ")"
+        |
+        (
+            & @noHandle :=? <NOHANDLE>
+            |
+            & <RESP> "(" Name #ResponseName(1) ")"
+            |
+            & <RESP2> "(" Name #Response2Name(1) ")"
+        ) #CommonOptions
+        |
+        &1& (
+            <PARTNER> "(" Name ")" =>||
+            | 
+            ( 
+                &1& <SYSID> "(" SystemName ")"
+                |
+                &   <PROFILE> "(" Name ")" 
+            )+
+        )
+    )+ =>||
+;
+
+Syncpoint :
+    <SYNCPOINT>
+    (
+        (
+            & @noHandle :=? <NOHANDLE>
+            |
+            & <RESP> "(" Name #ResponseName(1) ")"
+            |
+            & <RESP2> "(" Name #Response2Name(1) ")"
+        ) #CommonOptions
+    )* =>||
+;
+
+SyncpointRollback :
+    <SYNCPOINT> <ROLLBACK>
+    (
+        (
+            & @noHandle :=? <NOHANDLE>
+            |
+            & <RESP> "(" Name #ResponseName(1) ")"
+            |
+            & <RESP2> "(" Name #Response2Name(1) ")"
+        ) #CommonOptions
+    )* =>|| // Note: this will warn with a sanity check as "probably not intended"!!!
+;
+
+Xctl :
+    <XCTL> <PROGRAM> "(" Name =>|| ")"
+    (
+        & (
+            <CHANNEL> "(" Name ")"
+            |
+            (
+                &1& <COMMAREA> "(" DataArea ")"
+                |
+                & <LENGTH> "(" DataArea ")"
+            )+
+        ) 
+        |
+        & (
+            &1& <INPUTMSG> "(" DataArea ")"
+            |
+            & <INPUTMSGLEN> "(" DataValue ")"
+        )+
+        |
+        (
+            & @noHandle :=? <NOHANDLE>
+            |
+            & <RESP> "(" Name #ResponseName(1) ")"
+            |
+            & <RESP2> "(" Name #Response2Name(1) ")"
+        ) #CommonOptions
+    )* =>||
+;
+
+Link :
+    <LINK> <PROGRAM> "(" Name ")"
+    (
+        &(
+            &<CHANNEL> "(" Name ")"
+            |
+            &<COMMAREA> "(" DataArea ")"
+            (    
+                &<LENGTH> "(" DataValue ")"
+                |
+                &<DATALENGTH> "(" DataValue ")"
+            )+
+        )+
+        |
+        &(
+            &<INPUTMSG> "(" DataArea ")"
+            [ <INPUTMSGLEN> "(" DataArea ")" ]
+            |
+            &(
+                &<SYSID> "(" SystemName ")"
+                |
+                &<SYNCONRETURN>
+                |
+                &<TRANSID> "(" Name ")"
+            )+
+        )+
+        |
+        (
+            & @noHandle :=? <NOHANDLE>
+            |
+            & <RESP> "(" Name #ResponseName(1) ")"
+            |
+            & <RESP2> "(" Name #Response2Name(1) ")"
+        ) #CommonOptions
+    )* =>||
+;
+
+Return :
+    <RETURN>
+    (
+        &(
+            &1& <TRANSID> "(" Name ")"
+            |
+            &(
+                &<IMMEDIATE>
+                |
+                &(
+                    (
+                        &1& <COMMAREA> "(" DataArea ")"
+                        |
+                        &   <LENGTH> "(" DataArea ")"
+                    )+
+                    |
+                    <CHANNEL> "(" Name ")"
+                )
+            )+
+        )+
+        |
+        & (
+            &1& <INPUTMSG> "(" DataArea ")"
+            |
+            &   <INPUTMSGLEN> "(" DataValue ")"
+        )+
+        |
+        &<ENDACTIVITY>
+        |
+        (
+            & @noHandle :=? <NOHANDLE>
+            |
+            & <RESP> "(" Name #ResponseName(1) ")"
+            |
+            & <RESP2> "(" Name #Response2Name(1) ")"
+        ) #CommonOptions
+    )* =>||
+;
+
+Receive3270 :
+    <RECEIVE> 
+    (
+        &(
+            <INTO> "(" DataArea ")"
+            |
+            <SET> "(" PtrRef ")"
+        )
+        |
+        &1&(
+            <LENGTH> "(" DataArea ")"
+            |
+            <FLENGTH> "(" DataArea ")"
+        )+
+        |
+        &(
+            <MAXLENGTH> "(" DataArea ")"
+            |
+            <MAXFLENGTH> "(" DataArea ")"
+        )+
+        |
+        &<NOTRUNCATE>
+        |
+        &<BUFFER>
+        |
+        &<ASIS>
+        |
+        (
+            & @noHandle :=? <NOHANDLE>
+            |
+            & <RESP> "(" Name #ResponseName(1) ")"
+            |
+            & <RESP2> "(" Name #Response2Name(1) ")"
+        ) #CommonOptions
+    )+ =>||
+;
+
+ReceiveMap :
+    <RECEIVE> <MAP> "(" Name ")"
+    (
+        &(
+            <INTO> "(" DataArea ")"
+            |
+            <SET> "(" PtrRef ")"
+        )
+        |
+        &(
+            (
+                &1& <TERMINAL>
+                |
+                &   <ASIS>
+                |
+                &   <INPARTN> "(" Name ")"
+            )+
+            |
+            (
+                &1&  <FROM> "(" DataArea ")"
+                |
+                &    <LENGTH> "(" DataValue ")"
+            )+
+        )
+        |
+        &<MAPSET> "(" Name ")"
+        |
+        (
+            & @noHandle :=? <NOHANDLE>
+            |
+            & <RESP> "(" Name #ResponseName(1) ")"
+            |
+            & <RESP2> "(" Name #Response2Name(1) ")"
+        ) #CommonOptions
+    )* =>||
+;
+
+SendMap : //minimum at this point
+    <SEND> <MAP> =>|| "(" Name ")"
+    (
+        &<MAPSET> "(" Name ")"
+        |
+        &(
+            &<MAPONLY>
+            |
+            &(
+                &<FROM> "(" DataArea ")"
+                |
+                &<DATAONLY>
+                |
+                &<LENGTH> "(" DataValue ")"
+            )+
+        )+
+        |
+        &<CURSOR> [ "(" DataValue ")" ] // !!! & in the ZeroOrOne gives Java error !!!
+        |
+        &<FORMFEED>
+        |
+        &(
+            &<ERASE> 
+            [ 
+                <ALTERNATE>
+                | 
+                <_DEFAULT> 
+            ]
+            |
+            &<ERASEAUP>
+        )+
+        |
+        &<PRINT>
+        |
+        &<FREEKB>
+        |
+        &<ALARM>
+        |
+        &<FRSET>
+        |
+        (
+            & @noHandle :=? <NOHANDLE>
+            |
+            & <RESP> "(" Name #ResponseName(1) ")"
+            |
+            & <RESP2> "(" Name #Response2Name(1) ")"
+        ) #CommonOptions
+    )* =>||
+;
+
+StartBr :
+    <STARTBR>
+    (
+        &1&<FILE> "(" FileName ")"
+        |
+        &1&<RIDFLD> "(" DataArea ")"
+        |
+        &(
+            &<KEYLENGTH> "(" DataValue ")"
+            |
+            &<GENERIC>
+        )+
+        |
+        &<SYSID> "(" SystemName ")"
+        |
+        &<REQID> "(" DataValue ")"
+        |
+        &(
+            <DEBKEY> |
+            <DEBREC> |
+            <RBA> |
+            <RRN> |
+            <XRBA>
+        )
+        |
+        &( <EQUAL> | <GTEQ> )
+        |
+        (
+            & @noHandle :=? <NOHANDLE>
+            |
+            & <RESP> "(" Name #ResponseName(1) ")"
+            |
+            & <RESP2> "(" Name #Response2Name(1) ")"
+        ) #CommonOptions
+    )+ =>||
+;
+
+EndBr :
+    <ENDBR>
+    (
+        &1&<FILE> "(" FileName ")"
+        |
+        &<SYSID> "(" SystemName ")"
+        |
+        &<REQID> "(" DataValue ")"
+        |
+        (
+            & @noHandle :=? <NOHANDLE>
+            |
+            & <RESP> "(" Name #ResponseName(1) ")"
+            |
+            & <RESP2> "(" Name #Response2Name(1) ")"
+        ) #CommonOptions
+    )+ =>||
+;
+
+Read :
+    <READ>
+    (
+        &1&<FILE> "(" FileName ")"
+        |
+        &(
+            <UNCOMMITTED> |
+            <CONSISTENT> |
+            <REPEATABLE> |
+            <UPDATE> [ <_TOKEN> "(" DataArea ")" ]
+        )
+        |
+        &1&(
+            <INTO> "(" DataArea ")" |
+            <SET> "(" PtrRef ")"
+        )
+        |
+        &1&<RIDFLD> "(" DataArea ")"
+        |
+        &<KEYLENGTH> "(" DataValue ")" [ <GENERIC> ]
+        |
+        &(
+            <SYSID> "(" SystemName ")" <LENGTH> "(" DataArea ")" |
+            <LENGTH> "(" DataArea ")"
+        )
+        |
+        &(
+            <DEBKEY> |
+            <DEBREC> |
+            <RBA> |
+            <RRN> |
+            <XRBA>
+        )
+        |
+        &( <EQUAL> | <GTEQ> )
+        |
+        &<NOSUSPEND>
+        |
+        (
+            & @noHandle :=? <NOHANDLE>
+            |
+            & <RESP> "(" Name #ResponseName(1) ")"
+            |
+            & <RESP2> "(" Name #Response2Name(1) ")"
+        ) #CommonOptions
+    )+ =>||
+;
+
+ReadPrev :
+{
+    boolean sysidPresent = false;
+    boolean lengthPresent = false;
+}
+    <READPREV> 
+    (
+        &1&<FILE> "(" FileName ")"
+        |
+        &(
+            <UNCOMMITTED> |
+            <CONSISTENT> |
+            <REPEATABLE> |
+            <UPDATE> [ <_TOKEN> "(" DataArea ")" ]
+        )
+        |
+        &1&(
+            <INTO> "(" DataArea ")" |
+            <SET> "(" PtrRef ")"
+        )
+        |
+        &1&<RIDFLD> "(" DataArea ")"
+        |
+        &<KEYLENGTH> "(" DataValue ")"
+        |
+        &<LENGTH> "(" DataArea ")" {lengthPresent=true;}
+        |
+        &<SYSID> "(" SystemName ")" {sysidPresent=true;}
+        |
+        &<REQID> "(" DataValue ")"
+        |
+        &(
+            <RBA> |
+            <RRN> |
+            <XRBA>
+        )
+        |
+        &<NOSUSPEND>
+        |
+        (
+            & @noHandle :=? <NOHANDLE>
+            |
+            & <RESP> "(" Name #ResponseName(1) ")"
+            |
+            & <RESP2> "(" Name #Response2Name(1) ")"
+        ) #CommonOptions
+    )+ =>||
+    {if (sysidPresent && !lengthPresent) throw new ParseException();}
+;
+
+ReadNext :
+{
+    boolean sysidPresent = false;
+    boolean lengthPresent = false;
+}
+    <READNEXT> 
+    (
+        &1&<FILE> "(" FileName ")"
+        |
+        &(
+            <UNCOMMITTED> |
+            <CONSISTENT> |
+            <REPEATABLE> |
+            <UPDATE> [ <_TOKEN> "(" DataArea ")" ]
+        )
+        |
+        &1&(
+            <INTO> "(" DataArea ")" |
+            <SET> "(" PtrRef ")"
+        )
+        |
+        &1&<RIDFLD> "(" DataArea ")"
+        |
+        &<KEYLENGTH> "(" DataValue ")"
+        |
+        &<LENGTH> "(" DataArea ")" {lengthPresent=true;}
+        |
+        &<SYSID> "(" SystemName ")" {sysidPresent=true;}
+        |
+        &<REQID> "(" DataValue ")"
+        |
+        &(
+            <RBA> |
+            <RRN> |
+            <XRBA>
+        )
+        |
+        &<NOSUSPEND>
+        |
+        (
+            & @noHandle :=? <NOHANDLE>
+            |
+            & <RESP> "(" Name #ResponseName(1) ")"
+            |
+            & <RESP2> "(" Name #Response2Name(1) ")"
+        ) #CommonOptions
+    )+ =>||
+    ASSERT {!(sysidPresent && !lengthPresent)} : "SYSID is present, but LENGTH is not"
+;
+
+Rewrite :
+    <REWRITE>
+    (
+        &1&<FILE> "(" FileName ")"
+        |
+        &<_TOKEN> "(" DataArea ")"
+        |
+        &1&<FROM> "(" DataArea ")"
+        |
+        &(
+            <SYSID> "(" SystemName ")" <LENGTH> "(" DataArea ")" |
+            <LENGTH> "(" DataArea ")"
+        )
+        |
+        &<NOSUSPEND>
+        |
+        (
+            & @noHandle :=? <NOHANDLE>
+            |
+            & <RESP> "(" Name #ResponseName(1) ")"
+            |
+            & <RESP2> "(" Name #Response2Name(1) ")"
+        ) #CommonOptions
+    )+ =>||
+;
+
+Write :
+    <WRITE>
+    (
+        &1&<FILE> "(" FileName ")"
+        |
+        &<MASSINSERT>
+        |
+        &1&<FROM> "(" DataArea ")"
+        |
+        &1&<RIDFLD> "(" DataArea ")"
+        |
+        &<KEYLENGTH> "(" DataValue ")"
+        |
+        &(
+            &<LENGTH> "(" DataArea ")"
+            |
+            &(
+                &1&<SYSID> "(" SystemName ")"
+                |
+                &1&<LENGTH> "(" DataArea ")"
+            )+
+        )+
+        |
+        &(
+            <RBA> |
+            <RRN> |
+            <XRBA>
+        )
+        |
+        &<NOSUSPEND>
+        |
+        (
+            & @noHandle :=? <NOHANDLE>
+            |
+            & <RESP> "(" Name #ResponseName(1) ")"
+            |
+            & <RESP2> "(" Name #Response2Name(1) ")"
+        ) #CommonOptions
+    )+ =>||
+;
+
+WriteQTd :
+    <WRITEQ> <TD>
+    (
+        &1&<QUEUE> "(" Name ")"
+        |
+        &1&<FROM> "(" DataArea ")"
+        |
+        &<LENGTH> "(" DataValue ")"
+        |
+        &<SYSID> "(" SystemName ")"
+        |
+        (
+            & @noHandle :=? <NOHANDLE>
+            |
+            & <RESP> "(" Name #ResponseName(1) ")"
+            |
+            & <RESP2> "(" Name #Response2Name(1) ")"
+        ) #CommonOptions
+    )+ =>||
+;
+
+WriteQTs :
+    <WRITEQ>
+    (
+        &<TS>
+        |
+        &1& (
+            (<QUEUE> | <QNAME>) 
+            "(" Name ")"
+        )
+        |
+        &1&<FROM> "(" DataArea ")"
+        |
+        &<LENGTH> "(" DataValue ")"
+        |
+        &<SYSID> "(" SystemName ")"
+        |
+        &(
+            <NUMITEMS> "(" DataArea ")"
+            |
+            (
+                &1&<ITEM> "(" DataArea ")"
+                |
+                &<REWRITE>
+            )+
+        )+
+        |
+        &<AUXILIARY>
+        |
+        &<MAIN>
+        |
+        &<NOSUSPEND>
+        |
+        (
+            & @noHandle :=? <NOHANDLE>
+            |
+            & <RESP> "(" Name #ResponseName(1) ")"
+            |
+            & <RESP2> "(" Name #Response2Name(1) ")"
+        ) #CommonOptions
+    )+ =>||
+;
+
+Assign : //TODO: This one is too big for Python (too much indentation)
+    <ASSIGN>
+    (
+        &<ABCODE> "(" DataArea ")" |
+        &<ABDUMP> "(" DataArea ")" |
+        &<ABOFFSET> "(" DataArea ")" |
+        &<ABPROGRAM> "(" DataArea ")" |
+        &<ACTIVITY> "(" DataArea ")" |
+        &<ACTIVITYID> "(" DataArea ")" |
+        &<ALTSCRNHT> "(" DataArea ")" |
+        &<ALTSCRNWD> "(" DataArea ")" |
+        &<APLKYBD> "(" DataArea ")" |
+        &<APLTEXT> "(" DataArea ")" |
+        &<APPLICATION> "(" DataArea ")" |
+        &<APPLID> "(" DataArea ")" |
+        &<ASRAINTRPT> "(" DataArea ")" |
+        &<ASRAKEY> "(" Cvda ")" |
+        &<ASRAPSW> "(" DataArea ")" |
+        &<ASRAPSW16> "(" DataArea ")" |
+        &<ASRAREGS> "(" DataArea ")" |
+        &<ASRAREGS64> "(" DataArea ")" |
+        &<ASRASPC> "(" Cvda ")" |
+        &<ASRASTG> "(" Cvda ")" |
+        &<BRIDGE> "(" DataArea ")" |
+        &<BTRANS> "(" DataArea ")" |
+        &<CHANNEL> "(" DataArea ")" |
+        &<CMDSEC> "(" DataArea ")" |
+        &<COLOR> "(" DataArea ")" |
+        &<CWALENG> "(" DataArea ")" |
+        &<DEFSCRNHT> "(" DataArea ")" |
+        &<DEFSCRNWD> "(" DataArea ")" |
+        &<DELIMITER> "(" DataArea ")" |
+        &<DESTCOUNT> "(" DataArea ")" |
+        &<DESTID> "(" DataArea ")" |
+        &<DESTIDLENG> "(" DataArea ")" |
+        &<DSSCS> "(" DataArea ")" |
+        &<DS3270> "(" DataArea ")" |
+        &<ERRORMSG> "(" DataArea ")" |
+        &<ERRORMSGLEN> "(" DataArea ")" |
+        &<EWASUPP> "(" DataArea ")" |
+        &<EXTDS> "(" DataArea ")" |
+        &<FACILITY> "(" DataArea ")" |
+        &<FCI> "(" DataArea ")" |
+        &<GCHARS> "(" DataArea ")" |
+        &<GCODES> "(" DataArea ")" |
+        &<GMMI> "(" DataArea ")" |
+        &<HILIGHT> "(" DataArea ")" |
+        &<INITPARM> "(" DataArea ")" |
+        &<INITPARMLEN> "(" DataArea ")" |
+        &<INPARTN> "(" DataArea ")" |
+        &<INPUTMSGLEN> "(" DataArea ")" |
+        &<INVOKINGPROG> "(" DataArea ")" |
+        &<KATAKANA> "(" DataArea ")" |
+        &<LANGINUSE> "(" DataArea ")" |
+        &<LDCMNEM> "(" DataArea ")" |
+        &<LDCNUM> "(" DataArea ")" |
+        &<LINKLEVEL> "(" DataArea ")" |
+        &<LOCALCCSID> "(" DataArea ")" |
+        &<MAJORVERSION> "(" DataArea ")" |
+        &<MAPCOLUMN> "(" DataArea ")" |
+        &<MAPHEIGHT> "(" DataArea ")" |
+        &<MAPLINE> "(" DataArea ")" |
+        &<MAPWIDTH> "(" DataArea ")" |
+        &<MICROVERSION> "(" DataArea ")" |
+        &<MINORVERSION> "(" DataArea ")" |
+        &<MSRCONTROL> "(" DataArea ")" |
+        &<NATLANGINUSE> "(" DataArea ")" |
+        &<NETNAME> "(" DataArea ")" |
+        &<NEXTTRANSID> "(" DataArea ")" |
+        &<NUMTAB> "(" DataArea ")" |
+        &<OPCLASS> "(" DataArea ")" |
+        &<OPERATION> "(" DataArea ")" |
+        &<OPERKEYS> "(" DataArea ")" |
+        &<OPID> "(" DataArea ")" |
+        &<OPSECURITY> "(" DataArea ")" |
+        &<ORGABCODE> "(" DataArea ")" |
+        &<OUTLINE> "(" DataArea ")" |
+        &<PAGENUM> "(" DataArea ")" |
+        &<PARTNPAGE> "(" DataArea ")" |
+        &<PARTNS> "(" DataArea ")" |
+        &<PARTNSET> "(" DataArea ")" |
+        &<PLATFORM> "(" DataArea ")" |
+        &<PRINSYSID> "(" DataArea ")" |
+        &<PROCESS> "(" DataArea ")" |
+        &<PROCESSTYPE> "(" DataArea ")" |
+        &<PROGRAM> "(" DataArea ")" |
+        &<PS> "(" DataArea ")" |
+        &<QNAME> "(" DataArea ")" |
+        &<RESSEC> "(" DataArea ")" |
+        &<RESTART> "(" DataArea ")" |
+        &<RETURNPROG> "(" DataArea ")" |
+        &<SCRNHT> "(" DataArea ")" |
+        &<SCRNWD> "(" DataArea ")" |
+        &<SIGDATA> "(" DataArea ")" |
+        &<SOSI> "(" DataArea ")" |
+        &<STARTCODE> "(" DataArea ")" |
+        &<STATIONID> "(" DataArea ")" |
+        &<SYSID> "(" DataArea ")" |
+        &<TASKPRIORITY> "(" DataArea ")" |
+        &<TCTUALENG> "(" DataArea ")" |
+        &<TELLERID> "(" DataArea ")" |
+        &<TERMCODE> "(" DataArea ")" |
+        &<TERMPRIORITY> "(" DataArea ")" |
+        &<TEXTKYBD> "(" DataArea ")" |
+        &<TEXTPRINT> "(" DataArea ")" |
+        &<TNADDR> "(" DataArea ")" |
+        &<TNIPFAMILY> "(" Cvda ")" |
+        &<TNPORT> "(" DataArea ")" |
+        &<TRANPRIORITY> "(" DataArea ")" |
+        &<TWALENG> "(" DataArea ")" |
+        &<UNATTEND> "(" DataArea ")" |
+        &<USERID> "(" DataArea ")" |
+        &<USERNAME> "(" DataArea ")" |
+        &<USERPRIORITY> "(" DataArea ")" |
+        &<VALIDATION> "(" DataArea ")"
+    )+ =>||
+;
+
+Send3270 :
+    <SEND>
+    (
+        &1&<FROM> "(" DataArea ")"
+        |
+        &1&(
+            <LENGTH> "(" DataValue ")" |
+            <FLENGTH> "(" DataValue ")"
+        )
+        |
+        &<WAIT>
+        |
+        &( <INVITE> | <LAST> )
+        |
+        &(
+            &<STRFIELD>
+            |
+            &(
+                &(
+                    &1&<ERASE>
+                    | 
+                    &( <_DEFAULT> | <ALTERNATE> )
+                )+
+                |
+                &<CTLCHAR> "(" DataValue ")"
+            )+
+        )+
+        |
+        &<DEFRESP>
+        |
+        (
+            & @noHandle :=? <NOHANDLE>
+            |
+            & <RESP> "(" Name #ResponseName(1) ")"
+            |
+            & <RESP2> "(" Name #Response2Name(1) ")"
+        ) #CommonOptions
+    )+ =>||
+;
+
+SendText :
+    <SEND> <TEXT> =>||
+    (
+        &1& (<FROM> "(" DataArea ")") #FromPhrase
+        |
+        & (<CURSOR> "(" DataValue ")") #CursorPhrase
+        |
+        & @withFF :=? <FORMFEED>
+        |
+        &(
+            &1& <ERASE>
+            | 
+            &( <_DEFAULT> | <ALTERNATE> )
+        )+ =>|| #ErasePhrase
+        |
+        & (<LENGTH> "(" DataValue ")") #LengthPhrase
+        |
+        & @forPrinting :=? <PRINT>
+        |
+        &<FREEKB>
+        |
+        &<ALARM>
+        |
+        & <NLEOM>
+        |
+        &<FMHPARM> "(" Name ")"
+        |
+        &<MSR> "(" DataValue ")"
+        |
+        &(
+            &<LDC> "(" Name ")"
+            |
+            &(
+                &<ACTPARTN> "(" Name ")"
+                |
+                &<OUTPARTN> "(" Name ")"
+            )+ =>||
+        )+ =>||
+        |
+        (
+            & @noHandle :=? <NOHANDLE>
+            |
+            & <RESP> "(" Name #ResponseName ")"
+            |
+            & <RESP2> "(" Name #Response2Name ")"
+        ) #CommonOptions
+    )+ =>||
+;
+
+Asktime :
+    <ASKTIME>
+    (
+        &<ABSTIME> "(" DataArea ")"
+        |
+        (
+            & @noHandle :=? <NOHANDLE>
+            |
+            & <RESP> "(" Name #ResponseName(1) ")"
+            |
+            & <RESP2> "(" Name #Response2Name(1) ")"
+        ) #CommonOptions
+    )* =>||
+;
+
+Formattime :
+    <FORMATTIME> 
+    (
+        &1& <ABSTIME> "(" DataArea ")"
+        |
+        &<DATE> "(" DataArea ")"
+        |
+        &<FULLDATE> "(" DataArea ")"
+        |
+        &<DATEFORM> "(" DataArea ")"
+        |
+        &<DATESEP> [ "(" DataValue ")" ]
+        |
+        &(
+            &<STRINGZONE> "(" Cvda ")"
+            |
+            &1&<DATESTRING> "(" DataArea ")"
+        )+ =>||
+        |
+        &<DAYOFMONTH> "(" DataArea ")"
+        |
+        &<DAYCOUNT> "(" DataArea ")"
+        |
+        &<DAYOFWEEK> "(" DataArea ")"
+        |
+        &<DDMMYY> "(" DataArea ")"
+        |
+        &<DDMMYYYY> "(" DataArea ")"
+        |
+        &<MILLISECONDS> "(" DataArea ")"
+        |
+        &<MMDDYY> "(" DataArea ")"
+        |
+        &<MMDDYYYY> "(" DataArea ")"
+        |
+        &<MONTHOFYEAR> "(" DataArea ")"
+        |
+        &<STRINGFORMAT> "(" Cvda ")"
+        |
+        &(
+            &1&<TIME> "(" DataArea ")"
+            |
+            &<TIMESEP> [ "(" DataValue ")" ]
+        )+ =>||
+        |
+        &<YYDDD> "(" DataArea ")"
+        |
+        &<YYDDMM> "(" DataArea ")"
+        |
+        &<YYMMDD> "(" DataArea ")"
+        |
+        &<YYYYDDD> "(" DataArea ")"
+        |
+        &<YYYYDDMM> "(" DataArea ")"
+        |
+        &<YYYYMMDD> "(" DataArea ")"
+        |
+        &<YEAR> "(" DataArea ")"
+        |
+        (
+            & @noHandle :=? <NOHANDLE>
+            |
+            & <RESP> "(" Name #ResponseName(1) ")"
+            |
+            & <RESP2> "(" Name #Response2Name(1) ")"
+        ) #CommonOptions
+    )+ =>||
+;
+
+Delete :
+    <DELETE>
+    (
+        &1&<FILE> "(" FileName ")"
+        |
+        &(
+            &<_TOKEN> "(" DataArea ")"
+            |
+            &(
+                &1&<RIDFLD> "(" DataArea ")"
+                |
+                &(
+                    &1&<KEYLENGTH> "(" DataValue ")"
+                    |
+                    (
+                        &1&<GENERIC>
+                        |
+                        &<NUMREC> "(" DataArea ")"
+                    )+
+                )+
+            )+
+        )+
+        |
+        &<SYSID> "(" SystemName ")"
+        |
+        &(
+            <RBA> |
+            <RRN>
+        )
+        |
+        &<NOSUSPEND>
+        |
+        (
+            & @noHandle :=? <NOHANDLE>
+            |
+            & <RESP> "(" Name #ResponseName(1) ")"
+            |
+            & <RESP2> "(" Name #Response2Name(1) ")"
+        ) #CommonOptions
+    )+ =>||
+;

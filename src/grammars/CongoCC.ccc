@@ -137,7 +137,7 @@ INJECT PARSER_CLASS :
         parser.setSymbols(grammar.getPreprocessorSymbols());
         BitSet lineMarkers = parser.PP_Root();
         token_source.setParsedLines(lineMarkers);
-    }
+    } 
 
     static public CompilationUnit parseJavaFile(String inputSource, CharSequence content) {
         PARSER_CLASS parser = new PARSER_CLASS(inputSource, content);
@@ -746,7 +746,7 @@ BNFProduction #org.congocc.core.BNFProduction :
         if (tba == null && !grammar.getAppSettings().getNodeDefaultVoid()) {
            grammar.addNodeType(CURRENT_NODE.getName(),CURRENT_NODE.getName());
         }
-     }
+    }
 ;
 
 TreeNodeDescriptor #TreeBuildingAnnotation :
@@ -844,9 +844,8 @@ INJECT TreeBuildingAnnotation :
     }
 }
 
-
 ExpansionChoice :
-  ExpansionSequence ( "|" ExpansionSequence)*
+  ExpansionSequence ("|" ExpansionSequence)*
 ;
 
 INJECT ExpansionChoice :
@@ -855,8 +854,22 @@ INJECT ExpansionChoice :
    import java.util.List;
    extends Expansion
 {
+    @Property int assertionIndex = -1;
+    
     public List<ExpansionSequence> getChoices() {
         return childrenOfType(ExpansionSequence.class);
+    }
+
+    /**
+     * Indicates one or more choices are constrained by a cardinality assertion.
+     * @return {@code true} iff this expansion's parent {@link ExpansionWithParentheses} should 
+     * provide a cardinality container and perform a final check of each cardinality assertion
+     */
+    public boolean isCardinalityConstrained() {
+        for (ExpansionSequence s : getChoices()) {
+            if (s.isCardinalityConstrained()) return true;
+        }
+        return false;
     }
 
     @Override
@@ -968,30 +981,37 @@ ExpansionWithParentheses :
     LexicalStateSwitch lss=null;
     Assignment assignment = null;
     Token atPrefix = null;
+    CodeBlock recoveryBlock = null;
+    ExpansionChoice choice;
 }
    [lss=LexicalStateSwitch | TokenActivation]
    [
        assignment = Assignment =>||
    ]
-   lparen ="(" =>|| ExpansionChoice {Expansion nested = (Expansion) peekNode();} ")"
+   lparen ="(" =>|| choice = ExpansionChoice {Expansion nested = (Expansion) peekNode();} ")"
    [
        "*" {CURRENT_NODE = new ZeroOrMore();}
        |
        "?" {CURRENT_NODE = new ZeroOrOne();}
        |
        "+" {CURRENT_NODE = new OneOrMore();}
+       // REVISIT: There could be a 4th alternative pertaining to when cardinality constraints
+       // are controlling this expansion.  It could be inferred repetition I.e., neither "*", "+", nor "?". 
+       // So "+" or "*" is inferred from ancestor repetition in a sanity check, perhaps.
    ]
    {
         CURRENT_NODE.setAssignment(assignment);
    }
    [
        SCAN ~\...\Lookahead =>
-       "!"
+       ( "!" | "!->" recoveryBlock = Block )
        {
            if (CURRENT_NODE instanceof ZeroOrOne) {
                nested.setTolerantParsing(true);
+               nested.setRecoveryBlock(recoveryBlock);
            } else {
                CURRENT_NODE.setTolerantParsing(true);
+               CURRENT_NODE.setRecoveryBlock(recoveryBlock);
            }
        }
    ]
@@ -1002,7 +1022,6 @@ ExpansionWithParentheses :
    }
 ;
 
-
 INJECT ExpansionWithParentheses :
    import org.congocc.core.*;
    import org.congocc.core.ExpansionSequence.*;
@@ -1010,7 +1029,58 @@ INJECT ExpansionWithParentheses :
    implements SyntaxElement
 {
     @Property Assignment assignment;
+    @Property int minCardinality = 0;
+    @Property int maxCardinality = 1;
+    
+    int assertionIndex = -1;
 
+    @Override
+    public void close() {
+        super.close();
+        for (Assertion assertion : getCardinalityAssertions()) {
+            if (assertion.isCardinalityConstraint()) {
+                assertion.setAssertionIndex(++assertionIndex);
+            }
+        }
+    }
+
+    public List<Assertion> getCardinalityAssertions() {
+        List<ExpansionSequence> sequences;
+        if (getNestedExpansion() instanceof ExpansionChoice) {
+            sequences = getNestedExpansion().childrenOfType(ExpansionSequence.class);
+        } else {
+            sequences = childrenOfType(ExpansionSequence.class);
+        }
+        List<Assertion> assertions = new ArrayList<>();
+        for (ExpansionSequence es : sequences) {
+            if (es.isCardinalityConstrained()) {
+                assertions.addAll(es.getCardinalityAssertions());
+            }
+        }
+        return assertions;
+    }
+    
+    /**
+     * Indicates that the {@link ExpansionChoice} contained in this iterating expansion includes cardinality assertion(s).
+     * @return {@code true} iff a cardinality container should be initially instantiated and a final check performed
+     * at upon satisfaction of the loop's exit conditions
+     */
+    public boolean isCardinalityContainer() {
+        if (this instanceof IteratingExpansion) {
+            return getCardinalityAssertions().size() > 0;
+        }
+        return false;
+    }
+    
+    public int[][] getCardinalityConstraints() {
+        List<int[]> cardinalityConstraints = new ArrayList<>();
+        for (Assertion a : getCardinalityAssertions()) {
+            int[] range = a.getCardinalityConstraint();
+            cardinalityConstraints.add(range);
+        }
+        return cardinalityConstraints.toArray(new int[0][]);
+    }
+    
     @Override
     public String getSpecifiedLexicalState() {
         LexicalStateSwitch lss = firstChildOfType(LexicalStateSwitch.class);
@@ -1028,6 +1098,8 @@ INJECT ExpansionWithParentheses :
          return super.isSingleTokenLookahead() && getNestedExpansion().isSingleTokenLookahead();
     }
 }
+
+IteratingExpansion#interface : FAIL;
 
 ExpansionSequence #org.congocc.core.ExpansionSequence :
 {
@@ -1048,11 +1120,34 @@ ExpansionSequence #org.congocc.core.ExpansionSequence :
   )+!
 ;
 
+int[] CardinalityConstraint#void :
+ {
+    int[] cardinality = new int[]{0,1};
+    Token literal;
+ }
+   "&"
+   [
+        literal=<INTEGER_LITERAL> 
+            {cardinality[0]=cardinality[1]=Integer.valueOf(literal.toString());}
+        [
+            ":" {cardinality[1]=Integer.MAX_VALUE;}
+            [
+            literal=<INTEGER_LITERAL> {cardinality[1]=Integer.valueOf(literal.toString());}
+        ]
+        ]
+        "&"
+   ]
+   {return cardinality;}
+;
+
 INJECT Assertion :
    import org.congocc.core.Expansion;
    extends org.congocc.core.EmptyExpansion
 {
-    @Property Expansion expansion;
+    @Property Expansion expansion;    
+    @Property int[] cardinalityConstraint = null;
+    @Property int assertionIndex = -1;
+    // @Property int iterationIndex = -1;
 
     @Override
     public boolean startsWithGlobalCodeAction(boolean stopAtScanLimit) {
@@ -1061,44 +1156,74 @@ INJECT Assertion :
 
     public boolean getAppliesInRegularParsing() {
         return firstChildOfType(__ASSERT) != null
-              || firstChildOfType(HASH) != null;
+              || isAppliedUniversally()
+              || isCardinalityConstraint();
     }
 
     public boolean getAppliesInLookahead() {
          return get(0).getType() == _ENSURE 
                || firstChildOfType(Expansion.class) != null && getAppSettings().getAssertAppliesInLookahead()
-               || firstChildOfType(HASH) != null
+               || isAppliedUniversally()
                || firstAncestorOfType(Lookahead.class) !=null
                || getContainingProduction().isOnlyForLookahead();
+               //|| isCardinalityConstraint();
+    }
+    
+    public boolean isCardinalityConstraint() {
+        return cardinalityConstraint != null; 
     }
 }
 
-Assertion :
-   {boolean assertKeywordPresent = false;}
+Assertion# :
+   {boolean assertKeywordPresent = false; int[] cardinality = null;}
    (
-      "ASSERT" {assertKeywordPresent = true;} ["ENSURE"]
-      |
-      "ENSURE" ["ASSERT" {assertKeywordPresent = true;}]
+       (
+          "ASSERT" {assertKeywordPresent = true;} ["ENSURE"]
+          |
+          "ENSURE" ["ASSERT" {assertKeywordPresent = true;}]
+       )
+       /** preceeding using cardinality, for example:
+       (
+          &"ASSERT" {assertKeywordPresent = true;}
+          |
+          &"ENSURE"
+       )+
+       **/
+       (
+         "{"
+         (
+           @assertionExpression := Expression
+           | 
+           cardinality=CardinalityConstraint =>|| 
+           {
+             CURRENT_NODE.setCardinalityConstraint(cardinality);
+           }
+         )
+         "}"
+         [ SCAN {assertKeywordPresent} => @appliedUniversally :=? "#" ]
+         |
+         [ @expansionNegated :=? "~" ]
+         "("
+            ExpansionChoice {CURRENT_NODE.setExpansion((Expansion) peekNode());}
+         ")"
+        )
+        [
+          SCAN {assertKeywordPresent} =>
+          ":" @messageExpression := Expression
+          [":"]
+        ]
+        |
+        // Abbreviated "ASSERT {&...&}#..."
+        SCAN /.../BNFProduction/.../ExpansionWithParentheses/ExpansionChoice/ExpansionSequence/ExpansionUnit => 
+        cardinality=CardinalityConstraint =>||  
+        {
+          CURRENT_NODE.setCardinalityConstraint(cardinality);
+          THIS_PRODUCTION.setAppliedUniversally(true);
+        }
    )
-   (
-    "{"
-       @assertionExpression := Expression
-    "}"
-    [ SCAN {assertKeywordPresent} => @semanticLookaheadNested :=? "#" ]
-    |
-    [ @expansionNegated :=? "~" ]
-    "("
-        ExpansionChoice {CURRENT_NODE.setExpansion((Expansion) peekNode());}
-    ")"
-   )
-   [
-      SCAN {assertKeywordPresent} =>
-       ":" @messageExpression := Expression
-       [":"]
-   ]
    [UpToHere(CURRENT_NODE)]
 ;
-
+/** is this used?
 Ensure :
    "ENSURE"
    (
@@ -1125,6 +1250,7 @@ INJECT Ensure :
         return firstChildOfType(Expression.class);
     }
 }
+**/
 
 Lookahead# :
 {
@@ -1372,7 +1498,7 @@ ExpansionUnit #void :
   ]
   [
      SCAN ~\...\Lookahead =>
-     "!"
+     ( "!" | "!->" @recoveryBlock = Block )
      {CURRENT_NODE.setTolerantParsing(true);}
   ]
   [ChildNameInfo(CURRENT_NODE)]
@@ -1397,11 +1523,9 @@ Terminal# :
       CURRENT_NODE.setLabel(result.getLabel());
   }
   [
-      SCAN ~\...\Lookahead
-      => "!"
-      {
-          CURRENT_NODE.setTolerantParsing(true);
-      }
+      SCAN ~\...\Lookahead =>
+     ( "!" | "!->" @recoveryBlock = Block )
+     {CURRENT_NODE.setTolerantParsing(true);}
   ]
   [
       ChildNameInfo(CURRENT_NODE)
@@ -1468,7 +1592,10 @@ ZeroOrOne :
         @assignment = Assignment =>||
     ]
     "[" =>|| ExpansionChoice {Expansion exp = (Expansion) peekNode();} "]"
-     ["!" {exp.setTolerantParsing(true);}]
+     [
+        ( "!" | "!->" @recoveryBlock = Block )
+        {exp.setTolerantParsing(true);}
+     ]
      [UpToHere(CURRENT_NODE)]
 ;
 
@@ -1476,7 +1603,7 @@ INJECT ZeroOrOne :
      import org.congocc.core.Expansion;
      import org.congocc.core.TokenSet;
      extends ExpansionWithParentheses
-{
+{  
     @Override
     protected int getMinimumSize(java.util.Set<String> unused) {return 0;}
 }
@@ -1487,6 +1614,7 @@ INJECT ZeroOrMore :
      import org.congocc.core.TokenSet;
      import java.util.Set;
      extends ExpansionWithParentheses
+     implements IteratingExpansion
 {
     @Override
     protected int getMinimumSize(Set<String> unused) {return 0;}
@@ -1500,6 +1628,7 @@ INJECT OneOrMore :
      import org.congocc.core.Expansion;
      import org.congocc.core.TokenSet;
      extends ExpansionWithParentheses
+     implements IteratingExpansion
 {
     @Override
     protected int getMaximumSize(java.util.Set<String> unused) {return Integer.MAX_VALUE;}
