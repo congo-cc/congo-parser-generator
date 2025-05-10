@@ -51,8 +51,9 @@ import static ${settings.parserPackage}.${settings.baseTokenClassName}.TokenType
 public ${isFinal ?: "final"} class ${settings.parserClassName} {
 
 static final int UNLIMITED = Integer.MAX_VALUE;
+private final ${settings.baseTokenClassName} DUMMY_START_TOKEN = new ${settings.baseTokenClassName}();
 // The last token successfully "consumed"
-${settings.baseTokenClassName} lastConsumedToken;
+${settings.baseTokenClassName} lastConsumedToken = DUMMY_START_TOKEN;
 private TokenType nextTokenType;
 // Normally null when parsing, populated when doing lookahead
 private ${settings.baseTokenClassName} currentLookaheadToken;
@@ -72,7 +73,6 @@ private EnumSet<TokenType> outerFollowSet;
    private final boolean legacyGlitchyLookahead = false;
 #endif
 
-private final ${settings.baseTokenClassName} DUMMY_START_TOKEN = new ${settings.baseTokenClassName}();
 private boolean cancelled;
 public void cancel() {cancelled = true;}
 public boolean isCancelled() {return cancelled;}
@@ -128,7 +128,7 @@ public boolean isCancelled() {return cancelled;}
       #if settings.lexerUsesParser
       token_source.setParser(this);
       #endif
-      lastConsumedToken = DUMMY_START_TOKEN;
+//      lastConsumedToken = DUMMY_START_TOKEN;
       lastConsumedToken.setTokenSource(lexer);
   }
 
