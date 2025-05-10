@@ -110,7 +110,7 @@
       deprecation="off"
       debug="on"
       optimize="off"
-      classpath="bin/freemarker3.jar"
+      classpath="bin/ctemplates.jar"
       failonerror="true"
       includeantruntime="false"
       release="8">
@@ -166,11 +166,11 @@
   </target>
 
   <target name="minimal-jar" depends="compile">
-    <echo>Creating minimal jarfile, using this requires a freemarker3.jar in the same directory</echo>
+    <echo>Creating minimal jarfile, using this requires a ctemplates.jar in the same directory</echo>
     <jar jarfile="congocc-minimal.jar" basedir="build" compress="true" excludes="**/*.java">
       <manifest>
         <attribute name="Main-Class" value="org.congocc.app.Main" />
-        <attribute name="Class-Path" value="freemarker.jar bin/freemarker3.jar" />
+        <attribute name="Class-Path" value="ctemplates.jar bin/ctemplates.jar" />
         <attribute name="Built-By" value="${user.name}" />
         <attribute name="Build-Date" value="${timestamp}" />
       </manifest>
@@ -181,7 +181,7 @@
     <echo>Creating jar with all dependencies included</echo>
     <jar jarfile="congocc.jar" compress="true" excludes="**/*.java">
       <fileset dir="build" includes="include/,org/,templates/"/>
-     <zipfileset includes="**/*.class" src="bin/freemarker3.jar" />
+     <zipfileset includes="**/*.class" src="bin/ctemplates.jar" />
       <manifest>
         <attribute name="Main-Class" value="org.congocc.app.Main" />
         <attribute name="Built-By" value="${user.name}" />
