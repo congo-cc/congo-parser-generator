@@ -114,7 +114,7 @@ MORE :
   <PP_FALSE_ALERT : ((~["\n", "\r"])*)? <PP_EOL>> : PP_SCAN_LINES
 ;
 
-INCLUDE "JavaIdentifierDef.ccc"
+INCLUDE JAVA_IDENTIFIER_DEF
 
 <PP_DIRECTIVE> TOKEN :
     <PP_TRUE : "true">

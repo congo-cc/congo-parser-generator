@@ -348,7 +348,7 @@ class ${settings.lexerClassName} extends TokenSource
   // Generate the map for lexical state transitions from the various token types
   static {
     #list lexerData.regularExpressions as regexp
-      #if !regexp.newLexicalState?is_null
+      #if regexp.newLexicalState
           tokenTypeToLexicalStateMap.put(${regexp.label}, LexicalState.${regexp.newLexicalState.name});
       #endif
     #endlist

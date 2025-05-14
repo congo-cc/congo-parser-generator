@@ -103,7 +103,7 @@
              #if expansion.simpleName = "ZeroOrMore" || expansion.simpleName = "OneOrMore"
                #var followingExpansion = expansion.followingExpansion
                #list 1..1000000 as unused
-                [#if followingExpansion?is_null][#break][/#if]
+                [#if !followingExpansion][#break][/#if]
                 #if followingExpansion.maximumSize > 0
                  #if followingExpansion.simpleName = "OneOrMore" || followingExpansion.simpleName = "ZeroOrOne" || followingExpansion.simpleName = "ZeroOrMore"
                  if (${ExpansionCondition(followingExpansion.nestedExpansion)}) {
@@ -115,7 +115,7 @@
                  }
                 #endif
                 [#if !followingExpansion.possiblyEmpty][#break][/#if]
-                #if followingExpansion.followingExpansion?is_null
+                #if !followingExpansion.followingExpansion
                  if (outerFollowSet != null) {
                    if (outerFollowSet.contains(nextTokenType())) {
                       success = true;
@@ -158,7 +158,7 @@
          }
          #endif
          ${BuildExpansionCode(expansion)}
-     [/@CU.HandleLexicalStateChange]
+     [/@]
 #endmacro
 
 #-- The following macro wraps expansions that might build tree nodes. --
@@ -671,7 +671,7 @@
 #-- The following macros build expansions that never build tree nodes. --
 
 #macro BuildCodeFailure fail
-    #if fail.code?is_null
+    #if !fail.code
       #if fail.exp??
        fail("Failure: " + ${fail.exp}, getToken(1));
       #else
