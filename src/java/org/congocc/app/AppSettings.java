@@ -571,7 +571,8 @@ public class AppSettings {
 
     public boolean getAssertAppliesInLookahead() {
         Boolean b = (Boolean) settings.get("ASSERT_APPLIES_IN_LOOKAHEAD");
-        return b==null || b;
+        //return b==null||b;
+        return b!=null && b;
     }
 
     public boolean getLexerUsesParser() {
@@ -590,14 +591,12 @@ public class AppSettings {
     }
 
     public boolean getUnparsedTokensAreNodes() {
-        Boolean b = (Boolean) settings.get("TOKENS_ARE_NODES");
+        if (!getTokensAreNodes()) return false;
+        Boolean b = (Boolean) settings.get("UNPARSED_TOKENS_ARE_NODES");
         if (b == null) {
-            b = (Boolean) settings.get("UNPARSED_TOKENS_ARE_NODES");
-            if (b == null) {
-                b = (Boolean) settings.get("SPECIAL_TOKENS_ARE_NODES");
-            }
+            b = (Boolean) settings.get("SPECIAL_TOKENS_ARE_NODES");
         }
-        return b != null;
+        return b != null && b;
     }
 
     public boolean getSmartNodeCreation() {

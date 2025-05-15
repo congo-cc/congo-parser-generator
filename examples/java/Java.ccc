@@ -202,6 +202,10 @@ Modifiers :
 ;
 
 INJECT PARSER_CLASS : {
+  // Used to hold the set of modifiers that is permissible
+  // at a given point in the parse. If this is null,
+  // we are in some permissive mode where we accept any 
+  // modifiers.
   private EnumSet<TokenType> permissibleModifiers;
 }
 

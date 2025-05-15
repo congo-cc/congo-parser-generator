@@ -67,12 +67,13 @@ private int lookaheadRoutineNesting;
 #if settings.faultTolerant
 private EnumSet<TokenType> outerFollowSet;
 #endif
+[#--
 #if settings.legacyGlitchyLookahead
    private final boolean legacyGlitchyLookahead = true;
 #else
    private final boolean legacyGlitchyLookahead = false;
 #endif
-
+--]
 private boolean cancelled;
 public void cancel() {cancelled = true;}
 public boolean isCancelled() {return cancelled;}
@@ -128,7 +129,6 @@ public boolean isCancelled() {return cancelled;}
       #if settings.lexerUsesParser
       token_source.setParser(this);
       #endif
-//      lastConsumedToken = DUMMY_START_TOKEN;
       lastConsumedToken.setTokenSource(lexer);
   }
 
@@ -138,11 +138,6 @@ public boolean isCancelled() {return cancelled;}
      */
     public void setStartingPos(int startingLine, int startingColumn) {
         token_source.setStartingPos(startingLine, startingColumn);
-    }
-
-    // this method is for testing only.
-    public boolean getLegacyGlitchyLookahead() {
-        return legacyGlitchyLookahead;
     }
 
   // If the next token is cached, it returns that

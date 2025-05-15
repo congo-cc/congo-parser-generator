@@ -463,8 +463,8 @@
      hitFailure = hitFailure${CU.newVarIndex};
      #if !subseq_has_next
         return false;
-     #else
-        if (passedPredicate && !legacyGlitchyLookahead) return false;
+     #elseif !settings.legacyGlitchyLookahead
+        if (passedPredicate) return false;
      #endif
   #endlist
   [#list choice.choices as unused] } [/#list]
@@ -477,7 +477,9 @@
    passedPredicate = false;
    try {
       if (!${CheckExpansion(zoo.nestedExpansion)}) {
-         if (passedPredicate && !legacyGlitchyLookahead) return false;
+        #if !settings.legacyGlitchyLookahead
+         if (passedPredicate) return false;
+        #endif
          currentLookaheadToken = ${settings.baseTokenClassName?lower_case}${CU.newVarIndex};
          hitFailure = false;
       }
@@ -495,7 +497,9 @@
       ${CU.newVar(type = settings.baseTokenClassName init = "currentLookaheadToken")}
         passedPredicate = false;
         if (!${CheckExpansion(zom.nestedExpansion)}) {
-            if (passedPredicate && !legacyGlitchyLookahead) return false;
+           #if !settings.legacyGlitchyLookahead
+            if (passedPredicate) return false;
+           #endif
             currentLookaheadToken = ${settings.baseTokenClassName?lower_case}${CU.newVarIndex};
             break;
         }
