@@ -114,7 +114,7 @@
       classpath="bin/ctemplates.jar"
       failonerror="true"
       includeantruntime="false"
-      release="8">
+      release="17">
       <src path="src/java"/>
       <src path="build/generated-java"/>
       <compilerarg value="-Xlint:deprecation" />

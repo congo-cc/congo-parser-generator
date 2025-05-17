@@ -22,10 +22,7 @@ import org.congocc.parser.python.ast.Module;
 import org.congocc.parser.tree.CompilationUnit;
 import org.congocc.parser.tree.ObjectType;
 
-//import freemarker3.template.*;
-//import freemarker3.cache.*;
 import org.congocc.templates.*;
-import org.congocc.templates.cache.*;
 
 public class FilesGenerator {
     private static final Logger logger = Logger.getLogger("filegen");
@@ -51,22 +48,16 @@ public class FilesGenerator {
         // We check for the 'templates' subdirectory existing, because otherwise
         // FreeMarker will raise an exception.
         //
-        TemplateLoader templateLoader;
         String templateFolder = "/templates/".concat(codeLang);
         Path altDir = dir.resolve(templateFolder.substring(1));
-        ArrayList<TemplateLoader> loaders = new ArrayList<>();
-        loaders.add(new FileTemplateLoader(dir.toFile()));
         if (Files.exists(altDir)) {
-            loaders.add(new FileTemplateLoader(altDir.toFile()));
+            fmConfig.setDirectoryForTemplateLoading(templateFolder);
+        } else if (Files.exists(dir)) {
+            fmConfig.setDirectoryForTemplateLoading(dir.resolve(templateFolder).toString());
         }
-        loaders.add(new ClassTemplateLoader(this.getClass(), templateFolder));
-        templateLoader = new MultiTemplateLoader(loaders.toArray(new TemplateLoader[0]));
-
-        fmConfig.setTemplateLoader(templateLoader);
-        //fmConfig.setObjectWrapper(new BeansWrapper());
+        fmConfig.setClassForTemplateLoading(this.getClass(),templateFolder);
         fmConfig.setNumberFormat("computer");
         fmConfig.setArithmeticEngine(org.congocc.templates.core.ArithmeticEngine.CONSERVATIVE_ENGINE);
-        //fmConfig.setStrictVariableDefinition(true);
         fmConfig.setSharedVariable("grammar", grammar);
         fmConfig.setSharedVariable("globals", grammar.getTemplateGlobals());
         fmConfig.setSharedVariable("settings", grammar.getAppSettings());
