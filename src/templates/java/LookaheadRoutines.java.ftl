@@ -463,7 +463,7 @@
      hitFailure = hitFailure${CU.newVarIndex};
      #if !subseq_has_next
         return false;
-     #elseif !settings.legacyGlitchyLookahead
+     #elif !settings.legacyGlitchyLookahead
         if (passedPredicate) return false;
      #endif
   #endlist

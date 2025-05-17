@@ -4,6 +4,7 @@ import org.congocc.parser.Node;
 import org.congocc.parser.ParseException;
 import static org.congocc.parser.Token.TokenType.UNPARSED_CONTENT;
 import org.congocc.parser.csharp.CSParser;
+import org.congocc.parser.python.PythonParser;
 
 public class UnparsedCodeBlock extends EmptyExpansion {
 
@@ -34,6 +35,13 @@ public class UnparsedCodeBlock extends EmptyExpansion {
     String getContent() {
         Node uc = firstChildOfType(UNPARSED_CONTENT);
         return uc == null ? "" : uc.getSource();
+    }
+
+    Node parsePythonExpression() {
+        PythonParser pyParser = new PythonParser(getInputSource(), getContent());
+        pyParser.setStartingPos(getBeginLine(), getBeginColumn() + 2);
+        pyParser.Expression();
+        return pyParser.peekNode();
     }
 
     Node parseCSharpBlock() {
