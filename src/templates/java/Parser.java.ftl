@@ -67,16 +67,17 @@ private int lookaheadRoutineNesting;
 #if settings.faultTolerant
 private EnumSet<TokenType> outerFollowSet;
 #endif
-[#--
-#if settings.legacyGlitchyLookahead
-   private final boolean legacyGlitchyLookahead = true;
-#else
-   private final boolean legacyGlitchyLookahead = false;
-#endif
---]
 private boolean cancelled;
 public void cancel() {cancelled = true;}
 public boolean isCancelled() {return cancelled;}
+
+public boolean getLegacyGlitchyLookahead() {
+    #if settings.legacyGlitchyLookahead
+       return true;
+    #else
+       return false;
+    #endif
+}
   /** Generated Lexer. */
   private ${settings.lexerClassName} token_source;
 
