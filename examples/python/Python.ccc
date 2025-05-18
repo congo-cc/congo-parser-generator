@@ -207,7 +207,7 @@ ImportFromTargets :
    |
    <NAME> [<AS> <NAME>] (<COMMA> <NAME> =>|| [<AS> <NAME>])* [<COMMA>]
    |
-   <LPAREN> <NAME> [<AS> <NAME>] (<COMMA> <NAME> =>|| [<AS> <NAME>])* [<COMMA>] <RPAREN> [<LPAREN>]
+   <LPAREN> <NAME> [<AS> <NAME>] (<COMMA> <NAME> =>|| [<AS> <NAME>])* [<COMMA>] <RPAREN>
 ;
 
 StarNamedExpression :
@@ -308,7 +308,7 @@ InvocationArguments :
 Argument(boolean seenEquals, boolean seenDoubleStar) :
    <NAME>
    (
-      SCAN 1 {!seenEquals} =>
+      SCAN {!seenEquals} =>
       <COLONEQUALS>
       |
       <ASSIGN>
@@ -317,7 +317,7 @@ Argument(boolean seenEquals, boolean seenDoubleStar) :
    Expression
    |
    [
-      SCAN 1 {!seenDoubleStar} => <STAR>
+      SCAN {!seenDoubleStar} => <STAR>
       |
       <STAR_STAR>
    ]
@@ -453,7 +453,7 @@ StarEtc :
    |
    <STAR> <COMMA> =>|| ParamMaybeDefault (<COMMA> =>|+1 ParamMaybeDefault)* [<COMMA> [KeyWords]]
    |
-   <STAR> <NAME> [SCAN 1 \.\FunctionDefinition => <COLON> (Expression|SCAN <STAR> => StarExpression)] (<COMMA> =>|+1 ParamMaybeDefault)* [<COMMA> [KeyWords]]
+   <STAR> <NAME> [SCAN \.\FunctionDefinition => <COLON> (Expression|SCAN <STAR> => StarExpression)] (<COMMA> =>|+1 ParamMaybeDefault)* [<COMMA> [KeyWords]]
 ;
 
 ParamMaybeDefault : <NAME> [<COLON> Expression] [<ASSIGN> Expression] ;
@@ -461,7 +461,7 @@ ParamMaybeDefault : <NAME> [<COLON> Expression] [<ASSIGN> Expression] ;
 KeyWords :
    <STAR_STAR> <NAME>
    [
-       SCAN 1 ~\...\LambdaDefinition =>
+       SCAN ~\...\LambdaDefinition =>
        <COLON> Expression
    ]
 ;
@@ -472,7 +472,7 @@ Parameters :
       <NAME>
 // Using a contextual predicate, we manage to use the same production
 // for the parameters of a function def or a lambda.
-      [SCAN 1 \FunctionDefinition => <COLON> (Expression|SCAN <STAR> => StarExpression)]
+      [SCAN \FunctionDefinition => <COLON> (Expression|SCAN <STAR> => StarExpression)]
       [<ASSIGN> Expression {seenDefault = true;}]
       (<COMMA> =>|+1
         (
@@ -480,7 +480,7 @@ Parameters :
           ASSERT {!seenSlash} : "The slash can only occur once in the parameters."
           {seenSlash = true;}
           |
-          <NAME> [SCAN 1 \FunctionDefinition => <COLON> Expression]
+          <NAME> [SCAN \FunctionDefinition => <COLON> Expression]
           // If we've already seen a param with a default value,
           // the remaining ones also have to have a default value.
           ASSERT {!seenDefault || checkNextTokenType(ASSIGN)}

@@ -57,7 +57,6 @@ public class FilesGenerator {
             templatesConfig.setDirectoryForTemplateLoading(dir.toString());
         }
         templatesConfig.setClassForTemplateLoading(this.getClass(),templateFolder);
-        //templatesConfig.setDirectoryForTemplateLoading("/home/revusky/projects/congo/src/templates/"+codeLang);
         templatesConfig.setNumberFormat("computer");
         templatesConfig.setArithmeticEngine(org.congocc.templates.core.ArithmeticEngine.CONSERVATIVE_ENGINE);
         templatesConfig.setSharedVariable("grammar", grammar);
