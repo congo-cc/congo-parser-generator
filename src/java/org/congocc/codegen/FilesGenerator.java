@@ -27,7 +27,7 @@ import org.congocc.templates.*;
 public class FilesGenerator {
     private static final Logger logger = Logger.getLogger("filegen");
 
-    private final Configuration fmConfig = new org.congocc.templates.Configuration();
+    private final Configuration templatesConfig = new org.congocc.templates.Configuration();
     private final Grammar grammar;
     private final AppSettings appSettings;
     private final Errors errors;
@@ -41,30 +41,32 @@ public class FilesGenerator {
         Path filename = appSettings.getFilename().toAbsolutePath();
         Path dir = filename.getParent();
         //
-        // The first two loaders are really for developers - templates
-        // are looked for in the grammar's directory, and then in a
+        // The first two locations are really for developers - templates
+        // are looked for in the grammar's directory, or if there is a
         // 'templates' subdirectory below that, which could, of course, be
         // a symlink to somewhere else.
         // We check for the 'templates' subdirectory existing, because otherwise
-        // FreeMarker will raise an exception.
+        // the template library will raise an exception.
         //
+        
         String templateFolder = "/templates/".concat(codeLang);
         Path altDir = dir.resolve(templateFolder.substring(1));
         if (Files.exists(altDir)) {
-            fmConfig.setDirectoryForTemplateLoading(templateFolder);
-        } else if (Files.exists(dir)) {
-            fmConfig.setDirectoryForTemplateLoading(dir.resolve(templateFolder).toString());
+            templatesConfig.setDirectoryForTemplateLoading(altDir.toString());
+        } else {
+            templatesConfig.setDirectoryForTemplateLoading(dir.toString());
         }
-        fmConfig.setClassForTemplateLoading(this.getClass(),templateFolder);
-        fmConfig.setNumberFormat("computer");
-        fmConfig.setArithmeticEngine(org.congocc.templates.core.ArithmeticEngine.CONSERVATIVE_ENGINE);
-        fmConfig.setSharedVariable("grammar", grammar);
-        fmConfig.setSharedVariable("globals", grammar.getTemplateGlobals());
-        fmConfig.setSharedVariable("settings", grammar.getAppSettings());
-        fmConfig.setSharedVariable("lexerData", grammar.getLexerData());
-        fmConfig.setSharedVariable("generated_by", org.congocc.app.Main.PROG_NAME);
+        templatesConfig.setClassForTemplateLoading(this.getClass(),templateFolder);
+        //templatesConfig.setDirectoryForTemplateLoading("/home/revusky/projects/congo/src/templates/"+codeLang);
+        templatesConfig.setNumberFormat("computer");
+        templatesConfig.setArithmeticEngine(org.congocc.templates.core.ArithmeticEngine.CONSERVATIVE_ENGINE);
+        templatesConfig.setSharedVariable("grammar", grammar);
+        templatesConfig.setSharedVariable("globals", grammar.getTemplateGlobals());
+        templatesConfig.setSharedVariable("settings", grammar.getAppSettings());
+        templatesConfig.setSharedVariable("lexerData", grammar.getLexerData());
+        templatesConfig.setSharedVariable("generated_by", org.congocc.app.Main.PROG_NAME);
         if (codeLang.equals("java"))
-           fmConfig.addAutoImport("CU", "CommonUtils.java.ftl");
+           templatesConfig.addAutoImport("CU", "CommonUtils.java.ftl");
     }
 
     public FilesGenerator(Grammar grammar) {
@@ -208,7 +210,7 @@ public class FilesGenerator {
         if (superClassName == null) superClassName = appSettings.getBaseTokenClassName();
         dataModel.put("superclass", superClassName);
         Writer out = new StringWriter();
-        Template template = fmConfig.getTemplate(templateName);
+        Template template = templatesConfig.getTemplate(templateName);
         // Sometimes needed in templates for e.g. injector.hasInjectedCode(node)
         dataModel.put("injector", grammar.getInjector());
         template.process(dataModel, out);
