@@ -1,5 +1,7 @@
 # The Congo Parser Generator
 
+[![Ask DeepWiki](https://deepwiki.com/badge.svg)](https://deepwiki.com/congo-cc/congo-parser-generator)
+
 The Congo Parser Generator is a Recursive Descent Parser Generator that generates code in Java, Python, and C#. 
 
 Here are some highlights:
