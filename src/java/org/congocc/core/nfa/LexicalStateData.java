@@ -29,8 +29,6 @@ public class LexicalStateData {
 
     private final Set<NfaState> allStates = new LinkedHashSet<>();
 
-    // private final Errors errors;
-    
     public LexicalStateData(Grammar grammar, String name) {
         this.grammar = grammar;
         // this.errors = grammar.getErrors();
@@ -95,9 +93,6 @@ public class LexicalStateData {
         for (TokenProduction tp : tokenProductions) {
             processTokenProduction(tp);
         }
-        if (regularExpressions.isEmpty()) {
-//            errors.addWarning("Warning: Lexical State " + getName() + " does not contain any token types!");
-        }
         generateData();
     }
 
@@ -131,7 +126,7 @@ public class LexicalStateData {
     }
 
     // We need the states that reach a final state (i.e. identify a token)
-    // to come before the ones that do lazy looping! Otherwise there are 
+    // to come before the ones that do lazy looping! Otherwise there are
     // issues.
     private int comparator(CompositeStateSet set1, CompositeStateSet set2) {
         if (set1 == initialState.getComposite()) {
