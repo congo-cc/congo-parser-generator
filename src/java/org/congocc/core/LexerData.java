@@ -13,7 +13,6 @@ import org.congocc.parser.tree.*;
  * hold the data related to generating the NFAs for the respective lexical
  * states.
  */
-@SuppressWarnings("unused")
 public class LexerData {
     private final Grammar grammar;
     private final Errors errors;
@@ -110,7 +109,7 @@ public class LexerData {
         }
         return result;
     }
-    
+
 
     static public boolean isJavaIdentifier(String s) {
         return !s.isEmpty() && Character.isJavaIdentifierStart(s.codePointAt(0))

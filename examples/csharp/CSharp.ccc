@@ -107,7 +107,7 @@ UsingStaticDirective :
 ;
 
 UsingAliasDirective :
-   <USING> <IDENTIFIER> <ASSIGN> =>|| 
+   <USING> <IDENTIFIER> <ASSIGN> =>||
    Type
    <SEMICOLON>
 ;
@@ -309,7 +309,7 @@ StructDeclaration :
     boolean isaRecordStruct = false;
     permissibleModifiers = EnumSet.of(TokenType.STATIC, TokenType.INTERNAL, TokenType.PUBLIC,
                                       TokenType.PRIVATE, TokenType.PROTECTED, TokenType.REF,
-                                      TokenType.READONLY, TokenType.UNSAFE, TokenType.NEW, 
+                                      TokenType.READONLY, TokenType.UNSAFE, TokenType.NEW,
                                       TokenType.SEALED, TokenType.FILE);
   }
   (AttributeSection)*
@@ -750,7 +750,7 @@ ArgumentList : Argument (<COMMA> Argument)* ;
 
 Argument :
    [
-      // This is necessary to disambiguate 
+      // This is necessary to disambiguate
       // the AttributeSection from a CollectionExpression
       SCAN AttributeSection ENSURE ~(<COMMA>|<RPAREN>) =>
       (AttributeSection)+
@@ -893,7 +893,7 @@ VarArgsParameter#void :
 
 
 ArgListParameter# :
-    ENSURE {tokenImage(1).equals("__arglist")}
+    ENSURE {checkNextTokenImage("__arglist")}
     <IDENTIFIER>
     =>||
 ;
@@ -1496,7 +1496,7 @@ UnaryExpressionPlusOrMinus : (<PLUS> | <MINUS>) UnaryExpression ;
 UnaryExpressionNotPlusMinus : (<BANG> | <TILDE>) UnaryExpression ;
 
 NullConditionalOperations :
-   <HOOK> 
+   <HOOK>
    ENSURE ~(CollectionExpression <COLON>)
    =>|+1
    (
@@ -1778,8 +1778,8 @@ ObjectInitializer :
 
 MemberInitializer :
    ENSURE ~(<LBRACKET>)
-   Expression 
-   ENSURE (<COMMA>|<RBRACE>) 
+   Expression
+   ENSURE (<COMMA>|<RBRACE>)
    =>||
    |
    (QualifiedIdentifier | <LBRACKET> ArgumentList <RBRACKET>)

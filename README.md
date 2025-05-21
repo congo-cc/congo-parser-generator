@@ -24,7 +24,7 @@ CongoCC has some features that, to the best of our knowledge are not in most (or
 
 - [Contextual Predicates](https://wiki.parsers.org/doku.php?id=contextual_predicates)
 - [Context-sensitive tokenization](https://parsers.org/javacc21/activating-de-activating-tokens/)
-- [Assertions](https://parsers.org/tips-and-tricks/introducing-assertions/)
+- [Assertions](https://parsers.org/tips-and-tricks/introducing-assertions/) also [here](https://parsers.org/announcements/revisiting-assertions-introducing-the-ensure-keyword/)
 - [Clean, streamlined up-to-here syntax](https://wiki.parsers.org/doku.php?id=up_to_here)
 - [Support for the full 32-bit Unicode standard](https://parsers.org/javacc21/javacc-21-now-supports-full-unicode/)
 - [Code Injection into generated classes](https://wiki.parsers.org/doku.php?id=code_injection_in_javacc_21)
