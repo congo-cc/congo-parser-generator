@@ -71,8 +71,7 @@ Slice :
     StarExpression
 ;
 
-//Slices : <LBRACKET> Slice (<COMMA> =>|+1 Slice)* [<COMMA>] <RBRACKET> ;
-Slices : <LBRACKET> Slice (<COMMA> ENSURE ~(<RBRACKET>) =>|| Slice)* [<COMMA>] <RBRACKET> ;
+Slices : <LBRACKET> Slice (<COMMA> =>|+1 Slice)* [<COMMA>] <RBRACKET> ;
 
 Statement :
    MatchStatement
@@ -289,16 +288,16 @@ InvocationArguments :
       // defined locally so only apply when parsing, not
       // scanning ahead, so the lookahead is looser
       // than the parsing.
-         boolean seenEquals = peekNode().firstChildOfType(ASSIGN) != null;
-         boolean seenDoubleStar = peekNode().firstChildOfType(STAR_STAR) != null;
+         boolean seenEquals = peekNode().firstChildOfType(TokenType.ASSIGN) != null;
+         boolean seenDoubleStar = peekNode().firstChildOfType(TokenType.STAR_STAR) != null;
       }
       (
          SCAN 3
          <COMMA>
          Argument(seenEquals, seenDoubleStar)
          {
-            seenEquals |= peekNode().firstChildOfType(ASSIGN) != null;
-            seenDoubleStar |= peekNode().firstChildOfType(STAR_STAR) != null;
+            seenEquals |= peekNode().firstChildOfType(TokenType.ASSIGN) != null;
+            seenDoubleStar |= peekNode().firstChildOfType(TokenType.STAR_STAR) != null;
          }
       )*
       [<COMMA>]
@@ -391,7 +390,7 @@ TypeAlias :
       |
       <NAME>
       {
-         replaceTokenType(TYPE);
+         replaceTokenType(TokenType.TYPE);
       }
     )
     <NAME>
@@ -532,7 +531,7 @@ MatchStatement :
       |
       <NAME>
       {
-        replaceTokenType(MATCH);
+        replaceTokenType(TokenType.MATCH);
       }
    )
    SubjectExpression
@@ -551,7 +550,7 @@ CaseBlock :
         |
         <NAME>
         {
-            replaceTokenType(CASE);
+            replaceTokenType(TokenType.CASE);
         }
     )
     Patterns
