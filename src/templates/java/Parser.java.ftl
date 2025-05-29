@@ -72,12 +72,9 @@ public void cancel() {cancelled = true;}
 public boolean isCancelled() {return cancelled;}
 
 public boolean getLegacyGlitchyLookahead() {
-    #if settings.legacyGlitchyLookahead
-       return true;
-    #else
-       return false;
-    #endif
+    return ${settings.legacyGlitchyLookahead ?: "true" : "false"};
 }
+
   /** Generated Lexer. */
   private ${settings.lexerClassName} token_source;
 

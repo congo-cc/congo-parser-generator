@@ -646,10 +646,12 @@ ClassPattern :
 PositionalPatterns :
    Pattern
    (
-       // If the next three tokens are a comma, identifier, and =, we need to end this
-       // production and go into KeywordPatterns. This has a bit of a kludgy feel to it.
-       SCAN 0 {getTokenType(1) == TokenType.COMMA && !( getTokenType(2) == TokenType.NAME && getTokenType(3) == TokenType.ASSIGN)}#
-       => <COMMA> Pattern
+       <COMMA> 
+       // If the next two tokens are an identifier followed by = 
+       // we need to end this production and go into KeywordPatterns. 
+       ENSURE ~(<NAME><ASSIGN>)
+       =>||
+       Pattern
    )*
 ;
 
