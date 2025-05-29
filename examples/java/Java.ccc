@@ -299,7 +299,7 @@ PermitsList :
       |
       <IDENTIFIER>
       {
-        replaceTokenType(TokenType.PERMITS);
+        replaceTokenType(PERMITS);
       }
    )
    ObjectType
@@ -363,7 +363,7 @@ RecordDeclaration :
     |
     <IDENTIFIER>
     {
-      replaceTokenType(TokenType.RECORD);
+      replaceTokenType(RECORD);
     }
   )
   TypeIdentifier 
@@ -1076,7 +1076,7 @@ VarDeclaration :
     |
     <IDENTIFIER> 
     {
-        replaceTokenType(TokenType.VAR);
+        replaceTokenType(VAR);
     }
   )
   VariableDeclarator
@@ -1146,7 +1146,7 @@ WhenClause :
       |
       <IDENTIFIER>
       {
-        replaceTokenType(TokenType.WHEN);
+        replaceTokenType(WHEN);
       }
    )
    Expression
@@ -1222,7 +1222,7 @@ NewCaseStatement :
 ;
 
 IfStatement :
-  <IF> <LPAREN> Expression <RPAREN> Statement [ <ELSE> Statement ]
+  <IF> <LPAREN> Expression <RPAREN> Statement [<ELSE> Statement]
 ;
 
 INJECT IfStatement :
@@ -1230,12 +1230,8 @@ INJECT IfStatement :
     public Node getElseBlock() {
       Node result = getLastChild();
       Token tok = (Token) result.previousSibling();
-      if (tok.getType() == TokenType.ELSE) return result;
+      if (tok.getType() == ELSE) return result;
       return null;
-      /*
-       Node elseTok = firstChildOfType(TokenType.ELSE);
-       return elseTok == null ? null : elseTok.nextSibling();
-       */
     }
 }
    
@@ -1284,7 +1280,7 @@ YieldStatement :
       |
       <IDENTIFIER>
       {
-        replaceTokenType(TokenType.YIELD);
+        replaceTokenType(YIELD);
       }
    )
    Expression 
@@ -1303,8 +1299,8 @@ TryStatement :
   <TRY>
   [ResourcesInTryBlock]
   Block
-  ASSERT {getTokenType(1) == TokenType.FINALLY 
-       || getTokenType(1) == TokenType.CATCH 
+  ASSERT {getTokenType(1) == FINALLY 
+       || getTokenType(1) == CATCH 
        || currentNodeScope.get(1) instanceof ResourcesInTryBlock}
        : "Since this is not a try-with-resources, there must be at least one catch or finally block." :
   (CatchBlock)*
@@ -1468,7 +1464,7 @@ LambdaParameter :
           |
           <IDENTIFIER>
           {
-            replaceTokenType(TokenType.VAR);
+            replaceTokenType(VAR);
           }
         )
         |
