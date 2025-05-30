@@ -361,6 +361,9 @@ public class ${settings.baseTokenClassName} ${implements} {
     }
 
     public ${settings.baseTokenClassName} replaceType(TokenType type) {
+        if (type == this.getType()) {
+            return this;
+        }
         ${settings.baseTokenClassName} result = newToken(type, getTokenSource(), getBeginOffset(), getEndOffset());
 #if !settings.minimalToken
         result.cachedImage = this.cachedImage;

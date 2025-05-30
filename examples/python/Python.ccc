@@ -385,14 +385,7 @@ TypeParameter :
 
 TypeAlias :
     ENSURE {checkNextTokenImage("type")}
-    (
-      <TYPE>
-      |
-      <NAME>
-      {
-         replaceTokenType(TokenType.TYPE);
-      }
-    )
+    ACTIVATE_TOKENS TYPE (<TYPE>)
     <NAME>
     [TypeParameters]
     <ASSIGN>
@@ -526,33 +519,20 @@ Assignment :
 
 MatchStatement :
    ENSURE {checkNextTokenImage("match")}
-   (
-      <MATCH>
-      |
-      <NAME>
-      {
-        replaceTokenType(TokenType.MATCH);
-      }
-   )
+   ACTIVATE_TOKENS MATCH (<MATCH>)   
    SubjectExpression
    <COLON>
    =>||
    <NEWLINE>
    <INDENT>
+   ASSERT {checkNextTokenImage("case")} : "Must have a case here":
    (CaseBlock)+
    <DEDENT>
 ;
 
 CaseBlock :
-    SCAN 0 {checkNextTokenImage("case")}# =>
-    (
-        <CASE>
-        |
-        <NAME>
-        {
-            replaceTokenType(TokenType.CASE);
-        }
-    )
+    ENSURE {checkNextTokenImage("case")}
+    ACTIVATE_TOKENS CASE (<CASE>)
     Patterns
     [<IF> NamedExpression]
     <COLON>
