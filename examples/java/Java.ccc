@@ -145,9 +145,8 @@ ImportDeclaration : <_IMPORT> [ <STATIC> | <MODULE>] Name [ <DOT> <STAR> ] <SEMI
 
 Modifiers :
  (
-  SCAN {isParserTolerant() || permissibleModifiers == null
-       || permissibleModifiers.contains(getTokenType(1))}#
-  =>
+  ENSURE {isParserTolerant() || permissibleModifiers == null
+       || permissibleModifiers.contains(getTokenType(1))}
   (
    <PUBLIC>|<STATIC>|<PROTECTED>|<PRIVATE> |<FINAL>|<ABSTRACT>
    |<SYNCHRONIZED>|<NATIVE>|<TRANSIENT>|<VOLATILE>|<STRICTFP>
@@ -174,7 +173,7 @@ Modifiers :
     }
   }
   |
-  SCAN {
+  ENSURE {
     permissibleModifiers == null
     ||
     permissibleModifiers.contains(SEALED)
@@ -187,7 +186,7 @@ Modifiers :
          && "sealed".equals(tokenImage(3))
          && getToken(3).getBeginOffset() == getToken(1).getEndOffset() + 1
     )
-  }# =>
+  }
   ACTIVATE_TOKENS SEALED, NON_SEALED (<SEALED>|<NON_SEALED>)
   {
     if (permissibleModifiers!=null) {
@@ -310,7 +309,7 @@ ExtendsList :
    <EXTENDS>
    ObjectType
    (
-     SCAN 1 \InterfaceDeclaration =>
+     SCAN \InterfaceDeclaration =>
      <COMMA> ObjectType
    )*
 ;
@@ -344,7 +343,7 @@ EnumDeclaration :
 
 EnumBody :
    <LBRACE>
-   [ EnumConstant ( SCAN 2 <COMMA> (EnumConstant) )* ]
+   [ EnumConstant ( SCAN 2 <COMMA> EnumConstant)* ]
    [ <COMMA> ]
    [ <SEMICOLON> ( ClassOrInterfaceBodyDeclaration )*! ]
    <RBRACE>
@@ -401,8 +400,8 @@ CompactConstructorDeclaration :
   (Modifiers)
   TypeIdentifier 
   <LBRACE> =>||
-  (SCAN ~(<RBRACE>|ExplicitConstructorInvocation) => BlockStatement)* // JEP 447
-  [ ExplicitConstructorInvocation =>|| ]
+  (SCAN ~(<RBRACE>|ExplicitConstructorInvocation) => BlockStatement)*! // JEP 447
+  [ ExplicitConstructorInvocation =>|| ]  
   ( SCAN ~(<RBRACE>) => BlockStatement )*!
   <RBRACE>
 ;
@@ -524,8 +523,8 @@ ConstructorDeclaration :
   TypeIdentifier FormalParameters =>||
   [ ThrowsList ]
   <LBRACE>
-  (SCAN ~(<RBRACE>|ExplicitConstructorInvocation) => BlockStatement)* // JEP 447
-  [ ExplicitConstructorInvocation =>||]
+  (SCAN ~(<RBRACE>|ExplicitConstructorInvocation) => BlockStatement)*! // JEP 447
+  [ ExplicitConstructorInvocation =>||]!
   ( SCAN ~(<RBRACE>) => BlockStatement )*!
   <RBRACE>
 ;
@@ -545,7 +544,7 @@ Initializer# :
 
 Type#interface :
   (
-   SCAN {getToken(2).getType() != LBRACKET}#
+   SCAN {getTokenType(2) != LBRACKET}#
    =>PrimitiveType
    |
    ReferenceType 
@@ -693,7 +692,7 @@ AssignmentExpression :
   }
   TernaryExpression {lhs = (Expression) peekNode();}
   [
-    SCAN 1 {lhs.isAssignableTo()}
+    SCAN {lhs.isAssignableTo()}
     => AssignmentOperator Expression
   ]
 ;
@@ -868,9 +867,8 @@ PrimaryExpression#interface :
 // For now, I'm not including a check for that. The compiler catches it, after all. Also, it is
 // still unclear to me whether this should be caught at this point or if it is better to just do
 // a post-parse tree walk that runs over the AST and checks for these things.
-//  SCAN 1 {getTokenType(0) == IDENTIFIER && (currentLookaheadToken==null || (peekNode().size() > 1 || !tokenImage(0).equals("yield")))}#
-  SCAN 1 {getTokenType(0) == IDENTIFIER}#
-  =>
+//  ENSURE {getTokenType(0) == IDENTIFIER && (currentLookaheadToken==null || (peekNode().size() > 1 || !tokenImage(0).equals("yield")))}
+  ENSURE {getTokenType(0) == IDENTIFIER}
   InvocationArguments #MethodCall(+1)
  )*
  ASSERT {getTokenType(0) != SUPER} : "Not a valid expression here " + getToken(0).getLocation()
@@ -1092,7 +1090,8 @@ StatementExpression# :
   PrimaryExpression
   {Expression lhs = (Expression) peekNode();}
   (
-      SCAN {lhs.isAssignableTo()}=>
+      SCAN {lhs.isAssignableTo()}
+      =>
       (
           (<INCR> | <DECR>) #PostfixExpression(2)
           |
@@ -1274,7 +1273,9 @@ BreakStatement :
 ;
 
 YieldStatement :
-   SCAN 2 {checkNextTokenImage("yield") && isInProduction("SwitchExpression")}# => 
+   SCAN 2
+   ENSURE {checkNextTokenImage("yield")}
+   ENSURE {isInProduction("SwitchExpression")}
    (
       <YIELD>
       |
@@ -1310,8 +1311,10 @@ TryStatement :
 ResourcesInTryBlock : 
     <LPAREN> 
     (
-      SCAN {getTokenType(0) == SEMICOLON}# ~(<RPAREN>)
-      =>
+      // Note that the following assertions only apply after the first iteration.
+       ENSURE {getTokenType(0) == SEMICOLON}
+       ENSURE {getTokenType(1) != RPAREN}
+       =>||
        (
          LocalVariableDeclaration
          |
@@ -1436,7 +1439,7 @@ AnnotationTypeMemberDeclaration :
 DefaultValue : <_DEFAULT> MemberValue ;
 
 LambdaExpression :
-  SCAN ~\...\NewSwitchLabel =>
+  ENSURE {!isInProduction("NewSwitchLabel")}
   LambdaLHS =>|| (Block | Expression)
 ;
 
@@ -1458,7 +1461,7 @@ LambdaParameter :
       Type (Annotation)* <VAR_ARGS> =>|| <IDENTIFIER>
       |
       (
-        SCAN {checkNextTokenImage("var")}# =>
+        ENSURE {checkNextTokenImage("var")}
         (
           <VAR>
           |
