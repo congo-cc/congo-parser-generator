@@ -47,14 +47,16 @@ TypeDeclarationLA#scan :
   (AttributeSection)*
   Modifiers
   [
-     SCAN 0 {checkNextTokenImage("partial")}
-     => (<IDENTIFIER>|<PARTIAL>)
+     ENSURE {checkNextTokenImage("partial")}
+     (<IDENTIFIER>|<PARTIAL>)
   ]
   ENSURE ~(<DELEGATE> <STAR>)
   (
     <STRUCT>|<CLASS>|<INTERFACE>|<ENUM>|<DELEGATE>
     |
-    SCAN {checkNextTokenImage("record")}=>(<IDENTIFIER>|<RECORD>)(<IDENTIFIER>|<STRUCT>|<CLASS>)
+    ENSURE {checkNextTokenImage("record")}
+    (<IDENTIFIER>|<RECORD>)
+    (<IDENTIFIER>|<STRUCT>|<CLASS>)
   )
 ;
 
@@ -327,7 +329,7 @@ StructDeclaration :
    [TypeParameterList]
    [<LPAREN> [FormalParameters] <RPAREN>]
    [
-      SCAN 1 {isaRecordStruct}
+      SCAN {isaRecordStruct}
       =>
       <LPAREN> [FormalParameters] <RPAREN>
    ]
@@ -349,7 +351,7 @@ RecordDeclaration :
   }
   (AttributeSection)*
   Modifiers
-  [SCAN {checkNextTokenImage("partial")}# => ACTIVATE_TOKENS PARTIAL (<PARTIAL>)]
+  [ENSURE {checkNextTokenImage("partial")} =>|| ACTIVATE_TOKENS PARTIAL (<PARTIAL>) ]
   ENSURE {checkNextTokenImage("record")}
   ACTIVATE_TOKENS RECORD (<RECORD>)
   =>||

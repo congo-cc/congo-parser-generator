@@ -1,7 +1,7 @@
  // This is the Java grammar that is used (via an INCLUDE) in the CongoCC
  // tool itself but it can be used on its own, and you are free to use it
  // in your own projects. It supports the stable feature set of the Java
- // language up to JDK 22.
+ // language up to JDK 24.
  // This grammar is a forward evolution of the sample Java grammar originally
  // included in the legacy JavaCC distribution in 1997 or thereabouts, but is
  // close to being a total rewrite, and serves as a kind of showcase for the latest
@@ -606,7 +606,7 @@ PrimitiveType# :
   =>||
 ;
 
-PrimitiveArrayType : PrimitiveType ((Annotation)* <LBRACKET><RBRACKET> =>||)+ ;
+PrimitiveArrayType : PrimitiveType ((Annotation)* <LBRACKET> =>|| <RBRACKET>)+ ;
 
 ReturnType# : <VOID> | Type ;
 

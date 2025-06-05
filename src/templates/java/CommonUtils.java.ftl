@@ -71,7 +71,7 @@
 #macro HandleLexicalStateChange expansion inLookahead
    #var resetToken = inLookahead ?: "currentLookaheadToken" : "lastConsumedToken"
    #var prevLexicalStateVar = newVarName("previousLexicalState")
-   #if expansion.specifiedLexicalState??
+   #if expansion.specifiedLexicalState
          LexicalState ${prevLexicalStateVar} = token_source.lexicalState;
          token_source.reset(${resetToken}, LexicalState.${expansion.specifiedLexicalState});
          try {
@@ -88,7 +88,7 @@
                 nextTokenType = null;
             }
          }
-   #elif expansion.tokenActivation??
+   #elif expansion.tokenActivation
       #var tokenActivation = expansion.tokenActivation
       #var prevActives = newVarName("previousActives")
       #var somethingChanged = newVarName("somethingChanged")
@@ -101,7 +101,7 @@
          #endlist
          );
       #endif
-      #if tokenActivation.deactivatedTokens?size > 0
+      #if tokenActivation.deactivatedTokens
          ${somethingChanged} = ${somethingChanged} |= deactivateTokenTypes(
          #list tokenActivation.deactivatedTokens as tokenName
              ${tokenName}[#if tokenName_has_next],[/#if]

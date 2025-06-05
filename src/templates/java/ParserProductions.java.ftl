@@ -103,7 +103,9 @@
              #if expansion.simpleName = "ZeroOrMore" || expansion.simpleName = "OneOrMore"
                #var followingExpansion = expansion.followingExpansion
                #list 1..1000000 as unused
-                [#if !followingExpansion][#break][/#if]
+                #if !followingExpansion
+                  #break
+                #endif
                 #if followingExpansion.maximumSize > 0
                  #if followingExpansion.simpleName = "OneOrMore" || followingExpansion.simpleName = "ZeroOrOne" || followingExpansion.simpleName = "ZeroOrMore"
                  if (${ExpansionCondition(followingExpansion.nestedExpansion)}) {
@@ -114,7 +116,9 @@
                     break;
                  }
                 #endif
-                [#if !followingExpansion.possiblyEmpty][#break][/#if]
+                #if !followingExpansion.possiblyEmpty
+                  #break
+                #endif
                 #if !followingExpansion.followingExpansion
                  if (outerFollowSet != null) {
                    if (outerFollowSet.contains(nextTokenType())) {
@@ -122,7 +126,7 @@
                       break;
                    }
                  }
-                 [#break/]
+                 #break
                 #endif
                 #set followingExpansion = followingExpansion.followingExpansion
                #endlist

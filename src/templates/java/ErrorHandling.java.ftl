@@ -197,9 +197,13 @@ void dumpLookaheadCallStack(PrintStream ps) {
   }
 
   private ${settings.baseTokenClassName} handleUnexpectedTokenType(TokenType expectedType, ${settings.baseTokenClassName} nextToken
-      [#if settings.faultTolerant], boolean tolerant, EnumSet<TokenType> followSet[/#if]
+      #if settings.faultTolerant
+        , boolean tolerant, EnumSet<TokenType> followSet
+      #endif
       )
-      [#if settings.useCheckedException] throws ParseException [/#if]
+      #if settings.useCheckedException 
+         throws ParseException 
+      #endif
       {
       #if !settings.faultTolerant
        throw new ParseException(nextToken, EnumSet.of(expectedType), parsingStack);
@@ -217,7 +221,7 @@ void dumpLookaheadCallStack(PrintStream ps) {
 #endif
              return nextNext;
        }
-         [#-- Since skipping the next token did not work, we will insert a virtual token --]
+         #-- Since skipping the next token did not work, we will insert a virtual token
        if (tolerant || followSet == null || followSet.contains(nextToken.getType())) {
            ${settings.baseTokenClassName} virtualToken = ${settings.baseTokenClassName}.newToken(expectedType, token_source, 0, 0);
            virtualToken.setVirtual(true);
@@ -251,6 +255,7 @@ void dumpLookaheadCallStack(PrintStream ps) {
    #if MULTIPLE_LEXICAL_STATE_HANDLING
        LexicalState lexicalState;
    #endif
+       EnumSet<${settings.baseTokenClassName}> activeTokenTypes;
    #if settings.treeBuildingEnabled
        NodeScope nodeScope;
    #endif
@@ -262,6 +267,9 @@ void dumpLookaheadCallStack(PrintStream ps) {
 #if MULTIPLE_LEXICAL_STATE_HANDLING
            this.lexicalState = token_source.lexicalState;
 #endif
+           if (token_source.activateTokenTypes!=null) {
+               activeTokenTypes = token_source.activeTokenTypes.clone();
+           }
 #if settings.treeBuildingEnabled
            this.nodeScope = currentNodeScope.clone();
 #endif
@@ -293,5 +301,6 @@ void dumpLookaheadCallStack(PrintStream ps) {
 #else
      token_source.reset(lastConsumedToken);
 #endif
+     token_source.activeTokenTypes = state.activeTokenTypes;
   }
 
