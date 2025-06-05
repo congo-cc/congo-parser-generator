@@ -471,6 +471,15 @@ public interface Node extends List<Node> {
         return null;
     }
 
+    @SuppressWarnings("unchecked")
+    default <T extends Node> T firstAncestorOfType(Class<T> clazz, Predicate<? super T> pred) {
+        Node ancestor = this;
+        do  {
+            ancestor = ancestor.firstAncestorOfType(clazz);
+        } while (ancestor != null && pred != null && !pred.test((T) ancestor));
+        return (T) ancestor;
+    }
+
     /**
      * Copy the location info from another Node
      * @param from the Node to copy the info from
@@ -739,7 +748,7 @@ public interface Node extends List<Node> {
 
     static abstract public class Visitor {
         private static Map<Class<? extends Node.Visitor>, Map<Class<? extends Node>, Method>> mapLookup;
-        private static final Method DUMMY_METHOD;
+        protected static final Method DUMMY_METHOD;
         static {
             try {
                 // Use this just to represent no method found, since ConcurrentHashMap cannot contain nulls
@@ -757,7 +766,7 @@ public interface Node extends List<Node> {
         }
         protected boolean visitUnparsedTokens;
 
-        private Method getVisitMethod(Node node) {
+        protected final Method getVisitMethod(Node node) {
             Class<? extends Node> nodeClass = node.getClass();
             Method method = methodCache.get(nodeClass);
             if (method == null) {

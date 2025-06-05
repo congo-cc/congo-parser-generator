@@ -1,0 +1,63 @@
+       EXEC CICS SEND TEXT
+           FROM   (WS-MESSAGE)
+           LENGTH (WS-MSG-LEN)
+           DEFAULT ERASE
+           FREEKB
+           END-EXEC
+           
+       EXEC CICS READ 
+           DATASET  ('CUSTOMER')
+           RIDFLD   (WS-CUST-ID)
+           INTO     (WS-CUST-REC)
+           LENGTH   (WS-CUST-LEN)
+           END-EXEC
+
+       EXEC CICS RECEIVE
+           INTO   (WS-INPUT-DATA)
+           LENGTH (WS-INPUT-LEN)
+           NOHANDLE
+           END-EXEC
+
+       EXEC CICS SEND MAP('MAINMAP')
+           MAPSET('MAPSET1')
+           FROM  (WS-MAP-DATA)
+           ERASE
+           END-EXEC
+
+       EXEC CICS RECEIVE MAP('MAINMAP')
+           MAPSET('MAPSET1')
+           INTO  (WS-MAP-DATA)
+           END-EXEC
+
+       EXEC CICS WRITE
+           DATASET ('ACCTFILE')
+           FROM    (WS-ACCOUNT-REC)
+           RIDFLD  (WS-ACCT-ID)
+           END-EXEC
+
+       EXEC CICS DELETE
+           DATASET ('ACCTFILE')
+           RIDFLD  (WS-ACCT-ID)
+           END-EXEC
+
+       EXEC CICS LINK
+           PROGRAM ('PAYMENTPGM')
+           COMMAREA (WS-COMM-AREA)
+           LENGTH   (WS-COMM-LEN)
+           END-EXEC
+
+       EXEC CICS XCTL
+           PROGRAM ('NEXTPGM')
+           COMMAREA (WS-COMM-AREA)
+           LENGTH   (WS-COMM-LEN)
+           END-EXEC
+
+       EXEC CICS WRITEQ TS
+           QUEUE   ('TRANSQ1')
+           FROM    (WS-DATA)
+           LENGTH  (WS-DATA-LEN)
+           END-EXEC
+
+       EXEC CICS SYNCPOINT END-EXEC
+
+       EXEC CICS SYNCPOINT ROLLBACK END-EXEC

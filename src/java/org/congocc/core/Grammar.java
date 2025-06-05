@@ -143,7 +143,7 @@ public class Grammar extends BaseNode {
         addCommandLineOverrides(settings);
         appSettings.setSettings((settings));
         if (appSettings.getSyntheticNodesEnabled() && appSettings.getCodeLang().equals("java")) {
-        	addNodeType(null, appSettings.getBaseNodeClassName());
+            addNodeType(null, appSettings.getBaseNodeClassName());
         }
 
     }
@@ -346,7 +346,7 @@ public class Grammar extends BaseNode {
         Set<String> usedNames = new LinkedHashSet<>();
         List<Expansion> result = new ArrayList<>();
         for (Expansion expansion : descendants(Expansion.class)) { // | is this one necessary now that BNFProduction is an Expansion? [jb]
-        														  //  V
+                                                                  //  V
             if ((expansion instanceof BNFProduction) || (expansion.getParent() instanceof BNFProduction)) continue; // Handle these separately
             if (type == 0 || type == 2) {   // follow sets
                 if (expansion instanceof CodeBlock) {
@@ -504,7 +504,7 @@ public class Grammar extends BaseNode {
      * @param fieldName is the name of the field to be injected
      */
     public void addFieldInjection(String nodeName, String modifiers, String typeName, String fieldName) {
-    	CodeInjection.inject(this, nodeName, "{" + modifiers + " " + typeName + " " + fieldName + ";}");
+        CodeInjection.inject(this, nodeName, "{" + modifiers + " " + typeName + " " + fieldName + ";}");
     }
 
     public boolean isInInclude() {
@@ -519,7 +519,13 @@ public class Grammar extends BaseNode {
         }
         return undefinedNTs.isEmpty();
     }
-
+    
+    public boolean isUsingCardinality() {
+        for (Assertion assertion : descendants(Assertion.class)) {
+            if (assertion.isCardinalityConstraint()) return true;
+        }
+        return false;
+    }
 
     /**
      * Run over the tree and do some sanity checks
@@ -619,6 +625,10 @@ public class Grammar extends BaseNode {
                 }
             }
         }
+        
+        if (isUsingCardinality()) {
+            new CardinalityChecker(this);
+        }
 
         if (errors.getErrorCount() >0) return;
 
@@ -679,6 +689,88 @@ public class Grammar extends BaseNode {
         }
 
     }
+    
+    public class CardinalityChecker extends Visitor {
+        private final Grammar context;
+        CardinalityChecker(Grammar context) {
+            this.context = context;
+            visit(context);
+        }
+        
+        @Override
+        public void visit(Node n) {
+            super.visit(n);
+        }
+        
+        Stack<int[]> rangeStack = new Stack<>();
+        
+        public void visit(BNFProduction n) {
+            recurse(n);
+        }
+        
+        // check repetition cardinality constraints (depth first)
+        public void visit(ExpansionWithParentheses n) {
+            if (n.isCardinalityContainer()) {
+                rangeStack.push(new int[] {0,Integer.MAX_VALUE});
+            }
+            recurse(n.getNestedExpansion());
+            if (n.isCardinalityContainer()) {
+                int[] repetitionRange = rangeStack.pop();
+                if (repetitionRange[0] > 0 && (n instanceof ZeroOrMore)) {
+                    // This is a very weak warning, as there are valid reasons to do this. Probably it is between info and warning (i.e., a caution).
+                    context.errors.addInfo(n, "This ZeroOrMore expansion contains a minimum cardinality assertion of > 0; this might not behave as intended.");
+                }
+                if (!(n instanceof IteratingExpansion)) {
+                    //FIXME: warn on constraints within ZeroOrOne (below does not work)
+                    context.errors.addError(n, "Cardinality constraints may only allowed be contained in ZeroOrMore and OneOrMore expansions.");
+                }
+            }
+            
+        }
+        
+        public void visit(AttemptBlock attempt) {
+            /*
+             *REVISIT:JB This restriction should probably be relaxed for consistency and least surprise. If/When it is, it
+             *needs to provide a way to save the state of the currently active cardinality (if any) in the parser state and restore
+             *it when recovering.
+             */
+            if (rangeStack.size() != 0) {
+                context.errors.addError(attempt, "Cardinality constraints are not allowed to be asserted within an ATTEMPT...RECOVER block.");
+            }
+            recurse(attempt);
+        }
+        
+        public void visit(ExpansionSequence s) {
+            recurse(s);
+            try {
+                if (s.isCardinalityConstrained()) {
+                    int[] repetitionRange = rangeStack.peek();
+                    int minCardinality = repetitionRange[0];
+                    int maxCardinality = repetitionRange[1];
+                    int numberOfConstraints = 0;
+                    //TODO: warn on improperly telescoped constraints in single sequence (i.e., shrinking the min or expanding the max)
+                    List<Assertion> assertions = s.getCardinalityAssertions();
+                    if (assertions != null) {
+                        for (Assertion a : assertions) {
+                            if (a.isCardinalityConstraint()) {
+                                int[] constraint = a.getCardinalityConstraint();
+                                if (constraint[1] == 0) errors.addWarning(a, "Maximum cardinality is 0; this is likely an error.");
+                                if (constraint[0] > constraint[1]) errors.addError(a, "Maximum cardinality is less than the minimum.");
+                                
+                                minCardinality = Math.max(constraint[0], minCardinality);
+                                maxCardinality = Math.min(constraint[1], maxCardinality);
+                            }
+                        }
+                    }
+                    repetitionRange[0] = minCardinality;
+                    repetitionRange[1] = maxCardinality;
+                }
+            } catch (Exception e) {
+                s.firstAncestorOfType(BNFProduction.class).dump();
+                throw e;
+            }
+        }
+    }
 
     public void reportDeadCode() {
         for (ExpansionChoice choice : descendants(ExpansionChoice.class)) {
@@ -737,7 +829,11 @@ public class Grammar extends BaseNode {
     }
 
     private Expansion nextExpansion(Expansion exp) {
-        Expansion next = (Expansion) exp.nextSibling();
+        Node n = exp.nextSibling();
+        while (n != null && !(n instanceof Expansion)) {
+            n = n.nextSibling();
+        }
+        Expansion next = (Expansion) n;
         if (next == null) {
             Expansion enclosing = (Expansion) exp.getParent().getParent();
             if (enclosing != null && enclosing.getClass() == ExpansionWithParentheses.class) {

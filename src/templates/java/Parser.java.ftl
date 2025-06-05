@@ -19,6 +19,10 @@ import java.util.Iterator;
 import java.util.ListIterator;
 import java.util.Map;
 import java.util.Objects;
+#if grammar.usingCardinality
+  import java.util.Stack;
+  import java.util.concurrent.atomic.AtomicInteger;
+#endif
 import java.util.concurrent.CancellationException;
 import ${settings.parserPackage}.${settings.lexerClassName}.LexicalState;
 import ${settings.parserPackage}.${settings.baseTokenClassName}.TokenType;
@@ -48,7 +52,189 @@ import static ${settings.parserPackage}.${settings.baseTokenClassName}.TokenType
   #endlist
 #endif
 
-public ${isFinal ?: "final"} class ${settings.parserClassName} {
+public ${isFinal ?: "final"} class ${settings.parserClassName} { 
+
+#if grammar.usingCardinality
+
+    [#-- N.B., this class definition can be replaced by:
+      record CardinalityState (int[] cardinalities, boolean isProvisional) {}; 
+      in Java 17 --]
+    
+    private static final class CardinalityState {
+        private final int[] cardinalities;
+        private final boolean isProvisional;
+
+        public CardinalityState(int[] cardinalities, boolean isProvisional) {
+            this.cardinalities = cardinalities.clone(); // Defensive copy to ensure immutability
+            this.isProvisional = isProvisional;
+        }
+
+        public int[] cardinalities() {
+            return cardinalities.clone(); // Defensive copy to prevent modification
+        }
+
+        public boolean isProvisional() {
+            return isProvisional;
+        }
+
+        @Override
+        public boolean equals(Object o) {
+            if (this == o) return true;
+            if (o == null || getClass() != o.getClass()) return false;
+            CardinalityState that = (CardinalityState) o;
+            return isProvisional == that.isProvisional && Arrays.equals(cardinalities, that.cardinalities);
+        }
+
+        @Override
+        public int hashCode() {
+            return 31 * Arrays.hashCode(cardinalities) + Boolean.hashCode(isProvisional);
+        }
+
+        @Override
+        public String toString() {
+            return "CardinalityState{" +
+                    "cardinalities=" + Arrays.toString(cardinalities) +
+                    ", isProvisional=" + isProvisional +
+                    '}';
+        }
+    }
+
+    private final class RepetitionCardinality {
+
+        final int[][] choiceCardinalities;
+        [#-- NOTE: This stack is currently unnecessary, as it never has more than 2 elements and could be replaced by 4 scalar fields.
+          I leave it in for now to make sure it isn't potentially useful for a likely future extension to this capability. I have
+          marked it as Deprecated in the meantime. JB --]
+        @Deprecated
+        Stack<CardinalityState> cardinalitiesStack = new Stack<>();
+        final int[] cardinalities;
+
+        // TODO: use "record CardinalityState (int[] cardinalities, boolean isProvisional) {};" in Java 17 
+
+        RepetitionCardinality(int[][] choiceCardinalities, boolean isParsing) {
+            this.choiceCardinalities = choiceCardinalities;
+            // push an initialized, non-provisional frame to start a loop
+            cardinalitiesStack.push(new CardinalityState(new int[choiceCardinalities.length], false));
+            // initialize the parse version of the cardinality state
+            cardinalities = new int[choiceCardinalities.length];
+        }
+
+        private String indent(int level) {
+            StringBuilder sb = new StringBuilder();
+            for (int i = 0; i < level; i++) {
+                sb.append("  ");
+            }
+            return sb.toString();
+        }
+
+        public final boolean choose(int choiceNo, boolean isLookahead) {
+            if (isLookahead) {
+                CardinalityState currentState = cardinalitiesStack.peek();
+                CardinalityState priorState = currentState;
+                if (!currentState.isProvisional()) {
+                    // open new provisional frame
+                    push(true);
+                } else {
+                    priorState = cardinalitiesStack.get(cardinalitiesStack.size() - 2);
+                }
+                // at this point current is a provisional frame 
+                int[] currentCardinalities = currentState.cardinalities();
+                int[] priorCardinalities = priorState.cardinalities();
+                // N.B., there can never be more than one increment per interation, hence this check
+                // allowing the detection of multiple chooses during the lookahead process.  In
+                // other words, in a given iteration only the first increment is necessary and 
+                // sufficient for accuracy.
+                if (currentCardinalities[choiceNo] == priorCardinalities[choiceNo]) {
+                    if (currentCardinalities[choiceNo] < choiceCardinalities[choiceNo][1]) {
+                        ++currentCardinalities[choiceNo];
+                        // replace the provisional frame at tos with incremented one
+                        cardinalitiesStack.pop();
+                        cardinalitiesStack.push(new CardinalityState(currentCardinalities, true));
+                        return true;
+                    }
+                } else {
+                    return true;
+                }
+            } else {
+                // the real thing
+                if (cardinalities[choiceNo] < choiceCardinalities[choiceNo][1]) {
+                  ++cardinalities[choiceNo];
+                  return true;
+                }
+            }
+            // cardinality maximum exceeded; indicate failure
+            return false;
+        }
+
+        public CardinalityState push(boolean isProvisional) {
+            if (cardinalitiesStack.size() == 0) {
+                // create new initialized frame
+                return cardinalitiesStack.push(new CardinalityState(new int[choiceCardinalities.length], isProvisional));
+            } else {
+                // create new frame from current top frame 
+                return cardinalitiesStack.push(new CardinalityState(cardinalitiesStack.peek().cardinalities(), isProvisional));
+            }
+        }
+
+        public void pop() {
+            CardinalityState popped = cardinalitiesStack.pop();
+            if (popped.isProvisional()) {
+                popped = cardinalitiesStack.pop();
+                assert (!popped.isProvisional()) : "Unexpected provisional stack entry!";
+            }
+        }
+
+        public boolean checkCardinality(boolean isLookahead) {
+          if (isLookahead) {
+              CardinalityState finalized = new CardinalityState(new int[choiceCardinalities.length], false);
+              if (cardinalitiesStack.size() == 1) {
+                  finalized = cardinalitiesStack.pop(); 
+              }
+              for (int i = 0; i < finalized.cardinalities().length; i++) {
+                  if (finalized.cardinalities()[i] < choiceCardinalities[i][0]) {
+                      return false;
+                  }
+              }
+          } else {
+              for (int i = 0; i < choiceCardinalities.length; i++) {
+                  if (cardinalities[i] < choiceCardinalities[i][0]) {
+                    return false;
+                  }
+              }
+          }
+          return true;
+        }
+
+        public void commitIteration(boolean isParsing) {
+            if (cardinalitiesStack.peek().isProvisional()) {
+                CardinalityState current = cardinalitiesStack.pop();
+                // replace the penultimate frame with the current one
+                cardinalitiesStack.pop(); // pop the penultimate
+                cardinalitiesStack.push(new CardinalityState(current.cardinalities(), false));
+            } else if (isParsing) {
+                // No provisional frame (i.e., no lookahead "choose" yet), but we are parsing now, so
+                // update the lookahead cardinalities by borrowing the parsing ones, as the lookahead 
+                // cardinality increment is potentially done after the actual parsing increment 
+                // (this handles the OneOrMore loop order). 
+                cardinalitiesStack.pop(); // pop the penultimate
+                cardinalitiesStack.push(new CardinalityState(cardinalities, false));
+            }
+        }
+
+        public boolean commit(boolean isSuccess) {
+            if (!cardinalitiesStack.isEmpty() && cardinalitiesStack.peek().isProvisional()) {
+              // discard the provisional frame if not successful
+              if (!isSuccess) {
+                  cardinalitiesStack.pop();
+                  assert (!cardinalitiesStack.peek().isProvisional()) : "provisional frames should always be on top of a non-provisional frame.";
+              }
+            }
+            return isSuccess;
+        }
+    }
+#else
+  // Suppressing RepetitionCardinality class; cardinality not used in this parser. 
+#endif
 
 static final int UNLIMITED = Integer.MAX_VALUE;
 private final ${settings.baseTokenClassName} DUMMY_START_TOKEN = new ${settings.baseTokenClassName}();
