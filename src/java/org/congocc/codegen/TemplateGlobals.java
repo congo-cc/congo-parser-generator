@@ -96,29 +96,31 @@ public class TemplateGlobals {
      *         integer 97, we display 'a', for example.
      */
     public Function<Integer, String> getDisplayChar() {
-        return ch->{
-            if (ch == '\'')
-                return "'\\''";
-            if (ch == '\\')
-                return "'\\\\'";
-            if (ch == '\t')
-                return "'\\t'";
-            if (ch == '\r')
-                return "'\\r'";
-            if (ch == '\n')
-                return "'\\n'";
-            if (ch == '\f')
-                return "'\\f'";
-            if (ch == ' ')
-                return "' '";
-            if (ch < 128 && !Character.isWhitespace(ch) && !Character.isISOControl(ch))
-                return "'" + (char) ch.intValue() + "'";
-            String s = "0x" + Integer.toHexString(ch);
-            if (appSettings.getCodeLang().equals("python")) {
-                s = String.format("as_chr(%s)", s);
-            }
-            return s;
-        };
+        return this::displayChar;
+    }
+
+    public String displayChar(int ch) {
+        if (ch == '\'')
+            return "'\\''";
+        if (ch == '\\')
+            return "'\\\\'";
+        if (ch == '\t')
+            return "'\\t'";
+        if (ch == '\r')
+            return "'\\r'";
+        if (ch == '\n')
+            return "'\\n'";
+        if (ch == '\f')
+            return "'\\f'";
+        if (ch == ' ')
+            return "' '";
+        if (ch < 128 && !Character.isWhitespace(ch) && !Character.isISOControl(ch))
+            return "'" + (char) ch + "'";
+        String s = "0x" + Integer.toHexString(ch);
+        if (appSettings.getCodeLang().equals("python")) {
+            s = String.format("as_chr(%s)", s);
+        }
+        return s;
     }
 
     // The following methods added for supporting generation in languages other than

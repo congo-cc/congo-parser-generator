@@ -86,7 +86,7 @@
         {
         #list nfaState.moveRanges as char
           ${globals.displayChar(char)}
-          [#if char_has_next],[/#if]
+          ${char_has_next ?: ","}
         #endlist
         };
     }
@@ -117,7 +117,6 @@
       #if !state_has_next || state.moveRanges != states[state_index + 1].moveRanges
         #-- We've reached the end of the block.
           #if state.nextState.final
-            [#--if (validTypes == null || validTypes.contains(${state.type.label}))--]
               type = ${state.type.label};
           #endif
         }
@@ -220,7 +219,7 @@ if NFA state's moveRanges array is smaller than NFA_RANGE_THRESHOLD
 #macro RangesCondition moveRanges
     #var left = moveRanges[0], right = moveRanges[1]
     #var displayLeft = globals.displayChar(left),
-         displayRight = globals.displayChar(right)
+         displayRight = globals::displayChar(right)
     #var singleChar = left == right
     #if moveRanges?size == 2
        #if singleChar
