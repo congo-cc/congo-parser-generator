@@ -3,7 +3,7 @@
 
 [#var TT = "TokenType."]
 
-[#macro enumSet varName tokenNames indent = 0]
+[#macro enumSet varName tokenNames]
 [#var size = tokenNames?size]
 [#if size = 0]
 private static readonly HashSet<TokenType> ${varName} = Utils.GetOrMakeSet();
@@ -18,15 +18,15 @@ private static readonly HashSet<TokenType> ${varName} = Utils.GetOrMakeSet(
 [/#macro]
 
 #macro firstSetVar expansion
-    [@enumSet expansion.firstSetVarName, expansion.firstSet.tokenNames, 8 /]
+    [@enumSet expansion.firstSetVarName, expansion.firstSet.tokenNames /]
 #endmacro
 
 [#macro finalSetVar expansion]
-    [@enumSet expansion.finalSetVarName, expansion.finalSet.tokenNames, 8 /]
+    [@enumSet expansion.finalSetVarName, expansion.finalSet.tokenNames /]
 [/#macro]
 
 #macro followSetVar expansion
-    [@enumSet expansion.followSetVarName, expansion.followSet.tokenNames, 8 /]
+    [@enumSet expansion.followSetVarName, expansion.followSet.tokenNames /]
 #endmacro
 
 
@@ -66,8 +66,8 @@ ${prefix}${newID()}[#rt]
 [#return val?string("true", "false")/]
 [/#function]
 
-[#macro HandleLexicalStateChange expansion inLookahead indent]
-[#-- # DBG > HandleLexicalStateChange ${indent} ${expansion.simpleName} --]
+[#macro HandleLexicalStateChange expansion inLookahead]
+[#-- # DBG > HandleLexicalStateChange ${expansion.simpleName} --]
 [#var resetToken = inLookahead?string("currentLookaheadToken", "LastConsumedToken")]
 [#if expansion.specifiedLexicalState??]
   [#var prevLexicalStateVar = newVarName("previousLexicalState")]
@@ -78,7 +78,7 @@ if (_remainingLookahead <= 0) return true;
 LexicalState ${prevLexicalStateVar} = tokenSource.LexicalState;
 tokenSource.Reset(${resetToken}, LexicalState.${expansion.specifiedLexicalState});
 try {
-[#nested indent + 8 /]
+#nested
 }
 finally {
     if (${prevLexicalStateVar} != LexicalState.${expansion.specifiedLexicalState}) {
@@ -104,7 +104,7 @@ var ${somethingChanged} = false;
 [#if tokenActivation.activatedTokens?size > 0]
 ${somethingChanged} = ActivateTokenTypes(
   [#list tokenActivation.activatedTokens as tokenName]
-    ${TT}${tokenName}[#if tokenName_has_next],[/#if]
+    ${TT}${tokenName}${tokenName_has_next ?: ","}
   [/#list]
 );
 [/#if]
@@ -116,7 +116,7 @@ ${somethingChanged} = ${somethingChanged} || DeactivateTokenTypes(
 );
 [/#if]
 try {
-  [#nested indent + 4 /]
+  #nested
 }
 finally {
     tokenSource.ActiveTokenTypes = ${prevActives};
@@ -125,9 +125,9 @@ finally {
         _nextTokenType = null;
     }
 }
-[#else]
-  [#nested indent /]
-[/#if]
-[#-- # DBG < HandleLexicalStateChange ${indent} ${expansion.simpleName} --]
-[/#macro]
+#else
+  #nested 
+#endif
+[#-- # DBG < HandleLexicalStateChange ${expansion.simpleName} --]
+#endmacro
 

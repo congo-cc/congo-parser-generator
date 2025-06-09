@@ -18,7 +18,7 @@ ${"#"}pragma warning disable 8632
 [/#if --]
 [#var TOKEN = settings.baseTokenClassName]
 
-[#macro EnumSet varName tokenNames indent = 0]
+[#macro EnumSet varName tokenNames]
 [#if tokenNames?size == 0]
 private static HashSet<TokenType> ${varName} = Utils.GetOrMakeSet();
 [#else]
@@ -824,15 +824,15 @@ ${globals::translateLexerImports()}
 
         // Token types that are "regular" tokens that participate in parsing,
         // i.e. declared as TOKEN
-        [@EnumSet "regularTokens", lexerData.regularTokens.tokenNames, 8 /]
+        [@EnumSet "regularTokens", lexerData.regularTokens.tokenNames /]
         // Token types that do not participate in parsing
         // i.e. declared as UNPARSED (or SPECIAL_TOKEN)
-        [@EnumSet "unparsedTokens", lexerData.unparsedTokens.tokenNames, 8 /]
+        [@EnumSet "unparsedTokens", lexerData.unparsedTokens.tokenNames /]
         [#-- // Tokens that are skipped, i.e. SKIP --]
-        [@EnumSet "skippedTokens", lexerData.skippedTokens.tokenNames, 8 /]
+        [@EnumSet "skippedTokens", lexerData.skippedTokens.tokenNames /]
         // Tokens that correspond to a MORE, i.e. that are pending
         // additional input
-        [@EnumSet "moreTokens", lexerData.moreTokens.tokenNames, 8 /]
+        [@EnumSet "moreTokens", lexerData.moreTokens.tokenNames /]
 
         // NFA code and data
 
