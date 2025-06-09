@@ -794,19 +794,19 @@ ${globals::translateLexerInjections(true)}
 
         # Token types that are "regular" tokens that participate in parsing,
         # i.e. declared as TOKEN
-        [@EnumSet "regular_tokens" lexerData.regularTokens.tokenNames 8 /]
+        [@EnumSet "regular_tokens", lexerData.regularTokens.tokenNames, 8 /]
 
   #list settings.extraTokenNames as tokenName
         self.regular_tokens.add(${settings.extraTokens[tokenName]})
   /#list
         # Token types that do not participate in parsing
         # i.e. declared as UNPARSED (or SPECIAL_TOKEN)
-        [@EnumSet "unparsed_tokens" lexerData.unparsedTokens.tokenNames 8 /]
+        [@EnumSet "unparsed_tokens", lexerData.unparsedTokens.tokenNames, 8 /]
         [#-- Tokens that are skipped, i.e. SKIP --]
-        [@EnumSet "skipped_tokens" lexerData.skippedTokens.tokenNames 8 /]
+        [@EnumSet "skipped_tokens", lexerData.skippedTokens.tokenNames, 8 /]
         # Tokens that correspond to a MORE, i.e. that are pending
         # additional input
-        [@EnumSet "more_tokens" lexerData.moreTokens.tokenNames 8 /]
+        [@EnumSet "more_tokens", lexerData.moreTokens.tokenNames, 8 /]
         self.lexical_state = lex_state
         if lex_state is not None:
             self.switch_to(lex_state)

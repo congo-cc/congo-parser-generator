@@ -139,12 +139,12 @@
   [#if expansion.simpleName != "ExpansionSequence" && expansion.simpleName != "ExpansionWithParentheses"]
 // Code for ${expansion.simpleName} specified at ${expansion.location}
   [/#if]
-     [@CU.HandleLexicalStateChange expansion false]
-      [#if settings.faultTolerant && expansion.requiresRecoverMethod && !expansion.possiblyEmpty]
+     [@CU.HandleLexicalStateChange expansion, false]
+      #if settings.faultTolerant && expansion.requiresRecoverMethod && !expansion.possiblyEmpty
 if (_pendingRecovery) {
     ${expansion.recoverMethodName}();
 }
-      [/#if]
+      #endif
        [@BuildExpansionCode expansion/]
      [/@CU.HandleLexicalStateChange]
 [#-- // DBG < BuildCode ${expansion.simpleName} --]
@@ -180,7 +180,7 @@ ${globals::translateCodeBlock(javaCodePrologue, 1)}[#rt]
         [#-- We need tree nodes and/or recovery code. --]
         [#if buildingTreeNode]
             [#-- Build the tree node (part 1). --]
-            [@buildTreeNode production treeNodeBehavior nodeVarName /]
+            [@buildTreeNode production, treeNodeBehavior, nodeVarName /]
         [/#if]
         [#-- Any prologue code can refer to CURRENT_NODE at this point. --][#-- REVISIT: Is this needed anymore, since THIS_PRODUCTION is always the reference to CURRENT_NODE (jb)? --]
 ${globals::translateCodeBlock(javaCodePrologue, 1)}
@@ -217,7 +217,7 @@ finally {
     RestoreCallStack(${callStackSizeVar});
 [#if buildingTreeNode]
     [#-- Build the tree node (part 2). --]
-    [@buildTreeNodeEpilogue treeNodeBehavior nodeVarName parseExceptionVar /]
+    [@buildTreeNodeEpilogue treeNodeBehavior, nodeVarName, parseExceptionVar /]
 [/#if]
 }
 [/#if]
@@ -441,7 +441,7 @@ finally {
 
 [#macro buildTreeNode production treeNodeBehavior nodeVarName] [#-- FIXME: production is not used here --]
    #exec globals::pushNodeVariableName(nodeVarName)
-   [@createNode nodeClassName(treeNodeBehavior) nodeVarName /]
+   [@createNode nodeClassName(treeNodeBehavior), nodeVarName /]
 [/#macro]
 
 [#--  Boilerplate code to create the node variable --]

@@ -17,17 +17,17 @@ private static readonly HashSet<TokenType> ${varName} = Utils.GetOrMakeSet(
 
 [/#macro]
 
-[#macro firstSetVar expansion]
-    [@enumSet expansion.firstSetVarName expansion.firstSet.tokenNames 8 /]
-[/#macro]
+#macro firstSetVar expansion
+    [@enumSet expansion.firstSetVarName, expansion.firstSet.tokenNames, 8 /]
+#endmacro
 
 [#macro finalSetVar expansion]
-    [@enumSet expansion.finalSetVarName expansion.finalSet.tokenNames 8 /]
+    [@enumSet expansion.finalSetVarName, expansion.finalSet.tokenNames, 8 /]
 [/#macro]
 
-[#macro followSetVar expansion]
-    [@enumSet expansion.followSetVarName expansion.followSet.tokenNames 8 /]
-[/#macro]
+#macro followSetVar expansion
+    [@enumSet expansion.followSetVarName, expansion.followSet.tokenNames, 8 /]
+#endmacro
 
 
 [#var newVarIndex = 0]

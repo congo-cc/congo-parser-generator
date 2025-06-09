@@ -343,9 +343,9 @@ if (_remainingLookahead <= 0) {
 }
 // Lookahead Code for ${classname} specified at ${expansion.location}
   [/#if]
-  [@CU.HandleLexicalStateChange expansion true indent; indent]
+  [@CU.HandleLexicalStateChange expansion, true, indent; indent]
    [#if classname = "ExpansionWithParentheses"]
-      [@BuildScanCode expansion.nestedExpansion indent /]
+      [@BuildScanCode expansion.nestedExpansion, indent /]
    [#elseif expansion.singleTokenLookahead]
 ${ScanSingleToken(expansion, indent)}
    [#elseif classname = "Assertion" && expansion.appliesInLookahead]
@@ -363,9 +363,9 @@ ${ScanCodeZeroOrMore(expansion, indent)}
    [#elseif classname = "OneOrMore"]
 ${ScanCodeOneOrMore(expansion, indent)}
    [#elseif classname = "NonTerminal"]
-      [@ScanCodeNonTerminal expansion indent /]
+      [@ScanCodeNonTerminal expansion, indent /]
    [#elseif classname = "TryBlock" || classname = "AttemptBlock"]
-      [@BuildScanCode expansion.nestedExpansion indent /]
+      [@BuildScanCode expansion.nestedExpansion, indent /]
    [#elseif classname = "ExpansionChoice"]
 ${ScanCodeChoice(expansion, indent)}
    [#elseif classname = "CodeBlock"]
@@ -391,7 +391,7 @@ ${globals::translateCodeBlock(expansion, indent)}
 [#var is = ""?right_pad(indent)]
 [#-- # DBG > ScanCodeSequence ${indent} --]
    [#list sequence.units as sub]
-       [@BuildScanCode sub indent /]
+       [@BuildScanCode sub, indent /]
        [#if sub.scanLimit]
          if (!scanToEnd && _lookaheadStack.Count <= 1) {
             if (_lookaheadRoutineNesting == 0) {
@@ -565,8 +565,8 @@ _hitFailure = false;
 if (!(${CheckExpansion(oom.nestedExpansion)})) {
     return false;
 }--]
-[@BuildScanCode oom.nestedExpansion indent /]
-[@ScanCodeZeroOrMore oom indent /]
+[@BuildScanCode oom.nestedExpansion, indent /]
+[@ScanCodeZeroOrMore oom, indent /]
 [#-- # DBG < ScanCodeOneOrMore ${indent} --]
 [/#macro]
 

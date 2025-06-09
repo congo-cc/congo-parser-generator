@@ -155,7 +155,7 @@
   #if expansion.simpleName != "ExpansionSequence" && expansion.simpleName != "ExpansionWithParentheses"
   // Code for ${expansion.simpleName} specified at ${expansion.location}
   #endif
-     [@CU.HandleLexicalStateChange expansion false]
+     [@CU.HandleLexicalStateChange expansion, false]
          #if settings.faultTolerant && expansion.requiresRecoverMethod && !expansion.possiblyEmpty
          if (pendingRecovery) {
             ${expansion.recoverMethodName}();

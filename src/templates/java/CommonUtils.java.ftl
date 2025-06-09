@@ -34,7 +34,7 @@
 #endmacro
 
 #macro finalSetVar expansion
-    ${enumSet(expansion.finalSetVarName expansion.finalSet.tokenNames)}
+    ${enumSet(expansion.finalSetVarName, expansion.finalSet.tokenNames)}
 #endmacro
 
 #macro followSetVar expansion

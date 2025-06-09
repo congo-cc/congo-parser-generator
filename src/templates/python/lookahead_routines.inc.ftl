@@ -338,13 +338,13 @@ ${is}if self.remaining_lookahead <= 0:
 ${is}    return True
 ${is}# Lookahead Code for ${classname} specified at ${expansion.location}
   [/#if]
-  [@CU.HandleLexicalStateChange expansion true indent; indent]
+  [@CU.HandleLexicalStateChange expansion, true, indent; indent]
   [#--
 ${is}# Building scan code for: ${classname}
 ${is}# at: ${expansion.location}
   --]
    [#if classname = "ExpansionWithParentheses"]
-      [@BuildScanCode expansion.nestedExpansion indent /]
+      ${BuildScanCode(expansion.nestedExpansion, indent)}
    [#elseif expansion.singleTokenLookahead]
 ${ScanSingleToken(expansion, indent)}
    [#elseif classname = "Assertion" && expansion.appliesInLookahead]
@@ -362,9 +362,9 @@ ${ScanCodeZeroOrMore(expansion, indent)}
    [#elseif classname = "OneOrMore"]
 ${ScanCodeOneOrMore(expansion, indent)}
    [#elseif classname = "NonTerminal"]
-      [@ScanCodeNonTerminal expansion indent /]
+      [@ScanCodeNonTerminal expansion, indent /]
    [#elseif classname = "TryBlock" || classname = "AttemptBlock"]
-      [@BuildScanCode expansion.nestedExpansion indent /]
+      [@BuildScanCode expansion.nestedExpansion, indent /]
    [#elseif classname = "ExpansionChoice"]
 ${ScanCodeChoice(expansion, indent)}
    [#elseif classname = "CodeBlock"]
@@ -390,7 +390,7 @@ ${globals::translateCodeBlock(expansion, indent)}
 #var is = ""?right_pad(indent)
 [#-- ${is}# DBG > ScanCodeSequence ${indent} --]
 #list sequence.units as sub
-       [@BuildScanCode sub indent /]
+       [@BuildScanCode sub, indent /]
   #if sub.scanLimit
 ${is}if not scan_to_end and (len(self.lookahead_stack) <= 1):
 ${is}    if self.lookahead_routine_nesting == 0:
@@ -547,8 +547,8 @@ ${is}self.hit_failure = False
 [#-- ${is}# DBG > ScanCodeOneOrMore ${indent} --]
 [#--${is}if not (${CheckExpansion(oom.nestedExpansion)}):
 ${is}    return False--]
-[@BuildScanCode oom.nestedExpansion indent /]
-[@ScanCodeZeroOrMore oom indent /]
+[@BuildScanCode oom.nestedExpansion, indent /]
+[@ScanCodeZeroOrMore oom, indent /]
 [#-- ${is}# DBG < ScanCodeOneOrMore ${indent} --]
 [/#macro]
 

@@ -237,18 +237,6 @@ void dumpLookaheadCallStack(PrintStream ps) {
       #endif
   }
 
-  /**
-   * pushes the last token back.
-   */
-  private void pushLastTokenBack() {
-     #if settings.treeBuildingEnabled
-        if (peekNode() == lastConsumedToken) {
-            popNode();
-        }
-     #endif
-     lastConsumedToken = lastConsumedToken.previousCachedToken();
-  }
-
   private class ParseState {
        ${settings.baseTokenClassName} lastConsumed;
        ArrayList<NonTerminalCall> parsingStack;

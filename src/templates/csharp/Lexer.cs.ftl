@@ -824,15 +824,15 @@ ${globals::translateLexerImports()}
 
         // Token types that are "regular" tokens that participate in parsing,
         // i.e. declared as TOKEN
-        [@EnumSet "regularTokens" lexerData.regularTokens.tokenNames 8 /]
+        [@EnumSet "regularTokens", lexerData.regularTokens.tokenNames, 8 /]
         // Token types that do not participate in parsing
         // i.e. declared as UNPARSED (or SPECIAL_TOKEN)
-        [@EnumSet "unparsedTokens" lexerData.unparsedTokens.tokenNames 8 /]
+        [@EnumSet "unparsedTokens", lexerData.unparsedTokens.tokenNames, 8 /]
         [#-- // Tokens that are skipped, i.e. SKIP --]
-        [@EnumSet "skippedTokens" lexerData.skippedTokens.tokenNames 8 /]
+        [@EnumSet "skippedTokens", lexerData.skippedTokens.tokenNames, 8 /]
         // Tokens that correspond to a MORE, i.e. that are pending
         // additional input
-        [@EnumSet "moreTokens" lexerData.moreTokens.tokenNames 8 /]
+        [@EnumSet "moreTokens", lexerData.moreTokens.tokenNames, 8 /]
 
         // NFA code and data
 

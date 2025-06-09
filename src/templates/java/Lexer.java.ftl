@@ -56,9 +56,7 @@ class ${settings.lexerClassName} extends TokenSource
   public enum LexicalState {
   #list lexerData.lexicalStates as lexicalState
      ${lexicalState.name}
-     #if lexicalState_has_next
-       ,
-     #endif
+     ${lexicalState_has_next ?: ","}
   #endlist
   }
   LexicalState lexicalState = LexicalState.values()[0];
@@ -87,15 +85,15 @@ class ${settings.lexerClassName} extends TokenSource
   private static final EnumMap<TokenType, LexicalState> tokenTypeToLexicalStateMap = new EnumMap<>(TokenType.class);
   // ${TOKEN} types that are "regular" tokens that participate in parsing,
   // i.e. declared as TOKEN
-  [@EnumSet "regularTokens" lexerData.regularTokens.tokenNames /]
+  [@EnumSet "regularTokens", lexerData.regularTokens.tokenNames /]
   // ${TOKEN} types that do not participate in parsing
   // i.e. declared as UNPARSED (or SPECIAL_TOKEN)
-  [@EnumSet "unparsedTokens" lexerData.unparsedTokens.tokenNames /]
+  [@EnumSet "unparsedTokens", lexerData.unparsedTokens.tokenNames /]
   // Tokens that are skipped, i.e. SKIP
-  [@EnumSet "skippedTokens" lexerData.skippedTokens.tokenNames /]
+  [@EnumSet "skippedTokens", lexerData.skippedTokens.tokenNames /]
   // Tokens that correspond to a MORE, i.e. that are pending
   // additional input
-  [@EnumSet "moreTokens" lexerData.moreTokens.tokenNames /]
+  [@EnumSet "moreTokens", lexerData.moreTokens.tokenNames /]
   #if settings.extraTokens
      static {
      #list settings.extraTokenNames as token
@@ -137,7 +135,7 @@ class ${settings.lexerClassName} extends TokenSource
         if (lexicalState != null) switchTo(lexState);
      #if settings.cppContinuationLine
         handleCContinuationLines();
-     #endif
+     #endif 
      }
 
      public ${TOKEN} getNextToken(${TOKEN} tok) {
@@ -233,7 +231,7 @@ class ${settings.lexerClassName} extends TokenSource
                 if (input instanceof TokenSource) {
                     position = ((TokenSource) input).nextUnignoredOffset(position);
                 }
-    #endif
+    #endif 
             } else {
                 currentStates.set(0);
             }
@@ -282,7 +280,7 @@ class ${settings.lexerClassName} extends TokenSource
        // If we are in a MORE, there is some possibility that there
        // was a lexical state change since the last iteration of this loop!
         NfaFunction[] nfaFunctions = functionTableMap.get(lexicalState);
-      #endif
+      #endif 
 #if settings.usesPreprocessor
         position = nextUnignoredOffset(position);
 #endif

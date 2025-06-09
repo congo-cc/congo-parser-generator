@@ -30,17 +30,17 @@
 [/#macro]
 
 [#macro firstSetVar expansion]
-    [@enumSet expansion.firstSetVarName expansion.firstSet.tokenNames /]
+    [@enumSet expansion.firstSetVarName, expansion.firstSet.tokenNames /]
 [/#macro]
 
 [#--
 [#macro finalSetVar expansion]
-    [@enumSet expansion.finalSetVarName expansion.finalSet.tokenNames /]
+    [@enumSet expansion.finalSetVarName, expansion.finalSet.tokenNames /]
 [/#macro]
 --]
 
 [#macro followSetVar expansion]
-    [@enumSet expansion.followSetVarName expansion.followSet.tokenNames /]
+    [@enumSet expansion.followSetVarName, expansion.followSet.tokenNames /]
 [/#macro]
 
 

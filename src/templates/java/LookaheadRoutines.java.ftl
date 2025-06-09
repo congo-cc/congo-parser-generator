@@ -320,7 +320,7 @@
       if (remainingLookahead <= 0 ) return true;
     // Lookahead Code for ${classname} specified at ${expansion.location}
   #endif
-  [@CU.HandleLexicalStateChange expansion true]
+  [@CU.HandleLexicalStateChange expansion, true]
    [#--
    // Building scan code for: ${classname}
    // at: ${expansion.location}
@@ -472,7 +472,7 @@
 #endmacro
 
 #macro ScanCodeZeroOrOne zoo
-   ${CU.newVar(settings.baseTokenClassName"currentLookaheadToken")}
+   ${CU.newVar(settings.baseTokenClassName, "currentLookaheadToken")}
    boolean passedPredicate${CU.newVarIndex} = passedPredicate;
    passedPredicate = false;
    try {
@@ -494,7 +494,7 @@
     boolean ${prevPassPredicateVarName} = passedPredicate;
     try {
       while (remainingLookahead > 0 && !hitFailure) {
-      ${CU.newVar(type = settings.baseTokenClassName init = "currentLookaheadToken")}
+      ${CU.newVar(settings.baseTokenClassName, "currentLookaheadToken")}
         passedPredicate = false;
         if (!${CheckExpansion(zom.nestedExpansion)}) {
            #if !settings.legacyGlitchyLookahead
