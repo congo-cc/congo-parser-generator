@@ -344,7 +344,7 @@ ${is}# Building scan code for: ${classname}
 ${is}# at: ${expansion.location}
   --]
    [#if classname = "ExpansionWithParentheses"]
-      ${BuildScanCode(expansion.nestedExpansion, indent)}
+      [@BuildScanCode expansion.nestedExpansion, indent /]
    [#elseif expansion.singleTokenLookahead]
 ${ScanSingleToken(expansion, indent)}
    [#elseif classname = "Assertion" && expansion.appliesInLookahead]

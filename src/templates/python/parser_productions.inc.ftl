@@ -144,15 +144,15 @@ ${is}# Code for ${expansion.simpleName} specified at ${expansion.location}
 ${is}if self.pending_recovery:
 ${is}    self.${expansion.recoverMethodName}()
   /#if
-  ${BuildExpansionCode(expansion, indent)}
+  [@BuildExpansionCode expansion, indent/]
 [/@CU.HandleLexicalStateChange][#rt]
 [#--${is}# DBG < BuildCode ${indent} ${expansion.simpleName} --]
-#endmacro
+/#macro
 
-#macro TreeBuildingAndRecovery expansion indent
-#var is = ""?right_pad(indent)
+[#macro TreeBuildingAndRecovery expansion indent]
+[#var is = ""?right_pad(indent)]
 [#--${is}# DBG > TreeBuildingAndRecovery ${indent} --]
-   #var production = null,
+   [#var production = null,
          treeNodeBehavior,
          buildingTreeNode = false,
          nodeVarName,
@@ -160,17 +160,18 @@ ${is}    self.${expansion.recoverMethodName}()
          parseExceptionVar = CU.newVarName("parseException"),
          callStackSizeVar = CU.newVarName("callStackSize"),
          canRecover = settings.faultTolerant && expansion.tolerantParsing && expansion.simpleName != "Terminal"
-   #set treeNodeBehavior = resolveTreeNodeBehavior(expansion)
-   #if expansion == currentProduction
+   ]
+   [#set treeNodeBehavior = resolveTreeNodeBehavior(expansion)]
+   [#if expansion == currentProduction]
       [#-- Set this expansion as the current production and capture any Java code specified before the first expansion unit --]
-      #set production = currentProduction
-      #set javaCodePrologue = production.javaCode!
-   #endif
-   #if treeNodeBehavior??
-      #if settings.treeBuildingEnabled
-         #set buildingTreeNode = true
-         #set nodeVarName = nodeVar(production??)
-      #endif
+      [#set production = currentProduction]
+      [#set javaCodePrologue = production.javaCode!]
+   [/#if]
+   [#if treeNodeBehavior??]
+      [#if settings.treeBuildingEnabled]
+         [#set buildingTreeNode = true]
+         [#set nodeVarName = nodeVar(production??)]
+      [/#if]
    [/#if]
    [#if !buildingTreeNode && !canRecover]
       [#-- We need neither tree nodes nor recovery code; do the simple one. --]
@@ -579,73 +580,73 @@ ${is}        self.clear_node_scope()
    [#return currentProduction.name]
 [/#function]
 
-#macro BuildExpansionCode expansion indent
-#var is = ""?right_pad(indent)
-#var classname = expansion.simpleName
+[#macro BuildExpansionCode expansion indent]
+[#var is = ""?right_pad(indent)]
+[#var classname = expansion.simpleName]
 [#--${is}# DBG > BuildExpansionCode ${indent} ${classname} --]
-    #var prevLexicalStateVar = CU.newVarName("previousLexicalState")
+    [#var prevLexicalStateVar = CU.newVarName("previousLexicalState")]
    [#-- take care of the non-tree-building classes --]
-   #if classname = "CodeBlock"
+   [#if classname = "CodeBlock"]
 ${globals::translateCodeBlock(expansion, indent)}
-   #elif classname = "UncacheTokens"
+   [#elseif classname = "UncacheTokens"]
 ${is}self.uncache_tokens()
-   #elif classname = "Failure"
+   [#elseif classname = "Failure"]
       [@BuildCodeFailure expansion, indent /]
-   #elif classname = "Assertion"
+   [#elseif classname = "Assertion"]
       [@BuildAssertionCode expansion, indent /]
-   #elif classname = "TokenTypeActivation"
+   [#elseif classname = "TokenTypeActivation"]
       [@BuildCodeTokenTypeActivation expansion, indent /]
-   #elif classname = "TryBlock"
+   [#elseif classname = "TryBlock"]
       [@BuildCodeTryBlock expansion, indent /]
-   #elif classname = "AttemptBlock"
+   [#elseif classname = "AttemptBlock"]
       [@BuildCodeAttemptBlock expansion, indent /]
-   #else
+   [#else]
       [#-- take care of the tree node (if any) --]
       [@TreeBuildingAndRecovery expansion, indent; indent]
-         #if classname = "BNFProduction"
+         [#if classname = "BNFProduction"]
             [#-- The tree node having been built, now build the actual top-level expansion --]
-            #set topLevelExpansion = true
+            [#set topLevelExpansion = true]
             [@BuildCode expansion.nestedExpansion, indent /]
-         #else
+         [#else]
             [#-- take care of terminal and non-terminal expansions; they cannot contain child expansions --]
-            #if classname = "NonTerminal"
+            [#if classname = "NonTerminal"]
                [@BuildCodeNonTerminal expansion, indent /]
-            #elif classname = "Terminal"
+            [#elseif classname = "Terminal"]
                [@BuildCodeTerminal expansion, indent /]
-            #else
+            [#else]
                [#-- take care of the syntactical expansions (which can contain child expansions) --]
                [#-- capture the top-level indication in order to restore when bubbling up --]
-               #var stackedTopLevel = topLevelExpansion
-               #if topLevelExpansion && classname != "ExpansionSequence"
-                  #-- turn off top-level indication unless an expansion sequence (the tree node has already been determined when this nested template is expanded) 
-                  #set topLevelExpansion = false
-               #endif
-               #if classname = "ZeroOrOne"
+               [#var stackedTopLevel = topLevelExpansion]
+               [#if topLevelExpansion && classname != "ExpansionSequence"]
+                  [#-- turn off top-level indication unless an expansion sequence (the tree node has already been determined when this nested template is expanded) --]
+                  [#set topLevelExpansion = false]
+               [/#if]
+               [#if classname = "ZeroOrOne"]
                   [@BuildCodeZeroOrOne expansion, indent /]
-               #elif classname = "ZeroOrMore"
+               [#elseif classname = "ZeroOrMore"]
                   [@BuildCodeZeroOrMore expansion, indent /]
-               #elif classname = "OneOrMore"
+               [#elseif classname = "OneOrMore"]
                   [@BuildCodeOneOrMore expansion, indent /]
-               #elif classname = "ExpansionChoice"
+               [#elseif classname = "ExpansionChoice"]
                   [@BuildCodeChoice expansion, indent /]
-               #elif classname = "ExpansionWithParentheses"
+               [#elseif classname = "ExpansionWithParentheses"]
                   [#-- Recurse; the real expansion is nested within this one (but the LHS, if any, is on the parent) --]
                   [@BuildExpansionCode expansion.nestedExpansion, indent /]
-               #elif classname = "ExpansionSequence"
+               [#elseif classname = "ExpansionSequence"]
                   [@BuildCodeSequence expansion, indent /]
                   [#-- leave the topLevelExpansion one-shot alone (see above) --]
-               #endif
-               #set topLevelExpansion = stackedTopLevel
-            #endif
-         #endif
+               [/#if]
+               [#set topLevelExpansion = stackedTopLevel]
+            [/#if]
+         [/#if]
       [/@TreeBuildingAndRecovery]
-   #endif
+   [/#if]
 [#--${is}# DBG < BuildExpansionCode ${indent} ${classname} --]
-#endmacro
+[/#macro]
 
 [#-- The following macros build expansions that never build tree nodes. --]
 
-[#macro BuildCodeFailure fail indent]
+[#macro BuildCodeFailure fail, indent]
 [#var is = ""?right_pad(indent)]
 [#--${is}# DBG > BuildCodeFailure ${indent} --]
     [#if fail.code?is_null]
