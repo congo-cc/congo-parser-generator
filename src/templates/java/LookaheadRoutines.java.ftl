@@ -296,9 +296,6 @@
    // BuildProductionLookaheadMethod macro
   #set CU.newVarIndex = 0 
    private boolean ${production.lookaheadMethodName}(boolean scanToEnd) {
-      #if production.javaCode?? && (production.javaCode.appliesInLookahead || production.onlyForLookahead)
-          ${production.javaCode}
-      #endif
       ${BuildScanCode(production.expansion)}
       return true;
    }

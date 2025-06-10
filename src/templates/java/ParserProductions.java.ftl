@@ -71,11 +71,6 @@
     {
      if (cancelled) throw new CancellationException();
      this.currentlyParsedProduction = "${production.name}";
-     [#--${production.javaCode!}
-       This is actually inserted further down because
-       we want the prologue java code block to be able to refer to
-       CURRENT_NODE.
-     --]
      #set topLevelExpansion = false
      ${BuildCode(production)}
     }
@@ -171,7 +166,6 @@
          treeNodeBehavior,
          buildingTreeNode = false,
          nodeVarName,
-         javaCodePrologue = "",
          parseExceptionVar = CU.newVarName("parseException"),
          callStackSizeVar = CU.newVarName("callStackSize"),
          canRecover = settings.faultTolerant && expansion.tolerantParsing && expansion.simpleName != "Terminal"
@@ -179,8 +173,7 @@
    #-- // DBG <> treeNodeBehavior = ${(treeNodeBehavior??)?string!} for expansion ${expansion.simpleName} --
    #if expansion == currentProduction
       #-- Set this expansion as the current production and capture any Java code specified before the first expansion unit --
-      #set production = currentProduction,
-           javaCodePrologue = production.javaCode!
+      #set production = currentProduction
    #endif
    #if treeNodeBehavior??
       #if settings.treeBuildingEnabled
@@ -190,7 +183,6 @@
    #endif
    #if !buildingTreeNode && !canRecover
       #-- We need neither tree nodes nor recovery code; do the simple one. --
-      ${javaCodePrologue}
       #nested
    #else
       #-- We need tree nodes and/or recovery code. --
@@ -198,9 +190,6 @@
          #-- Build the tree node (part 1). 
          ${createNode(nodeClassName(treeNodeBehavior), nodeVarName)}
       #endif
-      #-- Any prologue code can refer to CURRENT_NODE at this point. --
-      #-- REVISIT: Is this needed anymore, since THIS_PRODUCTION is always the reference to the current production node (if any) (jb)? --
-      ${javaCodePrologue}
       ParseException ${parseExceptionVar} = null;
       int ${callStackSizeVar} = parsingStack.size();
       try {

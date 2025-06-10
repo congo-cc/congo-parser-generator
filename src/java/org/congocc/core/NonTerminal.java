@@ -121,8 +121,6 @@ public class NonTerminal extends Expansion implements SyntaxElement {
      }
 
      public boolean startsWithGlobalCodeAction(boolean stopAtScanLimit) {
-        CodeBlock javaCode = getProduction().getJavaCode();
-        if (javaCode != null && javaCode.isAppliesInLookahead()) return true;
         return getNestedExpansion().startsWithGlobalCodeAction(stopAtScanLimit);
      }
 

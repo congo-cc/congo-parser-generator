@@ -69,10 +69,6 @@ public class BNFProduction extends Expansion {
         return expansion.getLookahead();
     }
 
-    public CodeBlock getJavaCode() {
-       return firstChildOfType(CodeBlock.class);
-    }
-
     public boolean isOnlyForLookahead() {
         TreeBuildingAnnotation tba = getTreeBuildingAnnotation();
         return tba!=null && "scan".equals(tba.getNodeName());

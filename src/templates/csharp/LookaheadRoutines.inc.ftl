@@ -311,9 +311,6 @@ private bool ${lookBehind.routineName}() {
 [#--     # DBG > BuildProductionLookaheadMethod --]
         // BuildProductionLookaheadMethod macro
         private bool ${production.lookaheadMethodName}(bool scanToEnd) {
-[#if production.javaCode?? && production.javaCode.appliesInLookahead]
-${globals::translateCodeBlock(production.javaCode, 12)}
-[/#if]
 ${BuildScanCode(production.expansion)}
             return true;
         }

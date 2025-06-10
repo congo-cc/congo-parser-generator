@@ -55,11 +55,6 @@
         // ${production.location}
         ${globals::startProduction()}${globals::translateModifiers(production.accessModifier)} ${globals::translateType(production.returnType)} Parse${production.name}([#if production.parameterList??]${globals::translateParameters(production.parameterList)}[/#if]) {
             _currentlyParsedProduction = "${production.name}";
-            [#--${production.javaCode!}
-            This is actually inserted further down because
-            we want the prologue java code block to be able to refer to
-            CURRENT_NODE.
-            --]
             [#set topLevelExpansion = false]
             ${BuildCode(production)}
         }
@@ -155,7 +150,6 @@ if (_pendingRecovery) {
           treeNodeBehavior,
           buildingTreeNode = false,
           nodeVarName,
-          javaCodePrologue = null,
           parseExceptionVar = CU.newVarName("parseException"),
           callStackSizeVar = CU.newVarName("callStackSize"),
           canRecover = settings.faultTolerant && expansion.tolerantParsing && expansion.simpleName != "Terminal"
@@ -165,7 +159,6 @@ if (_pendingRecovery) {
     [#if expansion == currentProduction]
       [#-- Set this expansion as the current production and capture any Java code specified before the first expansion unit --]
       [#set production = currentProduction]
-      [#set javaCodePrologue = production.javaCode!]
     [/#if]
     [#if treeNodeBehavior??]
         [#if settings.treeBuildingEnabled]
@@ -174,17 +167,14 @@ if (_pendingRecovery) {
         [/#if]
     [/#if]
     [#if !buildingTreeNode && !canRecover]
-${globals::translateCodeBlock(javaCodePrologue, 1)}[#rt]
         [#nested]
     [#else]
         [#-- We need tree nodes and/or recovery code. --]
         #if buildingTreeNode
             [#-- Build the tree node (part 1). --]
             [@createNode nodeClassName(treeNodeBehavior), nodeVarName /]
-            #-- [@buildTreeNode production, treeNodeBehavior, nodeVarName /]
         #endif
         [#-- Any prologue code can refer to CURRENT_NODE at this point. --][#-- REVISIT: Is this needed anymore, since THIS_PRODUCTION is always the reference to CURRENT_NODE (jb)? --]
-${globals::translateCodeBlock(javaCodePrologue, 1)}
 ParseException ${parseExceptionVar} = null;
 var ${callStackSizeVar} = ParsingStack.Count;
 try {

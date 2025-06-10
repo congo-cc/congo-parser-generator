@@ -61,12 +61,7 @@ ${is}${globals::startProduction()}def parse_${production.name}(self[#if producti
 ${is}    # import pdb; pdb.set_trace()
    [#-- OMITTED: "if (cancelled) throw new CancellationException();" --]
 ${is}    self.currently_parsed_production = '${production.name}'
-   [#--${production.javaCode!}
-      This is actually inserted further down because
-      we want the prologue java code block to be able to refer to
-      CURRENT_NODE.
-   --]
-   [#set topLevelExpansion = false]
+   #set topLevelExpansion = false
 ${BuildCode(production, indent + 4)}
 ${is}# end of parse_${production.name}${globals::endProduction()}
 [/#macro]
@@ -156,7 +151,6 @@ ${is}    self.${expansion.recoverMethodName}()
          treeNodeBehavior,
          buildingTreeNode = false,
          nodeVarName,
-         javaCodePrologue = null,
          parseExceptionVar = CU.newVarName("parseException"),
          callStackSizeVar = CU.newVarName("callStackSize"),
          canRecover = settings.faultTolerant && expansion.tolerantParsing && expansion.simpleName != "Terminal"
@@ -165,7 +159,6 @@ ${is}    self.${expansion.recoverMethodName}()
    [#if expansion == currentProduction]
       [#-- Set this expansion as the current production and capture any Java code specified before the first expansion unit --]
       [#set production = currentProduction]
-      [#set javaCodePrologue = production.javaCode!]
    [/#if]
    [#if treeNodeBehavior??]
       [#if settings.treeBuildingEnabled]
@@ -175,7 +168,6 @@ ${is}    self.${expansion.recoverMethodName}()
    [/#if]
    [#if !buildingTreeNode && !canRecover]
       [#-- We need neither tree nodes nor recovery code; do the simple one. --]
-${globals::translateCodeBlock(javaCodePrologue, indent)}[#rt]
       [#nested indent][#rt]
    [#else]
       [#-- We need tree nodes and/or recovery code. --]
@@ -184,7 +176,6 @@ ${globals::translateCodeBlock(javaCodePrologue, indent)}[#rt]
          [@buildTreeNode production, treeNodeBehavior, nodeVarName, indent/]
       [/#if]
       [#-- Any prologue code can refer to CURRENT_NODE at this point. --]
-${globals::translateCodeBlock(javaCodePrologue, indent)}[#rt]
 ${is}${parseExceptionVar} = None
 ${is}${callStackSizeVar} = len(self.parsing_stack)
 ${is}try:

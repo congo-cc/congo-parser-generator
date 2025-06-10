@@ -44,7 +44,7 @@ private static readonly HashSet<TokenType> ${varName} = Utils.GetOrMakeSet(
 [/#macro]
 --]
 [#macro newVarName prefix]
-${prefix}${newID()}[#rt]
+  ${prefix}${newID()}
 [/#macro]
 
 [#function newID]

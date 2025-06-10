@@ -4,7 +4,6 @@ PARSER_PACKAGE=org.congocc.parser;
 NODE_PACKAGE=org.congocc.parser.tree;
 DEFAULT_LEXICAL_STATE=JAVA;
 BASE_SRC_DIR="../../build/generated-java";
-//MINIMAL_TOKEN=false;
 
 USES_PREPROCESSOR;
 
@@ -713,12 +712,6 @@ BNFProduction #org.congocc.core.BNFProduction :
         {CURRENT_NODE.setLexicalState(lastConsumedToken.toString());}
         ":"
     ]
-    [
-        Block
-        {CodeBlock block = (CodeBlock) peekNode();}
-        ["#" {block.setAppliesInLookahead(true);}]
-        ASSERT ENSURE ~(";") =>||
-    ]
     ExpansionChoice
     {CURRENT_NODE.setExpansion((Expansion) peekNode());}
     ";"
@@ -760,12 +753,12 @@ InlineTreeNodeDescriptor #TreeBuildingAnnotation :
     ")"
     |
     "("
-    ASSERT ~(ExpansionSequence "|") //A bit kludgy, but we treat this case specially for principle of least surprise.
+    ENSURE ~(ExpansionSequence "|") //A bit kludgy, but we treat this case specially for principle of least surprise.
     Expression {CURRENT_NODE.setCondition((Expression) peekNode());}
     ")"
     // If any of the following tokens are after the closing parenthesesis, this must
     // be an expansion (or the code is just invalid)
-    ASSERT ~(<STAR>|<PLUS>|<HOOK>|<HASH>)
+    ENSURE ~(<STAR>|<PLUS>|<HOOK>|<HASH>)
     =>||
     |
     SCAN "(" ExpansionChoice ")" => {}

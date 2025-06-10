@@ -313,9 +313,6 @@ ${is}    return True
     # BuildProductionLookaheadMethod
     def ${production.lookaheadMethodName}(self, scan_to_end):
         # import pdb; pdb.set_trace()
-[#if production.javaCode?? && production.javaCode.appliesInLookahead]
-${globals::translateCodeBlock(production.javaCode, 8)}
-[/#if]
 ${BuildScanCode(production.expansion, 8)}
         return True
 
