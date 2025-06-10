@@ -473,7 +473,7 @@
 #endfunction
 
 #macro buildTreeNode production treeNodeBehavior nodeVarName [#-- FIXME: production is not used here --]
-   #exec globals::pushNodeVariableName(nodeVarName)
+#--   #exec globals::pushNodeVariableName(nodeVarName)
    ${createNode(nodeClassName(treeNodeBehavior), nodeVarName)}
 #endmacro
 
@@ -517,7 +517,7 @@
    #endif
       }
    }
-   #exec globals::popNodeVariableName()
+#--   #exec globals::popNodeVariableName()
 #endmacro
 
 #function getRhsAssignmentPattern assignment

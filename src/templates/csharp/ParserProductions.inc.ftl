@@ -440,7 +440,7 @@ finally {
 /#function
 
 [#macro buildTreeNode production treeNodeBehavior nodeVarName] [#-- FIXME: production is not used here --]
-   #exec globals::pushNodeVariableName(nodeVarName)
+#--   #exec globals::pushNodeVariableName(nodeVarName)
    [@createNode nodeClassName(treeNodeBehavior), nodeVarName /]
 [/#macro]
 
@@ -480,7 +480,7 @@ if (BuildTree) {
    [/#if]
       }
    }
-   #exec globals::popNodeVariableName()
+#--   #exec globals::popNodeVariableName()
 [/#macro]
 
 [#function getRhsAssignmentPattern assignment]

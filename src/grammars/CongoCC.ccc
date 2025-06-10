@@ -4,7 +4,7 @@ PARSER_PACKAGE=org.congocc.parser;
 NODE_PACKAGE=org.congocc.parser.tree;
 DEFAULT_LEXICAL_STATE=JAVA;
 BASE_SRC_DIR="../../build/generated-java";
-MINIMAL_TOKEN=false;
+//MINIMAL_TOKEN=false;
 
 USES_PREPROCESSOR;
 
@@ -139,8 +139,8 @@ INJECT PARSER_CLASS :
         token_source.setParsedLines(lineMarkers);
     }
 
-    static public CompilationUnit parseJavaFile(String inputSource, CharSequence content) {
-        PARSER_CLASS parser = new PARSER_CLASS(inputSource, content);
+    static public CompilationUnit parseJavaFile(Grammar grammar, String inputSource, CharSequence content) throws IOException{
+        PARSER_CLASS parser = new PARSER_CLASS(grammar, inputSource, content);
         return parser.CompilationUnit();
     }
 
@@ -323,16 +323,8 @@ INJECT Identifier :
         String image = getSource();
         if (firstAncestorOfType(Options.class) != null) return image; 
         return switch (image) {
-            case "jjtThis", "CURRENT_NODE" -> {
-               savedImage=getGrammar().getTemplateGlobals().getCurrentNodeVariableName();
-               if ("null".equals(savedImage)) {
-                  savedImage = null;
-                  yield image;
-               }
-               yield savedImage;
-            }
-            case "THIS_PRODUCTION" -> 
-               "thisProduction";
+            case "jjtThis", "CURRENT_NODE", "THIS_PRODUCTION" -> 
+                "thisProduction";
             case "PARSER_CLASS" -> 
                getAppSettings().getParserClassName();
             case "LEXER_CLASS" -> 
@@ -371,6 +363,8 @@ INJECT interface Node :
 {
     default Grammar getGrammar() {
         TokenSource ts = getTokenSource();
+        assert ts != null;
+        assert ts.getGrammar() != null;
         return ts == null ? null : ts.getGrammar();
     }
     default Node getNamedChild(String name) { return null; }

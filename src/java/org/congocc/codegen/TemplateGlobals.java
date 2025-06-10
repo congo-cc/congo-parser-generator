@@ -22,7 +22,7 @@ public class TemplateGlobals {
     private final AppSettings appSettings;
     private Translator translator;
 
-    private final List<String> nodeVariableNameStack = new ArrayList<>();
+//    private final List<String> nodeVariableNameStack = new ArrayList<>();
 
     public TemplateGlobals(Grammar grammar) {
         this.grammar = grammar;
@@ -31,7 +31,7 @@ public class TemplateGlobals {
     }
 
     public void setTranslator(Translator translator) {this.translator = translator;}
-
+/*
     public void pushNodeVariableName(String nodeName) {
         nodeVariableNameStack.add(nodeName);
     }
@@ -39,6 +39,11 @@ public class TemplateGlobals {
     public void popNodeVariableName() {
         nodeVariableNameStack.remove(nodeVariableNameStack.size() - 1);
     }
+
+    public String getCurrentNodeVariableName() {
+        return "thisProduction";
+    }
+*/
 
     public boolean nodeIsInterface(String nodeName) {
         return grammar.nodeIsInterface(nodeName);
@@ -501,11 +506,5 @@ public class TemplateGlobals {
         List<String> result = seq.steps(bnn);
         result.remove(0); // The bnn value
         return result;
-    }
-
-    public String getCurrentNodeVariableName() {
-        if (nodeVariableNameStack.isEmpty())
-            return "null";
-        return nodeVariableNameStack.get(nodeVariableNameStack.size() - 1);
     }
 }

@@ -186,7 +186,7 @@ public class Grammar extends BaseNode {
         if (location.toLowerCase().endsWith(".java") || location.toLowerCase().endsWith(".jav")) {
             Path includeFile = Paths.get(location);
             String content = new String(Files.readAllBytes(path), StandardCharsets.UTF_8);
-            CompilationUnit cu = CongoCCParser.parseJavaFile(includeFile.normalize().toString(), content);
+            CompilationUnit cu = CongoCCParser.parseJavaFile(this, includeFile.normalize().toString(), content);
             codeInjections.add(cu);
             return cu;
         } else {

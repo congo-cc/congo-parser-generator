@@ -303,7 +303,7 @@ public class FilesGenerator {
         CompilationUnit jcu;
         Writer out = Files.newBufferedWriter(outputFile);
         try {
-            jcu = CongoCCParser.parseJavaFile(outputFile.getFileName().toString(), code);
+            jcu = CongoCCParser.parseJavaFile(grammar, outputFile.getFileName().toString(), code);
         } catch (Exception e) {
             e.printStackTrace();
             out.write(code);
