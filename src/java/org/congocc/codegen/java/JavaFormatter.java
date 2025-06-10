@@ -134,7 +134,7 @@ public class JavaFormatter extends Node.Visitor {
 
     void visit(Delimiter delimiter) {
         switch (delimiter.getType()) {
-            case COMMA :
+            case COMMA -> {
                 outputToken(delimiter);
                 if (currentLineLength() > MAX_LINE_LENGTH 
                     && (delimiter.getParent() instanceof ArrayInitializer 
@@ -143,22 +143,22 @@ public class JavaFormatter extends Node.Visitor {
                         newLine();
                 }
                 else buf.append(' ');
-                break;
-            case RBRACKET :
+            }
+            case RBRACKET -> {
                 outputToken(delimiter);
                 TokenType nextType = delimiter.getNext().getType();
                 if (nextType != LBRACKET && nextType != SEMICOLON && nextType != GT
                         && nextType != RPAREN && nextType != COMMA && nextType != DOT)
                     addSpaceIfNecessary();
-                break;
-            case LBRACE :
+            }
+            case LBRACE -> {
                 outputToken(delimiter);
                 if (!(delimiter.getParent() instanceof ArrayInitializer)) {
                     currentIndent += indent;
                     newLine();
                 }
-                break;
-            case RBRACE :
+            }
+            case RBRACE -> {
                 boolean endOfArrayInitializer = delimiter.getParent() instanceof ArrayInitializer;
                 if (!endOfArrayInitializer) {
                     newLine();
@@ -171,13 +171,13 @@ public class JavaFormatter extends Node.Visitor {
                         addSpaceIfNecessary(); // space for multi block statements
                     else newLine();
                 }
-                break;
-            case RPAREN:
+            }
+            case RPAREN -> {
                 buf.append(delimiter);
                 if (delimiter.getParent() instanceof CastExpression)
                     addSpaceIfNecessary();
-                break;
-            case SEMICOLON:
+            }
+            case SEMICOLON -> {
                 if (buf.charAt(buf.length() - 1) != ' ') { // detect rogue semicolons
                     buf.append(delimiter);
                     if (!(delimiter.getParent() instanceof ForStatement)
@@ -186,8 +186,8 @@ public class JavaFormatter extends Node.Visitor {
                 } else for (int i = 1; i <= 6; i++) // remove rogue semicolons
                     if (buf.charAt(buf.length() - 1) == ' ' || buf.charAt(buf.length() - 1) == '\n')
                         buf.setLength(buf.length() - 1);
-                break;
-            default : outputToken(delimiter);
+            }
+            default -> outputToken(delimiter);
         }
     }
 

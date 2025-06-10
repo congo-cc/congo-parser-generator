@@ -392,59 +392,30 @@ public class CSharpTranslator extends Translator {
     }
 
     @Override public String translateTypeName(String name) {
-        String result = name;
-
-        switch (name) {
-            case "List":
-            case "java.util.List":
-                result = "ListAdapter";
-                break;
-            case "Map":
-            case "java.util.Map":
-            case "java.util.HashMap":
-                result = "MapAdapter";
-                break;
-            case "Set":
-            case "HashSet":
-            case "EnumSet":
-                result = "HashSet";
-                break;
-            case "Iterator":
-            case "java.util.Iterator":
-                result = "Iterator";
-                break;
-            case "boolean":
-                result = "bool";
-                break;
-            case "Integer":
-                result = "int";
-                break;
-            case "BASE_TOKEN_CLASS" :
-                result = "Token";
-                break;
-            case "LEXER_CLASS":
-                result = "Lexer";
-                break;
-            case "PARSER_CLASS":
-                result = "Parser";
-                break;
-            default:
-                if (name.equals(appSettings.getLexerClassName())) {
-                    result = "Lexer";
-                }
-                else if (name.equals(appSettings.getParserClassName())) {
-                    result = "Parser";
-                }
-                else if (name.equals(appSettings.getBaseTokenClassName())) {
-                    result = "Token";
-                }
+        return switch (name) {
+            case "List", "java.util.List" -> "ListAdapter";
+            case "Map", "java.util.Map", "java.util.HashMap" -> "MapAdapter";
+            case "Set", "HashSet", "EnumSet" -> "HashSet";
+            case "Iterator", "java.util.Iterator" -> "Iterator";
+            case "boolean" -> "bool";
+            case "Integer" -> "int";
+            case "BASE_TOKEN_CLASS" -> "Token";
+            case "LEXER_CLASS" -> "Lexer";
+            case "PARSER_CLASS" -> "Parser";
+            default -> {
+                if (name.equals(appSettings.getLexerClassName())) 
+                    yield "Lexer";
+                else if (name.equals(appSettings.getParserClassName())) 
+                    yield "Parser";
+                else if (name.equals(appSettings.getBaseTokenClassName())) 
+                    yield "Token";
                 else if (name.startsWith(appSettings.getNodePackage().concat("."))) {
                     int prefixLength = appSettings.getNodePackage().length() + 1;
-                    result = name.substring(prefixLength);
+                    yield name.substring(prefixLength);
                 }
-                break;
-        }
-        return result;
+                yield name;
+            }
+        };
     }
 
     @Override protected void translateType(ASTTypeExpression expr, StringBuilder result) {

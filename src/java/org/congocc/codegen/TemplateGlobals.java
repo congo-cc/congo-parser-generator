@@ -37,37 +37,22 @@ public class TemplateGlobals {
         StringBuilder retval = new StringBuilder();
         for (int ch : str.codePoints().toArray()) {
             switch (ch) {
-                case '\b':
-                    retval.append("\\b");
-                    continue;
-                case '\t':
-                    retval.append("\\t");
-                    continue;
-                case '\n':
-                    retval.append("\\n");
-                    continue;
-                case '\f':
-                    retval.append("\\f");
-                    continue;
-                case '\r':
-                    retval.append("\\r");
-                    continue;
-                case '\"':
-                    retval.append("\\\"");
-                    continue;
-                case '\'':
-                    retval.append("\\'");
-                    continue;
-                case '\\':
-                    retval.append("\\\\");
-                    continue;
-                default:
+                case '\b' -> retval.append("\\b");
+                case '\t' -> retval.append("\\t");
+                case '\n' -> retval.append("\\n");
+                case '\f' -> retval.append("\\f");
+                case '\r' -> retval.append("\\r");
+                case '\"' -> retval.append("\\\"");
+                case '\'' -> retval.append("\\'");
+                case '\\' -> retval.append("\\\\");
+                default -> {
                     if (Character.isISOControl(ch)) {
                         String s = "0000" + java.lang.Integer.toString(ch, 16);
                         retval.append("\\u").append(s.substring(s.length() - 4));
                     } else {
                         retval.appendCodePoint(ch);
                     }
+                }
             }
         }
         return retval.toString();
@@ -88,27 +73,24 @@ public class TemplateGlobals {
     }
 
     public String displayChar(int ch) {
-        if (ch == '\'')
-            return "'\\''";
-        if (ch == '\\')
-            return "'\\\\'";
-        if (ch == '\t')
-            return "'\\t'";
-        if (ch == '\r')
-            return "'\\r'";
-        if (ch == '\n')
-            return "'\\n'";
-        if (ch == '\f')
-            return "'\\f'";
-        if (ch == ' ')
-            return "' '";
-        if (ch < 128 && !Character.isWhitespace(ch) && !Character.isISOControl(ch))
-            return "'" + (char) ch + "'";
-        String s = "0x" + Integer.toHexString(ch);
-        if (appSettings.getCodeLang().equals("python")) {
-            s = String.format("as_chr(%s)", s);
-        }
-        return s;
+        return switch (ch) {
+            case '\'' -> "'\\''";
+            case '\\' -> "'\\\\'";
+            case '\t' -> "'\\t'";
+            case '\r' -> "'\\r'";
+            case '\n' -> "'\\n'";
+            case '\f' -> "'\\f'";
+            case ' '  -> "' '";
+            default -> {
+                if (ch < 128 && !Character.isWhitespace(ch) && !Character.isISOControl(ch))
+                    yield "'" + (char) ch + "'";
+                String s = "0x" + Integer.toHexString(ch);
+                if (appSettings.getCodeLang().equals("python")) {
+                    s = String.format("as_chr(%s)", s);
+                }
+                yield s;
+            }
+        };
     }
 
     // The following methods added for supporting generation in languages other than

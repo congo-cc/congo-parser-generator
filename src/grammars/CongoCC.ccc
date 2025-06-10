@@ -1273,7 +1273,7 @@ ChildNameInfo(Expansion expansion) : //#void :
     String name;
     boolean multiple = false;
 }
-  ASSERT ~(Assignment)
+  ENSURE ~(Assignment)
   // TODO these delimiters are provisional - agreement needed on final form
   "/" =>||
   (
