@@ -452,7 +452,6 @@ ${injectDeclaration(treeNodeBehavior.nodeName, treeNodeBehavior.assignment.name,
 [#macro buildTreeNode production treeNodeBehavior nodeVarName indent]
 [#-- FIXME: production is not used here --]
 [#var is = ""?right_pad(indent)]
-#-- #exec globals::pushNodeVariableName(nodeVarName)
 [@createNode nodeClassName(treeNodeBehavior), nodeVarName, indent /]
 [/#macro]
 
@@ -488,7 +487,6 @@ ${is}        ${nodeVarName}.dirty = True
    [#else]
 ${is}        self.clear_node_scope()
    [/#if]
-#-- #exec globals::popNodeVariableName()
 [/#macro]
 
 [#function getRhsAssignmentPattern assignment]

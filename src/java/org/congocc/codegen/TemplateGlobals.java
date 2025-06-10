@@ -18,32 +18,15 @@ import org.congocc.parser.tree.*;
 public class TemplateGlobals {
 
     private final Grammar grammar;
-    // private final LexerData lexerData;
     private final AppSettings appSettings;
     private Translator translator;
 
-//    private final List<String> nodeVariableNameStack = new ArrayList<>();
-
     public TemplateGlobals(Grammar grammar) {
         this.grammar = grammar;
-        // this.lexerData = grammar.getLexerData();
         this.appSettings = grammar.getAppSettings();
     }
 
     public void setTranslator(Translator translator) {this.translator = translator;}
-/*
-    public void pushNodeVariableName(String nodeName) {
-        nodeVariableNameStack.add(nodeName);
-    }
-
-    public void popNodeVariableName() {
-        nodeVariableNameStack.remove(nodeVariableNameStack.size() - 1);
-    }
-
-    public String getCurrentNodeVariableName() {
-        return "thisProduction";
-    }
-*/
 
     public boolean nodeIsInterface(String nodeName) {
         return grammar.nodeIsInterface(nodeName);

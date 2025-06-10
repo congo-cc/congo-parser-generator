@@ -717,7 +717,7 @@ BNFProduction #org.congocc.core.BNFProduction :
         Block
         {CodeBlock block = (CodeBlock) peekNode();}
         ["#" {block.setAppliesInLookahead(true);}]
-        ASSERT ~(";") =>||
+        ASSERT ENSURE ~(";") =>||
     ]
     ExpansionChoice
     {CURRENT_NODE.setExpansion((Expansion) peekNode());}

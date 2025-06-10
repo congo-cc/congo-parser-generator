@@ -178,10 +178,11 @@ ${globals::translateCodeBlock(javaCodePrologue, 1)}[#rt]
         [#nested]
     [#else]
         [#-- We need tree nodes and/or recovery code. --]
-        [#if buildingTreeNode]
+        #if buildingTreeNode
             [#-- Build the tree node (part 1). --]
-            [@buildTreeNode production, treeNodeBehavior, nodeVarName /]
-        [/#if]
+            [@createNode nodeClassName(treeNodeBehavior), nodeVarName /]
+            #-- [@buildTreeNode production, treeNodeBehavior, nodeVarName /]
+        #endif
         [#-- Any prologue code can refer to CURRENT_NODE at this point. --][#-- REVISIT: Is this needed anymore, since THIS_PRODUCTION is always the reference to CURRENT_NODE (jb)? --]
 ${globals::translateCodeBlock(javaCodePrologue, 1)}
 ParseException ${parseExceptionVar} = null;
@@ -440,7 +441,6 @@ finally {
 /#function
 
 [#macro buildTreeNode production treeNodeBehavior nodeVarName] [#-- FIXME: production is not used here --]
-#--   #exec globals::pushNodeVariableName(nodeVarName)
    [@createNode nodeClassName(treeNodeBehavior), nodeVarName /]
 [/#macro]
 
@@ -480,7 +480,6 @@ if (BuildTree) {
    [/#if]
       }
    }
-#--   #exec globals::popNodeVariableName()
 [/#macro]
 
 [#function getRhsAssignmentPattern assignment]
@@ -929,13 +928,34 @@ ${BuildCode(subexp)}
 [/#macro]
 
 [#-- Generates code for when we need a scanahead --]
-[#macro ScanAheadCondition expansion]
-[#if expansion.lookahead?? && expansion.lookahead.assignment??](${expansion.lookahead.assignment.name} = [/#if][#if expansion.hasSemanticLookahead && !expansion.lookahead.semanticLookaheadNested](${globals::translateExpression(expansion.semanticLookahead)}) && [/#if]${expansion.predicateMethodName}()[#if expansion.lookahead?? && expansion.lookahead.assignment??])[/#if]
-[/#macro]
+#macro ScanAheadCondition expansion
+  #if expansion.lookahead?? && expansion.lookahead.assignment??
+     (${expansion.lookahead.assignment.name} = 
+  #endif
+  #if expansion.hasSemanticLookahead && !expansion.lookahead.semanticLookaheadNested
+    (${globals::translateExpression(expansion.semanticLookahead)}) && 
+  #endif
+    ${expansion.predicateMethodName}()
+  #if expansion.lookahead?? && expansion.lookahead.assignment??
+    )
+  #endif
+#endmacro
 
 
-[#-- Generates code for when we don't need any scanahead routine --]
-[#macro SingleTokenCondition expansion]
-[#if expansion.hasSemanticLookahead](${globals::translateExpression(expansion.semanticLookahead)}) && [/#if]
-[#if expansion.enteredUnconditionally]true[#elseif expansion.firstSet.tokenNames?size == 0]false[#elseif expansion.firstSet.tokenNames?size < 5][#list expansion.firstSet.tokenNames as name](NextTokenType == TokenType.${name})[#if name_has_next] || [/#if][/#list][#else]${expansion.firstSetVarName}.Contains(NextTokenType)[/#if][#t]
-[/#macro]
+#-- Generates code for when we don't need any scanahead routine 
+#macro SingleTokenCondition expansion
+  #if expansion.hasSemanticLookahead
+     (${globals::translateExpression(expansion.semanticLookahead)}) && 
+  #endif
+  #if expansion.enteredUnconditionally 
+     true
+  #elif expansion.firstSet.tokenNames?size == 0
+     false
+  #elif expansion.firstSet.tokenNames?size < 5
+     #list expansion.firstSet.tokenNames as name
+        (NextTokenType == TokenType.${name})${name_has_next ?: "||"}
+     #endlist
+  #else
+     ${expansion.firstSetVarName}.Contains(NextTokenType)
+  #endif
+#endmacro

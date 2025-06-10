@@ -195,8 +195,8 @@
    #else
       #-- We need tree nodes and/or recovery code. --
       #if buildingTreeNode
-         #-- Build the tree node (part 1). --
-         ${buildTreeNode(production, treeNodeBehavior, nodeVarName)}
+         #-- Build the tree node (part 1). 
+         ${createNode(nodeClassName(treeNodeBehavior), nodeVarName)}
       #endif
       #-- Any prologue code can refer to CURRENT_NODE at this point. --
       #-- REVISIT: Is this needed anymore, since THIS_PRODUCTION is always the reference to the current production node (if any) (jb)? --
@@ -473,7 +473,6 @@
 #endfunction
 
 #macro buildTreeNode production treeNodeBehavior nodeVarName [#-- FIXME: production is not used here --]
-#--   #exec globals::pushNodeVariableName(nodeVarName)
    ${createNode(nodeClassName(treeNodeBehavior), nodeVarName)}
 #endmacro
 
@@ -517,7 +516,6 @@
    #endif
       }
    }
-#--   #exec globals::popNodeVariableName()
 #endmacro
 
 #function getRhsAssignmentPattern assignment
