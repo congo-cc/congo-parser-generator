@@ -94,7 +94,7 @@ public class TemplateGlobals {
     }
 
     // The following methods added for supporting generation in languages other than
-    // Java. (It is only called from non-Java-generating templates, i.e. .cs.ftl and .py.ftl)
+    // Java. (It is only called from non-Java-generating templates, i.e. .cs.ctl and .py.ctl)
     public Map<String, Object> tokenSubClassInfo() {
         Map<String, String> tokenClassMap = new HashMap<>();
         Map<String, String> superClassMap = new HashMap<>();

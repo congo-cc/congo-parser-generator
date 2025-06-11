@@ -336,15 +336,15 @@ public boolean getLegacyGlitchyLookahead() {
   }
 
 
-#import "ParserProductions.java.ftl" as ParserCode
+#import "ParserProductions.java.ctl" as ParserCode
 ${ParserCode.Productions()}
-#import "LookaheadRoutines.java.ftl" as LookaheadCode
+#import "LookaheadRoutines.java.ctl" as LookaheadCode
 ${LookaheadCode.Generate()}
 
-#embed "ErrorHandling.java.ftl"
+#embed "ErrorHandling.java.ctl"
 
 #if settings.treeBuildingEnabled
-   #embed "TreeBuildingCode.java.ftl"
+   #embed "TreeBuildingCode.java.ctl"
 #else
   public boolean isTreeBuildingEnabled() {
     return false;

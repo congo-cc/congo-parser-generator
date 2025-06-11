@@ -65,7 +65,7 @@ public class FilesGenerator {
         templatesConfig.setSharedVariable("lexerData", grammar.getLexerData());
         templatesConfig.setSharedVariable("generated_by", org.congocc.app.Main.PROG_NAME);
         if (codeLang.equals("java"))
-           templatesConfig.addAutoImport("CU", "CommonUtils.java.ftl");
+           templatesConfig.addAutoImport("CU", "CommonUtils.java.ctl");
     }
 
     public FilesGenerator(Grammar grammar) {
@@ -156,29 +156,29 @@ public class FilesGenerator {
     };
 
     private String getTemplateName(String outputFilename) {
-        String result = outputFilename + ".ftl";
+        String result = outputFilename + ".ctl";
         if (codeLang.equals("java")) {
             if (outputFilename.equals(appSettings.getBaseTokenClassName() + ".java")) {
-                result = "Token.java.ftl";
+                result = "Token.java.ctl";
             } else if (tokenSubclassFileNames.contains(outputFilename)) {
-                result = "ASTToken.java.ftl";
+                result = "ASTToken.java.ctl";
             } else if (outputFilename.equals(appSettings.getParserClassName() + ".java")) {
-                result = "Parser.java.ftl";
+                result = "Parser.java.ctl";
             } else if (outputFilename.endsWith("Lexer.java")
                     || outputFilename.equals(appSettings.getLexerClassName() + ".java")) {
-                result = "Lexer.java.ftl";
+                result = "Lexer.java.ctl";
             } else if (outputFilename.equals(appSettings.getBaseNodeClassName() + ".java")) {
-                result = "BaseNode.java.ftl";
+                result = "BaseNode.java.ctl";
             }
             else if (outputFilename.startsWith(appSettings.getNodePrefix())) {
                 if (!nonNodeNames.contains(outputFilename) && !outputFilename.equals(appSettings.getBaseTokenClassName()+".java")) {
-                    result = "ASTNode.java.ftl";
+                    result = "ASTNode.java.ctl";
                 }
             }
         }
         else if (codeLang.equals("csharp")) {
             if (outputFilename.endsWith(".csproj")) {
-                result = "project.csproj.ftl";
+                result = "project.csproj.ctl";
             }
         }
         return result;

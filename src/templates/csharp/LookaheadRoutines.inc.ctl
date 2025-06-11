@@ -1,6 +1,6 @@
 [#-- This template generates the various lookahead/predicate routines --]
 
-[#import "CommonUtils.inc.ftl" as CU]
+[#import "CommonUtils.inc.ctl" as CU]
 
 [#var UNLIMITED = 2147483647]
 [#var MULTIPLE_LEXICAL_STATE_HANDLING = lexerData.numLexicalStates > 1]

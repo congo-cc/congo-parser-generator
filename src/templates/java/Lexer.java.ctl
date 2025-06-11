@@ -3,10 +3,10 @@
  [#--
     This template generates the XXXLexer.java class.
     The details of generating the code for the NFA state machine
-    are in the imported template NfaCode.java.ftl
+    are in the imported template NfaCode.java.ctl
  --]
 
-#import "NfaCode.java.ftl" as NFA
+#import "NfaCode.java.ctl" as NFA
 #var TOKEN = settings.baseTokenClassName
 
 package ${settings.parserPackage};

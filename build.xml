@@ -121,7 +121,7 @@
     </javac>
     <copy todir="build/templates">
       <fileset dir="src/templates">
-        <include name="**/*.ftl" />
+        <include name="**/*.ctl" />
       </fileset>
     </copy>
     <copy todir="build/include">

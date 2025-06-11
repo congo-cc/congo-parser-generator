@@ -4,7 +4,7 @@ import java.util.*;
 
 /**
  * A class to represent a set of Token types.
- * Will probably eventually move this into the Token.java.ftl as 
+ * Will probably eventually move this into the Token.java.ctl as 
  * something available to all generated parsers.
  */
 public class TokenSet extends BitSet {

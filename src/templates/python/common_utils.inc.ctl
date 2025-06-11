@@ -4,7 +4,7 @@
 [#var TT = "TokenType."]
 
 [#--
-  This macro is slightly different to the similarly-named one in lexer.py.ftl. This
+  This macro is slightly different to the similarly-named one in lexer.py.ctl. This
   variant is intended for setting class-level first/final/follow sets, so 'self.' is not
   present and the indentation is fixed at 4 (class member level).
 --]

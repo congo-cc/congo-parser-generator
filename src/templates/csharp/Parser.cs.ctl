@@ -1,6 +1,6 @@
 ${"#"}pragma warning disable 414, 168, 659
 // ReSharper disable InconsistentNaming
-[#import "CommonUtils.inc.ftl" as CU]
+[#import "CommonUtils.inc.ctl" as CU]
 [#var MULTIPLE_LEXICAL_STATE_HANDLING = (lexerData.numLexicalStates > 1)]
 [#var csPackage = globals::getPreprocessorSymbol('cs.package', settings.parserPackage) ]
 namespace ${csPackage} {
@@ -323,7 +323,7 @@ ${globals::translateParserInitializers()}
 [#if settings.treeBuildingEnabled]
         public bool IsTreeBuildingEnabled { get { return BuildTree; } }
 
-   [#embed "TreeBuildingCode.inc.ftl"]
+   [#embed "TreeBuildingCode.inc.ctl"]
 [#else]
         public bool IsTreeBuildingEnabled { get { return false; } }
 
@@ -497,12 +497,12 @@ ${globals::translateParserInitializers()}
             }
             return false;
         }
-[#import "ParserProductions.inc.ftl" as ParserCode]
+[#import "ParserProductions.inc.ctl" as ParserCode]
 [@ParserCode.Productions /]
-[#import "LookaheadRoutines.inc.ftl" as LookaheadCode]
+[#import "LookaheadRoutines.inc.ctl" as LookaheadCode]
 [@LookaheadCode.Generate/]
 
-[#embed "ErrorHandling.inc.ftl"]
+[#embed "ErrorHandling.inc.ctl"]
 
 [#if settings.treeBuildingEnabled]
     //
