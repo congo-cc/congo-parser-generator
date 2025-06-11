@@ -987,8 +987,8 @@ ${globals::translateLexerInjections(false)}
 #if lexerData.hasLexicalStateTransitions
 # Generate the map for lexical state transitions from the various token types (if necessary)
   #list lexerData.regularExpressions as regexp
-    #if !regexp.newLexicalState?is_null
+    #if regexp.newLexicalState
 token_type_to_lexical_state_map[TokenType.${regexp.label}] = LexicalState.${regexp.newLexicalState.name}
-    /#if
-  /#list
-/#if
+    #endif
+  #endlist
+#endif

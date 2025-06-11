@@ -88,7 +88,7 @@ ${is}            break
    [#if expansion.simpleName = "ZeroOrMore" || expansion.simpleName = "OneOrMore"]
       [#var followingExpansion = expansion.followingExpansion]
       [#list 1..1000000 as unused]
-      [#if followingExpansion?is_null][#break][/#if]
+      [#if !followingExpansion][#break][/#if]
       [#if followingExpansion.maximumSize > 0]
          [#if followingExpansion.simpleName = "OneOrMore" || followingExpansion.simpleName = "ZeroOrOne" || followingExpansion.simpleName = "ZeroOrMore"]
 ${is}        if (${ExpansionCondition(followingExpansion.nestedExpansion)}):
@@ -99,7 +99,7 @@ ${is}            success = True
 ${is}            break
       [/#if]
       [#if !followingExpansion.possiblyEmpty][#break][/#if]
-      [#if followingExpansion.followingExpansion?is_null]
+      [#if !followingExpansion.followingExpansion]
 ${is}        if self.outer_follow_set is not None:
 ${is}            if self.next_token_type() in self.outer_follow_set:
 ${is}                success = True
@@ -192,7 +192,7 @@ ${is}    raise
 ${is}    if not self.is_tolerant: raise
 ${is}    self.pending_recovery = True
          ${expansion.customErrorRecoveryBlock!}
-         [#if !production?is_null && production.returnType != "void"]
+         [#if production && production.returnType != "void"]
             [#var rt = production.returnType]
             [#-- We need a return statement here or the code won't compile! --]
             [#if rt = "int" || rt = "char" || rt == "byte" || rt = "short" || rt = "long" || rt = "float"|| rt = "double"]
@@ -222,7 +222,7 @@ ${is}    self.restore_call_stack(${callStackSizeVar})
          [#set fieldName = jtbNameMap[nodeClass]/]
       [/#if]
       [#set fieldOrdinal = nodeFieldOrdinal[nodeClass]!null]
-      [#if fieldOrdinal?is_null]
+      [#if !fieldOrdinal]
          [#set nodeFieldOrdinal = nodeFieldOrdinal + {nodeClass : 1}]
       [#else]
          [#set nodeFieldOrdinal = nodeFieldOrdinal + {nodeClass : fieldOrdinal + 1}]
@@ -638,7 +638,7 @@ ${is}self.uncache_tokens()
 [#macro BuildCodeFailure fail, indent]
 [#var is = ""?right_pad(indent)]
 [#--${is}# DBG > BuildCodeFailure ${indent} --]
-    [#if fail.code?is_null]
+    [#if !fail.code]
       [#if fail.exp??]
 ${is}self.fail('Failure: %s' % "${fail.exp?j_string}")
       [#else]

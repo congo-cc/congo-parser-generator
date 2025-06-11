@@ -90,7 +90,7 @@ class Reaper extends Node.Visitor {
     }
 
     private String getKey(ImportDeclaration decl) {
-        StringBuilder result = new StringBuilder();
+        var result = new StringBuilder();
         for (Node child : decl.descendants(Token.class)) result.append(child);
         return result.toString();
     }
@@ -116,13 +116,13 @@ class Reaper extends Node.Visitor {
     }
 
     void visit(ObjectType ot) {
-        Identifier firstID = ot.firstChildOfType(Identifier.class);
+        var firstID = ot.firstChildOfType(Identifier.class);
         usedTypeNames.add(firstID.toString());
         recurse(ot);
     }
 
     void visit(Annotation ann) {
-        String firstID = ann.firstDescendantOfType(Identifier.class).toString();
+        var firstID = ann.firstDescendantOfType(Identifier.class).toString();
         usedTypeNames.add(firstID);
         recurse(ann);
     }

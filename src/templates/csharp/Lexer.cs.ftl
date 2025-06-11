@@ -19,15 +19,15 @@ ${"#"}pragma warning disable 8632
 [#var TOKEN = settings.baseTokenClassName]
 
 [#macro EnumSet varName tokenNames]
-[#if tokenNames?size == 0]
+#if !tokenNames
 private static HashSet<TokenType> ${varName} = Utils.GetOrMakeSet();
-[#else]
+#else
 private static HashSet<TokenType> ${varName} = Utils.GetOrMakeSet(
 [#list tokenNames as type]
     TokenType.${type}[#if type_index < (tokenNames?size - 1)],[/#if]
 [/#list]
 );
-[/#if]
+#endif
 [/#macro]
 
 [#--
@@ -900,11 +900,11 @@ ${globals::translateLexerImports()}
 [/#list]
 [#if lexerData.hasLexicalStateTransitions]
             // Generate the map for lexical state transitions from the various token types
-  [#list lexerData.regularExpressions as regexp]
-    [#if !regexp.newLexicalState?is_null]
+  #list lexerData.regularExpressions as regexp
+    #if regexp.newLexicalState
             tokenTypeToLexicalStateMap[TokenType.${regexp.label}] = LexicalState.${regexp.newLexicalState.name};
-    [/#if]
-  [/#list]
+    #endif
+  #endlist
 [/#if]
         }
 

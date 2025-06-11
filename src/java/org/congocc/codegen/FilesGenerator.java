@@ -83,7 +83,7 @@ public class FilesGenerator {
         }
         initializeTemplateEngine();
         switch (codeLang) {
-            case "java":
+            case "java" -> {
                 generateToken();
                 generateLexer();
                 generateOtherFiles();
@@ -97,8 +97,8 @@ public class FilesGenerator {
                 generateInvalidNode(wanted);
                 generateParsingProblem(wanted);
                 generateTreeBuildingFiles(appSettings.getTreeBuildingEnabled());
-                break;
-            case "python":
+            }
+            case "python" -> {
                 // Hardcoded for now, could make configurable later
                 String[] paths = new String[]{
                         "__init__.py",
@@ -114,10 +114,10 @@ public class FilesGenerator {
                     // always (re)generate
                     generate(outputFile);
                 }
-                break;
-            case "csharp":
+            }
+            case "csharp" -> {
                 // Hardcoded for now, could make configurable later
-                paths = new String[]{
+                String[] paths = new String[]{
                         "Utils.cs",
                         "Tokens.cs",
                         "Lexer.cs",
@@ -126,16 +126,15 @@ public class FilesGenerator {
                 };
                 String csPackageName = grammar.getTemplateGlobals().getPreprocessorSymbol("cs.package", appSettings.getParserPackage());
                 paths[paths.length - 1] = csPackageName + ".csproj";
-                outDir = appSettings.getParserOutputDirectory();
+                Path outDir = appSettings.getParserOutputDirectory();
                 for (String p : paths) {
                     Path outputFile = outDir.resolve(p);
                     // Could check if regeneration is needed, but for now
                     // always (re)generate
                     generate(outputFile);
                 }
-                break;
-            default:
-                throw new UnsupportedOperationException(String.format("Code generation in '%s' is currently not supported.", codeLang));
+            }
+            default -> throw new UnsupportedOperationException(String.format("Code generation in '%s' is currently not supported.", codeLang));
         }
     }
 

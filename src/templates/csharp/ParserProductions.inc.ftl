@@ -84,19 +84,23 @@
   #if expansion.simpleName = "ZeroOrMore" || expansion.simpleName = "OneOrMore"
     #var followingExpansion = expansion.followingExpansion
     #list 1..1000000 as unused
-      [#if followingExpansion?is_null][#break][/#if]
+      #if !followingExpansion
+         #break
+      #endif
       #if followingExpansion.maximumSize > 0
         #if followingExpansion.simpleName = "OneOrMore" || followingExpansion.simpleName = "ZeroOrOne" || followingExpansion.simpleName = "ZeroOrMore"
             if (${ExpansionCondition(followingExpansion.nestedExpansion)}) {
         #else
             if (${ExpansionCondition(followingExpansion)}) {
-        /#if
+        #endif
                 success = true;
                 break;
             }
-      /#if
-      [#if !followingExpansion.possiblyEmpty][#break][/#if]
-      #if followingExpansion.followingExpansion?is_null
+      #endif
+      #if !followingExpansion.possiblyEmpty
+         #break
+      #endif
+      #if !followingExpansion.followingExpansion
             if (OuterFollowSet != null) {
                 if (OuterFollowSet.Contains(NextTokenType)) {
                     success = true;
@@ -193,7 +197,7 @@ catch (ParseException ${exceptionVar()}) {
     if (!IsTolerant) throw;
     _pendingRecovery = true;
          ${expansion.customErrorRecoveryBlock!}
-            [#if !production?is_null && production.returnType != "void"]
+            #if production && production.returnType != "void"
                 [#var rt = production.returnType]
                 [#-- We need a return statement here or the code won't compile! --]
                 [#if rt = "int" || rt = "char" || rt == "byte" || rt = "short" || rt = "long" || rt = "float"|| rt = "double"]
@@ -201,7 +205,7 @@ catch (ParseException ${exceptionVar()}) {
                 [#else]
        return null;
                 [/#if]
-            [/#if]
+            #endif
         [/#if]
 }
 finally {
@@ -225,7 +229,7 @@ finally {
          [#set fieldName = jtbNameMap[nodeClass]/]
       [/#if]
       [#set fieldOrdinal = nodeFieldOrdinal[nodeClass]!null]
-      [#if fieldOrdinal?is_null]
+      [#if !fieldOrdinal]
          [#set nodeFieldOrdinal = nodeFieldOrdinal + {nodeClass : 1}]
       [#else]
          [#set nodeFieldOrdinal = nodeFieldOrdinal + {nodeClass : fieldOrdinal + 1}]
@@ -625,7 +629,7 @@ ${globals::translateCodeBlock(expansion, 1)}
 
 [#macro BuildCodeFailure fail]
 [#-- // DBG > BuildCodeFailure --]
-    [#if fail.code?is_null]
+    [#if !fail.code]
       [#if fail.exp??]
 Fail("Failure: " + ${fail.exp});
       [#else]

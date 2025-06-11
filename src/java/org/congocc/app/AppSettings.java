@@ -185,21 +185,16 @@ public class AppSettings {
         for (String key : settings.keySet()) {
             Object value = settings.get(key);
             switch (key) {
-                case "IGNORE_CASE":
-                    setIgnoreCase((Boolean) value);
-                    break;
-                case "DEFAULT_LEXICAL_STATE":
-                    grammar.setDefaultLexicalState((String) value);
-                    break;
-                case "DEACTIVATE_TOKENS": {
+                case "IGNORE_CASE" -> setIgnoreCase((Boolean) value);
+                case "DEFAULT_LEXICAL_STATE" -> grammar.setDefaultLexicalState((String) value);
+                case "DEACTIVATE_TOKENS" -> {
                     String tokens = (String) settings.get(key);
                     for (StringTokenizer st = new StringTokenizer(tokens, ", \t\n\r"); st.hasMoreTokens(); ) {
                         String tokenName = st.nextToken();
                         tokensOffByDefault.add(tokenName);
                     }
-                    break;
                 }
-                case "EXTRA_TOKENS": {
+                case "EXTRA_TOKENS" -> {
                     String tokens = (String) settings.get(key);
                     for (StringTokenizer st = new StringTokenizer(tokens, ",\r\n"); st.hasMoreTokens(); ) {
                         String tokenNameAndMaybeClass = st.nextToken();
@@ -217,13 +212,12 @@ public class AppSettings {
                             extraTokens.put(tokenName, tokenClassName);
                         }
                     }
-                    break;
                 }
-                case "BASE_SRC_DIR":
-                case "OUTPUT_DIRECTORY":
+                case "BASE_SRC_DIR", "OUTPUT_DIRECTORY" -> {
                     if (!grammar.isInInclude() && outputDir == null)
                         outputDir = Paths.get((String) value);
-                    break;
+                }
+                
             }
             if (!grammar.isInInclude() && key.equals("JDK_TARGET") && jdkTarget == 0) {
                 int jdkTarget = (Integer) value;

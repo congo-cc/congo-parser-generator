@@ -16,9 +16,9 @@ public class JavaCodeUtils {
      * Adds getter/setter methods if a field is annotated with a "@Property" annotation
      */
     static public void addGetterSetters(Node root) {
-        List<FieldDeclaration> fds = root.descendants(FieldDeclaration.class);
-        for (FieldDeclaration fd : fds) {
-            for (Annotation annotation : getAnnotations(fd)) {
+        var fds = root.descendants(FieldDeclaration.class);
+        for (var fd : fds) {
+            for (var annotation : getAnnotations(fd)) {
                 if (annotation.getName().equals("Property")) {
                     addGetterSetter(fd);
                     annotation.getParent().remove(annotation);
@@ -28,8 +28,8 @@ public class JavaCodeUtils {
     }
 
     static private List<Annotation> getAnnotations(Node node) {
-        List<Annotation> result = new ArrayList<>(node.childrenOfType(Annotation.class));
-        Modifiers mods = node.firstChildOfType(Modifiers.class);
+        var result = new ArrayList<Annotation>(node.childrenOfType(Annotation.class));
+        var mods = node.firstChildOfType(Modifiers.class);
         if (mods != null) {
             result.addAll(mods.childrenOfType(Annotation.class));
         }
@@ -40,19 +40,19 @@ public class JavaCodeUtils {
         Node context = fd.getParent();
         int index = context.indexOf(fd);
         String fieldType = fd.firstChildOfType(Type.class).toString();
-        for (Identifier id : fd.getVariableIds()) {
+        for (var id : fd.getVariableIds()) {
             ensurePrivate(fd);
             insertGetterSetter(context, fieldType, id.toString(), index);
         }
     }
 
     static private void ensurePrivate(FieldDeclaration fd) {
-        List<Token> tokens = fd.childrenOfType(Token.class);
-        Modifiers mods = fd.firstChildOfType(Modifiers.class);
+        var tokens = fd.childrenOfType(Token.class);
+        var mods = fd.firstChildOfType(Modifiers.class);
         if (mods != null) {
             tokens.addAll(mods.childrenOfType(Token.class));
         }
-        for (Token tok : tokens) {
+        for (var tok : tokens) {
             TokenType type = tok.getType();
             if (type == PRIVATE) {
                 return; // Nothing to do!
