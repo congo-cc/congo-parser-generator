@@ -243,7 +243,7 @@ void dumpLookaheadCallStack(PrintStream ps) {
    #if MULTIPLE_LEXICAL_STATE_HANDLING
        LexicalState lexicalState;
    #endif
-       EnumSet<${settings.baseTokenClassName}> activeTokenTypes;
+       EnumSet<TokenType> activeTokenTypes;
    #if settings.treeBuildingEnabled
        NodeScope nodeScope;
    #endif
@@ -255,8 +255,8 @@ void dumpLookaheadCallStack(PrintStream ps) {
 #if MULTIPLE_LEXICAL_STATE_HANDLING
            this.lexicalState = token_source.lexicalState;
 #endif
-           if (token_source.activateTokenTypes!=null) {
-               activeTokenTypes = token_source.activeTokenTypes.clone();
+           if (${settings.parserClassName}.this.token_source.activeTokenTypes!=null) {
+               activeTokenTypes = ${settings.parserClassName}.this.token_source.activeTokenTypes.clone();
            }
 #if settings.treeBuildingEnabled
            this.nodeScope = currentNodeScope.clone();
