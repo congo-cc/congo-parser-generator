@@ -25,6 +25,7 @@
     </uptodate>
     <uptodate property="templates.uptodate"
       targetfile="build/generated-java/org/congocc/templates/core/parser/CTLParser.java">
+      <!--srcfiles dir="src/grammars" includes="CTLInternal.ccc"/ -->
       <srcfiles dir="examples/congo-templates" includes="*.ccc"/>
     </uptodate>
     <uptodate property="ppline.uptodate"
@@ -59,8 +60,8 @@
     <ant target="clean" dir="examples/python" />
     <ant target="clean" dir="examples/csharp" />
     <ant target="clean" dir="examples/lua" />
-    <ant target="clean" dir="examples/freemarker" />
     <ant target="clean" dir="examples/preprocessor" />
+    <!--ant target="clean" dir="examples/freemarker" /-->
   </target>
 
   <macrodef name="congocc">
@@ -92,6 +93,7 @@
   </target>
   <target name="templates-gen" unless="templates.uptodate">
     <congocc target="examples/congo-templates/CTL.ccc"/>
+    <!--congocc target="src/grammars/CTLInternal.ccc"/-->
   </target>
 
 
@@ -170,9 +172,9 @@
     <echo>Building the Python parser</echo>
     <ant dir="examples/python" target="clean" />
     <ant dir="examples/python" target="test" />
-    <echo>Testing the newer FreeMarker parser</echo>
+    <!--echo>Testing the newer FreeMarker parser</echo>
     <ant dir="examples/freemarker" target="clean" />
-    <ant dir="examples/freemarker" target="test" />
+    <ant dir="examples/freemarker" target="test" /-->
   </target>
 
   <target name="test-java" depends="jar">
