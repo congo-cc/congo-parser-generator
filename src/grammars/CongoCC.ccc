@@ -464,8 +464,8 @@ GrammarInclusion throws IOException :
          "!"
          (<STRING_LITERAL>|<IDENTIFIER>)
          {
-           if (lastConsumedToken instanceof StringLiteral) {
-              locations.add(((StringLiteral) lastConsumedToken).getString());
+           if (lastConsumedToken instanceof StringLiteral sl) {
+              locations.add(sl.getString());
            } else {
                locations.add(lastConsumedToken.toString());
            }
@@ -1364,8 +1364,8 @@ Terminal# :
   ACTIVATE_TOKENS _EOF(RegexpStringLiteral | RegexpRef | EndOfFile )
   {
       RegularExpression result = (RegularExpression) peekNode();
-      if (result instanceof RegexpStringLiteral) {
-            ((RegexpStringLiteral) result).setLexicalState(grammar.getDefaultLexicalState());
+      if (result instanceof RegexpStringLiteral rsl) {
+            rsl.setLexicalState(grammar.getDefaultLexicalState());
       }
       CURRENT_NODE.setRegexp(result);
       CURRENT_NODE.setLabel(result.getLabel());
