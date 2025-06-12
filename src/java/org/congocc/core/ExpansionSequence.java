@@ -94,8 +94,7 @@ public class ExpansionSequence extends Expansion {
     private boolean getRequiresScanAhead() {
         if (this.getHasExplicitScanLimit()) return true;
         for (Expansion unit : allUnits()) {
-            if (unit instanceof NonTerminal) {
-                NonTerminal nt = (NonTerminal) unit;
+            if (unit instanceof NonTerminal nt) {
                 if (nt.getHasScanLimit())
                     return true;
                 if (nt.getProduction().getHasExplicitLookahead())
@@ -118,8 +117,7 @@ public class ExpansionSequence extends Expansion {
         if (lookahead != null)
             return lookahead;
         for (Expansion unit : childrenOfType(Expansion.class)) {
-            if (unit instanceof NonTerminal) {
-                NonTerminal nt = (NonTerminal) unit;
+            if (unit instanceof NonTerminal nt) {
                 return nt.getLookahead();
             }
             if (unit.superfluousParentheses() || unit instanceof OneOrMore) {
@@ -302,8 +300,8 @@ public class ExpansionSequence extends Expansion {
     @Override
     public boolean startsWithLexicalChange(boolean stopAtScanLimit) {
         Node parent = getParent();
-        if (parent instanceof BNFProduction) {
-            if (((BNFProduction) parent).getLexicalState() != null) {
+        if (parent instanceof BNFProduction bnf) {
+            if (bnf.getLexicalState() != null) {
                 return true;
             }
         }        

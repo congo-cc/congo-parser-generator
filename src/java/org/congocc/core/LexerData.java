@@ -93,8 +93,7 @@ public class LexerData {
 
     private void addRegularExpression(RegularExpression regexp) {
         regularExpressions.add(regexp);
-        if (regexp instanceof RegexpStringLiteral) {
-            RegexpStringLiteral stringLiteral = (RegexpStringLiteral) regexp;
+        if (regexp instanceof RegexpStringLiteral stringLiteral) {
             for (String lexicalStateName : stringLiteral.getLexicalStateNames()) {
                 LexicalStateData lsd = getLexicalState(lexicalStateName);
                 lsd.addStringLiteral(stringLiteral);

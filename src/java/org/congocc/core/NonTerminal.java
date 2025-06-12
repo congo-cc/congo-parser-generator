@@ -98,8 +98,8 @@ public class NonTerminal extends Expansion implements SyntaxElement {
      @Override
      public boolean getHasScanLimit() {
         Expansion exp = getNestedExpansion();
-        if (exp instanceof ExpansionSequence) {
-            for (Expansion sub : ((ExpansionSequence) exp).allUnits()) {
+        if (exp instanceof ExpansionSequence seq) {
+            for (Expansion sub : seq.allUnits()) {
                 if (sub.isScanLimit()) return true;
             }
         }

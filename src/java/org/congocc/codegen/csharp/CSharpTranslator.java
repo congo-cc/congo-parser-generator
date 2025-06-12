@@ -505,9 +505,9 @@ public class CSharpTranslator extends Translator {
             result.append(';');
             addNewline = true;
         }
-        else if (stmt instanceof ASTStatementList) {
-            boolean isInitializer = ((ASTStatementList) stmt).isInitializer();
-            List<ASTStatement> statements = ((ASTStatementList) stmt).getStatements();
+        else if (stmt instanceof ASTStatementList asl) {
+            boolean isInitializer =asl.isInitializer();
+            List<ASTStatement> statements = asl.getStatements();
 
             if (isInitializer) {
                 addIndent(indent, result);
@@ -524,8 +524,7 @@ public class CSharpTranslator extends Translator {
                 closeBrace(indent, result);
             }
         }
-        else if (stmt instanceof ASTVariableOrFieldDeclaration) {
-            ASTVariableOrFieldDeclaration vd = (ASTVariableOrFieldDeclaration) stmt;
+        else if (stmt instanceof ASTVariableOrFieldDeclaration vd) {
             List<ASTPrimaryExpression> names = vd.getNames();
             List<ASTExpression> initializers = vd.getInitializers();
             ASTTypeExpression type = vd.getTypeExpression();
@@ -565,9 +564,9 @@ public class CSharpTranslator extends Translator {
             }
             result.append(';');
         }
-        else if (stmt instanceof ASTReturnStatement) {
+        else if (stmt instanceof ASTReturnStatement ars) {
             result.append("return");
-            ASTExpression value = ((ASTReturnStatement) stmt).getValue();
+            ASTExpression value = ars.getValue();
             if (value != null) {
                 result.append(' ');
                 internalTranslateExpression(value, TranslationContext.UNKNOWN, result);
@@ -575,9 +574,7 @@ public class CSharpTranslator extends Translator {
             result.append(';');
             addNewline = true;
         }
-        else if (stmt instanceof ASTIfStatement) {
-            ASTIfStatement s = (ASTIfStatement) stmt;
-
+        else if (stmt instanceof ASTIfStatement s) {
             result.append("if (");
             internalTranslateExpression(s.getCondition(), TranslationContext.UNKNOWN, result);
             result.append(") {\n");
@@ -590,17 +587,14 @@ public class CSharpTranslator extends Translator {
             }
             closeBrace(indent, result);
         }
-        else if (stmt instanceof ASTWhileStatement) {
-            ASTWhileStatement s = (ASTWhileStatement) stmt;
-
+        else if (stmt instanceof ASTWhileStatement s) {
             result.append("while (");
             internalTranslateExpression(s.getCondition(), TranslationContext.UNKNOWN, result);
             result.append(") {\n");
             internalTranslateStatement(s.getStatements(), indent + 4, result);
             closeBrace(indent, result);
         }
-        else if (stmt instanceof ASTForStatement) {
-            ASTForStatement s = (ASTForStatement) stmt;
+        else if (stmt instanceof ASTForStatement s) {
             ASTExpression iterable;
             ASTVariableOrFieldDeclaration decl = s.getVariable();
 
@@ -651,8 +645,7 @@ public class CSharpTranslator extends Translator {
             }
             closeBrace(indent, result);
         }
-        else if (stmt instanceof ASTSwitchStatement) {
-            ASTSwitchStatement s = (ASTSwitchStatement) stmt;
+        else if (stmt instanceof ASTSwitchStatement s) {
             String tv = getTempVarName();
             ASTExpression expr = s.getVariable();
             boolean isTT = isTokenType(expr);
@@ -692,8 +685,7 @@ public class CSharpTranslator extends Translator {
             }
             closeBrace(indent, result);
         }
-        else if (stmt instanceof ASTMethodDeclaration) {
-            ASTMethodDeclaration decl = (ASTMethodDeclaration) stmt;
+        else if (stmt instanceof ASTMethodDeclaration decl) {
             String methodName = translateIdentifier(decl.getName(), TranslationContext.METHOD);
             List<ASTFormalParameter> formals = decl.getParameters();
             SymbolTable symbols = new SymbolTable();
@@ -752,8 +744,7 @@ public class CSharpTranslator extends Translator {
             result.append("}\n\n");
             popSymbols();
         }
-        else if (stmt instanceof ASTAssertStatement) {
-            ASTAssertStatement s = (ASTAssertStatement) stmt;
+        else if (stmt instanceof ASTAssertStatement s) {
             result.append("Debug.Assert(");
             internalTranslateExpression(s.getCondition(), TranslationContext.UNKNOWN, result);
             result.append(", ");
@@ -769,8 +760,7 @@ public class CSharpTranslator extends Translator {
                 result.append(");\n");
             }
         }
-        else if (stmt instanceof ASTTryStatement) {
-            ASTTryStatement tryStmt = (ASTTryStatement) stmt;
+        else if (stmt instanceof ASTTryStatement tryStmt) {
             result.append("try {\n");
             internalTranslateStatement(tryStmt.getBlock(), indent + 4, result);
             closeBrace(indent, result);
@@ -818,9 +808,7 @@ public class CSharpTranslator extends Translator {
                 closeBrace(indent, result);
             }
         }
-        else if (stmt instanceof ASTEnumDeclaration) {
-            ASTEnumDeclaration enumDecl = (ASTEnumDeclaration) stmt;
-
+        else if (stmt instanceof ASTEnumDeclaration enumDecl) {
             result.append("public enum ");
             result.append(enumDecl.getName());
             result.append(" {\n");
@@ -838,8 +826,7 @@ public class CSharpTranslator extends Translator {
                 closeBrace(indent, result);
             }
         }
-        else if (stmt instanceof ASTClassDeclaration) {
-            ASTClassDeclaration classDecl = (ASTClassDeclaration) stmt;
+        else if (stmt instanceof ASTClassDeclaration classDecl) {
             List<ASTStatement> decls = classDecl.getDeclarations();
             result.append("public class ");
             result.append(classDecl.getName());
@@ -851,8 +838,8 @@ public class CSharpTranslator extends Translator {
             }
             closeBrace(indent, result);
         }
-        else if (stmt instanceof ASTBreakOrContinueStatement) {
-            String s = ((ASTBreakOrContinueStatement) stmt).isBreak() ? "break" : "continue";
+        else if (stmt instanceof ASTBreakOrContinueStatement abcs) {
+            String s = abcs.isBreak() ? "break" : "continue";
             result.append(s).append(";\n");
         }
         else {
@@ -903,8 +890,8 @@ public class CSharpTranslator extends Translator {
                 // Collect all the field declarations
                 List<FieldDeclaration> fieldDecls = new ArrayList<>();
                 for (ClassOrInterfaceBodyDeclaration decl : decls) {
-                    if (decl instanceof FieldDeclaration) {
-                        fieldDecls.add((FieldDeclaration) decl);
+                    if (decl instanceof FieldDeclaration fd) {
+                        fieldDecls.add(fd);
                     }
                 }
                 clearFields();

@@ -122,8 +122,8 @@ public class PythonTranslator extends Translator {
                 expr instanceof ASTUnaryExpression) {
             result = false;
         }
-        else if (expr instanceof ASTBinaryExpression) {
-            String op = ((ASTBinaryExpression) expr).getOp();
+        else if (expr instanceof ASTBinaryExpression abe) {
+            String op = abe.getOp();
             if (op.equals(".") || op.equals("=") || (op.endsWith("=") && ("+-*/|&".indexOf(op.charAt(0)) >= 0))) {
                 result = false;
             }
@@ -140,9 +140,7 @@ public class PythonTranslator extends Translator {
         Node parent = expr.getParent();
 
         if (parent != null) {
-            if (parent instanceof ASTBinaryExpression) {
-                ASTBinaryExpression be = (ASTBinaryExpression) parent;
-
+            if (parent instanceof ASTBinaryExpression be) {
                 if (be.getOp().equals(".") && (expr == be.getRhs())) {
                     result = false;
                 }
@@ -267,8 +265,8 @@ public class PythonTranslator extends Translator {
     }
 
     void renderReceiver(ASTExpression expr, StringBuilder result) {
-        if (expr instanceof ASTBinaryExpression) {
-            internalTranslateExpression(((ASTBinaryExpression) expr).getLhs(), TranslationContext.UNKNOWN, result);
+        if (expr instanceof ASTBinaryExpression abe) {
+            internalTranslateExpression(abe.getLhs(), TranslationContext.UNKNOWN, result);
         }
         else if (expr instanceof ASTPrimaryExpression) {
             result.append("self");
@@ -410,11 +408,10 @@ public class PythonTranslator extends Translator {
     private boolean shouldIndent(ASTStatement stmt) {
         boolean result = true;
 
-        if (stmt instanceof ASTStatementList) {
-            result = ((ASTStatementList) stmt).getStatements() == null;
+        if (stmt instanceof ASTStatementList asl) {
+            result = asl.getStatements() == null;
         }
-        else if (stmt instanceof ASTVariableOrFieldDeclaration) {
-            ASTVariableOrFieldDeclaration d = (ASTVariableOrFieldDeclaration) stmt;
+        else if (stmt instanceof ASTVariableOrFieldDeclaration d) {
             result = d.isField() || d.hasInitializer();
         }
         return result;
@@ -458,8 +455,8 @@ public class PythonTranslator extends Translator {
             internalTranslateExpression(((ASTExpressionStatement) stmt).getValue(), TranslationContext.UNKNOWN, result);
             addNewline = true;
         }
-        else if (stmt instanceof ASTStatementList) {
-            List<ASTStatement> statements = ((ASTStatementList) stmt).getStatements();
+        else if (stmt instanceof ASTStatementList asl) {
+            List<ASTStatement> statements = asl.getStatements();
 
             if (statements == null) {   // empty block
                 result.append("pass\n");
@@ -470,8 +467,7 @@ public class PythonTranslator extends Translator {
                 }
             }
         }
-        else if (stmt instanceof ASTVariableOrFieldDeclaration) {
-            ASTVariableOrFieldDeclaration vd = (ASTVariableOrFieldDeclaration) stmt;
+        else if (stmt instanceof ASTVariableOrFieldDeclaration vd) {
             List<ASTPrimaryExpression> names = vd.getNames();
             List<ASTExpression> initializers = vd.getInitializers();
             ASTTypeExpression type = vd.getTypeExpression();
@@ -519,24 +515,21 @@ public class PythonTranslator extends Translator {
             }
             addNewline = true;
         }
-        else if (stmt instanceof ASTBreakOrContinueStatement) {
-            String s = ((ASTBreakOrContinueStatement) stmt).isBreak() ? "break" : "continue";
+        else if (stmt instanceof ASTBreakOrContinueStatement abcs) {
+            String s = abcs.isBreak() ? "break" : "continue";
             result.append(s);
             addNewline = true;
         }
-        else if (stmt instanceof ASTIfStatement) {
-            translateIf((ASTIfStatement) stmt, indent, true, result);
+        else if (stmt instanceof ASTIfStatement ais) {
+            translateIf(ais, indent, true, result);
         }
-        else if (stmt instanceof ASTWhileStatement) {
-            ASTWhileStatement s = (ASTWhileStatement) stmt;
-
+        else if (stmt instanceof ASTWhileStatement s) {
             result.append("while ");
             internalTranslateExpression(s.getCondition(), TranslationContext.UNKNOWN, result);
             result.append(":\n");
             internalTranslateStatement(s.getStatements(), indent + 4, result);
         }
-        else if (stmt instanceof ASTAssertStatement) {
-            ASTAssertStatement s = (ASTAssertStatement) stmt;
+        else if (stmt instanceof ASTAssertStatement s) {
             result.append("if not (");
             internalTranslateExpression(s.getCondition(), TranslationContext.UNKNOWN, result);
             result.append("):\n");
@@ -551,8 +544,7 @@ public class PythonTranslator extends Translator {
                 result.append("))\n");
             }
         }
-        else if (stmt instanceof ASTForStatement) {
-            ASTForStatement s = (ASTForStatement) stmt;
+        else if (stmt instanceof ASTForStatement s) {
             ASTExpression iterable;
             ASTVariableOrFieldDeclaration decl = s.getVariable();
 
@@ -596,8 +588,7 @@ public class PythonTranslator extends Translator {
                 }
             }
         }
-        else if (stmt instanceof ASTSwitchStatement) {
-            ASTSwitchStatement s = (ASTSwitchStatement) stmt;
+        else if (stmt instanceof ASTSwitchStatement s) {
             String tv = getTempVarName();
             result.append(tv);
             result.append(" = ");
@@ -634,8 +625,7 @@ public class PythonTranslator extends Translator {
                 useIf = !c.hasBreak();
             }
         }
-        else if (stmt instanceof ASTMethodDeclaration) {
-            ASTMethodDeclaration decl = (ASTMethodDeclaration) stmt;
+        else if (stmt instanceof ASTMethodDeclaration decl) {
             String methodName = decl.isConstructor() ? "__init__" : translateIdentifier(decl.getName(), TranslationContext.METHOD);
             List<ASTFormalParameter> formals = decl.getParameters();
             SymbolTable symbols = new SymbolTable();
@@ -674,8 +664,7 @@ public class PythonTranslator extends Translator {
             result.append('\n');
             popSymbols();
         }
-        else if (stmt instanceof ASTTryStatement) {
-            ASTTryStatement tryStmt = (ASTTryStatement) stmt;
+        else if (stmt instanceof ASTTryStatement tryStmt) {
             result.append("try:\n");
             internalTranslateStatement(tryStmt.getBlock(), indent + 4, result);
             List<ASTExceptionInfo> catchBlocks = tryStmt.getCatchBlocks();
@@ -712,9 +701,7 @@ public class PythonTranslator extends Translator {
                 internalTranslateStatement(fb, indent + 4, result);
             }
         }
-        else if (stmt instanceof ASTEnumDeclaration) {
-            ASTEnumDeclaration enumDecl = (ASTEnumDeclaration) stmt;
-
+        else if (stmt instanceof ASTEnumDeclaration enumDecl) {
             result.append("@unique\n");
             addIndent(indent, result);
             result.append("class ");
@@ -734,8 +721,7 @@ public class PythonTranslator extends Translator {
                 result.append('\n');
             }
         }
-        else if (stmt instanceof ASTClassDeclaration) {
-            ASTClassDeclaration classDecl = (ASTClassDeclaration) stmt;
+        else if (stmt instanceof ASTClassDeclaration classDecl) {
             List<ASTStatement> decls = classDecl.getDeclarations();
             result.append("class ");
             result.append(classDecl.getName());
@@ -841,8 +827,8 @@ public class PythonTranslator extends Translator {
             // Collect all the field declarations
             List<FieldDeclaration> fieldDecls = new ArrayList<>();
             for (ClassOrInterfaceBodyDeclaration decl : decls) {
-                if (decl instanceof FieldDeclaration) {
-                    fieldDecls.add((FieldDeclaration) decl);
+                if (decl instanceof FieldDeclaration fd) {
+                    fieldDecls.add(fd);
                 }
             }
             clearFields();

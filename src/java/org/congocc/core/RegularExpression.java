@@ -138,8 +138,7 @@ public abstract class RegularExpression extends BaseNode {
     public boolean isPossiblyAtStart() {
         Node parent = getParent();
         if (!(parent instanceof RegularExpression)) return true;
-        if (parent instanceof RegexpSequence) {
-            RegexpSequence parentSequence = (RegexpSequence) parent;
+        if (parent instanceof RegexpSequence parentSequence) {
             for (RegularExpression re : parentSequence.childrenOfType(RegularExpression.class)) {
                 if (re == this) break;
                 if (!re.matchesEmptyString()) return false;

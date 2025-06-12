@@ -429,8 +429,7 @@ public class Grammar extends BaseNode {
         if (node == null || node instanceof Token || node instanceof EmptyDeclaration) {
             return;
         }
-        if (node instanceof CodeInjection) {
-            CodeInjection ci = (CodeInjection) node;
+        if (node instanceof CodeInjection ci) {
             if (ci.getName().equals(appSettings.getLexerClassName())) {
                 checkForHooks(ci.body, appSettings.getLexerClassName());
             }
@@ -438,8 +437,7 @@ public class Grammar extends BaseNode {
                 checkForHooks(ci.body, appSettings.getParserClassName());
             }
         }
-        else if (node instanceof TypeDeclaration) {
-            TypeDeclaration typeDecl = (TypeDeclaration) node;
+        else if (node instanceof TypeDeclaration typeDecl) {
             String typeName = typeDecl.getName();
             if (typeName.equals(appSettings.getLexerClassName()) || typeName.endsWith("." + appSettings.getLexerClassName())) {
                 for (Node value : typeDecl) {
@@ -452,8 +450,7 @@ public class Grammar extends BaseNode {
                 }
             }
         }
-        else if (node instanceof MethodDeclaration) {
-            MethodDeclaration decl = (MethodDeclaration) node;
+        else if (node instanceof MethodDeclaration decl) {
             String sig = decl.getFullSignature();
             String closeNodePrefix = appSettings.generateIdentifierPrefix("closeNodeHook");
             if (sig != null) {

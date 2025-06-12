@@ -36,10 +36,10 @@ public class CodeInjector {
         this.grammar = grammar;
         this.appSettings = grammar.getAppSettings();
         for (Node n : codeInjections) {
-            if (n instanceof CompilationUnit) {
-                inject((CompilationUnit) n);
-            } else if (n instanceof CodeInjection) {
-                inject((CodeInjection) n);
+            if (n instanceof CompilationUnit cu) {
+                inject(cu);
+            } else if (n instanceof CodeInjection ci) {
+                inject(ci);
             } 
         } 
     }
@@ -115,8 +115,8 @@ public class CodeInjector {
             }
             List<ClassOrInterfaceBodyDeclaration> injectedCode = new ArrayList<>();
             for (Node n : dec.getBody()) {
-                if (n instanceof ClassOrInterfaceBodyDeclaration) {
-                    injectedCode.add((ClassOrInterfaceBodyDeclaration) n);
+                if (n instanceof ClassOrInterfaceBodyDeclaration cibd) {
+                    injectedCode.add(cibd);
                 }
             }
             List<ClassOrInterfaceBodyDeclaration> existingCode = bodyDeclarations.get(name);
@@ -127,8 +127,8 @@ public class CodeInjector {
             }
             for (ClassOrInterfaceBodyDeclaration decl : injectedCode) {
                 String key = null;
-                if (decl instanceof MethodDeclaration) {
-                   key = ((MethodDeclaration) decl).getFullSignature();
+                if (decl instanceof MethodDeclaration md) {
+                    key = md.getFullSignature();
                 }
                 if (key != null) {
                     overriddenMethods.add(key);

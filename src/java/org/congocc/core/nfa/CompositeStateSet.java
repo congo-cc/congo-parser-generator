@@ -65,8 +65,8 @@ public class CompositeStateSet {
     }
 
     public boolean equals(Object other) {
-        return (other instanceof CompositeStateSet)
-               && ((CompositeStateSet)other).states.equals(this.states);
+        return (other instanceof CompositeStateSet css)
+               && css.states.equals(this.states);
     }
 
     /**

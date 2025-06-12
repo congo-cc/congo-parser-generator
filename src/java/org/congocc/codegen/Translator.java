@@ -189,14 +189,14 @@ public class Translator {
             ASTExpression node = receiver;
 
             while (result == null) {
-                if (node instanceof ASTPrimaryExpression) {
-                    result = ((ASTPrimaryExpression) node).name;
+                if (node instanceof ASTPrimaryExpression ape) {
+                    result = ape.name;
                     if (result == null) {
-                        result = ((ASTPrimaryExpression) node).literal;
+                        result = ape.literal;
                     }
                 }
-                else if (node instanceof ASTBinaryExpression) {
-                    node = ((ASTBinaryExpression) node).rhs;
+                else if (node instanceof ASTBinaryExpression abe) {
+                    node = abe.rhs;
                 }
                 else {
                     throw new UnsupportedOperationException("node is '" + node + "' class " + Translator.getSimpleName(node));
@@ -857,7 +857,7 @@ public class Translator {
                 return transformTree(child, forType);
             }
             else if (child instanceof Identifier) {
-                result.name = ((Identifier) child).toString();
+                result.name = child.toString();
             }
             else {
                 throw new UnsupportedOperationException("node is '" + child + "' class " + getSimpleName(child));
@@ -867,7 +867,7 @@ public class Translator {
             StringBuilder sb = new StringBuilder();
             for (Node child : node.children()) {
                 if (child instanceof Token) {
-                    sb.append(((Token) child));
+                    sb.append(child);
                 }
                 else if (!(child instanceof TypeArguments)) {
                     throw new UnsupportedOperationException("node is '" + child + "' class " + getSimpleName(child));
@@ -1054,8 +1054,8 @@ public class Translator {
                 for (int j = 1; j < m; j++) {
                     if (child.get(j).getType() == Token.TokenType.COLON) continue; // temporary kludge?
                     ASTStatement s = (ASTStatement) transformTree(child.get(j));
-                    if (s instanceof ASTBreakOrContinueStatement) {
-                        currentCase.hasBreak = ((ASTBreakOrContinueStatement) s).isBreak();
+                    if (s instanceof ASTBreakOrContinueStatement stmt) {
+                        currentCase.hasBreak = stmt.isBreak();
                     }
                     else {
                         currentCase.add(s);
@@ -1121,7 +1121,7 @@ public class Translator {
         else {
             // it's a ConstructorDeclaration (alternative using property)
 //            List<Node> statements = ((ConstructorDeclaration) node).getStatements();
-            List<Statement> statements = node.childrenOfType(Statement.class);
+            var statements = node.childrenOfType(Statement.class);
             if (!statements.isEmpty()) {
                 result.statements = new ASTStatementList();
                 for (Node child : statements) {
@@ -1203,7 +1203,7 @@ public class Translator {
         }
         else if (node instanceof Token) {
             ASTPrimaryExpression resultNode = forType ? new ASTTypeExpression() : new ASTPrimaryExpression();
-            resultNode.literal = ((Token) node).toString();
+            resultNode.literal = node.toString();
             if (forType && node.getParent() instanceof PrimitiveType && node.getParent().getParent() instanceof PrimitiveArrayType) {
                 ((ASTTypeExpression) resultNode).isArray = true;
             }
@@ -1582,31 +1582,31 @@ public class Translator {
             result.append('(');
             translateCast(cast, result);
         }
-        if (expr instanceof ASTPrimaryExpression) {
-            translatePrimaryExpression((ASTPrimaryExpression) expr, ctx, result);
+        if (expr instanceof ASTPrimaryExpression ape) {
+            translatePrimaryExpression(ape, ctx, result);
         }
-        else if (expr instanceof ASTUnaryExpression) {
-            translateUnaryExpression((ASTUnaryExpression) expr, ctx, result);
+        else if (expr instanceof ASTUnaryExpression aue) {
+            translateUnaryExpression(aue, ctx, result);
         }
-        else if (expr instanceof ASTBinaryExpression) {
-            translateBinaryExpression((ASTBinaryExpression) expr, result);
+        else if (expr instanceof ASTBinaryExpression abe) {
+            translateBinaryExpression(abe, result);
         }
-        else if (expr instanceof ASTTernaryExpression) {
-            translateTernaryExpression((ASTTernaryExpression) expr, result);
+        else if (expr instanceof ASTTernaryExpression ate) {
+            translateTernaryExpression(ate, result);
         }
-        else if (expr instanceof ASTInvocation) {
-            translateInvocation((ASTInvocation) expr, result);
+        else if (expr instanceof ASTInvocation ai) {
+            translateInvocation(ai, result);
         }
-        else if (expr instanceof ASTInstanceofExpression) {
-            translateInstanceofExpression((ASTInstanceofExpression) expr, result);
+        else if (expr instanceof ASTInstanceofExpression aie) {
+            translateInstanceofExpression(aie, result);
         }
-        else if (expr instanceof ASTArrayAccess) {
-            translateArrayAccess((ASTArrayAccess) expr, result);
+        else if (expr instanceof ASTArrayAccess aaa) {
+            translateArrayAccess(aaa, result);
         }
-        else if (expr instanceof ASTMethodReference) {
-            internalTranslateExpression(((ASTMethodReference) expr).getTypeExpression(), TranslationContext.UNKNOWN, result);
+        else if (expr instanceof ASTMethodReference ame) {
+            internalTranslateExpression(ame.getTypeExpression(), TranslationContext.UNKNOWN, result);
             result.append('.');
-            internalTranslateExpression(((ASTMethodReference) expr).getIdentifier(), TranslationContext.UNKNOWN, result);
+            internalTranslateExpression(ame.getIdentifier(), TranslationContext.UNKNOWN, result);
         }
         else {
             throw new UnsupportedOperationException("node is '" + expr + "' class " + getSimpleName(expr));
@@ -1790,11 +1790,11 @@ public class Translator {
                 expr instanceof ASTInstanceofExpression) {
             result = false;
         }
-        else if (expr instanceof ASTUnaryExpression) {
-            result = needsParentheses(((ASTUnaryExpression) expr).getOperand());
+        else if (expr instanceof ASTUnaryExpression aue) {
+            result = needsParentheses(aue.getOperand());
         }
-        else if (expr instanceof ASTBinaryExpression) {
-            String op = ((ASTBinaryExpression) expr).getOp();
+        else if (expr instanceof ASTBinaryExpression abe) {
+            String op = abe.getOp();
             if (op.equals(".") || op.equals("=")) {
                 result = false;
             }
@@ -1841,8 +1841,7 @@ public class Translator {
     protected ASTTypeExpression getExpressionType(ASTExpression expr) {
         ASTTypeExpression result = null;
 
-        if (expr instanceof ASTPrimaryExpression) {
-            ASTPrimaryExpression pe = (ASTPrimaryExpression) expr;
+        if (expr instanceof ASTPrimaryExpression pe) {
             String s = pe.getName();
             result = findSymbol(s);
         }
