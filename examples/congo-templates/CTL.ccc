@@ -1,0 +1,138 @@
+BASE_SRC_DIR="../../build/generated-java";
+BASE_NAME="CTL";
+PARSER_PACKAGE=org.congocc.templates.core.parser;
+NODE_PACKAGE=org.congocc.templates.core.nodes.generated;
+BASE_NODE_CLASS=TemplateNode;
+PRESERVE_TABS;
+EXTRA_TOKENS=DIRECTIVE_END;
+DEACTIVATE_TOKENS=EOL;
+DEFAULT_LEXICAL_STATE=TEXT;
+INCLUDE "Lexer.ccc"
+INCLUDE "Expressions.inc.ccc"
+INCLUDE "Directives.inc.ccc"
+
+INJECT Node : 
+   import org.congocc.templates.*;
+   import org.congocc.templates.core.Environment;
+   import org.congocc.templates.core.InvalidReferenceException;
+   import org.congocc.templates.core.EvaluationUtil;
+   import org.congocc.templates.core.nodes.generated.Expression;
+{
+    void setTemplate(Template template);
+    Template getTemplate();
+
+    default String getLocation() {
+        String templateName = getTemplate() != null ? getTemplate().getName() : getInputSource();
+        return "on line " 
+              + getBeginLine() 
+              + ", column " 
+              + getBeginColumn()
+              + " in "
+              + templateName;
+    }
+
+    default void copyLocationFrom(Node from)
+    {
+        setTokenSource(from.getTokenSource());
+        setBeginOffset(from.getBeginOffset());
+        setEndOffset(from.getEndOffset());
+    }
+
+}
+
+INJECT BASE_NODE_CLASS :
+   import org.congocc.templates.*;
+   import org.congocc.templates.core.Environment;
+   import org.congocc.templates.core.parser.Token;
+   import org.congocc.templates.core.nodes.generated.Expression;
+{
+	@Property Template template;
+	
+	public String getDescription() {
+		return getClass().getSimpleName();
+	}
+
+    static public TemplateException invalidTypeException(Object model, Expression exp, Environment env, String expected)
+    {
+        exp.assertNonNull(model, env);
+        return new TemplateException(
+            "Expected " + expected + ". " + 
+            exp + " evaluated instead to " + 
+            model.getClass().getName() + " " +
+            exp.getLocation() + ".", env);
+    }
+    
+}
+
+INJECT Token :
+    import org.congocc.templates.Template;
+{
+    @Property Template template;
+}
+
+
+INJECT PARSER_CLASS : 
+    import org.congocc.templates.*;
+    import java.util.HashSet;
+    import java.util.List;
+    import java.util.LinkedHashMap;
+    import java.util.Map;
+    import java.util.Set;
+{
+    // Necessary for adding macros and setting location info.
+    @Property Template template;
+    private String templateName;
+
+    void OPEN_NODE_HOOK(Node n) {
+         n.setTemplate(template);
+    }
+
+    /**
+    * Create an FM expression parser using a string.
+    */
+    static public CTLParser createExpressionParser(String s) {
+        CTLLexer lexer;
+        lexer = new CTLLexer(s);
+        lexer.switchTo(LexicalState.EXPRESSION);
+        return new CTLParser(lexer);
+    }
+
+    /**
+    * Constructs a new parser object.
+    * @param template The template associated with this parser.
+    * @param path The character stream to use as input
+    */
+    public CTLParser(Template template, Path path) throws IOException {
+        this(path);
+        this.template = template;
+        this.templateName = template != null ? template.getName() : "";
+        token_source.templateName = templateName;
+    }
+
+    public CTLParser(Template template, CharSequence input) {
+        this (input);
+        this.template = template;
+        this.templateName = template != null ? template.getName() : "";
+    }
+
+    private String getErrorStart(Token t) {
+        return "Error in template: " + template.getName() + "\non line " + t.getBeginLine() + ", column " + t.getBeginColumn();
+    }
+}
+ 
+INJECT ParseException  : 
+    import org.congocc.core.nodes.generated.TemplateNode;
+{
+    int lineNumber, columnNumber;
+    public List<ParsingProblemImpl> problems;
+
+    public ParseException(String message, int lineNumber, int columnNumber) {
+        super(message);
+        this.lineNumber = lineNumber;
+        this.columnNumber = columnNumber;
+    }
+
+    public ParseException(List<ParsingProblemImpl> problems) {
+        this.problems = problems;
+    }
+}

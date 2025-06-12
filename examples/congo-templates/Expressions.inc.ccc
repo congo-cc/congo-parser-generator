@@ -1,0 +1,1406 @@
+// This file defines the expression
+// grammar. It is INCLUDEd from the main template.
+
+#Expression#interface : 
+    TernaryExpression 
+    {
+        return (Expression) peekNode();
+    } 
+;
+
+INJECT Expression :
+   import org.congocc.templates.core.Environment;
+   import org.congocc.templates.core.variables.InvalidReferenceException;
+   import org.congocc.templates.TemplateException;
+   import org.congocc.templates.TemplateSequence;
+   import java.lang.reflect.Array;
+   import static org.congocc.templates.core.variables.Wrap.*;
+{
+    public abstract Object evaluate(Environment env);
+    
+    default String getDescription() {
+    	return "the expression: "  + this;
+    }
+
+    default boolean isAssignableTo() {
+        return false;
+    }
+
+    default String getStringValue(Environment env) {
+        return getStringValue(env, evaluate(env));
+    }
+
+    default String getStringValue(Environment env, Object referent) {
+        assertNonNull(referent, env);
+        if (referent == LOOSE_NULL) {
+            return "";
+        }
+        if (referent instanceof Number n) {
+            return env.formatNumber(n);
+        }
+        return referent.toString();
+    }
+    
+    default void assertNonNull(Object value, Environment env) {
+        assertIsDefined(value, env);
+        if (value == JAVA_NULL) {
+            throw new InvalidReferenceException("Expression " + this + " is null " + getLocation() + ".", env);
+        }
+    }
+
+    default void assertIsDefined(Object value, Environment env) {
+        if (value == null) {
+            throw new InvalidReferenceException("Expression " + this + " is undefined " + getLocation() + ".", env);
+        }
+    }
+
+    default boolean isTrue(Environment env) {
+        Object referent = evaluate(env);
+        assertIsDefined(referent, env);
+        if (referent == JAVA_NULL || referent == LOOSE_NULL) {
+            return false;
+        }
+        if (isBoolean(referent)) {
+            return asBoolean(referent);
+        }
+        if (referent instanceof Collection c) {
+            return !c.isEmpty();
+        }
+        if (referent instanceof Map m) {
+            return !m.isEmpty();
+        }
+        if (referent.getClass().isArray()) {
+            return Array.getLength(referent) > 0;
+        }
+        if (referent instanceof Iterable<?> it) {
+            return it.iterator().hasNext();
+        }
+        return referent.toString().length() > 0;
+    }
+}
+
+TernaryExpression : 
+    OrExpression 
+    [
+        <TERNARY>
+        Expression
+        [
+          <COLON>
+          Expression
+        ]
+    ]
+; 
+
+INJECT TernaryExpression :
+   import org.congocc.templates.core.Environment;
+   import static org.congocc.templates.core.variables.Wrap.LOOSE_NULL;
+   implements Expression
+{
+    public Object evaluate(Environment env) {
+        Expression condition = (Expression) get(0);
+        Expression trueChoice= (Expression) get(2);
+        Expression falseChoice = size() > 4 ? (Expression) get(4) : null;
+        if (condition.isTrue(env)) {
+            return trueChoice.evaluate(env);
+        }
+        return falseChoice == null ? LOOSE_NULL : falseChoice.evaluate(env);
+    }
+}
+
+Literal#void :
+  <NULL>
+  |
+  <TRUE>
+  |
+  <FALSE>
+  |
+  <NUMBER>
+  |
+  <STRING_LITERAL>
+  |
+  <RAW_STRING>
+  |
+  HashLiteral
+  |
+  ListLiteral
+;
+
+PrimaryExpression(boolean noSpace)#void :
+   (
+      Literal
+      |
+      <ID>
+      |
+      ParentheticalExpression
+      |
+      BuiltinVariable
+  )
+  (
+    SCAN 1 {!noSpace || getToken(0).getEndOffset() == getToken(1).getBeginOffset()} =>
+    (
+      (
+        <DOT>
+        DEACTIVATE_TOKENS IN, AS, USING, TRUE, FALSE, NULL
+        (<ID>|<TIMES>|<DOUBLE_STAR>) 
+      ) #DotVariable(+1) 
+      |
+      <OPEN_BRACKET> Expression <CLOSE_BRACKET> #org.congocc.templates.core.nodes.DynamicKeyName(4)
+      |
+      (<OPEN_PAREN> [ArgsList] <CLOSE_PAREN>) #MethodCall(+1)
+      |
+      <BUILT_IN><ID> #BuiltInExpression(3)
+      |
+      <EXISTS>#ExistsExpression(2) 
+      |
+      (
+        <EXCLAM>
+        [
+            SCAN {getToken(1).getType() != TokenType.ID || getToken(2).getType() != TokenType.EQUALS}
+            => PrimaryExpression(false) =>||
+        ]
+      ) #DefaultToExpression(+1)
+      |
+      <DOUBLE_COLON> <ID> #MethodReference(3)
+    )
+  )*
+;
+
+ParentheticalExpression :
+    <OPEN_PAREN> 
+    Expression 
+    <CLOSE_PAREN>
+;
+
+INJECT ParentheticalExpression :
+   import org.congocc.templates.core.Environment;
+   implements Expression
+{
+   public Expression getNested() {
+        return firstChildOfType(Expression.class);
+    }
+
+    public boolean isTrue(Environment env) {
+        return getNested().isTrue(env);
+    }
+    
+    public Object evaluate(Environment env) {
+        return getNested().evaluate(env);
+    }
+
+    public boolean isAssignableTo() {
+        return getNested().isAssignableTo();
+    }
+}
+
+INJECT DotVariable :
+    import org.congocc.templates.core.Environment;
+    import org.congocc.templates.core.variables.*;
+    import org.congocc.templates.core.variables.scope.Scope;
+    import org.congocc.templates.TemplateHash;
+    import static org.congocc.templates.core.variables.Wrap.wrap;
+    import static org.congocc.templates.core.variables.Wrap.JAVA_NULL;
+    import static org.congocc.templates.core.variables.Wrap.LOOSE_NULL;
+    implements Expression
+{
+    public Expression getTarget() {
+        return (Expression) get(0);
+    }
+
+    public String getKey() {
+        return get(2).toString();
+    }
+
+    public boolean isAssignableTo() {
+        return true;
+    }
+
+    public Object evaluate(Environment env) {
+        Object lhs = getTarget().evaluate(env);
+        assertNonNull(lhs, env);
+        if (lhs == LOOSE_NULL) return JAVA_NULL;
+        if (lhs instanceof Map m) {
+            Object key = getKey();
+            Object value = m.get(key);
+            if (value == null) {
+                return m.containsKey(key) ? JAVA_NULL : null;
+            } 
+            return wrap(value);
+        }
+        if (lhs instanceof TemplateHash hash) {
+            return wrap(hash.get(getKey()));
+        }
+        return ReflectionCode.getProperty(lhs, getKey());
+    }
+}
+
+/**
+ * A primary expression preceded (optionally)
+ * by a unary operator
+ */
+UnaryExpression#void :
+   UnaryPlusMinusExpression
+   |
+   NotExpression 
+   |
+   PrimaryExpression(false) 
+;
+
+NotExpression :
+   <EXCLAM>
+   (
+      PrimaryExpression(false) 
+      |
+      NotExpression 
+   )
+;
+
+INJECT NotExpression :
+    import org.congocc.templates.core.Environment;
+    implements Expression
+{
+    public Expression getTarget() {
+        return (Expression) get(1);
+    }
+
+    public Object evaluate(Environment env) {
+        return isTrue(env);
+    }
+
+    public boolean isTrue(Environment env) {
+        return (!getTarget().isTrue(env));
+    }
+}
+
+UnaryPlusMinusExpression :
+   (
+      <PLUS>
+      |
+      <MINUS>
+   )
+   (
+      UnaryPlusMinusExpression
+      |
+      PrimaryExpression(false)
+   )
+;
+
+INJECT UnaryPlusMinusExpression : 
+    import org.congocc.templates.core.Environment;
+    import org.congocc.templates.core.ArithmeticEngine;
+    import org.congocc.templates.core.variables.*;
+    import org.congocc.templates.TemplateException;
+    implements Expression
+{
+    private static final Integer MINUS_ONE = Integer.valueOf(-1); 
+
+    public Expression getTarget() {
+    	return firstChildOfType(Expression.class);
+    }
+    
+    public boolean isMinus() {
+    	return get(0).getType()==MINUS;
+    }
+    
+    public Object evaluate(Environment env) {
+        Number value = null;
+        try {
+            value = (Number)getTarget().evaluate(env);
+        } catch (ClassCastException cce) {
+            String msg = "Error " + getLocation();
+            msg += "\nExpression " + getTarget() + " is not numerical.";
+            throw new TemplateException(msg, env);
+        }
+        if (!isMinus()) {
+            return value;
+        }
+        return ArithmeticEngine.CONSERVATIVE_ENGINE.multiply(MINUS_ONE, value);
+    }
+}
+
+AdditiveExpression :
+   MultiplicativeExpression 
+   (
+      (
+         <PLUS> 
+         |
+         <MINUS>
+      )
+      MultiplicativeExpression
+   )*
+;
+
+INJECT AdditiveExpression : 
+    import org.congocc.templates.TemplateException;
+    import org.congocc.templates.core.ArithmeticEngine;
+    import org.congocc.templates.core.Environment;
+    import org.congocc.templates.core.variables.EvaluationException;
+    import static org.congocc.templates.core.variables.Wrap.*;
+    implements Expression;
+{
+
+    public Expression getLeft() {
+        return (Expression) get(0);
+    }
+
+    public Expression getRight() {
+        return (Expression) get(2);
+    }
+
+    public Object evaluate(Environment env) {
+        Object result = ((Expression) get(0)).evaluate(env);
+        for (int i = 0; i < size()/2; i++) {
+            boolean isMinus = get(i*2+1).getType() == MINUS;
+            if (isMinus) {
+                if (!(result instanceof Number)) {
+                    throw new EvaluationException("Expecting number here");
+                }
+                Number leftSide = (Number) result;
+                Expression rhs = (Expression) get(i*2+2);
+                Object rightSide = rhs.evaluate(env);
+                if (!(rightSide instanceof Number)) {
+                    throw new EvaluationException("Expecting number at: " + rhs.getLocation());
+                }
+                ArithmeticEngine ae = env != null ? env.getArithmeticEngine() : getTemplate().getArithmeticEngine();
+                result = ae.subtract(leftSide, (Number) rightSide);
+                continue;
+            }
+            Object right = ((Expression)get(i*2+2)).evaluate(env);
+            result = addOrConcatenate(env, result, right);
+        }
+        return result;
+    }
+
+    private Object addOrConcatenate(Environment env, Object left, Object right) {
+        ArithmeticEngine ae = env != null ? env.getArithmeticEngine() : getTemplate().getArithmeticEngine();
+        if (left instanceof Number n1 && right instanceof Number n2) {
+            return ae.add(n1,n2);
+        }
+        if (isList(left) && isList(right)) {
+            List<?> leftList = asList(left);
+            List<?> rightList = asList(right);
+            List<Object> result = new ArrayList<>();
+            result.addAll(leftList);
+            result.addAll(rightList);
+            return result;
+        }
+        if (isMap(left) && isMap(right)) {
+            Map<?,?> leftMap = (Map) unwrap(left);
+            Map<?,?> rightMap = (Map) unwrap(right);
+            Map<Object,Object> result = new LinkedHashMap<>(leftMap);
+            for (Object key : rightMap.keySet()) {
+                result.put(key, rightMap.get(key));
+            }
+            return result;
+        }
+        return getLeft().getStringValue(env, left) + getRight().getStringValue(env, right);
+    }
+}
+
+MultiplicativeExpression :
+   UnaryExpression 
+   (
+      (
+         <TIMES>
+         |
+         <DIVIDE>
+         |
+         <PERCENT>
+      )
+      UnaryExpression
+   )*
+;
+
+INJECT MultiplicativeExpression :
+   import org.congocc.templates.TemplateException;
+   import org.congocc.templates.core.Environment;
+   import org.congocc.templates.core.ArithmeticEngine;
+   import static org.congocc.templates.core.variables.Wrap.getNumber;
+   implements Expression
+{
+    public Expression getLeft() {
+    	return (Expression) get(0);
+    }
+    
+    public Expression getRight() {
+    	return (Expression) get(2);
+    }
+    
+    public Object evaluate(Environment env) {
+        Object result = ((Expression) get(0)).evaluate(env);
+        for (int i=0; i<size()/2; i++) {
+            TokenType operation = (TokenType) get(i*2+1).getType();
+            Object rightSide = ((Expression) get(i*2+2)).evaluate(env);
+            result = mulDivMod(env, result, rightSide, operation);
+        }
+        return result;
+    }
+
+    public Object mulDivMod(Environment env, Object leftSide, Object rightSide, TokenType operation) {
+        boolean leftIsNumber = leftSide instanceof Number;
+        boolean rightIsNumber = rightSide instanceof Number;
+        boolean bothNumbers = leftIsNumber && rightIsNumber;
+        if (!bothNumbers) {
+            String msg = "Error " + getLocation();
+            if (!leftIsNumber) {
+                msg += "\nExpression " + getLeft() + " is not numerical";
+            }
+            if (!rightIsNumber) {
+                msg += "\nExpression " + getRight() + " is not numerical";
+            }
+            throw new TemplateException(msg, env);
+        }
+        Number first = getNumber(leftSide, getLeft(), env);
+        Number second = getNumber(rightSide, getRight(), env);
+        ArithmeticEngine ae = 
+            env != null 
+                ? env.getArithmeticEngine()
+                : getTemplate().getArithmeticEngine();
+        switch (operation) {
+            case TIMES :
+                return ae.multiply(first, second);
+            case DIVIDE :
+                return ae.divide(first, second);
+            case PERCENT :
+                return ae.modulus(first, second);
+            default:
+                throw new TemplateException("unknown operation : " + operation, env);
+        }
+    }
+}
+
+EqualityExpression :
+   RelationalExpression
+   [
+     (
+      <NOT_EQUALS> 
+      |
+      <EQUALS> 
+      |
+      <DOUBLE_EQUALS>
+     )
+     RelationalExpression
+   ]
+;
+
+INJECT EqualityExpression :
+    import org.congocc.templates.core.Environment;
+    import org.congocc.templates.core.ArithmeticEngine;
+    import static org.congocc.templates.core.variables.Wrap.*;
+    implements Expression
+{
+    public Expression getLeft() {
+        return (Expression) get(0);
+    }
+
+    public Expression getRight() {
+        return (Expression) get(2);
+    }
+
+    public Object evaluate(Environment env) {
+        return isTrue(env);
+    }
+
+    public boolean isTrue(Environment env) {
+        TokenType operation = (TokenType) get(1).getType();
+        Object left = getLeft().evaluate(env);
+        Object right = getRight().evaluate(env);
+        assertIsDefined(left, env);
+        assertIsDefined(right, env);
+        if (left == JAVA_NULL || left == LOOSE_NULL) {
+            boolean areEqual = (right == JAVA_NULL || right == LOOSE_NULL);
+            return operation == NOT_EQUALS ? !areEqual : areEqual;
+        }
+        if (right == JAVA_NULL || right == LOOSE_NULL) {
+            boolean areEqual = (left == JAVA_NULL || left == LOOSE_NULL);
+            return operation == NOT_EQUALS ? !areEqual : areEqual;
+        }
+        if (left instanceof Number n1 && right instanceof Number n2) {
+            ArithmeticEngine ae = env != null ? env.getArithmeticEngine() : getTemplate().getArithmeticEngine();
+            int comp = ae.compareNumbers(n1, n2);
+            return operation == NOT_EQUALS ? comp !=0 : comp == 0;
+        }
+        left = unwrap(left);
+        right = unwrap(right);
+        return operation == NOT_EQUALS ? !left.equals(right) : left.equals(right);
+    }
+
+    private boolean dealWithNumbers(Number left, Number right, TokenType operation, Environment env) {
+        ArithmeticEngine ae = env != null ? env.getArithmeticEngine() : getTemplate().getArithmeticEngine();
+        int comp = ae.compareNumbers(left, right);
+        return operation == NOT_EQUALS ? comp !=0 : comp == 0;
+    }
+}
+
+RelationalExpression :
+   RangeExpression 
+   [
+     (
+      <GREATER_THAN_EQUALS>
+      |
+      <ESCAPED_GTE>
+      |
+      <GREATER_THAN>
+      |
+      <ESCAPED_GT>
+      |
+      <LESS_THAN_EQUALS>
+      |
+      <LESS_THAN>
+     )
+     RangeExpression
+   ]
+;
+
+INJECT RelationalExpression :
+    import org.congocc.templates.TemplateException;
+    import org.congocc.templates.core.Environment;
+    import org.congocc.templates.core.ArithmeticEngine;
+    import static org.congocc.templates.core.variables.Wrap.*;
+    implements Expression;
+{
+    public Expression getLeft() {
+        return (Expression) get(0);
+    }
+
+    public Expression getRight() {
+        return (Expression) get(2);
+    }
+
+    public Object evaluate(Environment env) {
+        return isTrue(env);
+    }
+
+    public boolean isTrue(Environment env) {
+        TokenType operation = (TokenType) get(1).getType();
+        Object left = getLeft().evaluate(env);
+        Object right = getRight().evaluate(env);
+        getLeft().assertNonNull(left, env);
+        getRight().assertNonNull(right, env);
+        if (!(left instanceof Number && right instanceof Number)) {
+            throw new TemplateException("Can only compare numbers", env);
+        }
+        ArithmeticEngine ae = env != null ? env.getArithmeticEngine() : getTemplate().getArithmeticEngine();
+        int comp = ae.compareNumbers((Number)left, (Number)right);
+        switch(operation) {
+            case LESS_THAN : 
+                return comp < 0;
+            case GREATER_THAN : case ESCAPED_GT : 
+                return comp > 0;
+            case LESS_THAN_EQUALS : 
+                return comp <= 0;
+            case GREATER_THAN_EQUALS : case ESCAPED_GTE : 
+                return comp >= 0;
+            default : throw new InternalError();
+        }
+    }
+}
+
+RangeExpression :
+   AdditiveExpression
+   [
+    <DOT_DOT>
+    [
+       AdditiveExpression
+    ]
+   ]
+;
+
+INJECT RangeExpression :
+   import org.congocc.templates.core.variables.*;
+   import org.congocc.templates.core.Environment;
+   import org.congocc.templates.TemplateException;
+   import static org.congocc.templates.core.variables.Wrap.getNumber;
+   implements Expression
+{
+    public Expression getLeft() {
+        return (Expression) get(0);
+    }
+
+    public Expression getRight() {
+        return hasRhs() ? (Expression) get(2) : null;
+    }
+
+    public boolean hasRhs() {
+        return size()==3;
+    }
+    
+    public Object evaluate(Environment env) {
+        int min = getNumber(getLeft(), env).intValue();
+        int max = 0;
+        if (hasRhs()) {
+            max = getNumber(getRight(), env).intValue();
+            return new NumericalRange(min, max);
+        }
+        return new NumericalRange(min);
+    }
+    
+    public boolean isTrue(Environment env) {
+        return size() > 0;
+    }
+
+    private class NumericalRange extends AbstractList<Integer> {
+        private int lower, upper;
+        private boolean descending, norhs; // if norhs is true, then we have a half-range, like n..
+        
+        /**
+        * Constructor for half-range, i.e. n..
+        */
+        public NumericalRange(int lower) {
+            this.norhs = true;
+            this.lower = lower;
+        }
+
+        public NumericalRange(int left, int right) {
+            lower = Math.min(left, right);
+            upper = Math.max(left, right);
+            descending = (left != lower);
+        }
+
+        public Integer get(int i) {
+            int index = descending ? (upper -i) : (lower + i);
+            if ((norhs && index > upper) || index <lower) {
+                throw new EvaluationException("out of bounds of range");
+            }
+            return index;
+        }
+
+        public int size() {
+            return 1 + upper - lower;
+        }
+    }
+}
+
+AndExpression :
+   EqualityExpression 
+   [
+      <AND>
+      AndExpression
+   ]
+;
+
+INJECT AndExpression :
+    import org.congocc.templates.core.Environment;
+    implements Expression
+{
+    public Expression getLeft() {
+    	return (Expression) get(0);
+    }
+    
+    public Expression getRight() {
+    	return (Expression) get(2);
+    }
+
+    public Object evaluate(Environment env) {
+        return isTrue(env);
+    }
+
+    public boolean isTrue(Environment env) {
+        return getLeft().isTrue(env) && getRight().isTrue(env);
+    }
+}
+
+OrExpression :
+   AndExpression
+   [
+      <OR>
+      OrExpression
+   ]
+;
+
+INJECT OrExpression :
+    import org.congocc.templates.core.Environment;
+    implements Expression
+{
+    public Expression getLeft() {
+    	return (Expression) get(0);
+    }
+    
+    public Expression getRight() {
+    	return (Expression) get(2);
+    }
+
+    public Object evaluate(Environment env) {
+        return isTrue(env);
+    }
+
+    public boolean isTrue(Environment env) {
+        return getLeft().isTrue(env) || getRight().isTrue(env);
+    }
+}
+
+ListLiteral :
+    <OPEN_BRACKET>
+    [
+      Expression 
+      (
+         <COMMA>
+         Expression 
+      )*
+    ]
+    <CLOSE_BRACKET>
+;
+
+INJECT ListLiteral :
+  import java.io.IOException;
+  import java.util.ArrayList;
+  import java.util.List;
+  import org.congocc.templates.core.Environment;
+  import org.congocc.templates.TemplateException;
+  import org.congocc.templates.core.variables.scope.Scope;
+  implements Expression
+{
+    public List<Expression> getElements() {
+        return childrenOfType(Expression.class);
+    }
+
+    public Object evaluate(Environment env) {
+        List<Object> result = new ArrayList<>();
+        for (Expression exp : getElements()) {
+            Object tm = exp.evaluate(env);
+            assertIsDefined(tm, env);
+            result.add(tm);
+        }
+        return result;
+    }
+}
+
+BuiltinVariable :
+   <DOT>
+   <ID>
+   {
+      CURRENT_NODE.setName(lastConsumedToken.toString());
+   }
+;
+
+INJECT BuiltinVariable :
+    import org.congocc.templates.core.variables.*;
+    import org.congocc.templates.core.Environment;
+    import org.congocc.templates.core.parser.ParseException;
+    import org.congocc.templates.Configuration;
+    import org.congocc.templates.TemplateException;
+    import org.congocc.templates.TemplateHash;
+    implements Expression
+{
+    private String name;
+
+    public void setName(String name) {
+      this.name = name.intern();
+    }
+    
+    public String getName() {
+        return name;
+    }
+
+    public Object evaluate(Environment env) {
+        switch (name) {
+           case "namespace" : return env.getCurrentNamespace();
+           case "main" : return env.getMainNamespace();
+           case "globals" : return env;
+           case "locals" : return env.getCurrentMacroContext();
+           case "data_model" : return env.getDataModel();
+           case "scope" : return env.getCurrentScope();
+           case "vars" : return new VarsHash(env);
+           case "locale" : return env.getLocale().toString();
+           case "lang" : return env.getLocale().getLanguage();
+           case "pass" : return Macro.DO_NOTHING_MACRO;
+           case "name" : return env.getTemplate().getName(); 
+           case "version" : return Configuration.getVersionNumber();
+           case "output_encoding" : return env.getOutputEncoding();
+           case "url_escaping_charset" : return env.getURLEscapingCharset();
+           case "error" : return env.getCurrentRecoveredErrorMessage();
+        }
+        throw new TemplateException("Invalid built-in variable: " + this, env);
+    }
+
+    static class VarsHash implements TemplateHash {
+        
+        private final Environment env;
+        
+        VarsHash(Environment env) {
+            this.env = env;
+        }
+        
+        public Object get(String key) {
+            return env.getVariable(key);
+        }
+        
+        public boolean isEmpty() {
+            return false;
+        }
+    }
+}
+
+INJECT DefaultToExpression : 
+    import org.congocc.templates.core.Environment;
+    import org.congocc.templates.core.variables.*;
+    import static org.congocc.templates.core.variables.Wrap.LOOSE_NULL;
+    import static org.congocc.templates.core.variables.Wrap.JAVA_NULL;
+    implements Expression
+{
+	public Expression getLeft() {
+		return (Expression) get(0);
+	}
+	
+	public Expression getRight() {
+		return childrenOfType(Expression.class).size() == 2 ?
+		(Expression) getLastChild() : null;
+	}
+
+	public Object evaluate(Environment env) {
+		Object left = null;		
+		try {
+			left = getLeft().evaluate(env);
+		} catch (InvalidReferenceException ire) {
+			if (!(getLeft() instanceof ParentheticalExpression)) {
+				throw ire;
+			}
+		}
+		if (left != null && left != JAVA_NULL && left != LOOSE_NULL) return left;
+		if (getRight() == null) return LOOSE_NULL;
+		return getRight().evaluate(env);
+	}
+}
+
+INJECT ExistsExpression :
+    import org.congocc.templates.core.Environment;
+    import org.congocc.templates.core.variables.InvalidReferenceException;
+    import static org.congocc.templates.core.variables.Wrap.JAVA_NULL;
+    import static org.congocc.templates.core.variables.Wrap.LOOSE_NULL;
+    implements Expression
+{
+	public Expression getExpression() {
+		return (Expression) get(0);
+	}
+
+	public Object evaluate(Environment env) {
+		Object value = null;
+		try {
+			value = getExpression().evaluate(env);
+		} catch (InvalidReferenceException ire) {
+			if (!(getExpression() instanceof ParentheticalExpression)) {
+				throw ire;
+			}
+		}
+		return value != null && value != JAVA_NULL && value != LOOSE_NULL;
+	}
+}
+
+INJECT BuiltInExpression :
+    import java.util.HashMap;
+    import org.congocc.templates.core.Environment;
+    import org.congocc.templates.builtins.*;
+    import org.congocc.templates.TemplateHash;
+    import org.congocc.templates.core.variables.JavaMethodCall;
+    import static org.congocc.templates.core.variables.Wrap.asString;
+    implements Expression;
+{
+    private static final HashMap<String, BuiltIn> knownBuiltins = new HashMap<String, BuiltIn>();
+    {
+        knownBuiltins.put("source", (env,caller)->caller.getTarget().getSource());
+        knownBuiltins.put("upper_case", (env,caller)->asString(caller.getTarget().evaluate(env)).toUpperCase(env.getLocale()));
+        knownBuiltins.put("lower_case", (env,caller)->asString(caller.getTarget().evaluate(env)).toLowerCase(env.getLocale()));
+        knownBuiltins.put("length", (env,caller)->asString(caller.getTarget().evaluate(env)).length());
+        knownBuiltins.put("trim", (env,caller)->asString(caller.getTarget().evaluate(env)).trim());
+        knownBuiltins.put("substring", (env,caller)->new JavaMethodCall(asString(caller.getTarget().evaluate(env)),"substring"));
+        knownBuiltins.put("instanceof", new instanceofBI());
+        knownBuiltins.put("exists", new ExistenceBuiltIn.ExistsBuiltIn());
+        knownBuiltins.put("c", new cBI());
+        knownBuiltins.put("size", new sizeBI());
+        knownBuiltins.put("string", new stringBI());
+        knownBuiltins.put("eval", new evalBI());
+        knownBuiltins.put("resolve", new resolveBI());
+        NumericalCast numericalCast = new NumericalCast();
+        knownBuiltins.put("byte", numericalCast);
+        knownBuiltins.put("double", numericalCast);
+        knownBuiltins.put("float", numericalCast);
+        knownBuiltins.put("int", numericalCast);
+        knownBuiltins.put("long", numericalCast);
+        knownBuiltins.put("short", numericalCast);
+        knownBuiltins.put("floor", numericalCast);
+        knownBuiltins.put("ceiling", numericalCast);
+        knownBuiltins.put("round", numericalCast);
+        knownBuiltins.put("capitalize", new StringTransformations.Capitalize());
+        knownBuiltins.put("cap_first", new StringTransformations.CapFirst(true));
+        knownBuiltins.put("uncap_first", new StringTransformations.CapFirst(false));
+        knownBuiltins.put("j_string", new StringTransformations.Java());
+        knownBuiltins.put("js_string", new StringTransformations.JavaScript());
+        knownBuiltins.put("chop_linebreak", new StringTransformations.Chomp());
+        knownBuiltins.put("html", new StringTransformations.Html());
+        knownBuiltins.put("web_safe", knownBuiltins.get("html"));
+        knownBuiltins.put("rtf", new StringTransformations.Rtf());
+        knownBuiltins.put("xml", new StringTransformations.Xml());
+        knownBuiltins.put("xhtml", new StringTransformations.Xhtml());
+        knownBuiltins.put("join", new StringFunctions.Join());
+        knownBuiltins.put("index_of", new StringFunctions.IndexOf());
+        knownBuiltins.put("last_index_of", new StringFunctions.LastIndexOf());
+        knownBuiltins.put("contains", new StringFunctions.Contains());
+        knownBuiltins.put("number", new numberBI());
+        knownBuiltins.put("left_pad", new StringFunctions.LeftPad());
+        knownBuiltins.put("right_pad", new StringFunctions.RightPad());
+        knownBuiltins.put("replace", new StringFunctions.Replace());
+        knownBuiltins.put("split", new StringFunctions.Split());
+        knownBuiltins.put("groups", new groupsBI());
+        knownBuiltins.put("matches", new StringFunctions.Matches());
+        knownBuiltins.put("starts_with", new StringFunctions.StartsWith());
+        knownBuiltins.put("ends_with", new StringFunctions.EndsWith());
+        knownBuiltins.put("word_list", new StringFunctions.WordList());
+        knownBuiltins.put("url", new StringFunctions.Url());
+        knownBuiltins.put("first", new SequenceFunctions.First());
+        knownBuiltins.put("last", new SequenceFunctions.Last());
+        knownBuiltins.put("reverse", new SequenceFunctions.Reverse());
+        knownBuiltins.put("sort", new SequenceFunctions.Sort());
+        knownBuiltins.put("chunk", new SequenceFunctions.Chunk());
+        knownBuiltins.put("seq_contains", new SequenceContainsBuiltIn());
+        knownBuiltins.put("scope", new MacroBuiltins.Scope());
+        knownBuiltins.put("namespace", new MacroBuiltins.Namespace());
+        knownBuiltins.put("keys", new HashBuiltin.Keys());
+        knownBuiltins.put("values", new HashBuiltin.Values());
+        knownBuiltins.put("is_defined", new ExistenceBuiltIn.IsDefinedBuiltIn());
+        knownBuiltins.put("default", new ExistenceBuiltIn.DefaultBuiltIn());
+        knownBuiltins.put("has_content", new ExistenceBuiltIn.HasContentBuiltIn());
+    }
+
+    private String key;
+    private BuiltIn bi;
+
+    public void close() {
+        key = getKeyTok().toString().intern();
+        bi = knownBuiltins.get(key);
+        if (bi == null) {
+            throw new ParseException("unknown builtin: ?" + key +  " at " + getKeyTok().getLocation());
+        }
+    }
+
+    public Expression getTarget() {
+        return (Expression) get(0);
+    }
+
+    public Token getKeyTok() {
+        return (Token) get(2);
+    }
+
+    public BuiltIn getBuiltIn() {
+        return bi;
+    }
+
+    public Object evaluate(Environment env) {
+        return bi.get(env, this);
+    }
+
+    public String getName() {
+        return key;
+    }
+}
+
+INJECT MethodCall :
+    import java.util.ArrayList;
+    import java.util.List;
+    import java.io.Writer;
+    import java.io.IOException;
+    import java.io.StringWriter;
+    import java.util.function.BiFunction;
+    import java.util.function.Function;
+    import java.util.function.Supplier;
+    import org.congocc.templates.core.Environment;
+    import org.congocc.templates.core.variables.*;
+    import static org.congocc.templates.core.variables.Wrap.wrap;
+    import static org.congocc.templates.core.variables.Wrap.unwrap;
+    import static org.congocc.templates.core.variables.Wrap.LOOSE_NULL;
+    import static org.congocc.templates.core.variables.Wrap.JAVA_NULL;
+    implements Expression;
+{
+
+    public ArgsList getArgs() {
+        return firstChildOfType(ArgsList.class);
+    }
+
+    public Expression getTarget() {
+    	return (Expression) get(0);
+    }
+    
+    @SuppressWarnings({"unchecked","rawtypes"})
+    public Object evaluate(Environment env) {
+        Object value = getTarget().evaluate(env);
+        if (value == LOOSE_NULL) return JAVA_NULL;
+        if (value instanceof VarArgsFunction<?> targetMethod) {
+            ArgsList args = getArgs();
+            List<Object> argumentList;
+            if (args !=null) {
+                argumentList = args.getParameterSequence(targetMethod, env);
+            } else {
+                argumentList = new ArrayList<>();
+            }
+            Object result = targetMethod.apply(argumentList.toArray(new Object[argumentList.size()]));
+            return wrap(result);
+        }
+        else if (value instanceof Supplier<?> supplier) {
+            ArgsList argsList = getArgs();
+            if (argsList != null && argsList.firstChildOfType(Expression.class) !=null) {
+                throw new EvaluationException("The method " + getTarget() + " takes no arguments.");
+            }
+            return wrap(supplier.get());
+        }
+        else if (value instanceof Function func) {
+            ArgsList args = getArgs();
+            if (args == null || args.childrenOfType(Expression.class).size() != 1) {
+                throw new EvaluationException("The method " + getTarget() + " takes exactly one argument.");
+            }
+            Expression argExp = (Expression)getArgs().get(0);
+            Object arg = unwrap(argExp.evaluate(env));
+            return wrap(func.apply(arg));
+        }
+        else if (value instanceof BiFunction bif) {
+            ArgsList args = getArgs();
+            List<Expression> argExpressions = args == null ? new ArrayList<>() : args.childrenOfType(Expression.class);
+            if (argExpressions.size() != 2) {
+                throw new EvaluationException("The method " + getTarget() + " takes exactly two arguments.");
+            }
+            Object firstArg = argExpressions.get(0).evaluate(env);
+            Object secondArg = argExpressions.get(1).evaluate(env);
+            return wrap(bif.apply(firstArg, secondArg));
+        }
+        else if (value instanceof TriFunction trif) {
+            ArgsList args = getArgs();
+            List<Expression> argExpressions = args == null ? new ArrayList<>() : args.childrenOfType(Expression.class);
+            if (argExpressions.size() != 3) {
+                throw new EvaluationException("The method " + getTarget() + " takes exactly three arguments.");
+            }
+            Object firstArg = argExpressions.get(0).evaluate(env);
+            Object secondArg = argExpressions.get(1).evaluate(env);
+            Object thirdArg = argExpressions.get(2).evaluate(env);
+            return wrap(trif.apply(firstArg, secondArg, thirdArg));
+        }
+        else if (value instanceof QuadFunction quadf) {
+            ArgsList args = getArgs();
+            List<Expression> argExpressions = args == null ? new ArrayList<>() : args.childrenOfType(Expression.class);
+            if (argExpressions.size() != 4) {
+                throw new EvaluationException("The method " + getTarget() + " takes exactly four arguments.");
+            }
+            Object firstArg = argExpressions.get(0).evaluate(env);
+            Object secondArg = argExpressions.get(1).evaluate(env);
+            Object thirdArg = argExpressions.get(2).evaluate(env);
+            Object fourthArg = argExpressions.get(3).evaluate(env);
+            return wrap(quadf.apply(firstArg, secondArg, thirdArg, fourthArg));
+        }
+        else if (value instanceof Macro func) {
+            StringWriter sw = null;
+            env.setLastReturnValue(null);
+            Writer prevOut = env.getOut();
+            try {
+                env.setOut(Environment.NULL_WRITER);
+                if (!func.isFunction()) {
+                    sw = new StringWriter();
+                    env.setOut(sw);
+                 }
+                env.render(func, getArgs(), null, null);
+            } catch (IOException ioe) {
+                throw new InternalError("This should be impossible.");
+            } finally {
+                env.setOut(prevOut);
+            }
+            return sw != null ? sw.getBuffer().toString() : env.getLastReturnValue();
+        }
+        throw invalidTypeException(value, getTarget(), env, "method");
+    }
+}
+
+PositionalArgsList# : 
+	Expression 
+	(
+	   <COMMA>
+	   Expression 
+	)*
+;
+
+INJECT PositionalArgsList :
+    import java.util.*;
+    import org.congocc.templates.core.Environment;
+    import org.congocc.templates.core.variables.*;
+    import org.congocc.templates.utility.UndeclaredThrowableException;
+    import org.congocc.templates.core.nodes.ParameterList;
+    extends ArgsList
+{
+   public List getParameterSequence(Object target, Environment env) {
+        ParameterList annotatedParameterList = getParameterList(target);
+        if (annotatedParameterList == null) {
+            List<Object> result = new ArrayList<>();
+            for (Expression exp : childrenOfType(Expression.class)) {
+               result.add(exp.evaluate(env));
+            }
+            return result;
+        }
+        return annotatedParameterList.getParameterSequence(this, env);
+    }
+
+    public Map<String, Object> getParameterMap(Object target, Environment env)
+    {
+        Map<String, Object> result = new HashMap<String, Object>();
+        ParameterList annotatedParameterList = getParameterList(target);
+        if (annotatedParameterList == null) {
+            if (firstChildOfType(Expression.class) != null) {
+                throw new EvaluationException("Cannot pass positional arguments to this UserDirective");
+            }
+        }
+        else {
+            result = annotatedParameterList.getParameterMap(this, env, false);
+        }
+        return result;
+    }
+
+    public Object getValueAt(int i, Environment env) {
+        Expression exp = childrenOfType(Expression.class).get(i);
+        Object value = exp.evaluate(env);
+        exp.assertIsDefined(value, env);
+        return value;
+    }
+}
+
+NamedArgsList :
+{
+    String param;
+	Expression arg;
+}
+	<ID> {param = lastConsumedToken.toString();}
+	<EQUALS> 
+	arg=Expression  
+	{
+		CURRENT_NODE.addNamedArg(param, arg);
+	}
+	(
+	   [<COMMA>]
+	   <ID> {param = lastConsumedToken.toString();}
+	   <EQUALS>
+	   arg=Expression
+	   {CURRENT_NODE.addNamedArg(param, arg);}
+	)*
+;
+
+INJECT NamedArgsList :
+    import java.util.*;
+    import org.congocc.templates.core.Environment;
+    import org.congocc.templates.core.nodes.ParameterList;
+    import org.congocc.templates.core.parser.ParseException;
+    import org.congocc.templates.*;
+    extends ArgsList;
+{
+
+    private LinkedHashMap<String,Expression> namedArgs = 
+        new LinkedHashMap<String, Expression>();
+
+    public void addNamedArg(String name, Expression exp) throws ParseException{
+        if (namedArgs.containsKey(name)) throw new ParseException(
+                "Error at: " + exp.getLocation() + "\nArgument " + name + " was already specified.");
+        namedArgs.put(name, exp);
+        exp.setParent(this);
+    }
+
+    public Map<String, Expression> getArgs() {
+        return namedArgs;
+    }
+
+    public int size() {
+        return namedArgs.size();
+    }
+
+    public Map<String,Expression> getCopyOfMap() {
+        return (Map<String,Expression>)namedArgs.clone();
+    }
+
+    public Map<String, Object> getParameterMap(Object tm, Environment env) {
+        Map<String, Object> result = null; 
+        ParameterList annotatedParameterList = ArgsList.getParameterList(tm);
+        if (annotatedParameterList == null) {
+            result = new HashMap<String, Object>();
+            for (String paramName : namedArgs.keySet()) {
+                Expression exp = namedArgs.get(paramName);
+                Object value = exp.evaluate(env);
+                exp.assertIsDefined(value, env);
+                result.put(paramName, value);
+            }
+        }
+        else {
+            result = annotatedParameterList.getParameterMap(this, env);
+        }
+        return result;
+    }
+
+    public List<Object> getParameterSequence(Object target, Environment env) {
+        ParameterList annotatedParameterList = getParameterList(target);
+        if (annotatedParameterList == null) {
+            String msg = "Error at: " + getLocation() 
+            + "\nCannot invoke method " + target + " with a key=value parameter list because it is not annotated.";
+            throw new TemplateException(msg, env);
+        }
+        return annotatedParameterList.getParameterSequence(this, env);
+    }
+}
+
+ArgsList#abstract :
+	(
+	   SCAN <ID><EQUALS> =>
+       NamedArgsList
+       |
+       PositionalArgsList
+    )
+;
+
+INJECT ArgsList :
+    import java.util.*;
+    import java.util.concurrent.ConcurrentHashMap;
+    import java.lang.reflect.*;
+
+    import org.congocc.templates.annotations.Parameters;
+    import org.congocc.templates.core.Environment;
+    import org.congocc.templates.core.variables.*;
+    import org.congocc.templates.core.parser.*;
+    import org.congocc.templates.core.parser.CTLLexer.LexicalState;
+    import org.congocc.templates.core.nodes.ParameterList;
+    import org.congocc.templates.TemplateException;
+{
+	/**
+	 * Cache the retrieved annotation information, since it seems like 
+	 * this operation could be a bit expensive.
+	 */
+	private static Map<String, ParameterList> parameterListCache = new ConcurrentHashMap<String, ParameterList>();
+   // Placeholder for null - ConcurrentHashMap doesn't tolerate null values
+	private static final ParameterList NO_PARAM_LIST = new ParameterList();
+        
+	/**
+	 * The target will be a TemplateTranformModel.
+	 * This returns a key-value map of the arguments to be passed to the target.
+	 * A TemplateException will be thrown if the target's parameters do not match
+	 * this ArgList in some way.
+	 */
+	public abstract Map<String, Object> getParameterMap(Object target, Environment env);
+	
+	public abstract List<Object> getParameterSequence(Object target, Environment env);
+	
+	public static ParameterList getParameterList(Object target) {
+            String keyName = target.getClass().getName();
+            ParameterList result = parameterListCache.get(keyName);
+            if(result == NO_PARAM_LIST) {
+                return null;
+            }
+            if(result != null) {
+                return result;
+            }
+            Parameters params = getAnnotatedParameters(target);
+            if (params != null) {
+                String paramString = params.value();
+                if("".equals(paramString)) {
+                    result = new ParameterList();
+                }
+                else try {
+                    result = getParameterList(paramString);
+                } catch (Exception pe) {
+                    throw new TemplateException("Can't parse parameter list [" + paramString + "] on " + target, pe, Environment.getCurrentEnvironment());
+                }
+                parameterListCache.put(keyName, result);
+                return result;
+            } else {
+                parameterListCache.put(keyName, NO_PARAM_LIST);
+                return null;
+            }
+	}
+	
+	private static ParameterList getParameterList(String s) {
+		CTLLexer token_source = new CTLLexer(s);
+		token_source.switchTo(LexicalState.EXPRESSION);
+		CTLParser parser = new CTLParser(token_source);
+		return parser.ParameterList();
+	}
+
+    @SuppressWarnings("deprecation")
+    private static Parameters getAnnotatedParameters(Object target) {
+        Parameters params = null;
+        Method keyMethod = null;
+        if (target instanceof VarArgsFunction<?>) {
+            try {
+                keyMethod = target.getClass().getMethod("apply", new Class[] {new Object[0].getClass()});
+            } catch (Exception e) {
+                // Again, this condition should be impossible. If something is
+                // a VarArgsFunction, it must implement this method.
+                throw new InternalError(e.getMessage());
+            }
+        }
+        if (keyMethod != null) {
+            params = keyMethod.getAnnotation(Parameters.class);
+        }
+        if (params == null) {
+            // Check if the class is annotated now
+            params = target.getClass().getAnnotation(Parameters.class);
+        }
+        return params;
+    }
+}
+
+HashLiteral :
+   <OPEN_BRACE>
+   [
+       Expression
+       <COLON>
+       Expression
+       (
+          <COMMA>
+           Expression
+           <COLON>
+           Expression
+       )*
+   ]
+   <CLOSE_BRACE>
+;
+
+INJECT HashLiteral :
+    import java.util.*;
+    import org.congocc.templates.core.Environment;
+    import org.congocc.templates.core.variables.*;
+    import org.congocc.templates.core.ast.CollectionAndSequence;
+    implements Expression
+{
+    private List<Expression> keys = new ArrayList<>();
+    private List<Expression> values = new ArrayList<>();
+    
+    public void close() {
+        boolean justSawKey = false;
+        for (Expression exp : childrenOfType(Expression.class)) {
+            if (justSawKey) values.add(exp);
+            else keys.add(exp);
+            justSawKey = !justSawKey;
+       }
+       assert keys.size() == values.size() : getSource();
+    }
+    
+    public Object evaluate(Environment env) {
+        Map<Object,Object> result = new LinkedHashMap<>();
+        for (int i = 0; i < keys.size(); i++) {
+            Object key = keys.get(i).evaluate(env);
+            Object value = values.get(i).evaluate(env);
+            result.put(key, value);
+        }
+        return result;
+    }
+    
+    public List<Expression> getKeys() {
+    	return Collections.unmodifiableList(keys);
+    }
+    
+    public List<Expression> getValues() {
+    	return Collections.unmodifiableList(values);
+    }
+}
+
+INJECT MethodReference :
+    import org.congocc.templates.core.Environment;
+    import org.congocc.templates.core.variables.JavaMethodCall;
+    implements Expression
+{
+    public Expression getTarget() {
+        return (Expression) get(0);
+    }
+
+    public Object evaluate(Environment env) {
+        Object target = getTarget().evaluate(env);
+        String methodName = get(2).toString();
+        return new JavaMethodCall(target, methodName);
+    }
+}

@@ -1,0 +1,568 @@
+/**
+ * The lexer portion defines 3 lexical states:
+ * TEXT, EXPRESSION, DIRECTIVE_NAME
+ * The lexer is in the TEXT state when it is 
+ * just consuming regular text, but is scanning for
+ * congo template constructs. 
+ * DIRECTIVE_NAME is a trivial state you are in just
+ * after a <# or [# and we expect a directive name.
+ * EXPRESSION is the state you are in
+ * when the parser wants an expression.
+ * So, for example, you enter the EXPRESSION state
+ * right after a ${ and leave it after the matching }.
+ * Or, you enter the EXPRESSION state right after
+ * an "<#if" and then, when you hit the matching ">"
+ * that ends the if directive, you go back to TEXT lexical state.
+ */
+
+INJECT LEXER_CLASS : 
+{
+    /**
+    Keeps track of how deeply nested
+    we have the hash literals.
+    This is necessary since we need to be
+    able to distinguish the } used to close
+    a hash literal and the one used to
+    close a ${
+    */
+    private int hashLiteralNesting;
+    private int parenthesisNesting;
+    private int bracketNesting;
+    private boolean inPointySyntax;
+    // Not being used now. FIXME later.
+    @Property boolean onlyTextOutput;
+    String templateName;
+
+    private static EnumSet<TokenType> directiveNames = EnumSet.of(
+        _ATTEMPT, _ASSERT, _RECOVER, IF, ELSE_IF, EXEC, LIST,  
+        SET, _INCLUDE, IMPORT, FUNCTION, _MACRO, STOP, RETURN, SETTING, 
+        EMBED, VAR, ELSE, BREAK, TRIM, LTRIM, RTRIM,
+        NESTED, FTL_HEADER, UNKNOWN_DIRECTIVE
+    );
+
+    private static EnumSet<TokenType> emptyDirectives = EnumSet.of(
+        _ATTEMPT, _RECOVER, ELSE, BREAK, TRIM, LTRIM, 
+        RTRIM, DEFAUL  
+    );
+
+    private static EnumSet<TokenType> continueLineTokens = EnumSet.of(
+        COMMA, EQUALS, DOUBLE_EQUALS, NOT_EQUALS, DOT_DOT, 
+        GREATER_THAN, GREATER_THAN_EQUALS, LESS_THAN, LESS_THAN_EQUALS,
+        ESCAPED_GT, ESCAPED_GTE, PLUS, MINUS, TIMES, DIVIDE,
+        PERCENT, AND, OR, SEMICOLON, COLON, IN, AS, USING, TERNARY
+    );
+
+    private boolean atLineStart(Token tok) {
+        for (int i = tok.getBeginOffset() -1; i >= 0; i--) {
+            int ch = charAt(i);
+            if (ch == '\n') break;
+            if (!Character.isWhitespace(ch)) return false;
+        }
+        return true;
+    }
+
+    private boolean atLineEnd(Token tok) {
+        for (int i = tok.getEndOffset(); i < length(); i++) {
+            int ch = charAt(i);
+            if (ch == '\n') break;
+            if (!Character.isWhitespace(ch)) return false;
+        }
+        return true;
+    }
+
+    private TokenType directiveTypeFromString(String name) {
+        switch(name) {
+            case "#assert" : return _ASSERT;
+            case "#attempt" : return _ATTEMPT;
+            case "#break" : return BREAK;
+            case "#case" : return CASE;
+            case "#default" : return DEFAUL;
+            case "#embed" : return EMBED;
+            case "#else" : return ELSE;
+            case "#elif" : return ELSE_IF;
+            case "#elseif" : return ELSE_IF;
+            case "#exec" : return EXEC;
+            case "#ftl" : return FTL_HEADER;
+            case "#function" : return FUNCTION;
+            case "#if" : return IF;
+            case "#import" : return IMPORT;
+            case "#include" : return _INCLUDE;
+            case "#list" : return LIST;
+            case "#macro" : return _MACRO;
+            case "#nested" : return NESTED;
+            case "#recover" : return _RECOVER;
+            case "#return" : return RETURN;
+            case "#set" : return SET;
+            case "#setting" : return SETTING;
+            case "#stop" : return STOP;
+            case "#switch" : return SWITCH;
+            case "#var" : return VAR;
+        }
+        return UNKNOWN_DIRECTIVE;
+    }
+
+    private Token TOKEN_HOOK(Token token) {
+        TokenType type = token.getType();
+        if (type == POSSIBLE_DIRECTIVE) {
+            if (!atLineStart(token)) return token;
+            TokenType directiveType = directiveTypeFromString(token.toString());
+            if (emptyDirectives.contains(directiveType) && !atLineEnd(token)) {
+                return token;
+            }
+            token.setType(directiveType);
+            if (directiveType == UNKNOWN_DIRECTIVE) return token;
+            if (!emptyDirectives.contains(directiveType)) {
+                switchTo(LexicalState.EXPRESSION);
+                if (token.charAt(0) != '[' && token.charAt(0) != '<') {
+                    activeTokenTypes.add(EOL);
+                }
+            }
+        }
+        else if (type == POSSIBLE_END_DIRECTIVE) {
+            if (!atLineStart(token) && !atLineEnd(token)) return token;
+            token.setType(CLOSE_DIRECTIVE_BLOCK);
+        }
+        else if (type == EOL) {
+            Token prevTok = token.previousCachedToken();
+            if (parenthesisNesting > 0 || 
+                bracketNesting > 0 ||
+                hashLiteralNesting > 0 ||
+                prevTok.getType() == EOL ||
+                prevTok != null && continueLineTokens.contains(prevTok.getType())) 
+            {
+                token.setUnparsed(true);
+            } else {
+                token.setType(DIRECTIVE_END);
+                activeTokenTypes.remove(EOL);
+                switchTo(LexicalState.TEXT);
+            }
+        }
+        return token;
+    }
+
+    private Token TOKEN_HOOK(Token token) {
+        TokenType type = token.getType();
+        if (type == UNIFIED_CALL) {
+            inPointySyntax = token.charAt(0) == '<';
+        }
+        else if (directiveNames.contains(type)) {
+            inPointySyntax = token.charAt(0) == '<';
+            if (emptyDirectives.contains(token.getType())) {
+                switchTo(LexicalState.TEXT);
+            }
+            else {
+                switchTo (LexicalState.EXPRESSION);
+            }
+        }
+        switch(token.getType()) {
+            case GREATER_THAN_EQUALS : 
+            case GREATER_THAN : 
+                if (parenthesisNesting == 0 && inPointySyntax && !activeTokenTypes.contains(EOL)) {
+                    if (token.getType() == GREATER_THAN_EQUALS) {
+                        token.truncate(1);
+                    }
+                    token.setType(DIRECTIVE_END);
+                    switchTo(LexicalState.TEXT);
+                }
+                break;
+            case OPEN_PAREN : 
+                parenthesisNesting++;
+                break;
+            case CLOSE_PAREN :
+                parenthesisNesting--;
+                break;
+            case OPEN_BRACKET : 
+                bracketNesting++;
+                break;
+            case CLOSE_BRACKET : 
+                if (bracketNesting > 0) {
+                    --bracketNesting;
+                } else if (!activeTokenTypes.contains(EOL)){
+                    token.setType(DIRECTIVE_END);
+                    switchTo(LexicalState.TEXT);
+                }
+                break;
+            case OPEN_BRACE : 
+                ++hashLiteralNesting;
+                break;
+            case CLOSE_BRACE : 
+                if (hashLiteralNesting > 0) {
+                    --hashLiteralNesting;
+                } else {
+                     switchTo(LexicalState.TEXT);
+                }
+                break;
+            case UNIFIED_CALL : 
+                switchTo(LexicalState.EXPRESSION);
+                break;
+        }
+        return token;
+    }
+}
+
+<TEXT,EXPRESSION> UNPARSED#Comment :
+    <?SQUARE_COMMENT : "[#--" (~[])* "--]">
+    |    
+    <?POINTY_COMMENT : "<#--" (~[])* "-->">
+    |
+    <SINGLE_LINE_COMMENT : "#--" (~["\n"])* >
+;
+
+<EXPRESSION> UNPARSED#Comment :
+    <EXPRESSION_SINGLE_LINE_COMMENT : <SINGLE_LINE_COMMENT> "\n"> {
+        if (activeTokenTypes.contains(EOL) && !atLineStart(matchedToken)) {
+            matchedToken.truncate(1);
+        }
+    }
+;
+
+MORE :
+    <START_TAG : "<#" | "[#"> : DIRECTIVE_NAME
+;    
+
+TOKEN#Delimiter :
+    <CLOSE_DIRECTIVE_BLOCK : ("[/#" (["a"-"z"])* (<BLANK>)* "]") | ("</#" (["a"-"z"])* (<BLANK>)* ">")> 
+    |
+    <UNIFIED_CALL : "<@" | "[@" > 
+    |
+    <UNIFIED_CALL_END : ("<" | "[") "/@" (~[" ", "\t", "\n", "\r", ">", "]"])* (">" | "]")> 
+    |
+    <OUTPUT_ESCAPE : "$" ("\\")? "{" > : EXPRESSION
+    |
+    <?NOPARSE : <NOPARSE_BEGIN> (~[])* <NOPARSE_END> > #LegacyNoParse
+    |
+    <#NOPARSE_BEGIN :   ("<#noparse" (<BLANK>)* ">") | ("/#noparse" (<BLANK>)* "]")>
+    |
+    <#NOPARSE_END :  ("</#noparse" (<BLANK>)* ">") | ("[/#noparse" (<BLANK>)* "]")>
+;
+
+TOKEN#Text :
+    <TRAILING_WHITESPACE : (["\t"," "])* "\n"> #org.congocc.templates.core.nodes.Whitespace
+    |
+    <NON_TRAILING_WHITESPACE : (["\t"," "])+> #org.congocc.templates.core.nodes.Whitespace
+    |
+    <PROBLEMATIC_CHAR : "$" | "<" | "["> #Printable
+    |
+    <POSSIBLE_END_DIRECTIVE : ( "#end" | "/#") (["a"-"z","A"-"Z"])* > #Printable
+    |
+    <POSSIBLE_DIRECTIVE : "#" (["a"-"z","A"-"Z"])+> #Printable
+    |
+    <REGULAR_PRINTABLE : (~["$", "<", "[" ,"\t", " ", "\n"])+> #Printable
+;
+
+<DIRECTIVE_NAME> TOKEN#DirectiveName :
+    <#BLANK : [" ", "\t", "\n", "\r"]>
+    |
+    <#CLOSE_TAG1 : (<BLANK>)* (">" | "]")>
+    |
+    <#CLOSE_TAG2 : (<BLANK>)* ("/")? (">" | "]")>
+    |
+    <_ASSERT : "assert">
+    |
+    <_ATTEMPT : "attempt" <CLOSE_TAG1>> 
+    |
+    <BREAK : "break" <CLOSE_TAG2>> 
+    |
+    <CASE : "case"> 
+    |
+    <DEFAUL : "default" <CLOSE_TAG1>> 
+    |
+    <ELSE : "else" <CLOSE_TAG2>> 
+    |
+    <ELSE_IF : "elseif" | "elif">
+    |
+    <EMBED : "embed"> 
+    |
+    <EXEC : "exec" > 
+    |
+    <FTL_HEADER : "ftl">
+    |
+    <FUNCTION : "function"> 
+    |
+    <IF : "if"> 
+    |
+    <IMPORT : "import"> 
+    |
+    <_INCLUDE : "include"> 
+    |
+    <LIST : "list"> 
+    |
+    <LTRIM : "lt" <CLOSE_TAG2>> 
+    |
+    <_MACRO : "macro">
+    |
+    <NESTED : "nested"> 
+    |
+    <_RECOVER : "recover" <CLOSE_TAG1>>
+    |
+    <RETURN : "return"> 
+    |
+    <RTRIM : "rt" <CLOSE_TAG2>> 
+    |
+    <SET : "set">
+    |
+    <SETTING : "setting"> 
+    |
+    <STOP : "stop"> 
+    |
+    <SWITCH : "switch">
+    |
+    <TRIM : "t" <CLOSE_TAG2>> 
+    |
+    <VAR : "var">
+    |
+    <UNKNOWN_DIRECTIVE : (["a"-"z","A"-"Z"])+>
+;
+
+<EXPRESSION> TOKEN :
+    <EOL : "\n">
+;
+
+<EXPRESSION> SKIP :
+    <IGNORED_WS : " " | "\t" | "\n" | "\r" >
+;
+
+<EXPRESSION> TOKEN#Literal :
+  <STRING_LITERAL :
+      ("\"" 
+          ((~["\\", "\""]) | ("\\" ~[]))*      
+      "\"")
+      |
+      ("'"
+          ((~["\\", "'"]) | ("\\" ~[]))*            
+      "'")
+  > #StringLiteral
+  |
+  <RAW_STRING : "r" (("\"" (~["\""])* "\"") | ("'" (~["'"])* "'"))> #StringLiteral
+  |
+  <FALSE : "false"> #BooleanLiteral
+  |
+  <TRUE : "true"> #BooleanLiteral
+  |
+  <NULL : "null"> #NullLiteral
+  |
+  <NUMBER : ("0" | (["1"-"9"]) (["0"-"9"])*) ("." (["0"-"9"])+)?> #NumberLiteral
+;
+
+<EXPRESSION> TOKEN#Operator :
+  <DOT : ".">
+  |
+  <DOT_DOT : "..">
+  |
+  <DOUBLE_COLON : "::">
+  |
+  <BUILT_IN : "?">
+  |
+  <EXISTS : "??">
+  |
+  <TERNARY : "?:">
+  |
+  <EQUALS : "=">
+  |
+  <DOUBLE_EQUALS : "==">
+  |
+  <NOT_EQUALS : "!=">
+  |
+  <GREATER_THAN : ">">
+  |
+  <GREATER_THAN_EQUALS: ">=">
+  |
+  <LESS_THAN : "lt" | "<" | "&lt;">
+  |
+  <LESS_THAN_EQUALS : "lte" | "<=" | "&lt;=">
+  |
+  <ESCAPED_GT: "gt" | "\\gt" |  "&gt;">
+  |
+  <ESCAPED_GTE : "gte" | "\\gte" | "&gt;=">
+  |
+  <PLUS : "+">
+  |
+  <MINUS : "-">
+  |
+  <TIMES : "*">
+  |
+  <DOUBLE_STAR : "**">
+  |
+  <ELLIPSIS : "...">
+  |
+  <DIVIDE : "/">
+  |
+  <PERCENT : "%">
+  |
+  <AND : "&" | "&&" >
+  |
+  <OR : "|" | "||">
+  |
+  <EXCLAM : "!">
+;
+
+<EXPRESSION> TOKEN#Delimiter :
+  <EMPTY_DIRECTIVE_END : "/>" | "/]"> : TEXT
+  |
+  <COMMA : ",">
+  |
+  <SEMICOLON : ";">
+  |
+  <COLON : ":">
+  |
+  <OPEN_BRACKET : "[">
+  |
+  <CLOSE_BRACKET : "]"> 
+  |
+  <OPEN_PAREN : "("> 
+  |
+  <CLOSE_PAREN : ")"> 
+  |
+  <OPEN_BRACE : "{" > 
+  |
+  <CLOSE_BRACE : "}" >
+  |
+  <IN : "in">
+  |
+  <AS : "as">
+  |
+  <USING : "using">
+;
+
+INCLUDE JAVA_IDENTIFIER_DEF
+
+<EXPRESSION> TOKEN:
+   <ID: ("@"|<JAVA_IDENTIFIER_START>)("@"|<JAVA_IDENTIFIER_PART>)*> #Identifier
+;
+
+INJECT Identifier :
+    import org.congocc.templates.TemplateException;
+    import org.congocc.templates.core.Environment;
+    implements Expression
+{
+    public Object evaluate(Environment env) {
+        if (env == null) {
+            throw new TemplateException("Variables are not available "
+            + "(certainly you are in a parse-time executed directive). The name of the variable "
+            + "you tried to read: " + this, null);
+        }
+        return env.getVariable(toString());
+    }
+
+    public boolean isAssignableTo() {
+        return true;
+    }
+}
+
+INJECT NullLiteral : 
+   import org.congocc.templates.core.Environment;
+   import static org.congocc.templates.core.variables.Wrap.JAVA_NULL;
+   implements Expression
+{
+    public Object evaluate(Environment env) {
+        return JAVA_NULL;
+    }
+}
+
+INJECT BooleanLiteral :
+    import org.congocc.templates.core.Environment;
+    import org.congocc.templates.core.variables.*;
+    implements Expression
+{
+    public boolean isTrue(Environment env) {
+        return getType() == TRUE;
+    }
+
+    public Boolean evaluate(Environment env) {
+        return isTrue(env);
+    }
+}
+
+INJECT NumberLiteral :
+  import org.congocc.templates.core.Environment;
+  import org.congocc.templates.Template;
+  import java.math.BigDecimal;
+  implements Expression
+{
+    @Property Number value;
+
+    public Object evaluate(Environment env) {
+        return getValue();
+    }
+    
+    public String getStringValue(Environment env) {
+        return env.formatNumber(getValue());
+    }
+
+    public void close() {
+        String s = toString();
+        Template template = getTemplate();
+        value = template != null ? 
+                template.getArithmeticEngine().toNumber(s) :
+                new BigDecimal(s);
+    }
+}
+
+INJECT StringLiteral :
+   import org.congocc.templates.TemplateException;
+   import org.congocc.templates.TemplateExceptionHandler;
+   import org.congocc.templates.core.Environment;
+   import java.io.IOException;
+   import static org.congocc.templates.utility.StringUtil.FTLStringLiteralDec;
+   implements Expression
+{
+    private TemplateElement interpolatedOutput;
+    private String value;
+
+    public boolean isRaw() {
+        return charAt(0)=='r';
+    }
+
+    public String getValue() {
+    	return value;
+    }
+
+    public void close() {
+       String s = toString();
+       s = s.substring(1, s.length() -1);
+       if (isRaw()) s = s.substring(1);
+       if (!isRaw()) s = FTLStringLiteralDec(s);
+       this.value = s;
+    }
+    
+    public void checkInterpolation() {
+    	String src = toString();
+        if (src.length() >5 && (src.indexOf("${") >= 0)) {
+            CTLLexer token_source = new CTLLexer("input", value, CTLLexer.LexicalState.TEXT, getBeginLine(), getBeginColumn() +1);
+            CTLParser parser = new CTLParser(token_source);
+            parser.setTemplate(getTemplate());
+            interpolatedOutput = parser.TemplateText();
+        }
+    }
+    
+    public Object evaluate(Environment env) {
+        return getStringValue(env);
+    }
+
+    public String getAsString() {
+        return value;
+    }
+    
+    public String getStringValue(Environment env) {
+        if (interpolatedOutput == null) {
+            return value;
+        } 
+        else {
+            TemplateExceptionHandler teh = env.getTemplateExceptionHandler();
+            env.setTemplateExceptionHandler(TemplateExceptionHandler.RETHROW_HANDLER);
+            try {
+               return env.renderElementToString(interpolatedOutput);
+            }
+            catch (IOException ioe) {
+                throw new TemplateException(ioe, env);
+            }
+            finally {
+                env.setTemplateExceptionHandler(teh);
+            }
+        }
+    }
+
+    public boolean isAssignableTo() {
+        return true;
+    }
+}

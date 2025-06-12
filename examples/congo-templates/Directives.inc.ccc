@@ -1,0 +1,1472 @@
+// This file defines the various 
+// template elements. It is INCLUDEd
+// from the main template.
+
+/**
+ * A production representing the ${...}
+ * that outputs a variable.
+ */
+Interpolation :
+   <OUTPUT_ESCAPE> 
+   Expression
+   <CLOSE_BRACE>
+;
+
+INJECT Interpolation :
+    import java.io.IOException;
+    import org.congocc.templates.core.Environment;
+    import org.congocc.templates.TemplateException;
+    implements TemplateElement
+{
+    public boolean isNoEscapeSet() {
+        return ((Token)get(0)).charAt(1) == '\\';
+    }
+
+    public Expression getExpression() {
+    	return firstChildOfType(Expression.class);
+    }
+
+    /**
+     * Outputs the string value of the enclosed expression.
+     */
+    public void execute(Environment env) throws IOException {
+        Expression exp = getExpression();
+        env.getOut().write(exp.getStringValue(env));
+    }
+
+    public String getDescription() {
+        return this.getSource();
+    }
+}
+
+IfBlock :
+{Token start;}
+  (
+    start=<IF>
+    Expression
+    <DIRECTIVE_END>
+    Block
+  )#ConditionalBlock
+  (
+    (
+        <ELSE_IF>
+        {
+            if (start.charAt(0) == '#' && start.charAt(0) == '#' && start.getBeginColumn()!=lastConsumedToken.getBeginColumn()) {
+                String message = "Mismatched indentation. The #elseif "
+                                 + " should match the indentation of the #if tag on line "
+                                 + start.getBeginLine();
+                throw new ParseException(message, lastConsumedToken, parsingStack);
+            }
+        }
+        Expression
+        <DIRECTIVE_END>
+        Block
+    )#ConditionalBlock
+  )*
+  [
+    (
+        <ELSE>
+        {
+            if (start.charAt(0) == '#' && start.charAt(0) == '#' && start.getBeginColumn()!=lastConsumedToken.getBeginColumn()) {
+                String message = "Mismatched indentation. The #else"
+                                 + " should match the indentation of the #if tag on line "
+                                 + start.getBeginLine();
+                throw new ParseException(message, lastConsumedToken, parsingStack);
+            }
+        }
+        Block
+    )#ConditionalBlock
+  ]
+  CloseDirectiveBlock(start)
+;
+
+INJECT IfBlock :
+    import java.util.*;
+    import java.io.IOException;
+    import org.congocc.templates.core.Environment;
+    implements TemplateElement
+{
+    public void execute(Environment env) throws IOException {
+        for (ConditionalBlock cblock : childrenOfType(ConditionalBlock.class)) {
+            Expression condition = cblock.getCondition();
+            if (condition == null || condition.isTrue(env)) {
+                if (cblock.firstChildOfType(Block.class) != null) {
+                    env.render(cblock);
+                }
+                return;
+            }
+        }
+    }
+
+    public String getDescription() {
+        return "if-else ";
+    }
+}
+
+INJECT ConditionalBlock :
+    import java.io.IOException;
+    import org.congocc.templates.core.Environment;
+    implements TemplateElement
+{
+    public Expression getCondition() {
+    	return firstChildOfType(Expression.class);
+    }
+    
+    public void execute(Environment env) throws IOException {
+        env.render(firstChildOfType(Block.class));
+    }
+
+    public String getDescription() {
+        return get(0).toString() + " block";
+    }
+}
+
+AttemptBlock :
+{Token start;}
+   start=<_ATTEMPT>
+   Block
+   <_RECOVER>
+   {
+        if (start.charAt(0) == '/' && start.charAt(1) == '#' && start.getBeginColumn()!=lastConsumedToken.getBeginColumn()) {
+            String message = "Mismatched indentation. The #recover "
+                                + " should match the indentation of the #attempt tag on line "
+                                + start.getBeginLine();
+            throw new ParseException(message, lastConsumedToken, parsingStack);
+        }
+   }
+   Block 
+   CloseDirectiveBlock(start)
+;
+
+INJECT AttemptBlock :
+    import java.io.IOException;
+    import org.congocc.templates.core.Environment;
+    implements TemplateElement
+{
+    public Block getAttemptBlock() {
+        return firstChildOfType(Block.class);
+    }
+    
+    public Block getRecoverBlock() {
+        return childrenOfType(Block.class).get(1);
+    }
+
+    public void execute(Environment env) throws IOException 
+    {
+        env.render(getAttemptBlock(), getRecoverBlock());
+    }
+
+    public String getDescription() {
+        return "attempt block";
+    }
+}
+
+ListBlock#IteratorBlock :
+{Token start;}
+   start=<LIST> 
+   Expression
+   <AS>
+   <ID>
+   [
+      <COMMA>
+      <ID>
+   ]
+   <DIRECTIVE_END>
+   Block
+   CloseDirectiveBlock(start)
+;
+
+INJECT IteratorBlock :
+    import java.io.IOException;
+    import org.congocc.templates.core.*;
+    import org.congocc.templates.core.variables.*;
+    import org.congocc.templates.core.variables.scope.BlockScope;
+    import org.congocc.templates.core.variables.scope.LoopContext;
+    import org.congocc.templates.TemplateHash;
+    import static org.congocc.templates.core.variables.Wrap.isIterable;
+    import static org.congocc.templates.core.variables.Wrap.asIterator;
+    import static org.congocc.templates.core.variables.Wrap.LOOSE_NULL;
+    implements TemplateElement
+{
+    public boolean isOverMap() {
+        return firstChildOfType(COMMA) != null;
+    }
+
+    public String getIndexName() {
+        return get(3).toString();
+    }
+
+    public String getValueVarName() {
+        Node comma = firstChildOfType(COMMA);
+        return comma == null ? null : comma.nextSibling().toString();
+    }
+    
+    public Expression getListExpression() {
+        return (Expression) get(1);
+    }
+
+    public void execute(Environment env) throws IOException {
+        Object listVar = getListExpression().evaluate(env);
+        if (listVar == LOOSE_NULL) return;
+        getListExpression().assertNonNull(listVar, env);
+        if (!isOverMap()) {
+            if (!isIterable(listVar)) {
+                throw TemplateNode.invalidTypeException(listVar, getListExpression(), env, "collection or sequence");            
+            }
+            env.process(asIterator(listVar), getNestedBlock(), getIndexName());
+        } else if (listVar instanceof Map || listVar instanceof TemplateHash) {
+            env.process(listVar, getNestedBlock(), getIndexName(), getValueVarName());
+        }
+        else {
+            String message = "Expecting map or hash, at " + getListExpression().getLocation();
+            throw new EvaluationException(message);
+        }
+    }
+
+    public String getDescription() {
+        return "list " + getListExpression() + " as " + getIndexName() + (getValueVarName() == null ? "" : "," + getValueVarName());
+    }
+}
+
+/**
+ * Production used to break out of a loop.
+ */
+BreakInstruction# :
+    <BREAK>
+;
+
+INJECT BreakInstruction :
+    import org.congocc.templates.core.Environment;
+    import org.congocc.templates.core.BreakException;
+    implements TemplateElement
+{
+    public void execute(Environment env) {
+        throw BreakException.INSTANCE;
+    }
+
+    public String getDescription() {
+        return "break" + " [" + getLocation() + "]";
+    }
+}
+
+AssertionInstruction :
+   <_ASSERT>
+   Expression
+   [
+      <COLON>
+      Expression
+   ]
+   LooseDirectiveEnd
+;
+
+INJECT AssertionInstruction :
+   import org.congocc.templates.core.Environment;
+   import org.congocc.templates.core.AssertionFailedException;
+   implements TemplateElement;
+{
+    public void execute(Environment env) {
+        Expression exp = (Expression) get(1);
+        if (!exp.isTrue(env)) {
+            String message = "Assertion failed. Expression " + exp + " was false.";
+            if (size() > 3) {
+                String extraInfo = ((Expression)get(3)).getStringValue(env);
+                message += " ";
+                message += extraInfo;
+            }
+            throw new AssertionFailedException(env, message);
+        }
+    }
+}
+
+ExecInstruction :
+    <EXEC> Expression LooseDirectiveEnd
+;
+
+INJECT ExecInstruction :
+    import org.congocc.templates.core.Environment;
+    implements TemplateElement
+{
+    public void execute(Environment env) {
+        Expression exp = (Expression) get(1);
+        exp.evaluate(env);
+    }
+}
+
+/**
+ * Production used to jump out of a macro.
+ */
+ReturnInstruction :
+   <RETURN> [Expression] LooseDirectiveEnd
+;
+
+INJECT ReturnInstruction :
+    import org.congocc.templates.core.Environment;
+    import org.congocc.templates.core.ReturnException;
+    implements TemplateElement
+{
+    public Object getReturnValue(Environment env) {
+        if (get(1) instanceof Expression exp) {
+            return exp.evaluate(env);
+        }
+        return null;
+    }
+    
+    public void execute(Environment env) {
+        env.setLastReturnValue(getReturnValue(env));
+        if (nextSibling() != null) {
+            // We need to jump out using an exception.
+            throw ReturnException.INSTANCE;
+        }
+        if (!(getParent() instanceof Macro || getParent().getParent() instanceof Macro)) {
+            // Here also, we need to jump out using an exception.
+            throw ReturnException.INSTANCE;
+        }
+    }
+
+    public String getDescription() {
+        return "return" + " [" + getLocation() + "]";
+    }
+}
+
+StopInstruction# :
+   <STOP> [Expression] LooseDirectiveEnd
+;
+
+INJECT StopInstruction :
+   import org.congocc.templates.core.Environment;
+   import org.congocc.templates.core.AssertionFailedException;
+   implements TemplateElement
+{
+   public String getMessage(Environment env) {
+      return get(1) instanceof Expression exp ? 
+             exp.getStringValue(env) 
+             : "";
+   }
+
+    public void execute(Environment env) {
+        throw new AssertionFailedException(env, getMessage(env));
+    }
+
+    public String getDescription() {
+        return "stop" + " [" + getLocation() + "]";
+    }
+}
+
+NestedInstruction# :
+    <NESTED>
+    [PositionalArgsList]
+    LooseDirectiveEnd
+;
+
+INJECT NestedInstruction :
+    import java.io.IOException;
+    import org.congocc.templates.core.*;
+    implements TemplateElement
+{
+    public PositionalArgsList getArgs() {
+    	return firstChildOfType(PositionalArgsList.class);
+    }
+    
+    /**
+     * There is actually a subtle but essential point in the code below.
+     * A macro operates in the context in which it is defined. However, 
+     * a nested block within a macro instruction is defined in the 
+     * context in which the macro was invoked. So, we actually need to
+     * temporarily switch the namespace and macro context back to
+     * what it was before macro invocation to implement this properly.
+     * I (JR) realized this thanks to some incisive comments from Daniel Dekany.
+     */
+    public void execute(Environment env) throws IOException {
+        env.render(this);
+    }
+
+    public String getDescription() {
+        return "nested macro content";
+    }
+}
+
+TrimInstruction# : <TRIM>|<LTRIM>|<RTRIM>;
+
+INJECT TrimInstruction :
+   import org.congocc.templates.core.Environment;
+   implements TemplateElement
+{
+    public boolean isLeft() {
+    	return get(0).getType() != RTRIM;
+    }
+    
+    public boolean isRight() {
+    	return get(0).getType() != LTRIM;
+    }
+
+    public void execute(Environment env) {
+        // This instruction does nothing at render-time, only parse-time.
+    }
+
+    public String getDescription() {
+        String type = "";
+        if (!isRight()) type = "left ";
+        if (!isLeft()) type = "right ";
+        return type + "trim instruction";
+    }
+
+    public boolean isIgnorable() {
+        return true;
+    }
+}
+
+BlockAssignment :
+{
+   Token start;
+}
+   start=<SET>
+   PrimaryExpression(false)
+   [ 
+      SCAN 1 {peekNode() instanceof Token} =>
+      <IN>
+      Expression
+   ]
+   <DIRECTIVE_END> =>||
+   Block
+   CloseDirectiveBlock(start)   
+;
+
+INJECT BlockAssignment :
+    import java.io.IOException;
+    import java.io.StringWriter;
+    import java.io.Writer;
+    import org.congocc.templates.core.Environment;
+    import org.congocc.templates.core.variables.InvalidReferenceException;
+    import org.congocc.templates.core.variables.UserDirectiveBody;
+    import org.congocc.templates.core.variables.UserDirective;
+    import org.congocc.templates.core.variables.scope.Scope;
+    import org.congocc.templates.TemplateException;
+    import org.congocc.templates.core.nodes.AssignmentInstruction;
+    implements TemplateElement
+{
+    public Expression getTargetExpression() {
+        return (Expression) get(1);
+    }
+
+    public Expression getNamespaceExp() {
+        Node inToken = firstChildOfType(IN);
+        if (inToken != null) {
+            return (Expression) inToken.nextSibling();
+        }
+        return null;
+    }
+
+    public void execute(Environment env) throws IOException {
+    	Map scope = null;
+        Expression namespaceExp = getNamespaceExp();
+    	if (namespaceExp != null) {
+    		try {
+    			scope = (Map) namespaceExp.evaluate(env); 
+    		} catch (ClassCastException cce) {
+                throw new InvalidReferenceException(getLocation() + "\nInvalid reference to namespace: " + namespaceExp, env);
+    		}
+    	}
+        Writer existingWriter = env.getOut();
+        StringWriter bufferWriter = new StringWriter();
+        try {
+            Block block = firstChildOfType(Block.class);
+            if (block != null) {
+                env.setOut(bufferWriter);
+                env.render(block);
+            }
+        } finally {
+            env.setOut(existingWriter);
+        }
+        AssignmentInstruction.set(getTargetExpression(), bufferWriter.toString(), env, scope);
+    }
+    
+    public String getDescription() {
+        return "block assignment to: " + getTargetExpression();
+    }
+}
+
+AssignmentInstruction#org.congocc.templates.core.nodes.AssignmentInstruction :
+ {boolean complexLHS = false;}
+   <SET>
+   PrimaryExpression(false)
+   {if (!(peekNode() instanceof Token)) complexLHS = true;}
+   <EQUALS> =>||
+   Expression
+   (
+     [<COMMA>]
+     PrimaryExpression(false)
+     {if (!(peekNode() instanceof Token)) complexLHS = true;}
+     <EQUALS>
+     Expression
+   )*
+   [
+      SCAN {!complexLHS} =>
+      <IN>
+      Expression     
+   ]
+   LooseDirectiveEnd
+;
+
+IncludeInstruction :
+{
+    CURRENT_NODE.setTemplate(template);
+}
+   (<_INCLUDE>|<EMBED>)
+   Expression
+   (
+    <ID><EQUALS>Expression
+   )*
+   LooseDirectiveEnd
+;
+
+INJECT IncludeInstruction :
+    import java.io.IOException;
+    import java.io.IOException;
+    import org.congocc.templates.*;
+    import org.congocc.templates.utility.StringUtil;
+    import org.congocc.templates.core.Environment;
+    import org.congocc.templates.core.variables.InvalidReferenceException;
+    import org.congocc.templates.core.parser.ParseException;
+    import static org.congocc.templates.core.variables.Wrap.*;
+    implements TemplateElement
+{
+    @Property Template template;
+
+    public boolean useFreshNamespace() {
+        return get(0).getType() == EMBED;
+    }
+
+    public Expression getParamByName(String name) {
+        for (Node n : this) {
+            if (n instanceof Identifier && n.toString().equalsIgnoreCase(name)) {
+                return (Expression) n.nextSibling().nextSibling();
+            }
+        }
+        return null;
+    }
+
+    public void execute(Environment env) throws IOException {
+        String templateNameString = ((Expression) get(1)).getStringValue(env);
+        if( templateNameString == null ) {
+            String msg = "Error " + getLocation()
+                        + "The expression " + get(1)  + " is undefined.";
+            throw new InvalidReferenceException(msg, env);
+        }
+        String encoding = null;
+        Expression encodingExp = getParamByName("encoding");
+        if (encodingExp!=null) {
+            encoding = encodingExp.getStringValue(env);
+        }
+        boolean parse = true;
+        Expression parseExp = getParamByName("parse");
+        if (parseExp != null) {
+            Object tm = parseExp.evaluate(env);
+            parseExp.assertNonNull(tm, env);
+            if (tm instanceof CharSequence) {
+                parse = StringUtil.getYesNo(asString(tm));
+            }
+            else {
+                parse = parseExp.isTrue(env);
+            }
+        }
+        Template includedTemplate;
+        String templatePath = "";
+    	if (template != null) {
+    		String templatePath1 = template.getName();
+    		int lastSlash = templatePath1.lastIndexOf('/');
+    		templatePath = lastSlash == -1 ? "" : templatePath1.substring(0, lastSlash + 1);
+    	}
+        try {
+            //REVISIT
+//            templateNameString = TemplateCache.getFullTemplatePath(env, templatePath, templateNameString);
+            includedTemplate = env.getTemplateForInclusion(templateNameString, encoding, parse);
+        }
+        catch (ParseException pe) {
+            String msg = "Error parsing included template "
+                        + templateNameString + "\n" + pe.getMessage();
+            throw new TemplateException(msg, pe, env);
+        }
+        catch (IOException ioe) {
+            String msg = "Error reading included file "
+                        + templateNameString;
+            throw new TemplateException(msg, ioe, env);
+        }
+        env.include(includedTemplate, useFreshNamespace());
+    }
+}
+
+ImportDeclaration :
+   <IMPORT>
+   Expression
+   <AS>
+   <ID>
+   LooseDirectiveEnd
+   {
+       CURRENT_NODE.setTemplate(template);
+   }
+;
+
+INJECT ImportDeclaration :
+    import java.io.IOException;
+    import org.congocc.templates.Template;
+    import org.congocc.templates.TemplateException;
+    import org.congocc.templates.core.Environment;
+    import org.congocc.templates.core.variables.InvalidReferenceException;
+    implements TemplateElement
+{
+    private String templatePath="";
+    @Property Template template;
+
+    public String getNamespace() {
+    	return get(3).toString();
+    }
+    
+    public Expression getTemplateNameExpression() {
+    	return (Expression) get(1);
+    }
+
+    public void execute(Environment env) throws IOException {
+        String templateNameString = getTemplateNameExpression().getStringValue(env);
+        if( templateNameString == null ) {
+            String msg = "Error " + getLocation()
+                        + "The expression " + getTemplateNameExpression() + " is undefined.";
+            throw new InvalidReferenceException(msg, env);
+        }
+        Template importedTemplate;
+        try {
+            if (templateNameString.indexOf("://") >0) {
+                ;
+            }
+            else if(templateNameString.length() > 0 && templateNameString.charAt(0) == '/')  {
+                int protIndex = templatePath.indexOf("://");
+                if (protIndex >0) {
+                    templateNameString = templatePath.substring(0, protIndex + 2) + templateNameString;
+                } else {
+                    templateNameString = templateNameString.substring(1);
+                }
+            }
+            else {
+                templateNameString = templatePath + templateNameString;
+            }
+            importedTemplate = env.getTemplateForImporting(templateNameString);
+        }
+        catch (ParseException pe) {
+            String msg = "Error parsing imported template "
+                        + templateNameString;
+            throw new TemplateException(msg, pe, env);
+        }
+        catch (IOException ioe) {
+            String msg = "Error reading imported file "
+                        + templateNameString;
+            throw new TemplateException(msg, ioe, env);
+        }
+        env.importLib(importedTemplate, getNamespace(), false);
+    }
+
+    public String getDescription() {
+        return "import " + getTemplateNameExpression() + " as " + getNamespace();
+    }
+
+    public String getTemplateName() {
+        return getTemplateNameExpression().toString();
+    }    
+
+    public void close() {
+        if (template != null) {
+        	String templatePath1 = template.getName();
+        	int lastSlash = templatePath1.lastIndexOf('/');
+        	templatePath = lastSlash == -1 ? "" : templatePath1.substring(0, lastSlash + 1);
+            template.addImport(this);
+        }
+    }
+}
+
+#ParameterList#org.congocc.templates.core.nodes.ParameterList(true) :
+{
+	Token arg=null, firstArg=null, ellipsis = null;
+	Expression defValue = null;
+	String catchAll = null;
+	boolean isCatchAll = false, hasDefaults = false;
+	Set<String> paramNames = new HashSet<String>();
+}
+    (
+          arg=<ID> 
+          {
+          	if (firstArg == null) firstArg = arg;
+          	defValue = null;
+          	if (paramNames.contains(arg.toString())) {
+          		throw new ParseException(getErrorStart(arg) + "\nThe parameter " + arg.toString() + " cannot be repeated.");
+          	}
+          	paramNames.add(arg.toString());
+          }
+          [
+             ellipsis=<ELLIPSIS> { isCatchAll = true; }
+          ]
+          [
+            <EQUALS>
+          	defValue=Expression
+            {
+		      hasDefaults = true;
+            }
+          ]
+          [<COMMA>]
+	  {
+          if (catchAll != null) {
+              throw new ParseException(getErrorStart(arg)
+                + "\nThere may only be one \"catch-all\" parameter in a macro declaration, "
+                + "and it must be the last parameter.", arg.getBeginLine(), arg.getEndLine());
+          }
+          if (isCatchAll) {
+              if (defValue != null) {
+                  throw new ParseException(getErrorStart(arg)
+                    + "\n\"Catch-all\" macro parameter may not have a default value.",
+                    arg.getBeginLine(), arg.getEndLine());
+              }
+              CURRENT_NODE.setCatchAll(arg.toString());
+          } 
+          else if (defValue == null) {
+             if (hasDefaults) {
+                  throw new ParseException(getErrorStart(arg)
+                    + "\nIn a macro declaration, parameters without a default value "
+                    + "must all occur before the parameters with default values.",
+                    arg.getBeginLine(), arg.getEndLine());
+             }
+          	 CURRENT_NODE.addParam(arg.toString());
+          }
+          else {
+              CURRENT_NODE.addParam(arg.toString(), defValue);
+          	  hasDefaults = true;
+          }
+	  }
+    )*
+	{
+		return CURRENT_NODE;
+	}
+;
+
+
+Macro :
+ { Token start; }
+    start=<_MACRO>
+    IdentifierOrStringLiteral
+    [<OPEN_PAREN>]
+    ParameterList
+    [<CLOSE_PAREN>]
+    <DIRECTIVE_END>
+    Block
+    CloseDirectiveBlock(start)
+;
+
+Function#Macro :
+{ Token start; }
+    start=<FUNCTION>
+    IdentifierOrStringLiteral
+    [<OPEN_PAREN>]
+    ParameterList
+    [<CLOSE_PAREN>]
+    <DIRECTIVE_END>
+    Block
+    CloseDirectiveBlock(start)
+;
+
+INJECT Macro :
+    import org.congocc.templates.core.Environment;
+    import org.congocc.templates.core.nodes.ParameterList;
+    import org.congocc.templates.core.variables.WrappedVariable;
+    implements TemplateElement, WrappedVariable
+{
+    static public final Macro DO_NOTHING_MACRO = new Macro();
+    static {
+    	DO_NOTHING_MACRO.add(new Block());
+    }
+
+    public boolean isFunction() {
+    	return get(0).getType() == FUNCTION;
+    }
+
+    public String getName() {
+        if (this == DO_NOTHING_MACRO) {
+            return ".pass";
+        }
+        if (get(1) instanceof Identifier) {
+            return get(1).toString();
+        }
+        return ((StringLiteral) get(1)).getAsString();
+    }
+
+    public ParameterList getParams() {
+        return firstChildOfType(ParameterList.class);
+    }
+
+    public void close() {
+    	ParameterList params = getParams();
+    	for (String paramName : params.getParams()) {
+    		getNestedBlock().declareVariable(paramName);
+    	}
+    	String catchallVar = params.getCatchAll();
+    	if (catchallVar != null) {
+    		getNestedBlock().declareVariable(catchallVar);
+    	}
+    }
+
+    public void execute(Environment env) {
+        env.visitMacroDef(this);
+    }
+
+    public String getDescription() {
+        return (isFunction() ? "function " : "macro ") + getName();
+    }
+}
+
+UnifiedCall :
+   <UNIFIED_CALL>
+   PrimaryExpression(true)
+   [ArgsList]
+   [
+       <SEMICOLON>
+       ParameterList
+   ] 
+   (
+      <EMPTY_DIRECTIVE_END>
+      |
+      <DIRECTIVE_END>
+      Block
+      <UNIFIED_CALL_END>      
+   )  
+;
+
+INJECT UnifiedCall :
+    import java.io.IOException;
+    import java.util.*;
+    import org.congocc.templates.core.Environment;
+    import org.congocc.templates.core.nodes.ParameterList;
+    import org.congocc.templates.core.variables.UserDirective;
+    import org.congocc.templates.TemplateException;
+    import static org.congocc.templates.core.variables.Wrap.LOOSE_NULL;
+    implements TemplateElement
+{
+    public Expression getNameExp() {
+        return (Expression) get(1);
+    }
+
+    public ArgsList getArgs() {
+        ArgsList result = firstChildOfType(ArgsList.class);
+        if (result == null) result = new PositionalArgsList();
+        return result;
+    }
+
+    public ParameterList getBodyParameters() {
+        return firstChildOfType(ParameterList.class);
+    }
+
+    public void close() {
+    	ParameterList bodyParameters = getBodyParameters();
+    	if (bodyParameters != null) {
+    		for (String paramName : bodyParameters.getParams()) {
+    			getNestedBlock().declareVariable(paramName);
+    		}
+    		String catchallParam = bodyParameters.getCatchAll();
+    		if (catchallParam != null) {
+    			getNestedBlock().declareVariable(catchallParam);
+    		}
+    	}
+    }
+
+    public void execute(Environment env) throws IOException {
+        Expression nameExp = getNameExp();
+        Object tm = nameExp.evaluate(env);
+        ArgsList args = getArgs();
+        ParameterList bodyParameters = getBodyParameters();
+        if (tm == Macro.DO_NOTHING_MACRO || tm ==LOOSE_NULL) return; // shortcut here.
+        if (tm instanceof Macro macro) {
+            if (macro.isFunction()) {
+                throw new TemplateException("Routine " + macro.getName() 
+                        + " is a function. A function can only be called " +
+                        "within the evaluation of an expression.", env);
+            }    
+            env.render(macro, args, bodyParameters, firstChildOfType(Block.class));
+        }
+        else {
+            nameExp.assertNonNull(tm, env);
+            throw new TemplateException(getLocation() + ": " + getNameExp() + 
+                    " is not a macro.", env);
+        }
+    }
+    
+    public String getDescription() {
+        return "user-directive " + getNameExp();
+    }
+}
+
+Map<String, Expression> NamedArgs#void :
+{
+    Map<String, Expression> result = new LinkedHashMap<String, Expression>();
+    Token t;
+    Expression exp;
+}
+  (
+     t=<ID>
+     <EQUALS>
+     exp=Expression
+     {
+        if (result.containsKey(t.toString())) {
+           throw new ParseException(getErrorStart(t)
+              + "\nValue of named parameter '" + t.toString()
+              + "' may only be specified once.", t.getBeginLine(), t.getEndLine());
+        }
+        result.put(t.toString(), exp);
+     }
+  )+
+  {
+     return result;
+  }
+;
+
+NoParseBlock# :
+    <NOPARSE>
+;
+
+INJECT NoParseBlock : 
+    import java.io.IOException;
+    import org.congocc.templates.core.Environment;
+    implements TemplateElement
+{
+    public void execute(Environment env) throws IOException {
+        String source = getSource();
+        for (int i = 0; i < source.length(); i++) {
+            if (source.charAt(i) == '>' || source.charAt(i) == ']') {
+                source = source.substring(i + 1);
+                break;
+            }
+        }
+        for (int i = source.length()-1; i>=0; i--) {
+            if (source.charAt(i) == '<' || source.charAt(i) == '[') {
+                source = source.substring(0, i);
+                break;
+            }
+        }
+        env.getOut().write(source);
+    }
+}    
+
+CloseDirectiveBlock(Token startToken)#void :
+    <CLOSE_DIRECTIVE_BLOCK>
+	{
+        String image = lastConsumedToken.toString();
+        String nameAtEnd = image.startsWith("#end") ? image.substring(4) : stripNonLetter(image);
+        String nameAtStart = stripNonLetter(startToken.toString());
+        if (nameAtEnd.length() > 0) {
+            if (!nameAtStart.equals(nameAtEnd)) {
+                if (!(nameAtStart.equals("attempt") && nameAtEnd.equals("recover"))) {
+                    String message = "Was expecting the closing tag #end" 
+                                     + nameAtStart 
+                                     + " to close the block starting on line " 
+                                     + startToken.getBeginLine()
+                                     + " but found " + nameAtEnd;
+                    throw new ParseException(message, lastConsumedToken, parsingStack);
+                }
+            }
+        }
+        if (startToken.charAt(0) == '#' 
+             && lastConsumedToken.charAt(0) == '/' 
+             && startToken.getBeginColumn() != lastConsumedToken.getBeginColumn()) 
+        {
+            String message = "Mismatched indentation. The closing tag /#" + nameAtEnd
+                             + " should match the indentation of the starting tag on line "
+                             + startToken.getBeginLine();
+            throw new ParseException(message, lastConsumedToken, parsingStack);
+        }
+	}
+    |
+    FAIL "Expecting closing tag for "+startToken + " block beginning at " + startToken.getLocation()
+;
+
+INJECT PARSER_CLASS :
+{
+    static String stripNonLetter(String s) {
+        StringBuilder buf = new StringBuilder();
+        for (int i = 0; i < s.length(); i++) {
+            if (Character.isLetter(s.charAt(i))) {
+                buf.append(s.charAt(i));
+            }
+        }
+        return buf.toString();
+    }
+}
+
+
+/**
+ * Production to terminate potentially empty elements. Either a ">" or "/>"
+ */
+LooseDirectiveEnd : <DIRECTIVE_END> | <EMPTY_DIRECTIVE_END> ;
+
+PropertySetting :
+   <SETTING>
+   <ID>
+   <EQUALS>
+   Expression
+   LooseDirectiveEnd
+;
+
+INJECT PropertySetting :
+    import org.congocc.templates.core.Environment;
+    import static org.congocc.templates.core.variables.Wrap.*;
+    implements TemplateElement
+{
+    public String getKey() {
+    	return firstChildOfType(ID).toString();
+    }
+    
+    public Expression getValue() {
+    	return (Expression) get(3);
+    }
+
+    public void execute(Environment env) {
+        Object mval = getValue().evaluate(env);
+        String strval;
+        if (mval instanceof CharSequence) {
+            strval = mval.toString();
+        } else if (isBoolean(mval)) {
+            strval = asBoolean(mval) ? "true" : "false";
+        } else if (mval instanceof Number n) {
+            strval = n.toString();
+        } else {
+            strval = getValue().getStringValue(env);
+        }
+        env.setSetting(getKey(), strval);
+    }
+
+    public String getDescription() {
+        return "setting " + getKey() + " set to " + "\"" + getValue() + "\" "
+	    + "[" + getLocation() + "]";
+    }    
+}
+
+VarDirective :
+{
+    Expression var, valueExp = null;
+}
+   <VAR>
+   (
+     var=IdentifierOrStringLiteral
+     [
+       <EQUALS>
+       valueExp=Expression
+     ]
+   )
+   {
+      CURRENT_NODE.addVar(var, valueExp);
+      valueExp = null;
+   }
+   (
+      (
+        [<COMMA>]
+        var=IdentifierOrStringLiteral
+        [
+           <EQUALS>
+           valueExp=Expression
+        ]
+      )
+      {
+         CURRENT_NODE.addVar(var, valueExp);
+         valueExp = null;
+      }
+   )*
+   LooseDirectiveEnd
+;
+
+INJECT VarDirective :
+   import java.util.*;
+   import org.congocc.templates.core.*;
+   import org.congocc.templates.core.variables.scope.Scope;
+   import static org.congocc.templates.core.variables.Wrap.JAVA_NULL;
+   implements TemplateElement
+{
+    private Map<String, Expression> vars = new LinkedHashMap<>();
+
+    public void execute(Environment env) {
+        for (Map.Entry<String, Expression> entry : vars.entrySet()) {
+            String varname = entry.getKey();
+            Expression exp = entry.getValue();
+            Scope scope = env.getCurrentScope();
+            //System.out.println("The current scope is " + scope);
+            if (exp == null) {
+                if (scope.get(varname) == null) {
+                    scope.put(varname, JAVA_NULL);
+                }
+            } 
+            else {
+                Object tm = exp.evaluate(env);
+                exp.assertIsDefined(tm, env);
+                scope.put(varname, tm);
+            }
+        }
+    }
+
+    public Map<String, Expression> getVariables() {
+        return Collections.unmodifiableMap(vars);
+    }
+
+    public void addVar(Expression name, Expression value) {
+        String varname = name.toString();
+        if (name instanceof StringLiteral sl) {
+            varname = sl.getAsString();
+        }
+        vars.put(varname, value);
+    }
+    
+    public void addVar(String name) {
+        vars.put(name, null);
+    }
+
+    public String getDescription() {
+        return "variable declaration";
+    }
+}
+
+/**
+ * A production for Template directives.
+ */
+TemplateElement#interface :
+   IfBlock
+   |
+   ListBlock
+   |
+   AssignmentInstruction
+   |
+   BlockAssignment
+   |
+   IncludeInstruction
+   |
+   ImportDeclaration
+   |
+   Macro
+   |
+   Function
+   |
+   UnifiedCall
+   |
+   NoParseBlock
+   |
+   PropertySetting
+   |
+   VarDirective
+   |
+   BreakInstruction
+   |
+   ReturnInstruction
+   |
+   ExecInstruction
+   |
+   StopInstruction
+   |
+   AssertionInstruction
+   |
+   TrimInstruction
+   |
+   AttemptBlock
+   |
+   SCAN 1 \...\Macro =>
+   NestedInstruction
+;
+
+INJECT TemplateElement :
+   import java.util.*;
+   import java.io.IOException;
+   import org.congocc.templates.core.Environment;
+{
+    /**
+     * Processes the contents of this <tt>TemplateElement</tt> and
+     * outputs the resulting text
+     *
+     * @param env The runtime environment
+     */
+    void execute(Environment env) throws IOException;
+
+    String getDescription();
+
+    default Block getNestedBlock() {
+        if (this instanceof Block b) return b;
+        return firstChildOfType(Block.class);
+    }
+
+    default boolean isIgnorable() {
+        return false;
+    }
+}
+
+TextElement# :
+{Token start=null;}
+   (
+      <TRAILING_WHITESPACE>
+      |
+      <NON_TRAILING_WHITESPACE>
+      |
+      <PROBLEMATIC_CHAR>
+      |
+      <POSSIBLE_DIRECTIVE>
+      |
+      <POSSIBLE_END_DIRECTIVE>
+      |
+      <REGULAR_PRINTABLE>
+   )+
+;
+
+INJECT TextElement :
+   import java.io.IOException;
+   import org.congocc.templates.core.Environment;
+   import org.congocc.templates.core.nodes.Whitespace;
+   import org.congocc.templates.core.nodes.AssignmentInstruction;
+   implements TemplateElement
+{
+    private String outputText;
+
+    private String getOutputText() {
+        if (outputText != null) {
+            return outputText;
+        }
+        if (firstChildOfType(Printable.class) == null 
+            && ignoresSandwichedWhitespace(previousSibling()) 
+            && ignoresSandwichedWhitespace(nextSibling())) 
+        {
+            return outputText = "";
+        }
+        StringBuilder buf = new StringBuilder();
+        for (Node n : this) {
+            if (!(n instanceof Whitespace) || !((Whitespace) n).isIgnored()) {
+                buf.append(n.toString());
+            }
+        }
+        return outputText = buf.toString();
+    }
+
+    public void execute(Environment env) throws IOException {
+        env.getOut().write(getOutputText());
+ 	}
+
+	private boolean ignoresSandwichedWhitespace(Node elem) {
+		return    (elem instanceof Macro) 
+		       || (elem instanceof AssignmentInstruction) 
+		       || (elem instanceof BlockAssignment) 
+		       || (elem instanceof VarDirective)
+		       || (elem instanceof ImportDeclaration)
+		       || (elem instanceof ExecInstruction)
+		       || (elem instanceof PropertySetting);
+ 	}
+}
+
+Block#(true) :
+    (
+       TextElement
+       |
+       Interpolation
+       |
+       TemplateElement
+    )*
+;
+
+INJECT Block :
+    import java.io.IOException;
+    import org.congocc.templates.core.Environment;
+    implements TemplateElement
+{
+
+    // The scoped variables defined in this element.
+    private HashSet<String> declaredVariables;
+    
+    public boolean declaresVariable(String name) {
+    	return declaredVariables != null && declaredVariables.contains(name);
+    }
+    
+    public void declareVariable(String varName) {
+    	if (declaredVariables == null) declaredVariables = new HashSet<String>();
+    	declaredVariables.add(varName);
+    }
+
+    public final boolean createsScope() {
+    	return declaredVariables != null && !declaredVariables.isEmpty();
+    }
+ 
+    public void execute(Environment env) throws IOException {
+        for (TemplateElement element : childrenOfType(TemplateElement.class)) {
+            env.render(element);
+        }
+    }
+
+    public boolean isTemplateRoot() {
+        return getParent() == null;
+    }
+
+    public String getDescription() {
+        if (getParent() == null) {
+            return "root element";
+        }
+        return "content"; // Block is uninteresting in a stack trace.
+    }
+}
+
+
+/**
+ * A production for template text that may contain
+ * ${...} but no directives.
+ */
+#TemplateText#Block :
+    (
+        TextElement
+        |
+        Interpolation
+    )+
+    {
+       return CURRENT_NODE;
+    }
+;
+
+TemplateHeaderElement# :
+  [IgnorableWhitespace] 
+  <FTL_HEADER> =>||
+  (
+    <ID>
+    [
+        <EQUALS>
+        Expression
+    ]
+  )*
+  LooseDirectiveEnd
+; 
+
+IgnorableWhitespace#void :
+   (
+    <TRAILING_WHITESPACE> {popNode();}
+    |
+    <NON_TRAILING_WHITESPACE> {popNode();}
+   )+
+;
+
+INJECT TemplateHeaderElement :
+    import java.util.*;
+    import org.congocc.templates.*;
+    import static org.congocc.templates.utility.StringUtil.*;
+    import static org.congocc.templates.core.variables.Wrap.*;
+{
+
+    private Map<String,Expression> params = new LinkedHashMap<>();
+
+    public void close() {
+        List<Node> ids = childrenOfType(ID);
+        for (Node n : ids) {
+            String key = n.toString();
+            if (n.nextSibling().getType() == EQUALS) {
+                Expression exp = (Expression) n.nextSibling().nextSibling();
+                params.put(key, exp);
+            } else {
+                Expression syntheticBooleanToken = (Expression) Token.newToken(TRUE, getTokenSource(), n.getEndOffset(), n.getEndOffset());
+                params.put(key, syntheticBooleanToken);
+            }
+        }
+    }
+
+    public boolean hasParameter(String name) {
+        return params.containsKey(name);
+    }
+
+    public Map<String,Expression> getParams() {
+        return params;
+    }
+
+    public Object getParameter(String name) {
+        if (!hasParameter(name)) {
+            return null;
+        }
+        Expression exp = params.get(name);
+        return exp.evaluate(null);
+    }
+
+	public String getStringParameter(String name) {
+		Object tm = getParameter(name);
+        if (tm == null) return null;
+		try {
+			return asString(tm);
+		} catch (ClassCastException cce) {
+		    throw new IllegalArgumentException("Parameter " + name + " is not a string.");
+		}
+	}
+
+	public boolean getBooleanParameter(String name) {
+		Object tm = getParameter(name);
+		if (tm == null) {
+			throw new IllegalArgumentException("No parameter " + name);
+		}
+		if (isBoolean(tm)) {
+			return asBoolean(tm);
+		}
+		if (tm instanceof CharSequence) {
+			try {
+				return getYesNo(asString(tm));
+			} catch (Exception e) {
+				throw new IllegalArgumentException(e);
+			}
+		}
+		throw new IllegalArgumentException("Parameter " + name + " is not a boolean type.");
+	}
+}
+
+Map<String,Expression> ParamList#void :
+{
+   Token id;
+   Expression exp;
+   Map<String,Expression> result = new HashMap<String,Expression>();
+}
+   (
+      id=<ID>
+      <EQUALS>
+      exp=Expression {result.put(id.toString(), exp);}
+      [<COMMA>]
+   )+
+   {
+       return result;
+   }
+;
+
+Expression IdentifierOrStringLiteral#void :
+   (
+      <ID>
+      |
+      <STRING_LITERAL>
+   )
+   {
+      return (Expression) peekNode();
+   }   
+;
+
+/**
+ * Root production to be used when parsing
+ * an entire file.
+ */
+Block Root#void :
+{
+   TemplateHeaderElement header;
+   Block doc;
+}
+   [
+       header=TemplateHeaderElement
+       {
+       	   template.setHeaderElement(header);
+       	   String templateEncoding = template.getEncoding();
+       	   if (templateEncoding != null && header.hasParameter("encoding")) {
+       	   	  String encoding = null;
+       	   	  try {
+       	   	     encoding = header.getStringParameter("encoding");
+       	   	  } catch (Exception e) {}
+       	   	  if (encoding != null && !encoding.equals(templateEncoding)) {
+       	   	  	throw new Template.WrongEncodingException(encoding);
+       	   	  }
+       	   }
+       }
+   ]
+   doc=Block
+   {assert doc.getParent() == null;}
+   <EOF>
+   {
+       return doc;
+   }
+   ;
