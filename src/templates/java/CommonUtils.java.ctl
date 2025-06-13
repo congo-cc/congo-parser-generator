@@ -68,7 +68,11 @@
    #return val ?: "true" : "false"
 #endfunction
 
-#macro HandleLexicalStateChange expansion inLookahead
+#macro BuildCardinalities assertions
+   new int[][]{[#list assertions as range]new int[]{${range[0]},${range[1]}}[#if range_has_next],[/#if][/#list]}
+#endmacro
+
+#macro HandleLexicalStateChange expansion inLookahead cardinalitiesVar
    #var resetToken = inLookahead ?: "currentLookaheadToken" : "lastConsumedToken"
    #var prevLexicalStateVar = newVarName("previousLexicalState")
    #if expansion.specifiedLexicalState
