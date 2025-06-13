@@ -404,28 +404,40 @@ ${globals::translateParserInjections(true)}
         self.token_source.reset(self.get_token(0))
         self._next_token_type = None
         return result
-
+#pywim:on
+<<<
     def deactivate_token_types(self, tt, *types):
-        result = False
+>>>    
+      result = False
         att = self.token_source.active_token_types
-        if tt in att:
+   if tt in att:
+>>>        
             result = True
-            att.remove(tt)
+               att.remove(tt)
+<<<            
         for tt in types:
+>>>        
             if tt in att:
-                result = True
-                att.remove(tt)
-        self.token_source.reset(self.get_token(0))
-        self._next_token_type = None
-        return result
-
+>>>            
+          result = True
+          att.remove(tt)
+<<< <<<                
+self.token_source.reset(self.get_token(0))
+self._next_token_type = None
+return result
+<<<
     def uncache_tokens(self):
-        self.token_source.reset(self.get_token(0))
-
+>>>        self.token_source.reset(self.get_token(0))
+<<<
     def fail(self, message):
+>>>    
         if self.current_lookahead_token is None:
+>>>        
             raise ParseException(self, message=message)
+<<<            
         self.hit_failure = True
+<<<
+#pywim:off        
 
     def is_in_production(self, name, *prods):
         if self.currently_parsed_production is not None:
