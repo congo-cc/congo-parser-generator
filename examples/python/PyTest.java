@@ -46,12 +46,6 @@ public class PyTest {
                 continue;
             }
             addPaths(path, paths);
-/*            
-            Files.walk(path).forEach(p->{
-                if (p.toString().endsWith(".py")) {
-                    paths.add(p);
-                }
-            });*/
         }
         if (paths.isEmpty()) usage();
         long startTime = System.currentTimeMillis();

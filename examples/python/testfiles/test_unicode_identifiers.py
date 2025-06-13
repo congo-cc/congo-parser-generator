@@ -12,21 +12,28 @@ class PEP3131Test(unittest.TestCase):
         self.assertEqual(getattr(T, "\u03bc"), 2)
         self.assertEqual(getattr(T, '\u87d2'), 3)
         self.assertEqual(getattr(T, 'x\U000E0100'), 4)
-
+# pywim:on
+<<<
     def test_non_bmp_normalized(self):
-        𝔘𝔫𝔦𝔠𝔬𝔡𝔢 = 1
+>>>        𝔘𝔫𝔦𝔠𝔬𝔡𝔢 = 1
         self.assertIn("Unicode", dir())
-
+<<<
+# pywim:off
     def test_invalid(self):
         try:
             from test import badsyntax_3131
         except SyntaxError as err:
+            
             self.assertEqual(str(err),
               "invalid character '€' (U+20AC) (badsyntax_3131.py, line 2)")
             self.assertEqual(err.lineno, 2)
             self.assertEqual(err.offset, 1)
         else:
             self.fail("expected exception didn't occur")
-
+#pywim:on
+<<< <<< <<<
 if __name__ == "__main__":
+>>>    
     unittest.main()
+<<<    
+#pywim:off
