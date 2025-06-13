@@ -70,7 +70,7 @@ public class PyTest {
     static void addPaths(Path path, List<Path> paths) throws IOException {
         Files.walk(path).forEach(p->{
             if (!Files.isDirectory(p)) {
-                if (p.toString().endsWith(".py")) {
+                if (p.toString().endsWith(".py") || p.toString().endsWith(".pywim")) {
                     paths.add(p);
                 }
                 else if (p.toString().endsWith(".zip")) {
@@ -90,7 +90,11 @@ public class PyTest {
 
     static public void parseFile(Path path) {
         try {
-            Node root = new PythonParser(path).Module();
+            PythonParser parser = new PythonParser(path);
+            if (path.toString().endsWith(".pywim")) {
+                parser.setUseExplicitIndent(true);
+            }
+            Node root = parser.Module();
             if (retainInMemory) roots.add(root);
             if (paths.size()==1) {
                 root.dump("");

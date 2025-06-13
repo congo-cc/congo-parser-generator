@@ -1,12 +1,11 @@
 /*
  * The Python lexical grammar
  */
-
 PARSER_PACKAGE = org.parsers.pylexer;
 DEFAULT_LEXICAL_STATE = PYTHON;
 ENSURE_FINAL_EOL;
 TOKEN_CHAINING;
-EXTRA_TOKENS = INDENT#IndentToken, DEDENT#DedentToken;
+//EXTRA_TOKENS = INDENT#IndentToken, DEDENT#DedentToken;
 TABS_TO_SPACES=4;
 
 
@@ -23,11 +22,35 @@ INJECT LEXER_CLASS :
    private BASE_TOKEN_CLASS danglingIndentation;
    private int bracketNesting, parenthesesNesting, braceNesting;
    private List<Integer> indentationStack = initIndentationStack();
+   // With this set, we use "<<<" and ">>>" as explicit DEDENT/INDENT
+   boolean useExplicitIndent;
 
    private static List<Integer> initIndentationStack() {
       List<Integer> result = new ArrayList<Integer>();
       result.add(1);
       return result;
+   }
+
+   /**
+    * Token hook to deal with explicit indents and dedents
+    * via ">>>" and "<<<". This is our own kludge and is not
+    * even part of standard Python. It is only enabled via the 
+    * useExplicitIndent toggle.
+    */
+   private BASE_TOKEN_CLASS TOKEN_HOOK(BASE_TOKEN_CLASS tok) {
+      TokenType type = tok.getType();
+      if (type != TokenType.INDENT && type != TokenType.DEDENT) return tok;
+      if (!useExplicitIndent) {
+         tok.setType(TokenType.INVALID);
+         return tok;
+      }
+      if (type == TokenType.INDENT) {
+         if (tok.charAt(0) == '\n') {
+            tok.setEndOffset(tok.getBeginOffset()+1);
+            return tok.replaceType(TokenType.NEWLINE);
+         }
+      }
+      return tok;
    }
 
    private BASE_TOKEN_CLASS TOKEN_HOOK(BASE_TOKEN_CLASS tok) {
@@ -55,7 +78,7 @@ INJECT LEXER_CLASS :
          case RPAREN : parenthesesNesting--; break;
          case LBRACKET : bracketNesting++; break;
          case RBRACKET : bracketNesting--; break;
-         case NEWLINE :  if (lineJoiningOn || tok.startsLine()) {
+         case NEWLINE :  if (lineJoiningOn  || tok.startsLine()) {
                              tok.setUnparsed(true);
                          }
                          return tok;
@@ -63,7 +86,7 @@ INJECT LEXER_CLASS :
       if (danglingIndentation != null) {
          tok.preInsert(danglingIndentation);
       }
-      if (lineJoiningOn || tok.isUnparsed()
+      if (lineJoiningOn || useExplicitIndent || tok.isUnparsed()
         || danglingIndentation == null && !tok.startsLine()) {
          return tok;
       }
@@ -147,6 +170,19 @@ INJECT BASE_TOKEN_CLASS : {
         return previousCachedToken();
     }
 }
+
+INJECT PARSER_CLASS :
+{
+   public void setUseExplicitIndent(boolean useExplicitIndent) {
+      token_source.useExplicitIndent = useExplicitIndent;
+      if (useExplicitIndent) {
+         activateTokenTypes(TokenType.INDENT, TokenType.DEDENT);
+      } else {
+         deactivateTokenTypes(TokenType.INDENT, TokenType.DEDENT);
+      }
+   }
+}
+
 
 INJECT DedentToken :
    import java.util.List;
@@ -239,10 +275,6 @@ TOKEN #Delimiter :
    |
    <EQ : "==">
    |
- //  <LBRACE: "{" >
- //  |
- //  <RBRACE: "}" >
- //  |
    <LBRACKET : "[">
    |
    <RBRACKET : "]">
@@ -282,6 +314,10 @@ TOKEN #Delimiter :
    <STARSTARASSIGN : "**=">
    |
    <SLASHSLASHASSIGN : "//=">
+   |
+   <INDENT : ("\n")? ">>>" (" ")* ("\n")?> #IndentToken
+   |
+   <DEDENT : "<<<" (" ")* ("\n")?> #DedentToken
 ;
 
 TOKEN #Operator :
@@ -531,10 +567,10 @@ TOKEN :
  IN_RAW_LONG_DOUBLE_QUOTE_FSTRING,
  IN_LONG_SINGLE_QUOTE_FSTRING,
  IN_RAW_LONG_SINGLE_QUOTE_FSTRING,
- IN_NESTED_PLACEHOLDER> TOKEN:
-   <LBRACE : "{" >
+ IN_NESTED_PLACEHOLDER> TOKEN #Delimiter:
+   <LBRACE : "{" > 
    |
-   <RBRACE : "}" >
+   <RBRACE : "}" > 
 ;
 
 <IN_DOUBLE_QUOTE_FSTRING, IN_RAW_DOUBLE_QUOTE_FSTRING> TOKEN :

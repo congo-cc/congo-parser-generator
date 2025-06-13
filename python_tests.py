@@ -303,13 +303,13 @@ def main():
                             jparser='org.parsers.preprocessor.PreprocessorParser',
                             ppackage='preprocessorparser', ext='.cs',
                             production='PP_Root'),
-        'freemarker': Namespace(name='Freemarker', dir='freemarker',
-                            grammar='FTL.ccc',
-                            files=['*.ccc', 'testfiles', '../java/Java*IdentifierDef.ccc'],
-                            jlexer='ftl.FTLLexer',
-                            jparser='ftl.FTLParser',
-                            ppackage='ftlparser', ext='.ftl',
-                            production='Root'),
+        # 'freemarker': Namespace(name='Freemarker', dir='freemarker',
+        #                     grammar='FTL.ccc',
+        #                     files=['*.ccc', 'testfiles', '../java/Java*IdentifierDef.ccc'],
+        #                     jlexer='ftl.FTLLexer',
+        #                     jparser='ftl.FTLParser',
+        #                     ppackage='ftlparser', ext='.ftl',
+        #                     production='Root'),
     }
     try:
         langs = options.langs.split(',')

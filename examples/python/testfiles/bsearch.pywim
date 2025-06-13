@@ -1,0 +1,18 @@
+# Just use binary search to check whether the char is in one of the
+# intervals
+def check_intervals(ranges, ch):
+>>>    index = bisect.bisect_left(ranges, ch)
+# The following are not indented properly but 
+# it doesn't matter! The parser takes its cue from
+# the indentation _markers_
+n = len(ranges)
+              if index < n:
+>>>     if index % 2 == 0:
+>>>            if index < (n - 1):
+>>> return ranges[index] <= ch <= ranges[index + 1]
+<<<
+<<<     
+elif index > 0:
+>>>          return ranges[index - 1] <= ch <= ranges[index]
+<<<       return False 
+<<< <<<
