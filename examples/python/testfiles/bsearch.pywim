@@ -11,7 +11,7 @@ n = len(ranges)
 >>>            if index < (n - 1):
 >>> return ranges[index] <= ch <= ranges[index + 1]
 <<<
-<<<     
+<<< # Is this okay?    
 elif index > 0:
 >>>          return ranges[index - 1] <= ch <= ranges[index]
 <<<       return False 

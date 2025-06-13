@@ -21,7 +21,6 @@ import org.congocc.templates.core.nodes.generated.PositionalArgsList;
 import org.congocc.templates.core.nodes.ParameterList;
 import org.congocc.templates.core.nodes.generated.TemplateElement;
 import org.congocc.templates.core.nodes.generated.UnifiedCall;
-import org.congocc.templates.core.variables.*;
 import org.congocc.templates.core.variables.scope.*;
 import org.congocc.templates.*;
 
@@ -44,9 +43,6 @@ import static org.congocc.templates.core.variables.Wrap.*;
  * <p>
  * If you need to modify or read this object before or after the
  * <tt>process</tt> call, use
- * 
- * @author <a href="mailto:jon@revusky.com">Jonathan Revusky</a>
- * @author Attila Szegedi
  */
 @SuppressWarnings("rawtypes")
 public final class Environment extends Configurable implements Scope {

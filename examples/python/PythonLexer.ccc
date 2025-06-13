@@ -160,8 +160,12 @@ INJECT BASE_TOKEN_CLASS : {
    boolean startsLine() {
       for (java.util.Iterator<BASE_TOKEN_CLASS> toks = precedingTokens(); toks.hasNext();) {
          BASE_TOKEN_CLASS t = toks.next();
-         if (t.getType()==TokenType.CONTINUE_LINE) return false;
-         if (!t.isUnparsed()) return t.getEndLine() != this.getBeginLine();
+         TokenType type = t.getType();
+         if (type==TokenType.CONTINUE_LINE) return false;
+         if (type == TokenType.INDENT || type == TokenType.DEDENT) continue;
+         if (!t.isUnparsed()) {
+            return t.getEndLine() != this.getBeginLine();
+         }
       }
       return true;
    }
@@ -182,7 +186,6 @@ INJECT PARSER_CLASS :
       }
    }
 }
-
 
 INJECT DedentToken :
    import java.util.List;

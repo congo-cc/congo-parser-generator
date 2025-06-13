@@ -7,10 +7,6 @@ import org.congocc.templates.core.Environment;
 import org.congocc.templates.core.nodes.generated.BuiltInExpression;
 import org.congocc.templates.core.nodes.generated.TemplateNode;
 
-/**
- * @author Attila Szegedi
- * @version $Id: $
- */
 public class SequenceContainsBuiltIn extends ExpressionEvaluatingBuiltIn {
 
     @Override
