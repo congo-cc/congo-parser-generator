@@ -404,7 +404,7 @@ ${globals::translateParserInjections(true)}
         self.token_source.reset(self.get_token(0))
         self._next_token_type = None
         return result
-#pywim:on
+# pywim:on
 <<<
     def deactivate_token_types(self, tt, *types):
 >>>    
@@ -428,61 +428,64 @@ return result
 <<<
     def uncache_tokens(self):
 >>>        self.token_source.reset(self.get_token(0))
+
+<<< def fail(self, message):
+>>>     if self.current_lookahead_token is None:
+>>>        raise ParseException(self, message=message)
+<<<     self.hit_failure = True
 <<<
-    def fail(self, message):
->>>    
-        if self.current_lookahead_token is None:
->>>        
-            raise ParseException(self, message=message)
-<<<            
-        self.hit_failure = True
-<<<
-#pywim:off        
 
     def is_in_production(self, name, *prods):
-        if self.currently_parsed_production is not None:
-            if self.currently_parsed_production == name:
-                return True
-            for prod in prods:
-                if self.currently_parsed_production == prod:
-                    return True
+>>>     if self.currently_parsed_production is not None:
+>>>         if self.currently_parsed_production == name:
+>>>            return True
+<<<         for prod in prods:
+>>>             if self.currently_parsed_production == prod:
+>>>                 return True
+<<< <<< <<< 
         if self.current_lookahead_production is not None:
-            if self.current_lookahead_production == name:
-                return True
-            for prod in prods:
-                if self.current_lookahead_production == prod:
-                    return True
+>>>         if self.current_lookahead_production == name:
+>>>             return True
+<<<         for prod in prods:
+>>>             if self.current_lookahead_production == prod:
+>>>                 return True
+<<<<<<<<<
         it = self.stack_iterator_backward()
         while it.has_next:
-            ntc = it.next
+>>>         ntc = it.next
             npn = ntc.production_name
             if npn == name:
-                return True
-            for pn in prods:
-                if npn == pn:
-                    return True
+>>>             return True
+<<<         for pn in prods:
+>>>             if npn == pn:
+>>>                 return True
+<<<
+<<<
+<<<
         return False
+<<<        
+# pywim:off        
 
-[#import "parser_productions.inc.ctl" as ParserCode]
+#import "parser_productions.inc.ctl" as ParserCode
 [@ParserCode.Productions /]
-[#import "lookahead_routines.inc.ctl" as LookaheadCode]
+#import "lookahead_routines.inc.ctl" as LookaheadCode
 [@LookaheadCode.Generate/]
 
-[#embed "error_handling.inc.ctl"]
+#embed "error_handling.inc.ctl"
 
-[#if settings.treeBuildingEnabled]
+#if settings.treeBuildingEnabled
 
     @property
     def is_tree_building_enabled(self):
         return self.build_tree
 
-   [#embed "tree_building_code.inc.ctl"]
-[#else]
+   #embed "tree_building_code.inc.ctl"
+#else
     @property
     def is_tree_building_enabled(self):
         return False
 
-[/#if]
+#endif
 
 #if settings.treeBuildingEnabled
 #

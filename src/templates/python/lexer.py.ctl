@@ -92,21 +92,21 @@ def NFA_FUNCTIONS_${lexicalState.name}_init():
     functions = [
   #list lexicalState.canonicalSets as state
         ${state.methodName}[#if state_has_next],[/#if]
-  /#list
+  #end
     ]
   #if multipleLexicalStates
     function_table_map[LexicalState.${lexicalState.name}] = functions
   #else
     return functions
-  /#if
+  #end
 
   #if multipleLexicalStates
 NFA_FUNCTIONS_${lexicalState.name}_init()
   #else
 nfa_functions = NFA_FUNCTIONS_${lexicalState.name}_init()
-  /#if
+  #end
 
-/#macro
+#endmacro
 
 [#--
    Generate the array representing the characters

@@ -117,7 +117,7 @@ public class JavaCodeUtils {
     }
 
     /**
-     * Uses the DeadCodeEliminator visitor class to get rid of
+     * Uses the Reaper visitor class to get rid of
      * unused private methods and fields
      */
     static public void stripUnused(CompilationUnit jcu) {

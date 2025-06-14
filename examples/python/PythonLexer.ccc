@@ -183,12 +183,14 @@ INJECT BASE_TOKEN_CLASS : {
     }
 }
 
+#if __java__
 INJECT PARSER_CLASS :
 {
-   public void setUseExplicitIndent(boolean useExplicitIndent) {
-      token_source.setUseExplicitIndent(useExplicitIndent);
-   }
+    public void setUseExplicitIndent(boolean useExplicitIndent) {
+       token_source.setUseExplicitIndent(useExplicitIndent);
+    }
 }
+#endif
 
 INJECT DedentToken :
    import java.util.List;
