@@ -237,10 +237,10 @@ public class FilesGenerator {
         int initialLines = countChars(code, '\n');
 
         try {
-            // if (!outputFile.toString().endsWith("parser.py")) {
-            //     out.write(code);
-            //     return;
-            // }
+            if (!outputFile.toString().endsWith("py")) {
+                 out.write(code);
+                 return;
+            }
             module = CongoCCParser.parsePythonFile(outputFile.getFileName().toString(), code);
         }
         catch (Exception e) {

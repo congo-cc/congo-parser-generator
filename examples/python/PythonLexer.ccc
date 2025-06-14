@@ -24,6 +24,7 @@ INJECT LEXER_CLASS :
    private List<Integer> indentationStack = initIndentationStack();
    // With this set, we use "<<<" and ">>>" as explicit DEDENT/INDENT
    boolean useExplicitIndent;
+   private List<Boolean> pywimStack = new ArrayList<>();
    private List<Integer> cachedIndentationStack = indentationStack;
 
    private static List<Integer> initIndentationStack() {
@@ -50,11 +51,17 @@ INJECT LEXER_CLASS :
    private BASE_TOKEN_CLASS TOKEN_HOOK(BASE_TOKEN_CLASS tok) {
       if (tok.getType() == TokenType.COMMENT) {
          String content = tok.toString().substring(1).trim();
-         if (content.equalsIgnoreCase("pywim:off")) {
-            if (useExplicitIndent) setUseExplicitIndent(false);
+         if (content.equalsIgnoreCase("pywim:restore")) {
+            boolean prev = pywimStack.remove(pywimStack.size()-1);
+            setUseExplicitIndent(prev);
+         }
+         else if (content.equalsIgnoreCase("pywim:off")) {
+            pywimStack.add(useExplicitIndent);
+            setUseExplicitIndent(false);
          }
          else if (content.equalsIgnoreCase("pywim:on")) {
-            if (!useExplicitIndent) setUseExplicitIndent(true);
+            pywimStack.add(useExplicitIndent);
+            setUseExplicitIndent(true);
          }
       }
       return tok;

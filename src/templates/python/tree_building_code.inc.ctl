@@ -107,7 +107,7 @@
 
 <<<
 
- # pywim:off
+ # pywim:restore
 
     #
     # A conditional node is constructed if the condition is true.  All

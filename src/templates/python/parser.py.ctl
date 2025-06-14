@@ -464,7 +464,7 @@ return result
 <<<
         return False
 <<<        
-# pywim:off        
+# pywim:restore        
 
 #import "parser_productions.inc.ctl" as ParserCode
 [@ParserCode.Productions /]

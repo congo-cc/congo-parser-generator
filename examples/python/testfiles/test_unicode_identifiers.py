@@ -18,7 +18,7 @@ class PEP3131Test(unittest.TestCase):
 >>>        𝔘𝔫𝔦𝔠𝔬𝔡𝔢 = 1
         self.assertIn("Unicode", dir())
 <<<
-# pywim:off
+# pywim:restore
     def test_invalid(self):
         try:
             from test import badsyntax_3131
@@ -36,4 +36,4 @@ if __name__ == "__main__":
 >>>    
     unittest.main()
 <<<    
-#pywim:off
+#pywim:restore

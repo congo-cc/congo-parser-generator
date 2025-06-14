@@ -519,7 +519,6 @@ ${is}    self.passed_predicate = passed_predicate${CU.newVarIndex}
 #var prevTokenName = CU.newVarName("token")
 ${is}${prevPassedPredicateVarName} = self.passed_predicate
 ${is}try:
-[#-- ${is}# DBG > ScanCodeZeroOrMore ${indent} --]
 ${is}    while self.remaining_lookahead > 0 and not self.hit_failure:
 ${is}        ${prevTokenName} = self.current_lookahead_token
 ${is}        self.passed_predicate = False
@@ -531,43 +530,40 @@ ${is}            break
 ${is}finally:
 ${is}    self.passed_predicate = ${prevPassedPredicateVarName}
 ${is}self.hit_failure = False
-[#-- ${is}# DBG < ScanCodeZeroOrMore ${indent} --]
-/#macro
+#endmacro
 
 [#--
    Generates lookahead code for a OneOrMore construct
    It generates the code for checking a single occurrence
    and then the same code as a ZeroOrMore
 --]
-[#macro ScanCodeOneOrMore oom indent]
-[#var is = ""?right_pad(indent)]
-[#-- ${is}# DBG > ScanCodeOneOrMore ${indent} --]
-[#--${is}if not (${CheckExpansion(oom.nestedExpansion)}):
-${is}    return False--]
+#macro ScanCodeOneOrMore oom indent
+  #var is = ""?right_pad(indent)
 [@BuildScanCode oom.nestedExpansion, indent /]
 [@ScanCodeZeroOrMore oom, indent /]
-[#-- ${is}# DBG < ScanCodeOneOrMore ${indent} --]
-[/#macro]
+#endmacro
 
 
 #macro CheckExpansion expansion
-#if expansion.singleTokenLookahead
-  #if expansion.firstSet.tokenNames?size = 1
-    #if optimize_scan_token
-      self.scan_token_one(${expansion.firstSet.tokenNames[0]})[#t]
+# pywim:on
+  #if expansion.singleTokenLookahead
+    #if expansion.firstSet.tokenNames?size = 1
+      #if optimize_scan_token
+        self.scan_token_one(${expansion.firstSet.tokenNames[0]})
+      #else
+        self.scan_token(${expansion.firstSet.tokenNames[0]})
+      #endif
     #else
-      self.scan_token(${expansion.firstSet.tokenNames[0]})[#t]
-    /#if
+      #if optimize_scan_token
+        self.scan_token_many(self.${expansion.firstSetVarName})
+      #else
+        self.scan_token(self.${expansion.firstSetVarName})
+      #endif
+    #endif
   #else
-    #if optimize_scan_token
-      self.scan_token_many(self.${expansion.firstSetVarName})[#t]
-    #else
-      self.scan_token(self.${expansion.firstSetVarName})[#t]
-    /#if
-  /#if
-#else
-      self.${expansion.scanRoutineName}(False)[#t]
-/#if
+        self.${expansion.scanRoutineName}(False)
+  #endif
+# pywim:restore
 /#macro
 
 
