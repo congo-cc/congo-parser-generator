@@ -545,7 +545,6 @@ ${is}self.hit_failure = False
 
 
 #macro CheckExpansion expansion
-# pywim:on
   #if expansion.singleTokenLookahead
     #if expansion.firstSet.tokenNames?size = 1
       #if optimize_scan_token
@@ -563,7 +562,6 @@ ${is}self.hit_failure = False
   #else
         self.${expansion.scanRoutineName}(False)
   #endif
-# pywim:restore
 /#macro
 
 

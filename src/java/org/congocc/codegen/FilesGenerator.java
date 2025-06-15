@@ -11,7 +11,7 @@ import java.util.logging.Logger;
 
 import org.congocc.app.AppSettings;
 import org.congocc.app.Errors;
-import org.congocc.codegen.python.PythonFormatter;
+//import org.congocc.codegen.python.PythonFormatter;
 import org.congocc.codegen.python.PyFormatter;
 import org.congocc.core.Grammar;
 import org.congocc.core.RegularExpression;
