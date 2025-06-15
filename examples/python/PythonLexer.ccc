@@ -5,9 +5,54 @@ PARSER_PACKAGE = org.parsers.pylexer;
 DEFAULT_LEXICAL_STATE = PYTHON;
 ENSURE_FINAL_EOL;
 TOKEN_CHAINING;
-//EXTRA_TOKENS = INDENT#IndentToken, DEDENT#DedentToken;
 TABS_TO_SPACES=4;
 
+INJECT LEXER_CLASS :
+{
+   private List<Boolean> pywimStack = new ArrayList<>();
+   private List<Integer> cachedIndentationStack = initIndentationStack();
+   
+   private BASE_TOKEN_CLASS TOKEN_HOOK(BASE_TOKEN_CLASS tok) {
+      if (tok.getType() == TokenType.COMMENT) {
+         String content = tok.toString().substring(1).trim();
+         if (content.equalsIgnoreCase("pywim:restore")) {
+            boolean prev = pywimStack.remove(pywimStack.size()-1);
+            setUseExplicitIndent(prev);
+         }
+         else if (content.equalsIgnoreCase("pywim:off")) {
+            pywimStack.add(useExplicitIndent);
+            setUseExplicitIndent(false);
+         }
+         else if (content.equalsIgnoreCase("pywim:on")) {
+            pywimStack.add(useExplicitIndent);
+            setUseExplicitIndent(true);
+         }
+      }
+      return tok;
+   }
+
+   void setUseExplicitIndent(boolean useExplicitIndent) {
+      this.useExplicitIndent = useExplicitIndent;
+      if (useExplicitIndent) {
+         activeTokenTypes.add(TokenType.INDENT);
+         activeTokenTypes.add(TokenType.DEDENT);
+         cachedIndentationStack = indentationStack;
+      } else {
+         activeTokenTypes.remove(TokenType.INDENT);
+         activeTokenTypes.remove(TokenType.DEDENT);
+         indentationStack = cachedIndentationStack;
+      }
+   }
+}
+
+#if __java__
+INJECT PARSER_CLASS :
+{
+    public void setUseExplicitIndent(boolean useExplicitIndent) {
+       token_source.setUseExplicitIndent(useExplicitIndent);
+    }
+}
+#endif
 
 /*
  * The following code injection implements the various indent/dedent logic.
@@ -23,9 +68,7 @@ INJECT LEXER_CLASS :
    private int bracketNesting, parenthesesNesting, braceNesting;
    private List<Integer> indentationStack = initIndentationStack();
    // With this set, we use "<<<" and ">>>" as explicit DEDENT/INDENT
-   boolean useExplicitIndent;
-   private List<Boolean> pywimStack = new ArrayList<>();
-   private List<Integer> cachedIndentationStack = indentationStack;
+   private boolean useExplicitIndent;
 
    private static List<Integer> initIndentationStack() {
       List<Integer> result = new ArrayList<Integer>();
@@ -49,26 +92,6 @@ INJECT LEXER_CLASS :
    }
 
    private BASE_TOKEN_CLASS TOKEN_HOOK(BASE_TOKEN_CLASS tok) {
-      if (tok.getType() == TokenType.COMMENT) {
-         String content = tok.toString().substring(1).trim();
-         if (content.equalsIgnoreCase("pywim:restore")) {
-            boolean prev = pywimStack.remove(pywimStack.size()-1);
-            setUseExplicitIndent(prev);
-         }
-         else if (content.equalsIgnoreCase("pywim:off")) {
-            pywimStack.add(useExplicitIndent);
-            setUseExplicitIndent(false);
-         }
-         else if (content.equalsIgnoreCase("pywim:on")) {
-            pywimStack.add(useExplicitIndent);
-            setUseExplicitIndent(true);
-         }
-         uncacheTokens(tok);
-      }
-      return tok;
-   }
-
-   private BASE_TOKEN_CLASS TOKEN_HOOK(BASE_TOKEN_CLASS tok) {
       boolean lineJoiningOn = bracketNesting > 0 || parenthesesNesting > 0 || braceNesting > 0 || this.lexicalState != LexicalState.PYTHON;
       TokenType type = tok.getType();
       switch (type) {
@@ -81,24 +104,25 @@ INJECT LEXER_CLASS :
          case NEWLINE :  if (lineJoiningOn  || tok.startsLine()) {
                              tok.setUnparsed(true);
                          }
-                         return tok;
+         case INDENT : 
+         case DEDENT : assert danglingIndentation ==null;
+                       return tok;
       }
       if (danglingIndentation != null) {
          tok.preInsert(danglingIndentation);
+         danglingIndentation = null;
       }
-      if (lineJoiningOn || useExplicitIndent || tok.isUnparsed()
-        || danglingIndentation == null && !tok.startsLine()) {
-         return tok;
-      }
-      danglingIndentation = null;
-      int beginColumn = tok.getBeginColumn();
-      int indentation = indentationStack.get(indentationStack.size()-1);
-      if (beginColumn > indentation) {
-         indentationStack.add(beginColumn);
-         return IndentToken.makeIndentToken(tok, this, indentationStack);
-      }
-      if (beginColumn < indentation) {
-         return handleDedent(tok, beginColumn);
+      if (!lineJoiningOn && !useExplicitIndent 
+          && !tok.isUnparsed() && tok.startsLine()) {
+         int beginColumn = tok.getBeginColumn();
+         int indentation = indentationStack.get(indentationStack.size()-1);
+         if (beginColumn > indentation) {
+            indentationStack.add(beginColumn);
+            return IndentToken.makeIndentToken(tok, this, indentationStack);
+         }
+         if (beginColumn < indentation) {
+            return handleDedent(tok, beginColumn);
+         }
       }
       return tok;
    }
@@ -128,8 +152,8 @@ INJECT LEXER_CLASS :
          if (tok.isVirtual()) {
              danglingIndentation = tok;
              indentationStack = tok.getIndents();
+             return;
          }
-         return;
       }
       if (tokType == TokenType.LBRACE) braceNesting++;
       else if (tokType == TokenType.RBRACE) braceNesting--;
@@ -154,18 +178,6 @@ INJECT LEXER_CLASS :
       }
    }
 
-   void setUseExplicitIndent(boolean useExplicitIndent) {
-      this.useExplicitIndent = useExplicitIndent;
-      if (useExplicitIndent) {
-         activeTokenTypes.add(TokenType.INDENT);
-         activeTokenTypes.add(TokenType.DEDENT);
-         cachedIndentationStack = indentationStack;
-      } else {
-         activeTokenTypes.remove(TokenType.INDENT);
-         activeTokenTypes.remove(TokenType.DEDENT);
-         indentationStack = cachedIndentationStack;
-      }
-   }
 }
 
 INJECT BASE_TOKEN_CLASS : {
@@ -191,14 +203,6 @@ INJECT BASE_TOKEN_CLASS : {
     }
 }
 
-#if __java__
-INJECT PARSER_CLASS :
-{
-    public void setUseExplicitIndent(boolean useExplicitIndent) {
-       token_source.setUseExplicitIndent(useExplicitIndent);
-    }
-}
-#endif
 
 INJECT DedentToken :
    import java.util.List;

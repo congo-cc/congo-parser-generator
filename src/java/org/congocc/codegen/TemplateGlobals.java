@@ -418,7 +418,7 @@ public class TemplateGlobals {
     public String translateLexerImports() {
         StringBuilder result = new StringBuilder();
         String cn = String.format("%s.%s", appSettings.getParserPackage(), appSettings.getLexerClassName());
-        Set<ImportDeclaration> imports = grammar.getInjector().getImportDeclarations(cn);
+        var imports = grammar.getInjector().getImportDeclarations(cn);
 
         if (imports != null) {
             processImports(imports, result);
