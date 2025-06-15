@@ -63,6 +63,7 @@ INJECT LEXER_CLASS :
             pywimStack.add(useExplicitIndent);
             setUseExplicitIndent(true);
          }
+         uncacheTokens(tok);
       }
       return tok;
    }
@@ -172,7 +173,7 @@ INJECT BASE_TOKEN_CLASS : {
       return null;
    }
 
-   boolean startsLine() {
+   public boolean startsLine() {
       for (java.util.Iterator<BASE_TOKEN_CLASS> toks = precedingTokens(); toks.hasNext();) {
          BASE_TOKEN_CLASS t = toks.next();
          TokenType type = t.getType();
