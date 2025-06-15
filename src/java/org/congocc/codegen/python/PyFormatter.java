@@ -31,7 +31,7 @@ public class PyFormatter extends Node.Visitor {
     }
 
     void visit(Comment tok) {
-        String s = tok.subSequence(1,tok.length()).toString().toLowerCase();
+        String s = tok.subSequence(1,tok.length()).toString().trim().toLowerCase();
         if (s.startsWith("pywim:")) return;
         if (tok.startsLine()) {
             indentLine();
