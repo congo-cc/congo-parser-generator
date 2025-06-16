@@ -235,7 +235,7 @@ public class FilesGenerator {
     void outputPythonFile(String code, Path outputFile) throws IOException {
         Module module;
         Writer out = Files.newBufferedWriter(outputFile);
-        int initialLines = countChars(code, '\n');
+        //int initialLines = countChars(code, '\n');
 
         try {
             if (!outputFile.toString().endsWith("py")) {

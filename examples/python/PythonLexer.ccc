@@ -65,7 +65,7 @@ INJECT LEXER_CLASS :
    import NODE_PACKAGE.DedentToken;
 {
    private BASE_TOKEN_CLASS danglingIndentation;
-   private int bracketNesting, parenthesesNesting, braceNesting;
+   private int bracketNesting, parenthesesNesting, braceNesting, indentNesting;
    private List<Integer> indentationStack = initIndentationStack();
    // With this set, we use "<<<" and ">>>" as explicit DEDENT/INDENT
    private boolean useExplicitIndent;

@@ -295,6 +295,7 @@ public interface Node extends List<Node> {
      * @return the (1-based) line location where this Node ends
      */
     default int getEndLine() {
+        if (getEndOffset() <= getBeginOffset()) return getBeginLine();
         TokenSource tokenSource = getTokenSource();
         return tokenSource == null ? 0 : tokenSource.getLineFromOffset(getEndOffset() - 1);
     };
@@ -311,6 +312,7 @@ public interface Node extends List<Node> {
      * @return the (1-based) column offset where this Node ends
      */
     default int getEndColumn() {
+        if (getEndOffset() <= getBeginOffset()) return getBeginColumn();
         TokenSource tokenSource = getTokenSource();
         return tokenSource == null ? 0 : tokenSource.getCodePointColumnFromOffset(getEndOffset() - 1);
     }
