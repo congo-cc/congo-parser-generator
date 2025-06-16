@@ -85,9 +85,9 @@ public class PyTest {
     static public void parseFile(Path path) {
         try {
             PythonParser parser = new PythonParser(path);
-            if (path.toString().endsWith(".pywim")) {
-                parser.setUseExplicitIndent(true);
-            }
+//            if (path.toString().endsWith(".pywim")) {
+//                parser.setUseExplicitIndent(true);
+//            }
             Node root = parser.Module();
             if (retainInMemory) roots.add(root);
             if (paths.size()==1) {

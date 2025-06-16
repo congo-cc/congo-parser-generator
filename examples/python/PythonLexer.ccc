@@ -1,58 +1,14 @@
 /*
  * The Python lexical grammar
  */
+
 PARSER_PACKAGE = org.parsers.pylexer;
 DEFAULT_LEXICAL_STATE = PYTHON;
 ENSURE_FINAL_EOL;
 TOKEN_CHAINING;
+EXTRA_TOKENS = INDENT#IndentToken, DEDENT#DedentToken;
 TABS_TO_SPACES=4;
 
-INJECT LEXER_CLASS :
-{
-   private List<Boolean> pywimStack = new ArrayList<>();
-   private List<Integer> cachedIndentationStack = initIndentationStack();
-   
-   private BASE_TOKEN_CLASS TOKEN_HOOK(BASE_TOKEN_CLASS tok) {
-      if (tok.getType() == TokenType.COMMENT) {
-         String content = tok.toString().substring(1).trim();
-         if (content.equalsIgnoreCase("pywim:restore")) {
-            boolean prev = pywimStack.remove(pywimStack.size()-1);
-            setUseExplicitIndent(prev);
-         }
-         else if (content.equalsIgnoreCase("pywim:off")) {
-            pywimStack.add(useExplicitIndent);
-            setUseExplicitIndent(false);
-         }
-         else if (content.equalsIgnoreCase("pywim:on")) {
-            pywimStack.add(useExplicitIndent);
-            setUseExplicitIndent(true);
-         }
-      }
-      return tok;
-   }
-
-   void setUseExplicitIndent(boolean useExplicitIndent) {
-      this.useExplicitIndent = useExplicitIndent;
-      if (useExplicitIndent) {
-         activeTokenTypes.add(TokenType.INDENT);
-         activeTokenTypes.add(TokenType.DEDENT);
-         cachedIndentationStack = indentationStack;
-      } else {
-         activeTokenTypes.remove(TokenType.INDENT);
-         activeTokenTypes.remove(TokenType.DEDENT);
-         indentationStack = cachedIndentationStack;
-      }
-   }
-}
-
-#if __java__
-INJECT PARSER_CLASS :
-{
-    public void setUseExplicitIndent(boolean useExplicitIndent) {
-       token_source.setUseExplicitIndent(useExplicitIndent);
-    }
-}
-#endif
 
 /*
  * The following code injection implements the various indent/dedent logic.
@@ -65,10 +21,8 @@ INJECT LEXER_CLASS :
    import NODE_PACKAGE.DedentToken;
 {
    private BASE_TOKEN_CLASS danglingIndentation;
-   private int bracketNesting, parenthesesNesting, braceNesting, indentNesting;
+   private int bracketNesting, parenthesesNesting, braceNesting;
    private List<Integer> indentationStack = initIndentationStack();
-   // With this set, we use "<<<" and ">>>" as explicit DEDENT/INDENT
-   private boolean useExplicitIndent;
 
    private static List<Integer> initIndentationStack() {
       List<Integer> result = new ArrayList<Integer>();
@@ -101,28 +55,27 @@ INJECT LEXER_CLASS :
          case RPAREN : parenthesesNesting--; break;
          case LBRACKET : bracketNesting++; break;
          case RBRACKET : bracketNesting--; break;
-         case NEWLINE :  if (lineJoiningOn  || tok.startsLine()) {
+         case NEWLINE :  if (lineJoiningOn || tok.startsLine()) {
                              tok.setUnparsed(true);
                          }
-         case INDENT : 
-         case DEDENT : assert danglingIndentation ==null;
-                       return tok;
+                         return tok;
       }
       if (danglingIndentation != null) {
          tok.preInsert(danglingIndentation);
-         danglingIndentation = null;
       }
-      if (!lineJoiningOn && !useExplicitIndent 
-          && !tok.isUnparsed() && tok.startsLine()) {
-         int beginColumn = tok.getBeginColumn();
-         int indentation = indentationStack.get(indentationStack.size()-1);
-         if (beginColumn > indentation) {
-            indentationStack.add(beginColumn);
-            return IndentToken.makeIndentToken(tok, this, indentationStack);
-         }
-         if (beginColumn < indentation) {
-            return handleDedent(tok, beginColumn);
-         }
+      if (lineJoiningOn || tok.isUnparsed()
+        || danglingIndentation == null && !tok.startsLine()) {
+         return tok;
+      }
+      danglingIndentation = null;
+      int beginColumn = tok.getBeginColumn();
+      int indentation = indentationStack.get(indentationStack.size()-1);
+      if (beginColumn > indentation) {
+         indentationStack.add(beginColumn);
+         return IndentToken.makeIndentToken(tok, this, indentationStack);
+      }
+      if (beginColumn < indentation) {
+         return handleDedent(tok, beginColumn);
       }
       return tok;
    }
@@ -149,11 +102,9 @@ INJECT LEXER_CLASS :
       braceNesting = bracketNesting = parenthesesNesting = 0;
       TokenType tokType = tok.getType();
       if (tokType == TokenType.INDENT || tokType == TokenType.DEDENT) {
-         if (tok.isVirtual()) {
-             danglingIndentation = tok;
-             indentationStack = tok.getIndents();
-             return;
-         }
+         danglingIndentation = tok;
+         indentationStack = tok.getIndents();
+         return;
       }
       if (tokType == TokenType.LBRACE) braceNesting++;
       else if (tokType == TokenType.RBRACE) braceNesting--;
@@ -172,12 +123,10 @@ INJECT LEXER_CLASS :
             case LBRACKET : bracketNesting++; break;
             case RBRACKET : bracketNesting--; break;
             case INDENT :
-            case DEDENT : if (previous.isVirtual()) indentationStack = previous.getIndents(); 
-                          return;
+            case DEDENT : indentationStack = previous.getIndents(); return;
          }
       }
    }
-
 }
 
 INJECT BASE_TOKEN_CLASS : {
@@ -188,12 +137,8 @@ INJECT BASE_TOKEN_CLASS : {
    public boolean startsLine() {
       for (java.util.Iterator<BASE_TOKEN_CLASS> toks = precedingTokens(); toks.hasNext();) {
          BASE_TOKEN_CLASS t = toks.next();
-         TokenType type = t.getType();
-         if (type==TokenType.CONTINUE_LINE) return false;
-         if (type == TokenType.INDENT || type == TokenType.DEDENT) continue;
-         if (!t.isUnparsed()) {
-            return t.getEndLine() != this.getBeginLine();
-         }
+         if (t.getType()==TokenType.CONTINUE_LINE) return false;
+         if (!t.isUnparsed()) return t.getEndLine() != this.getBeginLine();
       }
       return true;
    }
@@ -203,15 +148,12 @@ INJECT BASE_TOKEN_CLASS : {
     }
 }
 
-
 INJECT DedentToken :
    import java.util.List;
    import java.util.ArrayList;
 {
    private List<Integer> indents;
    private int dedentAmount;
-   // Is this an explicit dedent marker, i.e. <<<
-   private boolean isExplicit;
 
    public static BASE_TOKEN_CLASS makeDedentToken(BASE_TOKEN_CLASS followingToken, LEXER_CLASS tokenSource, List<Integer> indents, int dedentAmount) {
       DedentToken result = new DedentToken(TokenType.DEDENT, tokenSource, 0, 0);
@@ -222,17 +164,10 @@ INJECT DedentToken :
       return result;
    }
 
-   public List<Integer> getIndents() { 
-      if (indents == null) return null;
-      return new ArrayList<Integer>(indents);
-   }
-
-   public void setExplicit(boolean isExplicit) {
-      this.isExplicit = isExplicit;
-   }
+   public List<Integer> getIndents() { return new ArrayList<Integer>(indents);}
 
    public boolean isVirtual() {
-      return !isExplicit;
+      return true;
    }
 
 /*
@@ -253,8 +188,6 @@ INJECT IndentToken :
    import java.util.ArrayList;
 {
    private List<Integer> indents;
-   // Is this an explicit indent marker, i.e. <<<
-   private boolean isExplicit;
 
    public static BASE_TOKEN_CLASS makeIndentToken(BASE_TOKEN_CLASS followingToken, LEXER_CLASS tokenSource, List<Integer> indents) {
       IndentToken result = new IndentToken(TokenType.INDENT, tokenSource, 0, 0);
@@ -264,17 +197,10 @@ INJECT IndentToken :
       return result;
    }
 
-   public List<Integer> getIndents() {
-      if (indents == null) return null;
-      return new ArrayList<Integer>(indents);
-   }
-
-   public void setExplicit(boolean isExplicit) {
-      this.isExplicit = isExplicit;
-   }
+   public List<Integer> getIndents() { return new ArrayList<Integer>(indents);}
 
    public boolean isVirtual() {
-      return !isExplicit;
+      return true;
    }
 
 /*
@@ -313,6 +239,10 @@ TOKEN #Delimiter :
    |
    <EQ : "==">
    |
+ //  <LBRACE: "{" >
+ //  |
+ //  <RBRACE: "}" >
+ //  |
    <LBRACKET : "[">
    |
    <RBRACKET : "]">
@@ -352,14 +282,6 @@ TOKEN #Delimiter :
    <STARSTARASSIGN : "**=">
    |
    <SLASHSLASHASSIGN : "//=">
-   |
-   <INDENT : ">>>"> #IndentToken {
-          ((IndentToken)matchedToken).setExplicit(true);
-      }
-   |
-   <DEDENT : "<<<"> #DedentToken {
-          ((DedentToken)matchedToken).setExplicit(true);
-      }
 ;
 
 TOKEN #Operator :
@@ -609,10 +531,10 @@ TOKEN :
  IN_RAW_LONG_DOUBLE_QUOTE_FSTRING,
  IN_LONG_SINGLE_QUOTE_FSTRING,
  IN_RAW_LONG_SINGLE_QUOTE_FSTRING,
- IN_NESTED_PLACEHOLDER> TOKEN #Delimiter:
-   <LBRACE : "{" > 
+ IN_NESTED_PLACEHOLDER> TOKEN:
+   <LBRACE : "{" >
    |
-   <RBRACE : "}" > 
+   <RBRACE : "}" >
 ;
 
 <IN_DOUBLE_QUOTE_FSTRING, IN_RAW_DOUBLE_QUOTE_FSTRING> TOKEN :
