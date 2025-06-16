@@ -6,7 +6,6 @@ PARSER_PACKAGE = org.parsers.pylexer;
 DEFAULT_LEXICAL_STATE = PYTHON;
 ENSURE_FINAL_EOL;
 TOKEN_CHAINING;
-EXTRA_TOKENS = INDENT#IndentToken, DEDENT#DedentToken;
 TABS_TO_SPACES=4;
 
 
@@ -19,8 +18,9 @@ INJECT LEXER_CLASS :
    import java.util.Iterator;
    import NODE_PACKAGE.IndentToken;
    import NODE_PACKAGE.DedentToken;
+   import NODE_PACKAGE.Indentation;
 {
-   private BASE_TOKEN_CLASS danglingIndentation;
+   private Indentation danglingIndentation;
    private int bracketNesting, parenthesesNesting, braceNesting;
    private List<Integer> indentationStack = initIndentationStack();
 
@@ -62,12 +62,11 @@ INJECT LEXER_CLASS :
       }
       if (danglingIndentation != null) {
          tok.preInsert(danglingIndentation);
+         danglingIndentation = null;
       }
-      if (lineJoiningOn || tok.isUnparsed()
-        || danglingIndentation == null && !tok.startsLine()) {
+      if (lineJoiningOn || tok.isUnparsed() || !tok.startsLine()) {
          return tok;
       }
-      danglingIndentation = null;
       int beginColumn = tok.getBeginColumn();
       int indentation = indentationStack.get(indentationStack.size()-1);
       if (beginColumn > indentation) {
@@ -101,8 +100,8 @@ INJECT LEXER_CLASS :
    private void RESET_TOKEN_HOOK(BASE_TOKEN_CLASS tok) {
       braceNesting = bracketNesting = parenthesesNesting = 0;
       TokenType tokType = tok.getType();
-      if (tokType == TokenType.INDENT || tokType == TokenType.DEDENT) {
-         danglingIndentation = tok;
+      if (tok instanceof Indentation) {
+         danglingIndentation = (Indentation) tok;
          indentationStack = tok.getIndents();
          return;
       }
@@ -138,6 +137,7 @@ INJECT BASE_TOKEN_CLASS : {
       for (java.util.Iterator<BASE_TOKEN_CLASS> toks = precedingTokens(); toks.hasNext();) {
          BASE_TOKEN_CLASS t = toks.next();
          if (t.getType()==TokenType.CONTINUE_LINE) return false;
+         if (t instanceof Indentation) return true;
          if (!t.isUnparsed()) return t.getEndLine() != this.getBeginLine();
       }
       return true;
@@ -148,35 +148,38 @@ INJECT BASE_TOKEN_CLASS : {
     }
 }
 
+INJECT Indentation :
+   import java.util.List;
+   import java.util.ArrayList;
+{
+   List<Integer> indents;
+   public List<Integer> getIndents() { return new ArrayList<Integer>(indents);}
+
+   private boolean explicit;
+
+   public boolean isExplicit() {
+      return !explicit;
+   }
+
+   public void setExplicit(boolean b) {
+      this.explicit = b;
+   }
+}
+
 INJECT DedentToken :
    import java.util.List;
    import java.util.ArrayList;
 {
-   private List<Integer> indents;
    private int dedentAmount;
 
    public static BASE_TOKEN_CLASS makeDedentToken(BASE_TOKEN_CLASS followingToken, LEXER_CLASS tokenSource, List<Integer> indents, int dedentAmount) {
       DedentToken result = new DedentToken(TokenType.DEDENT, tokenSource, 0, 0);
-      result.indents = new ArrayList<Integer>(indents.size());
-      result.indents.addAll(indents);
+      result.indents = new ArrayList<Integer>(indents);
       result.dedentAmount = dedentAmount;
       followingToken.preInsert(result);
       return result;
    }
 
-   public List<Integer> getIndents() { return new ArrayList<Integer>(indents);}
-
-   public boolean isVirtual() {
-      return true;
-   }
-
-/*
- *  Commented out, as interferes with representation used in tests
- *
-   public String toString() {
-       return "DEDENT";
-   }
- */
 
    public int getDedentAmount() {
       return dedentAmount;
@@ -187,20 +190,12 @@ INJECT IndentToken :
    import java.util.List;
    import java.util.ArrayList;
 {
-   private List<Integer> indents;
-
    public static BASE_TOKEN_CLASS makeIndentToken(BASE_TOKEN_CLASS followingToken, LEXER_CLASS tokenSource, List<Integer> indents) {
       IndentToken result = new IndentToken(TokenType.INDENT, tokenSource, 0, 0);
       result.indents = new ArrayList<Integer>(indents.size());
       result.indents.addAll(indents);
       followingToken.preInsert(result);
       return result;
-   }
-
-   public List<Integer> getIndents() { return new ArrayList<Integer>(indents);}
-
-   public boolean isVirtual() {
-      return true;
    }
 
 /*
@@ -225,7 +220,19 @@ UNPARSED :
 ;
 
 TOKEN :
-   <NEWLINE : (<SPACE>)? "\n"> #Newline
+   //<NEWLINE : (<SPACE>)? "\n"> #Newline
+   <NEWLINE : "\n"> #Newline
+;
+
+
+TOKEN #Indentation : 
+   <INDENT : ">>>"> #IndentToken {
+      ((Indentation)matchedToken).setExplicit(true);
+   }
+   |
+   <DEDENT : "<<<"> #DedentToken {
+      ((Indentation)matchedToken).setExplicit(true);
+   }
 ;
 
 TOKEN #Delimiter :
@@ -239,10 +246,6 @@ TOKEN #Delimiter :
    |
    <EQ : "==">
    |
- //  <LBRACE: "{" >
- //  |
- //  <RBRACE: "}" >
- //  |
    <LBRACKET : "[">
    |
    <RBRACKET : "]">

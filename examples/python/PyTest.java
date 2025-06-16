@@ -64,7 +64,7 @@ public class PyTest {
     static void addPaths(Path path, List<Path> paths) throws IOException {
         Files.walk(path).forEach(p->{
             if (!Files.isDirectory(p)) {
-                if (p.toString().endsWith(".py") || p.toString().endsWith(".pywim")) {
+                if (p.toString().endsWith(".py")) {
                     paths.add(p);
                 }
                 else if (p.toString().endsWith(".zip")) {
