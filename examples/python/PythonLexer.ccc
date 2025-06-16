@@ -64,22 +64,30 @@ INJECT LEXER_CLASS :
          tok.preInsert(danglingIndentation);
          danglingIndentation = null;
       }
-      if (lineJoiningOn || tok.isUnparsed() || !tok.startsLine()) {
-         return tok;
-      }
-      int beginColumn = tok.getBeginColumn();
-      int indentation = indentationStack.get(indentationStack.size()-1);
-      if (beginColumn > indentation) {
-         indentationStack.add(beginColumn);
-         return IndentToken.makeIndentToken(tok, this, indentationStack);
-      }
-      if (beginColumn < indentation) {
-         return handleDedent(tok, beginColumn);
+      if (!lineJoiningOn && !tok.isUnparsed() && tok.startsLine()) {
+         tok = handleIndentation(tok);
       }
       return tok;
    }
 
-   private BASE_TOKEN_CLASS handleDedent(BASE_TOKEN_CLASS tok, final int offset) {
+   private BASE_TOKEN_CLASS handleIndentation(BASE_TOKEN_CLASS tok) {
+      int beginColumn = tok.getBeginColumn();
+      int indentation = indentationStack.get(indentationStack.size()-1);
+      if (beginColumn > indentation) {
+         tok = handleIndent(tok, beginColumn);
+      }
+      if (beginColumn < indentation) {
+         tok = handleDedent(tok, beginColumn);
+      }
+      return tok;
+   }
+
+   private BASE_TOKEN_CLASS handleIndent(BASE_TOKEN_CLASS tok, int offset) {
+      indentationStack.add(offset);
+      return Indentation.makeIndentToken(tok, this, indentationStack);
+   }
+
+   private BASE_TOKEN_CLASS handleDedent(BASE_TOKEN_CLASS tok, int offset) {
        int dedentIndex = indentationStack.indexOf(offset);
        if (dedentIndex <0) {
           BASE_TOKEN_CLASS invalidDedent = new InvalidToken(this, 0,0);
@@ -91,7 +99,7 @@ INJECT LEXER_CLASS :
        for (int i=indentationStack.size()-1; i>dedentIndex; i--) {
           int dedentAmount = indentationStack.get(i) - indentationStack.get(i-1);
           indentationStack.remove(i);
-          BASE_TOKEN_CLASS dedent = DedentToken.makeDedentToken(tok, this, indentationStack, dedentAmount);
+          BASE_TOKEN_CLASS dedent = Indentation.makeDedentToken(tok, this, indentationStack);
           if (firstDedent == null) firstDedent = dedent;
        }
        return firstDedent;
@@ -164,51 +172,32 @@ INJECT Indentation :
    public void setExplicit(boolean b) {
       this.explicit = b;
    }
+
+   public static BASE_TOKEN_CLASS makeIndentToken(BASE_TOKEN_CLASS followingToken, LEXER_CLASS tokenSource, List<Integer> indents) {
+      IndentToken result = new IndentToken(TokenType.INDENT, tokenSource, 0, 0);
+      result.indents = new ArrayList<Integer>(indents);
+      followingToken.preInsert(result);
+      return result;
+   }
+
+   public static BASE_TOKEN_CLASS makeDedentToken(BASE_TOKEN_CLASS followingToken, LEXER_CLASS tokenSource, List<Integer> indents) {
+      DedentToken result = new DedentToken(TokenType.DEDENT, tokenSource, 0, 0);
+      result.indents = new ArrayList<Integer>(indents);
+      followingToken.preInsert(result);
+      return result;
+   }
 }
 
 INJECT DedentToken :
    import java.util.List;
    import java.util.ArrayList;
 {
-   private int dedentAmount;
-
-   public static BASE_TOKEN_CLASS makeDedentToken(BASE_TOKEN_CLASS followingToken, LEXER_CLASS tokenSource, List<Integer> indents, int dedentAmount) {
-      DedentToken result = new DedentToken(TokenType.DEDENT, tokenSource, 0, 0);
-      result.indents = new ArrayList<Integer>(indents);
-      result.dedentAmount = dedentAmount;
-      followingToken.preInsert(result);
-      return result;
-   }
-
-
-   public int getDedentAmount() {
-      return dedentAmount;
-   }
 }
 
 INJECT IndentToken :
    import java.util.List;
    import java.util.ArrayList;
 {
-   public static BASE_TOKEN_CLASS makeIndentToken(BASE_TOKEN_CLASS followingToken, LEXER_CLASS tokenSource, List<Integer> indents) {
-      IndentToken result = new IndentToken(TokenType.INDENT, tokenSource, 0, 0);
-      result.indents = new ArrayList<Integer>(indents.size());
-      result.indents.addAll(indents);
-      followingToken.preInsert(result);
-      return result;
-   }
-
-/*
- *  Commented out, as interferes with representation used in tests
- *
-   public String toString() {
-       return "INDENT";
-   }
- */
-
-   public int getIndentAmount() {
-      return indents.get(indents.size() - 1) - indents.get(indents.size() - 2);
-   }
 }
 
 SKIP : <SPACE : (' ' | "\f")+>;
