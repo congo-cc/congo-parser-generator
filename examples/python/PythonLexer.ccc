@@ -37,10 +37,10 @@ INJECT LEXER_CLASS :
       if (tok.getType() == COMMENT) {
          String s = tok.toString().substring(1).trim();
          if (s.equalsIgnoreCase("explicitdedent:on")) {
-            explicitDedentStack.add(true);
+            explicitDedentStack.add(useImplicitIndent);
             setUseImplicitIndent(true);
          } else if (s.equalsIgnoreCase("explicitdedent:off")) {
-            explicitDedentStack.add(false);
+            explicitDedentStack.add(useImplicitIndent);
             setUseImplicitIndent(false);
          } else if (s.equalsIgnoreCase("explicitdedent:restore")) {
             setUseImplicitIndent(explicitDedentStack.remove(explicitDedentStack.size()-1));

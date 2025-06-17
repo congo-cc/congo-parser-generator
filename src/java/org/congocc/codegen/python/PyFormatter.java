@@ -35,11 +35,9 @@ public class PyFormatter extends Node.Visitor {
         if (tok.toString()
            .substring(1)
            .trim()
-           .toLowerCase()
-           .startsWith("explicitindent:")) {
-            System.err.println("KILROY!!!");
+           .toLowerCase().startsWith("explicitdedent:")) {
             return;
-        }
+        } 
         if (tok.startsLine()) {
             indentLine();
         }
