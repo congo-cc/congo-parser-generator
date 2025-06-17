@@ -32,6 +32,14 @@ public class PyFormatter extends Node.Visitor {
     }
 
     void visit(Comment tok) {
+        if (tok.toString()
+           .substring(1)
+           .trim()
+           .toLowerCase()
+           .startsWith("explicitindent:")) {
+            System.err.println("KILROY!!!");
+            return;
+        }
         if (tok.startsLine()) {
             indentLine();
         }
