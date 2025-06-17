@@ -1,3 +1,5 @@
+# explicitdedent:on    
+    <-
     #
     # the root node of the AST. It only makes sense to call
     # this after a successful parse.
@@ -5,24 +7,28 @@
     @property
     def root_node(self):
         return self.current_node_scope.root_node
+    <-
 
     #
     # push a node onto the top of the node stack
     #
     def push_node(self, n):
         self.current_node_scope.append(n)
+    <-
 
     #
     # return the node on the top of the stack, and remove it from the
     # stack
     def pop_node(self):
         return self.current_node_scope.pop()
+    <-
 
     #
     # the node currently on the top of the tree-building stack.
     #
     def peek_node(self):
         return self.current_node_scope.peek()
+    <-
 
     #
     # Puts the node on the top of the stack. However, unlike pushNode()
@@ -31,6 +37,7 @@
     #
     def poke_node(self, n):
         self.current_node_scope.poke(n)
+    <-
 
     #
     # Replace the type of the last consumed token and poke it onto the
@@ -39,6 +46,7 @@
     def replace_token_type(self, tt):
         self.last_consumed_token = self.last_consumed_token.replace_type(tt)
         self.poke_node(self.last_consumed_token)
+    <-
 
     #
     # Pop and return a number of nodes. This can be perhaps optimized
@@ -47,6 +55,7 @@
     #
     def pop_nodes(self, n):
         return [self.pop_node() for i in range(n)]
+    <-
 
     #
     # return the number of Nodes on the tree-building stack in the current node
@@ -54,9 +63,11 @@
     @property
     def node_arity(self):
         return len(self.current_node_scope)
+    <-
 
     def clear_node_scope(self):
         self.current_node_scope.clear()
+    <-
 
     def open_node_scope(self, n):
         NodeScope(self)  # as a side-effect, attaches into self
@@ -69,6 +80,8 @@
 [#list grammar.openNodeScopeHooks as hook]
             self.${hook}(n)
 [/#list]
+        <-
+    <-
 
     #
     # A definite node is constructed from a specified number of
@@ -83,13 +96,16 @@
         if nodes:
             n.begin_offset = nodes[-1].begin_offset
             n.end_offset = nodes[0].end_offset
+        <-
         for child in reversed(nodes):
             n.add(child)
+        <-
         n.close()
         self.push_node(n)
 [#list grammar.closeNodeScopeHooks as hook]
         ${hook}(n)
 [/#list]
+    <-
 
     #
     # A conditional node is constructed if the condition is true.  All
@@ -107,6 +123,7 @@
             assert isinstance(condition_or_num, int)
             self.close_node_scope_numbered(n, condition_or_num)
             return True
+        <-
         if n and condition_or_num:
             n.begin_offset = self.last_consumed_token.end_offset
             n.end_offset = self.last_consumed_token.end_offset
@@ -116,22 +133,31 @@
             if nodes:
                 n.begin_offset = nodes[-1].begin_offset
                 n.end_offset = nodes[0].end_offset
+            <-
             for child in reversed(nodes):
                 if self.unparsed_tokens_are_nodes and isinstance(child, Token):
                     tok = child
                     while tok.previous_cached_token and tok.previous_cached_token.is_unparsed:
                         tok = tok.previous_cached_token
+                    <-
                     while tok.is_unparsed:
                         n.add(tok)
                         tok = tok.next_cached_token
+                    <-
+                <-
                 n.add(child)
+            <-
             n.close()
             self.push_node(n)
 [#list grammar.closeNodeScopeHooks as hook]
             self.${hook}(n)
 [/#list]
+        <-
         else:
             self.current_node_scope.close()
             return False
+        <-            
         return True
+    <-
 
+# explicitdedent:restore
