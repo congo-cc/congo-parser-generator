@@ -344,7 +344,7 @@ ${is}# at: ${expansion.location}
    [#if classname = "ExpansionWithParentheses"]
       [@BuildScanCode expansion.nestedExpansion, indent /]
    [#elseif expansion.singleTokenLookahead]
-${ScanSingleToken(expansion, indent)}
+${ScanSingleToken(expansion)}
    [#elseif classname = "Assertion" && expansion.appliesInLookahead]
 ${ScanCodeAssertion(expansion, indent)}
    [#elseif classname = "Failure"]
@@ -403,9 +403,9 @@ ${is}        self.passed_predicate_threshold = self.remaining_lookahead[#if sub.
   It (trivially) just delegates to the code for
   checking the production's nested expansion
 --]
-[#macro ScanCodeNonTerminal nt]
-# explicitdedent:on
-# NonTerminal ${nt.name} at ${nt.location}
+#macro ScanCodeNonTerminal nt
+ # explicitdedent:on
+ # NonTerminal ${nt.name} at ${nt.location}
    self.push_onto_lookahead_stack('${nt.containingProduction.name}', '${nt.inputSource?j_string}', ${nt.beginLine}, ${nt.beginColumn})
    self.current_lookahead_production = '${nt.production.name}'
    try:
@@ -415,30 +415,31 @@ ${is}        self.passed_predicate_threshold = self.remaining_lookahead[#if sub.
    finally:
        self.pop_lookahead_stack()
    <<<
-# explicitdedent:restore
-[/#macro]
+ # explicitdedent:restore
+#endmacro
 
-[#macro ScanSingleToken expansion indent]
-[#var is = ""?right_pad(indent)]
-[#var firstSet = expansion.firstSet.tokenNames]
-[#-- ${is}# DBG > ScanSingleToken ${indent} --]
-[#if firstSet?size = 1]
-[#if optimize_scan_token]
-${is}if not self.scan_token_one(${firstSet[0]}):
-[#else]
-${is}if not self.scan_token(${firstSet[0]}):
-[/#if]
-${is}    return False
-[#else]
-[#if optimize_scan_token]
-${is}if not self.scan_token_many(self.${expansion.firstSetVarName}):
-[#else]
-${is}if not self.scan_token(self.${expansion.firstSetVarName}):
-[/#if]
-${is}    return False
-[/#if]
-[#-- ${is}# DBG < ScanSingleToken ${indent} --]
-[/#macro]
+#macro ScanSingleToken expansion
+# explicitdedent:on
+  #var firstSet = expansion.firstSet.tokenNames
+  #if firstSet?size = 1
+    #if optimize_scan_token
+       if not self.scan_token_one(${firstSet[0]}):
+    #else
+       if not self.scan_token(${firstSet[0]}):
+    #endif
+          return False
+          <<<
+  #else
+    #if optimize_scan_token
+      if not self.scan_token_many(self.${expansion.firstSetVarName}):
+    #else
+      if not self.scan_token(self.${expansion.firstSetVarName}):
+    #endif
+        return False
+        <<<
+  #endif
+# explicitdedent:restore
+#endmacro
 
 [#macro ScanCodeAssertion assertion indent]
 [#var is = ""?right_pad(indent)]
