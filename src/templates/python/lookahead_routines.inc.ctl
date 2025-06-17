@@ -206,27 +206,30 @@ ${is}        self.hit_failure = prev_hit_failure
 
 [#-- Build the code for checking semantic lookahead, lookbehind, and/or syntactic lookahead --]
 #macro BuildPredicateCode expansion indent
-#var is = ""?right_pad(indent)
-[#-- ${is}# DBG > BuildPredicateCode ${indent} --]
+#explicitdedent:on
 #if expansion.hasSemanticLookahead && (expansion.lookahead.semanticLookaheadNested || expansion.containingProduction.onlyForLookahead)
-${is}if not (${globals::translateExpression(expansion.semanticLookahead)}):
-${is}    return False
-/#if
+if not (${globals::translateExpression(expansion.semanticLookahead)}):
+    return False
+<<<    
+#endif
 #if expansion.hasLookBehind
-${is}if [#if !expansion.lookBehind.negated]not [/#if]self.${expansion.lookBehind.routineName}():
-${is}    return False
-/#if
+if [#if !expansion.lookBehind.negated]not [/#if]self.${expansion.lookBehind.routineName}():
+    return False
+<<<    
+#endif
 #if expansion.hasSeparateSyntacticLookahead
-${is}if self.remaining_lookahead <= 0:
-${is}    self.passed_predicate = True
-${is}    return not self.hit_failure
-${is}if [#if !expansion.lookahead.negated]not [/#if]self.${expansion.lookaheadExpansion.scanRoutineName}(True):
-${is}    return False
-/#if
+if self.remaining_lookahead <= 0:
+    self.passed_predicate = True
+    return not self.hit_failure
+  <<<
+if ${!expansion.lookahead.negated ?: "not"} self.${expansion.lookaheadExpansion.scanRoutineName}(True):
+    return False
+  <<<
+#endif
 #if expansion.lookaheadAmount == 0
-${is}self.passed_predicate = True
-/#if
-[#-- ${is}# DBG < BuildPredicateCode ${indent} --]
+self.passed_predicate = True
+#endif
+#explicitdedent:off
 /#macro
 
 
