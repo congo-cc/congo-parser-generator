@@ -259,7 +259,7 @@ TOKEN :
 
 
 TOKEN #Indentation : 
-   <DEDENT : "<<<"> #DedentToken {
+   <DEDENT : "<-"> #DedentToken {
       ((Indentation)matchedToken).setExplicit(true);
    }
 ;

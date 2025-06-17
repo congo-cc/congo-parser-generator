@@ -208,21 +208,21 @@ ${is}        self.hit_failure = prev_hit_failure
 #if expansion.hasSemanticLookahead && (expansion.lookahead.semanticLookaheadNested || expansion.containingProduction.onlyForLookahead)
 if not (${globals::translateExpression(expansion.semanticLookahead)}):
     return False
-<<<    
+<-    
 #endif
 #if expansion.hasLookBehind
 if [#if !expansion.lookBehind.negated]not [/#if]self.${expansion.lookBehind.routineName}():
     return False
-<<<    
+<-    
 #endif
 #if expansion.hasSeparateSyntacticLookahead
 if self.remaining_lookahead <= 0:
     self.passed_predicate = True
     return not self.hit_failure
-  <<<
+  <-
 if ${!expansion.lookahead.negated ?: "not"} self.${expansion.lookaheadExpansion.scanRoutineName}(True):
     return False
-  <<<
+  <-
 #endif
 #if expansion.lookaheadAmount == 0
 self.passed_predicate = True
@@ -269,7 +269,7 @@ ${is}        self.hit_failure = prev_hit_failure
   #if element = "."
     if not stack_iterator.has_next:
         return False
-        <<<
+        <-
     stack_iterator.next
   #elif element = "..."
     #if element_index = lookBehind.path?size - 1
@@ -288,28 +288,28 @@ ${is}        self.hit_failure = prev_hit_failure
         if ntc.production_name ${equalityOp} "${nextElement}":
             stack_iterator.previous
             break
-            <<<
+            <-
         if not stack_iterator.has_next:
             return False
-            <<<
+            <-
     #endif
   #else
     if not stack_iterator.has_next:
         return False
-        <<<
+        <-
     ntc = stack_iterator.next
      [#var equalityOp = elementNegated?string("==", "!=")]
     if ntc.production_name ${equalityOp} "${element}":
         return False
-        <<<
+        <-
   #endif
 #endlist
 #if lookBehind.hasEndingSlash
     return not stack_iterator.has_next
-    <<<
+    <-
 #else
     return True
-    <<<
+    <-
 #endif
  # explicitdedent:restore
 #endmacro
@@ -415,10 +415,10 @@ ${is}        self.passed_predicate_threshold = self.remaining_lookahead[#if sub.
    try:
       if not self.${nt.production.lookaheadMethodName}(${CU.bool(nt.scanToEnd)}):
         return False
-   <<<<<<
+   <-<-
    finally:
        self.pop_lookahead_stack()
-   <<<
+   <-
  # explicitdedent:restore
 #endmacro
 
@@ -432,7 +432,7 @@ ${is}        self.passed_predicate_threshold = self.remaining_lookahead[#if sub.
        if not self.scan_token(${firstSet[0]}):
     #endif
           return False
-          <<<
+          <-
   #else
     #if optimize_scan_token
       if not self.scan_token_many(self.${expansion.firstSetVarName}):
@@ -440,7 +440,7 @@ ${is}        self.passed_predicate_threshold = self.remaining_lookahead[#if sub.
       if not self.scan_token(self.${expansion.firstSetVarName}):
     #endif
         return False
-        <<<
+        <-
   #endif
 # explicitdedent:restore
 #endmacro
@@ -451,13 +451,13 @@ ${is}        self.passed_predicate_threshold = self.remaining_lookahead[#if sub.
      if not (${globals::translateExpression(assertion.assertionExpression)}):
        self.hit_failure = True
        return False
-     <<<
+     <-
    #endif
    #if assertion.expansion
      if ${!assertion.expansionNegated ?: "not"} self.${assertion.expansion.scanRoutineName}():
         self.hit_failure = True
         return False
-       <<<
+       <-
    #endif
  # explicitdedent:restore
 #endmacro
@@ -484,17 +484,17 @@ ${is}        self.passed_predicate_threshold = self.remaining_lookahead[#if sub.
                self.hit_failure = hit_failure${CU.newVarIndex}
     #if !subseq_has_next
                return False
-               <<<
+               <-
     #else
                if self.passed_predicate and not self.legacy_glitchy_lookahead:
                return False
-               <<<
+               <-
     #endif
   #endlist
-  [#list choice.choices as unused]<<<[/#list]
+  [#list choice.choices as unused]<-[/#list]
    finally:
       self.passed_predicate = passed_predicate${CU.newVarIndex}
-   <<<
+   <-
  # explicitdedent:restore   
 #endmacro
 
@@ -507,13 +507,13 @@ try:
     if not (${CheckExpansion(zoo.nestedExpansion)}):
          if self.passed_predicate and not self.legacy_glitchy_lookahead:
             return False
-<<<            
+<-            
         self.current_lookahead_token = token${CU.newVarIndex}
         self.hit_failure = False
-<<<<<<        
+<-<-        
 finally:
     self.passed_predicate = passed_predicate${CU.newVarIndex}
-<<<    
+<-    
 # explicitdedent:restore
 #endmacro
 
@@ -532,13 +532,13 @@ try:
         if not (${CheckExpansion(zom.nestedExpansion)}):
             if self.passed_predicate and not self.legacy_glitchy_lookahead:
                 return False
-<<<                
+<-                
             self.current_lookahead_token = ${prevTokenName}
             break
-<<<<<<<<<            
+<-<-<-            
 finally:
     self.passed_predicate = ${prevPassedPredicateVarName}
-<<<    
+<-    
 self.hit_failure = False
 # explicitdedent:restore
 /#macro
