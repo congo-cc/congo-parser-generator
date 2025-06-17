@@ -353,9 +353,9 @@ ${is}self.uncache_tokens()
    [#elseif classname = "ExpansionSequence"]
 ${ScanCodeSequence(expansion, indent)}
    [#elseif classname = "ZeroOrOne"]
-${ScanCodeZeroOrOne(expansion, indent)}
+${ScanCodeZeroOrOne(expansion)}
    [#elseif classname = "ZeroOrMore"]
-${ScanCodeZeroOrMore(expansion, indent)}
+${ScanCodeZeroOrMore(expansion)}
    [#elseif classname = "OneOrMore"]
 ${ScanCodeOneOrMore(expansion, indent)}
    [#elseif classname = "NonTerminal"]
@@ -493,45 +493,49 @@ ${is}    self.passed_predicate = passed_predicate${CU.newVarIndex}
 [#-- ${is}# DBG < ScanCodeChoice ${indent} --]
 /#macro
 
-#macro ScanCodeZeroOrOne zoo indent
-#var is = ""?right_pad(indent)
-[#-- ${is}# DBG > ScanCodeZeroOrOne ${indent} --]
-${is}${CU.newVarName("token")} = self.current_lookahead_token
-${is}passed_predicate${CU.newVarIndex} = self.passed_predicate
-${is}self.passed_predicate = False
-${is}try:
-${is}    if not (${CheckExpansion(zoo.nestedExpansion)}):
-${is}        if self.passed_predicate and not self.legacy_glitchy_lookahead:
-${is}            return False
-${is}        self.current_lookahead_token = token${CU.newVarIndex}
-${is}        self.hit_failure = False
-${is}finally:
-${is}    self.passed_predicate = passed_predicate${CU.newVarIndex}
-[#-- ${is}# DBG < ScanCodeZeroOrOne ${indent} --]
-/#macro
+#macro ScanCodeZeroOrOne zoo 
+# explicitdedent:on
+${CU.newVarName("token")} = self.current_lookahead_token
+passed_predicate${CU.newVarIndex} = self.passed_predicate
+self.passed_predicate = False
+try:
+    if not (${CheckExpansion(zoo.nestedExpansion)}):
+         if self.passed_predicate and not self.legacy_glitchy_lookahead:
+            return False
+<<<            
+        self.current_lookahead_token = token${CU.newVarIndex}
+        self.hit_failure = False
+<<<<<<        
+finally:
+    self.passed_predicate = passed_predicate${CU.newVarIndex}
+<<<    
+# explicitdedent:restore
+#endmacro
 
 [#--
   Generates lookahead code for a ZeroOrMore construct]
 --]
-#macro ScanCodeZeroOrMore zom indent
-#var is = ""?right_pad(indent)
+#macro ScanCodeZeroOrMore zom 
+# explicitdedent:on
 #var prevPassedPredicateVarName = CU.newVarName("passed_predicate")
 #var prevTokenName = CU.newVarName("token")
-${is}${prevPassedPredicateVarName} = self.passed_predicate
-${is}try:
-[#-- ${is}# DBG > ScanCodeZeroOrMore ${indent} --]
-${is}    while self.remaining_lookahead > 0 and not self.hit_failure:
-${is}        ${prevTokenName} = self.current_lookahead_token
-${is}        self.passed_predicate = False
-${is}        if not (${CheckExpansion(zom.nestedExpansion)}):
-${is}            if self.passed_predicate and not self.legacy_glitchy_lookahead:
-${is}                return False
-${is}            self.current_lookahead_token = ${prevTokenName}
-${is}            break
-${is}finally:
-${is}    self.passed_predicate = ${prevPassedPredicateVarName}
-${is}self.hit_failure = False
-[#-- ${is}# DBG < ScanCodeZeroOrMore ${indent} --]
+${prevPassedPredicateVarName} = self.passed_predicate
+try:
+    while self.remaining_lookahead > 0 and not self.hit_failure:
+        ${prevTokenName} = self.current_lookahead_token
+        self.passed_predicate = False
+        if not (${CheckExpansion(zom.nestedExpansion)}):
+            if self.passed_predicate and not self.legacy_glitchy_lookahead:
+                return False
+<<<                
+            self.current_lookahead_token = ${prevTokenName}
+            break
+<<<<<<<<<            
+finally:
+    self.passed_predicate = ${prevPassedPredicateVarName}
+<<<    
+self.hit_failure = False
+# explicitdedent:restore
 /#macro
 
 [#--
@@ -540,13 +544,8 @@ ${is}self.hit_failure = False
    and then the same code as a ZeroOrMore
 --]
 [#macro ScanCodeOneOrMore oom indent]
-[#var is = ""?right_pad(indent)]
-[#-- ${is}# DBG > ScanCodeOneOrMore ${indent} --]
-[#--${is}if not (${CheckExpansion(oom.nestedExpansion)}):
-${is}    return False--]
 [@BuildScanCode oom.nestedExpansion, indent /]
-[@ScanCodeZeroOrMore oom, indent /]
-[#-- ${is}# DBG < ScanCodeOneOrMore ${indent} --]
+[@ScanCodeZeroOrMore oom /]
 [/#macro]
 
 

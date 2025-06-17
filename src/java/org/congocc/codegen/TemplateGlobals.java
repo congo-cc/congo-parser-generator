@@ -153,20 +153,14 @@ public class TemplateGlobals {
         return translator.translateIdentifier(ident, Translator.TranslationContext.METHOD);
     }
 
-    // Used in templates for side effects, hence returning empty string
-    @SuppressWarnings("SameReturnValue")
-    public String startProduction() {
+    public void startProduction() {
         Translator.SymbolTable symbols = new Translator.SymbolTable();
         translator.pushSymbols(symbols);
-        return "";
     }
 
-    // Used in templates for side effects, hence returning empty string
-    @SuppressWarnings("SameReturnValue")
-    public String endProduction() {
+    public void endProduction() {
         translator.popSymbols();
         translator.clearParameterNames();
-        return "";
     }
 
     public String translateParameters(FormalParameters parameters) {

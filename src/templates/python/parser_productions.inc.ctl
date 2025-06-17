@@ -56,14 +56,16 @@
 ${is}# ${production.leadingComments}
    [/#if]
 ${is}# ${production.location}
-${is}${globals::startProduction()}def parse_${production.name}(self[#if production.parameterList??], ${globals::translateParameters(production.parameterList)}[/#if]):
+#exec globals::startProduction()
+${is}def parse_${production.name}(self[#if production.parameterList??], ${globals::translateParameters(production.parameterList)}[/#if]):
    [#-- Now generate the body --]
 ${is}    # import pdb; pdb.set_trace()
    [#-- OMITTED: "if (cancelled) throw new CancellationException();" --]
 ${is}    self.currently_parsed_production = '${production.name}'
    #set topLevelExpansion = false
 ${BuildCode(production, indent + 4)}
-${is}# end of parse_${production.name}${globals::endProduction()}
+${is}# end of parse_${production.name}
+#exec globals::endProduction()
 [/#macro]
 
 [#--
@@ -416,7 +418,7 @@ ${injectDeclaration(treeNodeBehavior.nodeName, treeNodeBehavior.assignment.name,
 #function isProductionInstantiatingNode expansion
    #return !expansion.containingProduction.treeNodeBehavior?? ||
            !expansion.containingProduction.treeNodeBehavior.neverInstantiated!true
-/#function
+#end
 
 #function nodeVar isProduction
    #var nodeVarName

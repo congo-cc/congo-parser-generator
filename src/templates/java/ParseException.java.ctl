@@ -88,9 +88,13 @@ public class ParseException extends ${BASE_EXCEPTION_TYPE} {
          }
      }
      String content = token.toString();
-     if (content == null) content = "";
-     if (content.length() > 32) content = content.substring(0, 32) + "...";
-     buf.append("\nFound string \"" + addEscapes(content) + "\" of type " + token.getType());
+     if (content == null || content.length() == 0) {
+        buf.append("\n Found token of type " + token.getType());
+     }
+     else {
+       if (content.length() > 32) content = content.substring(0, 32) + "...";
+       buf.append("\nFound string \"" + addEscapes(content) + "\" of type " + token.getType());
+     }
      return buf.toString();
   }
 

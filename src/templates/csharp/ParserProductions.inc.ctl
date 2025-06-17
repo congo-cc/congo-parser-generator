@@ -53,12 +53,14 @@
     [#-- Generate the method modifiers and header --]
         ${production.leadingComments}
         // ${production.location}
-        ${globals::startProduction()}${globals::translateModifiers(production.accessModifier)} ${globals::translateType(production.returnType)} Parse${production.name}([#if production.parameterList??]${globals::translateParameters(production.parameterList)}[/#if]) {
+        #exec globals::startProduction()
+        ${globals::translateModifiers(production.accessModifier)} ${globals::translateType(production.returnType)} Parse${production.name}([#if production.parameterList??]${globals::translateParameters(production.parameterList)}[/#if]) {
             _currentlyParsedProduction = "${production.name}";
             [#set topLevelExpansion = false]
             ${BuildCode(production)}
         }
-        // end of Parse${production.name}${globals::endProduction()}
+        // end of Parse${production.name}
+        #exec globals::endProduction()
 
 [/#macro]
 
