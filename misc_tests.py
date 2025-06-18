@@ -308,7 +308,7 @@ class BaseTestCase(unittest.TestCase):
     <NamespaceBody (2, 19)-(8, 1)>
       Delimiter: (2, 19) - (2, 19): {
       Delimiter: (8, 1) - (8, 1): }
-  Token: (9, 1) - (8, 2): EOF
+  Token: (9, 1) - (9, 1): EOF
 '''.strip()
         self.assertEqual(out, OUT)
         p = run_command('java CSParse valid.cs', cwd=wd, out=True, check=False)
@@ -330,7 +330,7 @@ class BaseTestCase(unittest.TestCase):
         Delimiter: (6, 15) - (6, 15): {
         Delimiter: (6, 16) - (6, 16): }
       Delimiter: (11, 1) - (11, 1): }
-  Token: (12, 1) - (11, 2): EOF
+  Token: (12, 1) - (12, 1): EOF
 '''.strip()
         self.assertEqual(decode_and_clean(p.stdout), OUT)
 
@@ -359,7 +359,7 @@ class BaseTestCase(unittest.TestCase):
       IGNORED_LINE: (6, 1) - (6, 24): // This is another.
       PPLine: (7, 1) - (7, 7): #endif
       Delimiter: (8, 1) - (8, 1): }
-  Token: (9, 1) - (8, 2): EOF
+  Token: (9, 1) - (9, 1): EOF
 '''.strip()
         self.assertEqual(out, OUT)
         p = run_command('java CSParse invalid1.cs', cwd=wd, out=True, check=False)
