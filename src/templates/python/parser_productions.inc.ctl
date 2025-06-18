@@ -418,7 +418,7 @@ ${injectDeclaration(treeNodeBehavior.nodeName, treeNodeBehavior.assignment.name,
 #function isProductionInstantiatingNode expansion
    #return !expansion.containingProduction.treeNodeBehavior?? ||
            !expansion.containingProduction.treeNodeBehavior.neverInstantiated!true
-#end
+/#function
 
 #function nodeVar isProduction
    #var nodeVarName

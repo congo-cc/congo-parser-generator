@@ -9,6 +9,7 @@ public class PyFormatter extends Node.Visitor {
     private StringBuilder buffer = new StringBuilder();
     private int currentIndentation;
     private final int indentAmount = 4;
+    private int bracketNesting, parenthesesNesting, braceNesting;
     private final String eol = "\n";
     
     public String format(Node node) {
@@ -22,8 +23,24 @@ public class PyFormatter extends Node.Visitor {
         return buffer.toString();
     }
 
+    private boolean lineJoining() {
+        assert bracketNesting >=0;
+        assert parenthesesNesting >=0;
+        assert braceNesting >=0;
+        return bracketNesting>0 || parenthesesNesting>0 || braceNesting>0;
+    }
+
     void visit(PythonToken tok) {
-        if (tok.startsLine()) {
+        switch (tok.getType()) {
+            case LBRACKET -> ++bracketNesting;
+            case RBRACKET -> --bracketNesting;
+            case LPAREN -> ++parenthesesNesting;
+            case RPAREN -> --parenthesesNesting;
+            case LBRACE -> ++braceNesting;
+            case RBRACE -> --braceNesting;
+            default -> {}
+        }
+        if (tok.startsLine() && !lineJoining()) {
             indentLine();
         }
         buffer.append(tok);
@@ -60,10 +77,8 @@ public class PyFormatter extends Node.Visitor {
             buffer.append(eol);
             return;
         } 
-        if (tok.previousCachedToken() instanceof Newline prev) {
-            if (!prev.isUnparsed()) {
-                buffer.append(eol);
-            }
+        if (tok.getPrevious() instanceof Newline) {
+            buffer.append(eol);
         }
     }
 

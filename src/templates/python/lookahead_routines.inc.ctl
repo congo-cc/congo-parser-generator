@@ -109,15 +109,15 @@ ${BuildLookaheadRoutine(lookahead, indent)}
      [/#if]
    [/#list]
    [#list grammar.allLookBehinds as lookBehind]
-${BuildLookBehindRoutine(lookBehind)}
+${BuildLookBehindRoutine(lookBehind, indent)}
    [/#list]
    [#list grammar.parserProductions as production]
 ${BuildProductionLookaheadMethod(production, indent)}
    [/#list]
 [/#macro]
 
-#macro BuildPredicateRoutine expansion
-  #var lookaheadAmount = expansion.lookaheadAmount
+[#macro BuildPredicateRoutine expansion indent]
+  [#var lookaheadAmount = expansion.lookaheadAmount]
   [#if lookaheadAmount = 2147483647][#set lookaheadAmount = "UNLIMITED"][/#if]
     # BuildPredicateRoutine: expansion at ${expansion.location}
     def ${expansion.predicateMethodName}(self):
@@ -125,7 +125,7 @@ ${BuildProductionLookaheadMethod(production, indent)}
         self.current_lookahead_token = self.last_consumed_token
         scan_to_end = False
         try:
-${BuildPredicateCode(expansion)}
+${BuildPredicateCode(expansion, 12)}
       [#if !expansion.hasSeparateSyntacticLookahead && expansion.lookaheadAmount != 0]
 ${BuildScanCode(expansion, 12)}
       [/#if]
@@ -134,10 +134,11 @@ ${BuildScanCode(expansion, 12)}
             self.lookahead_routine_nesting = 0
             self.current_lookahead_token = None
             self.hit_failure = False
-#endmacro
+[/#macro]
 
 [#macro BuildScanRoutine expansion indent]
 [#var is = ""?right_pad(indent)]
+[#-- ${is}# DBG > BuildScanRoutine ${indent} --]
 #if !expansion.singleTokenLookahead || expansion.requiresPredicateMethod
 ${is}# scanahead routine for expansion at:
 ${is}# ${expansion.location}
@@ -153,7 +154,7 @@ ${is}    passed_predicate_threshold = self.remaining_lookahead - ${expansion.loo
   /#if
 ${is}    try:
 ${is}        self.lookahead_routine_nesting += 1
-${BuildPredicateCode(expansion)}
+${BuildPredicateCode(expansion, indent + 8)}
   #if !expansion.hasScanLimit
 ${is}        reached_scan_code = True
   /#if
@@ -171,6 +172,7 @@ ${is}            self.passed_predicate = True
 ${is}    self.passed_predicate = False
 ${is}    return True
 /#if
+[#-- ${is}# DBG < BuildScanRoutine ${indent} --]
 [/#macro]
 
 [#macro BuildAssertionRoutine expansion indent]
@@ -203,31 +205,28 @@ ${is}        self.hit_failure = prev_hit_failure
 [/#macro]
 
 [#-- Build the code for checking semantic lookahead, lookbehind, and/or syntactic lookahead --]
-#macro BuildPredicateCode expansion 
-#explicitdedent:on
+#macro BuildPredicateCode expansion indent
+#var is = ""?right_pad(indent)
+[#-- ${is}# DBG > BuildPredicateCode ${indent} --]
 #if expansion.hasSemanticLookahead && (expansion.lookahead.semanticLookaheadNested || expansion.containingProduction.onlyForLookahead)
-if not (${globals::translateExpression(expansion.semanticLookahead)}):
-    return False
-<-    
-#endif
+${is}if not (${globals::translateExpression(expansion.semanticLookahead)}):
+${is}    return False
+/#if
 #if expansion.hasLookBehind
-if [#if !expansion.lookBehind.negated]not [/#if]self.${expansion.lookBehind.routineName}():
-    return False
-<-    
-#endif
+${is}if [#if !expansion.lookBehind.negated]not [/#if]self.${expansion.lookBehind.routineName}():
+${is}    return False
+/#if
 #if expansion.hasSeparateSyntacticLookahead
-if self.remaining_lookahead <= 0:
-    self.passed_predicate = True
-    return not self.hit_failure
-  <-
-if ${!expansion.lookahead.negated ?: "not"} self.${expansion.lookaheadExpansion.scanRoutineName}(True):
-    return False
-  <-
-#endif
+${is}if self.remaining_lookahead <= 0:
+${is}    self.passed_predicate = True
+${is}    return not self.hit_failure
+${is}if [#if !expansion.lookahead.negated]not [/#if]self.${expansion.lookaheadExpansion.scanRoutineName}(True):
+${is}    return False
+/#if
 #if expansion.lookaheadAmount == 0
-self.passed_predicate = True
-#endif
-#explicitdedent:off
+${is}self.passed_predicate = True
+/#if
+[#-- ${is}# DBG < BuildPredicateCode ${indent} --]
 /#macro
 
 
@@ -258,61 +257,55 @@ ${is}        self.hit_failure = prev_hit_failure
 [#-- ${is}# DBG < BuildLookaheadRoutine ${indent} --]
 [/#macro]
 
-#macro BuildLookBehindRoutine lookBehind
- # explicitdedent:on 
-# Look behind
-  def ${lookBehind.routineName}(self):
-    stack_iterator = self.${lookBehind.backward?string("stack_iterator_backward", "stack_iterator_forward")}()
- #list lookBehind.path as element
-  #var elementNegated = (element[0] == "~")
+[#macro BuildLookBehindRoutine lookBehind indent]
+[#var is = ""?right_pad(indent)]
+[#-- ${is}# DBG > BuildLookBehindRoutine ${indent} --]
+${is}# Look behind
+${is}def ${lookBehind.routineName}(self):
+${is}    stack_iterator = self.${lookBehind.backward?string("stack_iterator_backward", "stack_iterator_forward")}()
+[#list lookBehind.path as element]
+  [#var elementNegated = (element[0] == "~")]
   [#if elementNegated][#set element = element?substring(1)][/#if]
-  #if element = "."
-    if not stack_iterator.has_next:
-        return False
-        <-
-    stack_iterator.next
-  #elif element = "..."
-    #if element_index = lookBehind.path?size - 1
-      #if lookBehind.hasEndingSlash
-    return not stack_iterator.has_next
-      #else
-    return True
-      #endif
-    #else
+  [#if element = "."]
+${is}    if not stack_iterator.has_next:
+${is}        return False
+${is}    stack_iterator.next
+  [#elseif element = "..."]
+    [#if element_index = lookBehind.path?size - 1]
+      [#if lookBehind.hasEndingSlash]
+${is}    return not stack_iterator.has_next
+      [#else]
+${is}    return True
+      [/#if]
+    [#else]
       [#var nextElement = lookBehind.path[element_index + 1]]
       [#var nextElementNegated = (nextElement[0]=="~")]
       [#if nextElementNegated][#set nextElement = nextElement?substring(1)][/#if]
-    while stack_iterator.has_next:
-        ntc = stack_iterator.next
+${is}    while stack_iterator.has_next:
+${is}        ntc = stack_iterator.next
       [#var equalityOp = nextElementNegated?string("!=", "==")]
-        if ntc.production_name ${equalityOp} "${nextElement}":
-            stack_iterator.previous
-            break
-            <-
-        if not stack_iterator.has_next:
-            return False
-            <-
-    #endif
-  #else
-    if not stack_iterator.has_next:
-        return False
-        <-
-    ntc = stack_iterator.next
+${is}        if ntc.production_name ${equalityOp} "${nextElement}":
+${is}            stack_iterator.previous
+${is}            break
+${is}        if not stack_iterator.has_next:
+${is}            return False
+    [/#if]
+  [#else]
+${is}    if not stack_iterator.has_next:
+${is}        return False
+${is}    ntc = stack_iterator.next
      [#var equalityOp = elementNegated?string("==", "!=")]
-    if ntc.production_name ${equalityOp} "${element}":
-        return False
-        <-
-  #endif
-#endlist
-#if lookBehind.hasEndingSlash
-    return not stack_iterator.has_next
-    <-
-#else
-    return True
-    <-
-#endif
- # explicitdedent:restore
-#endmacro
+${is}    if ntc.production_name ${equalityOp} "${element}":
+${is}        return False
+  [/#if]
+[/#list]
+[#if lookBehind.hasEndingSlash]
+${is}    return not stack_iterator.has_next
+[#else]
+${is}    return True
+[/#if]
+[#-- ${is}# DBG < BuildLookBehindRoutine ${indent} --]
+[/#macro]
 
 [#macro BuildProductionLookaheadMethod production indent]
 [#var is = ""?right_pad(indent)]
@@ -332,7 +325,8 @@ ${BuildScanCode(production.expansion, 8)}
    based on the Expansion's class name.
 --]
 [#macro BuildScanCode expansion indent]
-  [#var is = ""?right_pad(indent)]
+[#var is = ""?right_pad(indent)]
+[#-- ${is}# DBG > BuildScanCode ${indent} ${expansion.simpleName} --]
   [#var classname = expansion.simpleName]
   [#if classname != "ExpansionSequence" && classname != "ExpansionWithParentheses"]
 ${is}if self.hit_failure:
@@ -349,33 +343,34 @@ ${is}# at: ${expansion.location}
    [#if classname = "ExpansionWithParentheses"]
       [@BuildScanCode expansion.nestedExpansion, indent /]
    [#elseif expansion.singleTokenLookahead]
-${ScanSingleToken(expansion)}
+${ScanSingleToken(expansion, indent)}
    [#elseif classname = "Assertion" && expansion.appliesInLookahead]
-${ScanCodeAssertion(expansion)}
+${ScanCodeAssertion(expansion, indent)}
    [#elseif classname = "Failure"]
-${ScanCodeError(expansion)}
+${ScanCodeError(expansion, indent)}
    [#elseif classname = "UncacheTokens"]
 ${is}self.uncache_tokens()
    [#elseif classname = "ExpansionSequence"]
 ${ScanCodeSequence(expansion, indent)}
    [#elseif classname = "ZeroOrOne"]
-${ScanCodeZeroOrOne(expansion)}
+${ScanCodeZeroOrOne(expansion, indent)}
    [#elseif classname = "ZeroOrMore"]
-${ScanCodeZeroOrMore(expansion)}
+${ScanCodeZeroOrMore(expansion, indent)}
    [#elseif classname = "OneOrMore"]
 ${ScanCodeOneOrMore(expansion, indent)}
    [#elseif classname = "NonTerminal"]
-      [@ScanCodeNonTerminal expansion /]
+      [@ScanCodeNonTerminal expansion, indent /]
    [#elseif classname = "TryBlock" || classname = "AttemptBlock"]
       [@BuildScanCode expansion.nestedExpansion, indent /]
    [#elseif classname = "ExpansionChoice"]
-${ScanCodeChoice(expansion)}
+${ScanCodeChoice(expansion, indent)}
    [#elseif classname = "CodeBlock"]
       [#if expansion.appliesInLookahead || expansion.insideLookahead || expansion.containingProduction.onlyForLookahead]
 ${globals::translateCodeBlock(expansion, indent)}
       [/#if]
    [/#if]
   [/@CU.HandleLexicalStateChange]
+[#-- ${is}# DBG < BuildScanCode ${indent} ${expansion.simpleName} --]
 [/#macro]
 
 [#--
@@ -390,6 +385,7 @@ ${globals::translateCodeBlock(expansion, indent)}
 --]
 #macro ScanCodeSequence sequence indent
 #var is = ""?right_pad(indent)
+[#-- ${is}# DBG > ScanCodeSequence ${indent} --]
 #list sequence.units as sub
        [@BuildScanCode sub, indent /]
   #if sub.scanLimit
@@ -400,6 +396,7 @@ ${is}    elif len(self.lookahead_stack) == 1:
 ${is}        self.passed_predicate_threshold = self.remaining_lookahead[#if sub.scanLimitPlus > 0] - ${sub.scanLimitPlus}[/#if]
   /#if
 /#list
+[#-- ${is}# DBG < ScanCodeSequence ${indent} --]
 /#macro
 
 [#--
@@ -407,140 +404,134 @@ ${is}        self.passed_predicate_threshold = self.remaining_lookahead[#if sub.
   It (trivially) just delegates to the code for
   checking the production's nested expansion
 --]
-#macro ScanCodeNonTerminal nt
- # explicitdedent:on
- # NonTerminal ${nt.name} at ${nt.location}
-   self.push_onto_lookahead_stack('${nt.containingProduction.name}', '${nt.inputSource?j_string}', ${nt.beginLine}, ${nt.beginColumn})
-   self.current_lookahead_production = '${nt.production.name}'
-   try:
-      if not self.${nt.production.lookaheadMethodName}(${CU.bool(nt.scanToEnd)}):
-        return False
-   <-<-
-   finally:
-       self.pop_lookahead_stack()
-   <-
- # explicitdedent:restore
-#endmacro
+[#macro ScanCodeNonTerminal nt indent]
+[#var is = ""?right_pad(indent)]
+${is}# NonTerminal ${nt.name} at ${nt.location}
+${is}self.push_onto_lookahead_stack('${nt.containingProduction.name}', '${nt.inputSource?j_string}', ${nt.beginLine}, ${nt.beginColumn})
+${is}self.current_lookahead_production = '${nt.production.name}'
+${is}try:
+${is}    if not self.${nt.production.lookaheadMethodName}(${CU.bool(nt.scanToEnd)}):
+${is}        return False
+${is}finally:
+${is}    self.pop_lookahead_stack()
+[/#macro]
 
-#macro ScanSingleToken expansion
-# explicitdedent:on
-  #var firstSet = expansion.firstSet.tokenNames
-  #if firstSet?size = 1
-    #if optimize_scan_token
-       if not self.scan_token_one(${firstSet[0]}):
-    #else
-       if not self.scan_token(${firstSet[0]}):
-    #endif
-          return False
-          <-
+[#macro ScanSingleToken expansion indent]
+[#var is = ""?right_pad(indent)]
+[#var firstSet = expansion.firstSet.tokenNames]
+[#-- ${is}# DBG > ScanSingleToken ${indent} --]
+[#if firstSet?size = 1]
+[#if optimize_scan_token]
+${is}if not self.scan_token_one(${firstSet[0]}):
+[#else]
+${is}if not self.scan_token(${firstSet[0]}):
+[/#if]
+${is}    return False
+[#else]
+[#if optimize_scan_token]
+${is}if not self.scan_token_many(self.${expansion.firstSetVarName}):
+[#else]
+${is}if not self.scan_token(self.${expansion.firstSetVarName}):
+[/#if]
+${is}    return False
+[/#if]
+[#-- ${is}# DBG < ScanSingleToken ${indent} --]
+[/#macro]
+
+[#macro ScanCodeAssertion assertion indent]
+[#var is = ""?right_pad(indent)]
+[#-- ${is}# DBG > ScanCodeAssertion ${indent} --]
+#if assertion.assertionExpression?? 
+${is}if not (${globals::translateExpression(assertion.assertionExpression)}):
+${is}    self.hit_failure = True
+${is}    return False
+#endif
+[#if assertion.expansion??]
+${is}if [#if !assertion.expansionNegated]not [/#if]self.${assertion.expansion.scanRoutineName}():
+${is}    self.hit_failure = True
+${is}    return False
+[/#if]
+[#-- ${is}# DBG < ScanCodeAssertion ${indent} --]
+[/#macro]
+
+[#macro ScanCodeError expansion indent]
+[#var is = ""?right_pad(indent)]
+[#-- ${is}# DBG > ScanCodeError ${indent} --]
+${is}self.hit_failure = True
+${is}return False
+[#-- ${is}# DBG < ScanCodeError ${indent} --]
+[/#macro]
+
+#macro ScanCodeChoice choice indent
+#var is = ""?right_pad(indent)
+[#-- ${is}# DBG > ScanCodeChoice ${indent} --]
+${is}${CU.newVarName("token")} = self.current_lookahead_token
+${is}remaining_lookahead${CU.newVarIndex} = self.remaining_lookahead
+${is}hit_failure${CU.newVarIndex} = self.hit_failure
+${is}passed_predicate${CU.newVarIndex} = self.passed_predicate
+${is}try:
+#list choice.choices as subseq
+${is}    self.passed_predicate = False
+${is}    if not (${CheckExpansion(subseq)}):
+${is}        self.current_lookahead_token = token${CU.newVarIndex}
+${is}        self.remaining_lookahead = remaining_lookahead${CU.newVarIndex}
+${is}        self.hit_failure = hit_failure${CU.newVarIndex}
+  #if !subseq_has_next
+${is}        return False
   #else
-    #if optimize_scan_token
-      if not self.scan_token_many(self.${expansion.firstSetVarName}):
-    #else
-      if not self.scan_token(self.${expansion.firstSetVarName}):
-    #endif
-        return False
-        <-
-  #endif
-# explicitdedent:restore
-#endmacro
+${is}        if self.passed_predicate and not self.legacy_glitchy_lookahead:
+${is}            return False
+  /#if
+[#-- bump up the indentation, as the items in the list are recursive
+     levels
+--]
+  #set is = is + "    "
+/#list
+[#list choice.choices as unused][#set is = is[4..]][/#list]
+${is}finally:
+${is}    self.passed_predicate = passed_predicate${CU.newVarIndex}
+[#-- ${is}# DBG < ScanCodeChoice ${indent} --]
+/#macro
 
-#macro ScanCodeAssertion assertion 
- # explicitdedent:on
-   #if assertion.assertionExpression
-     if not (${globals::translateExpression(assertion.assertionExpression)}):
-       self.hit_failure = True
-       return False
-     <-
-   #endif
-   #if assertion.expansion
-     if ${!assertion.expansionNegated ?: "not"} self.${assertion.expansion.scanRoutineName}():
-        self.hit_failure = True
-        return False
-       <-
-   #endif
- # explicitdedent:restore
-#endmacro
-
-#macro ScanCodeError expansion
-  # explicitdedent:on
-   self.hit_failure = True
-   return False
-  # explicitdedent:restore   
-#endmacro
-
-#macro ScanCodeChoice choice 
-  # explicitdedent:on
-   ${CU.newVarName("token")} = self.current_lookahead_token
-   remaining_lookahead${CU.newVarIndex} = self.remaining_lookahead
-   hit_failure${CU.newVarIndex} = self.hit_failure
-   passed_predicate${CU.newVarIndex} = self.passed_predicate
-   try:
-  #list choice.choices as subseq
-           self.passed_predicate = False
-           if not (${CheckExpansion(subseq)}):
-               self.current_lookahead_token = token${CU.newVarIndex}
-               self.remaining_lookahead = remaining_lookahead${CU.newVarIndex}
-               self.hit_failure = hit_failure${CU.newVarIndex}
-    #if !subseq_has_next
-               return False
-               <-
-    #else
-               if self.passed_predicate and not self.legacy_glitchy_lookahead:
-               return False
-               <-
-    #endif
-  #endlist
-  [#list choice.choices as unused]<-[/#list]
-   finally:
-      self.passed_predicate = passed_predicate${CU.newVarIndex}
-   <-
- # explicitdedent:restore   
-#endmacro
-
-#macro ScanCodeZeroOrOne zoo 
-# explicitdedent:on
-${CU.newVarName("token")} = self.current_lookahead_token
-passed_predicate${CU.newVarIndex} = self.passed_predicate
-self.passed_predicate = False
-try:
-    if not (${CheckExpansion(zoo.nestedExpansion)}):
-         if self.passed_predicate and not self.legacy_glitchy_lookahead:
-            return False
-<-            
-        self.current_lookahead_token = token${CU.newVarIndex}
-        self.hit_failure = False
-<-<-        
-finally:
-    self.passed_predicate = passed_predicate${CU.newVarIndex}
-<-    
-# explicitdedent:restore
-#endmacro
+#macro ScanCodeZeroOrOne zoo indent
+#var is = ""?right_pad(indent)
+[#-- ${is}# DBG > ScanCodeZeroOrOne ${indent} --]
+${is}${CU.newVarName("token")} = self.current_lookahead_token
+${is}passed_predicate${CU.newVarIndex} = self.passed_predicate
+${is}self.passed_predicate = False
+${is}try:
+${is}    if not (${CheckExpansion(zoo.nestedExpansion)}):
+${is}        if self.passed_predicate and not self.legacy_glitchy_lookahead:
+${is}            return False
+${is}        self.current_lookahead_token = token${CU.newVarIndex}
+${is}        self.hit_failure = False
+${is}finally:
+${is}    self.passed_predicate = passed_predicate${CU.newVarIndex}
+[#-- ${is}# DBG < ScanCodeZeroOrOne ${indent} --]
+/#macro
 
 [#--
   Generates lookahead code for a ZeroOrMore construct]
 --]
-#macro ScanCodeZeroOrMore zom 
-# explicitdedent:on
+#macro ScanCodeZeroOrMore zom indent
+#var is = ""?right_pad(indent)
 #var prevPassedPredicateVarName = CU.newVarName("passed_predicate")
 #var prevTokenName = CU.newVarName("token")
-${prevPassedPredicateVarName} = self.passed_predicate
-try:
-    while self.remaining_lookahead > 0 and not self.hit_failure:
-        ${prevTokenName} = self.current_lookahead_token
-        self.passed_predicate = False
-        if not (${CheckExpansion(zom.nestedExpansion)}):
-            if self.passed_predicate and not self.legacy_glitchy_lookahead:
-                return False
-<-                
-            self.current_lookahead_token = ${prevTokenName}
-            break
-<-<-<-            
-finally:
-    self.passed_predicate = ${prevPassedPredicateVarName}
-<-    
-self.hit_failure = False
-# explicitdedent:restore
+${is}${prevPassedPredicateVarName} = self.passed_predicate
+${is}try:
+[#-- ${is}# DBG > ScanCodeZeroOrMore ${indent} --]
+${is}    while self.remaining_lookahead > 0 and not self.hit_failure:
+${is}        ${prevTokenName} = self.current_lookahead_token
+${is}        self.passed_predicate = False
+${is}        if not (${CheckExpansion(zom.nestedExpansion)}):
+${is}            if self.passed_predicate and not self.legacy_glitchy_lookahead:
+${is}                return False
+${is}            self.current_lookahead_token = ${prevTokenName}
+${is}            break
+${is}finally:
+${is}    self.passed_predicate = ${prevPassedPredicateVarName}
+${is}self.hit_failure = False
+[#-- ${is}# DBG < ScanCodeZeroOrMore ${indent} --]
 /#macro
 
 [#--
@@ -548,31 +539,35 @@ self.hit_failure = False
    It generates the code for checking a single occurrence
    and then the same code as a ZeroOrMore
 --]
-
 [#macro ScanCodeOneOrMore oom indent]
+[#var is = ""?right_pad(indent)]
+[#-- ${is}# DBG > ScanCodeOneOrMore ${indent} --]
+[#--${is}if not (${CheckExpansion(oom.nestedExpansion)}):
+${is}    return False--]
 [@BuildScanCode oom.nestedExpansion, indent /]
-[@ScanCodeZeroOrMore oom /]
+[@ScanCodeZeroOrMore oom, indent /]
+[#-- ${is}# DBG < ScanCodeOneOrMore ${indent} --]
 [/#macro]
 
 
 #macro CheckExpansion expansion
-  #if expansion.singleTokenLookahead
-    #if expansion.firstSet.tokenNames?size = 1
-      #if optimize_scan_token
+#if expansion.singleTokenLookahead
+  #if expansion.firstSet.tokenNames?size = 1
+    #if optimize_scan_token
       self.scan_token_one(${expansion.firstSet.tokenNames[0]})[#t]
-      #else
-      self.scan_token(${expansion.firstSet.tokenNames[0]})[#t]
-      #endif
     #else
-      #if optimize_scan_token
-        self.scan_token_many(self.${expansion.firstSetVarName})[#t]
-      #else
-        self.scan_token(self.${expansion.firstSetVarName})[#t]
-      #endif
-    #endif
+      self.scan_token(${expansion.firstSet.tokenNames[0]})[#t]
+    /#if
   #else
+    #if optimize_scan_token
+      self.scan_token_many(self.${expansion.firstSetVarName})[#t]
+    #else
+      self.scan_token(self.${expansion.firstSetVarName})[#t]
+    /#if
+  /#if
+#else
       self.${expansion.scanRoutineName}(False)[#t]
-  #endif
-#endmacro
+/#if
+/#macro
 
 

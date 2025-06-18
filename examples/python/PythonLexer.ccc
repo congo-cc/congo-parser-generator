@@ -90,7 +90,7 @@ INJECT LEXER_CLASS :
       else if (useImplicitIndent && tok.getType().isEOF()) {
          BASE_TOKEN_CLASS t = tok;
          for (int i = 1; i< indentationStack.size();i++) {
-            t = Indentation.makeDedentToken(tok,this,indentationStack);
+            t = DedentToken.makeDedentToken(tok,this,indentationStack);
          }
          tok = t;
       }
@@ -138,7 +138,7 @@ INJECT LEXER_CLASS :
       } else {
          indentationStack.add(indentationStack.get(indentationStack.size()-1) + 4);
       }
-      return Indentation.makeIndentToken(tok, this, indentationStack);
+      return IndentToken.makeIndentToken(tok, this, indentationStack);
    }
 
    private BASE_TOKEN_CLASS handleDedent(BASE_TOKEN_CLASS tok, int offset) {
@@ -153,7 +153,7 @@ INJECT LEXER_CLASS :
        for (int i=indentationStack.size()-1; i>dedentIndex; i--) {
           int dedentAmount = indentationStack.get(i) - indentationStack.get(i-1);
           indentationStack.remove(i);
-          BASE_TOKEN_CLASS dedent = Indentation.makeDedentToken(tok, this, indentationStack);
+          BASE_TOKEN_CLASS dedent = DedentToken.makeDedentToken(tok, this, indentationStack);
           if (firstDedent == null) firstDedent = dedent;
        }
        return firstDedent;

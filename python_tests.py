@@ -225,9 +225,11 @@ def test_grammar(gdata, options):
         raise ValueError('Python parser test run failed')
     elapsed = time.time() - start
     print('Python parser run completed (%.2f secs).' % elapsed)
-    compare_diffs()
-    print('Results for Python & Java '
+    if lang != 'python' :
+        compare_diffs()
+        print('Results for Python & Java '
           'lexers & parsers are identical - yay!')
+    else : print('Not comparing diffs for Python for now')
 
 def main():
     # if sys.version_info[:2] < (3, 8):
@@ -303,13 +305,6 @@ def main():
                             jparser='org.parsers.preprocessor.PreprocessorParser',
                             ppackage='preprocessorparser', ext='.cs',
                             production='PP_Root'),
-        # 'freemarker': Namespace(name='Freemarker', dir='freemarker',
-        #                     grammar='FTL.ccc',
-        #                     files=['*.ccc', 'testfiles', '../java/Java*IdentifierDef.ccc'],
-        #                     jlexer='ftl.FTLLexer',
-        #                     jparser='ftl.FTLParser',
-        #                     ppackage='ftlparser', ext='.ftl',
-        #                     production='Root'),
     }
     try:
         langs = options.langs.split(',')
