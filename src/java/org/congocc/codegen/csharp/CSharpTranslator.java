@@ -51,6 +51,9 @@ public class CSharpTranslator extends Translator {
         else if (ident.equals("currentNodeScope")) {
             result = "CurrentNodeScope";
         }
+        else if (ident.equals("activeTokenTypes")) {
+            result = "ActiveTokenTypes";
+        }
         else if (ident.equals("addAll")) {
             result = "AddRange";
         }

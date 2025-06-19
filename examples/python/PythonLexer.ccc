@@ -100,7 +100,7 @@ INJECT LEXER_CLASS :
       else if (useImplicitIndent && tok.getType().isEOF()) {
          BASE_TOKEN_CLASS t = tok;
          for (int i = 1; i< indentationStack.size();i++) {
-            t = DedentToken.makeDedentToken(tok,this,indentationStack);
+            t = makeDedentToken(tok,this,indentationStack);
          }
          tok = t;
       }
@@ -129,6 +129,20 @@ INJECT LEXER_CLASS :
       return tok;
    }
 
+   private BASE_TOKEN_CLASS makeIndentToken(BASE_TOKEN_CLASS followingToken, LEXER_CLASS tokenSource, List<Integer> indents) {
+      IndentToken result = new IndentToken(TokenType.INDENT, tokenSource, followingToken.getBeginOffset(), followingToken.getEndOffset());
+      result.setIndents(indents);
+      followingToken.preInsert(result);
+      return result;
+   }
+
+   public static BASE_TOKEN_CLASS makeDedentToken(BASE_TOKEN_CLASS followingToken, LEXER_CLASS tokenSource, List<Integer> indents) {
+      DedentToken result = new DedentToken(TokenType.DEDENT, tokenSource, followingToken.getBeginOffset(), followingToken.getBeginOffset());
+      result.setIndents(indents);
+      followingToken.preInsert(result);
+      return result;
+   }
+
    private boolean expectingIndent(BASE_TOKEN_CLASS tok) {
       BASE_TOKEN_CLASS prev = tok.getPrevious();
       if (prev != null) {
@@ -148,7 +162,7 @@ INJECT LEXER_CLASS :
       } else {
          indentationStack.add(indentationStack.get(indentationStack.size()-1) + 4);
       }
-      return IndentToken.makeIndentToken(tok, this, indentationStack);
+      return makeIndentToken(tok, this, indentationStack);
    }
 
    private BASE_TOKEN_CLASS handleDedent(BASE_TOKEN_CLASS tok, int offset) {
@@ -163,7 +177,7 @@ INJECT LEXER_CLASS :
        for (int i=indentationStack.size()-1; i>dedentIndex; i--) {
           int dedentAmount = indentationStack.get(i) - indentationStack.get(i-1);
           indentationStack.remove(i);
-          BASE_TOKEN_CLASS dedent = DedentToken.makeDedentToken(tok, this, indentationStack);
+          BASE_TOKEN_CLASS dedent = makeDedentToken(tok, this, indentationStack);
           if (firstDedent == null) firstDedent = dedent;
        }
        return firstDedent;
@@ -228,29 +242,11 @@ INJECT Indentation :
    public List<Integer> getIndents() { return new ArrayList<Integer>(indents);}
    public void setIndents(List<Integer> indents) {this.indents = new ArrayList<>(indents);}
 
-   private boolean explicit;
-
-   public boolean isExplicit() {
-      return !explicit;
+     
+   public boolean isVirtual() {
+      return length() == 0;
    }
 
-   public void setExplicit(boolean b) {
-      this.explicit = b;
-   }
-
-   public static BASE_TOKEN_CLASS makeIndentToken(BASE_TOKEN_CLASS followingToken, LEXER_CLASS tokenSource, List<Integer> indents) {
-      IndentToken result = new IndentToken(TokenType.INDENT, tokenSource, 0, 0);
-      result.indents = new ArrayList<Integer>(indents);
-      followingToken.preInsert(result);
-      return result;
-   }
-
-   public static BASE_TOKEN_CLASS makeDedentToken(BASE_TOKEN_CLASS followingToken, LEXER_CLASS tokenSource, List<Integer> indents) {
-      DedentToken result = new DedentToken(TokenType.DEDENT, tokenSource, 0, 0);
-      result.indents = new ArrayList<Integer>(indents);
-      followingToken.preInsert(result);
-      return result;
-   }
 }
 
 INJECT IndentToken: extends Indentation 
@@ -269,9 +265,7 @@ TOKEN :
 
 
 TOKEN #Indentation : 
-   <DEDENT : "<-"> #DedentToken {
-      ((Indentation)matchedToken).setExplicit(true);
-   }
+   <DEDENT : "<-"> #DedentToken 
 ;
 
 TOKEN #Delimiter :
