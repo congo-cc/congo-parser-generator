@@ -328,30 +328,6 @@ INJECT ReturnInstruction :
     }
 }
 
-StopInstruction# :
-   <STOP> [Expression] LooseDirectiveEnd
-;
-
-INJECT StopInstruction :
-   import org.congocc.templates.core.Environment;
-   import org.congocc.templates.core.AssertionFailedException;
-   implements TemplateElement
-{
-   public String getMessage(Environment env) {
-      return get(1) instanceof Expression exp ? 
-             exp.getStringValue(env) 
-             : "";
-   }
-
-    public void execute(Environment env) {
-        throw new AssertionFailedException(env, getMessage(env));
-    }
-
-    public String getDescription() {
-        return "stop" + " [" + getLocation() + "]";
-    }
-}
-
 NestedInstruction# :
     <NESTED>
     [PositionalArgsList]
@@ -1157,8 +1133,6 @@ TemplateElement#interface :
    ReturnInstruction
    |
    ExecInstruction
-   |
-   StopInstruction
    |
    AssertionInstruction
    |
