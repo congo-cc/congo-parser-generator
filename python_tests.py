@@ -229,7 +229,7 @@ def test_grammar(gdata, options):
         compare_diffs()
         print('Results for Python & Java '
           'lexers & parsers are identical - yay!')
-    else : print('Not comparing diffs for Python for now')
+    else : print('Not comparing diffs for for now')
 
 def main():
     # if sys.version_info[:2] < (3, 8):

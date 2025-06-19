@@ -14,7 +14,6 @@ public class PyFormatter extends Node.Visitor {
     
     public String format(Node node) {
         visit(node);
-        buffer.append("\n# Output by PyFormatter class\n");
         return getText();
     }
 

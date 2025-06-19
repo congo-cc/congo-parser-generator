@@ -25,6 +25,11 @@ public class CSharpFormatter extends Node.Visitor {
     private final int indentAmount = 4;
     private final String eol = "\n";
 
+    public String format(Node node) {
+        visit(node);
+        return getText();
+    }
+
     public String getText() {
         if (buffer.charAt(buffer.length()-1) != '\n') buffer.append('\n');
         return buffer.toString();

@@ -263,6 +263,7 @@ public class FilesGenerator {
             // }
             String s = new PyFormatter().format(module);
             output.write(s);
+            output.write("\n# Output by PyFormatter class\n");
         }
     }
 
@@ -286,13 +287,13 @@ public class FilesGenerator {
                 reaper.reap();
             }
             CSharpFormatter formatter = new CSharpFormatter();
-            formatter.visit(cscu);
-            String s = formatter.getText();
+            String s = formatter.format(cscu);
             int finalLines = countChars(s, '\n');
             if (initialLines != finalLines) {
                 logger.fine(String.format("Line count went from %d to %d", initialLines, finalLines));
             }
             output.write(s);
+            output.write("\n//Output by CSharpFormatter class\n");
         }
     }
 
