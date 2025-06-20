@@ -4,6 +4,8 @@ import org.congocc.parser.Node;
 import org.congocc.parser.ParseException;
 import static org.congocc.parser.Token.TokenType.UNPARSED_CONTENT;
 
+import javax.net.ssl.CertPathTrustManagerParameters;
+
 import org.congocc.parser.CongoCCParser;
 import org.congocc.parser.csharp.CSParser;
 import org.congocc.parser.python.PythonParser;
@@ -44,6 +46,20 @@ public class RawCode extends EmptyExpansion {
                         contentType = ContentType.JAVA_BLOCK;
                     }
                 }
+                case "csharp" -> {
+                    if (getParent() instanceof Assertion || getParent() instanceof Lookahead) {
+                        contentType = ContentType.CSHARP_EXPRESSION;
+                    } else {
+                        contentType = ContentType.CSHARP_BLOCK;
+                    }
+                }
+                case "python" -> {
+                    if (getParent() instanceof Assertion || getParent() instanceof Lookahead) {
+                        contentType = ContentType.PYTHON_EXPRESSION;
+                    } else {
+                        contentType = ContentType.PYTHON_BLOCK;
+                    }
+                }
             }
         }
         return contentType;
@@ -58,7 +74,10 @@ public class RawCode extends EmptyExpansion {
             this.parsedContent = switch(contentType) {
                 case JAVA_BLOCK -> parseJavaBlock();
                 case JAVA_EXPRESSION -> parseJavaExpression();
-                default -> this;
+                case CSHARP_BLOCK -> parseCSharpBlock();
+                case CSHARP_EXPRESSION -> parseCSharpExpression();
+                case PYTHON_BLOCK -> parsePythonBlock();
+                case PYTHON_EXPRESSION -> parsePythonExpression();
             };
         } catch(ParseException pe) {
             this.parseException = pe;
@@ -91,7 +110,6 @@ public class RawCode extends EmptyExpansion {
     Node parseJavaBlock() {
         String content = getSource();
         content = content.substring(1,content.length()-1);
-        System.err.println(content);
         CongoCCParser cccParser = new CongoCCParser(getInputSource(), content);
         cccParser.setStartingPos(getBeginLine(), getBeginColumn()+1);
         cccParser.Block();
@@ -105,16 +123,11 @@ public class RawCode extends EmptyExpansion {
         cccParser.setStartingPos(getBeginLine(), getBeginColumn()+2);
         return cccParser.Expression();
     }
-
-    Node parsePythonExpression() {
-        PythonParser pyParser = new PythonParser(getInputSource(), getContent());
-        pyParser.setStartingPos(getBeginLine(), getBeginColumn() + 2);
-        pyParser.Expression();
-        return pyParser.peekNode();
-    }
-
+    
     Node parseCSharpBlock() {
-        CSParser csParser = new CSParser(getInputSource(), getContent());
+        String content = getSource();
+        content = content.substring(1,content.length()-1);
+        CSParser csParser = new CSParser(getInputSource(), content);
         csParser.setStartingPos(getBeginLine(), getBeginColumn()+2);
         try {
            return csParser.InjectionBody();
@@ -123,4 +136,33 @@ public class RawCode extends EmptyExpansion {
         }
         return null;
     }
+
+    Node parseCSharpExpression() {
+        String content = getSource();
+        content = content.substring(2, content.length()-2);
+        CSParser csParser = new CSParser(getInputSource(), content);
+        csParser.setStartingPos(getBeginLine(), getBeginColumn() + 2);
+        csParser.Expression();
+        return csParser.peekNode();
+    }
+
+    Node parsePythonBlock() {
+        String content = getSource();
+        content = content.substring(2,content.length()-2);
+        CongoCCParser cccParser = new CongoCCParser(getInputSource(), content);
+        cccParser.setStartingPos(getBeginLine(), getBeginColumn()+1);
+        cccParser.Block();
+        return cccParser.rootNode();
+    }
+
+    Node parsePythonExpression() {
+        String content = getSource();
+        content = content.substring(2, content.length()-2);
+        PythonParser pyParser = new PythonParser(getInputSource(), content);
+        pyParser.setLineJoining(true);
+        pyParser.setStartingPos(getBeginLine(), getBeginColumn() + 2);
+        pyParser.Expression();
+        return pyParser.peekNode();
+    }
+
 }

@@ -24,13 +24,17 @@ INJECT LEXER_CLASS :
    private Indentation danglingIndentation;
    private int bracketNesting, parenthesesNesting, braceNesting;
    private List<Integer> indentationStack = initIndentationStack();
-   private boolean useImplicitIndent;
+   private boolean useImplicitIndent, lineJoiningTurnedOn;
    private List<Boolean> explicitDedentStack = new ArrayList<>();
 
    private static List<Integer> initIndentationStack() {
       List<Integer> result = new ArrayList<Integer>();
       result.add(1);
       return result;
+   }
+
+   void setLineJoining(boolean b) {
+      lineJoiningTurnedOn = b;
    }
 
    private BASE_TOKEN_CLASS TOKEN_HOOK(BASE_TOKEN_CLASS tok) {
@@ -75,7 +79,7 @@ INJECT LEXER_CLASS :
    }
 
    private BASE_TOKEN_CLASS TOKEN_HOOK(BASE_TOKEN_CLASS tok) {
-      boolean lineJoiningOn = bracketNesting > 0 || parenthesesNesting > 0 || braceNesting > 0 || this.lexicalState != LexicalState.PYTHON;
+      boolean lineJoiningOn = lineJoiningTurnedOn || bracketNesting > 0 || parenthesesNesting > 0 || braceNesting > 0 || this.lexicalState != LexicalState.PYTHON;
       TokenType type = tok.getType();
       switch (type) {
          case LBRACE : braceNesting++; break;
@@ -213,6 +217,14 @@ INJECT LEXER_CLASS :
       }
    }
 }
+
+#if __java__
+INJECT PARSER_CLASS : {
+   public void setLineJoining(boolean b) {
+      token_source.setLineJoining(b);
+   }
+}
+#endif
 
 INJECT BASE_TOKEN_CLASS : {
    public java.util.List<Integer> getIndents() {

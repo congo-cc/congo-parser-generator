@@ -1,4 +1,4 @@
-ENSURE_FINAL_EOL;
+RawCode;
 JAVA_UNICODE_ESCAPE;
 PARSER_PACKAGE=org.congocc.parser;
 NODE_PACKAGE=org.congocc.parser.tree;
@@ -950,6 +950,7 @@ ExpansionSequence #org.congocc.core.ExpansionSequence :
 
 INJECT Assertion :
    import org.congocc.core.Expansion;
+   import org.congocc.core.RawCode;
    extends org.congocc.core.EmptyExpansion
 {
     @Property Expansion expansion;
@@ -981,9 +982,13 @@ Assertion :
       "ENSURE" ["ASSERT" {assertKeywordPresent = true;}]
    )
    (
+    (
     "{"
        @assertionExpression := Expression
     "}"
+     |
+     @assertionExpressionRawCode := RawCode
+    )
     [ SCAN {assertKeywordPresent} => @semanticLookaheadNested :=? "#" ]
     |
     [ @expansionNegated :=? "~" ]

@@ -655,13 +655,19 @@ ${globals::translateCodeBlock(fail.code, indent)}[#rt]
 [#macro BuildAssertionCode assertion indent]
 [#var is = ""?right_pad(indent)]
 [#var optionalPart = ""]
-[#if assertion.messageExpression??]
-  [#set optionalPart = " + " + globals::translateExpression(assertion.messageExpression)]
+[#if assertion.messageExpression]
+  #if assertion.assertionExpression
+   #set optionalPart = " + " + globals::translateExpression(assertion.messageExpression)
+  #else
+   #set optionalPart = " + " + assertion.messageExpression
+  #endif
 [/#if]
 [#var assertionMessage = "Assertion at: " + assertion.location?j_string + " failed."]
-[#if assertion.assertionExpression??]
+[#if assertion.assertionExpression]
 ${is}if not (${globals::translateExpression(assertion.assertionExpression)}):
 ${is}    self.fail("${assertionMessage}"${optionalPart})
+#elif assertion.assertionExpressionRawCode
+${is}if not (${assertionExpressionRawCode.parsedContent})
 [/#if]
 [#if assertion.expansion??]
 ${is}if [#if !assertion.expansionNegated]not [/#if]self.${assertion.expansion.scanRoutineName}():

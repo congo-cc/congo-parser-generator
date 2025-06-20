@@ -686,12 +686,12 @@
       #set optionalPart = " + " + assertion.messageExpression
    #endif
    #var assertionMessage = "Assertion at: " + assertion.location?j_string + " failed. "
-   #if assertion.assertionExpression??
+   #if assertion.assertionExpression
       if (!(${assertion.assertionExpression})) {
          fail("${assertionMessage}"${optionalPart}, getToken(1));
       }
    #endif
-   #if assertion.expansion??
+   #if assertion.expansion
       if ( [#if !assertion.expansionNegated]![/#if]
       ${assertion.expansion.scanRoutineName}()) {
          fail("${assertionMessage}"${optionalPart}, getToken(1));
