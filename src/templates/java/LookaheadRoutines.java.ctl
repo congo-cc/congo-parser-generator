@@ -217,9 +217,9 @@
   // scanahead routine for assertion at:
   // ${expansion.parent.location}
   // BuildAssertionRoutine macro
+  #set newVarIndex = 0 in CU
   #var storeCurrentLookaheadVar = CU.newVarName("currentLookahead"),
         storeRemainingLookahead = CU.newVarName("remainingLookahead")
-  #set newVarIndex = 0 in CU
     private boolean ${expansion.scanRoutineName}() {
        final boolean scanToEnd = true;
        int ${storeRemainingLookahead} = remainingLookahead;

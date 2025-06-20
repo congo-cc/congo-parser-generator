@@ -1,0 +1,38 @@
+PARSER_PACKAGE=org.parsers.cpp.CPP14Parser;
+TAB_SIZE=4;
+ENSURE_FINAL_EOL;
+SMART_NODE_CREATION=false;
+TREE_BUILDING_ENABLED=true;
+TERMINATING_STRING="";
+//#define FT
+#if FT
+FAULT_TOLERANT;
+FAULT_TOLERANT_DEFAULT=true;
+#endif
+
+TOKEN : 
+    <SINGLE_LINE_COMMENT : ("//"|"#") (~["\n","\r"])* >
+    |
+    <?MULTI_LINE_COMMENT : "/*" (~[])* "*/" >
+;
+
+TOKEN :
+    <_WHITESPACE : 
+        ( 
+            [
+             " ", "\t", "\f",
+             "\u000b", "\u00a0", "\u1680",
+             "\u2000"-"\u200a",
+             "\u202f", "\u205f", "\u3000","\uC2A0"
+            ]
+        )+ 
+    >
+;
+
+TOKEN : <EOL: "\n" | "\r\n" | "\r" >;
+
+#CppGrammar :
+    translationunit {return CURRENT_NODE;}
+;
+
+INCLUDE "grammar/generated/CPP14.ccc";
