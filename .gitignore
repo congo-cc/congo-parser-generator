@@ -41,9 +41,15 @@ __pycache__/*
 /examples/lua/org/*
 /examples/lua/luaparser/*
 /examples/lua/cs-luaparser/*
+/examples/cardinality/org/*
+/examples/cics/org/*
 /personal.code-workspace
 /.vscode/*
 /.idea/*
+.DS_Store
+.java-version
+.project
+.classpath
 
 # Compiled class file
 *.class
