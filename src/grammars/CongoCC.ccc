@@ -113,13 +113,7 @@ INJECT PARSER_CLASS :
     }
 }
 
-<IN_UNPARSED_CODE_BLOCK> TOKEN :
-  <UNPARSED_CONTENT : (~["$"] | (("$")+ ~["}"]))+ > #UnparsedContent
-  |
-  <END_UNPARSED : "$}" >
-;
-
-UnparsedCodeBlock #org.congocc.core.UnparsedCodeBlock :
+RawCode #org.congocc.core.RawCode :
    <START_UNPARSED>
    LEXICAL_STATE IN_UNPARSED_CODE_BLOCK
    (
@@ -1005,33 +999,6 @@ Assertion :
    [UpToHere(CURRENT_NODE)]
 ;
 
-Ensure :
-   "ENSURE"
-   (
-     "{" Expression "}" 
-     |
-     ["~"] "(" ExpansionChoice ")"
-   )
-   [UpToHere(CURRENT_NODE)]
-;
-
-INJECT Ensure :
-   import org.congocc.core.*;
-   extends EmptyExpansion
-{
-    public boolean isNegated() {
-        return firstChildOfType(TILDE) != null;
-    }
-
-    public Expansion getExpansion() {
-        return firstChildOfType(Expansion.class);
-    }
-
-    public Expression getExpression() {
-        return firstChildOfType(Expression.class);
-    }
-}
-
 Lookahead# :
 {
    Token amountToken=null;
@@ -1051,6 +1018,8 @@ Lookahead# :
     exp=Expression {hasSemanticLookahead = true; CURRENT_NODE.setSemanticLookahead(exp);}
     "}"
     ["#" {CURRENT_NODE.setSemanticLookaheadNested(true);}]
+    |
+    RawCode 
 ]
 [LookBehind =>|| {lb = peekNode();}]
 [
@@ -1239,7 +1208,7 @@ ExpansionUnit #void :
     }
   ]
   |
-  UnparsedCodeBlock // Currently unused
+  RawCode
   |
   SCAN 1 ~\...\Lookahead => AttemptBlock
   |

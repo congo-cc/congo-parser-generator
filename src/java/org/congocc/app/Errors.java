@@ -4,7 +4,6 @@ import java.util.*;
 import org.congocc.parser.Node;
 
 public class Errors {
-	private int parseErrorCount;
     private int warningCount;
 
     private final List<String> errorMessages = new ArrayList<>();
@@ -17,13 +16,6 @@ public class Errors {
 	 */
 	public int getWarningCount() {
 		return warningCount;
-	}
-
-	/**
-	 * @return the parse error count during grammar parsing.
-	 */
-	public int getParseErrorCount() {
-		return parseErrorCount;
 	}
 
     public void addError(String errorMessage) {

@@ -79,9 +79,6 @@ public class FilesGenerator {
     }
 
     public void generateAll() throws IOException {
-        if (errors.getErrorCount() != 0) {
-            throw new ParseException();
-        }
         initializeTemplateEngine();
         switch (codeLang) {
             case "java" -> {

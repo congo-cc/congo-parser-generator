@@ -308,7 +308,12 @@ public final class Main {
             outputErrors(grammar, quiet);
             return 1;
         }
+        grammar.checkUnparsedContent();
         grammar.reportDeadCode();
+        if (errors.getErrorCount() != 0) {
+            outputErrors(grammar, quiet);
+            return (errors.getErrorCount() == 0) ? 0 : 1;
+        }        
         grammar.generateFiles();
         if (errors.getWarningCount() == 0 && !quiet) {
             System.out.println("Parser generated successfully.");

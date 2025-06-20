@@ -36,17 +36,17 @@ INJECT LEXER_CLASS :
    private BASE_TOKEN_CLASS TOKEN_HOOK(BASE_TOKEN_CLASS tok) {
       if (tok.getType() == COMMENT) {
          String s = tok.toString().substring(1).trim();
-         if (s.equalsIgnoreCase("explicitdedent:on")) {
+         if (s.toLowerCase().equals("explicitdedent:on")) {
             explicitDedentStack.add(useImplicitIndent);
             this.useImplicitIndent = true;
             activeTokenTypes.add(TokenType.DEDENT);
             //setUseImplicitIndent(true);
-         } else if (s.equalsIgnoreCase("explicitdedent:off")) {
+         } else if (s.toLowerCase().equals("explicitdedent:off")) {
             explicitDedentStack.add(useImplicitIndent);
             useImplicitIndent = false;
             activeTokenTypes.remove(TokenType.DEDENT);
             //setUseImplicitIndent(false);
-         } else if (s.equalsIgnoreCase("explicitdedent:restore")) {
+         } else if (s.toLowerCase().equals("explicitdedent:restore")) {
              useImplicitIndent = explicitDedentStack.remove(explicitDedentStack.size()-1);
              if (useImplicitIndent) {
                activeTokenTypes.add(TokenType.DEDENT);
@@ -110,7 +110,7 @@ INJECT LEXER_CLASS :
       return tok;
    }
 
-    void setUseImplicitIndent(boolean b) {
+    void useImplicitIndent(boolean b) {
       this.useImplicitIndent = b;
       if (b) activeTokenTypes.add(TokenType.DEDENT);
       else activeTokenTypes.remove(TokenType.DEDENT);

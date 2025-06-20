@@ -284,13 +284,6 @@ def main():
                             jparser='org.parsers.csharp.CSharpParser',
                             ppackage='csharpparser', ext='.cs',
                             production='CompilationUnit'),
-        'python': Namespace(name='Python', dir='python',
-                            grammar='Python.ccc',
-                            files=['*.ccc', 'testfiles'],
-                            jlexer='org.parsers.python.PythonLexer',
-                            jparser='org.parsers.python.PythonParser',
-                            ppackage='pythonparser', ext='.py',
-                            production='Module'),
         'lua': Namespace(name='Lua', dir='lua',
                             grammar='Lua.ccc',
                             files=['*.ccc', 'testfiles'],
@@ -305,6 +298,13 @@ def main():
                             jparser='org.parsers.preprocessor.PreprocessorParser',
                             ppackage='preprocessorparser', ext='.cs',
                             production='PP_Root'),
+        'python': Namespace(name='Python', dir='python',
+                            grammar='Python.ccc',
+                            files=['*.ccc', 'testfiles'],
+                            jlexer='org.parsers.python.PythonLexer',
+                            jparser='org.parsers.python.PythonParser',
+                            ppackage='pythonparser', ext='.py',
+                            production='Module'),
     }
     try:
         langs = options.langs.split(',')

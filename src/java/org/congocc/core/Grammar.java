@@ -546,16 +546,6 @@ public class Grammar extends BaseNode {
             if (sequence.getHasExplicitNumericalLookahead() && sequence.getHasExplicitScanLimit()) {
                 errors.addError(sequence, "An expansion cannot have both numerical lookahead and a scan limit.");
             }
-/*            
-            if (sequence.getHasExplicitLookahead()) {
-                if (sequence.getHasExplicitLookahead()
-                    && !sequence.getHasSeparateSyntacticLookahead()
-                    && !sequence.getHasScanLimit()
-                    && !sequence.getHasExplicitNumericalLookahead() 
-                    && sequence.getMaximumSize() > 1) {
-                        errors.addWarning(sequence, "Expansion defaults to a lookahead of 1. In a similar spot in JavaCC 21, it would be an indefinite lookahead here, but this changed in Congo");
-                    }
-            }*/
         }
         for (Expansion exp : descendants(Expansion.class, Expansion::isScanLimit)) {
             if (!((Expansion) exp.getParent()).isAtChoicePoint()) {
@@ -674,7 +664,15 @@ public class Grammar extends BaseNode {
                    && t.firstAncestorOfType(Lookahead.class) != null)) { 
             errors.addWarning(tok, "ASSERT keyword inside a lookahead, should really be ENSURE");
         }
+    }
 
+    public void checkUnparsedContent() {
+        for (RawCode ucb : descendants(RawCode.class)) {
+            if (!ucb.isProcessed()) ucb.parseContent();
+            if (ucb.getParseException()!=null) {
+                errors.addError(ucb, ucb.getParseException().getMessage());
+            } 
+        }
     }
 
     public void reportDeadCode() {

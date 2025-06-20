@@ -32,6 +32,17 @@ INJECT CompilationUnit :
     }
 }
 
+INJECT InternalJavaBlock :
+{
+    @Override
+    public String toString() {
+        String result = super.toString();
+        result = result.replace("{$", "{");
+        result = result.replace("$}", "}");
+        return result;
+    }
+}
+
 
 INJECT TypeDeclaration :
     import java.util.*;
