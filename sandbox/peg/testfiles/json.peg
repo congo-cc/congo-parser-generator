@@ -1,0 +1,6 @@
+Value    <- String / Number / Object / Array / 'true' / 'false' / 'null'
+Object   <- '{' (Pair (',' >>> Pair)*)? '}'
+Pair     <- String ':' Value
+Array    <- '[' (Value ( ',' >>> Value)* )? ']'
+String   <- '"' (!'"' .)* '"'
+Number   <- '-'? [0-9]+ ('.' [0-9]+)? ([eE] [-+]? [0-9]+)?

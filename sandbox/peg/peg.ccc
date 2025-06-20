@@ -1,0 +1,75 @@
+PARSER_PACKAGE=org.parsers.peg;
+TAB_SIZE=4;
+ENSURE_FINAL_EOL;
+SMART_NODE_CREATION=false;
+TERMINATING_STRING="";
+
+//////////////////////////////////////////////////////////////////////////////
+// Select the default lexer state based on the variant to be generated:     //
+// ALT_BOOT      - SINGLE_LINE_COMMENT and MULTILINE_COMMENT are referenced //
+// ALT_PEG       - All lexer tokens are referenced in the grammar           //
+// Not specified - ditto                 //
+//////////////////////////////////////////////////////////////////////////////
+
+#if ALT_BOOT
+    DEFAULT_LEXICAL_STATE=EXT_PEG
+#else
+    DEFAULT_LEXICAL_STATE=EXT_ALT_PEG
+#endif
+;
+
+//#define FT
+#if FT
+FAULT_TOLERANT;
+FAULT_TOLERANT_DEFAULT=true;
+#endif
+
+#PegGrammar :
+    Grammar {return CURRENT_NODE;}
+;
+
+<EXT_PEG, EXT_ALT_PEG> TOKEN : 
+    <SINGLE_LINE_COMMENT : ("//"|"#") (~["\n","\r"])* >
+    |
+    <?MULTI_LINE_COMMENT : "/*" (~[])* "*/" >
+;
+
+<EXT_ALT_PEG> TOKEN :
+    <WHITESPACE : 
+        ( 
+            [
+             " ", "\t", "\f",
+             "\u000b", "\u00a0", "\u1680",
+             "\u2000"-"\u200a",
+             "\u202f", "\u205f", "\u3000","\uC2A0"
+            ]
+        )+ 
+    >
+;
+
+<EXT_ALT_PEG> TOKEN : <EOL: "\n" | "\r\n" | "\r" >;
+
+INJECT BASE_NODE_CLASS :
+{
+    public String toRealString() {
+        List<Token> tokens = getRealTokens();
+        StringBuilder sb = new StringBuilder();
+        for (Token t : tokens) {
+            sb.append(t.toString());
+        }
+        return sb.append(' ').toString();
+    }
+}
+
+/////////////////////////////////////
+// Use the desired grammar variant //
+/////////////////////////////////////
+
+#if ALT_BOOT
+INCLUDE "grammar/ccc/peg_alt_boot.inc" // For generating an alternative peg parser using the original peg grammar.
+#elif PEG_ALT
+INCLUDE "grammar/generated/peg_alt.ccc"// For testing a new alternative peg parser.
+#else
+INCLUDE "grammar/ccc/peg_alt.inc"      // For generating an alternative peg parser using the alternative peg grammar.
+#endif
+;
