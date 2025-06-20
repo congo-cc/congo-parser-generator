@@ -14,6 +14,22 @@ INCLUDE "../../examples/java/Java.ccc"
 
 VariableDeclarator# : VariableDeclaratorId [ "=" VariableInitializer ] ;
 
+CodeBlock EmbeddedJavaBlock#void :
+    Block
+    {
+        CodeBlock block = (CodeBlock) peekNode();
+    }
+    <EOF>
+    {return block;}
+;
+
+Expression EmbeddedJavaExpression :
+    {Expression exp = null;}
+    exp=Expression
+    <EOF>
+    {return exp;}
+;    
+
 INJECT CompilationUnit :
     import java.util.*;
 {
@@ -31,18 +47,6 @@ INJECT CompilationUnit :
         add(1+indexOf(pd), decl);
     }
 }
-
-INJECT InternalJavaBlock :
-{
-    @Override
-    public String toString() {
-        String result = super.toString();
-        result = result.replace("{$", "{");
-        result = result.replace("$}", "}");
-        return result;
-    }
-}
-
 
 INJECT TypeDeclaration :
     import java.util.*;

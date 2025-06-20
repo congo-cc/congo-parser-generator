@@ -258,7 +258,7 @@ public class FilesGenerator {
             // if (initialLines != finalLines) {
             //     logger.fine(String.format("Parser line count went from %d to %d", initialLines, finalLines));
             // }
-            String s = new PyFormatter().format(module);
+            String s = new PyFormatter().format(module, false);
             output.write(s);
             output.write("\n# Output by PyFormatter class\n");
         }

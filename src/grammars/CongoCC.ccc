@@ -1,4 +1,4 @@
-RawCode;
+ENSURE_FINAL_EOL;
 JAVA_UNICODE_ESCAPE;
 PARSER_PACKAGE=org.congocc.parser;
 NODE_PACKAGE=org.congocc.parser.tree;
@@ -975,7 +975,10 @@ INJECT Assertion :
 }
 
 Assertion :
-   {boolean assertKeywordPresent = false;}
+   {
+    boolean assertKeywordPresent = false;
+    boolean messageAlreadySeen = false;
+   }
    (
       "ASSERT" {assertKeywordPresent = true;} ["ENSURE"]
       |
@@ -985,9 +988,15 @@ Assertion :
     (
     "{"
        @assertionExpression := Expression
+       [
+         ":"
+         @messageExpression := Expression
+         {messageAlreadySeen = true;}
+       ]
     "}"
      |
      @assertionExpressionRawCode := RawCode
+     {messageAlreadySeen = true;}
     )
     [ SCAN {assertKeywordPresent} => @semanticLookaheadNested :=? "#" ]
     |
@@ -997,7 +1006,7 @@ Assertion :
     ")"
    )
    [
-      SCAN {assertKeywordPresent} =>
+      SCAN {assertKeywordPresent && !messageAlreadySeen} =>
        ":" @messageExpression := Expression
        [":"]
    ]

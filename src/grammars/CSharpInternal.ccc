@@ -20,10 +20,18 @@ INJECT BASE_TOKEN_CLASS :
     @Property Grammar grammar;
 }
 
-#InjectionBody :
-    (ClassMemberDeclaration)*
+Block EmbeddedCSharpBlock :
+    {Block block = null;}
+    block=Block
     <EOF>
     {
-        return CURRENT_NODE;
+        return block;
     }
+;
+
+Expression EmbeddedCSharpExpression :
+    {Expression exp;}
+    exp=Expression
+    <EOF>
+    {return exp;}
 ;

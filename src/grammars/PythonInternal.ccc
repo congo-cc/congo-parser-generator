@@ -18,3 +18,19 @@ INJECT BASE_TOKEN_CLASS :
 {
     @Property Grammar grammar;
 }
+
+Block EmbeddedPythonBlock#void :
+    Block
+    {
+        Block block = (Block) peekNode();
+    }
+    <EOF>
+    {return block;}
+;
+
+Expression EmbeddedPythonExpression :
+    {Expression exp = null;}
+    exp=Expression
+    <EOF>
+    {return exp;}
+;    

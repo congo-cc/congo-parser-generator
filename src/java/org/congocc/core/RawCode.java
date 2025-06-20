@@ -102,26 +102,20 @@ public class RawCode extends EmptyExpansion {
         return parseException != null;
     }
 
-    String getContent() {
-        Node uc = firstChildOfType(UNPARSED_CONTENT);
-        return uc == null ? "" : uc.getSource();
-    }
-
     Node parseJavaBlock() {
         String content = getSource();
         content = content.substring(1,content.length()-1);
         CongoCCParser cccParser = new CongoCCParser(getInputSource(), content);
         cccParser.setStartingPos(getBeginLine(), getBeginColumn()+1);
-        cccParser.Block();
-        return cccParser.rootNode();
+        return cccParser.EmbeddedJavaBlock();
     }
 
     Node parseJavaExpression() {
         String content = getSource();
         content = content.substring(2, content.length()-2);
-        CongoCCParser cccParser = new CongoCCParser(getInputSource(), getContent());
+        CongoCCParser cccParser = new CongoCCParser(getInputSource(), content);
         cccParser.setStartingPos(getBeginLine(), getBeginColumn()+2);
-        return cccParser.Expression();
+        return cccParser.EmbeddedJavaExpression();
     }
     
     Node parseCSharpBlock() {
@@ -129,12 +123,7 @@ public class RawCode extends EmptyExpansion {
         content = content.substring(1,content.length()-1);
         CSParser csParser = new CSParser(getInputSource(), content);
         csParser.setStartingPos(getBeginLine(), getBeginColumn()+2);
-        try {
-           return csParser.InjectionBody();
-        } catch (ParseException pe) {
-            this.parseException = pe;
-        }
-        return null;
+        return csParser.EmbeddedCSharpBlock();
     }
 
     Node parseCSharpExpression() {
@@ -142,17 +131,15 @@ public class RawCode extends EmptyExpansion {
         content = content.substring(2, content.length()-2);
         CSParser csParser = new CSParser(getInputSource(), content);
         csParser.setStartingPos(getBeginLine(), getBeginColumn() + 2);
-        csParser.Expression();
-        return csParser.peekNode();
+        return csParser.EmbeddedCSharpExpression();
     }
 
     Node parsePythonBlock() {
         String content = getSource();
         content = content.substring(2,content.length()-2);
-        CongoCCParser cccParser = new CongoCCParser(getInputSource(), content);
+        PythonParser cccParser = new PythonParser(getInputSource(), content);
         cccParser.setStartingPos(getBeginLine(), getBeginColumn()+1);
-        cccParser.Block();
-        return cccParser.rootNode();
+        return cccParser.EmbeddedPythonBlock();
     }
 
     Node parsePythonExpression() {
@@ -161,8 +148,7 @@ public class RawCode extends EmptyExpansion {
         PythonParser pyParser = new PythonParser(getInputSource(), content);
         pyParser.setLineJoining(true);
         pyParser.setStartingPos(getBeginLine(), getBeginColumn() + 2);
-        pyParser.Expression();
-        return pyParser.peekNode();
+        return pyParser.EmbeddedPythonExpression();
     }
 
 }

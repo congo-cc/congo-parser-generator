@@ -11,14 +11,20 @@ public class PyFormatter extends Node.Visitor {
     private final int indentAmount = 4;
     private int bracketNesting, parenthesesNesting, braceNesting;
     private final String eol = "\n";
+    private boolean altFormat;
     
-    public String format(Node node) {
+    public String format(Node node, boolean altFormat) {
+        this.altFormat = altFormat;
+        if (altFormat) {
+            buffer.append("explicitdedent:on");
+        }
         visit(node);
         return getText();
     }
 
     public String getText() {
         if (buffer.charAt(buffer.length()-1) != '\n') buffer.append('\n');
+        if (altFormat) buffer.append("#explicitdedent:restore\n");
         return buffer.toString();
     }
 
@@ -69,6 +75,11 @@ public class PyFormatter extends Node.Visitor {
     void visit(DedentToken tok) {
         currentIndentation -= indentAmount;
         assert currentIndentation >=0;
+        if (altFormat) {
+            buffer.append(eol);
+            indentLine();
+            buffer.append("<-");
+        }
     }
 
     void visit(Newline tok) {

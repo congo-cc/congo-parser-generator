@@ -582,7 +582,9 @@ ${globals::translateCodeBlock(expansion, 1)}
    [#elseif classname = "Failure"]
       [@BuildCodeFailure expansion/]
    [#elseif classname = "Assertion"]
+     #if expansion.appliesInRegularParsing
       [@BuildAssertionCode expansion/]
+     #endif
    [#elseif classname = "TokenTypeActivation"]
       [@BuildCodeTokenTypeActivation expansion/]
    [#elseif classname = "TryBlock"]
@@ -647,16 +649,20 @@ ${globals::translateCodeBlock(fail.code, 1)}
 
 [#macro BuildAssertionCode assertion]
 [#var optionalPart = ""]
-[#if assertion.messageExpression??]
-  [#set optionalPart = " + " + globals::translateExpression(assertion.messageExpression)]
+[#if assertion.messageExpression]
+    #set optionalPart = " + " + globals::translateExpression(assertion.messageExpression)
 [/#if]
    [#var assertionMessage = "Assertion at: " + assertion.location?j_string + " failed. "]
-   [#if assertion.assertionExpression??]
+   [#if assertion.assertionExpression]
 if (!(${globals::translateExpression(assertion.assertionExpression)})) {
     Fail("${assertionMessage}"${optionalPart});
 }
+   #elif assertion.assertionExpressionRawCode
+if (!(${assertion.assertionExpressionRawCode.parsedContent})) {
+    Fail("${assertionMessage}"${optionalPart});
+}
    [/#if]
-   [#if assertion.expansion??]
+   [#if assertion.expansion]
 if ([#if !assertion.expansionNegated]![/#if]${assertion.expansion.scanRoutineName}()) {
     Fail("${assertionMessage}"${optionalPart});
 }
