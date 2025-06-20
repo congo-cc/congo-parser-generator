@@ -71,7 +71,13 @@ public abstract class RegularExpression extends BaseNode {
         }
         String literalString = getLiteralString();
         if (literalString != null && isJavaIdentifier(literalString)) {
-            literalString = literalString.toUpperCase();
+            if (getIgnoreCase()) {
+                literalString = literalString.toUpperCase();
+            } 
+            else if (literalString.toLowerCase().equals(literalString)) {
+                // Avoid all lower-case label issues (e.g., Java keywords)
+                literalString = "_" + literalString;
+            }
             if (!getGrammar().getLexerData().regexpLabelAlreadyUsed(literalString, this)) {
                 return literalString;
             }

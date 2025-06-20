@@ -1,6 +1,8 @@
 package org.congocc.core;
 
 import java.util.*;
+import java.util.function.Predicate;
+
 import org.congocc.parser.Node;
 import org.congocc.parser.tree.*;
 
@@ -39,6 +41,38 @@ public class ExpansionSequence extends Expansion {
     public boolean isEssentialSequence() {
     	return getNumberOfSyntaxElements() > 1;
     }
+    
+    public Predicate<ExpansionWithParentheses> isOuterCardinalityScope = (expWithParens) -> {
+        return (expWithParens instanceof IteratingExpansion);
+    };
+    
+    public Predicate<Assertion> isInScopeConstraint = (assertion) -> {
+        return assertion.isCardinalityConstraint() && assertion.firstAncestorOfType(ExpansionWithParentheses.class, isOuterCardinalityScope) == getCardinalitiesContainer();
+    };
+    
+    @Override
+    public boolean isCardinalityConstrained() { //N.B., this can (erroneously) extend beyond the parent production.
+        Assertion cardinalityAssertion = firstDescendantOfType(Assertion.class, isInScopeConstraint);
+        return cardinalityAssertion != null;
+    }
+    
+    public List<Assertion> getCardinalityAssertions() {
+        return descendantsOfType(Assertion.class, isInScopeConstraint);
+    }
+        
+    public ExpansionWithParentheses getCardinalitiesContainer() {
+        return firstAncestorOfType(ExpansionWithParentheses.class, isOuterCardinalityScope);
+    }
+    
+    public int getCardinalityIndex() {
+    	List<Assertion> cardinalityAssertions = childrenOfType(Assertion.class);
+        for (Assertion assertion : cardinalityAssertions) {
+            if (assertion.isCardinalityConstraint()) {
+            	return assertion.getAssertionIndex();
+            }
+        }
+        return -1;
+    }
 
     Expansion firstNonEmpty() {
         for (Expansion unit : childrenOfType(Expansion.class)) {
@@ -52,7 +86,6 @@ public class ExpansionSequence extends Expansion {
         }
         return null;
     }
-
 
     @Override
     public TokenSet getFirstSet() {
