@@ -678,7 +678,7 @@ public class Grammar extends BaseNode {
 
     public void checkUnparsedContent() {
         for (RawCode ucb : descendants(RawCode.class)) {
-            if (!ucb.isProcessed()) ucb.parseContent();
+            ucb.parseContent();
             if (ucb.getParseException()!=null) {
                 errors.addError(ucb, ucb.getParseException().getMessage());
             } 

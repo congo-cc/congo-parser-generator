@@ -241,9 +241,10 @@ public class FilesGenerator {
             }
             module = CongoCCParser.parsePythonFile(outputFile.getFileName().toString(), code);
         }
-        catch (Exception e) {
+        catch (ParseException pe) {
             out.write(code);
-            e.printStackTrace();
+            pe.printStackTrace();
+            errors.addError(pe.getToken(), pe.getMessage());
             return;
         }
         finally {
@@ -271,8 +272,10 @@ public class FilesGenerator {
 
         try {
            cscu = CongoCCParser.parseCSharpFile(outputFile.getFileName().toString(), code);
-        } catch (Exception e) {
+        } catch (ParseException pe) {
             out.write(code);
+            pe.printStackTrace();
+            errors.addError(pe.getToken(), pe.getMessage());
             return;
         } finally {
             out.flush();
@@ -303,9 +306,10 @@ public class FilesGenerator {
         Writer out = Files.newBufferedWriter(outputFile);
         try {
             jcu = CongoCCParser.parseJavaFile(grammar, outputFile.getFileName().toString(), code);
-        } catch (Exception e) {
-            e.printStackTrace();
+        } catch (ParseException pe) {
+            pe.printStackTrace();
             out.write(code);
+            errors.addError(pe.getToken(), pe.getMessage());
             return;
         } finally {
             out.flush();

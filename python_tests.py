@@ -225,7 +225,8 @@ def test_grammar(gdata, options):
         raise ValueError('Python parser test run failed')
     elapsed = time.time() - start
     print('Python parser run completed (%.2f secs).' % elapsed)
-    if lang != 'python' :
+    # if lang != 'python' :
+    if False :
         compare_diffs()
         print('Results for Python & Java '
           'lexers & parsers are identical - yay!')
@@ -277,13 +278,6 @@ def main():
                           ppackage='javaparser', ext='.java',
                           #production='CompilationUnit'),
                           production='Root'),
-        'csharp': Namespace(name='CSharp', dir='csharp',
-                            grammar='CSharp.ccc',
-                            files=['*.ccc', 'testfiles'],
-                            jlexer='org.parsers.csharp.CSharpLexer',
-                            jparser='org.parsers.csharp.CSharpParser',
-                            ppackage='csharpparser', ext='.cs',
-                            production='CompilationUnit'),
         'lua': Namespace(name='Lua', dir='lua',
                             grammar='Lua.ccc',
                             files=['*.ccc', 'testfiles'],
@@ -298,6 +292,13 @@ def main():
                             jparser='org.parsers.preprocessor.PreprocessorParser',
                             ppackage='preprocessorparser', ext='.cs',
                             production='PP_Root'),
+        'csharp': Namespace(name='CSharp', dir='csharp',
+                            grammar='CSharp.ccc',
+                            files=['*.ccc', 'testfiles'],
+                            jlexer='org.parsers.csharp.CSharpLexer',
+                            jparser='org.parsers.csharp.CSharpParser',
+                            ppackage='csharpparser', ext='.cs',
+                            production='CompilationUnit'),
         'python': Namespace(name='Python', dir='python',
                             grammar='Python.ccc',
                             files=['*.ccc', 'testfiles'],

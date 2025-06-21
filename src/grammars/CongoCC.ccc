@@ -9,7 +9,6 @@ USES_PREPROCESSOR;
 
 DEACTIVATE_TOKENS=_INCLUDE,_INJECT,_EOF, RECORD, VAR, YIELD, SEALED, NON_SEALED, PERMITS, TERMINATES;
 
-
 /* congocc RESERVED WORDS: These are the only tokens in congocc but not in Java */
 
 INCLUDE "Lexical.inc.ccc"
@@ -174,43 +173,6 @@ INJECT BASE_NODE_CLASS :
     }
 }
 
-INJECT CodeBlock :
-  import java.util.List;
-   extends org.congocc.core.EmptyExpansion;
-{
-    @Property boolean appliesInLookahead;
-
-    public CodeBlock getJavaCode() {
-        return this;
-    }
-
-    @Override
-    public boolean startsWithGlobalCodeAction(boolean stopAtScanLimit) {
-        return isAppliesInLookahead() || getContainingProduction().isOnlyForLookahead();
-    }
-
-    public String toString() {
-        StringBuilder buf = new StringBuilder();
-        List<? extends TerminalNode> tokens = getAllTokens(true);
-        boolean outputOpeningBrace = false;
-        for (int i=0; i<tokens.size() -1; i++) {
-            Token t = (Token) tokens.get(i);
-            buf.append(" ");
-            if (i>0 && ((Token)tokens.get(i-1)).getEndOffset() != t.getBeginOffset()) {
-                buf.append(" ");
-            }
-            if (outputOpeningBrace) {
-                buf.append(t);
-            } else if (t.getType() == TokenType.LBRACE) {
-                outputOpeningBrace = true;
-            }
-            buf.append(" ");
-        }
-        return buf.toString();
-    }
-}
-
-
 
 INJECT PARSER_CLASS : {
 
@@ -232,7 +194,6 @@ INJECT PARSER_CLASS : {
         return t;
     }
 }
-
 
 INJECT Identifier :
     import org.congocc.app.AppSettings;
@@ -292,10 +253,10 @@ INJECT interface Node :
         assert ts.getGrammar() != null;
         return ts == null ? null : ts.getGrammar();
     }
-    default Node getNamedChild(String name) { return null; }
-    default List<Node> getNamedChildList(String name) { return null; }
-    default void setNamedChild(String name, Node node) {}
-    default void addToNamedChildList(String name, Node node) {}
+    default Node getNamedChild(String name) { throw new UnsupportedOperationException(); }
+    default List<Node> getNamedChildList(String name) { throw new UnsupportedOperationException(); }
+    default void setNamedChild(String name, Node node) { throw new UnsupportedOperationException(); }
+    default void addToNamedChildList(String name, Node node) { throw new UnsupportedOperationException(); }
 }
 
 

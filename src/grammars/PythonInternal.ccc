@@ -19,10 +19,10 @@ INJECT BASE_TOKEN_CLASS :
     @Property Grammar grammar;
 }
 
-Block EmbeddedPythonBlock#void :
+Node EmbeddedPythonBlock#void :
     Block
     {
-        Block block = (Block) peekNode();
+        Node block = peekNode();
     }
     <EOF>
     {return block;}

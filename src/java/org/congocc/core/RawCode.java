@@ -25,18 +25,16 @@ public class RawCode extends EmptyExpansion {
 
     private Node parsedContent;
 
-    private boolean parsed;
-
     private ParseException parseException;
 
-    private ContentType contentType = ContentType.JAVA_BLOCK;
+    private ContentType contentType;
 
     public ParseException getParseException() {
         return this.parseException;
     }
 
     public ContentType getContentType() {
-        if (contentType != null) {
+        if (contentType == null) {
             String lang = getAppSettings().getCodeLang();
             switch (lang) {
                 case "java" -> {
@@ -70,22 +68,23 @@ public class RawCode extends EmptyExpansion {
     }
 
     public void parseContent() {
-        try {
-            this.parsedContent = switch(contentType) {
-                case JAVA_BLOCK -> parseJavaBlock();
-                case JAVA_EXPRESSION -> parseJavaExpression();
-                case CSHARP_BLOCK -> parseCSharpBlock();
-                case CSHARP_EXPRESSION -> parseCSharpExpression();
-                case PYTHON_BLOCK -> parsePythonBlock();
-                case PYTHON_EXPRESSION -> parsePythonExpression();
-            };
-        } catch(ParseException pe) {
-            this.parseException = pe;
+        if (!isAlreadyParsed()) {
+            try {
+                this.parsedContent = switch(getContentType()) {
+                    case JAVA_BLOCK -> parseJavaBlock();
+                    case JAVA_EXPRESSION -> parseJavaExpression();
+                    case CSHARP_BLOCK -> parseCSharpBlock();
+                    case CSHARP_EXPRESSION -> parseCSharpExpression();
+                    case PYTHON_BLOCK -> parsePythonBlock();
+                    case PYTHON_EXPRESSION -> parsePythonExpression();
+                };
+            } catch(ParseException pe) {
+                this.parseException = pe;
+            }
         }
-        this.parsed = true;
     }
 
-    public boolean isProcessed() {
+    public boolean isAlreadyParsed() {
         return parseException != null || parsedContent != null;
     }
 
@@ -94,11 +93,11 @@ public class RawCode extends EmptyExpansion {
     }
 
     public String toString() {
-        if (!parsed) parseContent();
+        if (!isAlreadyParsed()) parseContent();
         return parsedContent.toString();
     }
 
-    public boolean hasError() {
+    public boolean getHasError() {
         return parseException != null;
     }
 

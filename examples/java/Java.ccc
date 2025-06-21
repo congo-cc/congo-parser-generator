@@ -143,7 +143,7 @@ INJECT PackageDeclaration :
 
 ImportDeclaration : <_IMPORT> [ <STATIC> | <MODULE>] Name [ <DOT> <STAR> ] <SEMICOLON> ;
 
-#if CARD
+#if !CARD && __java__
 
 // Alternative to Modifiers using repetition cardinality constraints.
 
@@ -188,6 +188,8 @@ Modifiers :
  {permissibleModifiers = null;}#
 ;
 
+// For some reason, this can only 
+// be injected if we are generating Java (JR)
 INJECT PARSER_CLASS :
 {
     boolean allows(TokenType... types) {
@@ -211,7 +213,7 @@ Modifiers :
    <PUBLIC>|<STATIC>|<PROTECTED>|<PRIVATE> |<FINAL>|<ABSTRACT>
    |<SYNCHRONIZED>|<NATIVE>|<TRANSIENT>|<VOLATILE>|<STRICTFP>
    |<_DEFAULT>)
-  {
+   {
     if (permissibleModifiers !=null) {
       TokenType tt = getTokenType(0);
       switch(tt) {
@@ -924,13 +926,9 @@ PrimaryExpression#interface :
   |
   (<DOUBLE_COLON> [TypeArguments] (<IDENTIFIER>|<NEW>)) #MethodReference(+1)
   |
-// The following commented-out line is the absolutely correct condition for recent JDK's,
-// since yield on its own cannot be a method call, though you can write this.yield(), for example.
-// For now, I'm not including a check for that. The compiler catches it, after all. Also, it is
-// still unclear to me whether this should be caught at this point or if it is better to just do
-// a post-parse tree walk that runs over the AST and checks for these things.
-//  ENSURE {getTokenType(0) == IDENTIFIER && (currentLookaheadToken==null || (peekNode().size() > 1 || !tokenImage(0).equals("yield")))}
   ENSURE {getTokenType(0) == IDENTIFIER}
+  // yield on its own cannot be a method call, though you can write this.yield() for example.
+  ASSERT {peekNode().size()>1 || !tokenImage(0).equals("yield")}
   InvocationArguments #MethodCall(+1)
  )*
  ASSERT {getTokenType(0) != SUPER} : "Not a valid expression here " + getToken(0).getLocation()
