@@ -1,9 +1,9 @@
 /**
  * The lexer portion defines 3 lexical states:
  * TEXT, EXPRESSION, DIRECTIVE_NAME
- * The lexer is in the TEXT state when it is 
+ * The lexer is in the TEXT state when it is
  * just consuming regular text, but is scanning for
- * congo template constructs. 
+ * congo template constructs.
  * DIRECTIVE_NAME is a trivial state you are in just
  * after a <# or [# and we expect a directive name.
  * EXPRESSION is the state you are in
@@ -15,7 +15,7 @@
  * that ends the if directive, you go back to TEXT lexical state.
  */
 
-INJECT LEXER_CLASS : 
+INJECT LEXER_CLASS :
 {
     /**
     Keeps track of how deeply nested
@@ -34,8 +34,8 @@ INJECT LEXER_CLASS :
     String templateName;
 
     private static EnumSet<TokenType> directiveNames = EnumSet.of(
-        _ATTEMPT, _ASSERT, _RECOVER, IF, ELSE_IF, EXEC, LIST,  
-        SET, _INCLUDE, IMPORT, FUNCTION, _MACRO, RETURN, SETTING, 
+        _ATTEMPT, _ASSERT, _RECOVER, IF, ELSE_IF, EXEC, LIST,
+        SET, _INCLUDE, IMPORT, FUNCTION, _MACRO, RETURN, SETTING,
         EMBED, VAR, ELSE, BREAK, TRIM, LTRIM, RTRIM,
         NESTED, FTL_HEADER, UNKNOWN_DIRECTIVE
     );
@@ -45,7 +45,7 @@ INJECT LEXER_CLASS :
     );
 
     private static EnumSet<TokenType> continueLineTokens = EnumSet.of(
-        COMMA, EQUALS, DOUBLE_EQUALS, NOT_EQUALS, DOT_DOT, 
+        COMMA, EQUALS, DOUBLE_EQUALS, NOT_EQUALS, DOT_DOT,
         GREATER_THAN, GREATER_THAN_EQUALS, LESS_THAN, LESS_THAN_EQUALS,
         ESCAPED_GT, ESCAPED_GTE, PLUS, MINUS, TIMES, DIVIDE,
         PERCENT, AND, OR, SEMICOLON, COLON, IN, AS, USING, TERNARY
@@ -119,11 +119,11 @@ INJECT LEXER_CLASS :
         }
         else if (type == EOL) {
             Token prevTok = token.previousCachedToken();
-            if (parenthesisNesting > 0 || 
+            if (parenthesisNesting > 0 ||
                 bracketNesting > 0 ||
                 hashLiteralNesting > 0 ||
                 prevTok.getType() == EOL ||
-                prevTok != null && continueLineTokens.contains(prevTok.getType())) 
+                prevTok != null && continueLineTokens.contains(prevTok.getType()))
             {
                 token.setUnparsed(true);
             } else {
@@ -150,8 +150,8 @@ INJECT LEXER_CLASS :
             }
         }
         switch(token.getType()) {
-            case GREATER_THAN_EQUALS : 
-            case GREATER_THAN : 
+            case GREATER_THAN_EQUALS :
+            case GREATER_THAN :
                 if (parenthesisNesting == 0 && inPointySyntax && !activeTokenTypes.contains(EOL)) {
                     if (token.getType() == GREATER_THAN_EQUALS) {
                         token.truncate(1);
@@ -160,16 +160,16 @@ INJECT LEXER_CLASS :
                     switchTo(LexicalState.TEXT);
                 }
                 break;
-            case OPEN_PAREN : 
+            case OPEN_PAREN :
                 parenthesisNesting++;
                 break;
             case CLOSE_PAREN :
                 parenthesisNesting--;
                 break;
-            case OPEN_BRACKET : 
+            case OPEN_BRACKET :
                 bracketNesting++;
                 break;
-            case CLOSE_BRACKET : 
+            case CLOSE_BRACKET :
                 if (bracketNesting > 0) {
                     --bracketNesting;
                 } else if (!activeTokenTypes.contains(EOL)){
@@ -177,17 +177,17 @@ INJECT LEXER_CLASS :
                     switchTo(LexicalState.TEXT);
                 }
                 break;
-            case OPEN_BRACE : 
+            case OPEN_BRACE :
                 ++hashLiteralNesting;
                 break;
-            case CLOSE_BRACE : 
+            case CLOSE_BRACE :
                 if (hashLiteralNesting > 0) {
                     --hashLiteralNesting;
                 } else {
                      switchTo(LexicalState.TEXT);
                 }
                 break;
-            case UNIFIED_CALL : 
+            case UNIFIED_CALL :
                 switchTo(LexicalState.EXPRESSION);
                 break;
         }
@@ -197,7 +197,7 @@ INJECT LEXER_CLASS :
 
 <TEXT,EXPRESSION> UNPARSED#Comment :
     <?SQUARE_COMMENT : "[#--" (~[])* "--]">
-    |    
+    |
     <?POINTY_COMMENT : "<#--" (~[])* "-->">
     |
     <SINGLE_LINE_COMMENT : "#--" (~["\n"])* >
@@ -213,17 +213,21 @@ INJECT LEXER_CLASS :
 
 MORE :
     <START_TAG : "<#" | "[#"> : DIRECTIVE_NAME
-;    
+;
 
 TOKEN#Delimiter :
-    <CLOSE_DIRECTIVE_BLOCK : ("[/#" (["a"-"z"])* (<BLANK>)* "]") | ("</#" (["a"-"z"])* (<BLANK>)* ">")> 
+    <CLOSE_DIRECTIVE_BLOCK : ("[/#" (["a"-"z"])* (<BLANK>)* "]") | ("</#" (["a"-"z"])* (<BLANK>)* ">")>
     |
-    <UNIFIED_CALL : "<@" | "[@" > 
+    <UNIFIED_CALL : "<@" | "[@" >
     |
-    <UNIFIED_CALL_END : ("<" | "[") "/@" (~[" ", "\t", "\n", "\r", ">", "]"])* (">" | "]")> 
+    <UNIFIED_CALL_END : ("<" | "[") "/@" (~[" ", "\t", "\n", "\r", ">", "]"])* (">" | "]")>
     |
     <OUTPUT_ESCAPE : "$" ("\\")? "{" > : EXPRESSION
     |
+#if support_terse_interpolation
+    <TERSE_INTERPOLATION : "$"<ID>> #TerseInterpolation
+    |
+#endif
     <?NOPARSE : <NOPARSE_BEGIN> (~[])* <NOPARSE_END> > #LegacyNoParse
     |
     <#NOPARSE_BEGIN :   ("<#noparse" (<BLANK>)* ">") | ("[#noparse" (<BLANK>)* "]")>
@@ -254,47 +258,47 @@ TOKEN#Text :
     |
     <_ASSERT : "assert">
     |
-    <_ATTEMPT : "attempt" <CLOSE_TAG1>> 
+    <_ATTEMPT : "attempt" <CLOSE_TAG1>>
     |
-    <BREAK : "break" <CLOSE_TAG2>> 
+    <BREAK : "break" <CLOSE_TAG2>>
     |
-    <ELSE : "else" <CLOSE_TAG2>> 
+    <ELSE : "else" <CLOSE_TAG2>>
     |
     <ELSE_IF : "elseif" | "elif">
     |
-    <EMBED : "embed"> 
+    <EMBED : "embed">
     |
-    <EXEC : "exec" > 
+    <EXEC : "exec" >
     |
     <FTL_HEADER : "ftl">
     |
-    <FUNCTION : "function"> 
+    <FUNCTION : "function">
     |
-    <IF : "if"> 
+    <IF : "if">
     |
-    <IMPORT : "import"> 
+    <IMPORT : "import">
     |
-    <_INCLUDE : "include"> 
+    <_INCLUDE : "include">
     |
-    <LIST : "list"> 
+    <LIST : "list">
     |
-    <LTRIM : "lt" <CLOSE_TAG2>> 
+    <LTRIM : "lt" <CLOSE_TAG2>>
     |
     <_MACRO : "macro">
     |
-    <NESTED : "nested"> 
+    <NESTED : "nested">
     |
     <_RECOVER : "recover" <CLOSE_TAG1>>
     |
-    <RETURN : "return"> 
+    <RETURN : "return">
     |
-    <RTRIM : "rt" <CLOSE_TAG2>> 
+    <RTRIM : "rt" <CLOSE_TAG2>>
     |
     <SET : "set">
     |
-    <SETTING : "setting"> 
+    <SETTING : "setting">
     |
-    <TRIM : "t" <CLOSE_TAG2>> 
+    <TRIM : "t" <CLOSE_TAG2>>
     |
     <VAR : "var">
     |
@@ -311,12 +315,12 @@ TOKEN#Text :
 
 <EXPRESSION> TOKEN#Literal :
   <STRING_LITERAL :
-      ("\"" 
-          ((~["\\", "\""]) | ("\\" ~[]))*      
+      ("\""
+          ((~["\\", "\""]) | ("\\" ~[]))*
       "\"")
       |
       ("'"
-          ((~["\\", "'"]) | ("\\" ~[]))*            
+          ((~["\\", "'"]) | ("\\" ~[]))*
       "'")
   > #StringLiteral
   |
@@ -394,13 +398,13 @@ TOKEN#Text :
   |
   <OPEN_BRACKET : "[">
   |
-  <CLOSE_BRACKET : "]"> 
+  <CLOSE_BRACKET : "]">
   |
-  <OPEN_PAREN : "("> 
+  <OPEN_PAREN : "(">
   |
-  <CLOSE_PAREN : ")"> 
+  <CLOSE_PAREN : ")">
   |
-  <OPEN_BRACE : "{" > 
+  <OPEN_BRACE : "{" >
   |
   <CLOSE_BRACE : "}" >
   |
@@ -414,7 +418,7 @@ TOKEN#Text :
 INCLUDE JAVA_IDENTIFIER_DEF
 
 <EXPRESSION> TOKEN:
-   <ID: ("@"|<JAVA_IDENTIFIER_START>)("@"|<JAVA_IDENTIFIER_PART>)*> #Identifier
+   <ID: <JAVA_IDENTIFIER_START>(<JAVA_IDENTIFIER_PART>)*> #Identifier
 ;
 
 INJECT Identifier :
@@ -436,7 +440,49 @@ INJECT Identifier :
     }
 }
 
-INJECT NullLiteral : 
+#if support_terse_interpolation
+INJECT TerseInterpolation :
+    import java.io.IOException;
+    import org.congocc.templates.core.Environment;
+    import org.congocc.templates.TemplateException;
+    import org.congocc.templates.core.variables.InvalidReferenceException;
+    import static org.congocc.templates.core.variables.Wrap.*;
+    implements TemplateElement
+{
+    public String getDescription() {
+        return getSource();
+    }
+
+    /**
+     * Outputs the string value of the enclosed expression.
+     */
+    public void execute(Environment env) throws IOException {
+        if (env == null) {
+            throw new TemplateException("Variables are not available "
+            + "(certainly you are in a parse-time executed directive). The name of the variable "
+            + "you tried to read: " + this, null);
+        }
+        Object referent = env.getVariable(getSource().substring(1));
+        if (referent == null || referent == JAVA_NULL) {
+            String nullUndefined = referent == null ? " is undefined " : " is null ";
+            throw new InvalidReferenceException("Expression " + this + nullUndefined + getLocation() + ".", env);
+        }
+        String output;
+        if (referent == LOOSE_NULL) {
+            output = "";
+        }
+        else if (referent instanceof Number n) {
+            output = env.formatNumber(n);
+        }
+        else {
+            output = referent.toString();
+        }
+        env.getOut().write(output);
+    }
+}
+#endif
+
+INJECT NullLiteral :
    import org.congocc.templates.core.Environment;
    import static org.congocc.templates.core.variables.Wrap.JAVA_NULL;
    implements Expression
@@ -471,7 +517,7 @@ INJECT NumberLiteral :
     public Object evaluate(Environment env) {
         return getValue();
     }
-    
+
     public String getStringValue(Environment env) {
         return env.formatNumber(getValue());
     }
@@ -479,7 +525,7 @@ INJECT NumberLiteral :
     public void close() {
         String s = toString();
         Template template = getTemplate();
-        value = template != null ? 
+        value = template != null ?
                 template.getArithmeticEngine().toNumber(s) :
                 new BigDecimal(s);
     }
@@ -511,7 +557,7 @@ INJECT StringLiteral :
        if (!isRaw()) s = FTLStringLiteralDec(s);
        this.value = s;
     }
-    
+
     public void checkInterpolation() {
     	String src = toString();
         if (src.length() >5 && (src.indexOf("${") >= 0)) {
@@ -521,7 +567,7 @@ INJECT StringLiteral :
             interpolatedOutput = parser.TemplateText();
         }
     }
-    
+
     public Object evaluate(Environment env) {
         return getStringValue(env);
     }
@@ -529,11 +575,11 @@ INJECT StringLiteral :
     public String getAsString() {
         return value;
     }
-    
+
     public String getStringValue(Environment env) {
         if (interpolatedOutput == null) {
             return value;
-        } 
+        }
         else {
             TemplateExceptionHandler teh = env.getTemplateExceptionHandler();
             env.setTemplateExceptionHandler(TemplateExceptionHandler.RETHROW_HANDLER);

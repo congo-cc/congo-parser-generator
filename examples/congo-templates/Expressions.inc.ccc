@@ -1,23 +1,22 @@
 // This file defines the expression
 // grammar. It is INCLUDEd from the main template.
 
-#Expression#interface : 
-    TernaryExpression 
+#Expression#interface :
+    TernaryExpression
     {
         return (Expression) peekNode();
-    } 
+    }
 ;
 
 INJECT Expression :
    import org.congocc.templates.core.Environment;
    import org.congocc.templates.core.variables.InvalidReferenceException;
    import org.congocc.templates.TemplateException;
-   import org.congocc.templates.TemplateSequence;
    import java.lang.reflect.Array;
    import static org.congocc.templates.core.variables.Wrap.*;
 {
     public abstract Object evaluate(Environment env);
-    
+
     default String getDescription() {
     	return "the expression: "  + this;
     }
@@ -40,7 +39,7 @@ INJECT Expression :
         }
         return referent.toString();
     }
-    
+
     default void assertNonNull(Object value, Environment env) {
         assertIsDefined(value, env);
         if (value == JAVA_NULL) {
@@ -79,8 +78,8 @@ INJECT Expression :
     }
 }
 
-TernaryExpression : 
-    OrExpression 
+TernaryExpression :
+    OrExpression
     [
         <TERNARY>
         Expression
@@ -89,7 +88,7 @@ TernaryExpression :
           Expression
         ]
     ]
-; 
+;
 
 INJECT TernaryExpression :
    import org.congocc.templates.core.Environment;
@@ -141,8 +140,8 @@ PrimaryExpression(boolean noSpace)#void :
       (
         <DOT>
         DEACTIVATE_TOKENS IN, AS, USING, TRUE, FALSE, NULL
-        (<ID>|<TIMES>|<DOUBLE_STAR>) 
-      ) #DotVariable(+1) 
+        (<ID>|<TIMES>|<DOUBLE_STAR>)
+      ) #DotVariable(+1)
       |
       <OPEN_BRACKET> Expression <CLOSE_BRACKET> #org.congocc.templates.core.nodes.DynamicKeyName(4)
       |
@@ -150,7 +149,7 @@ PrimaryExpression(boolean noSpace)#void :
       |
       <BUILT_IN><ID> #BuiltInExpression(3)
       |
-      <EXISTS>#ExistsExpression(2) 
+      <EXISTS>#ExistsExpression(2)
       |
       (
         <EXCLAM>
@@ -166,8 +165,8 @@ PrimaryExpression(boolean noSpace)#void :
 ;
 
 ParentheticalExpression :
-    <OPEN_PAREN> 
-    Expression 
+    <OPEN_PAREN>
+    Expression
     <CLOSE_PAREN>
 ;
 
@@ -182,7 +181,7 @@ INJECT ParentheticalExpression :
     public boolean isTrue(Environment env) {
         return getNested().isTrue(env);
     }
-    
+
     public Object evaluate(Environment env) {
         return getNested().evaluate(env);
     }
@@ -223,7 +222,7 @@ INJECT DotVariable :
             Object value = m.get(key);
             if (value == null) {
                 return m.containsKey(key) ? JAVA_NULL : null;
-            } 
+            }
             return wrap(value);
         }
         if (lhs instanceof TemplateHash hash) {
@@ -240,17 +239,17 @@ INJECT DotVariable :
 UnaryExpression#void :
    UnaryPlusMinusExpression
    |
-   NotExpression 
+   NotExpression
    |
-   PrimaryExpression(false) 
+   PrimaryExpression(false)
 ;
 
 NotExpression :
    <EXCLAM>
    (
-      PrimaryExpression(false) 
+      PrimaryExpression(false)
       |
-      NotExpression 
+      NotExpression
    )
 ;
 
@@ -284,23 +283,23 @@ UnaryPlusMinusExpression :
    )
 ;
 
-INJECT UnaryPlusMinusExpression : 
+INJECT UnaryPlusMinusExpression :
     import org.congocc.templates.core.Environment;
     import org.congocc.templates.core.ArithmeticEngine;
     import org.congocc.templates.core.variables.*;
     import org.congocc.templates.TemplateException;
     implements Expression
 {
-    private static final Integer MINUS_ONE = Integer.valueOf(-1); 
+    private static final Integer MINUS_ONE = Integer.valueOf(-1);
 
     public Expression getTarget() {
     	return firstChildOfType(Expression.class);
     }
-    
+
     public boolean isMinus() {
     	return get(0).getType()==MINUS;
     }
-    
+
     public Object evaluate(Environment env) {
         Number value = null;
         try {
@@ -318,10 +317,10 @@ INJECT UnaryPlusMinusExpression :
 }
 
 AdditiveExpression :
-   MultiplicativeExpression 
+   MultiplicativeExpression
    (
       (
-         <PLUS> 
+         <PLUS>
          |
          <MINUS>
       )
@@ -329,7 +328,7 @@ AdditiveExpression :
    )*
 ;
 
-INJECT AdditiveExpression : 
+INJECT AdditiveExpression :
     import org.congocc.templates.TemplateException;
     import org.congocc.templates.core.ArithmeticEngine;
     import org.congocc.templates.core.Environment;
@@ -397,7 +396,7 @@ INJECT AdditiveExpression :
 }
 
 MultiplicativeExpression :
-   UnaryExpression 
+   UnaryExpression
    (
       (
          <TIMES>
@@ -420,11 +419,11 @@ INJECT MultiplicativeExpression :
     public Expression getLeft() {
     	return (Expression) get(0);
     }
-    
+
     public Expression getRight() {
     	return (Expression) get(2);
     }
-    
+
     public Object evaluate(Environment env) {
         Object result = ((Expression) get(0)).evaluate(env);
         for (int i=0; i<size()/2; i++) {
@@ -451,8 +450,8 @@ INJECT MultiplicativeExpression :
         }
         Number first = getNumber(leftSide, getLeft(), env);
         Number second = getNumber(rightSide, getRight(), env);
-        ArithmeticEngine ae = 
-            env != null 
+        ArithmeticEngine ae =
+            env != null
                 ? env.getArithmeticEngine()
                 : getTemplate().getArithmeticEngine();
         switch (operation) {
@@ -472,9 +471,9 @@ EqualityExpression :
    RelationalExpression
    [
      (
-      <NOT_EQUALS> 
+      <NOT_EQUALS>
       |
-      <EQUALS> 
+      <EQUALS>
       |
       <DOUBLE_EQUALS>
      )
@@ -532,7 +531,7 @@ INJECT EqualityExpression :
 }
 
 RelationalExpression :
-   RangeExpression 
+   RangeExpression
    [
      (
       <GREATER_THAN_EQUALS>
@@ -582,13 +581,13 @@ INJECT RelationalExpression :
         ArithmeticEngine ae = env != null ? env.getArithmeticEngine() : getTemplate().getArithmeticEngine();
         int comp = ae.compareNumbers((Number)left, (Number)right);
         switch(operation) {
-            case LESS_THAN : 
+            case LESS_THAN :
                 return comp < 0;
-            case GREATER_THAN : case ESCAPED_GT : 
+            case GREATER_THAN : case ESCAPED_GT :
                 return comp > 0;
-            case LESS_THAN_EQUALS : 
+            case LESS_THAN_EQUALS :
                 return comp <= 0;
-            case GREATER_THAN_EQUALS : case ESCAPED_GTE : 
+            case GREATER_THAN_EQUALS : case ESCAPED_GTE :
                 return comp >= 0;
             default : throw new InternalError();
         }
@@ -623,7 +622,7 @@ INJECT RangeExpression :
     public boolean hasRhs() {
         return size()==3;
     }
-    
+
     public Object evaluate(Environment env) {
         int min = getNumber(getLeft(), env).intValue();
         int max = 0;
@@ -633,7 +632,7 @@ INJECT RangeExpression :
         }
         return new NumericalRange(min);
     }
-    
+
     public boolean isTrue(Environment env) {
         return size() > 0;
     }
@@ -641,7 +640,7 @@ INJECT RangeExpression :
     private class NumericalRange extends AbstractList<Integer> {
         private int lower, upper;
         private boolean descending, norhs; // if norhs is true, then we have a half-range, like n..
-        
+
         /**
         * Constructor for half-range, i.e. n..
         */
@@ -671,7 +670,7 @@ INJECT RangeExpression :
 }
 
 AndExpression :
-   EqualityExpression 
+   EqualityExpression
    [
       <AND>
       AndExpression
@@ -685,7 +684,7 @@ INJECT AndExpression :
     public Expression getLeft() {
     	return (Expression) get(0);
     }
-    
+
     public Expression getRight() {
     	return (Expression) get(2);
     }
@@ -714,7 +713,7 @@ INJECT OrExpression :
     public Expression getLeft() {
     	return (Expression) get(0);
     }
-    
+
     public Expression getRight() {
     	return (Expression) get(2);
     }
@@ -731,10 +730,10 @@ INJECT OrExpression :
 ListLiteral :
     <OPEN_BRACKET>
     [
-      Expression 
+      Expression
       (
          <COMMA>
-         Expression 
+         Expression
       )*
     ]
     <CLOSE_BRACKET>
@@ -786,7 +785,7 @@ INJECT BuiltinVariable :
     public void setName(String name) {
       this.name = name.intern();
     }
-    
+
     public String getName() {
         return name;
     }
@@ -803,7 +802,7 @@ INJECT BuiltinVariable :
            case "locale" : return env.getLocale().toString();
            case "lang" : return env.getLocale().getLanguage();
            case "pass" : return Macro.DO_NOTHING_MACRO;
-           case "name" : return env.getTemplate().getName(); 
+           case "name" : return env.getTemplate().getName();
            case "version" : return Configuration.getVersionNumber();
            case "output_encoding" : return env.getOutputEncoding();
            case "url_escaping_charset" : return env.getURLEscapingCharset();
@@ -813,24 +812,24 @@ INJECT BuiltinVariable :
     }
 
     static class VarsHash implements TemplateHash {
-        
+
         private final Environment env;
-        
+
         VarsHash(Environment env) {
             this.env = env;
         }
-        
+
         public Object get(String key) {
             return env.getVariable(key);
         }
-        
+
         public boolean isEmpty() {
             return false;
         }
     }
 }
 
-INJECT DefaultToExpression : 
+INJECT DefaultToExpression :
     import org.congocc.templates.core.Environment;
     import org.congocc.templates.core.variables.*;
     import static org.congocc.templates.core.variables.Wrap.LOOSE_NULL;
@@ -840,14 +839,14 @@ INJECT DefaultToExpression :
 	public Expression getLeft() {
 		return (Expression) get(0);
 	}
-	
+
 	public Expression getRight() {
 		return childrenOfType(Expression.class).size() == 2 ?
 		(Expression) getLastChild() : null;
 	}
 
 	public Object evaluate(Environment env) {
-		Object left = null;		
+		Object left = null;
 		try {
 			left = getLeft().evaluate(env);
 		} catch (InvalidReferenceException ire) {
@@ -1017,7 +1016,7 @@ INJECT MethodCall :
     public Expression getTarget() {
     	return (Expression) get(0);
     }
-    
+
     @SuppressWarnings({"unchecked","rawtypes"})
     public Object evaluate(Environment env) {
         Object value = getTarget().evaluate(env);
@@ -1104,11 +1103,11 @@ INJECT MethodCall :
     }
 }
 
-PositionalArgsList# : 
-	Expression 
+PositionalArgsList# :
+	Expression
 	(
 	   <COMMA>
-	   Expression 
+	   Expression
 	)*
 ;
 
@@ -1161,8 +1160,8 @@ NamedArgsList :
 	Expression arg;
 }
 	<ID> {param = lastConsumedToken.toString();}
-	<EQUALS> 
-	arg=Expression  
+	<EQUALS>
+	arg=Expression
 	{
 		CURRENT_NODE.addNamedArg(param, arg);
 	}
@@ -1184,7 +1183,7 @@ INJECT NamedArgsList :
     extends ArgsList;
 {
 
-    private LinkedHashMap<String,Expression> namedArgs = 
+    private LinkedHashMap<String,Expression> namedArgs =
         new LinkedHashMap<String, Expression>();
 
     public void addNamedArg(String name, Expression exp) throws ParseException{
@@ -1207,7 +1206,7 @@ INJECT NamedArgsList :
     }
 
     public Map<String, Object> getParameterMap(Object tm, Environment env) {
-        Map<String, Object> result = null; 
+        Map<String, Object> result = null;
         ParameterList annotatedParameterList = ArgsList.getParameterList(tm);
         if (annotatedParameterList == null) {
             result = new HashMap<String, Object>();
@@ -1227,7 +1226,7 @@ INJECT NamedArgsList :
     public List<Object> getParameterSequence(Object target, Environment env) {
         ParameterList annotatedParameterList = getParameterList(target);
         if (annotatedParameterList == null) {
-            String msg = "Error at: " + getLocation() 
+            String msg = "Error at: " + getLocation()
             + "\nCannot invoke method " + target + " with a key=value parameter list because it is not annotated.";
             throw new TemplateException(msg, env);
         }
@@ -1258,13 +1257,13 @@ INJECT ArgsList :
     import org.congocc.templates.TemplateException;
 {
 	/**
-	 * Cache the retrieved annotation information, since it seems like 
+	 * Cache the retrieved annotation information, since it seems like
 	 * this operation could be a bit expensive.
 	 */
 	private static Map<String, ParameterList> parameterListCache = new ConcurrentHashMap<String, ParameterList>();
    // Placeholder for null - ConcurrentHashMap doesn't tolerate null values
 	private static final ParameterList NO_PARAM_LIST = new ParameterList();
-        
+
 	/**
 	 * The target will be a TemplateTranformModel.
 	 * This returns a key-value map of the arguments to be passed to the target.
@@ -1272,9 +1271,9 @@ INJECT ArgsList :
 	 * this ArgList in some way.
 	 */
 	public abstract Map<String, Object> getParameterMap(Object target, Environment env);
-	
+
 	public abstract List<Object> getParameterSequence(Object target, Environment env);
-	
+
 	public static ParameterList getParameterList(Object target) {
             String keyName = target.getClass().getName();
             ParameterList result = parameterListCache.get(keyName);
@@ -1302,7 +1301,7 @@ INJECT ArgsList :
                 return null;
             }
 	}
-	
+
 	private static ParameterList getParameterList(String s) {
 		CTLLexer token_source = new CTLLexer(s);
 		token_source.switchTo(LexicalState.EXPRESSION);
@@ -1359,7 +1358,7 @@ INJECT HashLiteral :
 {
     private List<Expression> keys = new ArrayList<>();
     private List<Expression> values = new ArrayList<>();
-    
+
     public void close() {
         boolean justSawKey = false;
         for (Expression exp : childrenOfType(Expression.class)) {
@@ -1369,7 +1368,7 @@ INJECT HashLiteral :
        }
        assert keys.size() == values.size() : getSource();
     }
-    
+
     public Object evaluate(Environment env) {
         Map<Object,Object> result = new LinkedHashMap<>();
         for (int i = 0; i < keys.size(); i++) {
@@ -1379,11 +1378,11 @@ INJECT HashLiteral :
         }
         return result;
     }
-    
+
     public List<Expression> getKeys() {
     	return Collections.unmodifiableList(keys);
     }
-    
+
     public List<Expression> getValues() {
     	return Collections.unmodifiableList(values);
     }
