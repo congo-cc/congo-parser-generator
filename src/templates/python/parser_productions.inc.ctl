@@ -580,7 +580,7 @@ ${is}        self.clear_node_scope()
    [#if classname = "CodeBlock"]
 ${globals::translateCodeBlock(expansion, indent)}
    [#elif classname = "RawCode"]
-${expansion.rawContent}
+${expansion}
    [#elseif classname = "UncacheTokens"]
 ${is}self.uncache_tokens()
    [#elseif classname = "Failure"]

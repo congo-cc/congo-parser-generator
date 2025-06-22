@@ -75,6 +75,10 @@ public class RawCode extends EmptyExpansion {
         return (Token) get(1);
     }
 
+    public String toString() {
+        return "\n# explicitdedent:on\n" + getRawContent() + "\n# explicitdedent:restore\n";
+    }
+
     public boolean getHitError() {
         return parseException != null;
     }
