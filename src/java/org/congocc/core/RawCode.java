@@ -23,7 +23,7 @@ public class RawCode extends EmptyExpansion {
         PYTHON_EXPRESSION
     }
 
-    private Node parsedContent;
+    private boolean alreadyParsed;
 
     private ParseException parseException;
 
@@ -68,86 +68,72 @@ public class RawCode extends EmptyExpansion {
     }
 
     public void parseContent() {
-        if (!isAlreadyParsed()) {
+        if (!alreadyParsed) {
             try {
-                this.parsedContent = switch(getContentType()) {
+                switch(getContentType()) {
                     case JAVA_BLOCK -> parseJavaBlock();
                     case JAVA_EXPRESSION -> parseJavaExpression();
                     case CSHARP_BLOCK -> parseCSharpBlock();
                     case CSHARP_EXPRESSION -> parseCSharpExpression();
                     case PYTHON_BLOCK -> parsePythonBlock();
                     case PYTHON_EXPRESSION -> parsePythonExpression();
-                };
+                }
             } catch(ParseException pe) {
                 this.parseException = pe;
             }
         }
+        alreadyParsed = true;
     }
 
     public boolean isAlreadyParsed() {
-        return parseException != null || parsedContent != null;
+        return alreadyParsed;
     }
 
-    public Node getParsedContent() {
-        return parsedContent;
-    }
-
-    public String toString() {
-        if (!isAlreadyParsed()) parseContent();
-        return parsedContent.toString();
+    public String getRawContent() {
+        return get(1).toString();
     }
 
     public boolean getHasError() {
         return parseException != null;
     }
 
-    Node parseJavaBlock() {
-        String content = getSource();
-        content = content.substring(1,content.length()-1);
-        CongoCCParser cccParser = new CongoCCParser(getInputSource(), content);
+    void parseJavaBlock() {
+        CongoCCParser cccParser = new CongoCCParser(getInputSource(), (CharSequence) get(1));
         cccParser.setStartingPos(getBeginLine(), getBeginColumn()+1);
-        return cccParser.EmbeddedJavaBlock();
+        cccParser.EmbeddedJavaBlock();
     }
 
-    Node parseJavaExpression() {
-        String content = getSource();
-        content = content.substring(2, content.length()-2);
-        CongoCCParser cccParser = new CongoCCParser(getInputSource(), content);
+    void parseJavaExpression() {
+        CongoCCParser cccParser = new CongoCCParser(getInputSource(), (CharSequence) get(1));
         cccParser.setStartingPos(getBeginLine(), getBeginColumn()+2);
-        return cccParser.EmbeddedJavaExpression();
+        cccParser.EmbeddedJavaExpression();
     }
-    
-    Node parseCSharpBlock() {
-        String content = getSource();
-        content = content.substring(1,content.length()-1);
-        CSParser csParser = new CSParser(getInputSource(), content);
+
+    void parseCSharpBlock() {
+        CSParser csParser = new CSParser(getInputSource(), (CharSequence) get(1));
         csParser.setStartingPos(getBeginLine(), getBeginColumn()+2);
-        return csParser.EmbeddedCSharpBlock();
+        csParser.EmbeddedCSharpBlock();
     }
 
-    Node parseCSharpExpression() {
-        String content = getSource();
-        content = content.substring(2, content.length()-2);
-        CSParser csParser = new CSParser(getInputSource(), content);
+    void parseCSharpExpression() {
+        CSParser csParser = new CSParser(getInputSource(), (CharSequence) get(1));
         csParser.setStartingPos(getBeginLine(), getBeginColumn() + 2);
-        return csParser.EmbeddedCSharpExpression();
+        csParser.EmbeddedCSharpExpression();
     }
 
-    Node parsePythonBlock() {
-        String content = getSource();
-        content = content.substring(2,content.length()-2);
-        PythonParser cccParser = new PythonParser(getInputSource(), content);
-        cccParser.setStartingPos(getBeginLine(), getBeginColumn()+1);
-        return cccParser.EmbeddedPythonBlock();
+    void parsePythonBlock() {
+        PythonParser cccParser = new PythonParser(getInputSource(), getRawContent());
+        cccParser.setStartingPos(getBeginLine(), getBeginColumn()+2);
+        cccParser.EmbeddedPythonBlock();
     }
 
-    Node parsePythonExpression() {
+    void parsePythonExpression() {
         String content = getSource();
         content = content.substring(2, content.length()-2);
         PythonParser pyParser = new PythonParser(getInputSource(), content);
         pyParser.setLineJoining(true);
         pyParser.setStartingPos(getBeginLine(), getBeginColumn() + 2);
-        return pyParser.EmbeddedPythonExpression();
+        pyParser.EmbeddedPythonExpression();
     }
 
 }

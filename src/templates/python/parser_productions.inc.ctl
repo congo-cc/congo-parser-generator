@@ -579,6 +579,8 @@ ${is}        self.clear_node_scope()
    [#-- take care of the non-tree-building classes --]
    [#if classname = "CodeBlock"]
 ${globals::translateCodeBlock(expansion, indent)}
+   [#elif classname = "RawCode"]
+${expansion.rawContent}
    [#elseif classname = "UncacheTokens"]
 ${is}self.uncache_tokens()
    [#elseif classname = "Failure"]
@@ -666,8 +668,6 @@ ${globals::translateCodeBlock(fail.code, indent)}[#rt]
 [#if assertion.assertionExpression]
 ${is}if not (${globals::translateExpression(assertion.assertionExpression)}):
 ${is}    self.fail("${assertionMessage}"${optionalPart})
-#elif assertion.assertionExpressionRawCode
-${is}if not (${assertionExpressionRawCode.parsedContent})
 [/#if]
 [#if assertion.expansion??]
 ${is}if [#if !assertion.expansionNegated]not [/#if]self.${assertion.expansion.scanRoutineName}():

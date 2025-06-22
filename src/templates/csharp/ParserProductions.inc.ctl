@@ -574,11 +574,11 @@ if (BuildTree) {
    [#-- take care of the non-tree-building classes --]
    [#if classname = "CodeBlock"]
 ${globals::translateCodeBlock(expansion, 1)}
+   [#elseif classname = "RawCode"]
+      ${expansion.rawContent}
 [#-- FIXME: for some reason a CodeBlock consisting only of a "// ..." line throws a ParseException on previous template line (for CSharp, not Java). --]
    [#-- OMITTED: [#elseif classname = "UncacheTokens"]
          uncacheTokens(); --]
-   [#elseif classname = "RawCode"]
-      ${expansion.parsedContent}
    [#elseif classname = "Failure"]
       [@BuildCodeFailure expansion/]
    [#elseif classname = "Assertion"]
@@ -655,10 +655,6 @@ ${globals::translateCodeBlock(fail.code, 1)}
    [#var assertionMessage = "Assertion at: " + assertion.location?j_string + " failed. "]
    [#if assertion.assertionExpression]
 if (!(${globals::translateExpression(assertion.assertionExpression)})) {
-    Fail("${assertionMessage}"${optionalPart});
-}
-   #elif assertion.assertionExpressionRawCode
-if (!(${assertion.assertionExpressionRawCode.parsedContent})) {
     Fail("${assertionMessage}"${optionalPart});
 }
    [/#if]
@@ -934,10 +930,10 @@ ${BuildCode(subexp)}
 [#-- Generates code for when we need a scanahead --]
 #macro ScanAheadCondition expansion
   #if expansion.lookahead?? && expansion.lookahead.assignment??
-     (${expansion.lookahead.assignment.name} = 
+     (${expansion.lookahead.assignment.name} =
   #endif
   #if expansion.hasSemanticLookahead && !expansion.lookahead.semanticLookaheadNested
-    (${globals::translateExpression(expansion.semanticLookahead)}) && 
+    (${globals::translateExpression(expansion.semanticLookahead)}) &&
   #endif
     ${expansion.predicateMethodName}()
   #if expansion.lookahead?? && expansion.lookahead.assignment??
@@ -946,12 +942,12 @@ ${BuildCode(subexp)}
 #endmacro
 
 
-#-- Generates code for when we don't need any scanahead routine 
+#-- Generates code for when we don't need any scanahead routine
 #macro SingleTokenCondition expansion
   #if expansion.hasSemanticLookahead
-     (${globals::translateExpression(expansion.semanticLookahead)}) && 
+     (${globals::translateExpression(expansion.semanticLookahead)}) &&
   #endif
-  #if expansion.enteredUnconditionally 
+  #if expansion.enteredUnconditionally
      true
   #elif expansion.firstSet.tokenNames?size == 0
      false

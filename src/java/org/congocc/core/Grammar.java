@@ -224,7 +224,7 @@ public class Grammar extends BaseNode {
     public LexerData getLexerData() {
         return lexerData;
     }
-    
+
     public String getDefaultLexicalState() {
         return defaultLexicalState == null ? "DEFAULT" : defaultLexicalState;
     }
@@ -492,7 +492,7 @@ public class Grammar extends BaseNode {
         checkForHooks(n, null);
         codeInjections.add(n);
     }
-    
+
     /**
      * Adds an injected field to the specified {@link Node} dynamically (post parsing).
      * @param nodeName is the name of the {@code Node}
@@ -516,7 +516,7 @@ public class Grammar extends BaseNode {
         }
         return undefinedNTs.isEmpty();
     }
-    
+
     public boolean isUsingCardinality() {
         for (Assertion assertion : descendants(Assertion.class)) {
             if (assertion.isCardinalityConstraint()) return true;
@@ -536,9 +536,9 @@ public class Grammar extends BaseNode {
             lexerData.addLexicalState(lexicalState);
         }
         if (!checkReferences()) return;
-        // Check whether we have any LOOKAHEADs at non-choice points 
+        // Check whether we have any LOOKAHEADs at non-choice points
         for (ExpansionSequence sequence : descendants(ExpansionSequence.class)) {
-            if (sequence.getHasExplicitLookahead() 
+            if (sequence.getHasExplicitLookahead()
                && !sequence.isAtChoicePoint())
             {
                 errors.addError(sequence, "Encountered scanahead at a non-choice location." );
@@ -590,7 +590,7 @@ public class Grammar extends BaseNode {
                 errors.addError(regexpSpec, "Regular Expression can match empty string. This is not allowed here.");
             }
         }
-        
+
         for (BNFProduction prod : descendants(BNFProduction.class)) {
             String lexicalStateName = prod.getLexicalState();
             if (lexicalStateName != null && lexerData.getLexicalState(lexicalStateName) == null) {
@@ -601,7 +601,7 @@ public class Grammar extends BaseNode {
                 errors.addError(prod, "Production " + prod.getName() + " is left recursive.");
             }
         }
-        
+
         for (Assignment assignment : descendants(Assignment.class)) {
             if (assignment.isPropertyAssignment() || assignment.isNamedAssignment()) {
                 BNFProduction production = assignment.firstAncestorOfType(BNFProduction.class);
@@ -612,7 +612,7 @@ public class Grammar extends BaseNode {
                 }
             }
         }
-        
+
         if (isUsingCardinality()) {
             new CardinalityChecker(this);
         }
@@ -629,7 +629,7 @@ public class Grammar extends BaseNode {
                         errors.addWarning(seq, msg);
                         break;
                     }
-                } 
+                }
             }
         }
 
@@ -640,8 +640,8 @@ public class Grammar extends BaseNode {
             }
         }
 
-        for (Expansion exp : descendantsOfType(ExpansionSequence.class, 
-                                               exp->exp.getHasExplicitLookahead() 
+        for (Expansion exp : descendantsOfType(ExpansionSequence.class,
+                                               exp->exp.getHasExplicitLookahead()
                                                  && exp.getHasNumericalLookahead())) {
             int amount = exp.getLookaheadAmount();
             int maxSize = exp.getMaximumSize();
@@ -669,9 +669,9 @@ public class Grammar extends BaseNode {
             }
         }
 
-        for (Token tok : descendantsOfType(Token.class, 
-                   t->t.getType() == Token.TokenType.__ASSERT 
-                   && t.firstAncestorOfType(Lookahead.class) != null)) { 
+        for (Token tok : descendantsOfType(Token.class,
+                   t->t.getType() == Token.TokenType.__ASSERT
+                   && t.firstAncestorOfType(Lookahead.class) != null)) {
             errors.addWarning(tok, "ASSERT keyword inside a lookahead, should really be ENSURE");
         }
     }
@@ -681,28 +681,29 @@ public class Grammar extends BaseNode {
             ucb.parseContent();
             if (ucb.getParseException()!=null) {
                 errors.addError(ucb, ucb.getParseException().getMessage());
-            } 
+                ucb.getParseException().printStackTrace();
+            }
         }
     }
-    
+
     public class CardinalityChecker extends Visitor {
         private final Grammar context;
         CardinalityChecker(Grammar context) {
             this.context = context;
             visit(context);
         }
-        
+
         @Override
         public void visit(Node n) {
             super.visit(n);
         }
-        
+
         Stack<int[]> rangeStack = new Stack<>();
-        
+
         public void visit(BNFProduction n) {
             recurse(n);
         }
-        
+
         // check repetition cardinality constraints (depth first)
         public void visit(ExpansionWithParentheses n) {
             if (n.isCardinalityContainer()) {
@@ -720,9 +721,9 @@ public class Grammar extends BaseNode {
                     context.errors.addError(n, "Cardinality constraints may only allowed be contained in ZeroOrMore and OneOrMore expansions.");
                 }
             }
-            
+
         }
-        
+
         public void visit(AttemptBlock attempt) {
             /*
              *REVISIT:JB This restriction should probably be relaxed for consistency and least surprise. If/When it is, it
@@ -734,7 +735,7 @@ public class Grammar extends BaseNode {
             }
             recurse(attempt);
         }
-        
+
         public void visit(ExpansionSequence s) {
             recurse(s);
             try {
@@ -751,7 +752,7 @@ public class Grammar extends BaseNode {
                                 int[] constraint = a.getCardinalityConstraint();
                                 if (constraint[1] == 0) errors.addWarning(a, "Maximum cardinality is 0; this is likely an error.");
                                 if (constraint[0] > constraint[1]) errors.addError(a, "Maximum cardinality is less than the minimum.");
-                                
+
                                 minCardinality = Math.max(constraint[0], minCardinality);
                                 maxCardinality = Math.min(constraint[1], maxCardinality);
                             }
@@ -848,7 +849,7 @@ public class Grammar extends BaseNode {
         if (following != null) {
             if (following.getNestedExpansion() != null) {
                 //Just exit the whole mess if lookahead or up-to-here is present
-                // We assume the grammar author knows what he's doing so the 
+                // We assume the grammar author knows what he's doing so the
                 // dead code check is superfluous.
                 if (following.getNestedExpansion().getRequiresPredicateMethod()) return;
             }

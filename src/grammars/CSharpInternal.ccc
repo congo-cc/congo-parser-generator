@@ -20,13 +20,9 @@ INJECT BASE_TOKEN_CLASS :
     @Property Grammar grammar;
 }
 
-Block EmbeddedCSharpBlock :
-    {Block block = null;}
-    block=Block
+EmbeddedCSharpBlock :
+    (SCAN ~(<EOF>) => Statement)+
     <EOF>
-    {
-        return block;
-    }
 ;
 
 Expression EmbeddedCSharpExpression :

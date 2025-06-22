@@ -151,10 +151,10 @@ Modifiers :
  (
     (
        SCAN {allows(ABSTRACT,FINAL)}# =>          &(<ABSTRACT>|<FINAL>) // Note the "&" is the short form for "ENSURE ASSERT {&0:1&}".
-       |  
+       |
        SCAN {allows(PRIVATE,PROTECTED,PUBLIC)}# =>&(<PRIVATE>|<PROTECTED>|<PUBLIC>)
        |
-       SCAN {allows(STATIC)}# =>                  &<STATIC> 
+       SCAN {allows(STATIC)}# =>                  &<STATIC>
        |
        SCAN {allows(SYNCHRONIZED)}# =>            &<SYNCHRONIZED>
        |
@@ -170,7 +170,7 @@ Modifiers :
     ) =>||
     |
     SCAN {
-        allows(SEALED) 
+        allows(SEALED)
         &&
         (
           checkNextTokenImage("sealed","non-sealed")
@@ -188,7 +188,7 @@ Modifiers :
  {permissibleModifiers = null;}#
 ;
 
-// For some reason, this can only 
+// For some reason, this can only
 // be injected if we are generating Java (JR)
 INJECT PARSER_CLASS :
 {
@@ -263,11 +263,11 @@ Modifiers :
 ;
 
 #endif
- 
+
 INJECT PARSER_CLASS : {
   // Used to hold the set of modifiers that is permissible
   // at a given point in the parse. If this is null,
-  // we are in some permissive mode where we accept any 
+  // we are in some permissive mode where we accept any
   // modifiers.
   private EnumSet<TokenType> permissibleModifiers;
 }
@@ -429,7 +429,7 @@ RecordDeclaration :
       replaceTokenType(RECORD);
     }
   )
-  TypeIdentifier 
+  TypeIdentifier
   [TypeParameters]
   RecordHeader
   [ImplementsList]
@@ -462,10 +462,10 @@ RecordBody :
 CompactConstructorDeclaration :
   {permissibleModifiers = EnumSet.of(PUBLIC, PROTECTED, PRIVATE);}
   (Modifiers)
-  TypeIdentifier 
+  TypeIdentifier
   <LBRACE> =>||
   (SCAN ~(<RBRACE>|ExplicitConstructorInvocation) => BlockStatement)*! // JEP 447
-  [ ExplicitConstructorInvocation =>|| ]  
+  [ ExplicitConstructorInvocation =>|| ]
   ( SCAN ~(<RBRACE>) => BlockStatement )*!
   <RBRACE>
 ;
@@ -611,7 +611,7 @@ Type#interface :
    SCAN {getTokenType(2) != LBRACKET}#
    =>PrimitiveType
    |
-   ReferenceType 
+   ReferenceType
   )
   =>||
 ;
@@ -800,7 +800,7 @@ InstanceOfExpression :
     (
       LocalVariableDeclaration // This is a stable feature in JDK 16.
       |
-      RecordPattern 
+      RecordPattern
       |
       ReferenceType
     )
@@ -1132,7 +1132,7 @@ VarDeclaration :
   (
     <VAR>
     |
-    <IDENTIFIER> 
+    <IDENTIFIER>
     {
         replaceTokenType(VAR);
     }
@@ -1212,7 +1212,7 @@ WhenClause :
 ;
 
 SwitchStatement :
-  <SWITCH> <LPAREN> Expression <RPAREN> 
+  <SWITCH> <LPAREN> Expression <RPAREN>
   <LBRACE>
   [
     SCAN NewSwitchLabel =>
@@ -1224,7 +1224,7 @@ SwitchStatement :
   <RBRACE>
 ;
 
-INJECT SwitchStatement : 
+INJECT SwitchStatement :
 {
     /**
      * Is this a newer style switch statement, that uses
@@ -1245,7 +1245,7 @@ ClassicCaseStatement# :
 ;
 
 NewSwitchLabel :
-  CaseOrDefault 
+  CaseOrDefault
   <LAMBDA>
 ;
 
@@ -1293,7 +1293,7 @@ INJECT IfStatement :
       return null;
     }
 }
-   
+
 WhileStatement :
   <WHILE> <LPAREN> Expression <RPAREN> Statement
 ;
@@ -1344,7 +1344,7 @@ YieldStatement :
         replaceTokenType(YIELD);
       }
    )
-   Expression 
+   Expression
    <SEMICOLON>
 ;
 
@@ -1360,16 +1360,16 @@ TryStatement :
   <TRY>
   [ResourcesInTryBlock]
   Block
-  ASSERT {getTokenType(1) == FINALLY 
-       || getTokenType(1) == CATCH 
+  ASSERT {getTokenType(1) == FINALLY
+       || getTokenType(1) == CATCH
        || currentNodeScope.get(1) instanceof ResourcesInTryBlock}
        : "Since this is not a try-with-resources, there must be at least one catch or finally block." :
   (CatchBlock)*
   [FinallyBlock]
 ;
 
-ResourcesInTryBlock : 
-    <LPAREN> 
+ResourcesInTryBlock :
+    <LPAREN>
     (
       // Note that the following assertions only apply after the first iteration.
        ENSURE {getTokenType(0) == SEMICOLON}
@@ -1386,7 +1386,7 @@ ResourcesInTryBlock :
        [<SEMICOLON>]
     )+
     <RPAREN>
-;    
+;
 
 CatchBlock :
     <CATCH>
