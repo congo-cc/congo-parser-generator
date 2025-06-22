@@ -399,10 +399,6 @@ INJECT CodeBlock :
 {
     @Property boolean appliesInLookahead;
 
-    public CodeBlock getJavaCode() {
-        return this;
-    }
-
     @Override
     public boolean startsWithGlobalCodeAction(boolean stopAtScanLimit) {
         return isAppliesInLookahead() || getContainingProduction().isOnlyForLookahead();
@@ -426,6 +422,10 @@ INJECT CodeBlock :
             buf.append(" ");
         }
         return buf.toString();
+    }
+
+    public String getRawContent() {
+        return toString();
     }
 }
 

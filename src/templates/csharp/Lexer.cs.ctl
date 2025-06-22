@@ -1301,7 +1301,7 @@ ${globals::translateLexerInitializers()}
         [#list lexerData.regularExpressions as regexp]
                 [#if regexp.codeSnippet??]
             case TokenType.${regexp.label}:
-${globals::translateCodeBlock(regexp.codeSnippet.javaCode, 16)}
+${globals::translateCodeBlock(regexp.codeSnippet, 16)}
                 break;
                 [/#if]
         [/#list]

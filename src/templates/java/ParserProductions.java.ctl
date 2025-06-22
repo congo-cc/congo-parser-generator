@@ -919,7 +919,7 @@
           if (${loopExpansion.recoverMethodName}(pe)) {
              #if loopExpansion.recoveryBlock??
                  // Recovery code action at ${loopExpansion.recoveryBlock.location} when recovery succeeded and pushed an InvalidNode
-                 ${loopExpansion.recoveryBlock.javaCode}
+                 ${loopExpansion.recoveryBlock}
              /#if
              pendingRecovery = false;
           }

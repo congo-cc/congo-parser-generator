@@ -135,7 +135,7 @@ class ${settings.lexerClassName} extends TokenSource
         if (lexicalState != null) switchTo(lexState);
      #if settings.cppContinuationLine
         handleCContinuationLines();
-     #endif 
+     #endif
      }
 
      public ${TOKEN} getNextToken(${TOKEN} tok) {
@@ -231,7 +231,7 @@ class ${settings.lexerClassName} extends TokenSource
                 if (input instanceof TokenSource) {
                     position = ((TokenSource) input).nextUnignoredOffset(position);
                 }
-    #endif 
+    #endif
             } else {
                 currentStates.set(0);
             }
@@ -280,7 +280,7 @@ class ${settings.lexerClassName} extends TokenSource
        // If we are in a MORE, there is some possibility that there
        // was a lexical state change since the last iteration of this loop!
         NfaFunction[] nfaFunctions = functionTableMap.get(lexicalState);
-      #endif 
+      #endif
 #if settings.usesPreprocessor
         position = nextUnignoredOffset(position);
 #endif
@@ -399,7 +399,7 @@ class ${settings.lexerClassName} extends TokenSource
    #list lexerData.regularExpressions as regexp
         #if regexp.codeSnippet
       case ${regexp.label} :
-          ${regexp.codeSnippet.javaCode}
+          ${regexp.codeSnippet}
            break;
         #endif
    #endlist

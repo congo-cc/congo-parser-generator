@@ -177,7 +177,7 @@ INJECT BASE_NODE_CLASS :
 INJECT PARSER_CLASS : {
 
     private EnumSet<TokenType> CongoCCKeyWords = EnumSet.of(
-       _FAIL, __ASSERT, _SCAN, _IGNORE_CASE,
+       __ASSERT, _SCAN, _IGNORE_CASE,
        _TOKEN, _CONTEXTUAL_KEYWORD, _UNPARSED, _SKIP, _MORE,
        _ATTEMPT, _RECOVER, _ON_ERROR,
        _LEXICAL_STATE);
@@ -1304,9 +1304,9 @@ ExpansionUnit #void :
   |
   RawCode
   |
-  SCAN 1 ~\...\Lookahead => AttemptBlock
+  SCAN ~\...\Lookahead => AttemptBlock
   |
-  SCAN 1 ~\...\Lookahead => TryBlock
+  SCAN ~\...\Lookahead => TryBlock
   |
   Assertion
   |
@@ -1508,6 +1508,8 @@ Failure# :
       [":"]
       |
       Block
+      |
+      RawCode
    ]
    {
        CURRENT_NODE.setExp(exp);

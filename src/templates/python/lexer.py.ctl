@@ -944,7 +944,7 @@ ${globals::translateLexerInjections(true)}
   #list lexerData.regularExpressions as regexp
     #if regexp.codeSnippet
         [#if idx > 0]el[/#if]if matched_type == TokenType.${regexp.label}:
-${globals::translateCodeBlock(regexp.codeSnippet.javaCode, 12)}
+${globals::translateCodeBlock(regexp.codeSnippet, 12)}
       #set idx = idx + 1
     /#if
   /#list

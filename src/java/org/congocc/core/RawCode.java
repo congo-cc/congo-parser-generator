@@ -1,16 +1,16 @@
 package org.congocc.core;
 
-import org.congocc.parser.Node;
 import org.congocc.parser.ParseException;
-import static org.congocc.parser.Token.TokenType.UNPARSED_CONTENT;
-
-import javax.net.ssl.CertPathTrustManagerParameters;
-
+import org.congocc.parser.Token;
 import org.congocc.parser.CongoCCParser;
+import org.congocc.parser.Node;
 import org.congocc.parser.csharp.CSParser;
 import org.congocc.parser.python.PythonParser;
 import org.congocc.parser.tree.Assertion;
+import org.congocc.parser.tree.Failure;
 import org.congocc.parser.tree.Lookahead;
+import static org.congocc.core.RawCode.ContentType.*;
+import static org.congocc.parser.Token.TokenType.HASH;
 
 public class RawCode extends EmptyExpansion {
 
@@ -34,33 +34,15 @@ public class RawCode extends EmptyExpansion {
     }
 
     public ContentType getContentType() {
-        if (contentType == null) {
-            String lang = getAppSettings().getCodeLang();
-            switch (lang) {
-                case "java" -> {
-                    if (getParent() instanceof Assertion || getParent() instanceof Lookahead) {
-                        contentType = ContentType.JAVA_EXPRESSION;
-                    } else {
-                        contentType = ContentType.JAVA_BLOCK;
-                    }
-                }
-                case "csharp" -> {
-                    if (getParent() instanceof Assertion || getParent() instanceof Lookahead) {
-                        contentType = ContentType.CSHARP_EXPRESSION;
-                    } else {
-                        contentType = ContentType.CSHARP_BLOCK;
-                    }
-                }
-                case "python" -> {
-                    if (getParent() instanceof Assertion || getParent() instanceof Lookahead) {
-                        contentType = ContentType.PYTHON_EXPRESSION;
-                    } else {
-                        contentType = ContentType.PYTHON_BLOCK;
-                    }
-                }
-            }
-        }
-        return contentType;
+        if (contentType != null) return contentType;
+        String lang = getAppSettings().getCodeLang();
+        boolean isExpression = getParent() instanceof Assertion || getParent() instanceof Lookahead || getParent() instanceof Failure;
+        return contentType = switch (lang) {
+            case "java" -> isExpression ? JAVA_EXPRESSION : JAVA_BLOCK;
+            case "csharp" -> isExpression ? CSHARP_EXPRESSION : CSHARP_BLOCK;
+            case "python" -> isExpression ? PYTHON_BLOCK : PYTHON_BLOCK;
+            default -> throw new IllegalArgumentException("Expecting one of java, csharp, or python");
+        };
     }
 
     public void setContentType(ContentType type) {
@@ -89,50 +71,63 @@ public class RawCode extends EmptyExpansion {
         return alreadyParsed;
     }
 
-    public String getRawContent() {
-        return get(1).toString();
+    public Token getRawContent() {
+        return (Token) get(1);
     }
 
-    public boolean getHasError() {
+    public boolean getHitError() {
         return parseException != null;
     }
 
+    public boolean isAppliesInLookahead() {
+        return this.size()>3;
+    }
+
+    @Override
+    public boolean startsWithGlobalCodeAction(boolean stopAtScanLimit) {
+        return isAppliesInLookahead() || getContainingProduction().isOnlyForLookahead();
+    }
+
     void parseJavaBlock() {
-        CongoCCParser cccParser = new CongoCCParser(getInputSource(), (CharSequence) get(1));
-        cccParser.setStartingPos(getBeginLine(), getBeginColumn()+1);
+        Token code = getRawContent();
+        CongoCCParser cccParser = new CongoCCParser(getInputSource(), code);
+        cccParser.setStartingPos(code.getBeginLine(), code.getBeginColumn());
         cccParser.EmbeddedJavaBlock();
     }
 
     void parseJavaExpression() {
-        CongoCCParser cccParser = new CongoCCParser(getInputSource(), (CharSequence) get(1));
-        cccParser.setStartingPos(getBeginLine(), getBeginColumn()+2);
+        Token code = getRawContent();
+        CongoCCParser cccParser = new CongoCCParser(getInputSource(), code);
+        cccParser.setStartingPos(code.getBeginLine(), code.getBeginColumn());
         cccParser.EmbeddedJavaExpression();
     }
 
     void parseCSharpBlock() {
-        CSParser csParser = new CSParser(getInputSource(), (CharSequence) get(1));
-        csParser.setStartingPos(getBeginLine(), getBeginColumn()+2);
+        Token code = getRawContent();
+        CSParser csParser = new CSParser(getInputSource(), code);
+        csParser.setStartingPos(code.getBeginLine(), code.getBeginColumn());
         csParser.EmbeddedCSharpBlock();
     }
 
     void parseCSharpExpression() {
-        CSParser csParser = new CSParser(getInputSource(), (CharSequence) get(1));
-        csParser.setStartingPos(getBeginLine(), getBeginColumn() + 2);
+        Token code = getRawContent();
+        CSParser csParser = new CSParser(getInputSource(), code);
+        csParser.setStartingPos(getBeginLine(), code.getBeginColumn());
         csParser.EmbeddedCSharpExpression();
     }
 
     void parsePythonBlock() {
-        PythonParser cccParser = new PythonParser(getInputSource(), getRawContent());
-        cccParser.setStartingPos(getBeginLine(), getBeginColumn()+2);
+        Token code = getRawContent();
+        PythonParser cccParser = new PythonParser(getInputSource(), code);
+        cccParser.setStartingPos(code.getBeginLine(), code.getBeginColumn());
         cccParser.EmbeddedPythonBlock();
     }
 
     void parsePythonExpression() {
-        String content = getSource();
-        content = content.substring(2, content.length()-2);
-        PythonParser pyParser = new PythonParser(getInputSource(), content);
+        Token code = getRawContent();
+        PythonParser pyParser = new PythonParser(getInputSource(), code);
         pyParser.setLineJoining(true);
-        pyParser.setStartingPos(getBeginLine(), getBeginColumn() + 2);
+        pyParser.setStartingPos(code.getBeginLine(), code.getBeginColumn());
         pyParser.EmbeddedPythonExpression();
     }
 
