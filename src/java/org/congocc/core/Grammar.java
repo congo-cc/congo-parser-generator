@@ -22,7 +22,6 @@ import org.congocc.parser.tree.*;
  * This object is the root Node of the data structure that contains all the
  * information regarding a congocc processing job.
  */
-@SuppressWarnings("unused")
 public class Grammar extends BaseNode {
     private String defaultLexicalState;
     private final LexerData lexerData = new LexerData(this);
@@ -680,7 +679,7 @@ public class Grammar extends BaseNode {
         for (RawCode ucb : descendants(RawCode.class)) {
             ucb.parseContent();
             if (ucb.getParseException()!=null) {
-                errors.addError(ucb, ucb.getParseException().getMessage());
+                errors.addError(ucb, "Error in embedded code block");
                 ucb.getParseException().printStackTrace();
             }
         }

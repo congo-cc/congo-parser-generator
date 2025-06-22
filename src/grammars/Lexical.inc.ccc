@@ -70,7 +70,7 @@ TOKEN :
 ;
 
 <IN_UNPARSED_CODE_BLOCK> TOKEN :
-  <UNPARSED_CONTENT : (~["}"] | (("}")+ ~["$"]))+ > #UnparsedContent
+  <?UNPARSED_CONTENT : (~[])* <END_UNPARSED>> #UnparsedContent {matchedToken.truncate(2);}
   |
   <END_UNPARSED : "}$" >
 ;
