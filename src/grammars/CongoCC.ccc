@@ -118,9 +118,9 @@ RawCode #org.congocc.core.RawCode :
    <START_UNPARSED>
    LEXICAL_STATE IN_UNPARSED_CODE_BLOCK
    (
-     [<UNPARSED_CONTENT>]
-     <END_UNPARSED>
-   )
+     <UNPARSED_CONTENT>
+   )?
+   <END_UNPARSED>
 ;
 
 INJECT BASE_NODE_CLASS :
@@ -159,7 +159,7 @@ INJECT BASE_NODE_CLASS :
     public String getInputSource() {
         return getTokenSource().getInputSource();
     }
-
+#if false
     public String getLocation() {
         return getInputSource() + ":" + getBeginLine() + ":" + getBeginColumn();
     }
@@ -173,6 +173,7 @@ INJECT BASE_NODE_CLASS :
         TokenSource tokenSource = getTokenSource();
         return tokenSource == null ? 0 : tokenSource.getCodePointColumnFromOffset(getBeginOffset());
     }
+#endif
 }
 
 

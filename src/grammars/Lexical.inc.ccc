@@ -69,12 +69,13 @@ TOKEN :
   > #StringLiteral
   |
   <START_UNPARSED : "${">
+  |
+  <END_UNPARSED : "}$">
 ;
 
 <IN_UNPARSED_CODE_BLOCK> TOKEN :
-  <?UNPARSED_CONTENT : (~[])* <END_UNPARSED>> #UnparsedContent {matchedToken.truncate(2);}
-  |
-  <END_UNPARSED : "}$" >
+  <?UNPARSED_CONTENT : (~[])+ <END_UNPARSED>>
+  #UnparsedContent {matchedToken.truncate(2);}
 ;
 
 TokenProduction :

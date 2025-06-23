@@ -308,6 +308,15 @@ public class ${settings.baseTokenClassName} ${implements} {
         ${settings.lexerClassName} ts = getTokenSource();
         return ts != null ? ts.getInputSource() : "input";
     }
+
+    public String getLocation() {
+        int extraIndent = 0;
+        TokenSource ts = getTokenSource();
+        if (ts != null) {
+           extraIndent = ts.getExtraIndent();
+        }
+        return getInputSource() + ":" + getBeginLine() + ":" + (getBeginColumn()+extraIndent);
+    }
 #endif
 
     public int getBeginOffset() {
@@ -568,10 +577,6 @@ public class ${settings.baseTokenClassName} ${implements} {
        #endif
     }
 
-    public String getLocation() {
-        return getInputSource() + ":" + getBeginLine() + ":" + getBeginColumn();
-     }
-
 #if settings.treeBuildingEnabled
 
     public Node getParent() {
@@ -585,7 +590,6 @@ public class ${settings.baseTokenClassName} ${implements} {
     public boolean isEmpty() {
         return length() == 0;
     }
-
 #endif
 
 #if settings.usesPreprocessor
