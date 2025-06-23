@@ -138,6 +138,7 @@ public class RawCode extends EmptyExpansion {
         System.out.println(code);
         PythonParser cccParser = new PythonParser(getInputSource(), code);
         cccParser.setStartingPos(get(1).getBeginLine(), get(1).getBeginColumn());
+        cccParser.setExtraIndent(extraIndent);
         parsedContent = cccParser.Module();
         parsedContent.dump();
     }

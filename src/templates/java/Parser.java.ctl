@@ -52,14 +52,14 @@ import static ${settings.parserPackage}.${settings.baseTokenClassName}.TokenType
   #endlist
 #endif
 
-public ${isFinal ?: "final"} class ${settings.parserClassName} { 
+public ${isFinal ?: "final"} class ${settings.parserClassName} {
 
 #if grammar.usingCardinality
 
     [#-- N.B., this class definition can be replaced by:
-      record CardinalityState (int[] cardinalities, boolean isProvisional) {}; 
+      record CardinalityState (int[] cardinalities, boolean isProvisional) {};
       in Java 17 --]
-    
+
     private static final class CardinalityState {
         private final int[] cardinalities;
         private final boolean isProvisional;
@@ -109,7 +109,7 @@ public ${isFinal ?: "final"} class ${settings.parserClassName} {
         Stack<CardinalityState> cardinalitiesStack = new Stack<>();
         final int[] cardinalities;
 
-        // TODO: use "record CardinalityState (int[] cardinalities, boolean isProvisional) {};" in Java 17 
+        // TODO: use "record CardinalityState (int[] cardinalities, boolean isProvisional) {};" in Java 17
 
         RepetitionCardinality(int[][] choiceCardinalities, boolean isParsing) {
             this.choiceCardinalities = choiceCardinalities;
@@ -137,12 +137,12 @@ public ${isFinal ?: "final"} class ${settings.parserClassName} {
                 } else {
                     priorState = cardinalitiesStack.get(cardinalitiesStack.size() - 2);
                 }
-                // at this point current is a provisional frame 
+                // at this point current is a provisional frame
                 int[] currentCardinalities = currentState.cardinalities();
                 int[] priorCardinalities = priorState.cardinalities();
                 // N.B., there can never be more than one increment per interation, hence this check
                 // allowing the detection of multiple chooses during the lookahead process.  In
-                // other words, in a given iteration only the first increment is necessary and 
+                // other words, in a given iteration only the first increment is necessary and
                 // sufficient for accuracy.
                 if (currentCardinalities[choiceNo] == priorCardinalities[choiceNo]) {
                     if (currentCardinalities[choiceNo] < choiceCardinalities[choiceNo][1]) {
@@ -171,7 +171,7 @@ public ${isFinal ?: "final"} class ${settings.parserClassName} {
                 // create new initialized frame
                 return cardinalitiesStack.push(new CardinalityState(new int[choiceCardinalities.length], isProvisional));
             } else {
-                // create new frame from current top frame 
+                // create new frame from current top frame
                 return cardinalitiesStack.push(new CardinalityState(cardinalitiesStack.peek().cardinalities(), isProvisional));
             }
         }
@@ -188,7 +188,7 @@ public ${isFinal ?: "final"} class ${settings.parserClassName} {
           if (isLookahead) {
               CardinalityState finalized = new CardinalityState(new int[choiceCardinalities.length], false);
               if (cardinalitiesStack.size() == 1) {
-                  finalized = cardinalitiesStack.pop(); 
+                  finalized = cardinalitiesStack.pop();
               }
               for (int i = 0; i < finalized.cardinalities().length; i++) {
                   if (finalized.cardinalities()[i] < choiceCardinalities[i][0]) {
@@ -213,9 +213,9 @@ public ${isFinal ?: "final"} class ${settings.parserClassName} {
                 cardinalitiesStack.push(new CardinalityState(current.cardinalities(), false));
             } else if (isParsing) {
                 // No provisional frame (i.e., no lookahead "choose" yet), but we are parsing now, so
-                // update the lookahead cardinalities by borrowing the parsing ones, as the lookahead 
-                // cardinality increment is potentially done after the actual parsing increment 
-                // (this handles the OneOrMore loop order). 
+                // update the lookahead cardinalities by borrowing the parsing ones, as the lookahead
+                // cardinality increment is potentially done after the actual parsing increment
+                // (this handles the OneOrMore loop order).
                 cardinalitiesStack.pop(); // pop the penultimate
                 cardinalitiesStack.push(new CardinalityState(cardinalities, false));
             }
@@ -233,7 +233,7 @@ public ${isFinal ?: "final"} class ${settings.parserClassName} {
         }
     }
 #else
-  // Suppressing RepetitionCardinality class; cardinality not used in this parser. 
+  // Suppressing RepetitionCardinality class; cardinality not used in this parser.
 #endif
 
 static final int UNLIMITED = Integer.MAX_VALUE;
@@ -322,6 +322,10 @@ public boolean getLegacyGlitchyLookahead() {
      */
     public void setStartingPos(int startingLine, int startingColumn) {
         token_source.setStartingPos(startingLine, startingColumn);
+    }
+
+    public void setExtraIndent(int extraIndent) {
+      token_source.setExtraIndent(extraIndent);
     }
 
   // If the next token is cached, it returns that

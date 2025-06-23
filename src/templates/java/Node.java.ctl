@@ -346,7 +346,12 @@ public interface Node extends List<Node> {
      * implementation that could be overridden
      */
     default String getLocation() {
-         return getInputSource() + ":" + getBeginLine() + ":" + getBeginColumn();
+         int extraIndent = 0;
+         TokenSource ts = getTokenSource();
+//         if (ts != null) {
+//            extraIndent = ts.getExtraIndent();
+//         }
+         return getInputSource() + ":" + getBeginLine() + ":" + (getBeginColumn()+extraIndent);
     }
 
      /**

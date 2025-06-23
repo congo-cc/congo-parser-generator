@@ -49,7 +49,7 @@ public class FilesGenerator {
         // We check for the 'templates' subdirectory existing, because otherwise
         // the template library will raise an exception.
         //
-        
+
         String templateFolder = "/templates/".concat(codeLang);
         Path altDir = dir.resolve(templateFolder.substring(1));
         if (Files.exists(altDir)) {
@@ -232,7 +232,6 @@ public class FilesGenerator {
     void outputPythonFile(String code, Path outputFile) throws IOException {
         Module module;
         Writer out = Files.newBufferedWriter(outputFile);
-        //int initialLines = countChars(code, '\n');
 
         try {
             if (!outputFile.toString().endsWith("py")) {
@@ -254,11 +253,6 @@ public class FilesGenerator {
         try (Writer output = Files.newBufferedWriter(outputFile)) {
             Reaper reaper = new Reaper(module);
             reaper.reap();
-            //PythonFormatter formatter = new PythonFormatter(module);
-            // int finalLines = countChars(s, '\n');
-            // if (initialLines != finalLines) {
-            //     logger.fine(String.format("Parser line count went from %d to %d", initialLines, finalLines));
-            // }
             String s = new PyFormatter().format(module, false);
             output.write(s);
             output.write("\n# Output by PyFormatter class\n");

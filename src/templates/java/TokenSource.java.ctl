@@ -66,6 +66,8 @@ abstract public class TokenSource implements CharSequence
     private int startingLine;
     private int startingColumn;
 
+    private int extraIndent;
+
     /**
      * Set the starting line/column for location reporting.
      * By default, this is 1,1.
@@ -73,6 +75,14 @@ abstract public class TokenSource implements CharSequence
     public void setStartingPos(int startingLine, int startingColumn) {
       this.startingLine = startingLine;
       this.startingColumn = startingColumn;
+    }
+
+    public void setExtraIndent(int extraIndent) {
+        this.extraIndent = extraIndent;
+    }
+
+    public int getExtraIndent() {
+        return this.extraIndent;
     }
 
     protected TokenSource(String inputSource,
