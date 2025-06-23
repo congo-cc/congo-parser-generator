@@ -33,6 +33,9 @@ public class RawCode extends EmptyExpansion {
 
     private Node parsedContent;
 
+    // Only used for parsing a Python block
+    private int extraIndent;
+
     public ParseException getParseException() {
         return this.parseException;
     }
@@ -129,9 +132,12 @@ public class RawCode extends EmptyExpansion {
     }
 
     void parsePythonBlock() {
-        Token code = getRawContent();
+        String code = get(1).toString();
+        System.out.println(code);
+        code = normalizePythonBlock(code);
+        System.out.println(code);
         PythonParser cccParser = new PythonParser(getInputSource(), code);
-        cccParser.setStartingPos(code.getBeginLine(), code.getBeginColumn());
+        cccParser.setStartingPos(get(1).getBeginLine(), get(1).getBeginColumn());
         parsedContent = cccParser.Module();
         parsedContent.dump();
     }
@@ -143,4 +149,21 @@ public class RawCode extends EmptyExpansion {
         pyParser.setStartingPos(code.getBeginLine(), code.getBeginColumn());
     }
 
+    private String normalizePythonBlock(String input) {
+        var minimalIndent = input.lines().mapToInt(s->indentLevel(s)).min();
+        if (minimalIndent.isEmpty()) return input;
+        extraIndent = minimalIndent.getAsInt();
+        return input.indent(-extraIndent);
+    }
+
+    private int indentLevel(String s) {
+        for (int i=0; i<s.length(); i++) {
+            char c = s.charAt(i);
+            if (!Character.isWhitespace(c)) {
+                if (c == '#') return Integer.MAX_VALUE;
+                return i;
+            }
+        }
+        return Integer.MAX_VALUE;
+    }
 }
