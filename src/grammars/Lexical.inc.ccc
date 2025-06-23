@@ -1,51 +1,53 @@
 // An included part of the CongoCC grammar that is just the
 // part that involves the lexical specification
 
+TOKEN #CongoCCKeyWord :
+  < _INJECT: "INJECT" >
+  |
+  < _INCLUDE : "INCLUDE">
+  |
+  < _FAIL : "FAIL" >
+  |
+  < _UNCACHE_TOKENS : "UNCACHE_TOKENS">
+  |
+  < _ACTIVE_TOKENS : "ACTIVE_TOKENS">
+  |
+  < _ACTIVATE_TOKENS : "ACTIVATE_TOKENS">
+  |
+  < _DEACTIVATE_TOKENS : "DEACTIVATE_TOKENS">
+  |
+  < __ASSERT : "ASSERT">
+  |
+  < _ENSURE : "ENSURE" >
+  |
+  < _SCAN : "SCAN" >
+  |
+  < _IGNORE_CASE: "IGNORE_CASE" >
+  |
+  < _TOKEN: "TOKEN" | "REGULAR_TOKEN">
+  |
+  < _CONTEXTUAL_KEYWORD: "CONTEXTUAL_KEYWORD" >
+  |
+  < TERMINATES : "TERMINATES" >
+  |
+  < _UNPARSED: "SPECIAL_TOKEN" | "UNPARSED" >
+  |
+  < _MORE: "MORE" | "INCOMPLETE_TOKEN" >
+  |
+  < _SKIP: "SKIP" >
+  |
+  < _EOF : "EOF">
+  |
+  < _ATTEMPT: "ATTEMPT">
+  |
+  < _RECOVER : "RECOVER">
+  |
+  < _RECOVER_TO : "RECOVER_TO">
+  |
+  < _ON_ERROR : "ON_ERROR">
+;
+
 TOKEN :
-  < _INJECT: "INJECT" > #CongoCCKeyWord
-  |
-  < _INCLUDE : "INCLUDE" | "INCLUDE_GRAMMAR"> #CongoCCKeyWord
-  |
-  < _FAIL : "FAIL" > #CongoCCKeyWord
-  |
-  < _UNCACHE_TOKENS : "UNCACHE_TOKENS"> #CongoCCKeyWord
-  |
-  < _ACTIVE_TOKENS : "ACTIVE_TOKENS"> #CongoCCKeyWord
-  |
-  < _ACTIVATE_TOKENS : "ACTIVATE_TOKENS"> #CongoCCKeyWord
-  |
-  < _DEACTIVATE_TOKENS : "DEACTIVATE_TOKENS"> #CongoCCKeyWord
-  |
-  < __ASSERT : "ASSERT"> #CongoCCKeyWord
-  |
-  < _ENSURE : "ENSURE" > #CongoCCKeyWord
-  |
-  < _SCAN : "SCAN" > #CongoCCKeyWord
-  |
-  < _IGNORE_CASE: "IGNORE_CASE" > #CongoCCKeyWord
-  |
-  < _TOKEN: "TOKEN" | "REGULAR_TOKEN"> #CongoCCKeyWord
-  |
-  < _CONTEXTUAL_KEYWORD: "CONTEXTUAL_KEYWORD" > #CongoCCKeyWord
-  |
-  < TERMINATES : "TERMINATES" > #CongoCCKeyWord
-  |
-  < _UNPARSED: "SPECIAL_TOKEN" | "UNPARSED" > #CongoCCKeyWord
-  |
-  < _MORE: "MORE" | "INCOMPLETE_TOKEN" > #CongoCCKeyWord
-  |
-  < _SKIP: "SKIP" > #CongoCCKeyWord
-  |
-  < _EOF : "EOF"> #CongoCCKeyWord
-  |
-  < _ATTEMPT: "ATTEMPT"> #CongoCCKeyWord
-  |
-  < _RECOVER : "RECOVER"> #CongoCCKeyWord
-  |
-  < _RECOVER_TO : "RECOVER_TO"> #CongoCCKeyWord
-  |
-  < _ON_ERROR : "ON_ERROR"> #CongoCCKeyWord
-  |
   <HASH : "#">
   |
   <BACKSLASH : "\\"> #Backslash

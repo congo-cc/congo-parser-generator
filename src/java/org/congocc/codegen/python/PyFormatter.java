@@ -12,11 +12,11 @@ public class PyFormatter extends Node.Visitor {
     private int bracketNesting, parenthesesNesting, braceNesting;
     private final String eol = "\n";
     private boolean altFormat;
-    
+
     public String format(Node node, boolean altFormat) {
         this.altFormat = altFormat;
         if (altFormat) {
-            buffer.append("explicitdedent:on");
+            buffer.append("# explicitdedent:on\n");
         }
         visit(node);
         return getText();
@@ -24,7 +24,7 @@ public class PyFormatter extends Node.Visitor {
 
     public String getText() {
         if (buffer.charAt(buffer.length()-1) != '\n') buffer.append('\n');
-        if (altFormat) buffer.append("#explicitdedent:restore\n");
+        if (altFormat) buffer.append("\n# explicitdedent:restore\n");
         return buffer.toString();
     }
 
@@ -59,7 +59,7 @@ public class PyFormatter extends Node.Visitor {
            .trim()
            .toLowerCase().startsWith("explicitdedent:")) {
             return;
-        } 
+        }
         if (tok.startsLine()) {
             indentLine();
         }
@@ -86,7 +86,7 @@ public class PyFormatter extends Node.Visitor {
         if (!tok.isUnparsed()) {
             buffer.append(eol);
             return;
-        } 
+        }
         if (tok.getPrevious() instanceof Newline) {
             buffer.append(eol);
         }
@@ -106,4 +106,4 @@ public class PyFormatter extends Node.Visitor {
             return 0xFFFF;
         }
     }
-}   
+}

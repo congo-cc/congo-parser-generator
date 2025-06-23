@@ -6,6 +6,8 @@ import org.congocc.parser.CongoCCParser;
 import org.congocc.parser.Node;
 import org.congocc.parser.csharp.CSParser;
 import org.congocc.parser.python.PythonParser;
+import org.congocc.parser.python.ast.EmbeddedPythonBlock;
+import org.congocc.parser.python.ast.Module;
 import org.congocc.parser.tree.Assertion;
 import org.congocc.parser.tree.Failure;
 import org.congocc.parser.tree.Lookahead;
@@ -28,6 +30,8 @@ public class RawCode extends EmptyExpansion {
     private ParseException parseException;
 
     private ContentType contentType;
+
+    private Node parsedContent;
 
     public ParseException getParseException() {
         return this.parseException;
@@ -76,7 +80,11 @@ public class RawCode extends EmptyExpansion {
     }
 
     public String toString() {
-        return "\n# explicitdedent:on\n" + getRawContent() + "\n# explicitdedent:restore\n";
+        if (contentType == ContentType.PYTHON_BLOCK) {
+            parseContent();
+            return ((Module) parsedContent).toAltFormat();
+        }
+        return getRawContent().toString();
     }
 
     public boolean getHitError() {
@@ -124,7 +132,8 @@ public class RawCode extends EmptyExpansion {
         Token code = getRawContent();
         PythonParser cccParser = new PythonParser(getInputSource(), code);
         cccParser.setStartingPos(code.getBeginLine(), code.getBeginColumn());
-        cccParser.EmbeddedPythonBlock();
+        parsedContent = cccParser.Module();
+        parsedContent.dump();
     }
 
     void parsePythonExpression() {
@@ -132,7 +141,6 @@ public class RawCode extends EmptyExpansion {
         PythonParser pyParser = new PythonParser(getInputSource(), code);
         pyParser.setLineJoining(true);
         pyParser.setStartingPos(code.getBeginLine(), code.getBeginColumn());
-        pyParser.EmbeddedPythonExpression();
     }
 
 }

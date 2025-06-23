@@ -19,12 +19,24 @@ INJECT BASE_TOKEN_CLASS :
     @Property Grammar grammar;
 }
 
-EmbeddedPythonBlock#void :
-  (Statement)+
-  <EOF>
-;
-
 EmbeddedPythonExpression :
     Expression
     <EOF>
 ;
+
+#EmbeddedPythonBlock# :
+  (Statement)*
+  <EOF>
+  {
+    return thisProduction;
+  }
+;
+
+INJECT Module :
+  import org.congocc.codegen.python.PyFormatter;
+{
+    public String toAltFormat() {
+        return new PyFormatter().format(this,true);
+    }
+}
+

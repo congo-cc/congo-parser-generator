@@ -9,7 +9,9 @@ USES_PREPROCESSOR;
 
 DEACTIVATE_TOKENS=_INCLUDE,_INJECT,_EOF, RECORD, VAR, YIELD, SEALED, NON_SEALED, PERMITS, TERMINATES;
 
-/* congocc RESERVED WORDS: These are the only tokens in congocc but not in Java */
+// We can use this symbol to generate code conditionally
+// based on whether we are generating code for internal use
+#define __congo_internal__
 
 INCLUDE "Lexical.inc.ccc"
 INCLUDE "JavaInternal.ccc"
