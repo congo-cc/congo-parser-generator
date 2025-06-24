@@ -8,6 +8,7 @@ import org.congocc.parser.csharp.CSParser;
 import org.congocc.parser.python.PythonParser;
 import org.congocc.parser.python.ast.Module;
 import org.congocc.parser.tree.Assertion;
+import org.congocc.parser.tree.CodeInjection;
 import org.congocc.parser.tree.EmbeddedCode;
 import org.congocc.parser.tree.Failure;
 import org.congocc.parser.tree.Lookahead;
@@ -39,31 +40,13 @@ public class RawCode extends EmptyExpansion implements EmbeddedCode {
         return this.parseException;
     }
 
-    public ContentType getContentType() {
-        if (contentType != null) return contentType;
-        CodeLang lang = getAppSettings().getCodeLang();
-        boolean isExpression = getParent() instanceof Assertion || getParent() instanceof Lookahead || getParent() instanceof Failure;
-        return contentType = switch (lang) {
-            case JAVA -> isExpression ? JAVA_EXPRESSION : JAVA_BLOCK;
-            case CSHARP -> isExpression ? CSHARP_EXPRESSION : CSHARP_BLOCK;
-            case PYTHON -> isExpression ? PYTHON_BLOCK : PYTHON_BLOCK;
-        };
-    }
-
-    public void setContentType(ContentType type) {
-        this.contentType = type;
-    }
-
     public void parseContent() {
         if (!alreadyParsed) {
             try {
-                switch(getContentType()) {
-                    case JAVA_BLOCK -> parseJavaBlock();
-                    case JAVA_EXPRESSION -> parseJavaExpression();
-                    case CSHARP_BLOCK -> parseCSharpBlock();
-                    case CSHARP_EXPRESSION -> parseCSharpExpression();
-                    case PYTHON_BLOCK -> parsePythonBlock();
-                    case PYTHON_EXPRESSION -> parsePythonExpression();
+                switch(getAppSettings().getCodeLang()) {
+                    case JAVA -> parseJava();
+                    case CSHARP -> parseCSharp();
+                    case PYTHON -> parsePython();
                 }
             } catch(ParseException pe) {
                 this.parseException = pe;
@@ -101,32 +84,46 @@ public class RawCode extends EmptyExpansion implements EmbeddedCode {
         return isAppliesInLookahead() || getContainingProduction().isOnlyForLookahead();
     }
 
-    void parseJavaBlock() {
+    void parseJava() {
         Token code = getRawContent();
         CongoCCParser cccParser = new CongoCCParser(getInputSource(), code);
         cccParser.setStartingPos(code.getBeginLine(), code.getBeginColumn());
-        cccParser.EmbeddedJavaBlock();
+        Node parent = this.getParent();
+        if (parent instanceof Assertion || parent instanceof Failure || parent instanceof Lookahead) {
+            cccParser.EmbeddedJavaExpression();
+        }
+        else if (parent instanceof CodeInjection) {
+            cccParser.EmbeddedJavaClassOrInterfaceBody();
+        }
+        else {
+            cccParser.EmbeddedJavaBlock();
+        }
     }
 
-    void parseJavaExpression() {
-        Token code = getRawContent();
-        CongoCCParser cccParser = new CongoCCParser(getInputSource(), code);
-        cccParser.setStartingPos(code.getBeginLine(), code.getBeginColumn());
-        cccParser.EmbeddedJavaExpression();
-    }
-
-    void parseCSharpBlock() {
+    void parseCSharp() {
         Token code = getRawContent();
         CSParser csParser = new CSParser(getInputSource(), code);
         csParser.setStartingPos(code.getBeginLine(), code.getBeginColumn());
-        csParser.EmbeddedCSharpBlock();
+        Node parent = this.getParent();
+        if (parent instanceof Assertion || parent instanceof Failure || parent instanceof Lookahead) {
+            csParser.EmbeddedCSharpExpression();
+        } else {
+            csParser.EmbeddedCSharpBlock();
+        }
+
     }
 
-    void parseCSharpExpression() {
-        Token code = getRawContent();
-        CSParser csParser = new CSParser(getInputSource(), code);
-        csParser.setStartingPos(getBeginLine(), code.getBeginColumn());
-        csParser.EmbeddedCSharpExpression();
+    void parsePython() {
+        String code = get(1).toString();
+        code = normalizePythonBlock(code);
+        PythonParser pyParser = new PythonParser(getInputSource(), code);
+        pyParser.setStartingPos(get(1).getBeginLine(), get(1).getBeginColumn());
+        pyParser.setExtraIndent(extraIndent);
+        Node parent = this.getParent();
+        if (parent instanceof Assertion || parent instanceof Failure || parent instanceof Lookahead) {
+            pyParser.EmbeddedPythonExpression();
+        }
+        parsedContent = pyParser.Module();
     }
 
     void parsePythonBlock() {

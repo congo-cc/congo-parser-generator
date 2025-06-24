@@ -68,9 +68,9 @@ TOKEN :
        "'"
   > #StringLiteral
   |
-  <START_UNPARSED : (["J","P","C"])? "${">
+  <START_UNPARSED : (["J","P","C"])? "{%">
   |
-  <END_UNPARSED : "}$">
+  <END_UNPARSED : "%}">
 ;
 
 <IN_UNPARSED_CODE_BLOCK> TOKEN :

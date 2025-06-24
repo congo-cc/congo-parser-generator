@@ -19,6 +19,11 @@ EmbeddedJavaBlock#void :
     <EOF>
 ;
 
+EmbeddedJavaClassOrInterfaceBody#void :
+    (SCAN ~(<EOF>) => ClassOrInterfaceBodyDeclaration)*
+    <EOF>
+;
+
 EmbeddedJavaExpression :
     Expression
     <EOF>

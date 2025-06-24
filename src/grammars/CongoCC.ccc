@@ -426,7 +426,7 @@ GrammarInclusion throws IOException :
         [
            SCAN 0 {foundOptionalInitialBrace} => "}"
         ]
-        [coib=ClassOrInterfaceBody {thisProduction.body = coib;}]
+        [coib=ClassOrInterfaceBody {%thisProduction.body = coib;%}]
         {
                 if (enterIncludes) {
                     grammar.addCodeInjection(thisProduction);
@@ -626,7 +626,11 @@ TreeNodeDescriptor #TreeBuildingAnnotation :
             (">" | ">=" | "<" | "<=" | "+" | "-")
             {thisProduction.setInitialShorthand(lastConsumedToken.toString());}
           ]
+          #if __java__
           Expression {thisProduction.setCondition((Expression) peekNode());}
+          #else
+          <INTEGER_LITERAL>
+          #endif
        ")"
   ]
 ;
@@ -1321,7 +1325,7 @@ ExpansionUnit #void :
  [
     SCAN ~\...\Lookahead =>
     InlineTreeNodeDescriptor =>||
-    { result.setTreeNodeBehavior((TreeBuildingAnnotation) peekNode()); }
+    {% result.setTreeNodeBehavior((TreeBuildingAnnotation) peekNode()); %}
  ]
 ;
 
@@ -1330,10 +1334,10 @@ ExpansionUnit #void :
       Block
       [
         "#"
-        ${
+        {%
             popNode();
             ((CodeBlock) peekNode()).setAppliesInLookahead(true);
-        }$
+        %}
       ]
       |
       RawCode
@@ -1358,7 +1362,7 @@ ExpansionUnit #void :
   ]
   [
      SCAN ~\...\Lookahead =>
-     ( "!" | "!->" @recoveryBlock = EmbeddedCode )
+     ( "!" | "!->" @recoveryBlock = EmbeddedCode() )
      {thisProduction.setTolerantParsing(true);}
   ]
   [ChildNameInfo(thisProduction)]
@@ -1617,7 +1621,4 @@ INJECT TryBlock  :
     public FinallyBlock getFinallyBlock() {
         return firstChildOfType(FinallyBlock.class);
     }
-
 }
-
-
