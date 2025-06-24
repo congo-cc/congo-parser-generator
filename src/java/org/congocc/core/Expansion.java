@@ -28,7 +28,7 @@ abstract public class Expansion extends BaseNode {
     private String scanRoutineName, firstSetVarName;
 
     private boolean tolerantParsing;
-    private CodeBlock recoveryBlock;
+    private EmbeddedCode recoveryBlock;
 
     /**
      * If we hit a parsing error in this expansion, do we try to recover? This is
@@ -46,11 +46,11 @@ abstract public class Expansion extends BaseNode {
      * If a recovery action is provided (in fault-tolerant mode), this is it.
      * @return the recovery action {@link CodeBlock}
      */
-    public CodeBlock getRecoveryBlock() {
+    public EmbeddedCode getRecoveryBlock() {
         return recoveryBlock;
     }
 
-    public void setRecoveryBlock(CodeBlock recoveryBlock) {
+    public void setRecoveryBlock(EmbeddedCode recoveryBlock) {
         this.recoveryBlock = recoveryBlock;
     }
 
@@ -87,7 +87,7 @@ abstract public class Expansion extends BaseNode {
     private Boolean atChoicePoint;
 
     /**
-     * This method is a bit hairy because of the need to deal with 
+     * This method is a bit hairy because of the need to deal with
      * superfluous parentheses.
      * @return Is this expansion at a choice point?
      */
@@ -97,11 +97,11 @@ abstract public class Expansion extends BaseNode {
             return atChoicePoint = false;
         }
         Node parent = getParent();
-        if (parent instanceof ExpansionChoice 
-            || parent instanceof OneOrMore 
+        if (parent instanceof ExpansionChoice
+            || parent instanceof OneOrMore
             || parent instanceof ZeroOrMore
-            || parent instanceof ZeroOrOne 
-            || parent instanceof BNFProduction) 
+            || parent instanceof ZeroOrOne
+            || parent instanceof BNFProduction)
         {
                 return atChoicePoint = true;
         }
@@ -135,7 +135,7 @@ abstract public class Expansion extends BaseNode {
     }
 
     /**
-     * @return the lexical state to switch into to parse this expansion. 
+     * @return the lexical state to switch into to parse this expansion.
      */
     public String getSpecifiedLexicalState() {
         Node parent = getParent();
@@ -155,7 +155,7 @@ abstract public class Expansion extends BaseNode {
     public final boolean superfluousParentheses() {
         return this.getClass() == ExpansionWithParentheses.class && firstChildOfType(ExpansionSequence.class) != null;
     }
- 
+
     public boolean isInsideLookahead() {
         return firstAncestorOfType(Lookahead.class) != null;
     }
@@ -163,7 +163,7 @@ abstract public class Expansion extends BaseNode {
     public boolean isInsideAssertion() {
         return firstAncestorOfType(Assertion.class) != null;
     }
-    
+
     public boolean isCardinalityConstrained() {
     	return false;
     }
@@ -344,14 +344,14 @@ abstract public class Expansion extends BaseNode {
     }
 
     /**
-     * @return Can we do a short-cut and scan this expansion 
+     * @return Can we do a short-cut and scan this expansion
      * as a single token (using the scanToken method)
      */
     public boolean isSingleTokenLookahead() {
-        return !isPossiblyEmpty() 
-            && getMaximumSize() == 1 
-            && !getHasScanLimit() && getLookahead() == null 
-            && !hasGlobalSemanticActions() 
+        return !isPossiblyEmpty()
+            && getMaximumSize() == 1
+            && !getHasScanLimit() && getLookahead() == null
+            && !hasGlobalSemanticActions()
             && !startsWithLexicalChange();
     }
 
@@ -366,7 +366,7 @@ abstract public class Expansion extends BaseNode {
         if (getRequiresPredicateMethod()) return false;
         if (getHasSemanticLookahead()) return false;
         if (isPossiblyEmpty()) return true;
-        return getLookaheadAmount() == 0; 
+        return getLookaheadAmount() == 0;
     }
 
     /**

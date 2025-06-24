@@ -391,7 +391,8 @@ INJECT InvocationArguments :
 
 INJECT CodeBlock :
   import java.util.List;
-   extends org.congocc.core.EmptyExpansion;
+   extends org.congocc.core.EmptyExpansion
+   implements EmbeddedCode
 {
     @Property boolean appliesInLookahead;
 

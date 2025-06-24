@@ -348,9 +348,9 @@ public interface Node extends List<Node> {
     default String getLocation() {
          int extraIndent = 0;
          TokenSource ts = getTokenSource();
-//         if (ts != null) {
-//            extraIndent = ts.getExtraIndent();
-//         }
+         if (ts != null) {
+            extraIndent = ts.getExtraIndent();
+         }
          return getInputSource() + ":" + getBeginLine() + ":" + (getBeginColumn()+extraIndent);
     }
 

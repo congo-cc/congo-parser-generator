@@ -6,15 +6,14 @@ import org.congocc.parser.CongoCCParser;
 import org.congocc.parser.Node;
 import org.congocc.parser.csharp.CSParser;
 import org.congocc.parser.python.PythonParser;
-import org.congocc.parser.python.ast.EmbeddedPythonBlock;
 import org.congocc.parser.python.ast.Module;
 import org.congocc.parser.tree.Assertion;
+import org.congocc.parser.tree.EmbeddedCode;
 import org.congocc.parser.tree.Failure;
 import org.congocc.parser.tree.Lookahead;
 import static org.congocc.core.RawCode.ContentType.*;
-import static org.congocc.parser.Token.TokenType.HASH;
 
-public class RawCode extends EmptyExpansion {
+public class RawCode extends EmptyExpansion implements EmbeddedCode {
 
     public enum ContentType {
         JAVA_BLOCK,
@@ -136,7 +135,8 @@ public class RawCode extends EmptyExpansion {
         code = normalizePythonBlock(code);
         PythonParser cccParser = new PythonParser(getInputSource(), code);
         cccParser.setStartingPos(get(1).getBeginLine(), get(1).getBeginColumn());
-        cccParser.setExtraIndent(extraIndent);
+        //cccParser.setExtraIndent(extraIndent);
+        System.out.println("Extra indent is: " +extraIndent);
         parsedContent = cccParser.Module();
     }
 
