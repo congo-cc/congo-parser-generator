@@ -8,6 +8,8 @@ import org.congocc.codegen.csharp.CSharpTranslator;
 import org.congocc.codegen.java.CodeInjector;
 import org.congocc.codegen.python.PythonTranslator;
 import org.congocc.parser.Node;
+import org.congocc.parser.Node.CodeLang;
+import static org.congocc.parser.Node.CodeLang.*;
 import org.congocc.parser.Token;
 import org.congocc.parser.Token.TokenType;
 import org.congocc.parser.tree.*;
@@ -700,12 +702,12 @@ public class Translator {
     public int getMethodIndent() { return methodIndent; }
 
     public static Translator getTranslatorFor(Grammar grammar) {
-        String codeLang = grammar.getAppSettings().getCodeLang();
+        CodeLang codeLang = grammar.getAppSettings().getCodeLang();
 
-        if (codeLang.equals("python")) {
+        if (codeLang == PYTHON) {
             return new PythonTranslator(grammar);
         }
-        else if (codeLang.equals("csharp")) {
+        else if (codeLang == CSHARP) {
             return new CSharpTranslator(grammar);
         }
         // Add other language translator cases here
@@ -1022,7 +1024,7 @@ public class Translator {
         return result;
     }
 
-    // Currently only works for the classic switch statement, i.e. case Exp : 
+    // Currently only works for the classic switch statement, i.e. case Exp :
     protected Node transformSwitchStatement(SwitchStatement switchStatement) {
         if (switchStatement.isNewStyle()) {
             throw new UnsupportedOperationException("Currently can only transform the classic switch statement");
@@ -1037,7 +1039,7 @@ public class Translator {
                 if (switchLabel.size() > 1) {
                     pendingLabels.add((ASTExpression) transformTree(switchLabel.get(1)));
                 }
-            } 
+            }
             else {
                 currentCase = new ASTCaseStatement();
                 Node label = child.get(0);
@@ -1508,7 +1510,7 @@ public class Translator {
     }
 
     public void fail() throws UnsupportedOperationException {
-        String message = String.format("not supported by translator for the '%s' language", appSettings.getCodeLang());
+        String message = String.format("not supported by translator for the '%s' language", appSettings.getCodeLang().toString().toLowerCase());
         throw new UnsupportedOperationException(message);
     }
 

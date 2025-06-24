@@ -19,6 +19,8 @@ import org.congocc.codegen.java.*;
 import org.congocc.codegen.python.Reaper;
 import org.congocc.codegen.csharp.CSharpFormatter;
 import org.congocc.parser.*;
+import org.congocc.parser.Node.CodeLang;
+import static org.congocc.parser.Node.CodeLang.*;
 import org.congocc.parser.python.ast.Module;
 import org.congocc.parser.tree.CompilationUnit;
 import org.congocc.parser.tree.ObjectType;
@@ -35,7 +37,7 @@ public class FilesGenerator {
     private final CodeInjector codeInjector;
     private final Set<String> tokenSubclassFileNames = new LinkedHashSet<>();
     private final Map<String, String> superClassLookup = new HashMap<>();
-    private final String codeLang;
+    private final CodeLang codeLang;
     private final boolean generateRootApi;
 
     void initializeTemplateEngine() throws IOException {
@@ -50,7 +52,7 @@ public class FilesGenerator {
         // the template library will raise an exception.
         //
 
-        String templateFolder = "/templates/".concat(codeLang);
+        String templateFolder = "/templates/".concat(codeLang.toString().toLowerCase());
         Path altDir = dir.resolve(templateFolder.substring(1));
         if (Files.exists(altDir)) {
             templatesConfig.setDirectoryForTemplateLoading(altDir.toString());
@@ -65,7 +67,7 @@ public class FilesGenerator {
         templatesConfig.setSharedVariable("settings", grammar.getAppSettings());
         templatesConfig.setSharedVariable("lexerData", grammar.getLexerData());
         templatesConfig.setSharedVariable("generated_by", org.congocc.app.Main.PROG_NAME);
-        if (codeLang.equals("java"))
+        if (codeLang == JAVA)
            templatesConfig.addAutoImport("CU", "CommonUtils.java.ctl");
     }
 
@@ -81,7 +83,7 @@ public class FilesGenerator {
     public void generateAll() throws IOException {
         initializeTemplateEngine();
         switch (codeLang) {
-            case "java" -> {
+            case JAVA -> {
                 generateToken();
                 generateLexer();
                 generateOtherFiles();
@@ -96,7 +98,7 @@ public class FilesGenerator {
                 generateParsingProblem(wanted);
                 generateTreeBuildingFiles(appSettings.getTreeBuildingEnabled());
             }
-            case "python" -> {
+            case PYTHON -> {
                 // Hardcoded for now, could make configurable later
                 String[] paths = new String[]{
                         "__init__.py",
@@ -113,7 +115,7 @@ public class FilesGenerator {
                     generate(outputFile);
                 }
             }
-            case "csharp" -> {
+            case CSHARP -> {
                 // Hardcoded for now, could make configurable later
                 String[] paths = new String[]{
                         "Utils.cs",
@@ -132,7 +134,6 @@ public class FilesGenerator {
                     generate(outputFile);
                 }
             }
-            default -> throw new UnsupportedOperationException(String.format("Code generation in '%s' is currently not supported.", codeLang));
         }
     }
 
@@ -155,7 +156,7 @@ public class FilesGenerator {
 
     private String getTemplateName(String outputFilename) {
         String result = outputFilename + ".ctl";
-        if (codeLang.equals("java")) {
+        if (codeLang == JAVA) {
             if (outputFilename.equals(appSettings.getBaseTokenClassName() + ".java")) {
                 result = "Token.java.ctl";
             } else if (tokenSubclassFileNames.contains(outputFilename)) {
@@ -174,7 +175,7 @@ public class FilesGenerator {
                 }
             }
         }
-        else if (codeLang.equals("csharp")) {
+        else if (codeLang == CSHARP) {
             if (outputFilename.endsWith(".csproj")) {
                 result = "project.csproj.ctl";
             }
@@ -392,46 +393,6 @@ public class FilesGenerator {
 
     private boolean regenerate(Path file) throws IOException {
         return true;
-/*
-        boolean result = false;
-
-        if (!Files.exists(file)) {
-        	result = true;
-        }
-        else {
-            String ourName = file.getFileName().toString();
-            String canonicalName = file.normalize().getFileName().toString();
-            if (canonicalName.equalsIgnoreCase(ourName) && !canonicalName.equals(ourName)) {
-                String msg = "You cannot have two files that differ only in case, as in "
-                        + ourName + " and "+ canonicalName
-                        + "\nThis does work on a case-sensitive file system but fails on a case-insensitive one (i.e. Mac/Windows)"
-                        + " \nYou will need to rename something in your grammar!";
-                throw new IOException(msg);
-            }
-            String filename = file.getFileName().toString();
-            // Changes here to allow different rules to be used for different
-            // languages. At the moment there are no non-Java code injections
-            String extension = codeLang.equals("java") ? ".java" : codeLang.equals("python") ? ".py" : ".cs";
-            if (filename.endsWith(extension)) {
-                String typename = filename.substring(0, filename.length()  - extension.length());
-                if (codeInjector.hasInjectedCode(typename)) {
-                    result = true;
-                }
-                if (typename.equals(appSettings.getBaseTokenClassName())) {
-                    // The Token class now contains the TokenType enum,
-                    // so we always regenerate.
-                    result = true;
-                }
-            }
-            //
-            // For now regenerate() isn't called for generating Python or C# files,
-            // but I'll leave this here for the moment
-            //
-            result = extension.equals(".py") || extension.equals(".cs");    // for now, always regenerate
-        }
-        logger.fine(String.format("regenerate %s -> %s", file, result));
-        return result;
- */
     }
 
     void generateTreeBuildingFiles(boolean wanted) throws IOException {

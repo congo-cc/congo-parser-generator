@@ -62,7 +62,7 @@ public class Grammar extends BaseNode {
         this.appSettings = new AppSettings(this);
         appSettings.setJdkTarget(jdkTarget);
         appSettings.setOutputDir(outputDir);
-        appSettings.setCodeLang(codeLang);
+        appSettings.setCodeLangString(codeLang);
         preprocessorSymbols.put("__" + codeLang + "__","1");
         appSettings.setQuiet(quiet);
         this.templateGlobals = new TemplateGlobals(this);
@@ -141,7 +141,7 @@ public class Grammar extends BaseNode {
         addEnvironmentOverrides(settings);
         addCommandLineOverrides(settings);
         appSettings.setSettings((settings));
-        if (appSettings.getSyntheticNodesEnabled() && appSettings.getCodeLang().equals("java")) {
+        if (appSettings.getSyntheticNodesEnabled() && appSettings.getCodeLang()==CodeLang.JAVA) {
             addNodeType(null, appSettings.getBaseNodeClassName());
         }
 

@@ -18,6 +18,8 @@ import org.congocc.core.Grammar;
 import org.congocc.core.LexerData;
 import org.congocc.core.RegexpSpec;
 import org.congocc.parser.Node;
+import org.congocc.parser.Node.CodeLang;
+import static org.congocc.parser.Node.CodeLang.*;
 import org.congocc.parser.tree.MethodCall;
 
 /**
@@ -30,7 +32,8 @@ public class AppSettings {
     private final Errors errors;
     private Map<String, Object> settings = new HashMap<>();
     private Path outputDir, filename, includedFileDirectory;
-    private String codeLang, parserPackage, parserClassName, lexerClassName, baseName, baseNodeClassName, baseTokenClassName;
+    private String parserPackage, parserClassName, lexerClassName, baseName, baseNodeClassName, baseTokenClassName;
+    private CodeLang codeLang;
 
     private final Set<String> usedIdentifiers = new HashSet<>();
     private final Set<String> tokensOffByDefault = new HashSet<>();
@@ -76,12 +79,16 @@ public class AppSettings {
         }
     };
 
-    public String getCodeLang() {
+    public String getCodeLangString() {
+        return codeLang.toString().toLowerCase();
+    }
+
+    public CodeLang getCodeLang() {
         return codeLang;
     }
 
-    public void setCodeLang(String codeLang) {
-        this.codeLang = codeLang;
+    public void setCodeLangString(String codeLangString) {
+        this.codeLang = CodeLang.valueOf(codeLangString.toUpperCase());
     }
 
     public Set<String> getDeactivatedTokens() {
@@ -217,7 +224,7 @@ public class AppSettings {
                     if (!grammar.isInInclude() && outputDir == null)
                         outputDir = Paths.get((String) value);
                 }
-                
+
             }
             if (!grammar.isInInclude() && key.equals("JDK_TARGET") && jdkTarget == 0) {
                 int jdkTarget = (Integer) value;
@@ -265,14 +272,14 @@ public class AppSettings {
             int dotPosition;
 
             switch (codeLang) {
-                case "java":
+                case JAVA :
                     packageName = packageName.replace('.', '/');
                     dir = dir.resolve(packageName);
                     if (!Files.exists(dir)) {
                         Files.createDirectories(dir);
                     }
                     break;
-                case "python":  // Use last part of package, append "parser"
+                case PYTHON :  // Use last part of package, append "parser"
                     dotPosition = packageName.lastIndexOf('.');
 
                     if (dotPosition >= 0) {
@@ -286,7 +293,7 @@ public class AppSettings {
                         Files.createDirectories(dir);
                     }
                     break;
-                case "csharp":
+                case CSHARP :
                     // Use last part of package, append "parser", prepend "cs-"
                     // only if outDir isn't specified
                     if (outputDir == null) {
@@ -302,8 +309,6 @@ public class AppSettings {
                         }
                     }
                     break;
-                default:
-                    throw new UnsupportedOperationException(String.format("Code generation in '%s' is not currently supported.", codeLang));
             }
         }
         return dir;
@@ -311,7 +316,7 @@ public class AppSettings {
 
     public String separatorString() {
         // Temporary solution. Use capital sigma for Python / others, for now
-        return codeLang.equals("java") ? "$" : "\u03A3";
+        return codeLang == JAVA ? "$" : "\u03A3";
     }
 
     public String getParserPackage() {

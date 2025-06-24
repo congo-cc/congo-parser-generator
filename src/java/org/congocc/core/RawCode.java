@@ -41,13 +41,12 @@ public class RawCode extends EmptyExpansion implements EmbeddedCode {
 
     public ContentType getContentType() {
         if (contentType != null) return contentType;
-        String lang = getAppSettings().getCodeLang();
+        CodeLang lang = getAppSettings().getCodeLang();
         boolean isExpression = getParent() instanceof Assertion || getParent() instanceof Lookahead || getParent() instanceof Failure;
         return contentType = switch (lang) {
-            case "java" -> isExpression ? JAVA_EXPRESSION : JAVA_BLOCK;
-            case "csharp" -> isExpression ? CSHARP_EXPRESSION : CSHARP_BLOCK;
-            case "python" -> isExpression ? PYTHON_BLOCK : PYTHON_BLOCK;
-            default -> throw new IllegalArgumentException("Expecting one of java, csharp, or python");
+            case JAVA -> isExpression ? JAVA_EXPRESSION : JAVA_BLOCK;
+            case CSHARP -> isExpression ? CSHARP_EXPRESSION : CSHARP_BLOCK;
+            case PYTHON -> isExpression ? PYTHON_BLOCK : PYTHON_BLOCK;
         };
     }
 
