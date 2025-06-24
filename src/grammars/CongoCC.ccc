@@ -251,6 +251,10 @@ INJECT Identifier :
 INJECT interface Node :
    import org.congocc.core.Grammar;
 {
+    public enum CodeLang {
+        JAVA, PYTHON, CSHARP;
+    }
+
     default Grammar getGrammar() {
         TokenSource ts = getTokenSource();
         assert ts != null;

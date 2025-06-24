@@ -68,7 +68,7 @@ TOKEN :
        "'"
   > #StringLiteral
   |
-  <START_UNPARSED : "${">
+  <START_UNPARSED : (["J","P","C"])? "${">
   |
   <END_UNPARSED : "}$">
 ;

@@ -89,7 +89,10 @@ public class ParseException extends ${BASE_EXCEPTION_TYPE} {
      }
      String content = token.toString();
      if (content == null || content.length() == 0) {
-        buf.append("\n Found token of type " + token.getType());
+        if (token.getType().isEOF()) {
+           buf.append("\n Unexpected end of input");
+        }
+        else buf.append("\n Found token of type " + token.getType());
      }
      else {
        if (content.length() > 32) content = content.substring(0, 32) + "...";
