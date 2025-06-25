@@ -12,24 +12,12 @@ import org.congocc.parser.tree.CodeInjection;
 import org.congocc.parser.tree.EmbeddedCode;
 import org.congocc.parser.tree.Failure;
 import org.congocc.parser.tree.Lookahead;
-import static org.congocc.core.RawCode.ContentType.*;
 
 public class RawCode extends EmptyExpansion implements EmbeddedCode {
-
-    public enum ContentType {
-        JAVA_BLOCK,
-        JAVA_EXPRESSION,
-        CSHARP_BLOCK,
-        CSHARP_EXPRESSION,
-        PYTHON_BLOCK,
-        PYTHON_EXPRESSION
-    }
 
     private boolean alreadyParsed;
 
     private ParseException parseException;
-
-    private ContentType contentType;
 
     private Node parsedContent;
 
@@ -41,7 +29,7 @@ public class RawCode extends EmptyExpansion implements EmbeddedCode {
     }
 
     public void parseContent() {
-        if (!alreadyParsed) {
+        if (!alreadyParsed && !wrongLanguageIgnore()) {
             try {
                 switch(getAppSettings().getCodeLang()) {
                     case JAVA -> parseJava();
@@ -63,8 +51,42 @@ public class RawCode extends EmptyExpansion implements EmbeddedCode {
         return (Token) get(1);
     }
 
+    public boolean isExpression() {
+        Node parent = getParent();
+        return  parent instanceof Assertion || parent instanceof Failure
+                || parent instanceof Lookahead;
+
+    }
+
+    public boolean useAltPythonFormat() {
+        return getAppSettings().getCodeLang() == CodeLang.PYTHON && !isExpression();
+    }
+
+    public boolean wrongLanguageIgnore() {
+        CodeLang langForThisBlock = specifiedLanguage();
+        CodeLang langForParser = getAppSettings().getCodeLang();
+        return langForThisBlock != null && langForThisBlock != langForParser;
+    }
+
+    CodeLang specifiedLanguage() {
+        char initialChar = ((Token) get(0)).charAt(0);
+        return switch (initialChar) {
+            case 'P' -> CodeLang.PYTHON;
+            case 'C' -> CodeLang.CSHARP;
+            case 'J' -> CodeLang.JAVA;
+            default -> null;
+        };
+    }
+
     public String toString() {
-        if (contentType == ContentType.PYTHON_BLOCK) {
+        if (wrongLanguageIgnore()) {
+            return switch(specifiedLanguage()) {
+                case PYTHON -> "\n# No output. This is Python code.";
+                case JAVA -> "// No output. This is Java code.";
+                case CSHARP -> "// No output. This is CSharp code.";
+            };
+        }
+        if (useAltPythonFormat()) {
             parseContent();
             return ((Module) parsedContent).toAltFormat();
         }
@@ -76,27 +98,26 @@ public class RawCode extends EmptyExpansion implements EmbeddedCode {
     }
 
     public boolean isAppliesInLookahead() {
-        return this.size()>3;
+        return this.size()>3 || getContainingProduction().isOnlyForLookahead();
     }
 
     @Override
     public boolean startsWithGlobalCodeAction(boolean stopAtScanLimit) {
-        return isAppliesInLookahead() || getContainingProduction().isOnlyForLookahead();
+        return isAppliesInLookahead();
     }
 
     void parseJava() {
         Token code = getRawContent();
         CongoCCParser cccParser = new CongoCCParser(getInputSource(), code);
         cccParser.setStartingPos(code.getBeginLine(), code.getBeginColumn());
-        Node parent = this.getParent();
-        if (parent instanceof Assertion || parent instanceof Failure || parent instanceof Lookahead) {
+        if (isExpression()) {
             cccParser.EmbeddedJavaExpression();
         }
-        else if (parent instanceof CodeInjection) {
+        else if (getParent() instanceof CodeInjection) {
             cccParser.EmbeddedJavaClassOrInterfaceBody();
         }
         else {
-            cccParser.EmbeddedJavaBlock();
+           cccParser.EmbeddedJavaBlock();
         }
     }
 
@@ -104,8 +125,7 @@ public class RawCode extends EmptyExpansion implements EmbeddedCode {
         Token code = getRawContent();
         CSParser csParser = new CSParser(getInputSource(), code);
         csParser.setStartingPos(code.getBeginLine(), code.getBeginColumn());
-        Node parent = this.getParent();
-        if (parent instanceof Assertion || parent instanceof Failure || parent instanceof Lookahead) {
+        if (isExpression()) {
             csParser.EmbeddedCSharpExpression();
         } else {
             csParser.EmbeddedCSharpBlock();
@@ -114,16 +134,12 @@ public class RawCode extends EmptyExpansion implements EmbeddedCode {
     }
 
     void parsePython() {
-        String code = get(1).toString();
-        code = normalizePythonBlock(code);
-        PythonParser pyParser = new PythonParser(getInputSource(), code);
-        pyParser.setStartingPos(get(1).getBeginLine(), get(1).getBeginColumn());
-        pyParser.setExtraIndent(extraIndent);
         Node parent = this.getParent();
         if (parent instanceof Assertion || parent instanceof Failure || parent instanceof Lookahead) {
-            pyParser.EmbeddedPythonExpression();
+             parsePythonExpression();
+        } else {
+            parsePythonBlock();
         }
-        parsedContent = pyParser.Module();
     }
 
     void parsePythonBlock() {
@@ -131,7 +147,6 @@ public class RawCode extends EmptyExpansion implements EmbeddedCode {
         code = normalizePythonBlock(code);
         PythonParser cccParser = new PythonParser(getInputSource(), code);
         cccParser.setStartingPos(get(1).getBeginLine(), get(1).getBeginColumn());
-        //cccParser.setExtraIndent(extraIndent);
         System.out.println("Extra indent is: " +extraIndent);
         parsedContent = cccParser.Module();
     }
