@@ -121,10 +121,7 @@ INJECT PARSER_CLASS :
 
 RawCode #org.congocc.core.RawCode :
    <START_UNPARSED>
-   LEXICAL_STATE IN_UNPARSED_CODE_BLOCK
-   (
-     <UNPARSED_CONTENT>
-   )?
+   <UNPARSED_CONTENT>
    <END_UNPARSED>
    [<HASH>]
 ;
@@ -661,7 +658,7 @@ InlineTreeNodeDescriptor #TreeBuildingAnnotation :
 INJECT TreeBuildingAnnotation :
 {
     @Property String initialShorthand;
-    @Property Expression condition;
+    @Property EmbeddedCode condition;
 
     /**
      * Just returns whatever comes after the hash ("#") including "void", etc.
@@ -1326,7 +1323,9 @@ ExpansionUnit #void :
  [
     SCAN ~\...\Lookahead =>
     InlineTreeNodeDescriptor =>||
-    {% result.setTreeNodeBehavior((TreeBuildingAnnotation) peekNode()); %}
+    P{%  This should be ignored! %}
+    C{%  And this one! %}
+    J{% result.setTreeNodeBehavior((TreeBuildingAnnotation) peekNode()); %}
  ]
 ;
 
@@ -1339,6 +1338,7 @@ ExpansionUnit #void :
             popNode();
             ((CodeBlock) peekNode()).setAppliesInLookahead(true);
         %}
+        C{% Yeah, mon! %}
       ]
       |
       RawCode

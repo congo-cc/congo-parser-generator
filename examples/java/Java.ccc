@@ -701,7 +701,6 @@ ExceptionType#ObjectType :
 INJECT Expression :
 {
   default boolean isAssignableTo() {return false;}
-  default String getAsString() {return toString();}
 }
 
 INJECT PrimaryExpression : extends Expression

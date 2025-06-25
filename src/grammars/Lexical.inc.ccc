@@ -48,7 +48,12 @@ TOKEN #CongoCCKeyWord :
 ;
 
 TOKEN :
-  <HASH : "#">
+  <HASH : "#"> {
+    Token prevToken = matchedToken.previousCachedToken();
+    if (prevToken.getType() == TokenType.UNPARSED_CONTENT && prevToken.isUnparsed()) {
+        matchedToken.setUnparsed(true);
+    }
+  }
   |
   <BACKSLASH : "\\"> #Backslash
   |
@@ -69,13 +74,38 @@ TOKEN :
   > #StringLiteral
   |
   <START_UNPARSED : (["J","P","C"])? "{%">
+  {
+     char initialChar = matchedToken.charAt(0);
+     char langInitialChar = getGrammar().getAppSettings().getCodeLang().toString().charAt(0);
+     if (initialChar != '{' && initialChar != langInitialChar) {
+        matchedToken.setUnparsed(true);
+     }
+  } : IN_UNPARSED_CODE_BLOCK
   |
-  <END_UNPARSED : "%}">
+  <END_UNPARSED : "%}"> {
+    if (matchedToken.previousCachedToken().isUnparsed()) {
+        matchedToken.setUnparsed(true);
+    }
+  }
 ;
+
+INJECT LEXER_CLASS :
+{
+    boolean langMatchesLetter(char c) {
+        getGrammar().getAppSettings().getCodeLang();
+        return true;
+    }
+}
 
 <IN_UNPARSED_CODE_BLOCK> TOKEN :
   <?UNPARSED_CONTENT : (~[])+ <END_UNPARSED>>
-  #UnparsedContent {matchedToken.truncate(2);}
+  #UnparsedContent
+  {
+    if (matchedToken.previousCachedToken().isUnparsed()) {
+        matchedToken.setUnparsed(true);
+    }
+    matchedToken.truncate(2);
+  } : JAVA
 ;
 
 TokenProduction :
