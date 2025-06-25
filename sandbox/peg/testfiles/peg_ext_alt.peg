@@ -1,0 +1,93 @@
+/*
+ * This is essentially Bryan Ford's original PEG grammar as defined by his paper 
+ * titled "Parsing Expression Grammars: A Recognition-based Syntactic Foundation" 
+ * in POPL'04 January 14-16, 2004, Venice, Italy.  It has been extended to illustrate the
+ * addition of entailment and repetition cardinality constraints to allow more efficient
+ * LL parsing and a compact way to recognize restricted cardinality of Primaries respectively.
+ * It also allows several relaxations to the syntax such as "_" in identifiers and the "|" to separate choices, 
+ * which are now de facto standards, and both an ASCII version of "entails" and the prioritized choice character and a Unicode version of both that 
+ * is more modern. Identifiers may also be surrounded by balanced "<" and ">" to allow external 
+ * CongoCC tokens to be referenced or mimicked within the PEG grammar, thereby allowing the PEG grammar 
+ * to utilize the full power of the a CongoCC-generated lexer if desired. 
+ *
+ * N.B., Entailment in Extended PEG functions identically to "=>||" in CongoCC. It is possible
+ * that this will change in the future. It is also probable that the original PEG commenting syntax
+ * will be changed to match modern conventions (i.e., Java/C-like) and that the "*" will replace the
+ * "%" for cardinality predicates.
+ *
+ * By convention, nonterminals begin with an upper-case letter, terminals are all upper-case, and lexer
+ * tokens are all upper-case within "<...>".  Munging and disambiguation element names are prefixed with an 
+ * "_" character.
+ */
+
+// This grammar is parsable by the extended PEG grammar.
+
+/*************************
+ ** Hierarchical Syntax **
+ *************************/
+
+Grammar    : Spacing (Definition)+ EndOfFile
+Definition :  Identifier (LEFTARROW | COLON) Expression SEMICOLON?
+Expression : Sequence ((SLASH | BAR) Sequence)*
+Sequence   : Action | (Prefix Entails? Action?)*
+Prefix     : (Cardinality | (AND | NOT))? Suffix
+Suffix     : Primary (QUESTION | STAR | PLUS)?
+Primary    : Identifier !(LEFTARROW | COLON)
+             | OPEN Expression CLOSE
+             | Literal | Class | DOT
+             
+/********************
+ ** Lexical Syntax **
+ ********************/
+    
+Identifier : (IdentStart IdentCont* | '<' Identifier '>') Spacing
+IdentStart : [a-zA-Z_]
+IdentCont  : IdentStart | [0-9]
+Literal    : ['] (!['] Char)* ['] Spacing 
+             | ["] (!["] Char)* ["] Spacing 
+Class      : '[' (!']' Range )* ']' Spacing
+Range      : Char '-' Char | Char
+Char       : '\\' [nrt"'\[\]\\]
+             | '\\' [uU] [0-9a-fA-F] [0-9a-fA-F] [0-9a-fA-F] [0-9a-fA-F]
+             | '\\' [0-2] [0-7] [0-7]
+             | '\\' [0-7] [0-7]? 
+             | !'\\' .
+
+LEFTARROW  : '<-' Spacing
+COLON      : ':' Spacing
+SLASH      : '/' Spacing
+BAR        : '|' Spacing
+AND        : '&' Spacing
+NOT        : '!' Spacing
+QUESTION   : '?' Spacing
+STAR       : '*' Spacing
+PLUS       : '+' Spacing
+OPEN       : '(' Spacing
+CLOSE      : ')' Spacing
+DOT        : '.' Spacing
+HASH       : '#' Spacing
+NESTED_GT  : '⫸' Spacing
+TRIPLE_GT  : '>>>' Spacing
+OPEN_BRACE : '{' Spacing
+CLOSE_BRACE: '}' Spacing
+SEMICOLON  : ';' Spacing
+
+Spacing    : ( Whitespace | Comment )*
+
+Comment    : <SINGLE_LINE_COMMENT> | <MULTI_LINE_COMMENT> | LegacyComment
+LegacyComment : !Cardinality (HASH (!EndOfLine .)* EndOfLine)
+Whitespace : Space+
+Space      : ' ' | '\t' | EndOfLine
+EndOfLine  : '\r\n' | '\n' | '\r'
+EndOfFile  : !.
+             
+/**********************
+ ** Extension Syntax **
+ **********************/
+
+Cardinality   : HASH (NaturalNumber (COLON NaturalNumber? HASH)? )?
+NaturalNumber : '0' | [1-9] [0-9]* Spacing
+Entails       : (TRIPLE_GT | NESTED_GT) Spacing
+Action        : OPEN_BRACE BalancedBraces CLOSE_BRACE
+BalancedBraces: OPEN_BRACE BalancedBraces CLOSE_BRACE | (!CLOSE_BRACE .)*
+        

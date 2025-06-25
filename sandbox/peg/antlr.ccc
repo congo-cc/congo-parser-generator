@@ -1,0 +1,19 @@
+PARSER_PACKAGE=org.parsers.antlr.ANTLRv4Parser;
+TAB_SIZE=4;
+ENSURE_FINAL_EOL;
+SMART_NODE_CREATION=false;
+TREE_BUILDING_ENABLED=true;
+TERMINATING_STRING="";
+//#define FT
+#if FT
+FAULT_TOLERANT;
+FAULT_TOLERANT_DEFAULT=true;
+#endif
+
+#AntlrGrammar :
+    grammarSpec {return CURRENT_NODE;}
+;
+
+UNPARSED: <_WS: ([ " ", "\t", "\r", "\n", "\f" ])+ >;
+
+INCLUDE "grammar/generated/ANTLRv4.ccc";
