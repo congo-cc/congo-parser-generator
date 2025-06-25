@@ -47,7 +47,7 @@ import java.util.*;
 #endif
 
 public
-${isFinal ?: "final" : ""}
+${isFinal ?: "final"}
 class ${settings.lexerClassName} extends TokenSource
 {
 

@@ -7,7 +7,7 @@ import org.congocc.parser.Node;
 import org.congocc.parser.tree.*;
 
 public class ExpansionSequence extends Expansion {
-	
+
 	/**
 	 * A marker interface in order to enumerate syntax element units within a sequence.
 	 *
@@ -24,15 +24,15 @@ public class ExpansionSequence extends Expansion {
             result.add(unit);
             if (unit.superfluousParentheses()) {
                 result.addAll(unit.firstChildOfType(ExpansionSequence.class).allUnits());
-            } 
+            }
         }
         return result;
     }
-    
+
     final int getNumberOfSyntaxElements() {
     	return childrenOfType(SyntaxElement.class).size();
     }
-    
+
     /**
      * Indicates that this {@link ExpansionSequence} is essential. That is, this
      * represents a sequence of more than one syntactical elements.
@@ -41,29 +41,29 @@ public class ExpansionSequence extends Expansion {
     public boolean isEssentialSequence() {
     	return getNumberOfSyntaxElements() > 1;
     }
-    
+
     public Predicate<ExpansionWithParentheses> isOuterCardinalityScope = (expWithParens) -> {
         return (expWithParens instanceof IteratingExpansion);
     };
-    
+
     public Predicate<Assertion> isInScopeConstraint = (assertion) -> {
         return assertion.isCardinalityConstraint() && assertion.firstAncestorOfType(ExpansionWithParentheses.class, isOuterCardinalityScope) == getCardinalitiesContainer();
     };
-    
+
     @Override
     public boolean isCardinalityConstrained() { //N.B., this can (erroneously) extend beyond the parent production.
         Assertion cardinalityAssertion = firstDescendantOfType(Assertion.class, isInScopeConstraint);
         return cardinalityAssertion != null;
     }
-    
+
     public List<Assertion> getCardinalityAssertions() {
         return descendantsOfType(Assertion.class, isInScopeConstraint);
     }
-        
+
     public ExpansionWithParentheses getCardinalitiesContainer() {
         return firstAncestorOfType(ExpansionWithParentheses.class, isOuterCardinalityScope);
     }
-    
+
     public int getCardinalityIndex() {
     	List<Assertion> cardinalityAssertions = childrenOfType(Assertion.class);
         for (Assertion assertion : cardinalityAssertions) {
@@ -101,7 +101,7 @@ public class ExpansionSequence extends Expansion {
             if (lookaheadExpansion != this) {
                 if (!getLookahead().isNegated()) {
                     firstSet.and(lookaheadExpansion.getFirstSet());
-                } 
+                }
                 else if (lookaheadExpansion.isSingleToken()) {
                     firstSet.andNot(lookaheadExpansion.getFirstSet());
                 }
@@ -195,7 +195,7 @@ public class ExpansionSequence extends Expansion {
 
     /**
      * @return whether we have a scan limit, including an implicit one inside a
-     *         nested NonTerminal. However, the NonTerminal has to 
+     *         nested NonTerminal. However, the NonTerminal has to
      *         start the sequence and we don't nest within the NonTerminal. I think
      *         that gets too confusing.
      */
@@ -250,7 +250,7 @@ public class ExpansionSequence extends Expansion {
             return Integer.MAX_VALUE;
         }
         return isPossiblyEmpty() ? 0 : 1;
-        //return getRequiresScanAhead() ? Integer.MAX_VALUE : 1; // A bit kludgy, REVISIT 
+        //return getRequiresScanAhead() ? Integer.MAX_VALUE : 1; // A bit kludgy, REVISIT
     }
 
     /**
@@ -276,7 +276,7 @@ public class ExpansionSequence extends Expansion {
     }
 
     @Override
-    public final Expression getSemanticLookahead() {
+    public final EmbeddedCode getSemanticLookahead() {
         Lookahead la = getLookahead();
         return la == null ? null : la.getSemanticLookahead();
     }
@@ -296,7 +296,7 @@ public class ExpansionSequence extends Expansion {
         Lookahead la = getLookahead();
         return la != null && la.hasSemanticLookahead();
     }
-    
+
    /**
      * Do we do a syntactic lookahead using this expansion itself as the lookahead
      * expansion?
@@ -312,7 +312,7 @@ public class ExpansionSequence extends Expansion {
         }
         if (getHasExplicitNumericalLookahead() && getLookaheadAmount() ==0)
             return false;
-// REVISIT.            
+// REVISIT.
 //        if (getMaximumSize() <= 1) {
 //            return false;
 //        }
@@ -323,7 +323,7 @@ public class ExpansionSequence extends Expansion {
     public boolean isSingleTokenLookahead() {
         if (!super.isSingleTokenLookahead()) return false;
         for (Expansion exp : allUnits()) {
-            // This is mostly in order to recurse into any NonTerminals 
+            // This is mostly in order to recurse into any NonTerminals
             // in the expansion sequence.
             if (exp.getMaximumSize() == 1 && !exp.isSingleTokenLookahead()) return false;
         }
@@ -337,7 +337,7 @@ public class ExpansionSequence extends Expansion {
             if (bnf.getLexicalState() != null) {
                 return true;
             }
-        }        
+        }
         for (Expansion exp : childrenOfType(Expansion.class)) {
             if (exp.startsWithLexicalChange(stopAtScanLimit && exp instanceof NonTerminal)) return true;
             if (!exp.isPossiblyEmpty()) break;
@@ -365,8 +365,8 @@ public class ExpansionSequence extends Expansion {
             return true;
         }
         if (getLookaheadAmount() == 0 || isPossiblyEmpty()) return false;
-        return getHasImplicitSyntacticLookahead() 
-            || startsWithGlobalCodeAction() 
+        return getHasImplicitSyntacticLookahead()
+            || startsWithGlobalCodeAction()
             || startsWithLexicalChange();
     }
 

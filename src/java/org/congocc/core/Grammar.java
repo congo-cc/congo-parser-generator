@@ -2,7 +2,6 @@ package org.congocc.core;
 
 import java.nio.charset.StandardCharsets;
 import java.util.*;
-import java.util.stream.IntStream;
 import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.nio.file.Files;

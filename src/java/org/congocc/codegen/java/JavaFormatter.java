@@ -60,7 +60,7 @@ public class JavaFormatter extends Node.Visitor {
     }
 
     void visit(Token tok) {
-        if (tok.getType() == EOF) buf.append("\n");
+        if (tok.getType() == EOF) buf.append(eol);
         else outputToken(tok);
     }
 
@@ -136,9 +136,9 @@ public class JavaFormatter extends Node.Visitor {
         switch (delimiter.getType()) {
             case COMMA -> {
                 outputToken(delimiter);
-                if (currentLineLength() > MAX_LINE_LENGTH 
-                    && (delimiter.getParent() instanceof ArrayInitializer 
-                        || delimiter.getParent() instanceof EnumBody)) 
+                if (currentLineLength() > MAX_LINE_LENGTH
+                    && (delimiter.getParent() instanceof ArrayInitializer
+                        || delimiter.getParent() instanceof EnumBody))
                 {
                         newLine();
                 }
@@ -167,7 +167,7 @@ public class JavaFormatter extends Node.Visitor {
                 buf.append(delimiter);
                 Token token = delimiter.getNext();
                 if (!endOfArrayInitializer && null != token && token.getType() != SEMICOLON) {
-                    if (token.getType()==CATCH || token.getType() == ELSE || token.getType()==FINALLY) 
+                    if (token.getType()==CATCH || token.getType() == ELSE || token.getType()==FINALLY)
                         addSpaceIfNecessary(); // space for multi block statements
                     else newLine();
                 }
@@ -200,7 +200,7 @@ public class JavaFormatter extends Node.Visitor {
     void visit(SingleLineComment comment) {
         if (startsNewLine(comment)) {
             newLine();
-        } 
+        }
         else {
             addSpaceIfNecessary();
         }

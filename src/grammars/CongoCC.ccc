@@ -40,6 +40,7 @@ INJECT PARSER_CLASS :
     import java.util.*;
     import org.congocc.app.*;
     import org.congocc.core.*;
+    import org.congocc.parser.Node.CodeLang;
     import org.congocc.parser.tree.StringLiteral;
     import org.congocc.parser.tree.IntegerLiteral;
     import org.congocc.preprocessor.PreprocessorParser;
@@ -109,6 +110,10 @@ INJECT PARSER_CLASS :
         return grammar.getAppSettings();
     }
 
+    public CodeLang getCodeLang() {
+        return getAppSettings().getCodeLang();
+    }
+
     public Errors getErrors() {
         return grammar.getErrors();
     }
@@ -131,10 +136,6 @@ INJECT BASE_NODE_CLASS :
     @SuppressWarnings("unused")
     implements Node;
 {
-    public AppSettings getAppSettings() {
-        return getGrammar().getAppSettings();
-    }
-
     public Errors getErrors() {
         return getGrammar().getErrors();
     }
@@ -160,21 +161,6 @@ INJECT BASE_NODE_CLASS :
     public String getInputSource() {
         return getTokenSource().getInputSource();
     }
-#if false
-    public String getLocation() {
-        return getInputSource() + ":" + getBeginLine() + ":" + getBeginColumn();
-    }
-
-    public int getBeginLine() {
-        TokenSource tokenSource = getTokenSource();
-        return tokenSource == null ? 0 : tokenSource.getLineFromOffset(getBeginOffset());
-    }
-
-    public int getBeginColumn() {
-        TokenSource tokenSource = getTokenSource();
-        return tokenSource == null ? 0 : tokenSource.getCodePointColumnFromOffset(getBeginOffset());
-    }
-#endif
 }
 
 
@@ -250,6 +236,7 @@ INJECT Identifier :
 
 INJECT interface Node :
    import org.congocc.core.Grammar;
+   import org.congocc.app.AppSettings;
 {
     public enum CodeLang {
         JAVA, PYTHON, CSHARP;
@@ -261,6 +248,15 @@ INJECT interface Node :
         assert ts.getGrammar() != null;
         return ts == null ? null : ts.getGrammar();
     }
+
+    default AppSettings getAppSettings() {
+        return getGrammar().getAppSettings();
+    }
+
+    default CodeLang getCodeLang() {
+        return getGrammar().getAppSettings().getCodeLang();
+    }
+
     default Node getNamedChild(String name) { throw new UnsupportedOperationException(); }
     default List<Node> getNamedChildList(String name) { throw new UnsupportedOperationException(); }
     default void setNamedChild(String name, Node node) { throw new UnsupportedOperationException(); }
@@ -626,11 +622,7 @@ TreeNodeDescriptor #TreeBuildingAnnotation :
             (">" | ">=" | "<" | "<=" | "+" | "-")
             {thisProduction.setInitialShorthand(lastConsumedToken.toString());}
           ]
-          #if __java__
           Expression {thisProduction.setCondition((Expression) peekNode());}
-          #else
-          <INTEGER_LITERAL>
-          #endif
        ")"
   ]
 ;
@@ -1048,6 +1040,7 @@ INJECT Assertion :
     }
 }
 
+
 Assertion# :
     {
     boolean assertKeywordPresent = false;
@@ -1110,9 +1103,10 @@ Lookahead# :
    Token amountToken=null;
    boolean hasSemanticLookahead = false, hasExplicitNumericalLookahead=false;
    Expansion expansion = null;
-   Expression exp=null;
+   EmbeddedCode exp=null;
    Name name = null;
    Node lb = null;
+   boolean isRawCode = false;
 }
 [ @assignment := Assignment ] //FIXME: should this have assignment?  It seems to do nothing right now.
 <_SCAN>
@@ -1120,12 +1114,19 @@ Lookahead# :
     <INTEGER_LITERAL> {hasExplicitNumericalLookahead = true;}
 ]
 [
-    "{"
-    exp=Expression {hasSemanticLookahead = true; thisProduction.setSemanticLookahead(exp);}
-    "}"
-    ["#" {thisProduction.setSemanticLookaheadNested(true);}]
-    |
-    RawCode
+    exp=EmbeddedExpression
+    {
+        hasSemanticLookahead = true;
+        thisProduction.setSemanticLookahead(exp);
+        isRawCode = peekNode() instanceof RawCode;
+        if (isRawCode) {
+            thisProduction.setSemanticLookaheadNested(((RawCode)peekNode()).isAppliesInLookahead());
+        }
+    }
+    [
+        SCAN {!isRawCode} =>
+        "#" {thisProduction.setSemanticLookaheadNested(true);}
+    ]
 ]
 [LookBehind =>|| {lb = peekNode();}]
 [
@@ -1149,7 +1150,7 @@ INJECT Lookahead :
 {
     @Property Expansion expansion, nestedExpansion;
     @Property boolean negated, semanticLookaheadNested;
-    @Property Expression semanticLookahead;
+    @Property EmbeddedCode semanticLookahead;
 
     public boolean getRequiresScanAhead() {
         if (!getLookaheadExpansion().isPossiblyEmpty()) return true;
@@ -1342,9 +1343,21 @@ ExpansionUnit #void :
       |
       RawCode
    )
-   {
+   {%
       return (EmbeddedCode) peekNode();
-   }
+   %}
+;
+
+EmbeddedCode EmbeddedExpression#void :
+   {EmbeddedCode result=null;}
+   (
+    "{" result=Expression "}"
+    |
+    result = RawCode
+   )
+   {%
+      return result;
+   %}
 ;
 
 #NonTerminal #org.congocc.core.NonTerminal :
@@ -1528,7 +1541,7 @@ Failure# :
       exp=Expression
       [":"]
       |
-      EmbeddedCode
+      RawCode
    ]
    {
        thisProduction.setExp(exp);

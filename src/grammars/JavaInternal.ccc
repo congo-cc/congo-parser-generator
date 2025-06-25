@@ -394,6 +394,8 @@ INJECT InvocationArguments :
     }
 }
 
+INJECT Expression : extends EmbeddedCode
+
 INJECT CodeBlock :
   import java.util.List;
    extends org.congocc.core.EmptyExpansion

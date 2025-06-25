@@ -4,6 +4,7 @@ import org.congocc.parser.ParseException;
 import org.congocc.parser.Token;
 import org.congocc.parser.CongoCCParser;
 import org.congocc.parser.Node;
+import static org.congocc.parser.Node.CodeLang.*;
 import org.congocc.parser.csharp.CSParser;
 import org.congocc.parser.python.PythonParser;
 import org.congocc.parser.python.ast.Module;
@@ -31,7 +32,7 @@ public class RawCode extends EmptyExpansion implements EmbeddedCode {
     public void parseContent() {
         if (!alreadyParsed && !wrongLanguageIgnore()) {
             try {
-                switch(getAppSettings().getCodeLang()) {
+                switch(getCodeLang()) {
                     case JAVA -> parseJava();
                     case CSHARP -> parseCSharp();
                     case PYTHON -> parsePython();
@@ -59,21 +60,19 @@ public class RawCode extends EmptyExpansion implements EmbeddedCode {
     }
 
     public boolean useAltPythonFormat() {
-        return getAppSettings().getCodeLang() == CodeLang.PYTHON && !isExpression();
+        return getCodeLang() == PYTHON && !isExpression();
     }
 
     public boolean wrongLanguageIgnore() {
-        CodeLang langForThisBlock = specifiedLanguage();
-        CodeLang langForParser = getAppSettings().getCodeLang();
-        return langForThisBlock != null && langForThisBlock != langForParser;
+        return specifiedLanguage() != null && specifiedLanguage() != getCodeLang();
     }
 
-    CodeLang specifiedLanguage() {
+    public CodeLang specifiedLanguage() {
         char initialChar = ((Token) get(0)).charAt(0);
         return switch (initialChar) {
-            case 'P' -> CodeLang.PYTHON;
-            case 'C' -> CodeLang.CSHARP;
-            case 'J' -> CodeLang.JAVA;
+            case 'P' -> PYTHON;
+            case 'C' -> CSHARP;
+            case 'J' -> JAVA;
             default -> null;
         };
     }
