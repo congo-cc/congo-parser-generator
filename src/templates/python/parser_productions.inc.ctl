@@ -934,11 +934,11 @@ ${SingleTokenCondition(expansion)}[#t]
 
 [#-- Generates code for when we need a scanahead --]
 [#macro ScanAheadCondition expansion]
-[#if expansion.lookahead?? && expansion.lookahead.assignment??](${expansion..assignment.name} = [/#if][#if expansion.hasSemanticLookahead && !expansion.lookahead.semanticLookaheadNested](${globals::translateExpression(expansion.semanticLookahead)}) and [/#if]self.${expansion.predicateMethodName}()[#if expansion.lookahead?? && expansion.lookahead.assignment??])[/#if][#t]
+[#if expansion.hasSemanticLookahead && !expansion.lookahead.semanticLookaheadNested](${globals::translateExpression(expansion.semanticLookahead)}) and [/#if]self.${expansion.predicateMethodName}()[#t]
 [/#macro]
 
 [#-- Generates code for when we don't need any scanahead routine --]
 [#macro SingleTokenCondition expansion]
 [#if expansion.hasSemanticLookahead](${globals::translateExpression(expansion.semanticLookahead)}) and [/#if][#t]
-[#if expansion.enteredUnconditionally]True[#elseif expansion.firstSet.tokenNames?size == 0]False[#elseif expansion.firstSet.tokenNames?size < 5][#list expansion.firstSet.tokenNames as name](self.next_token_type == ${name})[#if name_has_next] or [/#if][/#list][#else](self.next_token_type in self.${expansion.firstSetVarName})[/#if][#t]
+[#if expansion.firstSet.tokenNames?size < 5][#list expansion.firstSet.tokenNames as name](self.next_token_type == ${name})[#if name_has_next] or [/#if][/#list][#else](self.next_token_type in self.${expansion.firstSetVarName})[/#if][#t]
 [/#macro]

@@ -996,8 +996,9 @@
 
 #-- Generates code for when we need a scanahead --
 #macro ScanAheadCondition expansion cardinalitiesVar
-   #if expansion.lookahead?? && expansion.lookahead.assignment??
-      (${expansion.lookahead.assignment.name} =
+   #if expansion.onlyNeedsSemanticCheck
+       (${expansion.semanticLookahead})
+       #return
    #endif
    #if expansion.hasSemanticLookahead && !expansion.lookahead.semanticLookaheadNested
       (${expansion.semanticLookahead}) &&
@@ -1007,9 +1008,6 @@
    #else
       ${expansion.predicateMethodName}()
    #endif
-   #if expansion.lookahead?? && expansion.lookahead.assignment??
-      )
-   #endif
 #endmacro
 
 
@@ -1018,15 +1016,11 @@
    #if expansion.hasSemanticLookahead
       (${expansion.semanticLookahead}) &&
    #endif
-   #if expansion.enteredUnconditionally
-      true
-   #elif expansion.firstSet.tokenNames?size == 0
-      false
-   #elif expansion.firstSet.tokenNames?size < CU.USE_FIRST_SET_THRESHOLD
+   #if expansion.firstSet.tokenNames::size() < CU.USE_FIRST_SET_THRESHOLD
       #list expansion.firstSet.tokenNames as name
-          nextTokenType [#if name_index == 0]() [/#if]
+          nextTokenType${name_index==0 ?: "()"}
           == ${name}
-         [#if name_has_next] || [/#if]
+         ${name_has_next ?: "||"}
       #endlist
    #else
       ${expansion.firstSetVarName}.contains(nextTokenType())

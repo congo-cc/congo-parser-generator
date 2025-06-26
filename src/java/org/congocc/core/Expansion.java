@@ -362,6 +362,10 @@ abstract public class Expansion extends BaseNode {
         return getMinimumSize() == 0;
     }
 
+    public boolean isOnlyNeedsSemanticCheck() {
+        return getLookaheadAmount() == 0 && !getHasLookBehind();
+    }
+
     public boolean isEnteredUnconditionally() {
         if (getRequiresPredicateMethod()) return false;
         if (getHasSemanticLookahead()) return false;

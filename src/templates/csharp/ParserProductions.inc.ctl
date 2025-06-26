@@ -929,16 +929,14 @@ ${BuildCode(subexp)}
 
 [#-- Generates code for when we need a scanahead --]
 #macro ScanAheadCondition expansion
-  #if expansion.lookahead?? && expansion.lookahead.assignment??
-     (${expansion.lookahead.assignment.name} =
+  #if expansion.onlyNeedsSemanticCheck
+       (${expansion.semanticLookahead})
+       #return
   #endif
   #if expansion.hasSemanticLookahead && !expansion.lookahead.semanticLookaheadNested
     (${globals::translateExpression(expansion.semanticLookahead)}) &&
   #endif
     ${expansion.predicateMethodName}()
-  #if expansion.lookahead?? && expansion.lookahead.assignment??
-    )
-  #endif
 #endmacro
 
 
@@ -947,11 +945,7 @@ ${BuildCode(subexp)}
   #if expansion.hasSemanticLookahead
      (${globals::translateExpression(expansion.semanticLookahead)}) &&
   #endif
-  #if expansion.enteredUnconditionally
-     true
-  #elif expansion.firstSet.tokenNames?size == 0
-     false
-  #elif expansion.firstSet.tokenNames?size < 5
+  #if expansion.firstSet.tokenNames?size < 5
      #list expansion.firstSet.tokenNames as name
         (NextTokenType == TokenType.${name})${name_has_next ?: "||"}
      #endlist
