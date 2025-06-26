@@ -1323,9 +1323,9 @@ ExpansionUnit #void :
  [
     SCAN ~\...\Lookahead =>
     InlineTreeNodeDescriptor =>||
-    P{%  This should be ignored! %}
-    C{%  And this one! %}
-    J{% result.setTreeNodeBehavior((TreeBuildingAnnotation) peekNode()); %}
+    {P%  This should be ignored! %}
+    {C%  And this one! %}
+    {J% result.setTreeNodeBehavior((TreeBuildingAnnotation) peekNode()); %}
  ]
 ;
 
@@ -1338,7 +1338,7 @@ ExpansionUnit #void :
             popNode();
             ((CodeBlock) peekNode()).setAppliesInLookahead(true);
         %}
-        C{% Yeah, mon! %}
+        {C% Yeah, mon! %}
       ]
       |
       RawCode

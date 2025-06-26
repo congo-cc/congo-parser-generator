@@ -56,7 +56,6 @@ public class RawCode extends EmptyExpansion implements EmbeddedCode {
         Node parent = getParent();
         return  parent instanceof Assertion || parent instanceof Failure
                 || parent instanceof Lookahead;
-
     }
 
     public boolean useAltPythonFormat() {
@@ -68,7 +67,7 @@ public class RawCode extends EmptyExpansion implements EmbeddedCode {
     }
 
     public CodeLang specifiedLanguage() {
-        char initialChar = ((Token) get(0)).charAt(0);
+        char initialChar = ((Token) get(1)).charAt(0);
         return switch (initialChar) {
             case 'P' -> PYTHON;
             case 'C' -> CSHARP;

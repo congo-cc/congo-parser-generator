@@ -73,11 +73,11 @@ TOKEN :
        "'"
   > #StringLiteral
   |
-  <START_UNPARSED : (["J","P","C"])? "{%">
+  <START_UNPARSED : "{" (["J","P","C"])? "%">
   {
-     char initialChar = matchedToken.charAt(0);
+     char initialChar = matchedToken.charAt(1);
      char langInitialChar = getGrammar().getAppSettings().getCodeLang().toString().charAt(0);
-     if (initialChar != '{' && initialChar != langInitialChar) {
+     if (initialChar != '%' && initialChar != langInitialChar) {
         matchedToken.setUnparsed(true);
      }
   } : IN_UNPARSED_CODE_BLOCK
