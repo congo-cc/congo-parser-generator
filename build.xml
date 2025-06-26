@@ -62,7 +62,6 @@
     <ant target="clean" dir="examples/lua" />
     <ant target="clean" dir="examples/preprocessor" />
     <ant target="clean" dir="examples/cics" />
-    <!--ant target="clean" dir="examples/freemarker" /-->
   </target>
 
   <macrodef name="congocc">
@@ -176,10 +175,6 @@
     <echo>Building the Python parser</echo>
     <ant dir="examples/python" target="clean" />
     <ant dir="examples/python" target="test" />
-    <!--echo>Testing the newer FreeMarker parser</echo>
-    <ant dir="examples/freemarker" target="clean" />
-    <ant dir="examples/freemarker" target="test" />
-    -->
   </target>
 
   <target name="test-java" depends="jar">

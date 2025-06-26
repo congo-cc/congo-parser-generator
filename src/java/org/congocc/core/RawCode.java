@@ -29,6 +29,10 @@ public class RawCode extends EmptyExpansion implements EmbeddedCode {
         return this.parseException;
     }
 
+    public Node getParsedContent() {
+        return parsedContent;
+    }
+
     public void parseContent() {
         if (!alreadyParsed && !wrongLanguageIgnore()) {
             try {
@@ -96,7 +100,7 @@ public class RawCode extends EmptyExpansion implements EmbeddedCode {
     }
 
     public boolean isAppliesInLookahead() {
-        return this.size()>3 || getContainingProduction().isOnlyForLookahead();
+        return this.size()>3 || getContainingProduction() != null && getContainingProduction().isOnlyForLookahead();
     }
 
     @Override
@@ -124,11 +128,10 @@ public class RawCode extends EmptyExpansion implements EmbeddedCode {
         CSParser csParser = new CSParser(getInputSource(), code);
         csParser.setStartingPos(code.getBeginLine(), code.getBeginColumn());
         if (isExpression()) {
-            csParser.EmbeddedCSharpExpression();
+            parsedContent = csParser.EmbeddedCSharpExpression();
         } else {
-            csParser.EmbeddedCSharpBlock();
+            parsedContent = csParser.EmbeddedCSharpBlock();
         }
-
     }
 
     void parsePython() {
@@ -154,6 +157,7 @@ public class RawCode extends EmptyExpansion implements EmbeddedCode {
         PythonParser pyParser = new PythonParser(getInputSource(), code);
         pyParser.setLineJoining(true);
         pyParser.setStartingPos(code.getBeginLine(), code.getBeginColumn());
+        parsedContent = pyParser.EmbeddedPythonExpression();
     }
 
     private String normalizePythonBlock(String input) {

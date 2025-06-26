@@ -6,6 +6,8 @@ ROOT_API_PACKAGE=org.congocc.parser;
 TAB_SIZE=4;
 ENSURE_FINAL_EOL;
 
+#define __congo_internal__
+
 INCLUDE "../../examples/csharp/CSharp.ccc";
 
 INJECT BASE_NODE_CLASS :
@@ -20,9 +22,10 @@ INJECT BASE_TOKEN_CLASS :
     @Property Grammar grammar;
 }
 
-EmbeddedCSharpBlock :
+#EmbeddedCSharpBlock :
     (SCAN ~(<EOF>) => Statement)+
     <EOF>
+    {return thisProduction;}
 ;
 
 Expression EmbeddedCSharpExpression :

@@ -3,6 +3,7 @@ package org.congocc.codegen;
 import java.util.*;
 
 import org.congocc.core.Grammar;
+import org.congocc.core.RawCode;
 import org.congocc.app.AppSettings;
 import org.congocc.codegen.csharp.CSharpTranslator;
 import org.congocc.codegen.java.CodeInjector;

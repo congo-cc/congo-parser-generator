@@ -265,7 +265,11 @@ INJECT Indentation :
 
 }
 
-INJECT IndentToken: extends Indentation
+// INJECT : IndentToken extends Indentation
+
+INJECT : {
+  class IndentToken extends Indentation {}
+}
 
 SKIP : <SPACE : (' ' | "\f")+>;
 

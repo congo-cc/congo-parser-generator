@@ -171,6 +171,9 @@ public class TemplateGlobals {
     }
 
     public String translateExpression(Node expr) {
+        if (expr instanceof RawCode rc) {
+            return rc.getRawContent().toString();
+        }
         StringBuilder result = new StringBuilder();
         translator.translateExpression(expr, result);
         return result.toString();

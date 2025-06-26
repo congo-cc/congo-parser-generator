@@ -321,15 +321,6 @@ INJECT GrammarFile :
     @Property String defaultLexicalState;
 }
 
-INJECT ReturnType :
-    import java.util.List;
-{
-    public boolean getAsBoolean() {
-        List<Token> lt = getRealTokens();
-        return lt.size() != 1 || lt.get(0).getType() != VOID;
-    }
-}
-
 INJECT PARSER_CLASS : {
     private boolean enterIncludes = true, isAlias = false;
     public void setEnterIncludes(boolean enterIncludes) {this.enterIncludes = enterIncludes;}
@@ -396,10 +387,13 @@ GrammarInclusion throws IOException :
         <IDENTIFIER> {thisProduction.setName(lastConsumedToken.toString());}
         ":"
         =>|+1
+#if false
+// Will get rid of this if nobody complains
         [
           SCAN "{" ("}" | "import" | "extends" | "implements" | (Annotation)+ "}") => "{"
           {foundOptionalInitialBrace=true;}
         ]
+#endif
         (ImportDeclaration)*
         (Annotation)*
         [
@@ -416,9 +410,13 @@ GrammarInclusion throws IOException :
         ]
         ASSERT {!isSealed || checkNextTokenImage("permits")} : "Expecting 'permits' here" :
         [PermitsList [";"]]
+        (Annotation)* // The annotations should really be here, since that is
+                      // the order in which they occur in a class declaration.
+#if false
         [
            SCAN 0 {foundOptionalInitialBrace} => "}"
         ]
+#endif
         [coib=ClassOrInterfaceBody {%thisProduction.body = coib;%}]
         {
                 if (enterIncludes) {
@@ -497,17 +495,22 @@ INJECT CodeInjection :
 
 CodeInjection2 :
 {
-        CompilationUnit jcu;
+        Node code=null;
 }
         ACTIVATE_TOKENS _INJECT (<_INJECT>)
-        ":" =>|| "{"
-        jcu=CompilationUnit
-       "}"
-        {
-                if (enterIncludes) {
-                    grammar.addCodeInjection(jcu);
-                }
-        }
+        ":" =>||
+        [
+            "{" code=CompilationUnit "}"
+        ]
+        [
+            SCAN {code==null} =>
+            code = RawCode
+        ]
+        {%
+            if (code!=null && enterIncludes) {
+                grammar.addCodeInjection(code);
+            }
+        %}
 ;
 
 Options# :

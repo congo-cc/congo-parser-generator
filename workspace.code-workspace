@@ -23,9 +23,7 @@
 			"examples/lua",
 			"examples/csharp"
 		],
-		"java.project.referencedLibraries": [
-			"bin/freemarker3.jar"
-		],
+		"java.project.referencedLibraries": [],
 		"cSpell.enabled": false,
 		"files.trimTrailingWhitespace": true
 	}

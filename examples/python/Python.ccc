@@ -316,7 +316,12 @@ Argument(boolean seenEquals, boolean seenDoubleStar) :
    Expression
    |
    [
-      SCAN {!seenDoubleStar} => <STAR>
+      #if !__congo_internal__
+      SCAN {J% !seenDoubleStar %} {C% !seenDoubleStar%} {P% not seenDoubleStar %}
+      #else
+      SCAN {!seenDoubleStar}
+      #endif
+      => <STAR>
       |
       <STAR_STAR>
    ]
@@ -498,8 +503,6 @@ AugAssign#void :
 
 SimpleAssignTarget :
    PrimaryExpression
-   //|
-   //<LPAREN> SimpleAssignTarget <RPAREN>
 ;
 
 Assignment :

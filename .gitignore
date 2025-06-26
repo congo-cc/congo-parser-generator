@@ -7,13 +7,6 @@
 __pycache__/*
 /*.jar
 \#*
-/examples/freemarker/ftl/*
-/examples/freemarker/ftlparser/*
-/examples/freemarker/cs-ftlparser/*
-/examples/freemarker/fel/*
-/examples/freemarker/felparser/*
-/examples/freemarker/cs-felparser/*
-/examples/freemarker/Java*IdentifierDef.ccc
 /examples/arithmetic/ex1/*
 /examples/arithmetic/ex2/*
 /examples/legacy/test.tmp/*

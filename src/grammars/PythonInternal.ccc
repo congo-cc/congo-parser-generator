@@ -5,6 +5,8 @@ ROOT_API_PACKAGE=org.congocc.parser;
 PARSER_PACKAGE=org.congocc.parser.python;
 TOKEN_CHAINING;
 
+#define __congo_internal__
+
 INCLUDE "../../examples/python/Python.ccc";
 
 INJECT BASE_NODE_CLASS :
@@ -19,9 +21,11 @@ INJECT BASE_TOKEN_CLASS :
     @Property Grammar grammar;
 }
 
-EmbeddedPythonExpression :
-    Expression
+Node EmbeddedPythonExpression :
+    {Node exp;}
+    Expression {exp = peekNode();}
     <EOF>
+    {return exp;}
 ;
 
 #EmbeddedPythonBlock# :
