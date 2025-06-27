@@ -154,12 +154,11 @@ public class Grammar extends BaseNode {
         return lexicalStates.toArray(new String[0]);
     }
 
-    public GrammarFile parse(Path file, boolean enterIncludes) throws IOException {
+    public GrammarFile parse(Path file) throws IOException {
         Path canonicalPath = file.normalize();
         if (alreadyIncluded.contains(canonicalPath)) return null;
         else alreadyIncluded.add(canonicalPath);
         CongoCCParser parser = new CongoCCParser(this, canonicalPath, preprocessorSymbols);
-        parser.setEnterIncludes(enterIncludes);
         Path prevIncludedFileDirectory = appSettings.getIncludedFileDirectory();
         if (!isInInclude()) {
             appSettings.setFilename(file);
@@ -192,7 +191,7 @@ public class Grammar extends BaseNode {
             String prevDefaultLexicalState = this.defaultLexicalState;
             boolean prevIgnoreCase = appSettings.isIgnoreCase();
             includeNesting++;
-            GrammarFile root = parse(path, true);
+            GrammarFile root = parse(path);
             if (root==null) return null;
             includeNesting--;
             appSettings.setFilename(prevLocation);
@@ -429,10 +428,10 @@ public class Grammar extends BaseNode {
         }
         if (node instanceof CodeInjection ci) {
             if (ci.getName().equals(appSettings.getLexerClassName())) {
-                checkForHooks(ci.body, appSettings.getLexerClassName());
+                checkForHooks(ci.getBody(), appSettings.getLexerClassName());
             }
             else if (ci.getName().equals(appSettings.getParserClassName())) {
-                checkForHooks(ci.body, appSettings.getParserClassName());
+                checkForHooks(ci.getBody(), appSettings.getParserClassName());
             }
         }
         else if (node instanceof TypeDeclaration typeDecl) {

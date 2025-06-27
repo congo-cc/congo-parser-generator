@@ -321,11 +321,6 @@ INJECT GrammarFile :
     @Property String defaultLexicalState;
 }
 
-INJECT PARSER_CLASS : {
-    private boolean enterIncludes = true, isAlias = false;
-    public void setEnterIncludes(boolean enterIncludes) {this.enterIncludes = enterIncludes;}
-}
-
 GrammarInclusion throws IOException :
 {
    List<String> locations = new ArrayList<>();
@@ -355,15 +350,13 @@ GrammarInclusion throws IOException :
    )
    [";"]
    {
-      if (enterIncludes) {
-          Node included = grammar.include(locations, includeToken);
-          if (included!=null) {
-              thisProduction.add(included);
-          } else {
-              getErrors().addWarning(thisProduction, "File is already included.");
-          }
-      }
-   }
+        Node included = grammar.include(locations, includeToken);
+        if (included!=null) {
+            thisProduction.add(included);
+        } else {
+            getErrors().addWarning(thisProduction, "File is already included.");
+        }
+}
 ;
 
 #CodeInjection :
@@ -373,7 +366,6 @@ GrammarInclusion throws IOException :
     boolean foundOptionalInitialBrace = false;
     boolean usingParentheses = false;
     ObjectType ot;
-    ClassOrInterfaceBody coib;
 }
         ACTIVATE_TOKENS _INJECT (<_INJECT>)
         {permissibleModifiers = EnumSet.of(ABSTRACT,FINAL,STRICTFP,SEALED,NON_SEALED);}
@@ -417,12 +409,9 @@ GrammarInclusion throws IOException :
            SCAN 0 {foundOptionalInitialBrace} => "}"
         ]
 #endif
-        [coib=ClassOrInterfaceBody {%thisProduction.body = coib;%}]
+        [ClassOrInterfaceBody]
         {
-                if (enterIncludes) {
-                    grammar.addCodeInjection(thisProduction);
-                }
-                return thisProduction;
+            return thisProduction;
         }
 ;
 
@@ -433,13 +422,12 @@ INJECT CodeInjection :
 {
    public List<ObjectType> extendsList = new ArrayList<>();
    public List<ObjectType> implementsList = new ArrayList<>();
-   public ClassOrInterfaceBody body;
+
    public static void inject(Grammar grammar, String nodeName, String injection) {
         String inject = "INJECT " + nodeName + " : " + injection;
         CongoCCParser parser;
         try {
             parser = new CongoCCParser(grammar, "dynamicInjection", inject);
-            parser.setEnterIncludes(true);
             CodeInjection ci = parser.CodeInjection();
             grammar.getInjector().add(ci);
         } catch (Exception e) {
@@ -449,6 +437,14 @@ INJECT CodeInjection :
         } finally {
             parser = null;
         }
+   }
+
+   public void close() {
+      getGrammar().addCodeInjection(this);
+   }
+
+   public ClassOrInterfaceBody getBody() {
+      return firstChildOfType(ClassOrInterfaceBody.class);
    }
 
    public void addExtendsType(ObjectType type) {extendsList.add(type);}
@@ -507,17 +503,17 @@ CodeInjection2 :
             code = RawCode
         ]
         {%
-            if (code!=null && enterIncludes) {
+            if (code!=null) {
                 grammar.addCodeInjection(code);
             }
         %}
 ;
 
 Options# :
-    {HashMap<String, Object> settings = new HashMap<>();}
+    {%HashMap<String, Object> settings = new HashMap<>();%}
     Setting(settings) =>||
     (Setting(settings))*
-    {grammar.setSettings(settings);}
+    {%grammar.setSettings(settings);%}
 ;
 
 Setting(Map<String,Object> settings) #Setting :
@@ -630,7 +626,7 @@ TreeNodeDescriptor #TreeBuildingAnnotation :
 InlineTreeNodeDescriptor #TreeBuildingAnnotation :
   [
       <BACKSLASH>
-    |
+      |
       @assignment := Assignment  =>||
   ]
   <HASH> =>||

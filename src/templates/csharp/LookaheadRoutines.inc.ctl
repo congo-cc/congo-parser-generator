@@ -77,16 +77,16 @@
 ${BuildScanRoutine(expansion)}
       [/#if]
    [/#list]
-   [#list grammar.assertionExpansions as expansion]
+   #list grammar.assertionExpansions as expansion
       ${BuildAssertionRoutine(expansion)}
-   [/#list]
-   [#list grammar.expansionsNeedingPredicate as expansion]
+   #endlist
+   #list grammar.expansionsNeedingPredicate as expansion
 ${BuildPredicateRoutine(expansion)}
-   [/#list]
-   [#list grammar.allLookaheads as lookahead]
-      [#if lookahead.nestedExpansion??]
+   #endlist
+   #list grammar.allLookaheads as lookahead
+      #if lookahead.nestedExpansion
 ${BuildLookaheadRoutine(lookahead)}
-     [/#if]
+     #endif
    [/#list]
    [#list grammar.allLookBehinds as lookBehind]
 ${BuildLookBehindRoutine(lookBehind)}
@@ -96,9 +96,11 @@ ${BuildProductionLookaheadMethod(production)}
    [/#list]
 [/#macro]
 
-[#macro BuildPredicateRoutine expansion]
-  [#var lookaheadAmount = expansion.lookaheadAmount]
-  [#if lookaheadAmount = 2147483647][#set lookaheadAmount = "UNLIMITED"][/#if]
+#macro BuildPredicateRoutine expansion
+  #var lookaheadAmount = expansion.lookaheadAmount
+  #if lookaheadAmount = 2147483647
+     #set lookaheadAmount = "UNLIMITED"
+  #endif
     // BuildPredicateRoutine: expansion at ${expansion.location}
     private bool ${expansion.predicateMethodName}() {
         _remainingLookahead = ${lookaheadAmount};
@@ -106,9 +108,9 @@ ${BuildProductionLookaheadMethod(production)}
         var scanToEnd = false;
         try {
 ${BuildPredicateCode(expansion)}
-      [#if !expansion.hasSeparateSyntacticLookahead && expansion.lookaheadAmount != 0]
+      #if !expansion.hasSeparateSyntacticLookahead && expansion.lookaheadAmount != 0
 ${BuildScanCode(expansion)}
-      [/#if]
+      #endif
             return true;
         }
         finally {
@@ -118,23 +120,23 @@ ${BuildScanCode(expansion)}
         }
     }
 
-[/#macro]
+#endmacro
 
-[#macro BuildScanRoutine expansion]
+#macro BuildScanRoutine expansion
 [#-- # DBG > BuildScanRoutine --]
- [#if !expansion.singleTokenLookahead]
+ #if !expansion.singleTokenLookahead
 // scanahead routine for expansion at:
 // ${expansion.location}
 // BuildScanRoutine macro
-[#set newVarIndex = 0 in CU]
+#set CU.newVarIndex = 0
 private bool ${expansion.scanRoutineName}(bool scanToEnd) {
-    [#if expansion.hasScanLimit]
+    #if expansion.hasScanLimit
        var prevPassedPredicateThreshold = _passedPredicateThreshold;
        _passedPredicateThreshold = -1;
-    [#else]
+    #else
        bool reachedScanCode = false;
        var passedPredicateThreshold = (int) _remainingLookahead - ${expansion.lookaheadAmount};
-    [/#if]
+    #endif
     try {
        _lookaheadRoutineNesting++;
        ${BuildPredicateCode(expansion)}
@@ -145,22 +147,22 @@ private bool ${expansion.scanRoutineName}(bool scanToEnd) {
     }
     finally {
        _lookaheadRoutineNesting--;
-   [#if expansion.hasScanLimit]
+   #if expansion.hasScanLimit
        if (_remainingLookahead <= _passedPredicateThreshold) {
          _passedPredicate = true;
          _passedPredicateThreshold = prevPassedPredicateThreshold;
        }
-   [#else]
+   #else
        if (reachedScanCode && _remainingLookahead <= passedPredicateThreshold) {
          _passedPredicate = true;
        }
-   [/#if]
+   #endif
     }
     _passedPredicate = false;
     return true;
 }
 
- [/#if]
+ #endif
 [#-- # DBG < BuildScanRoutine --]
 [/#macro]
 
@@ -463,7 +465,7 @@ return false;
 [/#list]
 )
 [#-- # DBG < ScanCodeTokenActivation --]
-[/#macro]]
+[/#macro]
 
 [#macro ScanCodeChoice choice]
 [#-- # DBG > ScanCodeChoice --]
@@ -472,18 +474,18 @@ var remainingLookahead${CU.newVarIndex} = _remainingLookahead;
 var hitFailure${CU.newVarIndex} = _hitFailure;
 var passedPredicate${CU.newVarIndex} = _passedPredicate;
 try {
-  [#list choice.choices as subseq]
+  #list choice.choices as subseq
     _passedPredicate = false;
     if (!${CheckExpansion(subseq)}) {
         currentLookaheadToken = token${CU.newVarIndex};
         _remainingLookahead = remainingLookahead${CU.newVarIndex};
         _hitFailure = hitFailure${CU.newVarIndex};
-     [#if !subseq_has_next]
+     #if !subseq_has_next
         return false;
-     [#else]
+     #else
         if (_passedPredicate && !_legacyGlitchyLookahead) return false;
-     [/#if]
-  [/#list]
+     #endif
+  #endlist
   [#list choice.choices as unused] } [/#list]
 }
 finally {
@@ -492,7 +494,7 @@ finally {
 [#-- # DBG < ScanCodeChoice --]
 [/#macro]
 
-[#macro ScanCodeZeroOrOne zoo]
+#macro ScanCodeZeroOrOne zoo
 [#-- # DBG > ScanCodeZeroOrOne --]
 var ${CU.newVarName("token")} = currentLookaheadToken;
 var passedPredicate${CU.newVarIndex} = _passedPredicate;
@@ -508,12 +510,12 @@ finally {
     _passedPredicate = passedPredicate${CU.newVarIndex};
 }
 [#-- # DBG < ScanCodeZeroOrOne --]
-[/#macro]
+#endmacro
 
 [#--
   Generates lookahead code for a ZeroOrMore construct]
 --]
-[#macro ScanCodeZeroOrMore zom]
+#macro ScanCodeZeroOrMore zom
 [#-- # DBG > ScanCodeZeroOrMore --]
 var ${CU.newVarName("passedPredicate")} = _passedPredicate;
 try {
@@ -532,35 +534,31 @@ finally {
 }
 _hitFailure = false;
 [#-- # DBG < ScanCodeZeroOrMore --]
-[/#macro]
+#endmacro
 
 [#--
    Generates lookahead code for a OneOrMore construct
    It generates the code for checking a single occurrence
    and then the same code as a ZeroOrMore
 --]
-[#macro ScanCodeOneOrMore oom]
+#macro ScanCodeOneOrMore oom
 [#-- # DBG > ScanCodeOneOrMore --]
-[#--
-if (!(${CheckExpansion(oom.nestedExpansion)})) {
-    return false;
-}--]
 [@BuildScanCode oom.nestedExpansion /]
 [@ScanCodeZeroOrMore oom /]
 [#-- # DBG < ScanCodeOneOrMore --]
-[/#macro]
+#endmacro
 
 
-[#macro CheckExpansion expansion]
-   [#if expansion.singleTokenLookahead]
-     [#if expansion.firstSet.tokenNames?size = 1]
+#macro CheckExpansion expansion
+   #if expansion.singleTokenLookahead
+     #if expansion.firstSet.tokenNames?size = 1
       ScanToken(${CU.TT}${expansion.firstSet.tokenNames[0]})
-     [#else]
+     #else
       ScanToken(${expansion.firstSetVarName})
-     [/#if]
-   [#else]
+     #endif
+   #else
       ${expansion.scanRoutineName}(false)
-   [/#if]
-[/#macro]
+   #endif
+#endmacro
 
 

@@ -62,7 +62,7 @@ public final class Main {
     }
 
     static void checkForNewer() {
-        if (jarPath != null && Files.exists(jarPath) 
+        if (jarPath != null && Files.exists(jarPath)
              && (jarPath.endsWith("congocc.jar") || jarPath.endsWith("congocc-full.jar")))
            try {
                 long jarLastModified = Files.getLastModifiedTime(jarPath).toMillis();
@@ -295,7 +295,7 @@ public final class Main {
       throws IOException {
         if (!quiet) bannerLine();
         Grammar grammar = new Grammar(outputDir, codeLang, jdkTarget, quiet, symbols);
-        grammar.parse(grammarFile, true);
+        grammar.parse(grammarFile);
         grammar.createOutputDir();
         Errors errors = grammar.getErrors();
         grammar.doSanityChecks();
@@ -313,7 +313,7 @@ public final class Main {
         if (errors.getErrorCount() != 0) {
             outputErrors(grammar, quiet);
             return (errors.getErrorCount() == 0) ? 0 : 1;
-        }        
+        }
         grammar.generateFiles();
         if (errors.getWarningCount() == 0 && !quiet) {
             System.out.println("Parser generated successfully.");

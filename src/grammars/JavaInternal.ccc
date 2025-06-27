@@ -298,10 +298,6 @@ INJECT TypeDeclaration :
     import java.util.*;
 {
     default String getName() {
-#if false
-        Node thisNode = getNamedChild("name");
-        return (thisNode != null) ? thisNode.toString() : firstChildOfType(Identifier.class).toString();
-#endif
         Identifier id = firstChildOfType(Identifier.class);
         return id == null ? null : id.toString();
     }

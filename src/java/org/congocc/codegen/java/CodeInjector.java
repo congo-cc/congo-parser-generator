@@ -9,10 +9,10 @@ import org.congocc.parser.tree.*;
 
 /**
  * Class to hold the code that comes from the grammar file
- * and is later "injected" into the output source files 
+ * and is later "injected" into the output source files
  */
 public class CodeInjector {
-    
+
     private final Map<String, TypeDeclaration> types = new HashMap<>();  // Not presently queried ...
     private final Map<String, Set<ImportDeclaration>> injectedImportsMap = new HashMap<>();
     private final Map<String, Set<Annotation>> injectedAnnotationsMap = new HashMap<>();
@@ -23,8 +23,8 @@ public class CodeInjector {
     private final Map<String, List<ClassOrInterfaceBodyDeclaration>> bodyDeclarations = new HashMap<>();
     private final Set<String> overriddenMethods = new LinkedHashSet<>();  // Not presently queried ...
     private final Set<String> typeNames = new LinkedHashSet<>();
-    private final Set<String> interfaces = new LinkedHashSet<>();  
-    private final Set<String> abstractClasses = new LinkedHashSet<>();  
+    private final Set<String> interfaces = new LinkedHashSet<>();
+    private final Set<String> abstractClasses = new LinkedHashSet<>();
     private final Set<String> finalClasses = new LinkedHashSet<>();
     private final Set<String> sealedClasses = new LinkedHashSet<>();
     private final Set<String> nonsealedClasses = new LinkedHashSet<>();
@@ -40,10 +40,10 @@ public class CodeInjector {
                 inject(cu);
             } else if (n instanceof CodeInjection ci) {
                 inject(ci);
-            } 
-        } 
+            }
+        }
     }
-    
+
     private boolean isInNodePackage(String classname) {
         return !classname.equals(appSettings.getParserClassName())
              && !classname.equals(appSettings.getLexerClassName())
@@ -62,7 +62,7 @@ public class CodeInjector {
 
     public boolean isSealed(String classname) {
         return sealedClasses.contains(classname);
-    } 
+    }
 
     public boolean isNonSealed(String classname) {
         return nonsealedClasses.contains(classname);
@@ -71,9 +71,8 @@ public class CodeInjector {
     public Set<ObjectType> getPermitsList(String classname) {
         return permitsLists.get(classname);
     }
-   
+
     private void inject(CompilationUnit jcu) {
-//        List<ImportDeclaration> importDecls = new ArrayList<>((List<ImportDeclaration>)(List)jcu.getImportDeclarations());
         List<ImportDeclaration> importDecls = jcu.childrenOfType(ImportDeclaration.class);
         for (TypeDeclaration dec : jcu.getTypeDeclarations()) {
             String name = dec.getName();
@@ -154,7 +153,7 @@ public class CodeInjector {
         }
     }
 
-    void inject(CodeInjection injection) 
+    void inject(CodeInjection injection)
     {
         String name = injection.getName();
         Modifiers mods = injection.firstChildOfType(Modifiers.class);
@@ -207,11 +206,11 @@ public class CodeInjector {
             addToDependencies(name, injection.getPermitsList().childrenOfType(ObjectType.class), permitsLists);
         }
         List<ClassOrInterfaceBodyDeclaration> existingDecls = bodyDeclarations.computeIfAbsent(name, k -> new ArrayList<>());
-        if (injection.body != null) {
-        	existingDecls.addAll(injection.body.childrenOfType(ClassOrInterfaceBodyDeclaration.class));
+        if (injection.getBody() != null) {
+        	existingDecls.addAll(injection.getBody().childrenOfType(ClassOrInterfaceBodyDeclaration.class));
         }
     }
-    
+
     /**
      * Adds a {@link CodeInjection} dynamically (post-parsing).
      * @param ci is the {@code CodeInjection} to be added
@@ -260,7 +259,7 @@ public class CodeInjector {
         }
         injectImportDeclarations(jcu, allInjectedImports);
     }
-    
+
     private void injectImportDeclarations(CompilationUnit jcu, Collection<ImportDeclaration> importDecls) {
         for (ImportDeclaration importDecl : importDecls) {
             if (!jcu.contains(importDecl)) {
@@ -268,7 +267,7 @@ public class CodeInjector {
             }
         }
     }
-    
+
     public boolean hasInjectedCode(String typename) {
         return typeNames.contains(typename);
     }
