@@ -9,6 +9,9 @@ package ${settings.nodePackage};
 import ${settings.parserPackage}.*;
 
 import static ${settings.parserPackage}.${settings.baseTokenClassName}.TokenType.*;
+#if settings.rootAPIPackage
+   import ${settings.rootAPIPackage}.TokenSource;
+#endif
 
 public
 [#if isAbstract]abstract[/#if]
@@ -21,7 +24,7 @@ class ${classname} extends ${superclass}
      ${item}[#if item_has_next],[/#if]
    #endlist
 {
-    public ${classname}(TokenType type, ${settings.lexerClassName} tokenSource, int beginOffset, int endOffset) {
+    public ${classname}(TokenType type,  TokenSource tokenSource, int beginOffset, int endOffset) {
         super(type, tokenSource, beginOffset, endOffset);
     }
 }

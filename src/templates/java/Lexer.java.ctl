@@ -428,28 +428,6 @@ class ${settings.lexerClassName} extends TokenSource
     }
 #endif
 
-
-
-  // Utility methods. Having them here makes it easier to handle things
-  // more uniformly in other generation languages.
-
-   private boolean atLineStart(${TOKEN} tok) {
-      int offset = tok.getBeginOffset();
-      while (offset > 0) {
-        --offset;
-        char c = charAt(offset);
-        if (!Character.isWhitespace(c)) return false;
-        if (c == '\n') break;
-      }
-      return true;
-   }
-
-   public String getLine(${TOKEN} tok) {
-       int lineNum = tok.getBeginLine();
-       return getText(getLineStartOffset(lineNum), getLineEndOffset(lineNum) + 1);
-   }
-
-
   // NFA related code follows.
 
   // The functional interface that represents
