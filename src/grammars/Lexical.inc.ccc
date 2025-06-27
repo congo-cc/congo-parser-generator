@@ -89,14 +89,6 @@ TOKEN :
   }
 ;
 
-INJECT LEXER_CLASS :
-{
-    boolean langMatchesLetter(char c) {
-        getGrammar().getAppSettings().getCodeLang();
-        return true;
-    }
-}
-
 <IN_UNPARSED_CODE_BLOCK> TOKEN :
   <?UNPARSED_CONTENT : (~[])+ <END_UNPARSED>>
   #UnparsedContent

@@ -78,9 +78,7 @@ public class CodeInjector {
             String name = dec.getName();
             typeNames.add(name);
             String packageName = isInNodePackage(name) ? appSettings.getNodePackage() : appSettings.getParserPackage();
-            if (packageName.length() > 0) {
-                name = packageName + "." + name;
-            }
+            name = packageName + "." + name;
             types.put(name, dec);
             if (dec instanceof InterfaceDeclaration) {
                 interfaces.add(name);

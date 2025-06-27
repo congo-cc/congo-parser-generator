@@ -44,7 +44,7 @@ INJECT PARSER_CLASS :
     import org.congocc.parser.tree.StringLiteral;
     import org.congocc.parser.tree.IntegerLiteral;
     import org.congocc.preprocessor.PreprocessorParser;
-    import org.congocc.parser.csharp.CSParser;
+    import org.congocc.parser.csharp.CSharpParser;
     import org.congocc.parser.python.PythonParser;
     import org.congocc.parser.python.ast.Module;
 {
@@ -93,12 +93,12 @@ INJECT PARSER_CLASS :
     }
 
     static public org.congocc.parser.csharp.ast.CompilationUnit parseCSharpFile(String inputSource, CharSequence content) {
-        CSParser parser  = new CSParser(inputSource, content);
+        CSharpParser parser  = new CSharpParser(inputSource, content);
         return parser.CompilationUnit();
     }
 
     static public org.congocc.parser.csharp.ast.CompilationUnit parseCSharpFile(Path path) throws IOException {
-        CSParser parser  = new CSParser(path);
+        CSharpParser parser  = new CSharpParser(path);
         return parser.CompilationUnit();
     }
 
@@ -425,17 +425,14 @@ INJECT CodeInjection :
 
    public static void inject(Grammar grammar, String nodeName, String injection) {
         String inject = "INJECT " + nodeName + " : " + injection;
-        CongoCCParser parser;
         try {
-            parser = new CongoCCParser(grammar, "dynamicInjection", inject);
+            var parser = new CongoCCParser(grammar, "dynamicInjection", inject);
             CodeInjection ci = parser.CodeInjection();
             grammar.getInjector().add(ci);
         } catch (Exception e) {
             //FIXME: need something better here!
             System.err.println("parser exception injecting '" + inject + "': ");
             throw new RuntimeException("Unable to dynamically inject code into " + nodeName);
-        } finally {
-            parser = null;
         }
    }
 

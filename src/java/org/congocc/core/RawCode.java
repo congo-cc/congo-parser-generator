@@ -5,7 +5,7 @@ import org.congocc.parser.Token;
 import org.congocc.parser.CongoCCParser;
 import org.congocc.parser.Node;
 import static org.congocc.parser.Node.CodeLang.*;
-import org.congocc.parser.csharp.CSParser;
+import org.congocc.parser.csharp.CSharpParser;
 import org.congocc.parser.python.PythonParser;
 import org.congocc.parser.python.ast.Module;
 import org.congocc.parser.tree.Assertion;
@@ -125,7 +125,7 @@ public class RawCode extends EmptyExpansion implements EmbeddedCode {
 
     void parseCSharp() {
         Token code = getRawContent();
-        CSParser csParser = new CSParser(getInputSource(), code);
+        CSharpParser csParser = new CSharpParser(getInputSource(), code);
         csParser.setStartingPos(code.getBeginLine(), code.getBeginColumn());
         if (isExpression()) {
             parsedContent = csParser.EmbeddedCSharpExpression();

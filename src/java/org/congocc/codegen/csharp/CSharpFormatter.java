@@ -1,15 +1,15 @@
 package org.congocc.codegen.csharp;
 
 import org.congocc.parser.*;
-import org.congocc.parser.csharp.CSToken;
+import org.congocc.parser.csharp.CSharpToken;
 import org.congocc.parser.csharp.ast.*;
 
-import static org.congocc.parser.csharp.CSToken.TokenType.*;
+import static org.congocc.parser.csharp.CSharpToken.TokenType.*;
 
 /**
- * A fairly effective CSharp pretty printer. It is far from perfect and 
+ * A fairly effective CSharp pretty printer. It is far from perfect and
  * will doubtless be refined over the coming while. But it is good enough
- * for now. There are so many things to do. It allows us to get rid of all 
+ * for now. There are so many things to do. It allows us to get rid of all
  * the messiness in the templates relating to keeping track of indentation.
  * There may be a possibility of merging this with the JavaFormatter and
  * eventually the (as yet unwritten) Python formatter. But this is still
@@ -34,7 +34,7 @@ public class CSharpFormatter extends Node.Visitor {
         if (buffer.charAt(buffer.length()-1) != '\n') buffer.append('\n');
         return buffer.toString();
     }
-    
+
     void visit(TypeDeclaration decl) {
         newLine(true);
         recurse(decl);
@@ -53,7 +53,7 @@ public class CSharpFormatter extends Node.Visitor {
         if (!(cd.nextSibling() instanceof ConstantDeclaration))
         newLine(true);
     }
-    
+
     void visit(PropertyDeclaration pd) {
         recurse(pd);
         if (!(pd.nextSibling() instanceof PropertyDeclaration)) {
@@ -67,7 +67,7 @@ public class CSharpFormatter extends Node.Visitor {
     }
 
 
-    void visit(CSToken tok) {
+    void visit(CSharpToken tok) {
         buffer.append(tok.toString());
     }
 
@@ -79,7 +79,7 @@ public class CSharpFormatter extends Node.Visitor {
     }
 
     void visit(Delimiter delimiter) {
-        CSToken.TokenType type = delimiter.getType();
+        CSharpToken.TokenType type = delimiter.getType();
         if (type == LBRACE) {
             addSpaceIfNecessary();
             buffer.append('{');
@@ -135,7 +135,7 @@ public class CSharpFormatter extends Node.Visitor {
     }
 
     void visit(Operator op) {
-        CSToken.TokenType type = op.getType();
+        CSharpToken.TokenType type = op.getType();
         if (type == DOT) {
             trimTrailingWhitespace();
             buffer.append('.');
@@ -180,7 +180,7 @@ public class CSharpFormatter extends Node.Visitor {
             }
         }
         buffer.append(kw.toString());
-        CSToken.TokenType type = kw.getType();
+        CSharpToken.TokenType type = kw.getType();
         if (type == IF || type == WHILE || type == FOR || type == FOREACH || type == WHEN) {
             buffer.append(' ');
         }
