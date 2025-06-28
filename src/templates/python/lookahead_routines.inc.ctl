@@ -441,7 +441,7 @@ ${is}    return False
 [#macro ScanCodeAssertion assertion indent]
 [#var is = ""?right_pad(indent)]
 [#-- ${is}# DBG > ScanCodeAssertion ${indent} --]
-#if assertion.assertionExpression?? 
+#if assertion.assertionExpression??
 ${is}if not (${globals::translateExpression(assertion.assertionExpression)}):
 ${is}    self.hit_failure = True
 ${is}    return False
@@ -510,7 +510,7 @@ ${is}    self.passed_predicate = passed_predicate${CU.newVarIndex}
 [#-- ${is}# DBG < ScanCodeZeroOrOne ${indent} --]
 /#macro
 
-[#-- --]
+[#--
   Generates lookahead code for a ZeroOrMore construct]
 #macro ScanCodeZeroOrMore zom indent
 #var is = ""?right_pad(indent)
@@ -518,7 +518,7 @@ ${is}    self.passed_predicate = passed_predicate${CU.newVarIndex}
 #var prevTokenName = CU.newVarName("token")
 ${is}${prevPassedPredicateVarName} = self.passed_predicate
 ${is}try:
-#-- ${is}# DBG > ScanCodeZeroOrMore ${indent} 
+#-- ${is}# DBG > ScanCodeZeroOrMore ${indent}
 ${is}    while self.remaining_lookahead > 0 and not self.hit_failure:
 ${is}        ${prevTokenName} = self.current_lookahead_token
 ${is}        self.passed_predicate = False
@@ -530,11 +530,10 @@ ${is}            break
 ${is}finally:
 ${is}    self.passed_predicate = ${prevPassedPredicateVarName}
 ${is}self.hit_failure = False
-#-- ${is}# DBG < ScanCodeZeroOrMore ${indent} 
+#-- ${is}# DBG < ScanCodeZeroOrMore ${indent}
 /#macro
-[#-- --]
+--]
 
-[#--
   Generates lookahead code for a ZeroOrMore construct]
 #macro ScanCodeZeroOrMore zom indent
 #explicitdedent:on
@@ -543,14 +542,15 @@ ${is}self.hit_failure = False
 ${prevPassedPredicateVarName} = self.passed_predicate
 try:
     while self.remaining_lookahead > 0 and not self.hit_failure:
-        ${prevTokenName} = self.current_lookahead_token
-        self.passed_predicate = False
-        if not (${CheckExpansion(zom.nestedExpansion)}):
-            if self.passed_predicate and not self.legacy_glitchy_lookahead:
+  ${prevTokenName} = self.current_lookahead_token
+# Some deliberately messed up indentation now
+self.passed_predicate = False
+    if not (${CheckExpansion(zom.nestedExpansion)}):
+   if self.passed_predicate and not self.legacy_glitchy_lookahead:
                 return False
                 <-
             self.current_lookahead_token = ${prevTokenName}
-            break
+               break
             <-
         <-
     <-
@@ -560,7 +560,6 @@ finally:
 self.hit_failure = False
 #explicitdedent:off
 /#macro
---]
 
 [#--
    Generates lookahead code for a OneOrMore construct
