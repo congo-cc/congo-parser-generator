@@ -32,15 +32,14 @@ public class CodeInjector {
     private final Grammar grammar;
     private final AppSettings appSettings;
 
-    public CodeInjector(Grammar grammar, List<Node> codeInjections) {
+    public CodeInjector(Grammar grammar) {
         this.grammar = grammar;
         this.appSettings = grammar.getAppSettings();
-        for (Node n : codeInjections) {
-            if (n instanceof CompilationUnit cu) {
-                inject(cu);
-            } else if (n instanceof CodeInjection ci) {
-                inject(ci);
-            }
+        for (CodeInjection ci : grammar.descendants(CodeInjection.class)) {
+            inject(ci);
+        }
+        for (CompilationUnit cu : grammar.descendants(CompilationUnit.class)) {
+            inject(cu);
         }
     }
 

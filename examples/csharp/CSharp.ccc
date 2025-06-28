@@ -197,7 +197,8 @@ TypeArgumentList :
 
 
 TypeDeclaration#interface :
-  SCAN TypeDeclarationLA =>
+  ENSURE (TypeDeclarationLA)
+  //SCAN TypeDeclarationLA =>
   (
    ClassDeclaration
    |

@@ -423,6 +423,9 @@ INJECT CodeInjection :
    public List<ObjectType> extendsList = new ArrayList<>();
    public List<ObjectType> implementsList = new ArrayList<>();
 
+// This is probably not the best way of doing this,
+// but to be fair, it is quite creative, and also, I never
+// provided any API for this. But I guess I will. (JR)
    public static void inject(Grammar grammar, String nodeName, String injection) {
         String inject = "INJECT " + nodeName + " : " + injection;
         try {
@@ -434,10 +437,6 @@ INJECT CodeInjection :
             System.err.println("parser exception injecting '" + inject + "': ");
             throw new RuntimeException("Unable to dynamically inject code into " + nodeName);
         }
-   }
-
-   public void close() {
-      getGrammar().addCodeInjection(this);
    }
 
    public ClassOrInterfaceBody getBody() {
@@ -487,23 +486,13 @@ INJECT CodeInjection :
 }
 
 CodeInjection2 :
-{
-        Node code=null;
-}
         ACTIVATE_TOKENS _INJECT (<_INJECT>)
         ":" =>||
-        [
-            "{" code=CompilationUnit "}"
-        ]
-        [
-            SCAN {code==null} =>
-            code = RawCode
-        ]
-        {%
-            if (code!=null) {
-                grammar.addCodeInjection(code);
-            }
-        %}
+        (
+            "{" CompilationUnit "}"
+            |
+            RawCode
+        )
 ;
 
 Options# :

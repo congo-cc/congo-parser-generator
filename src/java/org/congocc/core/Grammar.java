@@ -36,7 +36,6 @@ public class Grammar extends BaseNode {
     private final Set<String> abstractNodeNames = new HashSet<>();
     private final Set<String> interfaceNodeNames = new HashSet<>();
     private final Map<String, String> nodePackageNames = new HashMap<>();
-    private final List<Node> codeInjections = new ArrayList<>();
     private final List<String> lexerTokenHooks = new ArrayList<>();
     private final List<String> parserTokenHooks = new ArrayList<>();
     private final List<String> openNodeScopeHooks = new ArrayList<>();
@@ -184,7 +183,6 @@ public class Grammar extends BaseNode {
             Path includeFile = Paths.get(location);
             String content = new String(Files.readAllBytes(path), StandardCharsets.UTF_8);
             CompilationUnit cu = CongoCCParser.parseJavaFile(this, includeFile.normalize().toString(), content);
-            codeInjections.add(cu);
             return cu;
         } else {
             Path prevLocation = appSettings.getFilename();
@@ -235,7 +233,7 @@ public class Grammar extends BaseNode {
 
     public CodeInjector getInjector() {
         if (injector == null) {
-            injector = new CodeInjector(this, codeInjections);
+            injector = new CodeInjector(this);
         }
         return injector;
     }
@@ -485,11 +483,6 @@ public class Grammar extends BaseNode {
         }
     }
 
-    public void addCodeInjection(Node n) {
-        checkForHooks(n, null);
-        codeInjections.add(n);
-    }
-
     /**
      * Adds an injected field to the specified {@link Node} dynamically (post parsing).
      * @param nodeName is the name of the {@code Node}
@@ -533,6 +526,12 @@ public class Grammar extends BaseNode {
             lexerData.addLexicalState(lexicalState);
         }
         if (!checkReferences()) return;
+        for (CodeInjection ci : descendants(CodeInjection.class)) {
+            checkForHooks(ci, null);
+        }
+        for (CompilationUnit cu : descendants(CompilationUnit.class)) {
+            checkForHooks(cu, null);
+        }
         // Check whether we have any LOOKAHEADs at non-choice points
         for (ExpansionSequence sequence : descendants(ExpansionSequence.class)) {
             if (sequence.getHasExplicitLookahead()

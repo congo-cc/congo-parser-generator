@@ -608,8 +608,7 @@ Initializer# :
 
 Type#interface :
   (
-   SCAN {getTokenType(2) != LBRACKET}#
-   =>PrimitiveType
+   PrimitiveType ENSURE ~(<LBRACKET>) =>||
    |
    ReferenceType
   )

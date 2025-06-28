@@ -34,7 +34,7 @@ public class NonTerminalCall {
     }
 
     StackTraceElement createStackTraceElement() {
-        return new StackTraceElement("${settings.parserClassName}", productionName, sourceFile, line);
+        return new StackTraceElement(parserClassName, productionName, sourceFile, line);
     }
 
     public void dump(PrintStream ps) {
