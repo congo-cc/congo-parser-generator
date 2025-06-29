@@ -1,4 +1,4 @@
-# explicitdedent:on    
+# explicitdedent:on
     <-
     #
     # the root node of the AST. It only makes sense to call
@@ -6,12 +6,10 @@
     #
     @property
     def root_node(self):
-        return self.current_node_scope.root_node
+  return self.current_node_scope.root_node
     <-
 
-    #
     # push a node onto the top of the node stack
-    #
     def push_node(self, n):
         self.current_node_scope.append(n)
     <-
@@ -156,7 +154,7 @@
         else:
             self.current_node_scope.close()
             return False
-        <-            
+        <-
         return True
     <-
 

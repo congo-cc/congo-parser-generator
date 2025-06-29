@@ -356,15 +356,9 @@ InterfaceDeclaration :
 ;
 
 PermitsList :
-   SCAN 0 {checkNextTokenImage("permits")}# =>
-   (
-      <PERMITS>
-      |
-      <IDENTIFIER>
-      {
-        replaceTokenType(PERMITS);
-      }
-   )
+   ENSURE {checkNextTokenImage("permits")}
+   =>||
+   ACTIVATE_TOKENS PERMITS(<PERMITS>)
    ObjectType
    (<COMMA> ObjectType)*
 ;

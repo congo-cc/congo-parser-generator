@@ -45,7 +45,7 @@ public class PyFormatter extends Node.Visitor {
             case RBRACE -> --braceNesting;
             default -> {}
         }
-        if (tok.startsLine() && !lineJoining()) {
+        if (!lineJoining() && tok.startsLine()) {
             indentLine();
         }
         buffer.append(tok);
@@ -83,13 +83,19 @@ public class PyFormatter extends Node.Visitor {
     }
 
     void visit(Newline tok) {
-        if (!tok.isUnparsed()) {
-            buffer.append(eol);
-            return;
-        }
-        if (tok.getPrevious() instanceof Newline) {
+        if (lineJoining() || !tok.isUnparsed()) {
             buffer.append(eol);
         }
+    }
+
+    void visit(ClassDefinition cd) {
+        buffer.append(eol);
+        recurse(cd);
+    }
+
+    void visit(FunctionDefinition fd) {
+        recurse(fd);
+        buffer.append(eol);
     }
 
     private void indentLine() {
