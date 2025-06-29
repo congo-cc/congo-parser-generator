@@ -760,7 +760,10 @@ public interface Node extends List<Node> {
             try {
                 // Use this just to represent no method found, since ConcurrentHashMap cannot contain nulls
                 DUMMY_METHOD = Object.class.getMethod("toString");
-            } catch (Exception e) {throw new RuntimeException(e);} // Never happens anyway.
+            } catch (Exception e) {
+            // Never happens anyway.
+                throw new RuntimeException(e);
+            }
             mapLookup = Collections.synchronizedMap(new HashMap<Class<? extends Node.Visitor>, Map<Class<? extends Node>, Method>>());
         }
         private Map<Class<? extends Node>, Method> methodCache;

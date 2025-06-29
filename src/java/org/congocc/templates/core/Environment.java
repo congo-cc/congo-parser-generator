@@ -5,11 +5,9 @@ import java.io.PrintWriter;
 import java.io.StringWriter;
 import java.io.Writer;
 import java.text.Collator;
-import java.text.DateFormat;
 import java.text.DecimalFormat;
 import java.text.DecimalFormatSymbols;
 import java.text.NumberFormat;
-import java.text.SimpleDateFormat;
 import java.util.*;
 
 import org.congocc.templates.core.nodes.generated.ArgsList;
@@ -34,12 +32,12 @@ import static org.congocc.templates.core.variables.Wrap.*;
  * variables created by the template, the value of settings set by the template,
  * the reference to the data model root, etc. Everything that is needed to
  * fulfill the template processing job.
- * 
+ *
  * <p>
  * Data models that need to access the <tt>Environment</tt> object that
  * represents the template processing on the current thread can use the
  * {@link #getCurrentEnvironment()} method.
- * 
+ *
  * <p>
  * If you need to modify or read this object before or after the
  * <tt>process</tt> call, use
@@ -93,13 +91,6 @@ public final class Environment extends Configurable implements Scope {
     private Throwable lastThrowable;
 
     private Object lastReturnValue;
-
-    private List<Scope> nodeNamespaces;
-
-    // Things we keep track of for the fallback mechanism.
-    private int nodeNamespaceIndex;
-
-    private String currentNodeName, currentNodeNS;
 
     private String cachedURLEscapingCharset;
 
@@ -161,7 +152,7 @@ public final class Environment extends Configurable implements Scope {
     public void render(TemplateElement element) throws IOException {
         pushElement(element);
         Block nestedBlock = element.getNestedBlock();
-        boolean createNewScope = nestedBlock != null 
+        boolean createNewScope = nestedBlock != null
                                  && !nestedBlock.isTemplateRoot()
                                  && !(nestedBlock.getParent() instanceof Macro)
                                  && nestedBlock.createsScope();
@@ -340,7 +331,7 @@ public final class Environment extends Configurable implements Scope {
             Configurable prevParent = getFallback();
             currentScope = currentMacroContext = mc;
             try {
-                render(macro.getNestedBlock());                
+                render(macro.getNestedBlock());
             } catch (ReturnException re) {
             } catch (TemplateException te) {
                 handleTemplateException(te);
@@ -595,7 +586,7 @@ public final class Environment extends Configurable implements Scope {
     /**
      * Sets a variable in the most local scope available (corresponds to an
      * unqualified #set instruction)
-     * 
+     *
      * @param name the identifier of the variable
      * @param value the value of the variable
      */
@@ -623,7 +614,7 @@ public final class Environment extends Configurable implements Scope {
      * Outputs the instruction stack. Useful for debugging.
      * {@link TemplateException}s incorporate this information in their stack
      * traces.
-     * 
+     *
      * @see #getElementStack() which exposes the actual element stack
      *      so that you can write your own custom stack trace or error message
      */
@@ -735,14 +726,14 @@ public final class Environment extends Configurable implements Scope {
     /**
      * Emulates <code>include</code> directive, except that <code>name</code>
      * must be tempate root relative.
-     * 
+     *
      * <p>
      * It's the same as
      * <code>include(getTemplateForInclusion(name, encoding, parse))</code>.
      * But, you may want to separately call these two methods, so you can
      * determine the source of exceptions more precisely, and thus achieve more
      * intelligent error handling.
-     * 
+     *
      * @see #getTemplateForInclusion(String name, String encoding, boolean
      *      parse)
      * @see #include(Template includedTemplate, boolean freshNamespace)
@@ -757,7 +748,7 @@ public final class Environment extends Configurable implements Scope {
      * advantage over simply
      * using <code>config.getTemplate(...)</code> is that it chooses the
      * default encoding as the <code>include</code> directive does.
-     * 
+     *
      * @param name
      *                 the name of the template, relatively to the template root
      *                 directory (not the to the directory of the currently
@@ -787,7 +778,7 @@ public final class Environment extends Configurable implements Scope {
     /**
      * Processes a Template in the context of this <code>Environment</code>,
      * including its output in the <code>Environment</code>'s Writer.
-     * 
+     *
      * @param includedTemplate
      *                         the template to process. Note that it does
      *                         <em>not</em> need
@@ -816,14 +807,14 @@ public final class Environment extends Configurable implements Scope {
     /**
      * Emulates <code>import</code> directive, except that <code>name</code>
      * must be tempate root relative.
-     * 
+     *
      * <p>
      * It's the same as
      * <code>importLib(getTemplateForImporting(name), namespace)</code>. But,
      * you may want to separately call these two methods, so you can determine
      * the source of exceptions more precisely, and thus achieve more
      * intelligent error handling.
-     * 
+     *
      * @see #getTemplateForImporting(String name)
      * @see #importLib(Template includedTemplate, String namespace, boolean global)
      */
@@ -837,7 +828,7 @@ public final class Environment extends Configurable implements Scope {
      * The
      * advantage over simply using <code>config.getTemplate(...)</code> is
      * that it chooses the encoding as the <code>import</code> directive does.
-     * 
+     *
      * @param name
      *             the name of the template, relatively to the template root
      *             directory (not the to the directory of the currently executing
@@ -851,7 +842,7 @@ public final class Environment extends Configurable implements Scope {
 
     /**
      * Emulates <code>import</code> directive.
-     * 
+     *
      * @param loadedTemplate
      *                       the template to import. Note that it does <em>not</em>
      *                       need
@@ -942,7 +933,7 @@ public final class Environment extends Configurable implements Scope {
 
     static public final Writer NULL_WRITER = new Writer() {
         public void write(char cbuf[], int off, int len) {}
-        
+
         public void flush() {}
 
         public void close() {}

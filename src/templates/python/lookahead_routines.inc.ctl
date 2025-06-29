@@ -125,7 +125,7 @@ ${BuildProductionLookaheadMethod(production, indent)}
         self.current_lookahead_token = self.last_consumed_token
         scan_to_end = False
         try:
-${BuildPredicateCode(expansion, 12)}
+${BuildPredicateCode(expansion)}
       [#if !expansion.hasSeparateSyntacticLookahead && expansion.lookaheadAmount != 0]
 ${BuildScanCode(expansion, 12)}
       [/#if]
@@ -154,7 +154,7 @@ ${is}    passed_predicate_threshold = self.remaining_lookahead - ${expansion.loo
   /#if
 ${is}    try:
 ${is}        self.lookahead_routine_nesting += 1
-${BuildPredicateCode(expansion, indent + 8)}
+${BuildPredicateCode(expansion)}
   #if !expansion.hasScanLimit
 ${is}        reached_scan_code = True
   /#if
@@ -204,30 +204,35 @@ ${is}        self.hit_failure = prev_hit_failure
 [#-- ${is}# DBG < BuildAssertionRoutine ${indent} --]
 [/#macro]
 
-[#-- Build the code for checking semantic lookahead, lookbehind, and/or syntactic lookahead --]
-#macro BuildPredicateCode expansion indent
-#var is = ""?right_pad(indent)
-[#-- ${is}# DBG > BuildPredicateCode ${indent} --]
-#if expansion.hasSemanticLookahead && (expansion.lookahead.semanticLookaheadNested || expansion.containingProduction.onlyForLookahead)
-${is}if not (${globals::translateExpression(expansion.semanticLookahead)}):
-${is}    return False
-/#if
-#if expansion.hasLookBehind
-${is}if [#if !expansion.lookBehind.negated]not [/#if]self.${expansion.lookBehind.routineName}():
-${is}    return False
-/#if
-#if expansion.hasSeparateSyntacticLookahead
-${is}if self.remaining_lookahead <= 0:
-${is}    self.passed_predicate = True
-${is}    return not self.hit_failure
-${is}if [#if !expansion.lookahead.negated]not [/#if]self.${expansion.lookaheadExpansion.scanRoutineName}(True):
-${is}    return False
-/#if
+#-- Build the code for checking semantic lookahead, lookbehind, and/or syntactic lookahead
+#macro BuildPredicateCode expansion
+# BuildPredicateCode macro begin
+   # explicitdedent:on
+ #if expansion.hasSemanticLookahead && (expansion.lookahead.semanticLookaheadNested || expansion.containingProduction.onlyForLookahead)
+    if not (${globals::translateExpression(expansion.semanticLookahead)}):
+        return False
+    <-
+ #endif
+   #if expansion.hasLookBehind
+    if ${!expansion.lookBehind.negated ?: "not "}self.${expansion.lookBehind.routineName}():
+       return False
+    <-
+   #endif
+   #if expansion.hasSeparateSyntacticLookahead
+    if self.remaining_lookahead <= 0:
+        self.passed_predicate = True
+        return not self.hit_failure
+    <-
+    if ${!expansion.lookahead.negated ?: "not "}self.${expansion.lookaheadExpansion.scanRoutineName}(True):
+        return False
+    <-
+   #endif
 #if expansion.lookaheadAmount == 0
-${is}self.passed_predicate = True
-/#if
-[#-- ${is}# DBG < BuildPredicateCode ${indent} --]
-/#macro
+   self.passed_predicate = True
+#endif
+   # explicitdedent:restore
+# BuildPredicateCode macro end
+#endmacro
 
 
 [#--
@@ -545,13 +550,8 @@ ${is}    self.passed_predicate = passed_predicate${CU.newVarIndex}
    and then the same code as a ZeroOrMore
 --]
 [#macro ScanCodeOneOrMore oom indent]
-[#var is = ""?right_pad(indent)]
-[#-- ${is}# DBG > ScanCodeOneOrMore ${indent} --]
-[#--${is}if not (${CheckExpansion(oom.nestedExpansion)}):
-${is}    return False--]
 [@BuildScanCode oom.nestedExpansion, indent /]
 [@ScanCodeZeroOrMore oom /]
-[#-- ${is}# DBG < ScanCodeOneOrMore ${indent} --]
 [/#macro]
 
 
