@@ -121,9 +121,7 @@ class NonTerminalCall:
         'production_name',
         'line', 'column',
         'scan_to_end',
-#if settings.faultTolerant
-        'follow_set',
-/#if
+        ${settings.faultTolerant ?: "follow_set,"}
     )
 
     def __init__(self, parser, filename, prodname, line, column[#if settings.faultTolerant], follow_set[/#if]):
@@ -150,12 +148,12 @@ class ParseState:
         self.parser = parser
         self.last_consumed = parser.last_consumed_token
         self.parsing_stack = parser.parsing_stack[:]
-[#if MULTIPLE_LEXICAL_STATE_HANDLING]
+#if MULTIPLE_LEXICAL_STATE_HANDLING
         self.lexical_state = parser.token_source.lexical_state
-[/#if]
-[#if settings.treeBuildingEnabled]
+#endif
+#if settings.treeBuildingEnabled
         self.node_scope = parser.current_node_scope.clone()
-[/#if]
+#endif
 
 class InvalidNode(BaseNode):
     pass
@@ -264,7 +262,7 @@ ${globals::translateParserInjections(true)}
         if tolerant:
             raise NotImplementedError('This parser was not built with fault tolerance support!')
 
-/#if
+#endif
 #if settings.legacyGlitchyLookahead
     @property
     def legacy_glitchy_lookahead(self):
@@ -281,10 +279,10 @@ ${globals::translateParserInjections(true)}
         return self.token_source.input_source
 
     def push_last_token_back(self):
-[#if settings.treeBuildingEnabled]
+#if settings.treeBuildingEnabled
         if self.peek_node() == self.last_consumed_token:
             self.pop_node()
-[/#if]
+#endif
         self.last_consumed_token = self.last_consumed_token.previous_token
 
     def stash_parse_state(self):
@@ -295,18 +293,18 @@ ${globals::translateParserInjections(true)}
 
     def restore_stashed_parse_state(self):
         state = self.pop_parse_state()
-[#if settings.treeBuildingEnabled]
+#if settings.treeBuildingEnabled
         self.current_node_scope = state.node_scope
         self.parsing_stack = state.parsing_stack
-[/#if]
+#endif
         if state.last_consumed is not None:
             # REVISIT
             self.last_consumed_token = state.last_consumed
-[#if MULTIPLE_LEXICAL_STATE_HANDLING]
+#if MULTIPLE_LEXICAL_STATE_HANDLING
         self.token_source.reset(self.last_consumed_token, state.lexical_state)
-[#else]
+#else
         self.token_source.reset(self.last_consumed_token)
-[/#if]
+#endif
 
     def push_onto_call_stack(self, method_name, filename, line, column):
         self.parsing_stack.append(NonTerminalCall(self, filename, method_name, line, column[#if settings.faultTolerant], self.current_follow_set[/#if]))
@@ -316,7 +314,7 @@ ${globals::translateParserInjections(true)}
         self.currently_parsed_production = ntc.production_name
 #if settings.faultTolerant
         self.outer_follow_set = ntc.follow_set
-/#if
+#endif
 
     def restore_call_stack(self, prev_size):
         while len(self.parsing_stack) > prev_size:
@@ -328,13 +326,13 @@ ${globals::translateParserInjections(true)}
         ts = self.token_source
         result = ts.get_next_token(tok)
         while result.is_unparsed:
-[#list grammar.parserTokenHooks as methodName]
+#list grammar.parserTokenHooks as methodName
             result = self.${methodName}(result)
-[/#list]
+#endlist
             result = ts.get_next_token(result)
-[#list grammar.parserTokenHooks as methodName]
+#list grammar.parserTokenHooks as methodName
         result = self.${methodName}(result)
-[/#list]
+#endlist
         self._next_token_type = None
         return result
 
@@ -451,26 +449,26 @@ ${globals::translateParserInjections(true)}
                     return True
         return False
 
-[#import "parser_productions.inc.ctl" as ParserCode]
+#import "parser_productions.inc.ctl" as ParserCode
 [@ParserCode.Productions /]
-[#import "lookahead_routines.inc.ctl" as LookaheadCode]
+#import "lookahead_routines.inc.ctl" as LookaheadCode
 [@LookaheadCode.Generate/]
 
-[#embed "error_handling.inc.ctl"]
+#embed "error_handling.inc.ctl"
 
-[#if settings.treeBuildingEnabled]
+#if settings.treeBuildingEnabled
 
     @property
     def is_tree_building_enabled(self):
         return self.build_tree
 
    [#embed "tree_building_code.inc.ctl"]
-[#else]
+#else
     @property
     def is_tree_building_enabled(self):
         return False
 
-[/#if]
+#endif
 
 #if settings.treeBuildingEnabled
 #
@@ -483,7 +481,7 @@ ${globals::translateParserInjections(true)}
 class ${node}(BaseNode): pass
     #else
 ${globals::translateInjectedClass(node)}
-    /#if
-  /#list
-/#if
+    #endif
+  #endlist
+#endif
 ${globals::translateParserInjections(false)}

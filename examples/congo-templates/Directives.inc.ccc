@@ -162,7 +162,7 @@ INJECT AttemptBlock :
 }
 
 ListBlock#IteratorBlock :
-{Token start;}
+  {%Token start;%}
    start=<LIST>
    Expression
    <AS>
@@ -392,9 +392,9 @@ INJECT TrimInstruction :
 }
 
 BlockAssignment :
-{
+{%
    Token start;
-}
+%}
    start=<SET>
    PrimaryExpression(false)
    [

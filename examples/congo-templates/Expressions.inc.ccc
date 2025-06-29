@@ -3,9 +3,9 @@
 
 #Expression#interface :
     TernaryExpression
-    {
+    {%
         return (Expression) peekNode();
-    }
+    %}
 ;
 
 INJECT Expression :

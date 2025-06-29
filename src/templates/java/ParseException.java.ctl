@@ -2,8 +2,12 @@
 
 package ${settings.parserPackage};
 
-#var BASE_EXCEPTION_TYPE = settings.useCheckedException?string("Exception", "RuntimeException")
-#var TOKEN_TYPE_SET = "EnumSet<TokenType>", BaseToken = settings.baseTokenClassName, BaseTokenType = "TokenType"
+#var BASE_EXCEPTION_TYPE = settings.useCheckedException ?: "Exception" : "RuntimeException"
+
+#var TOKEN_TYPE_SET = "EnumSet<TokenType>",
+                      BaseToken = settings.baseTokenClassName,
+                      BaseTokenType = "TokenType"
+
 #if settings.treeBuildingEnabled || settings.rootAPIPackage
   #set TOKEN_TYPE_SET = "Set<? extends Node.NodeType>"
   #set BaseToken = "Node.TerminalNode"
@@ -48,9 +52,8 @@ public class ParseException extends ${BASE_EXCEPTION_TYPE} {
 
   public ParseException() {}
 
-  // Needed because of inheritance
   public ParseException(String message) {
-    super(message);
+      super(message);
   }
 
   public ParseException(String message, List<NonTerminalCall> callStack) {
@@ -78,13 +81,18 @@ public class ParseException extends ${BASE_EXCEPTION_TYPE} {
          [#-- //This is really screwy, have to REVISIT this whole case. --]
          return buf.toString();
      }
-     if (expectedTypes != null) {
-         buf.append("\nWas expecting one of the following:\n");
-         boolean isFirst = true;
-         for (${BaseTokenType} type : expectedTypes) {
-             if (!isFirst) buf.append(", ");
-             isFirst = false;
-             buf.append(type);
+     if (expectedTypes != null && expectedTypes.size() >0) {
+         if (expectedTypes.size() == 1) {
+            buf.append("\nWas expecting: " + expectedTypes.iterator().next() + "\n");
+         }
+         else {
+            buf.append("\nWas expecting one of the following:\n");
+            boolean isFirst = true;
+            for (${BaseTokenType} type : expectedTypes) {
+               if (!isFirst) buf.append(", ");
+               isFirst = false;
+               buf.append(type);
+            }
          }
      }
      String content = token.toString();
