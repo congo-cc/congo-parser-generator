@@ -45,6 +45,9 @@ public class ${settings.baseTokenClassName} ${implements} {
         #list settings.extraTokenNames as extraToken
           ${extraToken},
         #endlist
+        #list settings.contextualKeywords as contextualKeyword
+          ${contextualKeyword},
+        #endlist
         DUMMY,
         INVALID;
 

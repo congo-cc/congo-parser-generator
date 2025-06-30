@@ -20,6 +20,7 @@ import org.congocc.core.RegexpSpec;
 import org.congocc.parser.Node;
 import org.congocc.parser.Node.CodeLang;
 import static org.congocc.parser.Node.CodeLang.*;
+import static org.congocc.core.LexerData.isJavaIdentifier;
 import org.congocc.parser.tree.MethodCall;
 
 /**
@@ -38,6 +39,7 @@ public class AppSettings {
     private final Set<String> usedIdentifiers = new HashSet<>();
     private final Set<String> tokensOffByDefault = new HashSet<>();
     private final Map<String, String> extraTokens = new LinkedHashMap<>();
+    private final Set<String> contextualKeywords = new HashSet<>();
     private boolean ignoreCase, quiet;
     private int jdkTarget = 8;
 
@@ -97,6 +99,10 @@ public class AppSettings {
 
     public Map<String, String> getExtraTokens() {
         return extraTokens;
+    }
+
+    public Set<String> getContextualKeywords() {
+        return contextualKeywords;
     }
 
     public List<String> getExtraTokenNames() {
@@ -220,6 +226,18 @@ public class AppSettings {
                         }
                     }
                 }
+                case "CONTEXTUAL_KEYWORDS" -> {
+                    String tokens = (String) settings.get(key);
+                    for (StringTokenizer st = new StringTokenizer(tokens, ",\t\r\n"); st.hasMoreTokens(); ) {
+                        String kw = st.nextToken();
+                        if (isJavaIdentifier(kw)) {
+                            contextualKeywords.add(kw);
+                        }
+                        else {
+                            errors.addError("The string " + kw + " is not permissible as a contextual keyword.");
+                        }
+                    }
+                }
                 case "BASE_SRC_DIR", "OUTPUT_DIRECTORY" -> {
                     if (!grammar.isInInclude() && outputDir == null)
                         outputDir = Paths.get((String) value);
@@ -287,7 +305,7 @@ public class AppSettings {
                     }
                     packageName = packageName.concat("parser");
                     // Use a user-specified value if available
-                    packageName = grammar.getPreprocessorSymbols().getOrDefault("py.package", packageName);
+                    //packageName = grammar.getPreprocessorSymbols().getOrDefault("py.package", packageName);
                     dir = dir.resolve(packageName);
                     if (!Files.exists(dir)) {
                         Files.createDirectories(dir);

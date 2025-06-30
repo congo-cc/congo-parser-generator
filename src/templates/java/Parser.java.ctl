@@ -53,8 +53,17 @@ import static ${settings.parserPackage}.${settings.baseTokenClassName}.TokenType
 #endif
 
 public ${isFinal ?: "final"} class ${settings.parserClassName} {
+  #if settings.contextualKeywords
 
-#if grammar.usingCardinality
+     EnumSet<TokenType> contextualKeywords = EnumSet.of(
+        #list settings.contextualKeywords as kw
+           ${kw} ${kw_has_next ?: ", "}
+        #endlist
+     );
+
+  #endif
+
+  #if grammar.usingCardinality
 
     [#-- N.B., this class definition can be replaced by:
       record CardinalityState (int[] cardinalities, boolean isProvisional) {};
@@ -232,9 +241,9 @@ public ${isFinal ?: "final"} class ${settings.parserClassName} {
             return isSuccess;
         }
     }
-#else
+  #else
   // Suppressing RepetitionCardinality class; cardinality not used in this parser.
-#endif
+  #endif
 
 static final int UNLIMITED = Integer.MAX_VALUE;
 private final ${settings.baseTokenClassName} DUMMY_START_TOKEN = new ${settings.baseTokenClassName}();

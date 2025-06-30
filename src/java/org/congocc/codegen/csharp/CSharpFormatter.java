@@ -21,7 +21,7 @@ public class CSharpFormatter extends Node.Visitor {
     {this.visitUnparsedTokens = true;}
 
     private final StringBuilder buffer = new StringBuilder();
-    private int currentIndentation;
+    private int currentIndentation, maxLineLength = 80;
     private final int indentAmount = 4;
     private final String eol = "\n";
 
@@ -105,7 +105,10 @@ public class CSharpFormatter extends Node.Visitor {
         }
         else if (type == COMMA) {
             trimTrailingWhitespace();
-            buffer.append(", ");
+            if (currentLineLength()>maxLineLength) {
+                buffer.append(",");
+                newLine();
+            } else {buffer.append(", "));}
         }
         else if (type == RPAREN) {
             trimTrailingWhitespace();

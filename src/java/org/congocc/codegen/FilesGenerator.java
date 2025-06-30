@@ -426,6 +426,14 @@ public class FilesGenerator {
             files.put(value, outputFile);
             tokenSubclassFileNames.add(outputFile.getFileName().toString());
         }
+        for (String kw : appSettings.getContextualKeywords()) {
+            String outputFileName = getOutputFile(kw).getFileName().toString();
+            if (tokenSubclassFileNames.contains(outputFileName)) {
+                errors.addError("Cannot use '" + kw + "' as a contextual keyword. Name is already taken.");
+            } else {
+                tokenSubclassFileNames.add(outputFileName);
+            }
+        }
         for (String nodeName : grammar.getNodeNames()) {
             if (nodeName.indexOf('.')>0) continue;
             Path outputFile = getOutputFile(nodeName);
