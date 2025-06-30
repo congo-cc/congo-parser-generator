@@ -108,7 +108,7 @@ public class CSharpFormatter extends Node.Visitor {
             if (currentLineLength()>maxLineLength) {
                 buffer.append(",");
                 newLine();
-            } else {buffer.append(", "));}
+            } else {buffer.append(", ");}
         }
         else if (type == RPAREN) {
             trimTrailingWhitespace();

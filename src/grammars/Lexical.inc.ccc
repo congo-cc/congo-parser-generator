@@ -308,9 +308,9 @@ INJECT RegexpStringLiteral :
   }
 
   public String getLabel() {
-    if (isContextual()) {
-        return literalString;
-    }
+//    if (isContextual()) {
+//        return literalString;
+//    }
      if (canonicalRegexp != null) {
         return canonicalRegexp.getLabel();
      }
