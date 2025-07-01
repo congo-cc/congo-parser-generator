@@ -296,8 +296,9 @@ INJECT RegexpStringLiteral :
   }
 
   public boolean isContextual() {
-    return get(0).getType() == SINGLE_QUOTE_STRING
-           || get(0).getType() == CHARACTER_LITERAL;
+    return firstAncestorOfType(TokenProduction.class) == null
+        && (get(0).getType() == SINGLE_QUOTE_STRING
+           || get(0).getType() == CHARACTER_LITERAL);
   }
 
   public int getOrdinal() {
@@ -308,9 +309,9 @@ INJECT RegexpStringLiteral :
   }
 
   public String getLabel() {
-//    if (isContextual()) {
-//        return literalString;
-//    }
+     if (isContextual()) {
+        return label = literalString;
+     }
      if (canonicalRegexp != null) {
         return canonicalRegexp.getLabel();
      }

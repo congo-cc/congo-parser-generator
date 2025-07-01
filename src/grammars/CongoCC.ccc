@@ -1378,10 +1378,13 @@ Terminal# :
   ACTIVATE_TOKENS _EOF(RegexpStringLiteral | RegexpRef | EndOfFile )
   {
       RegularExpression result = (RegularExpression) peekNode();
+      thisProduction.setRegexp(result);
       if (result instanceof RegexpStringLiteral rsl) {
             rsl.setLexicalState(grammar.getDefaultLexicalState());
+            if (rsl.isContextual()) {
+                result.setLabel(result.getLiteralString());
+            }
       }
-      thisProduction.setRegexp(result);
       thisProduction.setLabel(result.getLabel());
   }
   [

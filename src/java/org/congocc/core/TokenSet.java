@@ -4,13 +4,13 @@ import java.util.*;
 
 /**
  * A class to represent a set of Token types.
- * Will probably eventually move this into the Token.java.ctl as 
+ * Will probably eventually move this into the Token.java.ctl as
  * something available to all generated parsers.
  */
 public class TokenSet extends BitSet {
-	
+
 	private static final long serialVersionUID = 1L;
-	
+
 	private final Grammar grammar;
 
 	private boolean incomplete;
@@ -31,7 +31,7 @@ public class TokenSet extends BitSet {
 	public void setIncomplete(boolean incomplete) {
 		this.incomplete = incomplete;
 	}
-	
+
 	public List<String> getTokenNames() {
 		List<String> names = new ArrayList<>();
 		int tokCount = grammar.getLexerData().getTokenCount();

@@ -151,13 +151,19 @@ void dumpLookaheadCallStack(PrintStream ps) {
 
       private ${settings.baseTokenClassName} consumeToken(TokenType expectedType
         #if settings.faultTolerant
-          , boolean tolerant, EnumSet<TokenType> followSet, Runnable recoveryAction 
+          , boolean tolerant, EnumSet<TokenType> followSet, Runnable recoveryAction
         #endif
       )
       [#if settings.useCheckedException] throws ParseException [/#if]
       {
         ${settings.baseTokenClassName} nextToken = nextToken(lastConsumedToken);
         if (nextToken.getType() != expectedType) {
+            #if settings.contextualKeywords
+               if (contextualKeywords.contains(expectedType)
+                   && expectedType.name().contentEquals(nextToken)) {
+                       nextToken = nextToken.replaceType(expectedType);
+               } else
+            #endif
             nextToken = handleUnexpectedTokenType(expectedType, nextToken
             #if settings.faultTolerant
                , tolerant, followSet
@@ -204,8 +210,8 @@ void dumpLookaheadCallStack(PrintStream ps) {
         , boolean tolerant, EnumSet<TokenType> followSet
       #endif
       )
-      #if settings.useCheckedException 
-         throws ParseException 
+      #if settings.useCheckedException
+         throws ParseException
       #endif
       {
       #if !settings.faultTolerant

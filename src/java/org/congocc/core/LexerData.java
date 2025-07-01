@@ -18,7 +18,6 @@ public class LexerData {
     private final Errors errors;
     private final List<LexicalStateData> lexicalStates = new ArrayList<>();
     private final List<RegularExpression> regularExpressions = new ArrayList<>();
-
     private final Map<String, RegularExpression> namedTokensTable = new HashMap<>();
     private final Set<RegularExpression> overriddenTokens = new HashSet<>();
     private final Set<RegularExpression> lazyTokens = new HashSet<>();
@@ -39,6 +38,9 @@ public class LexerData {
         return regularExpressions.indexOf(re);
     }
 
+    // All of this is kinda kludgy.
+    // It evolved forward from much messier stuff in the
+    // Legacy JavaCC codebase.
     public String getTokenName(int ordinal) {
         if (ordinal < regularExpressions.size()) {
             return regularExpressions.get(ordinal).getLabel();
@@ -66,7 +68,10 @@ public class LexerData {
     }
 
     public int getMaxNfaStates() {
-        return lexicalStates.stream().mapToInt(state -> state.getAllNfaStates().size()).max().getAsInt();
+        return lexicalStates.stream()
+               .mapToInt(state -> state.getAllNfaStates().size())
+               .max()
+               .getAsInt();
     }
 
     public List<RegularExpression> getRegularExpressions() {
@@ -101,15 +106,6 @@ public class LexerData {
         }
     }
 
-    public List<String> getTokenNames() {
-        List<String> result = new ArrayList<>();
-        for (RegularExpression regexp : regularExpressions) {
-            result.add(regexp.getLabel());
-        }
-        return result;
-    }
-
-
     static public boolean isJavaIdentifier(String s) {
         return !s.isEmpty() && Character.isJavaIdentifierStart(s.codePointAt(0))
                 && s.codePoints().allMatch(Character::isJavaIdentifierPart);
@@ -128,7 +124,7 @@ public class LexerData {
     }
 
     public int getTokenCount() {
-        return regularExpressions.size() + grammar.getAppSettings().getExtraTokenNames().size();
+        return regularExpressions.size() + grammar.getAppSettings().getExtraTokens().size();
     }
 
     public TokenSet getMoreTokens() {
@@ -198,6 +194,7 @@ public class LexerData {
                 addRegularExpression(stringLiteral);
             }
         }
+        var contextualKeywords = grammar.getAppSettings().getContextualKeywords();
         for (RegexpStringLiteral stringLiteral : grammar.descendants(RegexpStringLiteral.class, rsl->rsl.getParent() instanceof Terminal)) {
             String image = stringLiteral.getLiteralString();
             String lexicalStateName = stringLiteral.getLexicalState();
@@ -205,6 +202,10 @@ public class LexerData {
             RegexpStringLiteral alreadyPresent = lsd.getStringLiteral(image);
             if (alreadyPresent == null) {
                 addRegularExpression(stringLiteral);
+                if (contextualKeywords.contains(image)) continue;
+                else if (stringLiteral.isContextual()) {
+                    contextualKeywords.add(image);
+                }
             } else {
                 String kind = alreadyPresent.getTokenProduction() == null ? "TOKEN"
                         : alreadyPresent.getTokenProduction().getKind();
@@ -238,7 +239,8 @@ public class LexerData {
         }
         for (RegexpRef ref : grammar.descendants(RegexpRef.class)) {
             String label = ref.getLabel();
-            if (grammar.getAppSettings().getExtraTokens().containsKey(label)) {
+            if (grammar.getAppSettings().getExtraTokens().containsKey(label)
+            || grammar.getAppSettings().getContextualKeywords().contains(label)) {
                 continue;
             }
             RegularExpression referenced = namedTokensTable.get(label);

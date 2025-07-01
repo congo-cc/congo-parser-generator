@@ -39,7 +39,7 @@ public class AppSettings {
     private final Set<String> usedIdentifiers = new HashSet<>();
     private final Set<String> tokensOffByDefault = new HashSet<>();
     private final Map<String, String> extraTokens = new LinkedHashMap<>();
-    private final Set<String> contextualKeywords = new HashSet<>();
+    private final Set<String> contextualKeywords = new LinkedHashSet<>();
     private boolean ignoreCase, quiet;
     private int jdkTarget = 8;
 

@@ -50,18 +50,25 @@ public abstract class RegularExpression extends BaseNode {
      */
     private boolean _private = false;
 
-    String label;
+    protected String label;
 
     public TokenProduction getTokenProduction() {
         return firstAncestorOfType(TokenProduction.class);
     }
 
-   public final void setLabel(String label) {
+    public final void setLabel(String label) {
         assert label.equals("") || isJavaIdentifier(label);
         this.label = label;
     }
 
+    public boolean isContextual() {
+        return false;
+    }
+
     public String getLabel() {
+        if (isContextual()) {
+            return getLiteralString();
+        }
         if (label != null && label.length() != 0) {
             return label;
         }
@@ -73,7 +80,7 @@ public abstract class RegularExpression extends BaseNode {
         if (literalString != null && isJavaIdentifier(literalString)) {
             if (getIgnoreCase()) {
                 literalString = literalString.toUpperCase();
-            } 
+            }
             else if (literalString.toLowerCase().equals(literalString)) {
                 // Avoid all lower-case label issues (e.g., Java keywords)
                 literalString = "_" + literalString;

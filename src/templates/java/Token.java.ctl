@@ -16,7 +16,6 @@ import java.util.List;
   import ${settings.rootAPIPackage}.Node;
   import ${settings.rootAPIPackage}.TokenSource;
 #endif
-
 #var implements = "implements CharSequence"
 
 #if settings.treeBuildingEnabled
@@ -35,7 +34,9 @@ public class ${settings.baseTokenClassName} ${implements} {
     {
         #list lexerData.regularExpressions as regexp
           ${regexp.label}
-          #if regexp.class.simpleName == "RegexpStringLiteral" && !regexp.ignoreCase
+          #if settings.contextualKeywords::contains(regexp.label)
+            ("${regexp.literalString}", ${regexp.ignoreCase ?: "true" : "false"}, true)
+          #elif regexp.class.simpleName == "RegexpStringLiteral" && !regexp.ignoreCase
             ("${regexp.literalString?j_string}")
           #elseif regexp.class.simpleName == "RegexpStringLiteral"
             ("${regexp.literalString?j_string}", true)
@@ -45,9 +46,6 @@ public class ${settings.baseTokenClassName} ${implements} {
         #list settings.extraTokenNames as extraToken
           ${extraToken},
         #endlist
-        #list settings.contextualKeywords as contextualKeyword
-          ${contextualKeyword},
-        #endlist
         DUMMY,
         INVALID;
 
@@ -55,7 +53,6 @@ public class ${settings.baseTokenClassName} ${implements} {
 
         TokenType(String literalString) {
             this.literalString = literalString;
-            this.ignoresCase = false;
         }
 
         TokenType(String literalString, boolean ignoresCase) {
@@ -63,17 +60,31 @@ public class ${settings.baseTokenClassName} ${implements} {
             this.ignoresCase = ignoresCase;
         }
 
+        #if settings.contextualKeywords
+        TokenType(String literalString, boolean ignoresCase, boolean contextualKeyword) {
+            this.literalString = literalString;
+            this.ignoresCase = ignoresCase;
+            this.contextualKeyword = contextualKeyword;
+        }
+        #endif
+
         private String literalString;
 
         public String getLiteralString() {
           return literalString;
         }
 
-        private boolean ignoresCase = false;
+        private boolean ignoresCase;
 
-        public boolean ignoresCase() {
-            return ignoresCase;
+    #if settings.contextualKeywords
+
+        private boolean contextualKeyword;
+
+        public boolean isContextualKeyword() {
+            return contextualKeyword;
         }
+
+    #endif
 
         public boolean isUndefined() {return this == DUMMY;}
         public boolean isInvalid() {return this == INVALID;}
