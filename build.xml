@@ -52,7 +52,6 @@
 
   <target name="clean">
     <delete file="congocc.jar" />
-    <delete file="congocc-minimal.jar" />
     <delete dir="build" />
     <delete><fileset dir="." includes="**/*.class"/></delete>
     <ant target="clean" dir="examples/json" />
@@ -183,18 +182,6 @@
     <ant dir="examples/java" target="test" />
   </target>
 
-  <target name="minimal-jar" depends="compile">
-    <echo>Creating minimal jarfile, using this requires a CTL.jar in the same directory</echo>
-    <jar jarfile="congocc-minimal.jar" basedir="build" compress="true" excludes="**/*.java">
-      <manifest>
-        <attribute name="Main-Class" value="org.congocc.app.Main" />
-        <attribute name="Class-Path" value="CTL.jar bin/CTL.jar" />
-        <attribute name="Built-By" value="${user.name}" />
-        <attribute name="Build-Date" value="${timestamp}" />
-      </manifest>
-    </jar>
-  </target>
-
   <target name="jar" depends="compile">
     <echo>Creating jar with all dependencies included</echo>
     <jar jarfile="congocc.jar" compress="true" excludes="**/*.java">
@@ -235,26 +222,5 @@
     <antcall target="jar"></antcall>
     <echo>Copying current jar to bootstrap location ...</echo>
     <copy file="congocc.jar" todir="bin" />
-  </target>
-
-  <target name="test-python" depends="jar">
-    <exec executable="python3" dir="${basedir}" failonerror="true">
-      <env key="PY_DEBUG" value="1"/>
-      <arg line="-u python_tests.py" />
-    </exec>
-  </target>
-
-  <target name="test-csharp" depends="jar">
-    <exec executable="python3" dir="${basedir}" failonerror="true">
-      <env key="PY_DEBUG" value="1"/>
-      <arg line="-u csharp_tests.py" />
-    </exec>
-  </target>
-
-  <target name="test-misc" depends="jar">
-    <exec executable="python3" dir="${basedir}" failonerror="true">
-      <env key="PY_DEBUG" value="1"/>
-      <arg line="-u misc_tests.py -v" />
-    </exec>
   </target>
 </project>
