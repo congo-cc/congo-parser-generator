@@ -53,16 +53,6 @@ import static ${settings.parserPackage}.${settings.baseTokenClassName}.TokenType
 #endif
 
 public ${isFinal ?: "final"} class ${settings.parserClassName} {
-  #if settings.contextualKeywords
-
-     EnumSet<TokenType> contextualKeywords = EnumSet.of(
-        #list settings.contextualKeywords as kw
-           ${kw} ${kw_has_next ?: ", "}
-        #endlist
-     );
-
-  #endif
-
   #if grammar.usingCardinality
 
     [#-- N.B., this class definition can be replaced by:

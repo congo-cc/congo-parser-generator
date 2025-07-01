@@ -96,10 +96,16 @@ public class LexerData {
         return lexicalStates;
     }
 
+    private Set<String> alreadyAddedContextual = new HashSet<>();
+
     private void addRegularExpression(RegularExpression regexp) {
+        if (alreadyAddedContextual.contains(regexp.getLiteralString())) return;
         regularExpressions.add(regexp);
         if (regexp instanceof RegexpStringLiteral stringLiteral) {
-            for (String lexicalStateName : stringLiteral.getLexicalStateNames()) {
+            if (stringLiteral.isContextual()) {
+                alreadyAddedContextual.add(stringLiteral.getLiteralString());
+            }
+            else for (String lexicalStateName : stringLiteral.getLexicalStateNames()) {
                 LexicalStateData lsd = getLexicalState(lexicalStateName);
                 lsd.addStringLiteral(stringLiteral);
             }

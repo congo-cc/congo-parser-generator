@@ -4,9 +4,9 @@
 
 #macro Generate
     ${firstSetVars()}
-#if settings.faultTolerant
-    ${followSetVars()}
-#endif
+    #if settings.faultTolerant
+        ${followSetVars()}
+    #endif
     #if grammar.choicePointExpansions
        ${BuildLookaheads()}
     #endif
@@ -43,31 +43,69 @@
 
 #macro BuildLookaheads
   private boolean scanToken(TokenType expectedType, TokenType... additionalTypes) {
+     boolean matched = false;
      ${settings.baseTokenClassName} peekedToken = nextToken(currentLookaheadToken);
      TokenType type = peekedToken.getType();
-     if (type != expectedType) {
-       boolean matched = false;
+     if (typeMatches(expectedType, peekedToken)) {
+        matched = true;
+     }
+     else {
        for (TokenType tt : additionalTypes) {
-         if (type == tt) {
+         if (typeMatches(tt, peekedToken)) {
             matched = true;
             break;
          }
        }
-       if (!matched) return false;
      }
-     --remainingLookahead;
-     currentLookaheadToken = peekedToken;
-     return true;
+     if (matched) {
+        --remainingLookahead;
+        currentLookaheadToken = peekedToken;
+        return true;
+     }
+     return false;
   }
 
   private boolean scanToken(EnumSet<TokenType> types) {
      ${settings.baseTokenClassName} peekedToken = nextToken(currentLookaheadToken);
-     TokenType type = peekedToken.getType();
-     if (!types.contains(type)) return false;
-     --remainingLookahead;
-     currentLookaheadToken = peekedToken;
-     return true;
+     boolean matched = false;
+     if (hasMatch(types,peekedToken)) {
+        --remainingLookahead;
+        currentLookaheadToken = peekedToken;
+        return true;
+     }
+     return false;
   }
+
+#if settings.contextualKeywords
+  private boolean typeMatches(TokenType type, ${settings.baseTokenClassName} tok) {
+     if (tok.getType() == type) return true;
+     if (type.isContextualKeyword()) {
+         #if settings.ignoreCase
+            return type.getLiteralString().equalsIgnoreCase(tok.toString());
+         #else
+            return type.getLiteralString().contentEquals(tok);
+         #endif
+     }
+     return false;
+  }
+
+  private boolean hasMatch(EnumSet<TokenType> types, ${settings.baseTokenClassName} tok) {
+      if (types.contains(tok.getType())) return true;
+      for (TokenType tt : types) {
+         if (tt.isContextualKeyword()) {
+            if (typeMatches(tt, tok)) return true;
+         }
+      }
+      return false;
+  }
+#else
+  private boolean typeMatches(TokenType type, ${settings.baseTokenClassName} tok) {
+      return tok.getType() == type;
+  }
+  private boolean hasMatch(EnumSet<TokenType> types, ${settings.baseTokenClassName} tok) {
+      return types.contains(tok.getType());
+  }
+#endif
 
 //====================================
  // Lookahead Routines

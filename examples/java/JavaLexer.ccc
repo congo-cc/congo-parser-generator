@@ -80,7 +80,9 @@ TOKEN #KeyWord :
 | < VOID: "void" >
 | < VOLATILE: "volatile" >
 | < WHILE: "while" >
+#if !__java__
 | < YIELD : "yield" >
+#endif
 | < SEALED : "sealed">
 | < NON_SEALED : "non-sealed">
 | < PERMITS : "permits">

@@ -1017,9 +1017,15 @@
       (${expansion.semanticLookahead}) &&
    #endif
    #if expansion.firstSet.tokenNames::size() < CU.USE_FIRST_SET_THRESHOLD
+      #var firstCall = true
       #list expansion.firstSet.tokenNames as name
-          nextTokenType${name_index==0 ?: "()"}
+        #if settings.contextualKeywords::contains(name)
+          typeMatches(${name}, getToken(1))
+        #else
+          nextTokenType${firstCall ?: "()"}
           == ${name}
+          #set firstCall = false
+        #endif
          ${name_has_next ?: "||"}
       #endlist
    #else

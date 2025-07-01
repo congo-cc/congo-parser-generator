@@ -328,6 +328,7 @@ INJECT RegexpStringLiteral :
   }
 
   public String[] getLexicalStateNames() {
+     if (isContextual()) return new String[0];
      TokenProduction tp = getTokenProduction();
      return tp != null ? tp.getLexicalStateNames() : new String[]{lexicalState};
   }

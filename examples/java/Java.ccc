@@ -15,9 +15,13 @@ DEFAULT_LEXICAL_STATE=JAVA;
 ASSERT_APPLIES_IN_LOOKAHEAD=false;
 // The following tokens are only activated at key points whether
 // they are needed.
-DEACTIVATE_TOKENS=RECORD, VAR, YIELD, SEALED, NON_SEALED, PERMITS, MODULE,
+DEACTIVATE_TOKENS=RECORD, VAR, SEALED, NON_SEALED, PERMITS, MODULE,
                   OPEN, OPENS, PROVIDES, REQUIRES, EXPORTS, USES, WITH,
-                  TO, TRANSITIVE, WHEN ;
+                  TO, TRANSITIVE, WHEN
+#if !__java__ && !__congo_internal__
+   ,YIELD
+#endif
+;
 
 #if FT
 FAULT_TOLERANT;
@@ -1326,6 +1330,9 @@ BreakStatement :
 
 YieldStatement :
    SCAN 2
+#if __java__
+   'yield'
+#else
    ENSURE {checkNextTokenImage("yield")}
    ENSURE {isInProduction("SwitchExpression")}
    (
@@ -1336,6 +1343,7 @@ YieldStatement :
         replaceTokenType(YIELD);
       }
    )
+#endif
    Expression
    <SEMICOLON>
 ;

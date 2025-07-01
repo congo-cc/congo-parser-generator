@@ -7,7 +7,7 @@ BASE_SRC_DIR="../../build/generated-java";
 
 USES_PREPROCESSOR;
 
-DEACTIVATE_TOKENS=_INCLUDE,_INJECT,_EOF, RECORD, VAR, YIELD, SEALED, NON_SEALED, PERMITS, TERMINATES;
+DEACTIVATE_TOKENS=_INCLUDE,_INJECT,_EOF, RECORD, VAR, SEALED, NON_SEALED, PERMITS, TERMINATES;
 
 // We can use this symbol to generate code conditionally
 // based on whether we are generating code for internal use

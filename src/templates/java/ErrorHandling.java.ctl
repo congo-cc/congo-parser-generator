@@ -159,10 +159,10 @@ void dumpLookaheadCallStack(PrintStream ps) {
         ${settings.baseTokenClassName} nextToken = nextToken(lastConsumedToken);
         if (nextToken.getType() != expectedType) {
             #if settings.contextualKeywords
-               if (contextualKeywords.contains(expectedType)
-                   && expectedType.name().contentEquals(nextToken)) {
-                       nextToken = nextToken.replaceType(expectedType);
-               } else
+               if (typeMatches(expectedType, nextToken)) {
+                  nextToken = nextToken.replaceType(expectedType);
+               }
+               else
             #endif
             nextToken = handleUnexpectedTokenType(expectedType, nextToken
             #if settings.faultTolerant
