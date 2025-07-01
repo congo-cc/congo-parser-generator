@@ -15,13 +15,13 @@ DEFAULT_LEXICAL_STATE=JAVA;
 ASSERT_APPLIES_IN_LOOKAHEAD=false;
 // The following tokens are only activated at key points whether
 // they are needed.
-DEACTIVATE_TOKENS=VAR, SEALED, NON_SEALED, MODULE,
-                  OPEN, OPENS, PROVIDES, REQUIRES, EXPORTS, USES, WITH,
-                  TO, TRANSITIVE, WHEN
+DEACTIVATE_TOKENS=VAR, SEALED, NON_SEALED
 #if !__java__
 // Contextual keywords are not implemented for
 // non-Java languages (yet)
-   ,RECORD,YIELD,PERMITS
+   ,RECORD,YIELD,PERMITS,MODULE, OPEN, OPENS,
+   PROVIDES, REQUIRES, EXPORTS, USES, WITH,
+   TO, TRANSITIVE, WHEN
 #endif
 ;
 
@@ -44,6 +44,11 @@ Node Root#void :
 ModularCompilationUnit :
    (ImportDeclaration)*
    (Annotation)*
+#if __java__
+   ['open']
+   'module'
+   =>||
+#else
    ENSURE {checkNextTokenImage("open","module")}
    =>||
    ACTIVATE_TOKENS OPEN,MODULE
@@ -51,6 +56,7 @@ ModularCompilationUnit :
      [<OPEN>]
      <MODULE>
    )
+#endif
    Name
    <LBRACE>
    (SCAN ~(<RBRACE>) => ModuleDirective)*
@@ -71,41 +77,69 @@ ModuleDirective :
 ;
 
 RequiresDirective :
+#if __java__
+   'requires' ['transitive' | <STATIC>]
+#else
    ACTIVATE_TOKENS REQUIRES, TRANSITIVE (<REQUIRES> [<TRANSITIVE>|<STATIC>])
+#endif
    Name
    <SEMICOLON>
 ;
 
 ExportsDirective :
+#if __java__
+    'exports'
+#else
    ACTIVATE_TOKENS EXPORTS (<EXPORTS>)
+#endif
    Name
+#if __java__
+   ['to' Name (<COMMA> Name)*]
+#else
    [
      ACTIVATE_TOKENS TO (<TO>)
      Name (<COMMA> Name)*
    ]
+#endif
    <SEMICOLON>
 ;
 
 OpensDirective :
+#if __java__
+   'opens'
+#else
    ACTIVATE_TOKENS OPENS (<OPENS>)
+#endif
    Name
+#if __java__
+   ['to' Name (<COMMA> Name)*]
+#else
    [
      ACTIVATE_TOKENS TO (<TO>)
      Name (<COMMA> Name)*
    ]
+#endif
    <SEMICOLON>
 ;
 
 UsesDirective :
+#if __java__
+    'uses'
+#else
     ACTIVATE_TOKENS USES (<USES>)
+#endif
     Name
     <SEMICOLON>
 ;
 
 ProvidesDirective :
+#if __java__
+    'provides' Name 'with'
+#else
     ACTIVATE_TOKENS PROVIDES(<PROVIDES>)
     Name
     ACTIVATE_TOKENS WITH (<WITH>)
+#endif
     Name
     (<COMMA> Name)*
     <SEMICOLON>
@@ -147,7 +181,21 @@ INJECT PackageDeclaration :
     }
 }
 
-ImportDeclaration : <_IMPORT> [ <STATIC> | <MODULE>] Name [ <DOT> <STAR> ] <SEMICOLON> ;
+ImportDeclaration :
+   <_IMPORT>
+   [
+    <STATIC>
+    |
+#if __java__
+    'module'
+#else
+    ACTIVATE_TOKENS MODULE (<MODULE>)
+#endif
+   ]
+   Name
+   [ <DOT> <STAR> ]
+   <SEMICOLON>
+;
 
 #if !CARD && __java__
 
@@ -1204,6 +1252,9 @@ TypePattern#LocalVariableDeclaration :
 ;
 
 WhenClause :
+#if __java__
+   'when'
+#else
    SCAN 0 {checkNextTokenImage("when")}#
    =>
    (
@@ -1214,6 +1265,7 @@ WhenClause :
         replaceTokenType(WHEN);
       }
    )
+#endif
    Expression
 ;
 

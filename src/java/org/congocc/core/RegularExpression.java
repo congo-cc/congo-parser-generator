@@ -97,8 +97,9 @@ public abstract class RegularExpression extends BaseNode {
     }
 
     public int getOrdinal() {
-        int id = getGrammar().getLexerData().getOrdinal(this);
-        return Math.max(0, id);
+        return getGrammar().getLexerData().getOrdinal(this);
+        //int id = getGrammar().getLexerData().getOrdinal(this);
+        //return Math.max(0, id);
     }
 
     public void setNewLexicalState(LexicalStateData newLexicalState) {

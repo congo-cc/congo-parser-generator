@@ -29,6 +29,18 @@ TOKEN #KeyWord :
 | < RECORD : "record" >
 | < YIELD : "yield" >
 | < PERMITS : "permits">
+// Soft keywords used only in the module-info
+| <MODULE : "module">
+| <EXPORTS : "exports">
+| <OPEN : "open">
+| <OPENS : "opens">
+| <PROVIDES : "provides">
+| <REQUIRES : "requires">
+| <TO : "to">
+| <TRANSITIVE : "transitive">
+| <USES : "uses">
+| <WITH : "with">
+| < WHEN : "when" >
 #endif
 |  < ABSTRACT: "abstract" >
 | < _ASSERT: "assert" >
@@ -86,18 +98,6 @@ TOKEN #KeyWord :
 | < WHILE: "while" >
 | < SEALED : "sealed">
 | < NON_SEALED : "non-sealed">
-| < WHEN : "when" >
-// Soft keywords used only in the module-info
-| <MODULE : "module">
-| <EXPORTS : "exports">
-| <OPEN : "open">
-| <OPENS : "opens">
-| <PROVIDES : "provides">
-| <REQUIRES : "requires">
-| <TO : "to">
-| <TRANSITIVE : "transitive">
-| <USES : "uses">
-| <WITH : "with">
 ;
 
 TOKEN #Literal :
