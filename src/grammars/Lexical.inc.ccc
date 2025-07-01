@@ -289,10 +289,6 @@ INJECT RegexpStringLiteral :
   @Property boolean singleQuoted;
   @Property RegexpStringLiteral canonicalRegexp;
 
-  public String toString() {
-    return super.toString() + " - " + getLiteralString();
-  }
-
   public boolean isContextual() {
     return firstAncestorOfType(TokenProduction.class) == null
         && (get(0).getType() == SINGLE_QUOTE_STRING
@@ -392,6 +388,11 @@ INJECT EndOfFile : extends org.congocc.core.RegularExpression
 
     @Override
     public int maximumLength() {return 0;}
+
+    @Override
+    public int getOrdinal() {
+        return 0;
+    }
 }
 
 RegexpChoice :

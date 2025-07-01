@@ -34,8 +34,15 @@ public class LexerData {
         return lazyTokens.contains(type);
     }
 
-    public int getOrdinal(RegularExpression re) {
-        return regularExpressions.indexOf(re);
+    public int getOrdinal(RegularExpression regexp) {
+        int result = regularExpressions.indexOf(regexp);
+        if (result >=0) return result;
+        for (int i = 0; i<regularExpressions.size(); i++) {
+            if (regexp.getLiteralString().equals(regularExpressions.get(i).getLiteralString())) {
+                return i;
+            }
+        }
+        return -1;
     }
 
     // All of this is kinda kludgy.
@@ -130,7 +137,8 @@ public class LexerData {
     }
 
     public int getTokenCount() {
-        return regularExpressions.size() + grammar.getAppSettings().getExtraTokens().size();
+        return regularExpressions.size()
+              + grammar.getAppSettings().getExtraTokens().size();
     }
 
     public TokenSet getMoreTokens() {
