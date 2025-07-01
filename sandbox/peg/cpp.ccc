@@ -32,7 +32,7 @@ TOKEN :
 TOKEN : <EOL: "\n" | "\r\n" | "\r" >;
 
 #CppGrammar :
-    translationunit {return CURRENT_NODE;}
+    translationunit {return HOC;}
 ;
 
 INCLUDE "grammar/generated/CPP14.ccc";

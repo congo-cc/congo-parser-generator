@@ -180,7 +180,6 @@ if (_pendingRecovery) {
             [#-- Build the tree node (part 1). --]
             [@createNode nodeClassName(treeNodeBehavior), nodeVarName /]
         #endif
-        [#-- Any prologue code can refer to CURRENT_NODE at this point. --][#-- REVISIT: Is this needed anymore, since THIS_PRODUCTION is always the reference to CURRENT_NODE (jb)? --]
 ParseException ${parseExceptionVar} = null;
 var ${callStackSizeVar} = ParsingStack.Count;
 try {

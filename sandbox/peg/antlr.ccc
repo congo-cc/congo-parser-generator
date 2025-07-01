@@ -11,7 +11,7 @@ FAULT_TOLERANT_DEFAULT=true;
 #endif
 
 #AntlrGrammar :
-    grammarSpec {return CURRENT_NODE;}
+    grammarSpec {return HOC;}
 ;
 
 UNPARSED: <_WS: ([ " ", "\t", "\r", "\n", "\f" ])+ >;

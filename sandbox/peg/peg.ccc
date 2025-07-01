@@ -25,7 +25,7 @@ FAULT_TOLERANT_DEFAULT=true;
 #endif
 
 #PegGrammar :
-    Grammar {return CURRENT_NODE;}
+    Grammar {return HOC;}
 ;
 
 <EXT_PEG, EXT_ALT_PEG> TOKEN : 
