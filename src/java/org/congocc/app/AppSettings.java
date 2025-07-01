@@ -227,6 +227,7 @@ public class AppSettings {
                     }
                 }
                 case "CONTEXTUAL_KEYWORDS" -> {
+                    if (true) continue; // Not supporting this for now
                     String tokens = (String) settings.get(key);
                     for (StringTokenizer st = new StringTokenizer(tokens, ",\t\r\n"); st.hasMoreTokens(); ) {
                         String kw = st.nextToken();

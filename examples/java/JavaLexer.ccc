@@ -25,6 +25,11 @@ UNPARSED #Comment :
 
 TOKEN #KeyWord :
   <UNDERSCORE : "_">
+#if !__java__
+| < RECORD : "record" >
+| < YIELD : "yield" >
+| < PERMITS : "permits">
+#endif
 |  < ABSTRACT: "abstract" >
 | < _ASSERT: "assert" >
 | < BOOLEAN: "boolean" > #Primitive
@@ -63,7 +68,6 @@ TOKEN #KeyWord :
 | < PROTECTED: "protected" >
 | < PUBLIC: "public" >
 | < RETURN: "return" >
-| < RECORD : "record" >
 | < SHORT: "short" > #Primitive
 | < STATIC: "static" >
 | < STRICTFP: "strictfp" >
@@ -80,12 +84,8 @@ TOKEN #KeyWord :
 | < VOID: "void" >
 | < VOLATILE: "volatile" >
 | < WHILE: "while" >
-#if !__java__
-| < YIELD : "yield" >
-#endif
 | < SEALED : "sealed">
 | < NON_SEALED : "non-sealed">
-| < PERMITS : "permits">
 | < WHEN : "when" >
 // Soft keywords used only in the module-info
 | <MODULE : "module">

@@ -7,7 +7,7 @@ BASE_SRC_DIR="../../build/generated-java";
 
 USES_PREPROCESSOR;
 
-DEACTIVATE_TOKENS=_INCLUDE,_INJECT,_EOF, RECORD, VAR, SEALED, NON_SEALED, PERMITS, TERMINATES;
+DEACTIVATE_TOKENS=_EOF, VAR, SEALED, NON_SEALED;
 
 // We can use this symbol to generate code conditionally
 // based on whether we are generating code for internal use
@@ -326,7 +326,7 @@ GrammarInclusion throws IOException :
    List<String> locations = new ArrayList<>();
    Token includeToken;
 }
-   ACTIVATE_TOKENS _INCLUDE (<_INCLUDE>)
+   <_INCLUDE>
    {includeToken = lastConsumedToken;}
    (
        (
@@ -367,7 +367,7 @@ GrammarInclusion throws IOException :
     boolean usingParentheses = false;
     ObjectType ot;
 }
-        ACTIVATE_TOKENS _INJECT (<_INJECT>)
+        <_INJECT>
         {permissibleModifiers = EnumSet.of(ABSTRACT,FINAL,STRICTFP,SEALED,NON_SEALED);}
         Modifiers
         {isSealed = peekNode().getType()==SEALED || peekNode().firstChildOfType(SEALED)!=null;}
@@ -486,7 +486,7 @@ INJECT CodeInjection :
 }
 
 CodeInjection2 :
-        ACTIVATE_TOKENS _INJECT (<_INJECT>)
+        <_INJECT>
         ":" =>||
         (
             "{" CompilationUnit "}"

@@ -2,7 +2,7 @@
 // part that involves the lexical specification
 
 TOKEN #CongoCCKeyWord :
-  < _INJECT: "INJECT" >
+  < _INJECT : "INJECT">
   |
   < _INCLUDE : "INCLUDE">
   |
@@ -27,8 +27,6 @@ TOKEN #CongoCCKeyWord :
   < _TOKEN: "TOKEN" | "REGULAR_TOKEN">
   |
   < _CONTEXTUAL_KEYWORD: "CONTEXTUAL_KEYWORD" >
-  |
-  < TERMINATES : "TERMINATES" >
   |
   < _UNPARSED: "SPECIAL_TOKEN" | "UNPARSED" >
   |

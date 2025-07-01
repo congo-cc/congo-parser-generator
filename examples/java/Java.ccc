@@ -15,11 +15,13 @@ DEFAULT_LEXICAL_STATE=JAVA;
 ASSERT_APPLIES_IN_LOOKAHEAD=false;
 // The following tokens are only activated at key points whether
 // they are needed.
-DEACTIVATE_TOKENS=RECORD, VAR, SEALED, NON_SEALED, PERMITS, MODULE,
+DEACTIVATE_TOKENS=VAR, SEALED, NON_SEALED, MODULE,
                   OPEN, OPENS, PROVIDES, REQUIRES, EXPORTS, USES, WITH,
                   TO, TRANSITIVE, WHEN
-#if !__java__ && !__congo_internal__
-   ,YIELD
+#if !__java__
+// Contextual keywords are not implemented for
+// non-Java languages (yet)
+   ,RECORD,YIELD,PERMITS
 #endif
 ;
 
@@ -360,9 +362,13 @@ InterfaceDeclaration :
 ;
 
 PermitsList :
+#if __java__
+   'permits'
+#else
    ENSURE {checkNextTokenImage("permits")}
    =>||
    ACTIVATE_TOKENS PERMITS(<PERMITS>)
+#endif
    ObjectType
    (<COMMA> ObjectType)*
 ;
@@ -419,6 +425,9 @@ RecordDeclaration :
   Modifiers
   ENSURE {checkNextTokenImage("record") && getTokenType(2) == IDENTIFIER}
   =>||
+  #if __java__
+  'record'
+  #else
   (
     <RECORD>
     |
@@ -427,6 +436,7 @@ RecordDeclaration :
       replaceTokenType(RECORD);
     }
   )
+  #endif
   TypeIdentifier
   [TypeParameters]
   RecordHeader

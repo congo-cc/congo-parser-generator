@@ -16,6 +16,7 @@ import org.congocc.app.AppSettings;
 import org.congocc.app.Errors;
 import org.congocc.parser.*;
 import org.congocc.parser.tree.*;
+import static org.congocc.core.LexerData.isJavaIdentifier;
 
 /**
  * This object is the root Node of the data structure that contains all the
@@ -670,6 +671,13 @@ public class Grammar extends BaseNode {
                    && t.firstAncestorOfType(Lookahead.class) != null)) {
             errors.addWarning(tok, "ASSERT keyword inside a lookahead, should really be ENSURE");
         }
+
+        for (RegexpStringLiteral rsl : descendants(RegexpStringLiteral.class, RegexpStringLiteral::isContextual)) {
+            String literal = rsl.getLiteralString();
+            if (!isJavaIdentifier(literal)) {
+                errors.addError(rsl, "A contextual keyword must be a valid (Java) identifier.");
+            }
+        }
     }
 
     public void checkUnparsedContent() {
@@ -680,6 +688,10 @@ public class Grammar extends BaseNode {
                 ucb.getParseException().printStackTrace();
             }
         }
+    }
+
+    void checkContextualTokens() {
+
     }
 
     public class CardinalityChecker extends Visitor {
