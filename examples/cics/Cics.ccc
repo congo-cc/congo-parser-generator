@@ -281,6 +281,7 @@ TOKEN [IGNORE_CASE] #CicsKeyword :
 |   <LINK: "link">
 |   <DATALENGTH: "datalength">
 |   <SYNCONRETURN: "synconreturn">
+|   <EIB: "eib">
 ;
 
 <CICS_STATE,COBOL_STATE> TOKEN [IGNORE_CASE]:
@@ -405,11 +406,11 @@ Abend :
     (
         &<ABCODE> "(" DataValue #AbendCode(1) ")"
         |
-        &(
-            @cancel :=? <CANCEL>  
+        (
+            & @cancel :=? <CANCEL>  
             |
-            @noDump :=? <NODUMP>
-        )+ #TerminationOption 
+            & @noDump :=? <NODUMP>
+        ) #TerminationOption 
         |
         (
             & @noHandle :=? <NOHANDLE>
@@ -424,13 +425,14 @@ Abend :
 HandleAbend :
     <HANDLE> <ABEND>
     (
-        & <CANCEL>
-        |
-        & <PROGRAM> "(" Name ")"
-        |
-        & <LABEL> "(" Label ")"
-        |
-        & <RESET>
+        & ( <CANCEL>
+            |
+            <PROGRAM> "(" Name ")"
+            |
+            <LABEL> "(" Label ")"
+            |
+            <RESET>
+        )
         |
         (
             & @noHandle :=? <NOHANDLE>
@@ -448,7 +450,7 @@ Acquire :
         (
             &1& <PROCESS> "(" DataValue ")"
             |
-            ASSERT {&1&} <PROCESSTYPE> "(" DataValue ")" // this should only check in parsing, not lookahead
+            &1& <PROCESSTYPE> "(" DataValue ")"
             |
             (
                 & @noHandle :=? <NOHANDLE>
@@ -459,7 +461,6 @@ Acquire :
             ) #CommonOptions
         )+ =>||
         |
-        // !!! & here gets freemarker null variable error !!!
         <ACTIVITYID> "(" DataValue ")"
     ) =>||
 ;
@@ -489,6 +490,8 @@ Address :
         & <COMMAREA> "(" PtrRef ")"
         |
         & <CWA> "(" PtrRef ")"
+        |
+        & <EIB> "(" PtrRef ")"
         |
         & <TCTUA> "(" PtrRef ")"
         |
@@ -619,8 +622,11 @@ Link :
         )+
         |
         &(
-            &<INPUTMSG> "(" DataArea ")"
-            [ <INPUTMSGLEN> "(" DataArea ")" ]
+            &(
+                &1&<INPUTMSG> "(" DataArea ")"
+                |
+                &<INPUTMSGLEN> "(" DataArea ")"
+            )
             |
             &(
                 &<SYSID> "(" SystemName ")"
@@ -776,12 +782,15 @@ SendMap : //minimum at this point
         &<FORMFEED>
         |
         &(
-            &<ERASE> 
-            [ 
-                <ALTERNATE>
+            &(
+                &1&<ERASE>
                 | 
-                <_DEFAULT> 
-            ]
+                &( 
+                    <ALTERNATE>
+                    | 
+                    <_DEFAULT> 
+                )
+            )+
             |
             &<ERASEAUP>
         )+
@@ -812,7 +821,7 @@ StartBr :
         &1&<RIDFLD> "(" DataArea ")"
         |
         &(
-            &<KEYLENGTH> "(" DataValue ")"
+            &1&<KEYLENGTH> "(" DataValue ")"
             |
             &<GENERIC>
         )+
@@ -869,7 +878,11 @@ Read :
             <UNCOMMITTED> |
             <CONSISTENT> |
             <REPEATABLE> |
-            <UPDATE> [ <_TOKEN> "(" DataArea ")" ]
+            (
+                &1&<UPDATE> 
+                |
+                &<_TOKEN> "(" DataArea ")" 
+            )+
         )
         |
         &1&(
@@ -879,12 +892,17 @@ Read :
         |
         &1&<RIDFLD> "(" DataArea ")"
         |
-        &<KEYLENGTH> "(" DataValue ")" [ <GENERIC> ]
+        &(
+            &1&<KEYLENGTH> "(" DataValue ")"
+            |
+            &<GENERIC>
+        )+
         |
         &(
-            <SYSID> "(" SystemName ")" <LENGTH> "(" DataArea ")" |
-            <LENGTH> "(" DataArea ")"
-        )
+            &<SYSID> "(" SystemName ")" 
+            |
+            &1&<LENGTH> "(" DataArea ")"
+        )+
         |
         &(
             <DEBKEY> |
@@ -921,7 +939,11 @@ ReadPrev :
             <UNCOMMITTED> |
             <CONSISTENT> |
             <REPEATABLE> |
-            <UPDATE> [ <_TOKEN> "(" DataArea ")" ]
+            ( 
+                &1&<UPDATE>
+                |
+                &<_TOKEN> "(" DataArea ")"
+            )+
         )
         |
         &1&(
@@ -933,9 +955,11 @@ ReadPrev :
         |
         &<KEYLENGTH> "(" DataValue ")"
         |
-        &<LENGTH> "(" DataArea ")" {lengthPresent=true;}
-        |
-        &<SYSID> "(" SystemName ")" {sysidPresent=true;}
+        &1&(
+            &1&<LENGTH> "(" DataArea ")"
+            |
+            &<SYSID> "(" SystemName ")"
+        )+
         |
         &<REQID> "(" DataValue ")"
         |
@@ -955,7 +979,6 @@ ReadPrev :
             & <RESP2> "(" Name #Response2Name(1) ")"
         ) #CommonOptions
     )+ =>||
-    {if (sysidPresent && !lengthPresent) throw new ParseException();}
 ;
 
 ReadNext :
@@ -971,7 +994,11 @@ ReadNext :
             <UNCOMMITTED> |
             <CONSISTENT> |
             <REPEATABLE> |
-            <UPDATE> [ <_TOKEN> "(" DataArea ")" ]
+            ( 
+                &1&<UPDATE>
+                |
+                &<_TOKEN> "(" DataArea ")"
+            )+
         )
         |
         &1&(
@@ -982,10 +1009,11 @@ ReadNext :
         &1&<RIDFLD> "(" DataArea ")"
         |
         &<KEYLENGTH> "(" DataValue ")"
-        |
-        &<LENGTH> "(" DataArea ")" {lengthPresent=true;}
-        |
-        &<SYSID> "(" SystemName ")" {sysidPresent=true;}
+        |&(
+            &1&<LENGTH> "(" DataArea ")"
+            |
+            &<SYSID> "(" SystemName ")"
+        )+
         |
         &<REQID> "(" DataValue ")"
         |
@@ -1018,9 +1046,10 @@ Rewrite :
         &1&<FROM> "(" DataArea ")"
         |
         &(
-            <SYSID> "(" SystemName ")" <LENGTH> "(" DataArea ")" |
-            <LENGTH> "(" DataArea ")"
-        )
+            &1&<LENGTH> "(" DataArea ")"
+            |
+            &<SYSID> "(" SystemName ")"
+        )+
         |
         &<NOSUSPEND>
         |
@@ -1048,13 +1077,9 @@ Write :
         &<KEYLENGTH> "(" DataValue ")"
         |
         &(
-            &<LENGTH> "(" DataArea ")"
+            &1&<LENGTH> "(" DataArea ")"
             |
-            &(
-                &1&<SYSID> "(" SystemName ")"
-                |
-                &1&<LENGTH> "(" DataArea ")"
-            )+
+            &<SYSID> "(" SystemName ")"
         )+
         |
         &(
@@ -1122,9 +1147,7 @@ WriteQTs :
             )+
         )+
         |
-        &<AUXILIARY>
-        |
-        &<MAIN>
+        & (<AUXILIARY>|<MAIN>)
         |
         &<NOSUSPEND>
         |
@@ -1270,7 +1293,7 @@ Send3270 :
         |
         &( <INVITE> | <LAST> )
         |
-        &(
+        (
             &<STRFIELD>
             |
             &(
@@ -1282,7 +1305,7 @@ Send3270 :
                 |
                 &<CTLCHAR> "(" DataValue ")"
             )+
-        )+
+        )
         |
         &<DEFRESP>
         |
@@ -1326,14 +1349,14 @@ SendText :
         &<MSR> "(" DataValue ")"
         |
         &(
-            &<LDC> "(" Name ")"
+            <LDC> "(" Name ")"
             |
             &(
                 &<ACTPARTN> "(" Name ")"
                 |
                 &<OUTPARTN> "(" Name ")"
             )+ =>||
-        )+ =>||
+        ) =>||
         |
         (
             & @noHandle :=? <NOHANDLE>
