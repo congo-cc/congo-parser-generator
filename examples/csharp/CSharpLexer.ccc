@@ -189,7 +189,7 @@ TOKEN #KeyWord :
    | < VOLATILE : "volatile" >
    | < WHILE : "while" >
 // Now contextual Keywords
-   | < ARGLIST : "__arglist">
+   //| < ARGLIST : "__arglist">
    | < ADD : "add">
    | < ASSEMBLY : "assembly">
    | < ASYNC : "async" >
@@ -202,15 +202,11 @@ TOKEN #KeyWord :
    | < UNMANAGED : "unmanaged">
    | < MODULE : "module">
    | < NAMEOF : "nameof">
-   //| < PARTIAL : "partial">
-   //| < RECORD : "record" >
    | < REMOVE : "remove">
    | < REQUIRED : "required">
    | < SCOPED : "scoped">
    | < SET : "set" >
-   | < VAR : "var" >
    | < WHEN : "when">
-   | < YIELD : "yield" >
    | < AND : "and">
    | < OR  : "or" >
    | < NOT : "not">
@@ -228,7 +224,7 @@ TOKEN #KeyWord :
    | <ON : "on">
    | <ORDERBY : "orderby" >
    | <SELECT : "select">
-   | <WHERE : "where">
+//   | <WHERE : "where">
 ;
 
 INCLUDE "CSharpIdentifierDef.ccc"

@@ -1029,6 +1029,6 @@
          ${name_has_next ?: "||"}
       #endlist
    #else
-      ${expansion.firstSetVarName}.contains(nextTokenType())
+      hasMatch(${expansion.firstSetVarName},getToken(1))
    #endif
 #endmacro

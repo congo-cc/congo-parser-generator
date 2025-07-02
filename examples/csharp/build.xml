@@ -46,18 +46,18 @@
       </assertions>
       <arg line="-n ${basedir}/CSharp.ccc" />
     </java>
-    <java jar="../../congocc.jar" failonerror="true" fork="true">
+    <!--java jar="../../congocc.jar" failonerror="true" fork="true">
       <assertions>
         <enable />
       </assertions>
       <arg line="-n -lang python ${basedir}/CSharp.ccc" />
-    </java>
-    <java jar="../../congocc.jar" failonerror="true" fork="true">
+    </java-->
+    <!--java jar="../../congocc.jar" failonerror="true" fork="true">
       <assertions>
         <enable />
       </assertions>
       <arg line="-n -lang csharp ${basedir}/CSharp.ccc" />
-    </java>
+    </java-->
   </target>
 
   <target name="compile" depends="parser-gen">

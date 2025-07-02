@@ -12,14 +12,14 @@ FAULT_TOLERANT_DEFAULT=false;
 #endif
 
 DEACTIVATE_TOKENS=ADD,ASSEMBLY,ASYNC,AWAIT,INTO,MODULE, NAMEOF,
-                  REMOVE,VAR,WHEN,YIELD, ARGLIST,
+                  REMOVE,WHEN,
                   GET,SET,INIT,WITH,REQUIRED,DYNAMIC,SCOPED,FILE,
                   MANAGED,UNMANAGED,
                   // The following are used in patterns:
                   AND, OR, NOT,
                   // The following are all used in queries
                   ASCENDING,BY,DESCENDING,EQUALS,FROM,GROUP,JOIN,LET,
-                  INTO, ON, ORDERBY,SELECT,WHERE;
+                  INTO, ON, ORDERBY,SELECT;
 
 INCLUDE "CSharpLexer.ccc"
 
@@ -476,13 +476,11 @@ DelegateDeclaration :
 ;
 
 TypeParameterConstraints :
-  ACTIVATE_TOKENS WHERE
   (TypeParameterConstraint)*
 ;
 
 TypeParameterConstraint :
-   <WHERE>
-   DEACTIVATE_TOKENS WHERE
+   'where'
    (
       <IDENTIFIER>
       <COLON>
@@ -884,16 +882,15 @@ FormalParameters :
 ;
 
 VarArgsParameter#void :
-   ArgListParameter
+   '__arglist'
    |
    ParameterArray
 ;
 
 
 ArgListParameter# :
-    ENSURE {checkNextTokenImage("__arglist")}
-    <IDENTIFIER>
-    =>||
+    '__arglist'
+//    =>||
 ;
 
 FixedParameter :
@@ -1198,7 +1195,7 @@ QueryExpressionLA#scan :
 
 QueryExpression :
    ACTIVATE_TOKENS ASCENDING,BY,DESCENDING,EQUALS,FROM,GROUP,JOIN,LET,
-                   INTO, ON, ORDERBY,SELECT,WHERE
+                   INTO, ON, ORDERBY,SELECT
    (
      FromClause
      QueryBody
@@ -1249,7 +1246,7 @@ QueryBodyClause :
 
 LetClause : <LET> <IDENTIFIER> <ASSIGN> InQueryExpression ;
 
-WhereClause : <WHERE> InQueryExpression ;
+WhereClause : 'where' InQueryExpression ;
 
 JoinClause :
    <JOIN>
@@ -1949,7 +1946,7 @@ VarDeclaration :
    [
       <READONLY> //REVISIT
    ]
-   ACTIVATE_TOKENS VAR (<VAR>)
+   'var'
    =>||
    (<IDENTIFIER>|Tuple) <ASSIGN> (AttributeSection)* [<REF>] LocalVariableInitializer
 ;
@@ -2026,7 +2023,7 @@ ForeachStatement :
     <LPAREN>
     [<REF>]
     (
-       <VAR>
+       'var'
        |
        Tuple {iteratingOverTupleType = true;}
        |
@@ -2083,7 +2080,7 @@ CatchClause :
 ;
 
 YieldStatement :
-   ACTIVATE_TOKENS YIELD (<YIELD>)
+   'yield'
    (
       <BREAK>
       |
@@ -2301,8 +2298,7 @@ DeclarationPattern :
 ;
 
 VarPattern :
-    SCAN 0 {checkNextTokenImage("var")}# =>
-    ACTIVATE_TOKENS VAR (<VAR>)
+    'var'
     (<IDENTIFIER> | Tuple)
 ;
 

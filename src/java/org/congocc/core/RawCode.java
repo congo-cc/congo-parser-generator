@@ -148,7 +148,6 @@ public class RawCode extends EmptyExpansion implements EmbeddedCode {
         code = normalizePythonBlock(code);
         PythonParser cccParser = new PythonParser(getInputSource(), code);
         cccParser.setStartingPos(get(1).getBeginLine(), get(1).getBeginColumn());
-        System.out.println("Extra indent is: " +extraIndent);
         parsedContent = cccParser.Module();
     }
 

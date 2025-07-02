@@ -48,4 +48,11 @@ public class TokenSet extends BitSet {
 		result.or(this);
 		return result;
 	}
+
+	public boolean getHasContextualKeywords() {
+		for (String name : getTokenNames()) {
+			if (grammar.getAppSettings().getContextualKeywords().contains(name)) return true;
+		}
+		return false;
+	}
 }
