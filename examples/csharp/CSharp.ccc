@@ -12,7 +12,7 @@ FAULT_TOLERANT_DEFAULT=false;
 #endif
 
 DEACTIVATE_TOKENS=ADD,ASSEMBLY,ASYNC,AWAIT,INTO,MODULE, NAMEOF,
-                  PARTIAL, RECORD, REMOVE,VAR,WHEN,YIELD, ARGLIST,
+                  REMOVE,VAR,WHEN,YIELD, ARGLIST,
                   GET,SET,INIT,WITH,REQUIRED,DYNAMIC,SCOPED,FILE,
                   MANAGED,UNMANAGED,
                   // The following are used in patterns:
@@ -47,15 +47,13 @@ TypeDeclarationLA#scan :
   (AttributeSection)*
   Modifiers
   [
-     ENSURE {checkNextTokenImage("partial")}
-     (<IDENTIFIER>|<PARTIAL>)
+     'partial'
   ]
   ENSURE ~(<DELEGATE> <STAR>)
   (
     <STRUCT>|<CLASS>|<INTERFACE>|<ENUM>|<DELEGATE>
     |
-    ENSURE {checkNextTokenImage("record")}
-    (<IDENTIFIER>|<RECORD>)
+    'record'
     (<IDENTIFIER>|<STRUCT>|<CLASS>)
   )
 ;
@@ -275,12 +273,11 @@ ClassDeclaration :
   }
   (AttributeSection)*
   Modifiers
-  [SCAN {checkNextTokenImage("partial")}# => ACTIVATE_TOKENS PARTIAL ("partial")]
+  ['partial']
   [
      // Record classes are since 10.0
      // and barely mentioned anywhere
-     SCAN {checkNextTokenImage("record")}#
-     => ACTIVATE_TOKENS RECORD (<RECORD>)
+     'record'
      {isaRecordClass =true;}
   ]
   <CLASS>
@@ -317,11 +314,10 @@ StructDeclaration :
   }
   (AttributeSection)*
   Modifiers
-  [SCAN {checkNextTokenImage("partial")}# => ACTIVATE_TOKENS PARTIAL (<PARTIAL>)]
+  ['partial']
   [
      // Record structs are since 10.0
-     SCAN {checkNextTokenImage("record")}#
-     => ACTIVATE_TOKENS RECORD (<RECORD>)
+     'record'
      {isaRecordStruct=true;}
   ]
    <STRUCT>
@@ -352,9 +348,8 @@ RecordDeclaration :
   }
   (AttributeSection)*
   Modifiers
-  [ENSURE {checkNextTokenImage("partial")} =>|| ACTIVATE_TOKENS PARTIAL (<PARTIAL>) ]
-  ENSURE {checkNextTokenImage("record")}
-  ACTIVATE_TOKENS RECORD (<RECORD>)
+  ['partial']
+  'record'
   =>||
   <IDENTIFIER>
   [TypeParameterList]
@@ -374,12 +369,12 @@ RecordDeclaration :
 
 InterfaceDeclaration :
   {
-    permissibleModifiers = EnumSet.of(TokenType.INTERNAL, TokenType.UNSAFE, TokenType.PUBLIC, TokenType.PARTIAL,
+    permissibleModifiers = EnumSet.of(TokenType.INTERNAL, TokenType.UNSAFE, TokenType.PUBLIC, TokenType.partial,
                                       TokenType.PRIVATE, TokenType.PROTECTED, TokenType.FILE);
   }
   (AttributeSection)*
   Modifiers
-  [SCAN {checkNextTokenImage("partial")}# => ACTIVATE_TOKENS PARTIAL ("partial")]
+  ['partial']
   <INTERFACE>
   =>||
   <IDENTIFIER>
@@ -433,7 +428,7 @@ EnumDeclaration :
   {
     permissibleModifiers = EnumSet.of(TokenType.STATIC, TokenType.INTERNAL, TokenType.PUBLIC,
                                       TokenType.PRIVATE, TokenType.PROTECTED, TokenType.SEALED,
-                                      TokenType.ABSTRACT, TokenType.PARTIAL, TokenType.UNSAFE, TokenType.NEW, TokenType.FILE);
+                                      TokenType.ABSTRACT, TokenType.partial, TokenType.UNSAFE, TokenType.NEW, TokenType.FILE);
   }
   (AttributeSection)*
   Modifiers
@@ -836,7 +831,7 @@ MethodDeclaration :
   }
   (AttributeSection)*
   Modifiers
-  [SCAN {checkNextTokenImage("partial")}# => ACTIVATE_TOKENS PARTIAL ("partial")]
+  ['partial']
   ReturnType
   //MemberName
   Name

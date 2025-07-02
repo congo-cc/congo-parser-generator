@@ -136,23 +136,29 @@ public final class Main {
                 sb.append(" and ");
             }
         }
+        System.out.println(String.format(
+              """
+              Usage:
+                  java -jar %s grammarfile
 
-        System.out.println("Usage:");
-        System.out.println("    java -jar " + jarFileName + " grammarfile");
-        System.out.println();
-        System.out.println("The following command-line flags are available:");
-        System.out.println(" -d <directory>    Specify the directory (absolute or relative to the grammarfile location) to place generated files");
-        System.out.println("   For example:   -d ../../src/generated");
-        System.out.println("   If this is unset, files are generated relative to the grammar file location.");
-        System.out.println(" -lang <language>  Specify the language to generate code in (the default is 'java')");
-        System.out.println("                     (valid choices are currently " + sb + ")");
-        System.out.println(" -jdkN             Specify the target JDK version. N is a number from 8 to 24. (Default is 8)");
-        System.out.println("                     (this is only useful when the code generation is in Java)");
-        System.out.println(" -n                Suppress the check for a newer version");
-        System.out.println(" -p                Define one or more comma-separated (no spaces) symbols to pass to the preprocessor.");
-        System.out.println("   For example:   -p debug,strict");
-        System.out.println(" -q                Quieter output");
-        System.out.println();
+              The following command-line flags are available:
+                 -d <directory>  Specify the directory (absolute or relative) to place generated files
+                    For example:   -d ../../src/generated
+                    If this is unset, files are generated relative to the grammar file location.
+                 -lang <language>Specify the language to generate code in (the default is 'java')
+                                 (valid choices are currently %s)
+                                 (NB: In this version, based on the \"main\" development branch
+                                 only Java is working. See note below.)
+                 -n              Suppress the check for a newer version
+                 -p              Define one or more comma-separated (no spaces) symbols to pass to the preprocessor.
+                                 For example:   -p debug,strict
+                 -q                Quieter output
+
+                NOTE! In this version, code generation for languages other than Java
+                is broken. If you want to generate Python or C#, you can download
+                this build: https://congocc.org/download/congocc_stable.jar.
+
+              """, jarFileName, sb));
     }
 
     /**
@@ -343,11 +349,13 @@ public final class Main {
      * takes as argument the tool's full name and its version.
      */
     static public void bannerLine() {
-    	System.out.println();
-        System.out.println(Main.PROG_NAME + getBuiltOnString());
-        System.out.println(Main.URL);
-        System.out.println("(type \"java -jar congocc.jar\" with no arguments for help)\n");
-        System.out.println();
+        System.out.println(String.format(
+            """
+
+            %s %s
+            %s
+            type \"java -jar congocc.jar\" with no arguments for help
+            """, Main.PROG_NAME, getBuiltOnString(), Main.URL));
     }
 
 

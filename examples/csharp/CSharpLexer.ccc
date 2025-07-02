@@ -202,8 +202,8 @@ TOKEN #KeyWord :
    | < UNMANAGED : "unmanaged">
    | < MODULE : "module">
    | < NAMEOF : "nameof">
-   | < PARTIAL : "partial">
-   | < RECORD : "record" >
+   //| < PARTIAL : "partial">
+   //| < RECORD : "record" >
    | < REMOVE : "remove">
    | < REQUIRED : "required">
    | < SCOPED : "scoped">
