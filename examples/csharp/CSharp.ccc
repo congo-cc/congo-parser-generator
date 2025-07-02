@@ -14,7 +14,7 @@ FAULT_TOLERANT_DEFAULT=false;
 DEACTIVATE_TOKENS=// The following are used in patterns:
                   AND, OR, NOT,
                   // The following are all used in queries
-                  ASCENDING,BY,DESCENDING,GROUP,LET,
+                  GROUP,LET,
                   ON, ORDERBY,SELECT;
 
 INCLUDE "CSharpLexer.ccc"
@@ -1172,7 +1172,7 @@ QueryExpressionLA#scan :
 ;
 
 QueryExpression :
-   ACTIVATE_TOKENS ASCENDING,BY,DESCENDING,GROUP,LET,
+   ACTIVATE_TOKENS GROUP,LET,
                    ON, ORDERBY,SELECT
    (
      FromClause
@@ -1181,8 +1181,7 @@ QueryExpression :
 ;
 
 InQueryExpression#void :
-   DEACTIVATE_TOKENS ASCENDING,BY,DESCENDING,
-                   GROUP, ON //, ORDERBY, LET
+   DEACTIVATE_TOKENS GROUP, ON //, ORDERBY, LET
    (Expression)
 ;
 
@@ -1242,14 +1241,14 @@ JoinClause :
 
 SelectClause : <SELECT> InQueryExpression ;
 
-GroupClause : <GROUP> InQueryExpression <BY> InQueryExpression;
+GroupClause : <GROUP> InQueryExpression 'by' InQueryExpression;
 
 OrderbyClause :
     <ORDERBY>
     InQueryExpression
-    [<ASCENDING>|<DESCENDING>]
+    ['ascending'|'descending']
     (
-       <COMMA> InQueryExpression [<ASCENDING>|<DESCENDING>]
+       <COMMA> InQueryExpression ['ascending'|'descending']
     )*
 ;
 
