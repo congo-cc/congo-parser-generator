@@ -191,15 +191,12 @@ TOKEN #KeyWord :
 // Now contextual Keywords
    | < ADD : "add">
    | < ASSEMBLY : "assembly">
-   | < ASYNC : "async" >
+//   | < ASYNC : "async" >
    | < AWAIT : "await" >
-//   | < DYNAMIC : "dynamic">
-   | < FILE : "file" > // Since C# 11
-   | < MANAGED : "managed">
-   | < UNMANAGED : "unmanaged">
+//   | < FILE : "file" > // Since C# 11
+//   | < MANAGED : "managed">
+//   | < UNMANAGED : "unmanaged">
    | < MODULE : "module">
-//   | < REQUIRED : "required">
-//   | < SCOPED : "scoped">
    | < AND : "and">
    | < OR  : "or" >
    | < NOT : "not">

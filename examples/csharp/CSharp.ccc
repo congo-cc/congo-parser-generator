@@ -11,9 +11,7 @@ FAULT_TOLERANT;
 FAULT_TOLERANT_DEFAULT=false;
 #endif
 
-DEACTIVATE_TOKENS=ADD,ASSEMBLY,ASYNC,AWAIT,INTO,MODULE,
-                  FILE,
-                  MANAGED,UNMANAGED,
+DEACTIVATE_TOKENS=ADD,ASSEMBLY,AWAIT,INTO,MODULE,
                   // The following are used in patterns:
                   AND, OR, NOT,
                   // The following are all used in queries
@@ -247,17 +245,17 @@ Modifiers#void : //TODO
       }
      |
      SCAN 0 { permissibleModifiers == null
-            || permissibleModifiers.contains(TokenType.ASYNC) && checkNextTokenImage("async")
+            || permissibleModifiers.contains(async) && checkNextTokenImage("async")
             || permissibleModifiers.contains(required) && checkNextTokenImage("required")
-            || permissibleModifiers.contains(TokenType.FILE) && checkNextTokenImage("file")
+            || permissibleModifiers.contains(file) && checkNextTokenImage("file")
           }#
-      => ACTIVATE_TOKENS ASYNC, FILE
+          =>
          (
-            <ASYNC> { if (permissibleModifiers!=null) permissibleModifiers.remove(TokenType.ASYNC);}
+            'async' { if (permissibleModifiers!=null) permissibleModifiers.remove(async);}
             |
             'required' {if (permissibleModifiers != null) permissibleModifiers.remove(required);}
             |
-            <FILE> {if (permissibleModifiers != null) permissibleModifiers.remove(TokenType.FILE);}
+            'file' {if (permissibleModifiers != null) permissibleModifiers.remove(file);}
          )
   )*
   {permissibleModifiers = null;}#
@@ -268,7 +266,7 @@ ClassDeclaration :
     boolean isaRecordClass = false;
     permissibleModifiers = EnumSet.of(NEW,  PUBLIC, TokenType.PROTECTED,
                                       TokenType.INTERNAL, TokenType.PRIVATE, TokenType.ABSTRACT,
-                                      TokenType.SEALED, TokenType.STATIC, TokenType.UNSAFE, TokenType.FILE);
+                                      TokenType.SEALED, TokenType.STATIC, TokenType.UNSAFE, file);
   }
   (AttributeSection)*
   Modifiers
@@ -309,7 +307,7 @@ StructDeclaration :
     permissibleModifiers = EnumSet.of(TokenType.STATIC, TokenType.INTERNAL, TokenType.PUBLIC,
                                       TokenType.PRIVATE, TokenType.PROTECTED, TokenType.REF,
                                       TokenType.READONLY, TokenType.UNSAFE, TokenType.NEW,
-                                      TokenType.SEALED, TokenType.FILE);
+                                      TokenType.SEALED, file);
   }
   (AttributeSection)*
   Modifiers
@@ -343,7 +341,7 @@ RecordDeclaration :
   {
     permissibleModifiers = EnumSet.of(TokenType.STATIC, TokenType.INTERNAL, TokenType.PUBLIC,
                                       TokenType.PRIVATE, TokenType.PROTECTED, TokenType.SEALED,
-                                      TokenType.ABSTRACT, TokenType.FILE);
+                                      TokenType.ABSTRACT, file);
   }
   (AttributeSection)*
   Modifiers
@@ -369,7 +367,7 @@ RecordDeclaration :
 InterfaceDeclaration :
   {
     permissibleModifiers = EnumSet.of(TokenType.INTERNAL, TokenType.UNSAFE, TokenType.PUBLIC, TokenType.partial,
-                                      TokenType.PRIVATE, TokenType.PROTECTED, TokenType.FILE);
+                                      TokenType.PRIVATE, TokenType.PROTECTED, file);
   }
   (AttributeSection)*
   Modifiers
@@ -427,7 +425,7 @@ EnumDeclaration :
   {
     permissibleModifiers = EnumSet.of(TokenType.STATIC, TokenType.INTERNAL, TokenType.PUBLIC,
                                       TokenType.PRIVATE, TokenType.PROTECTED, TokenType.SEALED,
-                                      TokenType.ABSTRACT, TokenType.partial, TokenType.UNSAFE, TokenType.NEW, TokenType.FILE);
+                                      TokenType.ABSTRACT, TokenType.partial, TokenType.UNSAFE, TokenType.NEW, file);
   }
   (AttributeSection)*
   Modifiers
@@ -459,7 +457,7 @@ DelegateDeclaration :
   {
     permissibleModifiers = EnumSet.of(TokenType.PUBLIC, TokenType.PRIVATE, TokenType.PROTECTED,
                                       TokenType.INTERNAL, TokenType.UNSAFE, TokenType.VIRTUAL,
-                                      TokenType.OVERRIDE, TokenType.NEW, TokenType.ABSTRACT, TokenType.FILE);
+                                      TokenType.OVERRIDE, TokenType.NEW, TokenType.ABSTRACT, file);
   }
   (AttributeSection)*
   Modifiers
@@ -556,7 +554,7 @@ FieldDeclaration :
     permissibleModifiers = EnumSet.of(TokenType.PUBLIC, TokenType.PRIVATE, TokenType.PROTECTED,
                                       TokenType.STATIC,TokenType.UNSAFE, TokenType.VIRTUAL,
                                       TokenType.OVERRIDE, TokenType.NEW, TokenType.ABSTRACT,
-                                      TokenType.EXTERN, TokenType.ASYNC, TokenType.INTERNAL,
+                                      TokenType.EXTERN, async, TokenType.INTERNAL,
                                       TokenType.REF, TokenType.READONLY, TokenType.SEALED,
                                       TokenType.VOLATILE);
   }
@@ -573,7 +571,7 @@ PropertyDeclaration :
     permissibleModifiers = EnumSet.of(TokenType.PUBLIC, TokenType.PRIVATE, TokenType.PROTECTED,
                                       TokenType.STATIC, TokenType.UNSAFE, TokenType.VIRTUAL,
                                       TokenType.OVERRIDE, TokenType.NEW, TokenType.ABSTRACT,
-                                      TokenType.EXTERN, TokenType.ASYNC, TokenType.INTERNAL,
+                                      TokenType.EXTERN, async, TokenType.INTERNAL,
                                       TokenType.REF, TokenType.READONLY, TokenType.SEALED,
                                       TokenType.VOLATILE, required);
   }
@@ -821,7 +819,7 @@ MethodDeclaration :
     permissibleModifiers = EnumSet.of(TokenType.PUBLIC, TokenType.PRIVATE, TokenType.PROTECTED,
                                       TokenType.STATIC,TokenType.UNSAFE, TokenType.VIRTUAL,
                                       TokenType.OVERRIDE, TokenType.NEW, TokenType.ABSTRACT,
-                                      TokenType.EXTERN, TokenType.ASYNC, TokenType.INTERNAL,
+                                      TokenType.EXTERN, async, TokenType.INTERNAL,
                                       TokenType.REF, TokenType.READONLY, TokenType.SEALED);
   }
   (AttributeSection)*
@@ -850,7 +848,7 @@ InterfaceMethodDeclaration :
     permissibleModifiers = EnumSet.of(TokenType.PUBLIC, TokenType.PRIVATE, TokenType.PROTECTED,
                                       TokenType.INTERNAL, TokenType.UNSAFE, TokenType.NEW,
                                       TokenType.STATIC, TokenType.ABSTRACT, TokenType.VIRTUAL,
-                                      TokenType.ASYNC, TokenType.SEALED);
+                                      async, TokenType.SEALED);
   }
    (AttributeSection)*
    Modifiers // REVISIT later.
@@ -942,8 +940,7 @@ NonTupleType : Type;
 DelegateStarType :
    <DELEGATE><STAR> =>||
    [
-     SCAN 0 {checkNextTokenImage("managed") || checkNextTokenImage("unmanaged")}#
-     => ACTIVATE_TOKENS MANAGED, UNMANAGED (<MANAGED> | <UNMANAGED>)
+      'managed' | 'unmanaged'
    ]
    (AttributeSection)*
    TypeParameterList
@@ -1153,9 +1150,7 @@ LambdaLHS :
   {boolean seenStatic = false;}
   [<STATIC> {seenStatic = true;}] // since 9.0
   [
-     SCAN 0 {checkNextTokenImage("async")}#
-     =>
-     ACTIVATE_TOKENS ASYNC (<ASYNC>)
+     'async'
      [
         SCAN {!seenStatic} => <STATIC>
      ]
@@ -1724,9 +1719,7 @@ AnonymousMethodExpression :
   {boolean seenStatic = false;}
   [<STATIC> {seenStatic = true;}] // since 9.0
   [
-     ENSURE {checkNextTokenImage("async")}
-     =>||
-     ACTIVATE_TOKENS ASYNC (<ASYNC>)
+     'async'
      [
         SCAN {!seenStatic} => <STATIC>
      ]
