@@ -411,7 +411,7 @@ public boolean getLegacyGlitchyLookahead() {
     return false;
   }
 
-  private TokenType nextTokenType() {
+  private final TokenType nextTokenType() {
     if (nextTokenType == null) {
        nextTokenType = nextToken(lastConsumedToken).getType();
     }
