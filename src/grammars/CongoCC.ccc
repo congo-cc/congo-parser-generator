@@ -7,7 +7,7 @@ BASE_SRC_DIR="../../build/generated-java";
 
 USES_PREPROCESSOR;
 
-DEACTIVATE_TOKENS=_EOF, VAR, SEALED, NON_SEALED;
+DEACTIVATE_TOKENS=_EOF, NON_SEALED;
 
 // We can use this symbol to generate code conditionally
 // based on whether we are generating code for internal use
@@ -368,9 +368,9 @@ GrammarInclusion throws IOException :
     ObjectType ot;
 }
         <_INJECT>
-        {permissibleModifiers = EnumSet.of(ABSTRACT,FINAL,STRICTFP,SEALED,NON_SEALED);}
+        {permissibleModifiers = EnumSet.of(ABSTRACT,FINAL,STRICTFP,sealed,NON_SEALED);}
         Modifiers
-        {isSealed = peekNode().getType()==SEALED || peekNode().firstChildOfType(SEALED)!=null;}
+        {isSealed = peekNode().getType()==sealed || peekNode().firstChildOfType(sealed)!=null;}
         [
             "class"
             |
@@ -467,9 +467,9 @@ INJECT CodeInjection :
    }
 
    public boolean isSealed() {
-      if (firstChildOfType(SEALED)!=null) return true;
+      if (firstChildOfType(sealed)!=null) return true;
       Modifiers mods = firstChildOfType(Modifiers.class);
-      return mods != null && mods.firstChildOfType(SEALED) != null;
+      return mods != null && mods.firstChildOfType(sealed) != null;
    }
 
    public boolean isNonSealed() {

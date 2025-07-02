@@ -19,18 +19,18 @@
       <arg value="-q" />
       <arg value="${basedir}/Java.ccc" />
     </java>
-    <java jar="../../congocc.jar" failonerror="true" fork="true">
+    <!--java jar="../../congocc.jar" failonerror="true" fork="true">
       <assertions>
         <enable />
       </assertions>
       <arg line="-n -lang python ${basedir}/Java.ccc" />
-    </java>
-    <java jar="../../congocc.jar" failonerror="true" fork="true">
+    </java-->
+    <!--java jar="../../congocc.jar" failonerror="true" fork="true">
       <assertions>
         <enable />
       </assertions>
       <arg line="-n -lang csharp ${basedir}/Java.ccc" />
-    </java>
+    </java-->
   </target>
 
   <target name="compile" depends="init, parser-gen">
