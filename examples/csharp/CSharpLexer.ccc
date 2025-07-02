@@ -195,9 +195,9 @@ TOKEN #KeyWord :
    | < ASYNC : "async" >
    | < AWAIT : "await" >
    | < DYNAMIC : "dynamic">
-   | < GET : "get" >
+//   | < GET : "get" >
    | < FILE : "file" > // Since C# 11
-   | < INIT : "init" >
+//   | < INIT : "init" >
    | < MANAGED : "managed">
    | < UNMANAGED : "unmanaged">
    | < MODULE : "module">
@@ -205,8 +205,8 @@ TOKEN #KeyWord :
    | < REMOVE : "remove">
    | < REQUIRED : "required">
    | < SCOPED : "scoped">
-   | < SET : "set" >
-   | < WHEN : "when">
+//   | < SET : "set" >
+//   | < WHEN : "when">
    | < AND : "and">
    | < OR  : "or" >
    | < NOT : "not">

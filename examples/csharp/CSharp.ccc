@@ -12,8 +12,8 @@ FAULT_TOLERANT_DEFAULT=false;
 #endif
 
 DEACTIVATE_TOKENS=ADD,ASSEMBLY,ASYNC,AWAIT,INTO,MODULE, NAMEOF,
-                  REMOVE,WHEN,
-                  GET,SET,INIT,WITH,REQUIRED,DYNAMIC,SCOPED,FILE,
+                  REMOVE,
+                  WITH,REQUIRED,DYNAMIC,SCOPED,FILE,
                   MANAGED,UNMANAGED,
                   // The following are used in patterns:
                   AND, OR, NOT,
@@ -612,9 +612,7 @@ InterfacePropertyDeclaration :
 
 InterfaceAccessor : // TODO, check that there is only one of each
     (AttributeSection)*
-    ENSURE ASSERT {checkNextTokenImage("get")||checkNextTokenImage("set")||checkNextTokenImage("init")}
-    ACTIVATE_TOKENS GET,SET,INIT
-    ( <GET> | <SET> | <INIT> )
+    ( 'get' | 'set' | 'init' )
     =>||
     (
       [<ARROW> Expression ]
@@ -794,7 +792,7 @@ AccessorDeclaration :
   }
    (AttributeSection)*
    Modifiers
-   ACTIVATE_TOKENS GET,SET,INIT (<GET> | <SET> | <INIT>)
+   ('get' | 'set'| 'init')
    =>||
    AccessorBody
 ;
@@ -2075,7 +2073,7 @@ UnsafeStatement : <UNSAFE> Block ;
 CatchClause :
    <CATCH>
    [ <LPAREN> Type [<IDENTIFIER>] <RPAREN> ]
-   [ ACTIVATE_TOKENS WHEN (<WHEN>) =>|| <LPAREN> Expression <RPAREN> ]
+   [ 'when'<LPAREN> Expression <RPAREN> ]
    Block
 ;
 
@@ -2164,9 +2162,7 @@ SwitchLabel :
 ;
 
 WhenClause :
-   SCAN 0 {checkNextTokenImage("when")}#
-   =>
-   ACTIVATE_TOKENS WHEN (<WHEN>)
+   'when'
    NullCoalescingExpression
 ;
 
@@ -2288,7 +2284,7 @@ ParenthesizedPattern : <LPAREN> Pattern <RPAREN> ;
 DeclarationPattern :
     NonNullableType
     ENSURE {checkNextTokenType(TokenType.IDENTIFIER)}
-    ACTIVATE_TOKENS FROM, WHEN
+    ACTIVATE_TOKENS FROM
     (
        ENSURE ~(FromClause)
        ENSURE ~(WhenClause)

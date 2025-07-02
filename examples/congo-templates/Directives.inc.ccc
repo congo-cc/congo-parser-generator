@@ -66,14 +66,6 @@ IfBlock :
   [
     (
         <ELSE>
-        {
-            if (start.charAt(0) == '#' && start.charAt(0) == '#' && start.getBeginColumn()!=lastConsumedToken.getBeginColumn()) {
-                String message = "Mismatched indentation. The #else"
-                                 + " should match the indentation of the #if tag on line "
-                                 + start.getBeginLine();
-                throw new ParseException(message, lastConsumedToken, parsingStack);
-            }
-        }
         Block
     )#ConditionalBlock
   ]
@@ -165,7 +157,7 @@ ListBlock#IteratorBlock :
   {%Token start;%}
    start=<LIST>
    Expression
-   <AS>
+   'as'
    <ID>
    [
       <COMMA>
@@ -398,8 +390,8 @@ BlockAssignment :
    start=<SET>
    PrimaryExpression(false)
    [
-      SCAN 1 {peekNode() instanceof Token} =>
-      <IN>
+      SCAN {peekNode() instanceof Token} =>
+      'in'
       Expression
    ]
    <DIRECTIVE_END> =>||
@@ -942,15 +934,6 @@ CloseDirectiveBlock(Token startToken)#void :
                     throw new ParseException(message, lastConsumedToken, parsingStack);
                 }
             }
-        }
-        if (startToken.charAt(0) == '#'
-             && lastConsumedToken.charAt(0) == '/'
-             && startToken.getBeginColumn() != lastConsumedToken.getBeginColumn())
-        {
-            String message = "Mismatched indentation. The closing tag /#" + nameAtEnd
-                             + " should match the indentation of the starting tag on line "
-                             + startToken.getBeginLine();
-            throw new ParseException(message, lastConsumedToken, parsingStack);
         }
 	}
     |
