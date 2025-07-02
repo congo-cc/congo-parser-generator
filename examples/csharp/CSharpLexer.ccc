@@ -189,12 +189,25 @@ TOKEN #KeyWord :
    | < VOLATILE : "volatile" >
    | < WHILE : "while" >
 // Now contextual Keywords
+   | < VAR : "var" >
+//   | < YIELD : "yield" >
    | < AND : "and">
    | < OR  : "or" >
+   | < NOT : "not">
 // Here are the soft keywords used in queries
+   | <ASCENDING : "ascending">
+   | <BY : "by">
+   | <DESCENDING : "descending">
+   | <EQUALS : "equals">
+   | <FROM : "from">
+   | <GROUP : "group">
+   | <INTO : "into">
+   | <JOIN : "join">
    | <LET : "let">
+   | <ON : "on">
    | <ORDERBY : "orderby" >
    | <SELECT : "select">
+   | <WHERE : "where">
 ;
 
 INCLUDE "CSharpIdentifierDef.ccc"

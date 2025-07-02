@@ -11,11 +11,12 @@ FAULT_TOLERANT;
 FAULT_TOLERANT_DEFAULT=false;
 #endif
 
-DEACTIVATE_TOKENS=// The following are used in patterns:
-                  AND, OR,
+DEACTIVATE_TOKENS= VAR,
+             // The following are used in patterns:
+                  AND, OR, NOT,
                   // The following are all used in queries
-                  //GROUP,
-                  LET, ORDERBY,SELECT;
+                  ASCENDING,BY,DESCENDING,EQUALS,FROM,GROUP,JOIN,LET,
+                  INTO, ON, ORDERBY,SELECT,WHERE;
 
 INCLUDE "CSharpLexer.ccc"
 
@@ -47,10 +48,7 @@ TypeDeclarationLA#scan :
   ]
   ENSURE ~(<DELEGATE> <STAR>)
   (
-    <STRUCT>|<CLASS>|<INTERFACE>|<ENUM>|<DELEGATE>
-    |
-    'record'
-    (<IDENTIFIER>|<STRUCT>|<CLASS>)
+    <STRUCT>|<CLASS>|<INTERFACE>|<ENUM>|<DELEGATE> | 'record'
   )
 ;
 
@@ -113,7 +111,7 @@ UsingNamespaceDirective :
 ;
 
 GlobalAttributeSection :
-   <LBRACKET>  ('assembly' | 'module') =>|| <COLON> AttributeList [<COMMA>] <RBRACKET>
+   <LBRACKET>  ('assembly'|'module') =>|| <COLON> AttributeList [<COMMA>] <RBRACKET>
 ;
 
 AttributeSection :
@@ -191,8 +189,7 @@ TypeArgumentList :
 
 
 TypeDeclaration#interface :
-  ENSURE (TypeDeclarationLA)
-  //SCAN TypeDeclarationLA =>
+  SCAN TypeDeclarationLA =>
   (
    ClassDeclaration
    |
@@ -228,6 +225,7 @@ Modifiers#void : //TODO
       =>
       (<NEW>|<PUBLIC>|<PROTECTED>|<INTERNAL>|<PRIVATE>|<ABSTRACT>
       |<SEALED>|<STATIC>|<UNSAFE>|<OVERRIDE>|<VIRTUAL>|<EXTERN>
+      |'async'|'required'|'file'
       // This is allowed on methods in some cases,
       // but not sure where exactly or when this was added
       // Have to check where this is possible and since when
@@ -236,9 +234,6 @@ Modifiers#void : //TODO
       // since 7.3
       | <REF>
       | <VOLATILE>
-      | 'async'
-      | 'required'
-      | 'file'
       )
       {
          if (permissibleModifiers != null) {
@@ -252,9 +247,9 @@ Modifiers#void : //TODO
 ClassDeclaration :
   {
     boolean isaRecordClass = false;
-    permissibleModifiers = EnumSet.of(NEW,  PUBLIC, TokenType.PROTECTED,
-                                      TokenType.INTERNAL, TokenType.PRIVATE, TokenType.ABSTRACT,
-                                      TokenType.SEALED, TokenType.STATIC, TokenType.UNSAFE, file);
+    permissibleModifiers = EnumSet.of(NEW,  PUBLIC, PROTECTED,
+                                      INTERNAL, PRIVATE, ABSTRACT,
+                                      SEALED, STATIC, UNSAFE, file);
   }
   (AttributeSection)*
   Modifiers
@@ -292,10 +287,10 @@ ClassDeclaration :
 StructDeclaration :
   {
     boolean isaRecordStruct = false;
-    permissibleModifiers = EnumSet.of(TokenType.STATIC, TokenType.INTERNAL, TokenType.PUBLIC,
-                                      TokenType.PRIVATE, TokenType.PROTECTED, TokenType.REF,
-                                      TokenType.READONLY, TokenType.UNSAFE, TokenType.NEW,
-                                      TokenType.SEALED, file);
+    permissibleModifiers = EnumSet.of(STATIC, INTERNAL, PUBLIC,
+                                      PRIVATE, PROTECTED, REF,
+                                      READONLY, UNSAFE, NEW,
+                                      SEALED, file);
   }
   (AttributeSection)*
   Modifiers
@@ -327,9 +322,9 @@ StructDeclaration :
 
 RecordDeclaration :
   {
-    permissibleModifiers = EnumSet.of(TokenType.STATIC, TokenType.INTERNAL, TokenType.PUBLIC,
-                                      TokenType.PRIVATE, TokenType.PROTECTED, TokenType.SEALED,
-                                      TokenType.ABSTRACT, file);
+    permissibleModifiers = EnumSet.of(STATIC, INTERNAL, PUBLIC,
+                                      PRIVATE, PROTECTED, SEALED,
+                                      ABSTRACT, file);
   }
   (AttributeSection)*
   Modifiers
@@ -354,8 +349,8 @@ RecordDeclaration :
 
 InterfaceDeclaration :
   {
-    permissibleModifiers = EnumSet.of(TokenType.INTERNAL, TokenType.UNSAFE, TokenType.PUBLIC, TokenType.partial,
-                                      TokenType.PRIVATE, TokenType.PROTECTED, file);
+    permissibleModifiers = EnumSet.of(INTERNAL, UNSAFE, PUBLIC, partial,
+                                      PRIVATE, PROTECTED, file);
   }
   (AttributeSection)*
   Modifiers
@@ -411,9 +406,10 @@ InterfaceIndexerDeclaration :
 
 EnumDeclaration :
   {
-    permissibleModifiers = EnumSet.of(TokenType.STATIC, TokenType.INTERNAL, TokenType.PUBLIC,
-                                      TokenType.PRIVATE, TokenType.PROTECTED, TokenType.SEALED,
-                                      TokenType.ABSTRACT, TokenType.partial, TokenType.UNSAFE, TokenType.NEW, file);
+    permissibleModifiers = EnumSet.of(STATIC, INTERNAL, PUBLIC,
+                                      PRIVATE, PROTECTED, SEALED,
+                                      ABSTRACT, partial, UNSAFE, NEW,
+                                      file);
   }
   (AttributeSection)*
   Modifiers
@@ -443,9 +439,9 @@ EnumMemberDeclaration :
 
 DelegateDeclaration :
   {
-    permissibleModifiers = EnumSet.of(TokenType.PUBLIC, TokenType.PRIVATE, TokenType.PROTECTED,
-                                      TokenType.INTERNAL, TokenType.UNSAFE, TokenType.VIRTUAL,
-                                      TokenType.OVERRIDE, TokenType.NEW, TokenType.ABSTRACT, file);
+    permissibleModifiers = EnumSet.of(PUBLIC, PRIVATE, PROTECTED,
+                                      INTERNAL, UNSAFE, VIRTUAL,
+                                      OVERRIDE, NEW, ABSTRACT, file);
   }
   (AttributeSection)*
   Modifiers
@@ -461,11 +457,13 @@ DelegateDeclaration :
 ;
 
 TypeParameterConstraints :
+  ACTIVATE_TOKENS WHERE
   (TypeParameterConstraint)*
 ;
 
 TypeParameterConstraint :
-   'where'
+   <WHERE>
+   DEACTIVATE_TOKENS WHERE
    (
       <IDENTIFIER>
       <COLON>
@@ -556,12 +554,12 @@ FieldDeclaration :
 
 PropertyDeclaration :
   {
-    permissibleModifiers = EnumSet.of(TokenType.PUBLIC, TokenType.PRIVATE, TokenType.PROTECTED,
-                                      TokenType.STATIC, TokenType.UNSAFE, TokenType.VIRTUAL,
-                                      TokenType.OVERRIDE, TokenType.NEW, TokenType.ABSTRACT,
-                                      TokenType.EXTERN, async, TokenType.INTERNAL,
-                                      TokenType.REF, TokenType.READONLY, TokenType.SEALED,
-                                      TokenType.VOLATILE, required);
+    permissibleModifiers = EnumSet.of(PUBLIC, PRIVATE, PROTECTED,
+                                      STATIC, UNSAFE, VIRTUAL,
+                                      OVERRIDE, NEW, ABSTRACT,
+                                      EXTERN, async, INTERNAL,
+                                      REF, READONLY, SEALED,
+                                      VOLATILE, required);
   }
   (AttributeSection)*
   Modifiers
@@ -597,7 +595,7 @@ InterfacePropertyDeclaration :
 
 InterfaceAccessor : // TODO, check that there is only one of each
     (AttributeSection)*
-    ( 'get' | 'set' | 'init' )
+    ('get' | 'set' | 'init')
     =>||
     (
       [<ARROW> Expression ]
@@ -748,7 +746,6 @@ Argument :
 AddAccessorDeclaration :
     (AttributeSection)*
     'add'
-    //ACTIVATE_TOKENS ADD (<ADD>)
     =>||
     AccessorBody
 ;
@@ -778,7 +775,7 @@ AccessorDeclaration :
   }
    (AttributeSection)*
    Modifiers
-   ('get' | 'set'| 'init')
+   ('get'|'set'|'init')
    =>||
    AccessorBody
 ;
@@ -805,11 +802,11 @@ ArrayInitializer :
 
 MethodDeclaration :
   {
-    permissibleModifiers = EnumSet.of(TokenType.PUBLIC, TokenType.PRIVATE, TokenType.PROTECTED,
-                                      TokenType.STATIC,TokenType.UNSAFE, TokenType.VIRTUAL,
-                                      TokenType.OVERRIDE, TokenType.NEW, TokenType.ABSTRACT,
-                                      TokenType.EXTERN, async, TokenType.INTERNAL,
-                                      TokenType.REF, TokenType.READONLY, TokenType.SEALED);
+    permissibleModifiers = EnumSet.of(PUBLIC, PRIVATE, PROTECTED,
+                                      STATIC,UNSAFE, VIRTUAL,
+                                      OVERRIDE, NEW, ABSTRACT,
+                                      EXTERN, async, INTERNAL,
+                                      REF, READONLY, SEALED);
   }
   (AttributeSection)*
   Modifiers
@@ -866,15 +863,16 @@ FormalParameters :
 ;
 
 VarArgsParameter#void :
-   '__arglist'
+   ArgListParameter
    |
    ParameterArray
 ;
 
 
 ArgListParameter# :
-    '__arglist'
-//    =>||
+    ENSURE {checkNextTokenImage("__arglist")}
+    <IDENTIFIER>
+    =>||
 ;
 
 FixedParameter :
@@ -939,7 +937,7 @@ Type :
   (
     DelegateStarType
     |
-    'dynamic'
+    'dynamic' // Is this right?
     |
     <VOID> <STAR> =>||
     |
@@ -1080,6 +1078,15 @@ INJECT ThrowExpression : extends UnaryExpression
 INJECT UnaryExpressionNotPlusMinus : extends UnaryExpression
 INJECT UnaryExpressionPlusOrMinus : extends UnaryExpression
 INJECT FromEndIndex : extends UnaryExpression
+INJECT OrPattern : implements Pattern
+INJECT AndPattern : implements Pattern
+INJECT NotPattern : implements Pattern
+INJECT ParenthesizedPattern : implements Pattern
+INJECT ListPattern : implements Pattern
+INJECT PropertyPattern : implements Pattern
+INJECT RelationalPattern : implements Pattern
+INJECT VarPattern : implements Pattern
+INJECT PositionalPattern : implements Pattern
 
 INJECT InvocationExpression : implements StatementExpression
 {
@@ -1163,7 +1170,8 @@ ImplicitAnonymousFunctionSignature :
 ;
 
 QueryExpressionLA#scan :
-   'from'
+   <IDENTIFIER>
+   ENSURE {tokenImage(0).equals("from")}
    (
       <IDENTIFIER> <IN> =>||
       |
@@ -1172,31 +1180,38 @@ QueryExpressionLA#scan :
 ;
 
 QueryExpression :
-   ACTIVATE_TOKENS LET, ORDERBY,SELECT
+   ACTIVATE_TOKENS ASCENDING,BY,DESCENDING,EQUALS,FROM,GROUP,JOIN,LET,
+                   INTO, ON, ORDERBY,SELECT,WHERE
    (
      FromClause
      QueryBody
    )
 ;
 
+InQueryExpression#void :
+   DEACTIVATE_TOKENS ASCENDING,BY,DESCENDING,EQUALS,FROM,
+                   GROUP,JOIN,INTO, ON
+   (Expression)
+;
+
 FromClause :
-   'from'
+   <FROM>
    (
-      <IDENTIFIER> <IN> =>|| Expression
+      <IDENTIFIER> <IN> =>|| InQueryExpression
       |
-      Type <IDENTIFIER> <IN> Expression
+      Type <IDENTIFIER> <IN> InQueryExpression
    )
 ;
 
 QueryBody :
-   ACTIVATE_TOKENS SELECT (QueryBodyClause)*
+   ACTIVATE_TOKENS SELECT, GROUP (QueryBodyClause)*
    (
       SelectClause
       |
       GroupClause
    )
    [
-      'into'
+      <INTO>
       <IDENTIFIER>
       QueryBody
    ]
@@ -1214,35 +1229,35 @@ QueryBodyClause :
    OrderbyClause
 ;
 
-LetClause : <LET> <IDENTIFIER> <ASSIGN> Expression ;
+LetClause : <LET> <IDENTIFIER> <ASSIGN> InQueryExpression ;
 
-WhereClause : 'where' Expression ;
+WhereClause : <WHERE> InQueryExpression ;
 
 JoinClause :
-   'join'
+   <JOIN>
    (
       <IDENTIFIER> <IN> =>||
       |
       Type <IDENTIFIER> <IN>
    )
-   Expression
-   'on'
-   Expression
-   'equals'
-   Expression
-   ['into' <IDENTIFIER>]
+   InQueryExpression
+   <ON>
+   InQueryExpression
+   <EQUALS>
+   InQueryExpression
+   [<INTO> <IDENTIFIER>]
 ;
 
-SelectClause : <SELECT> Expression ;
+SelectClause : <SELECT> InQueryExpression ;
 
-GroupClause : 'group' Expression 'by' Expression;
+GroupClause : <GROUP> InQueryExpression <BY> InQueryExpression;
 
 OrderbyClause :
     <ORDERBY>
-    Expression
-    ['ascending'|'descending']
+    InQueryExpression
+    [<ASCENDING>|<DESCENDING>]
     (
-       <COMMA> Expression ['ascending'|'descending']
+       <COMMA> InQueryExpression [<ASCENDING>|<DESCENDING>]
     )*
 ;
 
@@ -1445,8 +1460,7 @@ CastExpression : <LPAREN> Type <RPAREN> =>|+1 UnaryExpression ;
 
 AwaitExpression :
    SCAN 2
-   'await'
-   UnaryExpression
+   'await' UnaryExpression
 ;
 
 UnaryExpressionUnsafe : (<STAR>| <BIT_AND>) UnaryExpression ;
@@ -1823,7 +1837,7 @@ EmbeddedStatement :
     |
     DoStatement
     |
-    SCAN 2 {checkNextTokenImage("yield")}#
+    SCAN 2
     => YieldStatement
     |
     CheckedStatement
@@ -1904,14 +1918,14 @@ NoVarDeclaration :
 ;
 
 VarDeclaration :
-   ['scoped']
+   [ 'scoped' ]
    [
       <REF> // since C# 7.0
    ]
    [
       <READONLY> //REVISIT
    ]
-   'var'
+   ACTIVATE_TOKENS VAR (<VAR>)
    =>||
    (<IDENTIFIER>|Tuple) <ASSIGN> (AttributeSection)* [<REF>] LocalVariableInitializer
 ;
@@ -1987,7 +2001,7 @@ ForeachStatement :
     <LPAREN>
     [<REF>]
     (
-       'var'
+       <VAR>
        |
        Tuple {iteratingOverTupleType = true;}
        |
@@ -2039,7 +2053,7 @@ UnsafeStatement : <UNSAFE> Block ;
 CatchClause :
    <CATCH>
    [ <LPAREN> Type [<IDENTIFIER>] <RPAREN> ]
-   [ 'when'<LPAREN> Expression <RPAREN> ]
+   [ 'when' <LPAREN> Expression <RPAREN> ]
    Block
 ;
 
@@ -2162,8 +2176,8 @@ ForStatement :
 
 // C# 8 Pattern syntax follows.
 
-Pattern :
-   ACTIVATE_TOKENS AND, OR (OrPattern)
+Pattern#interface :
+   ACTIVATE_TOKENS AND, OR, NOT (OrPattern)
 ;
 
 // New in C# 11
@@ -2199,7 +2213,7 @@ INJECT PARSER_CLASS :
 }
 
 InListPattern :
-  SCAN 1 {!seenRange} =>
+  SCAN {!seenRange} =>
   (
     <RANGE> {seenRange = true;} ENSURE ~(Pattern) =>||
     |
@@ -2213,9 +2227,9 @@ OrPattern : AndPattern (<OR> AndPattern)* ;
 
 AndPattern : NotPattern (<AND> NotPattern)* ;
 
-NotPattern : ('not')* PrimaryPattern ;
+NotPattern : (<NOT>)* PrimaryPattern ;
 
-PrimaryPattern :
+PrimaryPattern#void :
    <NULL> | <TRUE> | <FALSE>
    |
    ListPattern
@@ -2249,6 +2263,7 @@ ParenthesizedPattern : <LPAREN> Pattern <RPAREN> ;
 DeclarationPattern :
     NonNullableType
     ENSURE {checkNextTokenType(TokenType.IDENTIFIER)}
+    ACTIVATE_TOKENS FROM
     (
        ENSURE ~(FromClause)
        ENSURE ~(WhenClause)
@@ -2258,7 +2273,8 @@ DeclarationPattern :
 ;
 
 VarPattern :
-    'var'
+    SCAN 0 {checkNextTokenImage("var")}# =>
+    ACTIVATE_TOKENS VAR (<VAR>)
     (<IDENTIFIER> | Tuple)
 ;
 
