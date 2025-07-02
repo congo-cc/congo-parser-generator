@@ -191,14 +191,8 @@ TOKEN #KeyWord :
 // Now contextual Keywords
    | < AND : "and">
    | < OR  : "or" >
-   | < NOT : "not">
 // Here are the soft keywords used in queries
-//   | <ASCENDING : "ascending">
-//   | <BY : "by">
-//   | <DESCENDING : "descending">
-   | <GROUP : "group">
    | <LET : "let">
-   | <ON : "on">
    | <ORDERBY : "orderby" >
    | <SELECT : "select">
 ;

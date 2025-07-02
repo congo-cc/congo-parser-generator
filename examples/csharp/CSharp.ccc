@@ -12,10 +12,10 @@ FAULT_TOLERANT_DEFAULT=false;
 #endif
 
 DEACTIVATE_TOKENS=// The following are used in patterns:
-                  AND, OR, NOT,
+                  AND, OR,
                   // The following are all used in queries
-                  GROUP,LET,
-                  ON, ORDERBY,SELECT;
+                  //GROUP,
+                  LET, ORDERBY,SELECT;
 
 INCLUDE "CSharpLexer.ccc"
 
@@ -1172,30 +1172,24 @@ QueryExpressionLA#scan :
 ;
 
 QueryExpression :
-   ACTIVATE_TOKENS GROUP,LET,
-                   ON, ORDERBY,SELECT
+   ACTIVATE_TOKENS LET, ORDERBY,SELECT
    (
      FromClause
      QueryBody
    )
 ;
 
-InQueryExpression#void :
-   DEACTIVATE_TOKENS GROUP, ON //, ORDERBY, LET
-   (Expression)
-;
-
 FromClause :
    'from'
    (
-      <IDENTIFIER> <IN> =>|| InQueryExpression
+      <IDENTIFIER> <IN> =>|| Expression
       |
-      Type <IDENTIFIER> <IN> InQueryExpression
+      Type <IDENTIFIER> <IN> Expression
    )
 ;
 
 QueryBody :
-   ACTIVATE_TOKENS SELECT, GROUP (QueryBodyClause)*
+   ACTIVATE_TOKENS SELECT (QueryBodyClause)*
    (
       SelectClause
       |
@@ -1220,9 +1214,9 @@ QueryBodyClause :
    OrderbyClause
 ;
 
-LetClause : <LET> <IDENTIFIER> <ASSIGN> InQueryExpression ;
+LetClause : <LET> <IDENTIFIER> <ASSIGN> Expression ;
 
-WhereClause : 'where' InQueryExpression ;
+WhereClause : 'where' Expression ;
 
 JoinClause :
    'join'
@@ -1231,24 +1225,24 @@ JoinClause :
       |
       Type <IDENTIFIER> <IN>
    )
-   InQueryExpression
-   <ON>
-   InQueryExpression
+   Expression
+   'on'
+   Expression
    'equals'
-   InQueryExpression
+   Expression
    ['into' <IDENTIFIER>]
 ;
 
-SelectClause : <SELECT> InQueryExpression ;
+SelectClause : <SELECT> Expression ;
 
-GroupClause : <GROUP> InQueryExpression 'by' InQueryExpression;
+GroupClause : 'group' Expression 'by' Expression;
 
 OrderbyClause :
     <ORDERBY>
-    InQueryExpression
+    Expression
     ['ascending'|'descending']
     (
-       <COMMA> InQueryExpression ['ascending'|'descending']
+       <COMMA> Expression ['ascending'|'descending']
     )*
 ;
 
@@ -2169,7 +2163,7 @@ ForStatement :
 // C# 8 Pattern syntax follows.
 
 Pattern :
-   ACTIVATE_TOKENS AND, OR, NOT (OrPattern)
+   ACTIVATE_TOKENS AND, OR (OrPattern)
 ;
 
 // New in C# 11
@@ -2219,7 +2213,7 @@ OrPattern : AndPattern (<OR> AndPattern)* ;
 
 AndPattern : NotPattern (<AND> NotPattern)* ;
 
-NotPattern : (<NOT>)* PrimaryPattern ;
+NotPattern : ('not')* PrimaryPattern ;
 
 PrimaryPattern :
    <NULL> | <TRUE> | <FALSE>
