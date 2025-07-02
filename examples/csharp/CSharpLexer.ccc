@@ -195,22 +195,18 @@ TOKEN #KeyWord :
    | < ASYNC : "async" >
    | < AWAIT : "await" >
    | < DYNAMIC : "dynamic">
-//   | < GET : "get" >
    | < FILE : "file" > // Since C# 11
-//   | < INIT : "init" >
    | < MANAGED : "managed">
    | < UNMANAGED : "unmanaged">
    | < MODULE : "module">
-   | < NAMEOF : "nameof">
-   | < REMOVE : "remove">
+//   | < NAMEOF : "nameof">
+//   | < REMOVE : "remove">
    | < REQUIRED : "required">
    | < SCOPED : "scoped">
-//   | < SET : "set" >
-//   | < WHEN : "when">
    | < AND : "and">
    | < OR  : "or" >
    | < NOT : "not">
-   | < WITH : "with" >
+//   | < WITH : "with" >
 // Here are the soft keywords used in queries
    | <ASCENDING : "ascending">
    | <BY : "by">
@@ -224,7 +220,6 @@ TOKEN #KeyWord :
    | <ON : "on">
    | <ORDERBY : "orderby" >
    | <SELECT : "select">
-//   | <WHERE : "where">
 ;
 
 INCLUDE "CSharpIdentifierDef.ccc"

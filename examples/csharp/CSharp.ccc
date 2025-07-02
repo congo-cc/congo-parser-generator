@@ -11,9 +11,8 @@ FAULT_TOLERANT;
 FAULT_TOLERANT_DEFAULT=false;
 #endif
 
-DEACTIVATE_TOKENS=ADD,ASSEMBLY,ASYNC,AWAIT,INTO,MODULE, NAMEOF,
-                  REMOVE,
-                  WITH,REQUIRED,DYNAMIC,SCOPED,FILE,
+DEACTIVATE_TOKENS=ADD,ASSEMBLY,ASYNC,AWAIT,INTO,MODULE,
+                  REQUIRED,DYNAMIC,SCOPED,FILE,
                   MANAGED,UNMANAGED,
                   // The following are used in patterns:
                   AND, OR, NOT,
@@ -769,7 +768,7 @@ AddAccessorDeclaration :
 
 RemoveAccessorDeclaration :
     (AttributeSection)*
-    ACTIVATE_TOKENS REMOVE (<REMOVE>)
+    'remove'
     =>||
     AccessorBody
 ;
@@ -1295,8 +1294,7 @@ MultiplicativeExpression :
 WithExpression :
    SwitchExpression
    [
-      SCAN 0 {checkNextTokenImage("with")}#
-      => ACTIVATE_TOKENS WITH (<WITH>)
+      'with'
       <LBRACE>
       [
          MemberInitializer
@@ -1655,8 +1653,7 @@ BaseAccess :
 ;
 
 NameofExpression :
-   ENSURE {checkNextTokenImage("nameof")}
-   ACTIVATE_TOKENS NAMEOF (<NAMEOF>)
+   'nameof'
    <LPAREN> =>||
    NamedEntity
    <RPAREN>
