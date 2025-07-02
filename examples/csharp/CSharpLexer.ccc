@@ -196,10 +196,7 @@ TOKEN #KeyWord :
    | <ASCENDING : "ascending">
    | <BY : "by">
    | <DESCENDING : "descending">
-   | <EQUALS : "equals">
-  // | <FROM : "from">
    | <GROUP : "group">
-   | <JOIN : "join">
    | <LET : "let">
    | <ON : "on">
    | <ORDERBY : "orderby" >
