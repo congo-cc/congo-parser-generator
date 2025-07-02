@@ -189,10 +189,6 @@ TOKEN #KeyWord :
    | < VOLATILE : "volatile" >
    | < WHILE : "while" >
 // Now contextual Keywords
-   | < ADD : "add">
-//   | < ASSEMBLY : "assembly">
-//   | < AWAIT : "await" >
-//   | < MODULE : "module">
    | < AND : "and">
    | < OR  : "or" >
    | < NOT : "not">
@@ -201,9 +197,8 @@ TOKEN #KeyWord :
    | <BY : "by">
    | <DESCENDING : "descending">
    | <EQUALS : "equals">
-   | <FROM : "from">
+  // | <FROM : "from">
    | <GROUP : "group">
-   | <INTO : "into">
    | <JOIN : "join">
    | <LET : "let">
    | <ON : "on">

@@ -11,12 +11,11 @@ FAULT_TOLERANT;
 FAULT_TOLERANT_DEFAULT=false;
 #endif
 
-DEACTIVATE_TOKENS=ADD,INTO,
-                  // The following are used in patterns:
+DEACTIVATE_TOKENS=// The following are used in patterns:
                   AND, OR, NOT,
                   // The following are all used in queries
-                  ASCENDING,BY,DESCENDING,EQUALS,FROM,GROUP,JOIN,LET,
-                  INTO, ON, ORDERBY,SELECT;
+                  ASCENDING,BY,DESCENDING,EQUALS,GROUP,JOIN,LET,
+                  ON, ORDERBY,SELECT;
 
 INCLUDE "CSharpLexer.ccc"
 
@@ -748,7 +747,8 @@ Argument :
 
 AddAccessorDeclaration :
     (AttributeSection)*
-    ACTIVATE_TOKENS ADD (<ADD>)
+    'add'
+    //ACTIVATE_TOKENS ADD (<ADD>)
     =>||
     AccessorBody
 ;
@@ -1163,8 +1163,7 @@ ImplicitAnonymousFunctionSignature :
 ;
 
 QueryExpressionLA#scan :
-   <IDENTIFIER>
-   ENSURE {tokenImage(0).equals("from")}
+   'from'
    (
       <IDENTIFIER> <IN> =>||
       |
@@ -1173,8 +1172,8 @@ QueryExpressionLA#scan :
 ;
 
 QueryExpression :
-   ACTIVATE_TOKENS ASCENDING,BY,DESCENDING,EQUALS,FROM,GROUP,JOIN,LET,
-                   INTO, ON, ORDERBY,SELECT
+   ACTIVATE_TOKENS ASCENDING,BY,DESCENDING,EQUALS,GROUP,JOIN,LET,
+                   ON, ORDERBY,SELECT
    (
      FromClause
      QueryBody
@@ -1182,14 +1181,13 @@ QueryExpression :
 ;
 
 InQueryExpression#void :
-   DEACTIVATE_TOKENS ASCENDING,BY,DESCENDING,EQUALS,FROM,
-                   GROUP,JOIN,INTO,
-                   ON //, ORDERBY, LET
+   DEACTIVATE_TOKENS ASCENDING,BY,DESCENDING,EQUALS,
+                   GROUP,JOIN, ON //, ORDERBY, LET
    (Expression)
 ;
 
 FromClause :
-   <FROM>
+   'from'
    (
       <IDENTIFIER> <IN> =>|| InQueryExpression
       |
@@ -1205,7 +1203,7 @@ QueryBody :
       GroupClause
    )
    [
-      <INTO>
+      'into'
       <IDENTIFIER>
       QueryBody
    ]
@@ -1239,7 +1237,7 @@ JoinClause :
    InQueryExpression
    <EQUALS>
    InQueryExpression
-   [<INTO> <IDENTIFIER>]
+   ['into' <IDENTIFIER>]
 ;
 
 SelectClause : <SELECT> InQueryExpression ;
@@ -2258,7 +2256,6 @@ ParenthesizedPattern : <LPAREN> Pattern <RPAREN> ;
 DeclarationPattern :
     NonNullableType
     ENSURE {checkNextTokenType(TokenType.IDENTIFIER)}
-    ACTIVATE_TOKENS FROM
     (
        ENSURE ~(FromClause)
        ENSURE ~(WhenClause)
