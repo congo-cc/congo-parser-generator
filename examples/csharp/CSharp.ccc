@@ -12,7 +12,7 @@ FAULT_TOLERANT_DEFAULT=false;
 #endif
 
 DEACTIVATE_TOKENS=ADD,ASSEMBLY,ASYNC,AWAIT,INTO,MODULE,
-                  REQUIRED,DYNAMIC,SCOPED,FILE,
+                  FILE,
                   MANAGED,UNMANAGED,
                   // The following are used in patterns:
                   AND, OR, NOT,
@@ -248,14 +248,14 @@ Modifiers#void : //TODO
      |
      SCAN 0 { permissibleModifiers == null
             || permissibleModifiers.contains(TokenType.ASYNC) && checkNextTokenImage("async")
-            || permissibleModifiers.contains(TokenType.REQUIRED) && checkNextTokenImage("required")
+            || permissibleModifiers.contains(required) && checkNextTokenImage("required")
             || permissibleModifiers.contains(TokenType.FILE) && checkNextTokenImage("file")
           }#
-      => ACTIVATE_TOKENS ASYNC, REQUIRED, FILE
+      => ACTIVATE_TOKENS ASYNC, FILE
          (
             <ASYNC> { if (permissibleModifiers!=null) permissibleModifiers.remove(TokenType.ASYNC);}
             |
-            <REQUIRED> {if (permissibleModifiers != null) permissibleModifiers.remove(TokenType.REQUIRED);}
+            'required' {if (permissibleModifiers != null) permissibleModifiers.remove(required);}
             |
             <FILE> {if (permissibleModifiers != null) permissibleModifiers.remove(TokenType.FILE);}
          )
@@ -291,7 +291,7 @@ ClassDeclaration :
        [ <LPAREN> [ArgumentList] <RPAREN>]
        | <OBJECT>
        | <STRING>
-       | SCAN 0 {checkNextTokenImage("dynamic")}# => ACTIVATE_TOKENS DYNAMIC (<DYNAMIC>)
+       | 'dynamic'
      )
      (<COMMA> Name [<LPAREN> ArgumentList <RPAREN>] )*
   ]
@@ -575,7 +575,7 @@ PropertyDeclaration :
                                       TokenType.OVERRIDE, TokenType.NEW, TokenType.ABSTRACT,
                                       TokenType.EXTERN, TokenType.ASYNC, TokenType.INTERNAL,
                                       TokenType.REF, TokenType.READONLY, TokenType.SEALED,
-                                      TokenType.VOLATILE, TokenType.REQUIRED);
+                                      TokenType.VOLATILE, required);
   }
   (AttributeSection)*
   Modifiers
@@ -896,7 +896,7 @@ FixedParameter :
       // REVISIT. Allows repeated modifiers, for example
       <REF>| <OUT> | <THIS>|<READONLY>
     | <IN> // since 7.2
-    | SCAN 0 {checkNextTokenImage("scoped")} => ACTIVATE_TOKENS SCOPED (<SCOPED>)
+    | 'scoped'
    )*
    =>|+1
    Type
@@ -953,9 +953,7 @@ Type :
   (
     DelegateStarType
     |
-    SCAN 0 {checkNextTokenImage("dynamic")}#
-    =>
-    ACTIVATE_TOKENS DYNAMIC (<DYNAMIC>) // Is this right?
+    'dynamic'
     |
     <VOID> <STAR> =>||
     |
@@ -1631,7 +1629,6 @@ TupleElement :
 ;
 
 PrimitiveTypeAccess :
-//   (PrimitiveType | SCAN {checkNextTokenImage("dynamic")}# => ACTIVATE_TOKENS DYNAMIC (<DYNAMIC>))
    PrimitiveType
    <DOT> =>||
    <IDENTIFIER>
@@ -1919,7 +1916,7 @@ LocalVariableDeclaration :
 ;
 
 NoVarDeclaration :
-   [ ENSURE {checkNextTokenImage("scoped")} ACTIVATE_TOKENS SCOPED (<SCOPED>) =>||]
+   [ 'scoped' ]
    [
       <REF> // since C# 7.0
    ]
@@ -1934,7 +1931,7 @@ NoVarDeclaration :
 ;
 
 VarDeclaration :
-   [ ENSURE {checkNextTokenImage("scoped")} ACTIVATE_TOKENS SCOPED (<SCOPED>) =>||]
+   ['scoped']
    [
       <REF> // since C# 7.0
    ]

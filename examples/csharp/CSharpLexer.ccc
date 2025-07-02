@@ -189,20 +189,17 @@ TOKEN #KeyWord :
    | < VOLATILE : "volatile" >
    | < WHILE : "while" >
 // Now contextual Keywords
-   //| < ARGLIST : "__arglist">
    | < ADD : "add">
    | < ASSEMBLY : "assembly">
    | < ASYNC : "async" >
    | < AWAIT : "await" >
-   | < DYNAMIC : "dynamic">
+//   | < DYNAMIC : "dynamic">
    | < FILE : "file" > // Since C# 11
    | < MANAGED : "managed">
    | < UNMANAGED : "unmanaged">
    | < MODULE : "module">
-//   | < NAMEOF : "nameof">
-//   | < REMOVE : "remove">
-   | < REQUIRED : "required">
-   | < SCOPED : "scoped">
+//   | < REQUIRED : "required">
+//   | < SCOPED : "scoped">
    | < AND : "and">
    | < OR  : "or" >
    | < NOT : "not">
