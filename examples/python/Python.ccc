@@ -12,7 +12,7 @@
 
 PARSER_PACKAGE = org.parsers.python;
 DEFAULT_LEXICAL_STATE = PYTHON;
-DEACTIVATE_TOKENS=MATCH,CASE,TYPE,EXCLAM,INDENT,DEDENT;
+DEACTIVATE_TOKENS=CASE,EXCLAM,INDENT,DEDENT;
 #if FT
 FAULT_TOLERANT;
 FAULT_TOLERANT_DEFAULT=false;
@@ -388,8 +388,7 @@ TypeParameter :
 ;
 
 TypeAlias :
-    ENSURE {checkNextTokenImage("type")}
-    ACTIVATE_TOKENS TYPE (<TYPE>)
+    'type'
     <NAME>
     [TypeParameters]
     <ASSIGN>
@@ -520,8 +519,7 @@ Assignment :
 // introduced in Python 3.10
 
 MatchStatement :
-   ENSURE {checkNextTokenImage("match")}
-   ACTIVATE_TOKENS MATCH (<MATCH>)
+   'match'
    SubjectExpression
    <COLON>
    =>||
