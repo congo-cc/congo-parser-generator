@@ -11,8 +11,7 @@ FAULT_TOLERANT;
 FAULT_TOLERANT_DEFAULT=false;
 #endif
 
-DEACTIVATE_TOKENS= VAR,
-             // The following are used in patterns:
+DEACTIVATE_TOKENS= // The following are used in patterns:
                   AND, OR, NOT,
                   // The following are all used in queries
                   ASCENDING,BY,DESCENDING,EQUALS,FROM,GROUP,JOIN,LET,
@@ -385,7 +384,7 @@ InterfaceMemberDeclaration :
 
 InterfaceEventDeclaration :
    {
-      permissibleModifiers = EnumSet.of(TokenType.PUBLIC, TokenType.NEW, TokenType.STATIC, TokenType.VIRTUAL);
+      permissibleModifiers = EnumSet.of(PUBLIC, NEW, STATIC, VIRTUAL);
    }
    (AttributeSection)*
    Modifiers
@@ -507,8 +506,8 @@ ClassMemberDeclaration :
 
 StructMemberDeclarationUnsafe :
   {
-    permissibleModifiers = EnumSet.of(TokenType.STATIC, TokenType.INTERNAL, TokenType.PUBLIC,
-                                      TokenType.PRIVATE, TokenType.PROTECTED, TokenType.UNSAFE);
+    permissibleModifiers = EnumSet.of(STATIC, INTERNAL, PUBLIC,
+                                      PRIVATE, PROTECTED, UNSAFE);
   }
   (AttributeSection)*
   Modifiers
@@ -521,8 +520,8 @@ StructMemberDeclarationUnsafe :
 
 ConstantDeclaration :
   {
-    permissibleModifiers = EnumSet.of(TokenType.PUBLIC, TokenType.PRIVATE, TokenType.PROTECTED,
-                                      TokenType.INTERNAL, TokenType.NEW);
+    permissibleModifiers = EnumSet.of(PUBLIC, PRIVATE, PROTECTED,
+                                      INTERNAL, NEW);
   }
   (AttributeSection)*
   Modifiers
@@ -537,12 +536,12 @@ ConstantDeclarator : <IDENTIFIER> <ASSIGN> Expression ;
 
 FieldDeclaration :
   {
-    permissibleModifiers = EnumSet.of(TokenType.PUBLIC, TokenType.PRIVATE, TokenType.PROTECTED,
-                                      TokenType.STATIC,TokenType.UNSAFE, TokenType.VIRTUAL,
-                                      TokenType.OVERRIDE, TokenType.NEW, TokenType.ABSTRACT,
-                                      TokenType.EXTERN, async, TokenType.INTERNAL,
-                                      TokenType.REF, TokenType.READONLY, TokenType.SEALED,
-                                      TokenType.VOLATILE);
+    permissibleModifiers = EnumSet.of(PUBLIC, PRIVATE, PROTECTED,
+                                      STATIC,UNSAFE, VIRTUAL,
+                                      OVERRIDE, NEW, ABSTRACT,
+                                      EXTERN, async, INTERNAL,
+                                      REF, READONLY, SEALED,
+                                      VOLATILE);
   }
   (AttributeSection)*
   Modifiers
@@ -572,9 +571,9 @@ PropertyDeclaration :
 
 InterfacePropertyDeclaration :
   {
-    permissibleModifiers = EnumSet.of(TokenType.PUBLIC, TokenType.PROTECTED, TokenType.PRIVATE,
-                                      TokenType.NEW, TokenType.STATIC, TokenType.INTERNAL,
-                                      TokenType.SEALED,TokenType.VIRTUAL);
+    permissibleModifiers = EnumSet.of(PUBLIC, PROTECTED, PRIVATE,
+                                      NEW, STATIC, INTERNAL,
+                                      SEALED, VIRTUAL);
   }
   (AttributeSection)*
   Modifiers
@@ -608,10 +607,10 @@ InterfaceAccessor : // TODO, check that there is only one of each
 
 EventDeclaration :
   {
-    permissibleModifiers = EnumSet.of(TokenType.PUBLIC, TokenType.PRIVATE, TokenType.PROTECTED,
-                                      TokenType.STATIC, TokenType.VIRTUAL,
-                                      TokenType.OVERRIDE, TokenType.NEW, TokenType.ABSTRACT,
-                                      TokenType.INTERNAL, TokenType.SEALED);
+    permissibleModifiers = EnumSet.of(PUBLIC, PRIVATE, PROTECTED,
+                                      STATIC, VIRTUAL,
+                                      OVERRIDE, NEW, ABSTRACT,
+                                      INTERNAL, SEALED);
   }
    (AttributeSection)*
    Modifiers
@@ -634,11 +633,11 @@ EventDeclaration :
 
 IndexerDeclaration :
   {
-    permissibleModifiers = EnumSet.of(TokenType.PUBLIC, TokenType.PRIVATE, TokenType.PROTECTED,
-                                      TokenType.STATIC, TokenType.VIRTUAL, TokenType.OVERRIDE,
-                                      TokenType.NEW, TokenType.ABSTRACT, TokenType.INTERNAL,
-                                      TokenType.SEALED, TokenType.UNSAFE, TokenType.REF,
-                                      TokenType.READONLY);
+    permissibleModifiers = EnumSet.of(PUBLIC, PRIVATE, PROTECTED,
+                                      STATIC, VIRTUAL, OVERRIDE,
+                                      NEW, ABSTRACT, INTERNAL,
+                                      SEALED, UNSAFE, REF,
+                                      READONLY);
   }
   (AttributeSection)*
   Modifiers
@@ -658,8 +657,7 @@ IndexerDeclaration :
 
 OperatorDeclaration :
   {
-    permissibleModifiers = EnumSet.of(TokenType.PUBLIC, TokenType.STATIC,
-                                      TokenType.EXTERN, TokenType.UNSAFE);
+    permissibleModifiers = EnumSet.of(PUBLIC, STATIC, EXTERN, UNSAFE);
   }
   (AttributeSection)*
   Modifiers
@@ -680,7 +678,7 @@ OperatorDeclaration :
 
 DestructorDeclaration :
   {
-    permissibleModifiers = EnumSet.of(TokenType.EXTERN, TokenType.UNSAFE);
+    permissibleModifiers = EnumSet.of(EXTERN, UNSAFE);
   }
   (AttributeSection)*
   Modifiers
@@ -694,8 +692,8 @@ DestructorDeclaration :
 
 ConstructorDeclaration :
   {
-    permissibleModifiers = EnumSet.of(TokenType.PUBLIC, TokenType.PRIVATE, TokenType.PROTECTED,
-                                      TokenType.STATIC, TokenType.INTERNAL, TokenType.EXTERN, TokenType.UNSAFE);
+    permissibleModifiers = EnumSet.of(PUBLIC, PRIVATE, PROTECTED,
+                                      STATIC, INTERNAL, EXTERN, UNSAFE);
   }
   (AttributeSection)*
   Modifiers
@@ -713,7 +711,7 @@ ConstructorDeclaration :
 
 StaticConstructorDeclaration :
   {
-    permissibleModifiers = EnumSet.of(TokenType.EXTERN, TokenType.STATIC);
+    permissibleModifiers = EnumSet.of(EXTERN, STATIC);
   }
    (AttributeSection)*
    Modifiers
@@ -769,9 +767,9 @@ PropertyBody :
 
 AccessorDeclaration :
   {
-    permissibleModifiers = EnumSet.of(TokenType.PUBLIC, TokenType.PRIVATE, TokenType.PROTECTED,
-                                      TokenType.VIRTUAL, TokenType.OVERRIDE, TokenType.NEW,
-                                      TokenType.ABSTRACT, TokenType.INTERNAL, TokenType.READONLY);
+    permissibleModifiers = EnumSet.of(PUBLIC, PRIVATE, PROTECTED,
+                                      VIRTUAL, OVERRIDE, NEW,
+                                      ABSTRACT, INTERNAL, READONLY);
   }
    (AttributeSection)*
    Modifiers
@@ -831,10 +829,10 @@ MethodBody :
 
 InterfaceMethodDeclaration :
   {
-    permissibleModifiers = EnumSet.of(TokenType.PUBLIC, TokenType.PRIVATE, TokenType.PROTECTED,
-                                      TokenType.INTERNAL, TokenType.UNSAFE, TokenType.NEW,
-                                      TokenType.STATIC, TokenType.ABSTRACT, TokenType.VIRTUAL,
-                                      async, TokenType.SEALED);
+    permissibleModifiers = EnumSet.of(PUBLIC, PRIVATE, PROTECTED,
+                                      INTERNAL, UNSAFE, NEW,
+                                      STATIC, ABSTRACT, VIRTUAL,
+                                      async, SEALED);
   }
    (AttributeSection)*
    Modifiers // REVISIT later.
@@ -849,7 +847,7 @@ InterfaceMethodDeclaration :
 ;
 
 ReturnType :
-   <VOID> ENSURE ~(<STAR>) =>||
+   < VOID> ENSURE ~(<STAR>) =>||
    |
    Type
 ;
@@ -961,7 +959,7 @@ Type :
   )*
   [
      SCAN 0 \ArrayType =>
-     ENSURE {getTokenType(0) == TokenType.RBRACKET}
+     ENSURE {getTokenType(0) == RBRACKET}
   ]
   (SCAN ~\TupleType => <STAR>)*
   [
@@ -1043,7 +1041,7 @@ INJECT InclusiveOrExpression : implements Expression
 INJECT LambdaExpression : implements Expression
 INJECT Literal : implements Expression
 INJECT MultiplicativeExpression : implements Expression
-INJECT NameofExpression : implements Expression
+INJECT NameofExpression : implements Expression, Pattern
 INJECT NullCoalescingExpression : implements Expression
 INJECT NullForgivingExpression : implements Expression
 INJECT NullConditionalExpression : extends UnaryExpression
@@ -1073,7 +1071,7 @@ INJECT PostIncrementExpression : extends UnaryExpression implements StatementExp
 INJECT PreDecrementExpression : extends UnaryExpression implements StatementExpression
 INJECT PreIncrementExpression : extends UnaryExpression implements StatementExpression
 INJECT AwaitExpression : extends UnaryExpression implements StatementExpression
-INJECT CastExpression : extends UnaryExpression
+INJECT CastExpression : extends UnaryExpression implements Pattern
 INJECT ThrowExpression : extends UnaryExpression
 INJECT UnaryExpressionNotPlusMinus : extends UnaryExpression
 INJECT UnaryExpressionPlusOrMinus : extends UnaryExpression
@@ -1081,10 +1079,12 @@ INJECT FromEndIndex : extends UnaryExpression
 INJECT OrPattern : implements Pattern
 INJECT AndPattern : implements Pattern
 INJECT NotPattern : implements Pattern
+INJECT DeclarationPattern : extends UnaryExpression implements Pattern
 INJECT ParenthesizedPattern : implements Pattern
 INJECT ListPattern : implements Pattern
 INJECT PropertyPattern : implements Pattern
 INJECT RelationalPattern : implements Pattern
+INJECT TypePattern : implements Pattern
 INJECT VarPattern : implements Pattern
 INJECT PositionalPattern : implements Pattern
 
@@ -1580,7 +1580,7 @@ ArrayCreationExpression :
 ;
 
 ObjectCreationExpression :
-   <NEW> =>|+1 [SCAN 1 {getTokenType(1) != TokenType.LPAREN}# => NonArrayType] // This seems possible since C# 9
+   <NEW> =>|+1 [ENSURE ~(<LPAREN>) NonArrayType] // This seems possible since C# 9
    (
       <LPAREN> [ArgumentList] <RPAREN> [ObjectInitializer | CollectionInitializer]
       |
@@ -1878,17 +1878,13 @@ LocalVariableDeclarationLA#scan :
       <USING>
    ]
    ENSURE {!checkNextTokenImage("await")} // Is there any possibility that a local type is named "await"?
-   [SCAN 0 {checkNextTokenImage("scoped")} => <IDENTIFIER>]
+   ['scoped']
    [<REF>] [<READONLY>]
    (
-      (
-         <IDENTIFIER> ENSURE {tokenImage(0).equals("var")} =>||
-         (<IDENTIFIER>|Tuple) <ASSIGN>
-      )
+      'var'
+      (<IDENTIFIER>|Tuple) <ASSIGN>
       |
-      (
-         Type <IDENTIFIER> (<ASSIGN>|<SEMICOLON>|<COMMA>)
-      )
+      Type <IDENTIFIER> (<ASSIGN>|<SEMICOLON>|<COMMA>)
    )
 ;
 
@@ -1911,7 +1907,7 @@ NoVarDeclaration :
       <READONLY> //REVISIT
    ]
    Type
-   ENSURE {getTokenType(-1) == TokenType.DOT || !tokenImage(0).equals("await")}
+   ENSURE {getTokenType(-1) == DOT || !tokenImage(0).equals("await")}
    =>|+1
    LocalVariableDeclarator
    (<COMMA> LocalVariableDeclarator)*
@@ -1925,7 +1921,7 @@ VarDeclaration :
    [
       <READONLY> //REVISIT
    ]
-   ACTIVATE_TOKENS VAR (<VAR>)
+   'var'
    =>||
    (<IDENTIFIER>|Tuple) <ASSIGN> (AttributeSection)* [<REF>] LocalVariableInitializer
 ;
@@ -1947,7 +1943,7 @@ StackAllocInitializer :
       |
       Type
       (
-         SCAN 0 {getTokenType(0) != TokenType.RBRACKET}#
+         SCAN 0 {getTokenType(0) != RBRACKET}#
          => <LBRACKET> Expression <RBRACKET>
          |
          <LBRACKET> Expression <RBRACKET>
@@ -2001,7 +1997,7 @@ ForeachStatement :
     <LPAREN>
     [<REF>]
     (
-       <VAR>
+       'var'
        |
        Tuple {iteratingOverTupleType = true;}
        |
@@ -2090,7 +2086,7 @@ LockStatement : <LOCK> <LPAREN> Expression <RPAREN> EmbeddedStatement ;
 FixedStatement :
    <FIXED>
    <LPAREN> =>||
-   Type ASSERT {getTokenType(0) == TokenType.STAR}
+   Type ASSERT {getTokenType(0) == STAR}
    FixedPointerDeclarator (<COMMA> FixedPointerDeclarator)*
    <RPAREN>
    EmbeddedStatement
@@ -2153,7 +2149,7 @@ SwitchSection :
          // in terms of negative conditions!
                 getTokenType(1) != RBRACE
                 && getTokenType(1) != CASE
-                && !(getTokenType(1) == DEFAULT && getTokenType(2) == TokenType.COLON)
+                && !(getTokenType(1) == DEFAULT && getTokenType(2) == COLON)
              }
       => Statement
    )+
@@ -2262,7 +2258,7 @@ ParenthesizedPattern : <LPAREN> Pattern <RPAREN> ;
 
 DeclarationPattern :
     NonNullableType
-    ENSURE {checkNextTokenType(TokenType.IDENTIFIER)}
+    ENSURE {checkNextTokenType(IDENTIFIER)}
     ACTIVATE_TOKENS FROM
     (
        ENSURE ~(FromClause)
@@ -2273,8 +2269,7 @@ DeclarationPattern :
 ;
 
 VarPattern :
-    SCAN 0 {checkNextTokenImage("var")}# =>
-    ACTIVATE_TOKENS VAR (<VAR>)
+    'var'
     (<IDENTIFIER> | Tuple)
 ;
 
@@ -2293,10 +2288,10 @@ TypePattern :
       {
          // If we have a left parenthesis, this choice fails
          // and we go to PositionalPattern
-         nextTokType != TokenType.LPAREN
+         nextTokType != LPAREN
          &&
          (
-            lastTokType != TokenType.HOOK
+            lastTokType != HOOK
          // This is now really grotesque!
          // If the Type we matched is "nullable", i.e.
          // ends in a ?  // then the token after that must be
@@ -2304,19 +2299,19 @@ TypePattern :
          // Otherwise we effectively backtrack
          // and match the Type as a NonNullableType,
          // i.e. we parse it without the trailing "?"
-            || nextTokType == TokenType.HOOK
-            || nextTokType == TokenType.RPAREN
-            || nextTokType == TokenType.SEMICOLON
-            || nextTokType == TokenType.EQ
-            || nextTokType == TokenType.SC_OR
-            || nextTokType == TokenType.SC_AND
-            || nextTokType == TokenType.COMMA
+            || nextTokType == HOOK
+            || nextTokType == RPAREN
+            || nextTokType == SEMICOLON
+            || nextTokType == EQ
+            || nextTokType == SC_OR
+            || nextTokType == SC_AND
+            || nextTokType == COMMA
             || checkNextTokenImage("and")
             || checkNextTokenImage("or")
          )
       } =>||
       |
-      NonNullableType ENSURE {getTokenType(1) != TokenType.LPAREN}
+      NonNullableType ENSURE ~(<LPAREN>)
    )
 ;
 

@@ -166,6 +166,10 @@ Modifiers :
            permissibleModifiers.remove(PROTECTED);
            permissibleModifiers.remove(PUBLIC);
            break;
+        case sealed :
+           permissibleModifiers.remove(sealed);
+           permissibleModifiers.remove(NON_SEALED);
+           break;
         default :
            permissibleModifiers.remove(lastConsumedToken.getType());
       }
@@ -1002,8 +1006,8 @@ BlockStatement#void :
   |
   EnumDeclaration
   |
-  LocalVariableDeclaration { Node varDecl = peekNode(); }
-  <SEMICOLON> {varDecl.add(popNode());}
+  LocalVariableDeclaration {% Node varDecl = peekNode(); %}
+  <SEMICOLON> {%varDecl.add(popNode());%}
   |
   Statement
  )

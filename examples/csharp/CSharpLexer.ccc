@@ -189,12 +189,11 @@ TOKEN #KeyWord :
    | < VOLATILE : "volatile" >
    | < WHILE : "while" >
 // Now contextual Keywords
-   | < VAR : "var" >
-//   | < YIELD : "yield" >
+//   | < VAR : "var" >
    | < AND : "and">
    | < OR  : "or" >
    | < NOT : "not">
-// Here are the soft keywords used in queries
+// Here are the keywords used in queries
    | <ASCENDING : "ascending">
    | <BY : "by">
    | <DESCENDING : "descending">
