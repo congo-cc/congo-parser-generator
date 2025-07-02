@@ -11,7 +11,7 @@ FAULT_TOLERANT;
 FAULT_TOLERANT_DEFAULT=false;
 #endif
 
-DEACTIVATE_TOKENS=ADD,ASSEMBLY,AWAIT,INTO,MODULE,
+DEACTIVATE_TOKENS=ADD,INTO,
                   // The following are used in patterns:
                   AND, OR, NOT,
                   // The following are all used in queries
@@ -114,7 +114,7 @@ UsingNamespaceDirective :
 ;
 
 GlobalAttributeSection :
-   <LBRACKET>  ACTIVATE_TOKENS ASSEMBLY, MODULE (<ASSEMBLY> | <MODULE>) =>|| <COLON> AttributeList [<COMMA>] <RBRACKET>
+   <LBRACKET>  ('assembly' | 'module') =>|| <COLON> AttributeList [<COMMA>] <RBRACKET>
 ;
 
 AttributeSection :
@@ -225,7 +225,7 @@ Modifiers#void : //TODO
   (
     SCAN { permissibleModifiers == null
          ||
-         permissibleModifiers.contains(getTokenType(1)) }#
+         hasMatch(permissibleModifiers,getToken(1)) }#
       =>
       (<NEW>|<PUBLIC>|<PROTECTED>|<INTERNAL>|<PRIVATE>|<ABSTRACT>
       |<SEALED>|<STATIC>|<UNSAFE>|<OVERRIDE>|<VIRTUAL>|<EXTERN>
@@ -237,26 +237,15 @@ Modifiers#void : //TODO
       // since 7.3
       | <REF>
       | <VOLATILE>
+      | 'async'
+      | 'required'
+      | 'file'
       )
       {
          if (permissibleModifiers != null) {
             permissibleModifiers.remove(getTokenType(0));
          }
       }
-     |
-     SCAN 0 { permissibleModifiers == null
-            || permissibleModifiers.contains(async) && checkNextTokenImage("async")
-            || permissibleModifiers.contains(required) && checkNextTokenImage("required")
-            || permissibleModifiers.contains(file) && checkNextTokenImage("file")
-          }#
-          =>
-         (
-            'async' { if (permissibleModifiers!=null) permissibleModifiers.remove(async);}
-            |
-            'required' {if (permissibleModifiers != null) permissibleModifiers.remove(required);}
-            |
-            'file' {if (permissibleModifiers != null) permissibleModifiers.remove(file);}
-         )
   )*
   {permissibleModifiers = null;}#
 ;
@@ -1464,9 +1453,9 @@ ThrowExpression# : <THROW> [Expression] ;
 CastExpression : <LPAREN> Type <RPAREN> =>|+1 UnaryExpression ;
 
 AwaitExpression :
-   SCAN 2 {checkNextTokenImage("await")}#
-    =>
-   ACTIVATE_TOKENS AWAIT (<AWAIT>) UnaryExpression
+   SCAN 2
+   'await'
+   UnaryExpression
 ;
 
 UnaryExpressionUnsafe : (<STAR>| <BIT_AND>) UnaryExpression ;
@@ -2001,8 +1990,7 @@ ForeachStatement :
    {boolean iteratingOverTupleType=false;}
     [
        //Since 8.0 (I think...)
-       SCAN {checkNextTokenImage("await")}#
-       => ACTIVATE_TOKENS AWAIT (<AWAIT>)
+       'await'
     ]
     <FOREACH> =>||
     <LPAREN>
@@ -2076,8 +2064,7 @@ YieldStatement :
 
 UsingStatement :
    [
-      SCAN {checkNextTokenImage("await")}#
-      =>ACTIVATE_TOKENS AWAIT (<AWAIT>)
+      'await'
    ]
    <USING>
    {boolean hasParenthesis = false;}

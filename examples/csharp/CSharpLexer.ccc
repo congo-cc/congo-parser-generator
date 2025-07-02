@@ -190,17 +190,12 @@ TOKEN #KeyWord :
    | < WHILE : "while" >
 // Now contextual Keywords
    | < ADD : "add">
-   | < ASSEMBLY : "assembly">
-//   | < ASYNC : "async" >
-   | < AWAIT : "await" >
-//   | < FILE : "file" > // Since C# 11
-//   | < MANAGED : "managed">
-//   | < UNMANAGED : "unmanaged">
-   | < MODULE : "module">
+//   | < ASSEMBLY : "assembly">
+//   | < AWAIT : "await" >
+//   | < MODULE : "module">
    | < AND : "and">
    | < OR  : "or" >
    | < NOT : "not">
-//   | < WITH : "with" >
 // Here are the soft keywords used in queries
    | <ASCENDING : "ascending">
    | <BY : "by">
