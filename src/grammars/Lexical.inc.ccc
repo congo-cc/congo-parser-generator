@@ -26,8 +26,6 @@ TOKEN #CongoCCKeyWord :
   |
   < _TOKEN: "TOKEN" | "REGULAR_TOKEN">
   |
-  < _CONTEXTUAL_KEYWORD: "CONTEXTUAL_KEYWORD" >
-  |
   < _UNPARSED: "SPECIAL_TOKEN" | "UNPARSED" >
   |
   < _MORE: "MORE" | "INCOMPLETE_TOKEN" >
@@ -117,7 +115,7 @@ TokenProduction :
       ("," <IDENTIFIER> {multipleStatesSpecified = true; grammar.addLexicalState(lastConsumedToken.toString());})*
      ">"
   ]
-  (<_TOKEN> | <_UNPARSED> | <_SKIP> | <_MORE> | <_CONTEXTUAL_KEYWORD>)
+  (<_TOKEN> | <_UNPARSED> | <_SKIP> | <_MORE>)
   [
     "[" "IGNORE_CASE" {ignoreCase = true;} "]"
   ]
@@ -326,11 +324,6 @@ INJECT RegexpStringLiteral :
      TokenProduction tp = getTokenProduction();
      return tp != null ? tp.getLexicalStateNames() : new String[]{lexicalState};
   }
-
-  @Override
-  public int maximumLength() {
-     return literalString.codePointCount(0, literalString.length());
-  }
 }
 
 #RegexpRef :
@@ -372,11 +365,6 @@ INJECT RegexpRef :
         }
         return regexp.getOrdinal();
     }
-
-    @Override
-    public int maximumLength() {
-       return regexp.maximumLength();
-    }
 }
 
 EndOfFile : "<" <_EOF> =>|| ">" ;
@@ -385,9 +373,6 @@ INJECT EndOfFile : extends org.congocc.core.RegularExpression
 {
     @Override
     public boolean matchesEmptyString() {return true;}
-
-    @Override
-    public int maximumLength() {return 0;}
 
     @Override
     public int getOrdinal() {
@@ -409,28 +394,9 @@ INJECT RegexpChoice :
     import org.congocc.core.RegularExpression;
     extends RegularExpression;
 {
-    public List<RegularExpression> getChoices() {
-        return childrenOfType(RegularExpression.class);
-    }
-
     @Override
     public boolean matchesEmptyString() {
-        for (RegularExpression choice: getChoices()) {
-            if (choice.matchesEmptyString()) {
-                return true;
-            }
-        }
-        return false;
-    }
-
-    public int maximumLength() {
-        int result = 0;
-        for (RegularExpression re : getChoices()) {
-            int max = re.maximumLength();
-            if (max == Integer.MAX_VALUE) return Integer.MAX_VALUE;
-            if (max > result) result = max;
-        }
-        return result;
+        return !childrenOfType(RegularExpression.class, RegularExpression::matchesEmptyString).isEmpty();
     }
 }
 
@@ -463,17 +429,6 @@ INJECT RegexpSequence :
        }
        return true;
    }
-
-    @Override
-    public int maximumLength() {
-        int result = 0;
-        for (RegularExpression re : childrenOfType(RegularExpression.class)) {
-            int max = re.maximumLength();
-            if (max == Integer.MAX_VALUE) return Integer.MAX_VALUE;
-            result += max;
-        }
-        return result;
-    }
 }
 
 RepeatedRegexp #void :
@@ -515,15 +470,6 @@ INJECT RepetitionRange :
     public boolean matchesEmptyString() {
         return min==0 || getRegexp().matchesEmptyString();
     }
-
-    @Override
-    public int maximumLength() {
-       if (getRegexp().maximumLength() == Integer.MAX_VALUE) return Integer.MAX_VALUE;
-       if (!hasMax()) {
-           return min *  getRegexp().maximumLength();
-       }
-       return max*getRegexp().maximumLength();
-    }
 }
 
 INJECT OneOrMoreRegexp :
@@ -538,11 +484,6 @@ INJECT OneOrMoreRegexp :
    @Override
    public boolean matchesEmptyString() {
        return getRegexp().matchesEmptyString();
-   }
-
-   @Override
-   public int maximumLength() {
-      return Integer.MAX_VALUE;
    }
 }
 
@@ -568,11 +509,6 @@ INJECT ZeroOrMoreRegexp :
    public boolean matchesEmptyString() {
        return true;
    }
-
-   @Override
-   public int maximumLength() {
-      return Integer.MAX_VALUE;
-   }
 }
 
 INJECT ZeroOrOneRegexp :
@@ -597,11 +533,6 @@ INJECT ZeroOrOneRegexp :
    @Override
    public boolean matchesEmptyString() {
        return true;
-   }
-
-   @Override
-   public int maximumLength() {
-       return getRegexp().maximumLength();
    }
 }
 
@@ -629,11 +560,6 @@ INJECT CharacterList :
     @Override
     public boolean matchesEmptyString() {
         return false;
-    }
-
-    @Override
-    public int maximumLength() {
-        return 1;
     }
 }
 

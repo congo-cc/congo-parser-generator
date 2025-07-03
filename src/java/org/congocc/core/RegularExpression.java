@@ -13,7 +13,6 @@ import org.congocc.parser.tree.RegexpSequence;
  * An abstract base class from which all the AST nodes that
  * are regular expressions inherit.
  */
-
 public abstract class RegularExpression extends BaseNode {
 
     private Grammar grammar;
@@ -98,8 +97,6 @@ public abstract class RegularExpression extends BaseNode {
 
     public int getOrdinal() {
         return getGrammar().getLexerData().getOrdinal(this);
-        //int id = getGrammar().getLexerData().getOrdinal(this);
-        //return Math.max(0, id);
     }
 
     public void setNewLexicalState(LexicalStateData newLexicalState) {
@@ -160,7 +157,4 @@ public abstract class RegularExpression extends BaseNode {
         }
         return ((RegularExpression) parent).isPossiblyAtStart();
     }
-
-    /** in code points */
-    abstract public int maximumLength();
 }

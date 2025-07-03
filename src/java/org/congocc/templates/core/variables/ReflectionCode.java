@@ -207,7 +207,7 @@ public class ReflectionCode {
         if (method.isVarArgs()) {
             numFixedParams--;
         }
-        if (numFixedParams > params.length) {
+        if (numFixedParams != params.length) {
             throw new EvaluationException("For method " + method.getName() + " expecting " +numFixedParams + " parameters, received " +params.length + " parameters.");
         }
         for (int i = 0; i< numFixedParams; i++) {
@@ -288,7 +288,7 @@ public class ReflectionCode {
             }
             return CAN_NOT_UNWRAP;
         }
-        if (desiredType == String.class) { 
+        if (desiredType == String.class) {
             return object.toString();
         }
         return CAN_NOT_UNWRAP;
@@ -306,7 +306,7 @@ public class ReflectionCode {
         }
         return buf.toString();
     }
-    
+
     private static String getLookupKey(Object object, String propertyName) {
         return object.getClass().getName() + "##" + propertyName;
     }

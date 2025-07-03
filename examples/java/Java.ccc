@@ -1213,8 +1213,8 @@ BreakStatement :
 ;
 
 YieldStatement :
-   SCAN 2
    'yield'
+   =>|+2
    Expression
    <SEMICOLON>
 ;
