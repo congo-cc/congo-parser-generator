@@ -196,7 +196,7 @@ INJECT Identifier :
         String image = getSource();
         if (firstAncestorOfType(Options.class) != null) return image;
         return switch (image) {
-            case "jjtThis", "CURRENT_NODE", "THIS_PRODUCTION" ->
+            case "jjtThis", "CURRENT_NODE", "THIS_PRODUCTION", "HOC" ->
                 "thisProduction";
             case "PARSER_CLASS" ->
                getAppSettings().getParserClassName();

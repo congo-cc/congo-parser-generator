@@ -325,7 +325,7 @@ TOKEN [IGNORE_CASE]:
         Command
         <END_EXEC>!
     )+
-    <EOF> {return CURRENT_NODE;}
+    <EOF> {return HOC;}
 ;
 
 Name :
