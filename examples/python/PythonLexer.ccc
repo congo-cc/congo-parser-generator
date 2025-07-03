@@ -435,8 +435,6 @@ TOKEN #Keyword :
    |
    <LAMBDA : "lambda">
    |
-   <MATCH : "match">
-   |
    <NONLOCAL : "nonlocal">
    |
    <NONE : "None">
@@ -456,8 +454,6 @@ TOKEN #Keyword :
    <TRUE : "True">
    |
    <TRY : "try">
-   |
-   <TYPE : "type">
    |
    <WHILE : "while">
    |

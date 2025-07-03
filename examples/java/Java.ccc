@@ -13,17 +13,12 @@ PARSER_PACKAGE=org.parsers.java;
 NODE_PACKAGE=org.parsers.java.ast;
 DEFAULT_LEXICAL_STATE=JAVA;
 ASSERT_APPLIES_IN_LOOKAHEAD=false;
-// The following tokens are only activated at key points whether
-// they are needed.
-DEACTIVATE_TOKENS=VAR, SEALED, NON_SEALED
-#if !__java__
-// Contextual keywords are not implemented for
-// non-Java languages (yet)
-   ,RECORD,YIELD,PERMITS,MODULE, OPEN, OPENS,
-   PROVIDES, REQUIRES, EXPORTS, USES, WITH,
-   TO, TRANSITIVE, WHEN
-#endif
-;
+
+// This is the only "conceptual keyword" that has to be
+// dealt with in a particularly funky way. This is because,
+// unlike the other conceptual keywords, like 'sealed' or 'record'
+// or whatever, it is not caught by the IDENTIFIER pattern.
+DEACTIVATE_TOKENS = NON_SEALED;
 
 #if FT
 FAULT_TOLERANT;
@@ -44,19 +39,9 @@ Node Root#void :
 ModularCompilationUnit :
    (ImportDeclaration)*
    (Annotation)*
-#if __java__
    ['open']
    'module'
    =>||
-#else
-   ENSURE {checkNextTokenImage("open","module")}
-   =>||
-   ACTIVATE_TOKENS OPEN,MODULE
-   (
-     [<OPEN>]
-     <MODULE>
-   )
-#endif
    Name
    <LBRACE>
    (SCAN ~(<RBRACE>) => ModuleDirective)*
@@ -77,69 +62,33 @@ ModuleDirective :
 ;
 
 RequiresDirective :
-#if __java__
    'requires' ['transitive' | <STATIC>]
-#else
-   ACTIVATE_TOKENS REQUIRES, TRANSITIVE (<REQUIRES> [<TRANSITIVE>|<STATIC>])
-#endif
    Name
    <SEMICOLON>
 ;
 
 ExportsDirective :
-#if __java__
     'exports'
-#else
-   ACTIVATE_TOKENS EXPORTS (<EXPORTS>)
-#endif
    Name
-#if __java__
    ['to' Name (<COMMA> Name)*]
-#else
-   [
-     ACTIVATE_TOKENS TO (<TO>)
-     Name (<COMMA> Name)*
-   ]
-#endif
    <SEMICOLON>
 ;
 
 OpensDirective :
-#if __java__
    'opens'
-#else
-   ACTIVATE_TOKENS OPENS (<OPENS>)
-#endif
    Name
-#if __java__
    ['to' Name (<COMMA> Name)*]
-#else
-   [
-     ACTIVATE_TOKENS TO (<TO>)
-     Name (<COMMA> Name)*
-   ]
-#endif
    <SEMICOLON>
 ;
 
 UsesDirective :
-#if __java__
     'uses'
-#else
-    ACTIVATE_TOKENS USES (<USES>)
-#endif
     Name
     <SEMICOLON>
 ;
 
 ProvidesDirective :
-#if __java__
     'provides' Name 'with'
-#else
-    ACTIVATE_TOKENS PROVIDES(<PROVIDES>)
-    Name
-    ACTIVATE_TOKENS WITH (<WITH>)
-#endif
     Name
     (<COMMA> Name)*
     <SEMICOLON>
@@ -186,87 +135,21 @@ ImportDeclaration :
    [
     <STATIC>
     |
-#if __java__
     'module'
-#else
-    ACTIVATE_TOKENS MODULE (<MODULE>)
-#endif
    ]
    Name
    [ <DOT> <STAR> ]
    <SEMICOLON>
 ;
 
-#if !CARD && __java__
-
-// Alternative to Modifiers using repetition cardinality constraints.
-
-Modifiers :
- (
-    (
-       SCAN {allows(ABSTRACT,FINAL)}# =>          &(<ABSTRACT>|<FINAL>) // Note the "&" is the short form for "ENSURE ASSERT {&0:1&}".
-       |
-       SCAN {allows(PRIVATE,PROTECTED,PUBLIC)}# =>&(<PRIVATE>|<PROTECTED>|<PUBLIC>)
-       |
-       SCAN {allows(STATIC)}# =>                  &<STATIC>
-       |
-       SCAN {allows(SYNCHRONIZED)}# =>            &<SYNCHRONIZED>
-       |
-       SCAN {allows(NATIVE)}# =>                  &<NATIVE>
-       |
-       SCAN {allows(TRANSIENT)}# =>               &<TRANSIENT>
-       |
-       SCAN {allows(VOLATILE)}# =>                &<VOLATILE>
-       |
-       SCAN {allows(STRICTFP)}# =>                &<STRICTFP>
-       |
-       SCAN {allows(_DEFAULT)}# =>                &<_DEFAULT>
-    ) =>||
-    |
-    SCAN {
-        allows(SEALED)
-        &&
-        (
-          checkNextTokenImage("sealed","non-sealed")
-          ||
-          checkNextTokenImage("non")
-              && "-".equals(tokenImage(2))
-              && "sealed".equals(tokenImage(3))
-              && getToken(3).getBeginOffset() == getToken(1).getEndOffset() + 1
-        )
-    }# =>
-    & ACTIVATE_TOKENS SEALED, NON_SEALED (<SEALED>|<NON_SEALED>) =>||
-    |
-    Annotation // Note no "&", so no cardinality limit here.
- )*
- {permissibleModifiers = null;}#
-;
-
-// For some reason, this can only
-// be injected if we are generating Java (JR)
-INJECT PARSER_CLASS :
-{
-    boolean allows(TokenType... types) {
-        if (isParserTolerant() || permissibleModifiers == null) return true;
-        for (TokenType type : types) {
-            if (permissibleModifiers.contains(type)) {
-                return true;
-            }
-        }
-        return false;
-    }
-}
-
-#else
-
 Modifiers :
  (
   ENSURE {isParserTolerant() || permissibleModifiers == null
-       || permissibleModifiers.contains(getTokenType(1))}
+       || hasMatch(permissibleModifiers, getToken(1))}
   (
    <PUBLIC>|<STATIC>|<PROTECTED>|<PRIVATE> |<FINAL>|<ABSTRACT>
    |<SYNCHRONIZED>|<NATIVE>|<TRANSIENT>|<VOLATILE>|<STRICTFP>
-   |<_DEFAULT>)
+   |'sealed'|<_DEFAULT>)
    {
     if (permissibleModifiers !=null) {
       TokenType tt = getTokenType(0);
@@ -283,6 +166,10 @@ Modifiers :
            permissibleModifiers.remove(PROTECTED);
            permissibleModifiers.remove(PUBLIC);
            break;
+        case sealed :
+           permissibleModifiers.remove(sealed);
+           permissibleModifiers.remove(NON_SEALED);
+           break;
         default :
            permissibleModifiers.remove(lastConsumedToken.getType());
       }
@@ -292,10 +179,10 @@ Modifiers :
   ENSURE {
     permissibleModifiers == null
     ||
-    permissibleModifiers.contains(SEALED)
+    permissibleModifiers.contains(NON_SEALED)
     &&
     (
-       checkNextTokenImage("sealed","non-sealed")
+       checkNextTokenType(NON_SEALED)
        ||
        checkNextTokenImage("non")
          && "-".equals(tokenImage(2))
@@ -303,10 +190,10 @@ Modifiers :
          && getToken(3).getBeginOffset() == getToken(1).getEndOffset() + 1
     )
   }
-  ACTIVATE_TOKENS SEALED, NON_SEALED (<SEALED>|<NON_SEALED>)
+  ACTIVATE_TOKENS NON_SEALED (<NON_SEALED>)
   {
     if (permissibleModifiers!=null) {
-      permissibleModifiers.remove(SEALED);
+      permissibleModifiers.remove(sealed);
       permissibleModifiers.remove(NON_SEALED);
     }
   }
@@ -315,8 +202,6 @@ Modifiers :
  )*
  {permissibleModifiers = null;}#
 ;
-
-#endif
 
 INJECT PARSER_CLASS : {
   // Used to hold the set of modifiers that is permissible
@@ -384,7 +269,7 @@ ClassDeclaration :
   {permissibleModifiers = EnumSet.of(PUBLIC,
                                     PROTECTED, PRIVATE,
                                     ABSTRACT, FINAL, STATIC,
-                                    STRICTFP, SEALED, NON_SEALED);}
+                                    STRICTFP, sealed, NON_SEALED);}
   Modifiers
   <CLASS> =>||
   TypeIdentifier
@@ -398,7 +283,7 @@ ClassDeclaration :
 InterfaceDeclaration :
   {permissibleModifiers = EnumSet.of(PUBLIC, PROTECTED,
                                      PRIVATE, ABSTRACT,
-                                     STATIC, STRICTFP, SEALED,
+                                     STATIC, STRICTFP, sealed,
                                      NON_SEALED);}
   Modifiers
   <INTERFACE> =>||
@@ -410,13 +295,7 @@ InterfaceDeclaration :
 ;
 
 PermitsList :
-#if __java__
    'permits'
-#else
-   ENSURE {checkNextTokenImage("permits")}
-   =>||
-   ACTIVATE_TOKENS PERMITS(<PERMITS>)
-#endif
    ObjectType
    (<COMMA> ObjectType)*
 ;
@@ -473,18 +352,7 @@ RecordDeclaration :
   Modifiers
   ENSURE {checkNextTokenImage("record") && getTokenType(2) == IDENTIFIER}
   =>||
-  #if __java__
   'record'
-  #else
-  (
-    <RECORD>
-    |
-    <IDENTIFIER>
-    {
-      replaceTokenType(RECORD);
-    }
-  )
-  #endif
   TypeIdentifier
   [TypeParameters]
   RecordHeader
@@ -1115,8 +983,6 @@ INJECT ForStatement : implements Statement
 INJECT IfStatement : implements Statement
 INJECT LabeledStatement : implements Statement
 INJECT LocalVariableDeclaration : implements Statement
-INJECT VarDeclaration : extends LocalVariableDeclaration
-INJECT NoVarDeclaration : extends LocalVariableDeclaration
 INJECT ReturnStatement : implements Statement
 INJECT SwitchStatement : implements Statement
 INJECT SynchronizedStatement : implements Statement
@@ -1140,58 +1006,27 @@ BlockStatement#void :
   |
   EnumDeclaration
   |
-  LocalVariableDeclaration { Node varDecl = peekNode(); }
-  <SEMICOLON> {varDecl.add(popNode());}
+  LocalVariableDeclaration {% Node varDecl = peekNode(); %}
+  <SEMICOLON> {%varDecl.add(popNode());%}
   |
   Statement
  )
 ;
 
-LocalVariableDeclaration#abstract :
-   SCAN LocalVariableDeclarationLA
-   =>
-   (
-     NoVarDeclaration
-     |
-     VarDeclaration
-   )
-;
-
-LocalVariableDeclarationLA#scan :
-   {permissibleModifiers = EnumSet.of(FINAL);}
+LocalVariableDeclaration :
+   {
+      boolean isVar = false;
+      permissibleModifiers = EnumSet.of(FINAL);
+   }
    Modifiers
    (
-     Type
-     |
-     <VAR>
-     |
-     <IDENTIFIER>
-     ENSURE {currentLookaheadToken.toString().equals("var")}
+      'var' {isVar = true;}
+      |
+      Type
    )
-   (<IDENTIFIER>|<UNDERSCORE>)
-;
-
-NoVarDeclaration :
-   {permissibleModifiers = EnumSet.of(FINAL);}
-   Modifiers
-   ENSURE {!checkNextTokenImage("var")}
-   =>||
-   Type VariableDeclarator ( <COMMA> VariableDeclarator )*
-;
-
-VarDeclaration :
-  {permissibleModifiers = EnumSet.of(FINAL);}
-  Modifiers
-  ASSERT {checkNextTokenImage("var")} // This must be the case. It is just a sanity check.
-  (
-    <VAR>
-    |
-    <IDENTIFIER>
-    {
-        replaceTokenType(VAR);
-    }
-  )
-  VariableDeclarator
+   =>|+1
+   VariableDeclarator
+   (SCAN {!isVar} => <COMMA> VariableDeclarator)*
 ;
 
 EmptyStatement# : <SEMICOLON> ;
@@ -1252,20 +1087,7 @@ TypePattern#LocalVariableDeclaration :
 ;
 
 WhenClause :
-#if __java__
    'when'
-#else
-   SCAN 0 {checkNextTokenImage("when")}#
-   =>
-   (
-      <WHEN>
-      |
-      <IDENTIFIER>
-      {
-        replaceTokenType(WHEN);
-      }
-   )
-#endif
    Expression
 ;
 
@@ -1392,20 +1214,7 @@ BreakStatement :
 
 YieldStatement :
    SCAN 2
-#if __java__
    'yield'
-#else
-   ENSURE {checkNextTokenImage("yield")}
-   ENSURE {isInProduction("SwitchExpression")}
-   (
-      <YIELD>
-      |
-      <IDENTIFIER>
-      {
-        replaceTokenType(YIELD);
-      }
-   )
-#endif
    Expression
    <SEMICOLON>
 ;
@@ -1583,15 +1392,7 @@ LambdaParameter :
       Type (Annotation)* <VAR_ARGS> =>|| <IDENTIFIER>
       |
       (
-        ENSURE {checkNextTokenImage("var")}
-        (
-          <VAR>
-          |
-          <IDENTIFIER>
-          {
-            replaceTokenType(VAR);
-          }
-        )
+        'var'
         |
         Type
       )

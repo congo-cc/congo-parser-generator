@@ -189,33 +189,11 @@ TOKEN #KeyWord :
    | < VOLATILE : "volatile" >
    | < WHILE : "while" >
 // Now contextual Keywords
-   | < ARGLIST : "__arglist">
-   | < ADD : "add">
-   | < ASSEMBLY : "assembly">
-   | < ASYNC : "async" >
-   | < AWAIT : "await" >
-   | < DYNAMIC : "dynamic">
-   | < GET : "get" >
-   | < FILE : "file" > // Since C# 11
-   | < INIT : "init" >
-   | < MANAGED : "managed">
-   | < UNMANAGED : "unmanaged">
-   | < MODULE : "module">
-   | < NAMEOF : "nameof">
-   | < PARTIAL : "partial">
-   | < RECORD : "record" >
-   | < REMOVE : "remove">
-   | < REQUIRED : "required">
-   | < SCOPED : "scoped">
-   | < SET : "set" >
-   | < VAR : "var" >
-   | < WHEN : "when">
-   | < YIELD : "yield" >
+//   | < VAR : "var" >
    | < AND : "and">
    | < OR  : "or" >
    | < NOT : "not">
-   | < WITH : "with" >
-// Here are the soft keywords used in queries
+// Here are the keywords used in queries
    | <ASCENDING : "ascending">
    | <BY : "by">
    | <DESCENDING : "descending">

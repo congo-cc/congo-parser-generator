@@ -184,7 +184,7 @@ public class CSharpFormatter extends Node.Visitor {
         }
         buffer.append(kw.toString());
         CSharpToken.TokenType type = kw.getType();
-        if (type == IF || type == WHILE || type == FOR || type == FOREACH || type == WHEN) {
+        if (type == IF || type == WHILE || type == FOR || type == FOREACH || type == when) {
             buffer.append(' ');
         }
     }
