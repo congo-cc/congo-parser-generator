@@ -369,7 +369,7 @@ public interface Node extends List<Node> {
       */
     void setUnparsed(boolean b);
 
-    default <T> T firstChildOfType(Class<T>clazz) {
+    default <T> T firstChildOfType(Class<T> clazz) {
         return firstChildOfType(clazz, null);
     }
 
@@ -382,6 +382,14 @@ public interface Node extends List<Node> {
             }
         }
         return null;
+    }
+
+    default <T> boolean hasChildOfType(Class<T> clazz) {
+        return firstChildOfType(clazz, null) != null;
+    }
+
+    default <T> boolean hasChildOfType(Class<T> clazz, Predicate<? super T> pred) {
+        return firstChildOfType(clazz, pred) != null;
     }
 
     default Node firstDescendantOfType(NodeType type, Predicate<? super Node> pred) {
@@ -401,15 +409,31 @@ public interface Node extends List<Node> {
         return firstDescendantOfType(type, null);
     }
 
+    default boolean hasChildOfType(NodeType type) {
+        return firstChildOfType(type) != null;
+    }
+
+    default boolean hasChildOfType(NodeType type, Predicate<? super Node> pred) {
+        return firstChildOfType(type,pred) != null;
+    }
+
     default Node firstChildOfType(NodeType type) {
+        return firstChildOfType(type, null);
+    }
+
+    default Node firstChildOfType(NodeType type, Predicate<? super Node> pred) {
         for (int i = 0; i < size(); i++) {
             Node child = get(i);
-            if (child.getType() == type) return child;
+            if (child.getType() == type) {
+                if (pred == null || pred.test(child)) {
+                    return child;
+                }
+            }
         }
         return null;
     }
 
-    default <T extends Node>T firstDescendantOfType(Class<T> clazz, Predicate<? super T> pred) {
+    default <T> T firstDescendantOfType(Class<T> clazz, Predicate<? super T> pred) {
          for (int i = 0; i < size(); i++) {
              Node child = get(i);
              if (clazz.isInstance(child)) {
@@ -424,7 +448,7 @@ public interface Node extends List<Node> {
          return null;
     }
 
-    default <T extends Node> T firstDescendantOfType(Class<T> clazz) {
+    default <T> T firstDescendantOfType(Class<T> clazz) {
         return firstDescendantOfType(clazz, null);
     }
 
@@ -438,6 +462,22 @@ public interface Node extends List<Node> {
             }
         }
         return result;
+   }
+
+   default <T> boolean hasDescendantOfType(Class<T> clazz) {
+      return firstDescendantOfType(clazz, null) != null;
+   }
+
+   default <T> boolean hasDescendantOfType(Class<T> clazz, Predicate<? super T> pred) {
+      return firstDescendantOfType(clazz, pred) != null;
+   }
+
+   default boolean hasDescendantOfType(NodeType type, Predicate<? super Node> pred) {
+      return firstDescendantOfType(type, pred) != null;
+   }
+
+   default boolean hasDescendantOfType(NodeType type) {
+      return firstDescendantOfType(type, null) != null;
    }
 
    default List<Node> childrenOfType(NodeType type, Predicate<? super Node> pred) {
@@ -459,32 +499,38 @@ public interface Node extends List<Node> {
        return childrenOfType(clazz, null);
    }
 
-   default <T extends Node> List<T> descendantsOfType(Class<T> clazz, Predicate<? super T> pred) {
+   default <T> List<T> descendantsOfType(Class<T> clazz, Predicate<? super T> pred) {
         return descendants(clazz, pred);
    }
 
-   default <T extends Node> List<T> descendantsOfType(Class<T> clazz) {
+   default <T> List<T> descendantsOfType(Class<T> clazz) {
        return descendants(clazz, null);
    }
 
-   default <T extends Node> T firstAncestorOfType(Class<T> clazz) {
-        Node parent = this;
+   default <T> T firstAncestorOfType(Class<T> clazz) {
+        return firstAncestorOfType(clazz, null);
+    }
+
+    default <T> T firstAncestorOfType(Class<T> clazz, Predicate<? super T> pred) {
+        Node parent = getParent();
         while (parent != null) {
-           parent = parent.getParent();
-           if (clazz.isInstance(parent)) {
-               return clazz.cast(parent);
-           }
+            if (clazz.isInstance(parent)) {
+                T t = clazz.cast(parent);
+                if (pred == null || pred.test(t)) {
+                    return t;
+                }
+            }
+            parent = parent.getParent();
         }
         return null;
     }
 
-    @SuppressWarnings("unchecked")
-    default <T extends Node> T firstAncestorOfType(Class<T> clazz, Predicate<? super T> pred) {
-        Node ancestor = this;
-        do  {
-            ancestor = ancestor.firstAncestorOfType(clazz);
-        } while (ancestor != null && pred != null && !pred.test((T) ancestor));
-        return (T) ancestor;
+    default <T> boolean hasAncestorOfType(Class<T> clazz, Predicate<? super T> pred) {
+        return firstAncestorOfType(clazz, pred) != null;
+    }
+
+    default <T> boolean hasAncestorOfType(Class<T> clazz) {
+        return firstAncestorOfType(clazz, null) != null;
     }
 
     /**
@@ -558,11 +604,11 @@ public interface Node extends List<Node> {
         return descendants(Node.class, predicate);
     }
 
-    default <T extends Node> List<T> descendants(Class<T> clazz) {
+    default <T> List<T> descendants(Class<T> clazz) {
         return descendants(clazz, null);
     }
 
-    default <T extends Node> List<T> descendants(Class<T> clazz, Predicate<? super T> predicate) {
+    default <T> List<T> descendants(Class<T> clazz, Predicate<? super T> predicate) {
        List<T> result = new ArrayList<>();
        for (int i = 0; i < size(); i++) {
            Node child = get(i);

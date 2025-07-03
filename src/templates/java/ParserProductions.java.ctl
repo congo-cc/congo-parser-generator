@@ -1016,17 +1016,20 @@
    #if expansion.hasSemanticLookahead
       (${expansion.semanticLookahead}) &&
    #endif
-   #if expansion.firstSet.tokenNames::size() < CU.USE_FIRST_SET_THRESHOLD
+   #if expansion.firstSet.tokenNames?size < CU.USE_FIRST_SET_THRESHOLD
       #list expansion.firstSet.tokenNames as name
-        #if settings.contextualKeywords::contains(name)
+        #if settings.contextualKeywords?contains(name)
           typeMatches(${name}, getToken(1))
         #else
-          nextTokenType()
-          == ${name}
+          nextTokenType() == ${name}
         #endif
-         ${name_has_next ?: "||"}
+        ${name_has_next ?: "||"}
       #endlist
    #else
-      hasMatch(${expansion.firstSetVarName},getToken(1))
+      #if expansion.firstSet.hasContextualKeywords
+          hasMatch(${expansion.firstSetVarName},getToken(1))
+      #else
+          ${expansion.firstSetVarName}.contains(nextTokenType())
+      #endif
    #endif
 #endmacro
