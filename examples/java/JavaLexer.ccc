@@ -25,24 +25,7 @@ UNPARSED #Comment :
 
 TOKEN #KeyWord :
   <UNDERSCORE : "_">
-#if !__java__
-| < RECORD : "record" >
-| < YIELD : "yield" >
-| < PERMITS : "permits">
-// Soft keywords used only in the module-info
-| <MODULE : "module">
-| <EXPORTS : "exports">
-| <OPEN : "open">
-| <OPENS : "opens">
-| <PROVIDES : "provides">
-| <REQUIRES : "requires">
-| <TO : "to">
-| <TRANSITIVE : "transitive">
-| <USES : "uses">
-| <WITH : "with">
-| < WHEN : "when" >
-#endif
-|  < ABSTRACT: "abstract" >
+| < ABSTRACT: "abstract" >
 | < _ASSERT: "assert" >
 | < BOOLEAN: "boolean" > #Primitive
 | < BREAK: "break" >
@@ -92,7 +75,6 @@ TOKEN #KeyWord :
 | < TRANSIENT: "transient" >
 | < TRUE: "true" > #BooleanLiteral
 | < TRY: "try" >
-//| < VAR: "var" >
 | < VOID: "void" >
 | < VOLATILE: "volatile" >
 | < WHILE: "while" >

@@ -24,13 +24,15 @@ TOKEN #CongoCCKeyWord :
   |
   < _IGNORE_CASE: "IGNORE_CASE" >
   |
-  < _TOKEN: "TOKEN" | "REGULAR_TOKEN">
+  < _TOKEN: "TOKEN">
   |
   < _UNPARSED: "SPECIAL_TOKEN" | "UNPARSED" >
   |
-  < _MORE: "MORE" | "INCOMPLETE_TOKEN" >
+  < _MORE: "MORE" >
   |
   < _SKIP: "SKIP" >
+  |
+  < _CONTEXTUAL : "CONTEXTUAL" >
   |
   < _EOF : "EOF">
   |
@@ -377,6 +379,11 @@ INJECT EndOfFile : extends org.congocc.core.RegularExpression
     @Override
     public int getOrdinal() {
         return 0;
+    }
+
+    @Override
+    public String getLabel() {
+        return "EOF";
     }
 }
 
