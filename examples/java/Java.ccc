@@ -602,7 +602,8 @@ WildcardBounds : (<EXTENDS> | <SUPER>) ReferenceType ;
 
 PrimitiveType# :
   (Annotation)*
-  <BOOLEAN> | <CHAR> | <BYTE> | <SHORT> | <INT> | <LONG> | <FLOAT> | <DOUBLE>
+  (<BOOLEAN> | <CHAR> | <BYTE> | <SHORT> | <INT>
+   | <LONG> | <FLOAT> | <DOUBLE>)
   =>||
 ;
 
@@ -1303,6 +1304,8 @@ TryStatement :
   Block
   ASSERT {getTokenType(1) == FINALLY
        || getTokenType(1) == CATCH
+       // This does not work for Python.
+       // It says that current_node_scope is undefined.
        || currentNodeScope.get(1) instanceof ResourcesInTryBlock}
        : "Since this is not a try-with-resources, there must be at least one catch or finally block." :
   (CatchBlock)*
@@ -1330,6 +1333,8 @@ ResourcesInTryBlock :
     <LPAREN>
     (
       // Note that the following assertions only apply after the first iteration.
+      // This was broken for a good while in the non-Java languages since it was
+      // checking this on the first iteration!
        ENSURE {getTokenType(0) == SEMICOLON}
        ENSURE {getTokenType(1) != RPAREN}
        =>||
