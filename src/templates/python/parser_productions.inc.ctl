@@ -652,6 +652,10 @@ ${globals::translateCodeBlock(fail.code, indent)}[#rt]
 
 [#macro BuildAssertionCode assertion indent]
 [#var is = ""?right_pad(indent)]
+   #if !assertion.appliesInRegularParsing
+${is}pass
+     #return
+   #endif
 [#var optionalPart = ""]
 [#if assertion.messageExpression??]
   [#set optionalPart = " + " + globals::translateExpression(assertion.messageExpression)]

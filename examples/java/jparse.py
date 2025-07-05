@@ -11,7 +11,8 @@ import sys
 
 from javaparser import Parser
 
-DEBUGGING = 'PY_DEBUG' in os.environ
+# DEBUGGING = 'PY_DEBUG' in os.environ
+DEBUGGING = True
 
 logger = logging.getLogger(__name__)
 
@@ -30,8 +31,12 @@ def process(options):
         else:
             p = os.path.join(fn, '**/*.java')
             for fn in glob.iglob(p, recursive=True):
-                parse_file(fn)
-
+                try :
+                    parse_file(fn)
+                except Exception as e:
+                    s = ' %s:' % type(e).__name__
+                    sys.stderr.write('Failed:%s %s\n' % (s, e))
+                    import traceback; traceback.print_exc()
 
 def main():
     fn = os.path.basename(__file__)

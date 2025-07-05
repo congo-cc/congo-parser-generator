@@ -578,7 +578,9 @@ ${globals::translateCodeBlock(expansion, 1)}
    [#elseif classname = "Failure"]
       [@BuildCodeFailure expansion/]
    [#elseif classname = "Assertion"]
+     #if expansion.appliesInRegularParsing
       [@BuildAssertionCode expansion/]
+     #endif
    [#elseif classname = "TokenTypeActivation"]
       [@BuildCodeTokenTypeActivation expansion/]
    [#elseif classname = "TryBlock"]
@@ -924,10 +926,10 @@ ${BuildCode(subexp)}
 [#-- Generates code for when we need a scanahead --]
 #macro ScanAheadCondition expansion
   #if expansion.lookahead?? && expansion.lookahead.assignment??
-     (${expansion.lookahead.assignment.name} = 
+     (${expansion.lookahead.assignment.name} =
   #endif
   #if expansion.hasSemanticLookahead && !expansion.lookahead.semanticLookaheadNested
-    (${globals::translateExpression(expansion.semanticLookahead)}) && 
+    (${globals::translateExpression(expansion.semanticLookahead)}) &&
   #endif
     ${expansion.predicateMethodName}()
   #if expansion.lookahead?? && expansion.lookahead.assignment??
@@ -936,12 +938,12 @@ ${BuildCode(subexp)}
 #endmacro
 
 
-#-- Generates code for when we don't need any scanahead routine 
+#-- Generates code for when we don't need any scanahead routine
 #macro SingleTokenCondition expansion
   #if expansion.hasSemanticLookahead
-     (${globals::translateExpression(expansion.semanticLookahead)}) && 
+     (${globals::translateExpression(expansion.semanticLookahead)}) &&
   #endif
-  #if expansion.enteredUnconditionally 
+  #if expansion.enteredUnconditionally
      true
   #elif expansion.firstSet.tokenNames?size == 0
      false
