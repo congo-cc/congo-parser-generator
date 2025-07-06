@@ -3,6 +3,9 @@ ${"#"}pragma warning disable 414, 168, 659
 [#import "CommonUtils.inc.ctl" as CU]
 [#var MULTIPLE_LEXICAL_STATE_HANDLING = (lexerData.numLexicalStates > 1)]
 [#var csPackage = globals::getPreprocessorSymbol('cs.package', settings.parserPackage) ]
+
+Console.WriteLine("Dummy program here. Need to replace this with a test harness that parses code!");
+
 namespace ${csPackage} {
     using System;
     using System.Linq;
