@@ -14,9 +14,9 @@ NODE_PACKAGE=org.parsers.java.ast;
 DEFAULT_LEXICAL_STATE=JAVA;
 ASSERT_APPLIES_IN_LOOKAHEAD=false;
 
-// This is the only "conceptual keyword" that has to be
+// This is the only "contextual keyword" that has to be
 // dealt with in a particularly funky way. This is because,
-// unlike the other conceptual keywords, like 'sealed' or 'record'
+// unlike the other contextual keywords, like 'sealed' or 'record'
 // or whatever, it is not caught by the IDENTIFIER pattern.
 DEACTIVATE_TOKENS = NON_SEALED;
 
@@ -589,7 +589,7 @@ WildcardBounds : (<EXTENDS> | <SUPER>) ReferenceType ;
 
 PrimitiveType# :
   (Annotation)*
-  <BOOLEAN> | <CHAR> | <BYTE> | <SHORT> | <INT> | <LONG> | <FLOAT> | <DOUBLE>
+  (<BOOLEAN> | <CHAR> | <BYTE> | <SHORT> | <INT> | <LONG> | <FLOAT> | <DOUBLE>)
   =>||
 ;
 
