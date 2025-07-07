@@ -11,14 +11,14 @@ public class Whitespace extends Text {
 
     private Boolean ignored;
 
-    public Whitespace(TokenType type, CTLLexer tokenSource, int beginOffset, int endOffset) {
+    public Whitespace(TokenType type, TokenSource tokenSource, int beginOffset, int endOffset) {
         super(type, tokenSource, beginOffset, endOffset);
     }
 
     public boolean isIgnored() {
         if (ignored == null) {
-            ignored = isNonOutputtingLine() 
-               || getType() == TRAILING_WHITESPACE && checkForExplicitRightTrim() 
+            ignored = isNonOutputtingLine()
+               || getType() == TRAILING_WHITESPACE && checkForExplicitRightTrim()
                || getType() == NON_TRAILING_WHITESPACE && getBeginColumn() == 1 && checkForExplicitLeftTrim();
         }
         return ignored;

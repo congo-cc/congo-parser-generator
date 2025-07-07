@@ -35,6 +35,7 @@ public class AppSettings {
     private final Set<String> usedIdentifiers = new HashSet<>();
     private final Set<String> tokensOffByDefault = new HashSet<>();
     private final Map<String, String> extraTokens = new LinkedHashMap<>();
+    private final Set<String> contextualKeywords = new LinkedHashSet<>();
     private boolean ignoreCase, quiet;
     private int jdkTarget = 8;
 
@@ -86,6 +87,10 @@ public class AppSettings {
 
     public Set<String> getDeactivatedTokens() {
         return tokensOffByDefault;
+    }
+
+    public Set<String> getContextualKeywords() {
+        return contextualKeywords;
     }
 
     public Map<String, String> getExtraTokens() {
@@ -217,7 +222,7 @@ public class AppSettings {
                     if (!grammar.isInInclude() && outputDir == null)
                         outputDir = Paths.get((String) value);
                 }
-                
+
             }
             if (!grammar.isInInclude() && key.equals("JDK_TARGET") && jdkTarget == 0) {
                 int jdkTarget = (Integer) value;

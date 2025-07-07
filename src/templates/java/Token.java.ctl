@@ -16,7 +16,6 @@ import java.util.List;
   import ${settings.rootAPIPackage}.Node;
   import ${settings.rootAPIPackage}.TokenSource;
 #endif
-
 #var implements = "implements CharSequence"
 
 #if settings.treeBuildingEnabled
@@ -33,37 +32,56 @@ public class ${settings.baseTokenClassName} ${implements} {
        implements Node.NodeType
     #endif
     {
-       #list lexerData.regularExpressions as regexp
+        #list lexerData.regularExpressions as regexp
           ${regexp.label}
-          #if regexp.class.simpleName == "RegexpStringLiteral" && !regexp.ignoreCase
+          #if settings.contextualKeywords::contains(regexp.label)
+            ("${regexp.literalString}", true)
+          #elseif regexp.class.simpleName == "RegexpStringLiteral"
             ("${regexp.literalString?j_string}")
           #endif
           ,
-       #endlist
-       #list settings.extraTokenNames as extraToken
+        #endlist
+        #list settings.extraTokenNames as extraToken
           ${extraToken},
-       #endlist
-       DUMMY,
-       INVALID;
+        #endlist
+        DUMMY,
+        INVALID;
 
-       TokenType() {}
+        TokenType() {}
 
-       TokenType(String literalString) {
-          this.literalString = literalString;
-       }
+        TokenType(String literalString) {
+            this.literalString = literalString;
+        }
 
-       private String literalString;
+        #if settings.contextualKeywords
+        TokenType(String literalString, boolean contextualKeyword) {
+            this.literalString = literalString;
+            this.contextualKeyword = contextualKeyword;
+        }
+        #endif
 
-       public String getLiteralString() {
-           return literalString;
-       }
+        private String literalString;
 
-       public boolean isUndefined() {return this == DUMMY;}
-       public boolean isInvalid() {return this == INVALID;}
-       public boolean isEOF() {return this == EOF;}
+        public String getLiteralString() {
+          return literalString;
+        }
+
+    #if settings.contextualKeywords
+
+        private boolean contextualKeyword;
+
+        public boolean isContextualKeyword() {
+            return contextualKeyword;
+        }
+
+    #endif
+
+        public boolean isUndefined() {return this == DUMMY;}
+        public boolean isInvalid() {return this == INVALID;}
+        public boolean isEOF() {return this == EOF;}
     }
 
-    private ${settings.lexerClassName} tokenSource;
+    private TokenSource tokenSource;
 
     private TokenType type = TokenType.DUMMY;
 
@@ -96,7 +114,7 @@ public class ${settings.baseTokenClassName} ${implements} {
      * @param image the String content of the token
      * @param tokenSource the object that vended this token.
      */
-    public ${settings.baseTokenClassName}(TokenType type, String image, ${settings.lexerClassName} tokenSource) {
+    public ${settings.baseTokenClassName}(TokenType type, String image, TokenSource tokenSource) {
         this.type = type;
         this.cachedImage = image;
         this.tokenSource = tokenSource;
@@ -163,10 +181,10 @@ public class ${settings.baseTokenClassName} ${implements} {
     }
 
     /**
-     * @return the ${settings.lexerClassName} object that handles
+     * @return the TokenSource object that handles
      * location info for the tokens.
      */
-    public ${settings.lexerClassName} getTokenSource() {
+    public TokenSource getTokenSource() {
         return tokenSource;
     }
 
@@ -183,7 +201,7 @@ public class ${settings.baseTokenClassName} ${implements} {
      * programmer needs to use this method.
      */
     public void setTokenSource(TokenSource tokenSource) {
-        this.tokenSource = (${settings.lexerClassName}) tokenSource;
+        this.tokenSource = tokenSource;
     }
 
     public boolean isInvalid() {
@@ -260,7 +278,7 @@ public class ${settings.baseTokenClassName} ${implements} {
      * @return the (1-based) line location where this ${settings.baseTokenClassName} starts
      */
     public int getBeginLine() {
-        ${settings.lexerClassName} ts = getTokenSource();
+        TokenSource ts = getTokenSource();
         return ts == null ? 0 : ts.getLineFromOffset(getBeginOffset());
     };
 
@@ -268,7 +286,8 @@ public class ${settings.baseTokenClassName} ${implements} {
      * @return the (1-based) line location where this ${settings.baseTokenClassName} ends
      */
     public int getEndLine() {
-        ${settings.lexerClassName} ts = getTokenSource();
+        if (getEndOffset() <= getBeginOffset()) return getBeginLine();
+        TokenSource ts = getTokenSource();
         return ts == null ? 0 : ts.getLineFromOffset(getEndOffset() - 1);
     };
 
@@ -276,7 +295,7 @@ public class ${settings.baseTokenClassName} ${implements} {
      * @return the (1-based) column where this ${settings.baseTokenClassName} starts
      */
     public int getBeginColumn() {
-        ${settings.lexerClassName} ts = getTokenSource();
+        TokenSource ts = getTokenSource();
         return ts == null ? 0 : ts.getCodePointColumnFromOffset(getBeginOffset());
     };
 
@@ -284,13 +303,23 @@ public class ${settings.baseTokenClassName} ${implements} {
      * @return the (1-based) column offset where this ${settings.baseTokenClassName} ends
      */
     public int getEndColumn() {
-        ${settings.lexerClassName} ts = getTokenSource();
+        if (getEndOffset() <= getBeginOffset()) return getBeginColumn();
+        TokenSource ts = getTokenSource();
         return ts == null ? 0 : ts.getCodePointColumnFromOffset(getEndOffset() - 1);
     }
 
     public String getInputSource() {
-        ${settings.lexerClassName} ts = getTokenSource();
+        TokenSource ts = getTokenSource();
         return ts != null ? ts.getInputSource() : "input";
+    }
+
+    public String getLocation() {
+        int extraIndent = 0;
+        TokenSource ts = getTokenSource();
+        if (ts != null) {
+           extraIndent = ts.getExtraIndent();
+        }
+        return getInputSource() + ":" + getBeginLine() + ":" + (getBeginColumn()+extraIndent);
     }
 #endif
 
@@ -344,7 +373,7 @@ public class ${settings.baseTokenClassName} ${implements} {
 #if settings.tokenChaining
         if (appendedToken != null) return appendedToken;
 #endif
-        ${settings.lexerClassName} tokenSource = getTokenSource();
+        TokenSource tokenSource = getTokenSource();
         return tokenSource != null ? (${settings.baseTokenClassName}) tokenSource.nextCachedToken(getEndOffset()) : null;
     }
 
@@ -389,7 +418,7 @@ public class ${settings.baseTokenClassName} ${implements} {
 
     public String getSource() {
          if (type == TokenType.EOF) return "";
-         ${settings.lexerClassName} ts = getTokenSource();
+         TokenSource ts = getTokenSource();
          int beginOffset = getBeginOffset();
          int endOffset = getEndOffset();
          return ts == null || beginOffset<=0 && endOffset <=0 ? null : ts.getText(beginOffset, endOffset);
@@ -397,7 +426,7 @@ public class ${settings.baseTokenClassName} ${implements} {
 
     protected ${settings.baseTokenClassName}() {}
 
-    public ${settings.baseTokenClassName}(TokenType type, ${settings.lexerClassName} tokenSource, int beginOffset, int endOffset) {
+    public ${settings.baseTokenClassName}(TokenType type, TokenSource tokenSource, int beginOffset, int endOffset) {
         this.type = type;
         this.tokenSource = tokenSource;
         this.beginOffset = beginOffset;
@@ -509,7 +538,7 @@ public class ${settings.baseTokenClassName} ${implements} {
     }
 #endif
 
-    public static ${settings.baseTokenClassName} newToken(TokenType type, ${settings.lexerClassName} tokenSource) {
+    public static ${settings.baseTokenClassName} newToken(TokenType type, TokenSource tokenSource) {
         ${settings.baseTokenClassName} result = newToken(type, tokenSource, 0, 0);
         #if settings.tokenChaining
         result.inserted = true;
@@ -520,7 +549,7 @@ public class ${settings.baseTokenClassName} ${implements} {
         return result;
     }
 
-    public static ${settings.baseTokenClassName} newToken(TokenType type, String image, ${settings.lexerClassName} tokenSource) {
+    public static ${settings.baseTokenClassName} newToken(TokenType type, String image, TokenSource tokenSource) {
         ${settings.baseTokenClassName} newToken = newToken(type, tokenSource);
         #if !settings.minimalToken
            newToken.setCachedImage(image);
@@ -529,7 +558,7 @@ public class ${settings.baseTokenClassName} ${implements} {
     }
 
 
-    public static ${settings.baseTokenClassName} newToken(TokenType type, ${settings.lexerClassName} tokenSource, int beginOffset, int endOffset) {
+    public static ${settings.baseTokenClassName} newToken(TokenType type, TokenSource tokenSource, int beginOffset, int endOffset) {
        #if settings.treeBuildingEnabled
            switch(type) {
            #list lexerData.orderedNamedTokens as re
@@ -552,10 +581,6 @@ public class ${settings.baseTokenClassName} ${implements} {
        #endif
     }
 
-    public String getLocation() {
-        return getInputSource() + ":" + getBeginLine() + ":" + getBeginColumn();
-     }
-
 #if settings.treeBuildingEnabled
 
     public Node getParent() {
@@ -569,7 +594,6 @@ public class ${settings.baseTokenClassName} ${implements} {
     public boolean isEmpty() {
         return length() == 0;
     }
-
 #endif
 
 #if settings.usesPreprocessor
