@@ -53,11 +53,15 @@
       </assertions>
       <arg value="org/parsers/java/ast/CompilationUnit.java" />
     </java>
+    <echo>
+      Now let's try the Python parser on the Congo source code.
+    </echo>
+    <antcall target="test-python"/>
   </target>
 
   <target name="test-python" depends="parser-gen">
     <exec executable="python3" dir="${basedir}" failonerror="true">
-      <arg line="-u jparse.py testfiles" />
+      <arg line="-u jparse.py ../../src/java" />
     </exec>
   </target>
 </project>
