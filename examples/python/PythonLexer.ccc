@@ -169,6 +169,7 @@ INJECT BASE_TOKEN_CLASS : {
       for (java.util.Iterator<BASE_TOKEN_CLASS> toks = precedingTokens(); toks.hasNext();) {
          BASE_TOKEN_CLASS t = toks.next();
          if (t.getType()==TokenType.CONTINUE_LINE) return false;
+         if (t.getType() == TokenType.INDENT || t.getType() == TokenType.DEDENT) return true;
          if (!t.isUnparsed()) return t.getEndLine() != this.getBeginLine();
       }
       return true;
@@ -225,14 +226,6 @@ INJECT IndentToken :
    public boolean isVirtual() {
       return true;
    }
-
-/*
- *  Commented out, as interferes with representation used in tests
- *
-   public String toString() {
-       return "INDENT";
-   }
- */
 
    public int getIndentAmount() {
       return indents.get(indents.size() - 1) - indents.get(indents.size() - 2);

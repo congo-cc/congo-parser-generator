@@ -45,7 +45,7 @@ public class PyFormatter extends Node.Visitor {
             case RBRACE -> --braceNesting;
             default -> {}
         }
-        if (!lineJoining() && tok.startsLine()) {
+        if (tok.startsLine()) {
             indentLine();
         }
         buffer.append(tok);

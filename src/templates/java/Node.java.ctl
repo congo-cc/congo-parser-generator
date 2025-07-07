@@ -295,6 +295,7 @@ public interface Node extends List<Node> {
      * @return the (1-based) line location where this Node ends
      */
     default int getEndLine() {
+        if (getEndOffset() <= getBeginOffset()) return getBeginLine();
         TokenSource tokenSource = getTokenSource();
         return tokenSource == null ? 0 : tokenSource.getLineFromOffset(getEndOffset() - 1);
     };
@@ -311,6 +312,7 @@ public interface Node extends List<Node> {
      * @return the (1-based) column offset where this Node ends
      */
     default int getEndColumn() {
+        if (getEndOffset() <= getBeginOffset()) return getBeginColumn();
         TokenSource tokenSource = getTokenSource();
         return tokenSource == null ? 0 : tokenSource.getCodePointColumnFromOffset(getEndOffset() - 1);
     }
@@ -344,7 +346,12 @@ public interface Node extends List<Node> {
      * implementation that could be overridden
      */
     default String getLocation() {
-         return getInputSource() + ":" + getBeginLine() + ":" + getBeginColumn();
+         int extraIndent = 0;
+         TokenSource ts = getTokenSource();
+         if (ts != null) {
+            extraIndent = ts.getExtraIndent();
+         }
+         return getInputSource() + ":" + getBeginLine() + ":" + (getBeginColumn()+extraIndent);
     }
 
      /**
@@ -362,7 +369,7 @@ public interface Node extends List<Node> {
       */
     void setUnparsed(boolean b);
 
-    default <T> T firstChildOfType(Class<T>clazz) {
+    default <T> T firstChildOfType(Class<T> clazz) {
         return firstChildOfType(clazz, null);
     }
 
@@ -375,6 +382,14 @@ public interface Node extends List<Node> {
             }
         }
         return null;
+    }
+
+    default <T> boolean hasChildOfType(Class<T> clazz) {
+        return firstChildOfType(clazz, null) != null;
+    }
+
+    default <T> boolean hasChildOfType(Class<T> clazz, Predicate<? super T> pred) {
+        return firstChildOfType(clazz, pred) != null;
     }
 
     default Node firstDescendantOfType(NodeType type, Predicate<? super Node> pred) {
@@ -394,15 +409,31 @@ public interface Node extends List<Node> {
         return firstDescendantOfType(type, null);
     }
 
+    default boolean hasChildOfType(NodeType type) {
+        return firstChildOfType(type) != null;
+    }
+
+    default boolean hasChildOfType(NodeType type, Predicate<? super Node> pred) {
+        return firstChildOfType(type,pred) != null;
+    }
+
     default Node firstChildOfType(NodeType type) {
+        return firstChildOfType(type, null);
+    }
+
+    default Node firstChildOfType(NodeType type, Predicate<? super Node> pred) {
         for (int i = 0; i < size(); i++) {
             Node child = get(i);
-            if (child.getType() == type) return child;
+            if (child.getType() == type) {
+                if (pred == null || pred.test(child)) {
+                    return child;
+                }
+            }
         }
         return null;
     }
 
-    default <T extends Node>T firstDescendantOfType(Class<T> clazz, Predicate<? super T> pred) {
+    default <T> T firstDescendantOfType(Class<T> clazz, Predicate<? super T> pred) {
          for (int i = 0; i < size(); i++) {
              Node child = get(i);
              if (clazz.isInstance(child)) {
@@ -417,7 +448,7 @@ public interface Node extends List<Node> {
          return null;
     }
 
-    default <T extends Node> T firstDescendantOfType(Class<T> clazz) {
+    default <T> T firstDescendantOfType(Class<T> clazz) {
         return firstDescendantOfType(clazz, null);
     }
 
@@ -431,6 +462,22 @@ public interface Node extends List<Node> {
             }
         }
         return result;
+   }
+
+   default <T> boolean hasDescendantOfType(Class<T> clazz) {
+      return firstDescendantOfType(clazz, null) != null;
+   }
+
+   default <T> boolean hasDescendantOfType(Class<T> clazz, Predicate<? super T> pred) {
+      return firstDescendantOfType(clazz, pred) != null;
+   }
+
+   default boolean hasDescendantOfType(NodeType type, Predicate<? super Node> pred) {
+      return firstDescendantOfType(type, pred) != null;
+   }
+
+   default boolean hasDescendantOfType(NodeType type) {
+      return firstDescendantOfType(type, null) != null;
    }
 
    default List<Node> childrenOfType(NodeType type, Predicate<? super Node> pred) {
@@ -452,23 +499,38 @@ public interface Node extends List<Node> {
        return childrenOfType(clazz, null);
    }
 
-   default <T extends Node> List<T> descendantsOfType(Class<T> clazz, Predicate<? super T> pred) {
+   default <T> List<T> descendantsOfType(Class<T> clazz, Predicate<? super T> pred) {
         return descendants(clazz, pred);
    }
 
-   default <T extends Node> List<T> descendantsOfType(Class<T> clazz) {
+   default <T> List<T> descendantsOfType(Class<T> clazz) {
        return descendants(clazz, null);
    }
 
-   default <T extends Node> T firstAncestorOfType(Class<T> clazz) {
-        Node parent = this;
+   default <T> T firstAncestorOfType(Class<T> clazz) {
+        return firstAncestorOfType(clazz, null);
+    }
+
+    default <T> T firstAncestorOfType(Class<T> clazz, Predicate<? super T> pred) {
+        Node parent = getParent();
         while (parent != null) {
-           parent = parent.getParent();
-           if (clazz.isInstance(parent)) {
-               return clazz.cast(parent);
-           }
+            if (clazz.isInstance(parent)) {
+                T t = clazz.cast(parent);
+                if (pred == null || pred.test(t)) {
+                    return t;
+                }
+            }
+            parent = parent.getParent();
         }
         return null;
+    }
+
+    default <T> boolean hasAncestorOfType(Class<T> clazz, Predicate<? super T> pred) {
+        return firstAncestorOfType(clazz, pred) != null;
+    }
+
+    default <T> boolean hasAncestorOfType(Class<T> clazz) {
+        return firstAncestorOfType(clazz, null) != null;
     }
 
     /**
@@ -542,11 +604,11 @@ public interface Node extends List<Node> {
         return descendants(Node.class, predicate);
     }
 
-    default <T extends Node> List<T> descendants(Class<T> clazz) {
+    default <T> List<T> descendants(Class<T> clazz) {
         return descendants(clazz, null);
     }
 
-    default <T extends Node> List<T> descendants(Class<T> clazz, Predicate<? super T> predicate) {
+    default <T> List<T> descendants(Class<T> clazz, Predicate<? super T> predicate) {
        List<T> result = new ArrayList<>();
        for (int i = 0; i < size(); i++) {
            Node child = get(i);
@@ -732,6 +794,7 @@ public interface Node extends List<Node> {
     }
 
     default void clear() {
+        throw new UnsupportedOperationException();
 #if false
         clearChildren();
 #endif
@@ -739,12 +802,15 @@ public interface Node extends List<Node> {
 
     static abstract public class Visitor {
         private static Map<Class<? extends Node.Visitor>, Map<Class<? extends Node>, Method>> mapLookup;
-        private static final Method DUMMY_METHOD;
+        protected static final Method DUMMY_METHOD;
         static {
             try {
                 // Use this just to represent no method found, since ConcurrentHashMap cannot contain nulls
                 DUMMY_METHOD = Object.class.getMethod("toString");
-            } catch (Exception e) {throw new RuntimeException(e);} // Never happens anyway.
+            } catch (Exception e) {
+            // Never happens anyway.
+                throw new RuntimeException(e);
+            }
             mapLookup = Collections.synchronizedMap(new HashMap<Class<? extends Node.Visitor>, Map<Class<? extends Node>, Method>>());
         }
         private Map<Class<? extends Node>, Method> methodCache;
@@ -757,7 +823,7 @@ public interface Node extends List<Node> {
         }
         protected boolean visitUnparsedTokens;
 
-        private Method getVisitMethod(Node node) {
+        protected final Method getVisitMethod(Node node) {
             Class<? extends Node> nodeClass = node.getClass();
             Method method = methodCache.get(nodeClass);
             if (method == null) {
