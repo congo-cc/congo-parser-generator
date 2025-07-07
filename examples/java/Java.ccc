@@ -816,7 +816,7 @@ PostfixExpression :
   [
     SCAN {((Expression)peekNode()).isAssignableTo()}
     =>
-    <INCR> | <DECR>
+    (<INCR> | <DECR>)
   ]
 ;
 

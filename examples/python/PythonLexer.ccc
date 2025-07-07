@@ -6,7 +6,11 @@ PARSER_PACKAGE = org.parsers.pylexer;
 DEFAULT_LEXICAL_STATE = PYTHON;
 ENSURE_FINAL_EOL;
 TOKEN_CHAINING;
-EXTRA_TOKENS = INDENT#IndentToken, DEDENT#DedentToken;
+EXTRA_TOKENS = INDENT#IndentToken
+#if !__java__
+, DEDENT#DedentToken
+#endif
+;
 TABS_TO_SPACES=4;
 
 
@@ -23,12 +27,39 @@ INJECT LEXER_CLASS :
    private BASE_TOKEN_CLASS danglingIndentation;
    private int bracketNesting, parenthesesNesting, braceNesting;
    private List<Integer> indentationStack = initIndentationStack();
+   private boolean useExplicitDedent, lineJoiningTurnedOn;
+   private List<Boolean> explicitDedentStack = new ArrayList<>();
 
    private static List<Integer> initIndentationStack() {
       List<Integer> result = new ArrayList<Integer>();
       result.add(1);
       return result;
    }
+
+#if __java__
+   private BASE_TOKEN_CLASS TOKEN_HOOK(BASE_TOKEN_CLASS tok) {
+      if (tok.getType() == COMMENT) {
+         String s = tok.toString().substring(1).trim();
+         if (s.equals("explicitdedent:on")) {
+            explicitDedentStack.add(useExplicitDedent);
+            this.useExplicitDedent = true;
+            activeTokenTypes.add(TokenType.DEDENT);
+         } else if (s.equals("explicitdedent:off")) {
+            explicitDedentStack.add(useExplicitDedent);
+            useExplicitDedent = false;
+            activeTokenTypes.remove(TokenType.DEDENT);
+         } else if (s.equals("explicitdedent:restore")) {
+             useExplicitDedent = explicitDedentStack.remove(explicitDedentStack.size()-1);
+             if (useExplicitDedent) {
+               activeTokenTypes.add(TokenType.DEDENT);
+             } else {
+               activeTokenTypes.remove(TokenType.DEDENT);
+             }
+         }
+      }
+      return tok;
+   }
+#endif
 
    private BASE_TOKEN_CLASS TOKEN_HOOK(BASE_TOKEN_CLASS tok) {
       TokenType type = tok.getType();
@@ -134,7 +165,7 @@ INJECT BASE_TOKEN_CLASS : {
       return null;
    }
 
-   boolean startsLine() {
+   public boolean startsLine() {
       for (java.util.Iterator<BASE_TOKEN_CLASS> toks = precedingTokens(); toks.hasNext();) {
          BASE_TOKEN_CLASS t = toks.next();
          if (t.getType()==TokenType.CONTINUE_LINE) return false;
@@ -169,14 +200,6 @@ INJECT DedentToken :
    public boolean isVirtual() {
       return true;
    }
-
-/*
- *  Commented out, as interferes with representation used in tests
- *
-   public String toString() {
-       return "DEDENT";
-   }
- */
 
    public int getDedentAmount() {
       return dedentAmount;
@@ -223,6 +246,13 @@ UNPARSED :
    |
    <COMMENT: "#" (~["\n"])*> #Comment
 ;
+
+#if __java__
+TOKEN #Indentation :
+   <DEDENT : "<-"> #DedentToken
+;
+#endif
+
 
 TOKEN :
    <NEWLINE : (<SPACE>)? "\n"> #Newline

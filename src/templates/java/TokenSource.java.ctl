@@ -494,6 +494,22 @@ abstract public class TokenSource implements CharSequence
 #endif
     }
 
+    public boolean atLineStart(${BaseToken} tok) {
+      int offset = tok.getBeginOffset();
+      while (offset > 0) {
+        --offset;
+        char c = charAt(offset);
+        if (!Character.isWhitespace(c)) return false;
+        if (c == '\n') break;
+      }
+      return true;
+   }
+
+   public String getLine(${BaseToken} tok) {
+       int lineNum = tok.getBeginLine();
+       return getText(getLineStartOffset(lineNum), getLineEndOffset(lineNum) + 1);
+   }
+
   // The source of the raw characters that we are scanning
 
     public String getInputSource() {

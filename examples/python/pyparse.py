@@ -11,7 +11,8 @@ import sys
 
 from pythonparser import Parser
 
-DEBUGGING = 'PY_DEBUG' in os.environ
+# DEBUGGING = 'PY_DEBUG' in os.environ
+DEBUGGING = True
 
 logger = logging.getLogger(__name__)
 
