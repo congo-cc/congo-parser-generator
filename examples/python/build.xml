@@ -46,11 +46,15 @@
     <echo>
       Now test on a few files..
     </echo>
-    <java classname="PyTest" classpath=".:../../congocc.jar" failonerror="true" fork="true">
+    <java classname="PyTest" classpath="${basedir}" failonerror="true" fork="true">
       <assertions>
         <enable />
       </assertions>
       <arg line = "-p -q ${basedir}/testfiles" />
+    </java>
+    <echo>Now let's test the alt syntax.</echo>
+    <java classname="PyTest" classpath="${basedir}" failonerror="true" fork="true">
+      <arg line = "altsyntax/test_unicode_identifiers.py"/>
     </java>
     <echo>Now let's try the python parser (in python!)
       We won't do as many files as we did with the Java parser!

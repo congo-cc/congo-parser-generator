@@ -36,7 +36,27 @@ INJECT LEXER_CLASS :
       return result;
    }
 
+   private BASE_TOKEN_CLASS TOKEN_HOOK(BASE_TOKEN_CLASS tok) {
+      TokenType type = tok.getType();
+      int tokLen = tok.toString().length();
+
+      if ((tokLen > 1) && (type == TokenType.LBRACE || type == TokenType.RBRACE || type == TokenType.SINGLE_QUOTE || type == TokenType.DOUBLE_QUOTE)) {
+         tok.truncate(1);
+         tok=tok.replaceType(TokenType.TEXT_IN_FSTRING);
+      }
+      else if ((tokLen > 3) && (type == TokenType.LONG_DOUBLE_QUOTE || type == TokenType.LONG_SINGLE_QUOTE)) {
+         tok.truncate(3);
+         tok=tok.replaceType(TokenType.TEXT_IN_FSTRING);
+      }
+      return tok;
+   }
+
 #if __java__
+// This is a real mess at the moment. This part, the code generated for java
+// should be merged with the #else part whic is the code for non-Java. I somehow
+// went off the rails because the Python (and possibly C#) was not working
+// but I really wasn't testing it and... At any rate, the alt-syntax thing
+//only does have to work for Java, so...
    private BASE_TOKEN_CLASS TOKEN_HOOK(BASE_TOKEN_CLASS tok) {
       if (tok.getType() == COMMENT) {
          String s = tok.toString().substring(1).trim();
@@ -59,23 +79,122 @@ INJECT LEXER_CLASS :
       }
       return tok;
    }
-#endif
 
    private BASE_TOKEN_CLASS TOKEN_HOOK(BASE_TOKEN_CLASS tok) {
+      boolean lineJoiningOn = lineJoiningTurnedOn || bracketNesting > 0 || parenthesesNesting > 0 || braceNesting > 0 || this.lexicalState != LexicalState.PYTHON;
       TokenType type = tok.getType();
-      int tokLen = tok.toString().length();
-
-      if ((tokLen > 1) && (type == TokenType.LBRACE || type == TokenType.RBRACE || type == TokenType.SINGLE_QUOTE || type == TokenType.DOUBLE_QUOTE)) {
-         tok.truncate(1);
-         tok=tok.replaceType(TokenType.TEXT_IN_FSTRING);
+      switch (type) {
+         case LBRACE : braceNesting++; break;
+         case RBRACE : braceNesting--; break;
+         case LPAREN : parenthesesNesting++; break;
+         case RPAREN : parenthesesNesting--; break;
+         case LBRACKET : bracketNesting++; break;
+         case RBRACKET : bracketNesting--; break;
+         case NEWLINE :  if (lineJoiningOn || tok.startsLine()) {
+                             tok.setUnparsed(true);
+                         }
+                         return tok;
       }
-      else if ((tokLen > 3) && (type == TokenType.LONG_DOUBLE_QUOTE || type == TokenType.LONG_SINGLE_QUOTE)) {
-         tok.truncate(3);
-         tok=tok.replaceType(TokenType.TEXT_IN_FSTRING);
+      if (danglingIndentation != null) {
+         tok.preInsert(danglingIndentation);
+         danglingIndentation = null;
+      }
+      if (tok.getType() == TokenType.DEDENT) {
+         indentationStack.remove(indentationStack.size()-1);
+         ((DedentToken) tok).setIndents(indentationStack);
+      }
+      else if (useExplicitDedent && tok.getType().isEOF()) {
+         BASE_TOKEN_CLASS t = tok;
+         for (int i = 1; i< indentationStack.size();i++) {
+            t = makeDedentToken(tok,this,indentationStack);
+         }
+         tok = t;
+      }
+      else if (!lineJoiningOn && !tok.isUnparsed() && tok.startsLine()) {
+         tok = handleIndentation(tok);
       }
       return tok;
    }
 
+   private BASE_TOKEN_CLASS handleIndentation(BASE_TOKEN_CLASS tok) {
+      int beginColumn = tok.getBeginColumn();
+      int indentation = indentationStack.get(indentationStack.size()-1);
+      boolean expectingIndent = expectingIndent(tok);
+      if (!useExplicitDedent && beginColumn > indentation && !expectingIndent) {
+         InvalidToken result = new InvalidToken(this,0,0);
+         result.setCachedImage("Invalid Indent");
+         tok.preInsert(result);
+         return result;
+      }
+      if (!useExplicitDedent && beginColumn > indentation
+          || useExplicitDedent && expectingIndent) {
+         tok = handleIndent(tok, beginColumn);
+      }
+      if (beginColumn < indentation && !useExplicitDedent) {
+         tok = handleDedent(tok, beginColumn);
+      }
+      return tok;
+   }
+
+   public static BASE_TOKEN_CLASS makeDedentToken(BASE_TOKEN_CLASS followingToken, LEXER_CLASS tokenSource, List<Integer> indents) {
+      DedentToken result = new DedentToken(TokenType.DEDENT, tokenSource, followingToken.getBeginOffset(), followingToken.getBeginOffset());
+      result.setIndents(indents);
+      followingToken.preInsert(result);
+      return result;
+   }
+
+   private boolean expectingIndent(BASE_TOKEN_CLASS tok) {
+      BASE_TOKEN_CLASS prev = tok.getPrevious();
+      if (prev != null) {
+         if (prev.getType() == TokenType.NEWLINE) {
+            BASE_TOKEN_CLASS prevPrev = prev.getPrevious();
+            if (prevPrev != null && prevPrev.getType() == TokenType.COLON) {
+               return true;
+            }
+         }
+      }
+      return false;
+   }
+
+   private BASE_TOKEN_CLASS handleIndent(BASE_TOKEN_CLASS tok, int offset) {
+      if (!useExplicitDedent) {
+          indentationStack.add(offset);
+      } else {
+         indentationStack.add(indentationStack.get(indentationStack.size()-1) + 4);
+      }
+      return makeIndentToken(tok, this, indentationStack);
+   }
+
+   private BASE_TOKEN_CLASS makeIndentToken(BASE_TOKEN_CLASS followingToken, LEXER_CLASS tokenSource, List<Integer> indents) {
+      IndentToken result = new IndentToken(TokenType.INDENT, tokenSource, followingToken.getBeginOffset(), followingToken.getEndOffset());
+      result.setIndents(indents);
+      followingToken.preInsert(result);
+      return result;
+   }
+
+   private BASE_TOKEN_CLASS handleDedent(BASE_TOKEN_CLASS tok, int offset) {
+       int dedentIndex = indentationStack.indexOf(offset);
+       if (dedentIndex <0) {
+          BASE_TOKEN_CLASS invalidDedent = new InvalidToken(this, 0,0);
+          invalidDedent.setCachedImage("Invalid Dedent");
+          tok.preInsert(invalidDedent);
+          return invalidDedent;
+       }
+       BASE_TOKEN_CLASS firstDedent = null;
+       for (int i=indentationStack.size()-1; i>dedentIndex; i--) {
+          int dedentAmount = indentationStack.get(i) - indentationStack.get(i-1);
+          indentationStack.remove(i);
+          BASE_TOKEN_CLASS dedent = makeDedentToken(tok, this, indentationStack);
+          if (firstDedent == null) firstDedent = dedent;
+       }
+       return firstDedent;
+   }
+
+   void setLineJoining(boolean b) {
+      lineJoiningTurnedOn = b;
+   }
+
+#else
    private BASE_TOKEN_CLASS TOKEN_HOOK(BASE_TOKEN_CLASS tok) {
       boolean lineJoiningOn = bracketNesting > 0 || parenthesesNesting > 0 || braceNesting > 0 || this.lexicalState != LexicalState.PYTHON;
       TokenType type = tok.getType();
@@ -128,6 +247,7 @@ INJECT LEXER_CLASS :
        }
        return firstDedent;
    }
+#endif
 
    private void RESET_TOKEN_HOOK(BASE_TOKEN_CLASS tok) {
       braceNesting = bracketNesting = parenthesesNesting = 0;
@@ -159,6 +279,14 @@ INJECT LEXER_CLASS :
       }
    }
 }
+
+#if __java__
+INJECT PARSER_CLASS : {
+   public void setLineJoining(boolean b) {
+      token_source.setLineJoining(b);
+   }
+}
+#endif
 
 INJECT BASE_TOKEN_CLASS : {
    public java.util.List<Integer> getIndents() {
@@ -197,6 +325,8 @@ INJECT DedentToken :
    }
 
    public List<Integer> getIndents() { return new ArrayList<Integer>(indents);}
+   public void setIndents(List<Integer> indents) {this.indents = new ArrayList<>(indents);}
+
 
    public boolean isVirtual() {
       return true;
@@ -222,6 +352,8 @@ INJECT IndentToken :
    }
 
    public List<Integer> getIndents() { return new ArrayList<Integer>(indents);}
+
+   public void setIndents(List<Integer> indents) {this.indents = new ArrayList<>(indents);}
 
    public boolean isVirtual() {
       return true;
