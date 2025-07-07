@@ -52,6 +52,10 @@
       </assertions>
       <arg line = "-p -q ${basedir}/testfiles" />
     </java>
+    <echo>Now let's try the python parser (in python!)
+      We won't do as many files as we did with the Java parser!
+    </echo>
+    <antcall target="test-python"/>
   </target>
 
   <target name="test-python" depends="parser-gen">

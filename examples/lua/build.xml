@@ -45,9 +45,11 @@
       </assertions>
       <arg value="testfiles" />
     </java>
+    <echo>Now let's try the Python parser.</echo>
+    <antcall target="test-lua"/>
   </target>
 
-  <target name="test-python" depends="parser-gen">
+  <target name="test-lua" depends="parser-gen">
     <exec executable="python3" dir="${basedir}" failonerror="true">
       <arg line="-u luaparse.py testfiles" />
     </exec>
