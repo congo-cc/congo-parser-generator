@@ -167,9 +167,12 @@ PP_IfBlock#void :
     (
         <PP_ELIF> result=PP_Expression
         {
-            if (!alreadyHandled) {
-                alreadyHandled = result.booleanValue;
+            if (alreadyHandled) {
+               currentlyOn = false;
+            }
+            else {
                 currentlyOn = previouslyOn && result.booleanValue;
+                alreadyHandled = result.booleanValue;
             }
         }
         PP_Block

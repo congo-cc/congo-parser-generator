@@ -51,13 +51,7 @@ INJECT LEXER_CLASS :
       return tok;
    }
 
-#if __java__
-// This is a real mess at the moment. This part, the code generated for java
-// should be merged with the #else part whic is the code for non-Java. I somehow
-// went off the rails because the Python (and possibly C#) was not working
-// but I really wasn't testing it and... At any rate, the alt-syntax thing
-//only does have to work for Java, so...
-   private BASE_TOKEN_CLASS TOKEN_HOOK(BASE_TOKEN_CLASS tok) {
+ private BASE_TOKEN_CLASS TOKEN_HOOK(BASE_TOKEN_CLASS tok) {
       if (tok.getType() == COMMENT) {
          String s = tok.toString().substring(1).trim();
          if (s.equals("explicitdedent:on")) {
@@ -79,7 +73,15 @@ INJECT LEXER_CLASS :
       }
       return tok;
    }
+#if false
+ This is a real mess at the moment. This part, the code generated for java
+ should be merged with the #else part whic is the code for non-Java. I somehow
+ went off the rails because the Python (and possibly C#) was not working
+ but I really wasn't testing it and... At any rate, the alt-syntax thing
+ only does have to work for Java, so...
+#endif
 
+#if __java__
    private BASE_TOKEN_CLASS TOKEN_HOOK(BASE_TOKEN_CLASS tok) {
       boolean lineJoiningOn = lineJoiningTurnedOn || bracketNesting > 0 || parenthesesNesting > 0 || braceNesting > 0 || this.lexicalState != LexicalState.PYTHON;
       TokenType type = tok.getType();
@@ -196,7 +198,7 @@ INJECT LEXER_CLASS :
 
 #else
    private BASE_TOKEN_CLASS TOKEN_HOOK(BASE_TOKEN_CLASS tok) {
-      boolean lineJoiningOn = bracketNesting > 0 || parenthesesNesting > 0 || braceNesting > 0 || this.lexicalState != LexicalState.PYTHON;
+      boolean lineJoiningOn = lineJoiningTurnedOn || bracketNesting > 0 || parenthesesNesting > 0 || braceNesting > 0 || this.lexicalState != LexicalState.PYTHON;
       TokenType type = tok.getType();
       switch (type) {
          case LBRACE : braceNesting++; break;
@@ -212,20 +214,30 @@ INJECT LEXER_CLASS :
       }
       if (danglingIndentation != null) {
          tok.preInsert(danglingIndentation);
+         danglingIndentation = null;
       }
-      if (lineJoiningOn || tok.isUnparsed()
-        || danglingIndentation == null && !tok.startsLine()) {
+      if (tok.getType() == TokenType.DEDENT) {
+         indentationStack.remove(indentationStack.size()-1);
+         ((DedentToken) tok).setIndents(indentationStack);
+      }
+      else if (useExplicitDedent && tok.getType().isEOF()) {
+         BASE_TOKEN_CLASS t = tok;
+         for (int i = 1; i< indentationStack.size();i++) {
+            t = makeDedentToken(tok,this,indentationStack);
+         }
+         tok = t;
+      }
+      else if (!lineJoiningOn && !tok.isUnparsed() && tok.startsLine()) {
+         int beginColumn = tok.getBeginColumn();
+         int indentation = indentationStack.get(indentationStack.size()-1);
+         if (beginColumn > indentation) {
+            indentationStack.add(beginColumn);
+            return IndentToken.makeIndentToken(tok, this, indentationStack);
+         }
+         if (beginColumn < indentation&&!useExplicitDedent) {
+            return handleDedent(tok, beginColumn);
+         }
          return tok;
-      }
-      danglingIndentation = null;
-      int beginColumn = tok.getBeginColumn();
-      int indentation = indentationStack.get(indentationStack.size()-1);
-      if (beginColumn > indentation) {
-         indentationStack.add(beginColumn);
-         return IndentToken.makeIndentToken(tok, this, indentationStack);
-      }
-      if (beginColumn < indentation) {
-         return handleDedent(tok, beginColumn);
       }
       return tok;
    }
