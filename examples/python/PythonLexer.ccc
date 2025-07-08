@@ -28,7 +28,7 @@ INJECT LEXER_CLASS :
    private int bracketNesting, parenthesesNesting, braceNesting;
    private List<Integer> indentationStack = initIndentationStack();
    boolean useExplicitDedent, lineJoiningTurnedOn;
-   private List<Boolean> explicitDedentStack = new ArrayList<>();
+   private List<Boolean> explicitDedentStack = new ArrayList<Boolean>();
 
    private static List<Integer> initIndentationStack() {
       List<Integer> result = new ArrayList<Integer>();
@@ -50,7 +50,7 @@ INJECT LEXER_CLASS :
       }
       return tok;
    }
-
+#if __java__
  private BASE_TOKEN_CLASS TOKEN_HOOK(BASE_TOKEN_CLASS tok) {
       if (tok.getType() == COMMENT) {
          String s = tok.toString().substring(1).trim();
@@ -73,6 +73,7 @@ INJECT LEXER_CLASS :
       }
       return tok;
    }
+   #endif
 
    private BASE_TOKEN_CLASS handleIndentation(BASE_TOKEN_CLASS tok) {
       int beginColumn = tok.getBeginColumn();
@@ -172,9 +173,9 @@ INJECT LEXER_CLASS :
       }
       if (tok.getType() == TokenType.DEDENT) {
          indentationStack.remove(indentationStack.size()-1);
-         ((DedentToken) tok).setIndents(indentationStack);
+         ((DedentToken) tok).copyIndents(indentationStack);
       }
-      else if (useExplicitDedent && tok.getType().isEOF()) {
+      else if (useExplicitDedent && tok.getType() == TokenType.EOF) {
          BASE_TOKEN_CLASS t = tok;
          for (int i = 1; i< indentationStack.size();i++) {
             t = makeDedentToken(tok,this,indentationStack, 4);
@@ -244,6 +245,14 @@ INJECT BASE_TOKEN_CLASS : {
    public BASE_TOKEN_CLASS getPreviousToken() {
         return previousCachedToken();
     }
+
+    public Token GetPrevious() {
+        Token result = previousCachedToken();
+        while (result != null && result.isUnparsed()) {
+            result = result.previousCachedToken();
+        }
+        return result;
+    }
 }
 
 INJECT DedentToken :
@@ -254,7 +263,7 @@ INJECT DedentToken :
    public int dedentAmount;
 
    public List<Integer> getIndents() { return new ArrayList<Integer>(indents);}
-   public void setIndents(List<Integer> indents) {this.indents = new ArrayList<>(indents);}
+   public void copyIndents(List<Integer> indents) {this.indents = new ArrayList<Integer>(indents);}
 
 
    public boolean isVirtual() {
@@ -274,7 +283,7 @@ INJECT IndentToken :
 
    public List<Integer> getIndents() { return new ArrayList<Integer>(indents);}
 
-   public void setIndents(List<Integer> indents) {this.indents = new ArrayList<>(indents);}
+   public void copyIndents(List<Integer> indents) {this.indents = new ArrayList<Integer>(indents);}
 
    public boolean isVirtual() {
       return true;
