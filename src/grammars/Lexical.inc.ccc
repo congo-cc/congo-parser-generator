@@ -192,8 +192,8 @@ INJECT RegexpStringLiteral :
   @Property boolean singleQuoted;
   @Property RegexpStringLiteral canonicalRegexp;
 
-  public String toString() {
-    return super.toString() + " - " + getLiteralString();
+  public boolean isContextual() {
+    return getSource().charAt(0) == '\'' || getAppSettings().getContextualKeywords().contains(literalString);
   }
 
   public int getOrdinal() {

@@ -1274,7 +1274,7 @@ BreakStatement :
 ;
 
 YieldStatement :
-   SCAN 2
+   SCAN 3
    ENSURE {checkNextTokenImage("yield")}
    ENSURE {isInProduction("SwitchExpression")}
    (

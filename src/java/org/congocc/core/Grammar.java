@@ -17,6 +17,7 @@ import org.congocc.app.AppSettings;
 import org.congocc.app.Errors;
 import org.congocc.parser.*;
 import org.congocc.parser.tree.*;
+import static org.congocc.parser.Node.CodeLang.*;
 
 /**
  * This object is the root Node of the data structure that contains all the
@@ -63,7 +64,7 @@ public class Grammar extends BaseNode {
         this.appSettings = new AppSettings(this);
         appSettings.setJdkTarget(jdkTarget);
         appSettings.setOutputDir(outputDir);
-        appSettings.setCodeLang(codeLang);
+        appSettings.setCodeLangString(codeLang);
         preprocessorSymbols.put("__" + codeLang + "__","1");
         appSettings.setQuiet(quiet);
         this.templateGlobals = new TemplateGlobals(this);
@@ -142,7 +143,7 @@ public class Grammar extends BaseNode {
         addEnvironmentOverrides(settings);
         addCommandLineOverrides(settings);
         appSettings.setSettings((settings));
-        if (appSettings.getSyntheticNodesEnabled() && appSettings.getCodeLang().equals("java")) {
+        if (appSettings.getSyntheticNodesEnabled() && appSettings.getCodeLang()==JAVA) {
         	addNodeType(null, appSettings.getBaseNodeClassName());
         }
 
@@ -224,7 +225,7 @@ public class Grammar extends BaseNode {
     public LexerData getLexerData() {
         return lexerData;
     }
-    
+
     public String getDefaultLexicalState() {
         return defaultLexicalState == null ? "DEFAULT" : defaultLexicalState;
     }
@@ -492,7 +493,7 @@ public class Grammar extends BaseNode {
         checkForHooks(n, null);
         codeInjections.add(n);
     }
-    
+
     /**
      * Adds an injected field to the specified {@link Node} dynamically (post parsing).
      * @param nodeName is the name of the {@code Node}
@@ -530,9 +531,9 @@ public class Grammar extends BaseNode {
             lexerData.addLexicalState(lexicalState);
         }
         if (!checkReferences()) return;
-        // Check whether we have any LOOKAHEADs at non-choice points 
+        // Check whether we have any LOOKAHEADs at non-choice points
         for (ExpansionSequence sequence : descendants(ExpansionSequence.class)) {
-            if (sequence.getHasExplicitLookahead() 
+            if (sequence.getHasExplicitLookahead()
                && !sequence.isAtChoicePoint())
             {
                 errors.addError(sequence, "Encountered scanahead at a non-choice location." );
@@ -546,12 +547,12 @@ public class Grammar extends BaseNode {
             if (sequence.getHasExplicitNumericalLookahead() && sequence.getHasExplicitScanLimit()) {
                 errors.addError(sequence, "An expansion cannot have both numerical lookahead and a scan limit.");
             }
-/*            
+/*
             if (sequence.getHasExplicitLookahead()) {
                 if (sequence.getHasExplicitLookahead()
                     && !sequence.getHasSeparateSyntacticLookahead()
                     && !sequence.getHasScanLimit()
-                    && !sequence.getHasExplicitNumericalLookahead() 
+                    && !sequence.getHasExplicitNumericalLookahead()
                     && sequence.getMaximumSize() > 1) {
                         errors.addWarning(sequence, "Expansion defaults to a lookahead of 1. In a similar spot in JavaCC 21, it would be an indefinite lookahead here, but this changed in Congo");
                     }
@@ -594,7 +595,7 @@ public class Grammar extends BaseNode {
                 errors.addError(regexpSpec, "Regular Expression can match empty string. This is not allowed here.");
             }
         }
-        
+
         for (BNFProduction prod : descendants(BNFProduction.class)) {
             String lexicalStateName = prod.getLexicalState();
             if (lexicalStateName != null && lexerData.getLexicalState(lexicalStateName) == null) {
@@ -605,7 +606,7 @@ public class Grammar extends BaseNode {
                 errors.addError(prod, "Production " + prod.getName() + " is left recursive.");
             }
         }
-        
+
         for (Assignment assignment : descendants(Assignment.class)) {
             if (assignment.isPropertyAssignment() || assignment.isNamedAssignment()) {
                 BNFProduction production = assignment.firstAncestorOfType(BNFProduction.class);
@@ -629,7 +630,7 @@ public class Grammar extends BaseNode {
                         errors.addWarning(seq, msg);
                         break;
                     }
-                } 
+                }
             }
         }
 
@@ -640,8 +641,8 @@ public class Grammar extends BaseNode {
             }
         }
 
-        for (Expansion exp : descendantsOfType(ExpansionSequence.class, 
-                                               exp->exp.getHasExplicitLookahead() 
+        for (Expansion exp : descendantsOfType(ExpansionSequence.class,
+                                               exp->exp.getHasExplicitLookahead()
                                                  && exp.getHasNumericalLookahead())) {
             int amount = exp.getLookaheadAmount();
             int maxSize = exp.getMaximumSize();
@@ -669,9 +670,9 @@ public class Grammar extends BaseNode {
             }
         }
 
-        for (Token tok : descendantsOfType(Token.class, 
-                   t->t.getType() == Token.TokenType.__ASSERT 
-                   && t.firstAncestorOfType(Lookahead.class) != null)) { 
+        for (Token tok : descendantsOfType(Token.class,
+                   t->t.getType() == Token.TokenType.__ASSERT
+                   && t.firstAncestorOfType(Lookahead.class) != null)) {
             errors.addWarning(tok, "ASSERT keyword inside a lookahead, should really be ENSURE");
         }
 
@@ -754,7 +755,7 @@ public class Grammar extends BaseNode {
         if (following != null) {
             if (following.getNestedExpansion() != null) {
                 //Just exit the whole mess if lookahead or up-to-here is present
-                // We assume the grammar author knows what he's doing so the 
+                // We assume the grammar author knows what he's doing so the
                 // dead code check is superfluous.
                 if (following.getNestedExpansion().getRequiresPredicateMethod()) return;
             }

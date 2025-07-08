@@ -6,6 +6,7 @@ import java.util.function.Function;
 import org.congocc.app.*;
 import org.congocc.core.*;
 import org.congocc.parser.Node;
+import static org.congocc.parser.Node.CodeLang.*;
 import org.congocc.parser.CongoCCParser;
 import org.congocc.parser.tree.*;
 
@@ -85,7 +86,7 @@ public class TemplateGlobals {
                 if (ch < 128 && !Character.isWhitespace(ch) && !Character.isISOControl(ch))
                     yield "'" + (char) ch + "'";
                 String s = "0x" + Integer.toHexString(ch);
-                if (appSettings.getCodeLang().equals("python")) {
+                if (appSettings.getCodeLang() == PYTHON) {
                     s = String.format("as_chr(%s)", s);
                 }
                 yield s;
@@ -214,7 +215,7 @@ public class TemplateGlobals {
         translator.popSymbols();
         return result.toString();
     }
-    
+
     // used in templates
     public String translateNonterminalArgs(InvocationArguments args) {
         // The args are passed through as a string, but need to be translated according

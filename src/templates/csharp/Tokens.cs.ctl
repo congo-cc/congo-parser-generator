@@ -48,11 +48,16 @@ namespace ${csPackage} {
 
         int BeginLine => TokenSource?.GetLineFromOffset(BeginOffset) ?? 0;
 
-        int EndLine => TokenSource?.GetLineFromOffset(EndOffset - 1) ?? 0;
+        int EndLine => BeginOffset>=EndOffset ? BeginLine :
+                  TokenSource?.GetLineFromOffset(EndOffset - 1) ?? 0;
+
 
         int BeginColumn => TokenSource?.GetCodePointColumnFromOffset(BeginOffset) ?? 0;
 
-        int EndColumn => TokenSource?.GetCodePointColumnFromOffset(EndOffset - 1) ?? 0;
+        int EndColumn =>
+            BeginOffset >= EndOffset ? BeginColumn :
+            TokenSource?.GetCodePointColumnFromOffset(EndOffset - 1) ?? 0;
+
 
         string Location => $"{InputSource}:{BeginLine}:{BeginColumn}";
 
@@ -337,11 +342,13 @@ namespace ${csPackage} {
         // TODO use default implementations in interface
         public int BeginLine => TokenSource?.GetLineFromOffset(BeginOffset) ?? 0;
 
-        public int EndLine => TokenSource?.GetLineFromOffset(EndOffset - 1) ?? 0;
+        public int EndLine => BeginOffset>=EndOffset ? BeginLine :
+                  TokenSource?.GetLineFromOffset(EndOffset - 1) ?? 0;
 
         public int BeginColumn => TokenSource?.GetCodePointColumnFromOffset(BeginOffset) ?? 0;
 
-        public int EndColumn => TokenSource?.GetCodePointColumnFromOffset(EndOffset - 1) ?? 0;
+        public int EndColumn => BeginOffset >= EndOffset ? BeginColumn :
+              TokenSource?.GetCodePointColumnFromOffset(EndOffset - 1) ?? 0;
 
         public T FirstChildOfType<T>(Type t) where T : Node {
             var result = default(T);

@@ -21,6 +21,8 @@ import org.congocc.parser.*;
 import org.congocc.parser.python.ast.Module;
 import org.congocc.parser.tree.CompilationUnit;
 import org.congocc.parser.tree.ObjectType;
+import org.congocc.parser.Node.CodeLang;
+import static org.congocc.parser.Node.CodeLang.*;
 
 import org.congocc.templates.*;
 
@@ -34,7 +36,7 @@ public class FilesGenerator {
     private final CodeInjector codeInjector;
     private final Set<String> tokenSubclassFileNames = new LinkedHashSet<>();
     private final Map<String, String> superClassLookup = new HashMap<>();
-    private final String codeLang;
+    private final CodeLang codeLang;
     private final boolean generateRootApi;
 
     void initializeTemplateEngine() throws IOException {
@@ -49,7 +51,7 @@ public class FilesGenerator {
         // the template library will raise an exception.
         //
 
-        String templateFolder = "/templates/".concat(codeLang);
+        String templateFolder = "/templates/".concat(codeLang.toString().toLowerCase());
         Path altDir = dir.resolve(templateFolder.substring(1));
         if (Files.exists(altDir)) {
             templatesConfig.setDirectoryForTemplateLoading(altDir.toString());
@@ -64,7 +66,7 @@ public class FilesGenerator {
         templatesConfig.setSharedVariable("settings", grammar.getAppSettings());
         templatesConfig.setSharedVariable("lexerData", grammar.getLexerData());
         templatesConfig.setSharedVariable("generated_by", org.congocc.app.Main.PROG_NAME);
-        if (codeLang.equals("java"))
+        if (codeLang == JAVA)
            templatesConfig.addAutoImport("CU", "CommonUtils.java.ctl");
     }
 
@@ -83,7 +85,7 @@ public class FilesGenerator {
         }
         initializeTemplateEngine();
         switch (codeLang) {
-            case "java" -> {
+            case JAVA-> {
                 generateToken();
                 generateLexer();
                 generateOtherFiles();
@@ -98,7 +100,7 @@ public class FilesGenerator {
                 generateParsingProblem(wanted);
                 generateTreeBuildingFiles(appSettings.getTreeBuildingEnabled());
             }
-            case "python" -> {
+            case PYTHON -> {
                 // Hardcoded for now, could make configurable later
                 String[] paths = new String[]{
                         "__init__.py",
@@ -115,7 +117,7 @@ public class FilesGenerator {
                     generate(outputFile);
                 }
             }
-            case "csharp" -> {
+            case CSHARP -> {
                 // Hardcoded for now, could make configurable later
                 String[] paths = new String[]{
                         "Utils.cs",
@@ -134,7 +136,6 @@ public class FilesGenerator {
                     generate(outputFile);
                 }
             }
-            default -> throw new UnsupportedOperationException(String.format("Code generation in '%s' is currently not supported.", codeLang));
         }
     }
 
@@ -157,7 +158,7 @@ public class FilesGenerator {
 
     private String getTemplateName(String outputFilename) {
         String result = outputFilename + ".ctl";
-        if (codeLang.equals("java")) {
+        if (codeLang == JAVA) {
             if (outputFilename.equals(appSettings.getBaseTokenClassName() + ".java")) {
                 result = "Token.java.ctl";
             } else if (tokenSubclassFileNames.contains(outputFilename)) {
@@ -176,7 +177,7 @@ public class FilesGenerator {
                 }
             }
         }
-        else if (codeLang.equals("csharp")) {
+        else if (codeLang == CSHARP) {
             if (outputFilename.endsWith(".csproj")) {
                 result = "project.csproj.ctl";
             }

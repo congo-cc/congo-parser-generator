@@ -296,10 +296,10 @@ INJECT PARSER_CLASS : {
 
     private BASE_TOKEN_CLASS TOKEN_HOOK(BASE_TOKEN_CLASS t) {
         if (CongoCCKeyWords.contains(t.getType())
-            && isInProduction("CompilationUnit", 
-                              "ClassOrInterfaceBody", 
-                              "BlockStatement", 
-                              "TreeBuildingAnnotation")) 
+            && isInProduction("CompilationUnit",
+                              "ClassOrInterfaceBody",
+                              "BlockStatement",
+                              "TreeBuildingAnnotation"))
         {
            t = t.replaceType(IDENTIFIER);
         }
@@ -320,13 +320,13 @@ INJECT Identifier :
     public String toString() {
         if (savedImage !=null) return savedImage;
         String image = getSource();
-        if (firstAncestorOfType(Options.class) != null) return image; 
+        if (firstAncestorOfType(Options.class) != null) return image;
         return switch (image) {
-            case "jjtThis", "CURRENT_NODE", "THIS_PRODUCTION" -> 
+            case "jjtThis", "CURRENT_NODE", "THIS_PRODUCTION" ->
                 "thisProduction";
-            case "PARSER_CLASS" -> 
+            case "PARSER_CLASS" ->
                getAppSettings().getParserClassName();
-            case "LEXER_CLASS" -> 
+            case "LEXER_CLASS" ->
                getAppSettings().getLexerClassName();
             case "BASE_NODE_CLASS" ->
                getAppSettings().getBaseNodeClassName();
@@ -359,17 +359,32 @@ INJECT Identifier :
 
 INJECT interface Node :
    import org.congocc.core.Grammar;
+   import org.congocc.app.AppSettings;
 {
+
+    public enum CodeLang {
+        JAVA, PYTHON, CSHARP;
+    }
+
     default Grammar getGrammar() {
         TokenSource ts = getTokenSource();
         assert ts != null;
         assert ts.getGrammar() != null;
-        return ts == null ? null : ts.getGrammar();
+        return ts.getGrammar();
     }
-    default Node getNamedChild(String name) { return null; }
-    default List<Node> getNamedChildList(String name) { return null; }
-    default void setNamedChild(String name, Node node) {}
-    default void addToNamedChildList(String name, Node node) {}
+
+    default AppSettings getAppSettings() {
+        return getGrammar().getAppSettings();
+    }
+
+//    default CodeLang getCodeLang() {
+//        return getGrammar().getAppSettings().getCodeLang();
+//    }
+
+    default Node getNamedChild(String name) { throw new UnsupportedOperationException(); }
+    default List<Node> getNamedChildList(String name) { throw new UnsupportedOperationException(); }
+    default void setNamedChild(String name, Node node) { throw new UnsupportedOperationException(); }
+    default void addToNamedChildList(String name, Node node) { throw new UnsupportedOperationException(); }
 }
 
 
@@ -1039,7 +1054,7 @@ INJECT Assertion :
     }
 
     public boolean getAppliesInLookahead() {
-         return get(0).getType() == _ENSURE 
+         return get(0).getType() == _ENSURE
                || firstChildOfType(Expansion.class) != null && getAppSettings().getAssertAppliesInLookahead()
                || firstChildOfType(HASH) != null
                || firstAncestorOfType(Lookahead.class) !=null
@@ -1076,7 +1091,7 @@ Assertion :
 Ensure :
    "ENSURE"
    (
-     "{" Expression "}" 
+     "{" Expression "}"
      |
      ["~"] "(" ExpansionChoice ")"
    )
