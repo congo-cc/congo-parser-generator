@@ -62,7 +62,7 @@
     <antcall target="test-python"/>
   </target>
 
-  <target name="test-python" depends="parser-gen">
+  <target name="test-python">
     <exec executable="python3" dir="${basedir}" failonerror="true">
       <arg line="-u pyparse.py testfiles" />
     </exec>
