@@ -36,6 +36,9 @@
 
   <target name="compile" depends="init,parser-gen">
     <javac srcdir="." failonerror="true" release="8" classpath="." debug="on" optimize="off" includeantruntime="no" fork="true" />
+    <exec executable="dotnet" dir="${basedir}/cs-luaparser">
+       <arg line="build"/>
+    </exec>
   </target>
 
   <target name="test" depends="compile">

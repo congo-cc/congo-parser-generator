@@ -13,7 +13,6 @@
     <uptodate property="csparser.uptodate" targetfile="org/parsers/csharp/CSharpParser.java">
       <srcfiles dir="." includes="*.ccc" />
     </uptodate>
-
     <uptodate property="pplineparser.uptodate" targetfile="org/parsers/csharp/ppline/PPDirectiveLineParser.java" srcfile="PPDirectiveLine.ccc" />
   </target>
 
@@ -62,6 +61,9 @@
 
   <target name="compile" depends="parser-gen">
     <javac srcdir="." failonerror="true" release="8" excludes="testfiles/**" classpath=".;../../congocc.jar" debug="on" optimize="off" includeantruntime="no" fork="true" />
+    <exec executable="dotnet" dir="${basedir}/cs-csharpparser">
+       <arg line="build"/>
+    </exec>
   </target>
 
   <target name="test" depends="compile">
