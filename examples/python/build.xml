@@ -40,7 +40,7 @@
     <echo>
       test harness via: java PyTest &lt;filename&gt;
     </echo>
-    <exec executable="dotnet" dir="${basedir}/cs-csharpparser">
+    <exec executable="dotnet" dir="${basedir}/cs-pythonparser">
        <arg line="build"/>
     </exec>
   </target>
