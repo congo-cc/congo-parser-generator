@@ -246,8 +246,8 @@ INJECT BASE_TOKEN_CLASS : {
         return previousCachedToken();
     }
 
-    public Token GetPrevious() {
-        Token result = previousCachedToken();
+    public BASE_TOKEN_CLASS GetPrevious() {
+        BASE_TOKEN_CLASS result = previousCachedToken();
         while (result != null && result.isUnparsed()) {
             result = result.previousCachedToken();
         }
