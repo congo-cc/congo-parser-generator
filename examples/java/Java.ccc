@@ -699,7 +699,9 @@ AssignmentExpression :
 ;
 
 AssignmentOperator #void :
-  <ASSIGN> | <STARASSIGN> | <SLASHASSIGN> | <REMASSIGN> | <PLUSASSIGN> | <MINUSASSIGN> | <LSHIFTASSIGN> | <RSIGNEDSHIFTASSIGN> | <RUNSIGNEDSHIFTASSIGN> | <ANDASSIGN> | <XORASSIGN> | <ORASSIGN>
+  <ASSIGN> | <STARASSIGN> | <SLASHASSIGN> | <REMASSIGN> | <PLUSASSIGN>
+  | <MINUSASSIGN> | <LSHIFTASSIGN> | <RSIGNEDSHIFTASSIGN>
+  | <RUNSIGNEDSHIFTASSIGN> | <ANDASSIGN> | <XORASSIGN> | <ORASSIGN>
 ;
 
 TernaryExpression :
@@ -759,7 +761,10 @@ ShiftExpression :
      // Under certain conditions we scanned forward
      // and (incorrectly) scanned a >>, so we uncache
      // the tokens and end up rescanning!
-     SCAN <GT> (<GT>|<RSIGNEDSHIFT>) => UNCACHE_TOKENS
+//     SCAN <GT> (<GT>|<RSIGNEDSHIFT>) => UNCACHE_TOKENS
+     SCAN <GT> (<GT>|<RSIGNEDSHIFT>) => {
+        this.token_source.reset(lastConsumedToken);
+     }
    ]
    (
       (<LSHIFT> | <RSIGNEDSHIFT> | <RUNSIGNEDSHIFT>)
