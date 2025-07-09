@@ -60,11 +60,21 @@
       Now let's try the Python parser on the Congo source code.
     </echo>
     <antcall target="test-python"/>
+    <echo>
+      Now let's try the CSharp parser on the test files.
+    </echo>
+    <antcall target="test-csharp"/>
   </target>
 
   <target name="test-python" depends="parser-gen">
     <exec executable="python3" dir="${basedir}" failonerror="true">
       <arg line="-u jparse.py ../../src/java" />
+    </exec>
+  </target>
+
+  <target name="test-csharp">
+    <exec executable="dotnet" dir="${basedir}" failonerror="true">
+      <arg line="cs-javaparser/bin/Debug/net6.0/org.parsers.java.dll testfiles" />
     </exec>
   </target>
 </project>

@@ -50,11 +50,19 @@
     </java>
     <echo>Now let's try the Python parser.</echo>
     <antcall target="test-lua"/>
+    <echo>And now the CSharp parser.</echo>
+    <antcall target="test-csharp"/>
   </target>
 
   <target name="test-lua" depends="parser-gen">
     <exec executable="python3" dir="${basedir}" failonerror="true">
       <arg line="-u luaparse.py testfiles" />
+    </exec>
+  </target>
+
+  <target name="test-csharp">
+    <exec executable="dotnet" dir="${basedir}" failonerror="true">
+      <arg line="cs-luaparser/bin/Debug/net6.0/org.parsers.lua.dll testfiles" />
     </exec>
   </target>
 </project>

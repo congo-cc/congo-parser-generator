@@ -63,11 +63,22 @@
       We won't do as many files as we did with the Java parser!
     </echo>
     <antcall target="test-python"/>
+    <echo>
+      Now let's try the csharp parser (for python!)
+      on the test files.
+    </echo>
+    <antcall target="test-csharp"/>
   </target>
 
   <target name="test-python">
     <exec executable="python3" dir="${basedir}" failonerror="true">
       <arg line="-u pyparse.py testfiles" />
+    </exec>
+  </target>
+
+  <target name="test-csharp">
+    <exec executable="dotnet" dir="${basedir}" failonerror="true">
+      <arg line="cs-pythonparser/bin/Debug/net6.0/org.parsers.python.dll testfiles" />
     </exec>
   </target>
 </project>
