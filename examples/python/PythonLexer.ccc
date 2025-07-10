@@ -306,6 +306,13 @@ UNPARSED :
 TOKEN :
    <DEDENT : "<-"> #DedentToken
 ;
+
+INJECT PARSER_CLASS :
+{
+   public void setLineJoining(boolean b) {
+      token_source.lineJoiningTurnedOn = true;
+   }
+}
 #endif
 
 TOKEN :

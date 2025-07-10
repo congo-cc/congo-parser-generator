@@ -39,7 +39,7 @@ INJECT PARSER_CLASS :
     import org.congocc.parser.tree.StringLiteral;
     import org.congocc.parser.tree.IntegerLiteral;
     import org.congocc.preprocessor.PreprocessorParser;
-    import org.congocc.parser.csharp.CSParser;
+    import org.congocc.parser.csharp.CSharpParser;
     import org.congocc.parser.python.PythonParser;
     import org.congocc.parser.python.ast.Module;
 {
@@ -88,12 +88,12 @@ INJECT PARSER_CLASS :
     }
 
     static public org.congocc.parser.csharp.ast.CompilationUnit parseCSharpFile(String inputSource, CharSequence content) {
-        CSParser parser  = new CSParser(inputSource, content);
+        CSharpParser parser  = new CSharpParser(inputSource, content);
         return parser.CompilationUnit();
     }
 
     static public org.congocc.parser.csharp.ast.CompilationUnit parseCSharpFile(Path path) throws IOException {
-        CSParser parser  = new CSParser(path);
+        CSharpParser parser  = new CSharpParser(path);
         return parser.CompilationUnit();
     }
 
@@ -116,7 +116,9 @@ INJECT PARSER_CLASS :
   <END_UNPARSED : "$}" >
 ;
 
-RawCode : //#org.congocc.core.RawCode :
+// INJECT RawCode : implements EmbeddedCode
+
+RawCode #org.congocc.core.RawCode :
    <START_UNPARSED>
    <UNPARSED_CONTENT>
    <END_UNPARSED>
@@ -211,8 +213,6 @@ INJECT CodeBlock :
     }
 }
 
-
-
 INJECT PARSER_CLASS : {
 
     private EnumSet<TokenType> CongoCCKeyWords = EnumSet.of(
@@ -304,9 +304,9 @@ INJECT interface Node :
         return getGrammar().getAppSettings();
     }
 
-//    default CodeLang getCodeLang() {
-//        return getGrammar().getAppSettings().getCodeLang();
-//    }
+    default CodeLang getCodeLang() {
+        return getGrammar().getAppSettings().getCodeLang();
+    }
 
     default Node getNamedChild(String name) { throw new UnsupportedOperationException(); }
     default List<Node> getNamedChildList(String name) { throw new UnsupportedOperationException(); }
@@ -1269,6 +1269,36 @@ ExpansionUnit #void :
     InlineTreeNodeDescriptor =>||
     { result.setTreeNodeBehavior((TreeBuildingAnnotation) peekNode()); }
  ]
+;
+
+#EmbeddedCode#interface :
+   (
+      Block
+      [
+        "#"
+        {
+            popNode();
+            ((CodeBlock) peekNode()).setAppliesInLookahead(true);
+        }
+      ]
+      |
+      RawCode
+   )
+   {
+      return (EmbeddedCode) peekNode();
+   }
+;
+
+EmbeddedCode EmbeddedExpression#void :
+   {EmbeddedCode result=null;}
+   (
+    "{" result=Expression "}"
+    |
+    result = RawCode
+   )
+   {
+      return result;
+   }
 ;
 
 #NonTerminal #org.congocc.core.NonTerminal :

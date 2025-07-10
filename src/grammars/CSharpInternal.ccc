@@ -1,6 +1,6 @@
 DEFAULT_LEXICAL_STATE=CSHARP;
 BASE_SRC_DIR="../../build/generated-java";
-BASE_NAME=CS;
+BASE_NAME=CSharp;
 PARSER_PACKAGE=org.congocc.parser.csharp;
 ROOT_API_PACKAGE=org.congocc.parser;
 TAB_SIZE=4;
@@ -26,4 +26,17 @@ INJECT BASE_TOKEN_CLASS :
     {
         return CURRENT_NODE;
     }
+;
+
+#EmbeddedCSharpBlock :
+    (SCAN ~(<EOF>) => Statement)+
+    <EOF>
+    {return thisProduction;}
+;
+
+Expression EmbeddedCSharpExpression :
+    {Expression exp;}
+    exp=Expression
+    <EOF>
+    {return exp;}
 ;

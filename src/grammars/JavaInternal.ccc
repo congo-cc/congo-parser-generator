@@ -12,7 +12,24 @@
 
 INCLUDE "../../examples/java/Java.ccc"
 
+INJECT Expression : extends EmbeddedCode
+
 VariableDeclarator# : VariableDeclaratorId [ "=" VariableInitializer ] ;
+
+EmbeddedJavaBlock#void :
+    (SCAN ~(<EOF>) => BlockStatement)*
+    <EOF>
+;
+
+EmbeddedJavaClassOrInterfaceBody#void :
+    (SCAN ~(<EOF>) => ClassOrInterfaceBodyDeclaration)*
+    <EOF>
+;
+
+EmbeddedJavaExpression :
+    Expression
+    <EOF>
+;
 
 INJECT CompilationUnit :
     import java.util.*;
@@ -284,10 +301,10 @@ INJECT TypeDeclaration :
     import java.util.*;
 {
     default String getName() {
-#if false        
+#if false
         Node thisNode = getNamedChild("name");
         return (thisNode != null) ? thisNode.toString() : firstChildOfType(Identifier.class).toString();
-#endif        
+#endif
         Identifier id = firstChildOfType(Identifier.class);
         return id == null ? null : id.toString();
     }

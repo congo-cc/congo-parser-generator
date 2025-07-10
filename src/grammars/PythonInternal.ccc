@@ -18,3 +18,26 @@ INJECT BASE_TOKEN_CLASS :
 {
     @Property Grammar grammar;
 }
+
+Node EmbeddedPythonExpression :
+    {Node exp;}
+    Expression {exp = peekNode();}
+    <EOF>
+    {return exp;}
+;
+
+#EmbeddedPythonBlock# :
+  (Statement)*
+  <EOF>
+  {
+    return thisProduction;
+  }
+;
+
+INJECT Module :
+  import org.congocc.codegen.python.PyFormatter;
+{
+    public String toAltFormat() {
+        return new PyFormatter().format(this,true);
+    }
+}
