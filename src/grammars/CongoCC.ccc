@@ -110,21 +110,6 @@ INJECT PARSER_CLASS :
     }
 }
 
-<IN_UNPARSED_CODE_BLOCK> TOKEN :
-  <UNPARSED_CONTENT : (~["$"] | (("$")+ ~["}"]))+ > #UnparsedContent
-  |
-  <END_UNPARSED : "$}" >
-;
-
-// INJECT RawCode : implements EmbeddedCode
-
-RawCode #org.congocc.core.RawCode :
-   <START_UNPARSED>
-   <UNPARSED_CONTENT>
-   <END_UNPARSED>
-   [<HASH>]
-;
-
 INJECT BASE_NODE_CLASS :
     import org.congocc.app.*;
     import org.congocc.core.Grammar;
@@ -174,42 +159,6 @@ INJECT BASE_NODE_CLASS :
     public int getBeginColumn() {
         TokenSource tokenSource = getTokenSource();
         return tokenSource == null ? 0 : tokenSource.getCodePointColumnFromOffset(getBeginOffset());
-    }
-}
-
-INJECT CodeBlock :
-  import java.util.List;
-   extends org.congocc.core.EmptyExpansion;
-{
-    @Property boolean appliesInLookahead;
-
-    public CodeBlock getJavaCode() {
-        return this;
-    }
-
-    @Override
-    public boolean startsWithGlobalCodeAction(boolean stopAtScanLimit) {
-        return isAppliesInLookahead() || getContainingProduction().isOnlyForLookahead();
-    }
-
-    public String toString() {
-        StringBuilder buf = new StringBuilder();
-        List<? extends TerminalNode> tokens = getAllTokens(true);
-        boolean outputOpeningBrace = false;
-        for (int i=0; i<tokens.size() -1; i++) {
-            Token t = (Token) tokens.get(i);
-            buf.append(" ");
-            if (i>0 && ((Token)tokens.get(i-1)).getEndOffset() != t.getBeginOffset()) {
-                buf.append(" ");
-            }
-            if (outputOpeningBrace) {
-                buf.append(t);
-            } else if (t.getType() == TokenType.LBRACE) {
-                outputOpeningBrace = true;
-            }
-            buf.append(" ");
-        }
-        return buf.toString();
     }
 }
 
@@ -1240,6 +1189,8 @@ ExpansionUnit #void :
   |
   Failure
   |
+  EmbeddedCode
+/*
   Block {CodeBlock block = (CodeBlock) peekNode();}
   [
     "#"
@@ -1247,7 +1198,7 @@ ExpansionUnit #void :
         block.setAppliesInLookahead(true);
         popNode();
     }
-  ]
+  ]*/
   |
   SCAN ~\...\Lookahead => AttemptBlock
   |
@@ -1269,6 +1220,13 @@ ExpansionUnit #void :
     InlineTreeNodeDescriptor =>||
     { result.setTreeNodeBehavior((TreeBuildingAnnotation) peekNode()); }
  ]
+;
+
+RawCode#org.congocc.core.RawCode :
+   <START_UNPARSED>
+   <UNPARSED_CONTENT>
+   <END_UNPARSED>
+   [<HASH>]
 ;
 
 #EmbeddedCode#interface :
