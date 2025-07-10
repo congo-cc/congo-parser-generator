@@ -188,7 +188,7 @@
    #else
       #-- We need tree nodes and/or recovery code. --
       #if buildingTreeNode
-         #-- Build the tree node (part 1). 
+         #-- Build the tree node (part 1).
          #set treeNodeStack = treeNodeStack + [nodeVarName]
          ${createNode(nodeClassName(treeNodeBehavior), nodeVarName)}
       #endif
@@ -608,6 +608,8 @@
    #-- take care of the non-tree-building classes --
    #if classname = "CodeBlock"
       ${expansion}
+   #elif classname = "RawCode"
+      ${expansion.rawContent}
    #elif classname = "UncacheTokens"
          uncacheTokens();
    #elif classname = "Failure"

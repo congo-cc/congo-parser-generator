@@ -15,7 +15,7 @@
      // EnumSets that represent the various expansions' first set (i.e. the set of tokens with which the expansion can begin)
      //=================================
     #list grammar.expansionsForFirstSet as expansion
-          ${CU.firstSetVar(expansion)} 
+          ${CU.firstSetVar(expansion)}
     #endlist
 #endmacro
 
@@ -294,7 +294,7 @@
 
 #macro BuildProductionLookaheadMethod production
    // BuildProductionLookaheadMethod macro
-  #set CU.newVarIndex = 0 
+  #set CU.newVarIndex = 0
    private boolean ${production.lookaheadMethodName}(boolean scanToEnd) {
       ${BuildScanCode(production.expansion)}
       return true;
@@ -308,7 +308,7 @@
 --]
 #macro BuildScanCode expansion
   #var classname = expansion.simpleName
-  #var skipCheck = classname == "ExpansionSequence" || 
+  #var skipCheck = classname == "ExpansionSequence" ||
                   #-- We can skip the check if this is a semantically meaningless
                   #-- parentheses, only there for grouping or readability
                    classname == "ExpansionWithParentheses" && !expansion::startsWithLexicalChange()
@@ -332,7 +332,7 @@
       sometimes I like to comment out the previous condition
       for testing purposes.--]
       ${ScanSingleToken(expansion)}
-   #elif classname = "Assertion" 
+   #elif classname = "Assertion"
       #if expansion.appliesInLookahead
          ${ScanCodeAssertion(expansion)}
       #else
@@ -359,6 +359,10 @@
    #elif classname = "CodeBlock"
       #if expansion.appliesInLookahead || expansion.insideLookahead || expansion.containingProduction.onlyForLookahead
          ${expansion}
+      #endif
+   #elif classname = "RawCode"
+      #if expansion.appliesInLookahead || expansion.insideLookahead || expansion.containingProduction.onlyForLookahead
+         ${expansion.rawContent}
       #endif
    #endif
   [/@CU.HandleLexicalStateChange]

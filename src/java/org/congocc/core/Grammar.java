@@ -678,6 +678,16 @@ public class Grammar extends BaseNode {
 
     }
 
+    public void checkUnparsedContent() {
+        for (RawCode ucb : descendants(RawCode.class)) {
+            ucb.parseContent();
+            if (ucb.getParseException()!=null) {
+                errors.addError(ucb, "Error in embedded code block");
+                ucb.getParseException().printStackTrace();
+            }
+        }
+    }
+
     public void reportDeadCode() {
         for (ExpansionChoice choice : descendants(ExpansionChoice.class)) {
             findDeadCode(choice);

@@ -577,6 +577,8 @@ ${is}        self.clear_node_scope()
    [#-- take care of the non-tree-building classes --]
    [#if classname = "CodeBlock"]
 ${globals::translateCodeBlock(expansion, indent)}
+   #elif classname = "RawCode"
+      ${expansion}
    [#elseif classname = "UncacheTokens"]
 ${is}self.uncache_tokens()
    [#elseif classname = "Failure"]

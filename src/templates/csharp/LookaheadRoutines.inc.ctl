@@ -358,11 +358,15 @@ ${ScanCodeOneOrMore(expansion)}
       [@BuildScanCode expansion.nestedExpansion /]
    [#elseif classname = "ExpansionChoice"]
 ${ScanCodeChoice(expansion)}
-   [#elseif classname = "CodeBlock"]
-      [#if expansion.appliesInLookahead || expansion.insideLookahead || expansion.containingProduction.onlyForLookahead]
+   #elif classname = "CodeBlock"
+      #if expansion.appliesInLookahead || expansion.insideLookahead || expansion.containingProduction.onlyForLookahead
 ${globals::translateCodeBlock(expansion, 12)}
-      [/#if]
-   [/#if]
+      #endif
+   #elif classname = "RawCode"
+      #if expansion.appliesInLookahead || expansion.insideLookahead || expansion.containingProduction.onlyForLookahead
+         ${expansion}
+      #endif
+   #endif
   [/@CU.HandleLexicalStateChange]
 [#-- # DBG < BuildScanCode ${expansion.simpleName} --]
 [/#macro]

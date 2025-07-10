@@ -62,7 +62,7 @@ public final class Main {
     }
 
     static void checkForNewer() {
-        if (jarPath != null && Files.exists(jarPath) 
+        if (jarPath != null && Files.exists(jarPath)
              && (jarPath.endsWith("congocc.jar") || jarPath.endsWith("congocc-full.jar")))
            try {
                 long jarLastModified = Files.getLastModifiedTime(jarPath).toMillis();
@@ -308,6 +308,7 @@ public final class Main {
             outputErrors(grammar, quiet);
             return 1;
         }
+        grammar.checkUnparsedContent();
         grammar.reportDeadCode();
         grammar.generateFiles();
         if (errors.getWarningCount() == 0 && !quiet) {
