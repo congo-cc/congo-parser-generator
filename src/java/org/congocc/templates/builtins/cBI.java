@@ -1,26 +1,27 @@
 package org.congocc.templates.builtins;
 
 import org.congocc.templates.core.Environment;
+import org.congocc.templates.core.variables.EvaluationException;
 import org.congocc.templates.core.variables.InvalidReferenceException;
 import org.congocc.templates.core.nodes.generated.BuiltInExpression;
 import org.congocc.templates.TemplateException;
 
 /**
- * Implementation of ?c built-in 
+ * Implementation of ?c built-in
  */
 public class cBI extends ExpressionEvaluatingBuiltIn {
-    
+
     @Override
-    public Object get(Environment env, BuiltInExpression caller, Object model) 
+    public Object get(Environment env, BuiltInExpression caller, Object model)
     {
         Number num;
         try {
             num = (Number)model;
         } catch (ClassCastException e) {
-            throw new TemplateException(
-                    "Expecting a number on the left side of ?c", env);
+            throw new EvaluationException(
+                    "Expecting a number on the left side of ?c");
         } catch (NullPointerException e) {
-            throw new InvalidReferenceException("Undefined number", env);
+            throw new InvalidReferenceException("Undefined number");
         }
         if (num instanceof Integer) {
             // We accelerate this fairly common case

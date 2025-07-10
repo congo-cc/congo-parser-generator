@@ -10,11 +10,11 @@ import org.congocc.templates.TemplateSequence;
 
 public class Wrap {
     /**
-     * A sort of general-purpose magic object that can be used 
-     * to simulate typical loose scripting language sorts of 
-     * behaviors in your templates. In the appropriate 
-     * context it is a string, a list, a map. As a string, it 
-     * is simply zero-output. It behaves like an empty list or 
+     * A sort of general-purpose magic object that can be used
+     * to simulate typical loose scripting language sorts of
+     * behaviors in your templates. In the appropriate
+     * context it is a string, a list, a map. As a string, it
+     * is simply zero-output. It behaves like an empty list or
      * empty map. It is also a function that always returns null!
      */
     public static final Object LOOSE_NULL = new Object();
@@ -23,11 +23,11 @@ public class Wrap {
      * A singleton value used to represent a java null
      * which comes from a wrapped Java API, for example, i.e.
      * is intentional. A null that comes from a generic container
-     * like a map is assumed to be unintentional and a 
+     * like a map is assumed to be unintentional and a
      * result of programming error.
      */
-    public static final Object JAVA_NULL = new JavaNull(); 
-    
+    public static final Object JAVA_NULL = new JavaNull();
+
     static private class JavaNull implements WrappedVariable {
         public Object getWrappedObject() {
             return null;
@@ -110,8 +110,8 @@ public class Wrap {
     }
 
     public static boolean isIterable(Object obj) {
-        return obj instanceof Iterable 
-              || obj instanceof Iterator 
+        return obj instanceof Iterable
+              || obj instanceof Iterator
               || obj.getClass().isArray();
     }
 
@@ -165,13 +165,13 @@ public class Wrap {
             return (Number) object;
         }
         else if(object == null) {
-            throw new InvalidReferenceException(expr + " is undefined.", env);
+            throw new InvalidReferenceException(expr + " is undefined.");
         }
         else if(object == JAVA_NULL) {
-            throw new InvalidReferenceException(expr + " is null.", env);
+            throw new InvalidReferenceException(expr + " is null.");
         }
         else {
-            throw new TemplateException(expr + " is not a number, it is " + object.getClass().getName(), env);
+            throw new TemplateException(expr + " is not a number, it is " + object.getClass().getName());
         }
     }
 

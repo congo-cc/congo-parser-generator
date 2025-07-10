@@ -7,13 +7,13 @@ import org.congocc.templates.TemplateException;
 
 /**
  * This exception is thrown when a &lt;stop&gt;
- * directive is encountered. 
+ * directive is encountered.
  */
 
 public class AssertionFailedException extends TemplateException
 {
-    public AssertionFailedException(Environment env, String s) {
-        super(s, env);
+    public AssertionFailedException(String s) {
+        super(s);
     }
 
     public void printStackTrace(PrintWriter pw) {

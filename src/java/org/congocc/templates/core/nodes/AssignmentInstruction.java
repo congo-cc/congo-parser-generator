@@ -51,9 +51,9 @@ public class AssignmentInstruction extends TemplateNode implements TemplateEleme
         Expression namespaceExp = getNamespaceExp();
     	if (namespaceExp != null) {
     		try {
-    			scope = (Map<String,Object>) namespaceExp.evaluate(env); 
+    			scope = (Map<String,Object>) namespaceExp.evaluate(env);
     		} catch (ClassCastException cce) {
-                throw new InvalidReferenceException(getLocation() + "\nInvalid reference to namespace: " + namespaceExp, env);
+                throw new InvalidReferenceException(getLocation() + "\nInvalid reference to namespace: " + namespaceExp);
     		}
     	}
         for (Expression exp : childrenOfType(Expression.class)) {

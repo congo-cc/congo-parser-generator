@@ -24,13 +24,13 @@ public abstract class StringTransformations extends ExpressionEvaluatingBuiltIn 
             string = caller.getTarget().getStringValue(env);
         }
         if (string == null) {
-            throw new InvalidReferenceException("String is undefined", env);
+            throw new InvalidReferenceException("String is undefined");
         }
         return apply(string);
     }
 
     public abstract String apply(String string);
-    
+
     public static class Html extends StringTransformations {
         @Override
         public String apply(String string) {
@@ -61,11 +61,11 @@ public abstract class StringTransformations extends ExpressionEvaluatingBuiltIn 
 
     public static class CapFirst extends StringTransformations {
         private final boolean cap;
-        
+
         public CapFirst(boolean cap) {
             this.cap = cap;
         }
-        
+
         @Override
         public String apply(String string) {
             for (int i=0; i<string.length(); i++) {

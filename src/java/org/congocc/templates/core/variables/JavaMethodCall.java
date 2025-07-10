@@ -69,7 +69,7 @@ public class JavaMethodCall implements VarArgsFunction<Object> {
         Method method = getCachedMethod(target, methodName, params);
         if (method != null) {
             // If we have already figured out which method
-            // to call and cached it, then we use that! 
+            // to call and cached it, then we use that!
             return invokeMethod(target, method, params);
         }
         Method matchedMethod = null;
@@ -84,5 +84,5 @@ public class JavaMethodCall implements VarArgsFunction<Object> {
         }
         cacheMethod(matchedMethod, target, params);
         return invokeMethod(target, matchedMethod, params);
-    }    
+    }
 }

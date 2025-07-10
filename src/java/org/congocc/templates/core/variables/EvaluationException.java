@@ -4,19 +4,10 @@ import org.congocc.templates.core.Environment;
 import org.congocc.templates.TemplateException;
 
 /**
- * This exception is thrown if there is some problem 
+ * This exception is thrown if there is some problem
  * evaluating an expression.
  */
 public class EvaluationException extends TemplateException {
-
-    /**
-     * Constructs an <tt>EvaluationException</tt> with no
-     * specified detail message.
-     */
-    public EvaluationException() {
-        this(null, null);
-    }
-
     /**
      * Constructs an <tt>EvaluationException</tt> with the
      * specified detail message.
@@ -48,6 +39,6 @@ public class EvaluationException extends TemplateException {
      * exception to be raised
      */
     public EvaluationException(String description, Exception cause) {
-        super( description, cause, Environment.getCurrentEnvironment() );
+        super( description, cause);
     }
 }

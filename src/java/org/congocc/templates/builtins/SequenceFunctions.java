@@ -28,17 +28,17 @@ public abstract class SequenceFunctions extends ExpressionEvaluatingBuiltIn {
 
     @Override
     public Object get(Environment env, BuiltInExpression caller,
-            Object model) 
+            Object model)
     {
         if (!isList(model)) {
             throw TemplateNode.invalidTypeException(model,
-                    caller.getTarget(), env, "sequence");
+                    caller.getTarget(), "sequence");
         }
         return apply(model);
     }
-    
+
     public abstract Object apply(Object model);
-    
+
     public static class First extends SequenceFunctions {
         @Override
         public Object apply(Object sequence) {
@@ -109,7 +109,7 @@ public abstract class SequenceFunctions extends ExpressionEvaluatingBuiltIn {
         private ChunkFunction(List tsm) {
             this.tsm = tsm;
         }
-        
+
         public Object apply(Object... args) {
             int numArgs = args.length;
             if (numArgs != 1 && numArgs != 2) {
@@ -243,7 +243,7 @@ public abstract class SequenceFunctions extends ExpressionEvaluatingBuiltIn {
             keyType = KEY_TYPE_NUMBER;
         } else {
             keyType = KEY_TYPE_STRING;
-        } 
+        }
 
         if (keys == null) {
             if (keyType == KEY_TYPE_STRING) {
@@ -268,7 +268,7 @@ public abstract class SequenceFunctions extends ExpressionEvaluatingBuiltIn {
                         result.add(new KVP((Number)item, item));
                     } catch (ClassCastException e) {
                         throw new EvaluationException(
-                                "sorting failed: " 
+                                "sorting failed: "
                                 + "All values in the sequence must be "
                                 + "numbers, because the first value "
                                 + "was a number. "
@@ -289,7 +289,7 @@ public abstract class SequenceFunctions extends ExpressionEvaluatingBuiltIn {
                     } catch (ClassCastException e) {
                         if (!(key instanceof TemplateHash)) {
                             throw new EvaluationException(
-                                    "sorting failed: " 
+                                    "sorting failed: "
                                     + "Problem with the sequence item at index "
                                     + i
                                     + ": "
@@ -302,7 +302,7 @@ public abstract class SequenceFunctions extends ExpressionEvaluatingBuiltIn {
                     }
                     if (key == null) {
                         throw new EvaluationException(
-                                "sorting failed "  
+                                "sorting failed "
                                 + "Problem with the sequence item at index "
                                 + i + ": " + "The "
                                 + StringUtil.jQuote(keys[j])
@@ -314,7 +314,7 @@ public abstract class SequenceFunctions extends ExpressionEvaluatingBuiltIn {
                         result.add(new KVP(asString(key), item));
                     } catch (ClassCastException e) {
                             throw new EvaluationException(
-                                    "sorting failed: " 
+                                    "sorting failed: "
                                     + "All key values in the sequence must be "
                                     + "date/time values, because the first key "
                                     + "value was a date/time. The key value at "
@@ -434,7 +434,7 @@ public abstract class SequenceFunctions extends ExpressionEvaluatingBuiltIn {
                         + "(the name of the subvariable), or a sequence of "
                         + "strings (the \"path\" to the subvariable).");
             }
-            return sort(seq, subvars); 
+            return sort(seq, subvars);
         }
     }
 
@@ -472,7 +472,7 @@ public abstract class SequenceFunctions extends ExpressionEvaluatingBuiltIn {
             if (reverse) {
                 for (int i = startIndex; i > -1; --i) {
                     if (comparator.areEqual(sequence.get(i), compareToThis)) {
-                        return i; 
+                        return i;
                     }
                 }
             }

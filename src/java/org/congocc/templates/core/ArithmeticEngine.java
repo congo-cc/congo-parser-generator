@@ -5,6 +5,7 @@ import java.util.HashMap;
 import java.util.Map;
 
 import org.congocc.templates.*;
+import org.congocc.templates.core.variables.EvaluationException;
 
 /**
  * Class to perform arithmetic operations.
@@ -48,9 +49,9 @@ public abstract class ArithmeticEngine {
         }
         this.minScale = minScale;
     }
-    
+
     /**
-     * Sets the maximal scale to use when multiplying BigDecimal numbers. 
+     * Sets the maximal scale to use when multiplying BigDecimal numbers.
      * Default value is 100.
      */
     public void setMaxScale(int maxScale) {
@@ -76,19 +77,19 @@ public abstract class ArithmeticEngine {
             BigDecimal right = toBigDecimal(second);
             return left.compareTo(right);
         }
-    
+
         public Number add(Number first, Number second) {
             BigDecimal left = toBigDecimal(first);
             BigDecimal right = toBigDecimal(second);
             return left.add(right);
         }
-    
+
         public Number subtract(Number first, Number second) {
             BigDecimal left = toBigDecimal(first);
             BigDecimal right = toBigDecimal(second);
             return left.subtract(right);
         }
-    
+
         public Number multiply(Number first, Number second) {
             BigDecimal left = toBigDecimal(first);
             BigDecimal right = toBigDecimal(second);
@@ -98,23 +99,23 @@ public abstract class ArithmeticEngine {
             }
             return result;
         }
-    
+
         public Number divide(Number first, Number second) {
             BigDecimal left = toBigDecimal(first);
             BigDecimal right = toBigDecimal(second);
             return divide(left, right);
         }
-    
+
         public Number modulus(Number first, Number second) {
             long left = first.longValue();
             long right = second.longValue();
             return Long.valueOf(left % right);
         }
-    
+
         public Number toNumber(String s) {
             return new BigDecimal(s);
         }
-        
+
         private BigDecimal divide(BigDecimal left, BigDecimal right) {
             int scale1 = left.scale();
             int scale2 = right.scale();
@@ -126,18 +127,18 @@ public abstract class ArithmeticEngine {
 
     /**
      * An arithmetic engine that conservatively widens the operation arguments
-     * to extent that they can hold the result of the operation. Widening 
+     * to extent that they can hold the result of the operation. Widening
      * conversions occur in following situations:
      * <ul>
      * <li>byte and short are always widened to int (alike to Java language).</li>
-     * <li>To preserve magnitude: when operands are of different types, the 
+     * <li>To preserve magnitude: when operands are of different types, the
      * result type is the type of the wider operand.</li>
      * <li>to avoid overflows: if add, subtract, or multiply would overflow on
-     * integer types, the result is widened from int to long, or from long to 
+     * integer types, the result is widened from int to long, or from long to
      * BigInteger.</li>
-     * <li>to preserve fractional part: if a division of integer types would 
-     * have a fractional part, int and long are converted to double, and 
-     * BigInteger is converted to BigDecimal. An operation on a float and a 
+     * <li>to preserve fractional part: if a division of integer types would
+     * have a fractional part, int and long are converted to double, and
+     * BigInteger is converted to BigDecimal. An operation on a float and a
      * long results in a double. An operation on a float or double and a
      * BigInteger results in a BigDecimal.</li>
      * </ul>
@@ -146,9 +147,9 @@ public abstract class ArithmeticEngine {
         private enum NumberType {
             INTEGER, LONG, FLOAT, DOUBLE, BIGINTEGER, BIGDECIMAL;
         }
-        
+
         private static final Map<Class<? extends Number>,NumberType> classCodes = createClassCodesMap();
-        
+
         public int compareNumbers(Number first, Number second) {
             return switch(getCommonClassCode(first, second)) {
                 case INTEGER -> {
@@ -183,7 +184,7 @@ public abstract class ArithmeticEngine {
                 }
             };
         }
-    
+
         public Number add(Number first, Number second) {
             return switch(getCommonClassCode(first, second)) {
                 case INTEGER -> {
@@ -218,7 +219,7 @@ public abstract class ArithmeticEngine {
                 }
             };
         }
-    
+
         public Number subtract(Number first, Number second) {
             return switch(getCommonClassCode(first, second)) {
                 case INTEGER -> {
@@ -257,7 +258,7 @@ public abstract class ArithmeticEngine {
                 }
             };
         }
-    
+
         public Number multiply(Number first, Number second) {
             return switch(getCommonClassCode(first, second)) {
                 case INTEGER -> {
@@ -293,7 +294,7 @@ public abstract class ArithmeticEngine {
                 }
             };
         }
-    
+
         public Number divide(Number first, Number second) {
             return switch(getCommonClassCode(first, second)) {
                 case INTEGER -> {
@@ -338,7 +339,7 @@ public abstract class ArithmeticEngine {
                 }
             };
         }
-    
+
         public Number modulus(Number first, Number second) {
             return switch(getCommonClassCode(first, second)) {
                 case INTEGER -> first.intValue() % second.intValue();
@@ -350,14 +351,14 @@ public abstract class ArithmeticEngine {
                     BigInteger n2 = toBigInteger(second);
                     yield n1.mod(n2);
                 }
-                case BIGDECIMAL -> throw new TemplateException("Can't calculate remainder on BigDecimals", Environment.getCurrentEnvironment());
+                case BIGDECIMAL -> throw new TemplateException("Can't calculate remainder on BigDecimals");
             };
         }
-    
+
         public Number toNumber(String s) {
             return optimizeNumberRepresentation(new BigDecimal(s));
         }
-        
+
         private static Map<Class<? extends Number>, NumberType> createClassCodesMap() {
             var map = new HashMap<Class<? extends Number>,NumberType>(17);
             map.put(Byte.class, NumberType.INTEGER);
@@ -370,19 +371,19 @@ public abstract class ArithmeticEngine {
             map.put(BigDecimal.class, NumberType.BIGDECIMAL);
             return map;
         }
-        
+
         private static NumberType getClassCode(Number num) {
             try {
                 return classCodes.get(num.getClass());
             }
             catch(NullPointerException e) {
                 if(num == null) {
-                    throw new TemplateException("Unknown number type null", Environment.getCurrentEnvironment());
+                    throw new EvaluationException("Unknown number type null");
                 }
-                throw new TemplateException("Unknown number type " + num.getClass().getName(), Environment.getCurrentEnvironment());
+                throw new EvaluationException("Unknown number type " + num.getClass().getName());
             }
         }
-        
+
         private static NumberType getCommonClassCode(Number num1, Number num2) {
             NumberType min = getClassCode(num1);
             NumberType max = getClassCode(num2);
@@ -397,14 +398,14 @@ public abstract class ArithmeticEngine {
                 return NumberType.DOUBLE;
             }
             // If BigInteger is combined with a Float or Double, the result is a
-            // BigDecimal instead of BigInteger in order not to lose the 
-            // fractional parts. 
+            // BigDecimal instead of BigInteger in order not to lose the
+            // fractional parts.
             if (max == NumberType.BIGINTEGER && (min == NumberType.DOUBLE || min == NumberType.FLOAT)) {
                 return NumberType.BIGDECIMAL;
             }
             return max;
         }
-        
+
         private static BigInteger toBigInteger(Number num) {
             return num instanceof BigInteger bi ? bi : new BigInteger(num.toString());
         }

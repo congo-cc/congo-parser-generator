@@ -20,7 +20,7 @@ public class numberBI extends ExpressionEvaluatingBuiltIn
             string = asString(value);
         }
         catch(ClassCastException ex) {
-            throw TemplateNode.invalidTypeException(value, caller.getTarget(), env, "string or number");
+            throw TemplateNode.invalidTypeException(value, caller.getTarget(), "string or number");
         }
         ArithmeticEngine e = env == null ? caller.getTemplate().getArithmeticEngine() : env.getArithmeticEngine();
         try {
@@ -29,7 +29,7 @@ public class numberBI extends ExpressionEvaluatingBuiltIn
         } catch(NumberFormatException nfe) {
                 String mess = "Error: " + caller.getLocation()
                 + "\nExpecting a number in string here, found: " + string;
-                throw new TemplateException(mess, env);
+                throw new TemplateException(mess);
             }
     }
 }

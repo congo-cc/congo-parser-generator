@@ -11,7 +11,7 @@ INCLUDE "Lexer.ccc"
 INCLUDE "Expressions.inc.ccc"
 INCLUDE "Directives.inc.ccc"
 
-INJECT Node : 
+INJECT Node :
    import org.congocc.templates.*;
    import org.congocc.templates.core.Environment;
    import org.congocc.templates.core.InvalidReferenceException;
@@ -23,9 +23,9 @@ INJECT Node :
 
     default String getLocation() {
         String templateName = getTemplate() != null ? getTemplate().getName() : getInputSource();
-        return "on line " 
-              + getBeginLine() 
-              + ", column " 
+        return "on line "
+              + getBeginLine()
+              + ", column "
               + getBeginColumn()
               + " in "
               + templateName;
@@ -47,21 +47,21 @@ INJECT BASE_NODE_CLASS :
    import org.congocc.templates.core.nodes.generated.Expression;
 {
 	@Property Template template;
-	
+
 	public String getDescription() {
 		return getClass().getSimpleName();
 	}
 
-    static public TemplateException invalidTypeException(Object model, Expression exp, Environment env, String expected)
+    static public TemplateException invalidTypeException(Object model, Expression exp, String expected)
     {
-        exp.assertNonNull(model, env);
+        exp.assertNonNull(model);
         return new TemplateException(
-            "Expected " + expected + ". " + 
-            exp + " evaluated instead to " + 
+            "Expected " + expected + ". " +
+            exp + " evaluated instead to " +
             model.getClass().getName() + " " +
-            exp.getLocation() + ".", env);
+            exp.getLocation() + ".");
     }
-    
+
 }
 
 INJECT Token :
@@ -71,7 +71,7 @@ INJECT Token :
 }
 
 
-INJECT PARSER_CLASS : 
+INJECT PARSER_CLASS :
     import org.congocc.templates.*;
     import java.util.HashSet;
     import java.util.List;
@@ -119,8 +119,8 @@ INJECT PARSER_CLASS :
         return "Error in template: " + template.getName() + "\non line " + t.getBeginLine() + ", column " + t.getBeginColumn();
     }
 }
- 
-INJECT ParseException  : 
+
+INJECT ParseException  :
     import org.congocc.core.nodes.generated.TemplateNode;
 {
     int lineNumber, columnNumber;

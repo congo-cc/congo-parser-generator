@@ -11,23 +11,23 @@ import java.util.ArrayList;
 import java.util.Map;
 
 /**
- * Implementation of ?resolve built-in 
+ * Implementation of ?resolve built-in
  */
 
 public abstract class HashBuiltin extends ExpressionEvaluatingBuiltIn {
 
     @Override
-    public Object get(Environment env, BuiltInExpression caller, Object lhs) 
+    public Object get(Environment env, BuiltInExpression caller, Object lhs)
     {
         if (!(lhs instanceof TemplateHash) && !isMap(lhs)) {
-            throw TemplateNode.invalidTypeException(lhs, 
-                    caller.getTarget(), env, "hash");
+            throw TemplateNode.invalidTypeException(lhs,
+                    caller.getTarget(), "hash");
         }
         return apply(unwrap(lhs));
     }
-    
-    public abstract Iterable apply(Object hash); 
-    
+
+    public abstract Iterable apply(Object hash);
+
     public static class Keys extends HashBuiltin {
         @Override
         public Iterable apply(Object hash) {

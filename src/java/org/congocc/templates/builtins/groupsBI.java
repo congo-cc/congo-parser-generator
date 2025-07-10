@@ -19,7 +19,7 @@ public class groupsBI extends ExpressionEvaluatingBuiltIn
             return match.subs;
         }
         else {
-            throw TemplateNode.invalidTypeException(model, caller.getTarget(), env, "regular expression matcher");
+            throw TemplateNode.invalidTypeException(model, caller.getTarget(), "regular expression matcher");
         }
     }
 }

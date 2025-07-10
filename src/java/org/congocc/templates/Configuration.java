@@ -21,11 +21,11 @@ import org.congocc.templates.utility.StringUtil;
 import static org.congocc.templates.core.variables.Wrap.*;
 
 /**
- * Main entry point into the Congo Templates API, this class encapsulates the 
+ * Main entry point into the Congo Templates API, this class encapsulates the
  * various configuration parameters with which the template engine is run, as well
  * as serves as a central template loading and caching point. Note that
- * this class uses a default strategy for loading 
- * and caching templates. 
+ * this class uses a default strategy for loading
+ * and caching templates.
  */
 
 public class Configuration extends Configurable {
@@ -53,7 +53,7 @@ public class Configuration extends Configurable {
     }
 
     /**
-     * 
+     *
      * @return the {@link Configuration} object that is being used
      * in this template processing thread.
      */
@@ -61,7 +61,7 @@ public class Configuration extends Configurable {
     	Environment env = Environment.getCurrentEnvironment();
     	return env != null ? env.getConfiguration() : defaultConfig;
     }
-  
+
     /**
      * Set the explicit directory from which to load templates.
      */
@@ -74,7 +74,7 @@ public class Configuration extends Configurable {
     }
 
     /**
-     * Sets a class relative to which we do the 
+     * Sets a class relative to which we do the
      * Class.getResource() call to load templates.
      */
     public void setClassForTemplateLoading(Class<?> clazz, String pathPrefix) {
@@ -113,7 +113,7 @@ public class Configuration extends Configurable {
 
     /**
      * Retrieves a template specified by a name and locale, interpreted using
-     * the specified character encoding, either parsed or unparsed. 
+     * the specified character encoding, either parsed or unparsed.
      * @return the requested template.
      * @throws FileNotFoundException if the template could not be found.
      * @throws IOException if there was a problem loading the template.
@@ -133,7 +133,7 @@ public class Configuration extends Configurable {
                     rawStream = connection.getInputStream();
                 }
             }
-        } 
+        }
         if (rawStream == null && classForTemplateLoading !=null) {
             url = classForTemplateLoading.getResource(pathPrefix + "/" + name);
             if (url != null) {
@@ -180,9 +180,9 @@ public class Configuration extends Configurable {
     }
 
     /**
-     * Gets the preferred character encoding for the given locale, or the 
+     * Gets the preferred character encoding for the given locale, or the
      * default encoding if no encoding is set explicitly for the specified
-     * locale. You can associate encodings with locales using 
+     * locale. You can associate encodings with locales using
      * {@link #setEncoding(Locale, String)} or {@link #loadBuiltInEncodingMap()}.
      * @param loc the locale
      * @return the preferred character encoding for the locale.
@@ -198,7 +198,7 @@ public class Configuration extends Configurable {
                 if (charset != null) {
                     encodingMap.put(loc.toString(), charset);
                 }
-            } 
+            }
             charset = encodingMap.get(loc.getLanguage());
             if (charset != null) {
                 encodingMap.put(loc.toString(), charset);
@@ -253,9 +253,9 @@ public class Configuration extends Configurable {
     public Set<String> getSharedVariableNames() {
         return new HashSet<String>(variables.keySet());
     }
-    
+
     /**
-     * Gets a shared variable. Shared variables are variables that are 
+     * Gets a shared variable. Shared variables are variables that are
      * available to all templates. When a template is processed, and an identifier
      * is undefined in the data model, a shared variable object with the same identifier
      * is then looked up in the configuration. There are several predefined variables
@@ -269,7 +269,7 @@ public class Configuration extends Configurable {
     public Object getSharedVariable(String name) {
         return variables.get(name);
     }
-    
+
     /**
      * Removes all shared variables, except the predefined ones (compress, html_escape, etc.).
      */
@@ -277,7 +277,7 @@ public class Configuration extends Configurable {
         variables.clear();
         loadBuiltInSharedVariables();
     }
-    
+
     /**
      * Removes all entries from the template cache, thus forcing reloading of templates
      * on subsequent <code>getTemplate</code> calls.
@@ -286,21 +286,21 @@ public class Configuration extends Configurable {
     public void clearTemplateCache() {
         // TODO
     }
-    
+
     /**
      * Returns if localized template lookup is enabled or not.
      */
     public boolean getLocalizedLookup() {
         return this.localizedLookup;
     }
-    
+
     /**
      * Enables/disables localized template lookup. Enabled by default.
      */
     public void setLocalizedLookup(boolean localizedLookup) {
         this.localizedLookup = localizedLookup;
     }
-    
+
     /**
      * Sets a setting by name and string value.
      *
@@ -374,12 +374,11 @@ public class Configuration extends Configurable {
             throw e;
         } catch(Exception e) {
             throw new TemplateException(
-                    "Failed to set setting " + key + " to value " + value,
-                    e, getEnvironment());
+                    "Failed to set setting " + key + " to value " + value, e);
         }
     }
-    
-    
+
+
     /**
      * Add an auto-imported template.
      * The importing will happen at the top of any template that
@@ -392,27 +391,27 @@ public class Configuration extends Configurable {
         autoImports.add(namespace);
         autoImportMap.put(namespace, template);
     }
-    
+
     /**
      * Remove an auto-imported template
      * @param namespace the name of the namespace into which the template was imported
      */
-    
+
     public synchronized void removeAutoImport(String namespace) {
         autoImports.remove(namespace);
         autoImportMap.remove(namespace);
     }
-    
+
     /**
-     * set a map of namespace names to templates for auto-importing 
+     * set a map of namespace names to templates for auto-importing
      * a set of templates. Note that all previous auto-imports are removed.
      */
-    
+
     public synchronized void setAutoImports(Map<String, String> map) {
         autoImports = new ArrayList<String>(map.keySet());
        	autoImportMap = new HashMap<String, String>(map);
     }
-    
+
     @Override
     protected void doAutoImportsAndIncludes(Environment env) throws IOException {
     	for (String namespace : autoImports) {
@@ -423,13 +422,13 @@ public class Configuration extends Configurable {
             env.include(getTemplate(templateName, env.getLocale()), false);
         }
     }
-    
+
     /**
      * add a template to be automatically included at the top of any template that
      * is vended by this Configuration object.
      * @param templateName the lookup name of the template.
      */
-     
+
     public synchronized void addAutoInclude(String templateName) {
         autoIncludes.remove(templateName);
         autoIncludes.add(templateName);
@@ -443,31 +442,31 @@ public class Configuration extends Configurable {
         autoIncludes.clear();
         autoIncludes.addAll(templateNames);
     }
-    
+
     /**
      * remove a template from the auto-include list.
      * @param templateName the lookup name of the template in question.
      */
-     
+
     public synchronized void removeAutoInclude(String templateName) {
         autoIncludes.remove(templateName);
     }
-    
+
     /**
      * Returns version number.
      */
     public static String getVersionNumber() {
     	return "3.0 Preview";
     }
-    
+
     /**
      * Set whether the getTemplate() methods throw exceptions
      * when there is a (recoverable) parsing problem in the template.
      * This would only be set true by certain tools such as FTL-aware
-     * editors that work with FTL code that contains syntactical errors. 
+     * editors that work with FTL code that contains syntactical errors.
      * @param tolerateParsingProblems
      */
-    
+
     public void setTolerateParsingProblems(boolean tolerateParsingProblems) {
     	this.tolerateParsingProblems = tolerateParsingProblems;
     }

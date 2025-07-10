@@ -9,16 +9,16 @@ import org.congocc.templates.core.nodes.generated.BuiltInExpression;
 import org.congocc.templates.TemplateException;
 
 /**
- * Implementation of ?resolve built-in 
+ * Implementation of ?resolve built-in
  */
 
 public class resolveBI extends ExpressionEvaluatingBuiltIn {
 
     @Override
-    public Function<String,Object> get(Environment env, BuiltInExpression caller, Object lhs) 
+    public Function<String,Object> get(Environment env, BuiltInExpression caller, Object lhs)
     {
         if (!(lhs instanceof Scope)) {
-            throw new TemplateException("Expecting scope on left of ?resolve built-in", env);
+            throw new TemplateException("Expecting scope on left of ?resolve built-in");
         }
         Scope scope = (Scope) lhs;
         return arg->scope.resolveVariable(arg);

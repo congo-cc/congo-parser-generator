@@ -2,9 +2,7 @@ package org.congocc.templates;
 
 import java.io.OutputStreamWriter;
 import java.io.PrintWriter;
-import java.lang.reflect.Method;
 import java.util.ArrayList;
-import java.util.Collections;
 import java.util.List;
 
 import org.congocc.templates.core.Environment;
@@ -18,20 +16,10 @@ import org.congocc.templates.core.nodes.generated.TemplateElement;
  */
 public class TemplateException extends RuntimeException {
 
-    private List<TemplateElement> ftlStack;
+    private List<TemplateElement> ftlStack=new ArrayList<>();
 
     public TemplateException(String message) {
-        super(message);
-    }
-
-    /**
-     * Constructs a TemplateException with the given detail message,
-     * but no underlying cause exception.
-     *
-     * @param description the description of the error that occurred
-     */
-    public TemplateException(String description, Environment env) {
-        this(description, null, env);
+        this(message,null);
     }
 
     /**
@@ -43,34 +31,24 @@ public class TemplateException extends RuntimeException {
      * @param cause the underlying <code>Exception</code> that caused this
      * exception to be raised
      */
-    public TemplateException(String description, Exception cause, Environment env) {
-        super(getDescription(description, cause), cause);
+    public TemplateException(String description, Exception cause) {
+        super(description, cause);
+        Environment env = Environment.getCurrentEnvironment();
         if(env != null) {
-            ftlStack = new ArrayList<>(env.getElementStack());
-            Collections.reverse(ftlStack); // We put this in opposite order, as the trace is usually displayed that way.
+            ftlStack = env.getElementStack();
         }
     }
 
-    public TemplateException(Exception cause, Environment env) {
-        this(null, cause, env);
+    public TemplateException(Exception cause) {
+        this(null,cause);
     }
 
-    private static String getDescription(String description, Exception cause)  {
-        if(description != null) {
-            return description;
-        }
-        if(cause != null) {
-            return cause.getClass().getName() + ": " + cause.getMessage();
-        }
-        return "No error message";
-    }
-    
     /**
      * Returns the quote of the problematic FTL instruction and the FTL stack strace.
      * We provide access to the FTL instruction stack
-     * so you might prefer to use getFTLStack() and format the items in 
+     * so you might prefer to use getFTLStack() and format the items in
      * list yourself.
-     * @see #getFTLStack() 
+     * @see #getFTLStack()
      */
     public String getFTLInstructionStack() {
     	StringBuilder buf = new StringBuilder("----------\n");
@@ -98,15 +76,9 @@ public class TemplateException extends RuntimeException {
     	}
     	return buf.toString();
     }
-    
-    /**
-     * @return the FTL call stack (starting with current element)
-     */
+
     public List<TemplateElement> getFTLStack() {
-    	if (ftlStack == null) {
-    		return Collections.emptyList();
-    	}
-    	return Collections.unmodifiableList(ftlStack);
+        return ftlStack;
     }
 
     public void printStackTrace(java.io.PrintStream ps) {
@@ -122,28 +94,9 @@ public class TemplateException extends RuntimeException {
         pw.println("Java backtrace for programmers:");
         pw.println("----------");
         super.printStackTrace(pw);
-        
-        // Dirty hack to fight with stupid ServletException class whose
-        // getCause() method doesn't work properly. Also an aid for pre-J2xE 1.4
-        // users.
-        try {
-            // Reflection is used to prevent dependency on Servlet classes.
-            Throwable causeException = getCause();
-            Method m = causeException.getClass().getMethod("getRootCause");
-            Throwable rootCause = (Throwable) m.invoke(causeException);
-            if (rootCause != null) {
-                Throwable j14Cause = null;
-                if (causeException != null) {
-                    m = causeException.getClass().getMethod("getCause");
-                    j14Cause = (Throwable) m.invoke(causeException);
-                }
-                if (j14Cause == null) {
-                    pw.println("ServletException root cause: ");
-                    rootCause.printStackTrace(pw);
-                }
-            }
-        } catch (Throwable exc) {
-            ; // ignore
+        Throwable cause = getCause();
+        if (cause != null) {
+            cause.printStackTrace(pw);
         }
     }
 }

@@ -76,7 +76,7 @@ public class ParameterList extends TemplateNode {
             }
             );
         } catch (IOException e) {
-            throw new TemplateException(e, env);
+            throw new TemplateException(e);
         }
     }
 
@@ -122,7 +122,7 @@ public class ParameterList extends TemplateNode {
                 throw firstReferenceException;
             } else {
                 assert firstUnresolvedExpression != null;
-                firstUnresolvedExpression.assertNonNull(null, scope.getEnvironment());
+                firstUnresolvedExpression.assertNonNull(null);
             }
         }
     }
@@ -144,7 +144,7 @@ public class ParameterList extends TemplateNode {
         if (commonSize < argsSize) {
             // More actual args than formal args -- use catchall if present
             if (catchall == null) {
-                throw new TemplateException("Extraneous parameters provided; expected " + paramsSize + ", got " + argsSize, env);
+                throw new TemplateException("Extraneous parameters provided; expected " + paramsSize + ", got " + argsSize);
             }
             for (int i = commonSize; i < argsSize; i++) {
                 result.add(args.getValueAt(i, env));
@@ -170,7 +170,7 @@ public class ParameterList extends TemplateNode {
         if (argsSize > paramsSize) {
             Collection<String> l = new LinkedHashSet<String>(args.getArgs().keySet());
             l.removeAll(params);
-            throw new TemplateException("Extraneous parameters " + l, env);
+            throw new TemplateException("Extraneous parameters " + l);
         }
         final List<Object> result = new ArrayList<>();
         List<String> unresolvedParamNames = null;
@@ -179,7 +179,7 @@ public class ParameterList extends TemplateNode {
             Expression argExp = argsMap.remove(paramName);
             if (argExp != null) {
                 Object argModel = argExp.evaluate(env);
-                argExp.assertIsDefined(argModel, env);
+                argExp.assertIsDefined(argModel);
                 result.add(argModel);
             } else {
                 if (unresolvedParamNames == null) {
@@ -206,7 +206,7 @@ public class ParameterList extends TemplateNode {
         final int paramsSize = params.size();
         final Map<String, Object> result = new HashMap<>();
         if (catchall == null && argsSize > paramsSize && !ignoreExtraParams) {
-            throw new TemplateException("Expecting exactly " + paramsSize + " arguments, received " + argsSize + ".", env);
+            throw new TemplateException("Expecting exactly " + paramsSize + " arguments, received " + argsSize + ".");
         }
         int min = Math.min(paramsSize, argsSize);
         for (int i = 0; i < min; i++) {
@@ -236,7 +236,7 @@ public class ParameterList extends TemplateNode {
             Expression argExp = argsMap.remove(paramName);
             if (argExp != null) {
                 Object value = argExp.evaluate(env);
-                argExp.assertIsDefined(value, env);
+                argExp.assertIsDefined(value);
                 result.put(paramName, value);
             } else if (defaults != null && defaults.containsKey(paramName)) {
                 if (unresolvedParamNames == null) {
@@ -244,7 +244,7 @@ public class ParameterList extends TemplateNode {
                 }
                 unresolvedParamNames.add(paramName);
             } else {
-                throw new TemplateException("Missing required parameter " + paramName, env);
+                throw new TemplateException("Missing required parameter " + paramName);
             }
         }
         if (unresolvedParamNames != null) {
@@ -263,11 +263,11 @@ public class ParameterList extends TemplateNode {
                 for (Map.Entry<String, Expression> entry : argsMap.entrySet()) {
                     Expression exp = entry.getValue();
                     Object val = exp.evaluate(env);
-                    exp.assertIsDefined(val, env);
+                    exp.assertIsDefined(val);
                     catchAllMap.put(entry.getKey(), val);
                 }
             } else {
-                throw new TemplateException("Extraneous parameters " + argsMap.keySet() + " provided.", env);
+                throw new TemplateException("Extraneous parameters " + argsMap.keySet() + " provided.");
             }
         }
         return result;

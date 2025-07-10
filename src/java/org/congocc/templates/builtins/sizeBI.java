@@ -11,7 +11,7 @@ import java.util.Collection;
 import java.util.Map;
 
 /**
- * Implementation of ?c built-in 
+ * Implementation of ?c built-in
  */
 public class sizeBI extends ExpressionEvaluatingBuiltIn {
 
@@ -33,7 +33,7 @@ public class sizeBI extends ExpressionEvaluatingBuiltIn {
             return Array.getLength(value);
         }
         else {
-            throw TemplateNode.invalidTypeException(value, caller.getTarget(), env, "a sequence or extended hash");
+            throw TemplateNode.invalidTypeException(value, caller.getTarget(), "a sequence or extended hash");
         }
     }
 }

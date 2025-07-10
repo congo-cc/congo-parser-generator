@@ -356,7 +356,7 @@ abstract public class Configurable {
 
     /**
      * Sets a setting by a name and string value.
-     * 
+     *
      * <p>
      * List of supported names and their valid values:
      * <ul>
@@ -399,10 +399,10 @@ abstract public class Configurable {
      * overrides the value of the <code>"output_encoding"</code> setting when
      * there is URL encoding.
      * </ul>
-     * 
+     *
      * @param key   the name of the setting.
      * @param value the string that describes the new value of the setting.
-     * 
+     *
      * @throws UnknownSettingException if the key is wrong.
      * @throws TemplateException       if the new value of the setting can't be set
      *                                 for any other reasons.
@@ -468,33 +468,28 @@ abstract public class Configurable {
             throw e;
         } catch (Exception e) {
             throw new TemplateException(
-                    "Failed to set setting " + key + " to value " + value,
-                    e, getEnvironment());
+                    "Failed to set setting " + key + " to value " + value, e);
         }
     }
 
-    public Environment getEnvironment() {
-        return Environment.getCurrentEnvironment();
-    }
-
     protected TemplateException unknownSettingException(String name) {
-        return new UnknownSettingException(name, getEnvironment());
+        return new UnknownSettingException(name);
     }
 
     protected TemplateException invalidSettingValueException(String name, String value) {
-        return new TemplateException("Invalid value for setting " + name + ": " + value, getEnvironment());
+        return new TemplateException("Invalid value for setting " + name + ": " + value);
     }
 
     public static class UnknownSettingException extends TemplateException {
 
-        private UnknownSettingException(String name, Environment env) {
-            super("Unknown setting: " + name, env);
+        private UnknownSettingException(String name) {
+            super("Unknown setting: " + name);
         }
     }
 
     /**
      * Set the settings stored in a <code>Properties</code> object.
-     * 
+     *
      * @throws TemplateException if the <code>Properties</code> object contains
      *                           invalid keys, or invalid setting values, or any
      *                           other error occurs

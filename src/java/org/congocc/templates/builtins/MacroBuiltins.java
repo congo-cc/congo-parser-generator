@@ -16,11 +16,11 @@ public abstract class MacroBuiltins extends ExpressionEvaluatingBuiltIn {
     public Object get(Environment env, BuiltInExpression caller,
             Object model) {
         if (!(model instanceof Macro)) {
-            throw TemplateNode.invalidTypeException(model, caller.getTarget(), env, "macro");
+            throw TemplateNode.invalidTypeException(model, caller.getTarget(), "macro");
         }
         return apply(env, (Macro)model);
     }
-    
+
     public abstract Object apply(Environment env, Macro macro);
 
     public static class Namespace extends MacroBuiltins {

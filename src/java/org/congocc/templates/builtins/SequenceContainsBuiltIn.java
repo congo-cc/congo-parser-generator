@@ -15,12 +15,12 @@ public class SequenceContainsBuiltIn extends ExpressionEvaluatingBuiltIn {
 
     @Override
     public Object get(Environment env, BuiltInExpression caller,
-            Object model) 
+            Object model)
     {
         if (model instanceof Iterable<?> it) {
             return new SequenceContainsFunction(it);
         }
-        throw TemplateNode.invalidTypeException(model, caller.getTarget(), env, "sequence or collection");
+        throw TemplateNode.invalidTypeException(model, caller.getTarget(), "sequence or collection");
     }
 
     static class SequenceContainsFunction implements Function<Object, Boolean> {
