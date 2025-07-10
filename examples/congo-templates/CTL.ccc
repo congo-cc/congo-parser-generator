@@ -45,6 +45,7 @@ INJECT BASE_NODE_CLASS :
    import org.congocc.templates.core.Environment;
    import org.congocc.templates.core.parser.Token;
    import org.congocc.templates.core.nodes.generated.Expression;
+   import static org.congocc.templates.core.variables.Wrap.assertNonNull;
 {
 	@Property Template template;
 
@@ -54,7 +55,7 @@ INJECT BASE_NODE_CLASS :
 
     static public TemplateException invalidTypeException(Object model, Expression exp, String expected)
     {
-        exp.assertNonNull(model);
+        assertNonNull(model, exp);
         return new TemplateException(
             "Expected " + expected + ". " +
             exp + " evaluated instead to " +

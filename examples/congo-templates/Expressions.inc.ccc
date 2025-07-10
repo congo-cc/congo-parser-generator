@@ -31,7 +31,7 @@ INJECT Expression :
     }
 
     default String getStringValue(Environment env, Object referent) {
-        assertNonNull(referent);
+        assertNonNull(referent, this);
         if (referent == LOOSE_NULL) {
             return "";
         }
@@ -41,22 +41,9 @@ INJECT Expression :
         return referent.toString();
     }
 
-    default void assertNonNull(Object value) {
-        assertIsDefined(value);
-        if (value == JAVA_NULL) {
-            throw new InvalidReferenceException("Expression " + this + " is null " + getLocation() + ".");
-        }
-    }
-
-    default void assertIsDefined(Object value) {
-        if (value == null) {
-            throw new InvalidReferenceException("Expression " + this + " is undefined " + getLocation() + ".");
-        }
-    }
-
     default boolean isTrue(Environment env) {
         Object referent = evaluate(env);
-        assertIsDefined(referent);
+        assertIsDefined(referent, this);
         if (referent == JAVA_NULL || referent == LOOSE_NULL) {
             return false;
         }
@@ -197,9 +184,7 @@ INJECT DotVariable :
     import org.congocc.templates.core.variables.*;
     import org.congocc.templates.core.variables.scope.Scope;
     import org.congocc.templates.TemplateHash;
-    import static org.congocc.templates.core.variables.Wrap.wrap;
-    import static org.congocc.templates.core.variables.Wrap.JAVA_NULL;
-    import static org.congocc.templates.core.variables.Wrap.LOOSE_NULL;
+    import static org.congocc.templates.core.variables.Wrap.*;
     implements Expression
 {
     public Expression getTarget() {
@@ -216,7 +201,7 @@ INJECT DotVariable :
 
     public Object evaluate(Environment env) {
         Object lhs = getTarget().evaluate(env);
-        assertNonNull(lhs);
+        assertNonNull(lhs, getTarget());
         if (lhs == LOOSE_NULL) return JAVA_NULL;
         if (lhs instanceof Map m) {
             Object key = getKey();
@@ -504,8 +489,8 @@ INJECT EqualityExpression :
         TokenType operation = (TokenType) get(1).getType();
         Object left = getLeft().evaluate(env);
         Object right = getRight().evaluate(env);
-        assertIsDefined(left);
-        assertIsDefined(right);
+        assertIsDefined(left, getLeft());
+        assertIsDefined(right, getRight());
         if (left == JAVA_NULL || left == LOOSE_NULL) {
             boolean areEqual = (right == JAVA_NULL || right == LOOSE_NULL);
             return operation == NOT_EQUALS ? !areEqual : areEqual;
@@ -574,8 +559,8 @@ INJECT RelationalExpression :
         TokenType operation = (TokenType) get(1).getType();
         Object left = getLeft().evaluate(env);
         Object right = getRight().evaluate(env);
-        getLeft().assertNonNull(left);
-        getRight().assertNonNull(right);
+        assertNonNull(left, getLeft());
+        assertNonNull(right, getRight());
         if (!(left instanceof Number && right instanceof Number)) {
             throw new TemplateException("Can only compare numbers");
         }
@@ -747,6 +732,7 @@ INJECT ListLiteral :
   import org.congocc.templates.core.Environment;
   import org.congocc.templates.TemplateException;
   import org.congocc.templates.core.variables.scope.Scope;
+  import static org.congocc.templates.core.variables.Wrap.assertIsDefined;
   implements Expression
 {
     public List<Expression> getElements() {
@@ -757,7 +743,7 @@ INJECT ListLiteral :
         List<Object> result = new ArrayList<>();
         for (Expression exp : getElements()) {
             Object tm = exp.evaluate(env);
-            assertIsDefined(tm);
+            assertIsDefined(tm, exp);
             result.add(tm);
         }
         return result;
@@ -1118,6 +1104,7 @@ INJECT PositionalArgsList :
     import org.congocc.templates.core.variables.*;
     import org.congocc.templates.utility.UndeclaredThrowableException;
     import org.congocc.templates.core.nodes.ParameterList;
+    import static org.congocc.templates.core.variables.Wrap.assertIsDefined;
     extends ArgsList
 {
    public List getParameterSequence(Object target, Environment env) {
@@ -1150,7 +1137,7 @@ INJECT PositionalArgsList :
     public Object getValueAt(int i, Environment env) {
         Expression exp = childrenOfType(Expression.class).get(i);
         Object value = exp.evaluate(env);
-        exp.assertIsDefined(value);
+        assertIsDefined(value, exp);
         return value;
     }
 }
@@ -1181,6 +1168,7 @@ INJECT NamedArgsList :
     import org.congocc.templates.core.nodes.ParameterList;
     import org.congocc.templates.core.parser.ParseException;
     import org.congocc.templates.*;
+    import static org.congocc.templates.core.variables.Wrap.*;
     extends ArgsList;
 {
 
@@ -1214,7 +1202,7 @@ INJECT NamedArgsList :
             for (String paramName : namedArgs.keySet()) {
                 Expression exp = namedArgs.get(paramName);
                 Object value = exp.evaluate(env);
-                exp.assertIsDefined(value);
+                assertIsDefined(value,exp);
                 result.put(paramName, value);
             }
         }

@@ -183,9 +183,7 @@ INJECT IteratorBlock :
     import org.congocc.templates.core.variables.scope.BlockScope;
     import org.congocc.templates.core.variables.scope.LoopContext;
     import org.congocc.templates.TemplateHash;
-    import static org.congocc.templates.core.variables.Wrap.isIterable;
-    import static org.congocc.templates.core.variables.Wrap.asIterator;
-    import static org.congocc.templates.core.variables.Wrap.LOOSE_NULL;
+    import static org.congocc.templates.core.variables.Wrap.*;
     implements TemplateElement
 {
     public boolean isOverMap() {
@@ -208,7 +206,7 @@ INJECT IteratorBlock :
     public void execute(Environment env) throws IOException {
         Object listVar = getListExpression().evaluate(env);
         if (listVar == LOOSE_NULL) return;
-        getListExpression().assertNonNull(listVar);
+        assertNonNull(listVar, getListExpression());
         if (!isOverMap()) {
             if (!isIterable(listVar)) {
                 throw TemplateNode.invalidTypeException(listVar, getListExpression(), "collection or sequence");
@@ -561,7 +559,7 @@ INJECT IncludeInstruction :
         Expression parseExp = getParamByName("parse");
         if (parseExp != null) {
             Object tm = parseExp.evaluate(env);
-            parseExp.assertNonNull(tm);
+            assertNonNull(tm, parseExp);
             if (tm instanceof CharSequence) {
                 parse = StringUtil.getYesNo(asString(tm));
             }
@@ -841,7 +839,7 @@ INJECT UnifiedCall :
     import org.congocc.templates.core.nodes.ParameterList;
     import org.congocc.templates.core.variables.UserDirective;
     import org.congocc.templates.TemplateException;
-    import static org.congocc.templates.core.variables.Wrap.LOOSE_NULL;
+    import static org.congocc.templates.core.variables.Wrap.*;
     implements TemplateElement
 {
     public Expression getNameExp() {
@@ -886,7 +884,7 @@ INJECT UnifiedCall :
             env.render(macro, args, bodyParameters, firstChildOfType(Block.class));
         }
         else {
-            nameExp.assertNonNull(tm);
+            assertNonNull(tm, nameExp);
             throw new TemplateException(getLocation() + ": " + getNameExp() +
                     " is not a macro.");
         }
@@ -1078,7 +1076,7 @@ INJECT VarDirective :
    import java.util.*;
    import org.congocc.templates.core.*;
    import org.congocc.templates.core.variables.scope.Scope;
-   import static org.congocc.templates.core.variables.Wrap.JAVA_NULL;
+   import static org.congocc.templates.core.variables.Wrap.*;
    implements TemplateElement
 {
     private Map<String, Expression> vars = new LinkedHashMap<>();
@@ -1096,7 +1094,7 @@ INJECT VarDirective :
             }
             else {
                 Object tm = exp.evaluate(env);
-                exp.assertIsDefined(tm);
+                assertIsDefined(tm, exp);
                 scope.put(varname, tm);
             }
         }

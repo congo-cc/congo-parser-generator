@@ -27,7 +27,7 @@ public class DynamicKeyName extends TemplateNode implements Expression {
 
     public Object evaluate(Environment env) {
         Object lhs = getTarget().evaluate(env);
-        getTarget().assertNonNull(lhs);
+        assertNonNull(lhs, getTarget());
         if (lhs == LOOSE_NULL) {
             return JAVA_NULL;
         }
@@ -36,7 +36,7 @@ public class DynamicKeyName extends TemplateNode implements Expression {
         }
         Object key = getNameExpression().evaluate(env);
         if (key == null) {
-            getNameExpression().assertNonNull(key);
+            assertNonNull(key, getNameExpression());
         }
         if (key instanceof Number n) {
             return dealWithNumericalKey(lhs, n.intValue(), env);

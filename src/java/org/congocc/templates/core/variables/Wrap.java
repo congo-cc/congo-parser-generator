@@ -4,6 +4,7 @@ import java.util.*;
 import java.lang.reflect.Array;
 import org.congocc.templates.core.Environment;
 import org.congocc.templates.core.nodes.generated.Expression;
+import org.congocc.templates.core.parser.Node;
 import org.congocc.templates.TemplateBoolean;
 import org.congocc.templates.TemplateException;
 import org.congocc.templates.TemplateSequence;
@@ -31,6 +32,19 @@ public class Wrap {
     static private class JavaNull implements WrappedVariable {
         public Object getWrappedObject() {
             return null;
+        }
+    }
+
+    public static void assertNonNull(Object value, Node location) {
+        assertIsDefined(value, location);
+        if (value == JAVA_NULL) {
+            throw new InvalidReferenceException("Expression " + location + " is null " + location.getLocation() + ".");
+        }
+    }
+
+    public static void assertIsDefined(Object value, Node location) {
+        if (value == null) {
+            throw new InvalidReferenceException("Expression " + location + " is undefined " + location.getLocation() + ".");
         }
     }
 

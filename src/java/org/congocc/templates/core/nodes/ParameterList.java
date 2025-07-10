@@ -7,6 +7,8 @@ import org.congocc.templates.core.variables.InvalidReferenceException;
 import org.congocc.templates.core.variables.scope.Scope;
 import org.congocc.templates.core.variables.scope.NamedParameterListScope;
 import org.congocc.templates.core.variables.scope.NamedParameterMapScope;
+import static org.congocc.templates.core.variables.Wrap.assertIsDefined;
+import static org.congocc.templates.core.variables.Wrap.assertNonNull;
 import org.congocc.templates.core.Environment;
 import java.util.*;
 import java.io.IOException;
@@ -122,7 +124,7 @@ public class ParameterList extends TemplateNode {
                 throw firstReferenceException;
             } else {
                 assert firstUnresolvedExpression != null;
-                firstUnresolvedExpression.assertNonNull(null);
+                assertNonNull(null, firstUnresolvedExpression);
             }
         }
     }
@@ -179,7 +181,7 @@ public class ParameterList extends TemplateNode {
             Expression argExp = argsMap.remove(paramName);
             if (argExp != null) {
                 Object argModel = argExp.evaluate(env);
-                argExp.assertIsDefined(argModel);
+                assertIsDefined(argModel, argExp);
                 result.add(argModel);
             } else {
                 if (unresolvedParamNames == null) {
@@ -236,7 +238,7 @@ public class ParameterList extends TemplateNode {
             Expression argExp = argsMap.remove(paramName);
             if (argExp != null) {
                 Object value = argExp.evaluate(env);
-                argExp.assertIsDefined(value);
+                assertIsDefined(value, argExp);
                 result.put(paramName, value);
             } else if (defaults != null && defaults.containsKey(paramName)) {
                 if (unresolvedParamNames == null) {
@@ -263,7 +265,7 @@ public class ParameterList extends TemplateNode {
                 for (Map.Entry<String, Expression> entry : argsMap.entrySet()) {
                     Expression exp = entry.getValue();
                     Object val = exp.evaluate(env);
-                    exp.assertIsDefined(val);
+                    assertIsDefined(val,exp);
                     catchAllMap.put(entry.getKey(), val);
                 }
             } else {
