@@ -612,41 +612,6 @@ public final class Environment extends Configurable implements Scope {
         }
     }
 
-    /**
-     * Outputs the instruction stack. Useful for debugging.
-     * {@link TemplateException}s incorporate this information in their stack
-     * traces.
-     *
-     * @see #getElementStack() which exposes the actual element stack
-     *      so that you can write your own custom stack trace or error message
-     */
-    public void outputInstructionStack(PrintWriter pw) {
-        pw.println("----------");
-        ListIterator<TemplateElement> iter = elementStack
-                .listIterator(elementStack.size());
-        if (iter.hasPrevious()) {
-            pw.print("==> ");
-            TemplateElement prev = iter.previous();
-            pw.print(prev.getDescription());
-            pw.print(" [");
-            pw.print(prev.getLocation());
-            pw.println("]");
-        }
-        while (iter.hasPrevious()) {
-            TemplateElement prev = iter.previous();
-            if (prev instanceof UnifiedCall || prev instanceof IncludeInstruction) {
-                String location = prev.getDescription() + " ["
-                        + prev.getLocation() + "]";
-                if (location != null && location.length() > 0) {
-                    pw.print(" in ");
-                    pw.println(location);
-                }
-            }
-        }
-        pw.println("----------");
-        pw.flush();
-    }
-
     public Environment getEnvironment() {
         return this;
     };

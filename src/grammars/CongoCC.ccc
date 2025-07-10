@@ -7,78 +7,7 @@ BASE_SRC_DIR="../../build/generated-java";
 
 USES_PREPROCESSOR;
 
-DEACTIVATE_TOKENS=_INCLUDE,_INJECT,_EOF, RECORD, VAR, YIELD, SEALED, NON_SEALED, PERMITS, TERMINATES;
-
-
-/* congocc RESERVED WORDS: These are the only tokens in congocc but not in Java */
-
-TOKEN :
-  < _INJECT: "INJECT" > #CongoCCKeyWord
-  |
-  < _INCLUDE : "INCLUDE" | "INCLUDE_GRAMMAR"> #CongoCCKeyWord
-  |
-  < _FAIL : "FAIL" > #CongoCCKeyWord
-  |
-  < _UNCACHE_TOKENS : "UNCACHE_TOKENS"> #CongoCCKeyWord
-  |
-  < _ACTIVE_TOKENS : "ACTIVE_TOKENS"> #CongoCCKeyWord
-  |
-  < _ACTIVATE_TOKENS : "ACTIVATE_TOKENS"> #CongoCCKeyWord
-  |
-  < _DEACTIVATE_TOKENS : "DEACTIVATE_TOKENS"> #CongoCCKeyWord
-  |
-  < __ASSERT : "ASSERT"> #CongoCCKeyWord
-  |
-  < _ENSURE : "ENSURE" > #CongoCCKeyWord
-  |
-  < _SCAN : "SCAN" > #CongoCCKeyWord
-  |
-  < _IGNORE_CASE: "IGNORE_CASE" > #CongoCCKeyWord
-  |
-  < _TOKEN: "TOKEN" | "REGULAR_TOKEN"> #CongoCCKeyWord
-  |
-  < _CONTEXTUAL_KEYWORD: "CONTEXTUAL_KEYWORD" > #CongoCCKeyWord
-  |
-  < TERMINATES : "TERMINATES" > #CongoCCKeyWord
-  |
-  < _UNPARSED: "SPECIAL_TOKEN" | "UNPARSED" > #CongoCCKeyWord
-  |
-  < _MORE: "MORE" | "INCOMPLETE_TOKEN" > #CongoCCKeyWord
-  |
-  < _SKIP: "SKIP" > #CongoCCKeyWord
-  |
-  < _EOF : "EOF"> #CongoCCKeyWord
-  |
-  < _ATTEMPT: "ATTEMPT"> #CongoCCKeyWord
-  |
-  < _RECOVER : "RECOVER"> #CongoCCKeyWord
-  |
-  < _RECOVER_TO : "RECOVER_TO"> #CongoCCKeyWord
-  |
-  < _ON_ERROR : "ON_ERROR"> #CongoCCKeyWord
-  |
-  <HASH : "#">
-  |
-  <BACKSLASH : "\\"> #Backslash
-  |
-  <RIGHT_ARROW : "=>"> #RightArrow
-  |
-  <UP_TO_HERE : "=>|" ("|" | ("+" ["0"-"9"]))>
-  |
-  <_LEXICAL_STATE : "LEXICAL_STATE"> #CongoCCKeyWord
-  |
-  <SINGLE_QUOTE_STRING:
-      "'"
-      (
-          ~["'","\\","\n","\r"]
-          |
-          <STRING_ESCAPE>
-      ){2,}
-       "'"
-  > #StringLiteral
-  |
-  <START_UNPARSED : "{$" >
-;
+DEACTIVATE_TOKENS=_INCLUDE,_INJECT,_EOF, RECORD, VAR, YIELD, SEALED, NON_SEALED, PERMITS;
 
 INCLUDE "Lexical.inc.ccc"
 INCLUDE "JavaInternal.ccc"
@@ -187,13 +116,11 @@ INJECT PARSER_CLASS :
   <END_UNPARSED : "$}" >
 ;
 
-UnparsedCodeBlock #org.congocc.core.UnparsedCodeBlock :
+RawCode : //#org.congocc.core.RawCode :
    <START_UNPARSED>
-   LEXICAL_STATE IN_UNPARSED_CODE_BLOCK
-   (
-     [<UNPARSED_CONTENT>]
-     <END_UNPARSED>
-   )
+   <UNPARSED_CONTENT>
+   <END_UNPARSED>
+   [<HASH>]
 ;
 
 INJECT BASE_NODE_CLASS :
@@ -290,7 +217,7 @@ INJECT PARSER_CLASS : {
 
     private EnumSet<TokenType> CongoCCKeyWords = EnumSet.of(
        _FAIL, __ASSERT, _SCAN, _IGNORE_CASE,
-       _TOKEN, _CONTEXTUAL_KEYWORD, _UNPARSED, _SKIP, _MORE,
+       _TOKEN, _CONTEXTUAL, _UNPARSED, _SKIP, _MORE,
        _ATTEMPT, _RECOVER, _ON_ERROR,
        _LEXICAL_STATE);
 
@@ -1322,11 +1249,9 @@ ExpansionUnit #void :
     }
   ]
   |
-  UnparsedCodeBlock // Currently unused
+  SCAN ~\...\Lookahead => AttemptBlock
   |
-  SCAN 1 ~\...\Lookahead => AttemptBlock
-  |
-  SCAN 1 ~\...\Lookahead => TryBlock
+  SCAN ~\...\Lookahead => TryBlock
   |
   Assertion
   |

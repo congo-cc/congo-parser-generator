@@ -1,6 +1,101 @@
 // An included part of the CongoCC grammar that is just the
 // part that involves the lexical specification
 
+/* congocc RESERVED WORDS: These are the only tokens in congocc but not in Java */
+
+TOKEN #CongoCCKeyWord :
+  < _INJECT: "INJECT" >
+  |
+  < _INCLUDE : "INCLUDE" | "INCLUDE_GRAMMAR">
+  |
+  < _FAIL : "FAIL" >
+  |
+  < _UNCACHE_TOKENS : "UNCACHE_TOKENS">
+  |
+  < _ACTIVE_TOKENS : "ACTIVE_TOKENS">
+  |
+  < _ACTIVATE_TOKENS : "ACTIVATE_TOKENS">
+  |
+  < _DEACTIVATE_TOKENS : "DEACTIVATE_TOKENS">
+  |
+  < __ASSERT : "ASSERT">
+  |
+  < _ENSURE : "ENSURE" >
+  |
+  < _SCAN : "SCAN" >
+  |
+  < _IGNORE_CASE: "IGNORE_CASE" >
+  |
+  < _TOKEN: "TOKEN" | "REGULAR_TOKEN">
+  |
+  < _UNPARSED: "SPECIAL_TOKEN" | "UNPARSED" >
+  |
+  < _MORE: "MORE">
+  |
+  < _SKIP: "SKIP" >
+  |
+  < _CONTEXTUAL : "CONTEXTUAL" >
+  |
+  < _EOF : "EOF">
+  |
+  < _ATTEMPT: "ATTEMPT">
+  |
+  < _RECOVER : "RECOVER">
+  |
+  < _RECOVER_TO : "RECOVER_TO">
+  |
+  < _ON_ERROR : "ON_ERROR">
+;
+
+TOKEN :
+  <HASH : "#">
+  |
+  <BACKSLASH : "\\"> #Backslash
+  |
+  <RIGHT_ARROW : "=>"> #RightArrow
+  |
+  <UP_TO_HERE : "=>|" ("|" | ("+" ["0"-"9"]))>
+  |
+  <_LEXICAL_STATE : "LEXICAL_STATE"> #CongoCCKeyWord
+  |
+  <SINGLE_QUOTE_STRING:
+      "'"
+      (
+          ~["'","\\","\n","\r"]
+          |
+          <STRING_ESCAPE>
+      ){2,}
+       "'"
+  > #StringLiteral
+  |
+  <START_UNPARSED : "{" (["J","P","C"])? "%">
+  {
+     char initialChar = matchedToken.charAt(1);
+     char langInitialChar = getGrammar().getAppSettings().getCodeLang().toString().charAt(0);
+     if (initialChar != '%' && initialChar != langInitialChar) {
+        matchedToken.setUnparsed(true);
+     }
+  } : IN_UNPARSED_CODE_BLOCK
+  |
+  <END_UNPARSED : "%}"> {
+    if (matchedToken.previousCachedToken().isUnparsed()) {
+        matchedToken.setUnparsed(true);
+    }
+  }
+;
+
+<IN_UNPARSED_CODE_BLOCK> TOKEN :
+  <?UNPARSED_CONTENT : (~[])+ <END_UNPARSED>>
+  #UnparsedContent
+  {
+    if (matchedToken.previousCachedToken().isUnparsed()) {
+        matchedToken.setUnparsed(true);
+    }
+    matchedToken.truncate(2);
+  } : JAVA
+;
+
+
 TokenProduction :
 {
     Token t = null;
@@ -20,7 +115,7 @@ TokenProduction :
       ("," <IDENTIFIER> {multipleStatesSpecified = true; grammar.addLexicalState(lastConsumedToken.toString());})*
      ">"
   ]
-  (<_TOKEN> | <_UNPARSED> | <_SKIP> | <_MORE> | <_CONTEXTUAL_KEYWORD>)
+  (<_TOKEN> | <_UNPARSED> | <_SKIP> | <_MORE> | <_CONTEXTUAL>)
   [
     "[" "IGNORE_CASE" {ignoreCase = true;} "]"
   ]
