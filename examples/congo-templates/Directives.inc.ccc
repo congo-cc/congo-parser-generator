@@ -1322,7 +1322,7 @@ INJECT Block :
 
 TemplateHeaderElement# :
   [IgnorableWhitespace]
-  <FTL_HEADER> =>||
+  <CTL_HEADER> =>||
   (
     <ID>
     [

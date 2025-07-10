@@ -82,7 +82,7 @@ ${globals::translateParserImports()}
         }
 
         public ParseException(string message) : base(message) {
-            // TODO REVISIT - this is only here because FTL.ccc
+            // TODO REVISIT - this is only here because CTL.ccc
             // throws with this signature
         }
 

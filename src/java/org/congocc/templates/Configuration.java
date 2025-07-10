@@ -308,10 +308,10 @@ public class Configuration extends Configurable {
      * {@link Configurable#setSetting the super method}, it understands these:
      * <ul>
      *   <li><code>"auto_import"</code>: Sets the list of auto-imports. Example of valid value:
-     *       <br><code>/lib/form.ftl as f, /lib/widget as w, "/lib/evil name.ftl" as odd</code>
+     *       <br><code>/lib/form.ctl as f, /lib/widget as w, "/lib/evil name.ctl" as odd</code>
      *       See: {@link #setAutoImports}
      *   <li><code>"auto_include"</code>: Sets the list of auto-includes. Example of valid value:
-     *       <br><code>/include/common.ftl, "/include/evil name.ftl"</code>
+     *       <br><code>/include/common.ctl, "/include/evil name.ctl"</code>
      *       See: {@link #setAutoIncludes}
      *   <li><code>"default_encoding"</code>: The name of the charset, such as <code>"UTF-8"</code>.
      *       See: {@link #setDefaultEncoding}
@@ -462,8 +462,8 @@ public class Configuration extends Configurable {
     /**
      * Set whether the getTemplate() methods throw exceptions
      * when there is a (recoverable) parsing problem in the template.
-     * This would only be set true by certain tools such as FTL-aware
-     * editors that work with FTL code that contains syntactical errors.
+     * This would only be set true by certain tools such as CTL-aware
+     * editors that work with CTL code that contains syntactical errors.
      * @param tolerateParsingProblems
      */
 

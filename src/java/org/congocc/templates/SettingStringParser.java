@@ -56,7 +56,7 @@ class SettingStringParser {
             if (c == ' ') throw new ParseException(
                     "Unexpected end of text: expected gate hash name", 0, 0);
             String ns = fetchStringValue();
-            
+
             map.put(ns, lib);
 
             c = skipWS();
@@ -74,7 +74,7 @@ class SettingStringParser {
         if (w.startsWith("'") || w.startsWith("\"")) {
             w = w.substring(1, w.length() - 1);
         }
-        return StringUtil.FTLStringLiteralDec(w);
+        return StringUtil.CTLStringLiteralDec(w);
     }
 
     String fetchKeyword() {

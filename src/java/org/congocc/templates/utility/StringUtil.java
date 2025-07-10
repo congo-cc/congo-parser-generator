@@ -126,12 +126,12 @@ public class StringUtil {
                 b.append((char) (c1 < 10 ? c1 + '0' : c1 - 10 + 'A'));
             }
         }
-        
+
         return b.toString();
     }
-    
+
     /**
-     * FTL string literal decoding.
+     * CTL string literal decoding.
      *
      * \\, \", \', \n, \t, \r, \b and \f will be replaced according to
      * Java rules. In additional, it knows \g, \l, \a and \{ which are
@@ -148,7 +148,7 @@ public class StringUtil {
      * @return String with all escape sequences resolved
      * @throws ParseException if there string contains illegal escapes
      */
-    public static String FTLStringLiteralDec(String s) {
+    public static String CTLStringLiteralDec(String s) {
         int idx = s.indexOf('\\');
         if (idx == -1) {
             return s;
@@ -309,16 +309,16 @@ public class StringUtil {
      *     <code>newsub</code>.
      * @return String The string after the replacements.
      */
-    public static String replace(String text, 
-                                  String oldsub, 
-                                  String newsub, 
+    public static String replace(String text,
+                                  String oldsub,
+                                  String newsub,
                                   boolean caseInsensitive,
-                                  boolean firstOnly) 
+                                  boolean firstOnly)
     {
         StringBuilder buf;
         int tln;
         int oln = oldsub.length();
-        
+
         if (oln == 0) {
             int nln = newsub.length();
             if (nln == 0) {
@@ -416,13 +416,13 @@ public class StringUtil {
      * Escapes the <code>String</code> with the escaping rules of Java language
      * string literals, so it is safe to insert the value into a string literal.
      * The resulting string will not be quoted.
-     * 
+     *
      * <p>In additional, all characters under UCS code point 0x20, that has no
      * dedicated escape sequence in Java language, will be replaced with UNICODE
      * escape (<tt>\<!-- -->u<i>XXXX</i></tt>).
-     * 
+     *
      * @see #jQuote(String)
-     */ 
+     */
     public static String javaStringEnc(String s) {
         int ln = s.length();
         for (int i = 0; i < ln; i++) {
@@ -468,17 +468,17 @@ public class StringUtil {
         } // for each characters
         return s;
     }
-    
+
     /**
      * Escapes a <code>String</code> according the JavaScript string literal
      * escaping rules. The resulting string will not be quoted.
-     * 
+     *
      * <p>It escapes both <tt>'</tt> and <tt>"</tt>.
      * In additional it escapes <tt>></tt> as <tt>\></tt> (to avoid
      * <tt>&lt;/script></tt>). Furthermore, all characters under UCS code point
      * 0x20, that has no dedicated escape sequence in JavaScript language, will
-     * be replaced with hexadecimal escape (<tt>\x<i>XX</i></tt>). 
-     */ 
+     * be replaced with hexadecimal escape (<tt>\x<i>XX</i></tt>).
+     */
     public static String javaScriptStringEnc(String s) {
         int ln = s.length();
         for (int i = 0; i < ln; i++) {
@@ -537,21 +537,21 @@ public class StringUtil {
      * value can be omitted if <code>defaultValue</code> is not null. When a
      * value is omitted, then the colon after the key must be omitted as well.
      * The same key can't be used for multiple times.
-     * 
+     *
      * @param s the string to parse.
      *     For example: <code>"strong:100, soft:900"</code>.
      * @param defaultValue the value used when the value is omitted in a
      *     key-value pair.
-     * 
+     *
      * @return the map that contains the name-value pairs.
-     * 
+     *
      * @throws java.text.ParseException if the string is not a valid name-value
      *     pair list.
      */
     public static Map<String, String> parseNameValuePairList(String s, String defaultValue)
     throws java.text.ParseException {
         Map<String, String> map = new HashMap<String, String>();
-        
+
         char c = ' ';
         int ln = s.length();
         int p = 0;
@@ -559,7 +559,7 @@ public class StringUtil {
         int valueStart;
         String key;
         String value;
-        
+
         fetchLoop: while (true) {
             // skip ws
             while (p < ln) {
@@ -620,12 +620,12 @@ public class StringUtil {
 
                 // skip ","
                 p++;
-                
+
                 value = defaultValue;
             } else {
                 // skip ":"
                 p++;
-    
+
                 // skip ws
                 while (p < ln) {
                     c = s.charAt(p);
@@ -642,7 +642,7 @@ public class StringUtil {
                             p);
                 }
                 valueStart = p;
-    
+
                 // seek value end
                 while (p < ln) {
                     c = s.charAt(p);
@@ -670,7 +670,7 @@ public class StringUtil {
                     }
                     p++;
                 }
-                
+
                 // skip ","
                 if (p < ln) {
                     if (c != ',') {
@@ -685,7 +685,7 @@ public class StringUtil {
                     }
                 }
             }
-            
+
             // store the key-value pair
             if (map.put(key, value) != null) {
                 throw new java.text.ParseException(
@@ -693,27 +693,27 @@ public class StringUtil {
                         + jQuote(key), keyStart);
             }
         }
-        
+
         return map;
     }
-    
+
     /**
      * Pads the string at the left with spaces until it reaches the desired
      * length. If the string is longer than this length, then it returns the
-     * unchanged string. 
-     * 
+     * unchanged string.
+     *
      * @param s the string that will be padded.
      * @param minLength the length to reach.
      */
     public static String leftPad(String s, int minLength) {
         return leftPad(s, minLength, ' ');
     }
-    
+
     /**
      * Pads the string at the left with the specified character until it reaches
      * the desired length. If the string is longer than this length, then it
      * returns the unchanged string.
-     * 
+     *
      * @param s the string that will be padded.
      * @param minLength the length to reach.
      * @param filling the filling pattern.
@@ -723,16 +723,16 @@ public class StringUtil {
         if (minLength <= ln) {
             return s;
         }
-        
+
         StringBuilder res = new StringBuilder(minLength);
-        
+
         int dif = minLength - ln;
         for (int i = 0; i < dif; i++) {
             res.append(filling);
         }
-        
+
         res.append(s);
-        
+
         return res.toString();
     }
 
@@ -741,7 +741,7 @@ public class StringUtil {
      * desired length. If the string is longer than this length, then it returns
      * the unchanged string. For example: <code>leftPad('ABC', 9, '1234')</code>
      * returns <code>"123412ABC"</code>.
-     * 
+     *
      * @param s the string that will be padded.
      * @param minLength the length to reach.
      * @param filling the filling pattern. Must be at least 1 characters long.
@@ -752,7 +752,7 @@ public class StringUtil {
         if (minLength <= ln) {
             return s;
         }
-        
+
         StringBuilder res = new StringBuilder(minLength);
 
         int dif = minLength - ln;
@@ -769,29 +769,29 @@ public class StringUtil {
         for (int i = 0; i < cnt; i++) {
             res.append(filling.charAt(i));
         }
-        
+
         res.append(s);
-        
+
         return res.toString();
     }
-    
+
     /**
      * Pads the string at the right with spaces until it reaches the desired
      * length. If the string is longer than this length, then it returns the
-     * unchanged string. 
-     * 
+     * unchanged string.
+     *
      * @param s the string that will be padded.
      * @param minLength the length to reach.
      */
     public static String rightPad(String s, int minLength) {
         return rightPad(s, minLength, ' ');
     }
-    
+
     /**
      * Pads the string at the right with the specified character until it
      * reaches the desired length. If the string is longer than this length,
      * then it returns the unchanged string.
-     * 
+     *
      * @param s the string that will be padded.
      * @param minLength the length to reach.
      * @param filling the filling pattern.
@@ -801,16 +801,16 @@ public class StringUtil {
         if (minLength <= ln) {
             return s;
         }
-        
+
         StringBuilder res = new StringBuilder(minLength);
 
         res.append(s);
-        
+
         int dif = minLength - ln;
         for (int i = 0; i < dif; i++) {
             res.append(filling);
         }
-        
+
         return res.toString();
     }
 
@@ -821,7 +821,7 @@ public class StringUtil {
      * returns <code>"ABC412341"</code>. Note that the filling pattern is
      * started as if you overlay <code>"123412341"</code> with the left-aligned
      * <code>"ABC"</code>, so it starts with <code>"4"</code>.
-     * 
+     *
      * @param s the string that will be padded.
      * @param minLength the length to reach.
      * @param filling the filling pattern. Must be at least 1 characters long.
@@ -832,7 +832,7 @@ public class StringUtil {
         if (minLength <= ln) {
             return s;
         }
-        
+
         StringBuilder res = new StringBuilder(minLength);
 
         res.append(s);
@@ -859,7 +859,7 @@ public class StringUtil {
         for (int i = 0; i < cnt; i++) {
             res.append(filling.charAt(i));
         }
-        
+
         return res.toString();
     }
 }

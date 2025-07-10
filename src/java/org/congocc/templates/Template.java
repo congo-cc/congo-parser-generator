@@ -24,7 +24,7 @@ import org.congocc.templates.core.parser.*;
    </PRE>
  *
  * <P>However, you can also construct a template directly by passing in to
- * the appropriate constructor a java.lang.CharSequence instance that contains 
+ * the appropriate constructor a java.lang.CharSequence instance that contains
  * the raw template text. The compiled template is
  * stored in an an efficient data structure for later use.
  *
@@ -37,11 +37,11 @@ import org.congocc.templates.core.parser.*;
  * {@link Configurable#setTemplateExceptionHandler(TemplateExceptionHandler)} on
  * a Configuration object (for all templates belonging to a configuration) or on
  * a Template object (for a single template).
- * 
+ *
  * <p>It's not legal to modify the values of the Template engine settings: a) while the
  * template is executing; b) if the template object is already accessible from
  * multiple threads.
- * 
+ *
  * @version $Id: Template.java,v 1.218 2005/12/07 00:31:18 revusky Exp $
  */
 
@@ -58,7 +58,7 @@ public class Template extends Configurable {
     private long lastModified;
 
 
-    
+
     /**
      * A prime constructor to which all other constructors should
      * delegate directly or indirectly.
@@ -70,7 +70,7 @@ public class Template extends Configurable {
         this.lastModified = System.currentTimeMillis();
     }
 	public Template(String name, CharSequence input, Configuration cfg,
-			String encoding) throws IOException 
+			String encoding) throws IOException
     {
         this(name, cfg);
         this.encoding = encoding;
@@ -80,7 +80,7 @@ public class Template extends Configurable {
         PostParseVisitor ppv = new PostParseVisitor(this);
         ppv.visit(this);
 	}
-	
+
     /**
      * Returns a trivial template, one that is just a single block of
      * plain text, no dynamic content. (Used by the cache module to create
@@ -90,7 +90,7 @@ public class Template extends Configurable {
      * @param content the block of text that this template represents
      * @param config the configuration to which this template belongs
      */
-    static public Template getPlainTextTemplate(String name, String content, 
+    static public Template getPlainTextTemplate(String name, String content,
             Configuration config) {
         Template template = new Template(name, config);
         template.rootElement = new Block() {
@@ -100,14 +100,14 @@ public class Template extends Configurable {
         };
         return template;
     }
-    
+
     /**
      * Processes the template, using data from the map, and outputs
      * the resulting text to the supplied <tt>Writer</tt> The elements of the
      * map are converted to template models using the default object wrapper
      * returned by the {@link Configuration#getObjectWrapper() getObjectWrapper()}
      * method of the <tt>Configuration</tt>.
-     * @param rootMap the root node of the data model.  
+     * @param rootMap the root node of the data model.
      * @param out a <tt>Writer</tt> to output the text to.
      * @throws TemplateException if an exception occurs during template processing
      * @throws IOException if an I/O exception occurs during writing to the writer.
@@ -142,7 +142,7 @@ public class Template extends Configurable {
     * before and after the processing:
     * <pre>
     * Environment env = myTemplate.createProcessingEnvironment(root, out);
-    * env.include("include/common.ftl", null, true);  // before processing
+    * env.include("include/common.ctl", null, true);  // before processing
     * env.process();
     * WrappedVariable x = env.getVariable("x");  // after processing
     * </pre>
@@ -180,19 +180,19 @@ public class Template extends Configurable {
     public Configuration getConfiguration() {
         return (Configuration) getFallback();
     }
-    
+
     public List<ParsingProblemImpl> getParsingProblems() {
     	return parsingProblems;
     }
-    
+
     public boolean hasParsingProblems() {
     	return !parsingProblems.isEmpty();
     }
-    
+
     public void addParsingProblem(ParsingProblemImpl problem) {
     	parsingProblems.add(problem);
     }
-    
+
     /**
      * Sets the character encoding to use for
      * included files. Usually you don't set this value manually,
@@ -217,23 +217,23 @@ public class Template extends Configurable {
     public void addImport(ImportDeclaration id) {
         imports.add(id);
     }
-    
+
     public void setHeaderElement(TemplateHeaderElement headerElement) {
     	this.headerElement = headerElement;
     }
-    
+
     public TemplateHeaderElement getHeaderElement() {
     	return headerElement;
     }
-    
+
     public boolean declaresVariable(String name) {
         return getRootElement().declaresVariable(name);
     }
-    
+
     public void declareVariable(String name) {
         getRootElement().declareVariable(name);
     }
-    
+
     /**
      *  @return the root TemplateElement object.
      */
@@ -252,7 +252,7 @@ public class Template extends Configurable {
     public void setLastModified(long lastModified) {
         this.lastModified = lastModified;
     }
-    
+
     static public class WrongEncodingException extends RuntimeException {
 
         public String specifiedEncoding;
@@ -277,7 +277,7 @@ public class Template extends Configurable {
     public Map<String,Macro> getMacros() {
         return macros;
     }
-    
+
     public Block getRootElement() {
         return rootElement;
     }

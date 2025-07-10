@@ -37,7 +37,7 @@ INJECT LEXER_CLASS :
         _ATTEMPT, _ASSERT, _RECOVER, IF, ELSE_IF, EXEC, LIST,
         SET, _INCLUDE, IMPORT, FUNCTION, _MACRO, STOP, RETURN, SETTING,
         EMBED, VAR, ELSE, BREAK, TRIM, LTRIM, RTRIM,
-        NESTED, FTL_HEADER, UNKNOWN_DIRECTIVE
+        NESTED, CTL_HEADER, UNKNOWN_DIRECTIVE
     );
 
     private static EnumSet<TokenType> emptyDirectives = EnumSet.of(
@@ -82,7 +82,8 @@ INJECT LEXER_CLASS :
             case "#elif" : return ELSE_IF;
             case "#elseif" : return ELSE_IF;
             case "#exec" : return EXEC;
-            case "#ftl" : return FTL_HEADER;
+            case "#ftl":
+            case "#ctl" : return CTL_HEADER;
             case "#function" : return FUNCTION;
             case "#if" : return IF;
             case "#import" : return IMPORT;
@@ -275,7 +276,7 @@ TOKEN#Text :
     |
     <EXEC : "exec" >
     |
-    <FTL_HEADER : "ftl">
+    <CTL_HEADER : "ftl" | "ctl">
     |
     <FUNCTION : "function">
     |
@@ -503,7 +504,7 @@ INJECT StringLiteral :
    import org.congocc.templates.TemplateExceptionHandler;
    import org.congocc.templates.core.Environment;
    import java.io.IOException;
-   import static org.congocc.templates.utility.StringUtil.FTLStringLiteralDec;
+   import static org.congocc.templates.utility.StringUtil.CTLStringLiteralDec;
    implements Expression
 {
     private TemplateElement interpolatedOutput;
@@ -521,7 +522,7 @@ INJECT StringLiteral :
        String s = toString();
        s = s.substring(1, s.length() -1);
        if (isRaw()) s = s.substring(1);
-       if (!isRaw()) s = FTLStringLiteralDec(s);
+       if (!isRaw()) s = CTLStringLiteralDec(s);
        this.value = s;
     }
 

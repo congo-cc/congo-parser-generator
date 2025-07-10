@@ -4,8 +4,8 @@ import java.lang.annotation.*;
 
 /**
  * An annotation that indicates what the parameters
- * an FTL transform or method can take. The annotation 
- * uses the same syntax as FTL.
+ * a CTL transform or method can take. The annotation
+ * uses the same syntax as CTL.
  */
 
 @Retention(RetentionPolicy.RUNTIME)

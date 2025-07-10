@@ -11,31 +11,31 @@ import java.util.*;
 
 /**
  * A class that visits the AST after the parsing step proper,
- * and makes various checks and adjustments. 
+ * and makes various checks and adjustments.
  * @author revusky
  */
 
 class PostParseVisitor extends Node.Visitor {
-	
+
 	private Template template;
 
 	PostParseVisitor(Template template) {
 		this.template = template;
 	}
-	
+
 	void visit(Template template) {
 		TemplateHeaderElement header = template.getHeaderElement();
 		if (header != null) visit(header);
 		visit(template.getRootTreeNode());
 	}
-	
+
 	void visit(TemplateHeaderElement header) {
 		if (header == null) return;
 		for (Map.Entry<String, Expression> entry : header.getParams().entrySet()) {
 			String key = entry.getKey();
 			try {
 				if (!key.equals("encoding")) {
-					ParsingProblemImpl problem  = new ParsingProblemImpl("Unknown ftl header parameter: " + entry.getKey(), header);
+					ParsingProblemImpl problem  = new ParsingProblemImpl("Unknown ctl header parameter: " + entry.getKey(), header);
 					template.addParsingProblem(problem);
 				}
 			} catch (Exception e) {
@@ -44,7 +44,7 @@ class PostParseVisitor extends Node.Visitor {
 			}
 		}
 	}
-	
+
 	void visit(AssignmentInstruction node) {
 		recurse(node);
 		for (Expression target : node.getTargetExpressions()) {
@@ -54,7 +54,7 @@ class PostParseVisitor extends Node.Visitor {
 			}
 		}
 	}
-	
+
 	void visit(BlockAssignment node) {
 		recurse(node);
 		Expression targetExpression = node.getTargetExpression();
@@ -63,7 +63,7 @@ class PostParseVisitor extends Node.Visitor {
 			template.addParsingProblem(problem);
 		}
 	}
-	
+
 	void visit(BuiltInExpression node) {
 		recurse(node);
 		if (node.getBuiltIn() == null) {
@@ -71,7 +71,7 @@ class PostParseVisitor extends Node.Visitor {
 			template.addParsingProblem(problem);
 		}
 	}
-	
+
 	void visit(Macro node) {
 		String macroName = node.getName();
 		if (template.declaresVariable(macroName)) {
@@ -90,7 +90,7 @@ class PostParseVisitor extends Node.Visitor {
 		template.addMacro(node);
 		recurse(node);
 	}
-	
+
 	void visit(IteratorBlock node) {
 		node.getNestedBlock().declareVariable(node.getIndexName());
 		node.getNestedBlock().declareVariable(node.getIndexName() + "_has_next");
@@ -102,14 +102,14 @@ class PostParseVisitor extends Node.Visitor {
 		}
 		recurse(node);
 	}
-	
+
 	void visit(BreakInstruction node) {
 		recurse(node);
 		if (node.firstAncestorOfType(IteratorBlock.class) == null) {
 			template.addParsingProblem(new ParsingProblemImpl("The break directive can only be used within a loop.", node));
 		}
 	}
-	
+
 	void visit(ReturnInstruction node) {
 		recurse(node);
 		Macro macro = node.firstAncestorOfType(Macro.class);
@@ -124,7 +124,7 @@ class PostParseVisitor extends Node.Visitor {
 			}
 		}
 	}
-	
+
 	void visit(VarDirective node) {
         Block parent = (Block) node.getParent();
        	for (String key : node.getVariables().keySet()) {
@@ -139,7 +139,7 @@ class PostParseVisitor extends Node.Visitor {
        		}
        	}
 	}
-	
+
 	void visit(StringLiteral node) {
 		if (!node.isRaw()) {
 			try {
@@ -151,10 +151,10 @@ class PostParseVisitor extends Node.Visitor {
 			}
 		}
 	}
-	
+
 	void visit(ImportDeclaration node) {
 		String namespaceName = node.getNamespace();
-		if (template.declaresVariable(namespaceName)) { 
+		if (template.declaresVariable(namespaceName)) {
 			String msg = "The variable "+namespaceName + " is already declared and should not be used as a namespace name to import.";
 			template.addParsingProblem(new ParsingProblemImpl(msg, node));
 		}
@@ -171,10 +171,10 @@ class PostParseVisitor extends Node.Visitor {
                 !key.equals(Configurable.DATETIME_FORMAT_KEY) &&
                 !key.equals(Configurable.TIME_ZONE_KEY) &&
                 !key.equals(Configurable.BOOLEAN_FORMAT_KEY) &&
-                !key.equals(Configurable.URL_ESCAPING_CHARSET_KEY)) 
+                !key.equals(Configurable.URL_ESCAPING_CHARSET_KEY))
             {
         		ParsingProblemImpl problem = new ParsingProblemImpl("Invalid setting name, or it is not allowed to change the"
-                        + "value of the setting with FTL: "
+                        + "value of the setting with CTL: "
                         + key, node);
         		template.addParsingProblem(problem);
             }

@@ -529,7 +529,7 @@ public final class Environment extends Configurable implements Scope {
 
     /**
      * Returns the variable that is visible in this context. This is the
-     * correspondent to an FTL top-level variable reading expression. That is,
+     * correspondent to a CTL top-level variable reading expression. That is,
      * it tries to find the the variable in this order:
      * <ol>
      * <li>An loop variable (if we're in a loop or user defined directive body)
@@ -568,7 +568,7 @@ public final class Environment extends Configurable implements Scope {
     }
 
     /**
-     * Sets a variable that is visible globally. This is correspondent to FTL
+     * Sets a variable that is visible globally. This is correspondent to CTL
      * <code><#global <i>name</i>=<i>model</i>></code>.
      */
     public void setGlobalVariable(String name, Object value) {
@@ -672,7 +672,7 @@ public final class Environment extends Configurable implements Scope {
     }
 
     /**
-     * Returns the main name-space. This is correspondent of FTL
+     * Returns the main name-space. This is correspondent of CTL
      * <code>.main</code> hash.
      */
     public Scope getMainNamespace() {
@@ -680,7 +680,7 @@ public final class Environment extends Configurable implements Scope {
     }
 
     /**
-     * Returns the current name-space. This is correspondent of FTL
+     * Returns the current name-space. This is correspondent of CTL
      * <code>.namespace</code> hash.
      */
     public Scope getCurrentNamespace() {
@@ -692,7 +692,7 @@ public final class Environment extends Configurable implements Scope {
     }
 
     /**
-     * Returns the data model hash. This is correspondent of FTL
+     * Returns the data model hash. This is correspondent of CTL
      * <code>.datamodel</code> hash. That is, it contains both the variables
      * of the root hash passed to the <code>Template.process(...)</code>, and
      * the shared variables in the <code>Configuration</code>.

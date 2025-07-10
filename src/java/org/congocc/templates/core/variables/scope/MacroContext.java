@@ -6,15 +6,15 @@ import org.congocc.templates.core.nodes.generated.Macro;
 import org.congocc.templates.core.nodes.ParameterList;
 
 /**
- * Represents the context or scope of the 
- * execution of an FTL macro. 
+ * Represents the context or scope of the
+ * execution of a CTL macro.
  */
 public class MacroContext extends BlockScope {
-    private Block body; 
+    private Block body;
     private ParameterList bodyParameters;
     private MacroContext invokingMacroContext;
     private Scope invokingScope;
-    
+
     public MacroContext(Macro macro, Environment env, Block body, ParameterList bodyParameters) {
     	super(macro.getNestedBlock(), env.getMacroNamespace(macro)); // REVISIT
         this.invokingMacroContext = env.getCurrentMacroContext();

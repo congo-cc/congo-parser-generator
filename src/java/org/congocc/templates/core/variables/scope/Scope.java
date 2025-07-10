@@ -8,9 +8,9 @@ import java.util.Map;
 import java.util.Set;
 
 /**
- * Represents a variable resolution context in FTL. This 
+ * Represents a variable resolution context in CTL. This
  * may be the local variables in a macro, the context of a loop
- * or a template namespace 
+ * or a template namespace
  */
 public interface Scope extends Map<String,Object> {
 
@@ -24,7 +24,7 @@ public interface Scope extends Map<String,Object> {
 
     /**
      * @return whether the variable is defined in
-     * this specific scope. (It could be defined in a 
+     * this specific scope. (It could be defined in a
      * fallback scope and this method will return false.)
      */
     boolean definesVariable(String name);
@@ -47,7 +47,7 @@ public interface Scope extends Map<String,Object> {
     }
 
     // All of the following 10 default methods exist so
-    // that it is not too onerous to implement this 
+    // that it is not too onerous to implement this
     // interface.
     default boolean isEmpty() {
         return size() == 0;
@@ -84,7 +84,7 @@ public interface Scope extends Map<String,Object> {
     default void putAll(Map<? extends String,? extends Object> m) {
         throw new UnsupportedOperationException();
     }
-    
+
     default void clear() {
         throw new UnsupportedOperationException();
     }

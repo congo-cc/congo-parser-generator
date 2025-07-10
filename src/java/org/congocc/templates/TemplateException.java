@@ -16,7 +16,7 @@ import org.congocc.templates.core.nodes.generated.TemplateElement;
  */
 public class TemplateException extends RuntimeException {
 
-    private List<TemplateElement> ftlStack=new ArrayList<>();
+    private List<TemplateElement> ctlStack=new ArrayList<>();
 
     public TemplateException(String message) {
         this(message,null);
@@ -35,7 +35,7 @@ public class TemplateException extends RuntimeException {
         super(description, cause);
         Environment env = Environment.getCurrentEnvironment();
         if(env != null) {
-            ftlStack = env.getElementStack();
+            ctlStack = env.getElementStack();
         }
     }
 
@@ -44,17 +44,16 @@ public class TemplateException extends RuntimeException {
     }
 
     /**
-     * Returns the quote of the problematic FTL instruction and the FTL stack strace.
-     * We provide access to the FTL instruction stack
-     * so you might prefer to use getFTLStack() and format the items in
+     * Returns the quote of the problematic CTL instruction and the CTL stack strace.
+     * We provide access to the CTL instruction stack
+     * so you might prefer to use Environment#getElementStack() and format the items in
      * list yourself.
-     * @see #getFTLStack()
      */
-    public String getFTLInstructionStack() {
+    public String getCTLInstructionStack() {
     	StringBuilder buf = new StringBuilder("----------\n");
-    	if (ftlStack != null) {
+    	if (ctlStack != null) {
         	boolean atFirstElement = true;
-    		for (TemplateElement location : ftlStack) {
+    		for (TemplateElement location : ctlStack) {
     			if (atFirstElement) {
     				atFirstElement = false;
     	            buf.append("==> ");
@@ -77,8 +76,8 @@ public class TemplateException extends RuntimeException {
     	return buf.toString();
     }
 
-    public List<TemplateElement> getFTLStack() {
-        return ftlStack;
+    public List<TemplateElement> getCTLStack() {
+        return ctlStack;
     }
 
     public void printStackTrace(java.io.PrintStream ps) {
@@ -90,7 +89,7 @@ public class TemplateException extends RuntimeException {
     public void printStackTrace(PrintWriter pw) {
         pw.println();
         pw.println(getMessage());
-        pw.println(getFTLInstructionStack());
+        pw.println(getCTLInstructionStack());
         pw.println("Java backtrace for programmers:");
         pw.println("----------");
         super.printStackTrace(pw);
