@@ -1194,15 +1194,6 @@ ExpansionUnit #void :
   Failure
   |
   EmbeddedCode
-/*
-  Block {CodeBlock block = (CodeBlock) peekNode();}
-  [
-    "#"
-    {
-        block.setAppliesInLookahead(true);
-        popNode();
-    }
-  ]*/
   |
   SCAN ~\...\Lookahead => AttemptBlock
   |
@@ -1348,14 +1339,14 @@ INJECT Terminal :
 
 UpToHere(Expansion exp) #void :
    <UP_TO_HERE>
-   {
+   {%
        String img = lastConsumedToken.toString();
        exp.setScanLimit(true);
        int lastChar = img.codePointBefore(img.length());
        if (Character.isDigit(lastChar)) {
            exp.setScanLimitPlus(lastChar - '0');
        }
-   }
+   %}
 ;
 
 //The following two productions are not actually used. These constructs are now
@@ -1413,7 +1404,7 @@ INJECT OneOrMore :
 
 
 AttemptBlock :
- "ATTEMPT" ExpansionChoice "RECOVER"  (ExpansionWithParentheses | Block)
+ "ATTEMPT" ExpansionChoice "RECOVER"  (ExpansionWithParentheses | EmbeddedCode)
 ;
 
 INJECT AttemptBlock :
@@ -1441,7 +1432,7 @@ Failure# :
       exp=Expression
       [":"]
       |
-      Block
+      EmbeddedCode
    ]
    {
        CURRENT_NODE.setExp(exp);

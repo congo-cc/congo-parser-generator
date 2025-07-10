@@ -1299,7 +1299,7 @@ ${globals::translateLexerInitializers()}
         private Token TokenLexicalActions(Token matchedToken, TokenType? matchedType) {
             switch (matchedType) {
         [#list lexerData.regularExpressions as regexp]
-                [#if regexp.codeSnippet??]
+                [#if regexp.codeSnippet]
             case TokenType.${regexp.label}:
 ${globals::translateCodeBlock(regexp.codeSnippet.javaCode, 16)}
                 break;

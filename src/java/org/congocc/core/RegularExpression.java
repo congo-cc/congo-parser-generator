@@ -2,11 +2,11 @@ package org.congocc.core;
 
 import org.congocc.core.nfa.LexicalStateData;
 import static org.congocc.core.LexerData.isJavaIdentifier;
-import org.congocc.parser.tree.CodeBlock;
 import org.congocc.parser.tree.TokenProduction;
 import org.congocc.parser.Node;
 import org.congocc.parser.TokenSource;
 import org.congocc.parser.tree.BaseNode;
+import org.congocc.parser.tree.EmbeddedCode;
 import org.congocc.parser.tree.RegexpSequence;
 
 /**
@@ -17,6 +17,7 @@ import org.congocc.parser.tree.RegexpSequence;
 public abstract class RegularExpression extends BaseNode {
 
     private Grammar grammar;
+    private EmbeddedCode codeSnippet;
 
     public Grammar getGrammar() {
         if (grammar == null) {
@@ -32,9 +33,15 @@ public abstract class RegularExpression extends BaseNode {
 
     private LexicalStateData newLexicalState;
 
-    public CodeBlock getCodeSnippet() {
-        return (getParent() instanceof RegexpSpec) ? getParent().firstChildOfType(CodeBlock.class) : null;
+    public EmbeddedCode getCodeSnippet() {
+        return codeSnippet;
     }
+
+    public void setCodeSnippet(EmbeddedCode codeSnippet) {
+        this.codeSnippet = codeSnippet;
+    }
+
+
 
     public boolean getIgnoreCase() {
         TokenProduction tp = firstAncestorOfType(TokenProduction.class);
