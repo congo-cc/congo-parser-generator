@@ -370,7 +370,7 @@ GrammarInclusion throws IOException :
        "(" <STRING_LITERAL> {locations.add(((StringLiteral)lastConsumedToken).getString());} ")"
    )
    [";"]
-   {
+   {%
       if (enterIncludes) {
           Node included = grammar.include(locations, includeToken);
           if (included!=null) {
@@ -379,7 +379,7 @@ GrammarInclusion throws IOException :
               getErrors().addWarning(thisProduction, "File is already included.");
           }
       }
-   }
+   %}
 ;
 
 #CodeInjection :
@@ -1285,20 +1285,20 @@ Terminal# :
     @assignment := Assignment
   ]
   ACTIVATE_TOKENS _EOF(RegexpStringLiteral | RegexpRef | EndOfFile )
-  {
+  {%
       RegularExpression result = (RegularExpression) peekNode();
       if (result instanceof RegexpStringLiteral rsl) {
             rsl.setLexicalState(grammar.getDefaultLexicalState());
       }
       thisProduction.setRegexp(result);
       thisProduction.setLabel(result.getLabel());
-  }
+  %}
   [
       SCAN ~\...\Lookahead
       => "!"
-      {
+      {%
           thisProduction.setTolerantParsing(true);
-      }
+      %}
   ]
   [
       ChildNameInfo(thisProduction)
@@ -1423,9 +1423,9 @@ UncacheTokens# : "UNCACHE_TOKENS" ;
 INJECT UncacheTokens : extends org.congocc.core.EmptyExpansion;
 
 Failure# :
-   {
+   {%
        Expression exp = null;
-   }
+   %}
    "FAIL"
    [
       [":"]
@@ -1434,9 +1434,9 @@ Failure# :
       |
       EmbeddedCode
    ]
-   {
+   {%
        thisProduction.setExp(exp);
-   }
+   %}
 ;
 
 INJECT Failure :

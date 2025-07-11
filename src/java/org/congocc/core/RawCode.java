@@ -146,9 +146,10 @@ public class RawCode extends EmptyExpansion implements EmbeddedCode {
     void parsePythonBlock() {
         String code = get(1).toString();
         code = normalizePythonBlock(code);
-        PythonParser cccParser = new PythonParser(getInputSource(), code);
-        cccParser.setStartingPos(get(1).getBeginLine(), get(1).getBeginColumn());
-        parsedContent = cccParser.Module();
+        PythonParser pyParser = new PythonParser(getInputSource(), code);
+        pyParser.setStartingPos(get(1).getBeginLine(), get(1).getBeginColumn());
+        pyParser.setExtraIndent(extraIndent);
+        parsedContent = pyParser.Module();
     }
 
     void parsePythonExpression() {

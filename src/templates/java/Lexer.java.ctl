@@ -399,6 +399,7 @@ class ${settings.lexerClassName} extends TokenSource
    #list lexerData.regularExpressions as regexp
         #if regexp.codeSnippet
       case ${regexp.label} :
+          // Code action from ${regexp.codeSnippet.location}
           ${regexp.codeSnippet}
            break;
         #endif

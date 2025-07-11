@@ -43,3 +43,10 @@ INJECT Module :
         return new PyFormatter().format(this,true);
     }
 }
+
+INJECT PARSER_CLASS :
+{
+    public void setExtraIndent(int extraIndent) {
+        token_source.setExtraIndent(extraIndent);
+    }
+}

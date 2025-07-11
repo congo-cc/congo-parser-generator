@@ -77,11 +77,12 @@ TOKEN :
      }
   } : IN_UNPARSED_CODE_BLOCK
   |
-  <END_UNPARSED : "%}"> {
+  <END_UNPARSED : "%}">
+  {%
     if (matchedToken.previousCachedToken().isUnparsed()) {
         matchedToken.setUnparsed(true);
     }
-  }
+  %}
 ;
 
 <IN_UNPARSED_CODE_BLOCK> TOKEN :
