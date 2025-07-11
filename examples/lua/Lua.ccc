@@ -18,7 +18,7 @@ INCLUDE "LuaLexer.ccc"
    [
       SCAN "#" => ACTIVATE_TOKENS SHEBANG (<SHEBANG>)
    ]
-   Block <EOF> {return CURRENT_NODE;}
+   Block <EOF> {return thisProduction;}
 ;
 
 Block#(>=0) : (Statement)* [LastStatement] ;

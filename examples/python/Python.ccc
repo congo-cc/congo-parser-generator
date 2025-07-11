@@ -24,7 +24,7 @@ INCLUDE "PythonLexer.ccc"
 #Module :
    (Statement)*!
    <EOF>
-   {return CURRENT_NODE;}
+   {return thisProduction;}
 ;
 
 Number#void :

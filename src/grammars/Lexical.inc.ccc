@@ -121,7 +121,7 @@ TokenProduction :
   ]
   ["#" Name {
     tokenClassName=peekNode().toString();
-    CURRENT_NODE.setTokenClassName(tokenClassName);
+    thisProduction.setTokenClassName(tokenClassName);
     }
   ]
   ":"
@@ -133,9 +133,9 @@ TokenProduction :
           if (firstSpecifiedLexicalState == null) {
               firstSpecifiedLexicalState = grammar.getDefaultLexicalState();
           }
-          CURRENT_NODE.setImplicitLexicalState(firstSpecifiedLexicalState);
+          thisProduction.setImplicitLexicalState(firstSpecifiedLexicalState);
       }
-      CURRENT_NODE.setIgnoreCase(ignoreCase || grammar.getAppSettings().isIgnoreCase());
+      thisProduction.setIgnoreCase(ignoreCase || grammar.getAppSettings().isIgnoreCase());
    }
 ;
 
@@ -263,7 +263,7 @@ RegexpSpec(String tokenClassName)#org.congocc.core.RegexpSpec :
     ]
     [
         SCAN {!regexp.isPrivate()} =>
-        ":" <IDENTIFIER> {CURRENT_NODE.setNextLexicalState(lastConsumedToken.toString());}
+        ":" <IDENTIFIER> {thisProduction.setNextLexicalState(lastConsumedToken.toString());}
     ]
 ;
 
@@ -271,12 +271,12 @@ RegexpSpec(String tokenClassName)#org.congocc.core.RegexpSpec :
 RegexpStringLiteral# :
    (
     <STRING_LITERAL>
-    |<CHARACTER_LITERAL> {CURRENT_NODE.setSingleQuoted(true);}
-    |<SINGLE_QUOTE_STRING> {CURRENT_NODE.setSingleQuoted(true);}
+    |<CHARACTER_LITERAL> {thisProduction.setSingleQuoted(true);}
+    |<SINGLE_QUOTE_STRING> {thisProduction.setSingleQuoted(true);}
    )
    {
       String image = StringLiteral.removeEscapesAndQuotes(lastConsumedToken.toString());
-      CURRENT_NODE.setLiteralString(image);
+      thisProduction.setLiteralString(image);
    }
 ;
 
@@ -334,8 +334,8 @@ INJECT RegexpStringLiteral :
     t=<IDENTIFIER> =>||
     DEACTIVATE_TOKENS RSIGNEDSHIFT, RUNSIGNEDSHIFT (">")
     {
-       CURRENT_NODE.setLabel(t.toString());
-       return CURRENT_NODE;
+       thisProduction.setLabel(t.toString());
+       return thisProduction;
     }
 ;
 

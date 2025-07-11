@@ -115,7 +115,7 @@ ProvidesDirective :
     <EOF>
   ]
   {
-    return CURRENT_NODE;
+    return thisProduction;
   }
 ;
 
@@ -509,7 +509,7 @@ ArrayInitializer :
   =>|+1 FormalParameters ( (Annotation)* <LBRACKET><RBRACKET> )*
   [ ThrowsList ]
   ( Block | <SEMICOLON> )
-  {return CURRENT_NODE;}
+  {return thisProduction;}
 ;
 
 FormalParameters : <LPAREN> [ FormalParameter ( <COMMA> FormalParameter )* ] <RPAREN> ;
@@ -884,7 +884,7 @@ LiteralExpression# : Literal ;
 
 Parentheses :
     <LPAREN>
-    Expression {CURRENT_NODE.setNestedExpression((Expression) peekNode());}
+    Expression {thisProduction.setNestedExpression((Expression) peekNode());}
     <RPAREN>
 ;
 
@@ -1310,7 +1310,7 @@ TryStatement :
   ASSERT {getTokenType(1) == FINALLY
        || getTokenType(1) == CATCH
        // This does not work for Python.
-       // It says that current_node_scope is undefined.
+       // It says that thisProduction_scope is undefined.
        || currentNodeScope.get(1) instanceof ResourcesInTryBlock}
        : "Since this is not a try-with-resources, there must be at least one catch or finally block." :
   (CatchBlock)*

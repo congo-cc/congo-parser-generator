@@ -319,7 +319,7 @@ INJECT Token :
   )+!
   <EOF>
   {
-        return CURRENT_NODE;
+        return thisProduction;
   }
 ;
 
@@ -374,9 +374,9 @@ GrammarInclusion throws IOException :
       if (enterIncludes) {
           Node included = grammar.include(locations, includeToken);
           if (included!=null) {
-              CURRENT_NODE.add(included);
+              thisProduction.add(included);
           } else {
-              getErrors().addWarning(CURRENT_NODE, "File is already included.");
+              getErrors().addWarning(thisProduction, "File is already included.");
           }
       }
    }
@@ -400,7 +400,7 @@ GrammarInclusion throws IOException :
             |
             "interface" {isInterface = true;}
         ]
-        <IDENTIFIER> {CURRENT_NODE.setName(lastConsumedToken.toString());}
+        <IDENTIFIER> {thisProduction.setName(lastConsumedToken.toString());}
         ":"
         =>|+1
         [
@@ -411,14 +411,14 @@ GrammarInclusion throws IOException :
         (Annotation)*
         [
              "extends"
-             ot=ObjectType {CURRENT_NODE.addExtendsType(ot);}
-             (SCAN 1 {isInterface} => "," ot=ObjectType {CURRENT_NODE.addExtendsType(ot);})*
+             ot=ObjectType {thisProduction.addExtendsType(ot);}
+             (SCAN 1 {isInterface} => "," ot=ObjectType {thisProduction.addExtendsType(ot);})*
              [";"]
         ]
         [
              SCAN 1 {!isInterface} =>
-             "implements" ot=ObjectType {CURRENT_NODE.addImplementsType(ot);}
-             ("," ot=ObjectType {CURRENT_NODE.addImplementsType(ot);})*
+             "implements" ot=ObjectType {thisProduction.addImplementsType(ot);}
+             ("," ot=ObjectType {thisProduction.addImplementsType(ot);})*
              [";"]
         ]
         ASSERT {!isSealed || checkNextTokenImage("permits")} : "Expecting 'permits' here" :
@@ -426,12 +426,12 @@ GrammarInclusion throws IOException :
         [
            SCAN 0 {foundOptionalInitialBrace} => "}"
         ]
-        [coib=ClassOrInterfaceBody {CURRENT_NODE.body = coib;}]
+        [coib=ClassOrInterfaceBody {thisProduction.body = coib;}]
         {
                 if (enterIncludes) {
-                    grammar.addCodeInjection(CURRENT_NODE);
+                    grammar.addCodeInjection(thisProduction);
                 }
-                return CURRENT_NODE;
+                return thisProduction;
         }
 ;
 
@@ -583,7 +583,7 @@ BNFProduction #org.congocc.core.BNFProduction :
        |
        @implicitReturnType =? "#"
     ]
-    id=<IDENTIFIER> {CURRENT_NODE.setName(id.toString());}
+    id=<IDENTIFIER> {thisProduction.setName(id.toString());}
     // @name =$ <IDENTIFIER>
     [FormalParameters]
     [
@@ -593,8 +593,8 @@ BNFProduction #org.congocc.core.BNFProduction :
         tba=TreeNodeDescriptor
         {
             String nodeName = tba.getNodeName();
-            if (nodeName == null) nodeName = CURRENT_NODE.getNodeName();
-            grammar.addNodeType(CURRENT_NODE.getName(), nodeName);
+            if (nodeName == null) nodeName = thisProduction.getNodeName();
+            grammar.addNodeType(thisProduction.getName(), nodeName);
         }
     ]
     [
@@ -604,16 +604,16 @@ BNFProduction #org.congocc.core.BNFProduction :
     [
         SCAN 2 => <IDENTIFIER>
         // SCAN 2 => @lexicalState =$ <IDENTIFIER>
-        {CURRENT_NODE.setLexicalState(lastConsumedToken.toString());}
+        {thisProduction.setLexicalState(lastConsumedToken.toString());}
         ":"
     ]
     ExpansionChoice
-    {CURRENT_NODE.setExpansion((Expansion) peekNode());}
+    {thisProduction.setExpansion((Expansion) peekNode());}
     ";"
     {
-        CURRENT_NODE.adjustFirstToken(firstToken);
+        thisProduction.adjustFirstToken(firstToken);
         if (tba == null && !grammar.getAppSettings().getNodeDefaultVoid()) {
-           grammar.addNodeType(CURRENT_NODE.getName(),CURRENT_NODE.getName());
+           grammar.addNodeType(thisProduction.getName(),thisProduction.getName());
         }
      }
 ;
@@ -624,9 +624,9 @@ TreeNodeDescriptor #TreeBuildingAnnotation :
        "("
           [
             (">" | ">=" | "<" | "<=" | "+" | "-")
-            {CURRENT_NODE.setInitialShorthand(lastConsumedToken.toString());}
+            {thisProduction.setInitialShorthand(lastConsumedToken.toString());}
           ]
-          Expression {CURRENT_NODE.setCondition((Expression) peekNode());}
+          Expression {thisProduction.setCondition((Expression) peekNode());}
        ")"
   ]
 ;
@@ -643,13 +643,13 @@ InlineTreeNodeDescriptor #TreeBuildingAnnotation :
     SCAN ~("(") => {}
     |
     "(" (">" | ">=" | "<" | "<=" | "+" | "-") =>||
-    {CURRENT_NODE.setInitialShorthand(lastConsumedToken.toString());}
-    [Expression {CURRENT_NODE.setCondition((Expression) peekNode());}]
+    {thisProduction.setInitialShorthand(lastConsumedToken.toString());}
+    [Expression {thisProduction.setCondition((Expression) peekNode());}]
     ")"
     |
     "("
     ENSURE ~(ExpansionSequence "|") //A bit kludgy, but we treat this case specially for principle of least surprise.
-    Expression {CURRENT_NODE.setCondition((Expression) peekNode());}
+    Expression {thisProduction.setCondition((Expression) peekNode());}
     ")"
     // If any of the following tokens are after the closing parenthesesis, this must
     // be an expansion (or the code is just invalid)
@@ -844,30 +844,30 @@ ExpansionWithParentheses :
    ]
    lparen ="(" =>|| ExpansionChoice {Expansion nested = (Expansion) peekNode();} ")"
    [
-       "*" {CURRENT_NODE = new ZeroOrMore();}
+       "*" {thisProduction = new ZeroOrMore();}
        |
-       "?" {CURRENT_NODE = new ZeroOrOne();}
+       "?" {thisProduction = new ZeroOrOne();}
        |
-       "+" {CURRENT_NODE = new OneOrMore();}
+       "+" {thisProduction = new OneOrMore();}
    ]
    {
-        CURRENT_NODE.setAssignment(assignment);
+        thisProduction.setAssignment(assignment);
    }
    [
        SCAN ~\...\Lookahead =>
        "!"
        {
-           if (CURRENT_NODE instanceof ZeroOrOne) {
+           if (thisProduction instanceof ZeroOrOne) {
                nested.setTolerantParsing(true);
            } else {
-               CURRENT_NODE.setTolerantParsing(true);
+               thisProduction.setTolerantParsing(true);
            }
        }
    ]
-   [UpToHere(CURRENT_NODE)]
+   [UpToHere(thisProduction)]
    {
        Node startNode = lss != null ? lss : lparen;
-       CURRENT_NODE.copyLocationInfo(startNode, lastConsumedToken);
+       thisProduction.copyLocationInfo(startNode, lastConsumedToken);
    }
 ;
 
@@ -908,8 +908,8 @@ ExpansionSequence #org.congocc.core.ExpansionSequence :
     =>
     la=Lookahead  =>||
     {
-       la.setExpansion(CURRENT_NODE);
-       CURRENT_NODE.setLookahead(la);
+       la.setExpansion(thisProduction);
+       thisProduction.setLookahead(la);
     }
   ]
   (
@@ -957,7 +957,7 @@ Assertion :
     |
     [ @expansionNegated :=? "~" ]
     "("
-        ExpansionChoice {CURRENT_NODE.setExpansion((Expansion) peekNode());}
+        ExpansionChoice {thisProduction.setExpansion((Expansion) peekNode());}
     ")"
    )
    [
@@ -965,7 +965,7 @@ Assertion :
        ":" @messageExpression := Expression
        [":"]
    ]
-   [UpToHere(CURRENT_NODE)]
+   [UpToHere(thisProduction)]
 ;
 
 Ensure :
@@ -975,7 +975,7 @@ Ensure :
      |
      ["~"] "(" ExpansionChoice ")"
    )
-   [UpToHere(CURRENT_NODE)]
+   [UpToHere(thisProduction)]
 ;
 
 INJECT Ensure :
@@ -1011,18 +1011,18 @@ Lookahead# :
 ]
 [
     "{"
-    exp=Expression {hasSemanticLookahead = true; CURRENT_NODE.setSemanticLookahead(exp);}
+    exp=Expression {hasSemanticLookahead = true; thisProduction.setSemanticLookahead(exp);}
     "}"
-    ["#" {CURRENT_NODE.setSemanticLookaheadNested(true);}]
+    ["#" {thisProduction.setSemanticLookaheadNested(true);}]
 ]
 [LookBehind =>|| {lb = peekNode();}]
 [
     SCAN {!hasExplicitNumericalLookahead} =>
-    ["~" {CURRENT_NODE.setNegated(true);}]
+    ["~" {thisProduction.setNegated(true);}]
     ExpansionChoice {expansion = (Expansion) peekNode();}
     <RIGHT_ARROW> =>||
     {
-       CURRENT_NODE.setNestedExpansion(expansion);
+       thisProduction.setNestedExpansion(expansion);
     }
 ]
 (
@@ -1270,11 +1270,11 @@ EmbeddedCode EmbeddedExpression#void :
   [
      SCAN ~\...\Lookahead =>
      "!"
-     {CURRENT_NODE.setTolerantParsing(true);}
+     {thisProduction.setTolerantParsing(true);}
   ]
-  [ChildNameInfo(CURRENT_NODE)]
-  [UpToHere(CURRENT_NODE)]
-  {return CURRENT_NODE;}
+  [ChildNameInfo(thisProduction)]
+  [UpToHere(thisProduction)]
+  {return thisProduction;}
 ;
 
 Terminal# :
@@ -1290,21 +1290,21 @@ Terminal# :
       if (result instanceof RegexpStringLiteral rsl) {
             rsl.setLexicalState(grammar.getDefaultLexicalState());
       }
-      CURRENT_NODE.setRegexp(result);
-      CURRENT_NODE.setLabel(result.getLabel());
+      thisProduction.setRegexp(result);
+      thisProduction.setLabel(result.getLabel());
   }
   [
       SCAN ~\...\Lookahead
       => "!"
       {
-          CURRENT_NODE.setTolerantParsing(true);
+          thisProduction.setTolerantParsing(true);
       }
   ]
   [
-      ChildNameInfo(CURRENT_NODE)
+      ChildNameInfo(thisProduction)
   ]
   [
-    UpToHere(CURRENT_NODE)
+    UpToHere(thisProduction)
   ]
 ;
 
@@ -1366,7 +1366,7 @@ ZeroOrOne :
     ]
     "[" =>|| ExpansionChoice {Expansion exp = (Expansion) peekNode();} "]"
      ["!" {exp.setTolerantParsing(true);}]
-     [UpToHere(CURRENT_NODE)]
+     [UpToHere(thisProduction)]
 ;
 
 INJECT ZeroOrOne :
@@ -1435,7 +1435,7 @@ Failure# :
       EmbeddedCode
    ]
    {
-       CURRENT_NODE.setExp(exp);
+       thisProduction.setExp(exp);
    }
 ;
 
@@ -1458,7 +1458,7 @@ INJECT LexicalStateSwitch : {
 }
 
 TokenActivation :
-   ("ACTIVE_TOKENS" | "ACTIVATE_TOKENS" | "DEACTIVATE_TOKENS" {CURRENT_NODE.setDeactivate(true);})
+   ("ACTIVE_TOKENS" | "ACTIVATE_TOKENS" | "DEACTIVATE_TOKENS" {thisProduction.setDeactivate(true);})
    ["+"|"-"] <IDENTIFIER>
    ([","] ["+"|"-"] <IDENTIFIER>)*
 ;

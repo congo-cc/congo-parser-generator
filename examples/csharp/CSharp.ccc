@@ -29,7 +29,7 @@ INCLUDE "CSharpLexer.ccc"
    (GlobalAttributeSection)*
    CompilationUnitBody
    <EOF>
-   {return CURRENT_NODE;}
+   {return thisProduction;}
 ;
 
 CompilationUnitBody#void :
