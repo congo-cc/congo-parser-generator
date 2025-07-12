@@ -444,6 +444,8 @@ ClassOrInterfaceBodyDeclaration#interface :
   MethodDeclaration
   |
   FieldDeclaration
+  |
+  FAIL "Not a valid class or interface body declaration."
 ;
 
 INJECT TypeDeclaration : extends ClassOrInterfaceBodyDeclaration
@@ -457,7 +459,8 @@ FieldDeclaration :
                                      PRIVATE, STATIC, FINAL,
                                      TRANSIENT, VOLATILE);}
   Modifiers
-  Type VariableDeclarator ( <COMMA> VariableDeclarator )* <SEMICOLON>
+  Type =>|+1
+  VariableDeclarator ( <COMMA> VariableDeclarator )* <SEMICOLON>
 ;
 
 VariableDeclarator# : VariableDeclaratorId [ <ASSIGN> VariableInitializer ] ;
@@ -520,7 +523,7 @@ ConstructorDeclaration :
   {permissibleModifiers = EnumSet.of(PUBLIC, PROTECTED, PRIVATE);}
   Modifiers
   [ TypeParameters ]
-  TypeIdentifier FormalParameters =>||
+  TypeIdentifier =>|+1 FormalParameters
   [ ThrowsList ]
   <LBRACE>
   (SCAN ~(<RBRACE>|ExplicitConstructorInvocation) => BlockStatement)*! // JEP 447
@@ -1302,22 +1305,6 @@ ThrowStatement : <THROW> Expression <SEMICOLON> ;
 
 SynchronizedStatement : <SYNCHRONIZED> <LPAREN> Expression <RPAREN> Block ;
 
-#if false
-TryStatement :
-  <TRY>
-  [ResourcesInTryBlock]
-  Block
-  ASSERT {getTokenType(1) == FINALLY
-       || getTokenType(1) == CATCH
-       // This does not work for Python.
-       // It says that thisProduction_scope is undefined.
-       || currentNodeScope.get(1) instanceof ResourcesInTryBlock}
-       : "Since this is not a try-with-resources, there must be at least one catch or finally block." :
-  (CatchBlock)*
-  [FinallyBlock]
-;
-
-#else
 TryStatement :
   {
     boolean isTryWithResources=false,
@@ -1332,7 +1319,6 @@ TryStatement :
   ASSERT {seenCatch || seenFinally || isTryWithResources}
   : "A try-catch must have at least one catch or finally block if it is not a try-with-resources."
 ;
-#endif
 
 ResourcesInTryBlock :
     <LPAREN>

@@ -25,17 +25,19 @@ public class ParseException extends ${BASE_EXCEPTION_TYPE} {
   //We were expecting one of these token types
   private ${TOKEN_TYPE_SET} expectedTypes;
 
-  private List<NonTerminalCall> callStack;
+  private List<NonTerminalCall> callStack = new ArrayList<>();
 
   private boolean alreadyAdjusted;
 
   private void setInfo(${BaseToken} token, ${TOKEN_TYPE_SET} expectedTypes, List<NonTerminalCall> callStack) {
-    if (token != null && !token.getType().isEOF() && token.getNext() != null) {
+[#--    if (token != null && !token.getType().isEOF() && token.getNext() != null) {
         token = token.getNext();
-    }
+    }--]
     this.token = token;
     this.expectedTypes = expectedTypes;
-    this.callStack = new ArrayList<>(callStack);
+    if (callStack != null) {
+        this.callStack = new ArrayList<>(callStack);
+    }
   }
 
   public boolean hitEOF() {
@@ -47,7 +49,7 @@ public class ParseException extends ${BASE_EXCEPTION_TYPE} {
   }
 
   public ParseException(${BaseToken} token) {
-     this.token = token;
+     setInfo(token, null, null);
   }
 
   public ParseException() {}
@@ -58,13 +60,12 @@ public class ParseException extends ${BASE_EXCEPTION_TYPE} {
 
   public ParseException(String message, List<NonTerminalCall> callStack) {
     super(message);
-    this.callStack = callStack;
+    this.callStack = new ArrayList<>(callStack);
   }
 
   public ParseException(String message, ${BaseToken} token, List<NonTerminalCall> callStack) {
      super(message);
-     this.token = token;
-     this.callStack = callStack;
+     setInfo(token, null, callStack);
   }
 
   @Override
@@ -76,35 +77,36 @@ public class ParseException extends ${BASE_EXCEPTION_TYPE} {
      StringBuilder buf = new StringBuilder();
      if (msg != null) buf.append(msg);
      String location = token != null ? token.getLocation() : "";
-     buf.append("\nEncountered an error at (or somewhere around) " + location);
-     if  (expectedTypes != null && token != null && expectedTypes.contains(token.getType())) {
-         [#-- //This is really screwy, have to REVISIT this whole case. --]
-         return buf.toString();
+     buf.append("\nEncountered an error");
+     if (token != null) {
+        buf.append(" at (or somewhere around) " + token.getLocation());
+        if (token.getType().isEOF()) {
+             buf.append("\nUnexpected end of input.");
+             return buf.toString();
+        }
      }
-     if (expectedTypes != null && expectedTypes.size() >0) {
-         if (expectedTypes.size() == 1) {
-            buf.append("\nWas expecting: " + expectedTypes.iterator().next() + "\n");
-         }
-         else {
-            buf.append("\nWas expecting one of the following:\n");
-            boolean isFirst = true;
-            for (${BaseTokenType} type : expectedTypes) {
-               if (!isFirst) buf.append(", ");
-               isFirst = false;
-               buf.append(type);
-            }
-         }
+     if (expectedTypes == null || token == null || expectedTypes.contains(token.getType())) {
+        return buf.toString();
      }
      String content = token.toString();
      if (content == null || content.length() == 0) {
-        if (token.getType().isEOF()) {
-           buf.append("\n Unexpected end of input");
-        }
-        else buf.append("\n Found token of type " + token.getType());
+        buf.append("\n Found token of type " + token.getType());
      }
      else {
        if (content.length() > 32) content = content.substring(0, 32) + "...";
        buf.append("\nFound string \"" + addEscapes(content) + "\" of type " + token.getType());
+     }
+     if (expectedTypes.size() == 1) {
+        buf.append("\nWas expecting: " + expectedTypes.iterator().next());
+     }
+     else {
+        buf.append("\nWas expecting one of the following:\n");
+        boolean isFirst = true;
+        for (${BaseTokenType} type : expectedTypes) {
+           if (!isFirst) buf.append(", ");
+           isFirst = false;
+           buf.append(type);
+        }
      }
      return buf.toString();
   }
@@ -130,24 +132,21 @@ public class ParseException extends ${BASE_EXCEPTION_TYPE} {
    }
 
    private void adjustStackTrace() {
-      if (alreadyAdjusted || callStack == null || callStack.isEmpty()) return;
-      List<StackTraceElement> fullTrace = new ArrayList<>();
+      if (alreadyAdjusted || callStack.isEmpty()) {
+         alreadyAdjusted = true;
+         return;
+      }
       List<StackTraceElement> ourCallStack = new ArrayList<>();
       for (NonTerminalCall ntc : callStack) {
          ourCallStack.add(ntc.createStackTraceElement());
       }
+      Collections.reverse(ourCallStack);
       StackTraceElement[] jvmCallStack = super.getStackTrace();
       for (StackTraceElement regularEntry : jvmCallStack) {
-           if (ourCallStack.isEmpty()) break;
-           String methodName = regularEntry.getMethodName();
-           StackTraceElement ourEntry = lastElementWithName(ourCallStack, methodName);
-           if (ourEntry!= null) {
-               fullTrace.add(ourEntry);
-           }
-           fullTrace.add(regularEntry);
+           ourCallStack.add(regularEntry);
       }
-      StackTraceElement[] result = new StackTraceElement[fullTrace.size()];
-      setStackTrace(fullTrace.toArray(result));
+      StackTraceElement[] result = new StackTraceElement[ourCallStack.size()];
+      setStackTrace(ourCallStack.toArray(result));
       alreadyAdjusted = true;
   }
 

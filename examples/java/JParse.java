@@ -71,7 +71,7 @@ public class JParse {
         }
         long startTime = System.currentTimeMillis();
         Stream<Path> stream = parallelParsing
-                               ? paths.parallelStream() 
+                               ? paths.parallelStream()
                                :  paths.stream();
         stream.forEach(path -> parseFile(path));
         for (Path path : failures) {
@@ -107,7 +107,7 @@ public class JParse {
 
 
     static public void parseFile(Path path) {
-        try {   
+        try {
             JavaParser parser = new JavaParser(path);
             parser.setParserTolerant(tolerantParsing);
             //Node root = parser.CompilationUnit();
@@ -121,13 +121,10 @@ public class JParse {
             }
             successes.add(path);
             if (successes.size() % 1000 == 0) {
-//                System.out.println("-----------------------------------------------");
                 System.out.println("Successfully parsed " + successes.size() + " files...");
-//                System.out.println("-----------------------------------------------");
             }
         }
         catch (Exception e) {
-          System.err.println("Error processing file: " + path);
           failures.add(path);
           e.printStackTrace();
         }

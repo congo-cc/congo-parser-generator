@@ -12,24 +12,26 @@
   </target>
 
   <target name="parser-gen" depends="init" unless="javaparser.uptodate">
+    <echo>Building Java parser in Java.</echo>
     <java jar="../../congocc.jar" failonerror="true" fork="true">
       <assertions>
         <enable />
       </assertions>
-      <arg value="-q" />
-      <arg value="${basedir}/Java.ccc" />
+      <arg line ="-n -q Java.ccc" />
     </java>
+    <echo>Building Java parser in Python.</echo>
     <java jar="../../congocc.jar" failonerror="true" fork="true">
       <assertions>
         <enable />
       </assertions>
-      <arg line="-n -lang python ${basedir}/Java.ccc" />
+      <arg line="-n -q -lang python Java.ccc" />
     </java>
+    <echo>Building Java parser in CSharp.</echo>
     <java jar="../../congocc.jar" failonerror="true" fork="true">
       <assertions>
         <enable />
       </assertions>
-      <arg line="-n -lang csharp ${basedir}/Java.ccc" />
+      <arg line="-n -q -lang csharp Java.ccc" />
     </java>
   </target>
 
@@ -74,13 +76,13 @@
   </target>
 
   <target name="test-python" depends="parser-gen">
-    <exec executable="python3" dir="${basedir}" failonerror="true">
+    <exec executable="python3" dir="." failonerror="true">
       <arg line="-u jparse.py ../../src/java" />
     </exec>
   </target>
 
   <target name="test-csharp">
-    <exec executable="dotnet" dir="${basedir}" failonerror="true">
+    <exec executable="dotnet" dir="." failonerror="true">
       <arg line="cs-javaparser/bin/Debug/net6.0/org.parsers.java.dll testfiles" />
     </exec>
   </target>

@@ -199,7 +199,6 @@
     <echo>Creating jar with all dependencies included</echo>
     <jar jarfile="congocc.jar" compress="true" excludes="**/*.java">
       <fileset dir="build" includes="include/,org/,templates/"/>
-     <!--zipfileset includes="**/*.class" src="bin/CTL.jar" / -->
       <manifest>
         <attribute name="Main-Class" value="org.congocc.app.Main" />
         <attribute name="Built-By" value="${user.name}" />
@@ -226,13 +225,13 @@
       code is using the updated templates.
     -->
     <echo>Ensuring templates are up to date in the bootstrap jar ...</echo>
-    <antcall target="clean"></antcall>
-    <antcall target="jar"></antcall>
+    <antcall target="clean"/>
+    <antcall target="jar"/>
     <echo>Copying current jar to bootstrap location ...</echo>
     <copy file="congocc.jar" todir="bin" />
     <echo>Ensuring any generated code is up to date in the bootstrap jar ...</echo>
-    <antcall target="clean"></antcall>
-    <antcall target="jar"></antcall>
+    <antcall target="clean"/>
+    <antcall target="jar"/>
     <echo>Copying current jar to bootstrap location ...</echo>
     <copy file="congocc.jar" todir="bin" />
   </target>
