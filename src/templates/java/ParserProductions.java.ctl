@@ -670,6 +670,9 @@
 
 #macro BuildCodeFailure fail
     #if !fail.code
+      pushOntoCallStack("${fail.containingProduction.name}",
+                        "${fail.inputSource?j_string}",
+                        ${fail.beginLine}, ${fail.beginColumn});
       #if fail.exp??
        fail("Failure: " + ${fail.exp}, getToken(1));
       #else
@@ -912,14 +915,14 @@
    #elif choice.parent.simpleName = "OneOrMore"
        else if (${inFirstVarName}) {
            pushOntoCallStack("${currentProduction.name}", "${choice.inputSource?j_string}", ${choice.beginLine}, ${choice.beginColumn});
-           throw new ParseException(lastConsumedToken, ${choice.firstSetVarName}, parsingStack);
+           throw new ParseException(getToken(1), ${choice.firstSetVarName}, parsingStack);
        } else {
            break;
        }
    #elif choice.parent.simpleName != "ZeroOrOne"
        else {
            pushOntoCallStack("${currentProduction.name}", "${choice.inputSource?j_string}", ${choice.beginLine}, ${choice.beginColumn});
-           throw new ParseException(lastConsumedToken, ${choice.firstSetVarName}, parsingStack);
+           throw new ParseException(getToken(1), ${choice.firstSetVarName}, parsingStack);
         }
    #endif
 #endmacro

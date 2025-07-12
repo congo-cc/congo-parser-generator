@@ -29,33 +29,24 @@ public class ParseException extends ${BASE_EXCEPTION_TYPE} {
 
   private boolean alreadyAdjusted;
 
-  private void setInfo(${BaseToken} token, ${TOKEN_TYPE_SET} expectedTypes, List<NonTerminalCall> callStack) {
-[#--    if (token != null && !token.getType().isEOF() && token.getNext() != null) {
-        token = token.getNext();
-    }--]
-    this.token = token;
-    this.expectedTypes = expectedTypes;
-    if (callStack != null) {
-        this.callStack = new ArrayList<>(callStack);
-    }
-  }
-
-  public boolean hitEOF() {
-    return token != null && token.getType().isEOF();
-  }
-
   public ParseException(${BaseToken} token, ${TOKEN_TYPE_SET} expectedTypes, List<NonTerminalCall> callStack) {
-      setInfo(token, expectedTypes, callStack);
+      this.token = token;
+      this.expectedTypes = expectedTypes;
+      if (callStack == null) {
+         this.callStack = new ArrayList<>(callStack);
+      }
   }
 
   public ParseException(${BaseToken} token) {
-     setInfo(token, null, null);
+     this.token = token;
   }
-
-  public ParseException() {}
 
   public ParseException(String message) {
       super(message);
+  }
+
+  public ParseException() {
+      super();
   }
 
   public ParseException(String message, List<NonTerminalCall> callStack) {
@@ -65,7 +56,14 @@ public class ParseException extends ${BASE_EXCEPTION_TYPE} {
 
   public ParseException(String message, ${BaseToken} token, List<NonTerminalCall> callStack) {
      super(message);
-     setInfo(token, null, callStack);
+     this.token = token;
+     if (callStack != null) {
+        this.callStack = new ArrayList<>(callStack);
+     }
+  }
+
+  public boolean hitEOF() {
+      return token != null && token.getType().isEOF();
   }
 
   @Override
@@ -80,7 +78,7 @@ public class ParseException extends ${BASE_EXCEPTION_TYPE} {
      buf.append("\nEncountered an error");
      if (token != null) {
         buf.append(" at (or somewhere around) " + token.getLocation());
-        if (token.getType().isEOF()) {
+        if (hitEOF()) {
              buf.append("\nUnexpected end of input.");
              return buf.toString();
         }
