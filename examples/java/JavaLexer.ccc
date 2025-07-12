@@ -15,8 +15,6 @@ SKIP :
   <CTRL_Z : "\u001A" > {matchedToken.setType(TokenType.EOF);}
 ;
 
-//UNPARSED : <SINGLE_LINE_COMMENT : "//" (~["\n"])* "\n" > #SingleLineComment ;
-
 UNPARSED #Comment :
   < SINGLE_LINE_COMMENT : "//" (~["\n"])* "\n" > #SingleLineComment
   |

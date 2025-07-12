@@ -116,7 +116,17 @@ TokenProduction :
       ("," <IDENTIFIER> {multipleStatesSpecified = true; grammar.addLexicalState(lastConsumedToken.toString());})*
      ">"
   ]
-  (<_TOKEN> | <_UNPARSED> | <_SKIP> | <_MORE> | <_CONTEXTUAL>)
+  (
+    <_TOKEN> {%thisProduction.setKind(Kind.TOKEN);%}
+    |
+    <_UNPARSED> {%thisProduction.setKind(Kind.UNPARSED);%}
+    |
+    <_SKIP> {%thisProduction.setKind(Kind.SKIPPED);%}
+    |
+    <_MORE> {%thisProduction.setKind(Kind.MORE);%}
+    |
+    <_CONTEXTUAL> {%thisProduction.setKind(Kind.CONTEXTUAL);%}
+  )
   [
     "[" "IGNORE_CASE" {ignoreCase = true;} "]"
   ]
@@ -143,9 +153,15 @@ TokenProduction :
 INJECT TokenProduction :
     import java.util.*;
     import org.congocc.core.RegexpSpec;
+    import static NODE_PACKAGE.TokenProduction.Kind.*;
 {
+    public enum Kind {
+        TOKEN, UNPARSED, MORE, SKIPPED, CONTEXTUAL
+    }
+
     @Property private boolean ignoreCase;
     @Property String tokenClassName;
+    @Property Kind kind = TOKEN;
 
     private String implicitLexicalState;
 
@@ -196,19 +212,6 @@ INJECT TokenProduction :
           }
        }
        return false;
-    }
-
-    public String getKind() {
-       for (Token t : childrenOfType(Token.class)) {
-           switch (t.getType()) {
-              case _MORE : return "MORE";
-              case _UNPARSED : return "UNPARSED";
-              case _SKIP : return "SKIP";
-              case _TOKEN : return "TOKEN";
-              default:
-           }
-      }
-      return "TOKEN";
     }
 }
 

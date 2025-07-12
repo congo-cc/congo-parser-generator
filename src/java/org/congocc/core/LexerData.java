@@ -6,6 +6,8 @@ import org.congocc.parser.Node;
 import org.congocc.app.Errors;
 import org.congocc.core.nfa.LexicalStateData;
 import org.congocc.parser.tree.*;
+import org.congocc.parser.tree.TokenProduction.Kind;
+import static org.congocc.parser.tree.TokenProduction.Kind.*;
 
 /**
  * Base object that contains lexical data. It contains LexicalStateData objects
@@ -132,19 +134,19 @@ public class LexerData {
     }
 
     public TokenSet getMoreTokens() {
-        return getTokensOfKind("MORE");
+        return getTokensOfKind(MORE);
     }
 
     public TokenSet getSkippedTokens() {
-        return getTokensOfKind("SKIP");
+        return getTokensOfKind(SKIPPED);
     }
 
     public TokenSet getUnparsedTokens() {
-        return getTokensOfKind("UNPARSED");
+        return getTokensOfKind(UNPARSED);
     }
 
     public TokenSet getRegularTokens() {
-        TokenSet result = getTokensOfKind("TOKEN");
+        TokenSet result = getTokensOfKind(TOKEN);
         for (RegularExpression re : regularExpressions) {
             if (re.getTokenProduction() == null) {
                 result.set(re.getOrdinal());
@@ -153,13 +155,13 @@ public class LexerData {
         return result;
     }
 
-    private TokenSet getTokensOfKind(String kind) {
+    private TokenSet getTokensOfKind(Kind kind) {
         TokenSet result = new TokenSet(grammar);
         for (RegularExpression re : regularExpressions) {
             if (isOverridden(re))
                 continue;
             TokenProduction tp = re.getTokenProduction();
-            if (tp != null && tp.getKind().equals(kind)) {
+            if (tp != null && tp.getKind() == kind) {
                 result.set(re.getOrdinal());
             }
         }
@@ -206,9 +208,9 @@ public class LexerData {
             if (alreadyPresent == null) {
                 addRegularExpression(stringLiteral);
             } else {
-                String kind = alreadyPresent.getTokenProduction() == null ? "TOKEN"
+                Kind kind = alreadyPresent.getTokenProduction() == null ? TOKEN
                         : alreadyPresent.getTokenProduction().getKind();
-                if (!kind.equals("TOKEN")) {
+                if (kind != TOKEN && kind != CONTEXTUAL) {
                     errors.addError(stringLiteral,
                             "String token \"" + image + "\" has been defined as a \"" + kind + "\" token.");
                 } else {
@@ -248,7 +250,7 @@ public class LexerData {
                 if (referenced.isPrivate()) {
                     errors.addError(ref,
                             "Token name \"" + label + "\" refers to a private (with a #) regular expression.");
-                } else if (!referenced.getTokenProduction().getKind().equals("TOKEN")) {
+                } else if (referenced.getTokenProduction().getKind() != TOKEN && referenced.getTokenProduction().getKind() != CONTEXTUAL) {
                     errors.addError(ref, "Token name \"" + label
                             + "\" refers to a non-token (SKIP, MORE, UNPARSED) regular expression.");
                 }

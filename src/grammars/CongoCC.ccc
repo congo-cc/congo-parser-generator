@@ -46,6 +46,7 @@ INJECT PARSER_CLASS :
     import org.congocc.parser.csharp.CSharpParser;
     import org.congocc.parser.python.PythonParser;
     import org.congocc.parser.python.ast.Module;
+    import NODE_PACKAGE.TokenProduction.Kind;
 {
     private Grammar grammar;
 
