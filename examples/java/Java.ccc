@@ -1056,7 +1056,6 @@ LocalVariableDeclaration#abstract :
 ;
 
 LocalVariableDeclarationLA#scan :
-   {permissibleModifiers = EnumSet.of(FINAL);}
    Modifiers
    (
      Type
@@ -1145,8 +1144,11 @@ RecordPattern :
 
 
 TypePattern#LocalVariableDeclaration :
+  ENSURE(LocalVariableDeclarationLA)
   {permissibleModifiers = EnumSet.of(FINAL);}#
-  Modifiers Type (<IDENTIFIER>|<UNDERSCORE>)
+  Modifiers ReferenceType (<IDENTIFIER>|<UNDERSCORE>)
+  |
+  VarDeclaration
 ;
 
 WhenClause :
