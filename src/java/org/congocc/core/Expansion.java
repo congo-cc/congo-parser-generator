@@ -74,7 +74,7 @@ abstract public class Expansion extends BaseNode {
     private Boolean atChoicePoint;
 
     /**
-     * This method is a bit hairy because of the need to deal with 
+     * This method is a bit hairy because of the need to deal with
      * superfluous parentheses.
      * @return Is this expansion at a choice point?
      */
@@ -84,11 +84,11 @@ abstract public class Expansion extends BaseNode {
             return atChoicePoint = false;
         }
         Node parent = getParent();
-        if (parent instanceof ExpansionChoice 
-            || parent instanceof OneOrMore 
+        if (parent instanceof ExpansionChoice
+            || parent instanceof OneOrMore
             || parent instanceof ZeroOrMore
-            || parent instanceof ZeroOrOne 
-            || parent instanceof BNFProduction) 
+            || parent instanceof ZeroOrOne
+            || parent instanceof BNFProduction)
         {
                 return atChoicePoint = true;
         }
@@ -122,7 +122,7 @@ abstract public class Expansion extends BaseNode {
     }
 
     /**
-     * @return the lexical state to switch into to parse this expansion. 
+     * @return the lexical state to switch into to parse this expansion.
      */
     public String getSpecifiedLexicalState() {
         Node parent = getParent();
@@ -152,7 +152,7 @@ abstract public class Expansion extends BaseNode {
     public final boolean superfluousParentheses() {
         return this.getClass() == ExpansionWithParentheses.class && firstChildOfType(ExpansionSequence.class) != null;
     }
- 
+
     public boolean isInsideLookahead() {
         return firstAncestorOfType(Lookahead.class) != null;
     }
@@ -231,6 +231,7 @@ abstract public class Expansion extends BaseNode {
     }
 
     public int getLookaheadAmount() {
+//        return isPossiblyEmpty() ? 0 : 1;
          return 1;
     }
 
@@ -337,14 +338,14 @@ abstract public class Expansion extends BaseNode {
     }
 
     /**
-     * @return Can we do a short-cut and scan this expansion 
+     * @return Can we do a short-cut and scan this expansion
      * as a single token (using the scanToken method)
      */
     public boolean isSingleTokenLookahead() {
-        return !isPossiblyEmpty() 
-            && getMaximumSize() == 1 
-            && !getHasScanLimit() && getLookahead() == null 
-            && !hasGlobalSemanticActions() 
+        return !isPossiblyEmpty()
+            && getMaximumSize() == 1
+            && !getHasScanLimit() && getLookahead() == null
+            && !hasGlobalSemanticActions()
             && !startsWithLexicalChange();
     }
 
@@ -359,7 +360,7 @@ abstract public class Expansion extends BaseNode {
         if (getRequiresPredicateMethod()) return false;
         if (getHasSemanticLookahead()) return false;
         if (isPossiblyEmpty()) return true;
-        return getLookaheadAmount() == 0; 
+        return getLookaheadAmount() == 0;
     }
 
     /**

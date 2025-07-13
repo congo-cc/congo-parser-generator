@@ -41,8 +41,6 @@ public abstract class RegularExpression extends BaseNode {
         this.codeSnippet = codeSnippet;
     }
 
-
-
     public boolean getIgnoreCase() {
         TokenProduction tp = firstAncestorOfType(TokenProduction.class);
         if (tp != null)
@@ -141,19 +139,4 @@ public abstract class RegularExpression extends BaseNode {
     private String generatedClassName, generatedSuperClassName;
 
     abstract public boolean matchesEmptyString();
-
-    public boolean isPossiblyAtStart() {
-        Node parent = getParent();
-        if (!(parent instanceof RegularExpression)) return true;
-        if (parent instanceof RegexpSequence parentSequence) {
-            for (RegularExpression re : parentSequence.childrenOfType(RegularExpression.class)) {
-                if (re == this) break;
-                if (!re.matchesEmptyString()) return false;
-            }
-        }
-        return ((RegularExpression) parent).isPossiblyAtStart();
-    }
-
-    /** in code points */
-    abstract public int maximumLength();
 }

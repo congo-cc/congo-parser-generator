@@ -95,6 +95,7 @@
 #endmacro
 
 #macro BuildPredicateRoutine expansion
+  #var needsScanCode = !expansion.hasSeparateSyntacticLookahead && expansion.lookaheadAmount >0
   #var lookaheadAmount = expansion.lookaheadAmount == 2147483647 ?: "UNLIMITED" : expansion.lookaheadAmount
   #set CU.newVarIndex = 0
   // BuildPredicateRoutine: expansion at ${expansion.location}
@@ -104,7 +105,7 @@
      final boolean scanToEnd = false;
      try {
       ${BuildPredicateCode(expansion)}
-      #if !expansion.hasSeparateSyntacticLookahead && expansion.lookaheadAmount > 0
+      #if needsScanCode
         ${BuildScanCode(expansion)}
       #endif
          return true;
@@ -426,13 +427,13 @@
 #endmacro
 
 #macro ScanCodeAssertion assertion
-   #if assertion.assertionExpression??
+   #if assertion.assertionExpression
       if (!(${assertion.assertionExpression})) {
          hitFailure = true;
          return false;
       }
    #endif
-   #if assertion.expansion??
+   #if assertion.expansion
       if (
          ${!assertion.expansionNegated ?: "!"}
          ${assertion.expansion.scanRoutineName}()

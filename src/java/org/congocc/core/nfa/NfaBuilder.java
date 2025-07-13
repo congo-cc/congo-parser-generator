@@ -10,14 +10,14 @@ import org.congocc.parser.Node;
 import org.congocc.parser.tree.*;
 
 /**
- * A Visitor object that builds a "finite automaton" from a Regular expression. 
- * This visitor object builds a lot of dummy states that are 
- * effectively a kind of scaffolding that are removed in a separate stage, 
+ * A Visitor object that builds a "finite automaton" from a Regular expression.
+ * This visitor object builds a lot of dummy states that are
+ * effectively a kind of scaffolding that are removed in a separate stage,
  * after doing the so-called "epsilon closure". At that point, the various
- * remaining NfaState objects (the ones that are actually used) are 
+ * remaining NfaState objects (the ones that are actually used) are
  * consolidated into CompositeStateSet objects that get expressed as
  * NFA_XXX methods in the generated code.
- * 
+ *
  * @author revusky
  */
 class NfaBuilder extends Node.Visitor {
@@ -125,10 +125,6 @@ class NfaBuilder extends Node.Visitor {
     }
 
     void visit(RegexpSequence sequence) {
-        if (sequence.getUnits().size() == 1) {
-            visit(sequence.getUnits().get(0));
-            return;
-        }
         NfaState startState = new NfaState(lexicalState, type);
         NfaState finalState = new NfaState(lexicalState, type);
         NfaState prevStartState = null;

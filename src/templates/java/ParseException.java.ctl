@@ -32,7 +32,7 @@ public class ParseException extends ${BASE_EXCEPTION_TYPE} {
   public ParseException(${BaseToken} token, ${TOKEN_TYPE_SET} expectedTypes, List<NonTerminalCall> callStack) {
       this.token = token;
       this.expectedTypes = expectedTypes;
-      if (callStack == null) {
+      if (callStack != null) {
          this.callStack = new ArrayList<>(callStack);
       }
   }
@@ -51,7 +51,9 @@ public class ParseException extends ${BASE_EXCEPTION_TYPE} {
 
   public ParseException(String message, List<NonTerminalCall> callStack) {
     super(message);
-    this.callStack = new ArrayList<>(callStack);
+    if (callStack != null) {
+        this.callStack = new ArrayList<>(callStack);
+    }
   }
 
   public ParseException(String message, ${BaseToken} token, List<NonTerminalCall> callStack) {

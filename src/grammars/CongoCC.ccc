@@ -1067,7 +1067,8 @@ INJECT Lookahead :
         IntegerLiteral it = firstChildOfType(IntegerLiteral.class);
         if (it!=null) return it.getValue();
         if (nestedExpansion !=null || expansion.getHasScanLimit()) return Integer.MAX_VALUE;
-        return 1;
+        return getLookaheadExpansion().isPossiblyEmpty() ? 0 : 1;
+       // return 1;
     }
 
     public LookBehind getLookBehind() {

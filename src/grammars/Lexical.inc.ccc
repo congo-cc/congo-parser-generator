@@ -104,6 +104,7 @@ TokenProduction :
     String firstSpecifiedLexicalState = null;
     boolean multipleStatesSpecified = false;
     boolean ignoreCase = false;
+    boolean isContextual = false;
 }
   [
     "<" "*" =>|| ">" {multipleStatesSpecified = true;}
@@ -125,7 +126,7 @@ TokenProduction :
     |
     <_MORE> {%thisProduction.setKind(Kind.MORE);%}
     |
-    <_CONTEXTUAL> {%thisProduction.setKind(Kind.CONTEXTUAL);%}
+    <_CONTEXTUAL> {%thisProduction.setKind(Kind.CONTEXTUAL); isContextual = true; %}
   )
   [
     "[" "IGNORE_CASE" {ignoreCase = true;} "]"
@@ -136,8 +137,8 @@ TokenProduction :
     }
   ]
   ":"
-   RegexpSpec(tokenClassName)
-   ( "|" RegexpSpec(tokenClassName) )*
+   RegexpSpec(tokenClassName, isContextual)
+   ( "|" RegexpSpec(tokenClassName, isContextual) )*
    ";"
    {
       if (!multipleStatesSpecified) {
@@ -167,6 +168,10 @@ INJECT TokenProduction :
 
     public void setImplicitLexicalState(String implicitLexicalState) {
         this.implicitLexicalState = implicitLexicalState;
+    }
+
+    public boolean isContextual() {
+        return getKind() == CONTEXTUAL;
     }
 
     public List<RegexpSpec> getRegexpSpecs() {
@@ -215,7 +220,7 @@ INJECT TokenProduction :
     }
 }
 
-RegexpSpec(String tokenClassName)#org.congocc.core.RegexpSpec :
+RegexpSpec(String tokenClassName, boolean isContextual)#org.congocc.core.RegexpSpec :
 {
     RegularExpression regexp;
     boolean isPrivate = false;
@@ -223,9 +228,10 @@ RegexpSpec(String tokenClassName)#org.congocc.core.RegexpSpec :
 }
     (
         RegexpStringLiteral
-        {   regexp = (RegularExpression) peekNode();
-            ((RegexpStringLiteral) regexp).setLexicalState(getGrammar().getDefaultLexicalState());
-        }
+        {%
+            regexp = (RegularExpression) peekNode();
+            ((RegexpStringLiteral)regexp).setLexicalState(getGrammar().getDefaultLexicalState());
+        %}
         |
         <LT>
         [
@@ -233,9 +239,10 @@ RegexpSpec(String tokenClassName)#org.congocc.core.RegexpSpec :
             <IDENTIFIER> {image = lastConsumedToken.toString();}
             ":"
         ]
-        RegexpChoice
-        {
-            regexp = (RegularExpression) peekNode();
+        RegexpChoice {%regexp = (RegularExpression)peekNode();%}
+        ASSERT {!isContextual || regexp instanceof RegexpStringLiteral}
+        : "The pattern in a contextual token definition can only be a string literal."
+        {%
             if (regexp instanceof RegexpRef) {
                 RegexpSequence seq = new RegexpSequence();
                 seq.add(regexp);
@@ -245,7 +252,7 @@ RegexpSpec(String tokenClassName)#org.congocc.core.RegexpSpec :
             regexp.setLabel(image);
             regexp.setGeneratedClassName(image);
             regexp.setPrivate(isPrivate);
-        }
+        %}
         <GT>
     )
     {
@@ -293,7 +300,9 @@ INJECT RegexpStringLiteral :
   @Property RegexpStringLiteral canonicalRegexp;
 
   public boolean isContextual() {
-    return getSource().charAt(0) == '\'' || getAppSettings().getContextualKeywords().contains(literalString);
+    TokenProduction tp = firstAncestorOfType(TokenProduction.class);
+    if (tp != null) return tp.isContextual();
+    return getSource().charAt(0) == '\'';
   }
 
   public int getOrdinal() {
@@ -322,11 +331,6 @@ INJECT RegexpStringLiteral :
   public String[] getLexicalStateNames() {
      TokenProduction tp = getTokenProduction();
      return tp != null ? tp.getLexicalStateNames() : new String[]{lexicalState};
-  }
-
-  @Override
-  public int maximumLength() {
-     return literalString.codePointCount(0, literalString.length());
   }
 }
 
@@ -369,11 +373,6 @@ INJECT RegexpRef :
         }
         return regexp.getOrdinal();
     }
-
-    @Override
-    public int maximumLength() {
-       return regexp.maximumLength();
-    }
 }
 
 EndOfFile : "<" <_EOF> =>|| ">" ;
@@ -382,9 +381,6 @@ INJECT EndOfFile : extends org.congocc.core.RegularExpression
 {
     @Override
     public boolean matchesEmptyString() {return true;}
-
-    @Override
-    public int maximumLength() {return 0;}
 }
 
 RegexpChoice :
@@ -413,16 +409,6 @@ INJECT RegexpChoice :
             }
         }
         return false;
-    }
-
-    public int maximumLength() {
-        int result = 0;
-        for (RegularExpression re : getChoices()) {
-            int max = re.maximumLength();
-            if (max == Integer.MAX_VALUE) return Integer.MAX_VALUE;
-            if (max > result) result = max;
-        }
-        return result;
     }
 }
 
@@ -455,17 +441,6 @@ INJECT RegexpSequence :
        }
        return true;
    }
-
-    @Override
-    public int maximumLength() {
-        int result = 0;
-        for (RegularExpression re : childrenOfType(RegularExpression.class)) {
-            int max = re.maximumLength();
-            if (max == Integer.MAX_VALUE) return Integer.MAX_VALUE;
-            result += max;
-        }
-        return result;
-    }
 }
 
 RepeatedRegexp #void :
@@ -507,15 +482,6 @@ INJECT RepetitionRange :
     public boolean matchesEmptyString() {
         return min==0 || getRegexp().matchesEmptyString();
     }
-
-    @Override
-    public int maximumLength() {
-       if (getRegexp().maximumLength() == Integer.MAX_VALUE) return Integer.MAX_VALUE;
-       if (!hasMax()) {
-           return min *  getRegexp().maximumLength();
-       }
-       return max*getRegexp().maximumLength();
-    }
 }
 
 INJECT OneOrMoreRegexp :
@@ -530,11 +496,6 @@ INJECT OneOrMoreRegexp :
    @Override
    public boolean matchesEmptyString() {
        return getRegexp().matchesEmptyString();
-   }
-
-   @Override
-   public int maximumLength() {
-      return Integer.MAX_VALUE;
    }
 }
 
@@ -560,11 +521,6 @@ INJECT ZeroOrMoreRegexp :
    public boolean matchesEmptyString() {
        return true;
    }
-
-   @Override
-   public int maximumLength() {
-      return Integer.MAX_VALUE;
-   }
 }
 
 INJECT ZeroOrOneRegexp :
@@ -589,11 +545,6 @@ INJECT ZeroOrOneRegexp :
    @Override
    public boolean matchesEmptyString() {
        return true;
-   }
-
-   @Override
-   public int maximumLength() {
-       return getRegexp().maximumLength();
    }
 }
 
@@ -621,11 +572,6 @@ INJECT CharacterList :
     @Override
     public boolean matchesEmptyString() {
         return false;
-    }
-
-    @Override
-    public int maximumLength() {
-        return 1;
     }
 }
 

@@ -445,7 +445,10 @@ ClassOrInterfaceBodyDeclaration#interface :
   |
   FieldDeclaration
   |
-  FAIL "Not a valid class or interface body declaration."
+  SCAN \.\InterfaceDeclaration =>
+  FAIL "Not a valid interface body declaration." :
+  |
+  FAIL "Not a valid class body declaration."
 ;
 
 INJECT TypeDeclaration : extends ClassOrInterfaceBodyDeclaration
