@@ -1144,11 +1144,13 @@ RecordPattern :
 
 
 TypePattern#LocalVariableDeclaration :
-  ENSURE(LocalVariableDeclarationLA)
-  {permissibleModifiers = EnumSet.of(FINAL);}#
-  Modifiers ReferenceType (<IDENTIFIER>|<UNDERSCORE>)
-  |
-  VarDeclaration
+  SCAN LocalVariableDeclarationLA =>
+  (
+    {permissibleModifiers = EnumSet.of(FINAL);}#
+    Modifiers ReferenceType (<IDENTIFIER>|<UNDERSCORE>)
+    |
+    VarDeclaration
+  )
 ;
 
 WhenClause :
