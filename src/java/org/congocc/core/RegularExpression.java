@@ -3,11 +3,9 @@ package org.congocc.core;
 import org.congocc.core.nfa.LexicalStateData;
 import static org.congocc.core.LexerData.isJavaIdentifier;
 import org.congocc.parser.tree.TokenProduction;
-import org.congocc.parser.Node;
 import org.congocc.parser.TokenSource;
 import org.congocc.parser.tree.BaseNode;
 import org.congocc.parser.tree.EmbeddedCode;
-import org.congocc.parser.tree.RegexpSequence;
 
 /**
  * An abstract base class from which all the AST nodes that
@@ -91,6 +89,10 @@ public abstract class RegularExpression extends BaseNode {
     public int getOrdinal() {
         int id = getGrammar().getLexerData().getOrdinal(this);
         return Math.max(0, id);
+    }
+
+    public boolean isContextualKeyword() {
+        return false;
     }
 
     public void setNewLexicalState(LexicalStateData newLexicalState) {

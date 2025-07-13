@@ -196,7 +196,27 @@ public class LexerData {
 
     // This method still really needs to be cleaned up!
     void buildData() {
-        for (RegexpStringLiteral stringLiteral : grammar.descendants(RegexpStringLiteral.class, rsl->rsl.getParent() instanceof RegexpSpec)) {
+        dealWithDeclaredStringLiterals();
+        dealWithUndeclaredStringLiterals();
+        dealWithDeclaredPatterns();
+        dealWithRegexpRefs();
+        // Check for self-referential loops in regular expressions
+        new RegexpVisitor().visit(grammar);
+        for (TokenProduction tokenProduction : grammar.descendants(TokenProduction.class)) {
+            for (String lexStateName : tokenProduction.getLexicalStateNames()) {
+                LexicalStateData lexState = getLexicalState(lexStateName);
+                lexState.addTokenProduction(tokenProduction);
+            }
+        }
+        for (LexicalStateData lexState : lexicalStates) {
+            lexState.process();
+        }
+    }
+
+    private void dealWithDeclaredStringLiterals() {
+        for (RegexpStringLiteral stringLiteral : grammar.descendants(RegexpStringLiteral.class,
+                                                 rsl->rsl.getParent() instanceof RegexpSpec))
+        {
             if (stringLiteral.hasLabel()) {
                 String label = stringLiteral.getLabel();
                 RegularExpression regexp = namedTokensTable.get(label);
@@ -209,7 +229,12 @@ public class LexerData {
                 addRegularExpression(stringLiteral);
             }
         }
-        for (RegexpStringLiteral stringLiteral : grammar.descendants(RegexpStringLiteral.class, rsl->rsl.getParent() instanceof Terminal)) {
+    }
+
+    private void dealWithUndeclaredStringLiterals() {
+        for (RegexpStringLiteral stringLiteral : grammar.descendants(RegexpStringLiteral.class,
+                                                                     rsl->rsl.getParent() instanceof Terminal))
+        {
             String image = stringLiteral.getLiteralString();
             String lexicalStateName = stringLiteral.getLexicalState();
             LexicalStateData lsd = getLexicalState(lexicalStateName);
@@ -227,13 +252,16 @@ public class LexerData {
                 }
             }
         }
+    }
+
+    private void dealWithDeclaredPatterns() {
         for (TokenProduction tp : grammar.descendants(TokenProduction.class)) {
             for (RegexpSpec res : tp.getRegexpSpecs()) {
                 RegularExpression re = res.getRegexp();
+                if (re instanceof RegexpStringLiteral) continue;
                 if (res.isLazy()) {
                     lazyTokens.add(re);
                 }
-                if (re instanceof RegexpStringLiteral) continue;
                 if (re.hasLabel()) {
                     String label = re.getLabel();
                     RegularExpression regexp = namedTokensTable.get(label);
@@ -247,6 +275,9 @@ public class LexerData {
                 }
             }
         }
+    }
+
+    private void dealWithRegexpRefs() {
         for (RegexpRef ref : grammar.descendants(RegexpRef.class)) {
             String label = ref.getLabel();
             if (grammar.getAppSettings().getExtraTokens().containsKey(label)) {
@@ -267,17 +298,6 @@ public class LexerData {
             if (referenced != null) {
                 ref.setRegexp(referenced);
             }
-        }
-        // Check for self-referential loops in regular expressions
-        new RegexpVisitor().visit(grammar);
-        for (TokenProduction tokenProduction : grammar.descendants(TokenProduction.class)) {
-            for (String lexStateName : tokenProduction.getLexicalStateNames()) {
-                LexicalStateData lexState = getLexicalState(lexStateName);
-                lexState.addTokenProduction(tokenProduction);
-            }
-        }
-        for (LexicalStateData lexState : lexicalStates) {
-            lexState.process();
         }
     }
 

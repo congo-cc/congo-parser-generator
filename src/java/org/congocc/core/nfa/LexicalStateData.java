@@ -145,6 +145,7 @@ public class LexicalStateData {
     }
 
     private void processTokenProduction(TokenProduction tp) {
+        if (tp.isContextual()) return;
         boolean ignore = tp.isIgnoreCase() || grammar.getAppSettings().isIgnoreCase();//REVISIT
         for (RegexpSpec regexpSpec : tp.getRegexpSpecs()) {
             RegularExpression currentRegexp = regexpSpec.getRegexp();
