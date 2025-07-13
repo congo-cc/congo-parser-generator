@@ -4,15 +4,20 @@ import java.lang.reflect.Method;
 import java.util.List;
 
 import java.util.ArrayList;
+import org.congocc.templates.core.parser.Node;
 import static org.congocc.templates.core.variables.ReflectionCode.*;
+import static org.congocc.templates.core.variables.Wrap.assertIsDefined;;
 
 public class JavaMethodCall implements VarArgsFunction<Object> {
 
     private String methodName;
     private Object target;
     private List<Method> possibleMethods;
+    private Node location;
 
-    public JavaMethodCall(Object target, String methodName) {
+    public JavaMethodCall(Object target, String methodName, Node location) {
+        assertIsDefined(target, location);
+        this.location = location;
         if (target instanceof WrappedVariable wv) {
             Object wrappedObject = wv.getWrappedObject();
             if (wrappedObject != null) {
@@ -42,7 +47,12 @@ public class JavaMethodCall implements VarArgsFunction<Object> {
             }
         }
         if (possibleMethods.size() == 1) {
-            possibleMethods.get(0).setAccessible(true);
+            try {
+               possibleMethods.get(0).setAccessible(true);
+            }
+            catch (Exception e) {
+                //ignore, I guess.
+            }
         }
     }
 
@@ -64,13 +74,13 @@ public class JavaMethodCall implements VarArgsFunction<Object> {
         if (!isMethodOverloaded())  {
             // If there is only one method of this name, just try to
             // call it and that's that! This is the percentage case, after all.
-            return invokeMethod(target, possibleMethods.get(0), params);
+            return invokeMethod(target, possibleMethods.get(0), params, location);
         }
         Method method = getCachedMethod(target, methodName, params);
         if (method != null) {
             // If we have already figured out which method
             // to call and cached it, then we use that!
-            return invokeMethod(target, method, params);
+            return invokeMethod(target, method, params, location);
         }
         Method matchedMethod = null;
         for (Method m : possibleMethods) {
@@ -83,6 +93,6 @@ public class JavaMethodCall implements VarArgsFunction<Object> {
             throw new EvaluationException("Cannot invoke method " + methodName + " here.");
         }
         cacheMethod(matchedMethod, target, params);
-        return invokeMethod(target, matchedMethod, params);
+        return invokeMethod(target, matchedMethod, params, location);
     }
 }

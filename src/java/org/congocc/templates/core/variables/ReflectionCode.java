@@ -9,6 +9,7 @@ import java.util.concurrent.ConcurrentHashMap;
 import org.congocc.templates.TemplateBoolean;
 
 import java.lang.reflect.Array;
+import org.congocc.templates.core.parser.Node;
 import static org.congocc.templates.core.variables.Wrap.*;
 
 /**
@@ -31,16 +32,16 @@ public class ReflectionCode {
 
     private ReflectionCode() {}
 
-    public static Object invokeMethod(Object target, Method method, Object[] params) {
+    public static Object invokeMethod(Object target, Method method, Object[] params, Node location) {
         if (isBannedMethod(method)) {
-            throw new EvaluationException("Cannot run method: " + method);
+            throw new EvaluationException("Cannot run method: " + method + " at: " + location.getLocation());
         }
         Object[] args = unwrapArgsForMethod(method, params);
         Object result = null;
         try {
            result =  method.invoke(target, args);
         } catch (Exception e) {
-            throw new EvaluationException("Error invoking method " + method, e);
+            throw new EvaluationException("Error invoking method " + method + " at location " + location.getLocation(), e);
         }
         if (result == null && method.getReturnType() != Void.TYPE) {
             result = JAVA_NULL;
@@ -288,7 +289,7 @@ public class ReflectionCode {
             }
             return CAN_NOT_UNWRAP;
         }
-        if (desiredType == String.class) { 
+        if (desiredType == String.class) {
             return object.toString();
         }
         return CAN_NOT_UNWRAP;
@@ -306,7 +307,7 @@ public class ReflectionCode {
         }
         return buf.toString();
     }
-    
+
     private static String getLookupKey(Object object, String propertyName) {
         return object.getClass().getName() + "##" + propertyName;
     }

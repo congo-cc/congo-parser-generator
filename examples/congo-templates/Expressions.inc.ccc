@@ -887,7 +887,7 @@ INJECT BuiltInExpression :
         knownBuiltins.put("lower_case", (env,caller)->asString(caller.getTarget().evaluate(env)).toLowerCase(env.getLocale()));
         knownBuiltins.put("length", (env,caller)->asString(caller.getTarget().evaluate(env)).length());
         knownBuiltins.put("trim", (env,caller)->asString(caller.getTarget().evaluate(env)).trim());
-        knownBuiltins.put("substring", (env,caller)->new JavaMethodCall(asString(caller.getTarget().evaluate(env)),"substring"));
+        knownBuiltins.put("substring", (env,caller)->new JavaMethodCall(asString(caller.getTarget().evaluate(env)),"substring", caller));
         knownBuiltins.put("instanceof", new instanceofBI());
         knownBuiltins.put("exists", new ExistenceBuiltIn.ExistsBuiltIn());
         knownBuiltins.put("c", new cBI());
@@ -1389,6 +1389,6 @@ INJECT MethodReference :
     public Object evaluate(Environment env) {
         Object target = getTarget().evaluate(env);
         String methodName = get(2).toString();
-        return new JavaMethodCall(target, methodName);
+        return new JavaMethodCall(target, methodName, this);
     }
 }

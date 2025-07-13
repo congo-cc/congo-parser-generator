@@ -231,8 +231,7 @@ abstract public class Expansion extends BaseNode {
     }
 
     public int getLookaheadAmount() {
-//        return isPossiblyEmpty() ? 0 : 1;
-         return 1;
+        return 1;
     }
 
     public boolean getRequiresPredicateMethod() {

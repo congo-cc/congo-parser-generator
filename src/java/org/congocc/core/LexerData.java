@@ -22,6 +22,7 @@ public class LexerData {
     private final List<RegularExpression> regularExpressions = new ArrayList<>();
 
     private final Map<String, RegularExpression> namedTokensTable = new HashMap<>();
+    private final Map<String, String> contextualTokenMap = new HashMap<>();
     private final Set<RegularExpression> overriddenTokens = new HashSet<>();
     private final Set<RegularExpression> lazyTokens = new HashSet<>();
 
@@ -69,6 +70,14 @@ public class LexerData {
 
     public int getMaxNfaStates() {
         return lexicalStates.stream().mapToInt(state -> state.getAllNfaStates().size()).max().getAsInt();
+    }
+
+    public boolean getHasContextualTokens() {
+        return !contextualTokenMap.isEmpty();
+    }
+
+    public boolean isContextualKeyword(String s) {
+        return contextualTokenMap.containsKey(s);
     }
 
     public List<RegularExpression> getRegularExpressions() {

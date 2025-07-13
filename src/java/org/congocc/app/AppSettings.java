@@ -39,7 +39,6 @@ public class AppSettings {
     private final Set<String> usedIdentifiers = new HashSet<>();
     private final Set<String> tokensOffByDefault = new HashSet<>();
     private final Map<String, String> extraTokens = new LinkedHashMap<>();
-    private final Set<String> contextualKeywords = new LinkedHashSet<>();
     private boolean ignoreCase, quiet;
     private int jdkTarget = 8;
 
@@ -59,7 +58,7 @@ public class AppSettings {
     private final String stringSettings = ",BASE_NAME,PARSER_PACKAGE,PARSER_CLASS,LEXER_CLASS,BASE_SRC_DIR,BASE_NODE_CLASS,"
             + "BASE_TOKEN_CLASS,NODE_PREFIX,NODE_CLASS,NODE_PACKAGE,DEFAULT_LEXICAL_STATE,"
             + "NODE_CLASS,OUTPUT_DIRECTORY,DEACTIVATE_TOKENS,EXTRA_TOKENS,ROOT_API_PACKAGE,"
-            + "COPYRIGHT_BLURB,CONTEXTUAL_TOKENS,TERMINATING_STRING,";
+            + "COPYRIGHT_BLURB,TERMINATING_STRING,";
 
     private final String integerSettings = ",TAB_SIZE,TABS_TO_SPACES,JDK_TARGET,";
 
@@ -91,10 +90,6 @@ public class AppSettings {
 
     public Set<String> getDeactivatedTokens() {
         return tokensOffByDefault;
-    }
-
-    public Set<String> getContextualKeywords() {
-        return contextualKeywords;
     }
 
     public Map<String, String> getExtraTokens() {

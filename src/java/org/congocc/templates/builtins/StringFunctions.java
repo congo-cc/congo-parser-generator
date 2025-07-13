@@ -22,7 +22,7 @@ import org.congocc.templates.utility.StringUtil;
 import static org.congocc.templates.core.variables.Wrap.*;
 
 /**
- * Implementations of ?substring and other 
+ * Implementations of ?substring and other
  * standard functions that operate on strings
  */
 public abstract class StringFunctions extends ExpressionEvaluatingBuiltIn {
@@ -75,18 +75,18 @@ public abstract class StringFunctions extends ExpressionEvaluatingBuiltIn {
         return result;
     }
 
-    @Override 
+    @Override
     public Object get(Environment env, BuiltInExpression caller, Object model) {
         String string = asString(model);
         return apply(string, env, caller);
     }
-    
+
     public abstract Object apply(final String string, final Environment env, final BuiltInExpression callingExpression);
-    
+
     public static class Substring extends StringFunctions {
         @Override
         public Object apply(String string, Environment env, BuiltInExpression caller) {
-            return new JavaMethodCall(string, "substring");
+            return new JavaMethodCall(string, "substring", caller);
         }
     }
 
@@ -100,28 +100,28 @@ public abstract class StringFunctions extends ExpressionEvaluatingBuiltIn {
     public static class Join extends StringFunctions {
         @Override
         public Object apply(String string, Environment env, BuiltInExpression caller) {
-            return new JavaMethodCall(string, "join");
+            return new JavaMethodCall(string, "join", caller);
         }
     }
 
     public static class Split extends StringFunctions {
         @Override
         public Object apply(String string, Environment env, BuiltInExpression caller) {
-            return new JavaMethodCall(string, "split");
+            return new JavaMethodCall(string, "split", caller);
         }
     }
 
     public static class StartsWith extends StringFunctions {
         @Override
         public Object apply(String string, Environment env, BuiltInExpression caller) {
-            return new JavaMethodCall(string, "startsWith");
+            return new JavaMethodCall(string, "startsWith", caller);
         }
     }
 
     public static class EndsWith extends StringFunctions {
         @Override
         public Object apply(String string, Environment env, BuiltInExpression caller) {
-            return new JavaMethodCall(string, "endsWith");
+            return new JavaMethodCall(string, "endsWith", caller);
         }
     }
 
@@ -211,7 +211,7 @@ public abstract class StringFunctions extends ExpressionEvaluatingBuiltIn {
                 Pattern pattern = getPattern(first, flags);
                 Matcher matcher = pattern.matcher(string);
                 result = firstOnly ? matcher.replaceFirst(second) : matcher.replaceAll(second);
-            } 
+            }
             return result;
         }
     }
@@ -241,7 +241,7 @@ public abstract class StringFunctions extends ExpressionEvaluatingBuiltIn {
     }
 
 
-    static class RegexMatchModel 
+    static class RegexMatchModel
     implements TemplateBoolean, TemplateSequence {
         Matcher matcher;
         String input;
@@ -384,7 +384,7 @@ public abstract class StringFunctions extends ExpressionEvaluatingBuiltIn {
             } else {
                 return StringUtil.leftPad(string, width);
             }
-        }        
+        }
     }
 
     static class RightPadMethod implements VarArgsFunction<String> {
@@ -497,7 +497,7 @@ public abstract class StringFunctions extends ExpressionEvaluatingBuiltIn {
         private String getName() {
             return "?" + (reverse ? "last_" : "") + "index_of";
         }
-        
+
         public Integer apply(Object... args) {
             Object obj;
             String sub;
@@ -511,7 +511,7 @@ public abstract class StringFunctions extends ExpressionEvaluatingBuiltIn {
                 throw new EvaluationException(getName() + "(...) expects at most two arguments.");
             }
 
-            obj = args[0];       
+            obj = args[0];
             if (!(obj instanceof CharSequence)) {
                 throw new EvaluationException(getName() + "(...) expects a string as its first argument.");
             }
@@ -530,8 +530,8 @@ public abstract class StringFunctions extends ExpressionEvaluatingBuiltIn {
             int index;
             if (reverse) {
                 if (ln >1)
-                    index = s.lastIndexOf(sub, fidx); 
-                else 
+                    index = s.lastIndexOf(sub, fidx);
+                else
                     index = s.lastIndexOf(sub);
             } else {
                 index = s.indexOf(sub, fidx);
