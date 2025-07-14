@@ -281,6 +281,7 @@ public boolean getLegacyGlitchyLookahead() {
   private void fail(String message, ${settings.baseTokenClassName} token) [#if settings.useCheckedException] throws ParseException [/#if]
   {
     if (currentLookaheadToken == null) {
+      if (message == null) message = "";
       throw new ParseException(message, token, parsingStack);
     }
     hitFailure = true;

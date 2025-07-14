@@ -27,8 +27,6 @@ public class ParseException extends ${BASE_EXCEPTION_TYPE} {
 
   private List<NonTerminalCall> callStack = new ArrayList<>();
 
-  private boolean alreadyAdjusted;
-
   public ParseException(${BaseToken} token, ${TOKEN_TYPE_SET} expectedTypes, List<NonTerminalCall> callStack) {
       this.token = token;
       this.expectedTypes = expectedTypes;
@@ -70,22 +68,24 @@ public class ParseException extends ${BASE_EXCEPTION_TYPE} {
 
   @Override
   public String getMessage() {
-     String msg = super.getMessage();
-     if (token == null && expectedTypes == null) {
-        return msg;
-     }
      StringBuilder buf = new StringBuilder();
-     if (msg != null) buf.append(msg);
+     buf.append(super.getMessage());
+     if (token == null && expectedTypes == null) {
+        buf.append(getCustomStackTrace());
+        return buf.toString();
+     }
      String location = token != null ? token.getLocation() : "";
      buf.append("\nEncountered an error");
      if (token != null) {
         buf.append(" at (or somewhere around) " + token.getLocation());
         if (hitEOF()) {
              buf.append("\nUnexpected end of input.");
+             buf.append(getCustomStackTrace());
              return buf.toString();
         }
      }
      if (expectedTypes == null || token == null || expectedTypes.contains(token.getType())) {
+        buf.append(getCustomStackTrace());
         return buf.toString();
      }
      String content = token.toString();
@@ -108,19 +108,19 @@ public class ParseException extends ${BASE_EXCEPTION_TYPE} {
            buf.append(type);
         }
      }
+     buf.append(getCustomStackTrace());
      return buf.toString();
   }
 
-  @Override
-  public StackTraceElement[] getStackTrace() {
-      adjustStackTrace();
-      return super.getStackTrace();
-  }
-
-  @Override
-  public void printStackTrace(java.io.PrintStream s) {
-        adjustStackTrace();
-        super.printStackTrace(s);
+  public String getCustomStackTrace() {
+     StringBuilder buf = new StringBuilder();
+     buf.append("\n----------\n");
+     for (int i = callStack.size() - 1; i>=0; i--) {
+        buf.append("        ");
+        buf.append(callStack.get(i));
+     }
+     buf.append("----------");
+     return buf.toString();
   }
 
   /**
@@ -131,37 +131,7 @@ public class ParseException extends ${BASE_EXCEPTION_TYPE} {
       return token;
    }
 
-   private void adjustStackTrace() {
-      if (alreadyAdjusted || callStack.isEmpty()) {
-         alreadyAdjusted = true;
-         return;
-      }
-      List<StackTraceElement> ourCallStack = new ArrayList<>();
-      for (NonTerminalCall ntc : callStack) {
-         ourCallStack.add(ntc.createStackTraceElement());
-      }
-      Collections.reverse(ourCallStack);
-      StackTraceElement[] jvmCallStack = super.getStackTrace();
-      for (StackTraceElement regularEntry : jvmCallStack) {
-           ourCallStack.add(regularEntry);
-      }
-      StackTraceElement[] result = new StackTraceElement[ourCallStack.size()];
-      setStackTrace(ourCallStack.toArray(result));
-      alreadyAdjusted = true;
-  }
-
-  private StackTraceElement lastElementWithName(List<StackTraceElement> elements, String methodName) {
-      for (ListIterator<StackTraceElement> it = elements.listIterator(elements.size()); it.hasPrevious();) {
-           StackTraceElement elem = it.previous();
-           if (elem.getMethodName().equals(methodName)) {
-                it.remove();
-                return elem;
-           }
-      }
-      return null;
-  }
-
-  private static String addEscapes(String str) {
+   private static String addEscapes(String str) {
       StringBuilder retval = new StringBuilder();
       for (int ch : str.codePoints().toArray()) {
         switch (ch) {

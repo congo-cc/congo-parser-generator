@@ -9,17 +9,17 @@ import java.io.PrintStream;
 #endif
 
 public class NonTerminalCall {
-    final TokenSource lexer;
     final String sourceFile;
     public final String productionName;
     final String parserClassName;
+    final String location;
     final int line, column;
 #if settings.faultTolerant
     final Set<${BaseTokenType}> followSet;
 #endif
-    public NonTerminalCall(String parserClassName, TokenSource lexer, String sourceFile, String productionName, int line, int column[#if settings.faultTolerant], Set<${BaseTokenType}> followSet[/#if]) {
+    public NonTerminalCall(String parserClassName, String location, String sourceFile, String productionName, int line, int column[#if settings.faultTolerant], Set<${BaseTokenType}> followSet[/#if]) {
         this.parserClassName = parserClassName;
-        this.lexer = lexer;
+        this.location = location;
         this.sourceFile = sourceFile;
         this.productionName = productionName;
         this.line = line;
@@ -29,15 +29,15 @@ public class NonTerminalCall {
 #endif
     }
 
-    final TokenSource getTokenSource() {
-        return lexer;
+    public String getLocation() {
+        return location;
     }
 
     StackTraceElement createStackTraceElement() {
         return new StackTraceElement("${settings.parserClassName}", productionName, sourceFile, line);
     }
 
-    public void dump(PrintStream ps) {
-         ps.println(productionName + ":" + line + ":" + column);
+    public String toString() {
+         return "at " + location + " entered " + productionName + "(" + sourceFile+ ":" + line + ":" + column+")\n";
     }
 }

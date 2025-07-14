@@ -60,14 +60,12 @@
   </target>
 
   <target name="compile" depends="parser-gen">
-    <javac srcdir="."
-           failonerror="true"
-           release="8"
-           debug="on"
-           includeantruntime="no"
-           fork="true">
-      <include name ="CSParse.java"/>
-    </javac>
+    <javac debug="on"
+      failonerror="true"
+      includeantruntime="false"
+      release="8"
+      srcdir="."
+      includes="CSParse.java,org/**/*.java" />
     <exec executable="dotnet" dir="${basedir}/cs-csharpparser">
        <arg line="build"/>
     </exec>

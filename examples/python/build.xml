@@ -36,15 +36,12 @@
   </target>
 
   <target name="compile" depends="parser-check,parser-gen">
-    <javac classpath=".:../../congocc.jar" srcdir="." includeantruntime="off" failonerror="true" debug="on" release="8" fork="true" />
-        <javac srcdir="."
-           failonerror="true"
-           release="8"
-           debug="on"
-           includeantruntime="no"
-           fork="true">
-      <include name ="PyTest.java"/>
-    </javac>
+    <javac debug="on"
+      failonerror="true"
+      includeantruntime="false"
+      release="8"
+      srcdir="."
+      includes="PyTest.java,org/**/*.java" />
     <echo>
       test harness via: java PyTest &lt;filename&gt;
     </echo>

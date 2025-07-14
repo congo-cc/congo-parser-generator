@@ -8,7 +8,7 @@ private final ArrayList<NonTerminalCall> lookaheadStack = new ArrayList<>();
 #endif
 
 private void pushOntoCallStack(String methodName, String fileName, int line, int column) {
-   parsingStack.add(new NonTerminalCall("${settings.parserClassName}", token_source, fileName, methodName, line, column[#if settings.faultTolerant], currentFollowSet[/#if]));
+   parsingStack.add(new NonTerminalCall("${settings.parserClassName}", getToken(1).getLocation(), fileName, methodName, line, column[#if settings.faultTolerant], currentFollowSet[/#if]));
 }
 
 private void popCallStack() {
@@ -75,7 +75,7 @@ private ListIterator<NonTerminalCall> stackIteratorBackward() {
 
 
 private void pushOntoLookaheadStack(String methodName, String fileName, int line, int column) {
-    lookaheadStack.add(new NonTerminalCall("${settings.parserClassName}", token_source, fileName, methodName, line, column[#if settings.faultTolerant], null[/#if]));
+    lookaheadStack.add(new NonTerminalCall("${settings.parserClassName}", getToken(1).getLocation(), fileName, methodName, line, column[#if settings.faultTolerant], null[/#if]));
 }
 
 private void popLookaheadStack() {
@@ -86,14 +86,14 @@ private void popLookaheadStack() {
 void dumpLookaheadStack(PrintStream ps) {
     ListIterator<NonTerminalCall> it = lookaheadStack.listIterator(lookaheadStack.size());
     while (it.hasPrevious()) {
-        it.previous().dump(ps);
+        ps.print(it.previous());
     }
 }
 
 void dumpCallStack(PrintStream ps) {
     ListIterator<NonTerminalCall> it = parsingStack.listIterator(parsingStack.size());
     while (it.hasPrevious()) {
-        it.previous().dump(ps);
+        ps.print(it.previous());
     }
 }
 
@@ -151,7 +151,7 @@ void dumpLookaheadCallStack(PrintStream ps) {
 
       private ${settings.baseTokenClassName} consumeToken(TokenType expectedType
         #if settings.faultTolerant
-          , boolean tolerant, EnumSet<TokenType> followSet 
+          , boolean tolerant, EnumSet<TokenType> followSet
         #endif
       )
       [#if settings.useCheckedException] throws ParseException [/#if]
@@ -201,8 +201,8 @@ void dumpLookaheadCallStack(PrintStream ps) {
         , boolean tolerant, EnumSet<TokenType> followSet
       #endif
       )
-      #if settings.useCheckedException 
-         throws ParseException 
+      #if settings.useCheckedException
+         throws ParseException
       #endif
       {
       #if !settings.faultTolerant

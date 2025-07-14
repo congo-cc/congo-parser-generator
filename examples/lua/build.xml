@@ -35,14 +35,12 @@
   </target>
 
   <target name="compile" depends="init,parser-gen">
-    <javac srcdir="."
-           failonerror="true"
-           release="8"
-           debug="on"
-           includeantruntime="no"
-           fork="true">
-      <include name ="LuaParse.java"/>
-    </javac>
+    <javac debug="on"
+      failonerror="true"
+      includeantruntime="false"
+      release="8"
+      srcdir="."
+      includes="LuaParse.java,org/**/*.java" />
     <exec executable="dotnet" dir="${basedir}/cs-luaparser">
        <arg line="build"/>
     </exec>
