@@ -36,14 +36,13 @@
   </target>
 
   <target name="compile" depends="init, parser-gen">
-    <javac srcdir="."
-           failonerror="true"
-           release="8"
-           debug="on"
-           includeantruntime="no"
-           fork="true">
-      <include name ="JParse.java"/>
-    </javac>
+    <javac debug="on"
+      failonerror="true"
+      includeantruntime="false"
+      release="8"
+      srcdir="."
+      includes="JParse.java,org/**/*.java"
+      excludes="testfiles/*.java" />
     <exec executable="dotnet" dir="cs-javaparser">
        <arg line="build"/>
     </exec>

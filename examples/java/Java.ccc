@@ -1173,7 +1173,10 @@ TypePattern#LocalVariableDeclaration :
   SCAN LocalVariableDeclarationLA =>
   (
     {permissibleModifiers = EnumSet.of(FINAL);}#
-    Modifiers ReferenceType (<IDENTIFIER>|<UNDERSCORE>)
+    Modifiers
+    // ReferenceType
+    (Type | ACTIVATE_TOKENS VAR(<VAR>))
+    (<IDENTIFIER>|<UNDERSCORE>)
     |
     VarDeclaration
   )
