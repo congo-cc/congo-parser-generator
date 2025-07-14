@@ -7,7 +7,6 @@ import org.congocc.app.*;
 import org.congocc.core.*;
 import org.congocc.parser.Node;
 import static org.congocc.parser.Node.CodeLang.*;
-import org.congocc.parser.CongoCCParser;
 import org.congocc.parser.tree.*;
 
 

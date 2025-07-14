@@ -376,7 +376,12 @@ RecordHeader :
    <LPAREN>
    [
      RecordComponent
-     (<COMMA> RecordComponent)*
+     {boolean sawVarArgs = getTokenType(-1) == VAR_ARGS;}
+     (
+      ASSERT {!sawVarArgs} : "The varargs (...) component must be the last one specified.":
+      <COMMA> RecordComponent
+      {sawVarArgs = getTokenType(-1) == VAR_ARGS;}
+     )*
    ]
    <RPAREN>
 ;
@@ -518,9 +523,30 @@ ArrayInitializer :
   {return thisProduction;}
 ;
 
-FormalParameters : <LPAREN> [ FormalParameter ( <COMMA> FormalParameter )* ] <RPAREN> ;
+FormalParameters :
+    <LPAREN>
+    [
+        {boolean seenVarArgs = false;}
+        seenVarArgs=FormalParameter
+        (
+          ASSERT {!seenVarArgs} : "The varargs (...) parameter must be the last one specified.":
+          <COMMA>
+          seenVarArgs=FormalParameter
+        )*
+    ]
+    <RPAREN>
+;
 
-FormalParameter : {permissibleModifiers = EnumSet.of(FINAL);}# Modifiers Type [ (Annotation)* <VAR_ARGS> ] VariableDeclaratorId ;
+boolean FormalParameter :
+   {permissibleModifiers = EnumSet.of(FINAL);}#
+   Modifiers Type
+   {boolean hasVarArgs = false;}
+   [ (Annotation)* <VAR_ARGS> {hasVarArgs = true;}]
+   VariableDeclaratorId
+   {
+      return hasVarArgs;
+   }
+;
 
 ConstructorDeclaration :
   {permissibleModifiers = EnumSet.of(PUBLIC, PROTECTED, PRIVATE);}
@@ -1473,7 +1499,20 @@ SimpleLambdaLHS #void :
    <RPAREN>
 ;
 
-LambdaParameters : <LPAREN> [ LambdaParameter ( <COMMA> LambdaParameter )* ] <RPAREN> ;
+LambdaParameters :
+    <LPAREN>
+    [
+      {boolean seenVarArgs = false;}
+      LambdaParameter
+      {seenVarArgs = getTokenType(-1) == VAR_ARGS;}
+      (
+        ASSERT {!seenVarArgs} : "The vars (...) parameter must be the last one specified.":
+        <COMMA> LambdaParameter
+        {seenVarArgs = getTokenType(-1) == VAR_ARGS;}
+      )*
+    ]
+    <RPAREN>
+;
 
 LambdaParameter :
     {permissibleModifiers = EnumSet.of(FINAL);}#
