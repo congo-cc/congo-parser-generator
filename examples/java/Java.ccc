@@ -372,22 +372,11 @@ RecordDeclaration :
   RecordBody
 ;
 
-RecordHeader :
-   <LPAREN>
-   [
-     RecordComponent
-     {boolean sawVarArgs = getTokenType(-1) == VAR_ARGS;}
-     (
-      ASSERT {!sawVarArgs} : "The varargs (...) component must be the last one specified.":
-      <COMMA> RecordComponent
-      {sawVarArgs = getTokenType(-1) == VAR_ARGS;}
-     )*
-   ]
-   <RPAREN>
-;
+RecordHeader : <LPAREN> [ RecordComponent ( <COMMA> RecordComponent)* ] <RPAREN> ;
 
 RecordComponent :
-   (Annotation)* Type [(Annotation)* <VAR_ARGS>] <IDENTIFIER>
+   (Annotation)* Type [(Annotation)* <VAR_ARGS> ] <IDENTIFIER>
+   ASSERT {getTokenType(-1) != VAR_ARGS || getTokenType(1) != COMMA} : "The varargs (...) component must be the last one specified."
 ;
 
 RecordBody :
@@ -523,29 +512,15 @@ ArrayInitializer :
   {return thisProduction;}
 ;
 
-FormalParameters :
-    <LPAREN>
-    [
-        {boolean seenVarArgs = false;}
-        seenVarArgs=FormalParameter
-        (
-          ASSERT {!seenVarArgs} : "The varargs (...) parameter must be the last one specified.":
-          <COMMA>
-          seenVarArgs=FormalParameter
-        )*
-    ]
-    <RPAREN>
-;
+FormalParameters : <LPAREN> [ FormalParameter ( <COMMA> FormalParameter)* ] <RPAREN> ;
 
-boolean FormalParameter :
+FormalParameter :
    {permissibleModifiers = EnumSet.of(FINAL);}#
    Modifiers Type
    {boolean hasVarArgs = false;}
    [ (Annotation)* <VAR_ARGS> {hasVarArgs = true;}]
    VariableDeclaratorId
-   {
-      return hasVarArgs;
-   }
+   ASSERT {!hasVarArgs || getTokenType(1) != COMMA} : "The varargs (...) parameter must be the last one specified."
 ;
 
 ConstructorDeclaration :
@@ -1500,26 +1475,14 @@ SimpleLambdaLHS #void :
    <RPAREN>
 ;
 
-LambdaParameters :
-    <LPAREN>
-    [
-      {boolean seenVarArgs = false;}
-      LambdaParameter
-      {seenVarArgs = getTokenType(-1) == VAR_ARGS;}
-      (
-        ASSERT {!seenVarArgs} : "The vars (...) parameter must be the last one specified.":
-        <COMMA> LambdaParameter
-        {seenVarArgs = getTokenType(-1) == VAR_ARGS;}
-      )*
-    ]
-    <RPAREN>
-;
+LambdaParameters : <LPAREN> [ LambdaParameter ( <COMMA> LambdaParameter)* ] <RPAREN> ;
 
 LambdaParameter :
     {permissibleModifiers = EnumSet.of(FINAL);}#
     Modifiers
     (
       Type (Annotation)* <VAR_ARGS> =>|| <IDENTIFIER>
+      ASSERT ~(",") : "The varargs (...) parameter must be the last one specified.":
       |
       (
         ENSURE {checkNextTokenImage("var")}
