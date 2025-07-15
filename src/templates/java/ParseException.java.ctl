@@ -73,13 +73,15 @@ public class ParseException extends ${BASE_EXCEPTION_TYPE} {
      if (token != null) {
         buf.append(" at (or somewhere around) ");
         buf.append(token.getLocation());
-        buf.append("\n");
      }
-     buf.append(super.getMessage());
+     if (super.getMessage() != null) {
+        buf.append("\n");
+        buf.append(super.getMessage());
+     }
+     if (hitEOF()) {
+        buf.append("\nUnexpected end of input.");
+     }
      if (token == null || expectedTypes == null || expectedTypes.contains(token.getType())) {
-        if (hitEOF()) {
-            buf.append("\nUnexpected end of input.");
-        }
         buf.append(getCustomStackTrace());
         return buf.toString();
      }

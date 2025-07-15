@@ -791,13 +791,13 @@ UnaryExpression :
 PreIncrementExpression :
   <INCR> UnaryExpression
   ASSERT {((Expression)peekNode()).isAssignableTo()}
-  : "Expression after ++ is not an assignable variable."
+  : "Expression " + peekNode() + " is not an assignable variable."
 ;
 
 PreDecrementExpression :
   <DECR> UnaryExpression
   ASSERT {((Expression)peekNode()).isAssignableTo()}
-  : "expression after -- is not an assignable variable"
+  : "Expression " + peekNode() + " is not an assignable variable."
 ;
 
 UnaryExpressionNotPlusMinus :
@@ -816,10 +816,10 @@ UnaryExpressionNotPlusMinus :
 
 PostfixExpression :
   PrimaryExpression
+  {Expression lhs = (Expression) peekNode();}
   [
-    SCAN {((Expression)peekNode()).isAssignableTo()}
-    =>
     (<INCR> | <DECR>)
+    ASSERT {lhs.isAssignableTo()} : "Expression " + lhs + " cannot be assigned to."
   ]
 ;
 
@@ -1098,13 +1098,23 @@ StatementExpression# :
           |
           AssignmentOperator Expression #AssignmentExpression(3)
       )
-      ASSERT {lhs.isAssignableTo()} : "Expression " + lhs + " cannot be assigned to.":
+      ASSERT {lhs.isAssignableTo()}
+#if !__python__
+     // for some reason, this just doesn't work but
+     // I don't understand why not. Shouldn't it just call the appropriate
+     // dunder method, like __str__ maybe? So I have this commented out for
+     // generating Python at the moment.
+      : "Expression " + lhs + " cannot be assigned to.":
+#endif
       |
       ASSERT {lhs instanceof MethodCall
                || lhs instanceof AllocationExpression
                || lhs instanceof ExplicitConstructorInvocation}
-      : "Not a valid statement at: " + lhs.getLocation()
-        + ".\nExpecting a method call, an assignment or an allocation expression (new...)."
+#if !__python__
+      // Same issue as above basically. Doesn't work in Python.
+      : "Expression at " + lhs.getLocation() + " is not a valid statement.\n"
+        + "Expecting a method call, an assignment or an allocation expression (new...)"
+#endif
   )
 ;
 
