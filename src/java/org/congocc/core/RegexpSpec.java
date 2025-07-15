@@ -2,6 +2,7 @@ package org.congocc.core;
 
 import org.congocc.parser.tree.BaseNode;
 import org.congocc.parser.tree.CodeBlock;
+import org.congocc.parser.tree.EmbeddedCode;
 import org.congocc.parser.tree.TokenProduction;
 import org.congocc.parser.Token;
 
@@ -21,8 +22,8 @@ public class RegexpSpec extends BaseNode {
         return firstChildOfType(RegularExpression.class);
     }
 
-    public CodeBlock getCodeSnippet() {
-        return firstChildOfType(CodeBlock.class);
+    public EmbeddedCode getCodeSnippet() {
+        return firstChildOfType(EmbeddedCode.class);
     }
 
     public boolean isImplicit() {

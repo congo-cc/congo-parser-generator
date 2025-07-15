@@ -28,6 +28,7 @@ abstract public class Expansion extends BaseNode {
     private String scanRoutineName, firstSetVarName;
 
     private boolean tolerantParsing;
+    private EmbeddedCode recoveryBlock;
 
     /**
      * If we hit a parsing error in this expansion, do we try to recover? This is
@@ -39,6 +40,18 @@ abstract public class Expansion extends BaseNode {
 
     public void setTolerantParsing(boolean tolerantParsing) {
         this.tolerantParsing = tolerantParsing;
+    }
+
+    /**
+     * If a recovery action is provided (in fault-tolerant mode), this is it.
+     * @return the recovery action {@link CodeBlock}
+     */
+    public EmbeddedCode getRecoveryBlock() {
+        return recoveryBlock;
+    }
+
+    public void setRecoveryBlock(EmbeddedCode recoveryBlock) {
+        this.recoveryBlock = recoveryBlock;
     }
 
     public String toString() {
@@ -136,16 +149,6 @@ abstract public class Expansion extends BaseNode {
         return firstChildOfType(TokenActivation.class);
     }
 
-    private CodeBlock customErrorRecoveryBlock;
-
-    public CodeBlock getCustomErrorRecoveryBlock() {
-        return customErrorRecoveryBlock;
-    }
-
-    public void setCustomErrorRecoveryBlock(CodeBlock customErrorRecoveryBlock) {
-        this.customErrorRecoveryBlock = customErrorRecoveryBlock;
-    }
-
     /**
      * Is this expansion superfluous parentheses?
      */
@@ -159,6 +162,10 @@ abstract public class Expansion extends BaseNode {
 
     public boolean isInsideAssertion() {
         return firstAncestorOfType(Assertion.class) != null;
+    }
+    
+    public boolean isCardinalityConstrained() {
+    	return false;
     }
 
     public boolean getHasNumericalLookahead() {
@@ -225,7 +232,7 @@ abstract public class Expansion extends BaseNode {
     // be okay.
     private boolean hasGlobalSemanticActions() {
         assert this.getMaximumSize() <= 1;
-        return descendants(CodeBlock.class).stream().anyMatch(CodeBlock::isAppliesInLookahead)
+        return descendants(CodeBlock.class).stream().anyMatch(CodeBlock::isAppliesInLookahead) //FIXME: But EmbeddedCode needs isAppliedInLookahead!
             || descendants(Assertion.class).stream().anyMatch(nt->nt.startsWithGlobalCodeAction())
             || descendants(NonTerminal.class).stream().anyMatch(nt->nt.getNestedExpansion().hasGlobalSemanticActions());
     }
