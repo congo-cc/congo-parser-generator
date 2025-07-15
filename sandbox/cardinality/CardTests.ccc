@@ -1,0 +1,369 @@
+
+PARSER_PACKAGE=org.parsers.test;
+TAB_SIZE=4;
+ENSURE_FINAL_EOL;
+TERMINATING_STRING="";
+//#define FT
+#if FT
+FAULT_TOLERANT;
+FAULT_TOLERANT_DEFAULT=true;
+#endif
+
+<DEFAULT,JAVA> UNPARSED : 
+    < #LINE_TERMINATOR: ( [ "\n", "\r" ] | "\r\n" ) > 
+    |
+    < #INLINE_WHITESPACE: ( [ " ", "\t", "\f" ] )+ > 
+    |
+    < WHITESPACE: <INLINE_WHITESPACE> | <LINE_TERMINATOR> >
+; 
+
+<DEFAULT> UNPARSED :
+    < COMMA: [ ",", ";" ] >
+;
+
+<ANY> TOKEN :
+    <ANY_CHARS: (~["!"])+ >
+;
+
+DelimitedString :
+    LEXICAL_STATE ANY
+    (
+        <ANY_CHARS>
+    )
+;
+
+#Root :
+    (
+        Test
+        |
+        "!" 
+        ( ENSURE {isParserTolerant()} =>|| Test | DelimitedString ) 
+        "!"!->{System.out.println("'" + lastConsumedToken + "' found; expected '!'!");}
+    )+
+    <EOF> {return CURRENT_NODE;}
+;
+
+Test :
+    "(" Letters ")"
+    |
+    Set
+    |
+    "[" 
+    LEXICAL_STATE JAVA (Modifiers) 
+    "]"!->{System.out.println("'" + lastConsumedToken + "' found; expected ']'!");}
+;  
+
+Letters :
+    LTest1 | LTest2 | LTest3
+;
+
+LTest1 :
+    ((ASSERT {&0:1&}# "a" =>|| )+ #ZeroOrOneA [ "a" ]) #Variant1
+    | 
+    ((&1&"b")* #OneB [ "b" ] "a") =>|| #Variant2
+;
+
+LTest2 :
+    (&"c")* "a" #Variant3
+;
+
+LTest3 : 
+    //Note: this works with ~FT, and "works" with an "invalid" token in FT.
+    (
+        &"t"
+        |
+        (
+            "h" "e"
+            |
+            &(
+                &"n" | "d" //This can match "the end" in FT mode by deleting the "e".
+            )+
+        )+
+        |
+        ((((("h" | &1&"e")))))+ //This is the proper match for the 2nd "e", with the "nd" matched above.
+    )+
+; 
+
+Set :
+    "{"
+    (
+        OddNumberUnitSet =>||   // This accepts a unit set of an odd natural number <= 5  
+        |
+        AllOddNumbersSet =>||   // This accepts a set of all odd natural numbers <= 5
+        |
+        OddNumberSet =>||       // This accepts a member of the power set of odd natural numbers <= 5 
+        |
+        EvenNumberUnitSet =>||  // This accepts a unit set of an even natural number <= 5
+        |
+        EvenNumberSet =>||      // This accepts a member of the power set of even natural numbers <= 5
+        |
+        PrimeNumberUnitSet =>|| // This accepts a unit set of a prime natural number <= 5
+        |
+        AllPrimeNumbersSet =>|| // This accepts a set of all prime natural numbers <= 5
+        |
+        PrimeNumberSet =>||     // This accepts a member of the power set of prime natural numbers <= 5
+        |
+        NumberSet =>||          // This accepts a member of the power set of natural numbers <= 5
+        |
+        Numbers =>||            // This accepts any collection of natural numbers <= 5
+    )
+    "}"
+;
+
+One: "1";
+Two: "2";
+Three: "3";
+Four: "4";
+Five: "5";
+
+Number : 
+    "1" 
+    | 
+    "2" 
+    | 
+    "3" 
+    | 
+    "4"
+    | 
+    "5"
+; 
+
+NumberUnitSet : 
+    Number 
+    ENSURE ("}")
+    {System.out.println("A member of the unit set of natural numbers <= 5");}
+;
+
+NumberSet :
+    (
+        & "1"
+        |
+        & "2"
+        |
+        & "3"
+        |
+        & "4"
+        |
+        & "5"
+    )+
+    ENSURE ("}")
+    {System.out.println("A member of the power set of natural numbers <= 5");}
+;
+
+Numbers :
+    (
+        Number
+    )+
+    ENSURE ("}")
+    {System.out.println("A non-empty collection of natural numbers <= 5");}
+;
+
+OddNumber :
+    "1" | "3" | "5"; 
+
+OddNumberUnitSet :
+    OddNumber 
+    ENSURE ("}")
+    {System.out.println("A member of the unit set of odd natural numbers <= 5");}
+;
+
+OddNumberSet :
+    ENSURE (NumberSet) (
+        OddNumber
+    )+ 
+    ENSURE ("}")
+    {System.out.println("A non-empty subset of the odd natural numbers <= 5");}
+;
+
+AllOddNumbersSet :
+    (
+        &1&"1" | &1&"3" | &1&"5"
+    )+ 
+    ENSURE ("}")
+    {System.out.println("The set of all odd natural numbers <= 5");}
+;
+
+PrimeNumber :
+    ENSURE ~(EvenNumber) Number 
+    | 
+    ENSURE ("2") Number
+;
+
+PrimeNumberUnitSet :
+    PrimeNumber
+    ENSURE ("}")
+    {System.out.println("A member of the unit set of prime natural numbers <= 5");}
+;
+
+AllPrimeNumbersSet :
+    (
+        &1&"1" | &1&"2" | &1&"3" | &1&"5"
+    )+ 
+    ENSURE ("}")
+    {System.out.println("A set of all prime natural numbers <= 5");}
+;
+
+PrimeNumberSet :
+    ENSURE (NumberSet) (
+        PrimeNumber
+    )+ 
+    ENSURE ("}")
+    {System.out.println("A non-empty subset of prime natural numbers <= 5");}
+;
+
+EvenNumber :
+    ENSURE ~(OddNumber) Number
+;
+
+EvenNumberUnitSet :
+    EvenNumber
+    ENSURE ("}")
+    {System.out.println("A member of the unit set of even natural numbers <= 5");}
+;
+
+EvenNumberSet :
+    ENSURE (NumberSet) (
+        EvenNumber
+    )+
+    ENSURE ("}")
+    {System.out.println("A non-empty subset of even natural numbers <= 5");}
+;
+
+/***
+ * The following is an isolated version of an alternative production for handling
+ * Modifiers in Java.ccc using RCAs instead of semantic actions (mostly).
+ */
+
+<JAVA> TOKEN #KeyWord :
+  <UNDERSCORE : "_">
+|  < ABSTRACT: "abstract" >
+| < _ASSERT: "assert" >
+| < BOOLEAN: "boolean" > #Primitive
+| < BREAK: "break" >
+| < BYTE: "byte" > #Primitive
+| < CASE: "case" >
+| < CATCH: "catch" >
+| < CHAR: "char" > #Primitive
+| < CLASS: "class" >
+| < CONST: "const" >
+| < CONTINUE: "continue" >
+| < _DEFAULT: "default" >
+| < DO: "do" >
+| < DOUBLE: "double" > #Primitive
+| < ELSE: "else" >
+| < ENUM: "enum" >
+| < EXTENDS: "extends" >
+| < FALSE: "false" > #BooleanLiteral
+| < FINAL: "final" >
+| < FINALLY: "finally" >
+| < FLOAT: "float" > #Primitive
+| < FOR: "for" >
+| < GOTO: "goto" >
+| < IF: "if" >
+| < IMPLEMENTS: "implements" >
+| < _IMPORT: "import" >
+| < INSTANCEOF: "instanceof" >
+| < INT: "int" > #Primitive
+| < INTERFACE: "interface" >
+| < LONG: "long" > #Primitive
+| < NATIVE: "native" >
+| < NEW: "new" >
+| < NULL: "null" > #NullLiteral
+| < PACKAGE: "package">
+| < PRIVATE: "private" >
+| < PROTECTED: "protected" >
+| < PUBLIC: "public" >
+| < RETURN: "return" >
+| < RECORD : "record" >
+| < SHORT: "short" > #Primitive
+| < STATIC: "static" >
+| < STRICTFP: "strictfp" >
+| < SUPER: "super" >
+| < SWITCH: "switch" >
+| < SYNCHRONIZED: "synchronized" >
+| < THIS: "this" > #ThisLiteral
+| < THROW: "throw" >
+| < THROWS: "throws" >
+| < TRANSIENT: "transient" >
+| < TRUE: "true" > #BooleanLiteral
+| < TRY: "try" >
+| < VAR: "var" >
+| < VOID: "void" >
+| < VOLATILE: "volatile" >
+| < WHILE: "while" >
+| < YIELD : "yield" >
+| < SEALED : "sealed">
+| < NON_SEALED : "non-sealed">
+| < PERMITS : "permits">
+| < WHEN : "when" >
+// Soft keywords used only in the module-info
+| <MODULE : "module">
+| <EXPORTS : "exports">
+| <OPEN : "open">
+| <OPENS : "opens">
+| <PROVIDES : "provides">
+| <REQUIRES : "requires">
+| <TO : "to">
+| <TRANSITIVE : "transitive">
+| <USES : "uses">
+| <WITH : "with">
+| <END_TOKEN: "]" > //TODO: remove this when issue #203 fixed
+;
+ 
+INJECT PARSER_CLASS : {
+  private EnumSet<TokenType> permissibleModifiers;
+}
+
+// Alternative to Modifiers using repetition cardinality constraints.
+Modifiers :
+ (
+    (
+       SCAN {allows(ABSTRACT,FINAL)}# =>          & (<ABSTRACT>|<FINAL> ) =>||// Note the "&" is the short form for "ENSURE ASSERT {&0:1&}".
+       |  
+       SCAN {allows(PRIVATE,PROTECTED,PUBLIC)}# =>& (<PRIVATE>|<PROTECTED>|<PUBLIC>) =>||
+       |
+       SCAN {allows(STATIC)}# =>                  & <STATIC> =>||
+       |
+       SCAN {allows(SYNCHRONIZED)}# =>            & <SYNCHRONIZED> =>||
+       |
+       SCAN {allows(NATIVE)}# =>                  & <NATIVE> =>||
+       |
+       SCAN {allows(TRANSIENT)}# =>               & <TRANSIENT> =>||
+       |
+       SCAN {allows(VOLATILE)}# =>                & <VOLATILE> =>||
+       |
+       SCAN {allows(STRICTFP)}# =>                & <STRICTFP> =>||
+       |
+       SCAN {allows(_DEFAULT)}# =>                & <_DEFAULT> =>||
+    ) =>||
+    |
+    SCAN {
+        allows(SEALED) 
+        &&
+        (
+          checkNextTokenImage("sealed","non-sealed")
+          ||
+          checkNextTokenImage("non")
+              && "-".equals(tokenImage(2))
+              && "sealed".equals(tokenImage(3))
+              && getToken(3).getBeginOffset() == getToken(1).getEndOffset() + 1
+        )
+    }# =>
+    & ACTIVATE_TOKENS SEALED, NON_SEALED (<SEALED>|<NON_SEALED>) =>||
+ )* =>||
+ {permissibleModifiers = null;}#
+;
+
+INJECT PARSER_CLASS :
+{
+    boolean allows(TokenType... types) {
+        if (isParserTolerant() || permissibleModifiers == null) return true;
+        for (TokenType type : types) {
+            if (permissibleModifiers.contains(type)) {
+                //System.out.println("allowed=" + type);
+                return true;
+            }
+        }
+        return false;
+    }
+}

@@ -151,7 +151,7 @@ void dumpLookaheadCallStack(PrintStream ps) {
 
       private ${settings.baseTokenClassName} consumeToken(TokenType expectedType
         #if settings.faultTolerant
-          , boolean tolerant, EnumSet<TokenType> followSet
+          , boolean tolerant, EnumSet<TokenType> followSet, Runnable recoveryAction 
         #endif
       )
       [#if settings.useCheckedException] throws ParseException [/#if]
@@ -191,6 +191,9 @@ void dumpLookaheadCallStack(PrintStream ps) {
                nextToken.setSkipped(true);
             }
          }
+      }
+      if (lastConsumedToken.isSkipped() || lastConsumedToken.isVirtual() || nextToken.isSkipped()) {
+         recoveryAction.run();
       }
 #endif
       return lastConsumedToken;

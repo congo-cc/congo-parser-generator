@@ -1,0 +1,48 @@
+<project name="Cardinality" default="compile">
+  <target name="clean">
+    <delete dir="org" />
+  	<delete file="CardTestsParse.class"/>
+  </target>
+
+  <target name="init">
+    <uptodate property="cardparser.uptodate" targetfile="org/parsers/test/CardTestsParser.java">
+      <srcfiles dir="." includes="*.ccc" />
+    </uptodate>
+  </target>
+
+  <target name="parser-gen" depends="init" unless="cardparser.uptodate">
+    <java jar="../../congocc.jar" failonerror="true" fork="true">
+      <assertions>
+        <enable />
+      </assertions>
+      <arg value="-n" />
+      <arg value="${basedir}/CardTests.ccc" />
+    </java>
+  </target>
+
+  <target name="parser-gen-ft" depends="init" unless="cardparser.uptodate">
+    <java jar="../../congocc.jar" failonerror="true" fork="true">
+      <assertions>
+        <enable />
+      </assertions>
+      <arg value="-n" />
+      <arg value="${basedir}/CardTests.ccc" />
+      <arg value="-p" />
+      <arg value="FT" />
+    </java>
+  </target>
+
+  <target name="compile" depends="init,parser-gen">
+    <javac srcdir="." failonerror="true" classpath="." debug="on" optimize="off" includeantruntime="no" fork="true" />
+  </target>
+
+  <target name="test" depends="compile">
+    <java fork="true" classpath="." failonerror="true" classname="CardTestsParse">
+      <assertions>
+        <enable />
+      </assertions>
+    	<jvmarg value="-agentlib:jdwp=transport=dt_socket,server=y,address=8000,suspend=n"/>
+      <arg value="testfiles" />
+    </java>
+  </target>
+</project>
