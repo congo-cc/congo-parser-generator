@@ -12,7 +12,6 @@ JAVA_UNICODE_ESCAPE;
 PARSER_PACKAGE=org.parsers.java;
 NODE_PACKAGE=org.parsers.java.ast;
 DEFAULT_LEXICAL_STATE=JAVA;
-ASSERT_APPLIES_IN_LOOKAHEAD=false;
 // The following tokens are only activated at key points whether
 // they are needed.
 DEACTIVATE_TOKENS=RECORD, VAR, YIELD, SEALED, NON_SEALED, PERMITS, MODULE,
@@ -637,11 +636,6 @@ ExceptionType#ObjectType :
 ;
 
 
-#Expression#interface :
-    AssignmentExpression
-    {return (Expression) peekNode();}
-;
-
 INJECT Expression :
 {
   default boolean isAssignableTo() {return false;}
@@ -694,23 +688,22 @@ INJECT ArrayAccess : implements PrimaryExpression {
   public boolean isAssignableTo() {return true;}
 }
 
-AssignmentExpression :
-  TernaryExpression
-  [
-    //SCAN {((Expression) peekNode()).isAssignableTo()} =>
-    ASSERT {((Expression) peekNode()).isAssignableTo()} : "The expression " + peekNode() + " cannot be assigned to."
-    AssignmentOperator Expression
-  ]
+#Expression#interface :
+    ConditionalOrExpression
+    [
+      (<HOOK> Expression <COLON> Expression) #TernaryExpression(+1)
+      |
+      {Expression lhs = (Expression) peekNode();}
+      (AssignmentOperator Expression) #AssignmentExpression(+1)
+      ASSERT {lhs.isAssignableTo()} : "The expression " + lhs + " cannot be assigned to."
+    ]
+    {return (Expression) peekNode();}
 ;
 
 AssignmentOperator #void :
   <ASSIGN> | <STARASSIGN> | <SLASHASSIGN> | <REMASSIGN> | <PLUSASSIGN>
   | <MINUSASSIGN> | <LSHIFTASSIGN> | <RSIGNEDSHIFTASSIGN>
   | <RUNSIGNEDSHIFTASSIGN> | <ANDASSIGN> | <XORASSIGN> | <ORASSIGN>
-;
-
-TernaryExpression :
-  ConditionalOrExpression [  <HOOK> Expression <COLON> Expression ]
 ;
 
 ConditionalOrExpression :
@@ -1100,18 +1093,18 @@ StatementExpression# :
   PrimaryExpression
   {Expression lhs = (Expression) peekNode();}
   (
-      //SCAN {lhs.isAssignableTo()} =>
-      ASSERT {lhs.isAssignableTo()} : "Expression " + peekNode() + " cannot be assigned to."
       (
           (<INCR> | <DECR>) #PostfixExpression(2)
           |
           AssignmentOperator Expression #AssignmentExpression(3)
       )
+      ASSERT {lhs.isAssignableTo()} : "Expression " + lhs + " cannot be assigned to.":
       |
       ASSERT {lhs instanceof MethodCall
                || lhs instanceof AllocationExpression
                || lhs instanceof ExplicitConstructorInvocation}
-      : "Not a valid statement."
+      : "Not a valid statement at: " + lhs.getLocation()
+        + ".\nExpecting a method call, an assignment or an allocation expression (new...)."
   )
 ;
 
@@ -1413,7 +1406,7 @@ MemberValue :
    |
    MemberValueArrayInitializer
    |
-   TernaryExpression
+   ConditionalOrExpression
 ;
 
 MemberValueArrayInitializer :

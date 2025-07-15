@@ -566,7 +566,6 @@ public class AppSettings {
 
     public boolean getAssertAppliesInLookahead() {
         Boolean b = (Boolean) settings.get("ASSERT_APPLIES_IN_LOOKAHEAD");
-        //return b==null||b;
         return b!=null && b;
     }
 

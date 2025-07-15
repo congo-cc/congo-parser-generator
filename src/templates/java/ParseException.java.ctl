@@ -69,22 +69,17 @@ public class ParseException extends ${BASE_EXCEPTION_TYPE} {
   @Override
   public String getMessage() {
      StringBuilder buf = new StringBuilder();
-     buf.append(super.getMessage());
-     if (token == null && expectedTypes == null) {
-        buf.append(getCustomStackTrace());
-        return buf.toString();
-     }
-     String location = token != null ? token.getLocation() : "";
-     buf.append("\nEncountered an error");
+     buf.append("Encountered an error");
      if (token != null) {
-        buf.append(" at (or somewhere around) " + token.getLocation());
-        if (hitEOF()) {
-             buf.append("\nUnexpected end of input.");
-             buf.append(getCustomStackTrace());
-             return buf.toString();
-        }
+        buf.append(" at (or somewhere around) ");
+        buf.append(token.getLocation());
+        buf.append("\n");
      }
-     if (expectedTypes == null || token == null || expectedTypes.contains(token.getType())) {
+     buf.append(super.getMessage());
+     if (token == null || expectedTypes == null || expectedTypes.contains(token.getType())) {
+        if (hitEOF()) {
+            buf.append("\nUnexpected end of input.");
+        }
         buf.append(getCustomStackTrace());
         return buf.toString();
      }

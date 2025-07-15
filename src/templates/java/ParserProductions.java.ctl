@@ -691,12 +691,18 @@
    #var assertionMessage = "Assertion at: " + assertion.location?j_string + " failed. "
    #if assertion.assertionExpression??
       if (!(${assertion.assertionExpression})) {
+         pushOntoCallStack("${assertion.containingProduction.name}",
+                        "${assertion.inputSource?j_string}",
+                        ${assertion.beginLine}, ${assertion.beginColumn});
          fail("${assertionMessage}"${optionalPart}, getToken(1));
       }
    #endif
    #if assertion.expansion??
       if ( [#if !assertion.expansionNegated]![/#if]
       ${assertion.expansion.scanRoutineName}()) {
+         pushOntoCallStack("${assertion.containingProduction.name}",
+                        "${assertion.inputSource?j_string}",
+                        ${assertion.beginLine}, ${assertion.beginColumn});
          fail("${assertionMessage}"${optionalPart}, getToken(1));
       }
    #endif
