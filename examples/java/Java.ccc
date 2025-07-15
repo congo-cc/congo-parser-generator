@@ -720,13 +720,11 @@ INJECT ArrayAccess : implements PrimaryExpression {
 }
 
 AssignmentExpression :
-  {
-    Expression lhs;
-  }
-  TernaryExpression {lhs = (Expression) peekNode();}
+  TernaryExpression
   [
-    SCAN {lhs.isAssignableTo()}
-    => AssignmentOperator Expression
+    //SCAN {((Expression) peekNode()).isAssignableTo()} =>
+    ASSERT {((Expression) peekNode()).isAssignableTo()} : "The expression " + peekNode() + " cannot be assigned to."
+    AssignmentOperator Expression
   ]
 ;
 
@@ -1127,8 +1125,8 @@ StatementExpression# :
   PrimaryExpression
   {Expression lhs = (Expression) peekNode();}
   (
-      SCAN {lhs.isAssignableTo()}
-      =>
+      //SCAN {lhs.isAssignableTo()} =>
+      ASSERT {lhs.isAssignableTo()} : "Expression " + peekNode() + " cannot be assigned to."
       (
           (<INCR> | <DECR>) #PostfixExpression(2)
           |

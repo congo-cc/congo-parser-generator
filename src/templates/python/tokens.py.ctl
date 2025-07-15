@@ -231,6 +231,9 @@ class ${settings.baseNodeClassName}:
             if isinstance(child, Token) and child.type == type:
                 return child
 
+    def has_child_of_type(self, type) :
+        return first_child_of_type(self, type) != None
+
     def first_descendant_of_type(self, type):
         for child in self.children:
             if isinstance(child, Token):

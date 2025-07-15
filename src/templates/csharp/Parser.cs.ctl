@@ -66,10 +66,11 @@ ${globals::translateParserImports()}
         public HashSet<TokenType> Expected { get; private set; }
         private IList<NonTerminalCall> callStack;
 
-        public ParseException(Parser parser, HashSet<TokenType> expected) : this(parser, null, null, expected) {}
+        public ParseException(Parser parser, HashSet<TokenType> expected) : this(parser, null, null) {}
 
         public ParseException(Parser parser, string message, Token token = null, HashSet<TokenType> expected = null) : base(message) {
             Parser = parser;
+            if (expected == null) expected = new HashSet<TokenType>();
             if (token == null) {
                 token = parser.LastConsumedToken;
                 if ((token != null) && (token.Next != null)) {

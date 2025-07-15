@@ -112,6 +112,7 @@ public class ParseException extends ${BASE_EXCEPTION_TYPE} {
      return buf.toString();
   }
 
+  // TODO: Make this configurable
   public String getCustomStackTrace() {
      StringBuilder buf = new StringBuilder();
      buf.append("\n----------\n");

@@ -169,15 +169,22 @@ namespace ${csPackage} {
 
         T FirstChildOfType<T>(Type t) where T : Node {
             var result = default(T);
-
             for (var i = 0; i < Size; i++) {
                 var child = Get(i);
-                if (!t.IsInstanceOfType(child)) continue;
-                result = (T)child;
+                if (t.IsInstanceOfType(child)) return (T) child;
             }
             return result;
         }
-
+[#--
+        //Why does this not work?
+        bool HasChildOfType<T>(Type t) where T : Node {
+            for (var i = 0; i < Size; i++) {
+                var child = Get(i);
+                if (t.IsInstanceOfType(child)) return true;
+            }
+            return false;
+        }
+--]
         T FirstChildOfType<T>(Type t, Predicate<T> pred) where T : Node {
             var result = default(T);
 

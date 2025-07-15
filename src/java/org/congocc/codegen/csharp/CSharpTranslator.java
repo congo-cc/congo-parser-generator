@@ -237,7 +237,8 @@ public class CSharpTranslator extends Translator {
         boolean treatAsProperty = propertyNames.contains(methodName);
         ASTExpression firstArg = (nargs != 1) ? null : expr.getArguments().get(0);
         boolean needsGeneric = methodName.equals("firstChildOfType") || methodName.equals("childrenOfType") ||
-                               methodName.equals("descendantsOfType") || methodName.equals("descendants");
+                               methodName.equals("descendantsOfType") || methodName.equals("descendants") ||
+                               methodName.equals("hasChildOfType") || methodName.equals("hasDescendantOfType");
 
         needsGeneric = needsGeneric && (firstArg instanceof ASTPrimaryExpression);
 
@@ -403,11 +404,11 @@ public class CSharpTranslator extends Translator {
             case "LEXER_CLASS" -> "Lexer";
             case "PARSER_CLASS" -> "Parser";
             default -> {
-                if (name.equals(appSettings.getLexerClassName())) 
+                if (name.equals(appSettings.getLexerClassName()))
                     yield "Lexer";
-                else if (name.equals(appSettings.getParserClassName())) 
+                else if (name.equals(appSettings.getParserClassName()))
                     yield "Parser";
-                else if (name.equals(appSettings.getBaseTokenClassName())) 
+                else if (name.equals(appSettings.getBaseTokenClassName()))
                     yield "Token";
                 else if (name.startsWith(appSettings.getNodePackage().concat("."))) {
                     int prefixLength = appSettings.getNodePackage().length() + 1;

@@ -410,7 +410,7 @@ Expression :
     SCAN ~\.\.\PlaceHolder <LAMBDA> =>
     LambdaDefinition
     |
-    SCAN <LAMBDA> => FAIL "Lambda is not allowed here without parenthesis."
+    <LAMBDA> FAIL "Lambda is not allowed here without parenthesis."
 ;
 
 Disjunction : Conjunction (<OR> Conjunction)* ;

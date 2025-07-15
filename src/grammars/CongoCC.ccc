@@ -395,7 +395,7 @@ GrammarInclusion throws IOException :
         ACTIVATE_TOKENS _INJECT (<_INJECT>)
         {permissibleModifiers = EnumSet.of(ABSTRACT,FINAL,STRICTFP,SEALED,NON_SEALED);}
         Modifiers
-        {isSealed = peekNode().getType()==SEALED || peekNode().firstChildOfType(SEALED)!=null;}
+        {isSealed = peekNode().getType()==SEALED || peekNode().hasChildOfType(SEALED);}
         [
             "class"
             |
@@ -465,35 +465,35 @@ INJECT CodeInjection :
    public void addImplementsType(ObjectType type) {implementsList.add(type);}
 
    public boolean isMarkedFinal() {
-      if (firstChildOfType(FINAL)!=null) return true;
+      if (hasChildOfType(FINAL)) return true;
       Modifiers mods = firstChildOfType(Modifiers.class);
-      return mods != null && mods.firstChildOfType(FINAL) != null;
+      return mods != null && mods.hasChildOfType(FINAL);
    }
 
    public boolean isMarkedAbstract() {
-      if (firstChildOfType(ABSTRACT)!=null) return true;
+      if (hasChildOfType(ABSTRACT)) return true;
       Modifiers mods = firstChildOfType(Modifiers.class);
-      return mods != null && mods.firstChildOfType(ABSTRACT) != null;
+      return mods != null && mods.hasChildOfType(ABSTRACT);
    }
 
    public boolean isMarkedInterface() {
-      return firstChildOfType(INTERFACE) != null;
+      return hasChildOfType(INTERFACE);
    }
 
    public boolean isMarkedClass() {
-      return firstChildOfType(CLASS) != null;
+      return hasChildOfType(CLASS);
    }
 
    public boolean isSealed() {
-      if (firstChildOfType(SEALED)!=null) return true;
+      if (hasChildOfType(SEALED)) return true;
       Modifiers mods = firstChildOfType(Modifiers.class);
-      return mods != null && mods.firstChildOfType(SEALED) != null;
+      return mods != null && mods.hasChildOfType(SEALED);
    }
 
    public boolean isNonSealed() {
-      if (firstChildOfType(NON_SEALED)!=null) return true;
+      if (hasChildOfType(NON_SEALED)) return true;
       Modifiers mods = firstChildOfType(Modifiers.class);
-      return mods != null && mods.firstChildOfType(NON_SEALED) != null;
+      return mods != null && mods.hasChildOfType(NON_SEALED);
    }
 
    public PermitsList getPermitsList() {
@@ -889,7 +889,7 @@ INJECT ExpansionWithParentheses :
 
     @Override
     public boolean startsWithLexicalChange(boolean stopAtScanLimit) {
-        return firstChildOfType(LexicalStateSwitch.class) != null || firstChildOfType(TokenActivation.class) != null
+        return hasChildOfType(LexicalStateSwitch.class) || hasChildOfType(TokenActivation.class)
               || getNestedExpansion().startsWithLexicalChange(stopAtScanLimit);
     }
 
@@ -930,15 +930,15 @@ INJECT Assertion :
     }
 
     public boolean getAppliesInRegularParsing() {
-        return firstChildOfType(__ASSERT) != null
-              || firstChildOfType(HASH) != null;
+        return hasChildOfType(__ASSERT)
+              || hasChildOfType(HASH);
     }
 
     public boolean getAppliesInLookahead() {
          return get(0).getType() == _ENSURE
-               || firstChildOfType(Expansion.class) != null && getAppSettings().getAssertAppliesInLookahead()
-               || firstChildOfType(HASH) != null
-               || firstAncestorOfType(Lookahead.class) !=null
+               || hasChildOfType(Expansion.class) && getAppSettings().getAssertAppliesInLookahead()
+               || hasChildOfType(HASH)
+               || hasAncestorOfType(Lookahead.class)
                || getContainingProduction().isOnlyForLookahead();
     }
 }
@@ -984,7 +984,7 @@ INJECT Ensure :
    extends EmptyExpansion
 {
     public boolean isNegated() {
-        return firstChildOfType(TILDE) != null;
+        return hasChildOfType(TILDE);
     }
 
     public Expansion getExpansion() {
@@ -1060,7 +1060,7 @@ INJECT Lookahead :
     }
 
     public boolean getHasExplicitNumericalAmount() {
-        return firstChildOfType(TokenType.INTEGER_LITERAL) != null;
+        return hasChildOfType(TokenType.INTEGER_LITERAL);
     }
 
     public int getAmount() {
