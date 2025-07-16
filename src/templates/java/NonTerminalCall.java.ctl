@@ -2,6 +2,7 @@
 package ${settings.parserPackage};
 
 #var BaseTokenType = settings.treeBuildingEnabled ?: "? extends Node.NodeType" : settings.baseTokenClassName + ".TokenType"
+#var LocationType = settings.treeBuildingEnabled ?: "Node" : settings.baseTokenClassName
 
 import java.io.PrintStream;
 #if settings.faultTolerant
@@ -12,14 +13,15 @@ public class NonTerminalCall {
     final String sourceFile;
     public final String productionName;
     final String parserClassName;
-    final String location;
-    final int line, column;
+    final TokenSource tokenSource;
+    final int position, line, column;
 #if settings.faultTolerant
     final Set<${BaseTokenType}> followSet;
 #endif
-    public NonTerminalCall(String parserClassName, String location, String sourceFile, String productionName, int line, int column[#if settings.faultTolerant], Set<${BaseTokenType}> followSet[/#if]) {
+    public NonTerminalCall(String parserClassName, ${LocationType} location, String sourceFile, String productionName, int line, int column[#if settings.faultTolerant], Set<${BaseTokenType}> followSet[/#if]) {
         this.parserClassName = parserClassName;
-        this.location = location;
+        this.tokenSource = location.getTokenSource();
+        this.position = location.getBeginOffset();
         this.sourceFile = sourceFile;
         this.productionName = productionName;
         this.line = line;
@@ -30,7 +32,11 @@ public class NonTerminalCall {
     }
 
     public String getLocation() {
-        return location;
+        return tokenSource.getInputSource()
+               + ":"
+               + tokenSource.getLineFromOffset(position)
+               + ":"
+               + tokenSource.getCodePointColumnFromOffset(position);
     }
 
     StackTraceElement createStackTraceElement() {
@@ -38,6 +44,16 @@ public class NonTerminalCall {
     }
 
     public String toString() {
-         return "at " + location + " entered " + productionName + "(" + sourceFile+ ":" + line + ":" + column+")\n";
+         return "at "
+                + getLocation()
+                + " in "
+                + productionName
+                + "("
+                + sourceFile
+                + ":"
+                + line
+                + ":"
+                + column
+                + ")\n";
     }
 }

@@ -8,7 +8,14 @@ private final ArrayList<NonTerminalCall> lookaheadStack = new ArrayList<>();
 #endif
 
 private void pushOntoCallStack(String methodName, String fileName, int line, int column) {
-   parsingStack.add(new NonTerminalCall("${settings.parserClassName}", getToken(1).getLocation(), fileName, methodName, line, column[#if settings.faultTolerant], currentFollowSet[/#if]));
+   parsingStack.add(new NonTerminalCall("${settings.parserClassName}",
+                                        getToken(1),
+                                        fileName,
+                                        methodName,
+                                        line,
+                                        column
+                                        ${settings.faultTolerant ?: ", currentFollowSet"}
+                                        ));
 }
 
 private void popCallStack() {
@@ -75,7 +82,13 @@ private ListIterator<NonTerminalCall> stackIteratorBackward() {
 
 
 private void pushOntoLookaheadStack(String methodName, String fileName, int line, int column) {
-    lookaheadStack.add(new NonTerminalCall("${settings.parserClassName}", getToken(1).getLocation(), fileName, methodName, line, column[#if settings.faultTolerant], null[/#if]));
+    lookaheadStack.add(new NonTerminalCall(
+          "${settings.parserClassName}",
+          getToken(1),
+          fileName,
+          methodName,
+          line,
+          column[#if settings.faultTolerant], null[/#if]));
 }
 
 private void popLookaheadStack() {
@@ -151,7 +164,7 @@ void dumpLookaheadCallStack(PrintStream ps) {
 
       private ${settings.baseTokenClassName} consumeToken(TokenType expectedType
         #if settings.faultTolerant
-          , boolean tolerant, EnumSet<TokenType> followSet, Runnable recoveryAction 
+          , boolean tolerant, EnumSet<TokenType> followSet, Runnable recoveryAction
         #endif
       )
       [#if settings.useCheckedException] throws ParseException [/#if]
