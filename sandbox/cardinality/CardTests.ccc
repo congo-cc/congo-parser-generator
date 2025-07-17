@@ -46,6 +46,8 @@ DelimitedString :
 Test :
     "(" Letters ")"
     |
+    "%" Ss "%" =>|| {System.out.println("The snake is dead.");}
+    |
     Set
     |
     "[" 
@@ -83,6 +85,13 @@ LTest3 :
         ((((("h" | &&"e")))))+ //This is the proper match for the 2nd "e", with the "nd" matched above.
     )+
 ; 
+
+// The most infamous explosive recursion case:
+// Ss : "s" Ss Ss | {} ; This won't work, for obvious reasons.
+Ss : 
+    ( "s" Ss Ss | SCAN {true} => && =>|| )* 
+    {System.out.println("sss..., said the snake.");} // But this one will!
+;
 
 Set :
     "{"
