@@ -865,7 +865,7 @@
    #if oom.cardinalityContainer
       #set cardinalitiesVar = "cardinalities" + repetitionIndex
       #set repetitionIndex = repetitionIndex + 1
-      RepetitionCardinality ${cardinalitiesVar} = new RepetitionCardinality(${CU.BuildCardinalities(oom.cardinalityConstraints)}, true);
+      RepetitionCardinality ${cardinalitiesVar} = new RepetitionCardinality(${CU.BuildCardinalities(oom.cardinalityConstraints)});
    #endif
    while (true) {
      ${RecoveryLoop(oom, cardinalitiesVar)} [#-- REVISIT: recovery of cardinalities!!! --]
@@ -891,7 +891,7 @@
    #if zom.cardinalityContainer
       #set cardinalitiesVar = "cardinalities" + repetitionIndex
       #set repetitionIndex = repetitionIndex + 1
-      RepetitionCardinality ${cardinalitiesVar} = new RepetitionCardinality(${CU.BuildCardinalities(zom.cardinalityConstraints)}, true);
+      RepetitionCardinality ${cardinalitiesVar} = new RepetitionCardinality(${CU.BuildCardinalities(zom.cardinalityConstraints)});
    #endif
    while (true) {
       #if zom.nestedExpansion.class.simpleName != "ExpansionChoice"

@@ -576,7 +576,7 @@
       #set zomCardVar = "cardinality" + repetitionIndex
       #set repetitionIndex = repetitionIndex + 1
       // instantiating the OneOrMore choice cardinality container for its ExpansionChoices 
-      RepetitionCardinality ${zomCardVar} = new RepetitionCardinality(${CU.BuildCardinalities(zom.cardinalityConstraints)}, false); 
+      RepetitionCardinality ${zomCardVar} = new RepetitionCardinality(${CU.BuildCardinalities(zom.cardinalityConstraints)}); 
     #endif
     boolean ${prevPassPredicateVarName} = passedPredicate;
     try {
@@ -614,7 +614,7 @@
       #set oomCardVar = "cardinality" + repetitionIndex
       #set repetitionIndex = repetitionIndex + 1
       // instantiating the OneOrMore choice cardinality container for its ExpansionChoices 
-      RepetitionCardinality ${oomCardVar} = new RepetitionCardinality(${CU.BuildCardinalities(oom.cardinalityConstraints)}, false); 
+      RepetitionCardinality ${oomCardVar} = new RepetitionCardinality(${CU.BuildCardinalities(oom.cardinalityConstraints)}); 
     #endif
    ${BuildScanCode(oom.nestedExpansion, oomCardVar, cardinalitiesVar!null)}
    #if oom.cardinalityContainer

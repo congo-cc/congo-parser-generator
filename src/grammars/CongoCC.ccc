@@ -988,23 +988,25 @@ ExpansionSequence #org.congocc.core.ExpansionSequence :
 ;
 
 int[] CardinalityConstraint#void :
- {
-    int[] cardinality = new int[]{0,1};
-    Token literal;
- }
-   "&"
-   [
-        literal=<INTEGER_LITERAL> 
-            {cardinality[0]=cardinality[1]=Integer.valueOf(literal.toString());}
+    {
+       int[] cardinality = new int[]{0,1};
+       Token literal;
+    }
+    DEACTIVATE_TOKENS SC_AND (
+    "&"
         [
-            ":" {cardinality[1]=Integer.MAX_VALUE;}
+            {cardinality[0]=cardinality[1]=1;}
+            [ literal=<INTEGER_LITERAL> {cardinality[0]=cardinality[1]=Integer.valueOf(literal.toString());} ]
             [
-            literal=<INTEGER_LITERAL> {cardinality[1]=Integer.valueOf(literal.toString());}
+                ":" {cardinality[1]=Integer.MAX_VALUE;}
+                [ literal=<INTEGER_LITERAL> {cardinality[1]=Integer.valueOf(literal.toString());} ]
+            ]
+            "&"
         ]
-        ]
-        "&"
-   ]
-   {return cardinality;}
+    )
+    {
+        return cardinality;
+    }
 ;
 
 INJECT Assertion :
