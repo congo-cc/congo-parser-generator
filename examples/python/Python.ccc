@@ -470,14 +470,20 @@ Parameters :
       (<COMMA> =>|+1
         (
           <SLASH>
-          ASSERT {!seenSlash} : "The slash can only occur once in the parameters."
+          ASSERT {
+            !seenSlash,
+            lastConsumedToken :
+            "The slash can only occur once in the parameters."
+          }
           {seenSlash = true;}
           |
           <NAME> [SCAN \FunctionDefinition => <COLON> Expression]
           // If we've already seen a param with a default value,
           // the remaining ones also have to have a default value.
-          ASSERT {!seenDefault || checkNextTokenType(ASSIGN)}
-                 : "This parameter must have a default value.":
+          ASSERT {
+              !seenDefault || checkNextTokenType(ASSIGN)
+              : "This parameter must have a default value."
+          }
           [
              <ASSIGN> Expression {seenDefault = true;}
           ]
@@ -525,7 +531,7 @@ MatchStatement :
    =>||
    <NEWLINE>
    <INDENT>
-   ASSERT {checkNextTokenImage("case")} : "Must have a case here":
+   ASSERT {checkNextTokenImage("case") : "Must have a case here"}
    (CaseBlock)+
    <DEDENT>
 ;

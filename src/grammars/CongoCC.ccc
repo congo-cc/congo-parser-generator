@@ -70,7 +70,7 @@ INJECT PARSER_CLASS :
         parser.setSymbols(grammar.getPreprocessorSymbols());
         BitSet lineMarkers = parser.PP_Root();
         token_source.setParsedLines(lineMarkers);
-    } 
+    }
 
     static public CompilationUnit parseJavaFile(Grammar grammar, String inputSource, CharSequence content) throws IOException{
         PARSER_CLASS parser = new PARSER_CLASS(grammar, inputSource, content);
@@ -725,14 +725,14 @@ INJECT ExpansionChoice :
    extends Expansion
 {
     @Property int assertionIndex = -1;
-    
+
     public List<ExpansionSequence> getChoices() {
         return childrenOfType(ExpansionSequence.class);
     }
 
     /**
      * Indicates one or more choices are constrained by a cardinality assertion.
-     * @return {@code true} iff this expansion's parent {@link ExpansionWithParentheses} should 
+     * @return {@code true} iff this expansion's parent {@link ExpansionWithParentheses} should
      * provide a cardinality container and perform a final check of each cardinality assertion
      */
     public boolean isCardinalityConstrained() {
@@ -898,7 +898,7 @@ INJECT ExpansionWithParentheses :
     @Property Assignment assignment;
     @Property int minCardinality = 0;
     @Property int maxCardinality = 1;
-    
+
     int assertionIndex = -1;
 
     @Override
@@ -926,7 +926,7 @@ INJECT ExpansionWithParentheses :
         }
         return assertions;
     }
-    
+
     /**
      * Indicates that the {@link ExpansionChoice} contained in this iterating expansion includes cardinality assertion(s).
      * @return {@code true} iff a cardinality container should be initially instantiated and a final check performed
@@ -938,7 +938,7 @@ INJECT ExpansionWithParentheses :
         }
         return false;
     }
-    
+
     public int[][] getCardinalityConstraints() {
         List<int[]> cardinalityConstraints = new ArrayList<>();
         for (Assertion a : getCardinalityAssertions()) {
@@ -947,7 +947,7 @@ INJECT ExpansionWithParentheses :
         }
         return cardinalityConstraints.toArray(new int[0][]);
     }
-    
+
     @Override
     public String getSpecifiedLexicalState() {
         LexicalStateSwitch lss = firstChildOfType(LexicalStateSwitch.class);
@@ -1013,7 +1013,7 @@ INJECT Assertion :
    import org.congocc.core.Expansion;
    extends org.congocc.core.EmptyExpansion
 {
-    @Property Expansion expansion;    
+    @Property Expansion expansion;
     @Property int[] cardinalityConstraint = null;
     @Property int assertionIndex = -1;
 
@@ -1029,16 +1029,16 @@ INJECT Assertion :
     }
 
     public boolean getAppliesInLookahead() {
-         return get(0).getType() == _ENSURE 
+         return get(0).getType() == _ENSURE
                || firstChildOfType(Expansion.class) != null && getAppSettings().getAssertAppliesInLookahead()
                || isAppliedUniversally()
                || firstAncestorOfType(Lookahead.class) !=null
                || getContainingProduction().isOnlyForLookahead();
                //|| isCardinalityConstraint();
     }
-    
+
     public boolean isCardinalityConstraint() {
-        return cardinalityConstraint != null; 
+        return cardinalityConstraint != null;
     }
 }
 
@@ -1059,27 +1059,38 @@ Assertion# :
                 "{"
                 (
                     @assertionExpression := Expression
-                    | 
-                    cardinality=CardinalityConstraint =>|| 
+                    |
+                    cardinality=CardinalityConstraint =>||
                     {
                         thisProduction.setCardinalityConstraint(cardinality);
                     }
                 )
-                   [
-         ":"
-         @messageExpression := Expression
-         {messageAlreadySeen = true;}
-       ]
-    "}"
+                [
+                    ","
+                    @locationExpression := Expression
+                ]
+                [
+                   ":"
+                   @messageExpression := Expression
+                  {messageAlreadySeen = true;}
+                ]
+                "}"
                 |
                 @assertionExpressionRawCode := RawCode
-             {messageAlreadySeen = true;}
-    )
+                {messageAlreadySeen = true;}
+           )
             [ SCAN {assertKeywordPresent} => @appliedUniversally :=? "#" ]
             |
             [ @expansionNegated :=? "~" ]
             "("
             ExpansionChoice {thisProduction.setExpansion((Expansion) peekNode());}
+            [
+               @locationExpression := Expression
+            ]
+            [
+                @messageExpression := Expression
+                {messageAlreadySeen = true;}
+            ]
             ")"
         )
         [
@@ -1089,8 +1100,8 @@ Assertion# :
         ]
         |
         // This is an abbreviated form equivalent to "ASSERT {&...&}#..." and is usually what is desired.
-        SCAN /.../BNFProduction/.../ExpansionWithParentheses/ExpansionChoice/ExpansionSequence/ExpansionUnit => 
-        cardinality=CardinalityConstraint =>||  
+        SCAN /.../BNFProduction/.../ExpansionWithParentheses/ExpansionChoice/ExpansionSequence/ExpansionUnit =>
+        cardinality=CardinalityConstraint =>||
         {
           thisProduction.setCardinalityConstraint(cardinality);
           thisProduction.setAppliedUniversally(true);
@@ -1481,7 +1492,7 @@ INJECT ZeroOrOne :
      import org.congocc.core.Expansion;
      import org.congocc.core.TokenSet;
      extends ExpansionWithParentheses
-{  
+{
     @Override
     protected int getMinimumSize(java.util.Set<String> unused) {return 0;}
 }

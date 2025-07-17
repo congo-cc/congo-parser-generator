@@ -256,8 +256,9 @@ TypeIdentifier#void :
            && !temp.equals("var")
            && !temp.equals("permits")
            && !temp.equals("sealed")
-           && !temp.equals("yield")}
-          : "Illegal type name " + temp
+           && !temp.equals("yield"),
+           lastConsumedToken
+          : "Illegal type name " + temp}
    =>||
 ;
 
@@ -695,7 +696,8 @@ INJECT ArrayAccess : implements PrimaryExpression {
       |
       {Expression lhs = (Expression) peekNode();}
       (AssignmentOperator Expression) #AssignmentExpression(+1)
-      ASSERT {lhs.isAssignableTo()} : "The expression " + lhs + " cannot be assigned to."
+      ASSERT {lhs.isAssignableTo(), lhs}
+      : "The expression " + lhs + " cannot be assigned to."
     ]
     {return (Expression) peekNode();}
 ;
@@ -790,13 +792,13 @@ UnaryExpression :
 
 PreIncrementExpression :
   <INCR> UnaryExpression
-  ASSERT {((Expression)peekNode()).isAssignableTo()}
+  ASSERT {((Expression)peekNode()).isAssignableTo(), peekNode()}
   : "Expression " + peekNode() + " is not an assignable variable."
 ;
 
 PreDecrementExpression :
   <DECR> UnaryExpression
-  ASSERT {((Expression)peekNode()).isAssignableTo()}
+  ASSERT {((Expression)peekNode()).isAssignableTo(), peekNode()}
   : "Expression " + peekNode() + " is not an assignable variable."
 ;
 
@@ -819,7 +821,7 @@ PostfixExpression :
   {Expression lhs = (Expression) peekNode();}
   [
     (<INCR> | <DECR>)
-    ASSERT {lhs.isAssignableTo()} : "Expression " + lhs + " cannot be assigned to."
+    ASSERT {lhs.isAssignableTo(), lhs} : "Expression " + lhs + " cannot be assigned to."
   ]
 ;
 
@@ -1020,7 +1022,8 @@ AssertStatement : <_ASSERT> Expression [ <COLON> Expression ] <SEMICOLON> ;
 Block #CodeBlock : <LBRACE> (SCAN ~(<RBRACE>) => BlockStatement)*! <RBRACE> ;
 
 BlockStatement#void :
- ASSERT ~((<FINAL>|Annotation)* (<PUBLIC>|<PRIVATE>|<PROTECTED>|<STATIC>)) : "Cannot declare anything to be public, private, protected, or static  in a local context"
+ ASSERT ~((<FINAL>|Annotation)* (<PUBLIC>|<PRIVATE>|<PROTECTED>|<STATIC>))
+ : "Cannot declare anything to be public, private, protected, or static  in a local context"
  (
   RecordDeclaration
   |
@@ -1098,7 +1101,7 @@ StatementExpression# :
           |
           AssignmentOperator Expression #AssignmentExpression(3)
       )
-      ASSERT {lhs.isAssignableTo()}
+      ASSERT {lhs.isAssignableTo(),lhs}
 #if !__python__
      // for some reason, this just doesn't work but
      // I don't understand why not. Shouldn't it just call the appropriate
@@ -1109,10 +1112,11 @@ StatementExpression# :
       |
       ASSERT {lhs instanceof MethodCall
                || lhs instanceof AllocationExpression
-               || lhs instanceof ExplicitConstructorInvocation}
+               || lhs instanceof ExplicitConstructorInvocation,
+               lhs}
 #if !__python__
       // Same issue as above basically. Doesn't work in Python.
-      : "Expression at " + lhs.getLocation() + " is not a valid statement.\n"
+      : "Expression " + lhs + " is not a valid statement.\n"
         + "Expecting a method call, an assignment or an allocation expression (new...)"
 #endif
   )
@@ -1347,7 +1351,7 @@ ResourcesInTryBlock :
          Name
          |
          PrimaryExpression
-         ASSERT {peekNode() instanceof DotName} : "Resource should be a field access here."
+         ASSERT {peekNode() instanceof DotName, peekNode()} : "Resource should be a field access here."
        )
        [<SEMICOLON>]
     )+

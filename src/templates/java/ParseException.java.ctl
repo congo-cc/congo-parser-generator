@@ -3,6 +3,7 @@
 package ${settings.parserPackage};
 
 #var BASE_EXCEPTION_TYPE = settings.useCheckedException ?: "Exception" : "RuntimeException"
+#var LOCATION_TYPE = settings.baseTokenClassName
 
 #var TOKEN_TYPE_SET = "EnumSet<TokenType>",
                       BaseToken = settings.baseTokenClassName,
@@ -12,6 +13,7 @@ package ${settings.parserPackage};
   #set TOKEN_TYPE_SET = "Set<? extends Node.NodeType>"
   #set BaseToken = "Node.TerminalNode"
   #set BaseTokenType = "Node.NodeType"
+  #set LOCATION_TYPE = "Node"
 #else
   import ${settings.parserPackage}.${BaseToken}.TokenType;
 #endif
@@ -20,23 +22,23 @@ import java.util.*;
 
 public class ParseException extends ${BASE_EXCEPTION_TYPE} {
 
-  // The token we tripped up on.
-  private ${BaseToken} token;
+  // The location where we tripped up.
+  private ${LOCATION_TYPE} location;
   //We were expecting one of these token types
   private ${TOKEN_TYPE_SET} expectedTypes;
 
   private List<NonTerminalCall> callStack = new ArrayList<>();
 
-  public ParseException(${BaseToken} token, ${TOKEN_TYPE_SET} expectedTypes, List<NonTerminalCall> callStack) {
-      this.token = token;
+  public ParseException(${LOCATION_TYPE} location, ${TOKEN_TYPE_SET} expectedTypes, List<NonTerminalCall> callStack) {
+      this.location = location;
       this.expectedTypes = expectedTypes;
       if (callStack != null) {
          this.callStack = new ArrayList<>(callStack);
       }
   }
 
-  public ParseException(${BaseToken} token) {
-     this.token = token;
+  public ParseException(${LOCATION_TYPE} location) {
+     this.location = location;
   }
 
   public ParseException(String message) {
@@ -54,25 +56,25 @@ public class ParseException extends ${BASE_EXCEPTION_TYPE} {
     }
   }
 
-  public ParseException(String message, ${BaseToken} token, List<NonTerminalCall> callStack) {
+  public ParseException(String message, ${LOCATION_TYPE} location, List<NonTerminalCall> callStack) {
      super(message);
-     this.token = token;
+     this.location = location;
      if (callStack != null) {
         this.callStack = new ArrayList<>(callStack);
      }
   }
 
   public boolean hitEOF() {
-      return token != null && token.getType().isEOF();
+      return location != null && location.getType() != null && location.getType().isEOF();
   }
 
   @Override
   public String getMessage() {
      StringBuilder buf = new StringBuilder();
      buf.append("Encountered an error");
-     if (token != null) {
+     if (location != null) {
         buf.append(" at (or somewhere around) ");
-        buf.append(token.getLocation());
+        buf.append(location.getLocation());
      }
      if (super.getMessage() != null) {
         buf.append("\n");
@@ -81,17 +83,17 @@ public class ParseException extends ${BASE_EXCEPTION_TYPE} {
      if (hitEOF()) {
         buf.append("\nUnexpected end of input.");
      }
-     if (token == null || expectedTypes == null || expectedTypes.contains(token.getType())) {
+     if (location == null || location.getType() == null || expectedTypes == null || expectedTypes.contains(location.getType())) {
         buf.append(getCustomStackTrace());
         return buf.toString();
      }
-     String content = token.toString();
+     String content = location.toString();
      if (content == null || content.length() == 0) {
-        buf.append("\n Found token of type " + token.getType());
+        buf.append("\n Found token of type " + location.getType());
      }
      else {
        if (content.length() > 32) content = content.substring(0, 32) + "...";
-       buf.append("\nFound string \"" + addEscapes(content) + "\" of type " + token.getType());
+       buf.append("\nFound string \"" + addEscapes(content) + "\" of type " + location.getType());
      }
      if (expectedTypes.size() == 1) {
         buf.append("\nWas expecting: " + expectedTypes.iterator().next());
@@ -125,8 +127,16 @@ public class ParseException extends ${BASE_EXCEPTION_TYPE} {
    * Returns the token which causes the parse error and null otherwise.
    * @return the token which causes the parse error and null otherwise.
    */
-   public ${BaseToken} getToken() {
-      return token;
+   public ${LOCATION_TYPE} getLocation() {
+      return location;
+   }
+
+   /**
+    * @Deprecated Use #getLocation
+    * We just keep this around in case anybody using it.
+    */
+   public ${LOCATION_TYPE} getToken() {
+      return location;
    }
 
    private static String addEscapes(String str) {

@@ -218,7 +218,7 @@
          this.pendingRecovery = true;
          // recovery for ${expansion.location}
          ${expansion.recoveryBlock!}
-         #-- REVISIT: Something needs to be done about always consuming a token if we get here, or an infinite loop can result. 
+         #-- REVISIT: Something needs to be done about always consuming a token if we get here, or an infinite loop can result.
          #if production?? && production.returnType != "void"
             #var rt = production.returnType
             #-- We need a return statement here or the code won't compile! --
@@ -701,8 +701,9 @@
          pushOntoCallStack("${assertion.containingProduction.name}",
                         "${assertion.inputSource?j_string}",
                         ${assertion.beginLine}, ${assertion.beginColumn});
-         fail("${assertionMessage}"${optionalPart}, getToken(1));
-      }  
+         fail("${assertionMessage}"${optionalPart},
+              ${assertion.locationExpression!"getToken(1)"});
+      }
    #elseif assertion.cardinalityConstraint??
       if (!${cardinalitiesVar!"cardinalities"}.choose(${assertion.assertionIndex}, false)) {
          fail("Maximum cardinality constraint at: ${assertion.location?j_string} exceeded.", getToken(1));
@@ -714,7 +715,8 @@
          pushOntoCallStack("${assertion.containingProduction.name}",
                         "${assertion.inputSource?j_string}",
                         ${assertion.beginLine}, ${assertion.beginColumn});
-         fail("${assertionMessage}"${optionalPart}, getToken(1));
+         fail("${assertionMessage}"${optionalPart},
+             ${assertion.locationExpression!"getToken(1)"});
       }
    #endif
 #endmacro
@@ -881,7 +883,7 @@
    #if oom.cardinalityContainer
       if (!${cardinalitiesVar}.checkCardinality(false))  {
          fail("Minimum cardinality constraint(s) for: ${oom.location?j_string} not met.", getToken(1));
-      } 
+      }
    #endif
    #set inFirstVarName = prevInFirstVarName
 #endmacro
@@ -905,7 +907,7 @@
    #if zom.cardinalityContainer
       if (!${cardinalitiesVar}.checkCardinality(false))  {
          fail("Minimum cardinality constraint(s) for: ${zom.location?j_string} not met.", getToken(1));
-      } 
+      }
    #endif
 #endmacro
 
@@ -928,8 +930,8 @@
           if (${loopExpansion.recoverMethodName}(pe)) {
              #if loopExpansion.recoveryBlock??
                  // Recovery code action at ${loopExpansion.recoveryBlock.location} when recovery succeeded and pushed an InvalidNode
-                 ${loopExpansion.recoveryBlock.javaCode} 
-             /#if 
+                 ${loopExpansion.recoveryBlock.javaCode}
+             /#if
              pendingRecovery = false;
           }
           if (pendingRecovery) throw pe;
@@ -999,7 +1001,7 @@
     #if expansion.requiresPredicateMethod
        ${ScanAheadCondition(expansion, cardinalitiesVar!null)}
     #else
-       ${SingleTokenCondition(expansion, cardinalitiesVar!null)} 
+       ${SingleTokenCondition(expansion, cardinalitiesVar!null)}
     #endif
 #endmacro
 
