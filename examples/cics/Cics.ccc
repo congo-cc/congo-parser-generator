@@ -448,9 +448,9 @@ Acquire :
     <ACQUIRE>
     (
         (
-            &1& <PROCESS> "(" DataValue ")"
+            && <PROCESS> "(" DataValue ")"
             |
-            &1& <PROCESSTYPE> "(" DataValue ")"
+            && <PROCESSTYPE> "(" DataValue ")"
             |
             (
                 & @noHandle :=? <NOHANDLE>
@@ -468,9 +468,9 @@ Acquire :
 Add :
     <ADD> 
     (
-        &1& <SUBEVENT> "(" DataValue ")"
+        && <SUBEVENT> "(" DataValue ")"
         |
-        &1& <EVENT> "(" DataValue ")"
+        && <EVENT> "(" DataValue ")"
         |
         (
             & @noHandle :=? <NOHANDLE>
@@ -540,11 +540,11 @@ AllocateAPPC :
             & <RESP2> "(" Name #Response2Name(1) ")"
         ) #CommonOptions
         |
-        &1& (
+        && (
             <PARTNER> "(" Name ")" =>||
             | 
             ( 
-                &1& <SYSID> "(" SystemName ")"
+                && <SYSID> "(" SystemName ")"
                 |
                 &   <PROFILE> "(" Name ")" 
             )+
@@ -585,14 +585,14 @@ Xctl :
             <CHANNEL> "(" Name ")"
             |
             (
-                &1& <COMMAREA> "(" DataArea ")"
+                && <COMMAREA> "(" DataArea ")"
                 |
                 & <LENGTH> "(" DataArea ")"
             )+
         ) 
         |
         & (
-            &1& <INPUTMSG> "(" DataArea ")"
+            && <INPUTMSG> "(" DataArea ")"
             |
             & <INPUTMSGLEN> "(" DataValue ")"
         )+
@@ -623,7 +623,7 @@ Link :
         |
         &(
             &(
-                &1&<INPUTMSG> "(" DataArea ")"
+                &&<INPUTMSG> "(" DataArea ")"
                 |
                 &<INPUTMSGLEN> "(" DataArea ")"
             )
@@ -651,14 +651,14 @@ Return :
     <RETURN>
     (
         &(
-            &1& <TRANSID> "(" Name ")"
+            && <TRANSID> "(" Name ")"
             |
             &(
                 &<IMMEDIATE>
                 |
                 &(
                     (
-                        &1& <COMMAREA> "(" DataArea ")"
+                        && <COMMAREA> "(" DataArea ")"
                         |
                         &   <LENGTH> "(" DataArea ")"
                     )+
@@ -669,7 +669,7 @@ Return :
         )+
         |
         & (
-            &1& <INPUTMSG> "(" DataArea ")"
+            && <INPUTMSG> "(" DataArea ")"
             |
             &   <INPUTMSGLEN> "(" DataValue ")"
         )+
@@ -695,7 +695,7 @@ Receive3270 :
             <SET> "(" PtrRef ")"
         )
         |
-        &1&(
+        &&(
             <LENGTH> "(" DataArea ")"
             |
             <FLENGTH> "(" DataArea ")"
@@ -734,7 +734,7 @@ ReceiveMap :
         |
         &(
             (
-                &1& <TERMINAL>
+                && <TERMINAL>
                 |
                 &   <ASIS>
                 |
@@ -742,7 +742,7 @@ ReceiveMap :
             )+
             |
             (
-                &1&  <FROM> "(" DataArea ")"
+                &&  <FROM> "(" DataArea ")"
                 |
                 &    <LENGTH> "(" DataValue ")"
             )+
@@ -783,7 +783,7 @@ SendMap : //minimum at this point
         |
         &(
             &(
-                &1&<ERASE>
+                &&<ERASE>
                 | 
                 &( 
                     <ALTERNATE>
@@ -816,12 +816,12 @@ SendMap : //minimum at this point
 StartBr :
     <STARTBR>
     (
-        &1&<FILE> "(" FileName ")"
+        &&<FILE> "(" FileName ")"
         |
-        &1&<RIDFLD> "(" DataArea ")"
+        &&<RIDFLD> "(" DataArea ")"
         |
         &(
-            &1&<KEYLENGTH> "(" DataValue ")"
+            &&<KEYLENGTH> "(" DataValue ")"
             |
             &<GENERIC>
         )+
@@ -853,7 +853,7 @@ StartBr :
 EndBr :
     <ENDBR>
     (
-        &1&<FILE> "(" FileName ")"
+        &&<FILE> "(" FileName ")"
         |
         &<SYSID> "(" SystemName ")"
         |
@@ -872,28 +872,28 @@ EndBr :
 Read :
     <READ>
     (
-        &1&<FILE> "(" FileName ")"
+        &&<FILE> "(" FileName ")"
         |
         &(
             <UNCOMMITTED> |
             <CONSISTENT> |
             <REPEATABLE> |
             (
-                &1&<UPDATE> 
+                &&<UPDATE> 
                 |
                 &<_TOKEN> "(" DataArea ")" 
             )+
         )
         |
-        &1&(
+        &&(
             <INTO> "(" DataArea ")" |
             <SET> "(" PtrRef ")"
         )
         |
-        &1&<RIDFLD> "(" DataArea ")"
+        &&<RIDFLD> "(" DataArea ")"
         |
         &(
-            &1&<KEYLENGTH> "(" DataValue ")"
+            &&<KEYLENGTH> "(" DataValue ")"
             |
             &<GENERIC>
         )+
@@ -901,7 +901,7 @@ Read :
         &(
             &<SYSID> "(" SystemName ")" 
             |
-            &1&<LENGTH> "(" DataArea ")"
+            &&<LENGTH> "(" DataArea ")"
         )+
         |
         &(
@@ -933,30 +933,30 @@ ReadPrev :
 }
     <READPREV> 
     (
-        &1&<FILE> "(" FileName ")"
+        &&<FILE> "(" FileName ")"
         |
         &(
             <UNCOMMITTED> |
             <CONSISTENT> |
             <REPEATABLE> |
             ( 
-                &1&<UPDATE>
+                &&<UPDATE>
                 |
                 &<_TOKEN> "(" DataArea ")"
             )+
         )
         |
-        &1&(
+        &&(
             <INTO> "(" DataArea ")" |
             <SET> "(" PtrRef ")"
         )
         |
-        &1&<RIDFLD> "(" DataArea ")"
+        &&<RIDFLD> "(" DataArea ")"
         |
         &<KEYLENGTH> "(" DataValue ")"
         |
-        &1&(
-            &1&<LENGTH> "(" DataArea ")"
+        &&(
+            &&<LENGTH> "(" DataArea ")"
             |
             &<SYSID> "(" SystemName ")"
         )+
@@ -988,29 +988,29 @@ ReadNext :
 }
     <READNEXT> 
     (
-        &1&<FILE> "(" FileName ")"
+        &&<FILE> "(" FileName ")"
         |
         &(
             <UNCOMMITTED> |
             <CONSISTENT> |
             <REPEATABLE> |
             ( 
-                &1&<UPDATE>
+                &&<UPDATE>
                 |
                 &<_TOKEN> "(" DataArea ")"
             )+
         )
         |
-        &1&(
+        &&(
             <INTO> "(" DataArea ")" |
             <SET> "(" PtrRef ")"
         )
         |
-        &1&<RIDFLD> "(" DataArea ")"
+        &&<RIDFLD> "(" DataArea ")"
         |
         &<KEYLENGTH> "(" DataValue ")"
         |&(
-            &1&<LENGTH> "(" DataArea ")"
+            &&<LENGTH> "(" DataArea ")"
             |
             &<SYSID> "(" SystemName ")"
         )+
@@ -1039,14 +1039,14 @@ ReadNext :
 Rewrite :
     <REWRITE>
     (
-        &1&<FILE> "(" FileName ")"
+        &&<FILE> "(" FileName ")"
         |
         &<_TOKEN> "(" DataArea ")"
         |
-        &1&<FROM> "(" DataArea ")"
+        &&<FROM> "(" DataArea ")"
         |
         &(
-            &1&<LENGTH> "(" DataArea ")"
+            &&<LENGTH> "(" DataArea ")"
             |
             &<SYSID> "(" SystemName ")"
         )+
@@ -1066,18 +1066,18 @@ Rewrite :
 Write :
     <WRITE>
     (
-        &1&<FILE> "(" FileName ")"
+        &&<FILE> "(" FileName ")"
         |
         &<MASSINSERT>
         |
-        &1&<FROM> "(" DataArea ")"
+        &&<FROM> "(" DataArea ")"
         |
-        &1&<RIDFLD> "(" DataArea ")"
+        &&<RIDFLD> "(" DataArea ")"
         |
         &<KEYLENGTH> "(" DataValue ")"
         |
         &(
-            &1&<LENGTH> "(" DataArea ")"
+            &&<LENGTH> "(" DataArea ")"
             |
             &<SYSID> "(" SystemName ")"
         )+
@@ -1103,9 +1103,9 @@ Write :
 WriteQTd :
     <WRITEQ> <TD>
     (
-        &1&<QUEUE> "(" Name ")"
+        &&<QUEUE> "(" Name ")"
         |
-        &1&<FROM> "(" DataArea ")"
+        &&<FROM> "(" DataArea ")"
         |
         &<LENGTH> "(" DataValue ")"
         |
@@ -1126,12 +1126,12 @@ WriteQTs :
     (
         &<TS>
         |
-        &1& (
+        && (
             (<QUEUE> | <QNAME>) 
             "(" Name ")"
         )
         |
-        &1&<FROM> "(" DataArea ")"
+        &&<FROM> "(" DataArea ")"
         |
         &<LENGTH> "(" DataValue ")"
         |
@@ -1141,7 +1141,7 @@ WriteQTs :
             <NUMITEMS> "(" DataArea ")"
             |
             (
-                &1&<ITEM> "(" DataArea ")"
+                &&<ITEM> "(" DataArea ")"
                 |
                 &<REWRITE>
             )+
@@ -1282,9 +1282,9 @@ Assign : //TODO: This one is too big for Python (too much indentation)
 Send3270 :
     <SEND>
     (
-        &1&<FROM> "(" DataArea ")"
+        &&<FROM> "(" DataArea ")"
         |
-        &1&(
+        &&(
             <LENGTH> "(" DataValue ")" |
             <FLENGTH> "(" DataValue ")"
         )
@@ -1298,7 +1298,7 @@ Send3270 :
             |
             &(
                 &(
-                    &1&<ERASE>
+                    &&<ERASE>
                     | 
                     &( <_DEFAULT> | <ALTERNATE> )
                 )+
@@ -1322,14 +1322,14 @@ Send3270 :
 SendText :
     <SEND> <TEXT> =>||
     (
-        &1& (<FROM> "(" DataArea ")") #FromPhrase
+        && (<FROM> "(" DataArea ")") #FromPhrase
         |
         & (<CURSOR> "(" DataValue ")") #CursorPhrase
         |
         & @withFF :=? <FORMFEED>
         |
         &(
-            &1& <ERASE>
+            && <ERASE>
             | 
             &( <_DEFAULT> | <ALTERNATE> )
         )+ =>|| #ErasePhrase
@@ -1386,7 +1386,7 @@ Asktime :
 Formattime :
     <FORMATTIME> 
     (
-        &1& <ABSTIME> "(" DataArea ")"
+        && <ABSTIME> "(" DataArea ")"
         |
         &<DATE> "(" DataArea ")"
         |
@@ -1399,7 +1399,7 @@ Formattime :
         &(
             &<STRINGZONE> "(" Cvda ")"
             |
-            &1&<DATESTRING> "(" DataArea ")"
+            &&<DATESTRING> "(" DataArea ")"
         )+ =>||
         |
         &<DAYOFMONTH> "(" DataArea ")"
@@ -1423,7 +1423,7 @@ Formattime :
         &<STRINGFORMAT> "(" Cvda ")"
         |
         &(
-            &1&<TIME> "(" DataArea ")"
+            &&<TIME> "(" DataArea ")"
             |
             &<TIMESEP> [ "(" DataValue ")" ]
         )+ =>||
@@ -1455,19 +1455,19 @@ Formattime :
 Delete :
     <DELETE>
     (
-        &1&<FILE> "(" FileName ")"
+        &&<FILE> "(" FileName ")"
         |
         &(
             &<_TOKEN> "(" DataArea ")"
             |
             &(
-                &1&<RIDFLD> "(" DataArea ")"
+                &&<RIDFLD> "(" DataArea ")"
                 |
                 &(
-                    &1&<KEYLENGTH> "(" DataValue ")"
+                    &&<KEYLENGTH> "(" DataValue ")"
                     |
                     (
-                        &1&<GENERIC>
+                        &&<GENERIC>
                         |
                         &<NUMREC> "(" DataArea ")"
                     )+

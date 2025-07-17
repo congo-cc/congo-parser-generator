@@ -25,14 +25,15 @@ Cardinality
 The syntax for repetition cardinality (`Cardinality`) can be expressed as:
 
 ```
-"&" [ Min [ ":" [ Max ] ] "&" ]
+"&" [ [ Min [ ":" [ Max ] ] ] "&" ]
 ```
 
 where:
 
-- `Min` is the minimum required occurrences (optional; defaults to `0` if omitted).
-- `Max` is the maximum allowed occurrences (optional; defaults to `Min` if the `Min` alone is present or the largest *integer* value otherwise).
+- `Min` is the minimum required occurrences (optional; defaults to `0` if lone "&", `1` if following "&" present).
+- `Max` is the maximum allowed occurrences (optional; defaults to `Min` if the `Min` if no ":" is present or the largest *integer* value otherwise).
 - A lone `"&"` is interpreted as `&0:1&`, meaning the expansion may appear at most once.
+- A `"&&"` is interpreted as `&1:1&`, meaning the expansion must appear exactly once.
 - If no constraint is specified, it is implicitly equivalent to `&0:∞&` (no upper limit).
 
 If an `ASSERT` is used, the assertion will only be checked during parsing, and will not affect any lookahead. To enforce the assertion during lookahead in addition to parsing, `ENSURE` may be specified, or it may be followed by the `#` suffix consistent with other semantic assertions.
@@ -53,7 +54,7 @@ For convenience and readablity the assertion may also be abbreviated using the c
       - Each iteration of the loop that is attempted will increment the corresponding tally by 1, provided it is not already 1, and will parse the choice normally. If the tally cannot be incremented (i.e., it has already been incremented in this loop instance), parsing will fail with a parse exception (or the lookahead will deem the loop completed).
       - During lookahead when no choice is available within the loop, either because the input does not match any choice or the input matches a choice but that choice's tally is 1, the loop exits.
       - The parser does not need to check the minimum cardinality because it is 0 and permits omission of any choices.
-    - `( &1:2& A | &1& B )*` ensures `A` appears **at least once but no more than twice**, and `B` appears **exactly once**. Possible sequences include `{}`, `AB`, `BA`, `AAB`, `ABA`, `BAA`.
+    - `( &1:2& A | && B )*` ensures `A` appears **at least once but no more than twice**, and `B` appears **exactly once**. Possible sequences include `{}`, `AB`, `BA`, `AAB`, `ABA`, `BAA`.
         - The parser will enter the loop containing `A` or `B` after initializing both tallies to 0.
         - If an `A` is the next input token, the parser checks the first tally and, if it is not already 2, increments it. If it is already 2, the loop is terminated with an exception (or lookahead will deem the loop completed).
         - If a `B` is encountered, the parser checks the second tally and, if it is not already 1, increments it.  If it is already 1, the loop is terminated with an exception (or lookahead will deem the loop completed).
@@ -67,7 +68,7 @@ For convenience and readablity the assertion may also be abbreviated using the c
 
 This is an example of the simplest use of repetition cardinality to recognize the set of all combinations of at most one `Foo` and one `Bar`. Note that the placement of the repetition cardinality assertion usually does not affect the syntax recognized by the grammar, since recognition of the entire sequence is based on the truth of all the predicates and assertions in the sequence, but the position could affect semantic actions applied before the acceptance or rejection of the sequence by the RCA.
 
-- `( &1& Foo | Bar )*` → Equivalent to `( &1:1& Foo | Bar )*`.
+- `( && Foo | Bar )*` → Equivalent to `( &1:1& Foo | Bar )*`.
 
 #### Constrained Elements Within Repetitions
 
