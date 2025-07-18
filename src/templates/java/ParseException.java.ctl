@@ -2,6 +2,8 @@
 
 package ${settings.parserPackage};
 
+import java.io.PrintStream;
+
 #var BASE_EXCEPTION_TYPE = settings.useCheckedException ?: "Exception" : "RuntimeException"
 #var LOCATION_TYPE = settings.baseTokenClassName
 
@@ -64,8 +66,40 @@ public class ParseException extends ${BASE_EXCEPTION_TYPE} {
      }
   }
 
+  public void printStackTrace(PrintStream ps) {
+      ps.println(getMessage());
+      ps.print(getCustomStackTrace());
+  }
+
+  public void printJavaStackTrace(java.io.PrintStream ps) {
+     super.printStackTrace(ps);
+  }
+
   public boolean hitEOF() {
       return location != null && location.getType() != null && location.getType().isEOF();
+  }
+
+  private boolean javaLocationsFilledIn;
+
+  void fillInJavaCodeLocations() {
+     if (javaLocationsFilledIn) return;
+     List<StackTraceElement> stackTrace = new ArrayList<>();
+     for (StackTraceElement elem : getStackTrace()) {
+        stackTrace.add(elem);
+     }
+     List<NonTerminalCall> callStack = new ArrayList<>(this.callStack);
+     Collections.reverse(callStack);
+     while (!callStack.isEmpty()) {
+         NonTerminalCall ntc = callStack.remove(callStack.size()-1);
+         while (!stackTrace.isEmpty()) {
+             StackTraceElement elem = stackTrace.remove(stackTrace.size()-1);
+             if (elem.getMethodName().equals(ntc.productionName) && elem.getClassName().endsWith("." + ntc.parserClassName)) {
+                 ntc.javaSourceLine = elem.getLineNumber();
+                 break;
+             }
+         }
+     }
+     javaLocationsFilledIn = true;
   }
 
   @Override
@@ -73,7 +107,7 @@ public class ParseException extends ${BASE_EXCEPTION_TYPE} {
      StringBuilder buf = new StringBuilder();
      buf.append("Encountered an error");
      if (location != null) {
-        buf.append(" at (or somewhere around) ");
+        buf.append(" at ");
         buf.append(location.getLocation());
      }
      if (super.getMessage() != null) {
@@ -84,7 +118,6 @@ public class ParseException extends ${BASE_EXCEPTION_TYPE} {
         buf.append("\nUnexpected end of input.");
      }
      if (location == null || location.getType() == null || expectedTypes == null || expectedTypes.contains(location.getType())) {
-        buf.append(getCustomStackTrace());
         return buf.toString();
      }
      String content = location.toString();
@@ -107,19 +140,17 @@ public class ParseException extends ${BASE_EXCEPTION_TYPE} {
            buf.append(type);
         }
      }
-     buf.append(getCustomStackTrace());
      return buf.toString();
   }
 
   // TODO: Make this configurable
   public String getCustomStackTrace() {
+     fillInJavaCodeLocations();
      StringBuilder buf = new StringBuilder();
-     buf.append("\n----------\n");
      for (int i = callStack.size() - 1; i>=0; i--) {
         buf.append("        ");
         buf.append(callStack.get(i));
      }
-     buf.append("----------");
      return buf.toString();
   }
 

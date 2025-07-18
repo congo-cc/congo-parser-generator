@@ -5,7 +5,6 @@ DEFAULT_LEXICAL_STATE=CSHARP;
 PRESERVE_TABS;
 TABS_TO_SPACES=4;
 ENSURE_FINAL_EOL;
-ASSERT_APPLIES_IN_LOOKAHEAD=false;
 #if FT
 FAULT_TOLERANT;
 FAULT_TOLERANT_DEFAULT=false;
@@ -1287,7 +1286,7 @@ AssignmentExpression :
    ConditionalExpression {Expression lhs = (Expression) peekNode();}
    [
       AssignmentOperator
-      ASSERT {lhs.isAssignableTo()} : "Left-hand side is not assignable." :
+      ASSERT {lhs.isAssignableTo(),peekNode()} : "Left-hand side is not assignable." :
       [<REF>] // since 7.0 ?
       Expression
    ]
@@ -2120,7 +2119,7 @@ LockStatement : <LOCK> <LPAREN> Expression <RPAREN> EmbeddedStatement ;
 FixedStatement :
    <FIXED>
    <LPAREN> =>||
-   Type ASSERT {getTokenType(0) == TokenType.STAR}
+   Type ASSERT {getTokenType(0) == TokenType.STAR, lastConsumedToken, "The type must have a *"}
    FixedPointerDeclarator (<COMMA> FixedPointerDeclarator)*
    <RPAREN>
    EmbeddedStatement
@@ -2151,7 +2150,7 @@ StatementExpression#interface :
    )
    |
    AssignmentExpression
-   ASSERT {peekNode() instanceof AssignmentExpression} : "Not a statement."
+   ASSERT {peekNode() instanceof AssignmentExpression, peekNode()} : "Not a statement."
 ;
 
 ExpressionStatement : StatementExpression <SEMICOLON> ;

@@ -472,8 +472,8 @@ Parameters :
           <SLASH>
           ASSERT {
             !seenSlash,
-            lastConsumedToken :
-            "The slash can only occur once in the parameters."
+            lastConsumedToken
+            : "The slash can only occur once in the parameters."
           }
           {seenSlash = true;}
           |

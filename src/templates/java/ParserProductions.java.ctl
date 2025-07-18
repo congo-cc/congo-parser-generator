@@ -224,6 +224,8 @@
             #-- We need a return statement here or the code won't compile! --
             #if rt = "int" || rt = "char" || rt == "byte" || rt = "short" || rt = "long" || rt = "float"|| rt = "double"
          return 0;
+            #elif rt = "boolean"
+         return false;
             #else
          return null;
             #endif

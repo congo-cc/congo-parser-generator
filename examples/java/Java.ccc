@@ -1116,7 +1116,7 @@ StatementExpression# :
                lhs}
 #if !__python__
       // Same issue as above basically. Doesn't work in Python.
-      : "Expression " + lhs + " is not a valid statement.\n"
+      : "Expression at " + lhs.getLocation() + " is not a valid statement.\n"
         + "Expecting a method call, an assignment or an allocation expression (new...)"
 #endif
   )

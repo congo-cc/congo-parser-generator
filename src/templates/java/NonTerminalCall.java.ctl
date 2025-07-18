@@ -15,6 +15,7 @@ public class NonTerminalCall {
     final String parserClassName;
     final TokenSource tokenSource;
     final int position, line, column;
+    int javaSourceLine;
 #if settings.faultTolerant
     final Set<${BaseTokenType}> followSet;
 #endif
@@ -44,6 +45,13 @@ public class NonTerminalCall {
     }
 
     public String toString() {
+         StringBuilder buf = new StringBuilder();
+         buf.append("at ");
+         buf.append(getLocation());
+         buf.append(" in ");
+         String javaSourceLocation = javaSourceLine > 0 ?
+                ","+parserClassName + ".java:" + javaSourceLine
+                : "";
          return "at "
                 + getLocation()
                 + " in "
@@ -54,6 +62,7 @@ public class NonTerminalCall {
                 + line
                 + ":"
                 + column
+                + javaSourceLocation
                 + ")\n";
     }
 }
