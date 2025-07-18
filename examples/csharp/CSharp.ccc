@@ -2119,7 +2119,7 @@ LockStatement : <LOCK> <LPAREN> Expression <RPAREN> EmbeddedStatement ;
 FixedStatement :
    <FIXED>
    <LPAREN> =>||
-   Type ASSERT {getTokenType(0) == TokenType.STAR, lastConsumedToken, "The type must have a *"}
+   Type ASSERT {getTokenType(0) == TokenType.STAR, lastConsumedToken: "The type must have a *"}
    FixedPointerDeclarator (<COMMA> FixedPointerDeclarator)*
    <RPAREN>
    EmbeddedStatement
