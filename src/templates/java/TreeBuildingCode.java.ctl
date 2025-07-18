@@ -75,6 +75,15 @@ private boolean unparsedTokensAreNodes = ${settings.unparsedTokensAreNodes ?: "t
         return currentNodeScope.size();
     }
 
+    private Node peekBack(int i) {
+        if (i == 0) return peekNode();
+        if (i<0) i = -i;
+        if (i < currentNodeScope.size()-1) {
+            return currentNodeScope.get(currentNodeScope.size()-i-1);
+        }
+        return null;
+    }
+
 
     private void clearNodeScope() {
         currentNodeScope.clear();

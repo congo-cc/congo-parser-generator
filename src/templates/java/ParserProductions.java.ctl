@@ -831,7 +831,13 @@
    #var LHS = getLhsPattern(terminal.assignment, "Token"), regexp = terminal.regexp
    #var lambda = terminal.recoveryBlock!
    #if !settings.faultTolerant
-       ${LHS?replace("@", "consumeToken(" + regexp.label + ")")};
+       pushOntoCallStack("${currentProduction.name}","${terminal.inputSource})", ${terminal.beginLine}, ${terminal.endLine});
+       try {
+           ${LHS?replace("@", "consumeToken(" + regexp.label + ")")};
+       }
+       finally {
+         popCallStack();
+       }
    #else
        #var tolerant = terminal.tolerantParsing?string("true", "false"),
             followSetVarName = terminal.followSetVarName
@@ -843,7 +849,13 @@
             ${followSetVarName}.addAll(outerFollowSet);
          }
        #endif
-       ${LHS?replace("@", "consumeToken(" + regexp.label + ", " + tolerant + ", " + followSetVarName + ", () -> {" + lambda + ";})")};
+       pushOntoCallStack("${currentProduction.name}","${terminal.inputSource})", ${terminal.beginLine}, ${terminal.endLine});
+       try {
+           ${LHS?replace("@", "consumeToken(" + regexp.label + ", " + tolerant + ", " + followSetVarName + ", () -> {" + lambda + ";})")};
+       }
+       finally {
+         popCallStack();
+       }
    #endif
 #endmacro
 

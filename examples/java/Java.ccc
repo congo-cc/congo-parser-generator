@@ -659,6 +659,7 @@ INJECT InclusiveOrExpression : implements Expression
 INJECT InstanceOfExpression : implements Expression
 INJECT ClassLiteral : implements PrimaryExpression
 INJECT DotThis : implements PrimaryExpression
+INJECT DotSuper : implements PrimaryExpression
 INJECT LambdaExpression : implements Expression
 INJECT MethodCall : implements PrimaryExpression
 INJECT MethodReference : implements PrimaryExpression
@@ -856,26 +857,31 @@ PrimaryExpression#interface :
   Name
  )
  (
-  (<DOT> <THIS> =>||) #DotThis(+1)
-  |
-  (<DOT> <SUPER> =>||) #DotSuper(+1)
-  |
-  (<DOT> =>|+1 AllocationExpression) #DotNew(+1)
-  |
-  (<LBRACKET> Expression <RBRACKET>) #ArrayAccess(+1)
-  |
-  (<DOT> [TypeArguments] <IDENTIFIER>) #DotName(+1)
-  |
-  (<DOUBLE_COLON> [TypeArguments] (<IDENTIFIER>|<NEW>)) #MethodReference(+1)
-  |
-// The following commented-out line is the absolutely correct condition for recent JDK's,
-// since yield on its own cannot be a method call, though you can write this.yield(), for example.
-// For now, I'm not including a check for that. The compiler catches it, after all. Also, it is
-// still unclear to me whether this should be caught at this point or if it is better to just do
-// a post-parse tree walk that runs over the AST and checks for these things.
-//  ENSURE {getTokenType(0) == IDENTIFIER && (currentLookaheadToken==null || (peekNode().size() > 1 || !tokenImage(0).equals("yield")))}
-  ENSURE {getTokenType(0) == IDENTIFIER}
-  InvocationArguments #MethodCall(+1)
+   {Expression lhs = (Expression) peekNode();}
+   ASSERT {!(lhs instanceof MethodReference)} : "A method reference cannot be derereferenced.":
+   ASSERT {!(lhs instanceof NODE_PACKAGE.NumericalLiteral)} : "A numerical literal cannot be derereferenced.":
+   (
+    (<DOT> <THIS> =>||) #DotThis(+1)
+    |
+    (<DOT> <SUPER> =>||) #DotSuper(+1)
+    |
+    (<DOT> =>|+1 AllocationExpression) #DotNew(+1)
+    |
+    (<LBRACKET> Expression <RBRACKET>) #ArrayAccess(+1)
+    |
+    (<DOT> [TypeArguments] <IDENTIFIER>) #DotName(+1)
+    |
+    (<DOUBLE_COLON> [TypeArguments] (<IDENTIFIER>|<NEW>)) #MethodReference(+1)
+    |
+  // The following commented-out line is the absolutely correct condition for recent JDK's,
+  // since yield on its own cannot be a method call, though you can write this.yield(), for example.
+  // For now, I'm not including a check for that. The compiler catches it, after all. Also, it is
+  // still unclear to me whether this should be caught at this point or if it is better to just do
+  // a post-parse tree walk that runs over the AST and checks for these things.
+  //  ENSURE {getTokenType(0) == IDENTIFIER && (currentLookaheadToken==null || (peekNode().size() > 1 || !tokenImage(0).equals("yield")))}
+    ENSURE {getTokenType(0) == IDENTIFIER}
+    InvocationArguments #MethodCall(+1)
+   )
  )*
  ASSERT {getTokenType(0) != SUPER} : "Not a valid expression here " + getToken(0).getLocation()
 ;
@@ -1023,7 +1029,7 @@ Block #CodeBlock : <LBRACE> (SCAN ~(<RBRACE>) => BlockStatement)*! <RBRACE> ;
 
 BlockStatement#void :
  ASSERT ~((<FINAL>|Annotation)* (<PUBLIC>|<PRIVATE>|<PROTECTED>|<STATIC>))
- : "Cannot declare anything to be public, private, protected, or static  in a local context"
+ : "Cannot declare anything to be public, private, protected, or static  in a local context":
  (
   RecordDeclaration
   |

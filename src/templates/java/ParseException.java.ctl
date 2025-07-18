@@ -3,6 +3,7 @@
 package ${settings.parserPackage};
 
 import java.io.PrintStream;
+import java.io.PrintWriter;
 
 #var BASE_EXCEPTION_TYPE = settings.useCheckedException ?: "Exception" : "RuntimeException"
 #var LOCATION_TYPE = settings.baseTokenClassName
@@ -69,11 +70,23 @@ public class ParseException extends ${BASE_EXCEPTION_TYPE} {
   public void printStackTrace(PrintStream ps) {
       ps.println(getMessage());
       ps.print(getCustomStackTrace());
+    #-- printJavaStackTrace(ps);
   }
 
-  public void printJavaStackTrace(java.io.PrintStream ps) {
+  public void printStackTrace(PrintWriter pw) {
+      pw.println(getMessage());
+      pw.print(getCustomStackTrace());
+     #-- printJavaStackTrace(pw);
+  }
+
+  public void printJavaStackTrace(PrintStream ps) {
      super.printStackTrace(ps);
   }
+
+  public void printJavaStackTrace(PrintWriter pw) {
+     super.printStackTrace(pw);
+  }
+
 
   public boolean hitEOF() {
       return location != null && location.getType() != null && location.getType().isEOF();
