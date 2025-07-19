@@ -228,6 +228,12 @@ TypeDeclaration #interface :
 TypeDeclarationLA#scan :
    <SEMICOLON>
    |
+   // This is necessary in some
+   // very rare cases, but I need
+   // to investigate why. I was convinced
+   // that permissibleModifiers was always
+   // null in this spot.
+   {permissibleModifiers=null;}
    Modifiers
    (
      <CLASS>
@@ -1094,6 +1100,7 @@ VarDeclaration :
 
 EmptyStatement# : <SEMICOLON> ;
 
+#if true
 StatementExpression# :
   PreIncrementExpression
   |
@@ -1127,6 +1134,26 @@ StatementExpression# :
 #endif
   )
 ;
+
+#else
+
+StatementExpression#void :
+    Expression
+    {Expression exp = (Expression) peekNode();}
+    ASSERT {
+        exp instanceof AssignmentExpression
+        || exp instanceof PostfixExpression
+        || exp instanceof PreDecrementExpression
+        || exp instanceof PreIncrementExpression
+        || exp instanceof MethodCall
+        || exp instanceof AllocationExpression
+        || exp instanceof ExplicitConstructorInvocation,
+        exp:
+        "Expression " + exp + " is not a valid statement.\n"
+        + "Expecting a method invocation, an assignment, or an allocation expression (new...)"
+    }
+;
+#endif
 
 ExpressionStatement : StatementExpression <SEMICOLON> ;
 
