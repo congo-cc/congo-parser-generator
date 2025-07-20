@@ -554,7 +554,6 @@ if (!(${CheckExpansion(oom.nestedExpansion)})) {
 [#-- # DBG < ScanCodeOneOrMore --]
 [/#macro]
 
-
 [#macro CheckExpansion expansion]
    [#if expansion.singleTokenLookahead]
      [#if expansion.firstSet.tokenNames?size = 1]

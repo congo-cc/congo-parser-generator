@@ -34,8 +34,8 @@ public class ${settings.baseTokenClassName} ${implements} {
     {
         #list lexerData.regularExpressions as regexp
           ${regexp.label}
-          #if lexerData::isContextualKeyword(regexp.label)
-            ("${regexp.literalString}", true)
+          #if lexerData::isContextualKeyword(regexp)
+            ("${regexp.literalString}", true, ${regexp.ignoreCase ?: "true" : "false"})
           #elseif regexp.class.simpleName == "RegexpStringLiteral"
             ("${regexp.literalString?j_string}")
           #endif
@@ -54,9 +54,11 @@ public class ${settings.baseTokenClassName} ${implements} {
         }
 
         #if lexerData.hasContextualTokens
-        TokenType(String literalString, boolean contextualKeyword) {
+        private boolean contextualKeyword, ignoreCase;
+        TokenType(String literalString, boolean contextualKeyword, ignoreCase) {
             this.literalString = literalString;
             this.contextualKeyword = contextualKeyword;
+            this.ignoreCase = ignoreCase;
         }
         #endif
 

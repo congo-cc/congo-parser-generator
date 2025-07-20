@@ -38,7 +38,6 @@ public class LexicalStateData {
 
     public LexerData getLexerData() {return grammar.getLexerData();}
 
-    @SuppressWarnings("unused")
     public List<CompositeStateSet> getCanonicalSets() {
         return compositeSets;
     }

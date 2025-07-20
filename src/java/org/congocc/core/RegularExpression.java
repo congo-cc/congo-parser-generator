@@ -6,6 +6,7 @@ import org.congocc.parser.tree.TokenProduction;
 import org.congocc.parser.TokenSource;
 import org.congocc.parser.tree.BaseNode;
 import org.congocc.parser.tree.EmbeddedCode;
+import org.congocc.parser.tree.EndOfFile;
 
 /**
  * An abstract base class from which all the AST nodes that
@@ -87,8 +88,8 @@ public abstract class RegularExpression extends BaseNode {
     }
 
     public int getOrdinal() {
-        int id = getGrammar().getLexerData().getOrdinal(this);
-        return Math.max(0, id);
+        if (this instanceof EndOfFile) return 0;
+        return getGrammar().getLexerData().getOrdinal(this);
     }
 
     public boolean isContextualKeyword() {

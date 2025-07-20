@@ -72,6 +72,23 @@ public class JToAltPyTranslator extends Node.Visitor {
         buf.append("\n<-\n");
     }
 
+    void visit(ThrowStatement ts) {
+        buf.append("raise ");
+        visit(ts.get(1));
+    }
+
+    void visit(FinallyBlock fb) {
+        buf.append("finally:");
+        visit(fb.get(1));
+    }
+
+    void visit(ReturnStatement rs) {
+        buf.append("return ");
+        if (rs.size() > 2) {
+            visit(rs.get(1));
+        }
+    }
+
     static public void main(String[] args) {
         System.out.println("Reading in Java code\n--");
         String snippet = """

@@ -1049,11 +1049,11 @@
       false
    #elif expansion.firstSet.tokenNames?size < CU.USE_FIRST_SET_THRESHOLD
       #list expansion.firstSet.tokenNames as name
-          nextTokenType [#if name_index == 0]() [/#if]
-          == ${name}
-         [#if name_has_next] || [/#if]
+          typeMatches(${name}, getToken(1))
+          ${name_has_next ?: "||"}
       #endlist
    #else
-      ${expansion.firstSetVarName}.contains(nextTokenType())
+      hasMatch(${expansion.firstSetVarName}, getToken(1))
+#--      ${expansion.firstSetVarName}.contains(nextTokenType())
    #endif
 #endmacro

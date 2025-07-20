@@ -1434,10 +1434,6 @@ INJECT Terminal :
     @Property RegularExpression regexp;
     @Property String label;
 
-    public int getOrdinal() {
-        return regexp.getOrdinal();
-    }
-
     public int getMinimumSize(Set<String> unused) {return 1;}
 
     public int getMaximumSize(Set<String> unused) {return 1;}
@@ -1445,7 +1441,7 @@ INJECT Terminal :
     public TokenSet getFirstSet() {
         if (firstSet == null) {
             firstSet = new TokenSet(getGrammar());
-            firstSet.set(getOrdinal());
+            firstSet.set(regexp.getOrdinal());
         }
         return firstSet;
     }

@@ -22,9 +22,21 @@ public class LexerData {
     private final List<RegularExpression> regularExpressions = new ArrayList<>();
 
     private final Map<String, RegularExpression> namedTokensTable = new HashMap<>();
-    private final Map<String, String> contextualTokenMap = new HashMap<>();
+    private final List<RegexpStringLiteral> contextualTokens = new ArrayList<>();
     private final Set<RegularExpression> overriddenTokens = new HashSet<>();
     private final Set<RegularExpression> lazyTokens = new HashSet<>();
+
+    static public Set<String> JAVA_RESERVED_WORDS = Set.of(
+       "_","abstract","assert","boolean","break",
+       "byte","case","catch","char","class","const",
+       "continue","default","do","double","else","enum",
+       "extends","false","final","finally","float",
+       "for","goto","if","implements","import","instanceof",
+       "int","interface","long","native","new","null",
+       "package","private","protected","public","return",
+       "short","static","strictfp","super","switch","synchronized",
+       "this","throw","throws","transient","true","try",
+       "void","volatile","while");
 
     public LexerData(Grammar grammar) {
         this.grammar = grammar;
@@ -47,6 +59,11 @@ public class LexerData {
             return regularExpressions.get(ordinal).getLabel();
         }
         return grammar.getAppSettings().getExtraTokenNames().get(ordinal - regularExpressions.size());
+    }
+
+    boolean isContextualToken(int index) {
+        if (index >= regularExpressions.size()) return false;
+        return regularExpressions.get(index).isContextualKeyword();
     }
 
     public String getLexicalStateName(int index) {
@@ -73,11 +90,11 @@ public class LexerData {
     }
 
     public boolean getHasContextualTokens() {
-        return !contextualTokenMap.isEmpty();
+        return !contextualTokens.isEmpty();
     }
 
-    public boolean isContextualKeyword(String s) {
-        return contextualTokenMap.containsKey(s);
+    public boolean isContextualKeyword(RegularExpression re) {
+        return contextualTokens.contains(re);
     }
 
     public List<RegularExpression> getRegularExpressions() {
@@ -105,7 +122,10 @@ public class LexerData {
     private void addRegularExpression(RegularExpression regexp) {
         regularExpressions.add(regexp);
         if (regexp instanceof RegexpStringLiteral stringLiteral) {
-            for (String lexicalStateName : stringLiteral.getLexicalStateNames()) {
+            if (stringLiteral.isContextualKeyword()) {
+                contextualTokens.add(stringLiteral);
+            }
+            else for (String lexicalStateName : stringLiteral.getLexicalStateNames()) {
                 LexicalStateData lsd = getLexicalState(lexicalStateName);
                 lsd.addStringLiteral(stringLiteral);
             }

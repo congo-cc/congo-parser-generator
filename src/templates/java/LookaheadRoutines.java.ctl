@@ -44,11 +44,10 @@
 #macro BuildLookaheads
   private boolean scanToken(TokenType expectedType, TokenType... additionalTypes) {
      ${settings.baseTokenClassName} peekedToken = nextToken(currentLookaheadToken);
-     TokenType type = peekedToken.getType();
-     if (type != expectedType) {
+     if (!typeMatches(expectedType, peekedToken)) {
        boolean matched = false;
        for (TokenType tt : additionalTypes) {
-         if (type == tt) {
+         if (typeMatches(tt,peekedToken)) {
             matched = true;
             break;
          }
@@ -62,12 +61,43 @@
 
   private boolean scanToken(EnumSet<TokenType> types) {
      ${settings.baseTokenClassName} peekedToken = nextToken(currentLookaheadToken);
-     TokenType type = peekedToken.getType();
-     if (!types.contains(type)) return false;
+     if (!hasMatch(types,peekedToken)) return false;
      --remainingLookahead;
      currentLookaheadToken = peekedToken;
-     return true; 
+     return true;
   }
+
+#if lexerData.hasContextualTokens
+  private boolean typeMatches(TokenType type, ${settings.baseTokenClassName} tok) {
+     if (tok.getType() == type) return true;
+     if (type.isContextualKeyword()) {
+         #if settings.ignoreCase
+            return type.getLiteralString().equalsIgnoreCase(tok.toString());
+         #else
+            return type.getLiteralString().contentEquals(tok);
+         #endif
+     }
+     return false;
+  }
+
+  private boolean hasMatch(EnumSet<TokenType> types, ${settings.baseTokenClassName} tok) {
+      if (types.contains(tok.getType())) return true;
+      for (TokenType tt : types) {
+         if (tt.isContextualKeyword()) {
+            if (typeMatches(tt, tok)) return true;
+         }
+      }
+      return false;
+  }
+#else
+  private boolean typeMatches(TokenType type, ${settings.baseTokenClassName} tok) {
+      return tok.getType() == type;
+  }
+  private boolean hasMatch(EnumSet<TokenType> types, ${settings.baseTokenClassName} tok) {
+      return types.contains(tok.getType());
+  }
+#endif
+
 
 //====================================
  // Lookahead Routines
@@ -99,7 +129,7 @@
 #function returnFalse cardinalitiesVar parentCardVar
    #if cardinalitiesVar??
       #if parentCardVar??
-         #return "return ${parentCardVar}.commit(false)" 
+         #return "return ${parentCardVar}.commit(false)"
       #else
          #return "return ${cardinalitiesVar}.commit(false)"
       #endif
@@ -111,7 +141,7 @@
 #function returnTrue cardinalitiesVar parentCardVar
    #if cardinalitiesVar??
       #if parentCardVar??
-         #return "return ${parentCardVar}.commit(true)" 
+         #return "return ${parentCardVar}.commit(true)"
       #else
          #return "return ${cardinalitiesVar}.commit(true)"
       #endif
@@ -123,7 +153,7 @@
 #function return retVal cardinalitiesVar parentCardVar
    #if cardinalitiesVar??
       #if parentCardVar??
-         #return "return ${parentCardVar}.commit(${retVal})" 
+         #return "return ${parentCardVar}.commit(${retVal})"
       #else
          #return "return ${cardinalitiesVar}.commit(${retVal})"
       #endif
@@ -175,7 +205,7 @@
   #if expansion.cardinalityConstrained
     #set cardinalitiesVar = "cardinalities"
   #endif
-  private boolean ${expansion.scanRoutineName}(boolean scanToEnd[#if expansion.cardinalityConstrained], RepetitionCardinality cardinalities[/#if]) { 
+  private boolean ${expansion.scanRoutineName}(boolean scanToEnd[#if expansion.cardinalityConstrained], RepetitionCardinality cardinalities[/#if]) {
     #if expansion.hasScanLimit
        int prevPassedPredicateThreshold = this.passedPredicateThreshold;
        this.passedPredicateThreshold = -1;
@@ -193,7 +223,7 @@
        ${BuildScanCode(expansion, cardinalitiesVar)}
       #else
        ${BuildScanCode(expansion)}
-      #endif 
+      #endif
     }
     finally {
        lookaheadRoutineNesting--;
@@ -372,7 +402,7 @@
    This macro just delegates to the various sub-macros
    based on the Expansion's class name.
 --]
-#macro BuildScanCode expansion cardVar parentCardVar 
+#macro BuildScanCode expansion cardVar parentCardVar
   #var classname = expansion.simpleName
   #var skipCheck = classname == "ExpansionSequence" ||
                   #-- We can skip the check if this is a semantically meaningless
@@ -400,7 +430,7 @@
       sometimes I like to comment out the previous condition
       for testing purposes.--]
       ${ScanSingleToken(expansion, cardVar!null)}
-   #elif classname = "Assertion" 
+   #elif classname = "Assertion"
       #if expansion.appliesInLookahead
          ${ScanCodeAssertion(expansion, cardVar!null, parentCardVar!null)}
       #else
@@ -543,7 +573,7 @@
         if (passedPredicate) ${returnFalse(cardinalitiesVar!null, parentCardVar!null)};
      #endif
   #endlist
-  [#list choice.choices as unused] 
+  [#list choice.choices as unused]
      }
   [/#list]
    } finally {
@@ -575,8 +605,8 @@
     #if zom.cardinalityContainer & !zomCardVar
       #set zomCardVar = "cardinality" + repetitionIndex
       #set repetitionIndex = repetitionIndex + 1
-      // instantiating the OneOrMore choice cardinality container for its ExpansionChoices 
-      RepetitionCardinality ${zomCardVar} = new RepetitionCardinality(${CU.BuildCardinalities(zom.cardinalityConstraints)}); 
+      // instantiating the OneOrMore choice cardinality container for its ExpansionChoices
+      RepetitionCardinality ${zomCardVar} = new RepetitionCardinality(${CU.BuildCardinalities(zom.cardinalityConstraints)});
     #endif
     boolean ${prevPassPredicateVarName} = passedPredicate;
     try {
@@ -613,8 +643,8 @@
     #if oom.cardinalityContainer
       #set oomCardVar = "cardinality" + repetitionIndex
       #set repetitionIndex = repetitionIndex + 1
-      // instantiating the OneOrMore choice cardinality container for its ExpansionChoices 
-      RepetitionCardinality ${oomCardVar} = new RepetitionCardinality(${CU.BuildCardinalities(oom.cardinalityConstraints)}); 
+      // instantiating the OneOrMore choice cardinality container for its ExpansionChoices
+      RepetitionCardinality ${oomCardVar} = new RepetitionCardinality(${CU.BuildCardinalities(oom.cardinalityConstraints)});
     #endif
    ${BuildScanCode(oom.nestedExpansion, oomCardVar, cardinalitiesVar!null)}
    #if oom.cardinalityContainer
