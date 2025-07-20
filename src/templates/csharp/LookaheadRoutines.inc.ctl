@@ -69,6 +69,71 @@
             return true;
         }
 
+#if lexerData.hasContextualTokens
+
+    bool IsContextualToken(TokenType type) {
+       #list lexerData.regularExpressions as regexp
+          ${regexp_index > 0 ?: "else"}
+          if (type == TokenType.${regexp.label}) {
+              return ${regexp.contextual ?: "true" : "false"};
+          }
+       #endlist
+       return false;
+    }
+
+    bool IsIgnoreCase(TokenType type) {
+       #list lexerData.regularExpressions as regexp
+          ${regexp_index > 0 ?: "else"}
+          if (type == TokenType.${regexp.label}) {
+              return ${regexp.ignoreCase ?: "true" : "false"};
+          }
+       #endlist
+       return false;
+    }
+
+    string GetLiteralString(TokenType type) {
+       #list lexerData.regularExpressions as regexp
+          ${regexp_index > 0 ?: "else"}
+          if (type == TokenType.${regexp.label}) {
+             #if regexp.literalString
+                return "${regexp.literalString?j_string}";
+             #else
+                return null;
+             #endif
+          }
+       #endlist
+       return null;
+    }
+
+  internal bool TypeMatches(TokenType type, Token tok) {
+     if (tok.Type == type) return true;
+     if (IsContextualToken(type)) {
+         return IsIgnoreCase(type) ?
+        (String.Compare(GetLiteralString(type), tok.ToString(), StringComparison.OrdinalIgnoreCase) == 0)
+         : GetLiteralString(type).Equals(tok.ToString());
+     }
+     return false;
+  }
+
+  internal bool HasMatch(HashSet<TokenType> types, Token tok) {
+      if (types.Contains(tok.Type)) return true;
+      foreach (TokenType tt in types) {
+         if (IsContextualToken(tt)) {
+            if (TypeMatches(tt, tok)) return true;
+         }
+      }
+      return false;
+  }
+#else
+  internal bool boolean TypeMatches(TokenType type, Token tok) {
+      return tok.Type == type;
+  }
+  internal bool boolean HasMatch(HashSet<TokenType> types, Token tok) {
+      return types.Contains(tok.Type);
+  }
+#endif
+
+
 // ====================================
 // Lookahead Routines
 // ====================================

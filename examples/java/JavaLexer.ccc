@@ -7,6 +7,13 @@ DEFAULT_LEXICAL_STATE=JAVA;
 JAVA_UNICODE_ESCAPE;
 TREE_BUILDING_ENABLED=false;
 
+#if !__congo_internal__
+CONTEXTUAL :
+   <YIELD : "yield">
+;
+#endif
+
+
 SKIP :
   <WHITESPACE : (" "| "\t"| "\n"| "\r"| "\f")+> #Whitespace
 ;
@@ -78,7 +85,9 @@ TOKEN #KeyWord :
 | < VOID: "void" >
 | < VOLATILE: "volatile" >
 | < WHILE: "while" >
+#if __congo_internal__
 | < YIELD : "yield" >
+#endif
 | < SEALED : "sealed">
 | < NON_SEALED : "non-sealed">
 | < PERMITS : "permits">
@@ -95,6 +104,8 @@ TOKEN #KeyWord :
 | <USES : "uses">
 | <WITH : "with">
 ;
+
+
 
 TOKEN #Literal :
   < #STRING_ESCAPE:

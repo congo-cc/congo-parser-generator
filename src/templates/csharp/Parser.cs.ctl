@@ -97,7 +97,7 @@ ${globals::translateParserImports()}
         }
     }
 
-[#if settings.treeBuildingEnabled]
+#if settings.treeBuildingEnabled
     internal class NodeScope : List<Node> {
         private readonly NodeScope _parentScope;
         private readonly Parser _parser;
@@ -178,8 +178,7 @@ ${globals::translateParserImports()}
         }
     }
 
-[/#if]
-
+#endif
     //
     // Class that represents entering a grammar production
     //
@@ -333,6 +332,8 @@ ${globals::translateParserInitializers()}
             get { return false; }
         }
 [/#if]
+
+
 
 
         private void PushLastTokenBack() {
