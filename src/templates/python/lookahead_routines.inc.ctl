@@ -89,7 +89,91 @@
         self.current_lookahead_token = peeked_token
         return True
 
-  #endif
+    pass
+
+#endif
+
+# explicitdedent:on
+
+#if lexerData.hasContextualTokens
+
+
+    def IsContextualToken(type) :
+      return (
+         #list lexerData.contextualTokens as ctok
+           type == TokenType.${ctok.label}
+            ${ctok_has_next ?: "or"}
+         #endlist
+      )
+    <-
+
+    def IsIgnoreCase(type) :
+        #if !lexerData.literalsThatDifferInCaseFromDefault
+           return ${settings.ignoreCase ?: "True":"False"};
+        #else
+        return ${settings.ignoreCase ?: " not "} (
+            #list lexerData.literalsThatDifferInCaseFromDefault as literal
+                type == TokenType.${literal.label}
+                ${literal_has_next ?: " or "}
+            #endlist
+        );
+        #endif
+    <-
+
+    def GetLiteralString(type) :
+        #list lexerData.regularExpressions as regexp
+           ${regexp_index==0 ?: " if " : " elif "} (type == TokenType.${regexp.label}) :
+               #if regexp.literalString
+                  return "${regexp.literalString?j_string}"
+               #else
+                  return None
+               #endif
+           <-
+        #endlist
+        return None
+    <-
+
+    def TypeMatches(type, tok) :
+      if tok.type == type :
+         return True;
+      <-
+      if (IsContextualToken(type)) :
+         if IsIgnoreCase(type) :
+             return GetLiteralString(type).lower() == tok.__str__().lower()
+         <-
+         else :
+             return GetLiteralString(type) == tok.__str__()
+         <-
+      <-
+      return False;
+    <-
+
+    def HasMatch(types, tok) :
+      if tok.type in types :
+         return True
+      <-
+      for tt in types :
+         if IsContextualToken(tt) :
+            if TypeMatches(tt, tok) :
+               return True
+            <-
+         <-
+      <-
+      return False
+    <-
+
+#else
+    def TypeMatches(type, tok) :
+      return tok.type == type
+    <-
+
+    def HasMatch(types, tok) :
+       return tok.type in types
+    <-
+#endif
+# explicitdedent:restore
+
+
 # ====================================
 # Lookahead Routines
 # ====================================
@@ -441,7 +525,7 @@ ${is}    return False
 [#macro ScanCodeAssertion assertion indent]
 [#var is = ""?right_pad(indent)]
 [#-- ${is}# DBG > ScanCodeAssertion ${indent} --]
-#if assertion.assertionExpression?? 
+#if assertion.assertionExpression??
 ${is}if not (${globals::translateExpression(assertion.assertionExpression)}):
 ${is}    self.hit_failure = True
 ${is}    return False

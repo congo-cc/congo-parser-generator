@@ -245,7 +245,9 @@ public class FilesGenerator {
             module = CongoCCParser.parsePythonFile(outputFile.getFileName().toString(), code);
         }
         catch (Exception e) {
+            errors.addError(e.getMessage());
             out.write(code);
+            e.printStackTrace();
             return;
         }
         finally {
