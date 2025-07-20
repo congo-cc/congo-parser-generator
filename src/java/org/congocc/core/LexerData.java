@@ -96,6 +96,10 @@ public class LexerData {
         return !contextualTokens.isEmpty();
     }
 
+    public List<RegexpStringLiteral> getContextualTokens() {
+        return new ArrayList<RegexpStringLiteral>(contextualTokens);
+    }
+
     public boolean isContextualKeyword(RegularExpression re) {
         return contextualTokens.contains(re);
     }
@@ -195,6 +199,16 @@ public class LexerData {
             TokenProduction tp = re.getTokenProduction();
             if (tp != null && tp.getKind() == kind) {
                 result.set(re.getOrdinal());
+            }
+        }
+        return result;
+    }
+
+    public Set<RegularExpression> getLiteralsThatDifferInCaseFromDefault() {
+        Set<RegularExpression> result = new LinkedHashSet<>();
+        for (RegularExpression re : getRegularExpressions()) {
+            if (re instanceof RegexpStringLiteral && re.getIgnoreCase() != grammar.getAppSettings().isIgnoreCase()) {
+                result.add(re);
             }
         }
         return result;

@@ -35,7 +35,7 @@ public class ${settings.baseTokenClassName} ${implements} {
         #list lexerData.regularExpressions as regexp
           ${regexp.label}
           #if regexp.contextual
-            ("${regexp.literalString}", true, ${regexp.ignoreCase ?: "true" : "false"})
+            ("${regexp.literalString?j_string}", true, ${regexp.ignoreCase ?: "true" : "false"})
           #elseif regexp.class.simpleName == "RegexpStringLiteral"
             ("${regexp.literalString?j_string}")
           #endif

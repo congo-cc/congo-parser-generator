@@ -13,6 +13,12 @@
             var oldToken = LastConsumedToken;
             var nextToken = NextToken(LastConsumedToken);
             if (nextToken.Type != expectedType) {
+              #if lexerData.hasContextualTokens
+               if (TypeMatches(expectedType, nextToken)) {
+                  nextToken = nextToken.ReplaceType(expectedType);
+               }
+               else
+              #endif
                 nextToken = HandleUnexpectedTokenType(expectedType, nextToken[#if settings.faultTolerant], tolerant, followSet[/#if]);
             }
             LastConsumedToken = nextToken;

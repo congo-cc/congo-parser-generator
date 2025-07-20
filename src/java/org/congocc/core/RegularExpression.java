@@ -71,7 +71,7 @@ public abstract class RegularExpression extends BaseNode {
         }
         int id = getOrdinal();
         if (id == 0) {
-            return "EOF";
+            return label = "EOF";
         }
         String literalString = getLiteralString();
         if (literalString != null && isJavaIdentifier(literalString)) {

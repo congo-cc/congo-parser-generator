@@ -49,10 +49,14 @@
 [#macro BuildLookaheads]
         internal bool ScanToken(params TokenType[] types) {
             Token peekedToken = NextToken(currentLookaheadToken);
-            TokenType tt = peekedToken.Type;
-            if (System.Array.FindIndex<TokenType>(types, t => t == tt) < 0) {
-                return false;
+            bool foundMatch = false;
+            foreach (TokenType tt in types) {
+                if (TypeMatches(tt, peekedToken)) {
+                    foundMatch = true;
+                    break;
+                }
             }
+            if (!foundMatch) return false;
             _remainingLookahead--;
             currentLookaheadToken = peekedToken;
             return true;
@@ -60,8 +64,7 @@
 
         internal bool ScanToken(HashSet<TokenType> types) {
             Token peekedToken = NextToken(currentLookaheadToken);
-            TokenType tt = peekedToken.Type;
-            if (!types.Contains(tt)) {
+            if (!HasMatch(types, peekedToken)) {
                 return false;
             }
             _remainingLookahead--;
@@ -70,39 +73,38 @@
         }
 
 #if lexerData.hasContextualTokens
-
-    bool IsContextualToken(TokenType type) {
-       #list lexerData.regularExpressions as regexp
-          ${regexp_index > 0 ?: "else"}
-          if (type == TokenType.${regexp.label}) {
-              return ${regexp.contextual ?: "true" : "false"};
-          }
-       #endlist
-       return false;
+    private bool IsContextualToken(TokenType type) {
+      return
+         #list lexerData.contextualTokens as ctok
+           type == TokenType.${ctok.label}
+            ${ctok_has_next ?: "||"}
+         #endlist
+        ;
     }
 
-    bool IsIgnoreCase(TokenType type) {
-       #list lexerData.regularExpressions as regexp
-          ${regexp_index > 0 ?: "else"}
-          if (type == TokenType.${regexp.label}) {
-              return ${regexp.ignoreCase ?: "true" : "false"};
-          }
-       #endlist
-       return false;
+    private bool IsIgnoreCase(TokenType type) {
+        #if !lexerData.literalsThatDifferInCaseFromDefault
+           return ${settings.ignoreCase ?: "true":"false"};
+        #else
+        return ${settings.ignoreCase ?: "!"}
+        (
+            #list lexerData.literalsThatDifferInCaseFromDefault as literal
+                type == TokenType.${literal.label}
+                ${literal_has_next ?: "||"}
+            #endlist
+        );
+        #endif
     }
 
-    string GetLiteralString(TokenType type) {
-       #list lexerData.regularExpressions as regexp
-          ${regexp_index > 0 ?: "else"}
-          if (type == TokenType.${regexp.label}) {
-             #if regexp.literalString
-                return "${regexp.literalString?j_string}";
-             #else
-                return null;
-             #endif
-          }
-       #endlist
-       return null;
+    private string GetLiteralString(TokenType type) {
+        switch(type) {
+            #list lexerData.regularExpressions as regexp
+               #if regexp.literalString
+                  case TokenType.${regexp.label} : return "${regexp.literalString?j_string}";
+               #endif
+            #endlist
+            default : return null;
+        }
     }
 
   internal bool TypeMatches(TokenType type, Token tok) {
@@ -125,10 +127,10 @@
       return false;
   }
 #else
-  internal bool boolean TypeMatches(TokenType type, Token tok) {
+  internal bool TypeMatches(TokenType type, Token tok) {
       return tok.Type == type;
   }
-  internal bool boolean HasMatch(HashSet<TokenType> types, Token tok) {
+  internal bool HasMatch(HashSet<TokenType> types, Token tok) {
       return types.Contains(tok.Type);
   }
 #endif
