@@ -1043,17 +1043,12 @@
    #if expansion.hasSemanticLookahead
       (${expansion.semanticLookahead}) &&
    #endif
-   #if expansion.enteredUnconditionally
-      true
-   #elif expansion.firstSet.tokenNames?size == 0
-      false
-   #elif expansion.firstSet.tokenNames?size < CU.USE_FIRST_SET_THRESHOLD
+   #if expansion.firstSet.tokenNames?size < CU.USE_FIRST_SET_THRESHOLD
       #list expansion.firstSet.tokenNames as name
           typeMatches(${name}, getToken(1))
           ${name_has_next ?: "||"}
       #endlist
    #else
       hasMatch(${expansion.firstSetVarName}, getToken(1))
-#--      ${expansion.firstSetVarName}.contains(nextTokenType())
    #endif
 #endmacro

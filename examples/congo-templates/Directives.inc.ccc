@@ -50,14 +50,6 @@ IfBlock :
   (
     (
         <ELSE_IF>
-        {
-            if (start.charAt(0) == '#' && start.charAt(0) == '#' && start.getBeginColumn()!=lastConsumedToken.getBeginColumn()) {
-                String message = "Mismatched indentation. The #elseif "
-                                 + " should match the indentation of the #if tag on line "
-                                 + start.getBeginLine();
-                throw new ParseException(message, lastConsumedToken, parsingStack);
-            }
-        }
         Expression
         <DIRECTIVE_END>
         Block

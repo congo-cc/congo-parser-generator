@@ -945,18 +945,12 @@ ${BuildCode(subexp)}
   #if expansion.hasSemanticLookahead
      (${globals::translateExpression(expansion.semanticLookahead)}) &&
   #endif
-  #if expansion.enteredUnconditionally
-     true
-  #elif expansion.firstSet.tokenNames?size == 0
-     false
-  #elif expansion.firstSet.tokenNames?size < 5
+  #if expansion.firstSet.tokenNames?size < 5
      #list expansion.firstSet.tokenNames as name
-        #-- (NextTokenType == TokenType.${name})
         TypeMatches(TokenType.${name}, GetToken(1))
         ${name_has_next ?: "||"}
      #endlist
   #else
-     #-- ${expansion.firstSetVarName}.Contains(NextTokenType)
       HasMatch(${expansion.firstSetVarName}, GetToken(1))
   #endif
 #endmacro

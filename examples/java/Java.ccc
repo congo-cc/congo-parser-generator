@@ -1334,7 +1334,7 @@ YieldStatement :
    SCAN 3
    ENSURE {checkNextTokenImage("yield")}
    ENSURE {isInProduction("SwitchExpression")}
-#if __congo_internal__ || __python__ || __csharp__
+#if __congo_internal__ || __python__
    (
       <IDENTIFIER>
       {

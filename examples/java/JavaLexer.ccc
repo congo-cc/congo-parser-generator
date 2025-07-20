@@ -7,7 +7,7 @@ DEFAULT_LEXICAL_STATE=JAVA;
 JAVA_UNICODE_ESCAPE;
 TREE_BUILDING_ENABLED=false;
 
-#if !__congo_internal__
+#if __python__
 CONTEXTUAL :
    <YIELD : "yield">
 ;
