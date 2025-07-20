@@ -831,7 +831,7 @@
    #var LHS = getLhsPattern(terminal.assignment, "Token"), regexp = terminal.regexp
    #var lambda = terminal.recoveryBlock!
    #if !settings.faultTolerant
-       pushOntoCallStack("${currentProduction.name}","${terminal.inputSource})", ${terminal.beginLine}, ${terminal.endLine});
+       pushOntoCallStack("${currentProduction.name}","${terminal.inputSource})", ${terminal.beginLine}, ${terminal.beginColumn});
        try {
            ${LHS?replace("@", "consumeToken(" + regexp.label + ")")};
        }

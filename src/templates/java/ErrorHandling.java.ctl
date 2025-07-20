@@ -171,11 +171,17 @@ void dumpLookaheadCallStack(PrintStream ps) {
       {
         ${settings.baseTokenClassName} nextToken = nextToken(lastConsumedToken);
         if (nextToken.getType() != expectedType) {
+            #if lexerData.hasContextualTokens
+               if (typeMatches(expectedType, nextToken)) {
+                  nextToken = nextToken.replaceType(expectedType);
+               }
+               else
+            #endif
             nextToken = handleUnexpectedTokenType(expectedType, nextToken
             #if settings.faultTolerant
                , tolerant, followSet
             #endif
-            ) ;
+            );
         }
         this.lastConsumedToken = nextToken;
         this.nextTokenType = null;

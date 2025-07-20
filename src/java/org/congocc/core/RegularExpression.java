@@ -92,7 +92,7 @@ public abstract class RegularExpression extends BaseNode {
         return getGrammar().getLexerData().getOrdinal(this);
     }
 
-    public boolean isContextualKeyword() {
+    public boolean isContextual() {
         return false;
     }
 

@@ -71,11 +71,8 @@
   private boolean typeMatches(TokenType type, ${settings.baseTokenClassName} tok) {
      if (tok.getType() == type) return true;
      if (type.isContextualKeyword()) {
-         #if settings.ignoreCase
-            return type.getLiteralString().equalsIgnoreCase(tok.toString());
-         #else
-            return type.getLiteralString().contentEquals(tok);
-         #endif
+         return type.isIgnoreCase() ? type.getLiteralString().equalsIgnoreCase(tok.toString())
+         : type.getLiteralString().contentEquals(tok);
      }
      return false;
   }

@@ -63,7 +63,10 @@ public class LexerData {
 
     boolean isContextualToken(int index) {
         if (index >= regularExpressions.size()) return false;
-        return regularExpressions.get(index).isContextualKeyword();
+        if (regularExpressions.get(index) instanceof RegexpStringLiteral rsl) {
+            return rsl.isContextual();
+        }
+        return false;
     }
 
     public String getLexicalStateName(int index) {
@@ -122,7 +125,7 @@ public class LexerData {
     private void addRegularExpression(RegularExpression regexp) {
         regularExpressions.add(regexp);
         if (regexp instanceof RegexpStringLiteral stringLiteral) {
-            if (stringLiteral.isContextualKeyword()) {
+            if (stringLiteral.isContextual()) {
                 contextualTokens.add(stringLiteral);
             }
             else for (String lexicalStateName : stringLiteral.getLexicalStateNames()) {
@@ -305,7 +308,7 @@ public class LexerData {
             }
             RegularExpression referenced = namedTokensTable.get(label);
             if (referenced == null) {
-                errors.addError(ref, "Undefined lexical token name \"" + label + "\".");
+                errors.addError(ref, " Undefined lexical token name \"" + label + "\".");
             } else if (ref.getTokenProduction() == null) {
                 if (referenced.isPrivate()) {
                     errors.addError(ref,
