@@ -192,7 +192,7 @@ TOKEN #KeyWord :
    | < ARGLIST : "__arglist">
    | < ADD : "add">
    | < ASYNC : "async" >
-   | < AWAIT : "await" >
+//   | < AWAIT : "await" >
    | < DYNAMIC : "dynamic">
    | < GET : "get" >
    | < FILE : "file" > // Since C# 11
@@ -200,7 +200,7 @@ TOKEN #KeyWord :
    | < NAMEOF : "nameof">
    | < PARTIAL : "partial">
 //   | < RECORD : "record" >
-   | < REMOVE : "remove">
+//   | < REMOVE : "remove">
    | < REQUIRED : "required">
    | < SCOPED : "scoped">
    | < SET : "set" >

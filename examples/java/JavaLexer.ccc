@@ -83,15 +83,15 @@ TOKEN #KeyWord :
 //| < WHEN : "when" >
 // Soft keywords used only in the module-info
 | <MODULE : "module">
-| <EXPORTS : "exports">
-| <OPEN : "open">
-| <OPENS : "opens">
-| <PROVIDES : "provides">
-| <REQUIRES : "requires">
-| <TO : "to">
-| <TRANSITIVE : "transitive">
-| <USES : "uses">
-| <WITH : "with">
+//| <EXPORTS : "exports">
+//| <OPEN : "open">
+//| <OPENS : "opens">
+//| <PROVIDES : "provides">
+//| <REQUIRES : "requires">
+//| <TO : "to">
+//| <TRANSITIVE : "transitive">
+//| <USES : "uses">
+//| <WITH : "with">
 ;
 
 

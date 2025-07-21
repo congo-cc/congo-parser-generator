@@ -14,9 +14,7 @@ NODE_PACKAGE=org.parsers.java.ast;
 DEFAULT_LEXICAL_STATE=JAVA;
 // The following tokens are only activated at key points whether
 // they are needed.
-DEACTIVATE_TOKENS=VAR, SEALED, NON_SEALED, PERMITS, MODULE,
-                  OPEN, OPENS, PROVIDES, REQUIRES, EXPORTS, USES, WITH,
-                  TO, TRANSITIVE;
+DEACTIVATE_TOKENS=VAR, SEALED, NON_SEALED, PERMITS, MODULE;
 
 #if FT
 FAULT_TOLERANT;
@@ -37,13 +35,12 @@ Node Root#void :
 ModularCompilationUnit :
    (ImportDeclaration)*
    (Annotation)*
-   ENSURE {checkNextTokenImage("open","module")}
-   =>||
-   ACTIVATE_TOKENS OPEN,MODULE
+   ACTIVATE_TOKENS MODULE
    (
-     [<OPEN>]
+     ['open']
      <MODULE>
    )
+   =>||
    Name
    <LBRACE>
    (SCAN ~(<RBRACE>) => ModuleDirective)*
@@ -64,41 +61,42 @@ ModuleDirective :
 ;
 
 RequiresDirective :
-   ACTIVATE_TOKENS REQUIRES, TRANSITIVE (<REQUIRES> [<TRANSITIVE>|<STATIC>])
+   'requires'
+   ['transitive'|<STATIC>]
    Name
    <SEMICOLON>
 ;
 
 ExportsDirective :
-   ACTIVATE_TOKENS EXPORTS (<EXPORTS>)
+   'exports'
    Name
    [
-     ACTIVATE_TOKENS TO (<TO>)
+     'to'
      Name (<COMMA> Name)*
    ]
    <SEMICOLON>
 ;
 
 OpensDirective :
-   ACTIVATE_TOKENS OPENS (<OPENS>)
+   'opens'
    Name
    [
-     ACTIVATE_TOKENS TO (<TO>)
+     'to'
      Name (<COMMA> Name)*
    ]
    <SEMICOLON>
 ;
 
 UsesDirective :
-    ACTIVATE_TOKENS USES (<USES>)
+    'uses'
     Name
     <SEMICOLON>
 ;
 
 ProvidesDirective :
-    ACTIVATE_TOKENS PROVIDES(<PROVIDES>)
+    'provides'
     Name
-    ACTIVATE_TOKENS WITH (<WITH>)
+    'with'
     Name
     (<COMMA> Name)*
     <SEMICOLON>

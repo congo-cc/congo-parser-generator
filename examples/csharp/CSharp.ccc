@@ -10,8 +10,8 @@ FAULT_TOLERANT;
 FAULT_TOLERANT_DEFAULT=false;
 #endif
 
-DEACTIVATE_TOKENS=ADD,ASYNC,AWAIT, NAMEOF,
-                  PARTIAL, REMOVE,VAR, ARGLIST,
+DEACTIVATE_TOKENS=ADD,ASYNC, NAMEOF,
+                  PARTIAL, VAR, ARGLIST,
                   GET,SET,INIT,REQUIRED,DYNAMIC,SCOPED,FILE,
                   // The following are used in patterns:
                   AND, OR, NOT,
@@ -771,7 +771,7 @@ AddAccessorDeclaration :
 
 RemoveAccessorDeclaration :
     (AttributeSection)*
-    ACTIVATE_TOKENS REMOVE (<REMOVE>)
+    'remove'
     =>||
     AccessorBody
 ;
@@ -1472,9 +1472,9 @@ ThrowExpression# : <THROW> [Expression] ;
 CastExpression : <LPAREN> Type <RPAREN> =>|+1 UnaryExpression ;
 
 AwaitExpression :
-   SCAN 2 {checkNextTokenImage("await")}#
-    =>
-   ACTIVATE_TOKENS AWAIT (<AWAIT>) UnaryExpression
+   SCAN 2
+   'await'
+   UnaryExpression
 ;
 
 UnaryExpressionUnsafe : (<STAR>| <BIT_AND>) UnaryExpression ;
@@ -2012,8 +2012,7 @@ ForeachStatement :
    {boolean iteratingOverTupleType=false;}
     [
        //Since 8.0 (I think...)
-       SCAN {checkNextTokenImage("await")}#
-       => ACTIVATE_TOKENS AWAIT (<AWAIT>)
+       'await'
     ]
     <FOREACH> =>||
     <LPAREN>
@@ -2087,10 +2086,7 @@ YieldStatement :
 ;
 
 UsingStatement :
-   [
-      SCAN {checkNextTokenImage("await")}#
-      =>ACTIVATE_TOKENS AWAIT (<AWAIT>)
-   ]
+   ['await']
    <USING>
    {boolean hasParenthesis = false;}
    [<LPAREN> {hasParenthesis=true;}]
