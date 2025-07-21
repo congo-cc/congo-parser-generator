@@ -13,7 +13,7 @@
 PARSER_PACKAGE = org.parsers.python;
 DEFAULT_LEXICAL_STATE = PYTHON;
 ENSURE_FINAL_EOL;
-DEACTIVATE_TOKENS= DEDENT, MATCH,CASE,TYPE,EXCLAM;
+DEACTIVATE_TOKENS= DEDENT,CASE,TYPE,EXCLAM;
 #if FT
 FAULT_TOLERANT;
 FAULT_TOLERANT_DEFAULT=false;
@@ -524,8 +524,7 @@ Assignment :
 // introduced in Python 3.10
 
 MatchStatement :
-   ENSURE {checkNextTokenImage("match")}
-   ACTIVATE_TOKENS MATCH (<MATCH>)
+   'match'
    SubjectExpression
    <COLON>
    =>||

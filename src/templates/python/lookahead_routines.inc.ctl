@@ -151,7 +151,7 @@
       <-
       for tt in types :
          if self.IsContextualToken(tt) :
-            if TypeMatches(tt, tok) :
+            if self.TypeMatches(tt, tok) :
                return True
             <-
          <-

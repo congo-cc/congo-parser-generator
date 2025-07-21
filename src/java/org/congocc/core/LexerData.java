@@ -23,6 +23,7 @@ public class LexerData {
 
     private final Map<String, RegularExpression> namedTokensTable = new HashMap<>();
     private final List<RegexpStringLiteral> contextualTokens = new ArrayList<>();
+    private final Set<String> contextualStrings = new HashSet<>();
     private final Set<RegularExpression> overriddenTokens = new HashSet<>();
     private final Set<RegularExpression> lazyTokens = new HashSet<>();
 
@@ -254,6 +255,7 @@ public class LexerData {
         for (RegexpStringLiteral stringLiteral : grammar.descendants(RegexpStringLiteral.class,
                                                  rsl->rsl.getParent() instanceof RegexpSpec))
         {
+            String image = stringLiteral.getLiteralString();
             if (stringLiteral.hasLabel()) {
                 String label = stringLiteral.getLabel();
                 RegularExpression regexp = namedTokensTable.get(label);
@@ -262,7 +264,10 @@ public class LexerData {
                 }
                 addNamedToken(label, stringLiteral);
             }
-            if (!stringLiteral.isPrivate()) {
+            if (!stringLiteral.isPrivate() && !contextualStrings.contains(image)) {
+                if (stringLiteral.isContextual()) {
+                    contextualStrings.add(image);
+                }
                 addRegularExpression(stringLiteral);
             }
         }
@@ -276,7 +281,10 @@ public class LexerData {
             String lexicalStateName = stringLiteral.getLexicalState();
             LexicalStateData lsd = getLexicalState(lexicalStateName);
             RegexpStringLiteral alreadyPresent = lsd.getStringLiteral(image);
-            if (alreadyPresent == null) {
+            if (alreadyPresent == null && !contextualStrings.contains(image)) {
+                if (stringLiteral.isContextual()) {
+                    contextualStrings.add(image);
+                }
                 addRegularExpression(stringLiteral);
             } else {
                 Kind kind = alreadyPresent.getTokenProduction() == null ? TOKEN

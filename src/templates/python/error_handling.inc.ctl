@@ -60,8 +60,13 @@
     def consume_token(self, expected_type[#if settings.faultTolerant], tolerant, follow_set[/#if]):
         # old_token = self.last_consumed_token
         next_token = self.next_token(self.last_consumed_token)
-        if next_token.type != expected_type:
-            next_token = self.handle_unexpected_token_type(expected_type, next_token[#if settings.faultTolerant], tolerant, follow_set[/#if])
+        if not self.TypeMatches(expected_type,next_token) :
+          #if lexerData.hasContextualTokens
+               if expected_type != next_token.type :
+                    next_token = next_token.replace_type(expectedType)
+               else: [#rt]
+          #endif
+                 next_token = self.handle_unexpected_token_type(expected_type, next_token[#if settings.faultTolerant], tolerant, follow_set[/#if])
         self.last_consumed_token = next_token
         self._next_token_type = None
 #if settings.treeBuildingEnabled

@@ -14,7 +14,7 @@ NODE_PACKAGE=org.parsers.java.ast;
 DEFAULT_LEXICAL_STATE=JAVA;
 // The following tokens are only activated at key points whether
 // they are needed.
-DEACTIVATE_TOKENS=RECORD, VAR, YIELD, SEALED, NON_SEALED, PERMITS, MODULE,
+DEACTIVATE_TOKENS=RECORD, VAR, SEALED, NON_SEALED, PERMITS, MODULE,
                   OPEN, OPENS, PROVIDES, REQUIRES, EXPORTS, USES, WITH,
                   TO, TRANSITIVE, WHEN ;
 

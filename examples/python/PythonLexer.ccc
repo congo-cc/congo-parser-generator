@@ -470,8 +470,8 @@ TOKEN #Keyword :
    |
    <LAMBDA : "lambda">
    |
-   <MATCH : "match">
-   |
+//   <MATCH : "match">
+//   |
    <NONLOCAL : "nonlocal">
    |
    <NONE : "None">
