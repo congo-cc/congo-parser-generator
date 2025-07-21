@@ -14,9 +14,9 @@ NODE_PACKAGE=org.parsers.java.ast;
 DEFAULT_LEXICAL_STATE=JAVA;
 // The following tokens are only activated at key points whether
 // they are needed.
-DEACTIVATE_TOKENS=RECORD, VAR, SEALED, NON_SEALED, PERMITS, MODULE,
+DEACTIVATE_TOKENS=VAR, SEALED, NON_SEALED, PERMITS, MODULE,
                   OPEN, OPENS, PROVIDES, REQUIRES, EXPORTS, USES, WITH,
-                  TO, TRANSITIVE, WHEN ;
+                  TO, TRANSITIVE;
 
 #if FT
 FAULT_TOLERANT;
@@ -361,17 +361,9 @@ RecordDeclaration :
                                      ABSTRACT, FINAL,
                                      STATIC, STRICTFP);}
   Modifiers
-  ENSURE {checkNextTokenImage("record") && getTokenType(2) == IDENTIFIER}
-  =>||
-  (
-    <RECORD>
-    |
-    <IDENTIFIER>
-    {
-      replaceTokenType(RECORD);
-    }
-  )
+  'record'
   TypeIdentifier
+  =>||
   [TypeParameters]
   RecordHeader
   [ImplementsList]
@@ -1190,16 +1182,7 @@ TypePattern#LocalVariableDeclaration :
 ;
 
 WhenClause :
-   SCAN 0 {checkNextTokenImage("when")}#
-   =>
-   (
-      <WHEN>
-      |
-      <IDENTIFIER>
-      {
-        replaceTokenType(WHEN);
-      }
-   )
+   'when'
    Expression
 ;
 

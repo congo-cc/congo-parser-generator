@@ -199,13 +199,12 @@ TOKEN #KeyWord :
    | < INIT : "init" >
    | < NAMEOF : "nameof">
    | < PARTIAL : "partial">
-   | < RECORD : "record" >
+//   | < RECORD : "record" >
    | < REMOVE : "remove">
    | < REQUIRED : "required">
    | < SCOPED : "scoped">
    | < SET : "set" >
    | < VAR : "var" >
-   | < WHEN : "when">
    | < AND : "and">
    | < OR  : "or" >
    | < NOT : "not">

@@ -11,7 +11,7 @@ FAULT_TOLERANT_DEFAULT=false;
 #endif
 
 DEACTIVATE_TOKENS=ADD,ASYNC,AWAIT, NAMEOF,
-                  PARTIAL, RECORD, REMOVE,VAR,WHEN, ARGLIST,
+                  PARTIAL, REMOVE,VAR, ARGLIST,
                   GET,SET,INIT,REQUIRED,DYNAMIC,SCOPED,FILE,
                   // The following are used in patterns:
                   AND, OR, NOT,
@@ -52,8 +52,7 @@ TypeDeclarationLA#scan :
   (
     <STRUCT>|<CLASS>|<INTERFACE>|<ENUM>|<DELEGATE>
     |
-    ENSURE {checkNextTokenImage("record")}
-    (<IDENTIFIER>|<RECORD>)
+    'record'
     (<IDENTIFIER>|<STRUCT>|<CLASS>)
   )
 ;
@@ -276,8 +275,7 @@ ClassDeclaration :
   [
      // Record classes are since 10.0
      // and barely mentioned anywhere
-     SCAN {checkNextTokenImage("record")}#
-     => ACTIVATE_TOKENS RECORD (<RECORD>)
+     'record'
      {isaRecordClass =true;}
   ]
   <CLASS>
@@ -317,8 +315,7 @@ StructDeclaration :
   [SCAN {checkNextTokenImage("partial")}# => ACTIVATE_TOKENS PARTIAL (<PARTIAL>)]
   [
      // Record structs are since 10.0
-     SCAN {checkNextTokenImage("record")}#
-     => ACTIVATE_TOKENS RECORD (<RECORD>)
+     'record'
      {isaRecordStruct=true;}
   ]
    <STRUCT>
@@ -350,8 +347,7 @@ RecordDeclaration :
   (AttributeSection)*
   Modifiers
   [ENSURE {checkNextTokenImage("partial")} =>|| ACTIVATE_TOKENS PARTIAL (<PARTIAL>) ]
-  ENSURE {checkNextTokenImage("record")}
-  ACTIVATE_TOKENS RECORD (<RECORD>)
+  'record'
   =>||
   <IDENTIFIER>
   [TypeParameterList]
@@ -2075,7 +2071,7 @@ UnsafeStatement : <UNSAFE> Block ;
 CatchClause :
    <CATCH>
    [ <LPAREN> Type [<IDENTIFIER>] <RPAREN> ]
-   [ ACTIVATE_TOKENS WHEN (<WHEN>) =>|| <LPAREN> Expression <RPAREN> ]
+   [ 'when' <LPAREN> Expression <RPAREN> ]
    Block
 ;
 
@@ -2165,9 +2161,7 @@ SwitchLabel :
 ;
 
 WhenClause :
-   SCAN 0 {checkNextTokenImage("when")}#
-   =>
-   ACTIVATE_TOKENS WHEN (<WHEN>)
+   'when'
    NullCoalescingExpression
 ;
 
@@ -2289,7 +2283,7 @@ ParenthesizedPattern : <LPAREN> Pattern <RPAREN> ;
 DeclarationPattern :
     NonNullableType
     ENSURE {checkNextTokenType(TokenType.IDENTIFIER)}
-    ACTIVATE_TOKENS FROM, WHEN
+    ACTIVATE_TOKENS FROM
     (
        ENSURE ~(FromClause)
        ENSURE ~(WhenClause)

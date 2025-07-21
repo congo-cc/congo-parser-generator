@@ -61,7 +61,6 @@ TOKEN #KeyWord :
 | < PROTECTED: "protected" >
 | < PUBLIC: "public" >
 | < RETURN: "return" >
-| < RECORD : "record" >
 | < SHORT: "short" > #Primitive
 | < STATIC: "static" >
 | < STRICTFP: "strictfp" >
@@ -81,7 +80,7 @@ TOKEN #KeyWord :
 | < SEALED : "sealed">
 | < NON_SEALED : "non-sealed">
 | < PERMITS : "permits">
-| < WHEN : "when" >
+//| < WHEN : "when" >
 // Soft keywords used only in the module-info
 | <MODULE : "module">
 | <EXPORTS : "exports">
