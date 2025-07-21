@@ -4,7 +4,6 @@ import java.util.*;
 
 import org.congocc.parser.Node;
 import org.congocc.app.Errors;
-import org.congocc.app.AppSettings;
 import org.congocc.core.nfa.LexicalStateData;
 import org.congocc.parser.tree.*;
 import org.congocc.parser.tree.TokenProduction.Kind;
@@ -18,7 +17,6 @@ import static org.congocc.parser.tree.TokenProduction.Kind.*;
  */
 public class LexerData {
     private final Grammar grammar;
-    private final AppSettings appSettings;
     private final Errors errors;
     private final List<LexicalStateData> lexicalStates = new ArrayList<>();
     private final List<RegularExpression> regularExpressions = new ArrayList<>();
@@ -43,11 +41,11 @@ public class LexerData {
 
     public LexerData(Grammar grammar) {
         this.grammar = grammar;
-        this.appSettings = grammar.getAppSettings();
         this.errors = grammar.getErrors();
         RegularExpression reof = new EndOfFile();
         reof.setGrammar(grammar);
         regularExpressions.add(reof);
+        String fuck =  "\u001A";
     }
 
     public boolean isLazy(RegularExpression type) {
@@ -58,7 +56,7 @@ public class LexerData {
         if (ordinal < regularExpressions.size()) {
             return regularExpressions.get(ordinal).getLabel();
         }
-        return appSettings.getExtraTokenNames().get(ordinal - regularExpressions.size());
+        return grammar.getAppSettings().getExtraTokenNames().get(ordinal - regularExpressions.size());
     }
 
     boolean isContextualToken(int index) {
@@ -167,7 +165,7 @@ public class LexerData {
     }
 
     public int getTokenCount() {
-        return regularExpressions.size() + appSettings.getExtraTokenNames().size();
+        return regularExpressions.size() + grammar.getAppSettings().getExtraTokenNames().size();
     }
 
     public TokenSet getMoreTokens() {
@@ -208,7 +206,7 @@ public class LexerData {
     public Set<RegularExpression> getLiteralsThatDifferInCaseFromDefault() {
         Set<RegularExpression> result = new LinkedHashSet<>();
         for (RegularExpression re : getRegularExpressions()) {
-            if (re instanceof RegexpStringLiteral && re.getIgnoreCase() != appSettings.isIgnoreCase()) {
+            if (re instanceof RegexpStringLiteral && re.getIgnoreCase() != grammar.getAppSettings().isIgnoreCase()) {
                 result.add(re);
             }
         }
@@ -336,7 +334,7 @@ public class LexerData {
     private void dealWithRegexpRefs() {
         for (RegexpRef ref : grammar.descendants(RegexpRef.class)) {
             String label = ref.getLabel();
-            if (appSettings.getExtraTokens().containsKey(label)) {
+            if (grammar.getAppSettings().getExtraTokens().containsKey(label)) {
                 continue;
             }
             RegularExpression referenced = namedTokensTable.get(label);

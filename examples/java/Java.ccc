@@ -879,12 +879,6 @@ PrimaryExpression#interface :
     |
     (<DOUBLE_COLON> [TypeArguments] (<IDENTIFIER>|<NEW>)) #MethodReference(+1)
     |
-  // The following commented-out line is the absolutely correct condition for recent JDK's,
-  // since yield on its own cannot be a method call, though you can write this.yield(), for example.
-  // For now, I'm not including a check for that. The compiler catches it, after all. Also, it is
-  // still unclear to me whether this should be caught at this point or if it is better to just do
-  // a post-parse tree walk that runs over the AST and checks for these things.
-  //  ENSURE {getTokenType(0) == IDENTIFIER && (currentLookaheadToken==null || (peekNode().size() > 1 || !tokenImage(0).equals("yield")))}
     ENSURE {getTokenType(0) == IDENTIFIER}
     InvocationArguments #MethodCall(+1)
    )
@@ -1332,21 +1326,7 @@ BreakStatement :
 
 YieldStatement :
    SCAN 3
-   ENSURE {checkNextTokenImage("yield")}
-   ENSURE {isInProduction("SwitchExpression")}
-#if __python__
-   (
-      <IDENTIFIER>
-      {
-        replaceTokenType(TokenType.YIELD);
-      }
-      |
-      <YIELD>
-   )
-#else
    'yield'
-#endif
-
    Expression
    <SEMICOLON>
 ;
