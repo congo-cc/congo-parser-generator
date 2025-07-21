@@ -55,6 +55,7 @@ public abstract class RegularExpression extends BaseNode {
     private boolean _private = false;
 
     String label;
+    private int ordinal = -1;
 
     public TokenProduction getTokenProduction() {
         return firstAncestorOfType(TokenProduction.class);
@@ -77,10 +78,11 @@ public abstract class RegularExpression extends BaseNode {
         if (literalString != null && isJavaIdentifier(literalString)) {
             literalString = literalString.toUpperCase();
             if (!getGrammar().getLexerData().regexpLabelAlreadyUsed(literalString, this)) {
-                return literalString;
+                return label = literalString;
             }
         }
-        return "_TOKEN_" + id;
+        assert id>=0;
+        return label = "_TOKEN_" + id;
     }
 
     public final boolean hasLabel() {
@@ -88,8 +90,12 @@ public abstract class RegularExpression extends BaseNode {
     }
 
     public int getOrdinal() {
-        if (this instanceof EndOfFile) return 0;
-        return getGrammar().getLexerData().getOrdinal(this);
+        if (this instanceof EndOfFile) ordinal = 0;
+        return ordinal;
+    }
+
+    public void setOrdinal(int ordinal) {
+        this.ordinal = ordinal;
     }
 
     public boolean isContextual() {

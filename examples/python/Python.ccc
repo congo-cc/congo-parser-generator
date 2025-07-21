@@ -13,7 +13,7 @@
 PARSER_PACKAGE = org.parsers.python;
 DEFAULT_LEXICAL_STATE = PYTHON;
 ENSURE_FINAL_EOL;
-DEACTIVATE_TOKENS= DEDENT,CASE,TYPE,EXCLAM;
+DEACTIVATE_TOKENS= DEDENT,EXCLAM;
 #if FT
 FAULT_TOLERANT;
 FAULT_TOLERANT_DEFAULT=false;
@@ -384,8 +384,7 @@ TypeParameter :
 ;
 
 TypeAlias :
-    ENSURE {checkNextTokenImage("type")}
-    ACTIVATE_TOKENS TYPE (<TYPE>)
+    'type'
     <NAME>
     [TypeParameters]
     <ASSIGN>
@@ -530,14 +529,12 @@ MatchStatement :
    =>||
    <NEWLINE>
    <INDENT>
-   ASSERT {checkNextTokenImage("case") : "Must have a case here"}
    (CaseBlock)+
    <DEDENT>
 ;
 
 CaseBlock :
-    ENSURE {checkNextTokenImage("case")}
-    ACTIVATE_TOKENS CASE (<CASE>)
+    'case'
     Patterns
     [<IF> NamedExpression]
     <COLON>

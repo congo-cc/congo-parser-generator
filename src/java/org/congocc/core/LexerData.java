@@ -4,6 +4,7 @@ import java.util.*;
 
 import org.congocc.parser.Node;
 import org.congocc.app.Errors;
+import org.congocc.app.AppSettings;
 import org.congocc.core.nfa.LexicalStateData;
 import org.congocc.parser.tree.*;
 import org.congocc.parser.tree.TokenProduction.Kind;
@@ -17,6 +18,7 @@ import static org.congocc.parser.tree.TokenProduction.Kind.*;
  */
 public class LexerData {
     private final Grammar grammar;
+    private final AppSettings appSettings;
     private final Errors errors;
     private final List<LexicalStateData> lexicalStates = new ArrayList<>();
     private final List<RegularExpression> regularExpressions = new ArrayList<>();
@@ -41,6 +43,7 @@ public class LexerData {
 
     public LexerData(Grammar grammar) {
         this.grammar = grammar;
+        this.appSettings = grammar.getAppSettings();
         this.errors = grammar.getErrors();
         RegularExpression reof = new EndOfFile();
         reof.setGrammar(grammar);
@@ -51,15 +54,11 @@ public class LexerData {
         return lazyTokens.contains(type);
     }
 
-    public int getOrdinal(RegularExpression re) {
-        return regularExpressions.indexOf(re);
-    }
-
     public String getTokenName(int ordinal) {
         if (ordinal < regularExpressions.size()) {
             return regularExpressions.get(ordinal).getLabel();
         }
-        return grammar.getAppSettings().getExtraTokenNames().get(ordinal - regularExpressions.size());
+        return appSettings.getExtraTokenNames().get(ordinal - regularExpressions.size());
     }
 
     boolean isContextualToken(int index) {
@@ -128,6 +127,7 @@ public class LexerData {
     }
 
     private void addRegularExpression(RegularExpression regexp) {
+        regexp.setOrdinal(regularExpressions.size());
         regularExpressions.add(regexp);
         if (regexp instanceof RegexpStringLiteral stringLiteral) {
             if (stringLiteral.isContextual()) {
@@ -167,7 +167,7 @@ public class LexerData {
     }
 
     public int getTokenCount() {
-        return regularExpressions.size() + grammar.getAppSettings().getExtraTokenNames().size();
+        return regularExpressions.size() + appSettings.getExtraTokenNames().size();
     }
 
     public TokenSet getMoreTokens() {
@@ -208,7 +208,7 @@ public class LexerData {
     public Set<RegularExpression> getLiteralsThatDifferInCaseFromDefault() {
         Set<RegularExpression> result = new LinkedHashSet<>();
         for (RegularExpression re : getRegularExpressions()) {
-            if (re instanceof RegexpStringLiteral && re.getIgnoreCase() != grammar.getAppSettings().isIgnoreCase()) {
+            if (re instanceof RegexpStringLiteral && re.getIgnoreCase() != appSettings.isIgnoreCase()) {
                 result.add(re);
             }
         }
@@ -273,27 +273,38 @@ public class LexerData {
         }
     }
 
+    private RegexpStringLiteral getAlreadyPresent(RegexpStringLiteral rsl) {
+        String image = rsl.getLiteralString();
+        for (int i = 0; i< regularExpressions.size(); i++) {
+            RegularExpression r = regularExpressions.get(i);
+            if (!(r instanceof RegexpStringLiteral)) continue;
+            RegexpStringLiteral other = (RegexpStringLiteral) r;
+            if (other.getIgnoreCase() && !image.equalsIgnoreCase(other.getLiteralString())) continue;
+            if (!other.getIgnoreCase() && !image.equals(other.getLiteralString())) continue;
+            return other;
+        }
+        return null;
+    }
+
     private void dealWithUndeclaredStringLiterals() {
         for (RegexpStringLiteral stringLiteral : grammar.descendants(RegexpStringLiteral.class,
                                                                      rsl->rsl.getParent() instanceof Terminal))
         {
             String image = stringLiteral.getLiteralString();
-            String lexicalStateName = stringLiteral.getLexicalState();
-            LexicalStateData lsd = getLexicalState(lexicalStateName);
-            RegexpStringLiteral alreadyPresent = lsd.getStringLiteral(image);
-            if (alreadyPresent == null && !contextualStrings.contains(image)) {
+            RegexpStringLiteral alreadyPresent = getAlreadyPresent(stringLiteral);
+            if (alreadyPresent == null) {
                 if (stringLiteral.isContextual()) {
                     contextualStrings.add(image);
                 }
                 addRegularExpression(stringLiteral);
             } else {
+                stringLiteral.setOrdinal(alreadyPresent.getOrdinal());
+                stringLiteral.setLabel(alreadyPresent.getLabel());
                 Kind kind = alreadyPresent.getTokenProduction() == null ? TOKEN
                         : alreadyPresent.getTokenProduction().getKind();
                 if (kind != TOKEN && kind != CONTEXTUAL) {
                     errors.addError(stringLiteral,
                             "String token \"" + image + "\" has been defined as a \"" + kind + "\" token.");
-                } else {
-                    stringLiteral.setCanonicalRegexp(alreadyPresent);
                 }
             }
         }
@@ -325,7 +336,7 @@ public class LexerData {
     private void dealWithRegexpRefs() {
         for (RegexpRef ref : grammar.descendants(RegexpRef.class)) {
             String label = ref.getLabel();
-            if (grammar.getAppSettings().getExtraTokens().containsKey(label)) {
+            if (appSettings.getExtraTokens().containsKey(label)) {
                 continue;
             }
             RegularExpression referenced = namedTokensTable.get(label);

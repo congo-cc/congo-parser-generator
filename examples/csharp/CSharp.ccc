@@ -10,10 +10,9 @@ FAULT_TOLERANT;
 FAULT_TOLERANT_DEFAULT=false;
 #endif
 
-DEACTIVATE_TOKENS=ADD,ASSEMBLY,ASYNC,AWAIT,INTO,MODULE, NAMEOF,
-                  PARTIAL, RECORD, REMOVE,VAR,WHEN,YIELD, ARGLIST,
-                  GET,SET,INIT,WITH,REQUIRED,DYNAMIC,SCOPED,FILE,
-                  MANAGED,UNMANAGED,
+DEACTIVATE_TOKENS=ADD,ASYNC,AWAIT, NAMEOF,
+                  PARTIAL, RECORD, REMOVE,VAR,WHEN, ARGLIST,
+                  GET,SET,INIT,REQUIRED,DYNAMIC,SCOPED,FILE,
                   // The following are used in patterns:
                   AND, OR, NOT,
                   // The following are all used in queries
@@ -118,7 +117,7 @@ UsingNamespaceDirective :
 ;
 
 GlobalAttributeSection :
-   <LBRACKET>  ACTIVATE_TOKENS ASSEMBLY, MODULE (<ASSEMBLY> | <MODULE>) =>|| <COLON> AttributeList [<COMMA>] <RBRACKET>
+   <LBRACKET> ('assembly' | 'module') =>|| <COLON> AttributeList [<COMMA>] <RBRACKET>
 ;
 
 AttributeSection :
@@ -950,10 +949,7 @@ NonTupleType : Type;
 
 DelegateStarType :
    <DELEGATE><STAR> =>||
-   [
-     SCAN 0 {checkNextTokenImage("managed") || checkNextTokenImage("unmanaged")}#
-     => ACTIVATE_TOKENS MANAGED, UNMANAGED (<MANAGED> | <UNMANAGED>)
-   ]
+   ['managed'|'unmanaged']
    (AttributeSection)*
    TypeParameterList
 ;
@@ -1303,8 +1299,7 @@ MultiplicativeExpression :
 WithExpression :
    SwitchExpression
    [
-      SCAN 0 {checkNextTokenImage("with")}#
-      => ACTIVATE_TOKENS WITH (<WITH>)
+      'with'
       <LBRACE>
       [
          MemberInitializer
@@ -1864,8 +1859,7 @@ EmbeddedStatement :
     |
     DoStatement
     |
-    SCAN 2 {checkNextTokenImage("yield")}#
-    => YieldStatement
+    YieldStatement
     |
     CheckedStatement
     |
@@ -2086,7 +2080,8 @@ CatchClause :
 ;
 
 YieldStatement :
-   ACTIVATE_TOKENS YIELD (<YIELD>)
+   SCAN 3
+   'yield'
    (
       <BREAK>
       |

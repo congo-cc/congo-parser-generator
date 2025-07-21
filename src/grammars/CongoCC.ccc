@@ -1407,7 +1407,6 @@ Terminal# :
             rsl.setLexicalState(grammar.getDefaultLexicalState());
       }
       thisProduction.setRegexp(result);
-      thisProduction.setLabel(result.getLabel());
   %}
   [
      SCAN ~\...\Lookahead =>
@@ -1432,11 +1431,14 @@ INJECT Terminal :
    implements SyntaxElement
 {
     @Property RegularExpression regexp;
-    @Property String label;
 
     public int getMinimumSize(Set<String> unused) {return 1;}
 
     public int getMaximumSize(Set<String> unused) {return 1;}
+
+    public String getLabel() {
+        return regexp.getLabel();
+    }
 
     public TokenSet getFirstSet() {
         if (firstSet == null) {

@@ -297,26 +297,11 @@ INJECT RegexpStringLiteral :
 {
   @Property String literalString, lexicalState;
   @Property boolean singleQuoted;
-  @Property RegexpStringLiteral canonicalRegexp;
 
   public boolean isContextual() {
     TokenProduction tp = firstAncestorOfType(TokenProduction.class);
     if (tp != null) return tp.isContextual();
     return getSource().charAt(0) == '\'';
-  }
-
-  public int getOrdinal() {
-      if (canonicalRegexp != null) {
-        return canonicalRegexp.getOrdinal();
-      }
-      return super.getOrdinal();
-  }
-
-  public String getLabel() {
-     if (canonicalRegexp != null) {
-        return canonicalRegexp.getLabel();
-     }
-     return super.getLabel();
   }
 
   public int hashCode() {
