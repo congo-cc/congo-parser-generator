@@ -73,7 +73,7 @@
   #else
     def scan_token_one(self, expected_type):
         peeked_token = self.next_token(self.current_lookahead_token)
-        if not self.TypeMatches(expected_type, peeked_token):
+        if not self.type_matches(expected_type, peeked_token):
             return False
         self.remaining_lookahead -= 1
         self.current_lookahead_token = peeked_token
@@ -81,7 +81,7 @@
 
     def scan_token_many(self, expected_types):
         peeked_token = self.next_token(self.current_lookahead_token)
-        if not self.HasMatch(expected_types, peeked_token):
+        if not self.has_match(expected_types, peeked_token):
             return False
         self.remaining_lookahead -= 1
         self.current_lookahead_token = peeked_token
@@ -130,7 +130,7 @@
         return None
     <-
 
-    def TypeMatches(self, type, tok) :
+    def type_matches(self, type, tok) :
       if tok.type == type :
          return True;
       <-
@@ -145,13 +145,13 @@
       return False;
     <-
 
-    def HasMatch(self, types, tok) :
+    def has_match(self, types, tok) :
       if tok.type in types :
          return True
       <-
       for tt in types :
          if self.IsContextualToken(tt) :
-            if self.TypeMatches(tt, tok) :
+            if self.type_matches(tt, tok) :
                return True
             <-
          <-
@@ -160,11 +160,11 @@
     <-
 
 #else
-    def TypeMatches(self, type, tok) :
+    def type_matches(self, type, tok) :
       return tok.type == type
     <-
 
-    def HasMatch(self, types, tok) :
+    def has_match(self, types, tok) :
        return tok.type in types
     <-
 #endif

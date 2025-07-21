@@ -12,9 +12,11 @@ JAVA_UNICODE_ESCAPE;
 PARSER_PACKAGE=org.parsers.java;
 NODE_PACKAGE=org.parsers.java.ast;
 DEFAULT_LEXICAL_STATE=JAVA;
-// The following tokens are only activated at key points whether
-// they are needed.
-DEACTIVATE_TOKENS=VAR, SEALED, NON_SEALED, PERMITS, MODULE;
+// "non-sealed" cannot be a contextual token because,
+// unlike typical contextual keywords, it is not
+// matched by a more general pattern (usually IDENTIFIER)
+DEACTIVATE_TOKENS=NON_SEALED;
+
 
 #if FT
 FAULT_TOLERANT;
@@ -35,11 +37,8 @@ Node Root#void :
 ModularCompilationUnit :
    (ImportDeclaration)*
    (Annotation)*
-   ACTIVATE_TOKENS MODULE
-   (
-     ['open']
-     <MODULE>
-   )
+   ['open']
+   'module'
    =>||
    Name
    <LBRACE>
@@ -138,16 +137,16 @@ INJECT PackageDeclaration :
     }
 }
 
-ImportDeclaration : <_IMPORT> [ <STATIC> | <MODULE>] Name [ <DOT> <STAR> ] <SEMICOLON> ;
+ImportDeclaration : <_IMPORT> [ <STATIC> | 'module' ] Name [ <DOT> <STAR> ] <SEMICOLON> ;
 
 Modifiers :
  (
   ENSURE {isParserTolerant() || permissibleModifiers == null
-       || permissibleModifiers.contains(getTokenType(1))}
+       || hasMatch(permissibleModifiers,getToken(1))}
   (
    <PUBLIC>|<STATIC>|<PROTECTED>|<PRIVATE> |<FINAL>|<ABSTRACT>
    |<SYNCHRONIZED>|<NATIVE>|<TRANSIENT>|<VOLATILE>|<STRICTFP>
-   |<_DEFAULT>)
+   |<_DEFAULT>|'sealed')
   {
     if (permissibleModifiers !=null) {
       TokenType tt = getTokenType(0);
@@ -164,6 +163,10 @@ Modifiers :
            permissibleModifiers.remove(PROTECTED);
            permissibleModifiers.remove(PUBLIC);
            break;
+        case SEALED :
+           permissibleModifiers.remove(SEALED);
+           permissibleModifiers.remove(NON_SEALED);
+           break;
         default :
            permissibleModifiers.remove(lastConsumedToken.getType());
       }
@@ -173,10 +176,10 @@ Modifiers :
   ENSURE {
     permissibleModifiers == null
     ||
-    permissibleModifiers.contains(SEALED)
+    permissibleModifiers.contains(NON_SEALED)
     &&
     (
-       checkNextTokenImage("sealed","non-sealed")
+       checkNextTokenImage("non-sealed")
        ||
        checkNextTokenImage("non")
          && "-".equals(tokenImage(2))
@@ -184,7 +187,7 @@ Modifiers :
          && getToken(3).getBeginOffset() == getToken(1).getEndOffset() + 1
     )
   }
-  ACTIVATE_TOKENS SEALED, NON_SEALED (<SEALED>|<NON_SEALED>)
+  ACTIVATE_TOKENS NON_SEALED (<NON_SEALED>)
   {
     if (permissibleModifiers!=null) {
       permissibleModifiers.remove(SEALED);
@@ -296,15 +299,7 @@ InterfaceDeclaration :
 ;
 
 PermitsList :
-   SCAN 0 {checkNextTokenImage("permits")}# =>
-   (
-      <PERMITS>
-      |
-      <IDENTIFIER>
-      {
-        replaceTokenType(PERMITS);
-      }
-   )
+   'permits'
    ObjectType
    (<COMMA> ObjectType)*
 ;
@@ -1049,12 +1044,9 @@ LocalVariableDeclaration#abstract :
 LocalVariableDeclarationLA#scan :
    Modifiers
    (
+     'var'
+     |
      Type
-     |
-     <VAR>
-     |
-     <IDENTIFIER>
-     ENSURE {currentLookaheadToken.toString().equals("var")}
    )
    (<IDENTIFIER>|<UNDERSCORE>)
 ;
@@ -1070,15 +1062,7 @@ NoVarDeclaration :
 VarDeclaration :
   {permissibleModifiers = EnumSet.of(FINAL);}
   Modifiers
-  ASSERT {checkNextTokenImage("var")} // This must be the case. It is just a sanity check.
-  (
-    <VAR>
-    |
-    <IDENTIFIER>
-    {
-        replaceTokenType(VAR);
-    }
-  )
+  'var'
   VariableDeclarator
 ;
 
@@ -1172,7 +1156,7 @@ TypePattern#LocalVariableDeclaration :
     {permissibleModifiers = EnumSet.of(FINAL);}#
     Modifiers
     // ReferenceType
-    (Type | ACTIVATE_TOKENS VAR(<VAR>))
+    ('var'|Type)
     (<IDENTIFIER>|<UNDERSCORE>)
     |
     VarDeclaration
@@ -1491,15 +1475,7 @@ LambdaParameter :
       ASSERT ~(",") : "The varargs (...) parameter must be the last one specified.":
       |
       (
-        ENSURE {checkNextTokenImage("var")}
-        (
-          <VAR>
-          |
-          <IDENTIFIER>
-          {
-            replaceTokenType(VAR);
-          }
-        )
+        'var'
         |
         Type
       )

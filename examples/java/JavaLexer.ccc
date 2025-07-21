@@ -73,26 +73,17 @@ TOKEN #KeyWord :
 | < TRANSIENT: "transient" >
 | < TRUE: "true" > #BooleanLiteral
 | < TRY: "try" >
-| < VAR: "var" >
+//| < VAR: "var" >
 | < VOID: "void" >
 | < VOLATILE: "volatile" >
 | < WHILE: "while" >
-| < SEALED : "sealed">
 | < NON_SEALED : "non-sealed">
-| < PERMITS : "permits">
-//| < WHEN : "when" >
-// Soft keywords used only in the module-info
-| <MODULE : "module">
-//| <EXPORTS : "exports">
-//| <OPEN : "open">
-//| <OPENS : "opens">
-//| <PROVIDES : "provides">
-//| <REQUIRES : "requires">
-//| <TO : "to">
-//| <TRANSITIVE : "transitive">
-//| <USES : "uses">
-//| <WITH : "with">
 ;
+
+CONTEXTUAL #KeyWord :
+  <SEALED : "sealed">
+;
+
 
 
 

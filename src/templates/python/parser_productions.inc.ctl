@@ -942,9 +942,9 @@ ${SingleTokenCondition(expansion)}[#t]
   #endif
   #if expansion.firstSet.tokenNames?size < 5
      #list expansion.firstSet.tokenNames as name
-          (self.TypeMatches(${name}, self.get_token(1)))${name_has_next?:" or "} [#t]
+          (self.type_matches(${name}, self.get_token(1)))${name_has_next?:" or "} [#t]
      #endlist
   #else
-      (self.HasMatch(self.${expansion.firstSetVarName},self.get_token(1))) [#t]
+      (self.has_match(self.${expansion.firstSetVarName},self.get_token(1))) [#t]
   #endif
 #endmacro

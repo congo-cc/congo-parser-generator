@@ -226,7 +226,7 @@ Modifiers#void : //TODO
   (
     SCAN { permissibleModifiers == null
          ||
-         permissibleModifiers.contains(getTokenType(1)) }#
+         hasMatch(permissibleModifiers, getToken(1)) }#
       =>
       (<NEW>|<PUBLIC>|<PROTECTED>|<INTERNAL>|<PRIVATE>|<ABSTRACT>
       |<SEALED>|<STATIC>|<UNSAFE>|<OVERRIDE>|<VIRTUAL>|<EXTERN>

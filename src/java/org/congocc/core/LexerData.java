@@ -45,7 +45,6 @@ public class LexerData {
         RegularExpression reof = new EndOfFile();
         reof.setGrammar(grammar);
         regularExpressions.add(reof);
-        String fuck =  "\u001A";
     }
 
     public boolean isLazy(RegularExpression type) {
