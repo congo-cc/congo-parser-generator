@@ -270,6 +270,8 @@ public class FilesGenerator {
         try {
            cscu = CongoCCParser.parseCSharpFile(outputFile.getFileName().toString(), code);
         } catch (Exception e) {
+            e.printStackTrace();
+            errors.addError(e.getMessage());
             out.write(code);
             return;
         } finally {

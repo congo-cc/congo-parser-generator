@@ -86,7 +86,7 @@ TOKEN #KeyWord :
 | < VOLATILE: "volatile" >
 | < WHILE: "while" >
 #if __congo_internal__
-| < YIELD : "yield" >
+//| < YIELD : "yield" >
 #endif
 | < SEALED : "sealed">
 | < NON_SEALED : "non-sealed">

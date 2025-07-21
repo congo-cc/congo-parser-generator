@@ -73,8 +73,7 @@
   #else
     def scan_token_one(self, expected_type):
         peeked_token = self.next_token(self.current_lookahead_token)
-        tt = peeked_token.type
-        if tt != expected_type:
+        if not self.TypeMatches(expected_type, peeked_token):
             return False
         self.remaining_lookahead -= 1
         self.current_lookahead_token = peeked_token
@@ -82,8 +81,7 @@
 
     def scan_token_many(self, expected_types):
         peeked_token = self.next_token(self.current_lookahead_token)
-        tt = peeked_token.type
-        if tt not in expected_types:
+        if not self.HasMatch(expected_types, peeked_token):
             return False
         self.remaining_lookahead -= 1
         self.current_lookahead_token = peeked_token
@@ -97,8 +95,7 @@
 
 #if lexerData.hasContextualTokens
 
-
-    def IsContextualToken(type) :
+    def IsContextualToken(self, type) :
       return (
          #list lexerData.contextualTokens as ctok
            type == TokenType.${ctok.label}
@@ -107,7 +104,7 @@
       )
     <-
 
-    def IsIgnoreCase(type) :
+    def IsIgnoreCase(self, type) :
         #if !lexerData.literalsThatDifferInCaseFromDefault
            return ${settings.ignoreCase ?: "True":"False"};
         #else
@@ -120,7 +117,7 @@
         #endif
     <-
 
-    def GetLiteralString(type) :
+    def GetLiteralString(self, type) :
         #list lexerData.regularExpressions as regexp
            ${regexp_index==0 ?: " if " : " elif "} (type == TokenType.${regexp.label}) :
                #if regexp.literalString
@@ -133,27 +130,27 @@
         return None
     <-
 
-    def TypeMatches(type, tok) :
+    def TypeMatches(self, type, tok) :
       if tok.type == type :
          return True;
       <-
-      if (IsContextualToken(type)) :
-         if IsIgnoreCase(type) :
-             return GetLiteralString(type).lower() == tok.__str__().lower()
+      if (self.IsContextualToken(type)) :
+         if self.IsIgnoreCase(type) :
+             return self.GetLiteralString(type).lower() == tok.__str__().lower()
          <-
          else :
-             return GetLiteralString(type) == tok.__str__()
+             return self.GetLiteralString(type) == tok.__str__()
          <-
       <-
       return False;
     <-
 
-    def HasMatch(types, tok) :
+    def HasMatch(self, types, tok) :
       if tok.type in types :
          return True
       <-
       for tt in types :
-         if IsContextualToken(tt) :
+         if self.IsContextualToken(tt) :
             if TypeMatches(tt, tok) :
                return True
             <-
@@ -163,11 +160,11 @@
     <-
 
 #else
-    def TypeMatches(type, tok) :
+    def TypeMatches(self, type, tok) :
       return tok.type == type
     <-
 
-    def HasMatch(types, tok) :
+    def HasMatch(self, types, tok) :
        return tok.type in types
     <-
 #endif
