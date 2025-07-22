@@ -10,10 +10,13 @@ FAULT_TOLERANT;
 FAULT_TOLERANT_DEFAULT=false;
 #endif
 
-DEACTIVATE_TOKENS= // The following are used in patterns:
+DEACTIVATE_TOKENS= // The following tokens are turned on
+                   // when we enter a Pattern
                   AND, OR, NOT,
-                  // The following are all used in queries
-                  EQUALS, LET, INTO, ON, ORDERBY,SELECT;
+                  // The following are the keywords that are
+                  // activated when we enter a QueryExpression
+                  ASCENDING, DESCENDING, BY, EQUALS, JOIN, GROUP,
+                  LET, INTO, ON, ORDERBY,SELECT;
 
 INCLUDE "CSharpLexer.ccc"
 
@@ -80,10 +83,10 @@ NamespaceBody :
 
 ExternAliasDirective :
    <EXTERN>
-   <IDENTIFIER>
-   ENSURE {tokenImage(0).equals("alias")}
+   'alias'
    =>||
-   <IDENTIFIER> <SEMICOLON>
+   <IDENTIFIER>
+   <SEMICOLON>
 ;
 
 UsingDirective :
@@ -109,7 +112,9 @@ UsingNamespaceDirective :
 ;
 
 GlobalAttributeSection :
-   <LBRACKET> ('assembly' | 'module') =>|| <COLON> AttributeList [<COMMA>] <RBRACKET>
+   <LBRACKET> ('assembly' | 'module')
+   =>||
+   <COLON> AttributeList [<COMMA>] <RBRACKET>
 ;
 
 AttributeSection :
@@ -135,7 +140,8 @@ AttributeArguments :
     <LPAREN>
     [
        SCAN ~(<RPAREN> | <IDENTIFIER><ASSIGN>)
-       => [Type <COLON> =>||] Expression
+       =>
+       [Type <COLON> =>||] Expression
        (
           <COMMA>
           [Type <COLON> =>||] // since when?
@@ -1155,28 +1161,24 @@ QueryExpression :
       )
    )
    FromClause
-   ACTIVATE_TOKENS EQUALS,LET, INTO, ON, ORDERBY,SELECT
+   ACTIVATE_TOKENS ASCENDING, DESCENDING, BY, EQUALS,GROUP,
+                   LET, INTO, JOIN, ON, ORDERBY,SELECT
    (
      QueryBody
    )
 ;
 
-InQueryExpression#void :
-   DEACTIVATE_TOKENS EQUALS, INTO, ON
-   (Expression)
-;
-
 FromClause :
    'from'
    (
-      <IDENTIFIER> <IN> =>|| InQueryExpression
+      <IDENTIFIER> <IN> =>|| Expression
       |
-      Type <IDENTIFIER> <IN> InQueryExpression
+      Type <IDENTIFIER> <IN> Expression
    )
 ;
 
 QueryBody :
-   ACTIVATE_TOKENS SELECT (QueryBodyClause)*
+   (QueryBodyClause)*
    (
       SelectClause
       |
@@ -1201,35 +1203,35 @@ QueryBodyClause :
    OrderbyClause
 ;
 
-LetClause : <LET> <IDENTIFIER> <ASSIGN> InQueryExpression ;
+LetClause : <LET> <IDENTIFIER> <ASSIGN> Expression ;
 
-WhereClause : 'where' InQueryExpression ;
+WhereClause : 'where' Expression ;
 
 JoinClause :
-   'join'
+   <JOIN>
    (
       <IDENTIFIER> <IN> =>||
       |
       Type <IDENTIFIER> <IN>
    )
-   InQueryExpression
+   Expression
    <ON>
-   InQueryExpression
+   Expression
    <EQUALS>
-   InQueryExpression
+   Expression
    [<INTO> <IDENTIFIER>]
 ;
 
-SelectClause : <SELECT> InQueryExpression ;
+SelectClause : <SELECT> Expression ;
 
-GroupClause : 'group' InQueryExpression 'by' InQueryExpression;
+GroupClause : <GROUP> Expression <BY> Expression;
 
 OrderbyClause :
     <ORDERBY>
-    InQueryExpression
-    ['ascending'|'descending']
+    Expression
+    [<ASCENDING>|<DESCENDING>]
     (
-       <COMMA> InQueryExpression ['ascending'|'descending']
+       <COMMA> Expression [<ASCENDING>|<DESCENDING>]
     )*
 ;
 

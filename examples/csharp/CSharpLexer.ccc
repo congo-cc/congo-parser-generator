@@ -193,8 +193,13 @@ TOKEN #KeyWord :
    | < OR  : "or" >
    | < NOT : "not">
 // Here are the soft keywords used in queries
+   | <ASCENDING : "ascending">
+   | <DESCENDING : "descending">
+   | <BY : "by">
    | <EQUALS : "equals">
+   | <GROUP : "group">
    | <INTO : "into">
+   | <JOIN : "join">
    | <LET : "let">
    | <ON : "on">
    | <ORDERBY : "orderby" >
