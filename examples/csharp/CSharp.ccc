@@ -10,12 +10,10 @@ FAULT_TOLERANT;
 FAULT_TOLERANT_DEFAULT=false;
 #endif
 
-DEACTIVATE_TOKENS=ASYNC, PARTIAL, REQUIRED,FILE,
-                  // The following are used in patterns:
-                  AND, OR, NOT,
+DEACTIVATE_TOKENS= // The following are used in patterns:
+                  AND, OR,// NOT,
                   // The following are all used in queries
-                  BY,EQUALS, GROUP,LET,
-                  INTO, ON, ORDERBY,SELECT;
+                  EQUALS, LET, INTO, ON, ORDERBY,SELECT;
 
 INCLUDE "CSharpLexer.ccc"
 
@@ -42,10 +40,7 @@ CompilationUnitBody#void :
 TypeDeclarationLA#scan :
   (AttributeSection)*
   Modifiers
-  [
-     ENSURE {checkNextTokenImage("partial")}
-     (<IDENTIFIER>|<PARTIAL>)
-  ]
+  [ 'partial' ]
   ENSURE ~(<DELEGATE> <STAR>)
   (
     <STRUCT>|<CLASS>|<INTERFACE>|<ENUM>|<DELEGATE>
@@ -220,7 +215,7 @@ INJECT PARSER_CLASS :
    EnumSet<TokenType> permissibleModifiers;
 }
 
-Modifiers#void : //TODO
+Modifiers#void : //TODO handle illegal combinations of mods
   (
     SCAN { permissibleModifiers == null
          ||
@@ -228,6 +223,7 @@ Modifiers#void : //TODO
       =>
       (<NEW>|<PUBLIC>|<PROTECTED>|<INTERNAL>|<PRIVATE>|<ABSTRACT>
       |<SEALED>|<STATIC>|<UNSAFE>|<OVERRIDE>|<VIRTUAL>|<EXTERN>
+      |<ASYNC>|<REQUIRED>|<FILE>
       // This is allowed on methods in some cases,
       // but not sure where exactly or when this was added
       // Have to check where this is possible and since when
@@ -242,20 +238,6 @@ Modifiers#void : //TODO
             permissibleModifiers.remove(getTokenType(0));
          }
       }
-     |
-     SCAN 0 { permissibleModifiers == null
-            || permissibleModifiers.contains(TokenType.ASYNC) && checkNextTokenImage("async")
-            || permissibleModifiers.contains(TokenType.REQUIRED) && checkNextTokenImage("required")
-            || permissibleModifiers.contains(TokenType.FILE) && checkNextTokenImage("file")
-          }#
-      => ACTIVATE_TOKENS ASYNC, REQUIRED, FILE
-         (
-            <ASYNC> { if (permissibleModifiers!=null) permissibleModifiers.remove(TokenType.ASYNC);}
-            |
-            <REQUIRED> {if (permissibleModifiers != null) permissibleModifiers.remove(TokenType.REQUIRED);}
-            |
-            <FILE> {if (permissibleModifiers != null) permissibleModifiers.remove(TokenType.FILE);}
-         )
   )*
   {permissibleModifiers = null;}#
 ;
@@ -269,7 +251,7 @@ ClassDeclaration :
   }
   (AttributeSection)*
   Modifiers
-  [SCAN {checkNextTokenImage("partial")}# => ACTIVATE_TOKENS PARTIAL ("partial")]
+  ['partial']
   [
      // Record classes are since 10.0
      // and barely mentioned anywhere
@@ -310,7 +292,7 @@ StructDeclaration :
   }
   (AttributeSection)*
   Modifiers
-  [SCAN {checkNextTokenImage("partial")}# => ACTIVATE_TOKENS PARTIAL (<PARTIAL>)]
+  ['partial']
   [
      // Record structs are since 10.0
      'record'
@@ -344,7 +326,7 @@ RecordDeclaration :
   }
   (AttributeSection)*
   Modifiers
-  [ENSURE {checkNextTokenImage("partial")} =>|| ACTIVATE_TOKENS PARTIAL (<PARTIAL>) ]
+  ['partial']
   'record'
   =>||
   <IDENTIFIER>
@@ -370,7 +352,7 @@ InterfaceDeclaration :
   }
   (AttributeSection)*
   Modifiers
-  [SCAN {checkNextTokenImage("partial")}# => ACTIVATE_TOKENS PARTIAL ("partial")]
+  ['partial']
   <INTERFACE>
   =>||
   <IDENTIFIER>
@@ -821,7 +803,7 @@ MethodDeclaration :
   }
   (AttributeSection)*
   Modifiers
-  [SCAN {checkNextTokenImage("partial")}# => ACTIVATE_TOKENS PARTIAL ("partial")]
+  ['partial']
   ReturnType
   //MemberName
   Name
@@ -1175,16 +1157,14 @@ QueryExpression :
       )
    )
    FromClause
-   ACTIVATE_TOKENS BY,EQUALS,GROUP,LET,
-                   INTO, ON, ORDERBY,SELECT
+   ACTIVATE_TOKENS EQUALS,LET, INTO, ON, ORDERBY,SELECT
    (
      QueryBody
    )
 ;
 
 InQueryExpression#void :
-   DEACTIVATE_TOKENS BY,EQUALS,
-                   GROUP,INTO, ON
+   DEACTIVATE_TOKENS EQUALS, INTO, ON
    (Expression)
 ;
 
@@ -1198,7 +1178,7 @@ FromClause :
 ;
 
 QueryBody :
-   ACTIVATE_TOKENS SELECT, GROUP (QueryBodyClause)*
+   ACTIVATE_TOKENS SELECT (QueryBodyClause)*
    (
       SelectClause
       |
@@ -1244,7 +1224,7 @@ JoinClause :
 
 SelectClause : <SELECT> InQueryExpression ;
 
-GroupClause : <GROUP> InQueryExpression <BY> InQueryExpression;
+GroupClause : 'group' InQueryExpression 'by' InQueryExpression;
 
 OrderbyClause :
     <ORDERBY>
@@ -2171,7 +2151,8 @@ ForStatement :
 // C# 8 Pattern syntax follows.
 
 Pattern :
-   ACTIVATE_TOKENS AND, OR, NOT (OrPattern)
+   ACTIVATE_TOKENS AND, OR//, NOT
+   (OrPattern)
 ;
 
 // New in C# 11
@@ -2221,7 +2202,8 @@ OrPattern : AndPattern (<OR> AndPattern)* ;
 
 AndPattern : NotPattern (<AND> NotPattern)* ;
 
-NotPattern : (<NOT>)* PrimaryPattern ;
+NotPattern : //(<NOT>)*
+             ('not')* PrimaryPattern ;
 
 PrimaryPattern :
    <NULL> | <TRUE> | <FALSE>

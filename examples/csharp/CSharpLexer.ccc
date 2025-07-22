@@ -189,17 +189,11 @@ TOKEN #KeyWord :
    | < VOLATILE : "volatile" >
    | < WHILE : "while" >
 // Now contextual Keywords
-   | < ASYNC : "async" >
-   | < FILE : "file" > // Since C# 11
-   | < PARTIAL : "partial">
-   | < REQUIRED : "required">
    | < AND : "and">
    | < OR  : "or" >
-   | < NOT : "not">
+//   | < NOT : "not">
 // Here are the soft keywords used in queries
-   | <BY : "by">
    | <EQUALS : "equals">
-   | <GROUP : "group">
    | <INTO : "into">
    | <LET : "let">
    | <ON : "on">
@@ -209,12 +203,12 @@ TOKEN #KeyWord :
 
 CONTEXTUAL #KeyWord :
    <ARGLIST : '__arglist'>
-   |
-   <GET : 'get'>
-   |
-   <SET : 'get'>
-   |
-   <INIT : 'init'>
+   | <GET : 'get'>
+   | <SET : 'get'>
+   | <INIT : 'init'>
+   | <ASYNC : 'async'>
+   | <REQUIRED : 'required'>
+   | <FILE : 'file'>
 ;
 
 INCLUDE "CSharpIdentifierDef.ccc"
