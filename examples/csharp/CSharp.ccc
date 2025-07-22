@@ -11,7 +11,7 @@ FAULT_TOLERANT_DEFAULT=false;
 #endif
 
 DEACTIVATE_TOKENS= // The following are used in patterns:
-                  AND, OR,// NOT,
+                  AND, OR, NOT,
                   // The following are all used in queries
                   EQUALS, LET, INTO, ON, ORDERBY,SELECT;
 
@@ -1121,9 +1121,7 @@ LambdaLHS :
   {boolean seenStatic = false;}
   [<STATIC> {seenStatic = true;}] // since 9.0
   [
-     SCAN 0 {checkNextTokenImage("async")}#
-     =>
-     ACTIVATE_TOKENS ASYNC (<ASYNC>)
+     'async'
      [
         SCAN {!seenStatic} => <STATIC>
      ]
@@ -1689,9 +1687,7 @@ AnonymousMethodExpression :
   {boolean seenStatic = false;}
   [<STATIC> {seenStatic = true;}] // since 9.0
   [
-     ENSURE {checkNextTokenImage("async")}
-     =>||
-     ACTIVATE_TOKENS ASYNC (<ASYNC>)
+     'async'
      [
         SCAN {!seenStatic} => <STATIC>
      ]
@@ -2151,7 +2147,7 @@ ForStatement :
 // C# 8 Pattern syntax follows.
 
 Pattern :
-   ACTIVATE_TOKENS AND, OR//, NOT
+   ACTIVATE_TOKENS AND, OR, NOT
    (OrPattern)
 ;
 
@@ -2202,8 +2198,7 @@ OrPattern : AndPattern (<OR> AndPattern)* ;
 
 AndPattern : NotPattern (<AND> NotPattern)* ;
 
-NotPattern : //(<NOT>)*
-             ('not')* PrimaryPattern ;
+NotPattern : (<NOT>)* PrimaryPattern ;
 
 PrimaryPattern :
    <NULL> | <TRUE> | <FALSE>

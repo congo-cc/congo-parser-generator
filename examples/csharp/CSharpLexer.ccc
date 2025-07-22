@@ -191,7 +191,7 @@ TOKEN #KeyWord :
 // Now contextual Keywords
    | < AND : "and">
    | < OR  : "or" >
-//   | < NOT : "not">
+   | < NOT : "not">
 // Here are the soft keywords used in queries
    | <EQUALS : "equals">
    | <INTO : "into">
