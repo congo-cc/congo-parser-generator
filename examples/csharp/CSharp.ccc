@@ -10,14 +10,12 @@ FAULT_TOLERANT;
 FAULT_TOLERANT_DEFAULT=false;
 #endif
 
-DEACTIVATE_TOKENS=ADD,ASYNC, NAMEOF,
-                  PARTIAL, VAR, ARGLIST,
-                  GET,SET,INIT,REQUIRED,DYNAMIC,SCOPED,FILE,
+DEACTIVATE_TOKENS=ASYNC, PARTIAL, REQUIRED,FILE,
                   // The following are used in patterns:
                   AND, OR, NOT,
                   // The following are all used in queries
-                  ASCENDING,BY,DESCENDING,EQUALS,FROM,GROUP,JOIN,LET,
-                  INTO, ON, ORDERBY,SELECT,WHERE;
+                  BY,EQUALS, GROUP,LET,
+                  INTO, ON, ORDERBY,SELECT;
 
 INCLUDE "CSharpLexer.ccc"
 
@@ -290,7 +288,7 @@ ClassDeclaration :
        [ <LPAREN> [ArgumentList] <RPAREN>]
        | <OBJECT>
        | <STRING>
-       | SCAN 0 {checkNextTokenImage("dynamic")}# => ACTIVATE_TOKENS DYNAMIC (<DYNAMIC>)
+       | 'dynamic'
      )
      (<COMMA> Name [<LPAREN> ArgumentList <RPAREN>] )*
   ]
@@ -474,23 +472,19 @@ DelegateDeclaration :
 ;
 
 TypeParameterConstraints :
-  ACTIVATE_TOKENS WHERE
   (TypeParameterConstraint)*
 ;
 
 TypeParameterConstraint :
-   <WHERE>
-   DEACTIVATE_TOKENS WHERE
+   'where'
+   <IDENTIFIER>
+   <COLON>
    (
-      <IDENTIFIER>
-      <COLON>
-      (
-         <NEW> <LPAREN> <RPAREN>
-         |
-         (<STRUCT> | <CLASS> [<HOOK>] | Name [<HOOK>]) (SCAN 2 <COMMA> Name[<HOOK>])* [<COMMA> <NEW> <LPAREN> <RPAREN>]
-         |
-         <DEFAULT> // Since C# 9.0 apparently
-      )
+      <NEW> <LPAREN> <RPAREN>
+      |
+      (<STRUCT> | <CLASS> [<HOOK>] | Name [<HOOK>]) (SCAN 2 <COMMA> Name[<HOOK>])* [<COMMA> <NEW> <LPAREN> <RPAREN>]
+      |
+      <DEFAULT> // Since C# 9.0 apparently
    )
 ;
 
@@ -612,9 +606,7 @@ InterfacePropertyDeclaration :
 
 InterfaceAccessor : // TODO, check that there is only one of each
     (AttributeSection)*
-    ENSURE ASSERT {checkNextTokenImage("get")||checkNextTokenImage("set")||checkNextTokenImage("init")}
-    ACTIVATE_TOKENS GET,SET,INIT
-    ( <GET> | <SET> | <INIT> )
+    ( 'get' | 'set' | 'init' )
     =>||
     (
       [<ARROW> Expression ]
@@ -764,7 +756,7 @@ Argument :
 
 AddAccessorDeclaration :
     (AttributeSection)*
-    ACTIVATE_TOKENS ADD (<ADD>)
+    'add'
     =>||
     AccessorBody
 ;
@@ -794,7 +786,7 @@ AccessorDeclaration :
   }
    (AttributeSection)*
    Modifiers
-   ACTIVATE_TOKENS GET,SET,INIT (<GET> | <SET> | <INIT>)
+   ('get'|'set'|'init')
    =>||
    AccessorBody
 ;
@@ -874,7 +866,7 @@ ReturnType :
 ;
 
 FormalParameters :
-   ArgListParameter
+   '__arglist'
    |
    ParameterArray
    |
@@ -882,17 +874,11 @@ FormalParameters :
 ;
 
 VarArgsParameter#void :
-   ArgListParameter
+   '__arglist'
    |
    ParameterArray
 ;
 
-
-ArgListParameter# :
-    ENSURE {checkNextTokenImage("__arglist")}
-    <IDENTIFIER>
-    =>||
-;
 
 FixedParameter :
    (AttributeSection)*
@@ -900,7 +886,7 @@ FixedParameter :
       // REVISIT. Allows repeated modifiers, for example
       <REF>| <OUT> | <THIS>|<READONLY>
     | <IN> // since 7.2
-    | SCAN 0 {checkNextTokenImage("scoped")} => ACTIVATE_TOKENS SCOPED (<SCOPED>)
+    | 'scoped'
    )*
    =>|+1
    Type
@@ -954,9 +940,7 @@ Type :
   (
     DelegateStarType
     |
-    SCAN 0 {checkNextTokenImage("dynamic")}#
-    =>
-    ACTIVATE_TOKENS DYNAMIC (<DYNAMIC>) // Is this right?
+    'dynamic' // Is this right?
     |
     <VOID> <STAR> =>||
     |
@@ -1182,8 +1166,7 @@ ImplicitAnonymousFunctionSignature :
 ;
 
 QueryExpressionLA#scan :
-   <IDENTIFIER>
-   ENSURE {tokenImage(0).equals("from")}
+   'from'
    (
       <IDENTIFIER> <IN> =>||
       |
@@ -1192,8 +1175,8 @@ QueryExpressionLA#scan :
 ;
 
 QueryExpression :
-   ACTIVATE_TOKENS ASCENDING,BY,DESCENDING,EQUALS,FROM,GROUP,JOIN,LET,
-                   INTO, ON, ORDERBY,SELECT,WHERE
+   ACTIVATE_TOKENS BY,EQUALS,GROUP,LET,
+                   INTO, ON, ORDERBY,SELECT//,WHERE
    (
      FromClause
      QueryBody
@@ -1201,14 +1184,13 @@ QueryExpression :
 ;
 
 InQueryExpression#void :
-   DEACTIVATE_TOKENS ASCENDING,BY,DESCENDING,EQUALS,FROM,
-                   GROUP,JOIN,INTO,
-                   ON //, ORDERBY, LET
+   DEACTIVATE_TOKENS BY,EQUALS,
+                   GROUP,INTO, ON
    (Expression)
 ;
 
 FromClause :
-   <FROM>
+   'from'
    (
       <IDENTIFIER> <IN> =>|| InQueryExpression
       |
@@ -1244,10 +1226,10 @@ QueryBodyClause :
 
 LetClause : <LET> <IDENTIFIER> <ASSIGN> InQueryExpression ;
 
-WhereClause : <WHERE> InQueryExpression ;
+WhereClause : 'where' InQueryExpression ;
 
 JoinClause :
-   <JOIN>
+   'join'
    (
       <IDENTIFIER> <IN> =>||
       |
@@ -1268,9 +1250,9 @@ GroupClause : <GROUP> InQueryExpression <BY> InQueryExpression;
 OrderbyClause :
     <ORDERBY>
     InQueryExpression
-    [<ASCENDING>|<DESCENDING>]
+    ['ascending'|'descending']
     (
-       <COMMA> InQueryExpression [<ASCENDING>|<DESCENDING>]
+       <COMMA> InQueryExpression ['ascending'|'descending']
     )*
 ;
 
@@ -1632,7 +1614,7 @@ TupleElement :
 ;
 
 PrimitiveTypeAccess :
-//   (PrimitiveType | SCAN {checkNextTokenImage("dynamic")}# => ACTIVATE_TOKENS DYNAMIC (<DYNAMIC>))
+//   (PrimitiveType | 'dynamic')
    PrimitiveType
    <DOT> =>||
    <IDENTIFIER>
@@ -1654,8 +1636,7 @@ BaseAccess :
 ;
 
 NameofExpression :
-   ENSURE {checkNextTokenImage("nameof")}
-   ACTIVATE_TOKENS NAMEOF (<NAMEOF>)
+   'nameof'
    <LPAREN> =>||
    NamedEntity
    <RPAREN>
@@ -1891,15 +1872,13 @@ EmbeddedStatement :
 ;
 
 LocalVariableDeclarationLA#scan :
-   [
-      <USING>
-   ]
+   [ <USING> ]
    ENSURE {!checkNextTokenImage("await")} // Is there any possibility that a local type is named "await"?
    [SCAN 0 {checkNextTokenImage("scoped")} => <IDENTIFIER>]
    [<REF>] [<READONLY>]
    (
       (
-         <IDENTIFIER> ENSURE {tokenImage(0).equals("var")} =>||
+         'var'
          (<IDENTIFIER>|Tuple) <ASSIGN>
       )
       |
@@ -1920,7 +1899,7 @@ LocalVariableDeclaration :
 ;
 
 NoVarDeclaration :
-   [ ENSURE {checkNextTokenImage("scoped")} ACTIVATE_TOKENS SCOPED (<SCOPED>) =>||]
+   [ 'scoped' ]
    [
       <REF> // since C# 7.0
    ]
@@ -1935,14 +1914,14 @@ NoVarDeclaration :
 ;
 
 VarDeclaration :
-   [ ENSURE {checkNextTokenImage("scoped")} ACTIVATE_TOKENS SCOPED (<SCOPED>) =>||]
+   [ 'scoped' ]
    [
       <REF> // since C# 7.0
    ]
    [
       <READONLY> //REVISIT
    ]
-   ACTIVATE_TOKENS VAR (<VAR>)
+   'var'
    =>||
    (<IDENTIFIER>|Tuple) <ASSIGN> (AttributeSection)* [<REF>] LocalVariableInitializer
 ;
@@ -2018,7 +1997,7 @@ ForeachStatement :
     <LPAREN>
     [<REF>]
     (
-       <VAR>
+       'var'
        |
        Tuple {iteratingOverTupleType = true;}
        |
@@ -2279,18 +2258,14 @@ ParenthesizedPattern : <LPAREN> Pattern <RPAREN> ;
 DeclarationPattern :
     NonNullableType
     ENSURE {checkNextTokenType(TokenType.IDENTIFIER)}
-    ACTIVATE_TOKENS FROM
-    (
-       ENSURE ~(FromClause)
-       ENSURE ~(WhenClause)
-    )
+    ENSURE ~(FromClause)
+    ENSURE ~(WhenClause)
     =>|+1
     VariableDesignation
 ;
 
 VarPattern :
-    SCAN 0 {checkNextTokenImage("var")}# =>
-    ACTIVATE_TOKENS VAR (<VAR>)
+    'var'
     (<IDENTIFIER> | Tuple)
 ;
 

@@ -241,9 +241,7 @@ TypeDeclarationLA#scan :
      | <INTERFACE>
      | <ENUM>
      | <AT> <INTERFACE>
-     | <IDENTIFIER>
-       ENSURE {currentLookaheadToken.toString().equals("record")}
-       <IDENTIFIER>
+     | 'record' <IDENTIFIER>
    )
 ;
 
