@@ -995,8 +995,7 @@ Block :
 ;
 
 Expression#interface :
-   SCAN QueryExpressionLA
-   =>QueryExpression
+   QueryExpression
    |
    LambdaExpression
    |
@@ -1165,20 +1164,20 @@ ImplicitAnonymousFunctionSignature :
    <LPAREN> [<IDENTIFIER> (<COMMA> <IDENTIFIER>)*] <RPAREN>
 ;
 
-QueryExpressionLA#scan :
-   'from'
-   (
-      <IDENTIFIER> <IN> =>||
-      |
-      Type <IDENTIFIER> <IN>
-   )
-;
-
 QueryExpression :
+   ENSURE (
+      'from'
+      (
+         ENSURE ~(<IDENTIFIER><IN>)
+         Type <IDENTIFIER> <IN>
+         |
+         <IDENTIFIER> <IN>
+      )
+   )
+   FromClause
    ACTIVATE_TOKENS BY,EQUALS,GROUP,LET,
-                   INTO, ON, ORDERBY,SELECT//,WHERE
+                   INTO, ON, ORDERBY,SELECT
    (
-     FromClause
      QueryBody
    )
 ;

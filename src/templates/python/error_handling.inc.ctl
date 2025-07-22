@@ -63,7 +63,7 @@
         if not self.type_matches(expected_type,next_token) :
           #if lexerData.hasContextualTokens
                if expected_type != next_token.type :
-                    next_token = next_token.replace_type(expectedType)
+                    next_token = next_token.replace_type(expected_type)
                else: [#rt]
           #endif
                  next_token = self.handle_unexpected_token_type(expected_type, next_token[#if settings.faultTolerant], tolerant, follow_set[/#if])

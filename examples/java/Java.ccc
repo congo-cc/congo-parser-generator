@@ -996,8 +996,6 @@ INJECT ForStatement : implements Statement
 INJECT IfStatement : implements Statement
 INJECT LabeledStatement : implements Statement
 INJECT LocalVariableDeclaration : implements Statement
-INJECT VarDeclaration : extends LocalVariableDeclaration
-INJECT NoVarDeclaration : extends LocalVariableDeclaration
 INJECT ReturnStatement : implements Statement
 INJECT SwitchStatement : implements Statement
 INJECT SynchronizedStatement : implements Statement
@@ -1029,39 +1027,24 @@ BlockStatement#void :
  )
 ;
 
-LocalVariableDeclaration#abstract :
-   SCAN LocalVariableDeclarationLA
+LocalVariableDeclaration :
+   SCAN
+   (
+    Modifiers
+    (
+      'var' <IDENTIFIER>
+      |
+      Type (<IDENTIFIER>|<UNDERSCORE>)
+    )
+   )
    =>
-   (
-     NoVarDeclaration
-     |
-     VarDeclaration
-   )
-;
-
-LocalVariableDeclarationLA#scan :
-   Modifiers
-   (
-     'var'
-     |
-     Type
-   )
-   (<IDENTIFIER>|<UNDERSCORE>)
-;
-
-NoVarDeclaration :
    {permissibleModifiers = EnumSet.of(FINAL);}
    Modifiers
-   ENSURE {!checkNextTokenImage("var")}
-   =>||
-   Type VariableDeclarator ( <COMMA> VariableDeclarator )*
-;
-
-VarDeclaration :
-  {permissibleModifiers = EnumSet.of(FINAL);}
-  Modifiers
-  'var'
-  VariableDeclarator
+   (
+      'var' VariableDeclarator
+      |
+      Type VariableDeclarator ( <COMMA> VariableDeclarator )*
+   )
 ;
 
 EmptyStatement# : <SEMICOLON> ;
@@ -1148,16 +1131,13 @@ RecordPattern :
 ;
 
 
-TypePattern#LocalVariableDeclaration :
-  SCAN LocalVariableDeclarationLA =>
+TypePattern :
+  {permissibleModifiers = EnumSet.of(FINAL);}#
+  Modifiers
   (
-    {permissibleModifiers = EnumSet.of(FINAL);}#
-    Modifiers
-    // ReferenceType
-    ('var'|Type)
-    (<IDENTIFIER>|<UNDERSCORE>)
+    'var' <IDENTIFIER>
     |
-    VarDeclaration
+    Type (<IDENTIFIER>|<UNDERSCORE>)
   )
 ;
 
