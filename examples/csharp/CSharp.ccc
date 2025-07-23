@@ -1,3 +1,14 @@
+// This is the Java grammar that is used in the CongoCC
+// tool itself but it can be used on its own, and you are free to use it
+// in your own projects. It supports the stable feature set of Dotnet 9,
+// i.e. C# version 13. There are a couple of C# 14 features that are currently
+// unsupported, such as extension members. I anticipate adding full support
+// for C# 14 once Dotnet 10 has a final release.
+// This grammar serves as a very good showcase for some of the more
+// advanced features of CongoCC, without which, it could well be
+// impossible to fully express the current C# language --
+// at least in a clean, elegant way.
+
 PARSER_PACKAGE=org.parsers.csharp;
 
 BASE_NODE_CLASS=BaseNode;
@@ -16,7 +27,7 @@ DEACTIVATE_TOKENS= // The following tokens are turned on
                   // The following are the keywords that are
                   // activated when we enter a QueryExpression
                   ASCENDING, DESCENDING, BY, EQUALS, JOIN, GROUP,
-                  LET, INTO, ON, ORDERBY,SELECT;
+                  LET, INTO, ON, ORDERBY,SELECT, FROM, WHERE;
 
 INCLUDE "CSharpLexer.ccc"
 
@@ -181,16 +192,21 @@ QualifiedAliasMember :
 
 TypeArgumentList :
    (AttributeSection)*
-   <LT> =>||
-   [
-      (AttributeSection)*
-      (<VOID> [<STAR>] | [<IN>|<OUT>|<REF>] Type)
-      (<COMMA> (AttributeSection)* (<VOID> [<STAR>] | [<IN>|<OUT>|<REF>] Type))*
-   ]
+   <LT>
+   =>||
+   TypeArgument ( <COMMA> TypeArgument)*
    DEACTIVATE_TOKENS RIGHT_SHIFT, UNSIGNED_RIGHT_SHIFT, RIGHT_SHIFT_ASSIGN, UNSIGNED_RIGHT_SHIFT_ASSIGN
    (<GT>)
 ;
 
+TypeArgument :
+   (AttributeSection)*
+   [
+      <VOID> [<STAR>]
+      |
+      [<IN>|<OUT>|<REF>] Type
+   ]
+;
 
 TypeDeclaration#interface :
   SCAN TypeDeclarationLA =>
@@ -464,7 +480,8 @@ TypeParameterConstraints :
 ;
 
 TypeParameterConstraint :
-   'where'
+   ENSURE {checkNextTokenImage("where")}
+   ACTIVATE_TOKENS WHERE (<WHERE>)
    <IDENTIFIER>
    <COLON>
    (
@@ -1151,8 +1168,9 @@ ImplicitAnonymousFunctionSignature :
 ;
 
 QueryExpression :
+   ENSURE {checkNextTokenImage("from")}
    ENSURE (
-      'from'
+      (<IDENTIFIER>|<FROM>)
       (
          ENSURE ~(<IDENTIFIER><IN>)
          Type <IDENTIFIER> <IN>
@@ -1160,16 +1178,16 @@ QueryExpression :
          <IDENTIFIER> <IN>
       )
    )
-   FromClause
    ACTIVATE_TOKENS ASCENDING, DESCENDING, BY, EQUALS,GROUP,
-                   LET, INTO, JOIN, ON, ORDERBY,SELECT
+                   LET, INTO, JOIN, ON, ORDERBY,SELECT,WHERE,FROM
    (
+     FromClause
      QueryBody
    )
 ;
 
 FromClause :
-   'from'
+   <FROM>
    (
       <IDENTIFIER> <IN> =>|| Expression
       |
@@ -1205,7 +1223,7 @@ QueryBodyClause :
 
 LetClause : <LET> <IDENTIFIER> <ASSIGN> Expression ;
 
-WhereClause : 'where' Expression ;
+WhereClause : <WHERE> Expression ;
 
 JoinClause :
    <JOIN>
@@ -2084,8 +2102,12 @@ StatementExpression#interface :
    {Expression lhs = (Expression) peekNode();}
    (
       NullConditionalOperations #NullConditionalExpression(2)
+      [
+         (AssignmentOperator [<REF>] Expression) #AssignmentExpression(+1)
+         ASSERT {lhs.isAssignableTo():"Expression " + lhs + " is not assignable"}
+      ]
       |
-      SCAN 1 {lhs.isAssignableTo()} =>
+      SCAN {lhs.isAssignableTo()} =>
       (AssignmentOperator [<REF>] Expression) #AssignmentExpression(+1)
       |
       ASSERT {lhs instanceof StatementExpression} : "Not a statement. "
@@ -2186,7 +2208,7 @@ INJECT PARSER_CLASS :
 }
 
 InListPattern :
-  SCAN 1 {!seenRange} =>
+  SCAN {!seenRange} =>
   (
     <RANGE> {seenRange = true;} ENSURE ~(Pattern) =>||
     |
