@@ -3,7 +3,6 @@
     # the root node of the AST. It only makes sense to call
     # this after a successful parse.
     #
-    <-
     @property
     def root_node(self):
         return self.current_node_scope.root_node

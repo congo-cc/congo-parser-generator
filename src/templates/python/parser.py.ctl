@@ -338,8 +338,11 @@ ${globals::translateParserInjections(true)}
         self._next_token_type = None
         return result
 
+# explicitdedent:on
+    <-
     def get_next_token(self):
         return self.get_token(1)
+    <-
 
     # If we are in a lookahead, it looks ahead/behind from the current lookahead token
     # Otherwise, it is the last consumed token. If you pass in a negative number, it goes
@@ -348,48 +351,68 @@ ${globals::translateParserInjections(true)}
         t = self.current_lookahead_token or self.last_consumed_token
         if index == 0:
             return t
+        <-
         elif index > 0:
             for i in range(index):
                 t = self.next_token(t)
+            <-
+        <-
         else:
             for i in range(-index):
                 t = t.previous
                 if t is None:
                     break
+                <-
+            <-
+        <-
         return t
+    <-
 
     def token_image(self, n):
         return self.get_token(n).image
+    <-
 
     def get_token_image(self, n):
         return self.get_token(n).image
+    <-
 
     def get_token_type(self, n):
         return self.get_token(n).type
+    <-
 
     def check_next_token_image(self, img, *additional_images):
         next_image = self.token_image(1)
         if next_image == img:
             return True
+        <-
         for ai in additional_images:
             if next_image == ai:
                 return True
+            <-
+        <-
         return False
+    <-
 
     def check_next_token_type(self, tt, *additional_types):
         next_type = self.get_token(1).type
         if next_type == tt:
             return True
+        <-
         for at in additional_types:
             if next_type == at:
                 return True
+            <-
+        <-
         return False
+    <-
 
     @property
     def next_token_type(self):
         if self._next_token_type is None:
             self._next_token_type = self.next_token(self.last_consumed_token).type
+        <-
         return self._next_token_type
+    <-
 
     def activate_token_types(self, tt, *types):
         result = False
@@ -397,13 +420,17 @@ ${globals::translateParserInjections(true)}
         if tt not in att:
             result = True
             att.add(tt)
+        <-
         for tt in types:
             if tt not in att:
                 result = True
                 att.add(tt)
+            <-
+        <-
         self.token_source.reset(self.get_token(0))
         self._next_token_type = None
         return result
+    <-
 
     def deactivate_token_types(self, tt, *types):
         result = False
@@ -411,66 +438,93 @@ ${globals::translateParserInjections(true)}
         if tt in att:
             result = True
             att.remove(tt)
+        <-
         for tt in types:
             if tt in att:
                 result = True
                 att.remove(tt)
+            <-
+        <-
         self.token_source.reset(self.get_token(0))
         self._next_token_type = None
         return result
+    <-
 
     def uncache_tokens(self):
         self.token_source.reset(self.get_token(0))
+    <-
 
     def fail(self, message):
         if self.current_lookahead_token is None:
             raise ParseException(self, message=message)
+        <-
         self.hit_failure = True
+    <-
 
     def is_in_production(self, name, *prods):
         if self.currently_parsed_production is not None:
             if self.currently_parsed_production == name:
                 return True
+            <-
             for prod in prods:
                 if self.currently_parsed_production == prod:
                     return True
+                <-
+            <-
+        <-
         if self.current_lookahead_production is not None:
             if self.current_lookahead_production == name:
                 return True
+            <-
             for prod in prods:
                 if self.current_lookahead_production == prod:
                     return True
+                <-
+            <-
+        <-
         it = self.stack_iterator_backward()
         while it.has_next:
             ntc = it.next
             npn = ntc.production_name
             if npn == name:
                 return True
+            <-
             for pn in prods:
                 if npn == pn:
                     return True
+                <-
+            <-
+        <-
         return False
+    <-
+# explicitdedent:restore
 
-[#import "parser_productions.inc.ctl" as ParserCode]
+#import "parser_productions.inc.ctl" as ParserCode
 [@ParserCode.Productions /]
-[#import "lookahead_routines.inc.ctl" as LookaheadCode]
+#import "lookahead_routines.inc.ctl" as LookaheadCode
 [@LookaheadCode.Generate/]
 
-[#embed "error_handling.inc.ctl"]
+# explicitdedent:on
 
-[#if settings.treeBuildingEnabled]
+#embed "error_handling.inc.ctl"
+
+#if settings.treeBuildingEnabled
 
     @property
     def is_tree_building_enabled(self):
         return self.build_tree
+    <-
 
-   [#embed "tree_building_code.inc.ctl"]
-[#else]
+   #embed "tree_building_code.inc.ctl"
+
+#else
     @property
     def is_tree_building_enabled(self):
         return False
+    <-
+#endif
 
-[/#if]
+# explicitdedent:restore
 
 #if settings.treeBuildingEnabled
 #
@@ -483,7 +537,7 @@ ${globals::translateParserInjections(true)}
 class ${node}(BaseNode): pass
     #else
 ${globals::translateInjectedClass(node)}
-    /#if
-  /#list
-/#if
+    #endif
+  #endlist
+#endif
 ${globals::translateParserInjections(false)}
