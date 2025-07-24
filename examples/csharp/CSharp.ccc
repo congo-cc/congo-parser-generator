@@ -930,9 +930,9 @@ NonArrayType#void : Type ;
 
 ArrayType#void : Type ;
 
-NonNullableType : Type;
+NonNullableType#void : Type;
 
-NonTupleType : Type;
+NonTupleType#void : Type;
 
 DelegateStarType :
    <DELEGATE><STAR> =>||

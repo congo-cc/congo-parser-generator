@@ -628,8 +628,7 @@ ExceptionType#ObjectType :
 
 INJECT Expression :
 {
-  default boolean isAssignableTo() {return false;}
-  default String getAsString() {return toString();}
+  default boolean canBeAssignedTo() {return false;}
 }
 
 INJECT PrimaryExpression : extends Expression
@@ -668,15 +667,15 @@ INJECT LiteralExpression : implements PrimaryExpression
 INJECT DotNew : extends AllocationExpression
 
 INJECT Name : implements PrimaryExpression {
-  public boolean isAssignableTo() {return true;}
+  public boolean canBeAssignedTo() {return true;}
 }
 
 INJECT DotName : implements PrimaryExpression {
-  public boolean isAssignableTo() {return true;}
+  public boolean canBeAssignedTo() {return true;}
 }
 
 INJECT ArrayAccess : implements PrimaryExpression {
-  public boolean isAssignableTo() {return true;}
+  public boolean canBeAssignedTo() {return true;}
 }
 
 #Expression#interface :
@@ -686,7 +685,7 @@ INJECT ArrayAccess : implements PrimaryExpression {
       |
       {Expression lhs = (Expression) peekNode();}
       (AssignmentOperator Expression) #AssignmentExpression(+1)
-      ASSERT {lhs.isAssignableTo(), lhs}
+      ASSERT {lhs.canBeAssignedTo(), lhs}
       : "The expression " + lhs + " cannot be assigned to."
     ]
     {return (Expression) peekNode();}
@@ -782,13 +781,13 @@ UnaryExpression :
 
 PreIncrementExpression :
   <INCR> UnaryExpression
-  ASSERT {((Expression)peekNode()).isAssignableTo(), peekNode()}
+  ASSERT {((Expression)peekNode()).canBeAssignedTo(), peekNode()}
   : "Expression " + peekNode() + " is not an assignable variable."
 ;
 
 PreDecrementExpression :
   <DECR> UnaryExpression
-  ASSERT {((Expression)peekNode()).isAssignableTo(), peekNode()}
+  ASSERT {((Expression)peekNode()).canBeAssignedTo(), peekNode()}
   : "Expression " + peekNode() + " is not an assignable variable."
 ;
 
@@ -811,7 +810,7 @@ PostfixExpression :
   {Expression lhs = (Expression) peekNode();}
   [
     (<INCR> | <DECR>)
-    ASSERT {lhs.isAssignableTo(), lhs} : "Expression " + lhs + " cannot be assigned to."
+    ASSERT {lhs.canBeAssignedTo(), lhs} : "Expression " + lhs + " cannot be assigned to."
   ]
 ;
 
@@ -879,7 +878,7 @@ Parentheses :
 
 INJECT Parentheses : implements PrimaryExpression {
   @Property Expression nestedExpression; // TODO: remove this @Property after jar refresh
-  public boolean isAssignableTo() {return nestedExpression.isAssignableTo();}
+  public boolean canBeAssignedTo() {return nestedExpression.canBeAssignedTo();}
 }
 
 ClassLiteral : (<VOID> | Type) <DOT> <CLASS> =>|| ;
@@ -1063,7 +1062,7 @@ StatementExpression# :
           |
           AssignmentOperator Expression #AssignmentExpression(3)
       )
-      ASSERT {lhs.isAssignableTo(),lhs}
+      ASSERT {lhs.canBeAssignedTo(),lhs}
 #if !__python__
      // for some reason, this just doesn't work but
      // I don't understand why not. Shouldn't it just call the appropriate

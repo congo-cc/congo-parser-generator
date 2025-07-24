@@ -10,7 +10,6 @@
 
 INJECT Expression :
    import org.congocc.templates.core.Environment;
-   import org.congocc.templates.core.variables.InvalidReferenceException;
    import org.congocc.templates.TemplateException;
    import org.congocc.templates.TemplateSequence;
    import java.lang.reflect.Array;
@@ -62,7 +61,10 @@ INJECT Expression :
         if (referent instanceof Iterable<?> it) {
             return it.iterator().hasNext();
         }
-        return referent.toString().length() > 0;
+        if (referent instanceof CharSequence cs) {
+            return cs.length() > 0;
+        }
+        return true;
     }
 }
 
