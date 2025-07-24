@@ -11,6 +11,7 @@ from .utils import (EMPTY_SET, ListIterator, StringBuilder, _Set, _List,
 
 ${globals::translateParserImports()}
 
+# explicitdedent:on
 logger = logging.getLogger(__name__)
 
 #
@@ -27,35 +28,45 @@ class ParseException(Exception):
             token = parser.last_consumed_token
             if token and token.next:
                 token = token.next
+            <-
+        <-
         self.token = token
         self.expected = expected
         if call_stack is None:
             call_stack = parser.parsing_stack
+        <-
         self.call_stack = call_stack[:]
+    <-
 
     def __repr__(self):
         if hasattr(self, 'message'):
             return self.message
+        <-
         parts = []
         if self.token:
             parts.append('unexpected %s (%r) at %s (%d, %d)' %
                          (self.token.type.name, self.token.image,
                           self.token.input_source,
                           self.token.begin_line, self.token.begin_column))
+        <-
         if self.expected:
             parts.append(', expected %s' % ('' if len(self.expected) == 1 else 'one of '))
             ex = [e.name for e in self.expected]
             parts.append(', '.join(ex))
+        <-
         return ''.join(parts)
+    <-
 
     __str__ = __repr__
+<-
 
 def is_lexer(stream_or_lexer):
     return hasattr(stream_or_lexer, 'input_source') and hasattr(stream_or_lexer, 'get_next_token')
+<-
 
 UNLIMITED = (1 << 31) - 1
 
-[#if settings.treeBuildingEnabled]
+#if settings.treeBuildingEnabled
 class NodeScope(list):
 
     __slots__ = ('parent_scope', 'parser')
@@ -64,36 +75,47 @@ class NodeScope(list):
         self.parent_scope = parser.current_node_scope
         self.parser = parser
         parser.current_node_scope = self
+    <-
 
     @property
     def is_root_Scope(self):
         return self.parent_scope is None
+    <-
 
     @property
     def root_node(self):
         ns = self
         while ns.parent_scope:
             ns = ns.parent_scope
+        <-
         return ns[0] if len(ns) else None
+    <-
 
     def peek(self):
         if len(self):
             return self[-1]
+        <-
         ps = self.parent_scope
         return None if not ps else ps.peek()
+    <-
 
     def pop(self):
         return self.parent_scope.pop() if not len(self) else super().pop()
+    <-
 
     def poke(self, n):
         if len(self) == 0:
             self.parent_scope.poke(n)
+        <-
         else:
             self[-1] = n
+        <-
+    <-
 
     def close(self):
         self.parent_scope.extend(self)
         self.parser.current_node_scope = self.parent_scope
+    <-
 
     @property
     def nesting_level(self):
@@ -102,12 +124,15 @@ class NodeScope(list):
         while parent.parent_scope is not None:
             result += 1
             parent = parent.parent_scope
+        <-
         return result
+    <-
 
     def clone(self):
         result = copy.deepcopy(self)
         return result
-
+    <-
+<-
 [/#if]
 
 #
@@ -137,9 +162,12 @@ class NonTerminalCall:
 #if settings.faultTolerant
         self.follow_set = follow_set
 /#if
+    <-
 
     def create_stack_trace_element(self):
         return (type(self.parser).__name__, self.production_name, self.source_file, self.line)
+    <-
+<-
 
 class ParseState:
 
@@ -156,9 +184,12 @@ class ParseState:
 [#if settings.treeBuildingEnabled]
         self.node_scope = parser.current_node_scope.clone()
 [/#if]
+   <-
+<-
 
 class InvalidNode(BaseNode):
     pass
+<-
 
 class Parser:
 
@@ -199,6 +230,7 @@ class Parser:
 [/#list]
 [/#if]
     )
+# explicitdedent:restore
 
     def __init__(self, input_source_or_lexer):
 ${globals::translateParserInjections(true)}
