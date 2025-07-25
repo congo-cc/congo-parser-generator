@@ -1072,13 +1072,13 @@ StatementExpression# :
 #endif
       |
       ASSERT {lhs instanceof MethodCall
-               || lhs instanceof AllocationExpression
+               || lhs instanceof AllocationExpression && getTokenType(0) != RBRACKET
                || lhs instanceof ExplicitConstructorInvocation,
                lhs}
 #if !__python__
       // Same issue as above basically. Doesn't work in Python.
       : "Expression at " + lhs.getLocation() + " is not a valid statement.\n"
-        + "Expecting a method call, an assignment or an allocation expression (new...)"
+        + "Expecting a method call, an assignment or a expression that calls an object constructor (i.e. new Foobar(...))"
 #endif
   )
 ;
