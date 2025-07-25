@@ -629,6 +629,7 @@ ExceptionType#ObjectType :
 INJECT Expression :
 {
   default boolean canBeAssignedTo() {return false;}
+  default boolean canBeThrown() {return canBeAssignedTo() || this instanceof ObjectInstantiation;}
 }
 
 INJECT PrimaryExpression : extends Expression
@@ -916,15 +917,32 @@ InvocationArguments :
     <RPAREN>
 ;
 
-AllocationExpression :
-  <NEW> PrimitiveType =>|| ArrayDimsAndInits
+INJECT PrimitiveArrayInitialization : extends AllocationExpression
+INJECT ObjectArrayInitialization : extends AllocationExpression
+INJECT ObjectInstantiation : extends AllocationExpression
+
+AllocationExpression#abstract :
+  PrimitiveArrayInitialization
   |
-  <NEW> [TypeArguments] ObjectType [ PossiblyEmptyTypeArguments ]
-    (
-      ArrayDimsAndInits
-      |
-      InvocationArguments [ ClassOrInterfaceBody ]
-    )
+  ObjectArrayInitialization
+  |
+  ObjectInstantiation
+;
+
+PrimitiveArrayInitialization :
+   <NEW> PrimitiveType =>|| ArrayDimsAndInits
+;
+
+ObjectArrayInitialization :
+   <NEW> [TypeArguments] ObjectType [PossiblyEmptyTypeArguments]
+   =>|+1
+   ArrayDimsAndInits
+;
+
+ObjectInstantiation :
+   <NEW> [TypeArguments] ObjectType [PossiblyEmptyTypeArguments]
+   =>|+1
+   InvocationArguments [ClassOrInterfaceBody]
 ;
 
 ArrayDimsAndInits :
@@ -1072,13 +1090,13 @@ StatementExpression# :
 #endif
       |
       ASSERT {lhs instanceof MethodCall
-               || lhs instanceof AllocationExpression && getTokenType(0) != RBRACKET
+               || lhs instanceof ObjectInstantiation
                || lhs instanceof ExplicitConstructorInvocation,
                lhs}
 #if !__python__
       // Same issue as above basically. Doesn't work in Python.
       : "Expression at " + lhs.getLocation() + " is not a valid statement.\n"
-        + "Expecting a method call, an assignment or a expression that calls an object constructor (i.e. new Foobar(...))"
+        + "Expecting a method call, an assignment or a expression that calls an object constructor (i.e. new Foobar(...) or an explicit constructor invocation)"
 #endif
   )
 ;
@@ -1094,7 +1112,7 @@ StatementExpression#void :
         || exp instanceof PreDecrementExpression
         || exp instanceof PreIncrementExpression
         || exp instanceof MethodCall
-        || exp instanceof AllocationExpression
+        || exp instanceof ObjectInstantiation
         || exp instanceof ExplicitConstructorInvocation,
         exp:
         "Expression " + exp + " is not a valid statement.\n"

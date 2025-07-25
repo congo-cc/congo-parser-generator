@@ -48,6 +48,9 @@ public class CSharpTranslator extends Translator {
         if (ident.equals("toString")) {
             result = "ToString";
         }
+        else if (ident.equals("nodeArity")) {
+            result = "NodeArity";
+        }
         else if (ident.equals("currentNodeScope")) {
             result = "CurrentNodeScope";
         }
