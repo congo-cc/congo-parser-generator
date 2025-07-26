@@ -389,7 +389,7 @@ CompactConstructorDeclaration :
   <RBRACE>
 ;
 
-INJECT CompactConstructorDeclaration : extends ConstructorDeclaration
+INJECT CompactConstructorDeclarationn : extends ConstructorDeclaration
 
 EnumConstant# :
   (Annotation)* <IDENTIFIER> [ InvocationArguments ] [ ClassOrInterfaceBody ]
@@ -629,16 +629,19 @@ ExceptionType#ObjectType :
 INJECT Expression :
 {
   default boolean canBeAssignedTo() {return false;}
-  default boolean canBeThrown() {return canBeAssignedTo() || this instanceof ObjectInstantiation;}
+  default boolean canBeThrown()
+#if !__csharp__
+  {return false;}
+#else
+// I honestly don't know why this is necessary for C#.
+  {return this instanceof ObjectInstantiation || this instanceof ObjectCastExpression;}
+#endif
 }
 
 INJECT PrimaryExpression : extends Expression
 INJECT AdditiveExpression : implements Expression
 INJECT ArrayInitializer : implements Expression
 INJECT AndExpression : implements Expression
-INJECT AssignmentExpression : implements Expression
-INJECT CastExpression : implements Expression
-INJECT ObjectCastExpression : extends CastExpression
 INJECT ConditionalAndExpression : implements Expression
 INJECT ConditionalOrExpression : implements Expression
 INJECT EqualityExpression : implements Expression
@@ -650,7 +653,6 @@ INJECT ClassLiteral : implements PrimaryExpression
 INJECT DotThis : implements PrimaryExpression
 INJECT DotSuper : implements PrimaryExpression
 INJECT LambdaExpression : implements Expression
-INJECT MethodCall : implements PrimaryExpression
 INJECT MethodReference : implements PrimaryExpression
 INJECT MultiplicativeExpression : implements Expression
 INJECT PostfixExpression : implements Expression
@@ -660,23 +662,42 @@ INJECT RelationalExpression : implements Expression
 INJECT ShiftExpression : implements Expression
 INJECT StatementExpression : implements Expression
 INJECT SwitchExpression : implements Expression
-INJECT TernaryExpression : implements Expression
 INJECT UnaryExpression : implements Expression
 INJECT UnaryExpressionNotPlusMinus : implements Expression
 INJECT AllocationExpression : implements PrimaryExpression
 INJECT LiteralExpression : implements PrimaryExpression
-INJECT DotNew : extends AllocationExpression
+
+INJECT DotNew : extends AllocationExpression {
+  public boolean canBeThrown() {return true;}
+}
+
+INJECT AssignmentExpression : implements Expression {
+  public boolean canBeThrown() {
+    return ((Expression) getLastChild()).canBeThrown();
+  }
+}
 
 INJECT Name : implements PrimaryExpression {
   public boolean canBeAssignedTo() {return true;}
+  public boolean canBeThrown() {return true;}
 }
 
 INJECT DotName : implements PrimaryExpression {
   public boolean canBeAssignedTo() {return true;}
+  public boolean canBeThrown() {return true;}
 }
 
 INJECT ArrayAccess : implements PrimaryExpression {
   public boolean canBeAssignedTo() {return true;}
+  public boolean canBeThrown() {return true;}
+}
+
+INJECT MethodCall : implements PrimaryExpression {
+  public boolean canBeThrown() {return true;}
+}
+
+INJECT TernaryExpression : implements Expression {
+  public boolean canBeThrown() {return true;}
 }
 
 #Expression#interface :
@@ -819,11 +840,30 @@ SwitchExpression# :
    SwitchStatement
 ;
 
-PrimitiveCastExpression#CastExpression :
+INJECT CastExpression : implements Expression
+
+INJECT PrimitiveCastExpression : extends CastExpression
+
+INJECT ObjectCastExpression :
+extends CastExpression
+{
+  public boolean canBeThrown() {
+      return true;
+  }
+}
+
+CastExpression :
+   PrimitiveCastExpression
+   |
+   ObjectCastExpression
+;
+
+PrimitiveCastExpression :
    <LPAREN> PrimitiveType <RPAREN> =>|| UnaryExpression
 ;
 
-ObjectCastExpression# :
+
+ObjectCastExpression :
    <LPAREN> ReferenceType (<BIT_AND> ObjectType)* <RPAREN> =>|+1 UnaryExpressionNotPlusMinus
 ;
 
@@ -846,9 +886,8 @@ PrimaryExpression#interface :
   Name
  )
  (
-   {Expression lhs = (Expression) peekNode();}
-   ASSERT {!(lhs instanceof MethodReference)} : "A method reference cannot be derereferenced.":
-   ASSERT {!(lhs instanceof NODE_PACKAGE.NumericalLiteral)} : "A numerical literal cannot be derereferenced.":
+   ASSERT {!(peekNode() instanceof MethodReference)} : "A method reference cannot be derereferenced.":
+   ASSERT {!(getToken(0) instanceof NODE_PACKAGE.NumericalLiteral)} : "A numerical literal cannot be derereferenced.":
    (
     (<DOT> <THIS> =>||) #DotThis(+1)
     |
@@ -880,6 +919,7 @@ Parentheses :
 INJECT Parentheses : implements PrimaryExpression {
   @Property Expression nestedExpression; // TODO: remove this @Property after jar refresh
   public boolean canBeAssignedTo() {return nestedExpression.canBeAssignedTo();}
+  public boolean canBeThrown() {return nestedExpression.canBeThrown();}
 }
 
 ClassLiteral : (<VOID> | Type) <DOT> <CLASS> =>|| ;
@@ -919,7 +959,11 @@ InvocationArguments :
 
 INJECT PrimitiveArrayInitialization : extends AllocationExpression
 INJECT ObjectArrayInitialization : extends AllocationExpression
+
 INJECT ObjectInstantiation : extends AllocationExpression
+{
+  public boolean canBeThrown() {return true;}
+}
 
 AllocationExpression#abstract :
   PrimitiveArrayInitialization
@@ -1096,7 +1140,7 @@ StatementExpression# :
 #if !__python__
       // Same issue as above basically. Doesn't work in Python.
       : "Expression at " + lhs.getLocation() + " is not a valid statement.\n"
-        + "Expecting a method call, an assignment or a expression that calls an object constructor (i.e. new Foobar(...) or an explicit constructor invocation)"
+        + "Expecting a method call, an assignment or an expression that calls an object constructor (i.e. new Foobar(...) or an explicit constructor invocation)"
 #endif
   )
 ;
@@ -1295,7 +1339,17 @@ ContinueStatement : <CONTINUE> [ <IDENTIFIER> ] <SEMICOLON> ;
 
 ReturnStatement : <RETURN> (Expression)? <SEMICOLON> ;
 
-ThrowStatement : <THROW> Expression <SEMICOLON> ;
+ThrowStatement :
+    <THROW>
+    {Expression exp;}
+    exp=Expression
+    ASSERT {
+      exp.canBeThrown(),
+      exp:
+      "Expression " + exp + " is not throwable."
+      }
+    <SEMICOLON>
+;
 
 SynchronizedStatement : <SYNCHRONIZED> <LPAREN> Expression <RPAREN> Block ;
 
@@ -1310,8 +1364,11 @@ TryStatement :
   Block
   (CatchBlock {seenCatch=true;})*
   [FinallyBlock{seenFinally=true;}]
-  ASSERT {seenCatch || seenFinally || isTryWithResources}
-  : "A try-catch must have at least one catch or finally block if it is not a try-with-resources."
+  ASSERT {
+    seenCatch || seenFinally || isTryWithResources,
+    currentNodeScope.get(0):
+    "A try-catch must have at least one catch or finally block if it is not a try-with-resources."
+  }
 ;
 
 ResourcesInTryBlock :

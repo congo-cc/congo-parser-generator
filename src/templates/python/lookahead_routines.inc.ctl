@@ -1,8 +1,8 @@
 [#-- This template generates the various lookahead/predicate routines --]
 
-[#import "common_utils.inc.ctl" as CU]
+#import "common_utils.inc.ctl" as CU
 
-[#var UNLIMITED = 2147483647]
+#var UNLIMITED = 2147483647
 [#-- var MULTIPLE_LEXICAL_STATE_HANDLING = lexerData.numLexicalStates > 1 --]
 [#var MULTIPLE_LEXICAL_STATE_HANDLING = false]
 
@@ -638,17 +638,17 @@ ${is}    return False--]
       self.scan_token_one(${expansion.firstSet.tokenNames[0]})[#t]
     #else
       self.scan_token(${expansion.firstSet.tokenNames[0]})[#t]
-    /#if
+    #endif
   #else
     #if optimize_scan_token
       self.scan_token_many(self.${expansion.firstSetVarName})[#t]
     #else
       self.scan_token(self.${expansion.firstSetVarName})[#t]
-    /#if
-  /#if
+    #endif
+  #endif
 #else
       self.${expansion.scanRoutineName}(False)[#t]
-/#if
-/#macro
+#endif
+#endmacro
 
 

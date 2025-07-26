@@ -30,7 +30,20 @@ int successes = 0;
 int failures = 0;
 
 foreach(string arg in args) {
-    foreach(var f in Directory.EnumerateFiles(arg, "*.${extension}", SearchOption.AllDirectories))
+    if (arg.EndsWith(".${extension}") && File.Exists(arg)) {
+        try {
+           Parser p = new Parser(arg);
+           p.Parse${rootProduction}();
+           Console.WriteLine("parsed " + arg + " successfully.");
+           successes++;
+        }
+        catch (ParseException e) {
+            Console.WriteLine("Problem parsing file: " + arg);
+            Console.WriteLine(e);
+            failures++;
+        }
+    }
+    else foreach(var f in Directory.EnumerateFiles(arg, "*.${extension}", SearchOption.AllDirectories))
     {
         try {
             Parser p = new Parser(f);
@@ -93,7 +106,7 @@ ${globals::translateParserImports()}
             var parts = e.ConvertAll<string>(e => e.ToString());
             var s = string.Join(", ", parts.ToArray());
 
-            return $"Unexpected {Token} ({Token.Type}) at {Token.Location}: expected {oneOf}{s}";
+            return $"{Message}\nUnexpected {Token} ({Token.Type}) at {Token.Location}: expected {oneOf}{s}";
         }
     }
 
