@@ -99,7 +99,7 @@
     private string GetLiteralString(TokenType type) {
         switch(type) {
             #list lexerData.regularExpressions as regexp
-               #if regexp.literalString
+               #if regexp.literalString??
                   case TokenType.${regexp.label} : return "${regexp.literalString?j_string}";
                #endif
             #endlist

@@ -12,7 +12,7 @@ import java.io.PrintWriter;
                       BaseToken = settings.baseTokenClassName,
                       BaseTokenType = "TokenType"
 
-#if settings.treeBuildingEnabled || settings.rootAPIPackage
+#if settings.treeBuildingEnabled || settings.rootAPIPackage??
   #set TOKEN_TYPE_SET = "Set<? extends Node.NodeType>"
   #set BaseToken = "Node.TerminalNode"
   #set BaseTokenType = "Node.NodeType"

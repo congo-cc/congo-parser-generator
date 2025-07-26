@@ -942,7 +942,7 @@ ${globals::translateLexerInjections(true)}
     def token_lexical_actions(self, matched_token, matched_type):
   #var idx = 0
   #list lexerData.regularExpressions as regexp
-    #if regexp.codeSnippet
+    #if regexp.codeSnippet??
         [#if idx > 0]el[/#if]if matched_type == TokenType.${regexp.label}:
 ${globals::translateCodeBlock(regexp.codeSnippet.javaCode, 12)}
       #set idx = idx + 1
@@ -987,7 +987,7 @@ ${globals::translateLexerInjections(false)}
 #if lexerData.hasLexicalStateTransitions
 # Generate the map for lexical state transitions from the various token types (if necessary)
   #list lexerData.regularExpressions as regexp
-    #if regexp.newLexicalState
+    #if regexp.newLexicalState??
 token_type_to_lexical_state_map[TokenType.${regexp.label}] = LexicalState.${regexp.newLexicalState.name}
     #endif
   #endlist

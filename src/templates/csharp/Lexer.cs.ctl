@@ -901,7 +901,7 @@ ${globals::translateLexerImports()}
 [#if lexerData.hasLexicalStateTransitions]
             // Generate the map for lexical state transitions from the various token types
   #list lexerData.regularExpressions as regexp
-    #if regexp.newLexicalState
+    #if regexp.newLexicalState??
             tokenTypeToLexicalStateMap[TokenType.${regexp.label}] = LexicalState.${regexp.newLexicalState.name};
     #endif
   #endlist
@@ -1295,21 +1295,21 @@ ${globals::translateLexerInitializers()}
 [/#if]
         }
 
-[#if lexerData.hasTokenActions]
+#if lexerData.hasTokenActions
         private Token TokenLexicalActions(Token matchedToken, TokenType? matchedType) {
             switch (matchedType) {
-        [#list lexerData.regularExpressions as regexp]
-                [#if regexp.codeSnippet]
+        #list lexerData.regularExpressions as regexp
+                #if regexp.codeSnippet??
             case TokenType.${regexp.label}:
 ${globals::translateCodeBlock(regexp.codeSnippet.javaCode, 16)}
                 break;
-                [/#if]
-        [/#list]
+                #endif
+        #endlist
             default: break;
             }
             return matchedToken;
         }
-[/#if]
+#endif
 #if false
         private int ReadChar() {
             while (_tokenLocationTable[_bufferPosition] == Ignored && _bufferPosition < _contentLength) {
@@ -1329,8 +1329,8 @@ ${globals::translateCodeBlock(regexp.codeSnippet.javaCode, 16)}
             return ch;
         }
 
-/#if
-[#if settings.tokenChaining]
+#endif
+#if settings.tokenChaining
         override public void CacheToken(${BaseToken} tok) {
             ${TOKEN} token = (${TOKEN}) tok;
             if (token.isInserted) {
@@ -1345,7 +1345,7 @@ ${globals::translateCodeBlock(regexp.codeSnippet.javaCode, 16)}
             base.UncacheTokens(lastToken);
             ((${TOKEN}) lastToken).UnsetAppendedToken();
         }
-[/#if]
+#endif
 
         protected bool AtLineStart(${TOKEN} tok) {
             int offset = tok.BeginOffset;
@@ -1364,12 +1364,12 @@ ${globals::translateCodeBlock(regexp.codeSnippet.javaCode, 16)}
         }
 
         private static NfaFunction[] GetFunctionTable(LexicalState lexicalState) {
-[#if multipleLexicalStates]
+#if multipleLexicalStates
             return functionTableMap[lexicalState];
-[#else]
+#else
             // We only have one lexical state in this case, so we return that!
             return nfaFunctions;
-[/#if]
+#endif
         }
 
 ${globals::translateLexerInjections(true)}

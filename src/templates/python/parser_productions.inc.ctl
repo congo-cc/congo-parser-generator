@@ -640,7 +640,7 @@ ${is}self.uncache_tokens()
 [#macro BuildCodeFailure fail, indent]
 [#var is = ""?right_pad(indent)]
 [#--${is}# DBG > BuildCodeFailure ${indent} --]
-    [#if !fail.code]
+    [#if !fail.code??]
       [#if fail.exp??]
 ${is}self.fail('Failure: %s' % "${fail.exp?j_string}")
       [#else]
@@ -932,7 +932,7 @@ ${SingleTokenCondition(expansion)}[#t]
 
 [#-- Generates code for when we need a scanahead --]
 [#macro ScanAheadCondition expansion]
-[#if expansion.lookahead && expansion.lookahead.assignment](${expansion..assignment.name} = [/#if][#if expansion.hasSemanticLookahead && !expansion.lookahead.semanticLookaheadNested](${globals::translateExpression(expansion.semanticLookahead)}) and [/#if]self.${expansion.predicateMethodName}()[#if expansion.lookahead && expansion.lookahead.assignment])[/#if][#t]
+[#if expansion.lookahead?? && expansion.lookahead.assignment??](${expansion..assignment.name} = [/#if][#if expansion.hasSemanticLookahead && !expansion.lookahead.semanticLookaheadNested](${globals::translateExpression(expansion.semanticLookahead)}) and [/#if]self.${expansion.predicateMethodName}()[#if expansion.lookahead?? && expansion.lookahead.assignment??])[/#if][#t]
 [/#macro]
 
 [#-- Generates code for when we don't need any scanahead routine --]

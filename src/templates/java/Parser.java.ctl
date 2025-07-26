@@ -28,7 +28,7 @@ import java.util.concurrent.CancellationException;
 import ${settings.parserPackage}.${settings.lexerClassName}.LexicalState;
 import ${settings.parserPackage}.${settings.baseTokenClassName}.TokenType;
 import static ${settings.parserPackage}.${settings.baseTokenClassName}.TokenType.*;
-#if settings.rootAPIPackage
+#if settings.rootAPIPackage??
    import ${settings.rootAPIPackage}.ParseException;
    import ${settings.rootAPIPackage}.TokenSource;
    import ${settings.rootAPIPackage}.NonTerminalCall;

@@ -5,7 +5,7 @@ package ${settings.parserPackage};
 
 #var BaseToken = settings.baseTokenClassName
 
-#if settings.treeBuildingEnabled || settings.rootAPIPackage
+#if settings.treeBuildingEnabled || settings.rootAPIPackage??
   #set BaseToken = "Node.TerminalNode"
 #endif
 

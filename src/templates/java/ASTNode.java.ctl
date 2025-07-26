@@ -9,7 +9,7 @@ package ${settings.nodePackage};
 import ${settings.parserPackage}.*;
 import java.util.*;
 
-#if settings.rootAPIPackage
+#if settings.rootAPIPackage??
   import ${settings.rootAPIPackage}.Node;
 #endif
 

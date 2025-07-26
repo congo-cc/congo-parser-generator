@@ -75,7 +75,7 @@
 #macro HandleLexicalStateChange expansion inLookahead cardinalitiesVar
    #var resetToken = inLookahead ?: "currentLookaheadToken" : "lastConsumedToken"
    #var prevLexicalStateVar = newVarName("previousLexicalState")
-   #if expansion.specifiedLexicalState
+   #if expansion.specifiedLexicalState??
          LexicalState ${prevLexicalStateVar} = token_source.lexicalState;
          token_source.reset(${resetToken}, LexicalState.${expansion.specifiedLexicalState});
          try {
@@ -92,7 +92,7 @@
                 nextTokenType = null;
             }
          }
-   #elif expansion.tokenActivation
+   #elif expansion.tokenActivation??
       #var tokenActivation = expansion.tokenActivation
       #var prevActives = newVarName("previousActives")
       #var somethingChanged = newVarName("somethingChanged")

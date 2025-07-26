@@ -11,6 +11,7 @@
 INJECT Expression :
    import org.congocc.templates.core.Environment;
    import org.congocc.templates.TemplateException;
+   import org.congocc.templates.core.variables.EvaluationException;
    import org.congocc.templates.TemplateSequence;
    import java.lang.reflect.Array;
    import static org.congocc.templates.core.variables.Wrap.*;
@@ -42,8 +43,8 @@ INJECT Expression :
 
     default boolean isTrue(Environment env) {
         Object referent = evaluate(env);
-        assertIsDefined(referent, this);
-        if (referent == JAVA_NULL || referent == LOOSE_NULL) {
+        assertNonNull(referent, this);
+        if (referent == LOOSE_NULL) {
             return false;
         }
         if (isBoolean(referent)) {
@@ -64,7 +65,8 @@ INJECT Expression :
         if (referent instanceof CharSequence cs) {
             return cs.length() > 0;
         }
-        return true;
+        throw new EvaluationException("Expression is not boolean.");
+        //return true;
     }
 }
 

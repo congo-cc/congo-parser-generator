@@ -120,7 +120,7 @@
     def GetLiteralString(self, type) :
         #list lexerData.regularExpressions as regexp
            ${regexp_index==0 ?: " if " : " elif "} (type == TokenType.${regexp.label}) :
-               #if regexp.literalString
+               #if regexp.literalString??
                   return "${regexp.literalString?j_string}"
                #else
                   return None

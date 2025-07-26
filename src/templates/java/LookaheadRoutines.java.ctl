@@ -527,7 +527,7 @@
          ${returnFalse(cardinalitiesVar, parentCardVar!null)};
       }
    #endif
-   #if assertion.expansion
+   #if assertion.expansion??
       if (
          ${!assertion.expansionNegated ?: "!"}
          ${assertion.expansion.scanRoutineName}()
@@ -536,7 +536,7 @@
         ${returnFalse(cardinalitiesVar, parentCardVar!null)};
       }
    #endif
-   #if assertion.cardinalityConstraint
+   #if assertion.cardinalityConstraint??
       // Cardinality constraint check to ensure maximum not reached.
       if (!${cardinalitiesVar}.choose(${assertion.assertionIndex}, true)) {
          hitFailure = true;
@@ -598,7 +598,7 @@
 --]
 #macro ScanCodeZeroOrMore zom cardVar cardinalitiesVar
    #var prevPassPredicateVarName = "passedPredicate" + CU.newID()
-    #var zomCardVar = cardVar!null
+    #var zomCardVar = cardVar!false
     #if zom.cardinalityContainer & !zomCardVar
       #set zomCardVar = "cardinality" + repetitionIndex
       #set repetitionIndex = repetitionIndex + 1

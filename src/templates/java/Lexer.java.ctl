@@ -13,7 +13,7 @@ package ${settings.parserPackage};
 
 import ${settings.parserPackage}.${TOKEN}.TokenType;
 import static ${settings.parserPackage}.${TOKEN}.TokenType.*;
-#if settings.rootAPIPackage
+#if settings.rootAPIPackage??
    import ${settings.rootAPIPackage}.Node;
    import ${settings.rootAPIPackage}.TokenSource;
 #endif
@@ -42,7 +42,7 @@ import static ${settings.parserPackage}.${TOKEN}.TokenType.*;
 import java.io.IOException;
 import java.util.*;
 
-#if settings.rootAPIPackage
+#if settings.rootAPIPackage??
     import ${settings.rootAPIPackage}.TokenSource;
 #endif
 
@@ -346,7 +346,7 @@ class ${settings.lexerClassName} extends TokenSource
   // Generate the map for lexical state transitions from the various token types
   static {
     #list lexerData.regularExpressions as regexp
-      #if regexp.newLexicalState
+      #if regexp.newLexicalState??
           tokenTypeToLexicalStateMap.put(${regexp.label}, LexicalState.${regexp.newLexicalState.name});
       #endif
     #endlist
@@ -397,7 +397,7 @@ class ${settings.lexerClassName} extends TokenSource
   private ${TOKEN} tokenLexicalActions(${TOKEN} matchedToken, TokenType matchedType) {
     switch(matchedType) {
    #list lexerData.regularExpressions as regexp
-        #if regexp.codeSnippet
+        #if regexp.codeSnippet??
       case ${regexp.label} :
           // Code action from ${regexp.codeSnippet.location}
           ${regexp.codeSnippet}

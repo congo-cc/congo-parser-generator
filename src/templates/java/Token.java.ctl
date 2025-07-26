@@ -12,7 +12,7 @@ import java.util.Collections;
 import java.util.Iterator;
 import java.util.List;
 
-#if settings.rootAPIPackage
+#if settings.rootAPIPackage??
   import ${settings.rootAPIPackage}.Node;
   import ${settings.rootAPIPackage}.TokenSource;
 #endif
@@ -20,7 +20,7 @@ import java.util.List;
 
 #if settings.treeBuildingEnabled
     #set implements = "implements CharSequence, Node.TerminalNode"
-    #if settings.rootAPIPackage
+    #if settings.rootAPIPackage??
        import ${settings.rootAPIPackage}.Node;
     #endif
 #endif

@@ -6,7 +6,7 @@
 
 package ${settings.nodePackage};
 
-#if settings.rootAPIPackage
+#if settings.rootAPIPackage??
    import ${settings.rootAPIPackage}.TokenSource;
 #endif
 

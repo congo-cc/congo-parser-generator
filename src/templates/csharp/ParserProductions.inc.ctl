@@ -633,7 +633,7 @@ ${globals::translateCodeBlock(expansion, 1)}
 
 [#macro BuildCodeFailure fail]
 [#-- // DBG > BuildCodeFailure --]
-    [#if !fail.code]
+    [#if !fail.code??]
       [#if fail.exp??]
 Fail("Failure: " + ${fail.exp});
       [#else]

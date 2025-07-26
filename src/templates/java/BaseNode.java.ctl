@@ -7,7 +7,7 @@ import ${settings.parserPackage}.*;
 import ${settings.parserPackage}.${settings.baseTokenClassName}.TokenType;
 import static ${settings.parserPackage}.${settings.baseTokenClassName}.TokenType.*;
 
-#if settings.rootAPIPackage
+#if settings.rootAPIPackage??
   import ${settings.rootAPIPackage}.Node;
   import ${settings.rootAPIPackage}.TokenSource;
 #endif
