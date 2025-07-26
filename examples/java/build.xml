@@ -1,4 +1,4 @@
-<project name="Java Parser" default="compile">
+<project name="Java Parser" default="compile-all">
   <target name="clean">
     <delete dir="org" />
     <delete dir="javaparser" />
@@ -9,9 +9,11 @@
 
   <target name="init">
     <uptodate property="javaparser.uptodate" srcfile="Java.ccc" targetfile="org/parsers/java/JavaParser.java" />
+    <uptodate property="pyparser.uptodate" srcfile="Java.ccc" targetfile="javaparser/parser.py" />
+    <uptodate property="csparser.uptodate" srcfile="Java.ccc" targetfile="cs-javaparser/Parser.cs" />
   </target>
 
-  <target name="parser-gen" depends="init" unless="javaparser.uptodate">
+  <target name="java-parser-gen" depends="init" unless="javaparser.uptodate">
     <echo>Building Java parser in Java.</echo>
     <java jar="../../congocc.jar" failonerror="true" fork="true">
       <assertions>
@@ -19,13 +21,19 @@
       </assertions>
       <arg line ="-n -q Java.ccc" />
     </java>
+  </target>
+
+  <target name="python-parser-gen" depends="init" unless = "pyparser.uptodate">
     <echo>Building Java parser in Python.</echo>
     <java jar="../../congocc.jar" failonerror="true" fork="true">
       <assertions>
         <enable />
       </assertions>
-      <arg line="-n -q -lang python Java.ccc" />
+      <arg line ="-n -q -lang python Java.ccc" />
     </java>
+  </target>
+
+  <target name="csharp-parser-gen" depends="init" unless="csparser.uptodate">
     <echo>Building Java parser in CSharp.</echo>
     <java jar="../../congocc.jar" failonerror="true" fork="true">
       <assertions>
@@ -35,7 +43,7 @@
     </java>
   </target>
 
-  <target name="compile" depends="init, parser-gen">
+  <target name="compile-java" depends="java-parser-gen">
     <javac debug="on"
       failonerror="true"
       includeantruntime="false"
@@ -43,46 +51,51 @@
       srcdir="."
       includes="JParse.java,org/**/*.java"
       excludes="testfiles/*.java" />
+  </target>
+
+  <target name="compile-csharp"   depends="csharp-parser-gen">
     <exec executable="dotnet" dir="cs-javaparser">
        <arg line="build"/>
     </exec>
   </target>
 
-  <target name="test" depends="compile">
-    <java fork="true" classpath="." failonerror="true" classname="JParse">
-      <assertions>
-        <enable />
-      </assertions>
-      <arg line = "-s -p -q" />
-    </java>
-    <echo>
-      ------------------- Okay, that seems okay. Now let's dump the parse tree for a single source file -------------------
-    </echo>
+  <target name="compile-all" depends="compile-java,compile-csharp"/>
+
+  <target name="test-java" depends="compile-java">
+    <echo>Let's try it out on a single source file.</echo>
     <java fork="true" classpath="." failonerror="true" classname="JParse">
       <assertions>
         <enable />
       </assertions>
       <arg value="org/parsers/java/ast/CompilationUnit.java" />
     </java>
-    <echo>
-      Now let's try the Python parser on the Congo source code.
-    </echo>
-    <antcall target="test-python"/>
-    <echo>
-      Now let's try the CSharp parser on the test files.
-    </echo>
-    <antcall target="test-csharp"/>
+    <echo>Now let's parse the contents of the entire JDK src.zip</echo>
+    <java fork="true" classpath="." failonerror="true" classname="JParse">
+      <assertions>
+        <enable />
+      </assertions>
+      <arg line = "-s -p -q" />
+    </java>
   </target>
 
-  <target name="test-python" depends="parser-gen">
-    <exec executable="python3" dir="." failonerror="true">
-      <arg line="-u jparse.py ../../src/java" />
-    </exec>
-  </target>
-
-  <target name="test-csharp">
+  <target name="test-csharp" depends="compile-csharp">
+    <echo>
+      Now let's try the CSharp parser on the Congo source code.
+    </echo>
     <exec executable="dotnet" dir="." failonerror="true">
-      <arg line="cs-javaparser/bin/Debug/net6.0/org.parsers.java.dll testfiles" />
+      <arg line="cs-javaparser/bin/Debug/net6.0/org.parsers.java.dll ../../src/java" />
     </exec>
   </target>
+
+  <target name="test-python" depends="python-parser-gen">
+    <echo>
+      Now let's try the Python parser on some test files.
+    </echo>
+    <exec executable="python3" dir="." failonerror="true">
+      <arg line="-u jparse.py testfiles" />
+    </exec>
+  </target>
+
+  <target name="test-all" depends="compile-all,test-java,test-csharp,test-python"/>
+
 </project>

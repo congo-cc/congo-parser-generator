@@ -172,31 +172,16 @@
     <ant dir="examples/csharp" target="test" />
     <echo>Testing the Java parser standalone</echo>
     <ant dir="examples/java" target="clean" />
-    <ant dir="examples/java" target="test" />
+    <ant dir="examples/java" target="test-all" />
     <echo>Building the Python parser</echo>
     <ant dir="examples/python" target="clean" />
     <ant dir="examples/python" target="test" />
-    <!--echo>Testing the newer FreeMarker parser</echo>
-    <ant dir="examples/freemarker" target="clean" />
-    <ant dir="examples/freemarker" target="test" /-->
   </target>
 
   <target name="test-java" depends="jar">
     <echo>Testing the Java parser standalone"</echo>
     <ant dir="examples/java" target="clean" />
     <ant dir="examples/java" target="test" />
-  </target>
-
-  <target name="minimal-jar" depends="compile">
-    <echo>Creating minimal jarfile, using this requires a CTL.jar in the same directory</echo>
-    <jar jarfile="congocc-minimal.jar" basedir="build" compress="true" excludes="**/*.java">
-      <manifest>
-        <attribute name="Main-Class" value="org.congocc.app.Main" />
-        <attribute name="Class-Path" value="CTL.jar bin/CTL.jar" />
-        <attribute name="Built-By" value="${user.name}" />
-        <attribute name="Build-Date" value="${timestamp}" />
-      </manifest>
-    </jar>
   </target>
 
   <target name="jar" depends="compile">
