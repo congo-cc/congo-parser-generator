@@ -629,13 +629,7 @@ ExceptionType#ObjectType :
 INJECT Expression :
 {
   default boolean canBeAssignedTo() {return false;}
-  default boolean canBeThrown()
-#if !__csharp__
-  {return false;}
-#else
-// I honestly don't know why this is necessary for C#.
-  {return this instanceof ObjectInstantiation || this instanceof ObjectCastExpression;}
-#endif
+  default boolean canBeThrown() {return false;}
 }
 
 INJECT PrimaryExpression : extends Expression
@@ -697,7 +691,15 @@ INJECT MethodCall : implements PrimaryExpression {
 }
 
 INJECT TernaryExpression : implements Expression {
-  public boolean canBeThrown() {return true;}
+  public boolean canBeThrown() {
+    return ((Expression) get(2)).canBeThrown()
+    || ((Expression)get(4)).canBeThrown();}
+}
+
+INJECT LiteralExpression : implements Expression {
+  public boolean canBeThrown() {
+    return toString().equals("this");
+  }
 }
 
 #Expression#interface :
@@ -864,7 +866,12 @@ PrimitiveCastExpression :
 
 
 ObjectCastExpression :
-   <LPAREN> ReferenceType (<BIT_AND> ObjectType)* <RPAREN> =>|+1 UnaryExpressionNotPlusMinus
+   <LPAREN>
+   ReferenceType
+   (<BIT_AND> ObjectType)*
+   <RPAREN>
+   =>|+1
+   UnaryExpressionNotPlusMinus
 ;
 
 PrimaryExpression#interface :
@@ -1341,13 +1348,17 @@ ReturnStatement : <RETURN> (Expression)? <SEMICOLON> ;
 
 ThrowStatement :
     <THROW>
+#if __csharp__
+    Expression
+#else
     {Expression exp;}
     exp=Expression
     ASSERT {
       exp.canBeThrown(),
       exp:
       "Expression " + exp + " is not throwable."
-      }
+    }
+#endif
     <SEMICOLON>
 ;
 
