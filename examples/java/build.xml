@@ -16,9 +16,7 @@
   <target name="java-parser-gen" depends="init" unless="javaparser.uptodate">
     <echo>Building Java parser in Java.</echo>
     <java jar="../../congocc.jar" failonerror="true" fork="true">
-      <assertions>
-        <enable />
-      </assertions>
+      <assertions> <enable /> </assertions>
       <arg line ="-n -q Java.ccc" />
     </java>
   </target>
@@ -26,9 +24,7 @@
   <target name="python-parser-gen" depends="init" unless = "pyparser.uptodate">
     <echo>Building Java parser in Python.</echo>
     <java jar="../../congocc.jar" failonerror="true" fork="true">
-      <assertions>
-        <enable />
-      </assertions>
+      <assertions> <enable /> </assertions>
       <arg line ="-n -q -lang python Java.ccc" />
     </java>
   </target>
@@ -36,9 +32,7 @@
   <target name="csharp-parser-gen" depends="init" unless="csparser.uptodate">
     <echo>Building Java parser in CSharp.</echo>
     <java jar="../../congocc.jar" failonerror="true" fork="true">
-      <assertions>
-        <enable />
-      </assertions>
+      <assertions> <enable /> </assertions>
       <arg line="-n -q -lang csharp Java.ccc" />
     </java>
   </target>

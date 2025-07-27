@@ -1,4 +1,4 @@
-<project name="Lua Parser" default="compile">
+<project name="Lua Parser" default="build">
   <target name="clean">
     <delete dir="org" />
     <delete dir="luaparser" />
@@ -7,67 +7,80 @@
   </target>
 
   <target name="init">
-    <uptodate property="luaparser.uptodate" targetfile="org/parsers/lua/LuaParser.java">
-      <srcfiles dir="." includes="*.ccc" />
+    <uptodate property="javaparser.uptodate" targetfile="org/parsers/lua/LuaParser.java">
+        <srcfiles dir="." includes="*.ccc"/>
+    </uptodate>
+    <uptodate property="pyparser.uptodate" targetfile="luaparser/parser.py">
+        <srcfiles dir="." includes="*.ccc"/>
+    </uptodate>
+    <uptodate property="csparser.uptodate" targetfile="cs-luaparser/Parser.cs" >
+        <srcfiles dir="." includes="*.ccc"/>
     </uptodate>
   </target>
 
-  <target name="parser-gen" depends="init" unless="luaparser.uptodate">
+  <target name="java-parser-gen" depends="init" unless="javaparser.uptodate">
     <java jar="../../congocc.jar" failonerror="true" fork="true">
-      <assertions>
-        <enable />
-      </assertions>
+      <assertions> <enable /> </assertions>
       <arg value="-n" />
       <arg value="${basedir}/Lua.ccc" />
     </java>
+  </target>
+
+  <target name="python-parser-gen" depends="init" unless="pyparser.uptodate">
     <java jar="../../congocc.jar" failonerror="true" fork="true">
-      <assertions>
-        <enable />
-      </assertions>
+      <assertions> <enable /> </assertions>
       <arg line="-n -lang python ${basedir}/Lua.ccc" />
     </java>
+    <echo>Test harness is:</echo>
+    <echo>python3 luaparse.py &lt;file(s) or directory&gt;</echo>
+  </target>
+
+   <target name="csharp-parser-gen" depends="init" unless="csparser.uptodate">
     <java jar="../../congocc.jar" failonerror="true" fork="true">
-      <assertions>
-        <enable />
-      </assertions>
+      <assertions> <enable /> </assertions>
       <arg line="-n -lang csharp ${basedir}/Lua.ccc" />
     </java>
   </target>
 
-  <target name="compile" depends="init,parser-gen">
+  <target name="compile-java" depends="java-parser-gen">
     <javac debug="on"
       failonerror="true"
       includeantruntime="false"
       release="8"
       srcdir="."
       includes="LuaParse.java,org/**/*.java" />
+    <echo> Test harness is java LuaParse &lt;file(s) or directory&gt;</echo>
+  </target>
+
+  <target name="compile-csharp" depends="csharp-parser-gen">
     <exec executable="dotnet" dir="${basedir}/cs-luaparser">
        <arg line="build"/>
     </exec>
+    <echo> Test harness is:</echo>
+    <echo> dotnet cs-luaparser/bin/Debug/net6.0/org.parsers.lua.dll &lt;file(s) or directory&gt;</echo>
   </target>
 
-  <target name="test" depends="compile">
+
+  <target name="test-java" depends="compile-java">
     <java fork="true" classpath="." failonerror="true" classname="LuaParse">
-      <assertions>
-        <enable />
-      </assertions>
+      <assertions> <enable /> </assertions>
       <arg value="testfiles" />
     </java>
-    <echo>Now let's try the Python parser.</echo>
-    <antcall target="test-lua"/>
-    <echo>And now the CSharp parser.</echo>
-    <antcall target="test-csharp"/>
   </target>
 
-  <target name="test-lua" depends="parser-gen">
+  <target name="test-python" depends="python-parser-gen">
     <exec executable="python3" dir="${basedir}" failonerror="true">
       <arg line="-u luaparse.py testfiles" />
     </exec>
   </target>
 
-  <target name="test-csharp">
+  <target name="test-csharp" depends="compile-csharp">
     <exec executable="dotnet" dir="${basedir}" failonerror="true">
       <arg line="cs-luaparser/bin/Debug/net6.0/org.parsers.lua.dll testfiles" />
     </exec>
   </target>
+
+  <target name="build" depends="python-parser-gen,compile-csharp,compile-java"/>
+
+  <target name="test-all" depends="test-java,test-python,test-csharp"/>
 </project>

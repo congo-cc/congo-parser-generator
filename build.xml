@@ -166,7 +166,7 @@
     <ant dir="examples/preprocessor" target="test" />
     <echo>Testing the Lua parser</echo>
     <ant dir="examples/lua" target = "clean" />
-    <ant dir="examples/lua" target = "test" />
+    <ant dir="examples/lua" target = "test-all" />
     <echo>Testing the CSharp parser standalone</echo>
     <ant dir="examples/csharp" target="clean" />
     <ant dir="examples/csharp" target="test" />

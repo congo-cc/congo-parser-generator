@@ -141,12 +141,20 @@ ImportDeclaration : <_IMPORT> [ <STATIC> | 'module' ] Name [ <DOT> <STAR> ] <SEM
 
 Modifiers :
  (
-  ENSURE {isParserTolerant() || permissibleModifiers == null
-       || hasMatch(permissibleModifiers,getToken(1))}
+  Annotation
+  |
   (
    <PUBLIC>|<STATIC>|<PROTECTED>|<PRIVATE> |<FINAL>|<ABSTRACT>
-   |<SYNCHRONIZED>|<NATIVE>|<TRANSIENT>|<VOLATILE>|<STRICTFP>
-   |<_DEFAULT>|'sealed')
+   |<SYNCHRONIZED>|<NATIVE>|<TRANSIENT>|<VOLATILE>|<STRICTFP> |<_DEFAULT>
+   |<SEALED>|<NON_SEALED> // SEALED and NON_SEALED are interesting. sealed
+                          // is declared as a contextual token in the lexical grammar
+                          // NON_SEALED can only match here if it was already cached
+                          // because in a previous iteration, we hit the "non"+"-"+"sealed" biz.
+  )
+  ASSERT {
+    permissibleModifiers == null || hasMatch(permissibleModifiers,lastConsumedToken),
+    lastConsumedToken : "Modifier " + lastConsumedToken + " not permitted here."
+  }
   {
     if (permissibleModifiers !=null) {
       TokenType tt = getTokenType(0);
@@ -164,6 +172,7 @@ Modifiers :
            permissibleModifiers.remove(PUBLIC);
            break;
         case SEALED :
+        case NON_SEALED :
            permissibleModifiers.remove(SEALED);
            permissibleModifiers.remove(NON_SEALED);
            break;
@@ -173,29 +182,23 @@ Modifiers :
     }
   }
   |
-  ENSURE {
-    permissibleModifiers == null
-    ||
-    permissibleModifiers.contains(NON_SEALED)
-    &&
-    (
-       checkNextTokenImage("non-sealed")
-       ||
-       checkNextTokenImage("non")
-         && "-".equals(tokenImage(2))
-         && "sealed".equals(tokenImage(3))
-         && getToken(3).getBeginOffset() == getToken(1).getEndOffset() + 1
-    )
-  }
-  ACTIVATE_TOKENS NON_SEALED (<NON_SEALED>)
-  {
-    if (permissibleModifiers!=null) {
-      permissibleModifiers.remove(SEALED);
-      permissibleModifiers.remove(NON_SEALED);
-    }
-  }
-  |
-  Annotation
+  // The first time we hit a "non-sealed" the token is not activated
+  // so we will see it via the rather silly looking lookahead below.
+  // Then we activate the token and match it. This involves "uncaching"
+  // the "non" + MINUS + "sealed" that we tokenized before and retokenizing!
+  SCAN 0 {"non".equals(tokenImage(1))
+           && "-".equals(tokenImage(2))
+           && "sealed".equals(tokenImage(3))
+           && getToken(3).getBeginOffset() == getToken(1).getEndOffset() + 1}
+   => ACTIVATE_TOKENS NON_SEALED (<NON_SEALED>)
+   ASSERT {permissibleModifiers==null || permissibleModifiers.contains(NON_SEALED),
+   lastConsumedToken: "Modifier non-sealed not expected here."}
+   {
+     if (permissibleModifiers!=null) {
+       permissibleModifiers.remove(SEALED);
+       permissibleModifiers.remove(NON_SEALED);
+     }
+   }
  )*
  {permissibleModifiers = null;}#
 ;
