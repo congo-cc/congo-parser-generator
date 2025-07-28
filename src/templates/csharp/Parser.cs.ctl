@@ -491,6 +491,10 @@ ${globals::translateParserInitializers()}
             }
         }
 
+        internal void UncacheTokens() {
+            tokenSource.UncacheTokens(GetToken(0));
+        }
+
         internal bool ActivateTokenTypes(TokenType type, params TokenType[] types) {
             var result = false;
             var att = tokenSource.ActiveTokenTypes;

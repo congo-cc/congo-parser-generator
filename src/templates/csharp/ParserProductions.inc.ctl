@@ -575,8 +575,8 @@ ${globals::translateCodeBlock(expansion, 1)}
    #elif classname = "RawCode"
       ${expansion}
 [#-- FIXME: for some reason a CodeBlock consisting only of a "// ..." line throws a ParseException on previous template line (for CSharp, not Java). --]
-   [#-- OMITTED: [#elseif classname = "UncacheTokens"]
-         uncacheTokens(); --]
+   [#elseif classname = "UncacheTokens"]
+         UncacheTokens();
    [#elseif classname = "Failure"]
       [@BuildCodeFailure expansion/]
    [#elseif classname = "Assertion"]

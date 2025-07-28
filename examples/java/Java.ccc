@@ -232,12 +232,6 @@ TypeDeclaration #interface :
 TypeDeclarationLA#scan :
    <SEMICOLON>
    |
-   // This is necessary in some
-   // very rare cases, but I need
-   // to investigate why. I was convinced
-   // that permissibleModifiers was always
-   // null in this spot.
-   {permissibleModifiers=null;}
    Modifiers
    (
      <CLASS>
@@ -777,10 +771,7 @@ ShiftExpression :
      // Under certain conditions we scanned forward
      // and (incorrectly) scanned a >>, so we uncache
      // the tokens and end up rescanning!
-//     SCAN <GT> (<GT>|<RSIGNEDSHIFT>) => UNCACHE_TOKENS
-     SCAN <GT> (<GT>|<RSIGNEDSHIFT>) => {
-        this.token_source.reset(lastConsumedToken);
-     }
+     SCAN <GT> (<GT>|<RSIGNEDSHIFT>) => UNCACHE_TOKENS
    ]
    (
       (<LSHIFT> | <RSIGNEDSHIFT> | <RUNSIGNEDSHIFT>)

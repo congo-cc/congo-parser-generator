@@ -170,7 +170,7 @@ INJECT BASE_NODE_CLASS :
 INJECT PARSER_CLASS : {
 
     private EnumSet<TokenType> CongoCCKeyWords = EnumSet.of(
-       _FAIL, __ASSERT, _SCAN, _IGNORE_CASE,
+       _FAIL, __ASSERT, _ENSURE, _FLAG, _SCAN, _IGNORE_CASE,
        _TOKEN, _CONTEXTUAL, _UNPARSED, _SKIP, _MORE,
        _ATTEMPT, _RECOVER, _ON_ERROR,
        _LEXICAL_STATE);

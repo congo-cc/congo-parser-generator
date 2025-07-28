@@ -58,16 +58,12 @@
   <target name="test-java" depends="compile-java">
     <echo>Let's try it out on a single source file.</echo>
     <java fork="true" classpath="." failonerror="true" classname="JParse">
-      <assertions>
-        <enable />
-      </assertions>
+      <assertions> <enable /> </assertions>
       <arg value="org/parsers/java/ast/CompilationUnit.java" />
     </java>
     <echo>Now let's parse the contents of the entire JDK src.zip</echo>
     <java fork="true" classpath="." failonerror="true" classname="JParse">
-      <assertions>
-        <enable />
-      </assertions>
+      <assertions> <enable /> </assertions>
       <arg line = "-s -p -q" />
     </java>
   </target>

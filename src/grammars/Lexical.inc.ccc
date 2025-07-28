@@ -22,6 +22,8 @@ TOKEN #CongoCCKeyWord :
   |
   < _ENSURE : "ENSURE" >
   |
+  < _FLAG : "FLAG">
+  |
   < _SCAN : "SCAN" >
   |
   < _IGNORE_CASE: "IGNORE_CASE" >
