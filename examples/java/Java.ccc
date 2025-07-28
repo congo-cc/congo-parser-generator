@@ -887,8 +887,9 @@ PrimaryExpression#interface :
   Name
  )
  (
-   ASSERT {!(peekNode() instanceof MethodReference)} : "A method reference cannot be derereferenced.":
-   ASSERT {!(getToken(0) instanceof NODE_PACKAGE.NumericalLiteral)} : "A numerical literal cannot be derereferenced.":
+   ASSERT {!(peekNode() instanceof MethodReference) : "A method reference cannot be derereferenced."}
+   ASSERT {!(getToken(0) instanceof NODE_PACKAGE.NumericalLiteral) : "A numerical literal cannot be derereferenced."}
+   ASSERT {!(getToken(0) instanceof NODE_PACKAGE.BooleanLiteral) : "A boolean literal cannot be derereferenced."}
    (
     (<DOT> <THIS> =>||) #DotThis(+1)
     |
