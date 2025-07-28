@@ -907,7 +907,7 @@ PrimaryExpression#interface :
     InvocationArguments #MethodCall(+1)
    )
  )*
- ASSERT {getTokenType(0) != SUPER} : "Not a valid expression here " + getToken(0).getLocation()
+ ASSERT {getTokenType(0) != SUPER, getToken(0) : "Not a valid expression here " + getToken(0).getLocation()}
 ;
 
 LiteralExpression# : Literal ;
@@ -1141,7 +1141,7 @@ StatementExpression# :
                lhs}
 #if !__python__
       // Same issue as above basically. Doesn't work in Python.
-      : "Expression at " + lhs.getLocation() + " is not a valid statement.\n"
+      : "Expression " + lhs + " at " + lhs.getLocation() + " is not a valid statement.\n"
         + "Expecting a method call, an assignment or an expression that calls an object constructor (i.e. new Foobar(...) or an explicit constructor invocation)"
 #endif
   )
