@@ -73,7 +73,6 @@ TOKEN #KeyWord :
 | < TRANSIENT: "transient" >
 | < TRUE: "true" > #BooleanLiteral
 | < TRY: "try" >
-//| < VAR: "var" >
 | < VOID: "void" >
 | < VOLATILE: "volatile" >
 | < WHILE: "while" >
@@ -83,9 +82,6 @@ TOKEN #KeyWord :
 CONTEXTUAL #KeyWord :
   <SEALED : "sealed">
 ;
-
-
-
 
 TOKEN #Literal :
   < #STRING_ESCAPE:
@@ -327,4 +323,3 @@ INCLUDE "JavaIdentifierDef.ccc"
 TOKEN :
   < IDENTIFIER: <JAVA_IDENTIFIER_START> (<JAVA_IDENTIFIER_PART>)* > #Identifier
 ;
-

@@ -1112,44 +1112,7 @@ LocalVariableDeclaration :
 
 EmptyStatement# : <SEMICOLON> ;
 
-#if true
 StatementExpression# :
-  PreIncrementExpression
-  |
-  PreDecrementExpression
-  |
-  PrimaryExpression
-  {Expression lhs = (Expression) peekNode();}
-  (
-      (
-          (<INCR> | <DECR>) #PostfixExpression(2)
-          |
-          AssignmentOperator Expression #AssignmentExpression(3)
-      )
-      ASSERT {lhs.canBeAssignedTo(),lhs}
-#if !__python__
-     // for some reason, this just doesn't work but
-     // I don't understand why not. Shouldn't it just call the appropriate
-     // dunder method, like __str__ maybe? So I have this commented out for
-     // generating Python at the moment.
-      : "Expression " + lhs + " cannot be assigned to.":
-#endif
-      |
-      ASSERT {lhs instanceof MethodCall
-               || lhs instanceof ObjectInstantiation
-               || lhs instanceof ExplicitConstructorInvocation,
-               lhs}
-#if !__python__
-      // Same issue as above basically. Doesn't work in Python.
-      : "Expression " + lhs + " at " + lhs.getLocation() + " is not a valid statement.\n"
-        + "Expecting a method call, an assignment or an expression that calls an object constructor (i.e. new Foobar(...) or an explicit constructor invocation)"
-#endif
-  )
-;
-
-#else
-
-StatementExpression#void :
     Expression
     {Expression exp = (Expression) peekNode();}
     ASSERT {
@@ -1158,14 +1121,12 @@ StatementExpression#void :
         || exp instanceof PreDecrementExpression
         || exp instanceof PreIncrementExpression
         || exp instanceof MethodCall
-        || exp instanceof ObjectInstantiation
-        || exp instanceof ExplicitConstructorInvocation,
+        || exp instanceof ObjectInstantiation,
         exp:
         "Expression " + exp + " is not a valid statement.\n"
-        + "Expecting a method invocation, an assignment, or an allocation expression (new...)"
+        + "Expecting a method invocation, an assignment, or an object instantiation, i.e. new Foobar(...)"
     }
 ;
-#endif
 
 ExpressionStatement : StatementExpression <SEMICOLON> ;
 
@@ -1544,4 +1505,3 @@ LambdaParameter :
       )
     )
 ;
-
