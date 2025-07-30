@@ -1,4 +1,4 @@
-<project name="CSharp Parser" default="compile">
+<project name="CSharp Parser" default="build-all">
   <target name="clean">
     <delete dir="org" />
     <delete dir="pplineparser" />
@@ -10,81 +10,97 @@
   </target>
 
   <target name="init">
-    <uptodate property="csparser.uptodate" targetfile="org/parsers/csharp/CSharpParser.java">
+    <uptodate property="csjparser.uptodate" targetfile="org/parsers/csharp/CSharpParser.java">
       <srcfiles dir="." includes="*.ccc" />
     </uptodate>
-    <uptodate property="pplineparser.uptodate" targetfile="org/parsers/csharp/ppline/PPDirectiveLineParser.java" srcfile="PPDirectiveLine.ccc" />
+    <uptodate property="cspyparser.uptodate" targetfile="csharpparser/parser.py">
+      <srcfiles dir="." includes="*.ccc" />
+    </uptodate>
+    <uptodate property="cscsparser.uptodate" targetfile="cs-csharpparser/Parser.cs">
+      <srcfiles dir="." includes="*.ccc" />
+    </uptodate>
+    <uptodate property="linedirective-j.uptodate" targetfile="org/parsers/csharp/ppline/PPDirectiveLineParser.java" srcfile="PPDirectiveLine.ccc" />
+    <uptodate property="linedirective-py.uptodate" targetfile="pplineparser/parser.py" srcfile="PPDirectiveLine.ccc"/>
+    <uptodate property="linedirective-cs.uptodate" targetfile="pplineparser/parser.py" srcfile="PPDirectiveLine.ccc"/>
   </target>
 
-  <target name="line-directive-parser-gen" depends="init" unless="pplineparser.uptodate">
+  <target name="line-directive-java-parser-gen" depends="init" unless="linedirective-j.uptodate">
     <echo>Using Bootstrap CongoCC to regenerate preprocessor</echo>
     <java jar="../../congocc.jar" failonerror="true" fork="true">
-      <assertions>
-        <enable />
-      </assertions>
+      <assertions> <enable /> </assertions>
       <arg line="-n PPDirectiveLine.ccc" />
     </java>
+  </target>
+  <target name="line-directive-py-parser-gen" depends="init" unless="linedirective-py.uptodate">
     <java jar="../../congocc.jar" failonerror="true" fork="true">
-      <assertions>
-        <enable />
-      </assertions>
+      <assertions> <enable /> </assertions>
       <arg line="-n -lang python ${basedir}/PPDirectiveLine.ccc" />
     </java>
+  </target>
+  <target name="line-directive-cs-parser-gen" depends="init" unless="linedirective-cs.uptodate">
     <java jar="../../congocc.jar" failonerror="true" fork="true">
-      <assertions>
-        <enable />
-      </assertions>
+      <assertions> <enable /> </assertions>
       <arg line="-n -lang csharp ${basedir}/PPDirectiveLine.ccc" />
     </java>
   </target>
 
-  <target name="parser-gen" depends="init,line-directive-parser-gen" unless="csparser.uptodate">
+  <target name="java-parser-gen" depends="init,line-directive-java-parser-gen" unless="csjparser.uptodate">
     <java jar="../../congocc.jar" failonerror="true" fork="true">
-      <assertions>
-        <enable />
-      </assertions>
+      <assertions> <enable /> </assertions>
       <arg line="-n ${basedir}/CSharp.ccc" />
     </java>
+  </target>
+  <target name="python-parser-gen" depends="init,line-directive-py-parser-gen" unless="cspyparser.uptodate">
     <java jar="../../congocc.jar" failonerror="true" fork="true">
-      <assertions>
-        <enable />
-      </assertions>
+      <assertions> <enable /> </assertions>
       <arg line="-n -lang python ${basedir}/CSharp.ccc" />
     </java>
+  </target>
+  <target name="csharp-parser-gen" depends="init,line-directive-cs-parser-gen" unless="cscsparser.uptodate">
     <java jar="../../congocc.jar" failonerror="true" fork="true">
-      <assertions>
-        <enable />
-      </assertions>
+      <assertions> <enable /> </assertions>
       <arg line="-n -lang csharp ${basedir}/CSharp.ccc" />
     </java>
   </target>
 
-  <target name="compile" depends="parser-gen">
+  <target name="compile-java" depends="java-parser-gen">
     <javac debug="on"
       failonerror="true"
       includeantruntime="false"
       release="8"
       srcdir="."
       includes="CSParse.java,org/**/*.java" />
+  </target>
+
+  <target name="compile-csharp" depends="csharp-parser-gen">
     <exec executable="dotnet" dir="${basedir}/cs-csharpparser">
        <arg line="build"/>
     </exec>
   </target>
 
-  <target name="test" depends="compile">
+
+  <target name="test-java" depends="compile-java">
     <java fork="true" classpath=".;../../congocc.jar" failonerror="true" classname="CSParse">
-      <assertions>
-        <enable />
-      </assertions>
+      <assertions> <enable /> </assertions>
       <arg value="-p" />
       <arg value="-q" />
       <arg value="testfiles" />
     </java>
   </target>
 
-  <target name="test-python" depends="parser-gen">
+  <target name="test-python" depends="python-parser-gen">
     <exec executable="python3" dir="${basedir}" failonerror="true">
       <arg line="-u csparse.py testfiles" />
     </exec>
   </target>
+
+  <target name="test-csharp" depends="compile-csharp">
+    <exec executable="dotnet" dir="${basedir}" failonerror="true">
+      <arg line="cs-csharpparser/bin/Debug/net6.0/org.parsers.csharp.dll testfiles" />
+    </exec>
+  </target>
+
+  <!-- For now, building the Parser in C# is broken.-->
+  <target name="build-all" depends="compile-java,python-parser-gen"/>
+  <target name="test-all" depends="test-java,test-python"/>
 </project>

@@ -169,7 +169,7 @@
     <ant dir="examples/lua" target = "test-all" />
     <echo>Testing the CSharp parser standalone</echo>
     <ant dir="examples/csharp" target="clean" />
-    <ant dir="examples/csharp" target="test" />
+    <ant dir="examples/csharp" target="test-all" />
     <echo>Testing the Java parser standalone</echo>
     <ant dir="examples/java" target="clean" />
     <ant dir="examples/java" target="test-all" />
