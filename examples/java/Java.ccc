@@ -186,11 +186,12 @@ Modifiers :
   // so we will see it via the rather silly looking lookahead below.
   // Then we activate the token and match it. This involves "uncaching"
   // the "non" + MINUS + "sealed" that we tokenized before and retokenizing!
-  SCAN 0 {"non".equals(tokenImage(1))
+  ENSURE {"non".equals(tokenImage(1))
            && "-".equals(tokenImage(2))
            && "sealed".equals(tokenImage(3))
            && getToken(3).getBeginOffset() == getToken(1).getEndOffset() + 1}
-   => ACTIVATE_TOKENS NON_SEALED (<NON_SEALED>)
+   ACTIVATE_TOKENS NON_SEALED (<NON_SEALED>)
+   =>||
    ASSERT {permissibleModifiers==null || permissibleModifiers.contains(NON_SEALED),
    lastConsumedToken: "Modifier non-sealed not expected here."}
    {
@@ -295,8 +296,8 @@ InterfaceDeclaration :
 
 PermitsList :
    'permits'
-   ObjectType
-   (<COMMA> ObjectType)*
+   Name
+   (<COMMA> Name)*
 ;
 
 ExtendsList :
@@ -537,8 +538,7 @@ Initializer# :
 
 Type#interface :
   (
-   SCAN {getTokenType(2) != LBRACKET}#
-   =>PrimitiveType
+   PrimitiveType ENSURE ~(<LBRACKET>) =>||
    |
    ReferenceType
   )
@@ -595,9 +595,13 @@ WildcardBounds : (<EXTENDS> | <SUPER>) ReferenceType ;
 
 PrimitiveType# :
   (Annotation)*
-  (<BOOLEAN> | <CHAR> | <BYTE> | <SHORT> | <INT>
-   | <LONG> | <FLOAT> | <DOUBLE>)
+  (<BOOLEAN> | NumericType)
   =>||
+;
+
+NumericType#void :
+ <CHAR> | <BYTE> | <SHORT> | <INT>
+   | <LONG> | <FLOAT> | <DOUBLE>
 ;
 
 PrimitiveArrayType : PrimitiveType ((Annotation)* <LBRACKET> =>|| <RBRACKET>)+ ;
@@ -924,7 +928,23 @@ INJECT Parentheses : implements PrimaryExpression {
   public boolean canBeThrown() {return nestedExpression.canBeThrown();}
 }
 
-ClassLiteral : (<VOID> | Type) <DOT> <CLASS> =>|| ;
+ClassLiteral :
+  (
+   <VOID><DOT><CLASS>
+   |
+   (
+     <BOOLEAN>
+     |
+     NumericType
+     |
+     Name
+   )
+   (<LBRACKET><RBRACKET>)*
+   <DOT>
+   <CLASS>
+  )
+  =>||
+;
 
 MethodReference :
     (Type | <SUPER>)
