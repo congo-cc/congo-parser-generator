@@ -2,7 +2,7 @@ Use the build.xml in this directory to build a Java source code parser in either
 
 You can see it in action by simply running:
 
-     ant test
+     ant test-java
 
 The Java parser (in Java) can be tested on its own via:
 

@@ -16,6 +16,7 @@ import org.congocc.templates.core.Environment;
 import org.congocc.templates.core.variables.WrappedVariable;
 import org.congocc.templates.core.parser.ParseException;
 import org.congocc.templates.core.parser.ParsingProblemImpl;
+import org.congocc.templates.core.parser.TokenSource;
 import org.congocc.templates.utility.StringUtil;
 
 import static org.congocc.templates.core.variables.Wrap.*;
@@ -148,7 +149,8 @@ public class Configuration extends Configurable {
         }
         byte[] bb = rawStream.readAllBytes();
         rawStream.close();
-        String content = new String(bb, defaultEncoding);
+        //String content = new String(bb, defaultEncoding);
+        String content = TokenSource.stringFromBytes(bb);
         result = new Template(name, content, this, defaultEncoding);
         if (result.hasParsingProblems()) {
             for (ParsingProblemImpl pp : result.getParsingProblems()) {
