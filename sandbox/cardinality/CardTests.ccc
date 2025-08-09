@@ -25,6 +25,9 @@ FAULT_TOLERANT_DEFAULT=true;
     <ANY_CHARS: (~["!"])+ >
 ;
 
+// FIXME: to reveal a bug in lexical state changing remove DEFAULT from the following:
+<DEFAULT,JAVA> TOKEN: <END_TOKEN: "]" > ; //TODO: remove this when issue #203 fixed
+
 DelimitedString :
     LEXICAL_STATE ANY
     (
@@ -86,12 +89,10 @@ LTest3 :
     )+
 ; 
 
-// The most infamous explosive recursion case:
-// Ss : "s" Ss Ss | {} ; This won't work, for obvious reasons.
-Ss : 
-    ( "s" Ss Ss | SCAN {true} => && =>|| )* 
-    {System.out.println("sss..., said the snake.");} // But this one will!
-;
+// The most infamous explosive recursion case...
+Ss : ("s" Ss Ss =>|| {System.out.println("hiss..., goes the snake.");}# | {System.out.println("shh..., said the snake.");}# )
+    {System.out.println("strike, did the snake!");}
+; //...but the Congolese viper, not so much.
 
 Set :
     "{"
@@ -316,7 +317,6 @@ EvenNumberSet :
 | <TRANSITIVE : "transitive">
 | <USES : "uses">
 | <WITH : "with">
-| <END_TOKEN: "]" > //TODO: remove this when issue #203 fixed
 ;
  
 INJECT PARSER_CLASS : {

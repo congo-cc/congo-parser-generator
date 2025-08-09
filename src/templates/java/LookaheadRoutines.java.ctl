@@ -621,7 +621,7 @@
            ${zomCardVar}.commitIteration(false);
         #endif
       }
-      #if zom.cardinalityContainer
+      #if zom.minCardinalityConstrained
          if(!${zomCardVar}.checkCardinality(true)) ${returnFalse(cardinalitiesVar!null)};
       #endif
     } finally {

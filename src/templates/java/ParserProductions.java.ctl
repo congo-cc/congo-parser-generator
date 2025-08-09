@@ -894,7 +894,7 @@
        if (!(${ExpansionCondition(oom.nestedExpansion, cardinalitiesVar)})) break;
      #endif
    }
-   #if oom.cardinalityContainer
+   #if oom.minCardinalityConstrained
       if (!${cardinalitiesVar}.checkCardinality(false))  {
          fail("Minimum cardinality constraint(s) for: ${oom.location?j_string} not met.", getToken(1));
       }
@@ -918,7 +918,7 @@
          ${cardinalitiesVar}.commitIteration(true);
       #endif
    }
-   #if zom.cardinalityContainer
+   #if zom.minCardinalityConstrained
       if (!${cardinalitiesVar}.checkCardinality(false))  {
          fail("Minimum cardinality constraint(s) for: ${zom.location?j_string} not met.", getToken(1));
       }
