@@ -175,8 +175,7 @@ namespace ${csPackage} {
             }
             return result;
         }
-[#--
-        //Why does this not work?
+
         bool HasChildOfType<T>(Type t) where T : Node {
             for (var i = 0; i < Size; i++) {
                 var child = Get(i);
@@ -184,7 +183,7 @@ namespace ${csPackage} {
             }
             return false;
         }
---]
+
         T FirstChildOfType<T>(Type t, Predicate<T> pred) where T : Node {
             var result = default(T);
 

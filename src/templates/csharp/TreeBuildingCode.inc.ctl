@@ -72,9 +72,9 @@
                 n.TokenSource = LastConsumedToken.TokenSource;
                 n.BeginOffset = next.BeginOffset;
                 n.Open();
-    [#list grammar.openNodeScopeHooks as hook]
+    #list grammar.openNodeScopeHooks as hook
                 ${hook}(n);
-    [/#list]
+    #endlist
             }
         }
 
@@ -122,9 +122,9 @@
             }
             n.Close();
             PushNode(n);
-    [#list grammar.closeNodeScopeHooks as hook]
+    #list grammar.closeNodeScopeHooks as hook
             ${hook}(n);
-    [/#list]
+    #endlist
             return true;
         }
 
@@ -164,9 +164,9 @@
                 }
                 n.Close();
                 PushNode(n);
-    [#list grammar.closeNodeScopeHooks as hook]
+    #list grammar.closeNodeScopeHooks as hook
                 ${hook}(n);
-    [/#list]
+    #endlist
             }
             else {
                 CurrentNodeScope.Close();

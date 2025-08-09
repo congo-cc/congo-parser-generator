@@ -86,7 +86,7 @@
    Macro to build routines that scan up to the start of an expansion
    as part of a recovery routine
 --]
-#macro BuildRecoverRoutines [#-- FIXME:JB this needs to consider cardinality --]
+#macro BuildRecoverRoutines #-- FIXME:JB this needs to consider cardinality
    #list grammar.expansionsNeedingRecoverMethod as expansion
        private boolean ${expansion.recoverMethodName}(ParseException pe) {
           ${settings.baseTokenClassName} initialToken = lastConsumedToken;
@@ -281,7 +281,7 @@
    #if expansion.simpleName = "BNFProduction"
       #set isProduction = true
    #else
-      #var nodeName = syntacticNodeName(expansion) [#-- This maps ExpansionSequence containing more than one syntax element to "Sequence", otherwise to the element itself --]
+      #var nodeName = syntacticNodeName(expansion) #-- This maps ExpansionSequence containing more than one syntax element to "Sequence", otherwise to the element itself
       #if !treeNodeBehavior?? &&
           expansion.assignment??
          #if syntheticNodesEnabled && isProductionInstantiatingNode(expansion)
@@ -300,7 +300,7 @@
                )
                #-- We do need to create a definite node --
                #if !jtbParseTree
-                  [#-- It's not a JTB tree but it is a syntactic node with a LHS assignment, so use the BASE_NODE type --][#-- (jb) is there a reason to use the syntactic type always?  Perhaps, but I can't think of one. --]
+                  #-- It's not a JTB tree but it is a syntactic node with a LHS assignment, so use the BASE_NODE type --][#-- (jb) is there a reason to use the syntactic type always?  Perhaps, but I can't think of one.
                   #set nodeName = settings.baseNodeClassName
                #endif
                #-- Make a new node to wrap the current expansion with the expansion's assignment. --
@@ -348,7 +348,7 @@
          #-- No in-line definite node annotation; synthesize a parser node for the expansion type being built, if needed. --
          #if nodeName??
             #-- Determine the node name depending on syntactic type --
-            #var nodeFieldName = imputedJtbFieldName(nodeName) [#-- Among other things this injects the node field into the generated node if result is non-nullv--]
+            #var nodeFieldName = imputedJtbFieldName(nodeName) #-- Among other things this injects the node field into the generated node if result is non-nullv
             #-- Default to a definite node --
             #var gtNode = false
             #var condition = null
@@ -528,7 +528,7 @@
       #-- replace "@" with "(((@) != null) ? true : false)" --
       #return "(((@) != null) ? true : false)"
    #elif assignment.stringOf!false
-      [#-- replace "@" with the string value of the node --]
+      #-- replace "@" with the string value of the node
       #return "Objects.toString((@), \"\").trim()"
    #endif
    #return "@"

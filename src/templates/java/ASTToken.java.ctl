@@ -14,11 +14,7 @@ import ${settings.parserPackage}.*;
 
 import static ${settings.parserPackage}.${settings.baseTokenClassName}.TokenType.*;
 
-public
-[#if isAbstract]abstract[/#if]
-[#if isFinal]final[/#if]
-[#if isSealed]sealed[/#if]
-[#if isNonSealed]non-sealed[/#if]
+public ${isAbstract ?: "abstract"} ${isFinal ?: "final"} ${isSealed ?: "sealed"} ${isNonSealed ?: "non-sealed"}
 class ${classname} extends ${superclass}
    #list permitsList as item
      [#if item_index == 0]permits[/#if]

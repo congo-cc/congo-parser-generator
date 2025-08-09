@@ -28,12 +28,12 @@
             }
   #list grammar.openNodeScopeHooks as hook
             ${hook}(LastConsumedToken);
-  /#list
+  #endlist
             PushNode(LastConsumedToken);
   #list grammar.closeNodeScopeHooks as hook
             ${hook}(LastConsumedToken);
-  /#list
-/#if
+  #endlist
+#endif
 #if settings.faultTolerant
             // Check whether the very next token is in the follow set of the last consumed token
             // and if it is not, we check one token ahead to see if skipping the next token remedies
@@ -47,14 +47,14 @@
                     }
                 }
             }
-/#if
+#endif
             return LastConsumedToken;
         }
 
         private Token HandleUnexpectedTokenType(TokenType expectedType, Token nextToken[#if settings.faultTolerant], bool tolerant, HashSet<TokenType> followSet[/#if]) {
-[#if !settings.faultTolerant]
+#if !settings.faultTolerant
             throw new ParseException(this, null, nextToken, Utils.EnumSet(expectedType));
-[#else]
+#else
             if (!tolerant) {
                 throw new ParseException(this, null, nextToken, Utils.EnumSet(expectedType));
             }
@@ -63,23 +63,23 @@
                 [#-- REVISIT. Here we skip one token (as well as any InvalidToken) but maybe (probably!) this behavior
                 should be configurable. But we need to experiment, because this is really a heuristic question, no?--]
                 nextToken.SetSkipped(true);
-  [#if settings.treeBuildingEnabled]
+  #if settings.treeBuildingEnabled
                 PushNode(nextToken);
-  [/#if]
+  #endif
                 return nextNext;
             }
-            [#-- Since skipping the next token did not work, we will insert a virtual token --]
+            #-- Since skipping the next token did not work, we will insert a virtual token
             if (tolerant || (followSet == null) || followSet.Contains(nextToken.Type)) {
                 var virtualToken = Token.NewToken(expectedType, tokenSource, 0, 0);
                 virtualToken.SetVirtual(true);
                 virtualToken.CopyLocationInfo(nextToken);
-  [#if lexerData.hasLexicalStateTransitions]
+  #if lexerData.hasLexicalStateTransitions
                 if (tokenSource.DoLexicalStateSwitch(expectedType)) {
                     tokenSource.Reset(virtualToken);
                 }
-  [/#if]
+  #endif
                 return virtualToken;
             }
             throw new ParseException(this, null, nextToken, Utils.EnumSet(expectedType));
-[/#if]
+#endif
         }
