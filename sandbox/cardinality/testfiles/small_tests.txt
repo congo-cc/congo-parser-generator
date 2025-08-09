@@ -1,5 +1,7 @@
 !{4,9,2}!
-%ssss%
+%s%
+%ss%
+%sss%
 [public final]
 [private static synchronized]
 (a)
