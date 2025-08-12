@@ -131,7 +131,7 @@ PrimaryExpression(boolean noSpace)#void :
     (
       (
         <DOT>
-        DEACTIVATE_TOKENS IN, AS, USING, TRUE, FALSE, NULL
+        DEACTIVATE_TOKENS IN, AS, TRUE, FALSE, NULL
         (<ID>|<TIMES>|<DOUBLE_STAR>)
       ) #DotVariable(+1)
       |
@@ -210,9 +210,6 @@ INJECT DotVariable :
         if (lhs instanceof Map m) {
             Object key = getKey();
             Object value = m.get(key);
-            if (value == null) {
-                return m.containsKey(key) ? JAVA_NULL : null;
-            }
             return wrap(value);
         }
         if (lhs instanceof TemplateHash hash) {
@@ -526,11 +523,7 @@ RelationalExpression :
      (
       <GREATER_THAN_EQUALS>
       |
-      <ESCAPED_GTE>
-      |
       <GREATER_THAN>
-      |
-      <ESCAPED_GT>
       |
       <LESS_THAN_EQUALS>
       |
@@ -570,17 +563,13 @@ INJECT RelationalExpression :
         }
         ArithmeticEngine ae = env != null ? env.getArithmeticEngine() : getTemplate().getArithmeticEngine();
         int comp = ae.compareNumbers((Number)left, (Number)right);
-        switch(operation) {
-            case LESS_THAN :
-                return comp < 0;
-            case GREATER_THAN : case ESCAPED_GT :
-                return comp > 0;
-            case LESS_THAN_EQUALS :
-                return comp <= 0;
-            case GREATER_THAN_EQUALS : case ESCAPED_GTE :
-                return comp >= 0;
-            default : throw new InternalError();
-        }
+        return switch(operation) {
+            case LESS_THAN -> comp<0;
+            case GREATER_THAN -> comp > 0;
+            case LESS_THAN_EQUALS  -> comp<=0;
+            case GREATER_THAN_EQUALS -> comp>=0;
+            default -> throw new InternalError();
+        };
     }
 }
 

@@ -162,7 +162,7 @@ WhileStatement : <WHILE> NamedExpression <COLON> Block [ElseBlock] ;
 WithStatement :
     [<ASYNC>] <WITH> =>||
     (
-        SCAN WithItemsInParentheses <COLON> => WithItemsInParentheses
+        WithItemsInParentheses ENSURE (<COLON>) =>||
         |
         WithItem (<COMMA> WithItem)*
     )
@@ -406,7 +406,7 @@ LambdaDefinition :
 Expression :
     Disjunction [<IF> Disjunction <ELSE> Expression]
     |
-    SCAN ~\.\.\PlaceHolder <LAMBDA> =>
+    SCAN ~\.\.\PlaceHolder =>
     LambdaDefinition
     |
     <LAMBDA> FAIL "Lambda is not allowed here without parenthesis."
@@ -802,7 +802,8 @@ PlaceHolder :
       (<COLON>|<RBRACE>)
    )
    [
-      SCAN 0 {getTokenType(0) == COLON}# => FormatSpecifier <RBRACE>
+      ENSURE {getTokenType(0) == COLON} =>||
+      FormatSpecifier <RBRACE>
    ]
 ;
 
