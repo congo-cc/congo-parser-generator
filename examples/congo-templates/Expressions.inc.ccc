@@ -127,7 +127,7 @@ PrimaryExpression(boolean noSpace)#void :
       BuiltinVariable
   )
   (
-    SCAN 1 {!noSpace || getToken(0).getEndOffset() == getToken(1).getBeginOffset()} =>
+    SCAN {!noSpace || getToken(0).getEndOffset() == getToken(1).getBeginOffset()} =>
     (
       (
         <DOT>
@@ -146,8 +146,10 @@ PrimaryExpression(boolean noSpace)#void :
       (
         <EXCLAM>
         [
-            SCAN {getToken(1).getType() != TokenType.ID || getToken(2).getType() != TokenType.EQUALS}
-            => PrimaryExpression(false) =>||
+            ENSURE ~(<DOT>)
+            ENSURE {!(getTokenType(1) == ID && getTokenType(2) == EQUALS)
+                   || !isInProduction("NamedArgs")}
+            PrimaryExpression(false)
         ]
       ) #DefaultToExpression(+1)
       |
