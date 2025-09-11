@@ -29,7 +29,7 @@
       <assertions>
         <enable />
       </assertions>
-      <arg line=" -n -lang csharp ${basedir}/JSON.ccc" />
+      <arg line=" -n -lang csharp -d cs-jsonparser ${basedir}/JSON.ccc" />
     </java>
   </target>
   <target name="parser2-gen" depends="parser1-gen" unless="parser2.uptodate">
@@ -49,20 +49,31 @@
       <assertions>
         <enable />
       </assertions>
-      <arg line=" -n -lang csharp ${basedir}/JSONC.ccc" />
+      <arg line=" -n -lang csharp -d cs-jsoncparser ${basedir}/JSONC.ccc" />
     </java>
   </target>
+
   <target name="compile" depends="parser1-gen, parser2-gen">
     <javac classpath="." srcdir="." includeantruntime="off" failonerror="true" debug="on" release="8" fork="true" />
-    <echo>
-      test harness via: java JSONTest &lt;filename&gt; OR : java JSONCTest &lt;filename&gt;
-    </echo>
+    <exec executable="dotnet" dir="${basedir}/cs-jsonparser">
+       <arg line="build"/>
+    </exec>
+    <exec executable="dotnet" dir="${basedir}/cs-jsonparser/test">
+       <arg line="build"/>
+    </exec>
+    <exec executable="dotnet" dir="${basedir}/cs-jsoncparser">
+       <arg line="build"/>
+    </exec>
+    <exec executable="dotnet" dir="${basedir}/cs-jsoncparser/test">
+       <arg line="build"/>
+    </exec>
   </target>
+
   <target name="test" depends="compile">
     <echo>
       Now test a few files I grabbed with various non-European characters This might not display correctly on the terminal you are using!
     </echo>
-    <java classname="JSONParse" classpath="." failonerror="true" fork="true">
+    <java classname="org.parsers.json.test.ParseFiles" classpath="." failonerror="true" fork="true">
       <assertions>
         <enable />
       </assertions>
@@ -74,11 +85,23 @@
     <echo>
       Now test the JSONC parser on a file with errors
     </echo>
-    <java classname="JSONCParse" classpath="." failonerror="true" fork="true">
+    <java classname="org.parsers.jsonc.test.ParseFiles" classpath="." failonerror="true" fork="true">
       <assertions>
         <enable />
       </assertions>
       <arg value="${basedir}/testfiles/invalid.json" />
     </java>
+  </target>
+
+  <target name="test-python">
+    <exec executable="python3" dir="${basedir}/jsonparser/test" failonerror="true">
+      <arg line="-u parse_files.py ../../testfiles" />
+    </exec>
+  </target>
+
+  <target name="test-csharp">
+    <exec executable="dotnet" dir="${basedir}/cs-jsonparser/test" failonerror="true">
+      <arg line="run ../../testfiles" />
+    </exec>
   </target>
 </project>

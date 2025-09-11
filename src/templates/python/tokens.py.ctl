@@ -76,11 +76,13 @@ class ${settings.baseNodeClassName}:
 
     @property
     def end_line(self):
+        if self.end_offset <= self.begin_offset: return self.begin_line
         ts = self.token_source
         return 0 if not ts else ts.get_line_from_offset(self.end_offset - 1)
 
     @property
     def end_column(self):
+        if self.end_offset <= self.begin_offset: return self.begin_column
         ts = self.token_source
         return 0 if not ts else ts.get_codepoint_column_from_offset(self.end_offset - 1)
 
@@ -565,11 +567,13 @@ ${globals::translateTokenInjections(true)}
 
     @property
     def end_line(self):
+        if self.end_offset <= self.begin_offset: return self.begin_line
         ts = self.token_source
         return 0 if not ts else ts.get_line_from_offset(self.end_offset - 1)
 
     @property
     def end_column(self):
+        if self.end_offset <= self.begin_offset: return self.begin_column
         ts = self.token_source
         return 0 if not ts else ts.get_codepoint_column_from_offset(self.end_offset - 1)
 

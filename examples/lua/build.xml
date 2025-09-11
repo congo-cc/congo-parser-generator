@@ -31,14 +31,12 @@
       <assertions> <enable /> </assertions>
       <arg line="-n -lang python ${basedir}/Lua.ccc" />
     </java>
-    <echo>Test harness is:</echo>
-    <echo>python3 luaparse.py &lt;file(s) or directory&gt;</echo>
   </target>
 
    <target name="csharp-parser-gen" depends="init" unless="csparser.uptodate">
     <java jar="../../congocc.jar" failonerror="true" fork="true">
       <assertions> <enable /> </assertions>
-      <arg line="-n -lang csharp ${basedir}/Lua.ccc" />
+      <arg line="-n -lang csharp -d cs-luaparser ${basedir}/Lua.ccc" />
     </java>
   </target>
 
@@ -56,27 +54,31 @@
     <exec executable="dotnet" dir="${basedir}/cs-luaparser">
        <arg line="build"/>
     </exec>
-    <echo> Test harness is:</echo>
-    <echo> dotnet cs-luaparser/bin/Debug/net6.0/org.parsers.lua.dll &lt;file(s) or directory&gt;</echo>
+    <exec executable="dotnet" dir="${basedir}/cs-luaparser/test">
+       <arg line="build"/>
+    </exec>
+    <exec executable="dotnet" dir="${basedir}/cs-luaparser/test">
+       <arg line="build"/>
+    </exec>
   </target>
 
 
   <target name="test-java" depends="compile-java">
-    <java fork="true" classpath="." failonerror="true" classname="LuaParse">
+    <java fork="true" classpath="." failonerror="true" classname="org.parsers.lua.test.ParseFiles">
       <assertions> <enable /> </assertions>
       <arg value="testfiles" />
     </java>
   </target>
 
   <target name="test-python" depends="python-parser-gen">
-    <exec executable="python3" dir="${basedir}" failonerror="true">
-      <arg line="-u luaparse.py testfiles" />
+    <exec executable="python3" dir="${basedir}/luaparser/test" failonerror="true">
+      <arg line="-u parse_files.py ../../testfiles" />
     </exec>
   </target>
 
   <target name="test-csharp" depends="compile-csharp">
-    <exec executable="dotnet" dir="${basedir}" failonerror="true">
-      <arg line="cs-luaparser/bin/Debug/net6.0/org.parsers.lua.dll testfiles" />
+    <exec executable="dotnet" dir="${basedir}/cs-luaparser/test" failonerror="true">
+      <arg line="run ../../testfiles" />
     </exec>
   </target>
 

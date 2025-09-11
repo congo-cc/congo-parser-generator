@@ -1,6 +1,8 @@
 DEFAULT_LEXICAL_STATE=PHP;
 PARSER_PACKAGE="org.parsers.php";
 ENSURE_FINAL_EOL;
+TEST_PRODUCTION=Root;
+TEST_EXTENSION=php;
 
 INCLUDE "PHPLexer.ccc"
 
@@ -8,7 +10,7 @@ Root : LEXICAL_STATE PHP_OUTER (Scriptlet | <TEXT>)* <EOF> ;
 
 Scriptlet : <SCRIPTLET_START> (Statement)* <SCRIPTLET_END> ;
 
-Statement : 
+Statement :
    CompoundStatement
    |
    NamedLabelStatement
@@ -16,19 +18,19 @@ Statement :
    IfStatement
    |
    SwitchStatement
-;   
+;
 
 CompoundStatement : <LBRACE> (Statement)* <RBRACE> ;
 
-NamedLabelStatement : <NAME> ":" ; 
+NamedLabelStatement : <NAME> ":" ;
 
 ExpressionStatement : [Expression] ";" ;
 
-IfStatement : 
-   <IF> 
-   "(" 
-   Expression 
-   ")" 
+IfStatement :
+   <IF>
+   "("
+   Expression
+   ")"
    (
      ":"
      (Statement)+
@@ -65,10 +67,10 @@ IfStatement :
          Statement
      ]
    )
-;   
+;
 
-SwitchStatement : 
-   <SWITCH> 
+SwitchStatement :
+   <SWITCH>
    "("
    Expression
    ")"
@@ -96,7 +98,7 @@ CaseStatement :
 ;
 
 WhileStatement :
-   <WHILE> 
+   <WHILE>
    "("
    Expression
    ")"
@@ -121,10 +123,10 @@ DoStatement :
 ;
 
 ForStatement :
-   <FOR> 
+   <FOR>
    "("
    [
-     Expression 
+     Expression
      ("," Expression)*
    ]
    ";"
@@ -167,28 +169,28 @@ ForeachStatement :
 
 GotoStatement : <GOTO> <NAME> ;
 
-ContinueStatement# : 
-    <CONTINUE> 
+ContinueStatement# :
+    <CONTINUE>
     [ BreakoutLevel ]
 ;
 
-BreakStatement# : 
+BreakStatement# :
     <BREAK>
     [BreakoutLevel]
-;    
+;
 
 BreakoutLevel# :
    <INTEGER_LITERAL>
    |
    "(" [BreakoutLevel] ")"
-;   
+;
 
 ReturnStatement# : <RETURN> [Expression] ;
 
 ThrowStatement# : <THROW> Expression ;
 
-TryStatement : 
-   <TRY> 
+TryStatement :
+   <TRY>
    CompoundStatement
    (
      FinallyClause
@@ -216,7 +218,7 @@ QualifiedName# :
    <NAMESPACE> <BACKSLASH> [<NAME> (<BACKSLASH> <NAME>)* <BACKSLASH>]
   ]
   <NAME>
-;   
+;
 
 ListExpressionList : UnkeyedListExpressionList | KeyedListExpressionList ;
 
@@ -247,7 +249,7 @@ RequireExpression :
 
 RequireOnceExpression :
    "require_once" Expression
-; 
+;
 
 IncludeOnceExpression :
    "include_once" Expression
@@ -269,7 +271,7 @@ Variable :
    ScopedPropertyAccessExpression
 //   |
 //   MemberAccessExpression
-;   
+;
 
 CallableVariable#void :
    SimpleVariable
@@ -294,7 +296,7 @@ FunctionCallExpression :
     ")"
 ;
 
-ArgumentExpression : 
+ArgumentExpression :
    [<ELLIPSIS>]
    Expression
 ;
@@ -359,10 +361,10 @@ MemberName :
    <NAME>
    |
    SimpleVariable
-;   
+;
 
 SimpleVariable :
-  ("$")+ 
+  ("$")+
   (
     <NAME>
     |

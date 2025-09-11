@@ -31,7 +31,7 @@
       <assertions>
         <enable />
       </assertions>
-      <arg line="-n -lang csharp ${basedir}/Python.ccc" />
+      <arg line="-n -lang csharp -d cs-pythonparser ${basedir}/Python.ccc" />
     </java>
   </target>
 
@@ -43,9 +43,12 @@
       srcdir="."
       includes="PyTest.java,org/**/*.java" />
     <echo>
-      test harness via: java PyTest &lt;filename&gt;
+      test harness via: java org.parsers.python.test.ParseFiles &lt;filename&gt;
     </echo>
     <exec executable="dotnet" dir="${basedir}/cs-pythonparser">
+       <arg line="build"/>
+    </exec>
+    <exec executable="dotnet" dir="${basedir}/cs-pythonparser/test">
        <arg line="build"/>
     </exec>
   </target>
@@ -54,14 +57,14 @@
     <echo>
       Now test on a few files..
     </echo>
-    <java classname="PyTest" classpath="${basedir}" failonerror="true" fork="true">
+    <java classname="org.parsers.python.test.ParseFiles" classpath="${basedir}" failonerror="true" fork="true">
       <assertions>
         <enable />
       </assertions>
-      <arg line = "-p -q ${basedir}/testfiles" />
+      <arg line = "${basedir}/testfiles" />
     </java>
     <echo>Now let's test the alt syntax.</echo>
-    <java classname="PyTest" classpath="${basedir}" failonerror="true" fork="true">
+    <java classname="org.parsers.python.test.ParseFiles" classpath="${basedir}" failonerror="true" fork="true">
       <arg line = "altsyntax/test_unicode_identifiers.py"/>
     </java>
     <echo>Now let's try the python parser (in python!)
@@ -76,14 +79,14 @@
   </target>
 
   <target name="test-python">
-    <exec executable="python3" dir="${basedir}" failonerror="true">
-      <arg line="-u pyparse.py testfiles" />
+    <exec executable="python3" dir="${basedir}/pythonparser/test" failonerror="true">
+      <arg line="-u parse_files.py ../../testfiles" />
     </exec>
   </target>
 
   <target name="test-csharp">
-    <exec executable="dotnet" dir="${basedir}" failonerror="true">
-      <arg line="cs-pythonparser/bin/Debug/net6.0/org.parsers.python.dll testfiles" />
+    <exec executable="dotnet" dir="${basedir}/cs-pythonparser/test" failonerror="true">
+      <arg line="run ../../testfiles" />
     </exec>
   </target>
 </project>

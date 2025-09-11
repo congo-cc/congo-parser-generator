@@ -106,7 +106,7 @@ private static HashSet<TokenType> ${varName} = Utils.GetOrMakeSet(
         [#-- We've reached the end of the block. --]
           [#if state.nextState.final]
                 [#var type = state.type]
-                if (validTypes.Contains(${TT}${type.label})) {
+                if ((validTypes == null) || validTypes.Contains(${TT}${type.label})) {
                     type = ${TT}${type.label};
                 }
           [/#if]
@@ -151,7 +151,7 @@ private static HashSet<TokenType> ${varName} = Utils.GetOrMakeSet(
         [#-- We've reached the end of the block. --]
           [#if state.nextState.final]
                 [#var type = state.type]
-                if (validTypes.Contains(${TT}${type.label})) {
+                if ((validTypes == null) || validTypes.Contains(${TT}${type.label})) {
                     type = ${TT}${type.label};
                 }
           [/#if]
@@ -878,17 +878,6 @@ ${globals::translateLexerImports()}
         // the current active NFA states in the core tokenization loop
         private BitSet _nextStates = new BitSet(MaxStates), _currentStates = new BitSet(MaxStates);
 
-        internal HashSet<TokenType> ActiveTokenTypes = Utils.EnumSet(
-[#list lexerData.regularExpressions as regexp]
-            TokenType.${regexp.label},
-[/#list]
- [#list settings.extraTokenNames as t]
-            TokenType.${t},
- [/#list]
-            TokenType.DUMMY,
-            TokenType.INVALID
-        );
-
         private LexicalState _lexicalState;
         public LexicalState LexicalState => _lexicalState;
 
@@ -912,15 +901,33 @@ ${globals::translateLexerImports()}
         private readonly IList<IObserver<LogInfo>> observers = new List<IObserver<LogInfo>>();
 [/#if]
 
+        internal HashSet<TokenType> ActiveTokenTypes;
+
         public Lexer(string inputSource, LexicalState lexState = LexicalState.${lexerData.lexicalStates[0].name}, int line = 1, int column = 1) : base(inputSource, line, column) {
-[#if settings.deactivatedTokens?size > 0 || settings.extraTokens?size > 0]
-  [#list settings.deactivatedTokens as token]
+#if settings.deactivatedTokens
+        ActiveTokenTypes = Utils.EnumSet(
+[#list lexerData.regularExpressions as regexp]
+            TokenType.${regexp.label},
+[/#list]
+ [#list settings.extraTokenNames as t]
+            TokenType.${t},
+ [/#list]
+            TokenType.DUMMY,
+            TokenType.INVALID
+        );
+
+  #list settings.deactivatedTokens as token
             ActiveTokenTypes.Remove(${CU.TT}${token});
-  [/#list]
-  [#list settings.extraTokenNames as token]
+  /#list
+#else
+            ActiveTokenTypes = null;
+/#if
+#if settings.extraTokens
+  #list settings.extraTokenNames as token
             regularTokens.Add(${CU.TT}${token});
-  [/#list]
-[/#if]
+  /#list
+/#if
+
 ${globals::translateLexerInitializers()}
             SwitchTo(lexState);
         }

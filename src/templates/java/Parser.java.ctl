@@ -35,7 +35,7 @@ import static ${settings.parserPackage}.${settings.baseTokenClassName}.TokenType
    import ${settings.rootAPIPackage}.Node;
 #endif
 #if settings.faultTolerant
-  #if settings.rootAPIPackage
+  #if settings.rootAPIPackage??
      import ${settings.rootAPIPackage}.InvalidNode;
      import ${settings.rootAPIPackage}.ParsingProblem;
   #else
