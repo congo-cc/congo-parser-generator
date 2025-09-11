@@ -224,11 +224,4 @@
     <echo>Copying current jar to bootstrap location ...</echo>
     <copy file="congocc.jar" todir="bin" />
   </target>
-
-  <target name="test-misc" depends="jar">
-    <exec executable="python3" dir="${basedir}" failonerror="true">
-      <env key="PY_DEBUG" value="1"/>
-      <arg line="-u misc_tests.py -v" />
-    </exec>
-  </target>
 </project>
