@@ -37,7 +37,6 @@ INJECT Node :
         setBeginOffset(from.getBeginOffset());
         setEndOffset(from.getEndOffset());
     }
-
 }
 
 INJECT BASE_NODE_CLASS :

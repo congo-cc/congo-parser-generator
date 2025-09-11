@@ -48,8 +48,8 @@ INJECT LEXER_CLASS :
     private static EnumSet<TokenType> continueLineTokens = EnumSet.of(
         COMMA, EQUALS, DOUBLE_EQUALS, NOT_EQUALS, DOT_DOT,
         GREATER_THAN, GREATER_THAN_EQUALS, LESS_THAN, LESS_THAN_EQUALS,
-        ESCAPED_GT, ESCAPED_GTE, PLUS, MINUS, TIMES, DIVIDE,
-        PERCENT, AND, OR, SEMICOLON, COLON, IN, AS, USING, TERNARY
+        PLUS, MINUS, TIMES, DIVIDE, PERCENT, AND, OR, SEMICOLON, COLON,
+        IN, AS, TERNARY
     );
 
     private boolean atLineStart(Token tok) {
@@ -364,17 +364,13 @@ TOKEN#Text :
   |
   <NOT_EQUALS : "!=">
   |
-  <GREATER_THAN : ">">
+  <GREATER_THAN : ">" | "&gt;">
   |
-  <GREATER_THAN_EQUALS: ">=">
+  <GREATER_THAN_EQUALS: ">=" | "&gt;=" >
   |
-  <LESS_THAN : "lt" | "<" | "&lt;">
+  <LESS_THAN : "<" | "&lt;">
   |
-  <LESS_THAN_EQUALS : "lte" | "<=" | "&lt;=">
-  |
-  <ESCAPED_GT: "gt" | "\\gt" |  "&gt;">
-  |
-  <ESCAPED_GTE : "gte" | "\\gte" | "&gt;=">
+  <LESS_THAN_EQUALS : "<=" | "&lt;=">
   |
   <PLUS : "+">
   |
@@ -421,8 +417,6 @@ TOKEN#Text :
   <IN : "in">
   |
   <AS : "as">
-  |
-  <USING : "using">
 ;
 
 INCLUDE JAVA_IDENTIFIER_DEF

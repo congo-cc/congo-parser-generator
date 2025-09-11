@@ -166,23 +166,23 @@ ${globals::translateParserImports()}
         public Parser Parser { get; private set; }
         public Token LastConsumed { get; private set; }
         public IList<NonTerminalCall> ParsingStack { get; private set; }
-[#if MULTIPLE_LEXICAL_STATE_HANDLING]
+#if MULTIPLE_LEXICAL_STATE_HANDLING
         public LexicalState LexicalState {get; private set; }
-[/#if]
-[#if settings.treeBuildingEnabled]
+#endif
+#if settings.treeBuildingEnabled
         public NodeScope NodeScope { get; private set; }
-[/#if]
+#endif
 
         internal ParseState(Parser parser) {
             Parser = parser;
             LastConsumed = parser.LastConsumedToken;
             ParsingStack = new List<NonTerminalCall>(parser.ParsingStack);
-[#if MULTIPLE_LEXICAL_STATE_HANDLING]
+#if MULTIPLE_LEXICAL_STATE_HANDLING
             LexicalState = parser.tokenSource.LexicalState;
-[/#if]
-[#if settings.treeBuildingEnabled]
+#endif
+#if settings.treeBuildingEnabled
             NodeScope = parser.CurrentNodeScope.Clone();
-[/#if]
+#endif
         }
     }
 
@@ -196,17 +196,17 @@ ${globals::translateParserImports()}
         public bool ScanToEnd { get; private set; }
         internal IList<NonTerminalCall> ParsingStack { get; private set; } = new List<NonTerminalCall>();
         internal readonly Lexer tokenSource;
-[#if settings.treeBuildingEnabled]
+#if settings.treeBuildingEnabled
         public bool BuildTree { get; set; } = ${CU.bool(settings.treeBuildingDefault)};
         public bool TokensAreNodes { get; set; } = ${CU.bool(settings.tokensAreNodes)};
         public bool UnparsedTokensAreNodes { get; set; } = ${CU.bool(settings.unparsedTokensAreNodes)};
         internal NodeScope CurrentNodeScope { get; set; }
-[/#if]
+#endif
 #if settings.legacyGlitchyLookahead
         private readonly bool _legacyGlitchyLookahead = true;
 #else
         private readonly bool _legacyGlitchyLookahead = false;
-/#if
+#endif
 
         // This property is for testing only
         public bool LegacyGlitchyLookahead {
@@ -224,20 +224,20 @@ ${globals::translateParserImports()}
 #if settings.faultTolerant
         internal ISet<TokenType> OuterFollowSet { get; private set; }
         private ISet<TokenType> _currentFollowSet;
-/#if
+#endif
         private readonly IList<NonTerminalCall> _lookaheadStack = new List<NonTerminalCall>();
         private readonly IList<ParseState> _parseStateStack = new List<ParseState>();
 #if settings.faultTolerant
-   [#if settings.faultTolerantDefault]
+   #if settings.faultTolerantDefault
         private bool _tolerantParsing = true;
-   [#else]
+   #else
         private bool _tolerantParsing = false;
-   [/#if]
+   #endif
         private bool _pendingRecovery = false;
         private readonly IList<Node> _parsingProblems = new List<Node>();
-/#if
+#endif
 
-[#if unwanted!false]
+#if unwanted!false
         private readonly IList<IObserver<LogInfo>> observers = new List<IObserver<LogInfo>>();
 
         public IDisposable Subscribe(IObserver<LogInfo> observer)
@@ -255,22 +255,22 @@ ${globals::translateParserImports()}
             }
         }
 
-[/#if]
+#endif
         public Parser(string inputSource) {
             InputSource = inputSource;
             tokenSource = new Lexer(inputSource);
-[#if settings.lexerUsesParser]
+#if settings.lexerUsesParser
             tokenSource.Parser = this;
-[/#if]
+#endif
             LastConsumedToken = Lexer.DummyStartToken;
             LastConsumedToken.TokenSource = tokenSource;
-[#if settings.treeBuildingEnabled]
+#if settings.treeBuildingEnabled
             new NodeScope(this); // attaches NodeScope instance to Parser instance
-[/#if]
+#endif
 ${globals::translateParserInitializers()}
         }
 
-[#if settings.faultTolerant]
+#if settings.faultTolerant
         public void AddParsingProblem(BaseNode problem) {
             _parsingProblems.Add(problem);
         }
@@ -279,21 +279,21 @@ ${globals::translateParserInitializers()}
             get { return _tolerantParsing; }
             set { _tolerantParsing = value; }
         }
-[#else]
+#else
         public bool IsTolerant {
             get { return false; }
         }
-[/#if]
+#endif
 
 
 
 
         private void PushLastTokenBack() {
-[#if settings.treeBuildingEnabled]
+#if settings.treeBuildingEnabled
             if (PeekNode().Equals(LastConsumedToken)) {
                 PopNode();
             }
-[/#if]
+#endif
             LastConsumedToken = LastConsumedToken.PreviousToken;
         }
 
@@ -307,29 +307,29 @@ ${globals::translateParserInitializers()}
 
         private void RestoreStashedParseState() {
             var state = PopParseState();
-[#if settings.treeBuildingEnabled]
+#if settings.treeBuildingEnabled
             CurrentNodeScope = state.NodeScope;
             ParsingStack = state.ParsingStack;
-[/#if]
+#endif
             if (state.LastConsumed != null) {
                 // REVISIT
                 LastConsumedToken = state.LastConsumed;
             }
-[#if MULTIPLE_LEXICAL_STATE_HANDLING]
+#if MULTIPLE_LEXICAL_STATE_HANDLING
             tokenSource.Reset(LastConsumedToken, state.LexicalState);
-[#else]
+#else
             tokenSource.Reset(LastConsumedToken);
-[/#if]
+#endif
         }
 
-[#if settings.treeBuildingEnabled]
+#if settings.treeBuildingEnabled
         public bool IsTreeBuildingEnabled { get { return BuildTree; } }
 
-   [#embed "TreeBuildingCode.inc.ctl"]
-[#else]
+   #embed "TreeBuildingCode.inc.ctl"
+#else
         public bool IsTreeBuildingEnabled { get { return false; } }
 
-[/#if]
+#endif
         internal void PushOntoCallStack(string methodName, string fileName, uint line, uint column) {
             ParsingStack.Add(new NonTerminalCall(this, fileName, methodName, line, column[#if settings.faultTolerant], _currentFollowSet[/#if]));
         }
@@ -353,14 +353,14 @@ ${globals::translateParserInitializers()}
         private Token NextToken(Token tok) {
             Token result = tokenSource.GetNextToken(tok);
             while (result.IsUnparsed) {
-[#list grammar.parserTokenHooks as methodName]
+#list grammar.parserTokenHooks as methodName
                 result = ${methodName}(result);
-[/#list]
+#endlist
                 result = tokenSource.GetNextToken(result);
             }
-[#list grammar.parserTokenHooks as methodName]
+#list grammar.parserTokenHooks as methodName
             result = ${methodName}(result);
-[/#list]
+#endlist
             _nextTokenType = null;
             return result;
         }
@@ -503,33 +503,33 @@ ${globals::translateParserInitializers()}
             }
             return false;
         }
-[#import "ParserProductions.inc.ctl" as ParserCode]
+#import "ParserProductions.inc.ctl" as ParserCode
 [@ParserCode.Productions /]
-[#import "LookaheadRoutines.inc.ctl" as LookaheadCode]
+#import "LookaheadRoutines.inc.ctl" as LookaheadCode
 [@LookaheadCode.Generate/]
 
-[#embed "ErrorHandling.inc.ctl"]
+#embed "ErrorHandling.inc.ctl"
 
-[#if settings.treeBuildingEnabled]
+#if settings.treeBuildingEnabled
     //
     // AST nodes
     //
-[#list globals.sortedNodeClassNames as node]
-  [#if !injector::hasInjectedCode(node)]
-    [#if globals::nodeIsInterface(node)]
+#list globals.sortedNodeClassNames as node
+  #if !injector::hasInjectedCode(node)
+    #if globals::nodeIsInterface(node)
     public interface ${node} : Node {}
-    [#else]
+    #else
     public class ${node} : BaseNode {
         public ${node}(Lexer tokenSource) : base(tokenSource) {}
     }
-    [/#if]
+    #endif
 
-  [#else]
+  #else
 ${globals::translateInjectedClass(node)}
 
-  [/#if]
-[/#list]
-[/#if]
+  #endif
+#endlist
+#endif
 
 ${globals::translateParserInjections(true)}
 ${globals::translateParserInjections(false)}

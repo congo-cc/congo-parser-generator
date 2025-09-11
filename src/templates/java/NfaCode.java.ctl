@@ -22,7 +22,7 @@
   #endlist
 
   #-- We break the initialization into multiple chunkSize
-  #-- if we have more than a couple of thousand NFA states in order to 
+  #-- if we have more than a couple of thousand NFA states in order to
   #-- get around the Code Too Large problem
   #-- This is pretty rare, and I thought it never happened, except
   #-- user ngx reported running into this with his SQL grammar
@@ -33,7 +33,7 @@
 
   private static void NFA_FUNCTIONS_init() {
     NfaFunction[] functions = new NfaFunction[${numChunks > 1 ?: lexicalState.canonicalSets?size}]
-    #if numChunks == 1 
+    #if numChunks == 1
     {
      #list canonicalSets as state
       ${lexicalState.name}::get${state.methodName}
@@ -42,7 +42,7 @@
     };
     #else
     ;
-    #list 1..numChunks as index 
+    #list 1..numChunks as index
         NFA_FUNCTIONS_init${index}(functions);
     #endlist
     #endif
@@ -98,12 +98,12 @@
     #var states = nfaState.orderedStates, lastBlockStartIndex = 0
     #list states as state
       #if state_index == 0 || state.moveRanges != states[state_index - 1].moveRanges
-          #-- In this case we need a new if or possibly else if 
+          #-- In this case we need a new if or possibly else if
          #if state_index == 0 || state::overlaps(states::subList(lastBlockStartIndex, state_index))
            [#-- If there is overlap between this state and any of the states
                  handled since the last lone if, we start a new if-else
                  If not, we continue in the same if-else block as before. --]
-           [#set lastBlockStartIndex = state_index]
+           #set lastBlockStartIndex = state_index
                if
          #else
                else if

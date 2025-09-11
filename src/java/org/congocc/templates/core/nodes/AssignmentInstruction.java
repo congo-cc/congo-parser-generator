@@ -3,7 +3,6 @@ package org.congocc.templates.core.nodes;
 import java.io.IOException;
 import java.util.*;
 import java.lang.reflect.Array;
-import org.congocc.templates.TemplateException;
 import org.congocc.templates.core.Environment;
 import org.congocc.templates.core.variables.EvaluationException;
 import org.congocc.templates.core.variables.InvalidReferenceException;

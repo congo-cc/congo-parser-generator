@@ -20,9 +20,6 @@ import java.util.List;
 
 #if settings.treeBuildingEnabled
     #set implements = "implements CharSequence, Node.TerminalNode"
-    #if settings.rootAPIPackage??
-       import ${settings.rootAPIPackage}.Node;
-    #endif
 #endif
 
 public class ${settings.baseTokenClassName} ${implements} {

@@ -570,9 +570,9 @@
         if (passedPredicate) ${returnFalse(cardinalitiesVar!null, parentCardVar!null)};
      #endif
   #endlist
-  [#list choice.choices as unused]
+  #list choice.choices as unused
      }
-  [/#list]
+  #endlist
    } finally {
       passedPredicate = passedPredicate${CU.newVarIndex};
    }
@@ -621,7 +621,7 @@
            ${zomCardVar}.commitIteration(false);
         #endif
       }
-      #if zom.cardinalityContainer
+      #if zom.minCardinalityConstrained
          if(!${zomCardVar}.checkCardinality(true)) ${returnFalse(cardinalitiesVar!null)};
       #endif
     } finally {
@@ -655,8 +655,7 @@
      #if expansion.firstSet.tokenNames?size < CU.USE_FIRST_SET_THRESHOLD
       scanToken(
         #list expansion.firstSet.tokenNames as name
-          ${name}
-          [#if name_has_next],[/#if]
+          ${name} ${name_has_next ?: ","}
         #endlist
       )
      #else

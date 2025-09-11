@@ -1,52 +1,52 @@
 [#-- This template generates the various lookahead/predicate routines --]
 
-[#import "CommonUtils.inc.ctl" as CU]
+#import "CommonUtils.inc.ctl" as CU
 
-[#var UNLIMITED = 2147483647]
-[#var MULTIPLE_LEXICAL_STATE_HANDLING = lexerData.numLexicalStates > 1]
-[#set MULTIPLE_LEXICAL_STATE_HANDLING = false]
+#var UNLIMITED = 2147483647
+#var MULTIPLE_LEXICAL_STATE_HANDLING = lexerData.numLexicalStates > 1
+#set MULTIPLE_LEXICAL_STATE_HANDLING = false
 
 
-[#macro Generate]
+#macro Generate
     [@firstSetVars /]
 #if settings.faultTolerant
     [@followSetVars /]
-/#if
-    [#if grammar.choicePointExpansions?size != 0]
+#endif
+    #if grammar.choicePointExpansions?size != 0
        [@BuildLookaheads /]
-     [/#if]
-[/#macro]
+    #endif
+#endmacro
 
 
-[#macro firstSetVars]
+#macro firstSetVars
     // ==================================================================
     // EnumSets that represent the various expansions' first set (i.e. the set of tokens with which the expansion can begin)
     // ==================================================================
-    [#list grammar.expansionsForFirstSet as expansion]
+    #list grammar.expansionsForFirstSet as expansion
           [@CU.firstSetVar expansion/]
-    [/#list]
-[/#macro]
+    #endlist
+#endmacro
 
-[#macro finalSetVars]
+#macro finalSetVars
     // ==================================================================
     // EnumSets that represent the various expansions' final set (i.e. the set of tokens with which the expansion can end)
     // ==================================================================
-    [#list grammar.expansionsForFinalSet as expansion]
+    #list grammar.expansionsForFinalSet as expansion
           [@finalSetVar expansion/]
-    [/#list]
-[/#macro]
+    #endlist
+#endmacro
 
 
-[#macro followSetVars]
+#macro followSetVars
     // ==================================================================
     // EnumSets that represent the various expansions' follow set (i.e. the set of tokens that can immediately follow this)
     // ==================================================================
-    [#list grammar.expansionsForFollowSet as expansion]
+    #list grammar.expansionsForFollowSet as expansion
           [@CU.followSetVar expansion/]
-    [/#list]
-[/#macro]
+    #endlist
+#endmacro
 
-[#macro BuildLookaheads]
+#macro BuildLookaheads
         internal bool ScanToken(params TokenType[] types) {
             Token peekedToken = NextToken(currentLookaheadToken);
             bool foundMatch = false;
@@ -139,33 +139,35 @@
 // ====================================
 // Lookahead Routines
 // ====================================
-   [#list grammar.choicePointExpansions as expansion]
-      [#if expansion.parent.class.simpleName != "BNFProduction"]
+   #list grammar.choicePointExpansions as expansion
+      #if expansion.parent.class.simpleName != "BNFProduction"
 ${BuildScanRoutine(expansion)}
-      [/#if]
-   [/#list]
-   [#list grammar.assertionExpansions as expansion]
+      #endif
+   #endlist
+   #list grammar.assertionExpansions as expansion
       ${BuildAssertionRoutine(expansion)}
-   [/#list]
-   [#list grammar.expansionsNeedingPredicate as expansion]
+   #endlist
+   #list grammar.expansionsNeedingPredicate as expansion
 ${BuildPredicateRoutine(expansion)}
-   [/#list]
-   [#list grammar.allLookaheads as lookahead]
-      [#if lookahead.nestedExpansion??]
+   #endlist
+   #list grammar.allLookaheads as lookahead
+      #if lookahead.nestedExpansion??
 ${BuildLookaheadRoutine(lookahead)}
-     [/#if]
-   [/#list]
-   [#list grammar.allLookBehinds as lookBehind]
+     #endif
+   #endlist
+   #list grammar.allLookBehinds as lookBehind
 ${BuildLookBehindRoutine(lookBehind)}
-   [/#list]
-   [#list grammar.parserProductions as production]
+   #endlist
+   #list grammar.parserProductions as production
 ${BuildProductionLookaheadMethod(production)}
-   [/#list]
-[/#macro]
+   #endlist
+#endmacro
 
-[#macro BuildPredicateRoutine expansion]
-  [#var lookaheadAmount = expansion.lookaheadAmount]
-  [#if lookaheadAmount = 2147483647][#set lookaheadAmount = "UNLIMITED"][/#if]
+#macro BuildPredicateRoutine expansion
+  #var lookaheadAmount = expansion.lookaheadAmount
+  #if lookaheadAmount = 2147483647
+     #set lookaheadAmount = "UNLIMITED"
+  #endif
     // BuildPredicateRoutine: expansion at ${expansion.location}
     private bool ${expansion.predicateMethodName}() {
         _remainingLookahead = ${lookaheadAmount};
@@ -173,9 +175,9 @@ ${BuildProductionLookaheadMethod(production)}
         var scanToEnd = false;
         try {
 ${BuildPredicateCode(expansion)}
-      [#if !expansion.hasSeparateSyntacticLookahead && expansion.lookaheadAmount != 0]
+      #if !expansion.hasSeparateSyntacticLookahead && expansion.lookaheadAmount != 0
 ${BuildScanCode(expansion)}
-      [/#if]
+      #endif
             return true;
         }
         finally {
@@ -185,60 +187,60 @@ ${BuildScanCode(expansion)}
         }
     }
 
-[/#macro]
+#endmacro
 
-[#macro BuildScanRoutine expansion]
-[#-- # DBG > BuildScanRoutine --]
- [#if !expansion.singleTokenLookahead]
+#macro BuildScanRoutine expansion
+#-- # DBG > BuildScanRoutine
+ #if !expansion.singleTokenLookahead
 // scanahead routine for expansion at:
 // ${expansion.location}
 // BuildScanRoutine macro
-[#set newVarIndex = 0 in CU]
+#set newVarIndex = 0 in CU
 private bool ${expansion.scanRoutineName}(bool scanToEnd) {
-    [#if expansion.hasScanLimit]
+    #if expansion.hasScanLimit
        var prevPassedPredicateThreshold = _passedPredicateThreshold;
        _passedPredicateThreshold = -1;
-    [#else]
+    #else
        bool reachedScanCode = false;
        var passedPredicateThreshold = (int) _remainingLookahead - ${expansion.lookaheadAmount};
-    [/#if]
+    #endif
     try {
        _lookaheadRoutineNesting++;
        ${BuildPredicateCode(expansion)}
-      [#if !expansion.hasScanLimit]
+      #if !expansion.hasScanLimit
        reachedScanCode = true;
-      [/#if]
+      #endif
        ${BuildScanCode(expansion)}
     }
     finally {
        _lookaheadRoutineNesting--;
-   [#if expansion.hasScanLimit]
+   #if expansion.hasScanLimit
        if (_remainingLookahead <= _passedPredicateThreshold) {
          _passedPredicate = true;
          _passedPredicateThreshold = prevPassedPredicateThreshold;
        }
-   [#else]
+   #else
        if (reachedScanCode && _remainingLookahead <= passedPredicateThreshold) {
          _passedPredicate = true;
        }
-   [/#if]
+   #endif
     }
     _passedPredicate = false;
     return true;
 }
 
- [/#if]
-[#-- # DBG < BuildScanRoutine --]
-[/#macro]
+ #endif
+#-- # DBG < BuildScanRoutine
+#endmacro
 
-[#macro BuildAssertionRoutine expansion]
+#macro BuildAssertionRoutine expansion
 // scanahead routine for assertion at:
 // ${expansion.parent.location}
 // BuildAssertionRoutine macro
 private bool ${expansion.scanRoutineName}() {
-[#var storeCurrentLookaheadVar = CU.newVarName("currentLookahead")
-      storeRemainingLookahead = CU.newVarName("remainingLookahead")]
-[#set newVarIndex = 0 in CU]
+#var storeCurrentLookaheadVar = CU.newVarName("currentLookahead"),
+      storeRemainingLookahead = CU.newVarName("remainingLookahead")
+#set newVarIndex = 0 in CU
     var ${storeRemainingLookahead} = _remainingLookahead;
     _remainingLookahead = UNLIMITED;
     var ${storeCurrentLookaheadVar} = currentLookaheadToken;
@@ -258,22 +260,22 @@ ${BuildScanCode(expansion)}
         _hitFailure = prevHitFailure;
     }
 }
-[/#macro]
+#endmacro
 
-[#-- Build the code for checking semantic lookahead, lookbehind, and/or syntactic lookahead --]
-[#macro BuildPredicateCode expansion]
-[#-- # DBG > BuildPredicateCode --]
-[#if expansion.hasSemanticLookahead && (expansion.lookahead.semanticLookaheadNested || expansion.containingProduction.onlyForLookahead)]
+#-- Build the code for checking semantic lookahead, lookbehind, and/or syntactic lookahead
+#macro BuildPredicateCode expansion
+#-- # DBG > BuildPredicateCode
+#if expansion.hasSemanticLookahead && (expansion.lookahead.semanticLookaheadNested || expansion.containingProduction.onlyForLookahead)
 if (!(${globals::translateExpression(expansion.semanticLookahead)})) {
     return false;
 }
-[/#if]
-[#if expansion.hasLookBehind]
+#endif
+#if expansion.hasLookBehind
 if ([#if !expansion.lookBehind.negated]![/#if]${expansion.lookBehind.routineName}()) {
     return false;
 }
-[/#if]
-[#if expansion.hasSeparateSyntacticLookahead]
+#endif
+#if expansion.hasSeparateSyntacticLookahead
 if (_remainingLookahead <= 0) {
     _passedPredicate = true;
     return !_hitFailure;
@@ -281,20 +283,20 @@ if (_remainingLookahead <= 0) {
 if ([#if !expansion.lookahead.negated]![/#if]${expansion.lookaheadExpansion.scanRoutineName}(true)) {
     return false;
 }
-[/#if]
+#endif
   #if expansion.lookaheadAmount == 0
     _passedPredicate = true;
-  /#if
-[#-- # DBG < BuildPredicateCode --]
-[/#macro]
+  #endif
+#-- # DBG < BuildPredicateCode
+#endmacro
 
 [#--
    Generates the routine for an explicit lookahead
    that is used in a nested lookahead.
  --]
-[#macro BuildLookaheadRoutine lookahead]
-[#-- # DBG > BuildLookaheadRoutine --]
-[#if lookahead.nestedExpansion??]
+#macro BuildLookaheadRoutine lookahead
+#-- # DBG > BuildLookaheadRoutine
+#if lookahead.nestedExpansion??
 // lookahead routine for lookahead at:
 // ${lookahead.location}
 private bool ${lookahead.nestedExpansion.scanRoutineName}(bool scanToEnd) {
@@ -313,38 +315,37 @@ ${BuildScanCode(lookahead.nestedExpansion)}
         _hitFailure = prevHitFailure;
     }
 }
+#endif
+#-- # DBG < BuildLookaheadRoutine
+#endmacro
 
-[/#if]
-[#-- # DBG < BuildLookaheadRoutine --]
-[/#macro]
-
-[#macro BuildLookBehindRoutine lookBehind]
-[#-- # DBG > BuildLookBehindRoutine --]
+#macro BuildLookBehindRoutine lookBehind
+#-- # DBG > BuildLookBehindRoutine
 private bool ${lookBehind.routineName}() {
     var stackIterator = new ${lookBehind.backward?string("BackwardIterator", "ForwardIterator")}<NonTerminalCall>(ParsingStack, _lookaheadStack);
     NonTerminalCall ntc;
-[#list lookBehind.path as element]
-  [#var elementNegated = (element[0] == "~")]
+#list lookBehind.path as element
+  #var elementNegated = (element[0] == "~")
   [#if elementNegated][#set element = element?substring(1)][/#if]
-  [#if element = "."]
+  #if element = "."
     if (!stackIterator.HasNext()) {
         return false;
     }
     stackIterator.Next();
-  [#elseif element = "..."]
-    [#if element_index = lookBehind.path?size-1]
-      [#if lookBehind.hasEndingSlash]
+  #elif element = "..."
+    #if element_index = lookBehind.path?size-1
+      #if lookBehind.hasEndingSlash
     return !stackIterator.HasNext();
-      [#else]
+      #else
     return true;
-      [/#if]
-    [#else]
-      [#var nextElement = lookBehind.path[element_index + 1]]
-      [#var nextElementNegated = (nextElement[0] == "~")]
+      #endif
+    #else
+      #var nextElement = lookBehind.path[element_index + 1]
+      #var nextElementNegated = (nextElement[0] == "~")
       [#if nextElementNegated][#set nextElement = nextElement?substring(1)][/#if]
     while (stackIterator.HasNext()) {
         ntc = stackIterator.Next();
-      [#var equalityOp = nextElementNegated?string("!=", "==")]
+      #var equalityOp = nextElementNegated?string("!=", "==")
         if (ntc.ProductionName ${equalityOp} "${nextElement}") {
             stackIterator.Previous();
             break;
@@ -353,77 +354,77 @@ private bool ${lookBehind.routineName}() {
             return false;
         }
     }
-    [/#if]
-  [#else]
+    #endif
+  #else
     if (!stackIterator.HasNext()) {
         return false;
     }
     ntc = stackIterator.Next();
-     [#var equalityOp = elementNegated?string("==", "!=")]
+     #var equalityOp = elementNegated?string("==", "!=")
     if (ntc.ProductionName ${equalityOp} "${element}") {
         return false;
     }
-  [/#if]
-[/#list]
-[#if lookBehind.hasEndingSlash]
+  #endif
+#endlist
+#if lookBehind.hasEndingSlash
     return !stackIterator.HasNext();
-[#else]
+#else
     return true;
-[/#if]
+#endif
 }
-[#-- # DBG < BuildLookBehindRoutine --]
-[/#macro]
+#-- # DBG < BuildLookBehindRoutine
+#endmacro
 
-[#macro BuildProductionLookaheadMethod production]
-[#--     # DBG > BuildProductionLookaheadMethod --]
+#macro BuildProductionLookaheadMethod production
+#--     # DBG > BuildProductionLookaheadMethod
         // BuildProductionLookaheadMethod macro
         private bool ${production.lookaheadMethodName}(bool scanToEnd) {
 ${BuildScanCode(production.expansion)}
             return true;
         }
 
-[#--     # DBG < BuildProductionLookaheadMethod --]
-[/#macro]
+#--     # DBG < BuildProductionLookaheadMethod
+#endmacro
 
 [#--
    Macro to build the lookahead code for an expansion.
    This macro just delegates to the various sub-macros
    based on the Expansion's class name.
 --]
-[#macro BuildScanCode expansion]
-[#-- # DBG > BuildScanCode ${expansion.simpleName} --]
-  [#var classname = expansion.simpleName]
-  [#if classname != "ExpansionSequence" && classname != "ExpansionWithParentheses"]
+#macro BuildScanCode expansion
+#-- # DBG > BuildScanCode ${expansion.simpleName}
+  #var classname = expansion.simpleName
+  #if classname != "ExpansionSequence" && classname != "ExpansionWithParentheses"
 if (_hitFailure) return false;
 if (_remainingLookahead <= 0) {
     return true;
 }
 // Lookahead Code for ${classname} specified at ${expansion.location}
-  [/#if]
+  #endif
   [@CU.HandleLexicalStateChange expansion, true]
-   [#if classname = "ExpansionWithParentheses"]
+   #if classname = "ExpansionWithParentheses"
       [@BuildScanCode expansion.nestedExpansion /]
-   [#elseif expansion.singleTokenLookahead]
+   #elif expansion.singleTokenLookahead
 ${ScanSingleToken(expansion)}
-   [#elseif classname = "Assertion" && expansion.appliesInLookahead]
+   #elif classname = "Assertion" && expansion.appliesInLookahead
 ${ScanCodeAssertion(expansion)}
-   [#elseif classname = "Failure"]
+   #elif classname = "Failure"
 ${ScanCodeError(expansion)}
-   [#elseif classname = "TokenTypeActivation"]
+   #elif classname = "TokenTypeActivation"
 ${ScanCodeTokenActivation(expansion)}
-   [#elseif classname = "ExpansionSequence"]
+   #elif classname = "ExpansionSequence"
 ${ScanCodeSequence(expansion)}
-   [#elseif classname = "ZeroOrOne"]
+   #elif classname = "ZeroOrOne"
 ${ScanCodeZeroOrOne(expansion)}
-   [#elseif classname = "ZeroOrMore"]
+   #elif classname = "ZeroOrMore"
 ${ScanCodeZeroOrMore(expansion)}
-   [#elseif classname = "OneOrMore"]
+   #elif classname = "OneOrMore"
 ${ScanCodeOneOrMore(expansion)}
-   [#elseif classname = "NonTerminal"]
+   #elif classname = "NonTerminal"
       [@ScanCodeNonTerminal expansion /]
-   [#elseif classname = "TryBlock" || classname = "AttemptBlock"]
+   #elif classname = "TryBlock" || classname = "AttemptBlock"
       [@BuildScanCode expansion.nestedExpansion /]
-   [#elseif classname = "ExpansionChoice"]
+   #elif classname = "ExpansionChoice"
 ${ScanCodeChoice(expansion)}
    #elif classname = "CodeBlock"
       #if expansion.appliesInLookahead || expansion.insideLookahead || expansion.containingProduction.onlyForLookahead
@@ -435,8 +436,8 @@ ${globals::translateCodeBlock(expansion, 12)}
       #endif
    #endif
   [/@CU.HandleLexicalStateChange]
-[#-- # DBG < BuildScanCode ${expansion.simpleName} --]
-[/#macro]
+#-- # DBG < BuildScanCode ${expansion.simpleName}
+#endmacro
 
 [#--
    Generates the lookahead code for an ExpansionSequence.
@@ -448,11 +449,11 @@ ${globals::translateCodeBlock(expansion, 12)}
    to scan to the end of an expansion strike me as quite useful in general,
    particularly for fault-tolerant.
 --]
-[#macro ScanCodeSequence sequence]
-[#-- # DBG > ScanCodeSequence --]
-   [#list sequence.units as sub]
+#macro ScanCodeSequence sequence
+#-- # DBG > ScanCodeSequence
+   #list sequence.units as sub
        [@BuildScanCode sub /]
-       [#if sub.scanLimit]
+       #if sub.scanLimit
          if (!scanToEnd && _lookaheadStack.Count <= 1) {
             if (_lookaheadRoutineNesting == 0) {
               _remainingLookahead = ${sub.scanLimitPlus};
@@ -461,20 +462,20 @@ ${globals::translateCodeBlock(expansion, 12)}
                _passedPredicateThreshold = (int) _remainingLookahead[#if sub.scanLimitPlus > 0] - ${sub.scanLimitPlus}[/#if];
             }
          }
-       [/#if]
-   [/#list]
-[#-- # DBG < ScanCodeSequence --]
-[/#macro]
+       #endif
+   #endlist
+#-- # DBG < ScanCodeSequence
+#endmacro
 
 [#--
   Generates the lookahead code for a non-terminal.
   It (trivially) just delegates to the code for
   checking the production's nested expansion
 --]
-[#macro ScanCodeNonTerminal nt]
+#macro ScanCodeNonTerminal nt
 // NonTerminal ${nt.name} at ${nt.location}
 PushOntoLookaheadStack("${nt.containingProduction.name}", "${nt.inputSource?j_string}", ${nt.beginLine}, ${nt.beginColumn});
-[#var prevScanToEndVarName = "prevScanToEnd" + CU.newID()]
+#var prevScanToEndVarName = "prevScanToEnd" + CU.newID()
 bool ${prevScanToEndVarName} = ScanToEnd;
 _currentLookaheadProduction = "${nt.production.name}";
 try {
@@ -485,86 +486,86 @@ try {
 finally {
     PopLookaheadStack();
 }
-[/#macro]
+#endmacro
 
-[#macro ScanSingleToken expansion]
-[#var firstSet = expansion.firstSet.tokenNames]
-[#-- # DBG > ScanSingleToken --]
-[#if firstSet?size = 1]
+#macro ScanSingleToken expansion
+#var firstSet = expansion.firstSet.tokenNames
+#-- # DBG > ScanSingleToken
+#if firstSet?size = 1
 if (!ScanToken(${CU.TT}${firstSet[0]})) {
     return false;
 }
-[#else]
+#else
 if (!ScanToken(${expansion.firstSetVarName})) {
     return false;
 }
-[/#if]
+#endif
 [#-- # DBG < ScanSingleToken --]
-[/#macro]
+#endmacro
 
-[#macro ScanCodeAssertion assertion]
-[#-- # DBG > ScanCodeAssertion --]
+#macro ScanCodeAssertion assertion
+#-- # DBG > ScanCodeAssertion
 #if assertion.assertionExpression??
 if (!(${globals::translateExpression(assertion.assertionExpression)})) {
     _hitFailure = true;
     return false;
 }
 #endif
-[#if assertion.expansion??]
+#if assertion.expansion??
 if ([#if !assertion.expansionNegated]![/#if]${assertion.expansion.scanRoutineName}()) {
     _hitFailure = true;
     return false;
 }
-[/#if]
-[#-- # DBG < ScanCodeAssertion --]
-[/#macro]
+#endif
+#-- # DBG < ScanCodeAssertion
+#endmacro
 
-[#macro ScanCodeError expansion]
-[#-- # DBG > ScanCodeError --]
+#macro ScanCodeError expansion
+#-- # DBG > ScanCodeError
 _hitFailure = true;
 return false;
-[#-- # DBG < ScanCodeError --]
-[/#macro]
+#-- # DBG < ScanCodeError
+#endmacro
 
-[#macro ScanCodeTokenActivation activation]
-[#-- # DBG > ScanCodeTokenActivation --]
+#macro ScanCodeTokenActivation activation
+#-- # DBG > ScanCodeTokenActivation
 [#if activation.deactivate]Dea[#else]A[/#if]ctivateTokenTypes(
-[#list activation.tokenNames as name]
+#list activation.tokenNames as name
     ${CU.TT}${name}[#if name_has_next],[/#if]
-[/#list]
+#endlist
 )
-[#-- # DBG < ScanCodeTokenActivation --]
-[/#macro]]
+#-- # DBG < ScanCodeTokenActivation
+#endmacro
 
-[#macro ScanCodeChoice choice]
-[#-- # DBG > ScanCodeChoice --]
+#macro ScanCodeChoice choice
+#-- # DBG > ScanCodeChoice
 var ${CU.newVarName("token")} = currentLookaheadToken;
 var remainingLookahead${CU.newVarIndex} = _remainingLookahead;
 var hitFailure${CU.newVarIndex} = _hitFailure;
 var passedPredicate${CU.newVarIndex} = _passedPredicate;
 try {
-  [#list choice.choices as subseq]
+  #list choice.choices as subseq
     _passedPredicate = false;
     if (!${CheckExpansion(subseq)}) {
         currentLookaheadToken = token${CU.newVarIndex};
         _remainingLookahead = remainingLookahead${CU.newVarIndex};
         _hitFailure = hitFailure${CU.newVarIndex};
-     [#if !subseq_has_next]
+     #if !subseq_has_next
         return false;
-     [#else]
+     #else
         if (_passedPredicate && !_legacyGlitchyLookahead) return false;
-     [/#if]
-  [/#list]
+     #endif
+  #endlist
   [#list choice.choices as unused] } [/#list]
 }
 finally {
     _passedPredicate = passedPredicate${CU.newVarIndex};
 }
-[#-- # DBG < ScanCodeChoice --]
-[/#macro]
+#-- # DBG < ScanCodeChoice
+#endmacro
 
-[#macro ScanCodeZeroOrOne zoo]
-[#-- # DBG > ScanCodeZeroOrOne --]
+#macro ScanCodeZeroOrOne zoo
+#-- # DBG > ScanCodeZeroOrOne
 var ${CU.newVarName("token")} = currentLookaheadToken;
 var passedPredicate${CU.newVarIndex} = _passedPredicate;
 _passedPredicate = false;
@@ -578,14 +579,14 @@ try {
 finally {
     _passedPredicate = passedPredicate${CU.newVarIndex};
 }
-[#-- # DBG < ScanCodeZeroOrOne --]
-[/#macro]
+#-- # DBG < ScanCodeZeroOrOne
+#endmacro
 
 [#--
   Generates lookahead code for a ZeroOrMore construct]
 --]
-[#macro ScanCodeZeroOrMore zom]
-[#-- # DBG > ScanCodeZeroOrMore --]
+#macro ScanCodeZeroOrMore zom
+#-- # DBG > ScanCodeZeroOrMore
 var ${CU.newVarName("passedPredicate")} = _passedPredicate;
 try {
     while (_remainingLookahead > 0 && !_hitFailure) {
@@ -602,35 +603,35 @@ finally {
     _passedPredicate = passedPredicate${CU.newVarIndex};
 }
 _hitFailure = false;
-[#-- # DBG < ScanCodeZeroOrMore --]
-[/#macro]
+#-- # DBG < ScanCodeZeroOrMore
+#endmacro
 
 [#--
    Generates lookahead code for a OneOrMore construct
    It generates the code for checking a single occurrence
    and then the same code as a ZeroOrMore
 --]
-[#macro ScanCodeOneOrMore oom]
-[#-- # DBG > ScanCodeOneOrMore --]
+#macro ScanCodeOneOrMore oom
+#-- # DBG > ScanCodeOneOrMore
 [#--
 if (!(${CheckExpansion(oom.nestedExpansion)})) {
     return false;
 }--]
 [@BuildScanCode oom.nestedExpansion /]
 [@ScanCodeZeroOrMore oom /]
-[#-- # DBG < ScanCodeOneOrMore --]
-[/#macro]
+#-- # DBG < ScanCodeOneOrMore
+#endmacro
 
-[#macro CheckExpansion expansion]
-   [#if expansion.singleTokenLookahead]
-     [#if expansion.firstSet.tokenNames?size = 1]
+#macro CheckExpansion expansion
+   #if expansion.singleTokenLookahead
+     #if expansion.firstSet.tokenNames?size = 1
       ScanToken(${CU.TT}${expansion.firstSet.tokenNames[0]})
-     [#else]
+     #else
       ScanToken(${expansion.firstSetVarName})
-     [/#if]
-   [#else]
+     #endif
+   #else
       ${expansion.scanRoutineName}(false)
-   [/#if]
-[/#macro]
+   #endif
+#endmacro
 
 

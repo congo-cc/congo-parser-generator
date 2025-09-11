@@ -18,10 +18,6 @@ INJECT Interpolation :
     import org.congocc.templates.TemplateException;
     implements TemplateElement
 {
-    public boolean isNoEscapeSet() {
-        return ((Token)get(0)).charAt(1) == '\\';
-    }
-
     public Expression getExpression() {
     	return firstChildOfType(Expression.class);
     }
@@ -56,18 +52,8 @@ IfBlock :
     )#ConditionalBlock
   )*
   [
-    (
-        <ELSE>
-        {
-            if (start.charAt(0) == '#' && start.charAt(0) == '#' && start.getBeginColumn()!=lastConsumedToken.getBeginColumn()) {
-                String message = "Mismatched indentation. The #else"
-                                 + " should match the indentation of the #if tag on line "
-                                 + start.getBeginLine();
-                throw new ParseException(message, lastConsumedToken, parsingStack);
-            }
-        }
-        Block
-    )#ConditionalBlock
+    <ELSE> Block
+    #ConditionalBlock(2)
   ]
   CloseDirectiveBlock(start)
 ;
@@ -118,14 +104,6 @@ AttemptBlock :
    start=<_ATTEMPT>
    Block
    <_RECOVER>
-   {
-        if (start.charAt(0) == '/' && start.charAt(1) == '#' && start.getBeginColumn()!=lastConsumedToken.getBeginColumn()) {
-            String message = "Mismatched indentation. The #recover "
-                                + " should match the indentation of the #attempt tag on line "
-                                + start.getBeginLine();
-            throw new ParseException(message, lastConsumedToken, parsingStack);
-        }
-   }
    Block
    CloseDirectiveBlock(start)
 ;
@@ -955,15 +933,6 @@ CloseDirectiveBlock(Token startToken)#void :
                     throw new ParseException(message, lastConsumedToken, parsingStack);
                 }
             }
-        }
-        if (startToken.charAt(0) == '#'
-             && lastConsumedToken.charAt(0) == '/'
-             && startToken.getBeginColumn() != lastConsumedToken.getBeginColumn())
-        {
-            String message = "Mismatched indentation. The closing tag /#" + nameAtEnd
-                             + " should match the indentation of the starting tag on line "
-                             + startToken.getBeginLine();
-            throw new ParseException(message, lastConsumedToken, parsingStack);
         }
 	}
     |
