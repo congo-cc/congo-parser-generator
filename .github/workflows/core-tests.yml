@@ -73,6 +73,12 @@ jobs:
         $source = 'https://repo1.maven.org/maven2/org/python/jython-standalone/2.7.2/jython-standalone-2.7.2.jar'
         $destination = "${env:USERPROFILE}/bin/jython.jar"
         Invoke-WebRequest -Uri $source -OutFile $destination
+    - name: Setup dotnet
+      uses: actions/setup-dotnet@v5
+      with:
+        dotnet-version: |
+          6.0.x
+          8.0.x
     - name: Run core tests
       run: |
         ant -version
