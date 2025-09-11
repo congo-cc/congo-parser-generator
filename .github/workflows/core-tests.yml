@@ -3,7 +3,7 @@ name: Core Tests
 on:
   workflow_dispatch:
   push:
-    branches: [ main ]
+    branches: [ master ]
     paths:
         - '**'
         - '!**/*.md'
@@ -11,7 +11,7 @@ on:
         - '.github/workflows/core-tests.yml'
 
   pull_request:
-    branches: [ main ]
+    branches: [ master ]
     paths:
         - '**'
         - '!**/*.md'
