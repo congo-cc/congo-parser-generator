@@ -76,7 +76,7 @@
       Now let's try the CSharp parser on the Congo source code.
     </echo>
     <exec executable="dotnet" dir="cs-javaparser/test" failonerror="true">
-      <arg line="run ../../../../src/java" />
+      <arg line="run --roll-forward LatestMajor ../../../../src/java" />
     </exec>
   </target>
 

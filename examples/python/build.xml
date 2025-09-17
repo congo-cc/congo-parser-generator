@@ -86,7 +86,7 @@
 
   <target name="test-csharp">
     <exec executable="dotnet" dir="${basedir}/cs-pythonparser/test" failonerror="true">
-      <arg line="run ../../testfiles" />
+      <arg line="run --roll-forward LatestMajor ../../testfiles" />
     </exec>
   </target>
 </project>

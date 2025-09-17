@@ -78,7 +78,7 @@
 
   <target name="test-csharp" depends="compile-csharp">
     <exec executable="dotnet" dir="${basedir}/cs-luaparser/test" failonerror="true">
-      <arg line="run ../../testfiles" />
+      <arg line="run --roll-forward LatestMajor ../../testfiles" />
     </exec>
   </target>
 
