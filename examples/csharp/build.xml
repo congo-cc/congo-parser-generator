@@ -99,5 +99,5 @@
   </target>
 
   <target name="build-all" depends="compile-java,python-parser-gen,compile-csharp"/>
-  <target name="test-all" depends="test-java,test-python"/>
+  <target name="test-all" depends="test-java,test-python,test-csharp"/>
 </project>
