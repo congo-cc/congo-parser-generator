@@ -53,7 +53,7 @@
     </exec>
   </target>
 
-  <target name="test" depends="compile">
+  <target name="test-java" depends="compile">
     <echo>
       Now test on a few files..
     </echo>
@@ -89,4 +89,6 @@
       <arg line="run --roll-forward LatestMajor ../../testfiles" />
     </exec>
   </target>
+
+   <target name="test-all" depends="compile,test-java,test-csharp,test-python"/>
 </project>

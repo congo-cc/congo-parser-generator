@@ -157,7 +157,7 @@
   <target name="test" depends="jar">
     <echo>Testing the JSON Parser</echo>
     <ant dir="examples/json" target="clean" />
-    <ant dir="examples/json" target="test" />
+    <ant dir="examples/json" target="test-all" />
     <echo>Testing the CICS parser</echo>
     <ant dir="examples/cics" target="clean" />
     <ant dir="examples/cics" target="test" />
@@ -175,7 +175,7 @@
     <ant dir="examples/java" target="test-all" />
     <echo>Building the Python parser</echo>
     <ant dir="examples/python" target="clean" />
-    <ant dir="examples/python" target="test" />
+    <ant dir="examples/python" target="test-all" />
   </target>
 
   <target name="test-java" depends="jar">

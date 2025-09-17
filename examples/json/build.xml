@@ -1,4 +1,4 @@
-<project name="JSONParser" default="compile" basedir=".">
+<project name="json" default="compile" basedir=".">
   <uptodate property="parser1.uptodate" srcfile="JSON.ccc" targetfile="${basedir}/org/parsers/json/JSONParser.java" />
   <uptodate property="parser2.uptodate" srcfile="JSONC.ccc" targetfile="${basedir}/org/parsers/jsonc/JSONCParser.java" />
   <target name="clean">
@@ -69,7 +69,7 @@
     </exec>
   </target>
 
-  <target name="test" depends="compile">
+  <target name="test-java" depends="compile">
     <echo>
       Now test a few files I grabbed with various non-European characters This might not display correctly on the terminal you are using!
     </echo>
@@ -104,4 +104,6 @@
       <arg line="run --roll-forward LatestMajor ../../testfiles" />
     </exec>
   </target>
+
+   <target name="test-all" depends="compile,test-java,test-csharp,test-python"/>
 </project>
