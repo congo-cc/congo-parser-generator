@@ -58,7 +58,7 @@ public class AppSettings {
     private final String stringSettings = ",BASE_NAME,PARSER_PACKAGE,PARSER_CLASS,LEXER_CLASS,BASE_SRC_DIR,BASE_NODE_CLASS,"
             + "BASE_TOKEN_CLASS,NODE_PREFIX,NODE_CLASS,NODE_PACKAGE,DEFAULT_LEXICAL_STATE,"
             + "NODE_CLASS,OUTPUT_DIRECTORY,DEACTIVATE_TOKENS,EXTRA_TOKENS,ROOT_API_PACKAGE,"
-            + "COPYRIGHT_BLURB,TERMINATING_STRING,";
+            + "COPYRIGHT_BLURB,TERMINATING_STRING,TEST_PRODUCTION,TEST_EXTENSION,";
 
     private final String integerSettings = ",TAB_SIZE,TABS_TO_SPACES,JDK_TARGET,";
 
@@ -236,6 +236,9 @@ public class AppSettings {
         }
     }
 
+    public String getStringSetting(String name, String defaultValue) {
+        return (String) settings.getOrDefault(name, defaultValue);
+    }
 
     public int getJdkTarget() {
         if (jdkTarget == 0) return 8;
@@ -259,7 +262,8 @@ public class AppSettings {
         Path dir = Paths.get(baseSrcDir);
         if (!dir.isAbsolute()) {
             Path inputFileDir = filename.toAbsolutePath().getParent();
-            dir = inputFileDir.resolve(baseSrcDir);
+            dir = inputFileDir.resolve(baseSrcDir).normalize();
+            outputDir = dir;
         }
         if (!Files.exists(dir)) {
             Files.createDirectories(dir);
@@ -272,9 +276,6 @@ public class AppSettings {
                 case JAVA:
                     packageName = packageName.replace('.', '/');
                     dir = dir.resolve(packageName);
-                    if (!Files.exists(dir)) {
-                        Files.createDirectories(dir);
-                    }
                     break;
                 case PYTHON:  // Use last part of package, append "parser"
                     dotPosition = packageName.lastIndexOf('.');
@@ -286,9 +287,6 @@ public class AppSettings {
                     // Use a user-specified value if available
                     packageName = grammar.getPreprocessorSymbols().getOrDefault("py.package", packageName);
                     dir = dir.resolve(packageName);
-                    if (!Files.exists(dir)) {
-                        Files.createDirectories(dir);
-                    }
                     break;
                 case CSHARP:
                     // Use last part of package, append "parser", prepend "cs-"
@@ -301,10 +299,10 @@ public class AppSettings {
                         }
                         packageName = "cs-".concat(packageName.concat("parser"));
                         dir = dir.resolve(packageName);
-                        if (!Files.exists(dir)) {
-                            Files.createDirectories(dir);
-                        }
                     }
+            }
+            if (!Files.exists(dir)) {
+                Files.createDirectories(dir);
             }
         }
         return dir;

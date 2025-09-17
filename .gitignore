@@ -20,11 +20,13 @@ __pycache__/*
 /examples/java/org/*
 /examples/java/javaparser/*
 /examples/java/cs-javaparser/*
+/examples/java/test/*
 /examples/json/org/*
 /examples/json/jsonparser/*
 /examples/json/cs-jsonparser/*
 /examples/json/jsoncparser/*
 /examples/json/cs-jsoncparser/*
+/examples/json/test/*
 /examples/csharp/org/*
 /examples/csharp/org/*
 /examples/csharp/csharpparser/*
@@ -35,9 +37,11 @@ __pycache__/*
 /examples/preprocessor/Java*IdentifierDef.ccc
 /examples/preprocessor/preprocessorparser/*
 /examples/preprocessor/cs-preprocessorparser/*
+/examples/preprocessor/test/*
 /examples/python/org/*
 /examples/python/pythonparser/*
 /examples/python/cs-pythonparser/*
+/examples/python/test/*
 /examples/lua/org/*
 /examples/lua/luaparser/*
 /examples/lua/cs-luaparser/*

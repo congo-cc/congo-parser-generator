@@ -1,7 +1,5 @@
 <Project Sdk="Microsoft.NET.Sdk">
   <PropertyGroup>
-    <OutputType>Exe</OutputType>
-    <TargetFrameworks>net6.0</TargetFrameworks>
-    <ImplicitUsings>enable</ImplicitUsings>
+    <TargetFrameworks>netstandard2.1;net6.0</TargetFrameworks>
   </PropertyGroup>
 </Project>

@@ -38,6 +38,8 @@ public class FilesGenerator {
     private final Map<String, String> superClassLookup = new HashMap<>();
     private final CodeLang codeLang;
     private final boolean generateRootApi;
+    private final Path parserOutputDirectory;
+    private final Path nodeOutputDirectory;
 
     void initializeTemplateEngine() throws IOException {
         Path filename = appSettings.getFilename().toAbsolutePath();
@@ -70,13 +72,15 @@ public class FilesGenerator {
            templatesConfig.addAutoImport("CU", "CommonUtils.java.ctl");
     }
 
-    public FilesGenerator(Grammar grammar) {
+    public FilesGenerator(Grammar grammar) throws IOException {
         this.grammar = grammar;
         this.appSettings = grammar.getAppSettings();
         this.codeLang = appSettings.getCodeLang();
         this.errors = grammar.getErrors();
         this.generateRootApi = appSettings.getRootAPIPackage() == null;
         this.codeInjector = grammar.getInjector();
+        this.parserOutputDirectory = appSettings.getParserOutputDirectory();
+        this.nodeOutputDirectory = appSettings.getNodeOutputDirectory();
     }
 
     public void generateAll() throws IOException {
@@ -85,7 +89,7 @@ public class FilesGenerator {
         }
         initializeTemplateEngine();
         switch (codeLang) {
-            case JAVA-> {
+            case JAVA -> {
                 generateToken();
                 generateLexer();
                 generateOtherFiles();
@@ -107,14 +111,13 @@ public class FilesGenerator {
                         "utils.py",
                         "tokens.py",
                         "lexer.py",
-                        "parser.py"
+                        "parser.py",
+                        "test/parse_files.py"
                 };
-                Path outDir = appSettings.getParserOutputDirectory();
                 for (String p : paths) {
-                    Path outputFile = outDir.resolve(p);
                     // Could check if regeneration is needed, but for now
                     // always (re)generate
-                    generate(outputFile);
+                    generate(parserOutputDirectory, p);
                 }
             }
             case CSHARP -> {
@@ -124,26 +127,26 @@ public class FilesGenerator {
                         "Tokens.cs",
                         "Lexer.cs",
                         "Parser.cs",
+                        "test/ParseFiles.cs",
+                        "test/ParseFiles.csproj",
                         null  // filled in below
                 };
                 String csPackageName = grammar.getTemplateGlobals().getPreprocessorSymbol("cs.package", appSettings.getParserPackage());
                 paths[paths.length - 1] = csPackageName + ".csproj";
-                Path outDir = appSettings.getParserOutputDirectory();
                 for (String p : paths) {
-                    Path outputFile = outDir.resolve(p);
                     // Could check if regeneration is needed, but for now
                     // always (re)generate
-                    generate(outputFile);
+                    generate(parserOutputDirectory, p);
                 }
             }
         }
     }
 
-    public void generate(Path outputFile) throws IOException {
-        generate(null, outputFile);
+    public void generate(Path outDir, String outputFile) throws IOException {
+        generate(null, outDir, outputFile);
     }
 
-    private final Set<String> nonNodeNames = new LinkedHashSet<String>() {
+    private final Set<String> nonNodeNames = new LinkedHashSet<>() {
         {
             add("ParseException.java");
             add("ParsingProblem.java");
@@ -171,6 +174,9 @@ public class FilesGenerator {
             } else if (outputFilename.equals(appSettings.getBaseNodeClassName() + ".java")) {
                 result = "BaseNode.java.ctl";
             }
+            else if (outputFilename.contains("ParseFiles")) {
+                // use value set in initializer above
+            }
             else if (outputFilename.startsWith(appSettings.getNodePrefix())) {
                 if (!nonNodeNames.contains(outputFilename) && !outputFilename.equals(appSettings.getBaseTokenClassName()+".java")) {
                     result = "ASTNode.java.ctl";
@@ -178,17 +184,18 @@ public class FilesGenerator {
             }
         }
         else if (codeLang == CSHARP) {
-            if (outputFilename.endsWith(".csproj")) {
+            if (outputFilename.endsWith(".csproj") && !outputFilename.contains("ParseFiles")) {
                 result = "project.csproj.ctl";
             }
         }
         return result;
     }
 
-    public void generate(String nodeName, Path outputFile) throws IOException {
+    public void generate(String nodeName, Path outDir, String outputFile) throws IOException {
+        Path outputPath = outDir.resolve(outputFile);
         logger.fine(String.format("Generating: %s", outputFile));
-        String currentFilename = outputFile.getFileName().toString();
-        String templateName = getTemplateName(currentFilename);
+        String currentFilename = outputPath.getFileName().toString();
+        String templateName = getTemplateName(outputFile);
         Map<String, Object> dataModel = new HashMap<>();
         dataModel.put("filename", currentFilename);
         dataModel.put("isAbstract", grammar.nodeIsAbstract(nodeName));
@@ -197,17 +204,24 @@ public class FilesGenerator {
         dataModel.put("isSealed", codeInjector.isSealed(nodeName));
         dataModel.put("isNonSealed", codeInjector.isNonSealed(nodeName));
         dataModel.put("CI", "true".equals(System.getenv("CI")));
-        String key = appSettings.getNodePackage() + "." + nodeName;
-        Set<ObjectType> permitsList = codeInjector.getPermitsList(key);
+        String key = null;
+        Set<ObjectType> permitsList = null;
+
+        if (nodeName != null) {
+            key = appSettings.getNodePackage() + "." + nodeName;
+            permitsList = codeInjector.getPermitsList(key);
+        }
         if (permitsList == null) {
             dataModel.put("permitsList", new ArrayList<>());
         } else {
-           dataModel.put("permitsList", codeInjector.getPermitsList(key));
+           dataModel.put("permitsList", permitsList);
         }
-        String classname = currentFilename.substring(0, currentFilename.length() - 5);
-        String superClassName = superClassLookup.get(classname);
-        if (superClassName == null) superClassName = appSettings.getBaseTokenClassName();
-        dataModel.put("superclass", superClassName);
+        if (codeLang == JAVA) {
+            String classname = currentFilename.substring(0, currentFilename.length() - 5);  // length of ".java"
+            String superClassName = superClassLookup.get(classname);
+            if (superClassName == null) superClassName = appSettings.getBaseTokenClassName();
+            dataModel.put("superclass", superClassName);
+        }
         Writer out = new StringWriter();
         Template template = templatesConfig.getTemplate(templateName);
         // Sometimes needed in templates for e.g. injector.hasInjectedCode(node)
@@ -215,16 +229,17 @@ public class FilesGenerator {
         template.process(dataModel, out);
         String code = out.toString();
         if (!appSettings.isQuiet()) {
-            System.out.println("Outputting: " + outputFile.normalize());
+            System.out.println("Outputting: " + outputPath.normalize());
         }
-        if (outputFile.getFileName().toString().endsWith(".java")) {
-            outputJavaFile(code, outputFile);
+        Files.createDirectories(outputPath.getParent());
+        if (currentFilename.endsWith(".java")) {
+            outputJavaFile(code, outputPath);
         }
-        else if (outputFile.getFileName().toString().endsWith(".cs")) {
-            outputCSharpFile(code, outputFile);
+        else if (currentFilename.endsWith(".cs")) {
+            outputCSharpFile(code, outputPath);
         }
         else  {
-            outputPythonFile(code, outputFile);
+            outputPythonFile(code, outputPath);
         }
     }
 
@@ -296,7 +311,7 @@ public class FilesGenerator {
 
     void outputJavaFile(String code, Path outputFile) throws IOException {
         Path dir = outputFile.getParent();
-        if (Files.exists(dir)) {
+        if (!Files.exists(dir)) {
             Files.createDirectories(dir);
         }
         CompilationUnit jcu;
@@ -323,59 +338,56 @@ public class FilesGenerator {
 
     void generateOtherFiles() throws IOException {
         if (generateRootApi) {
-            Path outputFile = appSettings.getParserOutputDirectory().resolve("TokenSource.java");
-            generate(outputFile);
-            outputFile = appSettings.getParserOutputDirectory().resolve("NonTerminalCall.java");
-            generate(outputFile);
+            generate(parserOutputDirectory, "TokenSource.java");
+            generate(parserOutputDirectory, "NonTerminalCall.java");
+            generate(parserOutputDirectory, "test/ParseFiles.java");
         }
     }
 
     void generateParseException() throws IOException {
-        Path outputFile = appSettings.getParserOutputDirectory().resolve("ParseException.java");
+        Path outputFile = parserOutputDirectory.resolve("ParseException.java");
         if (regenerate(outputFile)) {
-            generate(outputFile);
+            generate(parserOutputDirectory, "ParseException.java");
         }
     }
 
-    private void generateOrDelete(String nodeName, Path outputFile, boolean wanted) throws IOException {
+    private void generateOrDelete(String nodeName, Path outDir, String outputFile, boolean wanted) throws IOException {
+        Path outputPath = outDir.resolve(outputFile);
         if (wanted) {
-            if (regenerate(outputFile)) {
-                generate(nodeName, outputFile);
+            if (regenerate(outputPath)) {
+                generate(nodeName, outDir, outputFile);
             }
         }
         else {
-            if (Files.exists(outputFile)) {
-                Files.delete(outputFile);
+            if (Files.exists(outputPath)) {
+                Files.delete(outputPath);
             }
         }
     }
 
     void generateParsingProblem(boolean wanted) throws IOException {
-        Path outputFile = appSettings.getParserOutputDirectory().resolve("ParsingProblem.java");
-        generateOrDelete(null, outputFile, wanted);
+        generateOrDelete(null, parserOutputDirectory,"ParsingProblem.java", wanted);
     }
 
     void generateInvalidNode(boolean wanted) throws IOException {
-        Path outputFile = appSettings.getNodeOutputDirectory().resolve("InvalidNode.java");
-        generateOrDelete(null, outputFile, wanted);
+        generateOrDelete(null, nodeOutputDirectory,"InvalidNode.java", wanted);
     }
 
     void generateToken() throws IOException {
         String filename = appSettings.getBaseTokenClassName() + ".java";
-        Path outputFile = appSettings.getParserOutputDirectory().resolve(filename);
+        Path outputFile = parserOutputDirectory.resolve(filename);
         if (regenerate(outputFile)) {
-            generate(outputFile);
+            generate(parserOutputDirectory, filename);
         }
-        outputFile = appSettings.getParserOutputDirectory().resolve("InvalidToken.java");
+        outputFile = parserOutputDirectory.resolve("InvalidToken.java");
         if (regenerate(outputFile)) {
-            generate(outputFile);
+            generate(parserOutputDirectory, "InvalidToken.java");
         }
     }
 
     void generateLexer() throws IOException {
         String filename = appSettings.getLexerClassName() + ".java";
-        Path outputFile = appSettings.getParserOutputDirectory().resolve(filename);
-        generate(outputFile);
+        generate(parserOutputDirectory, filename);
     }
 
     void generateParser() throws IOException {
@@ -383,13 +395,11 @@ public class FilesGenerator {
         	throw new ParseException();
         }
         String filename = appSettings.getParserClassName() + ".java";
-        Path outputFile = appSettings.getParserOutputDirectory().resolve(filename);
-        generate(outputFile);
+        generate(parserOutputDirectory, filename);
     }
 
     void generateNodeFile(boolean wanted) throws IOException {
-        Path outputFile = appSettings.getParserOutputDirectory().resolve("Node.java");
-        generateOrDelete(null, outputFile, wanted);
+        generateOrDelete(null, parserOutputDirectory, "Node.java", wanted);
     }
 
     private boolean regenerate(Path file) throws IOException {
@@ -440,7 +450,7 @@ public class FilesGenerator {
         if (generateRootApi) {
     	    generateNodeFile(wanted);
         }
-        Map<String, Path> files = new LinkedHashMap<>();
+        Map<String, String> files = new LinkedHashMap<>();
         if (appSettings.getBaseNodeClassName().indexOf('.') == -1) {
             files.put(appSettings.getBaseNodeClassName(), getOutputFile(appSettings.getBaseNodeClassName()));
         }
@@ -448,52 +458,53 @@ public class FilesGenerator {
             if (re.isPrivate()) continue;
             String tokenClassName = re.getGeneratedClassName();
             if (tokenClassName.indexOf('.') != -1) continue;
-            Path outputFile = getOutputFile(tokenClassName);
+            String outputFile = getOutputFile(tokenClassName);
             files.put(tokenClassName, outputFile);
-            tokenSubclassFileNames.add(outputFile.getFileName().toString());
+            tokenSubclassFileNames.add(outputFile);
             String superClassName = re.getGeneratedSuperClassName();
             if (superClassName != null) {
                 if (superClassName.indexOf('.') == -1) {
                     outputFile = getOutputFile(superClassName);
                     files.put(superClassName, outputFile);
-                    tokenSubclassFileNames.add(outputFile.getFileName().toString());
+                    tokenSubclassFileNames.add(outputFile);
                 }
                 superClassLookup.put(tokenClassName, superClassName);
             }
         }
         for (Map.Entry<String, String> es : appSettings.getExtraTokens().entrySet()) {
             String value = es.getValue();
-            Path outputFile = getOutputFile(value);
+            String outputFile = getOutputFile(value);
             files.put(value, outputFile);
-            tokenSubclassFileNames.add(outputFile.getFileName().toString());
+            tokenSubclassFileNames.add(outputFile);
         }
         for (String nodeName : grammar.getNodeNames()) {
             if (nodeName.indexOf('.')>0) continue;
-            Path outputFile = getOutputFile(nodeName);
-            if (tokenSubclassFileNames.contains(outputFile.getFileName().toString())) {
-                String name = outputFile.getFileName().toString();
-                name = name.substring(0, name.length() -5);
+            String outputFile = getOutputFile(nodeName);
+            if (tokenSubclassFileNames.contains(outputFile)) {
+                String name = outputFile.substring(0, outputFile.length() - 5);  // for ".java"
                 errors.addError("The name " + name + " is already used as a Node type.");
             }
             files.put(nodeName, outputFile);
         }
-        for (Map.Entry<String, Path> entry : files.entrySet()) {
-            if (regenerate(entry.getValue())) {
-                generateOrDelete(entry.getKey(), entry.getValue(), wanted);
+        for (Map.Entry<String, String> entry : files.entrySet()) {
+            String s = entry.getValue();
+            Path outPath = nodeOutputDirectory.resolve(s);
+            if (regenerate(outPath)) {
+                generateOrDelete(entry.getKey(), nodeOutputDirectory, s, wanted);
             }
         }
     }
 
     // only used for tree-building files (a bit kludgy)
-    private Path getOutputFile(String nodeName) throws IOException {
+    private String getOutputFile(String nodeName) throws IOException {
         if (nodeName.equals(appSettings.getBaseNodeClassName())) {
-            return appSettings.getNodeOutputDirectory().resolve(nodeName + ".java");
+            return nodeName + ".java";
         }
         String className = grammar.getNodeClassName(nodeName);
         //KLUDGE
         if (nodeName.equals(appSettings.getBaseNodeClassName())) {
             className = nodeName;
         }
-        return appSettings.getNodeOutputDirectory().resolve(className + ".java");
+        return className + ".java";
     }
 }
