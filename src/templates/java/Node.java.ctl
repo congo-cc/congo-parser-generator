@@ -339,7 +339,7 @@ public interface Node extends List<Node> {
       * Set the offset where the token ends, actually the location where
       * the very next token should begin.
       */
-      void setEndOffset(int endOffet);
+      void setEndOffset(int endOffset);
 
     /**
      * @return a String that gives the starting location of this Node. This is a default
