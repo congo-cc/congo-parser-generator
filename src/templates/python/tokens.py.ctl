@@ -239,10 +239,9 @@ class ${settings.baseNodeClassName}:
             if isinstance(child, Token):
                 if child.type == type:
                     return child
-            else:
-                child = child.first_descendant_of_type(type)
-                if child:
-                    return child
+            child = child.first_descendant_of_type(type)
+            if child:
+                return child
 
     def descendants(self, cls=None, predicate=None):
         if cls is None:
