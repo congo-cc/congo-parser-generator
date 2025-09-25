@@ -339,7 +339,7 @@ public interface Node extends List<Node> {
       * Set the offset where the token ends, actually the location where
       * the very next token should begin.
       */
-      void setEndOffset(int endOffet);
+      void setEndOffset(int endOffset);
 
     /**
      * @return a String that gives the starting location of this Node. This is a default
@@ -397,10 +397,9 @@ public interface Node extends List<Node> {
              Node child = get(i);
              if (child.getType() == type) {
                 if (pred == null || pred.test(child)) return child;
-             } else {
-                 Node tok = child.firstDescendantOfType(type, pred);
-                 if (tok != null) return tok;
              }
+             Node tok = child.firstDescendantOfType(type, pred);
+             if (tok != null) return tok;
          }
          return null;
     }
@@ -440,10 +439,8 @@ public interface Node extends List<Node> {
                 T t = clazz.cast(child);
                 if (pred == null || pred.test(t)) return t;
              }
-             else {
-                 T descendant = child.firstDescendantOfType(clazz, pred);
-                 if (descendant != null) return descendant;
-             }
+             T descendant = child.firstDescendantOfType(clazz, pred);
+             if (descendant != null) return descendant;
          }
          return null;
     }

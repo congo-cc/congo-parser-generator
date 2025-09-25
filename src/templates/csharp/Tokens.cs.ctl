@@ -227,11 +227,9 @@ namespace ${csPackage} {
                         return tok;
                     }
                 }
-                else {
-                    tok = child.FirstDescendantOfType(tt);
-                    if (tok != null) {
-                        return tok;
-                    }
+                tok = child.FirstDescendantOfType(tt);
+                if (tok != null) {
+                    return tok;
                 }
             }
             return null;
