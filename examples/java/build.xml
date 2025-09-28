@@ -33,7 +33,7 @@
     <echo>Building Java parser in CSharp.</echo>
     <java jar="../../congocc.jar" failonerror="true" fork="true">
       <assertions> <enable /> </assertions>
-      <arg line="-n -q -lang csharp -d cs-javaparser Java.ccc" />
+      <arg line="-n -q -lang csharp Java.ccc" />
     </java>
   </target>
 

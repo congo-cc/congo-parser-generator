@@ -31,7 +31,7 @@
       <assertions>
         <enable />
       </assertions>
-      <arg line="-n -lang csharp -d cs-pythonparser ${basedir}/Python.ccc" />
+      <arg line="-n -lang csharp ${basedir}/Python.ccc" />
     </java>
   </target>
 
@@ -84,7 +84,7 @@
     </exec>
   </target>
 
-  <target name="test-csharp">
+  <target name="test-csharp" depends="compile">
     <exec executable="dotnet" dir="${basedir}/cs-pythonparser/test" failonerror="true">
       <arg line="run --roll-forward LatestMajor ../../testfiles" />
     </exec>

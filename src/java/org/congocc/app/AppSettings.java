@@ -265,9 +265,6 @@ public class AppSettings {
             dir = inputFileDir.resolve(baseSrcDir).normalize();
             outputDir = dir;
         }
-        if (!Files.exists(dir)) {
-            Files.createDirectories(dir);
-        }
         String packageName = getParserPackage();
         if (packageName != null && packageName.length() > 0) {
             int dotPosition;
@@ -290,16 +287,14 @@ public class AppSettings {
                     break;
                 case CSHARP:
                     // Use last part of package, append "parser", prepend "cs-"
-                    // only if outDir isn't specified
-                    if (outputDir == null) {
-                        dotPosition = packageName.lastIndexOf('.');
+                    dotPosition = packageName.lastIndexOf('.');
 
-                        if (dotPosition >= 0) {
-                            packageName = packageName.substring(dotPosition + 1);
-                        }
-                        packageName = "cs-".concat(packageName.concat("parser"));
-                        dir = dir.resolve(packageName);
+                    if (dotPosition >= 0) {
+                        packageName = packageName.substring(dotPosition + 1);
                     }
+                    packageName = "cs-".concat(packageName.concat("parser"));
+                    dir = dir.resolve(packageName);
+                    break;
             }
             if (!Files.exists(dir)) {
                 Files.createDirectories(dir);

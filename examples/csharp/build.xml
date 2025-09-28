@@ -57,7 +57,7 @@
   <target name="csharp-parser-gen" depends="init,line-directive-cs-parser-gen" unless="cscsparser.uptodate">
     <java jar="../../congocc.jar" failonerror="true" fork="true">
       <assertions> <enable /> </assertions>
-      <arg line="-n -lang csharp -d cs-csharpparser ${basedir}/CSharp.ccc" />
+      <arg line="-n -lang csharp ${basedir}/CSharp.ccc" />
     </java>
   </target>
 

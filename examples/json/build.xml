@@ -29,7 +29,7 @@
       <assertions>
         <enable />
       </assertions>
-      <arg line=" -n -lang csharp -d cs-jsonparser ${basedir}/JSON.ccc" />
+      <arg line=" -n -lang csharp ${basedir}/JSON.ccc" />
     </java>
   </target>
   <target name="parser2-gen" depends="parser1-gen" unless="parser2.uptodate">
@@ -49,7 +49,7 @@
       <assertions>
         <enable />
       </assertions>
-      <arg line=" -n -lang csharp -d cs-jsoncparser ${basedir}/JSONC.ccc" />
+      <arg line=" -n -lang csharp ${basedir}/JSONC.ccc" />
     </java>
   </target>
 
@@ -99,7 +99,7 @@
     </exec>
   </target>
 
-  <target name="test-csharp">
+  <target name="test-csharp" depends="compile">
     <exec executable="dotnet" dir="${basedir}/cs-jsonparser/test" failonerror="true">
       <arg line="run --roll-forward LatestMajor ../../testfiles" />
     </exec>

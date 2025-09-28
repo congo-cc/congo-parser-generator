@@ -36,7 +36,7 @@
    <target name="csharp-parser-gen" depends="init" unless="csparser.uptodate">
     <java jar="../../congocc.jar" failonerror="true" fork="true">
       <assertions> <enable /> </assertions>
-      <arg line="-n -lang csharp -d cs-luaparser ${basedir}/Lua.ccc" />
+      <arg line="-n -lang csharp ${basedir}/Lua.ccc" />
     </java>
   </target>
 
@@ -57,11 +57,7 @@
     <exec executable="dotnet" dir="${basedir}/cs-luaparser/test">
        <arg line="build"/>
     </exec>
-    <exec executable="dotnet" dir="${basedir}/cs-luaparser/test">
-       <arg line="build"/>
-    </exec>
   </target>
-
 
   <target name="test-java" depends="compile-java">
     <java fork="true" classpath="." failonerror="true" classname="org.parsers.lua.test.ParseFiles">

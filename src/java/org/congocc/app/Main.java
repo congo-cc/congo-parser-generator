@@ -171,12 +171,12 @@ public final class Main {
         int jdkTarget = 0;
         Map<String, String> preprocessorSymbols = new HashMap<>();
         boolean quiet = false, noNewerCheck = false;
-        for (int i=0; i<args.length;i++) {
+        for (int i = 0; i < args.length; i++) {
             String arg = args[i];
             if (arg.charAt(0) == '-') {
                 if (arg.startsWith("--")) arg = arg.substring(1);
                 if (arg.equalsIgnoreCase("-p")) {
-                    if (i==args.length-1) {
+                    if (i == args.length-1) {
                         System.err.println("-p flag with no preprocessor symbols afterwards");
                         System.exit(-1);
                     }
@@ -268,7 +268,7 @@ public final class Main {
             System.err.println("File " + grammarFile + " does not exist!");
             System.exit(-1);
         }
-        if (outputDirectory !=null) {
+        if (outputDirectory != null) {
             if (!Files.exists(outputDirectory)) {
                 try {Files.createDirectories(outputDirectory);}
                 catch (IOException ioe) {
@@ -296,7 +296,6 @@ public final class Main {
         if (!quiet) bannerLine();
         Grammar grammar = new Grammar(outputDir, codeLang, jdkTarget, quiet, symbols);
         grammar.parse(grammarFile, true);
-        grammar.createOutputDir();
         Errors errors = grammar.getErrors();
         grammar.doSanityChecks();
         if (errors.getErrorCount() > 0) {
