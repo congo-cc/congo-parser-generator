@@ -137,7 +137,17 @@ INJECT PackageDeclaration :
     }
 }
 
-ImportDeclaration : <_IMPORT> [ <STATIC> | 'module' ] Name [ <DOT> <STAR> ] <SEMICOLON> ;
+ImportDeclaration :
+    {boolean isModule = false;}
+    <_IMPORT>
+    [ <STATIC> | 'module' {isModule=true;}]
+    Name
+    [
+      ASSERT {!isModule : "No wildcard import in a module import declaration"}
+      <DOT> <STAR> =>||
+    ]
+    <SEMICOLON>
+;
 
 Modifiers :
  (

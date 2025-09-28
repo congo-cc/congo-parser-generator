@@ -296,7 +296,7 @@ public class FilesGenerator {
 
     void outputJavaFile(String code, Path outputFile) throws IOException {
         Path dir = outputFile.getParent();
-        if (Files.exists(dir)) {
+        if (!Files.exists(dir)) {
             Files.createDirectories(dir);
         }
         CompilationUnit jcu;
