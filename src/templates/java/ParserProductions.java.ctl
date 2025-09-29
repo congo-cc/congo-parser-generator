@@ -60,7 +60,7 @@
 // ${production.location}
     final ${production.accessModifier}
     ${production.returnType}
-    ${production.name}(${production.parameterList!})
+    ${production.name}(${production!.parameterList!})
    #if settings.useCheckedException
     throws ParseException
     [#list (production.throwsList.types)! as throw], ${throw}[/#list]
@@ -104,7 +104,7 @@
              #if expansion.simpleName = "ZeroOrMore" || expansion.simpleName = "OneOrMore"
                #var followingExpansion = expansion.followingExpansion
                #list 1..1000000 as unused
-                #if !followingExpansion
+                #if !followingExpansion??
                   #break
                 #endif
                 #if followingExpansion.maximumSize > 0
@@ -120,7 +120,7 @@
                 #if !followingExpansion.possiblyEmpty
                   #break
                 #endif
-                #if !followingExpansion.followingExpansion
+                #if !followingExpansion.followingExpansion??
                  if (outerFollowSet != null) {
                    if (outerFollowSet.contains(nextTokenType())) {
                       success = true;
