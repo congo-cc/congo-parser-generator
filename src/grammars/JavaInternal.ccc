@@ -36,7 +36,7 @@ INJECT CompilationUnit :
 {
     public String getPackageName() {
         PackageDeclaration jpd = getPackageDeclaration();
-        return jpd.getName();
+        return (jpd == null) ? null : jpd.getName();
     }
 
     public List<TypeDeclaration> getTypeDeclarations() {
@@ -45,7 +45,9 @@ INJECT CompilationUnit :
 
     public void addImportDeclaration(ImportDeclaration decl) {
         PackageDeclaration pd = firstChildOfType(PackageDeclaration.class);
-        add(1+indexOf(pd), decl);
+        if (pd != null) {
+            add(1 + indexOf(pd), decl);
+        }
     }
 }
 

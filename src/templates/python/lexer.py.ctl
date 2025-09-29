@@ -782,11 +782,14 @@ ${globals::translateLexerInjections(true)}
         self.next_states = BitSet(MAX_STATES)
         self.current_states = BitSet(MAX_STATES)
 
+#if settings.deactivatedTokens
         self.active_token_types = set(TokenType)
-#list settings.deactivatedTokens as token
+  #list settings.deactivatedTokens as token
         self.active_token_types.remove(TokenType.${token})
-/#list
-
+  /#list
+#else
+        self.active_token_types = None
+/#if
         # Just used to "bookmark" the starting location for a token
         # for when we put in the location info at the end.
         self.starting_line = line

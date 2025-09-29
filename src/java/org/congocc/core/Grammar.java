@@ -205,13 +205,6 @@ public class Grammar extends BaseNode {
         }
     }
 
-    public void createOutputDir() {
-        Path outputDir = Paths.get(".");
-        if (!Files.isWritable(outputDir)) {
-            errors.addError(null, "Cannot write to the output directory : \"" + outputDir + "\"");
-        }
-    }
-
     public void generateLexer() {
         lexerData.buildData();
     }
@@ -517,32 +510,32 @@ public class Grammar extends BaseNode {
         }
         return undefinedNTs.isEmpty();
     }
-    
+
     public boolean isUsingCardinality() {
         for (Assertion assertion : descendants(Assertion.class)) {
             if (assertion.isCardinalityConstraint()) return true;
         }
         return false;
     }
-    
+
     public class CardinalityChecker extends Visitor {
         private final Grammar context;
         CardinalityChecker(Grammar context) {
             this.context = context;
             visit(context);
         }
-        
+
         @Override
         public void visit(Node n) {
             super.visit(n);
         }
-        
+
         Stack<int[]> rangeStack = new Stack<>();
-        
+
         public void visit(BNFProduction n) {
             recurse(n);
         }
-        
+
         // check repetition cardinality constraints (depth first)
         public void visit(ExpansionWithParentheses n) {
             if (n.isCardinalityContainer()) {
@@ -560,9 +553,9 @@ public class Grammar extends BaseNode {
                     context.errors.addError(n, "Cardinality constraints may only allowed be contained in ZeroOrMore and OneOrMore expansions.");
                 }
             }
-            
+
         }
-        
+
         public void visit(AttemptBlock attempt) {
             /*
              *REVISIT:JB This restriction should probably be relaxed for consistency and least surprise. If/When it is, it
@@ -574,7 +567,7 @@ public class Grammar extends BaseNode {
             }
             recurse(attempt);
         }
-        
+
         public void visit(ExpansionSequence s) {
             recurse(s);
             try {
@@ -591,7 +584,7 @@ public class Grammar extends BaseNode {
                                 int[] constraint = a.getCardinalityConstraint();
                                 if (constraint[1] == 0) errors.addWarning(a, "Maximum cardinality is 0; this is likely an error.");
                                 if (constraint[0] > constraint[1]) errors.addError(a, "Maximum cardinality is less than the minimum.");
-                                
+
                                 minCardinality = Math.max(constraint[0], minCardinality);
                                 maxCardinality = Math.min(constraint[1], maxCardinality);
                             }
@@ -705,7 +698,7 @@ public class Grammar extends BaseNode {
                 }
             }
         }
-        
+
         if (isUsingCardinality()) {
             new CardinalityChecker(this);
         }

@@ -2,28 +2,33 @@
 
 #import "CommonUtils.inc.ctl" as CU
 
-#var nodeNumbering = 0
-#var exceptionNesting = 0
-#var NODE_USES_PARSER = settings.nodeUsesParser
-#var NODE_PREFIX = grammar.nodePrefix
-#var currentProduction
-#var topLevelExpansion [#-- A "one-shot" indication that we are processing
+#var nodeNumbering = 0,
+     exceptionNesting = 0,
+     NODE_USES_PARSER = settings.nodeUsesParser,
+     NODE_PREFIX = grammar.nodePrefix,
+     currentProduction,
+     treeNodeStack = [],
+     topLevelExpansion [#-- A "one-shot" indication that we are processing
                               an expansion immediately below the BNF production expansion,
                               ignoring an ExpansionSequence that might be there. This is
                               primarily, if not exclusively, for allowing JTB-compatible
                               syntactic trees to be built. While seemingly silly (and perhaps could be done differently),
                               it is also a bit tricky, so treat it like the Holy Hand-grenade in that respect.
                           --]
+
+#var inFirstVarName = "",
+     choicesVarName = ""
+
 #var jtbNameMap = {
    "Terminal" : "nodeToken",
    "Sequence" : "nodeSequence",
    "Choice" : "nodeChoice",
    "ZeroOrOne" : "nodeOptional",
    "ZeroOrMore" : "nodeListOptional",
-   "OneOrMore" : "nodeList" }
+   "OneOrMore" : "nodeList" },
+   nodeFieldOrdinal = {}
 
-#var nodeFieldOrdinal = {},
-     injectedFields = {},
+#var injectedFields = {},
      syntheticNodesEnabled = settings.syntheticNodesEnabled && settings.treeBuildingEnabled,
      jtbParseTree = syntheticNodesEnabled && settings.jtbParseTree
 
@@ -66,9 +71,9 @@
    Macro to build routines that scan up to the start of an expansion
    as part of a recovery routine
 --]
-#macro BuildRecoverRoutines
+#macro BuildRecoverRoutines #-- FIXME:JB this needs to consider cardinality
 #list grammar.expansionsNeedingRecoverMethod as expansion
-    private void ${expansion.recoverMethodName}() {
+    private bool ${expansion.recoverMethodName}(ParseException pe) {
         var initialToken = LastConsumedToken;
         IList<Token> skippedTokens = new List<Token>();
         var success = false;
@@ -149,7 +154,8 @@ if (_pendingRecovery) {
 #-- // DBG < BuildCode ${expansion.simpleName}
 #endmacro
 
-#macro TreeBuildingAndRecovery expansion
+#-- The following macro wraps expansions that might build tree nodes. --
+#macro TreeBuildingAndRecovery expansion cardinalitiesVar
     #var production,
           treeNodeBehavior,
           buildingTreeNode = false,
@@ -165,25 +171,24 @@ if (_pendingRecovery) {
     #endif
     #if treeNodeBehavior??
         #if settings.treeBuildingEnabled
-            #set buildingTreeNode = true
-            #set nodeVarName = nodeVar(production??)
+            #set buildingTreeNode = true,
+                 nodeVarName = nodeVar(production??)
         #endif
     #endif
     #if !buildingTreeNode && !canRecover
         #nested
     #else
-        [#-- We need tree nodes and/or recovery code. --]
-        #if buildingTreeNode
-            [#-- Build the tree node (part 1). --]
-            [@createNode nodeClassName(treeNodeBehavior), nodeVarName /]
-        #endif
-        [#-- Any prologue code can refer to CURRENT_NODE at this point. --][#-- REVISIT: Is this needed anymore, since THIS_PRODUCTION is always the reference to CURRENT_NODE (jb)? --]
+      #-- We need tree nodes and/or recovery code. --
+      #if buildingTreeNode
+         #-- Build the tree node (part 1).
+         #set treeNodeStack = treeNodeStack + [nodeVarName]
+         ${createNode(nodeClassName(treeNodeBehavior), nodeVarName)}
+      #endif
 ParseException ${parseExceptionVar} = null;
 var ${callStackSizeVar} = ParsingStack.Count;
 try {
-        #--     pass  # in case there's nothing else in the try clause!
-        #-- Here is the "nut".
-        #nested
+    #-- Here is the "nut".
+    #nested
 }
 catch (ParseException ${exceptionVar()}) {
     ${parseExceptionVar} = ${exceptionVar()};
@@ -195,17 +200,21 @@ catch (ParseException ${exceptionVar()}) {
         #else
     if (!IsTolerant) throw;
     _pendingRecovery = true;
-         ${expansion.customErrorRecoveryBlock!}
-            #if production && production.returnType != "void"
-                #var rt = production.returnType
-                #-- We need a return statement here or the code won't compile!
-                #if rt = "int" || rt = "char" || rt == "byte" || rt = "short" || rt = "long" || rt = "float"|| rt = "double"
+    // recovery for ${expansion.location}
+    ${expansion.recoveryBlock!}
+    #-- REVISIT: Something needs to be done about always consuming a token if we get here, or an infinite loop can result.
+    #if production?? && production.returnType != "void"
+        #var rt = production.returnType
+        #-- We need a return statement here or the code won't compile!
+        #if rt = "int" || rt = "char" || rt == "byte" || rt = "short" || rt = "long" || rt = "float"|| rt = "double"
        return 0;
-                #else
+        #elif rt == "boolean"
+       return false;
+        #else
        return null;
-                #endif
-            #endif
         #endif
+    #endif
+#endif
 }
 finally {
     RestoreCallStack(${callStackSizeVar});
@@ -803,7 +812,7 @@ ${BuildCode(zoo.nestedExpansion)}
 #-- // DBG < BuildCodeZeroOrOne ${zoo.nestedExpansion.class.simpleName}
 #endmacro
 
-#var inFirstVarName = "", inFirstIndex = 0
+#var inFirstIndex = 0
 
 #macro BuildCodeOneOrMore oom
 #-- // DBG > BuildCodeOneOrMore

@@ -3,67 +3,6 @@ ${"#"}pragma warning disable 414, 168, 659
 #import "CommonUtils.inc.ctl" as CU
 #var MULTIPLE_LEXICAL_STATE_HANDLING = (lexerData.numLexicalStates > 1)
 #var csPackage = globals::getPreprocessorSymbol('cs.package', settings.parserPackage)
-
-#-- Just using the name of the default lexical state to deduce (or guess at)
-#-- the name of the file extension!
-#var extension = lexerData::getLexicalStateName(0)::toLowerCase()
-#if extension == "csharp" || extension == "python"
-   #set extension = extension::substring(0,2)
-#endif
-
-#var rootProduction = "Module"
-#if extension == "cs" || extension == "java"
-   #set rootProduction = "CompilationUnit"
-#elif extension = "lua"
-   #set rootProduction = "Root"
-#endif
-
-using ${csPackage};
-using System;
-using System.IO;
-
-if (args.Length == 0) {
-    Console.WriteLine("Usage: <program> " + "files or directories with files to parse.");
-}
-long start = System.DateTime.Now.Ticks;
-int successes = 0;
-int failures = 0;
-
-foreach(string arg in args) {
-    if (arg.EndsWith(".${extension}") && File.Exists(arg)) {
-        try {
-           Parser p = new Parser(arg);
-           p.Parse${rootProduction}();
-           Console.WriteLine("parsed " + arg + " successfully.");
-           successes++;
-        }
-        catch (ParseException e) {
-            Console.WriteLine("Problem parsing file: " + arg);
-            Console.WriteLine(e);
-            failures++;
-        }
-    }
-    else foreach(var f in Directory.EnumerateFiles(arg, "*.${extension}", SearchOption.AllDirectories))
-    {
-        try {
-            Parser p = new Parser(f);
-            p.Parse${rootProduction}();
-            Console.WriteLine("parsed " + f + " successfully.");
-            successes++;
-        } catch (ParseException e) {
-            Console.WriteLine("Problem parsing file: " + f);
-            Console.WriteLine(e.ToString());
-            failures++;
-        }
-    }
-}
-
-Console.WriteLine("Successfully parsed " + successes + " files.");
-Console.WriteLine("Failed on: " + failures + " files.");
-
-long duration = (System.DateTime.Now.Ticks - start)/10000;
-Console.WriteLine("Duration: " + duration + " milliseconds.");
-
 namespace ${csPackage} {
     using System;
     using System.Linq;

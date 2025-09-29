@@ -51,6 +51,9 @@
     <exec executable="dotnet" dir="cs-javaparser">
        <arg line="build"/>
     </exec>
+    <exec executable="dotnet" dir="cs-javaparser/test">
+       <arg line="build"/>
+    </exec>
   </target>
 
   <target name="compile-all" depends="compile-java,compile-csharp"/>
@@ -72,8 +75,8 @@
     <echo>
       Now let's try the CSharp parser on the Congo source code.
     </echo>
-    <exec executable="dotnet" dir="." failonerror="true">
-      <arg line="cs-javaparser/bin/Debug/net6.0/org.parsers.java.dll ../../src/java" />
+    <exec executable="dotnet" dir="cs-javaparser/test" failonerror="true">
+      <arg line="run --roll-forward LatestMajor ../../../../src/java" />
     </exec>
   </target>
 
@@ -81,8 +84,8 @@
     <echo>
       Now let's try the Python parser on some test files.
     </echo>
-    <exec executable="python3" dir="." failonerror="true">
-      <arg line="-u jparse.py testfiles" />
+    <exec executable="python3" dir="javaparser/test" failonerror="true">
+      <arg line="-u parse_files.py ../../testfiles" />
     </exec>
   </target>
 

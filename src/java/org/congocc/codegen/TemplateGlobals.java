@@ -1,5 +1,7 @@
 package org.congocc.codegen;
 
+import java.io.IOException;
+import java.nio.file.Path;
 import java.util.*;
 import java.util.function.Function;
 
@@ -61,6 +63,14 @@ public class TemplateGlobals {
     // For use from templates.
     public String getPreprocessorSymbol(String key, String defaultValue) {
         return grammar.getPreprocessorSymbols().getOrDefault(key, defaultValue);
+    }
+
+    public String getStringSetting(String name, String defaultValue) {
+        return grammar.getAppSettings().getStringSetting(name, defaultValue);
+    }
+
+    public String getParserOutputDirectory() throws IOException {
+        return appSettings.getParserOutputDirectory().getFileName().toString();
     }
 
     /**

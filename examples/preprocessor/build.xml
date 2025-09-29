@@ -25,7 +25,7 @@
       <assertions>
         <enable />
       </assertions>
-      <arg line="-p localtest -n -lang csharp ${basedir}/Preprocessor.ccc" />
+      <arg line="-p localtest -n -lang csharp -d cs-preprocessorparser ${basedir}/Preprocessor.ccc" />
     </java>
   </target>
   <target name="compile" depends="parser-gen">

@@ -16,6 +16,8 @@ DEFAULT_LEXICAL_STATE=JAVA;
 // unlike typical contextual keywords, it is not
 // matched by a more general pattern (usually IDENTIFIER)
 DEACTIVATE_TOKENS=NON_SEALED;
+TEST_PRODUCTION=CompilationUnit;
+TEST_EXTENSION=java;
 
 
 #if FT
