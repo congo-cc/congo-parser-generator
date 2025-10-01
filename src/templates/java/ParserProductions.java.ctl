@@ -138,7 +138,7 @@
           if (!success && !skippedTokens.isEmpty()) {
              lastConsumedToken = initialToken;
           }
-          if (success&& !skippedTokens.isEmpty()) {
+          if (success && !skippedTokens.isEmpty()) {
              InvalidNode iv = new InvalidNode(pe);
              iv.copyLocationInfo(skippedTokens.get(0));
              for (${settings.baseTokenClassName} tok : skippedTokens) {

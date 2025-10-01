@@ -59,7 +59,6 @@ ${is}# ${production.location}
 ${is}${globals::startProduction()}def parse_${production.name}(self[#if production.parameterList??], ${globals::translateParameters(production.parameterList)}[/#if]):
    [#-- Now generate the body --]
 ${is}    # import pdb; pdb.set_trace()
-   [#-- OMITTED: "if (cancelled) throw new CancellationException();" --]
 ${is}    self.currently_parsed_production = '${production.name}'
    #set topLevelExpansion = false
 ${BuildCode(production, indent + 4)}
@@ -70,62 +69,60 @@ ${is}# end of parse_${production.name}${globals::endProduction()}
    Macro to build routines that scan up to the start of an expansion
    as part of a recovery routine
 --]
-[#macro BuildRecoverRoutines indent]
-[#var is = ""?right_pad(indent)]
-   [#list grammar.expansionsNeedingRecoverMethod as expansion]
-${is}def ${expansion.recoverMethodName}(self):
+#macro BuildRecoverRoutines indent
+#var is = ""?right_pad(indent)
+#list grammar.expansionsNeedingRecoverMethod as expansion
+${is}def ${expansion.recoverMethodName}(self, pe):
 ${is}    initial_token = self.last_consumed_token
 ${is}    skipped_tokens = []
 ${is}    success = False
 ${is}    while self.last_consumed_token.type != EOF:
-   [#if expansion.simpleName = "OneOrMore" || expansion.simpleName = "ZeroOrMore"]
+  #if expansion.simpleName = "OneOrMore" || expansion.simpleName = "ZeroOrMore"
 ${is}        if (${ExpansionCondition(expansion.nestedExpansion)}):
-   [#else]
+  #else
 ${is}        if (${ExpansionCondition(expansion)}):
-   [/#if]
+  #endif
 ${is}            success = True
 ${is}            break
-   [#if expansion.simpleName = "ZeroOrMore" || expansion.simpleName = "OneOrMore"]
-      [#var followingExpansion = expansion.followingExpansion]
-      [#list 1..1000000 as unused]
-      [#if !followingExpansion][#break][/#if]
-      [#if followingExpansion.maximumSize > 0]
-         [#if followingExpansion.simpleName = "OneOrMore" || followingExpansion.simpleName = "ZeroOrOne" || followingExpansion.simpleName = "ZeroOrMore"]
+   #if expansion.simpleName = "ZeroOrMore" || expansion.simpleName = "OneOrMore"
+      #var followingExpansion = expansion.followingExpansion
+      #list 1..1000000 as unused
+      [#if !followingExpansion??][#break][/#if]
+      #if followingExpansion.maximumSize > 0
+         #if followingExpansion.simpleName = "OneOrMore" || followingExpansion.simpleName = "ZeroOrOne" || followingExpansion.simpleName = "ZeroOrMore"
 ${is}        if (${ExpansionCondition(followingExpansion.nestedExpansion)}):
-         [#else]
+         #else
 ${is}        if (${ExpansionCondition(followingExpansion)}):
-         [/#if]
+         #endif
 ${is}            success = True
 ${is}            break
-      [/#if]
+      #endif
       [#if !followingExpansion.possiblyEmpty][#break][/#if]
-      [#if !followingExpansion.followingExpansion]
+      #if !followingExpansion.followingExpansion??
 ${is}        if self.outer_follow_set is not None:
 ${is}            if self.next_token_type() in self.outer_follow_set:
 ${is}                success = True
 ${is}                break
-         [#break/]
-      [/#if]
-      [#set followingExpansion = followingExpansion.followingExpansion]
-      [/#list]
-   [/#if]
+         #break
+      #endif
+      #set followingExpansion = followingExpansion.followingExpansion
+      #endlist
+   #endif
 ${is}        self.last_consumed_token = self.next_token(self.last_consumed_token)
 ${is}        skipped_tokens.append(self.last_consumed_token)
 ${is}        if not success and skipped_tokens:
 ${is}            self.last_consumed_token = initial_token
 ${is}        if success and skipped_tokens:
-${is}            iv = InvalidNode(self)
+${is}            iv = InvalidNode(pe)
          [#-- OMITTED: "iv.copyLocationInfo(skippedTokens.get(0));" --]
 ${is}        for tok in skipped_tokens:
 ${is}            iv.add(tok)
          [#-- OMITTED: "iv.setEndOffset(tok.getEndOffset());" --]
-${is}        #   if self.debug_fault_tolerant:
-${is}        #       logger.info('Skipping %s tokens starting at: %s', len(skipped_tokens), skipped_tokens[0].location)
 ${is}        self.push_node(iv)
-${is}        self.pending_recovery = not success
+${is}    return success
 
-   [/#list]
-[/#macro]
+#endlist
+#endmacro
 
 #macro BuildCode expansion indent
 #var is = ""?right_pad(indent)
@@ -137,7 +134,7 @@ ${is}# Code for ${expansion.simpleName} specified at ${expansion.location}
   #if settings.faultTolerant && expansion.requiresRecoverMethod && !expansion.possiblyEmpty
     [#var is = ""?right_pad(indent)][#-- needed for when passed as nested content --]
 ${is}if self.pending_recovery:
-${is}    self.${expansion.recoverMethodName}()
+${is}    self.${expansion.recoverMethodName}(None)
   /#if
   [@BuildExpansionCode expansion, indent/]
 [/@CU.HandleLexicalStateChange][#rt]
@@ -192,7 +189,7 @@ ${is}    raise
 ${is}    if not self.is_tolerant: raise
 ${is}    self.pending_recovery = True
          ${expansion.customErrorRecoveryBlock!}
-         [#if production && production.returnType != "void"]
+         [#if production?? && production.returnType != "void"]
             [#var rt = production.returnType]
             [#-- We need a return statement here or the code won't compile! --]
             [#if rt = "int" || rt = "char" || rt == "byte" || rt = "short" || rt = "long" || rt = "float"|| rt = "double"]
