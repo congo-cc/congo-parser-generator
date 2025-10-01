@@ -4,6 +4,7 @@
 
 #var nodeNumbering = 0,
      exceptionNesting = 0,
+     repetitionIndex = 0,
      NODE_USES_PARSER = settings.nodeUsesParser,
      NODE_PREFIX = grammar.nodePrefix,
      currentProduction,
@@ -46,20 +47,20 @@
    #endif
 #endlist
 #if settings.faultTolerant
-
-  [@BuildRecoverRoutines /]
+  ${BuildRecoverRoutines()}
 #endif
 #endmacro
 
 #macro ParserProduction production
-    #set nodeNumbering = 0
-    #set nodeFieldOrdinal = {}
-    #set injectedFields = {}
+    #set nodeNumbering = 0,
+         repetitionIndex = 0,
+         nodeFieldOrdinal = {},
+         injectedFields = {}
     #set newVarIndex = 0 in CU
     #-- Generate the method modifiers and header
         ${production.leadingComments}
         // ${production.location}
-        ${globals::startProduction()}${globals::translateModifiers(production.accessModifier)} ${globals::translateType(production.returnType)} Parse${production.name}([#if production.parameterList??]${globals::translateParameters(production.parameterList)}[/#if]) {
+        ${globals::startProduction()}${globals::translateModifiers(production.accessModifier)} ${globals::translateType(production.returnType)} Parse${production.name}([#if production!.parameterList??]${globals::translateParameters(production.parameterList)}[/#if]) {
             _currentlyParsedProduction = "${production.name}";
             #set topLevelExpansion = false
             ${BuildCode(production)}
@@ -89,7 +90,7 @@
   #if expansion.simpleName = "ZeroOrMore" || expansion.simpleName = "OneOrMore"
     #var followingExpansion = expansion.followingExpansion
     #list 1..1000000 as unused
-      #if !followingExpansion
+      #if !followingExpansion??
          #break
       #endif
       #if followingExpansion.maximumSize > 0
@@ -105,7 +106,7 @@
       #if !followingExpansion.possiblyEmpty
          #break
       #endif
-      #if !followingExpansion.followingExpansion
+      #if !followingExpansion.followingExpansion??
             if (OuterFollowSet != null) {
                 if (OuterFollowSet.Contains(NextTokenType)) {
                     success = true;
@@ -146,7 +147,7 @@
      [@CU.HandleLexicalStateChange expansion, false]
       #if settings.faultTolerant && expansion.requiresRecoverMethod && !expansion.possiblyEmpty
 if (_pendingRecovery) {
-    ${expansion.recoverMethodName}();
+    ${expansion.recoverMethodName}(null);
 }
       #endif
        [@BuildExpansionCode expansion/]
@@ -820,7 +821,7 @@ ${BuildCode(zoo.nestedExpansion)}
    #if nestedExp.simpleName = "ExpansionChoice"
      #set inFirstVarName = "inFirst" + inFirstIndex, inFirstIndex = inFirstIndex + 1
 var ${inFirstVarName} = true;
-   [/#if]
+   #endif
 while (true) {
 ${RecoveryLoop(oom)}
       #if nestedExp.simpleName = "ExpansionChoice"
