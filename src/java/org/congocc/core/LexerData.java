@@ -235,6 +235,7 @@ public class LexerData {
         dealWithUndeclaredStringLiterals();
         dealWithDeclaredPatterns();
         dealWithRegexpRefs();
+        if (errors.getErrorCount()>0) return;
         // Check for self-referential loops in regular expressions
         new RegexpVisitor().visit(grammar);
         for (TokenProduction tokenProduction : grammar.descendants(TokenProduction.class)) {
