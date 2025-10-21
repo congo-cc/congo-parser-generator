@@ -52,9 +52,11 @@ public interface Node extends List<Node> {
             throw new UnsupportedOperationException("This is a terminal node. It has no child nodes.");
         }
 
+#if false
         default int indexOf(Node n) {
             return -1;
         }
+#endif
 
         default int size() {
             return 0;
@@ -158,6 +160,7 @@ public interface Node extends List<Node> {
          return true;
      }
 
+#if false
      /**
       * @return the index of the child Node. Or -1 if it is not
       * a child Node.
@@ -171,6 +174,7 @@ public interface Node extends List<Node> {
          }
          return -1;
      }
+#endif
 
      default Node previousSibling() {
          Node parent = getParent();
@@ -741,6 +745,12 @@ public interface Node extends List<Node> {
     }
 
     default int indexOf(Object obj) {
+        if (!(obj instanceof Node)) {
+            if (obj == null) {
+                throw new NullPointerException("Argument cannot be null.");
+            }
+            throw new IllegalArgumentException("Argument must be an instance of Node");
+        }
         for (int i = 0; i< size(); i++) {
             if (get(i).equals(obj)) return i;
         }
@@ -748,6 +758,12 @@ public interface Node extends List<Node> {
     }
 
     default int lastIndexOf(Object obj) {
+        if (!(obj instanceof Node)) {
+            if (obj == null) {
+                throw new NullPointerException("Argument cannot be null.");
+            }
+            throw new IllegalArgumentException("Argument must be an instance of Node");
+        }
         for (int i = size() - 1; i >= 0; i--) {
             if (get(i).equals(obj)) return i;
         }

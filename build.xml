@@ -180,8 +180,8 @@
 
   <target name="test-java" depends="jar">
     <echo>Testing the Java parser standalone"</echo>
-    <ant dir="examples/java" target="clean" />
-    <ant dir="examples/java" target="test" />
+    <!--ant dir="examples/java" target="clean" /-->
+    <ant dir="examples/java" target="test-java" />
   </target>
 
   <target name="jar" depends="compile">
