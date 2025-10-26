@@ -32,7 +32,7 @@ public class ParseFiles {
                 if (p.toString().endsWith(".${extension}")) {
                     paths.add(p);
                 }
-                else {
+                else if (p.toString().endsWith(".zip") || p.toString().endsWith(".jar")) {
                     try {
                         FileSystem zfs = FileSystems.newFileSystem(p, (ClassLoader) null);
                         p = zfs.getRootDirectories().iterator().next();
