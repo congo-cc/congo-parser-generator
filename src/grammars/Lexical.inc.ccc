@@ -1,53 +1,6 @@
 // An included part of the CongoCC grammar that is just the
 // part that involves the lexical specification
 
-/* congocc RESERVED WORDS: These are the only tokens in congocc but not in Java */
-
-TOKEN #CongoCCKeyWord :
-  < _INJECT: "INJECT" >
-  |
-  < _INCLUDE : "INCLUDE" | "INCLUDE_GRAMMAR">
-  |
-  < _FAIL : "FAIL" >
-  |
-  < _UNCACHE_TOKENS : "UNCACHE_TOKENS">
-  |
-  < _ACTIVE_TOKENS : "ACTIVE_TOKENS">
-  |
-  < _ACTIVATE_TOKENS : "ACTIVATE_TOKENS">
-  |
-  < _DEACTIVATE_TOKENS : "DEACTIVATE_TOKENS">
-  |
-  < __ASSERT : "ASSERT">
-  |
-  < _ENSURE : "ENSURE" >
-  |
-  < _FLAG : "FLAG">
-  |
-  < _SCAN : "SCAN" >
-  |
-  < _IGNORE_CASE: "IGNORE_CASE" >
-  |
-  < _TOKEN: "TOKEN" | "REGULAR_TOKEN">
-  |
-  < _UNPARSED: "SPECIAL_TOKEN" | "UNPARSED" >
-  |
-  < _MORE: "MORE">
-  |
-  < _SKIP: "SKIP" >
-  |
-  < _CONTEXTUAL : "CONTEXTUAL" >
-  |
-  < _EOF : "EOF">
-  |
-  < _ATTEMPT: "ATTEMPT">
-  |
-  < _RECOVER : "RECOVER">
-  |
-  < _RECOVER_TO : "RECOVER_TO">
-  |
-  < _ON_ERROR : "ON_ERROR">
-;
 
 TOKEN :
   <HASH : "#">
