@@ -13,8 +13,56 @@ DEACTIVATE_TOKENS=_INCLUDE,_INJECT,_EOF, RECORD, VAR, YIELD, SEALED, NON_SEALED,
 // based on whether we are generating code for internal use
 #define __congo_internal__
 
-INCLUDE "Lexical.inc.ccc"
+/* congocc RESERVED WORDS: These are the reserved words congocc but not in Java */
+
+TOKEN #CongoCCKeyWord :
+  < _INJECT: "INJECT" >
+  |
+  < _INCLUDE : "INCLUDE" | "INCLUDE_GRAMMAR">
+  |
+  < _FAIL : "FAIL" >
+  |
+  < _UNCACHE_TOKENS : "UNCACHE_TOKENS">
+  |
+  < _ACTIVE_TOKENS : "ACTIVE_TOKENS">
+  |
+  < _ACTIVATE_TOKENS : "ACTIVATE_TOKENS">
+  |
+  < _DEACTIVATE_TOKENS : "DEACTIVATE_TOKENS">
+  |
+  < __ASSERT : "ASSERT">
+  |
+  < _ENSURE : "ENSURE" >
+  |
+  < _FLAG : "FLAG">
+  |
+  < _SCAN : "SCAN" >
+  |
+  < _IGNORE_CASE: "IGNORE_CASE" >
+  |
+  < _TOKEN: "TOKEN" | "REGULAR_TOKEN">
+  |
+  < _UNPARSED: "SPECIAL_TOKEN" | "UNPARSED" >
+  |
+  < _MORE: "MORE">
+  |
+  < _SKIP: "SKIP" >
+  |
+  < _CONTEXTUAL : "CONTEXTUAL" >
+  |
+  < _EOF : "EOF">
+  |
+  < _ATTEMPT: "ATTEMPT">
+  |
+  < _RECOVER : "RECOVER">
+  |
+  < _RECOVER_TO : "RECOVER_TO">
+  |
+  < _ON_ERROR : "ON_ERROR">
+;
+
 INCLUDE "JavaInternal.ccc"
+INCLUDE "Lexical.inc.ccc"
 
 INJECT TokenSource :
    import org.congocc.core.Grammar;
@@ -947,7 +995,7 @@ INJECT ExpansionWithParentheses :
         }
         return cardinalityConstraints.toArray(new int[0][]);
     }
-    
+
     public boolean isMinCardinalityConstrained() {
         if (isCardinalityContainer()) {
             int[][] cardinalities = getCardinalityConstraints();
@@ -1634,13 +1682,18 @@ INJECT TokenActivation :
 
 
 TryBlock :
+    {
+        boolean seenCatch = false;
+        boolean seenFinally = false;
+    }
     "try" "{" ExpansionChoice "}"
     (
-        CatchBlock
+        CatchBlock {seenCatch = true;}
     )*
     [
-        FinallyBlock
+        FinallyBlock {seenFinally = true;}
     ]
+    ASSERT {seenCatch||seenFinally : "Expecting catch or finally here"}
 ;
 
 
