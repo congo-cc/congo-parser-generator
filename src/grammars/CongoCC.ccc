@@ -251,7 +251,7 @@ INJECT Identifier :
         String image = getSource();
         if (firstAncestorOfType(Options.class) != null) return image;
         return switch (image) {
-            case "jjtThis", "CURRENT_NODE", "THIS_PRODUCTION" ->
+            case "jjtThis", "CURRENT_NODE", "THIS_PRODUCTION", "THIS" ->
                 "thisProduction";
             case "PARSER_CLASS" ->
                getAppSettings().getParserClassName();
@@ -1108,10 +1108,10 @@ Assertion# :
     }
     (
         (
-            "ASSERT" {assertKeywordPresent = true;} ["ENSURE"]
+            & "ASSERT" {assertKeywordPresent = true;}
             |
-            "ENSURE" ["ASSERT" {assertKeywordPresent = true;}]
-        )
+            & "ENSURE" 
+        )+
         (
             (
                 "{"

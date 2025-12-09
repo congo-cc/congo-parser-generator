@@ -174,7 +174,7 @@ TOKEN #KeyWord :
    | < STRING : "string" > #PrimitiveType
    | < STRUCT : "struct" >
    | < SWITCH : "switch" >
-   | < THIS : "this" >
+   | < _THIS : "this" >
    | < THROW : "throw" >
    | < TRY : "try" >
    | < TYPEOF : "typeof" >

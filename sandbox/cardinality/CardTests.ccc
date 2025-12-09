@@ -291,7 +291,7 @@ EvenNumberSet :
 | < SUPER: "super" >
 | < SWITCH: "switch" >
 | < SYNCHRONIZED: "synchronized" >
-| < THIS: "this" > #ThisLiteral
+| < _THIS: "this" > #ThisLiteral
 | < THROW: "throw" >
 | < THROWS: "throws" >
 | < TRANSIENT: "transient" >

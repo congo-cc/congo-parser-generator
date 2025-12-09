@@ -345,7 +345,7 @@ finally {
                                     'initialShorthand' : initialShorthand,
                                     'void' : false,
                                     'assignment' :
-                                       { 'name' : globals::translateIdentifier("THIS_PRODUCTION") + "." + nodeFieldName,
+                                       { 'name' : globals::translateIdentifier("THIS") + "." + nodeFieldName,
                                           'propertyAssignment' : false,
                                           'declarationOf' : true,
                                           'existenceOf' : false }
@@ -425,7 +425,7 @@ finally {
 #function nodeVar isProduction
    #var nodeVarName
    #if isProduction
-      #set nodeVarName = globals::translateIdentifier("THIS_PRODUCTION")
+      #set nodeVarName = globals::translateIdentifier("THIS")
    #else
       #set nodeNumbering = nodeNumbering + 1
       #set nodeVarName = currentProduction.name + nodeNumbering
@@ -509,10 +509,10 @@ if (BuildTree) {
          #endif
          #if assignment.addTo!false
             #-- This is the addition of the current node as an element of the specified list property
-            #return globals::translateIdentifier("THIS_PRODUCTION") + "." + lhsName + ".Add(" + getRhsAssignmentPattern(assignment) + ")"
+            #return globals::translateIdentifier("THIS") + "." + lhsName + ".Add(" + getRhsAssignmentPattern(assignment) + ")"
          #else
             #-- This is an assignment of the current node's effective value to the specified property of the production node
-            #return globals::translateIdentifier("THIS_PRODUCTION") + "." + lhsName + " = " + getRhsAssignmentPattern(assignment)
+            #return globals::translateIdentifier("THIS") + "." + lhsName + " = " + getRhsAssignmentPattern(assignment)
          #endif
       #elseif assignment.namedAssignment!false
          #if assignment.addTo
@@ -750,7 +750,7 @@ finally {
    #var impliedLHS = "@"
    #if jtbParseTree && isProductionInstantiatingNode(nonterminal.production) && topLevelExpansion
       #var newName = imputedJtbFieldName(nonterminal.production.nodeName)
-      #set impliedLHS = globals::translateIdentifier("THIS_PRODUCTION") + "." + newName + " = @"
+      #set impliedLHS = globals::translateIdentifier("THIS") + "." + newName + " = @"
    #endif
    #-- Accept the non-terminal expansion
    #if nonterminal.production.returnType != "void" && expressedLHS != "@" && !nonterminal.assignment.namedAssignment && !nonterminal.assignment.propertyAssignment
