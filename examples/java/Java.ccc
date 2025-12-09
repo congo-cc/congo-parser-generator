@@ -536,11 +536,11 @@ ConstructorDeclaration :
 ;
 
 ExplicitConstructorInvocation :
-  [TypeArguments] (<THIS> | <SUPER>) =>|+1 InvocationArguments <SEMICOLON>
+  [TypeArguments] (<_THIS> | <SUPER>) =>|+1 InvocationArguments <SEMICOLON>
   |
   // Is this 100% correct? I think so, but it is not quite what the
   // language spec says. Maybe need to revisit this.
-  (Name [<DOT><THIS> =>||] | Parentheses [<DOT> =>|+1 Name][<DOT><THIS> =>||])
+  (Name [<DOT><_THIS> =>||] | Parentheses [<DOT> =>|+1 Name][<DOT><_THIS> =>||])
   <DOT> [TypeArguments] <SUPER> =>|+1 InvocationArguments <SEMICOLON>
 ;
 
@@ -888,7 +888,7 @@ PrimaryExpression#interface :
  (
   LiteralExpression
   |
-  <THIS> #LiteralExpression
+  <_THIS> #LiteralExpression
   |
   <SUPER> #LiteralExpression
   |
@@ -907,7 +907,7 @@ PrimaryExpression#interface :
    ASSERT {!(getToken(0) instanceof NODE_PACKAGE.NumericalLiteral) : "A numerical literal cannot be derereferenced."}
    ASSERT {!(getToken(0) instanceof NODE_PACKAGE.BooleanLiteral) : "A boolean literal cannot be derereferenced."}
    (
-    (<DOT> <THIS> =>||) #DotThis(+1)
+    (<DOT> <_THIS> =>||) #DotThis(+1)
     |
     (<DOT> <SUPER> =>||) #DotSuper(+1)
     |

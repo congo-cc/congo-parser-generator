@@ -325,7 +325,7 @@ ${injectDeclaration(treeNodeBehavior.nodeName, treeNodeBehavior.assignment.name,
                                           'initialShorthand' : initialShorthand,
                                           'void' : false,
                                           'assignment' :
-                                             { 'name' : globals::translateIdentifier("THIS_PRODUCTION") + "." + nodeFieldName,
+                                             { 'name' : globals::translateIdentifier("THIS") + "." + nodeFieldName,
                                                'propertyAssignment' : false,
                                                'declarationOf' : true,
                                                'existenceOf' : false }
@@ -418,7 +418,7 @@ ${injectDeclaration(treeNodeBehavior.nodeName, treeNodeBehavior.assignment.name,
 #function nodeVar isProduction
    #var nodeVarName
    #if isProduction
-      #set nodeVarName = globals::translateIdentifier("THIS_PRODUCTION")
+      #set nodeVarName = globals::translateIdentifier("THIS")
    #else
       #set nodeNumbering = nodeNumbering + 1
       #set nodeVarName = currentProduction.name + nodeNumbering
@@ -499,10 +499,10 @@ ${is}        self.clear_node_scope()
          [/#if]
          [#if assignment.addTo!false]
             [#-- This is the addition of the current node as an element of the specified list property --]
-            [#return globals::translateIdentifier("THIS_PRODUCTION") + "." + globals::translateIdentifier(lhsName) + ".add(" + getRhsAssignmentPattern(assignment) + ")" /]
+            [#return globals::translateIdentifier("THIS") + "." + globals::translateIdentifier(lhsName) + ".add(" + getRhsAssignmentPattern(assignment) + ")" /]
          [#else]
             [#-- This is an assignment of the current node's effective value to the specified property of the production node --]
-            [#return globals::translateIdentifier("THIS_PRODUCTION") + "." + globals::translateIdentifier(lhsName) + " = " + getRhsAssignmentPattern(assignment) /]
+            [#return globals::translateIdentifier("THIS") + "." + globals::translateIdentifier(lhsName) + " = " + getRhsAssignmentPattern(assignment) /]
          [/#if]
       [#elseif assignment.namedAssignment!false]
          [#if assignment.addTo]
@@ -749,7 +749,7 @@ ${is}    self.pop_call_stack()
    [#var impliedLHS = "@"]
    #if jtbParseTree && isProductionInstantiatingNode(nonterminal.production) && topLevelExpansion
       #var newName = imputedJtbFieldName(nonterminal.production.nodeName)
-      #set impliedLHS = globals::translateIdentifier("THIS_PRODUCTION") + "." + newName + " = @"
+      #set impliedLHS = globals::translateIdentifier("THIS") + "." + newName + " = @"
    /#if
    [#-- Accept the non-terminal expansion --]
    [#if nonterminal.production.returnType != "void" && expressedLHS != "@" && !nonterminal.assignment.namedAssignment && !nonterminal.assignment.propertyAssignment]
