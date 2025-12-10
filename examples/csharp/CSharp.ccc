@@ -421,7 +421,7 @@ InterfaceIndexerDeclaration :
    (AttributeSection)*
    [<NEW>]
    Type
-   <THIS>
+   <_THIS>
    <LBRACKET> FormalParameters <RBRACKET>
    <LBRACE> (InterfaceAccessor)+ <RBRACE>
 ;
@@ -662,7 +662,7 @@ IndexerDeclaration :
   Modifiers
   Type
   [Name <DOT>]
-  <THIS>
+  <_THIS>
   <LBRACKET>
   =>||
    FormalParameters
@@ -723,7 +723,7 @@ ConstructorDeclaration :
   <RPAREN>
   [
      <COLON>
-     (<BASE> | <THIS>)
+     (<BASE> | <_THIS>)
      <LPAREN> [ArgumentList] <RPAREN>
   ]
   MethodBody
@@ -891,7 +891,7 @@ FixedParameter :
    (AttributeSection)*
    (
       // REVISIT. Allows repeated modifiers, for example
-      <REF>| <OUT> | <THIS>|<READONLY>
+      <REF>| <OUT> | <_THIS>|<READONLY>
     | <IN> // since 7.2
     | 'scoped'
    )*
@@ -1499,7 +1499,7 @@ PrimaryExpression#void :
       |
       InterpolatedString
       |
-      <THIS> #This
+      <_THIS> #This
       |
       BaseAccess
       |
@@ -1642,7 +1642,7 @@ NameofExpression :
 ;
 
 NamedEntity :
-   (SimpleName | <THIS> | <BASE> | PredefinedType | QualifiedAliasMember)
+   (SimpleName | <_THIS> | <BASE> | PredefinedType | QualifiedAliasMember)
    (<DOT> <IDENTIFIER> [TypeArgumentList])*
 ;
 
