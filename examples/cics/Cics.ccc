@@ -322,10 +322,10 @@ TOKEN [IGNORE_CASE]:
 #Root :
     (
         <EXEC> <CICS>
-        Command
+        Command {assert THIS != THAT && THAT == peekNode();}
         <END_EXEC>!
     )+
-    <EOF> {return CURRENT_NODE;}
+    <EOF> {return THIS;}
 ;
 
 Name :

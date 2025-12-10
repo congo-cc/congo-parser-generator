@@ -43,7 +43,7 @@ DelimitedString :
         ( ENSURE {isParserTolerant()} =>|| Test | DelimitedString ) 
         "!"!->{System.out.println("'" + lastConsumedToken + "' found; expected '!'!");}
     )+
-    <EOF> {return CURRENT_NODE;}
+    <EOF> {return THIS;}
 ;
 
 Test :

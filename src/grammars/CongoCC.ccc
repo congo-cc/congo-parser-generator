@@ -251,8 +251,12 @@ INJECT Identifier :
         String image = getSource();
         if (firstAncestorOfType(Options.class) != null) return image;
         return switch (image) {
-            case "jjtThis", "CURRENT_NODE", "THIS_PRODUCTION", "THIS" ->
-                "thisProduction";
+            case "jjtThis", "CURRENT_NODE" ->
+               "thisProduction"; //FIXME: [JB] I think this should be the same as "THAT" based on JJTree semantics (Issue 236)
+            case "THIS_PRODUCTION", "THIS" ->
+               "thisProduction";
+            case "THAT" ->
+               "peekNode()";
             case "PARSER_CLASS" ->
                getAppSettings().getParserClassName();
             case "LEXER_CLASS" ->
