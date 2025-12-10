@@ -172,7 +172,6 @@ ${is}    self.${expansion.recoverMethodName}(None)
          [#-- Build the tree node (part 1). --]
          [@buildTreeNode production, treeNodeBehavior, nodeVarName, indent/]
       [/#if]
-      [#-- Any prologue code can refer to CURRENT_NODE at this point. --]
 ${is}${parseExceptionVar} = None
 ${is}${callStackSizeVar} = len(self.parsing_stack)
 ${is}try:
