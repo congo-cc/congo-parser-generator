@@ -1191,9 +1191,8 @@ TypePattern :
   {permissibleModifiers = EnumSet.of(FINAL);}#
   Modifiers
   (
-    'var' <IDENTIFIER>
-    |
-    Type (<IDENTIFIER>|<UNDERSCORE>)
+    ('var' | Type)
+    (<IDENTIFIER>|<UNDERSCORE>)
   )
 ;
 
