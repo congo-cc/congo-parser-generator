@@ -1205,11 +1205,19 @@ SwitchStatement :
   <SWITCH> <LPAREN> Expression <RPAREN>
   <LBRACE>
   [
-    SCAN NewSwitchLabel =>
-    (NewCaseStatement)+
-    |
-    SCAN ClassicSwitchLabel =>
-    (ClassicCaseStatement)+
+    SCAN ~(<RBRACE>) =>
+    (
+      SCAN NewSwitchLabel =>
+      (NewCaseStatement)+
+      |
+      SCAN ClassicSwitchLabel =>
+      (ClassicCaseStatement)+
+      |
+      SCAN (<CASE>|<_DEFAULT>) =>
+      FAIL "expecting valid case statement here" :
+      |
+      FAIL "expecting case or default"
+    )
   ]
   <RBRACE>
 ;
