@@ -295,6 +295,9 @@ public class AppSettings {
                     packageName = "cs-".concat(packageName.concat("parser"));
                     dir = dir.resolve(packageName);
                     break;
+                case RUST:
+                    // Rust uses the -d flag for output directory; no package path resolution needed
+                    break;
             }
             if (!Files.exists(dir)) {
                 Files.createDirectories(dir);

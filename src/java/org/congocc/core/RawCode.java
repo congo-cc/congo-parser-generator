@@ -40,6 +40,7 @@ public class RawCode extends EmptyExpansion implements EmbeddedCode {
                     case JAVA -> parseJava();
                     case CSHARP -> parseCSharp();
                     case PYTHON -> parsePython();
+                    case RUST -> {}
                 }
             } catch(ParseException pe) {
                 this.parseException = pe;
@@ -86,6 +87,7 @@ public class RawCode extends EmptyExpansion implements EmbeddedCode {
                 case PYTHON -> "\n# No output. This is Python code.";
                 case JAVA -> "// No output. This is Java code.";
                 case CSHARP -> "// No output. This is CSharp code.";
+                case RUST -> "// No output. This is Rust code.";
             };
         }
         if (useAltPythonFormat()) {

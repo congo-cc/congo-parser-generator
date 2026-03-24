@@ -10,6 +10,8 @@
     <delete dir="${basedir}/cs-jsonparser" />
     <delete dir="${basedir}/jsoncparser" />
     <delete dir="${basedir}/cs-jsoncparser" />
+    <delete dir="${basedir}/rust-jsonparser" />
+    <delete dir="${basedir}/rust-jsoncparser" />
   </target>
   <target name="parser1-gen" unless="parser1.uptodate">
     <mkdir dir="../../bin" />
@@ -105,5 +107,33 @@
     </exec>
   </target>
 
-   <target name="test-all" depends="compile,test-java,test-csharp,test-python"/>
+  <target name="rust-gen">
+    <java jar="../../congocc.jar" fork="true" failonerror="true">
+      <assertions><enable /></assertions>
+      <arg line=" -n -lang rust -d ${basedir}/rust-jsonparser ${basedir}/JSON.ccc" />
+    </java>
+    <java jar="../../congocc.jar" fork="true" failonerror="true">
+      <assertions><enable /></assertions>
+      <arg line=" -n -lang rust -d ${basedir}/rust-jsoncparser ${basedir}/JSONC.ccc" />
+    </java>
+    <mkdir dir="${basedir}/rust-jsonparser/test-data" />
+    <copy todir="${basedir}/rust-jsonparser/test-data">
+      <fileset dir="${basedir}/testfiles" includes="*.json" excludes="invalid.json" />
+    </copy>
+    <mkdir dir="${basedir}/rust-jsoncparser/test-data" />
+    <copy todir="${basedir}/rust-jsoncparser/test-data">
+      <fileset dir="${basedir}/testfiles" includes="*.json" />
+    </copy>
+  </target>
+
+  <target name="test-rust" depends="rust-gen">
+    <exec executable="cargo" dir="${basedir}/rust-jsonparser" failonerror="true">
+      <arg line="test" />
+    </exec>
+    <exec executable="cargo" dir="${basedir}/rust-jsoncparser" failonerror="true">
+      <arg line="test" />
+    </exec>
+  </target>
+
+   <target name="test-all" depends="compile,test-java,test-csharp,test-python,test-rust"/>
 </project>

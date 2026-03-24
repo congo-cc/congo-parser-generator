@@ -2,7 +2,7 @@
 
 [![Ask DeepWiki](https://deepwiki.com/badge.svg)](https://deepwiki.com/congo-cc/congo-parser-generator)
 
-The Congo Parser Generator is a Recursive Descent Parser Generator that generates code in Java, Python, and C#.
+The Congo Parser Generator is a Recursive Descent Parser Generator that generates code in Java, Python, C#, and Rust.
 
 Here are some highlights:
 
@@ -37,3 +37,9 @@ CongoCC also supports [fault-tolerant parsing](https://parsers.org/javacc21/the-
 If you are interested in this project, either as a user or developer, by all means sign up on our [Discussion Forum](https://discuss.congocc.org) and post any questions or suggestions there.
 
 See our [QuickStart Guide](https://parsers.org/home/).
+
+## Rust Support
+
+See [README_RUST.md](README_RUST.md) for details on Rust code generation, supported grammars, and usage examples.
+
+

@@ -3,6 +3,7 @@
     <delete dir="org" />
     <delete dir="luaparser" />
     <delete dir="cs-luaparser" />
+    <delete dir="rust-luaparser" />
     <delete file="LuaParse.class" />
   </target>
 
@@ -78,7 +79,24 @@
     </exec>
   </target>
 
+  <target name="rust-parser-gen">
+    <java jar="../../congocc.jar" failonerror="true" fork="true">
+      <assertions><enable /></assertions>
+      <arg line="-n -lang rust -d ${basedir}/rust-luaparser ${basedir}/Lua.ccc" />
+    </java>
+    <mkdir dir="${basedir}/rust-luaparser/test-data" />
+    <copy todir="${basedir}/rust-luaparser/test-data">
+      <fileset dir="${basedir}/testfiles" includes="*.lua" />
+    </copy>
+  </target>
+
+  <target name="test-rust" depends="rust-parser-gen">
+    <exec executable="cargo" dir="${basedir}/rust-luaparser" failonerror="true">
+      <arg line="test" />
+    </exec>
+  </target>
+
   <target name="build" depends="python-parser-gen,compile-csharp,compile-java"/>
 
-  <target name="test-all" depends="test-java,test-python,test-csharp"/>
+  <target name="test-all" depends="test-java,test-python,test-csharp,test-rust"/>
 </project>

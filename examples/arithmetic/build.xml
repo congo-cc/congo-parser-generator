@@ -2,6 +2,8 @@
   <target name="clean">
     <delete dir="ex1" />
     <delete dir="ex2" />
+    <delete dir="rust-arith1" />
+    <delete dir="rust-arith2" />
   </target>
 
   <target name="init">
@@ -41,4 +43,23 @@
     </java>
   </target>
 
+  <target name="rust-gen">
+    <java jar="../../congocc.jar" failonerror="true" fork="true">
+      <assertions><enable /></assertions>
+      <arg line="-n -lang rust -d ${basedir}/rust-arith1 ${basedir}/Arithmetic1.ccc" />
+    </java>
+    <java jar="../../congocc.jar" failonerror="true" fork="true">
+      <assertions><enable /></assertions>
+      <arg line="-n -lang rust -d ${basedir}/rust-arith2 ${basedir}/Arithmetic2.ccc" />
+    </java>
+  </target>
+
+  <target name="test-rust" depends="rust-gen">
+    <exec executable="cargo" dir="${basedir}/rust-arith1" failonerror="true">
+      <arg line="test" />
+    </exec>
+    <exec executable="cargo" dir="${basedir}/rust-arith2" failonerror="true">
+      <arg line="test" />
+    </exec>
+  </target>
 </project>

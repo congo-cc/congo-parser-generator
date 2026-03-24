@@ -1,6 +1,7 @@
 <project name="Cics Parser" default="compile">
   <target name="clean">
     <delete dir="org" />
+    <delete dir="rust-cicsparser" />
     <delete file="CicsParse.class" />
   </target>
 
@@ -33,5 +34,21 @@
       <arg value="testfiles" />
     </java>
   </target>
-	
+
+  <target name="rust-gen">
+    <java jar="../../congocc.jar" failonerror="true" fork="true">
+      <assertions><enable /></assertions>
+      <arg line="-n -lang rust -d ${basedir}/rust-cicsparser ${basedir}/Cics.ccc" />
+    </java>
+    <mkdir dir="${basedir}/rust-cicsparser/test-data" />
+    <copy todir="${basedir}/rust-cicsparser/test-data">
+      <fileset dir="${basedir}/testfiles" includes="*.cics" />
+    </copy>
+  </target>
+
+  <target name="test-rust" depends="rust-gen">
+    <exec executable="cargo" dir="${basedir}/rust-cicsparser" failonerror="true">
+      <arg line="test" />
+    </exec>
+  </target>
 </project>

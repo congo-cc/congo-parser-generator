@@ -296,7 +296,7 @@ INJECT interface Node :
 {
 
     public enum CodeLang {
-        JAVA, PYTHON, CSHARP;
+        JAVA, PYTHON, CSHARP, RUST;
     }
 
     default Grammar getGrammar() {

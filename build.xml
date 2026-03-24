@@ -62,6 +62,7 @@
     <ant target="clean" dir="examples/lua" />
     <ant target="clean" dir="examples/preprocessor" />
     <ant target="clean" dir="examples/cics" />
+    <ant target="clean" dir="examples/arithmetic" />
     <!--ant target="clean" dir="examples/freemarker" /-->
   </target>
 
@@ -182,6 +183,14 @@
     <echo>Testing the Java parser standalone"</echo>
     <!--ant dir="examples/java" target="clean" /-->
     <ant dir="examples/java" target="test-java" />
+  </target>
+
+  <target name="test-rust" depends="jar">
+    <echo>Testing Rust parser generation</echo>
+    <ant dir="examples/json" target="test-rust" />
+    <ant dir="examples/lua" target="test-rust" />
+    <ant dir="examples/cics" target="test-rust" />
+    <ant dir="examples/arithmetic" target="test-rust" />
   </target>
 
   <target name="jar" depends="compile">

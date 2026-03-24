@@ -47,6 +47,12 @@ __pycache__/*
 /examples/lua/cs-luaparser/*
 /examples/cardinality/org/*
 /examples/cics/org/*
+/examples/json/rust-jsonparser/*
+/examples/json/rust-jsoncparser/*
+/examples/lua/rust-luaparser/*
+/examples/cics/rust-cicsparser/*
+/examples/arithmetic/rust-arith1/*
+/examples/arithmetic/rust-arith2/*
 /personal.code-workspace
 /.vscode/*
 /.idea/*
