@@ -162,6 +162,7 @@
     <echo>Testing the CICS parser</echo>
     <ant dir="examples/cics" target="clean" />
     <ant dir="examples/cics" target="test" />
+    <ant dir="examples/cics" target="test-rust" />
     <echo>Testing the Preprocessor</echo>
     <ant dir="examples/preprocessor" target="clean" />
     <ant dir="examples/preprocessor" target="test" />
@@ -177,6 +178,10 @@
     <echo>Building the Python parser</echo>
     <ant dir="examples/python" target="clean" />
     <ant dir="examples/python" target="test-all" />
+    <echo>Testing the Arithmetic parsers</echo>
+    <ant dir="examples/arithmetic" target="clean" />
+    <ant dir="examples/arithmetic" target="test" />
+    <ant dir="examples/arithmetic" target="test-rust" />
   </target>
 
   <target name="test-java" depends="jar">

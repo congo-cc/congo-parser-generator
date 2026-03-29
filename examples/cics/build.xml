@@ -40,6 +40,7 @@
       <assertions><enable /></assertions>
       <arg line="-n -lang rust -d ${basedir}/rust-cicsparser ${basedir}/Cics.ccc" />
     </java>
+    <delete dir="${basedir}/rust-cicsparser/test-data" />
     <mkdir dir="${basedir}/rust-cicsparser/test-data" />
     <copy todir="${basedir}/rust-cicsparser/test-data">
       <fileset dir="${basedir}/testfiles" includes="*.cics" />
@@ -48,7 +49,7 @@
 
   <target name="test-rust" depends="rust-gen">
     <exec executable="cargo" dir="${basedir}/rust-cicsparser" failonerror="true">
-      <arg line="test" />
+      <arg line="test -- --nocapture" />
     </exec>
   </target>
 </project>

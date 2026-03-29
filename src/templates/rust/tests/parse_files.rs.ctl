@@ -45,21 +45,23 @@ fn collect_files(dir: &Path, extension: &str, out: &mut Vec<PathBuf>) {
 /// test-data directory, asserting that each one parses without error.
 ///
 /// The test-data directory is resolved relative to the crate's manifest
-/// directory (i.e., next to `Cargo.toml`).  If it does not exist, the
-/// test is skipped.
+/// directory (i.e., next to `Cargo.toml`).
 #[test]
 fn parse_test_files() {
     let test_dir = Path::new(env!("CARGO_MANIFEST_DIR")).join("test-data");
     if !test_dir.exists() {
-        // No test data directory — skip silently.
-        return;
+        panic!(
+            "Test data directory not found: {}\n\
+             Expected directory next to Cargo.toml containing test files.\n\
+             The build system should copy test files from the grammar's \
+             testfiles/ directory.\n\
+             Check the build.xml test-rust target for this grammar.",
+            test_dir.display()
+        );
     }
 
-[#if settings.testExtension?has_content]
-    let extension = "${settings.testExtension}";
-[#else]
-    let extension = "txt";
-[/#if]
+[#var extension = globals::getStringSetting("TEST_EXTENSION", "txt")]
+    let extension = "${extension}";
 
     let mut files: Vec<PathBuf> = Vec::new();
     collect_files(&test_dir, extension, &mut files);
@@ -67,8 +69,8 @@ fn parse_test_files() {
     files.sort();
 
     if files.is_empty() {
-        println!("No .{} files found in {}", extension, test_dir.display());
-        return;
+        panic!("No .{} files found in {} — check TEST_EXTENSION setting",
+               extension, test_dir.display());
     }
 
     let mut passed = 0usize;

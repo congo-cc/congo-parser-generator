@@ -1,5 +1,6 @@
 PARSER_PACKAGE=ex1;
 PARSER_CLASS=Calc;
+TEST_EXTENSION=arith;
 
 SKIP : " " | "\t" | "\n" | "\r" ;
 

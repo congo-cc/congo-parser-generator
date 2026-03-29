@@ -339,7 +339,7 @@ impl Lexer {
     ///
     /// Returns the token and the new character position after the token.
     fn tokenize_at(&mut self, position: usize) -> Result<(Token, usize), ParseError> {
-        let nfa_functions = get_nfa_functions(self.lexical_state);
+        let mut nfa_functions = get_nfa_functions(self.lexical_state);
         let input_len = self.chars.len();
         let token_begin = position;
         let mut in_more = false;
@@ -370,32 +370,57 @@ impl Lexer {
                 self.get_match_info(current_position, nfa_functions);
 
             if matched_type == TokenType::INVALID {
-                // No valid token matched. Report error with location.
-                let byte_offset = self.char_pos_to_byte_offset(current_position);
-                let (line, col) = self.line_column_from_char_pos(current_position);
-                return Err(ParseError::at(
-                    format!(
-                        "Invalid character '{}' (U+{:04X})",
-                        char::from_u32(self.chars[current_position]).unwrap_or('\u{FFFD}'),
-                        self.chars[current_position]
-                    ),
-                    &self.source_name,
-                    line,
-                    col,
+                // No valid token matched in the current lexical state.
+                // Produce a single-character INVALID token and continue
+                // tokenization.  The parser may re-tokenize this region
+                // when it changes lexical state or activates/deactivates
+                // token types via retokenize_from_pos().
+                let byte_start = self.char_pos_to_byte_offset(current_position);
+                let byte_end = self.char_pos_to_byte_offset(current_position + 1);
+                return Ok((
+                    Token {
+                        kind: TokenType::INVALID,
+                        start: byte_start,
+                        end: byte_end,
+                        is_unparsed: false,
+                    },
+                    current_position + 1,
                 ));
             }
 
+            let match_start = current_position;
             in_more = matched_type.is_more();
             current_position = match_end;
 
 [#if lexerData.hasLexicalStateTransitions]
-            // Check for lexical state transition.
+            // Check for lexical state transition.  When a MORE token
+            // triggers a state switch, the NFA functions must be updated
+            // so the next iteration matches against the NEW state's tokens.
+            let prev_state = self.lexical_state;
             if let Some(new_state) = crate::tokens::lexical_state_for(matched_type) {
                 self.lexical_state = new_state;
+                nfa_functions = get_nfa_functions(new_state);
             }
 [/#if]
 
             if !in_more {
+[#if lexerData.moreTokens.tokenNames?size != 0 && lexerData.hasLexicalStateTransitions]
+                // When a MORE accumulation completes, validate balanced
+                // bracket delimiters.  Grammars like Lua use [==[...]==]
+                // long strings where the NFA cannot enforce that the
+                // closing delimiter's = count matches the opening's.
+                // If they don't match, the closing match is a false
+                // positive: back up 1 char and continue accumulating.
+                if match_start > token_begin
+                    && !Self::balanced_delimiters(&self.chars, token_begin, current_position)
+                {
+                    current_position -= 1;
+                    in_more = true;
+                    self.lexical_state = prev_state;
+                    nfa_functions = get_nfa_functions(prev_state);
+                    continue;
+                }
+[/#if]
                 let byte_start = self.char_pos_to_byte_offset(token_begin);
                 let byte_end = self.char_pos_to_byte_offset(current_position);
                 let token = Token {
@@ -410,6 +435,59 @@ impl Lexer {
             // but the token_begin stays the same.
         }
     }
+
+[#if lexerData.moreTokens.tokenNames?size != 0 && lexerData.hasLexicalStateTransitions]
+    /// Check whether a MORE-accumulated token has balanced bracket
+    /// delimiters.  Lua-style long strings (`[==[...]==]`) and long
+    /// comments (`--[==[...]==]`) require the number of `=` signs in
+    /// the closing delimiter to match the opening.  The NFA cannot
+    /// enforce this constraint, so this post-match validation rejects
+    /// false closings.
+    ///
+    /// Returns `true` if the delimiters are balanced or the token does
+    /// not use bracket delimiters (i.e., no validation needed).
+    fn balanced_delimiters(chars: &[u32], begin: usize, end: usize) -> bool {
+        if begin >= end || end > chars.len() {
+            return true;
+        }
+        const DASH: u32 = '-' as u32;
+        const LBRACKET: u32 = '[' as u32;
+        const RBRACKET: u32 = ']' as u32;
+        const EQUALS: u32 = '=' as u32;
+        // Find opening bracket pattern: optional "--" prefix, then "[" "="* "["
+        let mut idx = begin;
+        if idx + 1 < end && chars[idx] == DASH && chars[idx + 1] == DASH {
+            idx += 2;
+        }
+        if idx >= end || chars[idx] != LBRACKET {
+            return true;
+        }
+        idx += 1;
+        let mut open_equals: usize = 0;
+        while idx < end && chars[idx] == EQUALS {
+            open_equals += 1;
+            idx += 1;
+        }
+        if idx >= end || chars[idx] != LBRACKET {
+            return true;
+        }
+        // Find closing bracket pattern at the end: "]" "="* "]"
+        let mut ridx = end - 1;
+        if chars[ridx] != RBRACKET {
+            return true;
+        }
+        ridx = ridx.saturating_sub(1);
+        let mut close_equals: usize = 0;
+        while ridx > begin && chars[ridx] == EQUALS {
+            close_equals += 1;
+            ridx = ridx.saturating_sub(1);
+        }
+        if chars[ridx] != RBRACKET {
+            return true;
+        }
+        open_equals == close_equals
+    }
+[/#if]
 
     /// Run the NFA from a given character position to find the longest match.
     ///

@@ -84,6 +84,7 @@
       <assertions><enable /></assertions>
       <arg line="-n -lang rust -d ${basedir}/rust-luaparser ${basedir}/Lua.ccc" />
     </java>
+    <delete dir="${basedir}/rust-luaparser/test-data" />
     <mkdir dir="${basedir}/rust-luaparser/test-data" />
     <copy todir="${basedir}/rust-luaparser/test-data">
       <fileset dir="${basedir}/testfiles" includes="*.lua" />
@@ -92,7 +93,7 @@
 
   <target name="test-rust" depends="rust-parser-gen">
     <exec executable="cargo" dir="${basedir}/rust-luaparser" failonerror="true">
-      <arg line="test" />
+      <arg line="test -- --nocapture" />
     </exec>
   </target>
 

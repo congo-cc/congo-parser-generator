@@ -52,14 +52,24 @@
       <assertions><enable /></assertions>
       <arg line="-n -lang rust -d ${basedir}/rust-arith2 ${basedir}/Arithmetic2.ccc" />
     </java>
+    <delete dir="${basedir}/rust-arith1/test-data" />
+    <mkdir dir="${basedir}/rust-arith1/test-data" />
+    <copy todir="${basedir}/rust-arith1/test-data">
+      <fileset dir="${basedir}/testfiles" includes="*.arith" />
+    </copy>
+    <delete dir="${basedir}/rust-arith2/test-data" />
+    <mkdir dir="${basedir}/rust-arith2/test-data" />
+    <copy todir="${basedir}/rust-arith2/test-data">
+      <fileset dir="${basedir}/testfiles" includes="*.arith" />
+    </copy>
   </target>
 
   <target name="test-rust" depends="rust-gen">
     <exec executable="cargo" dir="${basedir}/rust-arith1" failonerror="true">
-      <arg line="test" />
+      <arg line="test -- --nocapture" />
     </exec>
     <exec executable="cargo" dir="${basedir}/rust-arith2" failonerror="true">
-      <arg line="test" />
+      <arg line="test -- --nocapture" />
     </exec>
   </target>
 </project>

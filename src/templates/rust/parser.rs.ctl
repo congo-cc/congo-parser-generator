@@ -141,17 +141,47 @@ if self.remaining_lookahead <= 0 { return true; }
 {
     [#var lexIdx = newID()]
     let _prev_lex_state_${lexIdx} = self.lexical_state;
-    self.switch_lexical_state(LexicalState::${expansion.specifiedLexicalState});
   [#if inLookahead]
+    // During scanning/lookahead, retokenize from scan_pos (not pos)
+    // and save/restore the original tokens so we don't corrupt the
+    // token stream for the actual parsing phase.  Because different
+    // lexical states may produce different token boundaries (e.g.
+    // COBOL_NAME "A-B-C" is one token vs FILE_NAME+INVALID+... in
+    // CICS_STATE), we track byte positions to realign scan_pos after
+    // restoring the original tokens.
+    let _saved_scan_pos_${lexIdx} = self.scan_pos;
+    let _saved_tokens_${lexIdx} = self.tokens[self.scan_pos..].to_vec();
+    self.lexical_state = LexicalState::${expansion.specifiedLexicalState};
+    let _ = self.retokenize_from_idx(self.scan_pos);
     let _lex_result_${lexIdx}: bool = (|| -> bool {
         [#nested/]
         true
     })();
     if _prev_lex_state_${lexIdx} != LexicalState::${expansion.specifiedLexicalState} {
-        self.switch_lexical_state(_prev_lex_state_${lexIdx});
+        // Note the byte position where the scan ended in the new state.
+        let _scan_end_byte_${lexIdx} = if self.scan_pos < self.tokens.len() {
+            self.tokens[self.scan_pos].start
+        } else if let Some(last) = self.tokens.last() {
+            last.end
+        } else {
+            0
+        };
+        // Restore the original lexical state and tokens.
+        self.lexical_state = _prev_lex_state_${lexIdx};
+        self.tokens.truncate(_saved_scan_pos_${lexIdx});
+        self.tokens.extend_from_slice(&_saved_tokens_${lexIdx});
+        // Adjust scan_pos to the equivalent position in the restored
+        // tokens by finding the first token at or past the byte offset
+        // where the new-state scan ended.
+        self.scan_pos = _saved_scan_pos_${lexIdx};
+        while self.scan_pos < self.tokens.len()
+              && self.tokens[self.scan_pos].start < _scan_end_byte_${lexIdx} {
+            self.scan_pos += 1;
+        }
     }
     if !_lex_result_${lexIdx} { return false; }
   [#else]
+    self.switch_lexical_state(LexicalState::${expansion.specifiedLexicalState});
     let _lex_result_${lexIdx}: Result<(), ParseError> = (|| {
         [#nested/]
         Ok(())
@@ -187,6 +217,9 @@ if self.remaining_lookahead <= 0 { return true; }
     ]);
   [/#if]
   [#if inLookahead]
+    if _something_changed_${taIdx} {
+        let _ = self.retokenize_from_pos();
+    }
     let _ta_result_${taIdx}: bool = (|| -> bool {
         [#nested/]
         true
@@ -197,6 +230,9 @@ if self.remaining_lookahead <= 0 { return true; }
     }
     if !_ta_result_${taIdx} { return false; }
   [#else]
+    if _something_changed_${taIdx} {
+        self.retokenize_from_pos()?;
+    }
     let _ta_result_${taIdx}: Result<(), ParseError> = (|| {
         [#nested/]
         Ok(())
@@ -606,8 +642,15 @@ ${globals::translateCodeBlock(fail.code, 1)}
             self.passed_predicate = true;
         }
 [/#if]
-        self.passed_predicate = false;
-        true
+        // Only reset passed_predicate when the scan succeeded.
+        // In Java, the equivalent "passedPredicate = false; return true;"
+        // is only reached on the success path (early "return false" in the
+        // try block skips it).  Here the closure captures that early return
+        // in _result_${scanIdx}, so we must branch on it.
+        if _result_${scanIdx} {
+            self.passed_predicate = false;
+        }
+        _result_${scanIdx}
     }
 
 [/#if]
@@ -872,6 +915,8 @@ ${globals::translateCodeBlock(expansion, 12)}
             ]);
 [/#macro]
 
+[#-- ScanCodeChoice: nested if-blocks so that once a choice succeeds,
+     later choices are skipped (matching Java's nested try structure). --]
 [#macro ScanCodeChoice choice]
 {
             let _saved_scan_${newID()} = self.scan_pos;
@@ -887,13 +932,19 @@ ${globals::translateCodeBlock(expansion, 12)}
   [#if !subseq_has_next]
                 self.passed_predicate = _saved_pred_${newVarIndex};
                 return false;
+            }
   [#else]
                 if self.passed_predicate && !self.legacy_glitchy_lookahead {
                     self.passed_predicate = _saved_pred_${newVarIndex};
                     return false;
                 }
   [/#if]
+[/#list]
+[#-- Close all nested if-blocks (one per non-last choice) --]
+[#list choice.choices as subseq]
+  [#if subseq_has_next]
             }
+  [/#if]
 [/#list]
             self.passed_predicate = _saved_pred_${newVarIndex};
 }
@@ -1106,7 +1157,11 @@ impl<'src> Parser<'src> {
             legacy_glitchy_lookahead: false,
 [/#if]
             lexical_state: LexicalState::default(),
+[#if settings.deactivatedTokens!false]
+            active_token_types: lexer.save_active_tokens(),
+[#else]
             active_token_types: None,
+[/#if]
         };
         parser.parse_${rootProductionName?lower_case}()?;
         let root = parser.builder.peek_node();
@@ -1342,8 +1397,16 @@ impl<'src> Parser<'src> {
     /// lexical state and active token settings. Called after lexical
     /// state changes or token activation/deactivation.
     fn retokenize_from_pos(&mut self) -> Result<(), ParseError> {
-        if self.pos >= self.tokens.len() { return Ok(()); }
-        let byte_start = self.tokens[self.pos].start;
+        self.retokenize_from_idx(self.pos)
+    }
+
+    /// Re-tokenizes from a given token index with the current lexical
+    /// state and active token settings. Used by retokenize_from_pos
+    /// (during parsing) and during lookahead scanning where we need
+    /// to retokenize from the scan position rather than parse position.
+    fn retokenize_from_idx(&mut self, idx: usize) -> Result<(), ParseError> {
+        if idx >= self.tokens.len() { return Ok(()); }
+        let byte_start = self.tokens[idx].start;
         let remaining = &self.source[byte_start..];
         let mut lexer = Lexer::new(remaining, &self.source_name);
         lexer.switch_to(self.lexical_state);
@@ -1353,7 +1416,7 @@ impl<'src> Parser<'src> {
             }
         }
         lexer.tokenize()?;
-        self.tokens.truncate(self.pos);
+        self.tokens.truncate(idx);
         for tok in lexer.tokens() {
             if !tok.is_unparsed || tok.kind == TokenType::EOF {
                 self.tokens.push(Token {
