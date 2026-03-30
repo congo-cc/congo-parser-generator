@@ -310,6 +310,40 @@ impl Ast {
             .collect()
     }
 
+    /// Returns the nth direct child of the given node (0-indexed), or `None`
+    /// if the index is out of bounds.
+    ///
+    /// This is the arena equivalent of Java's `node.get(index)` in INJECT blocks.
+    ///
+    /// # Examples
+    ///
+    /// ```ignore
+    /// // Java INJECT:  get(0).evaluate()
+    /// // Rust arena:   ast.child_at(id, 0).map(|c| ast.evaluate(c))
+    /// ```
+    pub fn child_at(&self, id: NodeId, index: usize) -> Option<NodeId> {
+        self.children(id).nth(index)
+    }
+
+    /// Returns `true` if the nth direct child of the given node is a token
+    /// of the specified type.  Returns `false` if the index is out of bounds
+    /// or the child is not a token of that type.
+    ///
+    /// This is the arena equivalent of Java's `get(i) instanceof SOME_TOKEN`
+    /// pattern commonly used in INJECT blocks.
+    ///
+    /// # Examples
+    ///
+    /// ```ignore
+    /// // Java INJECT:  boolean subtract = get(i) instanceof MINUS;
+    /// // Rust arena:   let subtract = ast.child_is_token(id, i, TokenType::MINUS);
+    /// ```
+    pub fn child_is_token(&self, id: NodeId, index: usize, tt: TokenType) -> bool {
+        self.child_at(id, index)
+            .and_then(|child| self.token_type(child))
+            .map_or(false, |t| t == tt)
+    }
+
     // --- Display ---
 
     /// Returns an indented text dump of the AST subtree rooted at `id`.

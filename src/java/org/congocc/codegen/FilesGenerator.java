@@ -148,8 +148,10 @@ public class FilesGenerator {
                         "error.rs",
                         "visitor.rs",
                         "pretty.rs",
+                        "inject.rs",
                         "lib.rs",
                         "Cargo.toml",
+                        "FIXME.md",
                         "tests/parse_files.rs",
                 };
                 for (String p : paths) {

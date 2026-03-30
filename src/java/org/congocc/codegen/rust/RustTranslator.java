@@ -609,8 +609,10 @@ public class RustTranslator extends Translator {
             addNewline = true;
         }
         else {
-            // Fallback: emit as FIXME comment
-            result.append("// FIXME(congocc): untranslatable statement — manual Rust implementation needed");
+            // Fallback: emit as FIXME comment identifying the untranslatable construct
+            result.append("// FIXME(congocc): Cannot translate ")
+                  .append(stmt.getClass().getSimpleName())
+                  .append(" to Rust — manual implementation needed");
             addNewline = true;
         }
 
