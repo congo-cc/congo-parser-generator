@@ -45,10 +45,11 @@
 [#set injectNodes = injectNodes + [node]]
 [/#if]
 [/#list]
-[#-- Check for PARSER_CLASS injections via translateParserInjections which
-     uses the correct parserPackage.parserClassName lookup key. --]
-[#var parserFieldInject = globals::translateParserInjections(true)]
-[#var parserMethodInject = globals::translateParserInjections(false)]
+[#-- Check for PARSER_CLASS injections via translateParserClassInjection which
+     uses the correct parserPackage.parserClassName lookup key and includes
+     original Java source in FIXME block comments. --]
+[#var parserFieldInject = globals::translateParserClassInjection(true)]
+[#var parserMethodInject = globals::translateParserClassInjection(false)]
 [#if parserFieldInject?has_content || parserMethodInject?has_content]
 [#set hasAnyInject = true]
 [/#if]

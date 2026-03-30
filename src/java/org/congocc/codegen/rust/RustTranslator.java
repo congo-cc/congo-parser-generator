@@ -461,10 +461,22 @@ public class RustTranslator extends Translator {
         try {
             for (ClassOrInterfaceBodyDeclaration decl : decls) {
                 try {
-                    if (decl instanceof FieldDeclaration) {
-                        translateStatement(decl, indent, result);
-                    } else if (decl instanceof MethodDeclaration) {
-                        translateStatement(decl, indent, result);
+                    if (decl instanceof FieldDeclaration || decl instanceof MethodDeclaration) {
+                        // Attempt translation into a temporary buffer so we can detect
+                        // silent FIXME fallbacks (from internalTranslateStatement) and
+                        // replace them with the original Java source as a block comment.
+                        StringBuilder buf = new StringBuilder();
+                        translateStatement(decl, indent, buf);
+                        String translated = buf.toString();
+                        if (translated.contains("FIXME(congocc)")) {
+                            // Translation produced a FIXME stub — replace with the
+                            // original Java source so the developer can see what needs
+                            // to be implemented.
+                            throw new UnsupportedOperationException(
+                                "Cannot translate " + getSimpleName(decl)
+                                + " to Rust");
+                        }
+                        result.append(translated);
                     } else {
                         // Unknown declaration type — flag for manual translation
                         throw new UnsupportedOperationException(
@@ -480,26 +492,7 @@ public class RustTranslator extends Translator {
                     translationWarnings.add(warning);
 
                     // Emit the original Java source as a commented-out FIXME block
-                    addIndent(indent, result);
-                    result.append("// FIXME(congocc): The following Java code requires manual translation to Rust.\n");
-                    addIndent(indent, result);
-                    result.append("// ").append(e.getMessage()).append('\n');
-                    addIndent(indent, result);
-                    result.append("// Please provide a Rust implementation, or use a\n");
-                    addIndent(indent, result);
-                    result.append("// #if __rust__ / #endif block in the grammar file.\n");
-                    addIndent(indent, result);
-                    result.append("//\n");
-                    addIndent(indent, result);
-                    result.append("// Original Java:\n");
-                    String declSource = decl.getSource();
-                    if (declSource != null) {
-                        for (String line : declSource.split("\n")) {
-                            addIndent(indent, result);
-                            result.append("//   ").append(line).append('\n');
-                        }
-                    }
-                    result.append('\n');
+                    emitJavaSourceAsFIXME(decl, name, indent, result);
                 }
             }
 
@@ -513,6 +506,76 @@ public class RustTranslator extends Translator {
         } finally {
             inInterface = false;
         }
+    }
+
+    /**
+     * Translates PARSER_CLASS INJECT blocks, using the parser package + class name
+     * as the lookup key.  Works the same as {@link #translateInjectedClass} but for
+     * the parser class rather than AST node classes.
+     *
+     * @param injector the code injector containing INJECT declarations
+     * @param fields if true, process only field declarations; if false, only methods
+     * @return the translated Rust code (or FIXME block comments with original Java)
+     */
+    public String translateParserClassInjection(CodeInjector injector, boolean fields) {
+        String qualifiedName = String.format("%s.%s",
+            appSettings.getParserPackage(), appSettings.getParserClassName());
+        List<ClassOrInterfaceBodyDeclaration> decls = injector.getBodyDeclarations(qualifiedName);
+
+        if (decls == null || decls.isEmpty()) {
+            return "";
+        }
+
+        StringBuilder result = new StringBuilder();
+        int indent = 4;
+        String target = appSettings.getParserClassName();
+
+        for (ClassOrInterfaceBodyDeclaration decl : decls) {
+            boolean isField = (decl instanceof FieldDeclaration || decl instanceof Initializer);
+            if (fields != isField) continue;
+
+            try {
+                StringBuilder buf = new StringBuilder();
+                translateStatement(decl, indent, buf);
+                String translated = buf.toString();
+                if (translated.contains("FIXME(congocc)")) {
+                    throw new UnsupportedOperationException(
+                        "Cannot translate " + getSimpleName(decl) + " to Rust");
+                }
+                result.append(translated);
+            } catch (Exception e) {
+                emitJavaSourceAsFIXME(decl, target, indent, result);
+            }
+        }
+
+        return result.toString();
+    }
+
+    /**
+     * Emits a FIXME block comment containing the original Java source code from
+     * an INJECT declaration that could not be translated to Rust.  The original
+     * Java is wrapped in a Rust block comment so the developer can see the full
+     * source inline and use it as a guide for writing the Rust equivalent.
+     */
+    private void emitJavaSourceAsFIXME(Node decl, String injectTarget,
+                                        int indent, StringBuilder result) {
+        addIndent(indent, result);
+        result.append("// FIXME(congocc): Manual Rust implementation needed for INJECT ")
+              .append(injectTarget).append('\n');
+        String declSource = decl.getSource();
+        if (declSource != null && !declSource.isEmpty()) {
+            addIndent(indent, result);
+            result.append("// Original Java code:\n");
+            addIndent(indent, result);
+            result.append("/*\n");
+            for (String line : declSource.split("\n")) {
+                addIndent(indent, result);
+                result.append(line).append('\n');
+            }
+            addIndent(indent, result);
+            result.append("*/\n");
+        }
+        result.append('\n');
     }
 
     // ----- Statement translation -----

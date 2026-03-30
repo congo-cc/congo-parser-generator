@@ -385,6 +385,15 @@ public class TemplateGlobals {
         return translateInjections(className, fields, fields && translator.isIncludeInitializers());
     }
 
+    // used in Rust inject.rs.ctl template — includes original Java source in FIXME comments
+    public String translateParserClassInjection(boolean fields) {
+        if (translator instanceof org.congocc.codegen.rust.RustTranslator rustTranslator) {
+            return rustTranslator.translateParserClassInjection(grammar.getInjector(), fields);
+        }
+        // Fall back to the generic path for non-Rust translators
+        return translateParserInjections(fields);
+    }
+
     // used in templates
     public String translateLexerInitializers() {
         String className = String.format("%s.%s", appSettings.getParserPackage(), appSettings.getLexerClassName());
