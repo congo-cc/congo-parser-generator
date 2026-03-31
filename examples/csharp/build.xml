@@ -5,6 +5,7 @@
     <delete dir="csharpparser" />
     <delete dir="cs-pplineparser" />
     <delete dir="cs-csharpparser" />
+    <delete dir="rust-csharpparser" />
   </target>
 
   <target name="init">
@@ -98,6 +99,24 @@
     </exec>
   </target>
 
-  <target name="build-all" depends="compile-java,python-parser-gen,compile-csharp"/>
-  <target name="test-all" depends="test-java,test-python,test-csharp"/>
+  <target name="rust-gen">
+    <echo>Building CSharp parser in Rust.</echo>
+    <java jar="../../congocc.jar" fork="true" failonerror="true">
+      <assertions><enable /></assertions>
+      <arg line="-n -lang rust -d ${basedir}/rust-csharpparser ${basedir}/CSharp.ccc" />
+    </java>
+  </target>
+
+  <target name="compile-rust" depends="rust-gen">
+    <exec executable="cargo" dir="${basedir}/rust-csharpparser" failonerror="true">
+      <arg line="build" />
+    </exec>
+  </target>
+
+  <target name="test-rust" depends="compile-rust">
+    <!-- Tests disabled until handwritten Rust code is supplied. -->
+  </target>
+
+  <target name="build-all" depends="compile-java,python-parser-gen,compile-csharp,compile-rust"/>
+  <target name="test-all" depends="test-java,test-python,test-csharp,test-rust"/>
 </project>

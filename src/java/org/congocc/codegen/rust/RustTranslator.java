@@ -37,6 +37,12 @@ public class RustTranslator extends Translator {
     // FilesGenerator can report them to the user after generation.
     private final List<String> translationWarnings = new ArrayList<>();
 
+    // Java names of parser fields from INJECT PARSER_CLASS, mapped to their
+    // snake_case Rust equivalents.  When the translator encounters one of these
+    // identifiers in a code action or assertion expression, it emits
+    // "self.<rust_name>" instead of a bare local variable reference.
+    private final Map<String, String> parserFieldNames = new HashMap<>();
+
     public RustTranslator(Grammar grammar) {
         super(grammar);
         methodIndent = 4;
@@ -118,6 +124,13 @@ public class RustTranslator extends Translator {
         // Types stay PascalCase
         if (kind == TranslationContext.TYPE) {
             return translateTypeName(ident);
+        }
+
+        // Check if this is a known parser field from INJECT PARSER_CLASS.
+        // These become self.field_name in Rust since they are struct fields.
+        if ((kind == TranslationContext.VARIABLE || kind == TranslationContext.FIELD)
+                && parserFieldNames.containsKey(ident)) {
+            return "self." + parserFieldNames.get(ident);
         }
 
         // Methods and variables -> snake_case, escaping Rust keywords
@@ -537,6 +550,101 @@ public class RustTranslator extends Translator {
         } finally {
             inInterface = false;
         }
+    }
+
+    /**
+     * Extracts field declarations from INJECT PARSER_CLASS blocks and returns
+     * them formatted as Rust struct field definitions.  These fields are added
+     * to the Parser struct so that code actions and scan methods that reference
+     * parser-level state variables can compile.
+     *
+     * For example, a grammar declaring:
+     *   INJECT PARSER_CLASS : {boolean sawEmptyTypeArgs = false;}
+     * produces:
+     *   saw_empty_type_args: bool,
+     */
+    public String getParserFieldStructFields(CodeInjector injector) {
+        String qualifiedName = String.format("%s.%s",
+            appSettings.getParserPackage(), appSettings.getParserClassName());
+        List<ClassOrInterfaceBodyDeclaration> decls = injector.getBodyDeclarations(qualifiedName);
+        if (decls == null || decls.isEmpty()) return "";
+
+        StringBuilder result = new StringBuilder();
+        for (ClassOrInterfaceBodyDeclaration decl : decls) {
+            if (!(decl instanceof FieldDeclaration)) continue;
+            try {
+                Node transformed = transformFieldDeclaration(decl);
+                if (transformed instanceof ASTVariableOrFieldDeclaration vd) {
+                    String rustType = getRustTypeFromDecl(vd);
+                    if (rustType == null) continue;  // skip untranslatable types
+                    List<ASTPrimaryExpression> names = vd.getNames();
+                    if (names != null) {
+                        for (ASTPrimaryExpression name : names) {
+                            String javaName = name.getName();
+                            String rustName = translateIdentifier(javaName, TranslationContext.VARIABLE);
+                            parserFieldNames.put(javaName, rustName);
+                            result.append("    ").append(rustName).append(": ").append(rustType).append(",\n");
+                        }
+                    }
+                }
+            } catch (Exception e) {
+                // Skip fields that can't be parsed
+            }
+        }
+        return result.toString();
+    }
+
+    /**
+     * Extracts the Rust type from a variable/field declaration AST node.
+     * Handles both primitive types (stored as literal) and object types (stored as name).
+     * Returns null if the type cannot be translated to a simple Rust type.
+     */
+    private String getRustTypeFromDecl(ASTVariableOrFieldDeclaration vd) {
+        ASTTypeExpression typeExpr = vd.getTypeExpression();
+        if (typeExpr == null) return "bool";
+        // Primitive types like 'boolean', 'int' are stored as literal
+        String typeName = typeExpr.getName();
+        if (typeName == null) typeName = typeExpr.getLiteral();
+        if (typeName == null) return "bool";
+        String rustType = translateTypeName(typeName);
+        // Skip complex Java types that don't have clean Rust equivalents
+        // (e.g., EnumSet<TokenType> — these require manual implementation)
+        if (rustType.equals("HashSet") || rustType.equals(typeName)) {
+            // Unknown type — only emit if it's a known primitive translation
+            if (!typeName.equals("boolean") && !typeName.equals("int") && !typeName.equals("long")
+                    && !typeName.equals("String") && !typeName.equals("float") && !typeName.equals("double")
+                    && !typeName.equals("char")) {
+                return null;  // skip this field
+            }
+        }
+        return rustType;
+    }
+
+    /**
+     * Returns Rust struct initializer expressions for parser fields from
+     * INJECT PARSER_CLASS blocks.  Pairs with {@link #getParserFieldStructFields}.
+     */
+    public String getParserFieldInitializers(CodeInjector injector) {
+        // Use the parserFieldNames map populated by getParserFieldStructFields.
+        // This avoids calling translateIdentifier which would add "self." prefix.
+        StringBuilder result = new StringBuilder();
+        for (Map.Entry<String, String> entry : parserFieldNames.entrySet()) {
+            String rustName = entry.getValue();
+            // Default to false for bool, 0 for numeric — all known parser fields
+            // are primitive types (complex types like EnumSet are filtered out).
+            result.append("            ").append(rustName).append(": false,\n");
+        }
+        return result.toString();
+    }
+
+    private static String getDefaultForType(String rustType) {
+        return switch (rustType) {
+            case "bool" -> "false";
+            case "i32", "i64", "f32", "f64" -> "0";
+            case "String" -> "String::new()";
+            case "char" -> "'\\0'";
+            default -> "Default::default()";
+        };
     }
 
     /**

@@ -562,6 +562,26 @@ public class TemplateGlobals {
         return translateInjections(className, fields, fields && translator.isIncludeInitializers());
     }
 
+    /**
+     * Extracts field declarations from INJECT PARSER_CLASS blocks and returns
+     * them as Rust struct field definitions (e.g., "saw_empty_type_args: bool,").
+     * These are Java parser class fields that need to become Rust parser struct
+     * fields so that code actions and scan methods can share state.
+     */
+    public String getParserFieldStructFields() {
+        if (!(translator instanceof RustTranslator rustTranslator)) return "";
+        return rustTranslator.getParserFieldStructFields(grammar.getInjector());
+    }
+
+    /**
+     * Returns Rust struct initializer expressions for parser fields extracted
+     * from INJECT PARSER_CLASS blocks (e.g., "saw_empty_type_args: false,").
+     */
+    public String getParserFieldInitializers() {
+        if (!(translator instanceof RustTranslator rustTranslator)) return "";
+        return rustTranslator.getParserFieldInitializers(grammar.getInjector());
+    }
+
     // used in Rust inject.rs.ctl template — includes original Java source in FIXME comments
     public String translateParserClassInjection(boolean fields) {
         if (translator instanceof org.congocc.codegen.rust.RustTranslator rustTranslator) {

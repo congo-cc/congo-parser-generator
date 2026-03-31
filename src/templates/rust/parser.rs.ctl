@@ -1141,7 +1141,9 @@ pub struct Parser<'src> {
     lexical_state: LexicalState,
     /// Active token types for re-tokenization.
     active_token_types: Option<HashSet<TokenType>>,
-}
+[#-- Parser-level fields from INJECT PARSER_CLASS --]
+${globals::getParserFieldStructFields()}}
+
 
 impl<'src> Parser<'src> {
     /// Parses the given input text and returns the resulting AST.
@@ -1194,7 +1196,7 @@ impl<'src> Parser<'src> {
 [#else]
             active_token_types: None,
 [/#if]
-        };
+${globals::getParserFieldInitializers()}        };
         parser.parse_${rootProductionName?lower_case}()?;
         let root = parser.builder.peek_node();
         if let Some(root_id) = root {

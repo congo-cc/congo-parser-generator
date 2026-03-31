@@ -55,6 +55,7 @@ __pycache__/*
 /examples/arithmetic/rust-arith2/*
 /examples/java/rust-javaparser/*
 /examples/python/rust-pythonparser/*
+/examples/csharp/rust-csharpparser/*
 /personal.code-workspace
 /.vscode/*
 /.idea/*
