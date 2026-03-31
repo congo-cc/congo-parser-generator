@@ -198,6 +198,8 @@
     <ant dir="examples/arithmetic" target="test-rust" />
     <!-- Java Rust tests disabled until handwritten Rust code is supplied -->
     <!-- <ant dir="examples/java" target="test-rust" /> -->
+    <!-- Python Rust tests disabled until handwritten Rust code is supplied -->
+    <!-- <ant dir="examples/python" target="test-rust" /> -->
   </target>
 
   <target name="jar" depends="compile">

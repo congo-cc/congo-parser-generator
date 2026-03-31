@@ -12,6 +12,7 @@
     <delete dir="${basedir}/org" />
     <delete dir="${basedir}/pythonparser" />
     <delete dir="${basedir}/cs-pythonparser" />
+    <delete dir="${basedir}/rust-pythonparser" />
   </target>
 
   <target name="parser-gen" unless="pyparser.uptodate">
@@ -90,5 +91,33 @@
     </exec>
   </target>
 
-   <target name="test-all" depends="compile,test-java,test-csharp,test-python"/>
+  <target name="rust-gen">
+    <echo>Building Python parser in Rust.</echo>
+    <java jar="../../congocc.jar" fork="true" failonerror="true">
+      <assertions><enable /></assertions>
+      <arg line="-n -lang rust -d ${basedir}/rust-pythonparser ${basedir}/Python.ccc" />
+    </java>
+  </target>
+
+  <target name="compile-rust" depends="rust-gen">
+    <exec executable="cargo" dir="${basedir}/rust-pythonparser" failonerror="true">
+      <arg line="build" />
+    </exec>
+  </target>
+
+  <target name="test-rust" depends="compile-rust">
+    <!-- Tests disabled until handwritten Rust code is supplied.
+         Eventually, the Rust parser will test against the same files as the Python parser.
+    <delete dir="${basedir}/rust-pythonparser/test-data" />
+    <mkdir dir="${basedir}/rust-pythonparser/test-data" />
+    <copy todir="${basedir}/rust-pythonparser/test-data">
+      <fileset dir="${basedir}/testfiles" includes="*.py" />
+    </copy>
+    <exec executable="cargo" dir="${basedir}/rust-pythonparser" failonerror="true">
+      <arg line="test - - - -nocapture" />
+    </exec>
+    -->
+  </target>
+
+   <target name="test-all" depends="compile,test-java,test-csharp,test-python,test-rust"/>
 </project>

@@ -291,7 +291,7 @@ if self.remaining_lookahead <= 0 { return true; }
     [#set newVarIndex = 0]
     ${production.leadingComments}
     // ${production.location}
-    ${globals::startProduction()}pub fn parse_${production.name?lower_case}(&mut self) -> Result<(), ParseError> {
+    ${globals::startProduction()}pub fn parse_${production.name?lower_case}(&mut self[#if production.parameterList??], ${globals::translateParameters(production.parameterList)}[/#if]) -> Result<(), ParseError> {
         self.currently_parsed_production = "${production.name}";
         [@BuildCode production /]
     }${globals::endProduction()}

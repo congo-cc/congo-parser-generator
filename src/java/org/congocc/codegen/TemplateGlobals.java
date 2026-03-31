@@ -354,10 +354,19 @@ public class TemplateGlobals {
      * code action that could not be translated to Rust.  The block comment is
      * valid Rust syntax anywhere (inside functions, match arms, etc.).
      */
+    // Matches Java variable declarations: boolean varName, int varName, String varName
+    private static final Pattern JAVA_VAR_DECL_PATTERN =
+        Pattern.compile("\\b(boolean|int|long|String)\\s+([a-zA-Z_]\\w*)\\b");
+
     private void emitCodeBlockFIXME(Node codeBlock, int indent, StringBuilder result) {
         String pad = " ".repeat(Math.max(indent * 4, 8));
         String src = codeBlock.getSource();
         if (src != null && !src.isEmpty()) {
+            // Emit default variable declarations for any variables defined in the
+            // FIXME'd code block, so subsequent code that references them compiles.
+            if (translator instanceof RustTranslator) {
+                emitDefaultDeclarationsForFIXME(src, pad, result);
+            }
             // Escape any existing block comment delimiters in the Java source
             src = src.replace("*/", "* /");
             result.append(pad).append("/* FIXME(congocc): Java code action not yet translated to Rust\n");
@@ -365,6 +374,31 @@ public class TemplateGlobals {
                 result.append(pad).append("   ").append(line).append('\n');
             }
             result.append(pad).append("*/\n");
+        }
+    }
+
+    /**
+     * Scans Java source for variable declarations and emits Rust default
+     * declarations for them.  This ensures that subsequent code referencing
+     * these variables (e.g., non-terminal arguments) still compiles even
+     * though the code block was replaced by a FIXME comment.
+     */
+    private void emitDefaultDeclarationsForFIXME(String javaSource, String pad, StringBuilder result) {
+        java.util.regex.Matcher m = JAVA_VAR_DECL_PATTERN.matcher(javaSource);
+        while (m.find()) {
+            String javaType = m.group(1);
+            String javaName = m.group(2);
+            String rustType, rustDefault;
+            switch (javaType) {
+                case "boolean": rustType = "bool"; rustDefault = "false"; break;
+                case "int": rustType = "i32"; rustDefault = "0"; break;
+                case "long": rustType = "i64"; rustDefault = "0"; break;
+                case "String": rustType = "String"; rustDefault = "String::new()"; break;
+                default: continue;
+            }
+            String rustName = translator.translateIdentifier(javaName, Translator.TranslationContext.VARIABLE);
+            result.append(pad).append("let mut ").append(rustName).append(": ")
+                  .append(rustType).append(" = ").append(rustDefault).append(";\n");
         }
     }
 

@@ -15,15 +15,20 @@ pub enum TokenType {
 [#list lexerData.regularExpressions as regexp]
     ${regexp.label} = ${regexp_index},
 [/#list]
+[#var nextOrdinal = lexerData.regularExpressions?size]
+[#list settings.extraTokenNames as extraToken]
+    ${extraToken} = ${nextOrdinal},
+    [#set nextOrdinal = nextOrdinal + 1]
+[/#list]
     /// Sentinel for the end of a sequence of tokens with no more pending.
-    DUMMY = ${lexerData.regularExpressions?size},
+    DUMMY = ${nextOrdinal},
     /// Placeholder for invalid/unrecognized input.
-    INVALID = ${lexerData.regularExpressions?size + 1},
+    INVALID = ${nextOrdinal + 1},
 }
 
 impl TokenType {
     /// Total number of defined token types (excluding DUMMY and INVALID).
-    pub const COUNT: usize = ${lexerData.regularExpressions?size};
+    pub const COUNT: usize = ${lexerData.regularExpressions?size + settings.extraTokenNames?size};
 
     /// Returns `true` if this token type is a regular (parsing) token.
     pub fn is_regular(self) -> bool {
@@ -75,6 +80,9 @@ impl std::fmt::Display for TokenType {
         match self {
 [#list lexerData.regularExpressions as regexp]
             TokenType::${regexp.label} => write!(f, "${regexp.label}"),
+[/#list]
+[#list settings.extraTokenNames as extraToken]
+            TokenType::${extraToken} => write!(f, "${extraToken}"),
 [/#list]
             TokenType::DUMMY => write!(f, "DUMMY"),
             TokenType::INVALID => write!(f, "INVALID"),

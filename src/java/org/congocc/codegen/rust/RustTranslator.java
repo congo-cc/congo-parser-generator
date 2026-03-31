@@ -311,6 +311,31 @@ public class RustTranslator extends Translator {
         // in grammar code blocks are not meaningful in Rust and can be omitted.
     }
 
+    // ----- Formal parameter translation -----
+
+    @Override
+    public void translateFormals(List<FormalParameter> formals, SymbolTable symbols, StringBuilder result) {
+        // Rust uses name: type syntax (not type name)
+        List<ASTFormalParameter> transformed = transformFormals(formals);
+        int n = transformed.size();
+        if (symbols == null) {
+            symbols = topSymbols();
+        }
+        for (int i = 0; i < n; i++) {
+            ASTFormalParameter formal = transformed.get(i);
+            String name = formal.getName();
+            String ident = translateIdentifier(name, TranslationContext.PARAMETER);
+            ASTTypeExpression type = formal.getTypeExpression();
+            result.append(ident);
+            result.append(": ");
+            translateType(type, result);
+            if (i < (n - 1)) {
+                result.append(", ");
+            }
+            symbols.put(name, type);
+        }
+    }
+
     // ----- Type expression translation -----
 
     @Override
