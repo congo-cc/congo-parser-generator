@@ -51,20 +51,41 @@
 [#function closeCondition treeNodeBehavior]
    [#if treeNodeBehavior?? && treeNodeBehavior.condition??]
       [#if treeNodeBehavior.gtNode]
-         [#-- node_arity() returns usize, so >=0 is always true --]
+         [#-- gtNode=true means the condition compares against node_arity().
+              initialShorthand is the comparison operator (>, >=, !=, etc.).
+              For comparison operators, emit a boolean expression.
+              For non-comparison operators like + (from #Foo(+1) annotations),
+              the Java template passes nodeArity()+N to closeNodeScope(Node, int)
+              which pops that many children.  In the Rust arena model, all children
+              in the open scope are included, so we just return true. --]
          [#var condStr = "" + treeNodeBehavior.condition]
          [#if treeNodeBehavior.initialShorthand = ">=" && condStr = "0"]
             [#return "true"]
-         [#else]
+         [#elseif treeNodeBehavior.initialShorthand?starts_with(">") || treeNodeBehavior.initialShorthand?starts_with("!") || treeNodeBehavior.initialShorthand?starts_with("<")]
             [#return "self.builder.node_arity()" + treeNodeBehavior.initialShorthand + treeNodeBehavior.condition]
+         [#else]
+            [#-- Non-comparison (e.g., +1): always create the node --]
+            [#return "true"]
          [/#if]
       [#else]
-         [#-- condition is an Expression AST node; convert to string for comparison --]
+         [#-- condition is an Expression AST node; convert to string for comparison.
+              In Java, numeric conditions (e.g., #(3)) are passed to
+              closeNodeScope(Node, int) which pops that many children.
+              In the Rust arena model, all children in scope are included,
+              so numeric conditions become true. --]
          [#var condStr = "" + treeNodeBehavior.condition]
          [#if condStr = "1"]
             [#return "true"]
          [#elseif condStr = "0"]
             [#return "false"]
+         [#elseif condStr?length = 1 || condStr?length = 2]
+            [#-- Small number from #(N) annotation — always create the node --]
+            [#var firstChar = condStr?substring(0, 1)]
+            [#if firstChar = "2" || firstChar = "3" || firstChar = "4" || firstChar = "5" || firstChar = "6" || firstChar = "7" || firstChar = "8" || firstChar = "9"]
+               [#return "true"]
+            [#else]
+               [#return condStr]
+            [/#if]
          [#else]
             [#return condStr]
          [/#if]
@@ -111,14 +132,14 @@ const ${expansion.followSetVarName}: &[TokenType] = &[];
 
 [#macro ScanAheadCondition expansion]
 [#if expansion.hasSemanticLookahead && !expansion.lookahead.semanticLookaheadNested]
-    (${globals::translateExpression(expansion.semanticLookahead)}) &&
+    (${globals::translateExpressionSafe(expansion.semanticLookahead, "true")}) &&
 [/#if]
     self.${expansion.predicateMethodName}()
 [/#macro]
 
 [#macro SingleTokenCondition expansion]
 [#if expansion.hasSemanticLookahead]
-    (${globals::translateExpression(expansion.semanticLookahead)}) &&
+    (${globals::translateExpressionSafe(expansion.semanticLookahead, "true")}) &&
 [/#if]
 [#if expansion.firstSet.tokenNames?size < 5]
 [#list expansion.firstSet.tokenNames as name]
@@ -497,15 +518,26 @@ ${globals::translateCodeBlock(fail.code, 1)}
 [#-- Assertion: grammar assertions --]
 [#macro BuildAssertionCode assertion]
 [#var optionalPart = ""]
-[#if assertion.messageExpression??]
-  [#set optionalPart = " + &" + globals::translateExpression(assertion.messageExpression)]
-[/#if]
+[#var assertionSkipped = false]
 [#if assertion.assertionExpression??]
-        if !(${globals::translateExpression(assertion.assertionExpression)}) {
+[#var assertCondition = globals::translateExpressionSafe(assertion.assertionExpression, "true")]
+[#if assertCondition?contains("FIXME")]
+[#set assertionSkipped = true]
+        // Assertion at ${assertion.location} skipped — condition not yet translatable to Rust
+        // ${assertCondition}
+[#else]
+[#if assertion.messageExpression??]
+  [#var msgTranslated = globals::translateExpressionSafe(assertion.messageExpression, "\"(message unavailable)\".to_string()")]
+  [#if !msgTranslated?contains("FIXME")]
+    [#set optionalPart = " + &" + msgTranslated]
+  [/#if]
+[/#if]
+        if !(${assertCondition}) {
             self.fail(&("Assertion at: ${assertion.location?replace("\\", "\\\\")?replace("\"", "\\\"")} failed. ".to_string()${optionalPart}))?;
         }
 [/#if]
-[#if assertion.expansion??]
+[/#if]
+[#if assertion.expansion?? && !assertionSkipped]
         if [#if !assertion.expansionNegated]![/#if]self.${assertion.expansion.scanRoutineName}() {
             self.fail(&("Assertion at: ${assertion.location?replace("\\", "\\\\")?replace("\"", "\\\"")} failed. ".to_string()${optionalPart}))?;
         }
@@ -682,7 +714,7 @@ ${globals::translateCodeBlock(fail.code, 1)}
 
 [#macro BuildPredicateCode expansion]
 [#if expansion.hasSemanticLookahead && (expansion.lookahead.semanticLookaheadNested || expansion.containingProduction.onlyForLookahead)]
-            if !(${globals::translateExpression(expansion.semanticLookahead)}) {
+            if !(${globals::translateExpressionSafe(expansion.semanticLookahead, "true")}) {
                 return false;
             }
 [/#if]
@@ -889,7 +921,7 @@ ${globals::translateCodeBlock(expansion, 12)}
 
 [#macro ScanCodeAssertion assertion]
 [#if assertion.assertionExpression??]
-            if !(${globals::translateExpression(assertion.assertionExpression)}) {
+            if !(${globals::translateExpressionSafe(assertion.assertionExpression, "true")}) {
                 self.hit_failure = true;
                 return false;
             }

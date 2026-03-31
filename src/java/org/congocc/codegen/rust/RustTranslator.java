@@ -461,7 +461,13 @@ public class RustTranslator extends Translator {
         try {
             for (ClassOrInterfaceBodyDeclaration decl : decls) {
                 try {
-                    if (decl instanceof FieldDeclaration || decl instanceof MethodDeclaration) {
+                    if (decl instanceof FieldDeclaration) {
+                        // Field declarations cannot be placed inside impl blocks in
+                        // Rust — the arena model has no per-type structs.  Always
+                        // emit as FIXME comments.
+                        throw new UnsupportedOperationException(
+                            "Field declarations cannot be placed in Rust impl blocks");
+                    } else if (decl instanceof MethodDeclaration) {
                         // Attempt translation into a temporary buffer so we can detect
                         // silent FIXME fallbacks (from internalTranslateStatement) and
                         // replace them with the original Java source as a block comment.
@@ -535,6 +541,12 @@ public class RustTranslator extends Translator {
             if (fields != isField) continue;
 
             try {
+                if (decl instanceof FieldDeclaration) {
+                    // Field declarations translate to `let mut` which is not valid
+                    // at module level in Rust.  Always emit as FIXME.
+                    throw new UnsupportedOperationException(
+                        "Parser class field declarations are not supported in Rust");
+                }
                 StringBuilder buf = new StringBuilder();
                 translateStatement(decl, indent, buf);
                 String translated = buf.toString();

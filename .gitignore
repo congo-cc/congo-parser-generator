@@ -53,6 +53,7 @@ __pycache__/*
 /examples/cics/rust-cicsparser/*
 /examples/arithmetic/rust-arith1/*
 /examples/arithmetic/rust-arith2/*
+/examples/java/rust-javaparser/*
 /personal.code-workspace
 /.vscode/*
 /.idea/*
