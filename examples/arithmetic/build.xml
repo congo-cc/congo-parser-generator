@@ -62,6 +62,14 @@
     <copy todir="${basedir}/rust-arith2/test-data">
       <fileset dir="${basedir}/testfiles" includes="*.arith" />
     </copy>
+    <!-- Restore hand-written files (evaluator, CLI, tests, config) that were
+         overwritten by parser regeneration above. -->
+    <copy todir="${basedir}/rust-arith1" overwrite="true">
+      <fileset dir="${basedir}/rust-saved/arith1" />
+    </copy>
+    <copy todir="${basedir}/rust-arith2" overwrite="true">
+      <fileset dir="${basedir}/rust-saved/arith2" />
+    </copy>
   </target>
 
   <target name="test-rust" depends="rust-gen">
