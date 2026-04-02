@@ -371,6 +371,10 @@ public class AppSettings {
 
 
     public Path getNodeOutputDirectory() throws IOException {
+        // Rust uses flat file layout in the -d directory; no package subdirectories.
+        if (codeLang == CodeLang.RUST) {
+            return getParserOutputDirectory();
+        }
         String nodePackage = getNodePackage();
         String baseSrcDir = getBaseSourceDirectory();
         if (nodePackage == null || nodePackage.equals("") || baseSrcDir.equals("")) {
