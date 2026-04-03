@@ -1,9 +1,10 @@
 //! Pretty-print test: demonstrates the built-in pretty-printer.
 //!
 //! Uses `DefaultPrettyPrinter` from `pretty.rs` to format each parsed
-//! expression.  The pretty-printer renders the AST back to text using
-//! the Wadler-Lindig algorithm, which inserts line breaks and indentation
-//! when the output exceeds a target width.
+//! expression.  The pretty-printer renders the AST as an indented tree
+//! using the Wadler-Lindig algorithm.  Each non-token node shows its
+//! kind name (e.g., `AdditiveExpression`) with children indented beneath
+//! it.  Token leaves show their type and text (e.g., `Token(NUMBER, "2")`).
 //!
 //! Run with output:
 //!     cargo test --test pretty_test -- --nocapture
@@ -38,24 +39,95 @@ fn pretty_print_expressions() {
             "pretty-print output should not be empty for '{}'",
             input
         );
+
+        // The output should contain AST node kind names, not just raw tokens.
+        assert!(
+            formatted.contains("AdditiveExpression"),
+            "output should contain 'AdditiveExpression' for '{}', got:\n{}",
+            input, formatted
+        );
+        assert!(
+            formatted.contains("MultiplicativeExpression"),
+            "output should contain 'MultiplicativeExpression' for '{}', got:\n{}",
+            input, formatted
+        );
+
+        // Token leaves should show their type and text.
+        assert!(
+            formatted.contains("Token(NUMBER,"),
+            "output should contain 'Token(NUMBER,' for '{}', got:\n{}",
+            input, formatted
+        );
     }
 }
 
 #[test]
-fn pretty_print_narrow_width() {
-    // Demonstrate how a narrow width forces more line breaks.
-    let input = "((1+2)*(3+4))/(5-(6-7))";
-    let ast = Parser::parse(input, Some("test")).unwrap();
+fn pretty_print_structure() {
+    // Verify that "2+3*4" produces the expected indented tree structure.
+    let ast = Parser::parse("2+3*4", Some("test")).unwrap();
+    let formatted = DefaultPrettyPrinter.render_ast(&ast, 80);
 
-    let wide = DefaultPrettyPrinter.render_ast(&ast, 80);
-    let narrow = DefaultPrettyPrinter.render_ast(&ast, 20);
+    println!("--- Pretty-print of 2+3*4 ---");
+    println!("{}", formatted);
 
-    println!("--- Width 80 ---");
-    println!("{}", wide);
-    println!("--- Width 20 ---");
-    println!("{}", narrow);
+    // Check indentation: children should be indented under their parents.
+    // The top-level AdditiveExpression should appear with no indentation.
+    let lines: Vec<&str> = formatted.lines().collect();
+    assert!(
+        lines[0].starts_with("AdditiveExpression"),
+        "first line should be AdditiveExpression, got: {:?}",
+        lines[0]
+    );
 
-    // Both should contain the source tokens regardless of width.
-    assert!(wide.contains("1") && wide.contains("+") && wide.contains("2"));
-    assert!(narrow.contains("1") && narrow.contains("+") && narrow.contains("2"));
+    // MultiplicativeExpression children should be indented by 2 spaces.
+    let mult_lines: Vec<&&str> = lines.iter()
+        .filter(|l| l.contains("MultiplicativeExpression"))
+        .collect();
+    assert!(
+        mult_lines.len() >= 2,
+        "should have at least 2 MultiplicativeExpression nodes"
+    );
+    for ml in &mult_lines {
+        assert!(
+            ml.starts_with("  MultiplicativeExpression"),
+            "MultiplicativeExpression should be indented 2 spaces: {:?}",
+            ml
+        );
+    }
+
+    // Token children of a MultiplicativeExpression should be indented 4 spaces.
+    let number_lines: Vec<&&str> = lines.iter()
+        .filter(|l| l.contains("Token(NUMBER,"))
+        .collect();
+    assert!(
+        !number_lines.is_empty(),
+        "should have NUMBER token lines"
+    );
+    for nl in &number_lines {
+        assert!(
+            nl.starts_with("    Token("),
+            "NUMBER tokens should be indented 4 spaces: {:?}",
+            nl
+        );
+    }
+}
+
+#[test]
+fn pretty_print_parenthesized() {
+    // Verify parenthesized expressions produce deeper nesting.
+    let ast = Parser::parse("(2+3)*4", Some("test")).unwrap();
+    let formatted = DefaultPrettyPrinter.render_ast(&ast, 80);
+
+    println!("--- Pretty-print of (2+3)*4 ---");
+    println!("{}", formatted);
+
+    // Should contain ParentheticalExpression for the grouping.
+    assert!(
+        formatted.contains("ParentheticalExpression"),
+        "output should contain 'ParentheticalExpression' for '(2+3)*4'"
+    );
+
+    // OPEN_PAREN and CLOSE_PAREN tokens should appear.
+    assert!(formatted.contains("Token(OPEN_PAREN,"), "should have OPEN_PAREN");
+    assert!(formatted.contains("Token(CLOSE_PAREN,"), "should have CLOSE_PAREN");
 }

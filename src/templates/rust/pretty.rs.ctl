@@ -298,17 +298,26 @@ pub fn render(doc: &Doc, width: usize) -> String {
 pub trait PrettyPrinter {
     /// Produces a `Doc` for any node kind without a specific `pp_*` override.
     ///
-    /// Default: concatenate pretty-printed children separated by soft
-    /// line breaks.
+    /// Default: emit the node's kind name as a label, then indent the
+    /// pretty-printed children beneath it.  This produces an output
+    /// similar to `Ast::dump()` but routed through the Wadler-Lindig
+    /// renderer so that line-break decisions respect the target width.
     fn pp_default(&self, ast: &Ast, id: NodeId) -> Doc {
+        let label = ast.kind(id).name().to_string();
         let children: Vec<Doc> = ast
             .children(id)
             .map(|child| self.pp(ast, child))
             .collect();
         if children.is_empty() {
-            Doc::Nil
+            Doc::text(label)
         } else {
-            Doc::join_lines(children)
+            Doc::concat(vec![
+                Doc::text(label),
+                Doc::indent(2, Doc::concat(vec![
+                    Doc::HardLine,
+                    Doc::join_lines(children),
+                ])),
+            ])
         }
     }
 
@@ -331,9 +340,19 @@ pub trait PrettyPrinter {
 [/#list]
     /// Pretty-print a token leaf node.
     ///
-    /// Default: emit the token's source text.
+    /// Default: emit the token type and source text in the format
+    /// `Token(TYPE, "text")`, matching the `Ast::dump()` format.
     fn pp_token(&self, ast: &Ast, id: NodeId) -> Doc {
-        Doc::text(ast.text(id))
+        let text = ast.text(id);
+        let display_text = if text.len() > 40 {
+            format!("{}...", &text[..37])
+        } else {
+            text.to_string()
+        };
+        match ast.token_type(id) {
+            Some(tt) => Doc::text(format!("Token({}, {:?})", tt, display_text)),
+            None => Doc::text(format!("Token({:?})", display_text)),
+        }
     }
 
     /// Convenience: pretty-print the entire AST and render to a string.
