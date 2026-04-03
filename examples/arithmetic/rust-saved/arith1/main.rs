@@ -1,7 +1,7 @@
 //! Arithmetic expression parser CLI (parse-only, no evaluation).
 //!
 //! Parses an arithmetic expression from command-line arguments and dumps the
-//! resulting AST.  This is the ex1 (Arithmetic1) variant which only parses --
+//! resulting AST.  This is the Arithmetic1 variant which only parses --
 //! it does not evaluate expressions.  Use arith2-calc (rust-arith2) for a
 //! fully functional evaluator.
 //!
@@ -24,7 +24,7 @@ fn main() {
         eprintln!("Usage: arith1-calc <expression>");
         eprintln!();
         eprintln!("Parses an arithmetic expression and dumps the AST.");
-        eprintln!("Note: This is the parse-only variant (ex1).");
+        eprintln!("Note: This is the parse-only variant (Arithmetic1).");
         eprintln!("      Use arith2-calc (rust-arith2) for expression evaluation.");
         eprintln!();
         eprintln!("Examples:");
@@ -51,7 +51,7 @@ fn main() {
         println!("{}", ast.dump(root));
     }
 
-    // Attempt evaluation -- this always fails for ex1, mirroring the Java
+    // Attempt evaluation -- this always fails for Arithmetic1, mirroring the Java
     // UnsupportedOperationException behavior.
     match ast.evaluate_root() {
         Ok(value) => {

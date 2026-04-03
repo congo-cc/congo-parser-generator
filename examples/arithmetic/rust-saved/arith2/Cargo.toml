@@ -21,3 +21,19 @@ path = "tests/parse_files.rs"
 [[test]]
 name = "evaluate"
 path = "tests/evaluate.rs"
+
+[[test]]
+name = "pretty_test"
+path = "tests/pretty_test.rs"
+
+[[test]]
+name = "visitor_test"
+path = "tests/visitor_test.rs"
+
+[[test]]
+name = "astmapper_value_test"
+path = "tests/astmapper_value_test.rs"
+
+[[test]]
+name = "astmapper_struct_test"
+path = "tests/astmapper_struct_test.rs"

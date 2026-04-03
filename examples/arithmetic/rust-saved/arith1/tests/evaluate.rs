@@ -1,6 +1,6 @@
-//! Tests for the ex1 (Arithmetic1) evaluation stub.
+//! Tests for the Arithmetic1 evaluation stub.
 //!
-//! The ex1 grammar does not define evaluation logic.  These tests verify that:
+//! The Arithmetic1 grammar does not define evaluation logic.  These tests verify that:
 //! 1. evaluate() and evaluate_root() correctly return EvalError::Unsupported.
 //! 2. Parsing still works correctly (no regression from adding the stub).
 
@@ -16,12 +16,12 @@ fn evaluate_root_returns_unsupported() {
     let ast = Parser::parse("1+1", Some("test"))
         .expect("parse should succeed for '1+1'");
     let result = ast.evaluate_root();
-    assert!(result.is_err(), "ex1 evaluate_root() should return an error");
+    assert!(result.is_err(), "Arithmetic1 evaluate_root() should return an error");
     match result.unwrap_err() {
         EvalError::Unsupported(msg) => {
             assert!(
-                msg.contains("ex2") || msg.contains("rust-arith2"),
-                "error message should direct user to ex2/rust-arith2, got: {}",
+                msg.contains("rust-arith2"),
+                "error message should direct user to rust-arith2, got: {}",
                 msg
             );
         }
@@ -34,7 +34,7 @@ fn evaluate_node_returns_unsupported() {
         .expect("parse should succeed for '42'");
     let root = ast.root().expect("AST should have a root node");
     let result = ast.evaluate(root);
-    assert!(result.is_err(), "ex1 evaluate() should return an error");
+    assert!(result.is_err(), "Arithmetic1 evaluate() should return an error");
     assert!(matches!(result.unwrap_err(), EvalError::Unsupported(_)));
 }
 

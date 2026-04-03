@@ -40,14 +40,14 @@ use std::fmt;
 
 /// Errors that can occur during arithmetic expression evaluation.
 ///
-/// The ex1 (Arithmetic1) grammar does not define evaluation logic.  The
+/// The Arithmetic1 grammar does not define evaluation logic.  The
 /// `Unsupported` variant is always returned, mirroring the Java
-/// `UnsupportedOperationException` thrown by `ex1.Calc`.  Use ex2
-/// (rust-arith2) for a fully functional evaluator.
+/// `UnsupportedOperationException`.  Use `rust-arith2` for a fully
+/// functional evaluator.
 #[derive(Debug, Clone)]
 pub enum EvalError {
     /// Evaluation is not supported in this parser variant.
-    /// The ex1 grammar only parses expressions; use ex2 for evaluation.
+    /// The Arithmetic1 grammar only parses expressions; use rust-arith2 for evaluation.
     Unsupported(String),
 }
 
@@ -116,24 +116,24 @@ static public void main(String[] args) throws ParseException {
 impl Ast {
     /// Attempts to evaluate the expression at the given node.
     ///
-    /// Always returns `Err(EvalError::Unsupported)` because the ex1
-    /// (Arithmetic1) grammar does not include evaluation logic.  Use the ex2
-    /// (rust-arith2) parser for expression evaluation.
+    /// Always returns `Err(EvalError::Unsupported)` because the
+    /// Arithmetic1 grammar does not include evaluation logic.  Use the
+    /// rust-arith2 parser for expression evaluation.
     pub fn evaluate(&self, _id: NodeId) -> Result<f64, EvalError> {
         Err(EvalError::Unsupported(
-            "evaluation is not supported in ex1 (Arithmetic1); use ex2 (rust-arith2) instead"
+            "evaluation is not supported in Arithmetic1; use rust-arith2 instead"
                 .to_string(),
         ))
     }
 
     /// Attempts to evaluate the root expression.
     ///
-    /// Always returns `Err(EvalError::Unsupported)` because the ex1
-    /// (Arithmetic1) grammar does not include evaluation logic.  Use the ex2
-    /// (rust-arith2) parser for expression evaluation.
+    /// Always returns `Err(EvalError::Unsupported)` because the
+    /// Arithmetic1 grammar does not include evaluation logic.  Use the
+    /// rust-arith2 parser for expression evaluation.
     pub fn evaluate_root(&self) -> Result<f64, EvalError> {
         Err(EvalError::Unsupported(
-            "evaluation is not supported in ex1 (Arithmetic1); use ex2 (rust-arith2) instead"
+            "evaluation is not supported in Arithmetic1; use rust-arith2 instead"
                 .to_string(),
         ))
     }

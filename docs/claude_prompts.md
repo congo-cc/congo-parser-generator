@@ -156,4 +156,30 @@ The plan should include the creation of comprehensive positive and negative test
 
 ###  Integrate Evaluator into Build
 
-Very nice.  The final task is to automate the copying of the hand-written files in examples/arithmetic/rust-saved into their cooresponding code directories.  The copying should take place after parser generation but before compilation and testing.  Rebuild cleanly and validate that the build now runs the evaluate.rs tests successfully. 
+Very nice.  The final task is to automate the copying of the hand-written files in examples/arithmetic/rust-saved into their cooresponding code directories.  The copying should take place after parser generation but before compilation and testing.  Rebuild cleanly and validate that the build now runs the evaluate.rs tests successfully.
+
+## AST Tranversal Tests
+
+Create test programs in the examples/arithmetic/arith2/tests directory that demonstrate different AST traversal scenarios.  The goal is to provide examples of how to use the AST API, so provide explanatory comments in the code where needed.  Each program will operate on the following 3 inputs: 
+
+    2+3*4
+    (2+3)*4
+    ((1+2)*(3+4))/(5-(6-7))
+
+All programs will display their output when invoked as follows:
+
+    cargo test --test <program name> -- --nocapture
+
+When run without the --nocaption option, no output will be displayed other than the normal test program success/failure information.  
+
+### Pretty Print Test
+Write the **pretty_test.rs** test program that invokes the built-in implementation for pretty printing in pretty.rs for each input.
+
+### Visitor Test
+Write the **visitor_test.rs** test program that uses the Visitor trait in visitor.rs to traverse every node in each AST.  For each arithmetic operator encountered, print a single line of output containing the operator and the number of children it has.  An example output line is "operator: *, children: 2".  Indent each line to signify the operator's depth in the AST.
+
+### AstMapper Value Test
+Write the **astmapper_value_test.rs** test program to demonstrate how to modify values in an AST.  Begin by evaluating each input expression to determine is numerical value.  Then use the AstMapper trait in visitor.rs to traverse every node in each AST.  Multiply each numeric literal encountered by 2.  Evaluate the modified AST and assert that it's value is the expected value.  For each input value, print the original expression and its value and the modified expression and its value. 
+
+### AstMapper Structure Test
+Write the **astmapper_struct_test.rs** test program to demonstrate how to modify the structure of an AST.  Begin by evaluating each input expression to determine is numerical value.  Then use the AstMapper trait in visitor.rs to append an addition operation to the end of each input expression.  The addition operation adds 1 to each expression.  For example, "2+3\*4" becomes "2+3\*4+1".  Evaluate the modified AST and assert that it's value is the expected value.  For each input value, print the original expression and its value and the modified expression and its value. 
