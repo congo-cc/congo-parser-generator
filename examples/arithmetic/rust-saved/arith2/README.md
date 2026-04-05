@@ -107,13 +107,25 @@ via the `AstMapper` trait:
   `((1+2)*(3+4))/(5-(6-7))` -> `((2+4)*(6+8))/(10-(12-14))` = 7
 
 **`tests/astmapper_struct_test.rs`** -- 2 tests demonstrating structural
-modification via the `AstMapper` trait:
+modification via the `AstMapper` trait using string re-parsing:
 - `AppendPlusOne` mapper that intercepts the top-level `AdditiveExpression` and
   appends a PLUS token and a `MultiplicativeExpression(NUMBER(1))` child,
   effectively appending `+1` to each expression
 - Verifies the mapped AST has more nodes than the original
 - Verifies via string reconstruction and re-parse: `2+3*4+1` = 15,
   `(2+3)*4+1` = 21, `((1+2)*(3+4))/(5-(6-7))+1` = 4.5
+
+**`tests/astmapper_struct2_test.rs`** -- 2 tests demonstrating structural
+modification with **direct evaluation** of the modified AST (no re-parsing):
+- Same `AppendPlusOne` mapper as above, but token offsets point into an
+  extended source string so that `evaluate()` works directly on the mapped AST
+- Uses a two-phase approach: (1) `AstMapper` inserts nodes with offsets set for
+  the extended source, (2) `rebuild_with_source()` copies the mapped AST into a
+  new `Ast` with the extended source string
+- Demonstrates the arena-based AST's offset-into-source-string design and how to
+  work around it when adding tokens that don't exist in the original source
+- Verifies via direct evaluation: `2+3*4+1` = 15, `(2+3)*4+1` = 21,
+  `((1+2)*(3+4))/(5-(6-7))+1` = 4.5
 
 ## Library API
 
@@ -261,10 +273,11 @@ rust-arith2/
   tests/
     parse_files.rs       # File-based parse tests (generated)
     evaluate.rs          # Evaluation tests (hand-written, 41 tests)
-    pretty_test.rs       # Pretty-printer tests (hand-written, 2 tests)
+    pretty_test.rs       # Pretty-printer tests (hand-written, 3 tests)
     visitor_test.rs      # Visitor trait tests (hand-written, 3 tests)
     astmapper_value_test.rs   # AstMapper value modification tests (hand-written, 2 tests)
     astmapper_struct_test.rs  # AstMapper structure modification tests (hand-written, 2 tests)
+    astmapper_struct2_test.rs # AstMapper structure + direct evaluation tests (hand-written, 2 tests)
   test-data/
     basic.arith          # 1+1
     decimals.arith       # 3.14 * 2.0 + 0.5

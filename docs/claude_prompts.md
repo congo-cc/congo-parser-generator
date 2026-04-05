@@ -183,3 +183,22 @@ Write the **astmapper_value_test.rs** test program to demonstrate how to modify 
 
 ### AstMapper Structure Test
 Write the **astmapper_struct_test.rs** test program to demonstrate how to modify the structure of an AST.  Begin by evaluating each input expression to determine is numerical value.  Then use the AstMapper trait in visitor.rs to append an addition operation to the end of each input expression.  The addition operation adds 1 to each expression.  For example, "2+3\*4" becomes "2+3\*4+1".  Evaluate the modified AST and assert that it's value is the expected value.  For each input value, print the original expression and its value and the modified expression and its value. 
+
+### AstMapper Structure2 Test
+Let's add another test program to the examples/arithmetic/rust-arith2/tests directory.  The new program will use the same inputs as the previous test programs:
+
+    2+3*4
+    (2+3)*4
+    ((1+2)*(3+4))/(5-(6-7))
+
+Like the previous test programs, the new program will display its output when invoked as follows:
+
+    cargo test --test <program name> -- --nocapture
+
+When run without the --nocaption option, no output will be displayed other than the normal test program success/failure information.
+
+Write the new **astmapper_struct2_test.rs** test program to demonstrate how to modify the structure of an AST using the AstMapper API.  The **astmapper_struct_test.rs** test program simply modified the input expression strings and then parsed and evaluated those modified strings.  That approach worked, but may not be available or desirable in all cases.  In **astmapper_struct2_test.rs**, we want to map the original expression's AST to a modified AST that has a new addition operation tacked on the to end of the AST.     
+
+Specifically, start with each input expression's AST and use the AstMapper API to insert nodes at the end of the AST that cause 1 to be added to the numeric value of the expression.  The resulting AST must be a valid, parsable AST.  Evaluate the modified AST and assert that it's value is the expected value.  For each input value, print the original expression and its value and the modified expression and its value.  Update documentation to describe this new test and how it differs from **astmapper_struct_test.rs**.  Run all test to verify no regression has occured.
+
+Great.  Let's increase clarity and coverage in **astmapper_struct2_test.rs** by (1) dumping the original AST in addition to the modified AST, and (2) by processing all input expressions from TEST_CASES in astmapper_struct2_ast_validity().

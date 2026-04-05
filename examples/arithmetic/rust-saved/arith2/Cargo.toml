@@ -37,3 +37,7 @@ path = "tests/astmapper_value_test.rs"
 [[test]]
 name = "astmapper_struct_test"
 path = "tests/astmapper_struct_test.rs"
+
+[[test]]
+name = "astmapper_struct2_test"
+path = "tests/astmapper_struct2_test.rs"
