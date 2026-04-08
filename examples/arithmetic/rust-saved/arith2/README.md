@@ -231,6 +231,209 @@ impl Visitor for NodeCounter {
 }
 ```
 
+### Using the AstMapper Trait
+
+`AstMapper` is the **functional, bottom-up transformation** counterpart
+to `Visitor`.  Where `Visitor` walks an AST read-only, `AstMapper`
+produces a *new* AST that is derived from the original.  Use it whenever
+you need to rewrite, restructure, or filter the tree without mutating
+the source.
+
+The trait walks the source AST in post-order: every child is mapped
+*before* its parent, and the freshly-built child `NodeId`s are passed
+up to the parent's `map_*` method along with a mutable `AstBuilder` for
+allocating new nodes and tokens.  Each method returns a `MappedNode`
+describing what the source node should become in the output:
+
+| Variant | Meaning |
+|---------|---------|
+| `MappedNode::Node { kind, children }` | Emit a node with the given `NodeKind` and child list.  Use the source kind + `mapped_children` for an identity map; change either to transform. |
+| `MappedNode::Splice(Vec<NodeId>)` | Drop this node and splice the supplied nodes directly into the parent's child list (useful for flattening wrappers). |
+| `MappedNode::Remove` | Drop this node and all its descendants from the output AST. |
+
+Every `map_*` method has a default implementation that performs an
+identity map, so a real `AstMapper` only needs to override the methods
+relevant to its transformation.  Drive the transformation by calling
+`mapper.map(&source_ast)`, which returns the new `Ast`.
+
+#### 1. Modifying existing AST nodes (no structural change)
+
+The simplest use is rewriting individual nodes — typically tokens —
+without altering the shape of the tree.  Override `map_token` (or
+another `map_*` method), inspect the source node, and emit a replacement
+via the `builder`.
+
+This pattern is what
+[`tests/astmapper_value_test.rs`](tests/astmapper_value_test.rs)
+demonstrates with its `DoubleNumbers` mapper.  Sketch:
+
+```rust
+use ex2::ast::{Ast, AstBuilder, NodeId, NodeKind};
+use ex2::tokens::TokenType;
+use ex2::visitor::{AstMapper, MappedNode};
+
+struct DoubleNumbers;
+
+impl AstMapper for DoubleNumbers {
+    fn map_token(
+        &mut self,
+        source_id: NodeId,
+        source: &Ast,
+        builder: &mut AstBuilder,
+    ) -> MappedNode {
+        if let Some(TokenType::NUMBER) = source.token_type(source_id) {
+            // Add a new token to the builder with the same kind/offsets.
+            let node = source.node(source_id);
+            let new_tid = builder.add_token(
+                TokenType::NUMBER,
+                node.begin_offset as usize,
+                node.end_offset as usize,
+                false,
+            );
+            return MappedNode::Node {
+                kind: NodeKind::Token(new_tid),
+                children: vec![],
+            };
+        }
+        // Operators, parens, etc. pass through unchanged.
+        MappedNode::Node {
+            kind: source.kind(source_id).clone(),
+            children: vec![],
+        }
+    }
+}
+
+let mut mapper = DoubleNumbers;
+let new_ast = mapper.map(&ast);
+```
+
+When to use this pattern: search-and-replace passes, value
+normalization, constant folding of leaves, unit conversions — anything
+that touches node *content* but leaves the tree's *shape* alone.
+
+> **Note on token text.** Because the arena-based AST stores token
+> text as byte offsets into the source string, "rewriting" a token's
+> text really means pointing it at a different range of an existing
+> string.  When the new text isn't already in the source, you need the
+> two-phase trick described in the next section.  The
+> `astmapper_value_test.rs` test sidesteps this by re-parsing a
+> reconstructed expression string after the mapper run.
+
+#### 2. Modifying AST structure (insertion / deletion)
+
+For structural transformations, override the `map_*` method for an
+*interior* node and return a `MappedNode::Node` whose `children` vector
+contains the desired sequence — including any freshly-built nodes added
+via the `builder`.  To delete a node entirely, return
+`MappedNode::Remove`; to flatten a wrapper away, return
+`MappedNode::Splice(mapped_children)`.
+
+The hard part of *adding* new tokens is that every token needs text in
+the source string.  The recommended pattern, demonstrated by
+[`tests/astmapper_struct2_test.rs`](tests/astmapper_struct2_test.rs),
+is two-phase:
+
+1. **Map phase** — your `AstMapper` calls
+   `builder.add_token(kind, start, end, false)` with byte offsets that
+   point *past the end of the original source*, into a position where
+   an *extended* source string will have the desired token text.  Use
+   the new `TokenId` to build the new node.
+2. **Rebuild phase** — copy the mapped AST's nodes and tokens into a
+   fresh `AstBuilder` and call
+   `builder.build(extended_source, source_name)` so token offsets
+   resolve against the longer string.  After this step, methods like
+   `evaluate_root()`, `dump()`, and the pretty-printer all work
+   directly on the modified AST without re-parsing.
+
+Sketch — append `+1` to the top-level `AdditiveExpression`:
+
+```rust
+use ex2::ast::{Ast, AstBuilder, NodeId, NodeKind};
+use ex2::tokens::TokenType;
+use ex2::visitor::{AstMapper, MappedNode};
+
+struct AppendPlusOne {
+    source_len: usize,
+    modified: bool,
+}
+
+impl AstMapper for AppendPlusOne {
+    fn map_additiveexpression(
+        &mut self,
+        source_id: NodeId,
+        source: &Ast,
+        mapped_children: &[NodeId],
+        builder: &mut AstBuilder,
+    ) -> MappedNode {
+        // Only modify the top-level AdditiveExpression once.
+        let is_top_level = match source.parent(source_id) {
+            None => true,
+            Some(p) => matches!(source.kind(p), NodeKind::Root),
+        };
+        if !(is_top_level && !self.modified) {
+            return MappedNode::Node {
+                kind: source.kind(source_id).clone(),
+                children: mapped_children.to_vec(),
+            };
+        }
+        self.modified = true;
+
+        // Token offsets point into the *extended* source ("<input>+1").
+        let plus_tid = builder.add_token(
+            TokenType::PLUS, self.source_len, self.source_len + 1, false);
+        let plus_node = builder.add_node(
+            NodeKind::Token(plus_tid),
+            self.source_len as u32, (self.source_len + 1) as u32);
+
+        let num_tid = builder.add_token(
+            TokenType::NUMBER, self.source_len + 1, self.source_len + 2, false);
+        let num_node = builder.add_node(
+            NodeKind::Token(num_tid),
+            (self.source_len + 1) as u32, (self.source_len + 2) as u32);
+
+        let mult_node = builder.add_node(
+            NodeKind::MultiplicativeExpression,
+            (self.source_len + 1) as u32, (self.source_len + 2) as u32);
+        builder.add_child_to(mult_node, num_node);
+
+        let mut new_children = mapped_children.to_vec();
+        new_children.push(plus_node);
+        new_children.push(mult_node);
+
+        MappedNode::Node {
+            kind: NodeKind::AdditiveExpression,
+            children: new_children,
+        }
+    }
+}
+
+// Phase 1: run the mapper.
+let mut mapper = AppendPlusOne { source_len: input.len(), modified: false };
+let mapped_ast = mapper.map(&ast);
+
+// Phase 2: rebuild with the extended source so the new tokens'
+// offsets resolve to real characters.  See the test file for the
+// helper `rebuild_with_source()` that copies all tokens, nodes, and
+// parent/child relationships into a fresh AstBuilder.
+let extended_source = format!("{}+1", input);
+let modified_ast = rebuild_with_source(&mapped_ast, &extended_source);
+
+// Now the modified AST is fully self-consistent — evaluate directly.
+let value = modified_ast.evaluate_root().unwrap();
+```
+
+When to use this pattern: AST rewriting (lowering, desugaring),
+code-mod tools, optimization passes, dead-code elimination, macro
+expansion — anything that changes which nodes appear in the tree.
+
+For comparison,
+[`tests/astmapper_struct_test.rs`](tests/astmapper_struct_test.rs)
+shows the simpler alternative: do the structural change *and* convert
+the mapped AST back to a string, then re-parse it.  That works when
+re-parsing is acceptable; the two-phase pattern in
+`astmapper_struct2_test.rs` is the right choice when you want to keep
+the modified AST around and operate on it directly.
+
 ### Using the Pretty-Printer
 
 The `PrettyPrinter` trait exposes two convenience methods:
@@ -311,4 +514,4 @@ parser regeneration.
 
 ## Acknowledgments
 
-Anthropic's Claude Opus 4.6 was used to generate most of the code and documentation in this project.
+Anthropic's Claude Opus 4.6 was used to generate most of the code and documentation for Rust support in this project.

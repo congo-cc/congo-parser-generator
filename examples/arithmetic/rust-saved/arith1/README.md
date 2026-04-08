@@ -144,4 +144,4 @@ parser regeneration.
 
 ## Acknowledgments
 
-Anthropic's Claude Opus 4.6 was used to generate most of the code and documentation in this project.
+Anthropic's Claude Opus 4.6 was used to generate most of the code and documentation for Rust support in this project.

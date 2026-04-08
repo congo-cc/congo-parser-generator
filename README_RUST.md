@@ -91,14 +91,162 @@ counter.visit(&ast, root);
 println!("Total nodes: {}", counter.count);
 ```
 
+### AstMapper Pattern
+
+In addition to the read-only `Visitor` trait, the generated `visitor.rs`
+provides an `AstMapper` trait for **functional, bottom-up AST
+transformation**.  Use it whenever you need to produce a *new* AST that is
+derived from an existing one — either by changing node values or by
+restructuring the tree.
+
+`AstMapper` walks the source AST in post-order: children are mapped first,
+and the result `NodeId`s are passed up to each parent's `map_*` method along
+with a mutable `AstBuilder` for emitting new nodes.  Each method returns a
+`MappedNode` describing what the source node becomes:
+
+| Variant | Meaning |
+|---------|---------|
+| `MappedNode::Node { kind, children }` | Emit a node with the given kind and children. Use the source kind + `mapped_children` for an identity map; change either to transform. |
+| `MappedNode::Splice(Vec<NodeId>)` | Remove this node and splice the supplied nodes directly into the parent's child list. |
+| `MappedNode::Remove` | Drop this node and all its descendants from the output. |
+
+By default every `map_*` method is an identity map, so an `AstMapper` impl
+only needs to override the methods relevant to its transformation.
+
+#### Modifying Existing Node Values (no structural change)
+
+The simplest use of `AstMapper` is rewriting the value of individual leaf
+nodes — typically tokens — without altering the tree shape.  Override
+`map_token` (or any other relevant `map_*` method), inspect the source
+node, and emit a replacement node with new content via the `builder`.
+
+```rust
+use my_parser::ast::{Ast, AstBuilder, NodeId, NodeKind};
+use my_parser::tokens::TokenType;
+use my_parser::visitor::{AstMapper, MappedNode};
+
+struct UppercaseIdents;
+
+impl AstMapper for UppercaseIdents {
+    fn map_token(
+        &mut self,
+        source_id: NodeId,
+        source: &Ast,
+        builder: &mut AstBuilder,
+    ) -> MappedNode {
+        // Only rewrite IDENTIFIER tokens; everything else passes through.
+        if let Some(TokenType::IDENTIFIER) = source.token_type(source_id) {
+            // Add a fresh token to the builder pointing at the desired
+            // text in the source string (or in an extended source — see
+            // the structural example for details).
+            let node = source.node(source_id);
+            let new_tid = builder.add_token(
+                TokenType::IDENTIFIER,
+                node.begin_offset as usize,
+                node.end_offset as usize,
+                false,
+            );
+            return MappedNode::Node {
+                kind: NodeKind::Token(new_tid),
+                children: vec![],
+            };
+        }
+        MappedNode::Node {
+            kind: source.kind(source_id).clone(),
+            children: vec![],
+        }
+    }
+}
+
+let mut mapper = UppercaseIdents;
+let new_ast = mapper.map(&ast); // bottom-up traversal, returns a new Ast
+```
+
+When to use it: search-and-replace passes, constant folding of leaves,
+unit conversions, value normalization — anything that touches node
+*content* but leaves the *shape* of the tree alone.
+
+> Note: because the arena AST stores token text as byte offsets into the
+> source string, "rewriting" a token's text really means pointing at a
+> different range of an existing string.  See the structural example below
+> for the two-phase pattern that synthesizes new text not present in the
+> original source.
+
+#### Modifying AST Structure (insertion / deletion)
+
+For structural transformations, override the `map_*` method for an
+*interior* node (e.g., a list or expression node) and return a `MappedNode`
+whose `children` vector contains the desired sequence — including any
+freshly-built nodes added via the `builder`.
+
+The trickiest part of *adding* tokens is that they need text in the
+source string.  The recommended pattern is two-phase:
+
+1. **Map phase** — your `AstMapper` calls `builder.add_token(kind, start,
+   end, false)` with byte offsets that point past the end of the original
+   source, into a position where an *extended* source string will have the
+   token text.  Use the result to build the new node.
+2. **Rebuild phase** — copy the mapped AST's nodes/tokens into a fresh
+   `AstBuilder` and call `builder.build(extended_source, source_name)` to
+   produce a final `Ast` whose token offsets resolve against the longer
+   string.
+
+To *delete* a node, return `MappedNode::Remove` from its `map_*` method.
+To flatten a wrapper node away, return `MappedNode::Splice(mapped_children)`
+so its children are absorbed into the parent's child list.
+
+```rust
+use my_parser::visitor::{AstMapper, MappedNode};
+use my_parser::ast::{Ast, AstBuilder, NodeId, NodeKind};
+
+struct DropDebugComments;
+
+impl AstMapper for DropDebugComments {
+    fn map_comment(
+        &mut self,
+        source_id: NodeId,
+        source: &Ast,
+        _mapped_children: &[NodeId],
+        _builder: &mut AstBuilder,
+    ) -> MappedNode {
+        if source.text(source_id).starts_with("// DEBUG") {
+            MappedNode::Remove
+        } else {
+            MappedNode::Node {
+                kind: source.kind(source_id).clone(),
+                children: _mapped_children.to_vec(),
+            }
+        }
+    }
+}
+```
+
+When to use it: AST rewriting (lowering, desugaring), code-mod tools,
+optimization passes, dead-code elimination, macro expansion — anything
+that changes which nodes appear in the tree.
+
+For complete worked examples (including the two-phase rebuild trick), see
+[`examples/arithmetic/rust-arith2/tests/astmapper_value_test.rs`](examples/arithmetic/rust-arith2/tests/astmapper_value_test.rs)
+and
+[`examples/arithmetic/rust-arith2/tests/astmapper_struct2_test.rs`](examples/arithmetic/rust-arith2/tests/astmapper_struct2_test.rs).
+
 ### Pretty Printing
+
+The generated `pretty.rs` exposes a `PrettyPrinter` trait with two
+convenience methods.  `pretty_print(&ast)` renders at the default target
+line width (`pretty::DEFAULT_WIDTH = 120`); `pretty_print_to_width(&ast,
+n)` renders at an explicit width.
 
 ```rust
 use my_parser::pretty::{DefaultPrettyPrinter, PrettyPrinter};
 
-let printer = DefaultPrettyPrinter::new(80);  // 80-column width
-let output = printer.pretty_print(&ast, root);
+// Render the entire AST at the default width (120 columns).
+let output = DefaultPrettyPrinter.pretty_print(&ast);
 println!("{}", output);
+
+// Render at an explicit narrower width to force more line breaks.
+let narrow = DefaultPrettyPrinter.pretty_print_to_width(&ast, 40);
+println!("{}", narrow);
 ```
 
 ## Supported Grammars
@@ -128,20 +276,73 @@ the injected Java code. The translator emits FIXME comments for untranslatable
 constructs. To complete these parsers, search for `FIXME(congocc)` in the generated
 code and implement the Rust equivalents manually.
 
-## Build System Integration
+## Building and Running the Rust Examples
 
-Each example directory has Ant targets for Rust:
+Each example directory has Ant targets for Rust.  The easiest way to build
+and exercise every supported grammar is from the project root:
 
 ```bash
-# Generate and test Rust parsers for all supported grammars
+# Build congocc.jar, regenerate every Rust parser, run all cargo tests.
 ant test-rust
+```
 
-# Or per-grammar:
+Or per-grammar:
+
+```bash
 cd examples/json && ant test-rust
 cd examples/lua && ant test-rust
 cd examples/cics && ant test-rust
 cd examples/arithmetic && ant test-rust
 ```
+
+Each example's `ant rust-gen` target invokes `congocc.jar` to (re)generate
+the Rust crate(s) and `ant test-rust` then runs `cargo test` inside each
+crate.  The arithmetic example also restores hand-written files from
+`examples/arithmetic/rust-saved/` after regeneration.
+
+To work with a single crate directly:
+
+```bash
+# Generate once via ant, then iterate with cargo:
+cd examples/arithmetic && ant rust-gen
+cd rust-arith2
+cargo build
+cargo test
+cargo test --test visitor_test -- --nocapture
+cargo run -- "(2 + 3) * 4"
+```
+
+### AST Traversal Examples
+
+The arithmetic example contains hand-written tests that demonstrate each
+of the AST-traversal patterns described above.  They are short, runnable,
+and assert their results, so they double as living documentation:
+
+| Pattern | Example test |
+|---------|--------------|
+| **Visitor** (read-only walk) | [`examples/arithmetic/rust-arith2/tests/visitor_test.rs`](examples/arithmetic/rust-arith2/tests/visitor_test.rs) |
+| **AstMapper — modifying node values** | [`examples/arithmetic/rust-arith2/tests/astmapper_value_test.rs`](examples/arithmetic/rust-arith2/tests/astmapper_value_test.rs) |
+| **AstMapper — modifying AST structure** | [`examples/arithmetic/rust-arith2/tests/astmapper_struct2_test.rs`](examples/arithmetic/rust-arith2/tests/astmapper_struct2_test.rs) |
+
+Run any one of them with output:
+
+```bash
+cd examples/arithmetic/rust-arith2
+cargo test --test visitor_test -- --nocapture
+cargo test --test astmapper_value_test -- --nocapture
+cargo test --test astmapper_struct2_test -- --nocapture
+```
+
+## Additional Documentation
+
+These per-crate / per-directory READMEs go into more detail than this
+top-level guide:
+
+| File | Content |
+|------|---------|
+| [`examples/arithmetic/rust-arith1/README.md`](examples/arithmetic/rust-arith1/README.md) | The parse-only arithmetic example (`Arithmetic1.ccc`): grammar, CLI, parsing API, why `evaluate()` returns `EvalError::Unsupported`. |
+| [`examples/arithmetic/rust-arith2/README.md`](examples/arithmetic/rust-arith2/README.md) | The full arithmetic evaluator (`Arithmetic2.ccc`): grammar, CLI, evaluation API, all six test suites, and detailed `Visitor` / `AstMapper` / `PrettyPrinter` walkthroughs with worked examples. |
+| [`examples/arithmetic/rust-saved/README.md`](examples/arithmetic/rust-saved/README.md) | The hand-written file inventory for `rust-arith1/` and `rust-arith2/`, plus the workflow for restoring them after `ant rust-gen` overwrites the generated tree. |
 
 ## Architecture
 
@@ -186,5 +387,5 @@ the Rust standard library.
 
 ## Acknowledgments
 
-Anthropic's Claude Opus 4.6 was used to generate most of the code and documentation in this project.
+Anthropic's Claude Opus 4.6 was used to generate most of the code and documentation for Rust support in this project.
 

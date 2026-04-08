@@ -205,4 +205,26 @@ Great.  Let's increase clarity and coverage in **astmapper_struct2_test.rs** by 
 
 ## Pretty Print Tweaks
 
-Please rename the render_ast() method in pretty.rs.ctl to pretty_print(), change all code to use the new name, and update all comments, test programs and README files to use the new name and correct method signature.  Set the default width for pretty printing to be 120.  Rebuild all example code from scratch and run all Rust test programs.  Insure that no regression has taken place and that all tests succeed.  Never ignore tests that fail or that are missing.
+Please rename the render_ast() method in pretty.rs.ctl to pretty_print(), change all example Rust code to use the new name, and update all comments, test programs and README files to use the new name and correct method signature.  Set the default width for pretty printing to be 120.  Rebuild all example code from scratch and run all Rust test programs.  Insure that no regression has taken place and that all tests succeed.  Never ignore tests that fail or that are missing.
+
+## Update Documentation
+
+This task puts the final touches on Rust-specific documentation.  Specifically, let's check documenation files for completeness and correctness.  The files to check are: 
+
+    README_RUST.md
+    examples/arithmetic/rust-saved/arith1/README.md
+    examples/arithmetic/rust-saved/arith2/README.md
+    examples/arithmetic/rust-saved/README.md
+
+Update README_RUST.md:
+1. Include references to all other Rust-specific README files.
+2. In addition to the Visitor Pattern section, add sections that briefly describe how and when to use AstMapper:
+    1. How to change modify existing nodes in an AST without changing an AST's structure.  
+    2. How to change an AST's structure by inserting or deleting nodes. 
+3. Describe how to build and run Rust example code.  In particular, point out AST traversal test code:
+    1. For visitor usage, see examples/arithmetic/rust-arith2/tests/visitor_test.rs
+    2. For modifying node values usage, see examples/arithmetic/rust-arith2/tests/astmapper_value_test.rs
+    3. For modifying structure usage, see examples/arithmetic/rust-arith2/tests/astmapper_struct2_test.rs
+
+Update examples/arithmetic/rust-saved/arith2/README.md with a detailed description of AstMapper and how it can be used (1) to modify existing AST nodes and (2) to modify AST structure. 
+
