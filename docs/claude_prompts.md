@@ -202,3 +202,7 @@ Write the new **astmapper_struct2_test.rs** test program to demonstrate how to m
 Specifically, start with each input expression's AST and use the AstMapper API to insert nodes at the end of the AST that cause 1 to be added to the numeric value of the expression.  The resulting AST must be a valid, parsable AST.  Evaluate the modified AST and assert that it's value is the expected value.  For each input value, print the original expression and its value and the modified expression and its value.  Update documentation to describe this new test and how it differs from **astmapper_struct_test.rs**.  Run all test to verify no regression has occured.
 
 Great.  Let's increase clarity and coverage in **astmapper_struct2_test.rs** by (1) dumping the original AST in addition to the modified AST, and (2) by processing all input expressions from TEST_CASES in astmapper_struct2_ast_validity().
+
+## Pretty Print Tweaks
+
+Please rename the render_ast() method in pretty.rs.ctl to pretty_print(), change all code to use the new name, and update all comments, test programs and README files to use the new name and correct method signature.  Set the default width for pretty printing to be 120.  Rebuild all example code from scratch and run all Rust test programs.  Insure that no regression has taken place and that all tests succeed.  Never ignore tests that fail or that are missing.

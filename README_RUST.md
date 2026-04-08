@@ -182,4 +182,9 @@ the Rust standard library.
 
 - CongoCC (`congocc.jar`) with Rust support
 - Java 8+ (to run CongoCC)
-- Rust 1.56+ (2021 edition, for generated code)
+- Rust 1.89+ (2024 edition, for generated code)
+
+## Acknowledgments
+
+Anthropic's Claude Opus 4.6 was used to generate most of the code and documentation in this project.
+

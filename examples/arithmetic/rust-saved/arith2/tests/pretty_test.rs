@@ -25,9 +25,9 @@ fn pretty_print_expressions() {
         let ast = Parser::parse(input, Some("test"))
             .unwrap_or_else(|e| panic!("parse failed for '{}': {}", input, e));
 
-        // render_ast() starts from the root node and renders to a string.
-        // The width parameter (80) controls where soft line breaks occur.
-        let formatted = DefaultPrettyPrinter.render_ast(&ast, 80);
+        // pretty_print() starts from the root node and renders to a
+        // string at the default target line width (DEFAULT_WIDTH = 120).
+        let formatted = DefaultPrettyPrinter.pretty_print(&ast);
 
         println!("--- Input: {} ---", input);
         println!("{}", formatted);
@@ -65,7 +65,7 @@ fn pretty_print_expressions() {
 fn pretty_print_structure() {
     // Verify that "2+3*4" produces the expected indented tree structure.
     let ast = Parser::parse("2+3*4", Some("test")).unwrap();
-    let formatted = DefaultPrettyPrinter.render_ast(&ast, 80);
+    let formatted = DefaultPrettyPrinter.pretty_print(&ast);
 
     println!("--- Pretty-print of 2+3*4 ---");
     println!("{}", formatted);
@@ -116,7 +116,7 @@ fn pretty_print_structure() {
 fn pretty_print_parenthesized() {
     // Verify parenthesized expressions produce deeper nesting.
     let ast = Parser::parse("(2+3)*4", Some("test")).unwrap();
-    let formatted = DefaultPrettyPrinter.render_ast(&ast, 80);
+    let formatted = DefaultPrettyPrinter.pretty_print(&ast);
 
     println!("--- Pretty-print of (2+3)*4 ---");
     println!("{}", formatted);

@@ -5,6 +5,13 @@
 
 use crate::ast::{Ast, NodeId, NodeKind};
 
+/// Default target line width for pretty-printing.
+///
+/// Used by [`PrettyPrinter::pretty_print`] when no explicit width is
+/// supplied.  Override on a per-call basis with
+/// [`PrettyPrinter::pretty_print_to_width`].
+pub const DEFAULT_WIDTH: usize = 120;
+
 // =================================================================
 // Document type (Wadler-Lindig)
 // =================================================================
@@ -292,7 +299,7 @@ pub fn render(doc: &Doc, width: usize) -> String {
 ///
 /// // Use the generated defaults directly:
 /// // let ast = Parser::parse("...", Some("input")).unwrap();
-/// // let formatted = DefaultPrettyPrinter.render_ast(&ast, 80);
+/// // let formatted = DefaultPrettyPrinter.pretty_print(&ast);
 /// // println!("{}", formatted);
 /// ```
 pub trait PrettyPrinter {
@@ -355,11 +362,23 @@ pub trait PrettyPrinter {
         }
     }
 
-    /// Convenience: pretty-print the entire AST and render to a string.
+    /// Convenience: pretty-print the entire AST using the default
+    /// target line width [`DEFAULT_WIDTH`] (120 columns).
+    ///
+    /// Equivalent to `self.pretty_print_to_width(ast, DEFAULT_WIDTH)`.
+    /// Returns an empty string if the AST has no root.
+    fn pretty_print(&self, ast: &Ast) -> String {
+        self.pretty_print_to_width(ast, DEFAULT_WIDTH)
+    }
+
+    /// Convenience: pretty-print the entire AST with an explicit
+    /// target line width.
     ///
     /// Starts from the root node and renders with the given target width.
+    /// Use [`pretty_print`](Self::pretty_print) to render at the default
+    /// width of [`DEFAULT_WIDTH`] (120 columns).
     /// Returns an empty string if the AST has no root.
-    fn render_ast(&self, ast: &Ast, width: usize) -> String {
+    fn pretty_print_to_width(&self, ast: &Ast, width: usize) -> String {
         match ast.root() {
             Some(root) => self.pp(ast, root).render(width),
             None => String::new(),
@@ -385,7 +404,11 @@ pub trait PrettyPrinter {
 
 /// Default pretty-printer that uses the generated defaults for all node types.
 ///
-/// Instantiate directly and call `render_ast()` for basic formatting.
+/// Instantiate directly and call [`pretty_print`](PrettyPrinter::pretty_print)
+/// for basic formatting at the default line width of [`DEFAULT_WIDTH`]
+/// (120 columns), or
+/// [`pretty_print_to_width`](PrettyPrinter::pretty_print_to_width) to
+/// supply an explicit width.
 ///
 /// # Examples
 ///
@@ -394,7 +417,7 @@ pub trait PrettyPrinter {
 /// use ${settings.parserPackage?replace(".", "_")}::parser::Parser;
 ///
 /// let ast = Parser::parse("{}", Some("input.json")).unwrap();
-/// let output = DefaultPrettyPrinter.render_ast(&ast, 80);
+/// let output = DefaultPrettyPrinter.pretty_print(&ast);
 /// println!("{}", output);
 /// ```
 pub struct DefaultPrettyPrinter;
