@@ -273,8 +273,8 @@ The following grammars generate fully compiling and tested Rust parsers:
 
 Complex grammars with Java INJECT blocks generate parsers that compile except for
 the injected Java code. The translator emits FIXME comments for untranslatable
-constructs. To complete these parsers, search for `FIXME(congocc)` in the generated
-code and implement the Rust equivalents manually.
+constructs. To complete these parsers, consult the `FIXME.md` and `inject.rs` files in the generated
+code to determine how and where the Rust translation of Java code needs to be provided.
 
 ## Building and Running the Rust Examples
 
