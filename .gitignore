@@ -4,6 +4,7 @@
 /target/*
 /.settings/*
 __pycache__/*
+/Ant*.out
 /*.jar
 \#*
 /examples/freemarker/ftl/*
