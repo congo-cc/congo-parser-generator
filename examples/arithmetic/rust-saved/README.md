@@ -66,7 +66,8 @@ silently restore the older version and your edits will appear to vanish.
 | `tests/visitor_test.rs` | 3 tests for the read-only `Visitor` trait |
 | `tests/astmapper_value_test.rs` | 2 tests for `AstMapper` value modification (`DoubleNumbers`) |
 | `tests/astmapper_struct_test.rs` | 2 tests for `AstMapper` structural change with re-parsing |
-| `tests/astmapper_struct2_test.rs` | 2 tests for `AstMapper` structural change with **direct evaluation** of the modified AST |
+| `tests/synthetic_struct2_test.rs` | 4 tests for in-place synthetic-token structural editing with evaluate, unparse, and reparse |
+| `tests/synthetic_struct3_test.rs` | 4 tests for in-place number-literal replacement with synthesized subtrees |
 
 ### arith1/ (parse-only)
 

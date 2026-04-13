@@ -39,5 +39,9 @@ name = "astmapper_struct_test"
 path = "tests/astmapper_struct_test.rs"
 
 [[test]]
-name = "astmapper_struct2_test"
-path = "tests/astmapper_struct2_test.rs"
+name = "synthetic_struct2_test"
+path = "tests/synthetic_struct2_test.rs"
+
+[[test]]
+name = "synthetic_struct3_test"
+path = "tests/synthetic_struct3_test.rs"

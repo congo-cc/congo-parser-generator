@@ -228,7 +228,7 @@ that changes which nodes appear in the tree.
 For complete worked examples (including the two-phase rebuild trick), see
 [`examples/arithmetic/rust-arith2/tests/astmapper_value_test.rs`](examples/arithmetic/rust-arith2/tests/astmapper_value_test.rs)
 and
-[`examples/arithmetic/rust-arith2/tests/astmapper_struct2_test.rs`](examples/arithmetic/rust-arith2/tests/astmapper_struct2_test.rs).
+[`examples/arithmetic/rust-arith2/tests/synthetic_struct2_test.rs`](examples/arithmetic/rust-arith2/tests/synthetic_struct2_test.rs).
 
 ### Pretty Printing
 
@@ -322,7 +322,7 @@ and assert their results, so they double as living documentation:
 |---------|--------------|
 | **Visitor** (read-only walk) | [`examples/arithmetic/rust-arith2/tests/visitor_test.rs`](examples/arithmetic/rust-arith2/tests/visitor_test.rs) |
 | **AstMapper — modifying node values** | [`examples/arithmetic/rust-arith2/tests/astmapper_value_test.rs`](examples/arithmetic/rust-arith2/tests/astmapper_value_test.rs) |
-| **AstMapper — modifying AST structure** | [`examples/arithmetic/rust-arith2/tests/astmapper_struct2_test.rs`](examples/arithmetic/rust-arith2/tests/astmapper_struct2_test.rs) |
+| **Synthetic tokens — in-place structural editing** | [`examples/arithmetic/rust-arith2/tests/synthetic_struct2_test.rs`](examples/arithmetic/rust-arith2/tests/synthetic_struct2_test.rs) |
 
 Run any one of them with output:
 
@@ -330,7 +330,7 @@ Run any one of them with output:
 cd examples/arithmetic/rust-arith2
 cargo test --test visitor_test -- --nocapture
 cargo test --test astmapper_value_test -- --nocapture
-cargo test --test astmapper_struct2_test -- --nocapture
+cargo test --test synthetic_struct2_test -- --nocapture
 ```
 
 ## Additional Documentation

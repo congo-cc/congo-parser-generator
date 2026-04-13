@@ -206,9 +206,9 @@ pub trait AstMapper {
         for &source_id in &post_order {
             let mapped = match source.kind(source_id) {
                 NodeKind::Token(tid) => {
-                    // Copy the token into the builder.
-                    let stored = source.token(*tid);
-                    let new_tid = builder.add_token(stored.kind, stored.start, stored.end, stored.is_unparsed);
+                    // Copy the token into the builder, preserving its
+                    // `TokenSource` variant (original range vs. synthetic text).
+                    let new_tid = builder.copy_token(source.token(*tid));
                     let result = self.map_token(source_id, source, &mut builder);
                     match result {
                         MappedNode::Node { kind, children } => {

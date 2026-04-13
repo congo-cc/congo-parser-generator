@@ -228,3 +228,38 @@ Update README_RUST.md:
 
 Update examples/arithmetic/rust-saved/arith2/README.md with a detailed description of AstMapper and how it can be used (1) to modify existing AST nodes and (2) to modify AST structure. 
 
+## Rethinking Structural Changes to ASTs
+
+Let's re-evaluate how structural changes to an AST are made.  Structural changes include the addition, deletion and modification of AST nodes and of parent/child relationships.  The current implementation uses AstMapper (visitor.rs) and AstBuilder (ast.rs) to make structural changes.  The examples/arithmetic/rust-arith2/tests/astmapper_struct2_test.rs shows how to append nodes to the end of an AST.  In this example, 1 is added to input expressions.  A limitation is revealed on line 233 in astmapper_struct2_test.rs:
+
+    let extended_source = format!("{}+1", input);
+
+In general, it will not be so easy to modify the parser's input.  If modifying input text was easy, then AST manipulation wouldn't be necessary since one could always just create a new input string and then parse it.  Specifically, AST structural changes in the middle of an AST or changes that reshuffle parent/child relationships are difficult, in general, to do to input text directly.  Parsers expose ASTs to avoid direct text manipulation, which itself requires parsing.
+
+One possible approach that would eliminate the burden of constructing a new input string would be if every AST had a `generate_string()` method that generated a string based on the current state of the AST.  Generated strings can optionally be validated by using the original parser, so no new validation code is required.  
+
+Please suggest improvements to the current design that achieve these goals:
+    1. Generality - Any structural change should be possible to any part of an AST
+    2. Ease of Use - Programmers should be able to manually manipulate ASTs in a systematic way
+        1. It should be easy traverse ASTs and make structural changes along the way
+        2. No step should require solving difficult parsing problems 
+    3. Performance - AST modifications should minimize cpu and memory overhead 
+
+If the current design cannot be easily improved, please explain why.
+
+## More AST Testing
+
+Let's create a new test that further demonstrates using synthetic tokens and nodes to change the structure of an AST.  Create the new examples/arithmetic/rust-arith2/tests/astmapper_struct3_test.rs test that processes the ASTs of the following expressions:
+-    5 + 6 * (2 * 5)
+-    2 * 6 - (5 + 1) / 3
+1. For each of the above expressions, do the following:
+    1. Replace each occurance of the number 5 in the AST with the synthesized AST for (2 + 3).
+    2. Replace each occurance of the number 6 in the AST with the synthesized AST for (2 * 3).
+2. Dump the ASTs before modification and after modification.
+3. Evaluate the numeric value of the ASTs before modification and after modification.
+4. Save the new test in the rust-saved subtree so that it will be preserved between builds. 
+5. Rebuild all Rust parsers and run their tests to verify that no regression has taken place.
+
+## Rename Tests for Accuracy and Consistency
+
+In examples/arithmetic/rust-saved/arith2, please rename astmapper_struct2_test.rs to synthetic_struct2_test.rs and rename astmapper_struct3_test.rs to synthetic_struct3_test.rs.  The new names reflect the APIs used in those tests.  Update README_RUST.md and all README.md files under the rust-saved directory to reflect the new names.  Similarly, update the inline comments and function names in the test programs to be consistent with the new names.  Finally, rebuild all Rust parsers and run their tests to verify that no regression has taken place.  

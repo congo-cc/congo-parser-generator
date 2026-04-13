@@ -121,17 +121,25 @@ modification via the `AstMapper` trait using string re-parsing:
 - Verifies via string reconstruction and re-parse: `2+3*4+1` = 15,
   `(2+3)*4+1` = 21, `((1+2)*(3+4))/(5-(6-7))+1` = 4.5
 
-**`tests/astmapper_struct2_test.rs`** -- 2 tests demonstrating structural
-modification with **direct evaluation** of the modified AST (no re-parsing):
-- Same `AppendPlusOne` mapper as above, but token offsets point into an
-  extended source string so that `evaluate()` works directly on the mapped AST
-- Uses a two-phase approach: (1) `AstMapper` inserts nodes with offsets set for
-  the extended source, (2) `rebuild_with_source()` copies the mapped AST into a
-  new `Ast` with the extended source string
-- Demonstrates the arena-based AST's offset-into-source-string design and how to
-  work around it when adding tokens that don't exist in the original source
+**`tests/synthetic_struct2_test.rs`** -- 4 tests demonstrating in-place
+structural editing using the synthetic-token API (no `AstMapper`, no
+source-string reconstruction):
+- `append_plus_one` edits the AST in place via `new_synthetic_token`,
+  `new_node`, and `append_child` to append a `+1` subtree
+- Exercises `Ast::unparse()` for text regeneration and `Ast::reparse()` for
+  round-trip validation through the original parser
 - Verifies via direct evaluation: `2+3*4+1` = 15, `(2+3)*4+1` = 21,
   `((1+2)*(3+4))/(5-(6-7))+1` = 4.5
+
+**`tests/synthetic_struct3_test.rs`** -- 4 tests demonstrating in-place
+number-literal replacement with fully synthesized subtrees:
+- Replaces every `5` with `(2+3)` and every `6` with `(2*3)` using
+  `new_synthetic_token`, `new_node`, `insert_after`, and `detach`
+- Builds multi-level synthesized subtrees (ParentheticalExpression wrapping
+  AdditiveExpression/MultiplicativeExpression) matching the grammar structure
+- Dumps ASTs before and after modification and verifies values are unchanged
+  (since 2+3=5 and 2*3=6)
+- Verifies via unparse and reparse round-trip
 
 ## Library API
 
@@ -330,7 +338,7 @@ via the `builder`.  To delete a node entirely, return
 
 The hard part of *adding* new tokens is that every token needs text in
 the source string.  The recommended pattern, demonstrated by
-[`tests/astmapper_struct2_test.rs`](tests/astmapper_struct2_test.rs),
+[`tests/synthetic_struct2_test.rs`](tests/synthetic_struct2_test.rs),
 is two-phase:
 
 1. **Map phase** — your `AstMapper` calls
@@ -431,7 +439,7 @@ For comparison,
 shows the simpler alternative: do the structural change *and* convert
 the mapped AST back to a string, then re-parse it.  That works when
 re-parsing is acceptable; the two-phase pattern in
-`astmapper_struct2_test.rs` is the right choice when you want to keep
+`synthetic_struct2_test.rs` is the right choice when you want to keep
 the modified AST around and operate on it directly.
 
 ### Using the Pretty-Printer
@@ -499,7 +507,8 @@ rust-arith2/
     visitor_test.rs      # Visitor trait tests (hand-written, 3 tests)
     astmapper_value_test.rs   # AstMapper value modification tests (hand-written, 2 tests)
     astmapper_struct_test.rs  # AstMapper structure modification tests (hand-written, 2 tests)
-    astmapper_struct2_test.rs # AstMapper structure + direct evaluation tests (hand-written, 2 tests)
+    synthetic_struct2_test.rs # In-place synthetic-token structural editing tests (hand-written, 4 tests)
+    synthetic_struct3_test.rs # In-place number-literal replacement tests (hand-written, 4 tests)
   test-data/
     basic.arith          # 1+1
     decimals.arith       # 3.14 * 2.0 + 0.5
