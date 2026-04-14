@@ -80,6 +80,123 @@ silently restore the older version and your edits will appear to vanish.
 | `README.md` | Crate-level documentation (build, run, test, parsing API) |
 | `tests/evaluate.rs` | 8 tests covering the `Unsupported` stub plus parsing regression checks |
 
+## Code Injection (inject.rs and FIXME.md)
+
+CongoCC grammars can contain `INJECT` blocks — Java code that gets added
+to generated AST node classes.  In Java, Python, and C#, this code is
+inserted directly into per-type class bodies.  In Rust, the arena-based
+AST has no per-type structs, so injected code needs a different approach.
+
+The Rust code generator handles this in two files:
+
+- **`inject.rs`** — The translator (`RustTranslator.java`) attempts a
+  mechanical Java-to-Rust translation of each INJECT block.  Code that
+  translates successfully is emitted as Rust; code that cannot be
+  translated is shown as FIXME comments with the original Java source.
+- **`FIXME.md`** — A generated inventory of all INJECT blocks, the
+  Java-to-Rust API mapping table, and a worked example showing how to
+  translate Java's virtual dispatch into Rust's `match`-on-`NodeKind`
+  pattern.
+
+### How the Arithmetic Evaluator Works
+
+The `Arithmetic2.ccc` grammar defines `evaluate()` methods on each AST
+node type via INJECT blocks.  In the generated Rust crate, these are
+consolidated into a single `impl Ast` block in `inject.rs` that
+dispatches on `NodeKind`:
+
+```rust
+impl Ast {
+    pub fn evaluate(&self, id: NodeId) -> Result<f64, EvalError> {
+        match self.kind(id) {
+            NodeKind::Root => {
+                // Delegate to the first child (the top-level expression).
+                self.evaluate(self.child_at(id, 0).unwrap())
+            }
+            NodeKind::AdditiveExpression => {
+                // Alternating operands and operators: child(0) op child(2) op ...
+                let mut result = self.evaluate(self.child_at(id, 0).unwrap())?;
+                let mut i = 1;
+                while i < self.child_count(id) {
+                    let subtract = self.child_is_token(id, i, TokenType::MINUS);
+                    let operand = self.evaluate(self.child_at(id, i + 1).unwrap())?;
+                    if subtract { result -= operand; } else { result += operand; }
+                    i += 2;
+                }
+                Ok(result)
+            }
+            // ... similar for MultiplicativeExpression, ParentheticalExpression
+            NodeKind::Token(_) => {
+                // NUMBER tokens: parse text as f64.
+                self.text(id).parse::<f64>().map_err(|_| ...)
+            }
+        }
+    }
+}
+```
+
+See
+[`rust-saved/arith2/inject.rs`](arith2/inject.rs)
+for the complete implementation.  The key translation patterns are:
+
+| Java INJECT Pattern | Rust Arena Equivalent |
+|---|---|
+| `this` (current node) | `id: NodeId` (passed as parameter) |
+| `get(i)` (ith child) | `ast.child_at(id, i)` returns `Option<NodeId>` |
+| `size()` (child count) | `ast.child_count(id)` returns `usize` |
+| `get(i) instanceof MINUS` | `ast.child_is_token(id, i, TokenType::MINUS)` |
+| `toString()` (node text) | `ast.text(id)` returns `&str` |
+
+For grammars with extensive INJECT blocks (Java, C#, Python), the
+generated `inject.rs` will contain many FIXME comments.  Use `FIXME.md`
+as a guide and place your implementations in a separate, non-generated
+file to avoid losing them during regeneration.
+
+## SPECIAL_TOKEN (Unparsed Tokens)
+
+Some grammars define tokens that are preserved in the token stream but
+not consumed by parser productions — for example, comments in a language
+like JSONC.  CongoCC calls these SPECIAL_TOKENs (also called "unparsed"
+tokens).
+
+In the grammar file, SPECIAL_TOKENs are defined with the `UNPARSED`
+keyword or the `?` prefix:
+
+```
+// JSONC.ccc — comments are SPECIAL_TOKENs
+UNPARSED :
+    <SINGLE_LINE_COMMENT : "//" (~["\n"])* >
+    |
+    <?MULTI_LINE_COMMENT : "/*" (~[])* "*/">
+;
+```
+
+In the generated Rust code:
+
+- `TokenType::is_unparsed()` returns `true` for SPECIAL_TOKEN types.
+- `StoredToken.is_unparsed` is `true` for tokens of these types.
+- The lexer preserves these tokens in the stream but the parser does
+  not build AST nodes for them.
+
+### When SPECIAL_TOKEN Matters
+
+SPECIAL_TOKENs are important when you need **round-trip fidelity** —
+that is, regenerating source text from an AST that preserves comments
+and formatting.  Without them, `unparse()` and the pretty-printer
+produce output that is semantically correct but strips all comments.
+
+For the arithmetic grammar, whitespace is `SKIP`ped (discarded entirely)
+and there are no SPECIAL_TOKENs.  The `unparse()` output concatenates
+tokens with no separators, which works because the grammar's tokens are
+unambiguous when adjacent (e.g., `2+3*4`).
+
+For grammars where adjacent tokens could re-lex into one (e.g., two
+identifiers separated only by whitespace), callers should either:
+
+1. Use the pretty-printer instead of `unparse()` for display, or
+2. Define whitespace as a SPECIAL_TOKEN (not SKIP) so it is preserved
+   in the token stream and `unparse()` includes it.
+
 ## Acknowledgments
 
 Anthropic's Claude Opus 4.6 was used to generate most of the code and documentation for Rust support in this project.

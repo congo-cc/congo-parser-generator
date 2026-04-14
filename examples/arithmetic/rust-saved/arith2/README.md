@@ -327,120 +327,122 @@ that touches node *content* but leaves the tree's *shape* alone.
 > `astmapper_value_test.rs` test sidesteps this by re-parsing a
 > reconstructed expression string after the mapper run.
 
-#### 2. Modifying AST structure (insertion / deletion)
+#### 2. Modifying AST structure with synthetic tokens
 
-For structural transformations, override the `map_*` method for an
-*interior* node and return a `MappedNode::Node` whose `children` vector
-contains the desired sequence — including any freshly-built nodes added
-via the `builder`.  To delete a node entirely, return
-`MappedNode::Remove`; to flatten a wrapper away, return
-`MappedNode::Splice(mapped_children)`.
+For transformations that **insert new nodes or replace subtrees**, the
+in-place mutation API on `&mut Ast` is the recommended approach.  Unlike
+`AstMapper` (which requires managing byte offsets into the source string
+when adding new tokens), synthetic tokens carry their own text, making
+structural edits straightforward.
 
-The hard part of *adding* new tokens is that every token needs text in
-the source string.  The recommended pattern, demonstrated by
-[`tests/synthetic_struct2_test.rs`](tests/synthetic_struct2_test.rs),
-is two-phase:
+The key concept is `TokenSource`:
 
-1. **Map phase** — your `AstMapper` calls
-   `builder.add_token(kind, start, end, false)` with byte offsets that
-   point *past the end of the original source*, into a position where
-   an *extended* source string will have the desired token text.  Use
-   the new `TokenId` to build the new node.
-2. **Rebuild phase** — copy the mapped AST's nodes and tokens into a
-   fresh `AstBuilder` and call
-   `builder.build(extended_source, source_name)` so token offsets
-   resolve against the longer string.  After this step, methods like
-   `evaluate_root()`, `dump()`, and the pretty-printer all work
-   directly on the modified AST without re-parsing.
+- **`TokenSource::Original { start, end }`** — Parser-produced tokens.
+  Text is a zero-copy slice of the original source string.
+- **`TokenSource::Synthetic(Box<str>)`** — Programmatically created
+  tokens.  Text is owned by the token itself.
 
-Sketch — append `+1` to the top-level `AdditiveExpression`:
+This means new tokens can be created at any point in the AST without
+coordinating with the source string.
+
+##### Mutation methods on `&mut Ast`
+
+| Method | Purpose |
+|--------|---------|
+| `ast.new_synthetic_token(kind, text)` | Create a new token node with owned text.  Returns `NodeId`. |
+| `ast.new_node(kind)` | Create a new production node (non-token) with no children. |
+| `ast.append_child(parent, child)` | Append `child` as the last child of `parent`. |
+| `ast.insert_after(sibling, new)` | Insert `new` after `sibling` in its parent's child list. |
+| `ast.detach(id)` | Remove `id` from its parent (the node stays in the arena). |
+
+##### Text regeneration and validation
+
+- **`ast.unparse()`** — Concatenates all token text in document order,
+  producing a string that reflects the AST's current state.
+- **`ast.reparse()`** — Calls `unparse()` then re-parses the result.
+  If it succeeds, the edited AST is syntactically valid.
+
+##### Walkthrough: appending "+1" to an expression
+
+This is the core pattern from
+[`tests/synthetic_struct2_test.rs`](tests/synthetic_struct2_test.rs).
+The test parses an expression like `2+3*4`, appends `+1` by editing the
+AST in place, and then evaluates, unparses, and reparses the result.
+
+**Step 1 — Create synthetic tokens and nodes.**  Each call to
+`new_synthetic_token` creates a token whose text is owned (not a slice
+of the source string).  Each call to `new_node` creates a detached
+production node.
 
 ```rust
-use ex2::ast::{Ast, AstBuilder, NodeId, NodeKind};
-use ex2::tokens::TokenType;
-use ex2::visitor::{AstMapper, MappedNode};
+fn append_plus_one(ast: &mut Ast) {
+    let add_expr = find_top_level_add(ast);
 
-struct AppendPlusOne {
-    source_len: usize,
-    modified: bool,
+    // Synthetic tokens own their text — no source string coordination.
+    let plus = ast.new_synthetic_token(TokenType::PLUS, "+");
+    let one  = ast.new_synthetic_token(TokenType::NUMBER, "1");
+
+    // The grammar expects AdditiveExpression children to alternate
+    // between MultiplicativeExpressions and operator tokens, so the
+    // NUMBER must be wrapped.
+    let mult = ast.new_node(NodeKind::MultiplicativeExpression);
+    ast.append_child(mult, one);
+
+    // Attach the new subtree to the existing AdditiveExpression.
+    ast.append_child(add_expr, plus);
+    ast.append_child(add_expr, mult);
 }
-
-impl AstMapper for AppendPlusOne {
-    fn map_additiveexpression(
-        &mut self,
-        source_id: NodeId,
-        source: &Ast,
-        mapped_children: &[NodeId],
-        builder: &mut AstBuilder,
-    ) -> MappedNode {
-        // Only modify the top-level AdditiveExpression once.
-        let is_top_level = match source.parent(source_id) {
-            None => true,
-            Some(p) => matches!(source.kind(p), NodeKind::Root),
-        };
-        if !(is_top_level && !self.modified) {
-            return MappedNode::Node {
-                kind: source.kind(source_id).clone(),
-                children: mapped_children.to_vec(),
-            };
-        }
-        self.modified = true;
-
-        // Token offsets point into the *extended* source ("<input>+1").
-        let plus_tid = builder.add_token(
-            TokenType::PLUS, self.source_len, self.source_len + 1, false);
-        let plus_node = builder.add_node(
-            NodeKind::Token(plus_tid),
-            self.source_len as u32, (self.source_len + 1) as u32);
-
-        let num_tid = builder.add_token(
-            TokenType::NUMBER, self.source_len + 1, self.source_len + 2, false);
-        let num_node = builder.add_node(
-            NodeKind::Token(num_tid),
-            (self.source_len + 1) as u32, (self.source_len + 2) as u32);
-
-        let mult_node = builder.add_node(
-            NodeKind::MultiplicativeExpression,
-            (self.source_len + 1) as u32, (self.source_len + 2) as u32);
-        builder.add_child_to(mult_node, num_node);
-
-        let mut new_children = mapped_children.to_vec();
-        new_children.push(plus_node);
-        new_children.push(mult_node);
-
-        MappedNode::Node {
-            kind: NodeKind::AdditiveExpression,
-            children: new_children,
-        }
-    }
-}
-
-// Phase 1: run the mapper.
-let mut mapper = AppendPlusOne { source_len: input.len(), modified: false };
-let mapped_ast = mapper.map(&ast);
-
-// Phase 2: rebuild with the extended source so the new tokens'
-// offsets resolve to real characters.  See the test file for the
-// helper `rebuild_with_source()` that copies all tokens, nodes, and
-// parent/child relationships into a fresh AstBuilder.
-let extended_source = format!("{}+1", input);
-let modified_ast = rebuild_with_source(&mapped_ast, &extended_source);
-
-// Now the modified AST is fully self-consistent — evaluate directly.
-let value = modified_ast.evaluate_root().unwrap();
 ```
 
+**Step 2 — Use the modified AST.**  After the edit, the AST is fully
+functional.  `evaluate_root()` works because `Ast::text()` delegates to
+`token_text()` for token leaves, which returns synthetic tokens' owned
+text.  `unparse()` concatenates all tokens (original and synthetic) in
+document order.  `reparse()` validates via the original parser.
+
+```rust
+let mut ast = Parser::parse("2+3*4", Some("test")).unwrap();
+append_plus_one(&mut ast);
+
+let value = ast.evaluate_root().unwrap();   // 15.0
+let text  = ast.unparse();                  // "2+3*4+1"
+let fresh = ast.reparse().unwrap();         // re-parsed, validates syntax
+```
+
+**Step 3 (optional) — Verify structure.**  `node_count()` returns the
+arena size.  Detached nodes remain in the arena (their `NodeId`s stay
+stable), so the delta equals the number of nodes created.
+
+```rust
+assert_eq!(ast.node_count(), original_count + 3);  // PLUS, NUMBER, MultExpr
+```
+
+##### Replacing nodes with synthesized subtrees
+
+For more complex edits — replacing a node with a multi-level subtree —
+use `insert_after` and `detach`.  The pattern is:
+
+1. **Collect targets** before mutating (so the tree walk is not affected
+   by structural changes).
+2. **Build the replacement subtree** bottom-up using `new_synthetic_token`,
+   `new_node`, and `append_child`.
+3. **Swap** using `ast.insert_after(target, replacement)` followed by
+   `ast.detach(target)`.
+
+[`tests/synthetic_struct3_test.rs`](tests/synthetic_struct3_test.rs)
+demonstrates this by replacing every `5` with `(2+3)` and every `6` with
+`(2*3)`.  Since 2+3 = 5 and 2*3 = 6, the expression value is unchanged
+— a convenient test invariant.
+
 When to use this pattern: AST rewriting (lowering, desugaring),
-code-mod tools, optimization passes, dead-code elimination, macro
-expansion — anything that changes which nodes appear in the tree.
+code-mod tools, macro expansion, optimization passes, instrumentation —
+any transformation that inserts, replaces, or rearranges subtrees.
 
 For comparison,
 [`tests/astmapper_struct_test.rs`](tests/astmapper_struct_test.rs)
-shows the simpler alternative: do the structural change *and* convert
-the mapped AST back to a string, then re-parse it.  That works when
-re-parsing is acceptable; the two-phase pattern in
-`synthetic_struct2_test.rs` is the right choice when you want to keep
-the modified AST around and operate on it directly.
+shows the older `AstMapper`-based alternative that constructs an extended
+source string and re-parses.  The synthetic-token approach is simpler for
+most structural editing use cases.
 
 ### Using the Pretty-Printer
 

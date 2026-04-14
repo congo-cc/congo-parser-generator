@@ -1,4 +1,10 @@
-//! AstMapper structure test: demonstrates modifying AST structure.
+//! AstMapper structure test: demonstrates modifying AST structure using
+//! the AstMapper trait and AstBuilder.
+//!
+//! NOTE: For most structural editing use cases, the synthetic-token API 
+//! allows creating new AST nodes without relying on source text offsets, 
+//! which is a simpler, more robust approach.  See the synthetic_struct2_test 
+//! and synthetic_struct3_test testsfor example usage of that API.
 //!
 //! Uses the `AstMapper` trait to append "+1" to the end of each
 //! expression.  For example, "2+3*4" becomes "2+3*4+1".  The mapper
@@ -30,7 +36,7 @@ use ex2::visitor::{AstMapper, MappedNode};
 const TEST_CASES: &[(&str, f64, f64)] = &[
     ("2+3*4",                    14.0, 15.0),
     ("(2+3)*4",                  20.0, 21.0),
-    ("((1+2)*(3+4))/(5-(6-7))", 3.5,  4.5),
+    ("((1+2)*(3+4))/(5-(6-7))",   3.5,  4.5),
 ];
 
 /// An AstMapper that appends "+1" to the top-level additive expression.

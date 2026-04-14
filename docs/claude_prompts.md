@@ -262,4 +262,29 @@ Let's create a new test that further demonstrates using synthetic tokens and nod
 
 ## Rename Tests for Accuracy and Consistency
 
-In examples/arithmetic/rust-saved/arith2, please rename astmapper_struct2_test.rs to synthetic_struct2_test.rs and rename astmapper_struct3_test.rs to synthetic_struct3_test.rs.  The new names reflect the APIs used in those tests.  Update README_RUST.md and all README.md files under the rust-saved directory to reflect the new names.  Similarly, update the inline comments and function names in the test programs to be consistent with the new names.  Finally, rebuild all Rust parsers and run their tests to verify that no regression has taken place.  
+In examples/arithmetic/rust-saved/arith2, please rename `astmapper_struct2_test.rs` to `synthetic_struct2_test.rs` and rename `astmapper_struct3_test.rs` to `synthetic_struct3_test.rs`.  The new names reflect the APIs used in those tests.  Please update README_RUST.md and all README.md files in the rust-saved subtree to reflect the new names.  Similarly, update the inline comments and function names in the test programs to be consistent with the new names.  Finally, rebuild all Rust parsers and run their tests to verify that no regression has taken place.
+
+## Comphrehensive Documentation Update
+
+Let's update for publication inline comments and the following README files:
+
+    README_RUST.md
+    examples/arithmetic/rust-saved/arith2/README.md
+    examples/arithmetic/rust-saved/README.md
+
+The goal is to provide detailed guidence to users on what Rust support is available and how to best use it.  Below are areas that can be improved.
+
+1. Enhance README_RUST.md:
+    1. In the Parsing section, explain what the two parameters to Parser::parse() are.
+    2. In the AST Traversal Examples section, include references to synthetic_struct3_test.rs.
+    3. Organize the AST traversal discussion by the different use cases and the support for each use case.
+        1. Explain the difference between traversals that (1) are read-only, (2) only change values, and (3) change structure and values. 
+        2. For read-only traversal, the Visitor Pattern section should be followed by the Pretty Printing section and a short section on dump().
+        3. For value modification, AstMapper Pattern section (with AstBuilder) should be reworded to focus on what it does best.  Reference example code.  Explain the difficulty in using this approach for structural changes as a lead in to the synthetic token API.  
+        4. For structural modification, explain how to use synthetic tokens and nodes.  Reference example code.
+2. Enhance examples/arithmetic/rust-saved/README.md:
+    1. Explain under what circumstance SPECIAL_TOKEN might be needed and how to use it.  Provide an example.
+    2. Explain how code injection is handled and the inject.rs and FIXME.md files.  Reference example code.
+3. Enhance examples/arithmetic/rust-saved/arith2/README.md:
+    1. Add a detailed explanation of how to use synthetic tokens and nodes based on synthetic_struct2_test.rs.
+
