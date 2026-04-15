@@ -15,6 +15,7 @@ Congo contains complete, up-to-date grammars for:
 - [C#](https://github.com/congo-cc/congo-parser-generator/tree/master/examples/csharp)
 - [Lua](https://github.com/congo-cc/congo-parser-generator/tree/master/examples/lua)
 - [JSON](https://github.com/congo-cc/congo-parser-generator/tree/master/examples/json)
+- [RUST](README_RUST.md)
 
 Any of these grammars may be freely used in your own projects, though it would be *nice* if you acknowledge the use and provide a link to this project. The above-linked grammars also can be studied as examples. (Best would be to start with the JSON grammar, move on to Lua, then Python, Java, and C# in order of complexity.)
 
