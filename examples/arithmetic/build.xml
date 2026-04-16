@@ -1,4 +1,15 @@
 <project name="CongoCC Arithmetic example" default="compile">
+  <!-- Rust code-generation is off by default. Enable with: ant -Drust.enabled=true ... -->
+  <property name="rust.enabled" value="false"/>
+  <target name="-rust-check">
+    <condition property="rust.on">
+      <istrue value="${rust.enabled}"/>
+    </condition>
+  </target>
+  <target name="-rust-guard" depends="-rust-check" unless="rust.on">
+    <echo level="warning">*** Skipping Rust targets (rust.enabled=${rust.enabled}). Enable with: ant -Drust.enabled=true ***</echo>
+  </target>
+
   <target name="clean">
     <delete dir="ex1" />
     <delete dir="ex2" />
@@ -43,7 +54,7 @@
     </java>
   </target>
 
-  <target name="rust-gen">
+  <target name="rust-gen" depends="-rust-guard" if="rust.on">
     <java jar="../../congocc.jar" failonerror="true" fork="true">
       <assertions><enable /></assertions>
       <arg line="-n -lang rust -d ${basedir}/rust-arith1 ${basedir}/Arithmetic1.ccc" />
@@ -72,7 +83,7 @@
     </copy>
   </target>
 
-  <target name="test-rust" depends="rust-gen">
+  <target name="test-rust" depends="-rust-guard,rust-gen" if="rust.on">
     <exec executable="cargo" dir="${basedir}/rust-arith1" failonerror="true">
       <arg line="test -- --nocapture" />
     </exec>

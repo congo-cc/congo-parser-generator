@@ -4,8 +4,18 @@ CongoCC can generate complete, self-contained Rust parser crates from `.ccc` gra
 Each generated crate includes a lexer, parser, arena-based AST, visitor trait, AST mapper,
 and Wadler-Lindig pretty-printer.
 
-## Quick Start
+## Building with Rust Support
+By default, this project's build.xml files have property `rust.enabled` set to `false`, which 
+disables Rust support.  To enable the generation of Rust parsers, use `ant -Drust.enabled=true`
+as shown below:
 
+```bash
+ant build -Drust.enabled=true
+ant test -Drust.enabled=true
+```
+
+## Quick Start
+Assuming CongoCC was built with Rust support enabled:
 ```bash
 # Generate a Rust parser from a grammar file
 java -jar congocc.jar -n -lang rust -d my-parser examples/json/JSON.ccc
