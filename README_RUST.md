@@ -6,8 +6,8 @@ and Wadler-Lindig pretty-printer.
 
 ## Building with Rust Support
 By default, this project's build.xml files have property `rust.enabled` set to `false`, which 
-disables Rust support.  To enable the generation of Rust parsers, use `ant -Drust.enabled=true`
-as shown below:
+disables Rust support.  To enable the generation of Rust parsers, first 
+[install Rust](https://rust-lang.org/tools/install/), then use `ant -Drust.enabled=true` as shown below:
 
 ```bash
 ant build -Drust.enabled=true
