@@ -139,6 +139,25 @@ public class FilesGenerator {
                     generate(parserOutputDirectory, p);
                 }
             }
+            case RUST -> {
+                String[] paths = new String[]{
+                        "tokens.rs",
+                        "lexer.rs",
+                        "parser.rs",
+                        "ast.rs",
+                        "error.rs",
+                        "visitor.rs",
+                        "pretty.rs",
+                        "inject.rs",
+                        "lib.rs",
+                        "Cargo.toml",
+                        "FIXME.md",
+                        "tests/parse_files.rs",
+                };
+                for (String p : paths) {
+                    generate(parserOutputDirectory, p);
+                }
+            }
         }
     }
 
@@ -238,6 +257,9 @@ public class FilesGenerator {
         else if (currentFilename.endsWith(".cs")) {
             outputCSharpFile(code, outputPath);
         }
+        else if (currentFilename.endsWith(".rs") || currentFilename.equals("Cargo.toml")) {
+            outputRustFile(code, outputPath);
+        }
         else  {
             outputPythonFile(code, outputPath);
         }
@@ -306,6 +328,14 @@ public class FilesGenerator {
                 logger.fine(String.format("Line count went from %d to %d", initialLines, finalLines));
             }
             output.write(s);
+        }
+    }
+
+    // Write raw template output for Rust files.  CongoCC does not have a Rust
+    // parser for AST-based post-processing; users can run rustfmt externally.
+    void outputRustFile(String code, Path outputFile) throws IOException {
+        try (Writer out = Files.newBufferedWriter(outputFile)) {
+            out.write(code);
         }
     }
 

@@ -1,6 +1,17 @@
 <project name="json" default="compile" basedir=".">
   <uptodate property="parser1.uptodate" srcfile="JSON.ccc" targetfile="${basedir}/org/parsers/json/JSONParser.java" />
   <uptodate property="parser2.uptodate" srcfile="JSONC.ccc" targetfile="${basedir}/org/parsers/jsonc/JSONCParser.java" />
+
+  <!-- Rust code-generation is off by default. Enable with: ant -Drust.enabled=true ... -->
+  <property name="rust.enabled" value="false"/>
+  <target name="-rust-check">
+    <condition property="rust.on">
+      <istrue value="${rust.enabled}"/>
+    </condition>
+  </target>
+  <target name="-rust-guard" depends="-rust-check" unless="rust.on">
+    <echo level="warning">*** Skipping Rust targets (rust.enabled=${rust.enabled}). Enable with: ant -Drust.enabled=true ***</echo>
+  </target>
   <target name="clean">
     <delete>
       <fileset dir="${basedir}" includes="*.class" />
@@ -10,6 +21,8 @@
     <delete dir="${basedir}/cs-jsonparser" />
     <delete dir="${basedir}/jsoncparser" />
     <delete dir="${basedir}/cs-jsoncparser" />
+    <delete dir="${basedir}/rust-jsonparser" />
+    <delete dir="${basedir}/rust-jsoncparser" />
   </target>
   <target name="parser1-gen" unless="parser1.uptodate">
     <mkdir dir="../../bin" />
@@ -105,5 +118,35 @@
     </exec>
   </target>
 
-   <target name="test-all" depends="compile,test-java,test-csharp,test-python"/>
+  <target name="rust-gen" depends="-rust-guard" if="rust.on">
+    <java jar="../../congocc.jar" fork="true" failonerror="true">
+      <assertions><enable /></assertions>
+      <arg line=" -n -lang rust -d ${basedir}/rust-jsonparser ${basedir}/JSON.ccc" />
+    </java>
+    <java jar="../../congocc.jar" fork="true" failonerror="true">
+      <assertions><enable /></assertions>
+      <arg line=" -n -lang rust -d ${basedir}/rust-jsoncparser ${basedir}/JSONC.ccc" />
+    </java>
+    <delete dir="${basedir}/rust-jsonparser/test-data" />
+    <mkdir dir="${basedir}/rust-jsonparser/test-data" />
+    <copy todir="${basedir}/rust-jsonparser/test-data">
+      <fileset dir="${basedir}/testfiles" includes="*.json" excludes="invalid.json" />
+    </copy>
+    <delete dir="${basedir}/rust-jsoncparser/test-data" />
+    <mkdir dir="${basedir}/rust-jsoncparser/test-data" />
+    <copy todir="${basedir}/rust-jsoncparser/test-data">
+      <fileset dir="${basedir}/testfiles" includes="*.json" excludes="invalid.json" />
+    </copy>
+  </target>
+
+  <target name="test-rust" depends="-rust-guard,rust-gen" if="rust.on">
+    <exec executable="cargo" dir="${basedir}/rust-jsonparser" failonerror="true">
+      <arg line="test -- --nocapture" />
+    </exec>
+    <exec executable="cargo" dir="${basedir}/rust-jsoncparser" failonerror="true">
+      <arg line="test -- --nocapture" />
+    </exec>
+  </target>
+
+   <target name="test-all" depends="compile,test-java,test-csharp,test-python,test-rust"/>
 </project>

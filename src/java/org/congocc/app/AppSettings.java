@@ -295,6 +295,9 @@ public class AppSettings {
                     packageName = "cs-".concat(packageName.concat("parser"));
                     dir = dir.resolve(packageName);
                     break;
+                case RUST:
+                    // Rust uses the -d flag for output directory; no package path resolution needed
+                    break;
             }
             if (!Files.exists(dir)) {
                 Files.createDirectories(dir);
@@ -368,6 +371,10 @@ public class AppSettings {
 
 
     public Path getNodeOutputDirectory() throws IOException {
+        // Rust uses flat file layout in the -d directory; no package subdirectories.
+        if (codeLang == CodeLang.RUST) {
+            return getParserOutputDirectory();
+        }
         String nodePackage = getNodePackage();
         String baseSrcDir = getBaseSourceDirectory();
         if (nodePackage == null || nodePackage.equals("") || baseSrcDir.equals("")) {

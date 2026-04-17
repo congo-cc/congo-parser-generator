@@ -3,6 +3,19 @@
     <format property="timestamp" pattern="yyyy-MM-dd HH:mm:ss" />
   </tstamp>
 
+  <!-- Rust code-generation is off by default. Enable with: ant -Drust.enabled=true ... -->
+  <property name="rust.enabled" value="false"/>
+
+  <target name="-rust-check">
+    <condition property="rust.on">
+      <istrue value="${rust.enabled}"/>
+    </condition>
+  </target>
+
+  <target name="-rust-guard" depends="-rust-check" unless="rust.on">
+    <echo level="warning">*** Skipping Rust targets (rust.enabled=${rust.enabled}). Enable with: ant -Drust.enabled=true ***</echo>
+  </target>
+
   <target name="init">
     <uptodate property="parser.uptodate" targetfile="build/generated-java/org/congocc/parser/CongoCCParser.java">
       <srcfiles dir="src/grammars" includes="CongoCC.ccc"/>
@@ -62,6 +75,7 @@
     <ant target="clean" dir="examples/lua" />
     <ant target="clean" dir="examples/preprocessor" />
     <ant target="clean" dir="examples/cics" />
+    <ant target="clean" dir="examples/arithmetic" />
     <!--ant target="clean" dir="examples/freemarker" /-->
   </target>
 
@@ -161,6 +175,7 @@
     <echo>Testing the CICS parser</echo>
     <ant dir="examples/cics" target="clean" />
     <ant dir="examples/cics" target="test" />
+    <ant dir="examples/cics" target="test-rust" />
     <echo>Testing the Preprocessor</echo>
     <ant dir="examples/preprocessor" target="clean" />
     <ant dir="examples/preprocessor" target="test" />
@@ -176,12 +191,30 @@
     <echo>Building the Python parser</echo>
     <ant dir="examples/python" target="clean" />
     <ant dir="examples/python" target="test-all" />
+    <echo>Testing the Arithmetic parsers</echo>
+    <ant dir="examples/arithmetic" target="clean" />
+    <ant dir="examples/arithmetic" target="test" />
+    <ant dir="examples/arithmetic" target="test-rust" />
   </target>
 
   <target name="test-java" depends="jar">
     <echo>Testing the Java parser standalone"</echo>
     <!--ant dir="examples/java" target="clean" /-->
     <ant dir="examples/java" target="test-java" />
+  </target>
+
+  <target name="test-rust" depends="jar,-rust-guard" if="rust.on">
+    <echo>Testing Rust parser generation</echo>
+    <ant dir="examples/json" target="test-rust" />
+    <ant dir="examples/lua" target="test-rust" />
+    <ant dir="examples/cics" target="test-rust" />
+    <ant dir="examples/arithmetic" target="test-rust" />
+    <!-- Java Rust tests disabled until handwritten Rust code is supplied -->
+    <!-- <ant dir="examples/java" target="test-rust" /> -->
+    <!-- Python Rust tests disabled until handwritten Rust code is supplied -->
+    <!-- <ant dir="examples/python" target="test-rust" /> -->
+    <!-- CSharp Rust tests disabled until handwritten Rust code is supplied -->
+    <!-- <ant dir="examples/csharp" target="test-rust" /> -->
   </target>
 
   <target name="jar" depends="compile">

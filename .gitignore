@@ -1,10 +1,10 @@
 *~
-/docs/*
 /build/*
 /classes/*
 /target/*
 /.settings/*
 __pycache__/*
+/Ant*.out
 /*.jar
 \#*
 /examples/freemarker/ftl/*
@@ -47,6 +47,15 @@ __pycache__/*
 /examples/lua/cs-luaparser/*
 /examples/cardinality/org/*
 /examples/cics/org/*
+/examples/json/rust-jsonparser/*
+/examples/json/rust-jsoncparser/*
+/examples/lua/rust-luaparser/*
+/examples/cics/rust-cicsparser/*
+/examples/arithmetic/rust-arith1/*
+/examples/arithmetic/rust-arith2/*
+/examples/java/rust-javaparser/*
+/examples/python/rust-pythonparser/*
+/examples/csharp/rust-csharpparser/*
 /personal.code-workspace
 /.vscode/*
 /.idea/*

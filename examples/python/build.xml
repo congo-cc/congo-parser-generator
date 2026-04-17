@@ -1,4 +1,15 @@
 <project name="Python" default="compile" basedir=".">
+  <!-- Rust code-generation is off by default. Enable with: ant -Drust.enabled=true ... -->
+  <property name="rust.enabled" value="false"/>
+  <target name="-rust-check">
+    <condition property="rust.on">
+      <istrue value="${rust.enabled}"/>
+    </condition>
+  </target>
+  <target name="-rust-guard" depends="-rust-check" unless="rust.on">
+    <echo level="warning">*** Skipping Rust targets (rust.enabled=${rust.enabled}). Enable with: ant -Drust.enabled=true ***</echo>
+  </target>
+
   <target name="parser-check">
     <uptodate property="pyparser.uptodate" targetfile="org/parsers/python/PythonParser.java">
       <srcfiles dir="." includes="*.ccc" />
@@ -12,6 +23,7 @@
     <delete dir="${basedir}/org" />
     <delete dir="${basedir}/pythonparser" />
     <delete dir="${basedir}/cs-pythonparser" />
+    <delete dir="${basedir}/rust-pythonparser" />
   </target>
 
   <target name="parser-gen" unless="pyparser.uptodate">
@@ -90,5 +102,33 @@
     </exec>
   </target>
 
-   <target name="test-all" depends="compile,test-java,test-csharp,test-python"/>
+  <target name="rust-gen" depends="-rust-guard" if="rust.on">
+    <echo>Building Python parser in Rust.</echo>
+    <java jar="../../congocc.jar" fork="true" failonerror="true">
+      <assertions><enable /></assertions>
+      <arg line="-n -lang rust -d ${basedir}/rust-pythonparser ${basedir}/Python.ccc" />
+    </java>
+  </target>
+
+  <target name="compile-rust" depends="-rust-guard,rust-gen" if="rust.on">
+    <exec executable="cargo" dir="${basedir}/rust-pythonparser" failonerror="true">
+      <arg line="build" />
+    </exec>
+  </target>
+
+  <target name="test-rust" depends="-rust-guard,compile-rust" if="rust.on">
+    <!-- Tests disabled until handwritten Rust code is supplied.
+         Eventually, the Rust parser will test against the same files as the Python parser.
+    <delete dir="${basedir}/rust-pythonparser/test-data" />
+    <mkdir dir="${basedir}/rust-pythonparser/test-data" />
+    <copy todir="${basedir}/rust-pythonparser/test-data">
+      <fileset dir="${basedir}/testfiles" includes="*.py" />
+    </copy>
+    <exec executable="cargo" dir="${basedir}/rust-pythonparser" failonerror="true">
+      <arg line="test - - - -nocapture" />
+    </exec>
+    -->
+  </target>
+
+   <target name="test-all" depends="compile,test-java,test-csharp,test-python,test-rust"/>
 </project>

@@ -1,5 +1,6 @@
 PARSER_PACKAGE=ex2;
 PARSER_CLASS=Calc;
+TEST_EXTENSION=arith;
 
 INCLUDE "Arithmetic1.ccc"
 

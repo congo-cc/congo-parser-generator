@@ -118,7 +118,8 @@ public final class Main {
 
     private static final String [] otherSupportedLanguages = new String[] {
         "python",
-        "csharp"
+        "csharp",
+        "rust"
     };
 
     static void usage() {
