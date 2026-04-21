@@ -1,0 +1,89 @@
+DEFAULT_LEXICAL_STATE=RUST;
+ENSURE_FINAL_EOL;
+DEACTIVATE_TOKENS=SHEBANG, STATIC2, MACRO_RULES, RAW, SAFE, UNION;
+
+SKIP :
+  <WHITESPACE : (" "| "\t"| "\n"| "\r"| "\f")+> #Whitespace
+;
+
+UNPARSED :
+   <SHEBANG : "#!" (~["\n"])* "\n">
+;
+
+// Some subtleties with comments not being addressed (yet)
+UNPARSED #Comment :
+  < SINGLE_LINE_COMMENT : "//" (~["\n"])* "\n" > #LineComment
+  |
+  < ?MULTI_LINE_COMMENT : "/*" (~[])* "*/" > #BlockComment
+;
+
+TOKEN #KeyWord :
+  <UNDERSCORE : "_">
+| < ABSTRACT: "abstract" >
+|  < AS: "as" >
+| < ASYNC: "async" >
+| < AWAIT: "await" >
+| < BECOME: "become" >
+| < BOX: "box" >
+| < CONST: "const" >
+| < CONTINUE: "continue" >
+| < CRATE: "crate" >
+| < _DEFAULT: "default" >
+| < DO: "do" >
+| < DYN: "dyn" >
+| < ELSE: "else" >
+| < ENUM: "enum" >
+| < EXTERN: "extern" >
+| < FALSE: "false" >
+| < FINAL: "final" >
+| < FN: "fn" >
+| < FOR: "for" >
+| < GEN: "gen" >
+| < IF: "if" >
+| < IMPL: "impl" >
+| < LET: "let" >
+| < LOOP: "loop" >
+| < MACRO: "macro" >
+| < MACRO_RULES: "macro_rules" >
+| < MATCH: "match" >
+| < MOD: "mod" >
+| < MOVE: "move" >
+| < OVERRIDE: "override" >
+| < PRIV: "priv" >
+| < PUB: "pub">
+| < RAW: "raw" >
+| < REF: "ref" >
+| < RETURN: "return" >
+| < SAFE: "safe" >
+| < SELF: "self" >
+| < SELF2: "Self" >
+| < STATIC: "static" >
+| < STATIC2: "'static" >
+| < STRUCT: "struct" >
+| < SUPER: "super" >
+| < TRAIT: "trait" >
+| < TRUE: "true" >
+| < TRY: "try" >
+| < TYPE: "type" >
+| < TYPEOF: "typeof" >
+| < UNION: "union" >
+| < UNSAFE : "unsafe" >
+| < UNSIZED: "unsized" >
+| < USE: "use" >
+| < VIRTUAL: "virtual" >
+| < WHERE: "where" >
+| < WHILE: "while" >
+| < YIELD: "yield" >
+;
+
+// TOKEN #Literal :
+
+
+// We'll just use the Java identifier definition for now.
+INCLUDE JAVA_IDENTIFIER_DEF
+
+TOKEN #Identifier :
+  < IDENTIFIER: <JAVA_IDENTIFIER_START> (<JAVA_IDENTIFIER_PART>)* >
+  |
+  < RAW_IDENTIIFER: "r#" <IDENTIFIER>>
+;
