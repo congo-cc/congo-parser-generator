@@ -1,0 +1,35 @@
+DEFAULT_LEXICAL_STATE=RUST;
+PARSER_PACKAGE=org.parsers.rust;
+NODE_PACKAGE=org.parsers.rust.ast;
+ENSURE_FINAL_EOL;
+DEACTIVATE_TOKENS=SHEBANG, STATIC2, MACRO_RULES, RAW, SAFE, UNION;
+
+INCLUDE "RustLexer.ccc"
+
+SimplePath : ["::"] SimplePathSegment ("::" SimplePathSegment)* ;
+
+SimplePathSegment : <IDENTIFIER> | "super" | "self" | "crate" | "$crate" ;
+
+MacroInvocation: SimplePath "!" DelimTokenTree ;
+
+DelimTokenTree :
+    "(" (SCAN ~(")") => TokenTree)* ")"
+    |
+    "[" (SCAN ~("]") => TokenTree)* "]"
+    |
+    "{" (SCAN ~("}") => TokenTree)* "}"
+;
+
+TokenTree :
+   DelimTokenTree
+   |
+   AnyToken
+;
+
+AnyToken#void : {pushNode(lastConsumedToken=nextToken(lastConsumedToken));};
+
+MacroTranscriber# : DelimTokenTree ;
+
+MacroRepSep#void : SCAN ~("("|"{"|"["|")"|"}"|"]"|"*"|"+"|"?") => AnyToken ;
+
+

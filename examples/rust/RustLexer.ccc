@@ -1,6 +1,5 @@
 DEFAULT_LEXICAL_STATE=RUST;
 ENSURE_FINAL_EOL;
-DEACTIVATE_TOKENS=SHEBANG, STATIC2, MACRO_RULES, RAW, SAFE, UNION;
 
 SKIP :
   <WHITESPACE : (" "| "\t"| "\n"| "\r"| "\f")+> #Whitespace
@@ -28,6 +27,7 @@ TOKEN #KeyWord :
 | < CONST: "const" >
 | < CONTINUE: "continue" >
 | < CRATE: "crate" >
+| < DOLLAR_CRATE: "$crate">
 | < _DEFAULT: "default" >
 | < DO: "do" >
 | < DYN: "dyn" >
@@ -76,14 +76,72 @@ TOKEN #KeyWord :
 | < YIELD: "yield" >
 ;
 
+TOKEN #Delimiter :
+    <LBRACE: "{">
+  | <RBRACE: "}">
+  | <LBRACKET: "[">
+  | <RBRACKET: "]">
+  | <LPAREN: "(">
+  | <RPAREN: ")">
+;
+
+TOKEN #Punctuation :
+   <ELLIPSIS: "...">
+  |<DOT_DOT_EQUALS: "..=">
+  |<LT_LT_EQUALS: "<<=">
+  |<GT_GT_EQUALS: ">>=">
+  |<NOT_EQUALS: "!=">
+  |<MOD_EQUALS: "%=">
+  |<SC_AND: "&&">
+  |<AND_EQUALS: "&=">
+  |<STAR_EQUALS: "*=">
+  |<PLUS_EQUALS: "+=">
+  |<MINUS_EQUALS: "-=">
+  |<RIGHT_ARROW: "->">
+  |<DOT_DOT: "..">
+  |<SLASH_EQUALS: "/=">
+  |<DOUBLE_COLON: "::">
+  |<LEFT_ARROW: "<-">
+  |<LT_LT: "<<">
+  |<LTE: "<=">
+  |<EQ: "==">
+  |<RIGHT_ARROW2: "=>">
+  |<GTE: ">=">
+  |<GT_GT: ">>">
+  |<CARET_EQUALS: "^=">
+  |<OR_EQUALS: "|=">
+  |<SC_OR: "||">
+  |<EXCLAM: "!">
+  |<HASH: "#">
+  |<DOLLAR: "$">
+  |<PERCENT: "%">
+  |<BIT_AND: "&">
+  |<STAR: "*">
+  |<PLUS: "+">
+  |<COMMA: ",">
+  |<MINUS: "-">
+  |<DOT: ".">
+  |<SLASH: "/">
+  |<COLON: ":">
+  |<SEMICOLON: ";">
+  |<LT: "<">
+  |<ASSIGN: "=">
+  |<GT: ">">
+  |<HOOK: "?">
+  |<AT: "@">
+  |<CARET: "^">
+  |<BIT_OR: "|">
+  |<TILDE: "~">
+;
+
+
 // TOKEN #Literal :
 
 
-// We'll just use the Java identifier definition for now.
-INCLUDE JAVA_IDENTIFIER_DEF
+INCLUDE "RustIdentifierDef.ccc"
 
 TOKEN #Identifier :
-  < IDENTIFIER: <JAVA_IDENTIFIER_START> (<JAVA_IDENTIFIER_PART>)* >
+  < IDENTIFIER: <RUST_IDENTIFIER_START> (<RUST_IDENTIFIER_PART>)* >
   |
-  < RAW_IDENTIIFER: "r#" <IDENTIFIER>>
+  < RAW_IDENTIIFER: "r#" <IDENTIFIER>> #RawIdentifier
 ;
