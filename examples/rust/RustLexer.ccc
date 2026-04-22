@@ -143,5 +143,5 @@ INCLUDE "RustIdentifierDef.ccc"
 TOKEN #Identifier :
   < IDENTIFIER: <RUST_IDENTIFIER_START> (<RUST_IDENTIFIER_PART>)* >
   |
-  < RAW_IDENTIIFER: "r#" <IDENTIFIER>> #RawIdentifier
+  < RAW_IDENTIFIER: "r#" <IDENTIFIER>> #RawIdentifier
 ;

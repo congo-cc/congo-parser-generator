@@ -30,6 +30,72 @@ AnyToken#void : {pushNode(lastConsumedToken=nextToken(lastConsumedToken));};
 
 MacroTranscriber# : DelimTokenTree ;
 
+
+MacroRulesDefinition : "macro_rules" "!" MacroRulesDef ;
+
+MacroRulesDef :
+   "(" MacroRules ")" ";"
+   |
+   "[" MacroRules "]" ";"
+   |
+   "{" MacroRules "}"
+;
+
+MacroRules : MacroRule (";" =>|+1 MacroRule)* [";"] ;
+
+MacroRule : MacroMatcher "=>" MacroTranscriber ;
+
+MacroMatcher :
+    "(" MacroMatch ")"
+    |
+    "[" MacroMatch "]"
+    |
+    "{" MacroMatch "}"
+;
+
+MacroMatch :
+    SCAN ~("$"|"("|")"|"["|"]"|"{"|"}") => AnyToken
+    |
+    MacroMatcher
+    |
+    "$" IdentifierOrKeywordButNotCrate ":" =>|| MacroFragSpec
+    |
+    // REVISIT: MacroRepSep currently unused???
+    "$" (SCAN ~("*"|"+"|"?") => MacroMatch)+ ("*"|"+"|"?")
+;
+
 MacroRepSep#void : SCAN ~("("|"{"|"["|")"|"}"|"]"|"*"|"+"|"?") => AnyToken ;
 
+IdentifierOrKeywordButNotCrate#void :
+    DEACTIVATE_TOKENS ABSTRACT, AS, ASYNC, AWAIT, BECOME, BOX, CONST
+                      CONTINUE, _DEFAULT, DO, DYN, ELSE, ENUM
+                      EXTERN, FALSE, FINAL, FN, FOR, GEN, IF, IMPL,
+                      LET, LOOP, MACRO, MACRO_RULES, MATCH, MOD,
+                      MOVE, OVERRIDE, PRIV, PUB, RAW, REF, RETURN,
+                      SAFE, SELF, SELF2, STATIC, STRUCT, TRAIT,
+                      TRUE, TRY, TYPE, TYPEOF, UNION, UNSAFE,
+                      UNSIZED, USE, VIRTUAL, WHERE, WHILE, YIELD
+    (
+        <IDENTIFIER>
+        |
+        <RAW_IDENTIFIER>
+    )
+;
 
+MacroFragSpec#void :
+    'block' |
+    'expr' |
+    'expr_2021' |
+    'ident' |
+    'item' |
+    'lifetime' |
+    'literal' |
+    'meta' |
+    'pat' |
+    'pat_param' |
+    'path' |
+    'stmt' |
+    'tt' |
+    'ty' |
+    'vis'
+;
