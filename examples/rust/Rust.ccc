@@ -2,7 +2,7 @@ DEFAULT_LEXICAL_STATE=RUST;
 PARSER_PACKAGE=org.parsers.rust;
 NODE_PACKAGE=org.parsers.rust.ast;
 ENSURE_FINAL_EOL;
-DEACTIVATE_TOKENS=SHEBANG, STATIC2, MACRO_RULES, RAW, SAFE, UNION;
+DEACTIVATE_TOKENS=SHEBANG, STATIC2, MACRO_RULES, RAW, SAFE, UNION, DOLLAR_CRATE;
 
 INCLUDE "RustLexer.ccc"
 
@@ -29,7 +29,6 @@ TokenTree :
 AnyToken#void : {pushNode(lastConsumedToken=nextToken(lastConsumedToken));};
 
 MacroTranscriber# : DelimTokenTree ;
-
 
 MacroRulesDefinition : "macro_rules" "!" MacroRulesDef ;
 

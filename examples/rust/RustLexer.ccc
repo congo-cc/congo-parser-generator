@@ -135,7 +135,56 @@ TOKEN #Punctuation :
 ;
 
 
-// TOKEN #Literal :
+TOKEN #Literal :
+
+  <CHARACTER_LITERAL:
+      "'"
+      (
+          ~["'","\\","\n","\r","\t"]
+          |
+          <QUOTE_ESCAPE>
+          |
+          <ASCII_ESCAPE>
+          |
+          <COMMON_ESCAPE>
+          |
+          <UNICODE_ESCAPE>
+      )
+      "'"
+      (<IDENTIFIER>)?
+  > #CharacterLiteral
+  |
+  <STRING_LITERAL:
+     '"'
+     (
+        ~['"', "\\", "\r"]
+        |
+        <QUOTE_ESCAPE>
+        |
+        <ASCII_ESCAPE>
+        |
+        <COMMON_ESCAPE>
+        |
+        <UNICODE_ESCAPE>
+        |
+        <STRING_CONTINUE>
+     )*
+     '"'
+     (<IDENTIFIER>)?
+  > #StringLiteral
+  |
+  <#QUOTE_ESCAPE: '\\"'|"\\'">
+  |
+  <#ASCII_ESCAPE: "\\x" ["0"-"7"] <HEX_DIGIT>>
+  |
+  <#COMMON_ESCAPE: "\\" ["n","r","t","\\","0"]>
+  |
+  <#HEX_DIGIT :  ["0"-"9", "a"-"f", "A"-"F"]>
+  |
+  <#UNICODE_ESCAPE : "\\u" (<HEX_DIGIT>){1,5}>
+  |
+  <#STRING_CONTINUE: "\\\n">
+;
 
 
 INCLUDE "RustIdentifierDef.ccc"
