@@ -136,7 +136,6 @@ TOKEN #Punctuation :
 
 
 TOKEN #Literal :
-
   <CHARACTER_LITERAL:
       "'"
       (
@@ -184,8 +183,65 @@ TOKEN #Literal :
   <#UNICODE_ESCAPE : "\\u" (<HEX_DIGIT>){1,5}>
   |
   <#STRING_CONTINUE: "\\\n">
+  |
+  <#RAW_STRING_LITERAL : 'r"' (~['"'])* '"' (<IDENTIFIER>)?> #RawStringLiteral
 ;
 
+MORE:
+   <HASH_RAW_STRING_START: "r" ("#")+> : IN_HASH_RAW_STRING
+;
+
+<IN_HASH_RAW_STRING>
+TOKEN:
+   <RAW_STRING_LITERAL_WITH_HASHES: ("#")+> #RawStringLiteral
+;
+
+<IN_HASH_RAW_STRING>
+MORE:
+   <ANY_CHAR : ~[]>
+;
+
+INJECT LEXER_CLASS :
+{
+   private int hashStringLiteralStart;
+
+   // token hook routine to deal with hash-delimited raw strings
+   private Token TOKEN_HOOK(Token tok) {
+      if (tok.getType() == HASH_RAW_STRING_START) {
+        hashStringLiteralStart = tok.getBeginOffset();
+      }
+      if (tok.getType() == RAW_STRING_LITERAL_WITH_HASHES) {
+        int numStartingHashes = countStartingHashes(tok);
+        int numTrailingHashes = countTrailingHashes(tok);
+        if (numTrailingHashes < numStartingHashes) {
+            switchTo(LexicalState.IN_HASH_RAW_STRING);
+            tok.setUnparsed(true);
+            return tok;
+        }
+        tok.truncate(numTrailingHashes-numStartingHashes);
+        tok.setBeginOffset(hashStringLiteralStart);
+        reset(tok);
+      }
+      return tok;
+   }
+
+   private int countStartingHashes(Token tok) {
+     int result = 1;
+     for (int i = 2; i<tok.length(); i++) {
+        if (tok.charAt(i) == '#') ++result;
+        else break;
+     }
+     return result;
+   }
+
+   private int countTrailingHashes(Token tok) {
+      int result = 0;
+      for (int i = tok.length()-1; i>0; i--) {
+         if (tok.charAt(i) == '#')  ++result;
+      }
+      return result;
+   }
+}
 
 INCLUDE "RustIdentifierDef.ccc"
 
