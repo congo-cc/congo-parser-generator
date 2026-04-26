@@ -184,10 +184,10 @@ TOKEN #Literal :
   |
   <#STRING_CONTINUE: "\\\n">
   |
-  <RAW_STRING_LITERAL : 'r"' (~['"'])* '"' (<IDENTIFIER>)?> #RawStringLiteral
+  <RAW_STRING_LITERAL : 'r"' (~['"'])* '"' (<IDENTIFIER>)?> #StringLiteral
   {chopLoneUnderscore(matchedToken);}
   |
-  <RAW_STRING_LITERAL2 : 'r#' (~['#'])* '"' (<IDENTIFIER>)?> #RawStringLiteral
+  <RAW_STRING_LITERAL_HASH : ("b"|"c")? 'r#' (~['#'])* '"' (<IDENTIFIER>)?> #StringLiteral
   {chopLoneUnderscore(matchedToken);}
   |
   <BYTE_LITERAL : "b'" (<ASCII_FOR_CHAR>|<BYTE_ESCAPE>) "'" (<IDENTIFIER>)?>
@@ -196,7 +196,7 @@ TOKEN #Literal :
   |
   <#ASCII_FOR_CHAR: ["\u0000" - "\u0008", "\u000B", "\u000C", "\u000E"-"&", "("-"[", "]"-"\u007f"]>
   |
-  <#ASCII_FOR_STRING: ["\u0000" - "&", "(" - "\u007f"]>
+  <#ASCII_FOR_STRING: ["\u0000" - "&", "(" - "\u007f"]> //any 7-bit ascii char except for the " char
   |
   <#BYTE_ESCAPE:
      "\\x" <HEX_DIGIT><HEX_DIGIT>
@@ -204,25 +204,46 @@ TOKEN #Literal :
      "\\" ["n","r","t","\\","0","'",'"']
   >
   |
+  <#C_BYTE_ESCAPE:
+     "\\x" <HEX_DIGIT><HEX_DIGIT>
+     |
+     "\\" ["n","r","t","\\","'",'"']
+  >
+  |
   <BYTE_STRING_LITERAL: 'b"' (<ASCII_FOR_STRING> | <BYTE_ESCAPE> | "\\\n")* '"' (<IDENTIFIER>)?>
-  #ByteStringLiteral
+  #StringLiteral
   {chopLoneUnderscore(matchedToken);}
-//  |
-//  <RAW_BYTE_STRING_LITERAL: 'br"'
+  |
+  <C_STRING_LITERAL:
+     'c"'
+     (
+        ~['"', "\\", "\r", "\u0000"]
+        |
+        <C_BYTE_ESCAPE>
+        |
+        <UNICODE_ESCAPE>
+        |
+        <STRING_CONTINUE>
+     )*
+     '"'
+     (<IDENTIFIER>)?
+  >
+  #StringLiteral
+  {chopLoneUnderscore(matchedToken);}
 ;
 
 MORE:
-   <HASH_RAW_STRING_START: "r" ("#"){2,}> : IN_HASH_RAW_STRING
+   <HASH_RAW_STRING_START: ("r"|"br"|"cr") ("#"){2,}> : IN_HASH_RAW_STRING
 ;
 
 <IN_HASH_RAW_STRING>
 TOKEN:
-   <RAW_STRING_LITERAL_WITH_HASHES: ("#"){2,}(<IDENTIFIER>)?> #RawStringLiteral
+   <RAW_STRING_LITERAL_WITH_HASHES: ("#"){2,}(<IDENTIFIER>)?> #StringLiteral
 ;
 
 <IN_HASH_RAW_STRING>
 MORE:
-   <ANY_CHAR : ~[]>
+   <~[]>
 ;
 
 INJECT LEXER_CLASS :
@@ -256,17 +277,15 @@ INJECT LEXER_CLASS :
         }
         chopLoneUnderscore(tok);
       }
-      if (type==RAW_STRING_LITERAL || type == RAW_STRING_LITERAL2 || type==STRING_LITERAL) {
-        chopLoneUnderscore(tok);
-      }
       return tok;
    }
 
    private int countStartingHashes(Token tok) {
-     int result = 1;
-     for (int i = 2; i<tok.length(); i++) {
-        if (tok.charAt(i) == '#') ++result;
-        else break;
+     int result = 0;
+     String image = tok.toString();
+     for (int i = image.indexOf('#'); i< image.length(); i++) {
+         if (image.charAt(i) == '#')  ++result;
+         else break;
      }
      return result;
    }
