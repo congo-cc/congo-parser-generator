@@ -85,6 +85,35 @@ TOKEN #Delimiter :
   | <RPAREN: ")">
 ;
 
+TOKEN #NumericalLiteral :
+    <FLOATING_POINT_LITERAL :
+       <FLOATING_POINT_LITERAL1>
+       |<FLOATING_POINT_LITERAL2>
+       |<FLOATING_POINT_LITERAL3>
+       |<FLOATING_POINT_LITERAL4>
+    > #FloatingPointLiteral
+    |
+    <#FLOATING_POINT_LITERAL1: <DEC_LITERAL> ("f32"|"f64")>
+    |
+    <#FLOATING_POINT_LITERAL2: <DEC_LITERAL> ".">
+    |
+    <#FLOATING_POINT_LITERAL3: <DEC_LITERAL> <FLOAT_EXPONENT> ("f32"|"f64")?>
+    |
+    <#FLOATING_POINT_LITERAL4 : <DEC_LITERAL> "." <DEC_LITERAL>  (<FLOAT_EXPONENT>)? ("f32"|"f64")?>
+    |
+    <#FLOAT_EXPONENT: ["e","E"] (["+","-"])? ("_")* <DEC_LITERAL>>
+    |
+    <INTEGER_LITERAL: <DEC_LITERAL> | <BIN_LITERAL> | <OCT_LITERAL> | <HEX_LITERAL> (<IDENTIFIER>)?> #IntegerLiteral
+    |
+    <#DEC_LITERAL: ["0"-"9"] (["0"-"9","_"])*>
+    |
+    <#BIN_LITERAL: "0b" ("_")* ["0","1"] (["0","1","_"])*>
+    |
+    <#OCT_LITERAL: "0o" ("_")* (["0"-"7"])* (["0"-"7","_"])*>
+    |
+    <#HEX_LITERAL: "0x" ("_")* (<HEX_DIGIT>|"_")*>
+;
+
 TOKEN #Punctuation :
    <ELLIPSIS: "...">
   |<DOT_DOT_EQUALS: "..=">
@@ -153,6 +182,12 @@ TOKEN #Literal :
       (<IDENTIFIER>)?
   > #CharacterLiteral
   |
+  <BYTE_LITERAL : "b'" (<ASCII_FOR_CHAR>|<BYTE_ESCAPE>) "'" (<IDENTIFIER>)?>
+  #ByteLiteral
+  {chopLoneUnderscore(matchedToken);}
+;
+
+TOKEN #StringLiteral :
   <STRING_LITERAL:
      '"'
      (
@@ -170,48 +205,9 @@ TOKEN #Literal :
      )*
      '"'
      (<IDENTIFIER>)?
-  > #StringLiteral {chopLoneUnderscore(matchedToken);}
-  |
-  <#QUOTE_ESCAPE: '\\"'|"\\'">
-  |
-  <#ASCII_ESCAPE: "\\x" ["0"-"7"] <HEX_DIGIT>>
-  |
-  <#COMMON_ESCAPE: "\\" ["n","r","t","\\","0"]>
-  |
-  <#HEX_DIGIT :  ["0"-"9", "a"-"f", "A"-"F"]>
-  |
-  <#UNICODE_ESCAPE : "\\u" (<HEX_DIGIT>){1,5}>
-  |
-  <#STRING_CONTINUE: "\\\n">
-  |
-  <RAW_STRING_LITERAL : 'r"' (~['"'])* '"' (<IDENTIFIER>)?> #StringLiteral
-  {chopLoneUnderscore(matchedToken);}
-  |
-  <RAW_STRING_LITERAL_HASH : ("b"|"c")? 'r#' (~['#'])* '"' (<IDENTIFIER>)?> #StringLiteral
-  {chopLoneUnderscore(matchedToken);}
-  |
-  <BYTE_LITERAL : "b'" (<ASCII_FOR_CHAR>|<BYTE_ESCAPE>) "'" (<IDENTIFIER>)?>
-  #ByteLiteral
-  {chopLoneUnderscore(matchedToken);}
-  |
-  <#ASCII_FOR_CHAR: ["\u0000" - "\u0008", "\u000B", "\u000C", "\u000E"-"&", "("-"[", "]"-"\u007f"]>
-  |
-  <#ASCII_FOR_STRING: ["\u0000" - "&", "(" - "\u007f"]> //any 7-bit ascii char except for the " char
-  |
-  <#BYTE_ESCAPE:
-     "\\x" <HEX_DIGIT><HEX_DIGIT>
-     |
-     "\\" ["n","r","t","\\","0","'",'"']
-  >
-  |
-  <#C_BYTE_ESCAPE:
-     "\\x" <HEX_DIGIT><HEX_DIGIT>
-     |
-     "\\" ["n","r","t","\\","'",'"']
-  >
+  > {chopLoneUnderscore(matchedToken);}
   |
   <BYTE_STRING_LITERAL: 'b"' (<ASCII_FOR_STRING> | <BYTE_ESCAPE> | "\\\n")* '"' (<IDENTIFIER>)?>
-  #StringLiteral
   {chopLoneUnderscore(matchedToken);}
   |
   <C_STRING_LITERAL:
@@ -228,17 +224,47 @@ TOKEN #Literal :
      '"'
      (<IDENTIFIER>)?
   >
-  #StringLiteral
   {chopLoneUnderscore(matchedToken);}
+  |
+  <RAW_STRING_LITERAL : 'r"' (~['"'])* '"' (<IDENTIFIER>)?>
+  {chopLoneUnderscore(matchedToken);}
+  |
+  <#QUOTE_ESCAPE: '\\"'|"\\'">
+  |
+  <#ASCII_ESCAPE: "\\x" ["0"-"7"] <HEX_DIGIT>>
+  |
+  <#COMMON_ESCAPE: "\\" ["n","r","t","\\","0"]>
+  |
+  <#HEX_DIGIT :  ["0"-"9", "a"-"f", "A"-"F"]>
+  |
+  <#UNICODE_ESCAPE : "\\u" (<HEX_DIGIT>){1,5}>
+  |
+  <#STRING_CONTINUE: "\\\n">
+  |
+  <#ASCII_FOR_CHAR: ["\u0000" - "\u0008", "\u000B", "\u000C", "\u000E"-"&", "("-"[", "]"-"\u007f"]>
+  |
+  <#ASCII_FOR_STRING: ["\u0000" - "&", "(" - "\u007f"]> //any 7-bit ascii char except for the " char
+  |
+  <#BYTE_ESCAPE:
+     "\\x" <HEX_DIGIT><HEX_DIGIT>
+     |
+     "\\" ["n","r","t","\\","0","'",'"']
+  >
+  |
+  <#C_BYTE_ESCAPE:
+     "\\x" <HEX_DIGIT><HEX_DIGIT>
+     |
+     "\\" ["n","r","t","\\","'",'"']
+  >
 ;
 
 MORE:
-   <HASH_RAW_STRING_START: ("r"|"br"|"cr") ("#"){2,}> : IN_HASH_RAW_STRING
+   <HASH_RAW_STRING_START: ("r"|"br"|"cr") ("#")+ '"'> : IN_HASH_RAW_STRING
 ;
 
 <IN_HASH_RAW_STRING>
 TOKEN:
-   <RAW_STRING_LITERAL_WITH_HASHES: ("#"){2,}(<IDENTIFIER>)?> #StringLiteral
+   <RAW_STRING_LITERAL_HASH: '"#' ("#")* (<IDENTIFIER>)?> #StringLiteral
 ;
 
 <IN_HASH_RAW_STRING>
@@ -253,7 +279,7 @@ INJECT LEXER_CLASS :
    // token hook routine to deal with hash-delimited raw strings
    private Token TOKEN_HOOK(Token tok) {
       TokenType type = tok.getType();
-      if (type == RAW_STRING_LITERAL_WITH_HASHES) {
+      if (type == RAW_STRING_LITERAL_HASH) {
         int numStartingHashes = countStartingHashes(tok);
         int numTrailingHashes = countTrailingHashes(tok);
         if (numTrailingHashes < numStartingHashes) {
