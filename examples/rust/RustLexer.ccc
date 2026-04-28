@@ -165,7 +165,7 @@ TOKEN #Punctuation :
 
 
 TOKEN #Literal :
-  <CHARACTER_LITERAL:
+  <CHAR_LITERAL:
       "'"
       (
           ~["'","\\","\n","\r","\t"]
@@ -226,7 +226,7 @@ TOKEN #StringLiteral :
   >
   {chopLoneUnderscore(matchedToken);}
   |
-  <RAW_STRING_LITERAL : 'r"' (~['"'])* '"' (<IDENTIFIER>)?>
+  <RAW_STRING_LITERAL : ("b")? 'r"' (~['"'])* '"' (<IDENTIFIER>)?>
   {chopLoneUnderscore(matchedToken);}
   |
   <#QUOTE_ESCAPE: '\\"'|"\\'">

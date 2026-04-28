@@ -6,6 +6,116 @@ DEACTIVATE_TOKENS=SHEBANG, STATIC2, MACRO_RULES, RAW, SAFE, UNION, DOLLAR_CRATE;
 
 INCLUDE "RustLexer.ccc"
 
+Crate :
+  (InnerAttribute)*
+  (Item)*
+  <EOF>
+;
+
+InnerAttribute :
+   "#" "!" "["
+   =>||
+   Attr
+   "]"
+;
+
+Item :
+   (OuterAttribute)*
+   (VisItem|MacroItem)
+;
+
+Attr :
+    SimplePath
+    [AttrInput]
+;
+
+AttrInput :
+   DelimTokenTree
+   |
+   "=" LiteralExpression // no suffix?
+;
+
+LiteralExpression :
+   <CHAR_LITERAL>
+   |
+   <STRING_LITERAL>
+   |
+   <RAW_STRING_LITERAL>
+   |
+   <RAW_STRING_LITERAL_HASH>
+   |
+   <BYTE_LITERAL>
+   |
+   <BYTE_STRING_LITERAL>
+   |
+   <INTEGER_LITERAL>
+   |
+   <FLOATING_POINT_LITERAL>
+   |
+   "true"
+   |
+   "false"
+;
+
+OuterAttribute :
+   "#" "[" =>||
+   Attr
+   "]"
+;
+
+VisItem :
+   [Visibility]
+   (
+      Module
+      |
+      ExternCrate
+      |
+      UseDeclaration
+      |
+      Function_
+      |
+      TypeAlias
+      |
+      Struct_
+      |
+      Enumeration
+      |
+      Union_
+      |
+      ConstantItem
+      |
+      StaticItem
+      |
+      Trait_
+      |
+      Implementation
+      |
+      ExternBlock
+   )
+;
+
+Visibility :
+   "pub"
+   [
+      "("
+      ( "crate" | "self" | "super" | "in" SimplePath)
+      ")"
+   ]
+;
+
+MacroItem : MacroInvocationSemi | MacroRulesDefinition ;
+
+MacroInvocationSemi :
+   SimplePath "!" =>|+1
+   (
+     "(" TokenTree ")" ";"
+     |
+     "[" TokenTree "]" ";"
+     |
+     "{" TokenTree "}"
+   )
+;
+
 SimplePath : ["::"] SimplePathSegment ("::" SimplePathSegment)* ;
 
 SimplePathSegment : <IDENTIFIER> | "super" | "self" | "crate" | "$crate" ;
@@ -98,3 +208,27 @@ MacroFragSpec#void :
     'ty' |
     'vis'
 ;
+
+INJECT PARSER_CLASS :
+import java.nio.file.Files;
+import java.nio.file.FileSystem;
+import java.nio.file.FileSystems;
+import java.nio.file.Path;
+{
+    static private FileSystem fileSystem = FileSystems.getDefault();
+
+    static public void main(String[] args) throws Exception {
+        if (args.length == 0) {
+            System.out.println("Usage: java org.parsers.rust.RustParser <filename>");
+        }
+        else {
+            parseFile(args[0]);
+        }
+    }
+
+    static void parseFile(String filename) throws Exception {
+        Path path = fileSystem.getPath(filename);
+        PARSER_CLASS parser = new PARSER_CLASS(path);
+        parser.Crate();
+    }
+}
