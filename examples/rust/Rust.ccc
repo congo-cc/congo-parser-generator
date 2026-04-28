@@ -2,7 +2,8 @@ DEFAULT_LEXICAL_STATE=RUST;
 PARSER_PACKAGE=org.parsers.rust;
 NODE_PACKAGE=org.parsers.rust.ast;
 ENSURE_FINAL_EOL;
-DEACTIVATE_TOKENS=SHEBANG, STATIC2, MACRO_RULES, RAW, SAFE, UNION, DOLLAR_CRATE;
+DEACTIVATE_TOKENS=SHEBANG, STATIC2, MACRO_RULES, RAW, SAFE, UNION, DOLLAR_CRATE,
+                  LIFETIME_OR_LABEL, STATIC_LIFETIME, UNDERLINE_LIFETIME;
 
 INCLUDE "RustLexer.ccc"
 
@@ -79,8 +80,8 @@ VisItem :
 //      |
 //      TypeAlias
 //      |
-//      Struct
-//      |
+      Struct
+      |
 //      Enumeration
 //      |
 //      Union
@@ -96,6 +97,176 @@ VisItem :
       ExternBlock
    )
 ;
+
+Struct : StructStruct | TupleStruct ;
+
+TupleStruct : "struct" Identifier [GenericParams] "(" =>|| [TupleFields] ")" [WhereClause] ";" ;
+
+TupleFields : TupleField ("," =>|+1 TupleField)* [","] ;
+
+TupleField : (OuterAttribute)* [Visibility] Type ;
+
+StructStruct : "struct" Identifier [GenericParams] [WhereClause] ("{" [StructFields] "}" | ";") ;
+
+StructFields : StructField ("," =>|+1 StructField) [","] ;
+
+StructField : (OuterAttribute)* [Visibility] Identifier ":" Type ;
+
+GenericParams : "<" [GenericParam ("," =>|+1 GenericParam)* [","]]  ">" ;
+
+GenericParam :  (OuterAttribute)* (TypeParam | ConstParam | LifetimeParam) ;
+
+TypeParam : [OuterAttribute] Identifier [":" [TypeParamBounds]] ["=" Type] ;
+
+TypeParamBounds : TypeParamBound ("+" =>|+1 TypeParamBound) ["+"] ;
+
+TypeParamBound : Lifetime | TraitBound ;
+
+TraitBound :
+   ["?"] [ForLifetimes] TypePath
+   |
+   "(" ["?"] [ForLifetimes] TypePath ")"
+;
+
+LifetimeBounds : (Lifetime "+" =>||)* [Lifetime] ;
+
+TypePath : "::" TypePathSegment ("::" TypePathSegment)* ;
+
+TypePathSegment : PathIdentSegment ["::"] [GenericArgs | TypePathFn] ;
+
+PathIdentSegment#void : Identifier | "super" | "self" | "Self" | "crate" | "$crate" ;
+
+GenericArgs :
+   "<"
+   (
+      GenericArgsLifetimes ["," =>|+1 GenericArgsTypes] ["," =>|+1 GenericArgsBinding] [","]
+      |
+      GenericArgsTypes ["," =>|+1 GenericArgsBinding] [","]
+      |
+      (GenericArg ",")* GenericArg [","]
+   )
+   ">"
+;
+
+GenericArg : Lifetime | Type | GenericArgsConst | GenericArgsBinding ;
+
+GenericArgsConst : BlockExpression | ["-"] LiteralExpression | SimplePathSegment ;
+
+GenericArgsBinding : Identifier "=" Type ;
+
+GenericArgsLifetimes : Lifetime ("," Lifetime)* ;
+
+GenericArgsTypes : Type ("," Type)* ;
+
+TypePathFn : "(" [TypePathInputs] ")" ["->" Type] ;
+
+TypePathInputs : Type ("," =>|+1 Type)* [","] ;
+
+ConstParam : "const" Identifier ":" Type ;
+
+LifetimeParam :
+    [OuterAttribute]
+    ACTIVATE_TOKENS LIFETIME_OR_LABEL (<LIFETIME_OR_LABEL>)
+    [":" LifetimeBounds]
+;
+
+WhereClause : "where" (WhereClauseItem ",")* [WhereClauseItem] ;
+
+WhereClauseItem : LifetimeWhereClauseItem | TypeBoundWhereClauseItem ;
+
+LifetimeWhereClauseItem : Lifetime ":" LifetimeBounds ;
+
+TypeBoundWhereClauseItem : [ForLifetimes] Type ":" [TypeParamBounds] ;
+
+ForLifetimes : "for" GenericParams ;
+
+Lifetime#void :
+   ACTIVATE_TOKENS LIFETIME_OR_LABEL, STATIC_LIFETIME, UNDERLINE_LIFETIME
+   (<LIFETIME_OR_LABEL>|<STATIC_LIFETIME>|<UNDERLINE_LIFETIME>)
+;
+
+BlockExpression : "{" (InnerAttribute)* [Statements] "}" ;
+
+Statements :
+    (Statement)+ [Expression]
+    |
+    Expression
+;
+
+Type : TypeNoBounds | ImplTraitType | TraitObjectType ;
+
+TypeNoBounds :
+      ParenthesizedType
+    | ImplTraitTypeOneBound
+    | TraitObjectTypeOneBound
+    | TypePath
+    | TupleType
+    | NeverType
+    | RawPointerType
+    | ReferenceType
+    | ArrayType
+    | SliceType
+    | InferredType
+    | QualifiedPathInType
+    | BareFunctionType
+    | MacroInvocation
+;
+
+ParenthesizedType : "(" Type ")" ;
+
+NeverType# : "!" ;
+
+InferredType# : "_" ;
+
+ImplTraitType : "impl" TypeParamBounds ;
+
+TraitObjectType : "dyn" TypeParamBounds ;
+
+BareFunctionType :
+   [ForLifetimes]
+   FunctionTypeQualifiers
+   "fn"
+   "("
+   [FunctionParametersMaybeNamedVariadic]
+   ")"
+   [BareFunctionReturnType]
+;
+
+BareFunctionReturnType : "->" TypeNoBounds ;
+
+TupleType :
+   "("
+   [
+     Type ("," =>|+1 Type)* [","]
+   ]
+   ")"
+;
+
+SliceType : "[" Type "]" =>|| ;
+
+ArrayType : "[" Type ";" =>|| Expression "]" ;
+
+RawPointerType : "*" ("mut" | "const") TypeNoBounds ;
+
+ReferenceType : "&" [Lifetime] ["mut"] TypeNoBounds ;
+
+ImplTraitTypeOneBound : "impl" TraitBound ;
+
+TraitObjectTypeOneBound : "dyn" TraitBound ;
+
+FunctionTypeQualifiers : ["unsafe"] ["extern" [Abi]] ;
+
+QualifiedPathInType : QualifiedPathType ("::" TypePathSegment)+ ;
+
+QualifiedPathType : "<" Type ["as" TypePath] ">" ;
+
+FunctionParametersMaybeNamedVariadic : MaybeNamedFunctionParameters | MaybeNamedFunctionParametersVariadic ;
+
+MaybeNamedFunctionParameters : MaybeNamedParam ("," =>|+1 MaybeNamedParam)* [","] ;
+
+MaybeNamedParam : (OuterAttribute)* [(Identifier | <UNDERSCORE>) ":"] Type ;
+
+MaybeNamedFunctionParametersVariadic : (MaybeNamedParam ",")+ (OuterAttribute)* "...";
 
 ExternCrate : "extern" "crate" =>|| CrateRef [AsClause] ";" ;
 

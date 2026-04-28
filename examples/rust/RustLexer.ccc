@@ -338,6 +338,14 @@ INJECT LEXER_CLASS :
    }
 }
 
+TOKEN :
+   <UNDERLINE_LIFETIME : "'_">
+   |
+   <STATIC_LIFETIME : "'static">
+   |
+   <LIFETIME_OR_LABEL : "'" <ID>>
+;
+
 INCLUDE "RustIdentifierDef.ccc"
 
 TOKEN #Ident :
