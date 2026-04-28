@@ -268,6 +268,120 @@ MaybeNamedParam : (OuterAttribute)* [(Identifier | <UNDERSCORE>) ":"] Type ;
 
 MaybeNamedFunctionParametersVariadic : (MaybeNamedParam ",")+ (OuterAttribute)* "...";
 
+Statement :
+   ";"
+   |
+   Item
+   |
+   LetStatement
+   |
+   ExpressionStatement
+   |
+   MacroInvocationSemi
+;
+
+ExpressionStatement :
+   Expression ";"
+   |
+   ExpressionWithBlock ";"
+;
+
+LetStatement :
+  (OuterAttribute)* "let" PatternNoTopAlt [":" Type] ["=" Expression] ";"
+;
+
+PatternNoTopAlt : PatternWithoutRange | RangePattern ;
+
+PatternWithoutRange :
+      LiteralPattern
+    | IdentifierPattern
+    | WildcardPattern
+    | RestPattern
+    | ReferencePattern
+    | StructPattern
+    | TupleStructPattern
+    | TuplePattern
+    | GroupedPattern
+    | SlicePattern
+    | PathPattern
+    | MacroInvocation
+;
+
+LiteralPattern :
+    "true"
+    | "false"
+    | <CHAR_LITERAL>
+    | <BYTE_LITERAL>
+    | <STRING_LITERAL>
+    | <RAW_STRING_LITERAL>
+    | <BYTE_STRING_LITERAL>
+    | ["-"] (<INTEGER_LITERAL>|<FLOAT_LITERAL>)
+;
+
+
+IdentifierPattern : ["ref"] ["mut"] Identifier ["@" Pattern] ;
+
+RestPattern# : ".." ;
+
+WildcardPattern# : "_" ;
+
+ReferencePattern : ("&"|"&&") ["mut"] PatternWithoutRange ;
+
+StructPattern : PathInExpression "{" [StructPatternElements] "}" ;
+
+PathInExpression : ["::"] PathExprSegment ("::" PathExprSegment)* ;
+
+PathExprSegment : PathIdentSegment ["::" GenericArgs] ;
+
+PathIdentSegment# : Identifier | "super" | "self" | "Self" | "crate" | "$crate" ;
+
+PathPattern : PathInExpression | QualifiedPathInExpression ;
+
+QualifiedPathInExpression : QualifiedPathType ("::" PathExprSegment)+ ;
+
+StructPatternElements :
+    StructPatternFields ["," StructPatternEtcetera]
+    |
+    StructPatternEtcetera
+;
+
+StructPatternEtcetera : (OuterAttribute)* ".." ;
+
+StructPatternFields : StructPatternField ("," StructPatternField)* ;
+
+StructPatternField :
+    (OuterAttribute)*
+    (
+        TupleIndex ":" Pattern
+        |
+        Identifier ":" =>|| Pattern
+        |
+        ["ref"] ["mut"] Identifier
+    )
+;
+
+TuplePattern : "(" [TuplePatternItems] ")" ;
+
+TuplePatternItems :
+      Pattern ","
+    | RestPattern
+    | Pattern ("," =>|+1 Pattern)+ [","]
+;
+
+
+GroupedPattern : "(" Pattern ")" ;
+
+RangePattern :
+    RangePatternBound
+    (
+        "..=" RangePatternBound
+        |
+        ".."
+        |
+        "..." RangePatternBound
+    )
+;
+
 ExternCrate : "extern" "crate" =>|| CrateRef [AsClause] ";" ;
 
 CrateRef : Identifier | "self" ;
