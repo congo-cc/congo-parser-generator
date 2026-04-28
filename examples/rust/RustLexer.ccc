@@ -103,7 +103,7 @@ TOKEN #NumericalLiteral :
     |
     <#FLOAT_EXPONENT: ["e","E"] (["+","-"])? ("_")* <DEC_LITERAL>>
     |
-    <INTEGER_LITERAL: <DEC_LITERAL> | <BIN_LITERAL> | <OCT_LITERAL> | <HEX_LITERAL> (<IDENTIFIER>)?> #IntegerLiteral
+    <INTEGER_LITERAL: <DEC_LITERAL> | <BIN_LITERAL> | <OCT_LITERAL> | <HEX_LITERAL> (<ID>)?> #IntegerLiteral
     |
     <#DEC_LITERAL: ["0"-"9"] (["0"-"9","_"])*>
     |
@@ -179,10 +179,10 @@ TOKEN #Literal :
           <UNICODE_ESCAPE>
       )
       "'"
-      (<IDENTIFIER>)?
+      (<ID>)?
   > #CharacterLiteral
   |
-  <BYTE_LITERAL : "b'" (<ASCII_FOR_CHAR>|<BYTE_ESCAPE>) "'" (<IDENTIFIER>)?>
+  <BYTE_LITERAL : "b'" (<ASCII_FOR_CHAR>|<BYTE_ESCAPE>) "'" (<ID>)?>
   #ByteLiteral
   {chopLoneUnderscore(matchedToken);}
 ;
@@ -204,10 +204,10 @@ TOKEN #StringLiteral :
         <STRING_CONTINUE>
      )*
      '"'
-     (<IDENTIFIER>)?
+     (<ID>)?
   > {chopLoneUnderscore(matchedToken);}
   |
-  <BYTE_STRING_LITERAL: 'b"' (<ASCII_FOR_STRING> | <BYTE_ESCAPE> | "\\\n")* '"' (<IDENTIFIER>)?>
+  <BYTE_STRING_LITERAL: 'b"' (<ASCII_FOR_STRING> | <BYTE_ESCAPE> | "\\\n")* '"' (<ID>)?>
   {chopLoneUnderscore(matchedToken);}
   |
   <C_STRING_LITERAL:
@@ -222,11 +222,11 @@ TOKEN #StringLiteral :
         <STRING_CONTINUE>
      )*
      '"'
-     (<IDENTIFIER>)?
+     (<ID>)?
   >
   {chopLoneUnderscore(matchedToken);}
   |
-  <RAW_STRING_LITERAL : ("b")? 'r"' (~['"'])* '"' (<IDENTIFIER>)?>
+  <RAW_STRING_LITERAL : ("b")? 'r"' (~['"'])* '"' (<ID>)?>
   {chopLoneUnderscore(matchedToken);}
   |
   <#QUOTE_ESCAPE: '\\"'|"\\'">
@@ -264,7 +264,7 @@ MORE:
 
 <IN_HASH_RAW_STRING>
 TOKEN:
-   <RAW_STRING_LITERAL_HASH: '"#' ("#")* (<IDENTIFIER>)?> #StringLiteral
+   <RAW_STRING_LITERAL_HASH: '"#' ("#")* (<ID>)?> #StringLiteral
 ;
 
 <IN_HASH_RAW_STRING>
@@ -340,8 +340,8 @@ INJECT LEXER_CLASS :
 
 INCLUDE "RustIdentifierDef.ccc"
 
-TOKEN #Identifier :
-  < IDENTIFIER: <RUST_IDENTIFIER_START> (<RUST_IDENTIFIER_PART>)* >
+TOKEN #Ident :
+  < ID: <RUST_IDENTIFIER_START> (<RUST_IDENTIFIER_PART>)* >
   |
-  < RAW_IDENTIFIER: "r#" <IDENTIFIER>> #RawIdentifier
+  < RAW_IDENTIFIER: "r#" <ID>> #RawIdentifier
 ;

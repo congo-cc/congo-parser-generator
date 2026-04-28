@@ -6,10 +6,13 @@ DEACTIVATE_TOKENS=SHEBANG, STATIC2, MACRO_RULES, RAW, SAFE, UNION, DOLLAR_CRATE;
 
 INCLUDE "RustLexer.ccc"
 
-Crate :
+#Crate :
   (InnerAttribute)*
   (Item)*
   <EOF>
+  {
+    return thisProduction;
+  }
 ;
 
 InnerAttribute :
@@ -72,26 +75,71 @@ VisItem :
       |
       UseDeclaration
       |
-      Function_
-      |
-      TypeAlias
-      |
-      Struct_
-      |
-      Enumeration
-      |
-      Union_
-      |
-      ConstantItem
-      |
+//      Function
+//      |
+//      TypeAlias
+//      |
+//      Struct
+//      |
+//      Enumeration
+//      |
+//      Union
+//      |
+//      ConstantItem
+//      |
       StaticItem
       |
-      Trait_
-      |
-      Implementation
-      |
+//      Trait
+//      |
+//      Implementation
+//      |
       ExternBlock
    )
+;
+
+ExternCrate : "extern" "crate" =>|| CrateRef [AsClause] ";" ;
+
+CrateRef : Identifier | "self" ;
+
+AsClause : "as" (Identifier | "_") ;
+
+ExternBlock : ["unsafe"] "extern" =>|| [Abi] "{" (InnerAttribute)* (ExternalItem)* "}" ;
+
+Abi : <STRING_LITERAL> | <RAW_STRING_LITERAL> ;
+
+Module :
+   ["unsafe"]
+   "mod" Identifier
+   (
+        ";"
+        |
+        "{" (InnerAttribute)* (Item)* "}"
+   )
+;
+
+ExternalItem :
+    (OuterAttribute)*
+    (
+        MacroInvocationSemi
+        |
+        [Visibility] (StaticItem) // |Function)
+    )
+;
+
+StaticItem : "static" ["mut"] Identifier ":" ; //Type ["=" Expression] ";" ;
+
+UseDeclaration : "use" UseTree ";" ;
+
+UseTree :
+    [[SimplePath] "::"]
+    =>|+1
+    (
+        "*"
+        |
+        "{" [UseTree ("," =>|+1 UseTree)* [","]] "}"
+    )
+    |
+    SimplePath ["as" (Identifier|"_")]
 ;
 
 Visibility :
@@ -116,9 +164,9 @@ MacroInvocationSemi :
    )
 ;
 
-SimplePath : ["::"] SimplePathSegment ("::" SimplePathSegment)* ;
+SimplePath : ["::"] SimplePathSegment ("::" =>|+1 SimplePathSegment)* ;
 
-SimplePathSegment : <IDENTIFIER> | "super" | "self" | "crate" | "$crate" ;
+SimplePathSegment : Identifier | "super" | "self" | "crate" | "$crate" ;
 
 MacroInvocation: SimplePath "!" DelimTokenTree ;
 
@@ -185,7 +233,7 @@ IdentifierOrKeywordButNotCrate#void :
                       TRUE, TRY, TYPE, TYPEOF, UNION, UNSAFE,
                       UNSIZED, USE, VIRTUAL, WHERE, WHILE, YIELD
     (
-        <IDENTIFIER>
+        <ID>
         |
         <RAW_IDENTIFIER>
     )
@@ -209,6 +257,8 @@ MacroFragSpec#void :
     'vis'
 ;
 
+Identifier : <ID>|<RAW_IDENTIFIER>|"macro_rules" ;
+
 INJECT PARSER_CLASS :
 import java.nio.file.Files;
 import java.nio.file.FileSystem;
@@ -229,6 +279,7 @@ import java.nio.file.Path;
     static void parseFile(String filename) throws Exception {
         Path path = fileSystem.getPath(filename);
         PARSER_CLASS parser = new PARSER_CLASS(path);
-        parser.Crate();
+        Node root = parser.Crate();
+        root.dump("");
     }
 }
