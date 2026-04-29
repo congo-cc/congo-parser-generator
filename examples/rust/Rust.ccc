@@ -12,7 +12,7 @@ INCLUDE "RustLexer.ccc"
   (Item)*
   <EOF>
   {
-    return thisProduction;
+    return THIS;
   }
 ;
 
@@ -82,21 +82,63 @@ VisItem :
       |
       Struct
       |
-//      Enumeration
-//      |
-//      Union
-//      |
-//      ConstantItem
-//      |
+      Enumeration
+      |
+      Union
+      |
+      ConstantItem
+      |
       StaticItem
       |
-//      Trait
-//      |
+      Trait
+      |
       Implementation
       |
       ExternBlock
    )
 ;
+
+Trait :
+    ["unsafe"]
+    "trait"
+    Identifier
+    [GenericParams]
+    [":" [TypeParamBounds]]
+    [WhereClause]
+    "{"
+    (InnerAttribute)* (AssociatedItem)*
+    "}"
+;
+
+AssociatedItem :
+   (OuterAttribute)*
+   (
+      MacroInvocationSemi
+      |
+      [Visibility] ( TypeAlias | ConstantItem | Function)
+   )
+;
+
+Union : "union" Identifier [GenericParams] [WhereClause] "{" StructFields "}" ;
+
+Enumeration : "enum" Identifier [GenericParams] [WhereClause] "{" [EnumItems] "}" ;
+
+EnumItems : EnumItem ("," =>|+1 EnumItem)* [","] ;
+
+EnumItem :
+     (OuterAttribute)* [Visibility] Identifier
+     [
+        EnumItemTuple
+        | EnumItemStruct
+        | EnumItemDiscriminant
+    ]
+;
+
+EnumItemTuple : "(" [TupleFields] ")" ;
+
+EnumItemStruct : "{" [StructFields] "}" ;
+
+EnumItemDiscriminant : "=" Expression ;
 
 Implementation : TraitImpl | InherentImpl ;
 
@@ -114,7 +156,7 @@ Function :
     FunctionQualifiers "fn" =>||
     Identifier [GenericParams]
     "(" [FunctionParameters] ")"
-    [FunctionReturnType] [WhereClause] (BlockExpression|";")
+    [FunctionReturnType] [WhereClause] (";" | BlockExpression)
 ;
 
 
@@ -229,13 +271,7 @@ Lifetime#void :
    (<LIFETIME_OR_LABEL>|<STATIC_LIFETIME>|<UNDERLINE_LIFETIME>)
 ;
 
-BlockExpression : "{" (InnerAttribute)* [Statements] "}" ;
-
-Statements :
-    SCAN ~(Statement) => Expression
-    |
-    (Statement)+ [Expression]
-;
+BlockExpression : "{" (InnerAttribute)* (Statement=>||)* [Expression] "}" ;
 
 Type : ImplTraitType |  TraitObjectType | TypeNoBounds ;
 
@@ -319,7 +355,7 @@ Statement :
    |
    LetStatement
    |
-   ExpressionStatement
+   ExpressionStatement =>||
    |
    MacroInvocationSemi
 ;
@@ -329,7 +365,7 @@ Expression : AttributedExpression | NoAttrExpression ;
 AttributedExpression : (OuterAttribute)+ NoAttrExpression ;
 
 BaseExpression :
-    (LiteralExpression | PathExpression | ParentheticalExpression)
+    (LiteralExpression | PathExpression | ParentheticalExpression | ArrayExpression)
     (
         "." PathExprSegment "(" =>|| [CallParams] ")" #MethodCall(+1)
         |
@@ -347,7 +383,16 @@ BaseExpression :
     )*
 ;
 
-ParentheticalExpression : "(" (InnerAttribute)* Expression ")" ;
+ParentheticalExpression : "(" (InnerAttribute)* Expression ("," Expression)* ")" ;
+
+ArrayExpression : "[" (InnerAttribute)* [ArrayElements] "]" ;
+
+ArrayElements :
+    Expression ";" =>|| Expression
+    |
+    Expression ("," =>|+1 Expression)* [","]
+;
+
 
 BorrowExpression : [("&" | "&&") ["mut"]] BaseExpression ;
 
@@ -414,6 +459,8 @@ NoAttrExpression :
    |
    ContinueExpression
    |
+   ExpressionWithBlockNoAttr
+   |
    MacroInvocation
 ;
 
@@ -422,14 +469,14 @@ CallParams : Expression ("," =>|+1 Expression)* ;
 PathExpression : QualifiedPathInExpression | PathInExpression ;
 
 ExpressionStatement :
-   Expression ";"
-   |
-   ExpressionWithBlock ";"
+   Expression
+   [";"]
+   ASSERT ENSURE {getTokenType(0) == SEMICOLON || getTokenType(1) == RBRACE : "Expecting a semicolon here"}
 ;
 
-ExpressionWithBlock :
-   (OuterAttribute)*
-   (
+ExpressionWithBlock : (OuterAttribute)* ExpressionWithBlockNoAttr ;
+
+ExpressionWithBlockNoAttr :
     BlockExpression
     |
     AsyncBlockExpression
@@ -443,7 +490,6 @@ ExpressionWithBlock :
     IfLetExpression
     |
     MatchExpression
-   )
 ;
 
 AsyncBlockExpression : "async" ["move"] BlockExpression ;
@@ -486,8 +532,7 @@ MatchArms : (MatchArm "=>" =>|| MatchArmExpression)* MatchArm "=>" Expression ["
 
 MatchArmExpression :
     Expression ","
-    |
-    ExpressionWithBlock [","]
+    ASSERT {getTokenType(0) == COMMA || getTokenType(0) == RBRACE}
 ;
 
 MatchArm : (OuterAttribute)* Pattern [MatchArmGuard] ;
