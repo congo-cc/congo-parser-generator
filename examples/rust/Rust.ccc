@@ -76,10 +76,10 @@ VisItem :
       |
       UseDeclaration
       |
-//      Function
-//      |
-//      TypeAlias
-//      |
+      Function
+      |
+      TypeAlias
+      |
       Struct
       |
 //      Enumeration
@@ -92,11 +92,51 @@ VisItem :
       |
 //      Trait
 //      |
-//      Implementation
-//      |
+      Implementation
+      |
       ExternBlock
    )
 ;
+
+Implementation : TraitImpl | InherentImpl ;
+
+InherentImpl : "impl" [GenericParams] Type [WhereClause] "{" (InnerAttribute)* (AssociatedItem)* "}" ;
+
+TraitImpl : ["unsafe"] "impl" [GenericParams] ["!"] TypePath "for" =>|| Type [WhereClause] "{" (InnerAttribute)* (AssociatedItem)* "}" ;
+
+AssociatedItem : (OuterAttribute)* (MacroInvocationSemi | [Visibility] (TypeAlias | Function | ConstantItem)) ;
+
+TypeAlias : "type" Identifier [GenericParams] [WhereClause] ["=" Type] ";" ;
+
+ConstantItem : "const" (Identifier|<UNDERSCORE>) ":" Type ["=" Expression] ";" ;
+
+Function :
+    FunctionQualifiers "fn" =>||
+    Identifier [GenericParams]
+    "(" [FunctionParameters] ")"
+    [FunctionReturnType] [WhereClause] (BlockExpression|";")
+;
+
+
+FunctionQualifiers : ["const"] ["async"] ["unsafe"] ["extern" [Abi]] ;
+
+FunctionParameters :
+   SelfParam [","] ENSURE ~(FunctionParam) =>||
+   |
+   [SelfParam ","] FunctionParam ("," =>|+1 FunctionParam)* [","]
+;
+
+FunctionReturnType : "->" Type ;
+
+FunctionParam : (OuterAttribute)* (FunctionParamPattern | "..." | Type) ;
+
+SelfParam : (OuterAttribute)* (TypedSelf | ShorthandSelf) ;
+
+TypedSelf : ["mut"] "self" ":" =>|| Type ;
+
+ShorthandSelf : ["&" [Lifetime]] ["mut"] "self" ;
+
+FunctionParamPattern : Pattern ":" =>|| (Type | "...") ;
 
 Struct : StructStruct | TupleStruct ;
 
@@ -108,7 +148,7 @@ TupleField : (OuterAttribute)* [Visibility] Type ;
 
 StructStruct : "struct" Identifier [GenericParams] [WhereClause] ("{" [StructFields] "}" | ";") ;
 
-StructFields : StructField ("," =>|+1 StructField) [","] ;
+StructFields : StructField ("," =>|+1 StructField)* [","] ;
 
 StructField : (OuterAttribute)* [Visibility] Identifier ":" Type ;
 
@@ -118,7 +158,7 @@ GenericParam :  (OuterAttribute)* (TypeParam | ConstParam | LifetimeParam) ;
 
 TypeParam : [OuterAttribute] Identifier [":" [TypeParamBounds]] ["=" Type] ;
 
-TypeParamBounds : TypeParamBound ("+" =>|+1 TypeParamBound) ["+"] ;
+TypeParamBounds : TypeParamBound ("+" =>|+1 TypeParamBound)* ["+"] ;
 
 TypeParamBound : Lifetime | TraitBound ;
 
@@ -130,7 +170,7 @@ TraitBound :
 
 LifetimeBounds : (Lifetime "+" =>||)* [Lifetime] ;
 
-TypePath : "::" TypePathSegment ("::" TypePathSegment)* ;
+TypePath : ["::"] TypePathSegment ("::" TypePathSegment)* ;
 
 TypePathSegment : PathIdentSegment ["::"] [GenericArgs | TypePathFn] ;
 
@@ -188,12 +228,12 @@ Lifetime#void :
 BlockExpression : "{" (InnerAttribute)* [Statements] "}" ;
 
 Statements :
-    (Statement)+ [Expression]
+    SCAN ~(Statement) =>Expression
     |
-    Expression
+    (Statement)+ [Expression]
 ;
 
-Type : TypeNoBounds | ImplTraitType | TraitObjectType ;
+Type : ImplTraitType | TypeNoBounds | TraitObjectType ;
 
 TypeNoBounds :
       ParenthesizedType
@@ -212,13 +252,13 @@ TypeNoBounds :
     | MacroInvocation
 ;
 
-ParenthesizedType : "(" Type ")" ;
+ParenthesizedType : "(" =>|+1 Type ")" ;
 
 NeverType# : "!" ;
 
 InferredType# : "_" ;
 
-ImplTraitType : "impl" TypeParamBounds ;
+ImplTraitType : "impl" =>|+1 TypeParamBounds ;
 
 TraitObjectType : "dyn" TypeParamBounds ;
 
@@ -260,7 +300,7 @@ QualifiedPathInType : QualifiedPathType ("::" TypePathSegment)+ ;
 
 QualifiedPathType : "<" Type ["as" TypePath] ">" ;
 
-FunctionParametersMaybeNamedVariadic : MaybeNamedFunctionParameters | MaybeNamedFunctionParametersVariadic ;
+FunctionParametersMaybeNamedVariadic : MaybeNamedFunctionParametersVariadic =>|| | MaybeNamedFunctionParameters ;
 
 MaybeNamedFunctionParameters : MaybeNamedParam ("," =>|+1 MaybeNamedParam)* [","] ;
 
@@ -280,26 +320,106 @@ Statement :
    MacroInvocationSemi
 ;
 
+Expression :
+   (OuterAttribute)*
+   (
+     LiteralExpression
+     |
+     PathExpression
+   )
+;
+
+PathExpression : QualifiedPathInExpression | PathInExpression ;
+
 ExpressionStatement :
    Expression ";"
    |
    ExpressionWithBlock ";"
 ;
 
-LetStatement :
-  (OuterAttribute)* "let" PatternNoTopAlt [":" Type] ["=" Expression] ";"
+ExpressionWithBlock :
+   (OuterAttribute)*
+   (
+    BlockExpression
+    |
+    AsyncBlockExpression
+    |
+    UnsafeBlockExpression
+    |
+    LoopExpression
+    |
+    IfExpression
+    |
+    IfLetExpression
+    |
+    MatchExpression
+   )
 ;
 
-PatternNoTopAlt : PatternWithoutRange | RangePattern ;
+AsyncBlockExpression : "async" ["move"] BlockExpression ;
+
+UnsafeBlockExpression : "unsafe" BlockExpression ;
+
+LoopExpression :
+    [LoopLabel]
+    =>|+1
+    (
+          InfiniteLoopExpression
+        | PredicatePatternLoopExpression
+        | PredicateLoopExpression
+        | IteratorLoopExpression
+    )
+;
+
+LoopLabel : ACTIVATE_TOKENS LIFETIME_OR_LABEL (<LIFETIME_OR_LABEL>) =>|| ":" ;
+
+InfiniteLoopExpression : "loop" BlockExpression ;
+
+PredicateLoopExpression : "while" Expression BlockExpression ;
+
+PredicatePatternLoopExpression : "while" "let" =>|| Pattern "=" Expression BlockExpression ;
+
+IteratorLoopExpression : "for" Pattern "in" Expression BlockExpression ;
+
+IfExpression : "if" Expression BlockExpression ["else" (BlockExpression | IfExpression | IfLetExpression)] ;
+
+IfLetExpression :
+    "if" "let" =>|| Pattern "=" Expression BlockExpression
+    [
+        "else" (BlockExpression | IfLetExpression | IfExpression)
+    ]
+;
+
+MatchExpression : "match" Expression "{" (InnerAttribute)* [MatchArms] "}" ;
+
+MatchArms : (MatchArm "=>" =>|| MatchArmExpression)* MatchArm "=>" Expression [","] ;
+
+MatchArmExpression :
+    Expression ","
+    |
+    ExpressionWithBlock [","]
+;
+
+MatchArm : (OuterAttribute)* Pattern [MatchArmGuard] ;
+
+MatchArmGuard : "if" Expression ;
+
+LetStatement :
+  (OuterAttribute)* "let" =>|| PatternNoTopAlt [":" Type] ["=" Expression] ";"
+;
+
+Pattern : ["|"] PatternNoTopAlt ("|" PatternNoTopAlt)* ;
+
+PatternNoTopAlt : RangePattern | PatternWithoutRange ;
 
 PatternWithoutRange :
       LiteralPattern
     | IdentifierPattern
+    | StructPattern
+    | TupleStructPattern
     | WildcardPattern
     | RestPattern
     | ReferencePattern
-    | StructPattern
-    | TupleStructPattern
     | TuplePattern
     | GroupedPattern
     | SlicePattern
@@ -315,7 +435,7 @@ LiteralPattern :
     | <STRING_LITERAL>
     | <RAW_STRING_LITERAL>
     | <BYTE_STRING_LITERAL>
-    | ["-"] (<INTEGER_LITERAL>|<FLOAT_LITERAL>)
+    | ["-"] (<INTEGER_LITERAL>|<FLOATING_POINT_LITERAL>)
 ;
 
 
@@ -327,7 +447,7 @@ WildcardPattern# : "_" ;
 
 ReferencePattern : ("&"|"&&") ["mut"] PatternWithoutRange ;
 
-StructPattern : PathInExpression "{" [StructPatternElements] "}" ;
+StructPattern : PathInExpression "{" =>|| [StructPatternElements] "}" ;
 
 PathInExpression : ["::"] PathExprSegment ("::" PathExprSegment)* ;
 
@@ -340,19 +460,19 @@ PathPattern : PathInExpression | QualifiedPathInExpression ;
 QualifiedPathInExpression : QualifiedPathType ("::" PathExprSegment)+ ;
 
 StructPatternElements :
-    StructPatternFields ["," StructPatternEtcetera]
-    |
     StructPatternEtcetera
+    |
+    StructPatternFields ["," StructPatternEtcetera]
 ;
 
-StructPatternEtcetera : (OuterAttribute)* ".." ;
+StructPatternEtcetera : (OuterAttribute)* ".." =>|| ;
 
 StructPatternFields : StructPatternField ("," StructPatternField)* ;
 
 StructPatternField :
     (OuterAttribute)*
     (
-        TupleIndex ":" Pattern
+        <INTEGER_LITERAL> ":" Pattern
         |
         Identifier ":" =>|| Pattern
         |
@@ -360,14 +480,21 @@ StructPatternField :
     )
 ;
 
-TuplePattern : "(" [TuplePatternItems] ")" ;
+TuplePattern : "(" [TuplePatternItems] ")" =>|| ;
 
 TuplePatternItems :
-      Pattern ","
-    | RestPattern
+      RestPattern
+    | Pattern "," ENSURE ~(Pattern) =>||
     | Pattern ("," =>|+1 Pattern)+ [","]
 ;
 
+TupleStructPattern : PathInExpression "(" [TupleStructItems] ")" ;
+
+TupleStructItems : Pattern ("," =>|+1 Pattern)* [","] ;
+
+SlicePattern : "[" [SlicePatternItems] "]" ;
+
+SlicePatternItems : Pattern ("," =>|+1 Pattern)* [","] ;
 
 GroupedPattern : "(" Pattern ")" ;
 
@@ -380,7 +507,17 @@ RangePattern :
         |
         "..." RangePatternBound
     )
+    =>||
 ;
+
+RangePatternBound :
+      <CHAR_LITERAL>
+    | <BYTE_LITERAL>
+    | ["-"] (<INTEGER_LITERAL>|<FLOATING_POINT_LITERAL>)
+    | PathPattern
+;
+
+
 
 ExternCrate : "extern" "crate" =>|| CrateRef [AsClause] ";" ;
 
@@ -407,7 +544,7 @@ ExternalItem :
     (
         MacroInvocationSemi
         |
-        [Visibility] (StaticItem) // |Function)
+        [Visibility] (StaticItem | Function)
     )
 ;
 
