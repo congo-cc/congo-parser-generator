@@ -185,7 +185,11 @@ GenericArgs :
       |
       (GenericArg ",")* GenericArg [","]
    )
-   ">"
+   [
+     SCAN <GT_GT> => UNCACHE_TOKENS
+   ]
+   DEACTIVATE_TOKENS GT_GT
+   (">")
 ;
 
 GenericArg : Lifetime | Type | GenericArgsConst | GenericArgsBinding ;
@@ -228,12 +232,12 @@ Lifetime#void :
 BlockExpression : "{" (InnerAttribute)* [Statements] "}" ;
 
 Statements :
-    SCAN ~(Statement) =>Expression
+    SCAN ~(Statement) => Expression
     |
     (Statement)+ [Expression]
 ;
 
-Type : ImplTraitType | TypeNoBounds | TraitObjectType ;
+Type : ImplTraitType |  TraitObjectType | TypeNoBounds ;
 
 TypeNoBounds :
       ParenthesizedType
@@ -304,7 +308,7 @@ FunctionParametersMaybeNamedVariadic : MaybeNamedFunctionParametersVariadic =>||
 
 MaybeNamedFunctionParameters : MaybeNamedParam ("," =>|+1 MaybeNamedParam)* [","] ;
 
-MaybeNamedParam : (OuterAttribute)* [(Identifier | <UNDERSCORE>) ":"] Type ;
+MaybeNamedParam : (OuterAttribute)* [(Identifier | <UNDERSCORE>) ":" =>||] Type ;
 
 MaybeNamedFunctionParametersVariadic : (MaybeNamedParam ",")+ (OuterAttribute)* "...";
 
@@ -320,14 +324,100 @@ Statement :
    MacroInvocationSemi
 ;
 
-Expression :
-   (OuterAttribute)*
-   (
-     LiteralExpression
-     |
-     PathExpression
-   )
+Expression : AttributedExpression | NoAttrExpression ;
+
+AttributedExpression : (OuterAttribute)+ NoAttrExpression ;
+
+BaseExpression :
+    (LiteralExpression | PathExpression | ParentheticalExpression)
+    (
+        "." PathExprSegment "(" =>|| [CallParams] ")" #MethodCall(+1)
+        |
+        "." Identifier =>|| #FieldExpression(+1)
+        |
+        "." <INTEGER_LITERAL> =>|| #TupleIndexingExpression(+1)
+        |
+        "." "await" =>|| #AwaitExpression(+1)
+        |
+        "(" [CallParams] ")" #CallExpression(+1)
+        |
+        "[" Expression "]" #IndexExpression(+1)
+        |
+        "?" #ErrorPropagationExpression(+1)
+    )*
 ;
+
+ParentheticalExpression : "(" (InnerAttribute)* Expression ")" ;
+
+BorrowExpression : [("&" | "&&") ["mut"]] BaseExpression ;
+
+DereferenceExpression : ("*")* BorrowExpression ;
+
+NegationExpression : ("!")* DereferenceExpression ;
+
+TypeCastExpression : NegationExpression ["as" TypeNoBounds] ;
+
+MultiplicativeExpression : TypeCastExpression (("*" | "/" | "%") TypeCastExpression)* ;
+
+AdditiveExpression : MultiplicativeExpression (("+"|"-") MultiplicativeExpression)* ;
+
+ShiftExpression : AdditiveExpression (("<<" | ">>") AdditiveExpression)* ;
+
+AndExpression : ShiftExpression ("&" ShiftExpression)* ;
+
+CaretExpression : AndExpression ("^" AndExpression)* ;
+
+OrExpression : CaretExpression ("|" CaretExpression)* ;
+
+LazyAndExpression : OrExpression ("&&" OrExpression)* ;
+
+LazyOrExpression : LazyAndExpression ("||" LazyAndExpression)* ;
+
+RangeExpression :
+    (".."|"..=") LazyAndExpression
+    |
+    LazyAndExpression [(".."|"..=") LazyAndExpression]
+;
+
+AssignmentExpression :
+   RangeExpression
+   [
+    ("="|"+="|"-="|"*="|"/="|"%="|"&="|"|="|"^="|"<<="|">>=")
+    RangeExpression
+   ]
+;
+
+BreakExpression :
+    "break"
+    [ACTIVATE_TOKENS LIFETIME_OR_LABEL(<LIFETIME_OR_LABEL>)]
+    [Expression]
+;
+
+ContinueExpression :
+    "continue"
+    [ACTIVATE_TOKENS LIFETIME_OR_LABEL(<LIFETIME_OR_LABEL>)]
+    [Expression]
+;
+
+ReturnExpression :
+    "return" [Expression]
+;
+
+ComparisonExpression : OrExpression [(">"|">="|"<"|"<="|"=="|"!=") OrExpression] ;
+
+NoAttrExpression :
+   AssignmentExpression
+   |
+   ReturnExpression
+   |
+   BreakExpression
+   |
+   ContinueExpression
+   |
+   MacroInvocation
+;
+
+CallParams : Expression ("," =>|+1 Expression)* ;
 
 PathExpression : QualifiedPathInExpression | PathInExpression ;
 
@@ -548,7 +638,7 @@ ExternalItem :
     )
 ;
 
-StaticItem : "static" ["mut"] Identifier ":" ; //Type ["=" Expression] ";" ;
+StaticItem : "static" ["mut"] Identifier ":" Type ["=" Expression] ";" ;
 
 UseDeclaration : "use" UseTree ";" ;
 
@@ -590,7 +680,7 @@ SimplePath : ["::"] SimplePathSegment ("::" =>|+1 SimplePathSegment)* ;
 
 SimplePathSegment : Identifier | "super" | "self" | "crate" | "$crate" ;
 
-MacroInvocation: SimplePath "!" DelimTokenTree ;
+MacroInvocation: SimplePath "!" =>|| DelimTokenTree ;
 
 DelimTokenTree :
     "(" (SCAN ~(")") => TokenTree)* ")"
