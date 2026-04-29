@@ -1,0 +1,707 @@
+DEFAULT_LEXICAL_STATE=RUST;
+PARSER_PACKAGE=org.parsers.rust;
+NODE_PACKAGE=org.parsers.rust.ast;
+ENSURE_FINAL_EOL;
+DEACTIVATE_TOKENS=SHEBANG, STATIC2, MACRO_RULES, RAW, SAFE, UNION, DOLLAR_CRATE,
+                  LIFETIME_OR_LABEL, STATIC_LIFETIME, UNDERLINE_LIFETIME;
+
+INCLUDE "RustLexer.ccc"
+
+#Crate :
+  (InnerAttribute)*
+  (Item)*
+  <EOF>
+  {
+    return thisProduction;
+  }
+;
+
+InnerAttribute :
+   "#" "!" "["
+   =>||
+   Attr
+   "]"
+;
+
+Item :
+   (OuterAttribute)*
+   (VisItem|MacroItem)
+;
+
+Attr :
+    SimplePath
+    [AttrInput]
+;
+
+AttrInput :
+   DelimTokenTree
+   |
+   "=" LiteralExpression // no suffix?
+;
+
+LiteralExpression :
+   <CHAR_LITERAL>
+   |
+   <STRING_LITERAL>
+   |
+   <RAW_STRING_LITERAL>
+   |
+   <RAW_STRING_LITERAL_HASH>
+   |
+   <BYTE_LITERAL>
+   |
+   <BYTE_STRING_LITERAL>
+   |
+   <INTEGER_LITERAL>
+   |
+   <FLOATING_POINT_LITERAL>
+   |
+   "true"
+   |
+   "false"
+;
+
+OuterAttribute :
+   "#" "[" =>||
+   Attr
+   "]"
+;
+
+VisItem :
+   [Visibility]
+   (
+      Module
+      |
+      ExternCrate
+      |
+      UseDeclaration
+      |
+      Function
+      |
+      TypeAlias
+      |
+      Struct
+      |
+//      Enumeration
+//      |
+//      Union
+//      |
+//      ConstantItem
+//      |
+      StaticItem
+      |
+//      Trait
+//      |
+      Implementation
+      |
+      ExternBlock
+   )
+;
+
+Implementation : TraitImpl | InherentImpl ;
+
+InherentImpl : "impl" [GenericParams] Type [WhereClause] "{" (InnerAttribute)* (AssociatedItem)* "}" ;
+
+TraitImpl : ["unsafe"] "impl" [GenericParams] ["!"] TypePath "for" =>|| Type [WhereClause] "{" (InnerAttribute)* (AssociatedItem)* "}" ;
+
+AssociatedItem : (OuterAttribute)* (MacroInvocationSemi | [Visibility] (TypeAlias | Function | ConstantItem)) ;
+
+TypeAlias : "type" Identifier [GenericParams] [WhereClause] ["=" Type] ";" ;
+
+ConstantItem : "const" (Identifier|<UNDERSCORE>) ":" Type ["=" Expression] ";" ;
+
+Function :
+    FunctionQualifiers "fn" =>||
+    Identifier [GenericParams]
+    "(" [FunctionParameters] ")"
+    [FunctionReturnType] [WhereClause] (BlockExpression|";")
+;
+
+
+FunctionQualifiers : ["const"] ["async"] ["unsafe"] ["extern" [Abi]] ;
+
+FunctionParameters :
+   SelfParam [","] ENSURE ~(FunctionParam) =>||
+   |
+   [SelfParam ","] FunctionParam ("," =>|+1 FunctionParam)* [","]
+;
+
+FunctionReturnType : "->" Type ;
+
+FunctionParam : (OuterAttribute)* (FunctionParamPattern | "..." | Type) ;
+
+SelfParam : (OuterAttribute)* (TypedSelf | ShorthandSelf) ;
+
+TypedSelf : ["mut"] "self" ":" =>|| Type ;
+
+ShorthandSelf : ["&" [Lifetime]] ["mut"] "self" ;
+
+FunctionParamPattern : Pattern ":" =>|| (Type | "...") ;
+
+Struct : StructStruct | TupleStruct ;
+
+TupleStruct : "struct" Identifier [GenericParams] "(" =>|| [TupleFields] ")" [WhereClause] ";" ;
+
+TupleFields : TupleField ("," =>|+1 TupleField)* [","] ;
+
+TupleField : (OuterAttribute)* [Visibility] Type ;
+
+StructStruct : "struct" Identifier [GenericParams] [WhereClause] ("{" [StructFields] "}" | ";") ;
+
+StructFields : StructField ("," =>|+1 StructField)* [","] ;
+
+StructField : (OuterAttribute)* [Visibility] Identifier ":" Type ;
+
+GenericParams : "<" [GenericParam ("," =>|+1 GenericParam)* [","]]  ">" ;
+
+GenericParam :  (OuterAttribute)* (TypeParam | ConstParam | LifetimeParam) ;
+
+TypeParam : [OuterAttribute] Identifier [":" [TypeParamBounds]] ["=" Type] ;
+
+TypeParamBounds : TypeParamBound ("+" =>|+1 TypeParamBound)* ["+"] ;
+
+TypeParamBound : Lifetime | TraitBound ;
+
+TraitBound :
+   ["?"] [ForLifetimes] TypePath
+   |
+   "(" ["?"] [ForLifetimes] TypePath ")"
+;
+
+LifetimeBounds : (Lifetime "+" =>||)* [Lifetime] ;
+
+TypePath : ["::"] TypePathSegment ("::" TypePathSegment)* ;
+
+TypePathSegment : PathIdentSegment ["::"] [GenericArgs | TypePathFn] ;
+
+PathIdentSegment#void : Identifier | "super" | "self" | "Self" | "crate" | "$crate" ;
+
+GenericArgs :
+   "<"
+   (
+      GenericArgsLifetimes ["," =>|+1 GenericArgsTypes] ["," =>|+1 GenericArgsBinding] [","]
+      |
+      GenericArgsTypes ["," =>|+1 GenericArgsBinding] [","]
+      |
+      (GenericArg ",")* GenericArg [","]
+   )
+   ">"
+;
+
+GenericArg : Lifetime | Type | GenericArgsConst | GenericArgsBinding ;
+
+GenericArgsConst : BlockExpression | ["-"] LiteralExpression | SimplePathSegment ;
+
+GenericArgsBinding : Identifier "=" Type ;
+
+GenericArgsLifetimes : Lifetime ("," Lifetime)* ;
+
+GenericArgsTypes : Type ("," Type)* ;
+
+TypePathFn : "(" [TypePathInputs] ")" ["->" Type] ;
+
+TypePathInputs : Type ("," =>|+1 Type)* [","] ;
+
+ConstParam : "const" Identifier ":" Type ;
+
+LifetimeParam :
+    [OuterAttribute]
+    ACTIVATE_TOKENS LIFETIME_OR_LABEL (<LIFETIME_OR_LABEL>)
+    [":" LifetimeBounds]
+;
+
+WhereClause : "where" (WhereClauseItem ",")* [WhereClauseItem] ;
+
+WhereClauseItem : LifetimeWhereClauseItem | TypeBoundWhereClauseItem ;
+
+LifetimeWhereClauseItem : Lifetime ":" LifetimeBounds ;
+
+TypeBoundWhereClauseItem : [ForLifetimes] Type ":" [TypeParamBounds] ;
+
+ForLifetimes : "for" GenericParams ;
+
+Lifetime#void :
+   ACTIVATE_TOKENS LIFETIME_OR_LABEL, STATIC_LIFETIME, UNDERLINE_LIFETIME
+   (<LIFETIME_OR_LABEL>|<STATIC_LIFETIME>|<UNDERLINE_LIFETIME>)
+;
+
+BlockExpression : "{" (InnerAttribute)* [Statements] "}" ;
+
+Statements :
+    SCAN ~(Statement) =>Expression
+    |
+    (Statement)+ [Expression]
+;
+
+Type : ImplTraitType | TypeNoBounds | TraitObjectType ;
+
+TypeNoBounds :
+      ParenthesizedType
+    | ImplTraitTypeOneBound
+    | TraitObjectTypeOneBound
+    | TypePath
+    | TupleType
+    | NeverType
+    | RawPointerType
+    | ReferenceType
+    | ArrayType
+    | SliceType
+    | InferredType
+    | QualifiedPathInType
+    | BareFunctionType
+    | MacroInvocation
+;
+
+ParenthesizedType : "(" =>|+1 Type ")" ;
+
+NeverType# : "!" ;
+
+InferredType# : "_" ;
+
+ImplTraitType : "impl" =>|+1 TypeParamBounds ;
+
+TraitObjectType : "dyn" TypeParamBounds ;
+
+BareFunctionType :
+   [ForLifetimes]
+   FunctionTypeQualifiers
+   "fn"
+   "("
+   [FunctionParametersMaybeNamedVariadic]
+   ")"
+   [BareFunctionReturnType]
+;
+
+BareFunctionReturnType : "->" TypeNoBounds ;
+
+TupleType :
+   "("
+   [
+     Type ("," =>|+1 Type)* [","]
+   ]
+   ")"
+;
+
+SliceType : "[" Type "]" =>|| ;
+
+ArrayType : "[" Type ";" =>|| Expression "]" ;
+
+RawPointerType : "*" ("mut" | "const") TypeNoBounds ;
+
+ReferenceType : "&" [Lifetime] ["mut"] TypeNoBounds ;
+
+ImplTraitTypeOneBound : "impl" TraitBound ;
+
+TraitObjectTypeOneBound : "dyn" TraitBound ;
+
+FunctionTypeQualifiers : ["unsafe"] ["extern" [Abi]] ;
+
+QualifiedPathInType : QualifiedPathType ("::" TypePathSegment)+ ;
+
+QualifiedPathType : "<" Type ["as" TypePath] ">" ;
+
+FunctionParametersMaybeNamedVariadic : MaybeNamedFunctionParametersVariadic =>|| | MaybeNamedFunctionParameters ;
+
+MaybeNamedFunctionParameters : MaybeNamedParam ("," =>|+1 MaybeNamedParam)* [","] ;
+
+MaybeNamedParam : (OuterAttribute)* [(Identifier | <UNDERSCORE>) ":"] Type ;
+
+MaybeNamedFunctionParametersVariadic : (MaybeNamedParam ",")+ (OuterAttribute)* "...";
+
+Statement :
+   ";"
+   |
+   Item
+   |
+   LetStatement
+   |
+   ExpressionStatement
+   |
+   MacroInvocationSemi
+;
+
+Expression :
+   (OuterAttribute)*
+   (
+     LiteralExpression
+     |
+     PathExpression
+   )
+;
+
+PathExpression : QualifiedPathInExpression | PathInExpression ;
+
+ExpressionStatement :
+   Expression ";"
+   |
+   ExpressionWithBlock ";"
+;
+
+ExpressionWithBlock :
+   (OuterAttribute)*
+   (
+    BlockExpression
+    |
+    AsyncBlockExpression
+    |
+    UnsafeBlockExpression
+    |
+    LoopExpression
+    |
+    IfExpression
+    |
+    IfLetExpression
+    |
+    MatchExpression
+   )
+;
+
+AsyncBlockExpression : "async" ["move"] BlockExpression ;
+
+UnsafeBlockExpression : "unsafe" BlockExpression ;
+
+LoopExpression :
+    [LoopLabel]
+    =>|+1
+    (
+          InfiniteLoopExpression
+        | PredicatePatternLoopExpression
+        | PredicateLoopExpression
+        | IteratorLoopExpression
+    )
+;
+
+LoopLabel : ACTIVATE_TOKENS LIFETIME_OR_LABEL (<LIFETIME_OR_LABEL>) =>|| ":" ;
+
+InfiniteLoopExpression : "loop" BlockExpression ;
+
+PredicateLoopExpression : "while" Expression BlockExpression ;
+
+PredicatePatternLoopExpression : "while" "let" =>|| Pattern "=" Expression BlockExpression ;
+
+IteratorLoopExpression : "for" Pattern "in" Expression BlockExpression ;
+
+IfExpression : "if" Expression BlockExpression ["else" (BlockExpression | IfExpression | IfLetExpression)] ;
+
+IfLetExpression :
+    "if" "let" =>|| Pattern "=" Expression BlockExpression
+    [
+        "else" (BlockExpression | IfLetExpression | IfExpression)
+    ]
+;
+
+MatchExpression : "match" Expression "{" (InnerAttribute)* [MatchArms] "}" ;
+
+MatchArms : (MatchArm "=>" =>|| MatchArmExpression)* MatchArm "=>" Expression [","] ;
+
+MatchArmExpression :
+    Expression ","
+    |
+    ExpressionWithBlock [","]
+;
+
+MatchArm : (OuterAttribute)* Pattern [MatchArmGuard] ;
+
+MatchArmGuard : "if" Expression ;
+
+LetStatement :
+  (OuterAttribute)* "let" =>|| PatternNoTopAlt [":" Type] ["=" Expression] ";"
+;
+
+Pattern : ["|"] PatternNoTopAlt ("|" PatternNoTopAlt)* ;
+
+PatternNoTopAlt : RangePattern | PatternWithoutRange ;
+
+PatternWithoutRange :
+      LiteralPattern
+    | IdentifierPattern
+    | StructPattern
+    | TupleStructPattern
+    | WildcardPattern
+    | RestPattern
+    | ReferencePattern
+    | TuplePattern
+    | GroupedPattern
+    | SlicePattern
+    | PathPattern
+    | MacroInvocation
+;
+
+LiteralPattern :
+    "true"
+    | "false"
+    | <CHAR_LITERAL>
+    | <BYTE_LITERAL>
+    | <STRING_LITERAL>
+    | <RAW_STRING_LITERAL>
+    | <BYTE_STRING_LITERAL>
+    | ["-"] (<INTEGER_LITERAL>|<FLOATING_POINT_LITERAL>)
+;
+
+
+IdentifierPattern : ["ref"] ["mut"] Identifier ["@" Pattern] ;
+
+RestPattern# : ".." ;
+
+WildcardPattern# : "_" ;
+
+ReferencePattern : ("&"|"&&") ["mut"] PatternWithoutRange ;
+
+StructPattern : PathInExpression "{" =>|| [StructPatternElements] "}" ;
+
+PathInExpression : ["::"] PathExprSegment ("::" PathExprSegment)* ;
+
+PathExprSegment : PathIdentSegment ["::" GenericArgs] ;
+
+PathIdentSegment# : Identifier | "super" | "self" | "Self" | "crate" | "$crate" ;
+
+PathPattern : PathInExpression | QualifiedPathInExpression ;
+
+QualifiedPathInExpression : QualifiedPathType ("::" PathExprSegment)+ ;
+
+StructPatternElements :
+    StructPatternEtcetera
+    |
+    StructPatternFields ["," StructPatternEtcetera]
+;
+
+StructPatternEtcetera : (OuterAttribute)* ".." =>|| ;
+
+StructPatternFields : StructPatternField ("," StructPatternField)* ;
+
+StructPatternField :
+    (OuterAttribute)*
+    (
+        <INTEGER_LITERAL> ":" Pattern
+        |
+        Identifier ":" =>|| Pattern
+        |
+        ["ref"] ["mut"] Identifier
+    )
+;
+
+TuplePattern : "(" [TuplePatternItems] ")" =>|| ;
+
+TuplePatternItems :
+      RestPattern
+    | Pattern "," ENSURE ~(Pattern) =>||
+    | Pattern ("," =>|+1 Pattern)+ [","]
+;
+
+TupleStructPattern : PathInExpression "(" [TupleStructItems] ")" ;
+
+TupleStructItems : Pattern ("," =>|+1 Pattern)* [","] ;
+
+SlicePattern : "[" [SlicePatternItems] "]" ;
+
+SlicePatternItems : Pattern ("," =>|+1 Pattern)* [","] ;
+
+GroupedPattern : "(" Pattern ")" ;
+
+RangePattern :
+    RangePatternBound
+    (
+        "..=" RangePatternBound
+        |
+        ".."
+        |
+        "..." RangePatternBound
+    )
+    =>||
+;
+
+RangePatternBound :
+      <CHAR_LITERAL>
+    | <BYTE_LITERAL>
+    | ["-"] (<INTEGER_LITERAL>|<FLOATING_POINT_LITERAL>)
+    | PathPattern
+;
+
+
+
+ExternCrate : "extern" "crate" =>|| CrateRef [AsClause] ";" ;
+
+CrateRef : Identifier | "self" ;
+
+AsClause : "as" (Identifier | "_") ;
+
+ExternBlock : ["unsafe"] "extern" =>|| [Abi] "{" (InnerAttribute)* (ExternalItem)* "}" ;
+
+Abi : <STRING_LITERAL> | <RAW_STRING_LITERAL> ;
+
+Module :
+   ["unsafe"]
+   "mod" Identifier
+   (
+        ";"
+        |
+        "{" (InnerAttribute)* (Item)* "}"
+   )
+;
+
+ExternalItem :
+    (OuterAttribute)*
+    (
+        MacroInvocationSemi
+        |
+        [Visibility] (StaticItem | Function)
+    )
+;
+
+StaticItem : "static" ["mut"] Identifier ":" ; //Type ["=" Expression] ";" ;
+
+UseDeclaration : "use" UseTree ";" ;
+
+UseTree :
+    [[SimplePath] "::"]
+    =>|+1
+    (
+        "*"
+        |
+        "{" [UseTree ("," =>|+1 UseTree)* [","]] "}"
+    )
+    |
+    SimplePath ["as" (Identifier|"_")]
+;
+
+Visibility :
+   "pub"
+   [
+      "("
+      ( "crate" | "self" | "super" | "in" SimplePath)
+      ")"
+   ]
+;
+
+MacroItem : MacroInvocationSemi | MacroRulesDefinition ;
+
+MacroInvocationSemi :
+   SimplePath "!" =>|+1
+   (
+     "(" TokenTree ")" ";"
+     |
+     "[" TokenTree "]" ";"
+     |
+     "{" TokenTree "}"
+   )
+;
+
+SimplePath : ["::"] SimplePathSegment ("::" =>|+1 SimplePathSegment)* ;
+
+SimplePathSegment : Identifier | "super" | "self" | "crate" | "$crate" ;
+
+MacroInvocation: SimplePath "!" DelimTokenTree ;
+
+DelimTokenTree :
+    "(" (SCAN ~(")") => TokenTree)* ")"
+    |
+    "[" (SCAN ~("]") => TokenTree)* "]"
+    |
+    "{" (SCAN ~("}") => TokenTree)* "}"
+;
+
+TokenTree :
+   DelimTokenTree
+   |
+   AnyToken
+;
+
+AnyToken#void : {pushNode(lastConsumedToken=nextToken(lastConsumedToken));};
+
+MacroTranscriber# : DelimTokenTree ;
+
+MacroRulesDefinition : "macro_rules" "!" MacroRulesDef ;
+
+MacroRulesDef :
+   "(" MacroRules ")" ";"
+   |
+   "[" MacroRules "]" ";"
+   |
+   "{" MacroRules "}"
+;
+
+MacroRules : MacroRule (";" =>|+1 MacroRule)* [";"] ;
+
+MacroRule : MacroMatcher "=>" MacroTranscriber ;
+
+MacroMatcher :
+    "(" MacroMatch ")"
+    |
+    "[" MacroMatch "]"
+    |
+    "{" MacroMatch "}"
+;
+
+MacroMatch :
+    SCAN ~("$"|"("|")"|"["|"]"|"{"|"}") => AnyToken
+    |
+    MacroMatcher
+    |
+    "$" IdentifierOrKeywordButNotCrate ":" =>|| MacroFragSpec
+    |
+    // REVISIT: MacroRepSep currently unused???
+    "$" (SCAN ~("*"|"+"|"?") => MacroMatch)+ ("*"|"+"|"?")
+;
+
+MacroRepSep#void : SCAN ~("("|"{"|"["|")"|"}"|"]"|"*"|"+"|"?") => AnyToken ;
+
+IdentifierOrKeywordButNotCrate#void :
+    DEACTIVATE_TOKENS ABSTRACT, AS, ASYNC, AWAIT, BECOME, BOX, CONST
+                      CONTINUE, _DEFAULT, DO, DYN, ELSE, ENUM
+                      EXTERN, FALSE, FINAL, FN, FOR, GEN, IF, IMPL,
+                      LET, LOOP, MACRO, MACRO_RULES, MATCH, MOD,
+                      MOVE, OVERRIDE, PRIV, PUB, RAW, REF, RETURN,
+                      SAFE, SELF, SELF2, STATIC, STRUCT, TRAIT,
+                      TRUE, TRY, TYPE, TYPEOF, UNION, UNSAFE,
+                      UNSIZED, USE, VIRTUAL, WHERE, WHILE, YIELD
+    (
+        <ID>
+        |
+        <RAW_IDENTIFIER>
+    )
+;
+
+MacroFragSpec#void :
+    'block' |
+    'expr' |
+    'expr_2021' |
+    'ident' |
+    'item' |
+    'lifetime' |
+    'literal' |
+    'meta' |
+    'pat' |
+    'pat_param' |
+    'path' |
+    'stmt' |
+    'tt' |
+    'ty' |
+    'vis'
+;
+
+Identifier : <ID>|<RAW_IDENTIFIER>|"macro_rules" ;
+
+INJECT PARSER_CLASS :
+import java.nio.file.Files;
+import java.nio.file.FileSystem;
+import java.nio.file.FileSystems;
+import java.nio.file.Path;
+{
+    static private FileSystem fileSystem = FileSystems.getDefault();
+
+    static public void main(String[] args) throws Exception {
+        if (args.length == 0) {
+            System.out.println("Usage: java org.parsers.rust.RustParser <filename>");
+        }
+        else {
+            parseFile(args[0]);
+        }
+    }
+
+    static void parseFile(String filename) throws Exception {
+        Path path = fileSystem.getPath(filename);
+        PARSER_CLASS parser = new PARSER_CLASS(path);
+        Node root = parser.Crate();
+        root.dump("");
+    }
+}
