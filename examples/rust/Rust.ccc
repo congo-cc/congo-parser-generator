@@ -119,6 +119,24 @@ AssociatedItem :
    )
 ;
 
+ClosureExpression :
+   ["move"]
+   (
+      "||"
+      |
+      "|" [ClosureParameters] "|"
+   )
+   (
+      Expression
+      |
+      "->" TypeNoBounds BlockExpression
+   )
+;
+
+ClosureParameters : ClosureParam ("," =>|+1 ClosureParam)* [","] ;
+
+ClosureParam : (OuterAttribute)* PatternNoTopAlt [":" Type] ;
+
 Union : "union" Identifier [GenericParams] [WhereClause] "{" StructFields "}" ;
 
 Enumeration : "enum" Identifier [GenericParams] [WhereClause] "{" [EnumItems] "}" ;
@@ -139,6 +157,32 @@ EnumItemTuple : "(" [TupleFields] ")" ;
 EnumItemStruct : "{" [StructFields] "}" ;
 
 EnumItemDiscriminant : "=" Expression ;
+
+EnumerationVariantExpression :
+    EnumExprStruct
+    | EnumExprTuple
+    | EnumExprFieldless
+;
+
+EnumExprStruct : PathInExpression "{" =>|| [EnumExprFields] "}" ;
+
+EnumExprFields : EnumExprField ("," =>|+1 EnumExprField)* [","] ;
+
+EnumExprField :
+    Identifier [":" Expression]
+    |
+    <INTEGER_LITERAL> ":" Expression
+;
+
+EnumExprTuple :
+    PathInExpression
+    "("
+    =>||
+    [Expression ("," =>|+1 Expression)* [","]]
+    ")"
+;
+
+EnumExprFieldless : PathInExpression ;
 
 Implementation : TraitImpl | InherentImpl ;
 
@@ -351,11 +395,11 @@ MaybeNamedFunctionParametersVariadic : (MaybeNamedParam ",")+ (OuterAttribute)* 
 Statement :
    ";"
    |
+   ExpressionStatement =>||
+   |
    Item
    |
    LetStatement
-   |
-   ExpressionStatement =>||
    |
    MacroInvocationSemi
 ;
@@ -414,14 +458,16 @@ CaretExpression : AndExpression ("^" AndExpression)* ;
 
 OrExpression : CaretExpression ("|" CaretExpression)* ;
 
-LazyAndExpression : OrExpression ("&&" OrExpression)* ;
+ComparisonExpression : OrExpression [(">"|">="|"<"|"<="|"=="|"!=") OrExpression] ;
+
+LazyAndExpression : ComparisonExpression ("&&" ComparisonExpression)* ;
 
 LazyOrExpression : LazyAndExpression ("||" LazyAndExpression)* ;
 
 RangeExpression :
-    (".."|"..=") LazyAndExpression
+    (".."|"..=") LazyOrExpression
     |
-    LazyAndExpression [(".."|"..=") LazyAndExpression]
+    LazyOrExpression [(".."|"..=") LazyOrExpression]
 ;
 
 AssignmentExpression :
@@ -448,8 +494,6 @@ ReturnExpression :
     "return" [Expression]
 ;
 
-ComparisonExpression : OrExpression [(">"|">="|"<"|"<="|"=="|"!=") OrExpression] ;
-
 NoAttrExpression :
    AssignmentExpression
    |
@@ -459,19 +503,48 @@ NoAttrExpression :
    |
    ContinueExpression
    |
+   StructExpression
+   |
+   EnumerationVariantExpression
+   |
+   ClosureExpression
+   |
    ExpressionWithBlockNoAttr
    |
    MacroInvocation
 ;
+
+StructExpression :
+   StructExprStruct | StructExprTuple | StructExprUnit
+;
+
+StructExprStruct : PathInExpression "{" =>|| (InnerAttribute)* (StructExprFields | StructBase)? "}" ;
+
+StructExprFields : StructExprField ("," =>|+1 StructExprField)* ("," =>|+1 StructBase | [","]) ;
+
+StructExprField : (OuterAttribute)* (Identifier [":" Expression] | <INTEGER_LITERAL> ":" Expression) ;
+
+StructBase : ".." Expression ;
+
+StructExprTuple :
+    PathInExpression
+    "("
+    =>||
+    (InnerAttribute)*
+    [Expression ("," =>|+1 Expression)* [","]]
+    ")"
+;
+
+StructExprUnit : PathInExpression ;
 
 CallParams : Expression ("," =>|+1 Expression)* ;
 
 PathExpression : QualifiedPathInExpression | PathInExpression ;
 
 ExpressionStatement :
-   Expression
-   [";"]
-   ASSERT ENSURE {getTokenType(0) == SEMICOLON || getTokenType(1) == RBRACE : "Expecting a semicolon here"}
+   ExpressionWithBlock [";"]
+   |
+   Expression ";"
 ;
 
 ExpressionWithBlock : (OuterAttribute)* ExpressionWithBlockNoAttr ;
@@ -528,11 +601,12 @@ IfLetExpression :
 
 MatchExpression : "match" Expression "{" (InnerAttribute)* [MatchArms] "}" ;
 
-MatchArms : (MatchArm "=>" =>|| MatchArmExpression)* MatchArm "=>" Expression [","] ;
+MatchArms : (MatchArm "=>" =>|+1 MatchArmExpression)+ [","] ;
 
 MatchArmExpression :
+    ExpressionWithBlock [","]
+    |
     Expression ","
-    ASSERT {getTokenType(0) == COMMA || getTokenType(0) == RBRACE}
 ;
 
 MatchArm : (OuterAttribute)* Pattern [MatchArmGuard] ;
@@ -549,9 +623,9 @@ PatternNoTopAlt : RangePattern | PatternWithoutRange ;
 
 PatternWithoutRange :
       LiteralPattern
+    | TupleStructPattern
     | IdentifierPattern
     | StructPattern
-    | TupleStructPattern
     | WildcardPattern
     | RestPattern
     | ReferencePattern
@@ -574,7 +648,7 @@ LiteralPattern :
 ;
 
 
-IdentifierPattern : ["ref"] ["mut"] Identifier ["@" Pattern] ;
+IdentifierPattern : ["ref"] ["mut"] Identifier ENSURE ~("::") =>|| ["@" Pattern] ;
 
 RestPattern# : ".." ;
 
@@ -586,7 +660,7 @@ StructPattern : PathInExpression "{" =>|| [StructPatternElements] "}" ;
 
 PathInExpression : ["::"] PathExprSegment ("::" PathExprSegment)* ;
 
-PathExprSegment : PathIdentSegment ["::" GenericArgs] ;
+PathExprSegment : PathIdentSegment ["::" =>|+1 GenericArgs] ;
 
 PathIdentSegment# : Identifier | "super" | "self" | "Self" | "crate" | "$crate" ;
 
@@ -623,7 +697,7 @@ TuplePatternItems :
     | Pattern ("," =>|+1 Pattern)+ [","]
 ;
 
-TupleStructPattern : PathInExpression "(" [TupleStructItems] ")" ;
+TupleStructPattern : PathInExpression "(" =>|| [TupleStructItems] ")" ;
 
 TupleStructItems : Pattern ("," =>|+1 Pattern)* [","] ;
 
