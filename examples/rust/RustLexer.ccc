@@ -38,6 +38,7 @@ TOKEN #KeyWord :
 | < GEN: "gen" >
 | < IF: "if" >
 | < IMPL: "impl" >
+| < IN : "in">
 | < LET: "let" >
 | < LOOP: "loop" >
 | < MACRO: "macro" >
@@ -55,7 +56,6 @@ TOKEN #KeyWord :
 | < SELF: "self" >
 | < SELF2: "Self" >
 | < STATIC: "static" >
-| < STATIC2: "'static" >
 | < STRUCT: "struct" >
 | < SUPER: "super" >
 | < TRAIT: "trait" >

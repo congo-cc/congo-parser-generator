@@ -2,8 +2,7 @@ DEFAULT_LEXICAL_STATE=RUST;
 PARSER_PACKAGE=org.parsers.rust;
 NODE_PACKAGE=org.parsers.rust.ast;
 ENSURE_FINAL_EOL;
-DEACTIVATE_TOKENS=SHEBANG, STATIC2, MACRO_RULES, RAW, SAFE, UNION, DOLLAR_CRATE,
-                  LIFETIME_OR_LABEL, STATIC_LIFETIME, UNDERLINE_LIFETIME;
+DEACTIVATE_TOKENS=SHEBANG;
 
 INCLUDE "RustLexer.ccc"
 
@@ -277,11 +276,11 @@ GenericArgs :
    (">")
 ;
 
-GenericArg : Lifetime | Type | GenericArgsConst | GenericArgsBinding ;
+GenericArg : Lifetime | Type | GenericArgsBinding | GenericArgsConst ;
 
 GenericArgsConst : BlockExpression | ["-"] LiteralExpression | SimplePathSegment ;
 
-GenericArgsBinding : Identifier "=" Type ;
+GenericArgsBinding : Identifier "=" =>|| Type ;
 
 GenericArgsLifetimes : Lifetime ("," Lifetime)* ;
 
@@ -295,11 +294,11 @@ ConstParam : "const" Identifier ":" Type ;
 
 LifetimeParam :
     [OuterAttribute]
-    ACTIVATE_TOKENS LIFETIME_OR_LABEL (<LIFETIME_OR_LABEL>)
+    <LIFETIME_OR_LABEL>
     [":" LifetimeBounds]
 ;
 
-WhereClause : "where" (WhereClauseItem ",")* [WhereClauseItem] ;
+WhereClause : "where" [WhereClauseItem ("," =>|+1 WhereClauseItem)* [","]] ;
 
 WhereClauseItem : LifetimeWhereClauseItem | TypeBoundWhereClauseItem ;
 
@@ -309,10 +308,7 @@ TypeBoundWhereClauseItem : [ForLifetimes] Type ":" [TypeParamBounds] ;
 
 ForLifetimes : "for" GenericParams ;
 
-Lifetime#void :
-   ACTIVATE_TOKENS LIFETIME_OR_LABEL, STATIC_LIFETIME, UNDERLINE_LIFETIME
-   (<LIFETIME_OR_LABEL>|<STATIC_LIFETIME>|<UNDERLINE_LIFETIME>)
-;
+Lifetime#void : <LIFETIME_OR_LABEL>|<STATIC_LIFETIME>|<UNDERLINE_LIFETIME> ;
 
 BlockExpression :
    "{"
@@ -506,13 +502,13 @@ AssignmentExpression :
 
 BreakExpression :
     "break"
-    [ACTIVATE_TOKENS LIFETIME_OR_LABEL(<LIFETIME_OR_LABEL>)]
+    [<LIFETIME_OR_LABEL>]
     [Expression]
 ;
 
 ContinueExpression :
     "continue"
-    [ACTIVATE_TOKENS LIFETIME_OR_LABEL(<LIFETIME_OR_LABEL>)]
+    <LIFETIME_OR_LABEL>
     [Expression]
 ;
 
@@ -606,7 +602,7 @@ LoopExpression :
     )
 ;
 
-LoopLabel : ACTIVATE_TOKENS LIFETIME_OR_LABEL (<LIFETIME_OR_LABEL>) =>|| ":" ;
+LoopLabel : <LIFETIME_OR_LABEL> ":" ;
 
 InfiniteLoopExpression : "loop" BlockExpression ;
 
@@ -840,7 +836,7 @@ AnyToken#void :
   | "become"|"box"|"const"|"continue"
   | "crate"|"$crate"|"do"|"dyn"|"else"
   | "enum"|"extern"|"false"|"final"|"fn"
-  | "for"|"gen"|"if"|"impl"|"let"|"loop"
+  | "for"|"gen"|"if"|"impl"|"in"|"let"|"loop"
   | "macro"|"macro_rules"|"match"|"mod"
   | "move"|"override"|"priv"|"pub"|"raw"
   | "ref"|"return"|"safe"|"self"|"Self"
@@ -860,7 +856,7 @@ AnyToken#void :
   | <CHAR_LITERAL>|<BYTE_LITERAL>
   | <STRING_LITERAL>|<BYTE_STRING_LITERAL>
   | <C_STRING_LITERAL>|<RAW_STRING_LITERAL_HASH>
-  | <ID>|<RAW_IDENTIFIER>
+  | <ID>|<RAW_IDENTIFIER>|<LIFETIME_OR_LABEL>
 ;
 
 MacroTranscriber# : DelimTokenTree ;
