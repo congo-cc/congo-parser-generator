@@ -12,8 +12,6 @@ UNPARSED :
 // Some subtleties with comments not being addressed (yet)
 UNPARSED #Comment :
   < LINE_COMMENT : "//" (~["\n"])* "\n" > #LineComment
-  |
-  < ?BLOCK_COMMENT : "/*" (~[])* "*/" > #BlockComment
 ;
 
 TOKEN #KeyWord :
@@ -261,6 +259,8 @@ TOKEN #StringLiteral :
 
 MORE:
    <HASH_RAW_STRING_START: ("r"|"br"|"cr") ("#")+ '"'> : IN_HASH_RAW_STRING
+   |
+   <COMMENT_START : "/*"> : IN_MULTILINE_COMMENT
 ;
 
 <IN_HASH_RAW_STRING>
@@ -268,14 +268,25 @@ TOKEN:
    <RAW_STRING_LITERAL_HASH: '"#' ("#")* (<ID>)?> #StringLiteral
 ;
 
-<IN_HASH_RAW_STRING>
+<IN_HASH_RAW_STRING, IN_MULTILINE_COMMENT>
 MORE:
    <~[]>
+;
+
+<IN_MULTILINE_COMMENT>
+UNPARSED :
+    <START_NESTED_COMMENT: "/*">
+;
+
+<IN_MULTILINE_COMMENT>
+UNPARSED :
+   <MULTILINE_COMMMENT : "*/">
 ;
 
 INJECT LEXER_CLASS :
 {
    private int hashStringLiteralStart=-1;
+   private int commentNesting;
 
    // token hook routine to deal with hash-delimited raw strings
    private Token TOKEN_HOOK(Token tok) {
@@ -308,6 +319,16 @@ INJECT LEXER_CLASS :
          if (tok.charAt(tok.length()-1) == '.' && tok.charAt(tok.length()) == '.') {
             tok.truncate(1);
             tok.setType(INTEGER_LITERAL);
+         }
+      }
+      else if (type==START_NESTED_COMMENT) {
+         commentNesting++;
+      }
+      else if (type == MULTILINE_COMMMENT) {
+         if (commentNesting > 0) {
+            --commentNesting;
+         } else {
+            switchTo(LexicalState.RUST);
          }
       }
       return tok;
