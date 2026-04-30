@@ -440,9 +440,10 @@ BaseExpression :
         |
         "." Identifier =>|| #FieldExpression(+1)
         |
-        "." <INTEGER_LITERAL> =>|| #TupleIndexingExpression(+1)
-        |
         "." "await" =>|| #AwaitExpression(+1)
+        |
+        SCAN "." (<INTEGER_LITERAL> | <FLOATING_POINT_LITERAL>) =>
+        "." DEACTIVATE_TOKENS FLOATING_POINT_LITERAL (<INTEGER_LITERAL>) #TupleIndexingExpression(+1)
         |
         "(" [CallParams] ")" #CallExpression(+1)
         |
