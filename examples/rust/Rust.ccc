@@ -268,8 +268,6 @@ GenericArgs :
       GenericArgsLifetimes ["," =>|+1 GenericArgsTypes] ["," =>|+1 GenericArgsBinding] [","]
       |
       GenericArgsTypes ["," =>|+1 GenericArgsBinding] [","]
-      |
-      (GenericArg ",")* GenericArg [","]
    )
    [
      SCAN <GT_GT> => UNCACHE_TOKENS
@@ -286,7 +284,7 @@ GenericArgsBinding : Identifier "=" Type ;
 
 GenericArgsLifetimes : Lifetime ("," Lifetime)* ;
 
-GenericArgsTypes : Type ("," Type)* ;
+GenericArgsTypes : Type ("," =>|+1 Type)* ;
 
 TypePathFn : "(" [TypePathInputs] ")" ["->" Type] ;
 
@@ -315,7 +313,46 @@ Lifetime#void :
    (<LIFETIME_OR_LABEL>|<STATIC_LIFETIME>|<UNDERLINE_LIFETIME>)
 ;
 
-BlockExpression : "{" (InnerAttribute)* (Statement=>||)* [Expression] "}" ;
+BlockExpression :
+   "{"
+   (InnerAttribute)*
+   (Statement)*
+   [Expression]
+   "}"
+;
+
+StatementLA #scan :
+   ";" | "let"
+   |
+   (
+      (OuterAttribute)*
+      [Visibility]
+      (
+         "unsafe" | "mod" | "trait" | "extern"
+         | "use" | "fn" | "type" | "struct"
+         | "enum" | "union" | "const" | "static"
+         | "impl" | "macro_rules"
+         | SimplePath "!" =>||
+      )
+   )
+   |
+   ExpressionStatement
+;
+
+Statement :
+  SCAN StatementLA =>
+  (
+   ";"
+   |
+   MacroInvocationSemi
+   |
+   ExpressionStatement
+   |
+   LetStatement
+   |
+   Item
+  )
+;
 
 Type : ImplTraitType |  TraitObjectType | TypeNoBounds ;
 
@@ -392,18 +429,6 @@ MaybeNamedParam : (OuterAttribute)* [(Identifier | <UNDERSCORE>) ":" =>||] Type 
 
 MaybeNamedFunctionParametersVariadic : (MaybeNamedParam ",")+ (OuterAttribute)* "...";
 
-Statement :
-   ";"
-   |
-   ExpressionStatement =>||
-   |
-   Item
-   |
-   LetStatement
-   |
-   MacroInvocationSemi
-;
-
 Expression : AttributedExpression | NoAttrExpression ;
 
 AttributedExpression : (OuterAttribute)+ NoAttrExpression ;
@@ -427,7 +452,7 @@ BaseExpression :
     )*
 ;
 
-ParentheticalExpression : "(" (InnerAttribute)* Expression ("," Expression)* ")" ;
+ParentheticalExpression : "(" (InnerAttribute)* [Expression ("," Expression)*] ")" ;
 
 ArrayExpression : "[" (InnerAttribute)* [ArrayElements] "]" ;
 
@@ -436,7 +461,6 @@ ArrayElements :
     |
     Expression ("," =>|+1 Expression)* [","]
 ;
-
 
 BorrowExpression : [("&" | "&&") ["mut"]] BaseExpression ;
 
@@ -495,6 +519,8 @@ ReturnExpression :
 ;
 
 NoAttrExpression :
+   SCAN "Self" "{" =>StructExprStruct
+   |
    AssignmentExpression
    |
    ReturnExpression
@@ -502,8 +528,8 @@ NoAttrExpression :
    BreakExpression
    |
    ContinueExpression
-   |
-   StructExpression
+//   |
+//   StructExpression
    |
    EnumerationVariantExpression
    |
@@ -515,7 +541,7 @@ NoAttrExpression :
 ;
 
 StructExpression :
-   StructExprStruct | StructExprTuple | StructExprUnit
+   StructExprStruct | StructExprTuple //| StructExprUnit
 ;
 
 StructExprStruct : PathInExpression "{" =>|| (InnerAttribute)* (StructExprFields | StructBase)? "}" ;
@@ -558,9 +584,9 @@ ExpressionWithBlockNoAttr :
     |
     LoopExpression
     |
-    IfExpression
-    |
     IfLetExpression
+    |
+    IfExpression
     |
     MatchExpression
 ;
@@ -856,7 +882,7 @@ MacroRepSep#void : SCAN ~("("|"{"|"["|")"|"}"|"]"|"*"|"+"|"?") => AnyToken ;
 
 IdentifierOrKeywordButNotCrate#void :
     DEACTIVATE_TOKENS ABSTRACT, AS, ASYNC, AWAIT, BECOME, BOX, CONST
-                      CONTINUE, _DEFAULT, DO, DYN, ELSE, ENUM
+                      CONTINUE, DO, DYN, ELSE, ENUM
                       EXTERN, FALSE, FINAL, FN, FOR, GEN, IF, IMPL,
                       LET, LOOP, MACRO, MACRO_RULES, MATCH, MOD,
                       MOVE, OVERRIDE, PRIV, PUB, RAW, REF, RETURN,
@@ -895,19 +921,32 @@ import java.nio.file.Files;
 import java.nio.file.FileSystem;
 import java.nio.file.FileSystems;
 import java.nio.file.Path;
+import java.io.IOException;
 {
     static private FileSystem fileSystem = FileSystems.getDefault();
+    static int successes, failures;
 
-    static public void main(String[] args) throws Exception {
+    static public void main(String[] args) throws IOException {
         if (args.length == 0) {
             System.out.println("Usage: java org.parsers.rust.RustParser <filename>");
         }
-        else {
-            parseFile(args[0]);
+        else for (int i = 0; i<args.length; i++) {
+            try {
+               parseFile(args[i]);
+            } catch (ParseException pe) {
+                pe.printStackTrace();
+                System.out.println("Failed on: " + args[i]);
+                ++failures;
+                continue;
+            }
+            System.out.println("File: " + args[i] + " parsed successfully.");
+            ++successes;
         }
+        System.out.println("Successfully parsed " + successes + " files.");
+        System.out.println("Failed on " + failures + " files.");
     }
 
-    static void parseFile(String filename) throws Exception {
+    static void parseFile(String filename) throws IOException {
         Path path = fileSystem.getPath(filename);
         PARSER_CLASS parser = new PARSER_CLASS(path);
         Node root = parser.Crate();

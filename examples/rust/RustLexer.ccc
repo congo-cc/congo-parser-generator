@@ -28,7 +28,6 @@ TOKEN #KeyWord :
 | < CONTINUE: "continue" >
 | < CRATE: "crate" >
 | < DOLLAR_CRATE: "$crate">
-| < _DEFAULT: "default" >
 | < DO: "do" >
 | < DYN: "dyn" >
 | < ELSE: "else" >
@@ -304,6 +303,12 @@ INJECT LEXER_CLASS :
             reset(tok);
         }
         chopLoneUnderscore(tok);
+      }
+      else if (type == FLOATING_POINT_LITERAL) {
+         if (tok.charAt(tok.length()-1) == '.' && tok.charAt(tok.length()) == '.') {
+            tok.truncate(1);
+            tok.setType(INTEGER_LITERAL);
+         }
       }
       return tok;
    }
