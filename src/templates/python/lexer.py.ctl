@@ -845,6 +845,7 @@ ${globals::translateLexerInjections(true)}
         if lex_state is None:
             lex_state = self.lexical_state
         token_begin_offset = pos
+        match_start = pos
         in_more = False
         invalid_region_start = -1
         matched_token = None
@@ -865,6 +866,7 @@ ${globals::translateLexerInjections(true)}
 #if settings.usesPreprocessor
             pos = self.next_unignored_offset(pos)
 /#if
+            match_start = pos
             if not in_more:
                 token_begin_offset = pos
 [#--
@@ -898,7 +900,7 @@ ${globals::translateLexerInjections(true)}
                 matched_token = new_token(matched_type, self, token_begin_offset, pos)
                 matched_token.is_unparsed = matched_type not in self.regular_tokens
 #if lexerData.hasTokenActions
-            matched_token = self.token_lexical_actions(matched_token, matched_type)
+            matched_token = self.token_lexical_actions(matched_token, matched_type, token_begin_offset, match_start, pos)
 /#if
 #list grammar.lexerTokenHooks as tokenHookMethodName
   #if tokenHookMethodName = "CommonTokenAction"
@@ -939,7 +941,9 @@ ${globals::translateLexerInjections(true)}
 /#if
 
 #if lexerData.hasTokenActions
-    def token_lexical_actions(self, matched_token, matched_type):
+  # token_begin_offset and match_start can only be different
+  # if this pattern is a MORE
+    def token_lexical_actions(self, matched_token, matched_type, token_begin_offset, match_start, match_end):
   #var idx = 0
   #list lexerData.regularExpressions as regexp
     #if regexp.codeSnippet??

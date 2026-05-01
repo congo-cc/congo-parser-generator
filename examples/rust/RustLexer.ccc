@@ -274,19 +274,32 @@ MORE:
 ;
 
 <IN_MULTILINE_COMMENT>
-UNPARSED :
-    <START_NESTED_COMMENT: "/*">
+MORE :
+   <START_NESTED_COMMENT: "/*"> {commentNesting++;}
 ;
 
 <IN_MULTILINE_COMMENT>
 UNPARSED :
    <MULTILINE_COMMMENT : "*/">
+   {
+      if (commentNesting == 0) {
+         if (commentStart != -1) {
+             matchedToken.setBeginOffset(commentStart);
+             commentStart = -1;
+         }
+         switchTo(LexicalState.RUST);
+      } else {
+         --commentNesting;
+         if (commentStart==-1) commentStart = matchedToken.getBeginOffset();
+      }
+   }
 ;
 
 INJECT LEXER_CLASS :
 {
    private int hashStringLiteralStart=-1;
    private int commentNesting;
+   private int commentStart=-1;
 
    // token hook routine to deal with hash-delimited raw strings
    private Token TOKEN_HOOK(Token tok) {
@@ -316,19 +329,10 @@ INJECT LEXER_CLASS :
         chopLoneUnderscore(tok);
       }
       else if (type == FLOATING_POINT_LITERAL) {
+         // So that a range such as 1..7 can be scanned correctly!
          if (tok.charAt(tok.length()-1) == '.' && tok.charAt(tok.length()) == '.') {
             tok.truncate(1);
             tok.setType(INTEGER_LITERAL);
-         }
-      }
-      else if (type==START_NESTED_COMMENT) {
-         commentNesting++;
-      }
-      else if (type == MULTILINE_COMMMENT) {
-         if (commentNesting > 0) {
-            --commentNesting;
-         } else {
-            switchTo(LexicalState.RUST);
          }
       }
       return tok;

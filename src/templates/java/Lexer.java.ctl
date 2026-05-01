@@ -266,6 +266,7 @@ class ${settings.lexerClassName} extends TokenSource
   final ${TOKEN} tokenizeAt(int position, LexicalState lexicalState, EnumSet<TokenType> activeTokenTypes) {
       if (lexicalState == null) lexicalState = this.lexicalState;
       int tokenBeginOffset = position;
+      int matchStart = position;
       boolean inMore = false;
       int invalidRegionStart = -1;
       ${TOKEN} matchedToken = null;
@@ -284,6 +285,7 @@ class ${settings.lexerClassName} extends TokenSource
 #if settings.usesPreprocessor
         position = nextUnignoredOffset(position);
 #endif
+        matchStart = position;
         if (!inMore) tokenBeginOffset = position;
         if (MATCHER_HOOK != null) {
             matchInfo = MATCHER_HOOK.apply(lexicalState, this, position, activeTokenTypes, nfaFunctions, currentStates, nextStates, matchInfo);
@@ -325,7 +327,7 @@ class ${settings.lexerClassName} extends TokenSource
             matchedToken.setUnparsed(!regularTokens.contains(matchedType));
         }
  #if lexerData.hasTokenActions
-        matchedToken = tokenLexicalActions(matchedToken, matchedType);
+        matchedToken = tokenLexicalActions(matchedToken, matchedType, tokenBeginOffset, matchStart, position);
  #endif
       }
  #list grammar.lexerTokenHooks as tokenHookMethodName
@@ -391,7 +393,9 @@ class ${settings.lexerClassName} extends TokenSource
   }
 
  #if lexerData.hasTokenActions
-  private ${TOKEN} tokenLexicalActions(${TOKEN} matchedToken, TokenType matchedType) {
+  // tokenBeginOffset and matchStart can only be different
+  // if this pattern is a MORE or a SKIP.
+  private ${TOKEN} tokenLexicalActions(${TOKEN} matchedToken, TokenType matchedType, int tokenBeginOffset, int matchStart, int matchEnd) {
     switch(matchedType) {
    #list lexerData.regularExpressions as regexp
         #if regexp.codeSnippet??
