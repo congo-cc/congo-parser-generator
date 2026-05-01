@@ -324,13 +324,10 @@ class ${settings.lexerClassName} extends TokenSource
                                         position);
             matchedToken.setUnparsed(!regularTokens.contains(matchedType));
         }
-      }
- #if lexerData.hasLexicalStateTransitions
-      doLexicalStateSwitch(matchedToken.getType());
- #endif
  #if lexerData.hasTokenActions
-      matchedToken = tokenLexicalActions(matchedToken, matchedType);
+        matchedToken = tokenLexicalActions(matchedToken, matchedType);
  #endif
+      }
  #list grammar.lexerTokenHooks as tokenHookMethodName
     #if tokenHookMethodName = "CommonTokenAction"
            ${tokenHookMethodName}(matchedToken);

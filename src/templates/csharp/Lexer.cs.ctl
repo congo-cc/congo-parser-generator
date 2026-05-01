@@ -1149,13 +1149,10 @@ ${globals::translateLexerInitializers()}
                                                   position);
                     matchedToken.IsUnparsed = !regularTokens.Contains((TokenType) matchedType);
                 }
-            }
-#if lexerData.hasLexicalStateTransitions
-            DoLexicalStateSwitch(matchedToken.Type);
-#endif
 #if lexerData.hasTokenActions
-            matchedToken = TokenLexicalActions(matchedToken, matchedType);
+                matchedToken = TokenLexicalActions(matchedToken, matchedType);
 #endif
+            }
 #list grammar.lexerTokenHooks as tokenHookMethodName
   #if tokenHookMethodName = "CommonTokenAction"
                 ${globals::translateIdentifier(tokenHookMethodName)}(matchedToken);

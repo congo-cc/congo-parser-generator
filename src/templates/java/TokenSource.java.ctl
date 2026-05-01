@@ -313,6 +313,10 @@ abstract public class TokenSource implements CharSequence
         }
     }
 
+    protected void cleanUpOrphans(${BaseToken} tok) {
+        tokenOffsets.clear(tok.getBeginOffset()+1, tok.getEndOffset());
+    }
+
     public ${BaseToken} nextCachedToken(int offset) {
         int nextOffset = tokenOffsets.nextSetBit(offset);
         return nextOffset != -1 ? tokenLocationTable[nextOffset] : null;

@@ -897,11 +897,8 @@ ${globals::translateLexerInjections(true)}
             elif matched_type in self.regular_tokens or matched_type in self.unparsed_tokens:
                 matched_token = new_token(matched_type, self, token_begin_offset, pos)
                 matched_token.is_unparsed = matched_type not in self.regular_tokens
-#if lexerData.hasLexicalStateTransitions
-        self.do_lexical_state_switch(matched_token.type)
-/#if
 #if lexerData.hasTokenActions
-        matched_token = self.token_lexical_actions(matched_token, matched_type)
+            matched_token = self.token_lexical_actions(matched_token, matched_type)
 /#if
 #list grammar.lexerTokenHooks as tokenHookMethodName
   #if tokenHookMethodName = "CommonTokenAction"
