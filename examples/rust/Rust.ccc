@@ -354,8 +354,7 @@ Statement :
 Type : ImplTraitType |  TraitObjectType | TypeNoBounds ;
 
 TypeNoBounds :
-      ParenthesizedType
-    | ImplTraitTypeOneBound
+      ImplTraitTypeOneBound
     | TraitObjectTypeOneBound
     | TypePath
     | TupleType
@@ -450,7 +449,7 @@ BaseExpression :
     )*
 ;
 
-ParentheticalExpression : "(" (InnerAttribute)* [Expression ("," Expression)*] ")" ;
+ParentheticalExpression : "(" (InnerAttribute)* [Expression ("," =>|+1 Expression)*] [","]")" ;
 
 ArrayExpression : "[" (InnerAttribute)* [ArrayElements] "]" ;
 
@@ -517,8 +516,8 @@ ReturnExpression :
 ;
 
 NoAttrExpression :
-//   StructExpression
-//  |
+   StructExpression =>||
+   |
    MacroInvocation
    |
    ReturnExpression
@@ -537,25 +536,19 @@ NoAttrExpression :
 ;
 
 StructExpression :
-   StructExprStruct | StructExprTuple //| StructExprUnit
+   PathInExpression =>|+1
+   (
+      "{" (InnerAttribute)* [StructExprFields | StructBase] "}"
+      |
+      "(" (InnerAttribute)* [Expression ("," =>|+1 Expression)* [","]] ")"
+   )
 ;
-
-StructExprStruct : PathInExpression "{" =>|| (InnerAttribute)* (StructExprFields | StructBase)? "}" ;
 
 StructExprFields : StructExprField ("," =>|+1 StructExprField)* ("," =>|+1 StructBase | [","]) ;
 
 StructExprField : (OuterAttribute)* (Identifier [":" Expression] | <INTEGER_LITERAL> ":" Expression) ;
 
 StructBase : ".." Expression ;
-
-StructExprTuple :
-    PathInExpression
-    "("
-    =>||
-    (InnerAttribute)*
-    [Expression ("," =>|+1 Expression)* [","]]
-    ")"
-;
 
 StructExprUnit : PathInExpression ;
 
