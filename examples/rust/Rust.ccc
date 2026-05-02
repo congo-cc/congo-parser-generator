@@ -507,7 +507,7 @@ BreakExpression :
 
 ContinueExpression :
     "continue"
-    <LIFETIME_OR_LABEL>
+    [<LIFETIME_OR_LABEL>]
     [Expression]
 ;
 
@@ -516,9 +516,9 @@ ReturnExpression :
 ;
 
 NoAttrExpression :
-   StructExpression =>||
-   |
    MacroInvocation
+   |
+   StructExpression =>||
    |
    ReturnExpression
    |
@@ -544,7 +544,7 @@ StructExpression :
    )
 ;
 
-StructExprFields : StructExprField ("," =>|+1 StructExprField)* ("," =>|+1 StructBase | [","]) ;
+StructExprFields : StructExprField ("," =>|+1 StructExprField)* ["," [StructBase]] ;
 
 StructExprField : (OuterAttribute)* (Identifier [":" Expression] | <INTEGER_LITERAL> ":" Expression) ;
 
@@ -552,7 +552,7 @@ StructBase : ".." Expression ;
 
 StructExprUnit : PathInExpression ;
 
-CallParams : Expression ("," =>|+1 Expression)* ;
+CallParams : Expression ("," =>|+1 Expression)* [","] ;
 
 PathExpression : QualifiedPathInExpression | PathInExpression ;
 
