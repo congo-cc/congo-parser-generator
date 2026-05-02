@@ -161,7 +161,7 @@ EnumItemDiscriminant : "=" Expression ;
 EnumerationVariantExpression :
     EnumExprStruct
     | EnumExprTuple
-    | EnumExprFieldless
+//    | EnumExprFieldless
 ;
 
 EnumExprStruct : PathInExpression "{" =>|| [EnumExprFields] "}" ;
@@ -463,7 +463,7 @@ BorrowExpression : [("&" | "&&") ["mut"]] BaseExpression ;
 
 DereferenceExpression : ("*")* BorrowExpression ;
 
-NegationExpression : ("!")* DereferenceExpression ;
+NegationExpression : [("!")+ | ("-")+] DereferenceExpression ;
 
 TypeCastExpression : NegationExpression ["as" TypeNoBounds] ;
 
@@ -488,7 +488,12 @@ LazyOrExpression : LazyAndExpression ("||" LazyAndExpression)* ;
 RangeExpression :
     (".."|"..=") LazyOrExpression
     |
-    LazyOrExpression [(".."|"..=") LazyOrExpression]
+    LazyOrExpression
+    [
+        ".." [LazyOrExpression]
+        |
+        "..=" LazyOrExpression
+    ]
 ;
 
 AssignmentExpression :
@@ -518,17 +523,17 @@ ReturnExpression :
 NoAttrExpression :
    MacroInvocation
    |
-   StructExpression =>||
-   |
    ReturnExpression
    |
    BreakExpression
    |
    ContinueExpression
    |
-   AssignmentExpression
+   StructExpression =>||
    |
-   EnumerationVariantExpression
+   EnumerationVariantExpression =>||
+   |
+   AssignmentExpression
    |
    ClosureExpression
    |
@@ -605,7 +610,7 @@ PredicatePatternLoopExpression : "while" "let" =>|| Pattern "=" Expression Block
 
 IteratorLoopExpression : "for" Pattern "in" Expression BlockExpression ;
 
-IfExpression : "if" Expression BlockExpression ["else" (BlockExpression | IfExpression | IfLetExpression)] ;
+IfExpression : "if" Expression BlockExpression ["else" (BlockExpression | IfLetExpression | IfExpression)] ;
 
 IfLetExpression :
     "if" "let" =>|| Pattern "=" Expression BlockExpression
@@ -637,10 +642,11 @@ Pattern : ["|"] PatternNoTopAlt ("|" PatternNoTopAlt)* ;
 PatternNoTopAlt : RangePattern | PatternWithoutRange ;
 
 PatternWithoutRange :
-      LiteralPattern
+    MacroInvocation
+    | LiteralPattern
     | TupleStructPattern
-    | IdentifierPattern
     | StructPattern
+    | IdentifierPattern
     | WildcardPattern
     | RestPattern
     | ReferencePattern
@@ -648,7 +654,6 @@ PatternWithoutRange :
     | GroupedPattern
     | SlicePattern
     | PathPattern
-    | MacroInvocation
 ;
 
 LiteralPattern :
