@@ -258,7 +258,7 @@ LifetimeBounds : (Lifetime "+" =>||)* [Lifetime] ;
 
 TypePath : ["::"] TypePathSegment ("::" TypePathSegment)* ;
 
-TypePathSegment : PathIdentSegment ["::"] [GenericArgs | TypePathFn] ;
+TypePathSegment : PathIdentSegment ["::" ENSURE ~(PathIdentSegment) =>||] [GenericArgs | TypePathFn] ;
 
 PathIdentSegment#void : Identifier | "super" | "self" | "Self" | "crate" | "$crate" ;
 
@@ -351,7 +351,10 @@ Statement :
   )
 ;
 
-Type : ImplTraitType |  TraitObjectType | TypeNoBounds ;
+//Type : ImplTraitType |  DEACTIVATE_TOKENS LT (TypeNoBounds) =>|| | TraitObjectType ;
+Type : ImplTraitType |  TypeNoBounds =>|| | TraitObjectType ;
+
+//Type : ["impl"|"dyn"] TypeParamBounds =>|| | TypeNoBounds ;
 
 TypeNoBounds :
       ImplTraitTypeOneBound
@@ -377,7 +380,7 @@ InferredType# : "_" ;
 
 ImplTraitType : "impl" =>|+1 TypeParamBounds ;
 
-TraitObjectType : "dyn" TypeParamBounds ;
+TraitObjectType : ["dyn"] TypeParamBounds ;
 
 BareFunctionType :
    [ForLifetimes]
@@ -430,23 +433,26 @@ Expression : AttributedExpression | NoAttrExpression ;
 AttributedExpression : (OuterAttribute)+ NoAttrExpression ;
 
 BaseExpression :
-    (LiteralExpression | PathExpression | ParentheticalExpression | ArrayExpression)
     (
-        "." PathExprSegment "(" =>|| [CallParams] ")" #MethodCall(+1)
-        |
-        "." Identifier =>|| #FieldExpression(+1)
-        |
-        "." "await" =>|| #AwaitExpression(+1)
-        |
-        SCAN "." (<INTEGER_LITERAL> | <FLOATING_POINT_LITERAL>) =>
-        "." DEACTIVATE_TOKENS FLOATING_POINT_LITERAL (<INTEGER_LITERAL>) #TupleIndexingExpression(+1)
-        |
-        "(" [CallParams] ")" #CallExpression(+1)
-        |
-        "[" Expression "]" #IndexExpression(+1)
-        |
-        "?" #ErrorPropagationExpression(+1)
-    )*
+        (LiteralExpression | PathExpression | ParentheticalExpression
+         | ArrayExpression|MacroInvocation)
+        (
+            "." PathExprSegment "(" =>|| [CallParams] ")" #MethodCall(+1)
+            |
+            "." Identifier =>|| #FieldExpression(+1)
+            |
+            "." "await" =>|| #AwaitExpression(+1)
+            |
+            SCAN "." (<INTEGER_LITERAL> | <FLOATING_POINT_LITERAL>) =>
+            "." DEACTIVATE_TOKENS FLOATING_POINT_LITERAL (<INTEGER_LITERAL>) #TupleIndexingExpression(+1)
+            |
+            "(" [CallParams] ")" #CallExpression(+1)
+            |
+            "[" Expression "]" #IndexExpression(+1)
+            |
+            "?" #ErrorPropagationExpression(+1)
+        )*
+    )
 ;
 
 ParentheticalExpression : "(" (InnerAttribute)* [Expression ("," =>|+1 Expression)*] [","]")" ;
@@ -459,7 +465,7 @@ ArrayElements :
     Expression ("," =>|+1 Expression)* [","]
 ;
 
-BorrowExpression : [("&" | "&&") ["mut"]] BaseExpression ;
+BorrowExpression : [("&" | "&&") ["mut" | ("raw" ("const"|"mut"))]] BaseExpression ;
 
 DereferenceExpression : ("*")* BorrowExpression ;
 
@@ -521,23 +527,30 @@ ReturnExpression :
 ;
 
 NoAttrExpression :
-   MacroInvocation
-   |
    ReturnExpression
    |
    BreakExpression
    |
    ContinueExpression
    |
-   StructExpression =>||
+   FieldsStructExpression =>||
    |
-   EnumerationVariantExpression =>||
-   |
+//   StructExpression =>||
+//   |
+//   EnumerationVariantExpression =>||
+//   |
    AssignmentExpression
    |
    ClosureExpression
    |
    ExpressionWithBlockNoAttr
+;
+
+FieldsStructExpression :
+   PathInExpression "{" =>||
+   (InnerAttribute)*
+   [StructExprFields | StructBase]
+   "}"
 ;
 
 StructExpression :
@@ -594,9 +607,9 @@ LoopExpression :
     =>|+1
     (
           InfiniteLoopExpression
-        | PredicatePatternLoopExpression
-        | PredicateLoopExpression
-        | IteratorLoopExpression
+        | WhileLetExpression
+        | WhileExpression
+        | ForExpression
     )
 ;
 
@@ -604,11 +617,11 @@ LoopLabel : <LIFETIME_OR_LABEL> ":" ;
 
 InfiniteLoopExpression : "loop" BlockExpression ;
 
-PredicateLoopExpression : "while" Expression BlockExpression ;
+WhileExpression : "while" Expression BlockExpression ;
 
-PredicatePatternLoopExpression : "while" "let" =>|| Pattern "=" Expression BlockExpression ;
+WhileLetExpression : "while" "let" =>|| Pattern "=" Expression BlockExpression ;
 
-IteratorLoopExpression : "for" Pattern "in" Expression BlockExpression ;
+ForExpression : "for" Pattern "in" Expression BlockExpression ;
 
 IfExpression : "if" Expression BlockExpression ["else" (BlockExpression | IfLetExpression | IfExpression)] ;
 
@@ -836,7 +849,7 @@ AnyToken#void :
   | "enum"|"extern"|"false"|"final"|"fn"
   | "for"|"gen"|"if"|"impl"|"in"|"let"|"loop"
   | "macro"|"macro_rules"|"match"|"mod"
-  | "move"|"override"|"priv"|"pub"|"raw"
+  | "move"|"mut"|"override"|"priv"|"pub"|"raw"
   | "ref"|"return"|"safe"|"self"|"Self"
   | "static"|"'static"|"struct"|"super"
   | "trait"|"true"|"type"|"typeof"|"union"
