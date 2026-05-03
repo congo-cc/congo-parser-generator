@@ -35,7 +35,6 @@ TOKEN #KeyWord :
 | < FINAL: "final" >
 | < FN: "fn" >
 | < FOR: "for" >
-| < GEN: "gen" >
 | < IF: "if" >
 | < IMPL: "impl" >
 | < IN : "in">

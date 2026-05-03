@@ -624,7 +624,7 @@ MatchArms : (MatchArm "=>" =>|+1 MatchArmExpression)+ [","] ;
 
 MatchArmExpression :
     Expression
-    [SCAN 0 {getToken(0).getType() != RBRACE || checkNextTokenType(RBRACE)} => ","]
+    [SCAN {getToken(0).getType() != RBRACE || !checkNextTokenType(RBRACE)} => ","]
 ;
 
 MatchArm : (OuterAttribute)* Pattern [MatchArmGuard] ;
@@ -846,7 +846,7 @@ AnyToken#void :
   | "become"|"box"|"const"|"continue"
   | "crate"|"$crate"|"do"|"dyn"|"else"
   | "enum"|"extern"|"false"|"final"|"fn"
-  | "for"|"gen"|"if"|"impl"|"in"|"let"|"loop"
+  | "for"|"if"|"impl"|"in"|"let"|"loop"
   | "macro"|"match"|"mod"
   | "move"|"mut"|"override"|"priv"|"pub"|"raw"
   | "ref"|"return"|"safe"|"self"|"Self"
@@ -909,7 +909,7 @@ MacroRepSep#void : SCAN ~("("|"{"|"["|")"|"}"|"]"|"*"|"+"|"?") => AnyToken ;
 IdentifierOrKeywordButNotCrate#void :
     DEACTIVATE_TOKENS ABSTRACT, AS, ASYNC, AWAIT, BECOME, BOX, CONST
                       CONTINUE, DO, DYN, ELSE, ENUM
-                      EXTERN, FALSE, FINAL, FN, FOR, GEN, IF, IMPL,
+                      EXTERN, FALSE, FINAL, FN, FOR, IF, IMPL,
                       LET, LOOP, MACRO, MATCH, MOD,
                       MOVE, OVERRIDE, PRIV, PUB, RAW, REF, RETURN,
                       SAFE, SELF, SELF2, STATIC, STRUCT, TRAIT,
