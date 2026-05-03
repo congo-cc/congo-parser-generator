@@ -42,7 +42,6 @@ TOKEN #KeyWord :
 | < LET: "let" >
 | < LOOP: "loop" >
 | < MACRO: "macro" >
-| < MACRO_RULES: "macro_rules" >
 | < MATCH: "match" >
 | < MOD: "mod" >
 | < MOVE: "move" >
