@@ -1083,6 +1083,7 @@ ${globals::translateLexerInitializers()}
         private ${TOKEN} TokenizeAt(int position, LexicalState? lexicalState, HashSet<TokenType> activeTokenTypes) {
             if (lexicalState == null) lexicalState = this._lexicalState;
             int tokenBeginOffset = position;
+            int matchStart = position;
             bool inMore = false;
             int invalidRegionStart = -1;
             ${TOKEN} matchedToken = null;
@@ -1101,6 +1102,7 @@ ${globals::translateLexerInitializers()}
 #if settings.usesPreprocessor
                 position = NextUnignoredOffset(position);
 #endif
+                matchStart = position;
                 if (!inMore) {
                     tokenBeginOffset = position;
                 }
@@ -1149,13 +1151,10 @@ ${globals::translateLexerInitializers()}
                                                   position);
                     matchedToken.IsUnparsed = !regularTokens.Contains((TokenType) matchedType);
                 }
-            }
-#if lexerData.hasLexicalStateTransitions
-            DoLexicalStateSwitch(matchedToken.Type);
-#endif
 #if lexerData.hasTokenActions
-            matchedToken = TokenLexicalActions(matchedToken, matchedType);
+                matchedToken = TokenLexicalActions(matchedToken, matchedType, tokenBeginOffset, matchStart, position);
 #endif
+            }
 #list grammar.lexerTokenHooks as tokenHookMethodName
   #if tokenHookMethodName = "CommonTokenAction"
                 ${globals::translateIdentifier(tokenHookMethodName)}(matchedToken);
@@ -1267,7 +1266,7 @@ ${globals::translateLexerInitializers()}
                     matchedToken.IsUnparsed = !regularTokens.Contains((TokenType) matchedType);
                 }
      #if lexerData.hasTokenActions
-                matchedToken = TokenLexicalActions(matchedToken, matchedType);
+                matchedToken = TokenLexicalActions(matchedToken, matchedType, tokenBeginOffset, matchStart, _bufferPosition);
      #endif
      #if lexerData.hasLexicalStateTransitions
                 DoLexicalStateSwitch(matchedType.Value);
@@ -1301,7 +1300,7 @@ ${globals::translateLexerInitializers()}
         }
 
 #if lexerData.hasTokenActions
-        private Token TokenLexicalActions(Token matchedToken, TokenType? matchedType) {
+        private Token TokenLexicalActions(Token matchedToken, TokenType? matchedType, int tokenBeginOffset, int matchStart, int matchEnd) {
             switch (matchedType) {
         #list lexerData.regularExpressions as regexp
                 #if regexp.codeSnippet??

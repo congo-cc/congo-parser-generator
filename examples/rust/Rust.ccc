@@ -2,8 +2,7 @@ DEFAULT_LEXICAL_STATE=RUST;
 PARSER_PACKAGE=org.parsers.rust;
 NODE_PACKAGE=org.parsers.rust.ast;
 ENSURE_FINAL_EOL;
-DEACTIVATE_TOKENS=SHEBANG, STATIC2, MACRO_RULES, RAW, SAFE, UNION, DOLLAR_CRATE,
-                  LIFETIME_OR_LABEL, STATIC_LIFETIME, UNDERLINE_LIFETIME;
+DEACTIVATE_TOKENS=SHEBANG;
 
 INCLUDE "RustLexer.ccc"
 
@@ -12,7 +11,7 @@ INCLUDE "RustLexer.ccc"
   (Item)*
   <EOF>
   {
-    return thisProduction;
+    return THIS;
   }
 ;
 
@@ -23,10 +22,13 @@ InnerAttribute :
    "]"
 ;
 
-Item :
-   (OuterAttribute)*
-   (VisItem|MacroItem)
+OuterAttribute :
+   "#" "[" =>||
+   Attr
+   "]"
 ;
+
+Item : MacroInvocationSemi|MacroRulesDef|VisItem ;
 
 Attr :
     SimplePath
@@ -34,9 +36,9 @@ Attr :
 ;
 
 AttrInput :
-   DelimTokenTree
-   |
    "=" LiteralExpression // no suffix?
+   |
+   DelimTokenTree
 ;
 
 LiteralExpression :
@@ -61,14 +63,10 @@ LiteralExpression :
    "false"
 ;
 
-OuterAttribute :
-   "#" "[" =>||
-   Attr
-   "]"
-;
-
 VisItem :
+   (OuterAttribute)*
    [Visibility]
+   =>|+1
    (
       Module
       |
@@ -82,21 +80,108 @@ VisItem :
       |
       Struct
       |
-//      Enumeration
-//      |
-//      Union
-//      |
-//      ConstantItem
-//      |
+      Enumeration
+      |
+      Union
+      |
+      ConstantItem
+      |
       StaticItem
       |
-//      Trait
-//      |
+      Trait
+      |
       Implementation
       |
       ExternBlock
    )
 ;
+
+Trait :
+    ["unsafe"]
+    "trait"
+    Identifier
+    [GenericParams]
+    [":" [TypeParamBounds]]
+    [WhereClause]
+    "{"
+    (InnerAttribute)* (AssociatedItem)*
+    "}"
+;
+
+AssociatedItem :
+   (OuterAttribute)*
+   (
+      MacroInvocationSemi
+      |
+      [Visibility] ( TypeAlias | ConstantItem | Function)
+   )
+;
+
+ClosureExpression :
+   ["move"]
+   (
+      "||"
+      |
+      "|" [ClosureParameters] "|"
+   )
+   =>||
+   (
+      Expression
+      |
+      "->" TypeNoBounds BlockExpression
+   )
+;
+
+ClosureParameters : ClosureParam ("," =>|+1 ClosureParam)* [","] ;
+
+ClosureParam : (OuterAttribute)* PatternNoTopAlt [":" Type] ;
+
+Union : "union" Identifier [GenericParams] [WhereClause] "{" StructFields "}" ;
+
+Enumeration : "enum" Identifier [GenericParams] [WhereClause] "{" [EnumItems] "}" ;
+
+EnumItems : EnumItem ("," =>|+1 EnumItem)* [","] ;
+
+EnumItem :
+     (OuterAttribute)* [Visibility] Identifier
+     [
+        EnumItemTuple
+        | EnumItemStruct
+        | EnumItemDiscriminant
+    ]
+;
+
+EnumItemTuple : "(" [TupleFields] ")" ;
+
+EnumItemStruct : "{" [StructFields] "}" ;
+
+EnumItemDiscriminant : "=" Expression ;
+
+EnumerationVariantExpression :
+    EnumExprStruct
+    | EnumExprTuple
+//    | EnumExprFieldless
+;
+
+EnumExprStruct : PathInExpression "{" =>|| [EnumExprFields] "}" ;
+
+EnumExprFields : EnumExprField ("," =>|+1 EnumExprField)* [","] ;
+
+EnumExprField :
+    Identifier [":" Expression]
+    |
+    <INTEGER_LITERAL> ":" Expression
+;
+
+EnumExprTuple :
+    PathInExpression
+    "("
+    =>||
+    [Expression ("," =>|+1 Expression)* [","]]
+    ")"
+;
+
+EnumExprFieldless : PathInExpression ;
 
 Implementation : TraitImpl | InherentImpl ;
 
@@ -114,7 +199,7 @@ Function :
     FunctionQualifiers "fn" =>||
     Identifier [GenericParams]
     "(" [FunctionParameters] ")"
-    [FunctionReturnType] [WhereClause] (BlockExpression|";")
+    [FunctionReturnType] [WhereClause] (";" | BlockExpression)
 ;
 
 
@@ -172,7 +257,7 @@ LifetimeBounds : (Lifetime "+" =>||)* [Lifetime] ;
 
 TypePath : ["::"] TypePathSegment ("::" TypePathSegment)* ;
 
-TypePathSegment : PathIdentSegment ["::"] [GenericArgs | TypePathFn] ;
+TypePathSegment : PathIdentSegment ["::" ENSURE ~(PathIdentSegment) =>||] [GenericArgs | TypePathFn] ;
 
 PathIdentSegment#void : Identifier | "super" | "self" | "Self" | "crate" | "$crate" ;
 
@@ -182,21 +267,23 @@ GenericArgs :
       GenericArgsLifetimes ["," =>|+1 GenericArgsTypes] ["," =>|+1 GenericArgsBinding] [","]
       |
       GenericArgsTypes ["," =>|+1 GenericArgsBinding] [","]
-      |
-      (GenericArg ",")* GenericArg [","]
    )
-   ">"
+   [
+     SCAN <GT_GT> => UNCACHE_TOKENS
+   ]
+   DEACTIVATE_TOKENS GT_GT
+   (">")
 ;
 
-GenericArg : Lifetime | Type | GenericArgsConst | GenericArgsBinding ;
+GenericArg : Lifetime | Type | GenericArgsBinding | GenericArgsConst ;
 
 GenericArgsConst : BlockExpression | ["-"] LiteralExpression | SimplePathSegment ;
 
-GenericArgsBinding : Identifier "=" Type ;
+GenericArgsBinding : Identifier "=" =>|| Type ;
 
 GenericArgsLifetimes : Lifetime ("," Lifetime)* ;
 
-GenericArgsTypes : Type ("," Type)* ;
+GenericArgsTypes : Type ("," =>|+1 Type)* ;
 
 TypePathFn : "(" [TypePathInputs] ")" ["->" Type] ;
 
@@ -206,11 +293,11 @@ ConstParam : "const" Identifier ":" Type ;
 
 LifetimeParam :
     [OuterAttribute]
-    ACTIVATE_TOKENS LIFETIME_OR_LABEL (<LIFETIME_OR_LABEL>)
+    <LIFETIME_OR_LABEL>
     [":" LifetimeBounds]
 ;
 
-WhereClause : "where" (WhereClauseItem ",")* [WhereClauseItem] ;
+WhereClause : "where" [WhereClauseItem ("," =>|+1 WhereClauseItem)* [","]] ;
 
 WhereClauseItem : LifetimeWhereClauseItem | TypeBoundWhereClauseItem ;
 
@@ -220,24 +307,47 @@ TypeBoundWhereClauseItem : [ForLifetimes] Type ":" [TypeParamBounds] ;
 
 ForLifetimes : "for" GenericParams ;
 
-Lifetime#void :
-   ACTIVATE_TOKENS LIFETIME_OR_LABEL, STATIC_LIFETIME, UNDERLINE_LIFETIME
-   (<LIFETIME_OR_LABEL>|<STATIC_LIFETIME>|<UNDERLINE_LIFETIME>)
+Lifetime#void : <LIFETIME_OR_LABEL>|<STATIC_LIFETIME>|<UNDERLINE_LIFETIME> ;
+
+BlockExpression :
+   "{"
+   (InnerAttribute)*
+   (
+    SCAN {getToken(1).getType() != RBRACE &&
+           (getToken(0).getType() == LBRACE
+           || getToken(0).getType() == RBRACE
+           || getToken(0).getType() == SEMICOLON)}
+      =>
+      Statement
+   )*
+   "}"
 ;
 
-BlockExpression : "{" (InnerAttribute)* [Statements] "}" ;
-
-Statements :
-    SCAN ~(Statement) =>Expression
-    |
-    (Statement)+ [Expression]
+Statement :
+   ";" #EmptyStatement(1)
+   |
+   LetStatement
+   |
+   MacroRulesDefinition
+   |
+   (OuterAttribute)* VisItem =>||
+   |
+   (
+     Expression
+     (
+       SCAN {getToken(0).getType() == RBRACE} => {}
+       |
+      ";"
+      |
+      {}
+     )
+   ) #ExpressionStatement(>1)
 ;
 
-Type : ImplTraitType | TypeNoBounds | TraitObjectType ;
+Type : ImplTraitType |  TypeNoBounds =>|| | TraitObjectType ;
 
 TypeNoBounds :
-      ParenthesizedType
-    | ImplTraitTypeOneBound
+      ImplTraitTypeOneBound
     | TraitObjectTypeOneBound
     | TypePath
     | TupleType
@@ -260,7 +370,7 @@ InferredType# : "_" ;
 
 ImplTraitType : "impl" =>|+1 TypeParamBounds ;
 
-TraitObjectType : "dyn" TypeParamBounds ;
+TraitObjectType : ["dyn"] TypeParamBounds ;
 
 BareFunctionType :
    [ForLifetimes]
@@ -304,57 +414,175 @@ FunctionParametersMaybeNamedVariadic : MaybeNamedFunctionParametersVariadic =>||
 
 MaybeNamedFunctionParameters : MaybeNamedParam ("," =>|+1 MaybeNamedParam)* [","] ;
 
-MaybeNamedParam : (OuterAttribute)* [(Identifier | <UNDERSCORE>) ":"] Type ;
+MaybeNamedParam : (OuterAttribute)* [(Identifier | <UNDERSCORE>) ":" =>||] Type ;
 
 MaybeNamedFunctionParametersVariadic : (MaybeNamedParam ",")+ (OuterAttribute)* "...";
 
-Statement :
-   ";"
-   |
-   Item
-   |
-   LetStatement
-   |
-   ExpressionStatement
-   |
-   MacroInvocationSemi
-;
-
 Expression :
    (OuterAttribute)*
+   =>|+1
    (
-     LiteralExpression
-     |
-     PathExpression
+        ReturnExpression
+        |
+        BreakExpression
+        |
+        ContinueExpression
+        |
+        FieldsStructExpression =>||
+        |
+        //   StructExpression =>||
+        //   |
+        //   EnumerationVariantExpression =>||
+        //   |
+        AssignmentExpression
+        |
+        ClosureExpression
+        |
+        BlockExpression
+        |
+        AsyncBlockExpression
+        |
+        UnsafeBlockExpression
+        |
+        LoopExpression
+        |
+        IfLetExpression
+        |
+        IfExpression
+        |
+        MatchExpression
    )
 ;
+
+BaseExpression :
+    (
+        (MacroInvocation|LiteralExpression | PathExpression | ParentheticalExpression
+         | ArrayExpression)
+        (
+            "." PathExprSegment "(" =>|| [CallParams] ")" #MethodCall(+1)
+            |
+            "." Identifier =>|| #FieldExpression(+1)
+            |
+            "." "await" =>|| #AwaitExpression(+1)
+            |
+            SCAN "." (<INTEGER_LITERAL> | <FLOATING_POINT_LITERAL>) =>
+            "." DEACTIVATE_TOKENS FLOATING_POINT_LITERAL (<INTEGER_LITERAL>) #TupleIndexingExpression(+1)
+            |
+            "(" [CallParams] ")" #CallExpression(+1)
+            |
+            "[" Expression "]" #IndexExpression(+1)
+            |
+            "?" #ErrorPropagationExpression(+1)
+        )*
+    )
+;
+
+ParentheticalExpression : "(" (InnerAttribute)* [Expression ("," =>|+1 Expression)*] [","]")" ;
+
+ArrayExpression : "[" (InnerAttribute)* [ArrayElements] "]" ;
+
+ArrayElements :
+    Expression ";" =>|| Expression
+    |
+    Expression ("," =>|+1 Expression)* [","]
+;
+
+//BorrowExpression : [("&" | "&&") ["mut" | ("raw" ("const"|"mut"))]] BaseExpression ;
+
+// DereferenceExpression : ("*")* BorrowExpression ;
+
+UnaryExpression :
+   ("-" | "!" | "*" | "&" | "mut") UnaryExpression
+   |
+   BaseExpression
+;
+
+
+//[("!")+ | ("-")+ | "*" | "&" | "&&"] DereferenceExpression ;
+
+TypeCastExpression : UnaryExpression ["as" TypeNoBounds] ;
+
+MultiplicativeExpression : TypeCastExpression (("*" | "/" | "%") TypeCastExpression)* ;
+
+AdditiveExpression : MultiplicativeExpression (("+"|"-") MultiplicativeExpression)* ;
+
+ShiftExpression : AdditiveExpression (("<<" | ">>") AdditiveExpression)* ;
+
+AndExpression : ShiftExpression ("&" ShiftExpression)* ;
+
+CaretExpression : AndExpression ("^" AndExpression)* ;
+
+OrExpression : CaretExpression ("|" CaretExpression)* ;
+
+ComparisonExpression : OrExpression [(">"|">="|"<"|"<="|"=="|"!=") OrExpression] ;
+
+LazyAndExpression : ComparisonExpression ("&&" ComparisonExpression)* ;
+
+LazyOrExpression : LazyAndExpression ("||" LazyAndExpression)* ;
+
+RangeExpression :
+    (".."|"..=") LazyOrExpression
+    |
+    LazyOrExpression
+    [
+        ".." [LazyOrExpression]
+        |
+        "..=" LazyOrExpression
+    ]
+;
+
+AssignmentExpression :
+   RangeExpression
+   [
+    ("="|"+="|"-="|"*="|"/="|"%="|"&="|"|="|"^="|"<<="|">>=")
+    RangeExpression
+   ]
+;
+
+BreakExpression :
+    "break"
+    [<LIFETIME_OR_LABEL>]
+    [Expression]
+;
+
+ContinueExpression :
+    "continue"
+    [<LIFETIME_OR_LABEL>]
+    [Expression]
+;
+
+ReturnExpression :
+    "return" [Expression]
+;
+
+
+FieldsStructExpression :
+   PathInExpression "{" =>||
+   (InnerAttribute)*
+   [StructExprFields | StructBase]
+   "}"
+;
+
+StructExpression :
+   PathInExpression =>|+1
+   (
+      "{" (InnerAttribute)* [StructExprFields | StructBase] "}"
+      |
+      "(" (InnerAttribute)* [Expression ("," =>|+1 Expression)* [","]] ")"
+   )
+;
+
+StructExprFields : StructExprField ("," =>|+1 StructExprField)* ["," [StructBase]] ;
+
+StructExprField : (OuterAttribute)* (Identifier [":" Expression] | <INTEGER_LITERAL> ":" Expression) ;
+
+StructBase : ".." Expression ;
+
+StructExprUnit : PathInExpression ;
+
+CallParams : Expression ("," =>|+1 Expression)* [","] ;
 
 PathExpression : QualifiedPathInExpression | PathInExpression ;
-
-ExpressionStatement :
-   Expression ";"
-   |
-   ExpressionWithBlock ";"
-;
-
-ExpressionWithBlock :
-   (OuterAttribute)*
-   (
-    BlockExpression
-    |
-    AsyncBlockExpression
-    |
-    UnsafeBlockExpression
-    |
-    LoopExpression
-    |
-    IfExpression
-    |
-    IfLetExpression
-    |
-    MatchExpression
-   )
-;
 
 AsyncBlockExpression : "async" ["move"] BlockExpression ;
 
@@ -365,23 +593,23 @@ LoopExpression :
     =>|+1
     (
           InfiniteLoopExpression
-        | PredicatePatternLoopExpression
-        | PredicateLoopExpression
-        | IteratorLoopExpression
+        | WhileLetExpression
+        | WhileExpression
+        | ForExpression
     )
 ;
 
-LoopLabel : ACTIVATE_TOKENS LIFETIME_OR_LABEL (<LIFETIME_OR_LABEL>) =>|| ":" ;
+LoopLabel : <LIFETIME_OR_LABEL> ":" ;
 
 InfiniteLoopExpression : "loop" BlockExpression ;
 
-PredicateLoopExpression : "while" Expression BlockExpression ;
+WhileExpression : "while" Expression BlockExpression ;
 
-PredicatePatternLoopExpression : "while" "let" =>|| Pattern "=" Expression BlockExpression ;
+WhileLetExpression : "while" "let" =>|| Pattern "=" Expression BlockExpression ;
 
-IteratorLoopExpression : "for" Pattern "in" Expression BlockExpression ;
+ForExpression : "for" Pattern "in" Expression BlockExpression ;
 
-IfExpression : "if" Expression BlockExpression ["else" (BlockExpression | IfExpression | IfLetExpression)] ;
+IfExpression : "if" Expression BlockExpression ["else" (BlockExpression | IfLetExpression | IfExpression)] ;
 
 IfLetExpression :
     "if" "let" =>|| Pattern "=" Expression BlockExpression
@@ -392,12 +620,11 @@ IfLetExpression :
 
 MatchExpression : "match" Expression "{" (InnerAttribute)* [MatchArms] "}" ;
 
-MatchArms : (MatchArm "=>" =>|| MatchArmExpression)* MatchArm "=>" Expression [","] ;
+MatchArms : (MatchArm "=>" =>|+1 MatchArmExpression)+ [","] ;
 
 MatchArmExpression :
-    Expression ","
-    |
-    ExpressionWithBlock [","]
+    Expression
+    [SCAN {getToken(0).getType() != RBRACE || !checkNextTokenType(RBRACE)} => ","]
 ;
 
 MatchArm : (OuterAttribute)* Pattern [MatchArmGuard] ;
@@ -413,10 +640,11 @@ Pattern : ["|"] PatternNoTopAlt ("|" PatternNoTopAlt)* ;
 PatternNoTopAlt : RangePattern | PatternWithoutRange ;
 
 PatternWithoutRange :
-      LiteralPattern
-    | IdentifierPattern
-    | StructPattern
+    MacroInvocation
+    | LiteralPattern
     | TupleStructPattern
+    | StructPattern
+    | IdentifierPattern
     | WildcardPattern
     | RestPattern
     | ReferencePattern
@@ -424,7 +652,6 @@ PatternWithoutRange :
     | GroupedPattern
     | SlicePattern
     | PathPattern
-    | MacroInvocation
 ;
 
 LiteralPattern :
@@ -439,7 +666,7 @@ LiteralPattern :
 ;
 
 
-IdentifierPattern : ["ref"] ["mut"] Identifier ["@" Pattern] ;
+IdentifierPattern : ["ref"] ["mut"] Identifier ENSURE ~("::") =>|| ["@" Pattern] ;
 
 RestPattern# : ".." ;
 
@@ -451,7 +678,7 @@ StructPattern : PathInExpression "{" =>|| [StructPatternElements] "}" ;
 
 PathInExpression : ["::"] PathExprSegment ("::" PathExprSegment)* ;
 
-PathExprSegment : PathIdentSegment ["::" GenericArgs] ;
+PathExprSegment : PathIdentSegment ["::" =>|+1 GenericArgs] ;
 
 PathIdentSegment# : Identifier | "super" | "self" | "Self" | "crate" | "$crate" ;
 
@@ -488,7 +715,7 @@ TuplePatternItems :
     | Pattern ("," =>|+1 Pattern)+ [","]
 ;
 
-TupleStructPattern : PathInExpression "(" [TupleStructItems] ")" ;
+TupleStructPattern : PathInExpression "(" =>|| [TupleStructItems] ")" ;
 
 TupleStructItems : Pattern ("," =>|+1 Pattern)* [","] ;
 
@@ -548,7 +775,7 @@ ExternalItem :
     )
 ;
 
-StaticItem : "static" ["mut"] Identifier ":" ; //Type ["=" Expression] ";" ;
+StaticItem : "static" ["mut"] Identifier ":" Type ["=" Expression] ";" ;
 
 UseDeclaration : "use" UseTree ";" ;
 
@@ -576,41 +803,75 @@ Visibility :
 MacroItem : MacroInvocationSemi | MacroRulesDefinition ;
 
 MacroInvocationSemi :
+   (OuterAttribute)*
    SimplePath "!" =>|+1
-   (
-     "(" TokenTree ")" ";"
-     |
-     "[" TokenTree "]" ";"
-     |
-     "{" TokenTree "}"
-   )
+   DelimTokenTree
+   [SCAN 0 {endDelim != RBRACE} => ";"]
 ;
 
 SimplePath : ["::"] SimplePathSegment ("::" =>|+1 SimplePathSegment)* ;
 
 SimplePathSegment : Identifier | "super" | "self" | "crate" | "$crate" ;
 
-MacroInvocation: SimplePath "!" DelimTokenTree ;
+MacroInvocation: SimplePath "!" =>|+1 DelimTokenTree ;
+
+INJECT PARSER_CLASS : {
+    private TokenType startDelim, endDelim;
+    private int delimNesting;
+}
 
 DelimTokenTree :
-    "(" (SCAN ~(")") => TokenTree)* ")"
-    |
-    "[" (SCAN ~("]") => TokenTree)* "]"
-    |
-    "{" (SCAN ~("}") => TokenTree)* "}"
+    ("("|"["|"{")
+    {
+        startDelim = getToken(0).getType();
+        delimNesting = 0;
+        if (startDelim == LPAREN) endDelim = RPAREN;
+        else if (startDelim == LBRACKET) endDelim = RBRACKET;
+        else if (startDelim == LBRACE) endDelim = RBRACE;
+    }#
+    (
+        SCAN {delimNesting > 0 || !checkNextTokenType(endDelim)}# =>
+        AnyToken
+        {
+            TokenType tt = getToken(0).getType();
+            if (tt == startDelim) ++delimNesting;
+            else if (tt == endDelim) --delimNesting;
+        }#
+    )*
+    (")"|"]"|"}")
 ;
 
-TokenTree :
-   DelimTokenTree
-   |
-   AnyToken
+AnyToken#void :
+  "_"|"abstract"|"as"|"async"|"await"
+  | "become"|"box"|"const"|"continue"
+  | "crate"|"$crate"|"do"|"dyn"|"else"
+  | "enum"|"extern"|"false"|"final"|"fn"
+  | "for"|"if"|"impl"|"in"|"let"|"loop"
+  | "macro"|"match"|"mod"
+  | "move"|"mut"|"override"|"priv"|"pub"|"raw"
+  | "ref"|"return"|"safe"|"self"|"Self"
+  | "static"|"'static"|"struct"|"super"
+  | "trait"|"true"|"type"|"typeof"|"union"
+  | "unsafe"|"unsized"|"use"|"virtual"
+  | "where"|"while"|"yield"
+  | "{"|"}"|"["|"]"|"("|")"
+  | <FLOATING_POINT_LITERAL>|<INTEGER_LITERAL>
+  | "..."|"..="|"<<="|">>="|"!="|"%="
+  | "&&"|"&="|"*="|"+="|"-="|"->"|".."
+  | "/="|"::"|"<-"|"<<"|"<="|"=="|"=>"
+  | ">="|">>"|"^="|"|="|"||"|"!"|"#"
+  | "$"|"%"|"&"|"*"|","|"-"|"+"|"."
+  | "/"|":"|";"|"<"|"="|">"|"?"|"@"|"^"
+  | "|" | "~"
+  | <CHAR_LITERAL>|<BYTE_LITERAL>
+  | <STRING_LITERAL>|<BYTE_STRING_LITERAL>
+  | <C_STRING_LITERAL>|<RAW_STRING_LITERAL_HASH>
+  | <ID>|<RAW_IDENTIFIER>|<LIFETIME_OR_LABEL>
 ;
-
-AnyToken#void : {pushNode(lastConsumedToken=nextToken(lastConsumedToken));};
 
 MacroTranscriber# : DelimTokenTree ;
 
-MacroRulesDefinition : "macro_rules" "!" MacroRulesDef ;
+MacroRulesDefinition : (OuterAttribute)* 'macro_rules' =>|| "!" MacroRulesDef ;
 
 MacroRulesDef :
    "(" MacroRules ")" ";"
@@ -647,9 +908,9 @@ MacroRepSep#void : SCAN ~("("|"{"|"["|")"|"}"|"]"|"*"|"+"|"?") => AnyToken ;
 
 IdentifierOrKeywordButNotCrate#void :
     DEACTIVATE_TOKENS ABSTRACT, AS, ASYNC, AWAIT, BECOME, BOX, CONST
-                      CONTINUE, _DEFAULT, DO, DYN, ELSE, ENUM
-                      EXTERN, FALSE, FINAL, FN, FOR, GEN, IF, IMPL,
-                      LET, LOOP, MACRO, MACRO_RULES, MATCH, MOD,
+                      CONTINUE, DO, DYN, ELSE, ENUM
+                      EXTERN, FALSE, FINAL, FN, FOR, IF, IMPL,
+                      LET, LOOP, MACRO, MATCH, MOD,
                       MOVE, OVERRIDE, PRIV, PUB, RAW, REF, RETURN,
                       SAFE, SELF, SELF2, STATIC, STRUCT, TRAIT,
                       TRUE, TRY, TYPE, TYPEOF, UNION, UNSAFE,
@@ -679,29 +940,5 @@ MacroFragSpec#void :
     'vis'
 ;
 
-Identifier : <ID>|<RAW_IDENTIFIER>|"macro_rules" ;
+Identifier : <ID>|<RAW_IDENTIFIER>;
 
-INJECT PARSER_CLASS :
-import java.nio.file.Files;
-import java.nio.file.FileSystem;
-import java.nio.file.FileSystems;
-import java.nio.file.Path;
-{
-    static private FileSystem fileSystem = FileSystems.getDefault();
-
-    static public void main(String[] args) throws Exception {
-        if (args.length == 0) {
-            System.out.println("Usage: java org.parsers.rust.RustParser <filename>");
-        }
-        else {
-            parseFile(args[0]);
-        }
-    }
-
-    static void parseFile(String filename) throws Exception {
-        Path path = fileSystem.getPath(filename);
-        PARSER_CLASS parser = new PARSER_CLASS(path);
-        Node root = parser.Crate();
-        root.dump("");
-    }
-}

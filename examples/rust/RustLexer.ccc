@@ -12,8 +12,6 @@ UNPARSED :
 // Some subtleties with comments not being addressed (yet)
 UNPARSED #Comment :
   < LINE_COMMENT : "//" (~["\n"])* "\n" > #LineComment
-  |
-  < ?BLOCK_COMMENT : "/*" (~[])* "*/" > #BlockComment
 ;
 
 TOKEN #KeyWord :
@@ -28,7 +26,6 @@ TOKEN #KeyWord :
 | < CONTINUE: "continue" >
 | < CRATE: "crate" >
 | < DOLLAR_CRATE: "$crate">
-| < _DEFAULT: "default" >
 | < DO: "do" >
 | < DYN: "dyn" >
 | < ELSE: "else" >
@@ -38,13 +35,12 @@ TOKEN #KeyWord :
 | < FINAL: "final" >
 | < FN: "fn" >
 | < FOR: "for" >
-| < GEN: "gen" >
 | < IF: "if" >
 | < IMPL: "impl" >
+| < IN : "in">
 | < LET: "let" >
 | < LOOP: "loop" >
 | < MACRO: "macro" >
-| < MACRO_RULES: "macro_rules" >
 | < MATCH: "match" >
 | < MOD: "mod" >
 | < MOVE: "move" >
@@ -58,7 +54,6 @@ TOKEN #KeyWord :
 | < SELF: "self" >
 | < SELF2: "Self" >
 | < STATIC: "static" >
-| < STATIC2: "'static" >
 | < STRUCT: "struct" >
 | < SUPER: "super" >
 | < TRAIT: "trait" >
@@ -92,6 +87,11 @@ TOKEN #NumericalLiteral :
        |<FLOATING_POINT_LITERAL3>
        |<FLOATING_POINT_LITERAL4>
     > #FloatingPointLiteral
+    {
+      if (charAt(matchEnd-1) == '.' && charAt(matchEnd) == '.') {
+         matchedToken.truncate(1);
+      }
+    }
     |
     <#FLOATING_POINT_LITERAL1: <DEC_LITERAL> ("f32"|"f64")>
     |
@@ -103,7 +103,7 @@ TOKEN #NumericalLiteral :
     |
     <#FLOAT_EXPONENT: ["e","E"] (["+","-"])? ("_")* <DEC_LITERAL>>
     |
-    <INTEGER_LITERAL: <DEC_LITERAL> | <BIN_LITERAL> | <OCT_LITERAL> | <HEX_LITERAL> (<ID>)?> #IntegerLiteral
+    <INTEGER_LITERAL: (<DEC_LITERAL> | <BIN_LITERAL> | <OCT_LITERAL> | <HEX_LITERAL>) (<INTEGER_SUFFIX>)?> #IntegerLiteral
     |
     <#DEC_LITERAL: ["0"-"9"] (["0"-"9","_"])*>
     |
@@ -112,6 +112,8 @@ TOKEN #NumericalLiteral :
     <#OCT_LITERAL: "0o" ("_")* (["0"-"7"])* (["0"-"7","_"])*>
     |
     <#HEX_LITERAL: "0x" ("_")* (<HEX_DIGIT>|"_")*>
+    |
+    <#INTEGER_SUFFIX: 'u8' | 'u16' | 'u32' | 'u64' | 'u128' | 'usize' | 'i8' | 'i16' | 'i32' | 'i64' | 'i128' | 'isize'>
 ;
 
 TOKEN #Punctuation :
@@ -207,7 +209,8 @@ TOKEN #StringLiteral :
      (<ID>)?
   > {chopLoneUnderscore(matchedToken);}
   |
-  <BYTE_STRING_LITERAL: 'b"' (<ASCII_FOR_STRING> | <BYTE_ESCAPE> | "\\\n")* '"' (<ID>)?>
+  // REVISIT to limit it to 7-bit ASCII, not worth dealing with now
+  <BYTE_STRING_LITERAL: 'b"' ( ~['"','\\'] | <BYTE_ESCAPE> | "\\\n")* '"' (<ID>)?>
   {chopLoneUnderscore(matchedToken);}
   |
   <C_STRING_LITERAL:
@@ -259,72 +262,71 @@ TOKEN #StringLiteral :
 ;
 
 MORE:
-   <HASH_RAW_STRING_START: ("r"|"br"|"cr") ("#")+ '"'> : IN_HASH_RAW_STRING
+   <HASH_RAW_STRING_START: ("r"|"br"|"cr") ("#")+ '"'>
+   {
+      rawStringStart = matchStart;
+      int index = matchStart+1;
+      if (charAt(matchStart) != 'r') index++;
+      numStartingHashes = 0;
+      while (charAt(index++) == '#') numStartingHashes++;
+   } : IN_HASH_RAW_STRING
+   |
+   <COMMENT_START : "/*">
+   {commentStart = matchStart;} : IN_MULTILINE_COMMENT
 ;
 
 <IN_HASH_RAW_STRING>
 TOKEN:
    <RAW_STRING_LITERAL_HASH: '"#' ("#")* (<ID>)?> #StringLiteral
+   {
+      int numTrailingHashes = 0;
+      int index2 = matchStart+1;
+      while(charAt(index2++) == '#') numTrailingHashes++;
+      if (numTrailingHashes < numStartingHashes) {
+         matchedToken = null;
+      }
+      else {
+         if (numTrailingHashes > numStartingHashes) {
+             matchedToken.setEndOffset(index2 - (numTrailingHashes - numStartingHashes));
+         }
+         matchedToken.setBeginOffset(rawStringStart);
+         switchTo(LexicalState.RUST);
+      }
+   }
 ;
 
-<IN_HASH_RAW_STRING>
+<IN_HASH_RAW_STRING, IN_MULTILINE_COMMENT>
 MORE:
    <~[]>
 ;
 
+<IN_MULTILINE_COMMENT>
+MORE :
+   <START_NESTED_COMMENT: "/*"> {commentNesting++;}
+;
+
+<IN_MULTILINE_COMMENT>
+UNPARSED :
+   <MULTILINE_COMMMENT : "*/">
+   {
+      assert commentNesting >=0 : "Should be impossible!";
+      if (commentNesting > 0) {
+         commentNesting--;
+         matchedToken = null;
+      }
+      else {
+         matchedToken.setBeginOffset(commentStart);
+         switchTo(LexicalState.RUST);
+      }
+   }
+;
+
 INJECT LEXER_CLASS :
 {
-   private int hashStringLiteralStart=-1;
-
-   // token hook routine to deal with hash-delimited raw strings
-   private Token TOKEN_HOOK(Token tok) {
-      TokenType type = tok.getType();
-      if (type == RAW_STRING_LITERAL_HASH) {
-        int numStartingHashes = countStartingHashes(tok);
-        int numTrailingHashes = countTrailingHashes(tok);
-        if (numTrailingHashes < numStartingHashes) {
-            // false alarm, these hashes are just content in the string.
-            switchTo(LexicalState.IN_HASH_RAW_STRING);
-            tok.setUnparsed(true);
-            if (hashStringLiteralStart == -1) {
-                hashStringLiteralStart = tok.getBeginOffset();
-            }
-            return tok; // return unparsed token which ends up being ignored
-        }
-        if (numTrailingHashes>numStartingHashes) {
-            String image = tok.toString();
-            int extraChars = image.length()-image.lastIndexOf('#');
-            tok.truncate(extraChars + numTrailingHashes - numStartingHashes);
-        }
-        if (hashStringLiteralStart != -1) {
-            tok.setBeginOffset(hashStringLiteralStart);
-            hashStringLiteralStart=-1;
-            reset(tok);
-        }
-        chopLoneUnderscore(tok);
-      }
-      return tok;
-   }
-
-   private int countStartingHashes(Token tok) {
-     int result = 0;
-     String image = tok.toString();
-     for (int i = image.indexOf('#'); i< image.length(); i++) {
-         if (image.charAt(i) == '#')  ++result;
-         else break;
-     }
-     return result;
-   }
-
-   private int countTrailingHashes(Token tok) {
-      int result = 0;
-      String image = tok.toString();
-      for (int i = image.lastIndexOf('#'); i>0; i--) {
-         if (image.charAt(i) == '#')  ++result;
-         else break;
-      }
-      return result;
-   }
+   private int rawStringStart,
+               numStartingHashes,
+               commentStart,
+               commentNesting;
 
    // The "suffix" after a string literal cannot be a lone underscore.
    private void chopLoneUnderscore(Token tok) {
