@@ -5,7 +5,7 @@ SKIP :
   <WHITESPACE : (" "| "\t"| "\n"| "\r"| "\f")+> #Whitespace
 ;
 
-UNPARSED :
+TOKEN :
    <SHEBANG : "#!" (~["\n"])* "\n">
 ;
 
@@ -47,10 +47,8 @@ TOKEN #KeyWord :
 | < OVERRIDE: "override" >
 | < PRIV: "priv" >
 | < PUB: "pub">
-| < RAW: "raw" >
 | < REF: "ref" >
 | < RETURN: "return" >
-| < SAFE: "safe" >
 | < SELF: "self" >
 | < SELF2: "Self" >
 | < STATIC: "static" >
@@ -61,7 +59,6 @@ TOKEN #KeyWord :
 | < TRY: "try" >
 | < TYPE: "type" >
 | < TYPEOF: "typeof" >
-| < UNION: "union" >
 | < UNSAFE : "unsafe" >
 | < UNSIZED: "unsized" >
 | < USE: "use" >
