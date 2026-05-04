@@ -10,10 +10,10 @@ INCLUDE "RustLexer.ccc"
   [
     SCAN 0
     {
-        getToken(1).getType() == HASH
-        && getToken(2).getType() == EXCLAM
+        getTokenType(1) == HASH
+        && getTokenType(2) == EXCLAM
         && getToken(1).getEndOffset() == getToken(2).getBeginOffset()
-        && getToken(3).getType() != LBRACKET
+        && getTokenType(3) != LBRACKET
     }
     => ACTIVATE_TOKENS SHEBANG (<SHEBANG>)
   ]
@@ -279,27 +279,17 @@ PathIdentSegment#void : Identifier | "super" | "self" | "Self" | "crate" | "$cra
 
 GenericArgs :
    "<"
-   (
-      GenericArgsLifetimes ["," =>|+1 GenericArgsTypes] ["," =>|+1 GenericArgsBinding] [","]
-      |
-      GenericArg ("," =>|+1 GenericArg)* [","]
-      |
-//      GenericArgsTypes ["," =>|+1 GenericArgsBinding] [","]
-//      |
-      {}
-   )
-/*
    [GenericArgsLifetimes [","]]
-   [
+   (
       SCAN
       {
         (getTokenType(0) == COMMA || getTokenType(0) == LT)
         && getTokenType(1) != GT && getTokenType(1) != GT_GT
         && !((getTokenType(1)==ID || getTokenType(1)==RAW_IDENTIFIER)&&getTokenType(2) == ASSIGN)
-      } => GenericArgsTypes
-   ]
+      } => Type [","]
+   )*
    [GenericArgsBinding]
-   [","]*/
+   [","]
    [
      SCAN <GT_GT> => UNCACHE_TOKENS
    ]
@@ -313,7 +303,7 @@ GenericArgsConst : BlockExpression | ["-"] LiteralExpression | SimplePathSegment
 
 GenericArgsBinding : Identifier "=" =>|| Type ;
 
-GenericArgsLifetimes : Lifetime ("," Lifetime)* ;
+GenericArgsLifetimes : Lifetime ("," Lifetime =>||)* ;
 
 GenericArgsTypes : Type ("," =>|+1 Type)* ;
 
@@ -345,10 +335,10 @@ BlockExpression :
    "{"
    (InnerAttribute)*
    (
-    SCAN {getToken(1).getType() != RBRACE &&
-           (getToken(0).getType() == LBRACE
-           || getToken(0).getType() == RBRACE
-           || getToken(0).getType() == SEMICOLON)}
+     SCAN {getTokenType(1) != RBRACE &&
+           (getTokenType(0) == LBRACE
+           || getTokenType(0) == RBRACE
+           || getTokenType(0) == SEMICOLON)}
       =>
       Statement
    )*
@@ -358,22 +348,20 @@ BlockExpression :
 Statement :
    ";" #EmptyStatement(1)
    |
-   LetStatement
-   |
+//   LetStatement
+//   |
    MacroRulesDefinition
    |
    (OuterAttribute)* VisItem =>||
    |
+   Expression
    (
-     Expression
-     (
-       SCAN {getToken(0).getType() == RBRACE} => {}
+       SCAN {getTokenType(0) == RBRACE} => {}
        |
-      ";"
+      ";" #ExpressionStatement(+1)
       |
       {}
-     )
-   ) #ExpressionStatement(>1)
+   )
 ;
 
 Type :
@@ -485,6 +473,8 @@ Expression :
         IfLetExpression
         |
         IfExpression
+        |
+        LetStatement
         |
         MatchExpression
    )
@@ -870,7 +860,7 @@ INJECT PARSER_CLASS : {
 DelimTokenTree :
     ("("|"["|"{")
     {
-        startDelim = getToken(0).getType();
+        startDelim = getTokenType(0);
         delimNesting = 0;
         if (startDelim == LPAREN) endDelim = RPAREN;
         else if (startDelim == LBRACKET) endDelim = RBRACKET;
@@ -880,7 +870,7 @@ DelimTokenTree :
         SCAN {delimNesting > 0 || !checkNextTokenType(endDelim)}# =>
         AnyToken
         {
-            TokenType tt = getToken(0).getType();
+            TokenType tt = getTokenType(0);
             if (tt == startDelim) ++delimNesting;
             else if (tt == endDelim) --delimNesting;
         }#
