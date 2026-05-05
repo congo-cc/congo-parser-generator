@@ -288,3 +288,6 @@ The goal is to provide detailed guidence to users on what Rust support is availa
 3. Enhance examples/arithmetic/rust-saved/arith2/README.md:
     1. Add a detailed explanation of how to use synthetic tokens and nodes based on synthetic_struct2_test.rs.
 
+# SqlExpr Example
+
+The examples/sqlexpr directory specifies a SQL Expression language in the SqlExprParser.ccc grammar file.  The README.md file explains how to generate the parser's Rust source code and how to compile the Rust parser.  The source code generated successfully, but the code fails to compile.  Please analyze the compilation error and suggest how the parser-generator can be fixed to output proper Rust code.  Absolutely no regression can take place anywhere in CongoCC.  In particular, all example Rust parsers must be regenerated from scratch and pass all their tests after the fix is applied.  Please generate a plan for review before implementing any fix.

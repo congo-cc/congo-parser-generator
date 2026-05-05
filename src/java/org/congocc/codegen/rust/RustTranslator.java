@@ -208,6 +208,17 @@ public class RustTranslator extends Translator {
     @Override
     protected void translateInvocation(ASTInvocation expr, StringBuilder result) {
         String name = expr.getMethodName();
+        ASTExpression receiver = expr.getReceiver();
+
+        // Always emit the receiver first (when present), so that `list.add(t)`
+        // becomes `list.push(t)` and not the receiverless `push(t)`.  Bare
+        // calls without a receiver (e.g. `peekNode()` from a Java code action)
+        // continue to emit just the method name, matching Java's implicit-this
+        // semantics in grammar action blocks.
+        if (receiver != null) {
+            internalTranslateExpression(receiver, TranslationContext.UNKNOWN, result);
+            result.append('.');
+        }
 
         // Map common Java method names to Rust equivalents
         if (name != null) {
@@ -266,14 +277,8 @@ public class RustTranslator extends Translator {
             }
         }
 
-        // Fall through: translate the receiver and emit a snake_case method call.
-        // The receiver (object the method is called on) is translated first,
-        // followed by '.' and the snake_case method name with arguments.
-        ASTExpression receiver = expr.getReceiver();
-        if (receiver != null) {
-            internalTranslateExpression(receiver, TranslationContext.UNKNOWN, result);
-            result.append('.');
-        }
+        // Fall through: emit the snake_case method name with arguments.  The
+        // receiver (if any) was already emitted above.
         if (name != null) {
             result.append(camelToSnake(name).toLowerCase());
         }

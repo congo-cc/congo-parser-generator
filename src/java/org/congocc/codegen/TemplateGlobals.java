@@ -255,17 +255,38 @@ public class TemplateGlobals {
         if (javaSource.contains("EnumSet.of")) return true;
         if (javaSource.contains(".equals(")) return true;
         if (javaSource.contains("hasMatch(")) return true;
+        // Java collection mutation: list.add(x), set.add(x), map.put(...).
+        // The arena AST has no Java-style ArrayList/HashSet/HashMap locals, so
+        // these calls cannot be safely translated.  The local variable they
+        // operate on is almost always a production-local Java variable whose
+        // declaration already FIXME'd out for being an untranslatable type.
+        if (javaSource.contains(".add(")) return true;
+        // Java's `null` does not have a clean Rust analog: `x = null` requires
+        // `x: Option<T>`, and `x == null`/`x != null` need `is_none()`/`is_some()`.
+        // The naive translation `x = None` is type-incorrect against the default
+        // `String`/`bool`/`i32` declarations that `emitDefaultDeclarationsForFIXME`
+        // emits for production-local Java variables.  No working grammar uses
+        // `null` in a code-action or lookahead expression, so a plain keyword
+        // check does not regress any existing example.
+        if (NULL_KEYWORD_PATTERN.matcher(javaSource).find()) return true;
         return false;
     }
+
+    // Matches the bare Java `null` keyword (word-bounded so we don't false-match
+    // on identifiers like `nullable` or `isNull`).
+    private static final Pattern NULL_KEYWORD_PATTERN = Pattern.compile("\\bnull\\b");
 
     // Regex patterns indicating broken Java-to-Rust translation output.
     // Double method call: some_method.some_method( — from incorrect camelCase decomposition.
     // Matches with or without a leading dot.
     private static final Pattern DOUBLE_METHOD_PATTERN =
         Pattern.compile("\\b([a-z_]+)\\.\\1\\(");
-    // All-caps Java identifiers incorrectly snake_cased: p_u_b_l_i_c, f_i_n_a_l, etc.
+    // All-caps Java identifiers incorrectly snake_cased: t_r_u_e (TRUE), n_u_l_l
+    // (NULL), f_a_l_s_e (FALSE), p_u_b_l_i_c (PUBLIC), etc.  Matches three or
+    // more single lowercase letters separated by underscores; the original
+    // 4-letter-only pattern missed 5+ letter constants like FALSE.
     private static final Pattern OVER_SNAKE_CASED_PATTERN =
-        Pattern.compile("\\b[a-z]_[a-z]_[a-z]_[a-z]\\b");
+        Pattern.compile("\\b[a-z](?:_[a-z]){2,}\\b");
 
     /**
      * Heuristic check for Java-to-Rust translations that are syntactically
@@ -354,9 +375,11 @@ public class TemplateGlobals {
      * code action that could not be translated to Rust.  The block comment is
      * valid Rust syntax anywhere (inside functions, match arms, etc.).
      */
-    // Matches Java variable declarations: boolean varName, int varName, String varName
+    // Matches Java variable declarations of supported scalar types, including
+    // comma-separated lists: "String t, u" or "boolean a, b, c".  Group 2 is
+    // the full name list (still containing commas); the caller splits on `,`.
     private static final Pattern JAVA_VAR_DECL_PATTERN =
-        Pattern.compile("\\b(boolean|int|long|String)\\s+([a-zA-Z_]\\w*)\\b");
+        Pattern.compile("\\b(boolean|int|long|String)\\s+([a-zA-Z_]\\w*(?:\\s*,\\s*[a-zA-Z_]\\w*)*)");
 
     private void emitCodeBlockFIXME(Node codeBlock, int indent, StringBuilder result) {
         String pad = " ".repeat(Math.max(indent * 4, 8));
@@ -387,7 +410,7 @@ public class TemplateGlobals {
         java.util.regex.Matcher m = JAVA_VAR_DECL_PATTERN.matcher(javaSource);
         while (m.find()) {
             String javaType = m.group(1);
-            String javaName = m.group(2);
+            String nameList = m.group(2);
             String rustType, rustDefault;
             switch (javaType) {
                 case "boolean": rustType = "bool"; rustDefault = "false"; break;
@@ -396,9 +419,12 @@ public class TemplateGlobals {
                 case "String": rustType = "String"; rustDefault = "String::new()"; break;
                 default: continue;
             }
-            String rustName = translator.translateIdentifier(javaName, Translator.TranslationContext.VARIABLE);
-            result.append(pad).append("let mut ").append(rustName).append(": ")
-                  .append(rustType).append(" = ").append(rustDefault).append(";\n");
+            // Split the name list on commas; "String t, u" -> ["t", "u"].
+            for (String javaName : nameList.split("\\s*,\\s*")) {
+                String rustName = translator.translateIdentifier(javaName.trim(), Translator.TranslationContext.VARIABLE);
+                result.append(pad).append("let mut ").append(rustName).append(": ")
+                      .append(rustType).append(" = ").append(rustDefault).append(";\n");
+            }
         }
     }
 
