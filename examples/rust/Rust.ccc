@@ -39,11 +39,14 @@ OuterAttribute :
 ;
 
 Item :
+  (OuterAttribute)*
+  (
+    MacroRulesDefinition
+    |
     MacroInvocationSemi
     |
-    MacroRulesDef
-    |
     VisItem
+  )
 ;
 
 Attr :
@@ -52,7 +55,7 @@ Attr :
 ;
 
 AttrInput :
-   "=" LiteralExpression // no suffix?
+   "=" LiteralExpression // no suffix? REVISIT, I guess
    |
    DelimTokenTree
 ;
@@ -79,10 +82,24 @@ LiteralExpression :
    "false"
 ;
 
-VisItem :
+VisItemLA#scan :
    (OuterAttribute)*
    [Visibility]
-   =>|+1
+   (
+     "use" | "type" | "struct" | "enum" | 'union' | "const" | "static"
+     |
+     ["unsafe"] ("mod" |"trait"|"impl" | "extern") =>||
+     |
+     "extern" "crate" =>||
+     |
+     FunctionQualifiers "fn" =>||
+   )
+;
+
+VisItem :
+   ENSURE (VisItemLA)
+   (OuterAttribute)*
+   [Visibility]
    (
       Module
       |
@@ -219,7 +236,13 @@ Function :
 ;
 
 
-FunctionQualifiers : ["const"] ["async"] ["unsafe"] ["extern" [Abi]] ;
+FunctionQualifiers :
+   ["const"]
+   ["async"]
+   ["unsafe"]
+   ["extern"
+   [Abi]]
+;
 
 FunctionParameters :
    SelfParam [","] ENSURE ~(FunctionParam) =>||
@@ -257,7 +280,7 @@ GenericParams : "<" [GenericParam ("," =>|+1 GenericParam)* [","]]  ">" ;
 
 GenericParam :  (OuterAttribute)* (TypeParam | ConstParam | LifetimeParam) ;
 
-TypeParam : [OuterAttribute] Identifier [":" [TypeParamBounds]] ["=" Type] ;
+TypeParam : Identifier [":" [TypeParamBounds]] ["=" Type] ;
 
 TypeParamBounds : TypeParamBound ("+" =>|+1 TypeParamBound)* ["+"] ;
 
@@ -314,7 +337,6 @@ TypePathInputs : Type ("," =>|+1 Type)* [","] ;
 ConstParam : "const" Identifier ":" Type ;
 
 LifetimeParam :
-    [OuterAttribute]
     <LIFETIME_OR_LABEL>
     [":" LifetimeBounds]
 ;
@@ -335,11 +357,10 @@ BlockExpression :
    "{"
    (InnerAttribute)*
    (
-     SCAN {getTokenType(1) != RBRACE &&
-           (getTokenType(0) == LBRACE
-           || getTokenType(0) == RBRACE
-           || getTokenType(0) == SEMICOLON)}
-      =>
+      SCAN ~("}") =>
+      // TODO: No check herefor whether
+      // the previous element was necessarily the
+      // last one
       Statement
    )*
    "}"
@@ -348,16 +369,14 @@ BlockExpression :
 Statement :
    ";" #EmptyStatement(1)
    |
-//   LetStatement
-//   |
    MacroRulesDefinition
    |
-   (OuterAttribute)* VisItem =>||
+   VisItem
    |
    Expression
    (
-       SCAN {getTokenType(0) == RBRACE} => {}
-       |
+      SCAN {getTokenType(0) == RBRACE} => {}
+      |
       ";" #ExpressionStatement(+1)
       |
       {}
@@ -444,6 +463,8 @@ MaybeNamedParam : (OuterAttribute)* [(Identifier | <UNDERSCORE>) ":" =>||] Type 
 
 MaybeNamedFunctionParametersVariadic : (MaybeNamedParam ",")+ (OuterAttribute)* "...";
 
+NotFieldsExpression : Expression ;
+
 Expression :
    (OuterAttribute)*
    =>|+1
@@ -454,27 +475,28 @@ Expression :
         |
         ContinueExpression
         |
+        SCAN ~\NotFieldsExpression =>
         FieldsStructExpression =>||
         |
         //StructExpression =>||
         //|
         //   EnumerationVariantExpression =>||
         //   |
-        AssignmentExpression
-        |
         ClosureExpression
         |
-        AsyncBlockExpression
-        |
-        UnsafeBlockExpression
-        |
-        LoopExpression
-        |
+//        AsyncBlockExpression
+//        |
+//        UnsafeBlockExpression
+//        |
+//        LoopExpression
+//        |
         IfLetExpression
         |
         IfExpression
         |
         LetStatement
+        |
+        AssignmentExpression
         |
         MatchExpression
    )
@@ -483,7 +505,7 @@ Expression :
 BaseExpression :
     (
         (MacroInvocation|LiteralExpression | PathExpression | ParentheticalExpression
-         | ArrayExpression | BlockExpression)
+         | ArrayExpression | AsyncBlockExpression | BlockExpression | LoopExpression | UnsafeBlockExpression)
         (
             "." PathExprSegment "(" =>|| [CallParams] ")" #MethodCall(+1)
             |
@@ -514,13 +536,11 @@ ArrayElements :
 ;
 
 UnaryExpression :
-   ("-" | "!" | "*" | "&" | "&&" | "mut") UnaryExpression
+   (OuterAttribute)*
+   ("-" | "!" | "*" | "&" | "&&" | "mut") =>|| UnaryExpression
    |
    BaseExpression
 ;
-
-
-//[("!")+ | ("-")+ | "*" | "&" | "&&"] DereferenceExpression ;
 
 TypeCastExpression : UnaryExpression ["as" TypeNoBounds] ;
 
@@ -543,15 +563,13 @@ LazyAndExpression : ComparisonExpression ("&&" ComparisonExpression)* ;
 LazyOrExpression : LazyAndExpression ("||" LazyAndExpression)* ;
 
 RangeExpression :
-    ".." [LazyOrExpression]
-    |
-    "..=" LazyOrExpression
+    (".."|"..=")
+    [LazyOrExpression]
     |
     LazyOrExpression
     [
-        ".." [LazyOrExpression]
-        |
-        "..=" LazyOrExpression
+        (".."|"..=")
+        [ENSURE ~("{") LazyOrExpression]
     ]
 ;
 
@@ -628,14 +646,14 @@ InfiniteLoopExpression : "loop" BlockExpression ;
 
 WhileExpression : "while" Expression BlockExpression ;
 
-WhileLetExpression : "while" "let" =>|| Pattern "=" Expression BlockExpression ;
+WhileLetExpression : "while" "let" =>|| Pattern "=" NotFieldsExpression BlockExpression ;
 
 ForExpression : "for" Pattern "in" Expression BlockExpression ;
 
 IfExpression : "if" Expression BlockExpression ["else" (BlockExpression | IfLetExpression | IfExpression)] ;
 
 IfLetExpression :
-    "if" "let" =>|| Pattern "=" Expression BlockExpression
+    "if" "let" =>|| Pattern "=" NotFieldsExpression BlockExpression
     [
         "else" (BlockExpression | IfLetExpression | IfExpression)
     ]
@@ -673,12 +691,12 @@ PatternNoTopAlt : RangePattern | PatternWithoutRange ;
 
 PatternWithoutRange :
     MacroInvocation
+    | RestPattern
     | LiteralPattern
     | TupleStructPattern
     | StructPattern
     | IdentifierPattern
     | WildcardPattern
-    | RestPattern
     | ReferencePattern
     | TuplePattern
     | GroupedPattern
@@ -721,15 +739,17 @@ QualifiedPathInExpression : QualifiedPathType ("::" PathExprSegment)+ ;
 StructPatternElements :
     StructPatternEtcetera
     |
-    StructPatternFields ["," StructPatternEtcetera]
+    StructPatternFields ["," StructPatternEtcetera =>||]
 ;
 
 StructPatternEtcetera : (OuterAttribute)* ".." =>|| ;
 
-StructPatternFields : StructPatternField ("," =>|+1 StructPatternField)* [","];
+StructPatternFields : StructPatternField ("," =>|+1 StructPatternField)*
+    [SCAN 0 {getTokenType(1) == COMMA && getTokenType(2) != DOT_DOT} => ","];
 
 StructPatternField :
     (OuterAttribute)*
+    =>|+1
     (
         <INTEGER_LITERAL> ":" Pattern
         |
@@ -833,14 +853,7 @@ Visibility :
    ]
 ;
 
-MacroItem :
-   MacroRulesDefinition
-   |
-   MacroInvocationSemi
-;
-
 MacroInvocationSemi :
-   (OuterAttribute)*
    SimplePath "!" =>|+1
    DelimTokenTree
    [SCAN 0 {endDelim != RBRACE} => ";"]
@@ -853,29 +866,46 @@ SimplePathSegment : Identifier | "super" | "self" | "crate" | "$crate" ;
 MacroInvocation: SimplePath "!" =>|+1 DelimTokenTree ;
 
 INJECT PARSER_CLASS : {
-    private TokenType startDelim, endDelim;
-    private int delimNesting;
+    private TokenType startDelim, endDelim, mostNestedDelim;
+    private int parenthesisNesting, bracketNesting, braceNesting, delimNesting;
 }
 
 DelimTokenTree :
     ("("|"["|"{")
     {
         startDelim = getTokenType(0);
-        delimNesting = 0;
-        if (startDelim == LPAREN) endDelim = RPAREN;
-        else if (startDelim == LBRACKET) endDelim = RBRACKET;
-        else if (startDelim == LBRACE) endDelim = RBRACE;
+        parenthesisNesting = bracketNesting = braceNesting = 0;
+        switch(getTokenType(0)) {
+            case LPAREN : endDelim = RPAREN; break;
+            case LBRACKET : endDelim = RBRACKET; break;
+            case LBRACE : endDelim = RBRACE; break;
+            default : assert false : "This should be impossible!";
+        }
     }#
     (
-        SCAN {delimNesting > 0 || !checkNextTokenType(endDelim)}# =>
+        SCAN {delimNesting >0 || !checkNextTokenType(endDelim)}# =>
         AnyToken
         {
-            TokenType tt = getTokenType(0);
-            if (tt == startDelim) ++delimNesting;
-            else if (tt == endDelim) --delimNesting;
+            if (getTokenType(0) == startDelim) delimNesting++;
+            else if (getTokenType(0) == endDelim) delimNesting--;
+            switch(getTokenType(0)) {
+                case LPAREN : ++parenthesisNesting;break;
+                case RPAREN : --parenthesisNesting;break;
+                case LBRACE : ++braceNesting;break;
+                case RBRACE : --braceNesting;break;
+                case LBRACKET : ++bracketNesting;break;
+                case RBRACKET : --bracketNesting;break;
+            }
         }#
+        ASSERT {parenthesisNesting >=0 && braceNesting>=0 && bracketNesting >=0
+                : "This content has imbalanced delimiters!"
+               }
+
     )*
     (")"|"]"|"}")
+    ASSERT {parenthesisNesting ==0 && braceNesting==0 && bracketNesting ==0
+               : "This content has imbalanced delimiters!"
+           }
 ;
 
 AnyToken#void :
@@ -908,14 +938,19 @@ AnyToken#void :
 
 MacroTranscriber# : DelimTokenTree ;
 
-MacroRulesDefinition : (OuterAttribute)* 'macro_rules' =>|| "!" MacroRulesDef ;
+MacroRulesDefinition : 'macro_rules'  "!" Identifier =>|+1 MacroRulesDef ;
 
 MacroRulesDef :
+  DelimTokenTree
+  [SCAN 0 {endDelim == RPAREN || endDelim == RBRACKET} => ";"]
+/*
+  (
    "(" MacroRules ")" ";"
    |
    "[" MacroRules "]" ";"
    |
    "{" MacroRules "}"
+  )*/
 ;
 
 MacroRules : MacroRule (";" =>|+1 MacroRule)* [";"] ;
