@@ -291,3 +291,16 @@ The goal is to provide detailed guidence to users on what Rust support is availa
 # SqlExpr Example
 
 The examples/sqlexpr directory specifies a SQL Expression language in the SqlExprParser.ccc grammar file.  The README.md file explains how to generate the parser's Rust source code and how to compile the Rust parser.  The source code generated successfully, but the code fails to compile.  Please analyze the compilation error and suggest how the parser-generator can be fixed to output proper Rust code.  Absolutely no regression can take place anywhere in CongoCC.  In particular, all example Rust parsers must be regenerated from scratch and pass all their tests after the fix is applied.  Please generate a plan for review before implementing any fix.
+
+# Pretty Print Test Generation
+
+Please generate a set of tests that verify that pretty printing works as expected.  The each test should contain two logical operators (AND, OR, NOT) randomly chosen and at least two relational or comparison operators.  Every expression type should be tested at least once.  The pretty printed output should be validated against the expected output.  When "cargo test" is issued, only the standard summary results should be displayed.  When "cargo test -- --nocapture" is issued, then the pretty printed AST should be displayed.  Put all tests in the tests/pretty_parse_test.rs file.    
+
+cargo test --test pretty_parse_test -- --test-threads 1 --nocapture
+
+# Lexer Test Generation
+
+Please generate a comprehensive set of positive and negative tests for the public interface of the Lexer and Token implemenations in lexer.rs.  Put all tests in the tests/lexer_test.rs.
+
+cargo test --test lexer_test --  --nocapture
+
