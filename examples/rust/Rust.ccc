@@ -159,9 +159,9 @@ ClosureExpression :
    )
    =>||
    (
-      Expression
-      |
       "->" TypeNoBounds BlockExpression
+      |
+      Expression
    )
 ;
 
@@ -463,7 +463,7 @@ MaybeNamedParam : (OuterAttribute)* [(Identifier | <UNDERSCORE>) ":" =>||] Type 
 
 MaybeNamedFunctionParametersVariadic : (MaybeNamedParam ",")+ (OuterAttribute)* "...";
 
-NotFieldsExpression : Expression ;
+ExpressionNotStruct : Expression ;
 
 Expression :
    (OuterAttribute)*
@@ -475,21 +475,16 @@ Expression :
         |
         ContinueExpression
         |
-        SCAN ~\NotFieldsExpression =>
+        SCAN ~\ExpressionNotStruct =>
         FieldsStructExpression =>||
         |
-        //StructExpression =>||
+//        SCAN ~\ExpressionNotStruct =>
+//        StructExpression =>||
+//        |
+        //EnumerationVariantExpression =>||
         //|
-        //   EnumerationVariantExpression =>||
-        //   |
         ClosureExpression
         |
-//        AsyncBlockExpression
-//        |
-//        UnsafeBlockExpression
-//        |
-//        LoopExpression
-//        |
         IfLetExpression
         |
         IfExpression
@@ -504,8 +499,16 @@ Expression :
 
 BaseExpression :
     (
-        (MacroInvocation|LiteralExpression | PathExpression | ParentheticalExpression
-         | ArrayExpression | AsyncBlockExpression | BlockExpression | LoopExpression | UnsafeBlockExpression)
+        (MacroInvocation
+        |LiteralExpression
+        | PathExpression
+        | ParentheticalExpression
+        | ArrayExpression
+        | AsyncBlockExpression
+        | BlockExpression
+        | LoopExpression
+        | UnsafeBlockExpression
+        |FieldsStructExpression) // Is this right?
         (
             "." PathExprSegment "(" =>|| [CallParams] ")" #MethodCall(+1)
             |
@@ -644,33 +647,37 @@ LoopLabel : <LIFETIME_OR_LABEL> ":" ;
 
 InfiniteLoopExpression : "loop" BlockExpression ;
 
-WhileExpression : "while" Expression BlockExpression ;
+WhileExpression : "while" ExpressionNotStruct BlockExpression ;
 
-WhileLetExpression : "while" "let" =>|| Pattern "=" NotFieldsExpression BlockExpression ;
+WhileLetExpression : "while" "let" =>|| Pattern "=" ExpressionNotStruct BlockExpression ;
 
-ForExpression : "for" Pattern "in" Expression BlockExpression ;
+ForExpression : "for" Pattern "in" ExpressionNotStruct BlockExpression ;
 
-IfExpression : "if" Expression BlockExpression ["else" (BlockExpression | IfLetExpression | IfExpression)] ;
+IfExpression : "if" ExpressionNotStruct BlockExpression ["else" (BlockExpression | IfLetExpression | IfExpression)] ;
 
 IfLetExpression :
-    "if" "let" =>|| Pattern "=" NotFieldsExpression BlockExpression
+    "if" "let" =>|| Pattern "=" ExpressionNotStruct BlockExpression
     [
         "else" (BlockExpression | IfLetExpression | IfExpression)
     ]
 ;
 
-MatchExpression : "match" Expression "{" (InnerAttribute)* [MatchArms] "}" ;
-
-MatchArms : (MatchArm "=>" =>|+1 MatchArmExpression)+ [","] ;
-
-MatchArmExpression :
+MatchExpression :
+    "match"
     Expression
-    [SCAN {getToken(0).getType() != RBRACE || !checkNextTokenType(RBRACE)} => ","]
+    "{"
+    (InnerAttribute)*
+    (
+        SCAN ~("}") =>
+        MatchArm
+        "=>"
+        Expression
+        [","]
+    )*
+    "}"
 ;
 
-MatchArm : (OuterAttribute)* Pattern [MatchArmGuard] ;
-
-MatchArmGuard : "if" Expression ;
+MatchArm : (OuterAttribute)* Pattern ["if" Expression] ;
 
 LetStatement :
   (OuterAttribute)*

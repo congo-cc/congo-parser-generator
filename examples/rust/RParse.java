@@ -90,8 +90,6 @@ public class RParse {
         });
     }
 
-
-
     static public void parseFile(Path path) {
         try {
             RustParser parser = new RustParser(path);
@@ -110,9 +108,9 @@ public class RParse {
                 System.out.println("Successfully parsed " + successes.size() + " files...");
             }
         }
-        catch (Exception e) {
+        catch (Throwable t) {
           failures.add(path);
-          e.printStackTrace();
+//          t.printStackTrace();
         }
     }
 
