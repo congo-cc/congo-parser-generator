@@ -463,7 +463,14 @@ MaybeNamedParam : (OuterAttribute)* [(Identifier | <UNDERSCORE>) ":" =>||] Type 
 
 MaybeNamedFunctionParametersVariadic : (MaybeNamedParam ",")+ (OuterAttribute)* "...";
 
-ExpressionNotStruct : Expression ;
+ExpressionNotStruct#void : Expression ;
+
+ExpressionNoSuffix#void :
+
+   Expression
+;
+
+ExpressionWithoutBlock : {} ;
 
 Expression :
    (OuterAttribute)*
@@ -477,10 +484,11 @@ Expression :
         |
         SCAN ~\ExpressionNotStruct =>
         FieldsStructExpression =>||
+        [
+           SCAN ~\ExpressionNoSuffix =>
+           (BaseExpressionSuffix)+
+        ]
         |
-//        SCAN ~\ExpressionNotStruct =>
-//        StructExpression =>||
-//        |
         //EnumerationVariantExpression =>||
         //|
         ClosureExpression
@@ -491,9 +499,13 @@ Expression :
         |
         LetStatement
         |
-        AssignmentExpression
-        |
         MatchExpression
+        [
+           SCAN ~\ExpressionNoSuffix =>
+           (BaseExpressionSuffix)+
+        ]
+        |
+        AssignmentExpression
    )
 ;
 
@@ -507,25 +519,26 @@ BaseExpression :
         | AsyncBlockExpression
         | BlockExpression
         | LoopExpression
-        | UnsafeBlockExpression
-        |FieldsStructExpression) // Is this right?
-        (
-            "." PathExprSegment "(" =>|| [CallParams] ")" #MethodCall(+1)
-            |
-            "." Identifier =>|| #FieldExpression(+1)
-            |
-            "." "await" =>|| #AwaitExpression(+1)
-            |
-            SCAN "." (<INTEGER_LITERAL> | <FLOATING_POINT_LITERAL>) =>
-            "." DEACTIVATE_TOKENS FLOATING_POINT_LITERAL (<INTEGER_LITERAL>) #TupleIndexingExpression(+1)
-            |
-            "(" [CallParams] ")" #CallExpression(+1)
-            |
-            "[" Expression "]" #IndexExpression(+1)
-            |
-            "?" #ErrorPropagationExpression(+1)
-        )*
+        | UnsafeBlockExpression)
     )
+    (BaseExpressionSuffix)*
+;
+
+BaseExpressionSuffix#void :
+    "." PathExprSegment "(" =>|| [CallParams] ")" #MethodCall(+1)
+    |
+    "." Identifier =>|| #FieldExpression(+1)
+    |
+    "." "await" =>|| #AwaitExpression(+1)
+    |
+    SCAN "." (<INTEGER_LITERAL> | <FLOATING_POINT_LITERAL>) =>
+    "." DEACTIVATE_TOKENS FLOATING_POINT_LITERAL (<INTEGER_LITERAL>) #TupleIndexingExpression(+1)
+    |
+    "(" [CallParams] ")" #CallExpression(+1)
+    |
+    "[" Expression "]" #IndexExpression(+1)
+    |
+    "?" #ErrorPropagationExpression(+1)
 ;
 
 ParentheticalExpression : "(" (InnerAttribute)* [Expression ("," =>|+1 Expression)*] [","]")" ;
@@ -533,9 +546,12 @@ ParentheticalExpression : "(" (InnerAttribute)* [Expression ("," =>|+1 Expressio
 ArrayExpression : "[" (InnerAttribute)* [ArrayElements] "]" ;
 
 ArrayElements :
-    Expression ";" =>|| Expression
-    |
-    Expression ("," =>|+1 Expression)* [","]
+    Expression
+    (
+        ";" Expression
+        |
+        ("," =>|+1 Expression)* [","]
+    )
 ;
 
 UnaryExpression :
@@ -561,7 +577,7 @@ OrExpression : CaretExpression ("|" CaretExpression)* ;
 
 ComparisonExpression : OrExpression [(">"|">="|"<"|"<="|"=="|"!=") OrExpression] ;
 
-LazyAndExpression : ComparisonExpression ("&&" ComparisonExpression)* ;
+LazyAndExpression : ComparisonExpression (ENSURE ~("&&" "let") "&&" ComparisonExpression)* ;
 
 LazyOrExpression : LazyAndExpression ("||" LazyAndExpression)* ;
 
@@ -653,10 +669,18 @@ WhileLetExpression : "while" "let" =>|| Pattern "=" ExpressionNotStruct BlockExp
 
 ForExpression : "for" Pattern "in" ExpressionNotStruct BlockExpression ;
 
-IfExpression : "if" ExpressionNotStruct BlockExpression ["else" (BlockExpression | IfLetExpression | IfExpression)] ;
+IfExpression :
+    "if"
+    ExpressionNotStruct
+    ("&&" LetExp)* // Note that this is a bleeding edge language feature
+    BlockExpression
+    ["else" (BlockExpression | IfLetExpression | IfExpression)]
+;
 
 IfLetExpression :
-    "if" "let" =>|| Pattern "=" ExpressionNotStruct BlockExpression
+    "if" "let" =>|| Pattern "=" ExpressionNotStruct
+    ("&&" LetExp)* // Note that this is a bleeding edge language feature
+    BlockExpression
     [
         "else" (BlockExpression | IfLetExpression | IfExpression)
     ]
@@ -679,18 +703,24 @@ MatchExpression :
 
 MatchArm : (OuterAttribute)* Pattern ["if" Expression] ;
 
-LetStatement :
-  (OuterAttribute)*
+LetExp :
   "let"
-  =>||
   PatternNoTopAlt [":" Type]
   ["=" Expression]
-  ["else" BlockExpression] // Note that this is since Rust 1.65.0 (November 2022)
+;
+
+LetStatement :
+   (OuterAttribute)*
+   =>|+1
+   LetExp
+   ["else" BlockExpression] // Note that this is since Rust 1.65.0 (November 2022)
                            // Also note that the else block
                            // cannot just fall through. It must
                            // exit via return or break or panic!
-  ";"
+   ";"
 ;
+
+
 
 Pattern : ["|"] PatternNoTopAlt ("|" PatternNoTopAlt)* ;
 
@@ -917,7 +947,7 @@ DelimTokenTree :
 
 AnyToken#void :
   "_"|"abstract"|"as"|"async"|"await"
-  | "become"|"box"|"const"|"continue"
+  | "become"|"const"|"continue"
   | "crate"|"$crate"|"do"|"dyn"|"else"
   | "enum"|"extern"|"false"|"final"|"fn"
   | "for"|"if"|"impl"|"in"|"let"|"loop"
@@ -941,6 +971,7 @@ AnyToken#void :
   | <STRING_LITERAL>|<BYTE_STRING_LITERAL>
   | <C_STRING_LITERAL>|<RAW_STRING_LITERAL_HASH>
   | <ID>|<RAW_IDENTIFIER>|<LIFETIME_OR_LABEL>
+  |<UNDERLINE_LIFETIME>
 ;
 
 MacroTranscriber# : DelimTokenTree ;
@@ -986,7 +1017,7 @@ MacroMatch :
 MacroRepSep#void : SCAN ~("("|"{"|"["|")"|"}"|"]"|"*"|"+"|"?") => AnyToken ;
 
 IdentifierOrKeywordButNotCrate#void :
-    DEACTIVATE_TOKENS ABSTRACT, AS, ASYNC, AWAIT, BECOME, BOX, CONST
+    DEACTIVATE_TOKENS ABSTRACT, AS, ASYNC, AWAIT, BECOME, CONST
                       CONTINUE, DO, DYN, ELSE, ENUM
                       EXTERN, FALSE, FINAL, FN, FOR, IF, IMPL,
                       LET, LOOP, MACRO, MATCH, MOD,
