@@ -55,7 +55,7 @@ Attr :
 ;
 
 AttrInput :
-   "=" LiteralExpression // no suffix? REVISIT, I guess
+   "=" Expression
    |
    DelimTokenTree
 ;
@@ -317,12 +317,8 @@ GenericArgs :
    "<"
    [GenericArgsLifetimes [","]]
    (
-      SCAN
-      {
-        (getTokenType(0) == COMMA || getTokenType(0) == LT)
-        && getTokenType(1) != GT && getTokenType(1) != GT_GT
-        && !((getTokenType(1)==ID || getTokenType(1)==RAW_IDENTIFIER)&&getTokenType(2) == ASSIGN)
-      } => Type [","]
+      ENSURE ~(Identifier [GenericArgs] "=")
+      GenericArg
    )*
    [GenericArgsBinding]
    [","]
@@ -333,15 +329,24 @@ GenericArgs :
    (">")
 ;
 
-GenericArg : Lifetime | GenericArgsBinding | Type | GenericArgsConst ;
+//GenericArg : Lifetime | GenericArgsBinding | Type | GenericArgsConst ;
+//GenericArgsConst : BlockExpression | ["-"] LiteralExpression | SimplePathSegment ;
+//GenericArgsTypes : Type ("," =>|+1 Type)* ;
 
-GenericArgsConst : BlockExpression | ["-"] LiteralExpression | SimplePathSegment ;
+GenericArg :
+    SCAN
+    {
+        (getTokenType(0) == COMMA || getTokenType(0) == LT)
+        && getTokenType(1) != GT && getTokenType(1) != GT_GT
+        && !((getTokenType(1)==ID || getTokenType(1)==RAW_IDENTIFIER)&&getTokenType(2) == ASSIGN)
+    }
+    => Type [","]
+;
 
-GenericArgsBinding : Identifier "=" =>|| Type ;
+GenericArgsBinding : Identifier [GenericArgs] "=" =>|| Type ;
 
 GenericArgsLifetimes : Lifetime ("," Lifetime =>||)* ;
 
-GenericArgsTypes : Type ("," =>|+1 Type)* ;
 
 TypePathFn : "(" [TypePathInputs] ")" ["->" Type] ;
 
