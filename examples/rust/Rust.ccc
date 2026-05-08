@@ -146,8 +146,22 @@ AssociatedItem :
    (
       MacroInvocationSemi
       |
-      [Visibility] ( TypeAlias | ConstantItem | Function)
+      [Visibility]
+      (
+        Function
+        |
+        ConstantItem
+        |
+        SCAN ~\Trait => TypeAlias
+        |
+        //SCAN \Trait => (ENSURE ("type") AssociatedTypeBound =>|| | {System.out.println("OH, FUCK!");})
+        SCAN \Trait => AssociatedTypeBound
+      )
    )
+;
+
+AssociatedTypeBound : // REVISIT production is surely incomplete
+   "type" Identifier [":" Type] [WhereClause] ";"
 ;
 
 ClosureExpression :
@@ -221,8 +235,6 @@ Implementation : TraitImpl | InherentImpl ;
 InherentImpl : "impl" [GenericParams] Type [WhereClause] "{" (InnerAttribute)* (AssociatedItem)* "}" ;
 
 TraitImpl : ["unsafe"] "impl" [GenericParams] ["!"] TypePath "for" =>|| Type [WhereClause] "{" (InnerAttribute)* (AssociatedItem)* "}" ;
-
-AssociatedItem : (OuterAttribute)* (MacroInvocationSemi | [Visibility] (TypeAlias | Function | ConstantItem)) ;
 
 TypeAlias : "type" Identifier [GenericParams] [WhereClause] ["=" Type] ";" ;
 
@@ -465,10 +477,7 @@ MaybeNamedFunctionParametersVariadic : (MaybeNamedParam ",")+ (OuterAttribute)* 
 
 ExpressionNotStruct#void : Expression ;
 
-ExpressionNoSuffix#void :
-
-   Expression
-;
+BlockNoPostfix#void : Expression ;
 
 ExpressionWithoutBlock : {} ;
 
@@ -484,10 +493,7 @@ Expression :
         |
         SCAN ~\ExpressionNotStruct =>
         FieldsStructExpression =>||
-        [
-           SCAN ~\ExpressionNoSuffix =>
-           (BaseExpressionSuffix)+
-        ]
+        (BaseExpressionPostfix)*
         |
         //EnumerationVariantExpression =>||
         //|
@@ -498,12 +504,6 @@ Expression :
         IfExpression
         |
         LetStatement
-        |
-        MatchExpression
-        [
-           SCAN ~\ExpressionNoSuffix =>
-           (BaseExpressionSuffix)+
-        ]
         |
         AssignmentExpression
    )
@@ -519,12 +519,13 @@ BaseExpression :
         | AsyncBlockExpression
         | BlockExpression
         | LoopExpression
-        | UnsafeBlockExpression)
+        | UnsafeBlockExpression
+        | MatchExpression)
     )
-    (BaseExpressionSuffix)*
+    (BaseExpressionPostfix)*
 ;
 
-BaseExpressionSuffix#void :
+BaseExpressionPostfix#void :
     "." PathExprSegment "(" =>|| [CallParams] ")" #MethodCall(+1)
     |
     "." Identifier =>|| #FieldExpression(+1)
@@ -695,7 +696,8 @@ MatchExpression :
         SCAN ~("}") =>
         MatchArm
         "=>"
-        Expression
+        //BlockNoPostfix
+        (BlockExpression | Expression)
         [","]
     )*
     "}"
