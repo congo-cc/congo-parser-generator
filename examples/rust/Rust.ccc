@@ -297,13 +297,27 @@ TypeParam : Identifier [":" [TypeParamBounds]] ["=" Type] ;
 
 TypeParamBounds : TypeParamBound ("+" =>|+1 TypeParamBound)* ["+"] ;
 
-TypeParamBound : Lifetime | TraitBound ;
+TypeParamBound : Lifetime | TraitBound | UseBound ;
 
 TraitBound :
    ["?"] [ForLifetimes] TypePath
    |
    "(" ["?"] [ForLifetimes] TypePath ")"
 ;
+
+UseBound : "use" UseBoundGenericArgs ;
+
+UseBoundGenericArgs :
+   "<" ">" =>||
+   |
+   "<"
+   UseBoundGenericArg
+   ("," =>|+1 UseBoundGenericArg)*
+   [","]
+   ">"
+;
+
+UseBoundGenericArg : Identifier | "Self" | Lifetime ;
 
 LifetimeBounds : (Lifetime "+" =>||)* [Lifetime] ;
 
@@ -317,8 +331,15 @@ GenericArgs :
    "<"
    [GenericArgsLifetimes [","]]
    (
+      ENSURE
+      {
+        (getTokenType(0) == COMMA || getTokenType(0) == LT)
+        && getTokenType(1) != GT && getTokenType(1) != GT_GT
+        && !((getTokenType(1)==ID || getTokenType(1)==RAW_IDENTIFIER)&&getTokenType(2) == ASSIGN)
+      }
       ENSURE ~(Identifier [GenericArgs] "=")
-      GenericArg
+      Type
+      [","]
    )*
    [GenericArgsBinding]
    [","]
@@ -568,7 +589,7 @@ UnaryExpression :
    BaseExpression
 ;
 
-TypeCastExpression : UnaryExpression ["as" TypeNoBounds] ;
+TypeCastExpression : UnaryExpression ("as" TypeNoBounds)* ;
 
 MultiplicativeExpression : TypeCastExpression (("*" | "/" | "%") TypeCastExpression)* ;
 
