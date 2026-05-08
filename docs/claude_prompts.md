@@ -428,7 +428,7 @@ The sqlexpr-congo-rust's parser interface is similar to, but differs from, the p
                                                                                                                                                                 
   b. Boolean-enforcement tests (parser_test.rs: ~5 tests; parser_test2.rs: test_reject_* group, ~4 tests): verify Step 2's assert_boolean_root matches source's is_boolean_expression  
   line-for-line. The conversion is mechanical but must be verified against each failing case.                                                                                          
-                                         
+                             rust-            
   c. Unterminated block comment (test_reject_unterminated_block_comment): local lexer treats unterminated /*… differently than source (likely produces INVALID tokens until EOF rather 
   than a single error). Verify the parser still surfaces Err(ParseError); if not, document and discuss.                                                                                
                                                                                                                                                                                        
@@ -440,7 +440,7 @@ The sqlexpr-congo-rust's parser interface is similar to, but differs from, the p
                                                                                                                                                                                        
   For each failure, the loop is: read the source test → read the local AST shape via a probe → fix the helper or the test → re-run. If a fix would require weakening the assertion,    
   halt and ask.                          
-                                                                                                                                                                                       
+                             rust-                                                                                                                                                          
   Step 6 — Final verification                                                                                                                                                          
                                          
   - cargo test --test parser_tests → all pass.                                                                                                                                         
@@ -471,3 +471,21 @@ The sqlexpr-congo-rust's parser interface is similar to, but differs from, the p
   approval and answers to three open questions before implementation. Next: confirm file name, boolean-enforcement approach, and != handling.                                          
 
 --------------------------- End Response
+
+Good work.  Here are the answers to your 3 questions.
+
+1. My mistake, parser_test.rs is correct file name (same as in source project).
+2. Yes, it's OK to put the validation in the test helpers.
+3. It's OK to add != to the local SqlExprParser.ccc and test for regression.  Note that the examples/sqlexpr/rust-saved directory contains the previously generated test files for the local sqlexpr project.  You'll need to copy them to examples/rust-sqlparser/tests before retesting them.
+
+Please proceed with implementation.
+
+
+# Parser Type Check Test Plan Generation
+
+Another Rust parser for the sqlexpr language has been developed in the sqlexpr-congo-rust project, which resides locally at ../sqlexpr-congo-rust/.  That project defines its parser type checking test file in the ../sqlexpr-congo-rust/tests/ directory: 
+
+- parser_type_checking_tests.rs
+
+The sqlexpr-congo-rust's parser interface is similar to, but differs from, the parser interface in this project.  Please generate a plan to migrate all test cases in the above test file to use this project's sqlexpr parser.  The plan should result in tests/parser_type_checking_tests.rs in this project.  The plan should also incorporate any missing type checking into the test/parser_test_support/mod.rs so that type checking in this project is as complete as in sqlexpr-congo-rust.  The migrated file should perform all the same tests as the sqlexpr-congo-rust test file.  Since all tests pass in sqlexpr-congo-rust, the plan should include running all migrated tests and investigating the cause for any failures.  No test can be ignored or skipped.  Make sure no regression occurs.
+
