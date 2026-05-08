@@ -524,8 +524,8 @@ Expression :
         |
         //EnumerationVariantExpression =>||
         //|
-        ClosureExpression
-        |
+        //ClosureExpression
+        //|
         IfLetExpression
         |
         IfExpression
@@ -547,6 +547,7 @@ BaseExpression :
         | BlockExpression
         | LoopExpression
         | UnsafeBlockExpression
+        | ClosureExpression
         | MatchExpression)
     )
     (BaseExpressionPostfix)*
