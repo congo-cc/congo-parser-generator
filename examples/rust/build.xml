@@ -1,0 +1,40 @@
+<project name="Rust Parser" default="build">
+  <!-- Rust code-generation is off by default. Enable with: ant -Drust.enabled=true ... -->
+  <target name="clean">
+    <delete dir="org" />
+  </target>
+
+  <target name="init">
+    <uptodate property="rustparser.uptodate" targetfile="org/parsers/rust/RustParser.java">
+        <srcfiles dir="." includes="*.ccc"/>
+    </uptodate>
+  </target>
+
+  <target name="rust-parser-gen" depends="init" unless="rustparser.uptodate">
+    <java jar="../../congocc.jar" failonerror="true" fork="true">
+      <assertions> <enable /> </assertions>
+      <arg value="-n" />
+      <arg value="${basedir}/Rust.ccc" />
+    </java>
+  </target>
+
+  <target name="compile" depends="rust-parser-gen">
+    <javac debug="on"
+      failonerror="true"
+      includeantruntime="false"
+      release="8"
+      srcdir="."
+      includes="RParse.java,org/**/*.java" />
+    <echo> Test harness is java RParse &lt;file(s) or directory&gt;</echo>
+  </target>
+
+  <target name="test" depends="compile">
+    <java fork="true" classpath="." failonerror="true" classname="RParse">
+      <assertions> <enable /> </assertions>
+      <arg value="testfiles" />
+    </java>
+  </target>
+
+  <target name="build" depends="compile"/>
+
+</project>

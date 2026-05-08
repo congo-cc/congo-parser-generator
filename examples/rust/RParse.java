@@ -60,9 +60,9 @@ public class RParse {
                                ? paths.parallelStream()
                                :  paths.stream();
         stream.forEach(path -> parseFile(path));
-        for (Path path : failures) {
-            System.out.println("Parse failed on: " + path);
-        }
+//        for (Path path : failures) {
+//            System.out.println("Parse failed on: " + path);
+//        }
         System.out.println("\nParsed " + successes.size() + " files successfully");
         System.out.println("Failed on " + failures.size() + " files");
         System.out.println("\nDuration: " + (System.currentTimeMillis() - startTime) + " milliseconds");
@@ -90,29 +90,28 @@ public class RParse {
         });
     }
 
-
-
     static public void parseFile(Path path) {
         try {
             RustParser parser = new RustParser(path);
             parser.setParserTolerant(tolerantParsing);
-            //Node root = parser.CompilationUnit();
+            System.out.print("Parsing " + path);
             Node root = parser.Crate();
             if (retainInMemory) roots.add(root);
             if (paths.size()==1) {
                 root.dump("");
             }
-            if (!quiet) {
-                System.out.println(path.getFileName().toString() + " parsed successfully.");
-            }
+            System.out.println(" Success");
             successes.add(path);
             if (successes.size() % 1000 == 0) {
                 System.out.println("Successfully parsed " + successes.size() + " files...");
             }
         }
-        catch (Exception e) {
+        catch (Throwable t) {
           failures.add(path);
-          e.printStackTrace();
+          System.out.println(" Failed");
+          if (paths.size()==1) {
+              t.printStackTrace(System.out);
+          }
         }
     }
 

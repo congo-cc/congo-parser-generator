@@ -5,7 +5,7 @@ SKIP :
   <WHITESPACE : (" "| "\t"| "\n"| "\r"| "\f")+> #Whitespace
 ;
 
-UNPARSED :
+TOKEN :
    <SHEBANG : "#!" (~["\n"])* "\n">
 ;
 
@@ -21,7 +21,7 @@ TOKEN #KeyWord :
 | < ASYNC: "async" >
 | < AWAIT: "await" >
 | < BECOME: "become" >
-| < BOX: "box" >
+//| < BOX: "box" >
 | < CONST: "const" >
 | < CONTINUE: "continue" >
 | < CRATE: "crate" >
@@ -47,10 +47,8 @@ TOKEN #KeyWord :
 | < OVERRIDE: "override" >
 | < PRIV: "priv" >
 | < PUB: "pub">
-| < RAW: "raw" >
 | < REF: "ref" >
 | < RETURN: "return" >
-| < SAFE: "safe" >
 | < SELF: "self" >
 | < SELF2: "Self" >
 | < STATIC: "static" >
@@ -61,7 +59,6 @@ TOKEN #KeyWord :
 | < TRY: "try" >
 | < TYPE: "type" >
 | < TYPEOF: "typeof" >
-| < UNION: "union" >
 | < UNSAFE : "unsafe" >
 | < UNSIZED: "unsized" >
 | < USE: "use" >
@@ -93,13 +90,13 @@ TOKEN #NumericalLiteral :
       }
     }
     |
-    <#FLOATING_POINT_LITERAL1: <DEC_LITERAL> ("f32"|"f64")>
+    <#FLOATING_POINT_LITERAL1: <DEC_LITERAL> ("f16"|"f32"|"f64")>
     |
     <#FLOATING_POINT_LITERAL2: <DEC_LITERAL> ".">
     |
-    <#FLOATING_POINT_LITERAL3: <DEC_LITERAL> <FLOAT_EXPONENT> ("f32"|"f64")?>
+    <#FLOATING_POINT_LITERAL3: <DEC_LITERAL> <FLOAT_EXPONENT> ("f16|f32"|"f64")?>
     |
-    <#FLOATING_POINT_LITERAL4 : <DEC_LITERAL> "." <DEC_LITERAL>  (<FLOAT_EXPONENT>)? ("f32"|"f64")?>
+    <#FLOATING_POINT_LITERAL4 : <DEC_LITERAL> "." <DEC_LITERAL>  (<FLOAT_EXPONENT>)? ("f16"|"f32"|"f64")?>
     |
     <#FLOAT_EXPONENT: ["e","E"] (["+","-"])? ("_")* <DEC_LITERAL>>
     |
@@ -240,7 +237,7 @@ TOKEN #StringLiteral :
   |
   <#HEX_DIGIT :  ["0"-"9", "a"-"f", "A"-"F"]>
   |
-  <#UNICODE_ESCAPE : "\\u" (<HEX_DIGIT>){1,5}>
+  <#UNICODE_ESCAPE : "\\u{" (<HEX_DIGIT>){1,6} "}">
   |
   <#STRING_CONTINUE: "\\\n">
   |
