@@ -96,7 +96,7 @@ fn pp_and_or_with_eq_gt() {
                 primaryExpr
                   variable
                     Token(ID, "age")
-          Token(_TOKEN_19, ">")
+          Token(_TOKEN_20, ">")
           addExpression
             multExpr
               unaryExpr
@@ -142,7 +142,7 @@ fn pp_not_and_with_eq_ge_le() {
                 Token(NOT, "NOT")
                 unaryExpr
                   primaryExpr
-                    Token(_TOKEN_23, "(")
+                    Token(_TOKEN_24, "(")
                     orExpression
                       andExpression
                         equalityExpression
@@ -162,7 +162,7 @@ fn pp_not_and_with_eq_ge_le() {
                                     literal
                                       stringLitteral
                                         Token(STRING_LITERAL, "'closed'")
-                    Token(_TOKEN_25, ")")
+                    Token(_TOKEN_26, ")")
       Token(AND, "AND")
       equalityExpression
         comparisonExpression
@@ -172,7 +172,7 @@ fn pp_not_and_with_eq_ge_le() {
                 primaryExpr
                   variable
                     Token(ID, "priority")
-          Token(_TOKEN_20, ">=")
+          Token(_TOKEN_21, ">=")
           addExpression
             multExpr
               unaryExpr
@@ -188,7 +188,7 @@ fn pp_not_and_with_eq_ge_le() {
                 primaryExpr
                   variable
                     Token(ID, "retries")
-          Token(_TOKEN_22, "<=")
+          Token(_TOKEN_23, "<=")
           addExpression
             multExpr
               unaryExpr
@@ -281,7 +281,7 @@ fn pp_and_not_or_with_like_ne_eq() {
                 Token(NOT, "NOT")
                 unaryExpr
                   primaryExpr
-                    Token(_TOKEN_23, "(")
+                    Token(_TOKEN_24, "(")
                     orExpression
                       andExpression
                         equalityExpression
@@ -300,7 +300,7 @@ fn pp_and_not_or_with_like_ne_eq() {
                                   primaryExpr
                                     literal
                                       Token(OCTAL_LITERAL, "0")
-                    Token(_TOKEN_25, ")")
+                    Token(_TOKEN_26, ")")
     Token(OR, "OR")
     andExpression
       equalityExpression
@@ -340,7 +340,7 @@ fn pp_and_or_with_arith_between_eq() {
             multExpr
               unaryExpr
                 primaryExpr
-                  Token(_TOKEN_23, "(")
+                  Token(_TOKEN_24, "(")
                   orExpression
                     andExpression
                       equalityExpression
@@ -351,14 +351,14 @@ fn pp_and_or_with_arith_between_eq() {
                                 primaryExpr
                                   variable
                                     Token(ID, "x")
-                            Token(_TOKEN_26, "+")
+                            Token(_TOKEN_27, "+")
                             multExpr
                               unaryExpr
                                 primaryExpr
                                   variable
                                     Token(ID, "y")
-                  Token(_TOKEN_25, ")")
-          Token(_TOKEN_19, ">")
+                  Token(_TOKEN_26, ")")
+          Token(_TOKEN_20, ">")
           addExpression
             multExpr
               unaryExpr
@@ -429,16 +429,22 @@ fn pp_or_not_with_in_isnull() {
                   variable
                     Token(ID, "country")
           Token(IN, "IN")
-          Token(_TOKEN_23, "(")
-          stringLitteral
-            Token(STRING_LITERAL, "'US'")
-          Token(_TOKEN_24, ",")
-          stringLitteral
-            Token(STRING_LITERAL, "'CA'")
-          Token(_TOKEN_24, ",")
-          stringLitteral
-            Token(STRING_LITERAL, "'MX'")
-          Token(_TOKEN_25, ")")
+          Token(_TOKEN_24, "(")
+          inElement
+            literal
+              stringLitteral
+                Token(STRING_LITERAL, "'US'")
+          Token(_TOKEN_25, ",")
+          inElement
+            literal
+              stringLitteral
+                Token(STRING_LITERAL, "'CA'")
+          Token(_TOKEN_25, ",")
+          inElement
+            literal
+              stringLitteral
+                Token(STRING_LITERAL, "'MX'")
+          Token(_TOKEN_26, ")")
     Token(OR, "OR")
     andExpression
       equalityExpression
@@ -449,7 +455,7 @@ fn pp_or_not_with_in_isnull() {
                 Token(NOT, "NOT")
                 unaryExpr
                   primaryExpr
-                    Token(_TOKEN_23, "(")
+                    Token(_TOKEN_24, "(")
                     orExpression
                       andExpression
                         equalityExpression
@@ -462,7 +468,7 @@ fn pp_or_not_with_in_isnull() {
                                       Token(ID, "state")
                           Token(IS, "IS")
                           Token(NULL, "NULL")
-                    Token(_TOKEN_25, ")")
+                    Token(_TOKEN_26, ")")
   Token(EOF, "")"#,
     });
 }
@@ -486,13 +492,17 @@ fn pp_and_or_with_notin_notbetween_eq() {
                     Token(ID, "code")
           Token(NOT, "NOT")
           Token(IN, "IN")
-          Token(_TOKEN_23, "(")
-          stringLitteral
-            Token(STRING_LITERAL, "'A'")
-          Token(_TOKEN_24, ",")
-          stringLitteral
-            Token(STRING_LITERAL, "'B'")
-          Token(_TOKEN_25, ")")
+          Token(_TOKEN_24, "(")
+          inElement
+            literal
+              stringLitteral
+                Token(STRING_LITERAL, "'A'")
+          Token(_TOKEN_25, ",")
+          inElement
+            literal
+              stringLitteral
+                Token(STRING_LITERAL, "'B'")
+          Token(_TOKEN_26, ")")
       Token(AND, "AND")
       equalityExpression
         comparisonExpression
@@ -555,7 +565,7 @@ fn pp_and_not_or_with_arith_ge_lt_eq() {
             multExpr
               unaryExpr
                 primaryExpr
-                  Token(_TOKEN_23, "(")
+                  Token(_TOKEN_24, "(")
                   orExpression
                     andExpression
                       equalityExpression
@@ -566,13 +576,13 @@ fn pp_and_not_or_with_arith_ge_lt_eq() {
                                 primaryExpr
                                   variable
                                     Token(ID, "x")
-                              Token(_TOKEN_28, "*")
+                              Token(_TOKEN_29, "*")
                               unaryExpr
                                 primaryExpr
                                   literal
                                     Token(DECIMAL_LITERAL, "2")
-                  Token(_TOKEN_25, ")")
-          Token(_TOKEN_20, ">=")
+                  Token(_TOKEN_26, ")")
+          Token(_TOKEN_21, ">=")
           addExpression
             multExpr
               unaryExpr
@@ -588,7 +598,7 @@ fn pp_and_not_or_with_arith_ge_lt_eq() {
                 Token(NOT, "NOT")
                 unaryExpr
                   primaryExpr
-                    Token(_TOKEN_23, "(")
+                    Token(_TOKEN_24, "(")
                     orExpression
                       andExpression
                         equalityExpression
@@ -599,19 +609,19 @@ fn pp_and_not_or_with_arith_ge_lt_eq() {
                                   primaryExpr
                                     variable
                                       Token(ID, "z")
-                                Token(_TOKEN_29, "/")
+                                Token(_TOKEN_30, "/")
                                 unaryExpr
                                   primaryExpr
                                     literal
                                       Token(DECIMAL_LITERAL, "3")
-                            Token(_TOKEN_21, "<")
+                            Token(_TOKEN_22, "<")
                             addExpression
                               multExpr
                                 unaryExpr
                                   primaryExpr
                                     literal
                                       Token(DECIMAL_LITERAL, "1")
-                    Token(_TOKEN_25, ")")
+                    Token(_TOKEN_26, ")")
     Token(OR, "OR")
     andExpression
       equalityExpression
@@ -628,7 +638,7 @@ fn pp_and_not_or_with_arith_ge_lt_eq() {
             multExpr
               unaryExpr
                 primaryExpr
-                  Token(_TOKEN_23, "(")
+                  Token(_TOKEN_24, "(")
                   orExpression
                     andExpression
                       equalityExpression
@@ -639,12 +649,12 @@ fn pp_and_not_or_with_arith_ge_lt_eq() {
                                 primaryExpr
                                   variable
                                     Token(ID, "n")
-                              Token(_TOKEN_30, "%")
+                              Token(_TOKEN_31, "%")
                               unaryExpr
                                 primaryExpr
                                   literal
                                     Token(DECIMAL_LITERAL, "5")
-                  Token(_TOKEN_25, ")")
+                  Token(_TOKEN_26, ")")
   Token(EOF, "")"#,
     });
 }
@@ -682,7 +692,7 @@ fn pp_and_or_with_hex_oct_arith() {
             multExpr
               unaryExpr
                 primaryExpr
-                  Token(_TOKEN_23, "(")
+                  Token(_TOKEN_24, "(")
                   orExpression
                     andExpression
                       equalityExpression
@@ -693,14 +703,14 @@ fn pp_and_or_with_hex_oct_arith() {
                                 primaryExpr
                                   variable
                                     Token(ID, "count")
-                            Token(_TOKEN_27, "-")
+                            Token(_TOKEN_28, "-")
                             multExpr
                               unaryExpr
                                 primaryExpr
                                   literal
                                     Token(DECIMAL_LITERAL, "1")
-                  Token(_TOKEN_25, ")")
-          Token(_TOKEN_19, ">")
+                  Token(_TOKEN_26, ")")
+          Token(_TOKEN_20, ">")
           addExpression
             multExpr
               unaryExpr
@@ -763,7 +773,7 @@ fn pp_and_or_with_floats() {
                 primaryExpr
                   variable
                     Token(ID, "height")
-          Token(_TOKEN_19, ">")
+          Token(_TOKEN_20, ">")
           addExpression
             multExpr
               unaryExpr
@@ -780,7 +790,7 @@ fn pp_and_or_with_floats() {
                 primaryExpr
                   variable
                     Token(ID, "weight")
-          Token(_TOKEN_21, "<")
+          Token(_TOKEN_22, "<")
           addExpression
             multExpr
               unaryExpr
@@ -807,7 +817,7 @@ fn pp_and_not_or_with_unary_eq_isnotnull() {
             multExpr
               unaryExpr
                 primaryExpr
-                  Token(_TOKEN_23, "(")
+                  Token(_TOKEN_24, "(")
                   orExpression
                     andExpression
                       equalityExpression
@@ -815,13 +825,13 @@ fn pp_and_not_or_with_unary_eq_isnotnull() {
                           addExpression
                             multExpr
                               unaryExpr
-                                Token(_TOKEN_27, "-")
+                                Token(_TOKEN_28, "-")
                                 unaryExpr
                                   primaryExpr
                                     variable
                                       Token(ID, "x")
-                  Token(_TOKEN_25, ")")
-          Token(_TOKEN_19, ">")
+                  Token(_TOKEN_26, ")")
+          Token(_TOKEN_20, ">")
           addExpression
             multExpr
               unaryExpr
@@ -837,7 +847,7 @@ fn pp_and_not_or_with_unary_eq_isnotnull() {
                 Token(NOT, "NOT")
                 unaryExpr
                   primaryExpr
-                    Token(_TOKEN_23, "(")
+                    Token(_TOKEN_24, "(")
                     orExpression
                       andExpression
                         equalityExpression
@@ -856,7 +866,7 @@ fn pp_and_not_or_with_unary_eq_isnotnull() {
                                   primaryExpr
                                     literal
                                       Token(NULL, "NULL")
-                    Token(_TOKEN_25, ")")
+                    Token(_TOKEN_26, ")")
     Token(OR, "OR")
     andExpression
       equalityExpression

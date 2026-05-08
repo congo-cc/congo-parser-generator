@@ -300,7 +300,174 @@ cargo test --test pretty_parse_test -- --test-threads 1 --nocapture
 
 # Lexer Test Generation
 
-Please generate a comprehensive set of positive and negative tests for the public interface of the Lexer and Token implemenations in lexer.rs.  Put all tests in the tests/lexer_test.rs.
+Please generate a comprehensive set of positive and negative tests for the public interface of the Lexer and Token implementations in lexer.rs.  Put all tests in the tests/lexer_test.rs.
 
 cargo test --test lexer_test --  --nocapture
 
+# Parser Test Plan Generation
+
+Another Rust parser for the sqlexpr language has been developed in the sqlexpr-congo-rust project, which resides locally at ../sqlexpr-congo-rust/.  That project defines its parser test files in the ../sqlexpr-congo-rust/tests/ directory: 
+
+- parser_test.rs
+- parser_test2.rs
+
+The sqlexpr-congo-rust's parser interface is similar to, but differs from, the parser interface in this project.  Please generate a plan to migrate all test cases in the above test files to use this project's sqlexpr parser.  The plan should result in tests/parser_tests.rs and tests/parser_test2.rs in this project.  The migrated files should perform all the same tests as their sqlexpr-congo-rust counterparts.  Since all tests pass in sqlexpr-congo-rust, the plan should include running all migrated tests and investigating the cause for any failures.  No test can be ignored or skipped.
+
+---------------------------- Response
+
+● Let me explore the source project and the local interface to build the migration plan.
+                                                                                                                                                                                       
+  Searched for 16 patterns, read 2 files, listed 2 directories (ctrl+o to expand)                                                                                                      
+                                                                                                                                                                                       
+● I have enough to draft the plan. Let me update tasks and present it.                                                                                                                 
+                                                                                                                                                                                       
+● Plan: migrate parser tests from sqlexpr-congo-rust → this project                                                                                                                    
+                                                                                                                                                                                       
+  Scope                                                                                                                                                                                
+                                                                                                                                                                                       
+  Migrate 164 tests from ../sqlexpr-congo-rust/tests/parser_test.rs and 155 tests from parser_test2.rs (319 total) into examples/sqlexpr/rust-sqlparser/tests/. Every test from the    
+  source must run, none may be #[ignore]d or removed.                                                                                                                                  
+                                                                                                                                                                                       
+  Naming question (please confirm)                                                                                                                                                     
+                                                                                                                                                                                       
+  You wrote tests/parser_tests.rs (plural) for the migration of the source's parser_test.rs (singular). I'll assume the plural name is intentional. The second file is parser_test2.rs 
+  in both projects — no question there.                                                                                                                                                
+                                         
+  Inventory: what differs between the two parser interfaces                                                                                                                            
+                                     
+  ┌──────────────────┬──────────────────────────────────────────────────────────────────────────────────────┬──────────────────────────────────────────────────────────────────────┐   
+  │     Concern      │                             sqlexpr-congo-rust (source)                              │                        this project (target)                         │   
+  ├────────────────┼──────────────────────────────────────────────────────────────────────────────────────┼────────────────────────────────────────────────────────────────────────┤
+  │ Construct +    │ Parser::new(input.to_string())?; p.parse()? -> NodeId                                │ Parser::parse(input, Some("name")) -> ParseResult<Ast>                 │   
+  │ parse          │                                                                                      │                                                                        │
+  ├──────────────────┼────────────────────────────────────────────────────────────────────────────────────┼───────────────────────────────────────────────────────────────────────┤    
+  │ AST root access  │ p.arena() -> &Arena, arena.get_node(id) -> &AstNode (typed enum with operator      │ Ast itself; ast.kind(id) -> &NodeKind, ast.children(id), ast.text(id) │ 
+  │                  │ fields)                                                                            │                                                                       │ 
+  ├──────────────────┼────────────────────────────────────────────────────────────────────────────────────┼───────────────────────────────────────────────────────────────────────┤    
+  │ Operators        │ First-class enums on the node, e.g. EqualityExpressionNode { operators:            │ Operators are interleaved Token children between operands (e.g. [lhs, │    
+  │                 │ Vec<EqualityOp>, children: Vec<NodeId> }                                      │ Token(_TOKEN_17,"="), rhs])                                                 │    
+  ├─────────────────┼───────────────────────────────────────────────────────────────────────────────┼─────────────────────────────────────────────────────────────────────────────┤    
+  │ IS NULL / IS    │ Collapsed to single EqualityOp::IsNull / IsNotNull                            │ Kept as separate Token(IS) / Token(NOT) / Token(NULL) siblings of the       │
+  ├─────────────────────┼─────────────────────────────────────────────────────────────────────────┼───────────────────────────────────────────────────────────────────────────────┤    
+  │ LIKE … ESCAPE       │ ComparisonOp::LikeEscape (one op)                                       │ Token(LIKE), stringLitteral, Token(ESCAPE), stringLitteral siblings           │
+  ├─────────────────────┼─────────────────────────────────────────────────────────────────────────┼───────────────────────────────────────────────────────────────────────────────┤    
+  │ BETWEEN, IN         │ ComparisonOp::Between, In (and Not… variants)                           │ Plain Token children: Token(BETWEEN), low, Token(AND), high and Token(IN),    │    
+  │                     │                                                                         │ Token('('), str, Token(','), …, Token(')')                                    │
+  ├─────────────────────┼─────────────────────────────────────────────────────────────────────────┼───────────────────────────────────────────────────────────────────────────────┤    
+  │ Pretty-print for    │ arena.pretty_print(root, 0, input)                                      │ DefaultPrettyPrinter.pretty_print(&ast)                                       │    
+  │ --nocapture         │                                                                         │                                                                               │
+  ├─────────────────────┼─────────────────────────────────────────────────────────────────────────┼───────────────────────────────────────────────────────────────────────────────┤    
+  │ Error type          │ ParseError { message: String, … }                                       │ ParseError (different fields) — but Display is implemented                    │
+  ├─────────────────────┼─────────────────────────────────────────────────────────────────────────┼───────────────────────────────────────────────────────────────────────────────┤    
+  │ Boolean-root        │ Yes: Java INJECT asBooleanExpression() rejects non-boolean roots        │ No: same INJECT block, but the Rust translator FIXMEs it (filtered by         │    
+  │ enforcement         │                                                                         │ instanceof/null heuristics)                                                   │
+  └─────────────────────┴─────────────────────────────────────────────────────────────────────────┴───────────────────────────────────────────────────────────────────────────────┘    
+                            
+  Step-by-step plan                                                                                                                                                                    
+                            
+  Step 1 — Build adapter helpers (single private module reused by both files)                                                                                                          
+                                     
+  Implement these helpers in each migrated file (kept local so each test file is self-contained):
+                                                                                                                                                                                       
+  - parse_ok(input) -> Ast — Parser::parse, panic-with-context on error, println! the DefaultPrettyPrinter rendering for --nocapture parity with source.
+  - parse_err(input) -> String — call parse, panic if it succeeds, otherwise return format!("{e}").                                                                                    
+  - skip(ast, id) -> NodeId — descend through pass-through wrappers (a node that has exactly one child and no interleaved operator tokens), mirroring source's skip().
+  - get_children(ast, id) -> Vec<NodeId> — ast.children(id).collect().                                                                                                                 
+  - operator_tokens(ast, id) -> Vec<TokenType> — pick out direct children whose NodeKind is Token(_), return their TokenType.
+  - operand_children(ast, id) -> Vec<NodeId> — direct children that are NOT tokens (i.e., the actual sub-expressions).                                                                 
+  - leaf_image(ast, id) -> &str — descend through wrappers, then ast.text(id).                                                                                                         
+  - Domain-specific predicates that hide AST-shape differences:                                                                                                                        
+    - is_equality_with(ast, id, &[TokenType]) — wraps "node is equalityExpression, its operator tokens equal the expected sequence".                                                   
+    - is_comparison_with(...), is_add_with(...), is_mult_with(...), is_unary_with(...).                                                                                                
+    - has_is_null(ast, id), has_is_not_null(ast, id), is_like(ast, id), is_not_like(ast, id), has_escape_clause(...), is_between(...), is_in(...), etc.                                
+  - assert_boolean_root(ast) — pure-Rust port of source's validate_boolean_root / is_boolean_expression (see Step 2).                                                                  
+                                                                                                                                                                                       
+  Step 2 — Replicate boolean-root validation in the test helpers                                                                                                                       
+                                                                                                                                                                                       
+  Source's grammar enforces boolean roots through an INJECT block written in Java. That block is FIXME'd by the Rust translator (the heuristics in                                     
+  TemplateGlobals.translateCodeBlockForRust reject instanceof, null, etc.). Patching the Rust generator to translate it would be a deep change with regression risk on every other     
+  working grammar.                                                                                                                                                                     
+                                                                                                                                                                                       
+  Recommendation: port the validation logic into the test file as a Rust helper (assert_boolean_root). It walks the Ast: the root is boolean iff it is andExpression/orExpression with
+  multiple operands, or a unaryExpr with NOT, or an equalityExpression/comparisonExpression with at least one operator token, or a primaryExpr whose only child is a parenthesized     
+  boolean expression, or a literal containing TRUE/FALSE, or a variable. This mirrors source's is_boolean_expression.
+                                                                                                                                                                                       
+  Then reframe each source parse_err("42") => msg.contains("boolean") as:
+  let ast = parse_ok("42");                                                                                                                                                            
+  assert!(!is_boolean_root(&ast), "42 should be flagged non-boolean");
+  The test still validates the same semantic contract; it just performs the validation in the harness instead of relying on the parser. Comment in each test must document this.       
+                                                                                                                                                                                
+  Step 3 — Translate test cases mechanically, in this order                                                                                                                            
+                                         
+  For each source test:                                                                                                                                                                
+                                                                                                                                                                                       
+  1. Replace Parser::new(input.to_string()).expect(...) + p.parse().expect(...) with parse_ok(input).                                                                                  
+  2. Replace arena.get_node(id) → AstNode::EqualityExpression(eq) checks with is_equality_with(...) (or whichever helper fits).                                                        
+  3. Replace eq.operators == vec![EqualityOp::Equal] with the equivalent token-sequence check.                                                                                         
+  4. Replace eq.children.len() == 2 with operand_children(...).len() == 2 (children minus operator tokens).                                                                            
+  5. Replace arena.get_token(n.begin_token).image with ast.text(id) after skip to the leaf.
+  6. Convert parse_err(...).contains("boolean") per Step 2.                                                                                                                            
+  7. Convert generic parse_err(...) (e.g. test_err_in_unclosed) to parse_err(input) returning the local error string and assert the error fires (no message match unless source also   
+  matches a literal substring).                                                                                                                                                        
+  8. Preserve test names exactly (test_integer_literal, etc.) for traceability between projects.                                                                                       
+                                                                                                                                                                                       
+  Step 4 — Run the migrated suite                                                                                                                                                      
+                                         
+  cargo test --test parser_tests --test parser_test2 -- --test-threads=1                                                                                                               
+                                         
+  Step 5 — Investigate every failure (no skipping)                                                                                                                                     
+                                     
+  Pre-identified investigation buckets:                                                                                                                                                
+                                                                                                                                                                                       
+  a. != not-equal operator (source: test_not_equal_2, test_not_equal_operator_exclamation, test_string_inequality_exclamation). Both grammars only declare <>. Confirm by:             
+  - cd ../sqlexpr-congo-rust && cargo test test_not_equal_2 -- --nocapture to verify it actually passes there.                                                                         
+  - Inspect the source's lexer.rs for an != token I might have missed.                                        
+  - If source genuinely accepts !=: edit the local SqlExprParser.ccc to add "!=" right = comparisonExpression to equalityExpression, regenerate (-Drust.enabled=true), re-test all     
+  working grammars to confirm no regression.                                                                                                                                      
+  - If source's test secretly fails or was changed locally: report back, decide with you whether to drop the source assertion (and document why) or add != here.                       
+                                                                                                                                                                
+  b. Boolean-enforcement tests (parser_test.rs: ~5 tests; parser_test2.rs: test_reject_* group, ~4 tests): verify Step 2's assert_boolean_root matches source's is_boolean_expression  
+  line-for-line. The conversion is mechanical but must be verified against each failing case.                                                                                          
+                                         
+  c. Unterminated block comment (test_reject_unterminated_block_comment): local lexer treats unterminated /*… differently than source (likely produces INVALID tokens until EOF rather 
+  than a single error). Verify the parser still surfaces Err(ParseError); if not, document and discuss.                                                                                
+                                                                                                                                                                                       
+  d. AST-shape edge cases: source's skip() collapses single-child wrappers using typed-enum fields (n.operators.is_empty()); local skip() will use the operator-token presence check.  
+  Spot-check the first test of each category (test_equal, test_greater_than, test_addition, test_unary_negate, test_and) in isolation before running the full suite.
+                                                                                                                                                                                       
+  e. test_double_negate: source comment notes --x becomes a line comment so they wrote - (-x). Same in local grammar (LINE_COMMENT is also --). Should port without change, just       
+  verify.                                
+                                                                                                                                                                                       
+  For each failure, the loop is: read the source test → read the local AST shape via a probe → fix the helper or the test → re-run. If a fix would require weakening the assertion,    
+  halt and ask.                          
+                                                                                                                                                                                       
+  Step 6 — Final verification                                                                                                                                                          
+                                         
+  - cargo test --test parser_tests → all pass.                                                                                                                                         
+  - cargo test --test parser_test2 → all pass.                                                                                                                                         
+  - cargo test --test pretty_parse_test --test lexer_test → still pass (no regression).
+  - ant -Drust.enabled=true test-rust → all six working example grammars still pass (no regression in CongoCC).                                                                        
+                                         
+  Acceptance criteria                                                                                                                                                                  
+                                                                                                                                                                                       
+  - All 164 tests in tests/parser_tests.rs pass.                                                                                                                                       
+  - All 155 tests in tests/parser_test2.rs pass.                                                                                                                                       
+  - No #[ignore], no commented-out asserts, no soft-skip.                                                                                                                              
+  - No regression in pretty_parse_test.rs, lexer_test.rs, or any other CongoCC example grammar.                                                                                        
+                                         
+  Open questions for you                 
+                                                                                                                                                                                       
+  1. File name: Confirm parser_tests.rs (plural) is intentional, or should it be parser_test.rs to match source.                                                                       
+  2. Boolean enforcement: OK with putting the validation in the test helpers (no parser change), or do you want me to fix the underlying FIXME in the generated Rust (much bigger      
+  change)?                                                                                                                                                                             
+  3. !=: If verification shows source's grammar genuinely accepts !=, are you OK with adding != to the local SqlExprParser.ccc and regenerating all six other example grammars to prove
+   no regression?                        
+                                                                                                                                                                                       
+  Once you approve (and answer the open questions), I'll proceed with implementation.
+                                                                                                                                                                                       
+✻ Worked for 4m 2s                                               
+                                                                                                                                                                                       
+※ recap: Goal: migrate 319 parser tests from sqlexpr-congo-rust into this project as tests/parser_tests.rs and tests/parser_test2.rs. Current task: plan delivered, awaiting your      
+  approval and answers to three open questions before implementation. Next: confirm file name, boolean-enforcement approach, and != handling.                                          
+
+--------------------------- End Response

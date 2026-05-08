@@ -237,6 +237,11 @@ Expression equalityExpression :
                 left = ComparisonExpression.createNotEqual(left, right);
             }
             |
+            "!=" right = comparisonExpression
+            {
+                left = ComparisonExpression.createNotEqual(left, right);
+            }
+            |
             SCAN 2 =>
             <IS> <NULL>
             {
@@ -320,43 +325,27 @@ Expression comparisonExpression :
             |
                 <IN>
                 "("
-                    t = stringLitteral
-                    {
-                        list = new ArrayList();
-                        list.add( t );
-                    }
+                    inElement
                     (
                         ","
-                        t = stringLitteral
-                        {
-                            list.add( t );
-                        }
-
+                        inElement
                     )*
                 ")"
                 {
-                   left = ComparisonExpression.createInFilter(left, list);
+                   left = ComparisonExpression.createInFilter(left, null);
                 }
             |
                 SCAN 2 =>
                 <NOT> <IN>
                 "("
-                    t = stringLitteral
-                    {
-                        list = new ArrayList();
-                        list.add( t );
-                    }
+                    inElement
                     (
                         ","
-                        t = stringLitteral
-                        {
-                            list.add( t );
-                        }
-
+                        inElement
                     )*
                 ")"
                 {
-                   left = ComparisonExpression.createNotInFilter(left, list);
+                   left = ComparisonExpression.createNotInFilter(left, null);
                 }
 
         )*
@@ -469,6 +458,28 @@ Expression primaryExpr :
 ;
 
 
+
+
+// IN list element: any literal (numeric, string, TRUE/FALSE/NULL) optionally
+// preceded by a unary +/-.  Type-validation (numeric/string consistency,
+// rejection of TRUE/FALSE/NULL) happens in the consumer's semantic layer
+// rather than in the grammar — this production only enforces the syntactic
+// shape that distinguishes "literal-or-signed-literal" from "expression".
+ConstantExpression inElement :
+{
+    ConstantExpression result = null;
+}
+    (
+        result = literal
+        |
+        "+" result = literal
+        |
+        "-" result = literal
+    )
+    {
+        return result;
+    }
+;
 
 
 ConstantExpression literal :
