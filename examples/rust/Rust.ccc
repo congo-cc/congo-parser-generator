@@ -799,7 +799,29 @@ StructPatternField :
     )
 ;
 
-TuplePattern : "(" [TuplePatternItems] ")" =>|| ;
+TuplePatternLA#scan :
+    "(" [".."] ")" =>||
+    |
+    "(" Pattern ","
+;
+
+INJECT PARSER_CLASS : {private boolean commaSeen;}
+
+TuplePattern :
+    SCAN TuplePatternLA =>
+    "("
+    (
+        ".."
+        |
+        {commaSeen = false;}#
+        Pattern ("," =>|+1 Pattern {commaSeen=true;}#)*
+        [SCAN 0 {!commaSeen}# => ","]
+        [SCAN 1 {commaSeen}# => ","]
+        |
+        {}
+    )
+    ")"
+;
 
 TuplePatternItems :
       RestPattern

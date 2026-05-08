@@ -131,7 +131,7 @@ enum EnvironmentCmd {
 //}
 
 fn create_environment(args: Args) -> anyhow::Result<(Environment, Vec<String>)> {
-    //let is_fast_try_build = is_fast_try_build();
+    let is_fast_try_build = is_fast_try_build();
     let (env, args) = match args.env {
         EnvironmentCmd::Local {
             target_triple,
