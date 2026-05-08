@@ -110,10 +110,9 @@ public class RParse {
         }
         catch (Throwable t) {
           failures.add(path);
+          System.out.println("Failed on: " + path);
           if (paths.size()==1) {
               t.printStackTrace(System.out);
-          } else {
-              System.out.println("Failed on: " + path);
           }
         }
     }

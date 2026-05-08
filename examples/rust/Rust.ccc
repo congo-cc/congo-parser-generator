@@ -109,6 +109,8 @@ VisItem :
       |
       Function
       |
+      ExternBlock
+      |
       TypeAlias
       |
       Struct
@@ -124,14 +126,12 @@ VisItem :
       Trait
       |
       Implementation
-      |
-      ExternBlock
    )
 ;
 
 Trait :
     ["unsafe"]
-    "trait"
+    "trait" =>||
     Identifier
     [GenericParams]
     [":" [TypeParamBounds]]
@@ -843,7 +843,7 @@ CrateRef : Identifier | "self" ;
 
 AsClause : "as" (Identifier | "_") ;
 
-ExternBlock : ["unsafe"] "extern" =>|| [Abi] "{" (InnerAttribute)* (ExternalItem)* "}" ;
+ExternBlock : ["unsafe"] "extern" [Abi] =>|| "{" (InnerAttribute)* (ExternalItem)* "}" ;
 
 Abi : <STRING_LITERAL> | <RAW_STRING_LITERAL> ;
 
