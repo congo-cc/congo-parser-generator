@@ -165,6 +165,7 @@ AssociatedTypeBound : // REVISIT production is surely incomplete
 ;
 
 ClosureExpression :
+   ["async"]
    ["move"]
    (
       "||"
@@ -645,7 +646,7 @@ CallParams : Expression ("," =>|+1 Expression)* [","] ;
 
 PathExpression : QualifiedPathInExpression | PathInExpression ;
 
-AsyncBlockExpression : "async" ["move"] BlockExpression ;
+AsyncBlockExpression : "async" ["move"] =>|+1 BlockExpression ;
 
 UnsafeBlockExpression : "unsafe" BlockExpression ;
 
@@ -653,7 +654,7 @@ LoopExpression :
     [LoopLabel]
     =>|+1
     (
-          InfiniteLoopExpression
+        InfiniteLoopExpression
         | WhileLetExpression
         | WhileExpression
         | ForExpression
