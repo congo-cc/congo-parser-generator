@@ -86,13 +86,15 @@ VisItemLA#scan :
    (OuterAttribute)*
    [Visibility]
    (
-     "use" | "type" | "struct" | "enum" | 'union' | "const" | "static"
+     FunctionQualifiers "fn" =>||
+     |
+     "use" | "type" | "struct" | "enum" | 'union' | "static"
+     |
+     ("const" ENSURE ~("{") =>||)
      |
      ["unsafe"] ("mod" |"trait"|"impl" | "extern") =>||
      |
      "extern" "crate" =>||
-     |
-     FunctionQualifiers "fn" =>||
    )
 ;
 
@@ -239,7 +241,9 @@ TraitImpl : ["unsafe"] "impl" [GenericParams] ["!"] TypePath "for" =>|| Type [Wh
 
 TypeAlias : "type" Identifier [GenericParams] [WhereClause] ["=" Type] ";" ;
 
-ConstantItem : "const" (Identifier|<UNDERSCORE>) ":" Type ["=" Expression] ";" ;
+ConstantItem : "const" (Identifier|"_") =>|| ":" Type ["=" Expression] ";" ;
+
+ConstBlock : "const" =>|+1 BlockExpression ;
 
 Function :
     FunctionQualifiers "fn" =>||
@@ -545,6 +549,8 @@ BaseExpression :
         FieldsStructExpression  =>|| // This is ugly and I'm not sure is totally correct.
        |
        PathExpression
+       |
+       ConstBlock
         | ParentheticalExpression
         | ArrayExpression
         | AsyncBlockExpression
