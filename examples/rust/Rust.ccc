@@ -2,7 +2,7 @@ DEFAULT_LEXICAL_STATE=RUST;
 PARSER_PACKAGE=org.parsers.rust;
 NODE_PACKAGE=org.parsers.rust.ast;
 ENSURE_FINAL_EOL;
-DEACTIVATE_TOKENS=SHEBANG;
+DEACTIVATE_TOKENS=SHEBANG, LT_LT;
 
 INCLUDE "RustLexer.ccc"
 
@@ -588,7 +588,12 @@ MultiplicativeExpression : TypeCastExpression (("*" | "/" | "%") TypeCastExpress
 
 AdditiveExpression : MultiplicativeExpression (("+"|"-") MultiplicativeExpression)* ;
 
-ShiftExpression : AdditiveExpression (("<<" | ">>") AdditiveExpression)* ;
+ShiftExpression : AdditiveExpression ((">>" | LeftShiftOp) AdditiveExpression)* ;
+
+LeftShiftOp#void :
+   SCAN "<" "<" ENSURE {getToken(-1).getEndOffset() == getToken(0).getBeginOffset()}
+   => ACTIVATE_TOKENS LT_LT (<LT_LT>)
+;
 
 AndExpression : ShiftExpression ("&" ShiftExpression)* ;
 
