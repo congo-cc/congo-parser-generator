@@ -680,7 +680,9 @@ FieldsStructExpressionLA#scan :
         |
         (InnerAttribute)*
         (
-            StructExprField =>|| | Expression
+            StructExprField =>||
+            |
+            Expression
         )
     )
 ;
@@ -693,22 +695,24 @@ FieldsStructExpression :
    "}"
 ;
 
-StructExpression :
-   PathInExpression =>|+1
+
+/*FieldsStructExpression :
+   PathInExpression
+   "{"
+   (InnerAttribute)*
    (
-      "{" (InnerAttribute)* [StructExprFields | StructBase] "}"
-      |
-      "(" (InnerAttribute)* [Expression ("," =>|+1 Expression)* [","]] ")"
-   )
-;
+     StructExprField
+
+   )*
+   [StructExprFields | StructBase]
+   "}"
+;*/
 
 StructExprFields : StructExprField ("," =>|+1 StructExprField)* ["," [StructBase]] ;
 
 StructExprField : (OuterAttribute)* (Identifier [":" Expression] | <INTEGER_LITERAL> ":" Expression) ;
 
 StructBase : ".." Expression ;
-
-StructExprUnit : PathInExpression ;
 
 CallParams : Expression ("," =>|+1 Expression)* [","] ;
 
@@ -824,17 +828,29 @@ PatternNoTopAlt : RangePattern | PatternWithoutRange ;
 PatternWithoutRange :
     "_" #WildcardPattern(1)
     |
+    ".." #RestPattern(1)
+    |
     MacroInvocation
-    | RestPattern
-    | LiteralPattern
-    | TupleStructPattern
-    | StructPattern
-    | IdentifierPattern
-    | ReferencePattern
-    | TuplePattern
-    | GroupedPattern
-    | SlicePattern
-    | PathPattern
+    |
+    LiteralPattern
+    |
+    TupleStructPattern
+    |
+    FieldsStructExpression =>||
+    |
+    StructPattern
+    |
+    IdentifierPattern
+    |
+    ReferencePattern
+    |
+    TuplePattern
+    |
+    GroupedPattern
+    |
+    SlicePattern
+    |
+    PathPattern
 ;
 
 LiteralPattern :
@@ -849,8 +865,6 @@ LiteralPattern :
 ;
 
 IdentifierPattern : ["ref"] ["mut"] Identifier ENSURE ~("::") =>|| ["@" Pattern] ;
-
-RestPattern# : ".." ;
 
 ReferencePattern : ("&"|"&&") ["mut"] PatternWithoutRange ;
 
@@ -943,7 +957,6 @@ RangePattern :
         "..." RangePatternBound
     )
    ) #RestPattern(<2)
-   // =>||
 ;
 
 RangePatternBound :
