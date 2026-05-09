@@ -851,7 +851,7 @@ TuplePattern :
     SCAN TuplePatternLA =>
     "("
     (
-        ".."
+        ".." ENSURE ~(",") =>||
         |
         {commaSeen = false;}#
         Pattern ("," =>|+1 Pattern {commaSeen=true;}#)*
