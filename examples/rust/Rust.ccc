@@ -526,10 +526,11 @@ Expression :
 
 BaseExpression :
     (
-        (MacroInvocation
-        |LiteralExpression
-        |
-        SCAN ~\...\Expression\ExpressionNotStruct =>
+       MacroInvocation
+       |
+       LiteralExpression
+       |
+       SCAN ~\...\Expression\ExpressionNotStruct =>
         FieldsStructExpression  =>|| // This is ugly and I'm not sure is totally correct.
         | PathExpression
         | ParentheticalExpression
@@ -539,7 +540,7 @@ BaseExpression :
         | LoopExpression
         | UnsafeBlockExpression
         | ClosureExpression
-        | MatchExpression)
+        | MatchExpression
     )
     (BaseExpressionPostfix)*
 ;
@@ -613,11 +614,15 @@ RangeExpression :
 ;
 
 AssignmentExpression :
-   RangeExpression
+   ("_" | RangeExpression)
    [
-    ("="|"+="|"-="|"*="|"/="|"%="|"&="|"|="|"^="|"<<="|">>=")
+    AssignmentOperator
     Expression
    ]
+;
+
+AssignmentOperator#void :
+    ("="|"+="|"-="|"*="|"/="|"%="|"&="|"|="|"^="|"<<="|">>=")
 ;
 
 BreakExpression :
@@ -711,7 +716,7 @@ IfExpression :
     ExpressionNotStruct
     ("&&" LetExp)* // Note that this is a bleeding edge language feature
     BlockExpression
-    ["else" (BlockExpression | IfLetExpression | IfExpression)]
+    ["else" (BlockExpression (BaseExpressionPostfix)* | IfLetExpression | IfExpression)]
 ;
 
 IfLetExpression :
@@ -771,13 +776,14 @@ Pattern : ["|"] PatternNoTopAlt ("|" PatternNoTopAlt)* ;
 PatternNoTopAlt : RangePattern | PatternWithoutRange ;
 
 PatternWithoutRange :
+    "_" #WildcardPattern(1)
+    |
     MacroInvocation
     | RestPattern
     | LiteralPattern
     | TupleStructPattern
     | StructPattern
     | IdentifierPattern
-    | WildcardPattern
     | ReferencePattern
     | TuplePattern
     | GroupedPattern
@@ -799,8 +805,6 @@ LiteralPattern :
 IdentifierPattern : ["ref"] ["mut"] Identifier ENSURE ~("::") =>|| ["@" Pattern] ;
 
 RestPattern# : ".." ;
-
-WildcardPattern# : "_" ;
 
 ReferencePattern : ("&"|"&&") ["mut"] PatternWithoutRange ;
 
@@ -864,9 +868,11 @@ TuplePattern :
 ;
 
 TuplePatternItems :
-      RestPattern
-    | Pattern "," ENSURE ~(Pattern) =>||
-    | Pattern ("," =>|+1 Pattern)+ [","]
+      ".." #RestPattern(1)
+      |
+      Pattern "," ENSURE ~(Pattern) =>||
+      |
+      Pattern ("," =>|+1 Pattern)+ [","]
 ;
 
 TupleStructPattern : PathInExpression "(" =>|| [TupleStructItems] ")" ;
