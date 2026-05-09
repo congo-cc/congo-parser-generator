@@ -554,6 +554,7 @@ BaseExpression :
         | ParentheticalExpression
         | ArrayExpression
         | AsyncBlockExpression
+        | LabeledBlock
         | BlockExpression
         | LoopExpression
         | UnsafeBlockExpression
@@ -562,6 +563,8 @@ BaseExpression :
     )
     (BaseExpressionPostfix)*
 ;
+
+LabeledBlock : LoopLabel =>|+1 BlockExpression ;
 
 BaseExpressionPostfix#void :
     "." PathExprSegment "(" =>|| [CallParams] ")" #MethodCall(+1)

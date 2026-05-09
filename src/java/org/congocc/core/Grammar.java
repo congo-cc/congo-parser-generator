@@ -823,7 +823,8 @@ public class Grammar extends BaseNode {
                     msg = msg.replaceFirst("tokens", "token");
                 }
                 msg += " cannot be matched at this point.";
-                errors.addWarning(exp, msg);
+                errors.addInfo(exp, msg);
+//                errors.addWarning(exp, msg);
                 matchedTokens.or(firstSet);
             }
         }
@@ -879,7 +880,7 @@ public class Grammar extends BaseNode {
                         msg = msg.replaceFirst("tokens", "token");
                     }
                     msg += " cannot be matched at this point.";
-                    errors.addWarning(following, msg);
+                    errors.addInfo(following, msg);
                 }
             }
         }
