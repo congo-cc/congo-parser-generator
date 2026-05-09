@@ -504,10 +504,6 @@ MaybeNamedFunctionParametersVariadic : (MaybeNamedParam ",")+ (OuterAttribute)* 
 
 ExpressionNotStruct#void : Expression ;
 
-BlockNoPostfix#void : Expression ;
-
-ExpressionWithoutBlock : {} ;
-
 Expression :
    (OuterAttribute)*
    =>|+1
@@ -518,14 +514,6 @@ Expression :
         |
         ContinueExpression
         |
-        SCAN ~\ExpressionNotStruct =>
-        FieldsStructExpression =>||
-        (BaseExpressionPostfix)*
-        |
-        //EnumerationVariantExpression =>||
-        //|
-        //ClosureExpression
-        //|
         IfLetExpression
         |
         IfExpression
@@ -540,6 +528,9 @@ BaseExpression :
     (
         (MacroInvocation
         |LiteralExpression
+        |
+        SCAN ~\...\Expression\ExpressionNotStruct =>
+        FieldsStructExpression  =>|| // This is ugly and I'm not sure is totally correct.
         | PathExpression
         | ParentheticalExpression
         | ArrayExpression
@@ -645,8 +636,25 @@ ReturnExpression :
     "return" [Expression]
 ;
 
+FieldsStructExpressionLA#scan :
+    PathInExpression
+    "{"
+    (InnerAttribute)*
+    (
+        "}"
+        |
+        ".."
+        |
+        (InnerAttribute)*
+        (
+            StructExprField =>|| | Expression
+        )
+    )
+;
+
 FieldsStructExpression :
-   PathInExpression "{" =>||
+   //ENSURE (FieldsStructExpressionLA)
+   PathInExpression "{"
    (InnerAttribute)*
    [StructExprFields | StructBase]
    "}"
@@ -707,13 +715,19 @@ IfExpression :
 ;
 
 IfLetExpression :
-    "if" "let" =>|| Pattern "=" ExpressionNotStruct
+    "if" "let" =>|| Pattern "=" ExpressionNotStruct // Expression
     ("&&" LetExp)* // Note that this is a bleeding edge language feature
     BlockExpression
     [
         "else" (BlockExpression | IfLetExpression | IfExpression)
     ]
 ;
+
+INJECT PARSER_CLASS : {
+    private String expressionParent() {
+        return null;
+    }
+}
 
 MatchExpression :
     "match"
@@ -781,7 +795,6 @@ LiteralPattern :
     | <BYTE_STRING_LITERAL>
     | ["-"] (<INTEGER_LITERAL>|<FLOATING_POINT_LITERAL>)
 ;
-
 
 IdentifierPattern : ["ref"] ["mut"] Identifier ENSURE ~("::") =>|| ["@" Pattern] ;
 
@@ -999,7 +1012,7 @@ DelimTokenTree :
 
 AnyToken#void :
   "_"|"abstract"|"as"|"async"|"await"
-  | "become"|"const"|"continue"
+  | "become"|"break"|"const"|"continue"
   | "crate"|"$crate"|"do"|"dyn"|"else"
   | "enum"|"extern"|"false"|"final"|"fn"
   | "for"|"if"|"impl"|"in"|"let"|"loop"
