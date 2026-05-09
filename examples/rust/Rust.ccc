@@ -742,7 +742,17 @@ IfExpression :
     ExpressionNotStruct
     ("&&" LetExp)* // Note that this is a bleeding edge language feature
     BlockExpression
-    ["else" (BlockExpression (BaseExpressionPostfix)* | IfLetExpression | IfExpression)]
+    [
+        "else"
+        (
+            // Is this correct? REVISIT
+            BlockExpression (BaseExpressionPostfix)* ["as" Type #CastExpression(3)]
+            |
+            IfLetExpression
+            |
+            IfExpression
+        )
+    ]
 ;
 
 IfLetExpression :
@@ -750,7 +760,15 @@ IfLetExpression :
     ("&&" LetExp)* // Note that this is a bleeding edge language feature
     BlockExpression
     [
-        "else" (BlockExpression | IfLetExpression | IfExpression)
+        "else"
+        (
+            // Is this correct? REVISIT
+            BlockExpression (BaseExpressionPostfix)* ["as" Type #CastExpression(3)]
+            |
+            IfLetExpression
+            |
+            IfExpression
+        )
     ]
 ;
 
