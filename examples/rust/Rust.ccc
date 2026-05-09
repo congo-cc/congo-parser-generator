@@ -430,6 +430,8 @@ Statement :
 ;
 
 Type :
+   MacroInvocation
+   |
    ImplTraitType
    |
    TraitObjectType =>||
