@@ -338,7 +338,10 @@ GenericArgs :
         && !((getTokenType(1)==ID || getTokenType(1)==RAW_IDENTIFIER)&&getTokenType(2) == ASSIGN)
       }
       ENSURE ~(Identifier [GenericArgs] "=")
-      Type
+      (
+        Type
+        | "{" Type "}" // The "Type" inside is restricted to constant expressions in reality. REVSIIT
+      )
       [","]
    )*
    [GenericArgsBinding]
