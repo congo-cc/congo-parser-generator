@@ -350,14 +350,9 @@ GenericArgs :
       )
       [","]
    )*
-   [GenericArgsBinding]
+   [GenericArgsBinding ("," =>|+1 GenericArgsBinding)*]
    [","]
-//   [
-//     SCAN <GT_GT> => UNCACHE_TOKENS
-//   ]
    ">"
-//   DEACTIVATE_TOKENS GT_GT
-//   (">")
 ;
 
 GenericArg :
