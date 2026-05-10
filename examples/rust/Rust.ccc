@@ -669,48 +669,38 @@ ReturnExpression :
     "return" [Expression]
 ;
 
-FieldsStructExpressionLA#scan :
-    PathInExpression
-    "{"
-    (InnerAttribute)*
-    (
-        "}"
-        |
-        ".."
-        |
-        (InnerAttribute)*
-        (
-            StructExprField =>||
-            |
-            Expression
-        )
-    )
-;
-
 FieldsStructExpression :
-   //ENSURE (FieldsStructExpressionLA)
    PathInExpression "{"
    (InnerAttribute)*
    [StructExprFields | StructBase]
    "}"
 ;
 
-
-/*FieldsStructExpression :
-   PathInExpression
-   "{"
+FieldsStructPattern :
+   PathInExpression "{"
    (InnerAttribute)*
-   (
-     StructExprField
-
-   )*
-   [StructExprFields | StructBase]
+   [
+      ".." [Expression]
+      |
+      StructExprField
+      ("," =>|+1 StructExprField)*
+      ["," [".." [Expression]]]
+   ]
    "}"
-;*/
+;
+
 
 StructExprFields : StructExprField ("," =>|+1 StructExprField)* ["," [StructBase]] ;
 
-StructExprField : (OuterAttribute)* (Identifier [":" Expression] | <INTEGER_LITERAL> ":" Expression) ;
+StructExprField :
+    (OuterAttribute)*
+    (
+        ["ref"] ["mut"] Identifier [":" Expression]
+        |
+        <INTEGER_LITERAL> ":" Expression
+    )
+;
+
 
 StructBase : ".." Expression ;
 
@@ -793,7 +783,6 @@ MatchExpression :
         SCAN ~("}") =>
         MatchArm
         "=>"
-        //BlockNoPostfix
         (BlockExpression | Expression)
         [","]
     )*
@@ -836,7 +825,7 @@ PatternWithoutRange :
     |
     TupleStructPattern
     |
-    FieldsStructExpression =>||
+    FieldsStructPattern =>||
     |
     StructPattern
     |
@@ -889,7 +878,8 @@ StructPatternElements :
 StructPatternEtcetera : (OuterAttribute)* ".." =>|| ;
 
 StructPatternFields : StructPatternField ("," =>|+1 StructPatternField)*
-    [SCAN 0 {getTokenType(1) == COMMA && getTokenType(2) != DOT_DOT} => ","];
+    [SCAN 0 {getTokenType(1) == COMMA && getTokenType(2) != DOT_DOT} => ","]
+;
 
 StructPatternField :
     (OuterAttribute)*
