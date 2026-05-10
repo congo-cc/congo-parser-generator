@@ -544,11 +544,11 @@ BaseExpression :
        |
        LiteralExpression
        |
-       SCAN ~\...\Expression\ExpressionNotStruct CheckForColonInStruct =>
-        FieldsStructExpression
-       |
+//       SCAN ~\...\Expression\ExpressionNotStruct CheckForColonInStruct =>
+//        FieldsStructExpression
+//       |
        SCAN ~\...\Expression\ExpressionNotStruct =>
-        FieldsStructExpression  =>|| // This is ugly and I'm not sure is totally correct.
+        FieldsStructExpression =>|| // This is ugly and I'm not sure is totally correct.
        |
        PathExpression
        |
@@ -669,15 +669,28 @@ ReturnExpression :
     "return" [Expression]
 ;
 
-FieldsStructExpression :
+/*FieldsStructExpression :
    PathInExpression "{"
    (InnerAttribute)*
    [StructExprFields | StructBase]
    "}"
+;*/
+
+FieldsStructExpression :
+   PathInExpression "{" =>||
+   (InnerAttribute)*
+   [
+      ".." [Expression]
+      |
+      StructExprField
+      ("," =>|+1 StructExprField)*
+      ["," [".." [Expression]]]
+   ]
+   "}"
 ;
 
 FieldsStructPattern :
-   PathInExpression "{"
+   PathInExpression "{" =>||
    (InnerAttribute)*
    [
       ".." [Expression]
@@ -1021,7 +1034,7 @@ MacroInvocationSemi :
 
 SimplePath : ["::"] SimplePathSegment ("::" =>|+1 SimplePathSegment)* ;
 
-SimplePathSegment : Identifier | "super" | "self" | "crate" | "$crate" ;
+SimplePathSegment : Identifier | "super" | "self" | "crate" | "$crate" | "unsafe";
 
 MacroInvocation: SimplePath "!" =>|+1 DelimTokenTree ;
 
