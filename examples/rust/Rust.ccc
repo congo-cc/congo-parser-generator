@@ -2,7 +2,7 @@ DEFAULT_LEXICAL_STATE=RUST;
 PARSER_PACKAGE=org.parsers.rust;
 NODE_PACKAGE=org.parsers.rust.ast;
 ENSURE_FINAL_EOL;
-DEACTIVATE_TOKENS=SHEBANG, LT_LT;
+DEACTIVATE_TOKENS=SHEBANG, LT_LT, GT_GT;
 
 INCLUDE "RustLexer.ccc"
 
@@ -156,14 +156,13 @@ AssociatedItem :
         |
         SCAN ~\Trait => TypeAlias
         |
-        //SCAN \Trait => (ENSURE ("type") AssociatedTypeBound =>|| | {System.out.println("OH, FUCK!");})
         SCAN \Trait => AssociatedTypeBound
       )
    )
 ;
 
 AssociatedTypeBound : // REVISIT production is surely incomplete
-   "type" Identifier [":" Type] [WhereClause] ";"
+   "type" Identifier [GenericArgs] [":" Type] [WhereClause] ";"
 ;
 
 ClosureExpression :
@@ -344,22 +343,22 @@ GenericArgs :
       ENSURE ~(Identifier [GenericArgs] "=")
       (
         Type
-        | "{" Type "}" // The "Type" inside is restricted to constant expressions in reality. REVSIIT
+        |
+        LiteralExpression
+        |
+        "{" Expression "}" // The "Type" inside is restricted to constant expressions in reality. REVISIT
       )
       [","]
    )*
    [GenericArgsBinding]
    [","]
-   [
-     SCAN <GT_GT> => UNCACHE_TOKENS
-   ]
-   DEACTIVATE_TOKENS GT_GT
-   (">")
+//   [
+//     SCAN <GT_GT> => UNCACHE_TOKENS
+//   ]
+   ">"
+//   DEACTIVATE_TOKENS GT_GT
+//   (">")
 ;
-
-//GenericArg : Lifetime | GenericArgsBinding | Type | GenericArgsConst ;
-//GenericArgsConst : BlockExpression | ["-"] LiteralExpression | SimplePathSegment ;
-//GenericArgsTypes : Type ("," =>|+1 Type)* ;
 
 GenericArg :
     SCAN
@@ -611,12 +610,18 @@ MultiplicativeExpression : TypeCastExpression (("*" | "/" | "%") TypeCastExpress
 
 AdditiveExpression : MultiplicativeExpression (("+"|"-") MultiplicativeExpression)* ;
 
-ShiftExpression : AdditiveExpression ((">>" | LeftShiftOp) AdditiveExpression)* ;
+ShiftExpression : AdditiveExpression ((LeftShiftOp|RightShiftOp) AdditiveExpression)* ;
 
 LeftShiftOp#void :
    SCAN "<" "<" ENSURE {getToken(-1).getEndOffset() == getToken(0).getBeginOffset()}
-   => ACTIVATE_TOKENS LT_LT (<LT_LT>)
+   => ACTIVATE_TOKENS LT_LT ("<<")
 ;
+
+RightShiftOp#void :
+   SCAN ">" ">" ENSURE {getToken(-1).getEndOffset() == getToken(0).getBeginOffset()}
+   => ACTIVATE_TOKENS GT_GT (">>")
+;
+
 
 AndExpression : ShiftExpression ("&" ShiftExpression)* ;
 
