@@ -834,7 +834,7 @@ INJECT PARSER_CLASS : {
 
 MatchExpression :
     "match"
-    Expression
+    ExpressionNotStruct
     "{"
     (InnerAttribute)*
     (
@@ -865,8 +865,6 @@ LetStatement :
                            // exit via return or break or panic!
    ";"
 ;
-
-
 
 Pattern : ["|"] PatternNoTopAlt ("|" PatternNoTopAlt)* ;
 
