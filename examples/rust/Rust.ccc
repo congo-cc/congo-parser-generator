@@ -241,7 +241,11 @@ InherentImpl : "impl" [GenericParams] Type [WhereClause] "{" (InnerAttribute)* (
 
 TraitImpl : ["unsafe"] "impl" [GenericParams] ["!"] TypePath "for" =>|| Type [WhereClause] "{" (InnerAttribute)* (AssociatedItem)* "}" ;
 
-TypeAlias : "type" Identifier [GenericParams] [WhereClause] ["=" Type] ";" ;
+TypeAlias :
+    "type"
+    Identifier [GenericParams] [WhereClause]
+    ["=" Type [WhereClause]] ";"
+;
 
 ConstantItem : "const" (Identifier|"_") =>|| ":" Type ["=" Expression] ";" ;
 
