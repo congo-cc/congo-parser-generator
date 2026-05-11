@@ -593,12 +593,16 @@ ArrayElements :
     )
 ;
 
+// The following production is a bit screwy
+// in terms of what it will accept. REVISIT.
 UnaryExpression :
    (OuterAttribute)*
    (
       "-" | "!" | "*" |  "&&"
       |
       ["&" 'raw'] "mut" =>||
+      |
+      "&" 'raw' "const" =>||
       |
       "&"
    )
