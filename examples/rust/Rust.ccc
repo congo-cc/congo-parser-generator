@@ -520,6 +520,7 @@ Expression :
         |
         IfLetExpression
         |
+        SCAN \Statement =>
         IfExpression
         |
         LetStatement
@@ -539,11 +540,8 @@ BaseExpression :
        |
        LiteralExpression
        |
-//       SCAN ~\...\Expression\ExpressionNotStruct CheckForColonInStruct =>
-//        FieldsStructExpression
-//       |
        SCAN ~\...\Expression\ExpressionNotStruct =>
-        FieldsStructExpression =>|| // This is ugly and I'm not sure is totally correct.
+        FieldsStructExpression =>|| // REVISIT. This is ugly and I'm not sure is totally correct.
        |
        PathExpression
        |
