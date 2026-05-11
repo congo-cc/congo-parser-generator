@@ -335,31 +335,6 @@ PathIdentSegment#void : Identifier | "super" | "self" | "Self" | "crate" | "$cra
 
 GenericArgs :
    "<"
-   [GenericArgsLifetimes [","]]
-   (
-      ENSURE
-      {
-        (getTokenType(0) == COMMA || getTokenType(0) == LT)
-        && getTokenType(1) != GT && getTokenType(1) != GT_GT
-        && !((getTokenType(1)==ID || getTokenType(1)==RAW_IDENTIFIER)&&getTokenType(2) == ASSIGN)
-      }
-      ENSURE ~(Identifier [GenericArgs] "=")
-      (
-        Type
-        |
-        LiteralExpression
-        |
-        "{" Expression "}" // The "Type" inside is restricted to constant expressions in reality. REVISIT
-      )
-      [","]
-   )*
-   [GenericArgsBinding ("," =>|+1 GenericArgsBinding)*]
-   [","]
-   ">"
-;
-
-GenericArgs :
-   "<"
    (
       GenericArg
       ("," =>|+1 GenericArg)*
@@ -386,12 +361,16 @@ GenericArgsBinding : Identifier [GenericArgs] "=" =>|| Type ;
 
 GenericArgsBounds : Identifier [GenericArgs] ":" =>|| TypeParamBounds ;
 
-GenericArgsLifetimes : Lifetime ("," Lifetime =>||)* ;
-
-
-TypePathFn : "(" [TypePathInputs] ")" ["->" Type] ;
-
-TypePathInputs : Type ("," =>|+1 Type)* [","] ;
+TypePathFn :
+    "("
+    [
+        Type
+        ("," =>|+1 Type)*
+        [","]
+    ]
+    ")"
+    ["->" Type]
+;
 
 ConstParam :
     "const"
@@ -551,10 +530,8 @@ Expression :
         |
         ContinueExpression
         |
-        IfLetExpression
-        |
         SCAN \Statement =>
-        IfExpression
+        (IfLetExpression|IfExpression)
         |
         LetStatement
         |
@@ -573,9 +550,9 @@ BaseExpression :
        |
        LiteralExpression
        |
-       SCAN ~\...\Expression\ExpressionNotStruct CheckForColonInStruct =>
-        FieldsStructExpression
-       |
+//       SCAN ~\...\Expression\ExpressionNotStruct CheckForColonInStruct =>
+//        FieldsStructExpression
+//       |
        SCAN ~\...\Expression\ExpressionNotStruct =>
         FieldsStructExpression =>|| // REVISIT. This is ugly and I'm not sure is totally correct.
        |
@@ -583,8 +560,11 @@ BaseExpression :
        |
        ConstBlock
        |
+       IfLetExpression
+       |
        IfExpression
-        | ParentheticalExpression
+       |
+       ParentheticalExpression
         | ArrayExpression
         | AsyncBlockExpression
         | LabeledBlock
@@ -790,14 +770,21 @@ InfiniteLoopExpression : "loop" BlockExpression ;
 
 WhileExpression : "while" ExpressionNotStruct BlockExpression ;
 
-WhileLetExpression : "while" "let" =>|| Pattern "=" ExpressionNotStruct BlockExpression ;
+WhileLetExpression :
+    "while" "let" =>||
+    Pattern
+    "="
+    ExpressionNotStruct
+    ("&&" LetExp)*
+    BlockExpression
+;
 
 ForExpression : "for" Pattern "in" ExpressionNotStruct BlockExpression ;
 
 IfExpression :
     "if"
     ExpressionNotStruct
-    ("&&" LetExp)* // Note that this is a bleeding edge language feature
+    ("&&" LetExp)*
     BlockExpression
     [
         "else"
@@ -813,7 +800,8 @@ IfExpression :
 ;
 
 IfLetExpression :
-    "if" "let" =>|| Pattern "=" ExpressionNotStruct // Expression
+    "if" "let" =>||
+    Pattern "=" ExpressionNotStruct
     ("&&" LetExp)* // Note that this is a bleeding edge language feature
     BlockExpression
     [
