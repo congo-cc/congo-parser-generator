@@ -27,7 +27,7 @@ TOKEN #KeyWord :
 | < CRATE: "crate" >
 | < DOLLAR_CRATE: "$crate">
 | < DO: "do" >
-| < DYN: "dyn" >
+//| < DYN: "dyn" >
 | < ELSE: "else" >
 | < ENUM: "enum" >
 | < EXTERN: "extern" >

@@ -458,7 +458,7 @@ InferredType# : "_" ;
 
 ImplTraitType : "impl" =>|+1 TypeParamBounds ;
 
-TraitObjectType : ["dyn"] TypeParamBounds ;
+TraitObjectType : ['dyn'] TypeParamBounds ;
 
 BareFunctionType :
    [ForLifetimes]
@@ -490,7 +490,7 @@ ReferenceType : ("&"|"&&") [Lifetime] ["mut"] TypeNoBounds ;
 
 ImplTraitTypeOneBound : "impl" TraitBound ;
 
-TraitObjectTypeOneBound : "dyn" TraitBound ;
+TraitObjectTypeOneBound : 'dyn' TraitBound ;
 
 FunctionTypeQualifiers : ["unsafe"] ["extern" [Abi]] ;
 
@@ -597,7 +597,14 @@ ArrayElements :
 
 UnaryExpression :
    (OuterAttribute)*
-   ("-" | "!" | "*" | "&" | "&&" | "mut") =>|| UnaryExpression
+   (
+      "-" | "!" | "*" |  "&&"
+      |
+      ["&" 'raw'] "mut" =>||
+      |
+      "&"
+   )
+   UnaryExpression
    |
    BaseExpression
 ;
@@ -1087,7 +1094,7 @@ DelimTokenTree :
 AnyToken#void :
   "_"|"abstract"|"as"|"async"|"await"
   | "become"|"break"|"const"|"continue"
-  | "crate"|"$crate"|"do"|"dyn"|"else"
+  | "crate"|"$crate"|"do"|"else"
   | "enum"|"extern"|"false"|"final"|"fn"
   | "for"|"if"|"impl"|"in"|"let"|"loop"
   | "macro"|"match"|"mod"
