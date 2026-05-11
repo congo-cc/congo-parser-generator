@@ -462,8 +462,6 @@ TypeNoBounds :
     | MacroInvocation
 ;
 
-ParenthesizedType : "(" =>|+1 Type ")" ;
-
 NeverType# : "!" ;
 
 InferredType# : "_" ;
@@ -531,7 +529,7 @@ Expression :
         ContinueExpression
         |
         SCAN \Statement =>
-        (IfLetExpression|IfExpression)
+        (IfLetExpression|IfExpression|ForExpression)
         |
         LetStatement
         |
@@ -565,14 +563,22 @@ BaseExpression :
        IfExpression
        |
        ParentheticalExpression
-        | ArrayExpression
-        | AsyncBlockExpression
-        | LabeledBlock
-        | BlockExpression
-        | LoopExpression
-        | UnsafeBlockExpression
-        | ClosureExpression
-        | MatchExpression
+       |
+       ArrayExpression
+       |
+       AsyncBlockExpression
+       |
+       LabeledBlock
+       |
+       BlockExpression
+       |
+       LoopExpression
+       |
+       UnsafeBlockExpression
+       |
+       ClosureExpression
+       |
+       MatchExpression
     )
     (BaseExpressionPostfix)*
 ;
@@ -644,7 +650,6 @@ RightShiftOp#void :
    SCAN ">" ">" ENSURE {getToken(-1).getEndOffset() == getToken(0).getBeginOffset()}
    => ACTIVATE_TOKENS GT_GT (">>")
 ;
-
 
 AndExpression : ShiftExpression ("&" ShiftExpression)* ;
 
