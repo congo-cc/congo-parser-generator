@@ -363,7 +363,7 @@ GenericArg :
 
 GenericArgsBinding : Identifier [GenericArgs] "=" =>|| Type ;
 
-GenericArgsBounds : Identifier [GenericArgs] ":" =>|| TypeParamBounds ;
+GenericArgsBounds : ["const"] Identifier [GenericArgs] ":" =>|| TypeParamBounds ;
 
 TypePathFn :
     "("
