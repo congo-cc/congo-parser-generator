@@ -557,6 +557,9 @@ BaseExpression :
        |
        LiteralExpression
        |
+       SCAN ~\...\Expression\ExpressionNotStruct CheckForColonInStruct =>
+        FieldsStructExpression
+       |
        SCAN ~\...\Expression\ExpressionNotStruct =>
         FieldsStructExpression =>|| // REVISIT. This is ugly and I'm not sure is totally correct.
        |
@@ -1134,7 +1137,7 @@ AnyToken#void :
   | "|" | "~"
   | <CHAR_LITERAL>|<BYTE_LITERAL>
   | <STRING_LITERAL>|<BYTE_STRING_LITERAL>
-  | <C_STRING_LITERAL>|<RAW_STRING_LITERAL_HASH>
+  | <C_STRING_LITERAL>|<RAW_STRING_LITERAL>|<RAW_STRING_LITERAL_HASH>
   | <ID>|<RAW_IDENTIFIER>|<LIFETIME_OR_LABEL>
   |<UNDERLINE_LIFETIME>
 ;
