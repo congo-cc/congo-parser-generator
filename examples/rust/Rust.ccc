@@ -3,6 +3,7 @@ PARSER_PACKAGE=org.parsers.rust;
 NODE_PACKAGE=org.parsers.rust.ast;
 ENSURE_FINAL_EOL;
 DEACTIVATE_TOKENS=SHEBANG, LT_LT, GT_GT;
+TAB_SIZE=4;
 
 INCLUDE "RustLexer.ccc"
 
@@ -547,6 +548,8 @@ BaseExpression :
        PathExpression
        |
        ConstBlock
+       |
+       IfExpression
         | ParentheticalExpression
         | ArrayExpression
         | AsyncBlockExpression
