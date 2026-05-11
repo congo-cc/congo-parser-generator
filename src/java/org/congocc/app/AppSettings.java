@@ -73,6 +73,9 @@ public class AppSettings {
             put("CSHARP", "/include/csharp/CSharp.ccc");
             put("CSHARP_LEXER", "/include/csharp/CSharpLexer.ccc");
             put("CSHARP_IDENTIFIER_DEF", "/include/csharp/CSharpIdentifierDef.ccc");
+            put("RUST", "/include/rust/Rust.ccc");
+            put("RUST_LEXER", "/include/rust/RustLexer.ccc");
+            put("RUST_IDENTIFIER_DEF", "/include/rust/RustIdentifierDef.ccc");
             put("PREPROCESSOR", "/include/preprocessor/Preprocessor.ccc");
             put("JSON", "/include/json/JSON.ccc");
             put("JSONC", "/include/json/JSONC.ccc");

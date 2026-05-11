@@ -327,7 +327,7 @@ INJECT LEXER_CLASS :
                commentNesting;
 
    // The "suffix" after a string literal cannot be a lone underscore.
-   private void chopLoneUnderscore(Token tok) {
+   private void chopLoneUnderscore(BASE_TOKEN_CLASS tok) {
       if (tok.length()>2) {
         int lastChar = tok.charAt(tok.length()-1);
         int secondLastChar = tok.charAt(tok.length()-2);
