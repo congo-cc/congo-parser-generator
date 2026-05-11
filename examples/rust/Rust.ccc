@@ -1069,6 +1069,7 @@ Visibility :
    [
       "("
       ( "crate" | "self" | "super" | "in" SimplePath)
+      =>||
       ")"
    ]
 ;
