@@ -375,7 +375,22 @@ TypePathFn : "(" [TypePathInputs] ")" ["->" Type] ;
 
 TypePathInputs : Type ("," =>|+1 Type)* [","] ;
 
-ConstParam : "const" Identifier ":" Type ;
+ConstParam :
+    "const"
+    Identifier
+    ":"
+    Type
+    [
+       "="
+       (
+          BlockExpression
+          |
+          Identifier
+          |
+          ["-"] LiteralExpression
+       )
+    ]
+;
 
 LifetimeParam :
     <LIFETIME_OR_LABEL>
