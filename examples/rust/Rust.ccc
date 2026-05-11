@@ -533,7 +533,15 @@ Expression :
         ContinueExpression
         |
         SCAN \Statement =>
-        (IfLetExpression|IfExpression|ForExpression)
+        (
+            IfLetExpression
+            |
+            IfExpression
+            |
+            ForExpression
+            |
+            BlockExpression
+        )
         |
         LetStatement
         |
