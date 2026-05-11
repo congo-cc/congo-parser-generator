@@ -96,8 +96,8 @@ VisItemLA#scan :
      ("const" ENSURE ~("{") =>||)
      |
      ["unsafe"] ("mod" |"trait"|"impl" | "extern") =>||
-     |
-     "extern" "crate" =>||
+//     |
+//     "extern" "crate" =>||
    )
 ;
 
@@ -881,9 +881,9 @@ PatternWithoutRange :
     |
     LiteralPattern
     |
-    TupleStructPattern
-    |
     FieldsStructPattern =>||
+    |
+    TupleStructPattern
     |
     StructPattern
     |
@@ -913,7 +913,7 @@ LiteralPattern :
 
 IdentifierPattern : ["ref"] ["mut"] Identifier ENSURE ~("::") =>|| ["@" Pattern] ;
 
-ReferencePattern : ("&"|"&&") ["mut"] PatternWithoutRange ;
+ReferencePattern : ['box'] ("&"|"&&") ["mut"] PatternWithoutRange ;
 
 StructPattern : PathInExpression "{" =>|| [StructPatternElements] "}" ;
 
@@ -1022,7 +1022,18 @@ CrateRef : Identifier | "self" ;
 
 AsClause : "as" (Identifier | "_") ;
 
-ExternBlock : ["unsafe"] "extern" [Abi] =>|| "{" (InnerAttribute)* (ExternalItem)* "}" ;
+ExternBlock :
+    ["unsafe"]
+    "extern" [Abi] =>||
+    "{"
+        (InnerAttribute)*
+        (
+            (OuterAttribute)* =>|+2 MacroInvocationSemi
+            |
+            VisItem // REVISIT: This is surely too general, but just to get things to parse...
+        )*
+    "}"
+;
 
 Abi : <STRING_LITERAL> | <RAW_STRING_LITERAL> ;
 
@@ -1035,15 +1046,6 @@ Module :
         |
         "{" (InnerAttribute)* (Item)* "}"
    )
-;
-
-ExternalItem :
-    (OuterAttribute)*
-    (
-        MacroInvocationSemi
-        |
-        [Visibility] (StaticItem | Function)
-    )
 ;
 
 StaticItem : "static" ["mut"] Identifier ":" Type ["=" Expression] ";" ;
