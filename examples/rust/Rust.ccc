@@ -358,17 +358,33 @@ GenericArgs :
    ">"
 ;
 
+GenericArgs :
+   "<"
+   (
+      GenericArg
+      ("," =>|+1 GenericArg)*
+      [","]
+   )*
+   ">"
+;
+
 GenericArg :
-    SCAN
-    {
-        (getTokenType(0) == COMMA || getTokenType(0) == LT)
-        && getTokenType(1) != GT && getTokenType(1) != GT_GT
-        && !((getTokenType(1)==ID || getTokenType(1)==RAW_IDENTIFIER)&&getTokenType(2) == ASSIGN)
-    }
-    => Type [","]
+    Lifetime
+    |
+    ["-"] LiteralExpression
+    |
+    GenericArgsBinding
+    |
+    GenericArgsBounds
+    |
+    Type
+    |
+    "{" Expression "}" // The expression inside is restricted to constant expressions in reality. REVISIT
 ;
 
 GenericArgsBinding : Identifier [GenericArgs] "=" =>|| Type ;
+
+GenericArgsBounds : Identifier [GenericArgs] ":" =>|| TypeParamBounds ;
 
 GenericArgsLifetimes : Lifetime ("," Lifetime =>||)* ;
 
