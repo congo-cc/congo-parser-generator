@@ -66,6 +66,8 @@ LiteralExpression :
    |
    <STRING_LITERAL>
    |
+   <C_STRING_LITERAL>
+   |
    <RAW_STRING_LITERAL>
    |
    <RAW_STRING_LITERAL_HASH>
