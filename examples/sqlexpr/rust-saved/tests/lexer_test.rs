@@ -57,10 +57,10 @@ fn shape<'a>(tokens: &'a [Token], source: &'a str) -> Vec<(TokenType, &'a str)> 
 
 #[test]
 fn token_type_count_matches_defined_variants() {
-    // COUNT excludes the DUMMY and INVALID sentinels (39 grammar
-    // tokens: EOF + 5 unparsed + 11 keywords + 14 operators + 2
+    // COUNT excludes the DUMMY and INVALID sentinels (40 grammar
+    // tokens: EOF + 5 unparsed + 11 keywords + 15 operators + 2
     // comments + 5 literals + ID).
-    assert_eq!(TokenType::COUNT, 39);
+    assert_eq!(TokenType::COUNT, 40);
 }
 
 #[test]
@@ -81,7 +81,7 @@ fn token_type_is_regular_positive() {
         TokenType::IN,
         TokenType::IS,
         TokenType::_TOKEN_17, // "="
-        TokenType::_TOKEN_30, // "%"
+        TokenType::_TOKEN_31, // "%"
         TokenType::DECIMAL_LITERAL,
         TokenType::HEX_LITERAL,
         TokenType::OCTAL_LITERAL,
@@ -190,7 +190,7 @@ fn token_type_classification_partitions_grammar_tokens() {
         TokenType::_TOKEN_20, TokenType::_TOKEN_21, TokenType::_TOKEN_22,
         TokenType::_TOKEN_23, TokenType::_TOKEN_24, TokenType::_TOKEN_25,
         TokenType::_TOKEN_26, TokenType::_TOKEN_27, TokenType::_TOKEN_28,
-        TokenType::_TOKEN_29, TokenType::_TOKEN_30,
+        TokenType::_TOKEN_29, TokenType::_TOKEN_30, TokenType::_TOKEN_31,
         TokenType::LINE_COMMENT, TokenType::BLOCK_COMMENT,
         TokenType::DECIMAL_LITERAL, TokenType::HEX_LITERAL,
         TokenType::OCTAL_LITERAL, TokenType::FLOATING_POINT_LITERAL,
@@ -224,7 +224,7 @@ fn token_type_display_matches_variant_name() {
         (TokenType::IN, "IN"),
         (TokenType::IS, "IS"),
         (TokenType::_TOKEN_17, "_TOKEN_17"),
-        (TokenType::_TOKEN_30, "_TOKEN_30"),
+        (TokenType::_TOKEN_31, "_TOKEN_31"),
         (TokenType::DECIMAL_LITERAL, "DECIMAL_LITERAL"),
         (TokenType::HEX_LITERAL, "HEX_LITERAL"),
         (TokenType::OCTAL_LITERAL, "OCTAL_LITERAL"),
@@ -547,10 +547,11 @@ fn tokenize_comparison_and_equality_operators() {
     let cases: &[(&str, TokenType)] = &[
         ("=",  TokenType::_TOKEN_17),
         ("<>", TokenType::_TOKEN_18),
-        (">",  TokenType::_TOKEN_19),
-        (">=", TokenType::_TOKEN_20),
-        ("<",  TokenType::_TOKEN_21),
-        ("<=", TokenType::_TOKEN_22),
+        ("!=", TokenType::_TOKEN_19),
+        (">",  TokenType::_TOKEN_20),
+        (">=", TokenType::_TOKEN_21),
+        ("<",  TokenType::_TOKEN_22),
+        ("<=", TokenType::_TOKEN_23),
     ];
     for (src, expected) in cases {
         let toks = lex_no_ws(src);
@@ -563,11 +564,11 @@ fn tokenize_comparison_and_equality_operators() {
 #[test]
 fn tokenize_arithmetic_operators() {
     let cases: &[(&str, TokenType)] = &[
-        ("+", TokenType::_TOKEN_26),
-        ("-", TokenType::_TOKEN_27),
-        ("*", TokenType::_TOKEN_28),
-        ("/", TokenType::_TOKEN_29),
-        ("%", TokenType::_TOKEN_30),
+        ("+", TokenType::_TOKEN_27),
+        ("-", TokenType::_TOKEN_28),
+        ("*", TokenType::_TOKEN_29),
+        ("/", TokenType::_TOKEN_30),
+        ("%", TokenType::_TOKEN_31),
     ];
     for (src, expected) in cases {
         let toks = lex_no_ws(src);
@@ -580,9 +581,9 @@ fn tokenize_arithmetic_operators() {
 #[test]
 fn tokenize_punctuation() {
     let cases: &[(&str, TokenType)] = &[
-        ("(", TokenType::_TOKEN_23),
-        (",", TokenType::_TOKEN_24),
-        (")", TokenType::_TOKEN_25),
+        ("(", TokenType::_TOKEN_24),
+        (",", TokenType::_TOKEN_25),
+        (")", TokenType::_TOKEN_26),
     ];
     for (src, expected) in cases {
         let toks = lex_no_ws(src);
@@ -599,11 +600,15 @@ fn tokenize_prefers_longest_match() {
     let src = ">=";
     let toks = lex_no_ws(src);
     assert_eq!(toks.len(), 2); // operator + EOF
-    assert_eq!(toks[0].kind, TokenType::_TOKEN_20);
+    assert_eq!(toks[0].kind, TokenType::_TOKEN_21);
     assert_eq!(toks[0].text(src), ">=");
 
-    // Same for "<=" and "<>".
-    for (input, expected) in [("<=", TokenType::_TOKEN_22), ("<>", TokenType::_TOKEN_18)] {
+    // Same for "<=", "<>", and "!=".
+    for (input, expected) in [
+        ("<=", TokenType::_TOKEN_23),
+        ("<>", TokenType::_TOKEN_18),
+        ("!=", TokenType::_TOKEN_19),
+    ] {
         let toks = lex_no_ws(input);
         assert_eq!(toks[0].kind, expected, "longest-match failed for {input:?}");
         assert_eq!(toks[0].text(input), input);
@@ -703,7 +708,7 @@ fn tokenize_complex_boolean_expression() {
         (TokenType::STRING_LITERAL, "'foo'"),
         (TokenType::AND,            "AND"),
         (TokenType::ID,             "age"),
-        (TokenType::_TOKEN_20,      ">="),
+        (TokenType::_TOKEN_21,      ">="),
         (TokenType::DECIMAL_LITERAL, "18"),
         (TokenType::OR,             "OR"),
         (TokenType::ID,             "active"),
@@ -721,11 +726,11 @@ fn tokenize_in_clause_with_string_list() {
     assert_eq!(pairs, vec![
         (TokenType::ID,             "country"),
         (TokenType::IN,             "IN"),
-        (TokenType::_TOKEN_23,      "("),
+        (TokenType::_TOKEN_24,      "("),
         (TokenType::STRING_LITERAL, "'US'"),
-        (TokenType::_TOKEN_24,      ","),
+        (TokenType::_TOKEN_25,      ","),
         (TokenType::STRING_LITERAL, "'CA'"),
-        (TokenType::_TOKEN_25,      ")"),
+        (TokenType::_TOKEN_26,      ")"),
         (TokenType::EOF,            ""),
     ]);
 }

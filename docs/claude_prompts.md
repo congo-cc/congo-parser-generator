@@ -489,3 +489,10 @@ Another Rust parser for the sqlexpr language has been developed in the sqlexpr-c
 
 The sqlexpr-congo-rust's parser interface is similar to, but differs from, the parser interface in this project.  Please generate a plan to migrate all test cases in the above test file to use this project's sqlexpr parser.  The plan should result in tests/parser_type_checking_tests.rs in this project.  The plan should also incorporate any missing type checking into the test/parser_test_support/mod.rs so that type checking in this project is as complete as in sqlexpr-congo-rust.  The migrated file should perform all the same tests as the sqlexpr-congo-rust test file.  Since all tests pass in sqlexpr-congo-rust, the plan should include running all migrated tests and investigating the cause for any failures.  No test can be ignored or skipped.  Make sure no regression occurs.
 
+# Integrate sqlexpr Example into CongoCC Build
+
+Integrate the sqlexpr example into the top-level build.xml's configuration.  Like the examples/arithmetic/rust-saved directory, the sqlexpr/rust-saved directory preserves test code and documentation between builds.  The files in sqlexpr/rust-saved are copied into sqlexpr/rust-sqlparser AFTER the parser source code is generated during the build (just like in the arithmetic example).  Never modify any of the test programs in examples/sqlexpr/rust-saved/tests. Please perform the following integration tasks:
+
+1. Create examples/sqlexpr/build.xml that cleans, builds, copied files from rust-saved and runs tests.  This build.xml should be structured like arithmetic/build.xml.
+2. Insert directives in the top-level build.xml file that respect the Rust guard to process the sqlexpr example build.xml.
+3. Create examples/sqlexpr/rust-saved/README.md that explains the example's purpose, file layout, how to build the code and tests, and how to run the tests.  This file will be copied to rust-sqlparser along will all test code during build processing.  
