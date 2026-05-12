@@ -198,9 +198,12 @@ EnumItem :
      (OuterAttribute)* [Visibility] Identifier
      [
         EnumItemTuple
-        | EnumItemStruct
-        | EnumItemDiscriminant
-    ]
+        |
+        EnumItemStruct
+     ]
+     [
+        EnumItemDiscriminant
+     ]
 ;
 
 EnumItemTuple : "(" [TupleFields] ")" ;
@@ -209,6 +212,7 @@ EnumItemStruct : "{" [StructFields] "}" ;
 
 EnumItemDiscriminant : "=" Expression ;
 
+/*
 EnumerationVariantExpression :
     EnumExprStruct
     | EnumExprTuple
@@ -218,6 +222,7 @@ EnumerationVariantExpression :
 EnumExprStruct : PathInExpression "{" =>|| [EnumExprFields] "}" ;
 
 EnumExprFields : EnumExprField ("," =>|+1 EnumExprField)* [","] ;
+*/
 
 EnumExprField :
     Identifier [":" Expression]
