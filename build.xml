@@ -82,6 +82,7 @@
     <ant target="clean" dir="examples/preprocessor" />
     <ant target="clean" dir="examples/cics" />
     <ant target="clean" dir="examples/arithmetic" />
+    <ant target="clean" dir="examples/sqlexpr" />
     <!--ant target="clean" dir="examples/freemarker" /-->
   </target>
 
@@ -206,6 +207,9 @@
     <ant dir="examples/arithmetic" target="clean" />
     <ant dir="examples/arithmetic" target="test" />
     <ant dir="examples/arithmetic" target="test-rust" />
+    <echo>Testing the SQL Expression parser</echo>
+    <ant dir="examples/sqlexpr" target="clean" />
+    <ant dir="examples/sqlexpr" target="test-rust" />
   </target>
 
   <target name="test-java" depends="jar">
@@ -220,6 +224,7 @@
     <ant dir="examples/lua" target="test-rust" />
     <ant dir="examples/cics" target="test-rust" />
     <ant dir="examples/arithmetic" target="test-rust" />
+    <ant dir="examples/sqlexpr" target="test-rust" />
     <!-- Java Rust tests disabled until handwritten Rust code is supplied -->
     <!-- <ant dir="examples/java" target="test-rust" /> -->
     <!-- Python Rust tests disabled until handwritten Rust code is supplied -->

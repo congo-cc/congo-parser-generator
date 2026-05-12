@@ -1,0 +1,1 @@
+NOT (status = 'closed') AND NOT (priority < 0) OR -temperature > -10

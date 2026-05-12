@@ -1,0 +1,1 @@
+price BETWEEN 100 AND 200 AND quantity NOT BETWEEN 0 AND 5

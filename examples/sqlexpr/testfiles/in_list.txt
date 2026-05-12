@@ -1,0 +1,1 @@
+country IN ('US', 'CA', 'MX') OR code NOT IN ('A', 'B', 'C')
