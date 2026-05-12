@@ -918,8 +918,8 @@ PatternWithoutRange :
     |
     TuplePattern
     |
-    GroupedPattern
-    |
+//    GroupedPattern
+//    |
     SlicePattern
     |
     PathPattern
@@ -984,9 +984,11 @@ TuplePatternLA#scan :
 
 INJECT PARSER_CLASS : {private boolean commaSeen;}
 
+/*
 TuplePattern :
-    SCAN TuplePatternLA =>
+//    SCAN TuplePatternLA =>
     "("
+    =>|+1
     (
         ".." ENSURE ~(",") =>||
         |
@@ -994,6 +996,18 @@ TuplePattern :
         Pattern ("," =>|+1 Pattern {commaSeen=true;}#)*
         [SCAN 0 {!commaSeen}# => ","]
         [SCAN 1 {commaSeen}# => ","]
+        |
+        {}
+    )
+    ")"
+;*/
+
+TuplePattern :
+    "(" =>|+1
+    (
+        ".." ENSURE ~(",") =>||
+        |
+        Pattern ("," =>|+1 Pattern)* [","]
         |
         {}
     )
@@ -1016,7 +1030,7 @@ SlicePattern : "[" [SlicePatternItems] "]" ;
 
 SlicePatternItems : Pattern ("," =>|+1 Pattern)* [","] ;
 
-GroupedPattern : "(" Pattern ")" ;
+//GroupedPattern : "(" Pattern ")" ;
 
 RangePattern :
    (
