@@ -582,7 +582,7 @@ BaseExpression :
 //        FieldsStructExpression
 //       |
        SCAN ~\...\Expression\ExpressionNotStruct =>
-        FieldsStructExpression =>|| // REVISIT. This is ugly and I'm not sure is totally correct.
+        FieldsStructExpression =>|| // REVISIT. This unbounded lookahead is ugly and we should really find a way to get rid of it.
        |
        PathExpression
        |
@@ -918,8 +918,6 @@ PatternWithoutRange :
     |
     TuplePattern
     |
-//    GroupedPattern
-//    |
     SlicePattern
     |
     PathPattern
@@ -976,32 +974,12 @@ StructPatternField :
     )
 ;
 
-TuplePatternLA#scan :
-    "(" [".."] ")" =>||
-    |
-    "(" Pattern ","
-;
-
 INJECT PARSER_CLASS : {private boolean commaSeen;}
 
-/*
-TuplePattern :
-//    SCAN TuplePatternLA =>
-    "("
-    =>|+1
-    (
-        ".." ENSURE ~(",") =>||
-        |
-        {commaSeen = false;}#
-        Pattern ("," =>|+1 Pattern {commaSeen=true;}#)*
-        [SCAN 0 {!commaSeen}# => ","]
-        [SCAN 1 {commaSeen}# => ","]
-        |
-        {}
-    )
-    ")"
-;*/
 
+// Note that this is used for just a single
+// pattern in parentheses as well. Or an empty
+// () pattern, I guess.
 TuplePattern :
     "(" =>|+1
     (
@@ -1014,14 +992,6 @@ TuplePattern :
     ")"
 ;
 
-TuplePatternItems :
-      ".." #RestPattern(1)
-      |
-      Pattern "," ENSURE ~(Pattern) =>||
-      |
-      Pattern ("," =>|+1 Pattern)+ [","]
-;
-
 TupleStructPattern : PathInExpression "(" =>|| [TupleStructItems] ")" ;
 
 TupleStructItems : Pattern ("," =>|+1 Pattern)* [","] ;
@@ -1029,8 +999,6 @@ TupleStructItems : Pattern ("," =>|+1 Pattern)* [","] ;
 SlicePattern : "[" [SlicePatternItems] "]" ;
 
 SlicePatternItems : Pattern ("," =>|+1 Pattern)* [","] ;
-
-//GroupedPattern : "(" Pattern ")" ;
 
 RangePattern :
    (
@@ -1119,7 +1087,7 @@ MacroInvocationSemi :
    [SCAN 0 {endDelim != RBRACE} => ";"]
 ;
 
-SimplePath : ["::"] SimplePathSegment ("::" =>|+1 SimplePathSegment)* ;
+SimplePath : ["::"] =>|+1 SimplePathSegment ("::" =>|+1 SimplePathSegment)* ;
 
 SimplePathSegment : Identifier | "super" | "self" | "crate" | "$crate" | "unsafe";
 
