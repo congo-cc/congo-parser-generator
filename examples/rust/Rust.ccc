@@ -520,11 +520,8 @@ Expression :
             |
             ForExpression
             |
-            BlockExpression
+            BlockExpression (BaseExpressionPostfix)*
         )
-        |
-        SCAN \...\MatchExpression =>
-        BlockExpression
         |
         LetStatement
         |
@@ -554,7 +551,11 @@ BaseExpression :
        LiteralExpression
        |
        SCAN ~\...\Expression\ExpressionNotStruct =>
-        FieldsStructExpression =>|| // REVISIT. This unbounded lookahead is ugly and we should really find a way to get rid of it.
+       // The following is a kludge that needs to be addressed.
+       // We should not be deciding whether to go into
+       // into a StructExpression by just doing a complete
+       // unbounded lookahead here.
+        StructExpression  =>||
        |
        PathExpression
        |
@@ -704,14 +705,7 @@ ReturnExpression :
     "return" [Expression]
 ;
 
-/*FieldsStructExpression :
-   PathInExpression "{"
-   (InnerAttribute)*
-   [StructExprFields | StructBase]
-   "}"
-;*/
-
-FieldsStructExpression :
+StructExpression :
    PathInExpression "{" =>||
    (InnerAttribute)*
    [
@@ -723,22 +717,6 @@ FieldsStructExpression :
    ]
    "}"
 ;
-
-FieldsStructPattern :
-   PathInExpression "{" =>||
-   (InnerAttribute)*
-   [
-      ".." [Expression]
-      |
-      StructExprField
-      ("," =>|+1 StructExprField)*
-      ["," [".." [Expression]]]
-   ]
-   "}"
-;
-
-
-StructExprFields : StructExprField ("," =>|+1 StructExprField)* ["," [StructBase]] ;
 
 StructExprField :
     (OuterAttribute)*
@@ -748,7 +726,6 @@ StructExprField :
         <INTEGER_LITERAL> ":" Expression
     )
 ;
-
 
 StructBase : ".." Expression ;
 
@@ -878,11 +855,9 @@ PatternWithoutRange :
     |
     LiteralPattern
     |
-    FieldsStructPattern =>||
+    StructPattern
     |
     TupleStructPattern
-    |
-    StructPattern
     |
     IdentifierPattern
     |
@@ -910,8 +885,6 @@ IdentifierPattern : ["ref"] ["mut"] Identifier ENSURE ~("::") =>|| ["@" Pattern]
 
 ReferencePattern : ['box'] ("&"|"&&") ["mut"] PatternWithoutRange ;
 
-StructPattern : PathInExpression "{" =>|| [StructPatternElements] "}" ;
-
 PathInExpression : ["::"] PathExprSegment ("::" PathExprSegment)* ;
 
 PathExprSegment : PathIdentSegment ["::" =>|+1 GenericArgs] ;
@@ -922,16 +895,21 @@ PathPattern : PathInExpression | QualifiedPathInExpression ;
 
 QualifiedPathInExpression : QualifiedPathType ("::" PathExprSegment)+ ;
 
-StructPatternElements :
-    StructPatternEtcetera
-    |
-    StructPatternFields ["," StructPatternEtcetera =>||]
-;
-
-StructPatternEtcetera : (OuterAttribute)* ".." =>|| ;
-
-StructPatternFields : StructPatternField ("," =>|+1 StructPatternField)*
-    [SCAN 0 {getTokenType(1) == COMMA && getTokenType(2) != DOT_DOT} => ","]
+StructPattern :
+    PathInExpression
+    "{"
+    =>|+1
+    [
+        StructPatternField
+        ("," =>|+1 StructPatternField)*
+        [","]
+    ]
+    [
+        SCAN {getTokenType(0) == LBRACE
+           || getTokenType(0) == COMMA}
+        => ".."
+    ]
+    "}"
 ;
 
 StructPatternField :
@@ -947,7 +925,6 @@ StructPatternField :
 ;
 
 INJECT PARSER_CLASS : {private boolean commaSeen;}
-
 
 // Note that this is used for just a single
 // pattern in parentheses as well. Or an empty
