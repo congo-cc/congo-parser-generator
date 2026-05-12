@@ -1078,6 +1078,7 @@ INJECT Assertion :
     @Property Expansion expansion;
     @Property int[] cardinalityConstraint = null;
     @Property int assertionIndex = -1;
+//    @Property LookBehind lookBehind;
 
     @Override
     public boolean startsWithGlobalCodeAction(boolean stopAtScanLimit) {
@@ -1102,6 +1103,10 @@ INJECT Assertion :
     public boolean isCardinalityConstraint() {
         return cardinalityConstraint != null;
     }
+
+    public LookBehind getLookBehind() {
+        return firstChildOfType(LookBehind.class);
+    }
 }
 
 Assertion# :
@@ -1114,9 +1119,11 @@ Assertion# :
         (
             & "ASSERT" {assertKeywordPresent = true;}
             |
-            & "ENSURE" 
+            & "ENSURE"
         )+
         (
+            SCAN (["~"]<BACKSLASH>) => LookBehind //{THIS.setLookBehind((LookBehind) peekNode());}
+            |
             (
                 "{"
                 (

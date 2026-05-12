@@ -512,7 +512,7 @@ Expression :
         |
         ContinueExpression
         |
-        SCAN \Statement =>
+        ENSURE \Statement
         (
             IfLetExpression
             |

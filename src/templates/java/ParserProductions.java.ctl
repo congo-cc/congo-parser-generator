@@ -193,7 +193,7 @@
       #if buildingTreeNode
          #-- Build the tree node (part 1).
          #-- Push the node name and JTB state on the node construction stack
-         #-- using the current JTB state if this is a synthetic node, else 
+         #-- using the current JTB state if this is a synthetic node, else
          #-- suppress JTB at this level and below.
          #set treeNodeStack = treeNodeStack + [[ nodeVarName, treeNodeBehavior.syntheticNode?? && isJtbParseTree() ]]
          ${createNode(nodeClassName(treeNodeBehavior), nodeVarName)}
@@ -308,8 +308,8 @@
          #endif
          set treeNodeBehavior = treeNodeBehavior + { 'syntheticNode' : false }
       #elseif expansion.assignment??
-         #-- No TNA, but assignment is present. -- 
-         #if settings.syntheticNodesEnabled && settings.treeBuildingEnabled && isProductionInstantiatingNode(expansion) 
+         #-- No TNA, but assignment is present. --
+         #if settings.syntheticNodesEnabled && settings.treeBuildingEnabled && isProductionInstantiatingNode(expansion)
             #-- Assignment is explicitly provided and synthetic nodes are enabled. --
             [#-- NOTE: An explicit assignment will take precedence over a synthetic JTB node assignment.
                I.e., it will not create a field in the production node.  It WILL, however,
@@ -322,7 +322,7 @@
                nodeName == "OneOrMore" ||
                nodeName == "Choice" ||
                nodeName == "Sequence"
-               )               
+               )
                #-- We do need to create a synthetic node --
                #if !settings.jtbParseTree
                   #-- It's not a JTB tree overall, but it is a syntactic node with a LHS assignment, so use the BASE_NODE type since the syntactic nodes are not defined --
@@ -719,7 +719,19 @@
       #set optionalPart = " + " + assertion.messageExpression
    #endif
    #var assertionMessage = "Assertion at: " + assertion.location?j_string + " failed. "
-   #if assertion.assertionExpression??
+   #if assertion.lookBehind??
+       if (
+         ${!assertion.lookBehind.negated ?: "!"}
+         ${assertion.lookBehind.routineName}()
+       )
+       {
+         pushOntoCallStack("${assertion.containingProduction.name}",
+                        "${assertion.inputSource?j_string}",
+                        ${assertion.beginLine}, ${assertion.beginColumn});
+         fail("${assertionMessage}"${optionalPart},
+              ${assertion.locationExpression!"getToken(1)"});
+       }
+   #elseif assertion.assertionExpression??
       if (!(${assertion.assertionExpression})) {
          pushOntoCallStack("${assertion.containingProduction.name}",
                         "${assertion.inputSource?j_string}",

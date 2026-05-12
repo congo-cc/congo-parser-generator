@@ -521,7 +521,13 @@
 #endmacro
 
 #macro ScanCodeAssertion assertion cardinalitiesVar patentCardVar
-   #if assertion.assertionExpression??
+   #if assertion.lookBehind??
+      if (${!assertion.lookBehind.negated ?: "!"}
+         ${assertion.lookBehind.routineName}()) {
+            hitFailure = true;
+            ${returnFalse(cardinalitiesVar, parentCardVar!null)};
+         };
+   #elseif assertion.assertionExpression??
       if (!(${assertion.assertionExpression})) {
          hitFailure = true;
          ${returnFalse(cardinalitiesVar, parentCardVar!null)};
