@@ -1166,7 +1166,19 @@ LambdaLHS :
 ImplicitAnonymousFunctionSignature :
    <IDENTIFIER>
    |
-   <LPAREN> [<IDENTIFIER> (<COMMA> <IDENTIFIER>)*] <RPAREN>
+   <LPAREN>
+   [
+      (AttributeSection)*
+      [<OUT>]
+      <IDENTIFIER>
+      (
+         <COMMA>
+         (AttributeSection)*
+         [<OUT>]
+         <IDENTIFIER>
+      )*
+   ]
+   <RPAREN>
 ;
 
 QueryExpression :
