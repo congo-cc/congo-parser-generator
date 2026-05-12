@@ -423,6 +423,7 @@ BlockExpression :
    "}"
 ;
 
+
 Statement :
    ";" #EmptyStatement(1)
    |
@@ -430,7 +431,11 @@ Statement :
    |
    VisItem
    |
-   Expression
+   (
+      MatchExpression (BaseExpressionPostfix)*
+      |
+      Expression
+   )
    (
       SCAN {getTokenType(0) == RBRACE} => {}
       |
@@ -543,10 +548,23 @@ Expression :
             BlockExpression
         )
         |
+        SCAN \...\MatchExpression =>
+        BlockExpression
+        |
         LetStatement
         |
         AssignmentExpression
    )
+;
+
+ExpressionWithBlock#void :
+      IfLetExpression
+      |
+      IfExpression
+      |
+      ForExpression
+      |
+      BlockExpression
 ;
 
 CheckForColonInStruct#scan :
@@ -849,7 +867,8 @@ MatchExpression :
         SCAN ~("}") =>
         MatchArm
         "=>"
-        (BlockExpression | Expression)
+//        (BlockExpression | Expression)
+        (ExpressionWithBlock | Expression)
         [","]
     )*
     "}"
