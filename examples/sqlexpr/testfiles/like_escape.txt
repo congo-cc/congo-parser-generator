@@ -1,0 +1,1 @@
+name LIKE 'admin%' ESCAPE '!' OR role NOT LIKE 'guest_%'

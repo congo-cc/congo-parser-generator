@@ -578,14 +578,12 @@ fn describe_non_literal_bound(ast: &Ast, id: NodeId) -> String {
     let inner_text = leaf_image(ast, id_skipped);
     match find_first_token_type(ast, id_skipped) {
         Some(TokenType::ID) => "BETWEEN bounds must be literal values, not variables".to_string(),
-        Some(TokenType::TRUE) | Some(TokenType::FALSE) => format!(
-            "BETWEEN bounds may not be boolean values, found '{}'",
-            inner_text,
-        ),
-        Some(TokenType::NULL) => format!(
-            "BETWEEN bounds may not be NULL, found '{}'",
-            inner_text,
-        ),
+        // Match source's exact wording so error-quality tests in
+        // parser_type_checking_tests.rs can substring-check.
+        Some(TokenType::TRUE) | Some(TokenType::FALSE) =>
+            "BETWEEN bounds cannot be boolean values".to_string(),
+        Some(TokenType::NULL) =>
+            "NULL is not allowed in BETWEEN bounds".to_string(),
         _ => format!(
             "BETWEEN bounds must be literal values (numeric or string), found '{}'",
             inner_text,

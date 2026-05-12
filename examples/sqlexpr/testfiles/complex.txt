@@ -1,0 +1,7 @@
+-- A representative selector with most expression types
+/* block comment */
+(category = 'electronics' OR category = 'computers')
+  AND price BETWEEN 100 AND 5000
+  AND brand <> 'unknown'
+  AND model NOT LIKE 'test_%'
+  AND stock_count > 0
