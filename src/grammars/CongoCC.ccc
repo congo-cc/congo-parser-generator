@@ -1102,6 +1102,10 @@ INJECT Assertion :
     public boolean isCardinalityConstraint() {
         return cardinalityConstraint != null;
     }
+
+    public LookBehind getLookBehind() {
+        return firstChildOfType(LookBehind.class);
+    }
 }
 
 Assertion# :
@@ -1114,9 +1118,11 @@ Assertion# :
         (
             & "ASSERT" {assertKeywordPresent = true;}
             |
-            & "ENSURE" 
+            & "ENSURE"
         )+
         (
+            LookBehind
+            |
             (
                 "{"
                 (
@@ -1175,7 +1181,7 @@ Assertion# :
 Lookahead# :
 {
    Token amountToken=null;
-   boolean hasSemanticLookahead = false, hasExplicitNumericalLookahead=false;
+   boolean hasExplicitNumericalLookahead=false;
    Expansion expansion = null;
    Expression exp=null;
    Name name = null;
@@ -1188,7 +1194,7 @@ Lookahead# :
 ]
 [
     "{"
-    exp=Expression {hasSemanticLookahead = true; thisProduction.setSemanticLookahead(exp);}
+    exp=Expression {thisProduction.setSemanticLookahead(exp);}
     "}"
     ["#" {thisProduction.setSemanticLookaheadNested(true);}]
 ]
@@ -1253,6 +1259,7 @@ INJECT Lookahead :
 }
 
 LookBehind :
+   ENSURE ([<TILDE>](<BACKSLASH>|<SLASH>))
    [ @negated :=? <TILDE> ]
    (
     LookBehindForward

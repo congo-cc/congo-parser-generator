@@ -390,7 +390,7 @@ BlockExpression :
    (InnerAttribute)*
    (
       SCAN ~("}") =>
-      // TODO: No check herefor whether
+      // TODO: No check here for whether
       // the previous element was necessarily the
       // last one
       Statement
@@ -405,6 +405,8 @@ Statement :
    MacroRulesDefinition
    |
    VisItem
+   |
+   LetStatement
    |
    (
       MatchExpression (BaseExpressionPostfix)*
@@ -512,18 +514,11 @@ Expression :
         |
         ContinueExpression
         |
-        SCAN \Statement =>
-        (
-            IfLetExpression
-            |
-            IfExpression
-            |
-            ForExpression
-            |
-            BlockExpression (BaseExpressionPostfix)*
-        )
+        ENSURE \Statement
+        ExpressionWithBlock
         |
-        LetStatement
+        ENSURE \MatchExpression
+        ExpressionWithBlock
         |
         AssignmentExpression
    )
@@ -539,23 +534,18 @@ ExpressionWithBlock#void :
       BlockExpression
 ;
 
-CheckForColonInStruct#scan :
-   PathInExpression "{"
-   Identifier ":"
-;
-
 BaseExpression :
     (
        MacroInvocation
        |
        LiteralExpression
        |
-       SCAN ~\...\Expression\ExpressionNotStruct =>
        // The following is a kludge that needs to be addressed.
        // We should not be deciding whether to go into
        // into a StructExpression by just doing a complete
-       // unbounded lookahead here.
-        StructExpression  =>||
+       // unbounded lookahead here. It is to be avoided
+       // on principle, but is also incorrect here, I'm pretty sure.
+       StructExpression =>||
        |
        PathExpression
        |
@@ -650,8 +640,12 @@ LeftShiftOp#void :
 ;
 
 RightShiftOp#void :
-   SCAN ">" ">" ENSURE {getToken(-1).getEndOffset() == getToken(0).getBeginOffset()}
-   => ACTIVATE_TOKENS GT_GT (">>")
+   ENSURE
+   (
+     ">" ">"
+     ENSURE {getToken(-1).getEndOffset() == getToken(0).getBeginOffset()}
+   )
+   ACTIVATE_TOKENS GT_GT (">>")
 ;
 
 AndExpression : ShiftExpression ("&" ShiftExpression)* ;
@@ -706,7 +700,10 @@ ReturnExpression :
 ;
 
 StructExpression :
-   PathInExpression "{" =>||
+   PathInExpression "{"
+   ENSURE ~\...\Expression\ExpressionNotStruct
+//   ENSURE ~\Expression\IfExpression
+   =>||
    (InnerAttribute)*
    [
       ".." [Expression]
@@ -768,6 +765,7 @@ ForExpression : "for" Pattern "in" ExpressionNotStruct BlockExpression ;
 IfExpression :
     "if"
     ExpressionNotStruct
+    //Expression
     ("&&" LetExp)*
     BlockExpression
     [
@@ -816,8 +814,7 @@ MatchExpression :
         SCAN ~("}") =>
         MatchArm
         "=>"
-//        (BlockExpression | Expression)
-        (ExpressionWithBlock | Expression)
+        Expression
         [","]
     )*
     "}"
