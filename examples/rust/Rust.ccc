@@ -391,27 +391,28 @@ ForLifetimes : "for" GenericParams ;
 Lifetime#void : <LIFETIME_OR_LABEL>|<STATIC_LIFETIME>|<UNDERLINE_LIFETIME> ;
 
 BlockExpression :
+   {boolean seenLastStatement = false;}
    "{"
    (InnerAttribute)*
    (
-      SCAN ~("}") =>
-      // TODO: No check here for whether
-      // the previous element was necessarily the
-      // last one
-      Statement
+    // TODO/REVISIT The following is completely correct, but maybe can be
+    // handled more elegantly in terms of error messages and fault tolerant
+    // and so on.
+      SCAN 0 {!seenLastStatement && getTokenType(1) != RBRACE}
+      => Statement
+      {seenLastStatement = getTokenType(0) != RBRACE && getTokenType(0) != SEMICOLON;}
    )*
    "}"
 ;
-
 
 Statement :
    ";" #EmptyStatement(1)
    |
    MacroRulesDefinition
    |
-   VisItem
-   |
    LetStatement
+   |
+   VisItem
    |
    (
       MatchExpression (BaseExpressionPostfix)*
@@ -551,6 +552,8 @@ BaseExpression :
     IfExpression
     |
     (
+       "_" #Placeholder(1)
+       |
        MacroInvocation
        |
        LiteralExpression
@@ -689,7 +692,7 @@ RangeExpression :
 ;
 
 AssignmentExpression :
-   ("_" | RangeExpression)
+   RangeExpression
    [
     AssignmentOperator
     Expression
