@@ -131,3 +131,7 @@ finally {
 #-- # DBG < HandleLexicalStateChange ${expansion.simpleName}
 #endmacro
 
+#-- Jagged int[][] initializer for RepetitionCardinality (mirrors Java CommonUtils.BuildCardinalities). --
+#macro BuildCardinalities assertions
+new int[][] { [#list assertions as range]new int[] { ${range[0]}, ${range[1]} }[#if range_has_next], [/#if][/#list] }
+#endmacro
