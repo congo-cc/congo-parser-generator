@@ -148,3 +148,10 @@ ${is}        self._next_token_type = None
 [#-- ${is}# DBG < HandleLexicalStateChange ${indent} ${expansion.simpleName} --]
 [/#macro]
 
+[#--
+  Python literal [[min, max], ...] for RepetitionCardinality (mirrors Java CommonUtils.BuildCardinalities).
+--]
+[#macro BuildCardinalities assertions indent]
+[#var is = ""?right_pad(indent)]
+${is}[[#list assertions as range][${range[0]}, ${range[1]}][#if range_has_next], [/#if][/#list]]
+[/#macro]
