@@ -1,4 +1,4 @@
-<project name="Cics Parser" default="compile">
+<project name="Cics Parser" default="compile" basedir=".">
   <!-- Rust code-generation is off by default. Enable with: ant -Drust.enabled=true ... -->
   <property name="rust.enabled" value="false"/>
   <target name="-rust-check">
@@ -12,38 +12,85 @@
 
   <target name="clean">
     <delete dir="org" />
+    <delete dir="cicsparser" />
+    <delete dir="cs-cicsparser" />
     <delete dir="rust-cicsparser" />
-    <delete file="CicsParse.class" />
+    <delete>
+      <fileset dir="${basedir}" includes="*.class" />
+    </delete>
   </target>
 
   <target name="init">
-    <uptodate property="cicsparser.uptodate" targetfile="org/parsers/cics/CicsParser.java">
-      <srcfiles dir="." includes="*.ccc" />
+    <uptodate property="javaparser.uptodate" targetfile="org/parsers/cics/CicsParser.java">
+      <srcfiles dir="." includes="*.ccc"/>
+    </uptodate>
+    <uptodate property="pyparser.uptodate" targetfile="cicsparser/parser.py">
+      <srcfiles dir="." includes="*.ccc"/>
+    </uptodate>
+    <uptodate property="csparser.uptodate" targetfile="cs-cicsparser/Parser.cs" >
+      <srcfiles dir="." includes="*.ccc"/>
     </uptodate>
   </target>
 
-  <target name="parser-gen" depends="init" unless="cicsparser.uptodate">
+  <target name="java-parser-gen" depends="init" unless="javaparser.uptodate">
     <java jar="../../congocc.jar" failonerror="true" fork="true">
-      <assertions>
-        <enable />
-      </assertions>
+      <assertions> <enable /> </assertions>
       <arg value="-n" />
       <arg value="${basedir}/Cics.ccc" />
     </java>
   </target>
 
-  <target name="compile" depends="init,parser-gen">
-    <javac srcdir="." failonerror="true" classpath="." debug="on" optimize="off" includeantruntime="no" fork="true" />
+  <target name="python-parser-gen" depends="init" unless="pyparser.uptodate">
+    <java jar="../../congocc.jar" failonerror="true" fork="true">
+      <assertions> <enable /> </assertions>
+      <arg line="-n -lang python ${basedir}/Cics.ccc" />
+    </java>
   </target>
 
-  <target name="test" depends="compile">
-    <java fork="true" classpath="." failonerror="true" classname="CicsParse">
-      <assertions>
-        <enable />
-      </assertions>
-        <jvmarg value="-agentlib:jdwp=transport=dt_socket,server=y,address=8000,suspend=n"/>
+  <target name="csharp-parser-gen" depends="init" unless="csparser.uptodate">
+    <java jar="../../congocc.jar" failonerror="true" fork="true">
+      <assertions> <enable /> </assertions>
+      <arg line="-n -lang csharp ${basedir}/Cics.ccc" />
+    </java>
+  </target>
+
+  <target name="compile-java" depends="java-parser-gen">
+    <javac debug="on"
+      failonerror="true"
+      includeantruntime="false"
+      release="8"
+      srcdir="."
+      includes="org/**/*.java" />
+  </target>
+
+  <target name="compile-csharp" depends="csharp-parser-gen">
+    <exec executable="dotnet" dir="${basedir}/cs-cicsparser">
+       <arg line="build"/>
+    </exec>
+    <exec executable="dotnet" dir="${basedir}/cs-cicsparser/test">
+       <arg line="build"/>
+    </exec>
+  </target>
+
+  <target name="test-java" depends="compile-java">
+    <java fork="true" classpath="." failonerror="true" classname="org.parsers.cics.test.ParseFiles">
+      <assertions> <enable /> </assertions>
       <arg value="testfiles" />
     </java>
+  </target>
+
+  <!-- Python: codegen succeeds but CPython rejects parser.py (nested block / indent depth) for this grammar size. -->
+  <target name="test-python">
+    <echo level="warning">
+      Skipping CICS Python parse tests: generated parser.py exceeds CPython nested-indentation limits.
+      Run ant python-parser-gen to refresh output; use Java/C# tests in test-all until lookahead codegen flattens deep scans.
+    </echo>
+  </target>
+
+  <target name="test-csharp" depends="compile-csharp">
+    <exec executable="dotnet" dir="${basedir}/cs-cicsparser/test" failonerror="true">
+      <arg line="run --roll-forward LatestMajor ../../testfiles" />
+    </exec>
   </target>
 
   <target name="rust-gen" depends="-rust-guard" if="rust.on">
@@ -63,4 +110,13 @@
       <arg line="test -- --nocapture" />
     </exec>
   </target>
+
+  <target name="compile" depends="python-parser-gen,compile-csharp,compile-java"/>
+
+  <target name="test-all" depends="test-java,test-csharp,test-rust"/>
+
+  <target name="build" depends="compile"/>
+
+  <!-- Backward-compatible alias -->
+  <target name="test" depends="test-java"/>
 </project>
