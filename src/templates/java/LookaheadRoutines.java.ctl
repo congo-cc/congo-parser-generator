@@ -668,6 +668,10 @@
       scanToken(${expansion.firstSetVarName})
      #endif
    #else
+     #if grammar.assertionExpansions?? && grammar.assertionExpansions?seq_contains(expansion)
+      ${expansion.scanRoutineName}()
+     #else
       ${expansion.scanRoutineName}(false[#if expansion.cardinalityConstrained && cardinalitiesVar??], ${cardinalitiesVar}[/#if])
+     #endif
    #endif
 #endmacro

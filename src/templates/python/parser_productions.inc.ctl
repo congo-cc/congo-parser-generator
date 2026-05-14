@@ -15,6 +15,7 @@
                               it is also a bit tricky, so treat it like the Holy Hand-grenade in that respect.
                           --]
 [#var inFirstVarName = "", inFirstIndex = 0]
+[#var repetitionIndex = 0]
 [#var jtbNameMap = {
    "Terminal" : "nodeToken",
    "Sequence" : "nodeSequence",
@@ -61,7 +62,8 @@ ${is}${globals::startProduction()}def parse_${production.name}(self[#if producti
 ${is}    # import pdb; pdb.set_trace()
 ${is}    self.currently_parsed_production = '${production.name}'
    #set topLevelExpansion = false
-${BuildCode(production, indent + 4)}
+   [#set repetitionIndex = 0][#rt]
+${BuildCode(production, indent + 4, "")}
 ${is}# end of parse_${production.name}${globals::endProduction()}
 [/#macro]
 
@@ -78,9 +80,9 @@ ${is}    skipped_tokens = []
 ${is}    success = False
 ${is}    while self.last_consumed_token.type != EOF:
   #if expansion.simpleName = "OneOrMore" || expansion.simpleName = "ZeroOrMore"
-${is}        if (${ExpansionCondition(expansion.nestedExpansion)}):
+${is}        if (${ExpansionCondition(expansion.nestedExpansion, "")}):
   #else
-${is}        if (${ExpansionCondition(expansion)}):
+${is}        if (${ExpansionCondition(expansion, "")}):
   #endif
 ${is}            success = True
 ${is}            break
@@ -90,9 +92,9 @@ ${is}            break
       [#if !followingExpansion??][#break][/#if]
       #if followingExpansion.maximumSize > 0
          #if followingExpansion.simpleName = "OneOrMore" || followingExpansion.simpleName = "ZeroOrOne" || followingExpansion.simpleName = "ZeroOrMore"
-${is}        if (${ExpansionCondition(followingExpansion.nestedExpansion)}):
+${is}        if (${ExpansionCondition(followingExpansion.nestedExpansion, "")}):
          #else
-${is}        if (${ExpansionCondition(followingExpansion)}):
+${is}        if (${ExpansionCondition(followingExpansion, "")}):
          #endif
 ${is}            success = True
 ${is}            break
@@ -124,24 +126,24 @@ ${is}    return success
 #endlist
 #endmacro
 
-#macro BuildCode expansion indent
+#macro BuildCode expansion indent cardinalitiesVar
 #var is = ""?right_pad(indent)
 [#--${is}# DBG > BuildCode ${indent} ${expansion.simpleName} --]
 #if expansion.simpleName != "ExpansionSequence" && expansion.simpleName != "ExpansionWithParentheses"
 ${is}# Code for ${expansion.simpleName} specified at ${expansion.location}
 /#if
-[@CU.HandleLexicalStateChange expansion, false, indent; indent]
+[@CU.HandleLexicalStateChange expansion, false, indent, cardinalitiesVar; indent]
   #if settings.faultTolerant && expansion.requiresRecoverMethod && !expansion.possiblyEmpty
     [#var is = ""?right_pad(indent)][#-- needed for when passed as nested content --]
 ${is}if self.pending_recovery:
 ${is}    self.${expansion.recoverMethodName}(None)
   /#if
-  [@BuildExpansionCode expansion, indent/]
+  [@BuildExpansionCode expansion, indent, cardinalitiesVar/]
 [/@CU.HandleLexicalStateChange][#rt]
 [#--${is}# DBG < BuildCode ${indent} ${expansion.simpleName} --]
 /#macro
 
-[#macro TreeBuildingAndRecovery expansion indent]
+[#macro TreeBuildingAndRecovery expansion indent cardinalitiesVar]
 [#var is = ""?right_pad(indent)]
 [#--${is}# DBG > TreeBuildingAndRecovery ${indent} --]
    [#var production = null,
@@ -565,7 +567,7 @@ ${is}        self.clear_node_scope()
    [#return currentProduction.name]
 [/#function]
 
-[#macro BuildExpansionCode expansion indent]
+[#macro BuildExpansionCode expansion indent cardinalitiesVar]
 [#var is = ""?right_pad(indent)]
 [#var classname = expansion.simpleName]
 [#--${is}# DBG > BuildExpansionCode ${indent} ${classname} --]
@@ -580,20 +582,20 @@ ${is}self.uncache_tokens()
    [#elseif classname = "Failure"]
       [@BuildCodeFailure expansion, indent /]
    [#elseif classname = "Assertion"]
-      [@BuildAssertionCode expansion, indent /]
+      [@BuildAssertionCode expansion, indent, cardinalitiesVar /]
    [#elseif classname = "TokenTypeActivation"]
       [@BuildCodeTokenTypeActivation expansion, indent /]
    [#elseif classname = "TryBlock"]
-      [@BuildCodeTryBlock expansion, indent /]
+      [@BuildCodeTryBlock expansion, indent, cardinalitiesVar /]
    [#elseif classname = "AttemptBlock"]
-      [@BuildCodeAttemptBlock expansion, indent /]
+      [@BuildCodeAttemptBlock expansion, indent, cardinalitiesVar /]
    [#else]
       [#-- take care of the tree node (if any) --]
-      [@TreeBuildingAndRecovery expansion, indent; indent]
+      [@TreeBuildingAndRecovery expansion, indent, cardinalitiesVar; indent]
          [#if classname = "BNFProduction"]
             [#-- The tree node having been built, now build the actual top-level expansion --]
             [#set topLevelExpansion = true]
-            [@BuildCode expansion.nestedExpansion, indent /]
+            [@BuildCode expansion.nestedExpansion, indent, cardinalitiesVar /]
          [#else]
             [#-- take care of terminal and non-terminal expansions; they cannot contain child expansions --]
             [#if classname = "NonTerminal"]
@@ -609,18 +611,18 @@ ${is}self.uncache_tokens()
                   [#set topLevelExpansion = false]
                [/#if]
                [#if classname = "ZeroOrOne"]
-                  [@BuildCodeZeroOrOne expansion, indent /]
+                  [@BuildCodeZeroOrOne expansion, indent, cardinalitiesVar /]
                [#elseif classname = "ZeroOrMore"]
                   [@BuildCodeZeroOrMore expansion, indent /]
                [#elseif classname = "OneOrMore"]
                   [@BuildCodeOneOrMore expansion, indent /]
                [#elseif classname = "ExpansionChoice"]
-                  [@BuildCodeChoice expansion, indent /]
+                  [@BuildCodeChoice expansion, indent, cardinalitiesVar /]
                [#elseif classname = "ExpansionWithParentheses"]
                   [#-- Recurse; the real expansion is nested within this one (but the LHS, if any, is on the parent) --]
-                  [@BuildExpansionCode expansion.nestedExpansion, indent /]
+                  [@BuildExpansionCode expansion.nestedExpansion, indent, cardinalitiesVar /]
                [#elseif classname = "ExpansionSequence"]
-                  [@BuildCodeSequence expansion, indent /]
+                  [@BuildCodeSequence expansion, indent, cardinalitiesVar /]
                   [#-- leave the topLevelExpansion one-shot alone (see above) --]
                [/#if]
                [#set topLevelExpansion = stackedTopLevel]
@@ -648,7 +650,7 @@ ${globals::translateCodeBlock(fail.code, indent)}[#rt]
 [#--${is}# DBG < BuildCodeFailure ${indent} --]
 [/#macro]
 
-[#macro BuildAssertionCode assertion indent]
+[#macro BuildAssertionCode assertion indent cardinalitiesVar]
 [#var is = ""?right_pad(indent)]
    #if !assertion.appliesInRegularParsing
 ${is}pass
@@ -665,6 +667,9 @@ ${is}    self.fail("${assertionMessage}"${optionalPart})
 [#elseif assertion.assertionExpression??]
 ${is}if not (${globals::translateExpression(assertion.assertionExpression)}):
 ${is}    self.fail("${assertionMessage}"${optionalPart})
+[#elseif assertion.cardinalityConstraint?? && cardinalitiesVar?? && (cardinalitiesVar?length > 0)]
+${is}if not ${cardinalitiesVar}.choose(${assertion.assertionIndex}, False):
+${is}    self.fail('Maximum cardinality constraint at: ${assertion.location?j_string} exceeded.')
 [/#if]
 [#if assertion.expansion??]
 ${is}if [#if !assertion.expansionNegated]not [/#if]self.${assertion.expansion.scanRoutineName}():
@@ -687,11 +692,11 @@ ${is})
 [#--${is}# DBG < BuildCodeTokenTypeActivation ${indent} --]
 [/#macro]
 
-[#macro BuildCodeTryBlock tryblock indent]
+[#macro BuildCodeTryBlock tryblock indent cardinalitiesVar]
 [#var is = ""?right_pad(indent)]
 [#--${is}# DBG > BuildCodeTryBlock ${indent} --]
 ${is}try:
-${BuildCode(tryblock.nestedExpansion, indent + 4)}[#rt]
+${BuildCode(tryblock.nestedExpansion, indent + 4, cardinalitiesVar)}[#rt]
 ${is}[#t]
    [#list tryblock.catchBlocks as catchBlock]
 ${is}${catchBlock}
@@ -701,17 +706,17 @@ ${is}${tryblock.finallyBlock!}
 [#--${is}# DBG < BuildCodeTryBlock ${indent} --]
 [/#macro]
 
-[#macro BuildCodeAttemptBlock attemptBlock indent]
+[#macro BuildCodeAttemptBlock attemptBlock indent cardinalitiesVar]
 [#var is = ""?right_pad(indent)]
 [#--${is}# DBG > BuildCodeAttemptBlock ${indent} --]
 ${is}try:
 ${is}    self.stash_parse_state()
-${BuildCode(attemptBlock.nestedExpansion, indent + 4)}
+${BuildCode(attemptBlock.nestedExpansion, indent + 4, cardinalitiesVar)}
 ${is}    self.pop_parse_state()
 #var pe = exceptionVar(true)
 ${is}except ParseException as ${pe}:
 ${is}    self.restore_stashed_parse_state()
-${BuildCode(attemptBlock.recoveryExpansion, indent + 4)}
+${BuildCode(attemptBlock.recoveryExpansion, indent + 4, "")}
 #set exceptionNesting = exceptionNesting - 1
 [#--${is}# DBG < BuildCodeAttemptBlock ${indent} --]
 [/#macro]
@@ -796,14 +801,14 @@ ${is}${LHS?replace("@", "self.consume_token(" + regexp.label + ", " + tolerant +
 [#--${is}# DBG < BuildCodeRegexp ${indent} --]
 [/#macro]
 
-[#macro BuildCodeZeroOrOne zoo indent]
+[#macro BuildCodeZeroOrOne zoo indent cardinalitiesVar]
 [#var is = ""?right_pad(indent)]
 [#--${is}# DBG > BuildCodeZeroOrOne ${indent} ${zoo.nestedExpansion.class.simpleName} --]
     [#if zoo.nestedExpansion.class.simpleName = "ExpansionChoice"]
-${BuildCode(zoo.nestedExpansion, indent)}[#rt]
+${BuildCode(zoo.nestedExpansion, indent, cardinalitiesVar)}[#rt]
     [#else]
-${is}if ${ExpansionCondition(zoo.nestedExpansion)}:
-${BuildCode(zoo.nestedExpansion, indent + 4)}[#rt]
+${is}if ${ExpansionCondition(zoo.nestedExpansion, cardinalitiesVar)}:
+${BuildCode(zoo.nestedExpansion, indent + 4, cardinalitiesVar)}[#rt]
     [/#if]
 [#--${is}# DBG < BuildCodeZeroOrOne ${indent} ${zoo.nestedExpansion.class.simpleName} --]
 [/#macro]
@@ -812,17 +817,29 @@ ${BuildCode(zoo.nestedExpansion, indent + 4)}[#rt]
 [#var is = ""?right_pad(indent)]
 [#--${is}# DBG > BuildCodeOneOrMore ${indent} --]
 [#var nestedExp = oom.nestedExpansion, prevInFirstVarName = inFirstVarName/]
+[#var cardinalitiesVar = ""]
+[#if oom.cardinalityContainer]
+[#set cardinalitiesVar = "cardinalities" + repetitionIndex][#set repetitionIndex = repetitionIndex + 1]
+${is}${cardinalitiesVar} = RepetitionCardinality([@CU.BuildCardinalities oom.cardinalityConstraints, ""/])
+[/#if]
    [#if nestedExp.simpleName = "ExpansionChoice"]
      [#set inFirstVarName = "inFirst" + inFirstIndex, inFirstIndex = inFirstIndex + 1 /]
 ${is}${inFirstVarName} = True
    [/#if]
 ${is}while True:
-${RecoveryLoop(oom, indent + 4)}
+${RecoveryLoop(oom, indent + 4, cardinalitiesVar)}
+[#if oom.cardinalityContainer]
+${is}    ${cardinalitiesVar}.commit_iteration(True)
+[/#if]
       [#if nestedExp.simpleName = "ExpansionChoice"]
 ${is}    ${inFirstVarName} = False
       [#else]
-${is}    if not (${ExpansionCondition(oom.nestedExpansion)}): break
+${is}    if not (${ExpansionCondition(oom.nestedExpansion, cardinalitiesVar)}): break
       [/#if]
+[#if oom.minCardinalityConstrained && oom.cardinalityContainer]
+${is}if not ${cardinalitiesVar}.check_cardinality(False):
+${is}    self.fail('Minimum cardinality constraint(s) for: ${oom.location?j_string} not met.')
+[/#if]
    [#set inFirstVarName = prevInFirstVarName /]
 [#--${is}# DBG < BuildCodeOneOrMore ${indent} --]
 [/#macro]
@@ -830,24 +847,36 @@ ${is}    if not (${ExpansionCondition(oom.nestedExpansion)}): break
 [#macro BuildCodeZeroOrMore zom indent]
 [#var is = ""?right_pad(indent)]
 [#--${is}# DBG > BuildCodeZeroOrMore ${indent} --]
+[#var cardinalitiesVar = ""]
+[#if zom.cardinalityContainer]
+[#set cardinalitiesVar = "cardinalities" + repetitionIndex][#set repetitionIndex = repetitionIndex + 1]
+${is}${cardinalitiesVar} = RepetitionCardinality([@CU.BuildCardinalities zom.cardinalityConstraints, ""/])
+[/#if]
 ${is}while True:
        [#if zom.nestedExpansion.class.simpleName != "ExpansionChoice"]
-${is}    if not (${ExpansionCondition(zom.nestedExpansion)}): break
+${is}    if not (${ExpansionCondition(zom.nestedExpansion, cardinalitiesVar)}): break
        [/#if]
-[@RecoveryLoop zom, indent + 4 /]
+[@RecoveryLoop zom, indent + 4, cardinalitiesVar /]
+[#if zom.cardinalityContainer]
+${is}    ${cardinalitiesVar}.commit_iteration(True)
+[/#if]
+[#if zom.minCardinalityConstrained && zom.cardinalityContainer]
+${is}if not ${cardinalitiesVar}.check_cardinality(False):
+${is}    self.fail('Minimum cardinality constraint(s) for: ${zom.location?j_string} not met.')
+[/#if]
 [#--${is}# DBG < BuildCodeZeroOrMore ${indent} --]
 [/#macro]
 
-[#macro RecoveryLoop loopExpansion indent]
+[#macro RecoveryLoop loopExpansion indent cardinalitiesVar]
 [#var is = ""?right_pad(indent)]
 [#--${is}# DBG > RecoveryLoop ${indent} --]
    [#if !settings.faultTolerant || !loopExpansion.requiresRecoverMethod]
-${BuildCode(loopExpansion.nestedExpansion, indent)}[#rt]
+${BuildCode(loopExpansion.nestedExpansion, indent, cardinalitiesVar)}[#rt]
    [#else]
    [#var initialTokenVarName = "initialToken" + CU.newID()]
 ${is}${initialTokenVarName} = self.last_consumed_token
 ${is}try:
-${BuildCode(loopExpansion.nestedExpansion, indent + 4)}[#rt]
+${BuildCode(loopExpansion.nestedExpansion, indent + 4, cardinalitiesVar)}[#rt]
 ${is}except ParseException as pe:
 ${is}    logger.exception('Hit a parsing exception: %s', pe)
 ${is}    if not self.is_tolerant: raise
@@ -868,13 +897,13 @@ ${is}    if self.pending_recovery: raise
 [#--${is}# DBG < RecoveryLoop ${indent} --]
 [/#macro]
 
-#macro BuildCodeChoice choice indent
+#macro BuildCodeChoice choice indent cardinalitiesVar
 #var is = ""?right_pad(indent)
 [#--${is}# DBG > BuildCodeChoice ${indent} --]
 #list choice.choices as expansion
   #if expansion.enteredUnconditionally
 ${is}else:
-${BuildCode(expansion, indent + 4)}[#rt]
+${BuildCode(expansion, indent + 4, cardinalitiesVar)}[#rt]
     #if expansion_has_next
       #var nextExpansion = choice[expansion_index + 1]
 ${is}# Warning: choice at ${nextExpansion.location} is is ignored because the
@@ -883,8 +912,8 @@ ${is}# out of the loop..
     /#if
     #return
   /#if
-${is}${(expansion_index == 0)?string("if", "elif")} (${ExpansionCondition(expansion)}):
-${BuildCode(expansion, indent + 4)}[#rt]
+${is}${(expansion_index == 0)?string("if", "elif")} (${ExpansionCondition(expansion, cardinalitiesVar)}):
+${BuildCode(expansion, indent + 4, cardinalitiesVar)}[#rt]
   #if jtbParseTree && isProductionInstantiatingNode(expansion)
 ${is}    ${globals.currentNodeVariableName}.setChoice(${expansion_index})
   /#if
@@ -906,11 +935,11 @@ ${is}    raise ParseException(self, expected=self.${choice.firstSetVarName})
 [#--${is}# DBG < BuildCodeChoice ${indent} --]
 /#macro
 
-[#macro BuildCodeSequence expansion indent]
+[#macro BuildCodeSequence expansion indent cardinalitiesVar]
 [#var is = ""?right_pad(indent)]
 [#--${is}# DBG > BuildCodeSequence ${indent} --]
    [#list expansion.units as subexp]
-${BuildCode(subexp, indent)}[#rt]
+${BuildCode(subexp, indent, cardinalitiesVar)}[#rt]
    [/#list]
 [#--${is}# DBG < BuildCodeSequence ${indent} --]
 [/#macro]
@@ -921,17 +950,17 @@ ${BuildCode(subexp, indent)}[#rt]
      Macro to generate the condition for entering an expansion
      including the default single-token lookahead
 --]
-[#macro ExpansionCondition expansion]
+[#macro ExpansionCondition expansion cardinalitiesVar]
    [#if expansion.requiresPredicateMethod]
-${ScanAheadCondition(expansion)}[#t]
+${ScanAheadCondition(expansion, cardinalitiesVar)}[#t]
    [#else]
 ${SingleTokenCondition(expansion)}[#t]
    [/#if]
 [/#macro]
 
 [#-- Generates code for when we need a scanahead --]
-[#macro ScanAheadCondition expansion]
-[#if expansion.lookahead?? && expansion.lookahead.assignment??](${expansion..assignment.name} = [/#if][#if expansion.hasSemanticLookahead && !expansion.lookahead.semanticLookaheadNested](${globals::translateExpression(expansion.semanticLookahead)}) and [/#if]self.${expansion.predicateMethodName}()[#if expansion.lookahead?? && expansion.lookahead.assignment??])[/#if][#t]
+[#macro ScanAheadCondition expansion cardinalitiesVar]
+[#if expansion.lookahead?? && expansion.lookahead.assignment??](${expansion.lookahead.assignment.name} = [/#if][#if expansion.hasSemanticLookahead && !expansion.lookahead.semanticLookaheadNested](${globals::translateExpression(expansion.semanticLookahead)}) and [/#if][#if expansion.cardinalityConstrained && cardinalitiesVar?? && (cardinalitiesVar?length > 0)]self.${expansion.predicateMethodName}(${cardinalitiesVar})[#else]self.${expansion.predicateMethodName}()[/#if][#if expansion.lookahead?? && expansion.lookahead.assignment??])[/#if][#t]
 [/#macro]
 
 [#-- Generates code for when we don't need any scanahead routine --]
