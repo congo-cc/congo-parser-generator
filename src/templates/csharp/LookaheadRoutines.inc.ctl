@@ -505,7 +505,12 @@ if (!ScanToken(${expansion.firstSetVarName})) {
 
 #macro ScanCodeAssertion assertion
 #-- # DBG > ScanCodeAssertion
-#if assertion.assertionExpression??
+#if assertion.lookBehind??
+if ([#if !assertion.lookBehind.negated]![/#if]${assertion.lookBehind.routineName}()) {
+    _hitFailure = true;
+    return false;
+}
+#elseif assertion.assertionExpression??
 if (!(${globals::translateExpression(assertion.assertionExpression)})) {
     _hitFailure = true;
     return false;
