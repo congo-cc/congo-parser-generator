@@ -5,6 +5,40 @@
 #var UNLIMITED = 2147483647
 [#-- var MULTIPLE_LEXICAL_STATE_HANDLING = lexerData.numLexicalStates > 1 --]
 [#var MULTIPLE_LEXICAL_STATE_HANDLING = false]
+[#var repetitionIndex = 0]
+
+[#-- Lookahead cardinality: mirror Java LookaheadRoutines returnFalse/returnTrue/return(commit) --]
+[#function lhReturnFalse cardinalitiesVar parentCardVar]
+  [#if cardinalitiesVar?? && (cardinalitiesVar?length > 0)]
+    [#if parentCardVar?? && (parentCardVar?length > 0)]
+      [#return "return " + parentCardVar + ".commit(False)"/]
+    [#else]
+      [#return "return " + cardinalitiesVar + ".commit(False)"/]
+    [/#if]
+  [#else]
+    [#return "return False"/]
+  [/#if]
+[/#function]
+[#function lhReturnTrue cardinalitiesVar parentCardVar]
+  [#if cardinalitiesVar?? && (cardinalitiesVar?length > 0)]
+    [#if parentCardVar?? && (parentCardVar?length > 0)]
+      [#return "return " + parentCardVar + ".commit(True)"/]
+    [#else]
+      [#return "return " + cardinalitiesVar + ".commit(True)"/]
+    [/#if]
+  [#else]
+    [#return "return True"/]
+  [/#if]
+[/#function]
+[#function lhReturnCommit retExpr cardinalitiesVar parentCardVar]
+  [#if parentCardVar?? && (parentCardVar?length > 0)]
+    [#return "return " + parentCardVar + ".commit(" + retExpr + ")"/]
+  [#elseif cardinalitiesVar?? && (cardinalitiesVar?length > 0)]
+    [#return "return " + cardinalitiesVar + ".commit(" + retExpr + ")"/]
+  [#else]
+    [#return "return " + retExpr/]
+  [/#if]
+[/#function]
 
 
 #macro Generate
@@ -174,6 +208,7 @@
 # ====================================
 # Lookahead Routines
 # ====================================
+   [#set repetitionIndex = 0]
    [#list grammar.choicePointExpansions as expansion]
       [#if expansion.parent.class.simpleName != "BNFProduction"]
 ${BuildScanRoutine(expansion, indent)}
@@ -182,7 +217,7 @@ ${BuildScanRoutine(expansion, indent)}
    [#list grammar.assertionExpansions as expansion]
 ${BuildAssertionRoutine(expansion, indent)}
    [/#list]   [#list grammar.expansionsNeedingPredicate as expansion]
-${BuildPredicateRoutine(expansion)}
+${BuildPredicateRoutine(expansion, indent)}
    [/#list]
    [#list grammar.allLookaheads as lookahead]
       [#if lookahead.nestedExpansion??]
@@ -200,17 +235,26 @@ ${BuildProductionLookaheadMethod(production, indent)}
 [#macro BuildPredicateRoutine expansion indent]
   [#var lookaheadAmount = expansion.lookaheadAmount]
   [#if lookaheadAmount = 2147483647][#set lookaheadAmount = "UNLIMITED"][/#if]
+  [#var inner = indent + 8]
+  [#var cardinalitiesVar = ""]
+  [#if expansion.cardinalityConstrained]
+    [#set cardinalitiesVar = "cardinalities"]
+  [/#if]
     # BuildPredicateRoutine: expansion at ${expansion.location}
-    def ${expansion.predicateMethodName}(self):
+    def ${expansion.predicateMethodName}(self[#if expansion.cardinalityConstrained], cardinalities[/#if]):
         self.remaining_lookahead = ${lookaheadAmount}
         self.current_lookahead_token = self.last_consumed_token
         scan_to_end = False
         try:
-${BuildPredicateCode(expansion, 12)}
+${BuildPredicateCode(expansion, inner, cardinalitiesVar)}
       [#if !expansion.hasSeparateSyntacticLookahead && expansion.lookaheadAmount != 0]
-${BuildScanCode(expansion, 12)}
+        [#if expansion.cardinalityConstrained]
+${BuildScanCode(expansion, inner, cardinalitiesVar, "")}
+        [#else]
+${BuildScanCode(expansion, inner, "", "")}
+        [/#if]
       [/#if]
-            return True
+            ${lhReturnTrue(cardinalitiesVar, "")}
         finally:
             self.lookahead_routine_nesting = 0
             self.current_lookahead_token = None
@@ -224,8 +268,13 @@ ${BuildScanCode(expansion, 12)}
 ${is}# scanahead routine for expansion at:
 ${is}# ${expansion.location}
 ${is}# BuildScanRoutine macro
-${is}def ${expansion.scanRoutineName}(self, scan_to_end):
+  [#var cardinalitiesVar = ""]
+  [#if expansion.cardinalityConstrained]
+    [#set cardinalitiesVar = "cardinalities"]
+  [/#if]
+${is}def ${expansion.scanRoutineName}(self, scan_to_end[#if expansion.cardinalityConstrained], cardinalities[/#if]):
 ${is}    # import pdb; pdb.set_trace()
+  [#var inner = indent + 4]
   #if expansion.hasScanLimit
 ${is}    prev_passed_predicate_threshold = self.passed_predicate_threshold
 ${is}    self.passed_predicate_threshold = -1
@@ -235,11 +284,15 @@ ${is}    passed_predicate_threshold = self.remaining_lookahead - ${expansion.loo
   /#if
 ${is}    try:
 ${is}        self.lookahead_routine_nesting += 1
-${BuildPredicateCode(expansion, indent + 8)}
+${BuildPredicateCode(expansion, inner + 4, cardinalitiesVar)}
   #if !expansion.hasScanLimit
 ${is}        reached_scan_code = True
   /#if
-${BuildScanCode(expansion, indent + 8)}
+  [#if expansion.cardinalityConstrained]
+${BuildScanCode(expansion, inner + 4, cardinalitiesVar, "")}
+  [#else]
+${BuildScanCode(expansion, inner + 4, "", "")}
+  [/#if]
 ${is}    finally:
 ${is}        self.lookahead_routine_nesting -= 1
   #if expansion.hasScanLimit
@@ -251,7 +304,7 @@ ${is}        if reached_scan_code and self.remaining_lookahead <= passed_predica
 ${is}            self.passed_predicate = True
   /#if
 ${is}    self.passed_predicate = False
-${is}    return True
+${is}    ${lhReturnTrue(cardinalitiesVar, "")}
 /#if
 [#-- ${is}# DBG < BuildScanRoutine ${indent} --]
 [/#macro]
@@ -275,7 +328,7 @@ ${is}    if self.current_lookahead_token is None:
 ${is}        self.current_lookahead_token = self.last_consumed_token
 ${is}    try:
 ${is}        self.lookahead_routine_nesting += 1
-${BuildScanCode(expansion, indent + 8)}
+${BuildScanCode(expansion, indent + 8, "", "")}
 ${is}        return True
 ${is}    finally:
 ${is}        self.lookahead_routine_nesting -= 1
@@ -286,23 +339,23 @@ ${is}        self.hit_failure = prev_hit_failure
 [/#macro]
 
 [#-- Build the code for checking semantic lookahead, lookbehind, and/or syntactic lookahead --]
-#macro BuildPredicateCode expansion indent
+#macro BuildPredicateCode expansion indent cardinalitiesVar
 #var is = ""?right_pad(indent)
 [#-- ${is}# DBG > BuildPredicateCode ${indent} --]
 #if expansion.hasSemanticLookahead && (expansion.lookahead.semanticLookaheadNested || expansion.containingProduction.onlyForLookahead)
 ${is}if not (${globals::translateExpression(expansion.semanticLookahead)}):
-${is}    return False
+${is}    ${lhReturnFalse(cardinalitiesVar, "")}
 /#if
 #if expansion.hasLookBehind
 ${is}if [#if !expansion.lookBehind.negated]not [/#if]self.${expansion.lookBehind.routineName}():
-${is}    return False
+${is}    ${lhReturnFalse(cardinalitiesVar, "")}
 /#if
 #if expansion.hasSeparateSyntacticLookahead
 ${is}if self.remaining_lookahead <= 0:
 ${is}    self.passed_predicate = True
-${is}    return not self.hit_failure
+${is}    ${lhReturnCommit("not self.hit_failure", cardinalitiesVar, "")}
 ${is}if [#if !expansion.lookahead.negated]not [/#if]self.${expansion.lookaheadExpansion.scanRoutineName}(True):
-${is}    return False
+${is}    ${lhReturnFalse(cardinalitiesVar, "")}
 /#if
 #if expansion.lookaheadAmount == 0
 ${is}self.passed_predicate = True
@@ -321,14 +374,23 @@ ${is}self.passed_predicate = True
 [#if lookahead.nestedExpansion??]
 ${is}# lookahead routine for lookahead at:
 ${is}# ${lookahead.location}
-${is}def ${lookahead.nestedExpansion.scanRoutineName}(self, scan_to_end):
+  [#var inner = indent + 4]
+  [#var cardinalitiesVar = ""]
+  [#if lookahead.nestedExpansion.cardinalityConstrained]
+    [#set cardinalitiesVar = "cardinalities"]
+  [/#if]
+${is}def ${lookahead.nestedExpansion.scanRoutineName}(self, scan_to_end[#if lookahead.nestedExpansion.cardinalityConstrained], cardinalities[/#if]):
 ${is}    prev_remaining_lookahead = self.remaining_lookahead
 ${is}    prev_hit_failure = self.hit_failure
 ${is}    prev_scanahead_token = self.current_lookahead_token
 ${is}    try:
 ${is}        self.lookahead_routine_nesting += 1
-${BuildScanCode(lookahead.nestedExpansion, indent + 8)}
-${is}        return not self.hit_failure
+  [#if lookahead.nestedExpansion.cardinalityConstrained]
+${BuildScanCode(lookahead.nestedExpansion, inner + 4, cardinalitiesVar, "")}
+  [#else]
+${BuildScanCode(lookahead.nestedExpansion, inner + 4, "", "")}
+  [/#if]
+${is}        ${lhReturnCommit("not self.hit_failure", cardinalitiesVar, "")}
 ${is}    finally:
 ${is}        self.lookahead_routine_nesting -= 1
 ${is}        self.current_lookahead_token = prev_scanahead_token
@@ -394,7 +456,7 @@ ${is}    return True
     # BuildProductionLookaheadMethod
     def ${production.lookaheadMethodName}(self, scan_to_end):
         # import pdb; pdb.set_trace()
-${BuildScanCode(production.expansion, 8)}
+${BuildScanCode(production.expansion, 8, "", "")}
         return True
 
 [#--     # DBG < BuildProductionLookaheadMethod ${indent} --]
@@ -405,46 +467,46 @@ ${BuildScanCode(production.expansion, 8)}
    This macro just delegates to the various sub-macros
    based on the Expansion's class name.
 --]
-[#macro BuildScanCode expansion indent]
+[#macro BuildScanCode expansion indent cardVar parentCardVar]
 [#var is = ""?right_pad(indent)]
 [#-- ${is}# DBG > BuildScanCode ${indent} ${expansion.simpleName} --]
   [#var classname = expansion.simpleName]
   [#if classname != "ExpansionSequence" && classname != "ExpansionWithParentheses"]
 ${is}if self.hit_failure:
-${is}    return False
+${is}    ${lhReturnFalse(cardVar, parentCardVar)}
 ${is}if self.remaining_lookahead <= 0:
-${is}    return True
+${is}    ${lhReturnTrue(cardVar, parentCardVar)}
 ${is}# Lookahead Code for ${classname} specified at ${expansion.location}
   [/#if]
-  [@CU.HandleLexicalStateChange expansion, true, indent; indent]
+  [@CU.HandleLexicalStateChange expansion, true, indent, cardVar!""; indent]
   [#--
 ${is}# Building scan code for: ${classname}
 ${is}# at: ${expansion.location}
   --]
    [#if classname = "ExpansionWithParentheses"]
-      [@BuildScanCode expansion.nestedExpansion, indent /]
+      [@BuildScanCode expansion.nestedExpansion, indent, cardVar, parentCardVar /]
    [#elseif expansion.singleTokenLookahead]
-${ScanSingleToken(expansion, indent)}
+${ScanSingleToken(expansion, indent, cardVar)}
    [#elseif classname = "Assertion" && expansion.appliesInLookahead]
-${ScanCodeAssertion(expansion, indent)}
+${ScanCodeAssertion(expansion, indent, cardVar, parentCardVar)}
    [#elseif classname = "Failure"]
-${ScanCodeError(expansion, indent)}
+${ScanCodeError(expansion, indent, cardVar)}
    [#elseif classname = "UncacheTokens"]
 ${is}self.uncache_tokens()
    [#elseif classname = "ExpansionSequence"]
-${ScanCodeSequence(expansion, indent)}
+${ScanCodeSequence(expansion, indent, cardVar, parentCardVar)}
    [#elseif classname = "ZeroOrOne"]
-${ScanCodeZeroOrOne(expansion, indent)}
+${ScanCodeZeroOrOne(expansion, indent, cardVar, parentCardVar)}
    [#elseif classname = "ZeroOrMore"]
-${ScanCodeZeroOrMore(expansion, indent)}
+${ScanCodeZeroOrMore(expansion, indent, cardVar, parentCardVar)}
    [#elseif classname = "OneOrMore"]
-${ScanCodeOneOrMore(expansion, indent)}
+${ScanCodeOneOrMore(expansion, indent, cardVar)}
    [#elseif classname = "NonTerminal"]
-      [@ScanCodeNonTerminal expansion, indent /]
+      [@ScanCodeNonTerminal expansion, indent, cardVar /]
    [#elseif classname = "TryBlock" || classname = "AttemptBlock"]
-      [@BuildScanCode expansion.nestedExpansion, indent /]
+      [@BuildScanCode expansion.nestedExpansion, indent, cardVar, parentCardVar /]
    [#elseif classname = "ExpansionChoice"]
-${ScanCodeChoice(expansion, indent)}
+${ScanCodeChoice(expansion, indent, cardVar, parentCardVar)}
    [#elseif classname = "CodeBlock"]
       [#if expansion.appliesInLookahead || expansion.insideLookahead || expansion.containingProduction.onlyForLookahead]
 ${globals::translateCodeBlock(expansion, indent)}
@@ -456,19 +518,12 @@ ${globals::translateCodeBlock(expansion, indent)}
 
 [#--
    Generates the lookahead code for an ExpansionSequence.
-   In legacy JavaCC there was some quite complicated logic so as
-   not to generate unnecessary code. They actually had a longstanding bug
-   there, which was the topic of this blog post: https://congocc.com/2020/10/28/a-bugs-life/
-   I very much doubt that this kind of space optimization is worth
-   the candle nowadays and it just really complicated the code. Also, the ability
-   to scan to the end of an expansion strike me as quite useful in general,
-   particularly for fault-tolerant.
 --]
-#macro ScanCodeSequence sequence indent
+#macro ScanCodeSequence sequence indent cardVar parentCardVar
 #var is = ""?right_pad(indent)
 [#-- ${is}# DBG > ScanCodeSequence ${indent} --]
 #list sequence.units as sub
-       [@BuildScanCode sub, indent /]
+       [@BuildScanCode sub, indent, cardVar, parentCardVar /]
   #if sub.scanLimit
 ${is}if not scan_to_end and (len(self.lookahead_stack) <= 1):
 ${is}    if self.lookahead_routine_nesting == 0:
@@ -480,24 +535,19 @@ ${is}        self.passed_predicate_threshold = self.remaining_lookahead[#if sub.
 [#-- ${is}# DBG < ScanCodeSequence ${indent} --]
 /#macro
 
-[#--
-  Generates the lookahead code for a non-terminal.
-  It (trivially) just delegates to the code for
-  checking the production's nested expansion
---]
-[#macro ScanCodeNonTerminal nt indent]
+[#macro ScanCodeNonTerminal nt indent cardinalitiesVar]
 [#var is = ""?right_pad(indent)]
 ${is}# NonTerminal ${nt.name} at ${nt.location}
 ${is}self.push_onto_lookahead_stack('${nt.containingProduction.name}', '${nt.inputSource?j_string}', ${nt.beginLine}, ${nt.beginColumn})
 ${is}self.current_lookahead_production = '${nt.production.name}'
 ${is}try:
 ${is}    if not self.${nt.production.lookaheadMethodName}(${CU.bool(nt.scanToEnd)}):
-${is}        return False
+${is}        ${lhReturnFalse(cardinalitiesVar, "")}
 ${is}finally:
 ${is}    self.pop_lookahead_stack()
 [/#macro]
 
-[#macro ScanSingleToken expansion indent]
+[#macro ScanSingleToken expansion indent cardinalitiesVar]
 [#var is = ""?right_pad(indent)]
 [#var firstSet = expansion.firstSet.tokenNames]
 [#-- ${is}# DBG > ScanSingleToken ${indent} --]
@@ -507,47 +557,52 @@ ${is}if not self.scan_token_one(${firstSet[0]}):
 [#else]
 ${is}if not self.scan_token(${firstSet[0]}):
 [/#if]
-${is}    return False
+${is}    ${lhReturnFalse(cardinalitiesVar, "")}
 [#else]
 [#if optimize_scan_token]
 ${is}if not self.scan_token_many(self.${expansion.firstSetVarName}):
 [#else]
 ${is}if not self.scan_token(self.${expansion.firstSetVarName}):
 [/#if]
-${is}    return False
+${is}    ${lhReturnFalse(cardinalitiesVar, "")}
 [/#if]
 [#-- ${is}# DBG < ScanSingleToken ${indent} --]
 [/#macro]
 
-[#macro ScanCodeAssertion assertion indent]
+[#macro ScanCodeAssertion assertion indent cardinalitiesVar parentCardVar]
 [#var is = ""?right_pad(indent)]
 [#-- ${is}# DBG > ScanCodeAssertion ${indent} --]
 [#if assertion.lookBehind??]
 ${is}if [#if !assertion.lookBehind.negated]not [/#if]self.${assertion.lookBehind.routineName}():
 ${is}    self.hit_failure = True
-${is}    return False
+${is}    ${lhReturnFalse(cardinalitiesVar, parentCardVar)}
 [#elseif assertion.assertionExpression??]
 ${is}if not (${globals::translateExpression(assertion.assertionExpression)}):
 ${is}    self.hit_failure = True
-${is}    return False
+${is}    ${lhReturnFalse(cardinalitiesVar, parentCardVar)}
 [/#if]
 [#if assertion.expansion??]
 ${is}if [#if !assertion.expansionNegated]not [/#if]self.${assertion.expansion.scanRoutineName}():
 ${is}    self.hit_failure = True
-${is}    return False
+${is}    ${lhReturnFalse(cardinalitiesVar, parentCardVar)}
+[/#if]
+[#if assertion.cardinalityConstraint?? && cardinalitiesVar?? && (cardinalitiesVar?length > 0)]
+${is}if not ${cardinalitiesVar}.choose(${assertion.assertionIndex}, True):
+${is}    self.hit_failure = True
+${is}    ${lhReturnFalse(cardinalitiesVar, parentCardVar)}
 [/#if]
 [#-- ${is}# DBG < ScanCodeAssertion ${indent} --]
 [/#macro]
 
-[#macro ScanCodeError expansion indent]
+[#macro ScanCodeError expansion indent cardinalitiesVar]
 [#var is = ""?right_pad(indent)]
 [#-- ${is}# DBG > ScanCodeError ${indent} --]
 ${is}self.hit_failure = True
-${is}return False
+${is}${lhReturnFalse(cardinalitiesVar, "")}
 [#-- ${is}# DBG < ScanCodeError ${indent} --]
 [/#macro]
 
-#macro ScanCodeChoice choice indent
+#macro ScanCodeChoice choice indent cardinalitiesVar parentCardVar
 #var is = ""?right_pad(indent)
 [#-- ${is}# DBG > ScanCodeChoice ${indent} --]
 ${is}${CU.newVarName("token")} = self.current_lookahead_token
@@ -557,15 +612,15 @@ ${is}passed_predicate${CU.newVarIndex} = self.passed_predicate
 ${is}try:
 #list choice.choices as subseq
 ${is}    self.passed_predicate = False
-${is}    if not (${CheckExpansion(subseq)}):
+${is}    if not (${CheckExpansion(subseq, cardinalitiesVar, parentCardVar)}):
 ${is}        self.current_lookahead_token = token${CU.newVarIndex}
 ${is}        self.remaining_lookahead = remaining_lookahead${CU.newVarIndex}
 ${is}        self.hit_failure = hit_failure${CU.newVarIndex}
   #if !subseq_has_next
-${is}        return False
+${is}        ${lhReturnFalse(cardinalitiesVar, parentCardVar)}
   #else
 ${is}        if self.passed_predicate and not self.legacy_glitchy_lookahead:
-${is}            return False
+${is}            ${lhReturnFalse(cardinalitiesVar, parentCardVar)}
   /#if
 [#-- bump up the indentation, as the items in the list are recursive
      levels
@@ -578,16 +633,16 @@ ${is}    self.passed_predicate = passed_predicate${CU.newVarIndex}
 [#-- ${is}# DBG < ScanCodeChoice ${indent} --]
 /#macro
 
-#macro ScanCodeZeroOrOne zoo indent
+#macro ScanCodeZeroOrOne zoo indent cardVar parentCardVar
 #var is = ""?right_pad(indent)
 [#-- ${is}# DBG > ScanCodeZeroOrOne ${indent} --]
 ${is}${CU.newVarName("token")} = self.current_lookahead_token
 ${is}passed_predicate${CU.newVarIndex} = self.passed_predicate
 ${is}self.passed_predicate = False
 ${is}try:
-${is}    if not (${CheckExpansion(zoo.nestedExpansion)}):
+${is}    if not (${CheckExpansion(zoo.nestedExpansion, cardVar, parentCardVar)}):
 ${is}        if self.passed_predicate and not self.legacy_glitchy_lookahead:
-${is}            return False
+${is}            ${lhReturnFalse(cardVar, "")}
 ${is}        self.current_lookahead_token = token${CU.newVarIndex}
 ${is}        self.hit_failure = False
 ${is}finally:
@@ -598,8 +653,13 @@ ${is}    self.passed_predicate = passed_predicate${CU.newVarIndex}
 [#--
   Generates lookahead code for a ZeroOrMore construct]
 --]
-#macro ScanCodeZeroOrMore zom indent
+#macro ScanCodeZeroOrMore zom indent cardVar parentCardVar
 #var is = ""?right_pad(indent)
+[#var zomCardVar = cardVar!""]
+[#if zom.cardinalityContainer && (!cardVar?? || cardVar == "")]
+[#set zomCardVar = "cardinality" + repetitionIndex][#set repetitionIndex = repetitionIndex + 1]
+${is}${zomCardVar} = RepetitionCardinality([@CU.BuildCardinalities zom.cardinalityConstraints, ""/])
+[/#if]
 #var prevPassedPredicateVarName = CU.newVarName("passed_predicate")
 #var prevTokenName = CU.newVarName("token")
 ${is}${prevPassedPredicateVarName} = self.passed_predicate
@@ -608,34 +668,42 @@ ${is}try:
 ${is}    while self.remaining_lookahead > 0 and not self.hit_failure:
 ${is}        ${prevTokenName} = self.current_lookahead_token
 ${is}        self.passed_predicate = False
-${is}        if not (${CheckExpansion(zom.nestedExpansion)}):
+${is}        if not (${CheckExpansion(zom.nestedExpansion, zomCardVar, parentCardVar)}):
 ${is}            if self.passed_predicate and not self.legacy_glitchy_lookahead:
-${is}                return False
+${is}                ${lhReturnFalse(parentCardVar, "")}
 ${is}            self.current_lookahead_token = ${prevTokenName}
 ${is}            break
+[#if zom.cardinalityContainer]
+${is}        ${zomCardVar}.commit_iteration(False)
+[/#if]
+[#if zom.minCardinalityConstrained && zom.cardinalityContainer]
+${is}    if not ${zomCardVar}.check_cardinality(True):
+${is}        ${lhReturnFalse(parentCardVar, "")}
+[/#if]
 ${is}finally:
 ${is}    self.passed_predicate = ${prevPassedPredicateVarName}
 ${is}self.hit_failure = False
 [#-- ${is}# DBG < ScanCodeZeroOrMore ${indent} --]
 /#macro
 
-[#--
-   Generates lookahead code for a OneOrMore construct
-   It generates the code for checking a single occurrence
-   and then the same code as a ZeroOrMore
---]
-[#macro ScanCodeOneOrMore oom indent]
+[#macro ScanCodeOneOrMore oom indent cardinalitiesVar]
 [#var is = ""?right_pad(indent)]
 [#-- ${is}# DBG > ScanCodeOneOrMore ${indent} --]
-[#--${is}if not (${CheckExpansion(oom.nestedExpansion)}):
-${is}    return False--]
-[@BuildScanCode oom.nestedExpansion, indent /]
-[@ScanCodeZeroOrMore oom, indent /]
+[#var oomCardVar = ""]
+[#if oom.cardinalityContainer]
+[#set oomCardVar = "cardinality" + repetitionIndex][#set repetitionIndex = repetitionIndex + 1]
+${is}${oomCardVar} = RepetitionCardinality([@CU.BuildCardinalities oom.cardinalityConstraints, ""/])
+[/#if]
+[@BuildScanCode oom.nestedExpansion, indent, oomCardVar, cardinalitiesVar /]
+[#if oom.cardinalityContainer]
+${is}${oomCardVar}.commit_iteration(False)
+[/#if]
+[@ScanCodeZeroOrMore oom, indent, oomCardVar, cardinalitiesVar /]
 [#-- ${is}# DBG < ScanCodeOneOrMore ${indent} --]
 [/#macro]
 
 
-#macro CheckExpansion expansion
+#macro CheckExpansion expansion cardinalitiesVar parentCardVar
 #if expansion.singleTokenLookahead
   #if expansion.firstSet.tokenNames?size = 1
     #if optimize_scan_token
@@ -651,7 +719,15 @@ ${is}    return False--]
     #endif
   #endif
 #else
+  [#if grammar.assertionExpansions?? && grammar.assertionExpansions?seq_contains(expansion)]
+      self.${expansion.scanRoutineName}()[#t]
+  [#else]
+  [#if expansion.cardinalityConstrained && cardinalitiesVar?? && (cardinalitiesVar?length > 0)]
+      self.${expansion.scanRoutineName}(False, ${cardinalitiesVar})[#t]
+  [#else]
       self.${expansion.scanRoutineName}(False)[#t]
+  [/#if]
+  [/#if]
 #endif
 #endmacro
 
