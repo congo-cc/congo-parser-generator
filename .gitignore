@@ -59,6 +59,7 @@ __pycache__/*
 /examples/python/rust-pythonparser/*
 /examples/csharp/rust-csharpparser/*
 /examples/sqlexpr/rust-sqlparser/*
+/sandbox/peg/*
 /personal.code-workspace
 /.vscode/*
 /.idea/*
