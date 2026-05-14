@@ -555,12 +555,7 @@ BaseExpression :
        |
        LiteralExpression
        |
-       // The following is a kludge that needs to be addressed.
-       // We should not be deciding whether to go into
-       // into a StructExpression by just doing a complete
-       // unbounded lookahead here. It is to be avoided
-       // on principle, but is also incorrect here, I'm pretty sure.
-       StructExpression =>||
+       StructExpression
        |
        PathExpression
        |
@@ -737,6 +732,7 @@ INJECT PARSER_CLASS : {
                 || caller == "ArrayExpression"
                 || caller == "BaseExpressionPostfix"
                 || caller == "ClosureExpression"
+                || caller == "BlockExpression"
             ) {
                 return false;
             }
@@ -796,12 +792,18 @@ InfiniteLoopExpression : "loop" BlockExpression ;
 
 WhileExpression : "while" ConditionExpression BlockExpression ;
 
+ChainedLetExp :
+  "let"
+  PatternNoTopAlt [":" Type]
+  ["=" ConditionExpression]
+;
+
 WhileLetExpression :
     "while" "let" =>||
     Pattern
     "="
     ConditionExpression
-    ("&&" LetExp)*
+    ("&&" ChainedLetExp)*
     BlockExpression
 ;
 
@@ -810,7 +812,7 @@ ForExpression : "for" Pattern "in" ConditionExpression BlockExpression ;
 IfExpression :
     "if"
     ConditionExpression
-    ("&&" LetExp)*
+    ("&&" ChainedLetExp)*
     ExpressionWithBlock
     [
         "else"
@@ -828,7 +830,7 @@ IfExpression :
 IfLetExpression :
     "if" "let" =>||
     Pattern "=" ConditionExpression
-    ("&&" LetExp)* // Note that this is a bleeding edge language feature
+    ("&&" ChainedLetExp)* // Note that this is a bleeding edge language feature
     BlockExpression
     [
         "else"
@@ -860,16 +862,13 @@ MatchExpression :
 
 MatchArm : (OuterAttribute)* Pattern ["if" Expression] ;
 
-LetExp :
-  "let"
-  PatternNoTopAlt [":" Type]
-  ["=" Expression]
-;
-
 LetStatement :
    (OuterAttribute)*
    =>|+1
-   LetExp
+   "let"
+   PatternNoTopAlt
+   [":" Type]
+   ["=" Expression]
    ["else" BlockExpression] // Note that this is since Rust 1.65.0 (November 2022)
                            // Also note that the else block
                            // cannot just fall through. It must
@@ -1153,24 +1152,6 @@ MacroRulesDef :
   DelimTokenTree
   [SCAN 0 {endDelim == RPAREN || endDelim == RBRACKET} => ";"]
 ;
-/*
-MacroMatcher :
-    "(" MacroMatch ")"
-    |
-    "[" MacroMatch "]"
-    |
-    "{" MacroMatch "}"
-;
-
-MacroMatch :
-    SCAN ~("$"|"("|")"|"["|"]"|"{"|"}") => AnyToken
-    |
-    MacroMatcher
-    |
-    "$" IdentifierOrKeywordButNotCrate ":" =>|| MacroFragSpec
-    |
-    "$" (SCAN ~("*"|"+"|"?") => MacroMatch)+ ("*"|"+"|"?")
-;*/
 
 IdentifierOrKeywordButNotCrate#void :
     DEACTIVATE_TOKENS ABSTRACT, AS, ASYNC, AWAIT, BECOME, CONST
@@ -1186,24 +1167,6 @@ IdentifierOrKeywordButNotCrate#void :
         |
         <RAW_IDENTIFIER>
     )
-;
-
-MacroFragSpec#void :
-    'block' |
-    'expr' |
-    'expr_2021' |
-    'ident' |
-    'item' |
-    'lifetime' |
-    'literal' |
-    'meta' |
-    'pat' |
-    'pat_param' |
-    'path' |
-    'stmt' |
-    'tt' |
-    'ty' |
-    'vis'
 ;
 
 Identifier : <ID>|<RAW_IDENTIFIER>;
