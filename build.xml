@@ -218,12 +218,11 @@
     <ant dir="examples/java" target="test-java" />
   </target>
 
-  <!-- Cardinality oracles (Java): sandbox/cardinality (CardTests.ccc) and examples/cics.
-       When Python/C# cardinality codegen lands, extend these dirs with -lang python/csharp checks. -->
+  <!-- Cardinality oracles: sandbox/cardinality (CardTests.ccc) Java/Python/C# and examples/cics Java. -->
   <target name="test-cardinality-oracles-java" depends="jar">
     <echo>Cardinality oracle: sandbox/cardinality</echo>
     <ant dir="sandbox/cardinality" target="clean" />
-    <ant dir="sandbox/cardinality" target="test" />
+    <ant dir="sandbox/cardinality" target="test-all" />
     <echo>Cardinality oracle: examples/cics</echo>
     <ant dir="examples/cics" target="clean" />
     <ant dir="examples/cics" target="test-java" />

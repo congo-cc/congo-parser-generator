@@ -1,5 +1,8 @@
 
-PARSER_PACKAGE=org.parsers.test;
+PARSER_PACKAGE="org.parsers.test";
+NODE_PACKAGE="org.parsers.test.ast";
+TEST_PRODUCTION=Root;
+TEST_EXTENSION=txt;
 TAB_SIZE=4;
 ENSURE_FINAL_EOL;
 TERMINATING_STRING="";
@@ -365,13 +368,25 @@ Modifiers :
 
 INJECT PARSER_CLASS :
 {
-    boolean allows(TokenType... types) {
+    boolean allows(TokenType t1) {
         if (isParserTolerant() || permissibleModifiers == null) return true;
-        for (TokenType type : types) {
-            if (permissibleModifiers.contains(type)) {
-                //System.out.println("allowed=" + type);
-                return true;
-            }
+        if (permissibleModifiers.contains(t1)) {
+            //System.out.println("allowed=" + t1);
+            return true;
+        }
+        return false;
+    }
+    boolean allows(TokenType t1, TokenType t2) {
+        if (isParserTolerant() || permissibleModifiers == null) return true;
+        if (permissibleModifiers.contains(t1) || permissibleModifiers.contains(t2)) {
+            return true;
+        }
+        return false;
+    }
+    boolean allows(TokenType t1, TokenType t2, TokenType t3) {
+        if (isParserTolerant() || permissibleModifiers == null) return true;
+        if (permissibleModifiers.contains(t1) || permissibleModifiers.contains(t2) || permissibleModifiers.contains(t3)) {
+            return true;
         }
         return false;
     }
