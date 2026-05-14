@@ -831,7 +831,7 @@ ${BuildCode(zoo.nestedExpansion, cardinalitiesVar)}
 #if oom.cardinalityContainer
 #set cardinalitiesVar = "cardinalities" + repetitionIndex
 #set repetitionIndex = repetitionIndex + 1
-var RepetitionCardinality ${cardinalitiesVar} = new RepetitionCardinality(${CU.BuildCardinalities(oom.cardinalityConstraints)});
+RepetitionCardinality ${cardinalitiesVar} = new RepetitionCardinality(${CU.BuildCardinalities(oom.cardinalityConstraints)});
 #endif
    #if nestedExp.simpleName = "ExpansionChoice"
      #set inFirstVarName = "inFirst" + inFirstIndex, inFirstIndex = inFirstIndex + 1
@@ -863,7 +863,7 @@ ${RecoveryLoop(oom, cardinalitiesVar)}
 #if zom.cardinalityContainer
 #set cardinalitiesVar = "cardinalities" + repetitionIndex
 #set repetitionIndex = repetitionIndex + 1
-var RepetitionCardinality ${cardinalitiesVar} = new RepetitionCardinality(${CU.BuildCardinalities(zom.cardinalityConstraints)});
+RepetitionCardinality ${cardinalitiesVar} = new RepetitionCardinality(${CU.BuildCardinalities(zom.cardinalityConstraints)});
 #endif
 while (true) {
        #if zom.nestedExpansion.class.simpleName != "ExpansionChoice"

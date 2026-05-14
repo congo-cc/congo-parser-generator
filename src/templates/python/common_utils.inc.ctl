@@ -153,6 +153,7 @@ ${is}        self._next_token_type = None
   Python literal [[min, max], ...] for RepetitionCardinality (mirrors Java CommonUtils.BuildCardinalities).
 --]
 [#macro BuildCardinalities assertions indent]
-[#var is = ""?right_pad(indent)]
+[#-- Second arg is reserved for indentation parity with other CU macros; all current call sites pass "". --]
+[#var is = ""]
 ${is}[[#list assertions as range][${range[0]}, ${range[1]}][#if range_has_next], [/#if][/#list]]
 [/#macro]
