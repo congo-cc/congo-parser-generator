@@ -659,7 +659,10 @@ ${is}pass
   [#set optionalPart = " + " + globals::translateExpression(assertion.messageExpression)]
 [/#if]
 [#var assertionMessage = "Assertion at: " + assertion.location?j_string + " failed."]
-[#if assertion.assertionExpression??]
+[#if assertion.lookBehind??]
+${is}if [#if !assertion.lookBehind.negated]not [/#if]self.${assertion.lookBehind.routineName}():
+${is}    self.fail("${assertionMessage}"${optionalPart})
+[#elseif assertion.assertionExpression??]
 ${is}if not (${globals::translateExpression(assertion.assertionExpression)}):
 ${is}    self.fail("${assertionMessage}"${optionalPart})
 [/#if]

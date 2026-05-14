@@ -522,11 +522,15 @@ ${is}    return False
 [#macro ScanCodeAssertion assertion indent]
 [#var is = ""?right_pad(indent)]
 [#-- ${is}# DBG > ScanCodeAssertion ${indent} --]
-#if assertion.assertionExpression??
+[#if assertion.lookBehind??]
+${is}if [#if !assertion.lookBehind.negated]not [/#if]self.${assertion.lookBehind.routineName}():
+${is}    self.hit_failure = True
+${is}    return False
+[#elseif assertion.assertionExpression??]
 ${is}if not (${globals::translateExpression(assertion.assertionExpression)}):
 ${is}    self.hit_failure = True
 ${is}    return False
-#endif
+[/#if]
 [#if assertion.expansion??]
 ${is}if [#if !assertion.expansionNegated]not [/#if]self.${assertion.expansion.scanRoutineName}():
 ${is}    self.hit_failure = True

@@ -661,7 +661,11 @@ ${globals::translateCodeBlock(fail.code, 1)}
   #set optionalPart = " + " + globals::translateExpression(assertion.messageExpression)
 #endif
    #var assertionMessage = "Assertion at: " + assertion.location?j_string + " failed. "
-   #if assertion.assertionExpression??
+   #if assertion.lookBehind??
+if ([#if !assertion.lookBehind.negated]![/#if]${assertion.lookBehind.routineName}()) {
+    Fail("${assertionMessage}"${optionalPart});
+}
+   #elseif assertion.assertionExpression??
 if (!(${globals::translateExpression(assertion.assertionExpression)})) {
     Fail("${assertionMessage}"${optionalPart});
 }
