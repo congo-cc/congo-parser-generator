@@ -282,9 +282,11 @@ public class FilesGenerator {
             module = CongoCCParser.parsePythonFile(outputFile.getFileName().toString(), code);
         }
         catch (Exception e) {
-            errors.addError(e.getMessage());
+            // Large generated parsers can exceed what the bundled Python parse/format
+            // pipeline accepts; raw template output is still written and is often valid for CPython.
+            errors.addWarning("Could not parse/format generated " + outputFile.getFileName()
+                    + " with the internal Python tooling; emitting raw template output. (" + e.getMessage() + ")");
             out.write(code);
-            e.printStackTrace();
             return;
         }
         finally {
