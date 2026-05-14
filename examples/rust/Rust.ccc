@@ -2,28 +2,33 @@ DEFAULT_LEXICAL_STATE=RUST;
 PARSER_PACKAGE=org.parsers.rust;
 NODE_PACKAGE=org.parsers.rust.ast;
 ENSURE_FINAL_EOL;
-DEACTIVATE_TOKENS=SHEBANG, LT_LT, GT_GT;
+DEACTIVATE_TOKENS=SHE_BANG, LT_LT, GT_GT;
 TAB_SIZE=4;
+TEST_PRODUCTION=Crate;
+TEST_EXTENSION=rs;
 
 INCLUDE "RustLexer.ccc"
 
 #Crate :
-  [
-    SCAN 0
-    {
-        getTokenType(1) == HASH
-        && getTokenType(2) == EXCLAM
-        && getToken(1).getEndOffset() == getToken(2).getBeginOffset()
-        && getTokenType(3) != LBRACKET
-    }
-    => ACTIVATE_TOKENS SHEBANG (<SHEBANG>)
-  ]
+  [Shebang]
   (InnerAttribute)*
   (Item)*
   <EOF>
   {
     return THIS;
   }
+;
+
+Shebang#void :
+  (
+    <SHE_BANG>
+    |
+    ENSURE ("#" "!")
+    ENSURE {getToken(1).getEndOffset() == getToken(2).getBeginOffset()}
+    ENSURE {getTokenType(3) != LBRACKET}
+    ACTIVATE_TOKENS SHE_BANG (<SHE_BANG>)
+  )
+  =>||
 ;
 
 InnerAttribute :
@@ -502,8 +507,6 @@ MaybeNamedParam : (OuterAttribute)* [(Identifier | <UNDERSCORE>) ":" =>||] Type 
 
 MaybeNamedFunctionParametersVariadic : (MaybeNamedParam ",")+ (OuterAttribute)* "...";
 
-ExpressionNotStruct#void : Expression ;
-
 Expression :
    (OuterAttribute)*
    =>|+1
@@ -515,10 +518,18 @@ Expression :
         ContinueExpression
         |
         ENSURE \Statement
-        ExpressionWithBlock
+        (
+            BlockExpression (BaseExpressionPostfix)*
+            |
+            IfLetExpression
+            |
+            IfExpression
+            |
+            ForExpression
+        )
         |
         ENSURE \MatchExpression
-        ExpressionWithBlock
+        BlockExpression
         |
         AssignmentExpression
    )
@@ -535,6 +546,10 @@ ExpressionWithBlock#void :
 ;
 
 BaseExpression :
+    IfLetExpression
+    |
+    IfExpression
+    |
     (
        MacroInvocation
        |
@@ -550,10 +565,6 @@ BaseExpression :
        PathExpression
        |
        ConstBlock
-       |
-       IfLetExpression
-       |
-       IfExpression
        |
        ParentheticalExpression
        |
@@ -632,14 +643,25 @@ MultiplicativeExpression : TypeCastExpression (("*" | "/" | "%") TypeCastExpress
 
 AdditiveExpression : MultiplicativeExpression (("+"|"-") MultiplicativeExpression)* ;
 
-ShiftExpression : AdditiveExpression ((LeftShiftOp|RightShiftOp) AdditiveExpression)* ;
+ShiftExpression :
+    AdditiveExpression
+    (
+        (
+           "<<" | ">>" //If somehow we have previously cached the tokens, we just pick them up.
+           // Otherwise we resort to the the following "synthetic" productions
+           // to turn two succesive '<' or '>' into a single '<<' or >>' token.
+           | SyntheticLeftShift | SyntheticRightShift
+        )
+        AdditiveExpression
+    )*
+;
 
-LeftShiftOp#void :
+SyntheticLeftShift#void :
    SCAN "<" "<" ENSURE {getToken(-1).getEndOffset() == getToken(0).getBeginOffset()}
    => ACTIVATE_TOKENS LT_LT ("<<")
 ;
 
-RightShiftOp#void :
+SyntheticRightShift#void :
    ENSURE
    (
      ">" ">"
@@ -699,10 +721,33 @@ ReturnExpression :
     "return" [Expression]
 ;
 
+ConditionExpression#void : Expression ;
+
+INJECT PARSER_CLASS : {
+    private boolean isInConditionButNotParenthesized() {
+        ListIterator<NonTerminalCall> it = stackIteratorBackward();
+        while (it.hasNext()) {
+            // NB. These strings are interned so we can just
+            // use identity comparison.
+            String caller = it.next().productionName;
+            if (caller == "ConditionExpression") return true;
+            if (
+                   caller == "ParentheticalExpression"
+                || caller == "CallParams"
+                || caller == "ArrayExpression"
+                || caller == "BaseExpressionPostfix"
+                || caller == "ClosureExpression"
+            ) {
+                return false;
+            }
+        }
+        return false;
+    }
+}
+
 StructExpression :
    PathInExpression "{"
-   ENSURE ~\...\Expression\ExpressionNotStruct
-//   ENSURE ~\Expression\IfExpression
+   ENSURE {!isInConditionButNotParenthesized()}
    =>||
    (InnerAttribute)*
    [
@@ -749,25 +794,24 @@ LoopLabel : <LIFETIME_OR_LABEL> ":" ;
 
 InfiniteLoopExpression : "loop" BlockExpression ;
 
-WhileExpression : "while" ExpressionNotStruct BlockExpression ;
+WhileExpression : "while" ConditionExpression BlockExpression ;
 
 WhileLetExpression :
     "while" "let" =>||
     Pattern
     "="
-    ExpressionNotStruct
+    ConditionExpression
     ("&&" LetExp)*
     BlockExpression
 ;
 
-ForExpression : "for" Pattern "in" ExpressionNotStruct BlockExpression ;
+ForExpression : "for" Pattern "in" ConditionExpression BlockExpression ;
 
 IfExpression :
     "if"
-    ExpressionNotStruct
-    //Expression
+    ConditionExpression
     ("&&" LetExp)*
-    BlockExpression
+    ExpressionWithBlock
     [
         "else"
         (
@@ -783,7 +827,7 @@ IfExpression :
 
 IfLetExpression :
     "if" "let" =>||
-    Pattern "=" ExpressionNotStruct
+    Pattern "=" ConditionExpression
     ("&&" LetExp)* // Note that this is a bleeding edge language feature
     BlockExpression
     [
@@ -799,15 +843,9 @@ IfLetExpression :
     ]
 ;
 
-INJECT PARSER_CLASS : {
-    private String expressionParent() {
-        return null;
-    }
-}
-
 MatchExpression :
     "match"
-    ExpressionNotStruct
+    ConditionExpression
     "{"
     (InnerAttribute)*
     (
@@ -920,8 +958,6 @@ StructPatternField :
         ["ref"] ["mut"] Identifier
     )
 ;
-
-INJECT PARSER_CLASS : {private boolean commaSeen;}
 
 // Note that this is used for just a single
 // pattern in parentheses as well. Or an empty
@@ -1116,20 +1152,8 @@ MacroRulesDefinition : 'macro_rules'  "!" Identifier =>|+1 MacroRulesDef ;
 MacroRulesDef :
   DelimTokenTree
   [SCAN 0 {endDelim == RPAREN || endDelim == RBRACKET} => ";"]
-/*
-  (
-   "(" MacroRules ")" ";"
-   |
-   "[" MacroRules "]" ";"
-   |
-   "{" MacroRules "}"
-  )*/
 ;
-
-MacroRules : MacroRule (";" =>|+1 MacroRule)* [";"] ;
-
-MacroRule : MacroMatcher "=>" DelimTokenTree ;
-
+/*
 MacroMatcher :
     "(" MacroMatch ")"
     |
@@ -1146,7 +1170,7 @@ MacroMatch :
     "$" IdentifierOrKeywordButNotCrate ":" =>|| MacroFragSpec
     |
     "$" (SCAN ~("*"|"+"|"?") => MacroMatch)+ ("*"|"+"|"?")
-;
+;*/
 
 IdentifierOrKeywordButNotCrate#void :
     DEACTIVATE_TOKENS ABSTRACT, AS, ASYNC, AWAIT, BECOME, CONST

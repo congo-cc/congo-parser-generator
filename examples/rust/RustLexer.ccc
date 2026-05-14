@@ -6,7 +6,7 @@ SKIP :
 ;
 
 TOKEN :
-   <SHEBANG : "#!" (~["\n"])* "\n">
+   <SHE_BANG : "#!" (~["\n"])* "\n">
 ;
 
 // Some subtleties with comments not being addressed (yet)
@@ -27,7 +27,6 @@ TOKEN #KeyWord :
 | < CRATE: "crate" >
 | < DOLLAR_CRATE: "$crate">
 | < DO: "do" >
-//| < DYN: "dyn" >
 | < ELSE: "else" >
 | < ENUM: "enum" >
 | < EXTERN: "extern" >
