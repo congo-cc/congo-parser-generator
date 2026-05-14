@@ -186,7 +186,7 @@
     <ant dir="examples/json" target="test-all" />
     <echo>Testing the CICS parser</echo>
     <ant dir="examples/cics" target="clean" />
-    <ant dir="examples/cics" target="test" />
+    <ant dir="examples/cics" target="test-all" />
     <ant dir="examples/cics" target="test-rust" />
     <echo>Testing the Preprocessor</echo>
     <ant dir="examples/preprocessor" target="clean" />
@@ -226,7 +226,7 @@
     <ant dir="sandbox/cardinality" target="test" />
     <echo>Cardinality oracle: examples/cics</echo>
     <ant dir="examples/cics" target="clean" />
-    <ant dir="examples/cics" target="test" />
+    <ant dir="examples/cics" target="test-java" />
   </target>
 
   <target name="test-rust" depends="jar,-rust-guard" if="rust.on">
