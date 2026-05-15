@@ -1,0 +1,58 @@
+/*
+ * Minimal grammar to exercise JTB-style synthetic trees in CongoCC.
+ * No Java actions, no SCAN — suitable as a smoke test for JTB settings.
+ *
+ * See README.md and WIKI-JTB-style-trees.md in this directory.
+ */
+
+PARSER_PACKAGE="org.parsers.jtbdemo";
+NODE_PACKAGE="org.parsers.jtbdemo.ast";
+DEFAULT_LEXICAL_STATE=DEFAULT;
+TEST_PRODUCTION=Root;
+TEST_EXTENSION=sum;
+
+SMART_NODE_CREATION=false;
+X_SYNTHETIC_NODES_ENABLED;
+X_JTB_PARSE_TREE;
+
+SKIP : <WS : (" " | "\t" | "\n" | "\r")+>;
+
+TOKEN :
+    <PLUS : '+'>
+    |
+    <STAR : '*'>
+    |
+    <DIGIT : ["0"-"9"]>
+;
+
+// Synthetic node types used when X_JTB_PARSE_TREE and X_SYNTHETIC_NODES_ENABLED are on.
+// (See WIKI-JTB-style-trees.md — same pattern as the wiki migration guide.)
+Terminal   : FAIL;
+Sequence   : FAIL;
+Choice     : FAIL;
+ZeroOrOne  : FAIL;
+ZeroOrMore : FAIL;
+OneOrMore  : FAIL;
+
+// Minimal hook so generated parser can record the taken alternative on synthetic Choice nodes
+// (calls use globals::translateIdentifier("setChoice") in templates → setChoice / SetChoice / set_choice).
+INJECT Choice :
+{
+    public int whichChoice;
+
+    public void setChoice(int which) {
+        this.whichChoice = which;
+    }
+}
+
+Root : Expr <EOF> ;
+
+Expr :
+    Term ((<PLUS> | <STAR>) Term)*
+;
+
+Term :
+    <DIGIT>
+    |
+    '(' Expr ')'
+;

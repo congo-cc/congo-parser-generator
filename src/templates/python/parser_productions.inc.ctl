@@ -25,8 +25,7 @@
    "OneOrMore" : "nodeList" }]
 [#var nodeFieldOrdinal = {}]
 [#var injectedFields = {}]
-[#var syntheticNodesEnabled = settings.syntheticNodesEnabled && settings.treeBuildingEnabled]
-[#var jtbParseTree = syntheticNodesEnabled && settings.jtbParseTree]
+[#var treeNodeStack = []]
 
 [#macro Productions]
 # ===================================================================
@@ -172,6 +171,8 @@ ${is}    self.${expansion.recoverMethodName}(None)
       [#-- We need tree nodes and/or recovery code. --]
       [#if buildingTreeNode]
          [#-- Build the tree node (part 1). --]
+         [#-- Push the node name and JTB state on the node construction stack --]
+         [#set treeNodeStack = treeNodeStack + [[ nodeVarName, treeNodeBehavior.syntheticNode?? && isJtbParseTree() ]]]
          [@buildTreeNode production, treeNodeBehavior, nodeVarName, indent/]
       [/#if]
 ${is}${parseExceptionVar} = None
@@ -205,13 +206,31 @@ ${is}    self.restore_call_stack(${callStackSizeVar})
       [#if buildingTreeNode]
          [#-- Build the tree node (part 2). --]
 [@buildTreeNodeEpilogue treeNodeBehavior, nodeVarName, parseExceptionVar, indent /]
+         [#-- Pop this node from the node construction stack. --]
+         [#if treeNodeStack?size > 1]
+            [#set treeNodeStack = treeNodeStack[0..treeNodeStack?size - 2]]
+         [#else]
+            [#set treeNodeStack = []]
+         [/#if]
       [/#if]
    [/#if]
 [#--${is}# DBG < TreeBuildingAndRecovery ${indent} --]
 [/#macro]
 
+[#function currentNodeVariableName]
+   [#return treeNodeStack[treeNodeStack?size - 1][0]/]
+[/#function]
+
+[#function isJtbParseTree]
+   [#if treeNodeStack?size > 0]
+      [#return (treeNodeStack[treeNodeStack?size - 1])[1]/]
+   [#else]
+      [#return settings.syntheticNodesEnabled && settings.treeBuildingEnabled && settings.jtbParseTree/]
+   [/#if]
+[/#function]
+
 [#function imputedJtbFieldName nodeClass]
-   [#if nodeClass?? && jtbParseTree && topLevelExpansion]
+   [#if nodeClass?? && isJtbParseTree() && topLevelExpansion]
       [#-- Determine the name of the node field containing the reference to a synthetic syntax node --]
       [#var fieldName = nodeClass?uncap_first]
       [#var fieldOrdinal]
@@ -220,7 +239,7 @@ ${is}    self.restore_call_stack(${callStackSizeVar})
          [#set fieldName = jtbNameMap[nodeClass]/]
       [/#if]
       [#set fieldOrdinal = nodeFieldOrdinal[nodeClass]!null]
-      [#if !fieldOrdinal]
+      [#if !fieldOrdinal??]
          [#set nodeFieldOrdinal = nodeFieldOrdinal + {nodeClass : 1}]
       [#else]
          [#set nodeFieldOrdinal = nodeFieldOrdinal + {nodeClass : fieldOrdinal + 1}]
@@ -241,11 +260,24 @@ ${is}    self.restore_call_stack(${callStackSizeVar})
       [#set isProduction = true]
    #else
       #var nodeName = syntacticNodeName(expansion) [#-- This maps ExpansionSequence containing more than one syntax element to "Sequence", otherwise to the element itself --]
-      #if !treeNodeBehavior?? &&
-           expansion.assignment??
-         #if syntheticNodesEnabled && isProductionInstantiatingNode(expansion)
-            #-- Assignment is explicitly provided and synthetic nodes are enabled --
-            [#-- NOTE: An explicit assignment will take precedence over a synthetic JTB node.
+      #if treeNodeBehavior??
+         #-- We have explicit TNA; we only need to resolve assignment side-effects. --
+         #if treeNodeBehavior.assignment??
+            #-- It is assigned; make sure a property is injected if needed. --
+            #if treeNodeBehavior.assignment.declarationOf
+               ${injectDeclaration(treeNodeBehavior.nodeName, treeNodeBehavior.assignment.name, treeNodeBehavior.assignment)}
+            #endif
+         #endif
+         #if isJtbParseTree()
+            #exec grammar.errors::addWarning(currentProduction, "Tree building annotation specified on " + treeNodeBehavior.nodeName + " in production node " + currentProduction.name + "; JTB-mode will be suppressed for this node and its descendants in this production.")
+            #-- Suppress JTB behavior for this and subordinate expansion elements in this production --
+         #endif
+         #set treeNodeBehavior = treeNodeBehavior + { 'syntheticNode' : false }
+      #elseif expansion.assignment??
+         #-- No TNA, but assignment is present. --
+         #if settings.syntheticNodesEnabled && settings.treeBuildingEnabled && isProductionInstantiatingNode(expansion)
+            #-- Assignment is explicitly provided and synthetic nodes are enabled. --
+            [#-- NOTE: An explicit assignment will take precedence over a synthetic JTB node assignment.
                I.e., it will not create a field in the production node.  It WILL, however,
                use the syntactic node type for the natural assignment value, as seen below.
             --]
@@ -257,12 +289,12 @@ ${is}    self.restore_call_stack(${callStackSizeVar})
                nodeName == "Choice" ||
                nodeName == "Sequence"
                )
-               #-- We do need to create a definite node --
-               #if !jtbParseTree
-                  [#-- It's not a JTB tree, so use the BASE_NODE type for type for assignment rather than syntactic type --][#-- (jb) is there a reason to use the syntactic type always?  Perhaps, but I can't think of one. --]
-               #set nodeName = settings.baseNodeClassName
-               /#if
-               #-- Make a new node to wrap the current expansion with the expansion's assignment. --
+               #-- We do need to create a synthetic node --
+               #if !settings.jtbParseTree
+                  #-- It's not a JTB tree overall, but it is a syntactic node with a LHS assignment, so use the BASE_NODE type since the syntactic nodes are not defined --
+                  #set nodeName = settings.baseNodeClassName
+               #endif
+               #-- Make a new synthetic node to wrap the current expansion with the expansion's assignment. --
                #-- Default to a definite node --
                #var gtNode = false
                #var condition = null
@@ -273,53 +305,47 @@ ${is}    self.restore_call_stack(${callStackSizeVar})
                   #set gtNode = true
                   #set condition = "0"
                   #set initialShorthand = " > "
-               /#if
+               #endif
                #set treeNodeBehavior = {
                                           'nodeName' : nodeName,
                                           'condition' : condition,
                                           'gtNode' : gtNode,
                                           'initialShorthand' : initialShorthand,
                                           'void' : false,
-                                          'assignment' : expansion.assignment
+                                          'assignment' : expansion.assignment,
+                                          'syntheticNode' : true
                                        }
                #if expansion.assignment.propertyAssignment && expansion.assignment.declarationOf
-                  [#-- Inject the receiving property --]
-${injectDeclaration(nodeName, expansion.assignment.name, expansion.assignment)}[#t]
-               /#if
-            /#if
-         #elseif nodeName??
-            [#-- We are attempting to do assignment of a syntactic node value, but synthetic nodes are not enabled --]
+                  #-- Inject the receiving property --
+                  ${injectDeclaration(nodeName, expansion.assignment.name, expansion.assignment)}
+               #endif
+            #endif
+         #elif nodeName??
+            #-- We are attempting to do assignment of a syntactic node value, but synthetic nodes are not enabled --
             #exec grammar.errors::addWarning(currentProduction, "Attempt to assign " + nodeName + " in production node " + currentProduction.name + " but either synthetic nodes are not enabled or the production is not instantiated; the assignment will be ignored.")
             #return null
-         /#if
-      [#elseif treeNodeBehavior?? &&
-               treeNodeBehavior.assignment??]
-         [#-- There is an explicit tree node annotation with assignment; make sure a property is injected if needed. --]
-         [#if treeNodeBehavior.assignment.declarationOf]
-${injectDeclaration(treeNodeBehavior.nodeName, treeNodeBehavior.assignment.name, treeNodeBehavior.assignment)}[#t]
-         [/#if]
-         #if jtbParseTree
-           #exec grammar.errors::addWarning(currentProduction, "Attempt to assign " + nodeName + " in production node " + currentProduction.name + " but it is an implicit JTB syntactic node.")
-         /#if
-      [#elseif jtbParseTree && expansion.parent.simpleName != "ExpansionWithParentheses" && isProductionInstantiatingNode(currentProduction)]
-         [#-- No in-line definite node annotation; synthesize a parser node for the expansion type being built, if needed. --]
-         [#if nodeName??]
-            [#-- Determine the node name depending on syntactic type --]
-            [#var nodeFieldName = imputedJtbFieldName(nodeName)] [#-- Among other things this injects the node field into the generated node if result is non-nullv--]
+         #endif
+      #elif isJtbParseTree() &&
+              expansion.parent.simpleName != "ExpansionWithParentheses" &&
+              isProductionInstantiatingNode(currentProduction)
+         #-- No TNA; synthesize a parser node for the expansion type being built, if needed. --
+         #if nodeName??
+            #-- Determine the node name depending on syntactic type --
+            #var nodeFieldName = imputedJtbFieldName(nodeName) [#-- Among other things this injects the node field into the generated node if result is non-null --]
             #-- Default to a definite node --
-            [#var gtNode = false]
-            [#var condition = null]
-            [#var initialShorthand = null]
-            [#if nodeName == "Choice"]
-               [#-- Generate a Choice node only if at least one child node --]
-               [#set gtNode = true]
-               [#set condition = "0"]
-               [#set initialShorthand = ">"]
-            [/#if]
-            [#if nodeFieldName??]
+            #var gtNode = false
+            #var condition = null
+            #var initialShorthand = null
+            #if nodeName == "Choice"
+               #-- Generate a Choice node only if at least one child node --
+               #set gtNode = true
+               #set condition = "0"
+               #set initialShorthand = " > "
+            #endif
+            #if nodeFieldName??
                [#-- Provide an assignment to save the syntactic node in a
                synthetic field injected into the actual production node per JTB behavior. --]
-               [#set treeNodeBehavior = {
+               #set treeNodeBehavior = {
                                           'nodeName' : nodeName!"nemo",
                                           'condition' : condition,
                                           'gtNode' : gtNode,
@@ -329,53 +355,57 @@ ${injectDeclaration(treeNodeBehavior.nodeName, treeNodeBehavior.assignment.name,
                                              { 'name' : globals::translateIdentifier("THIS") + "." + nodeFieldName,
                                                'propertyAssignment' : false,
                                                'declarationOf' : true,
-                                               'existenceOf' : false }
-                                       } /]
-            [#else]
-               [#-- Just provide the syntactic node with no LHS needed --]
-               [#set treeNodeBehavior = {
+                                               'existenceOf' : false },
+                                          'syntheticNode' : true
+                                       }
+            #else
+               #-- Just provide the syntactic node with no LHS needed --
+               #set treeNodeBehavior = {
                                           'nodeName' : nodeName!"nemo",
                                           'condition' : condition,
                                           'gtNode' : gtNode,
                                           'initialShorthand' : initialShorthand,
                                           'void' : false,
-                                          'assignment' : null
-                                       } /]
-            [/#if]
-         [/#if]
-      [/#if]
-   [/#if]
-   [#if !treeNodeBehavior??]
-      [#-- There is still no treeNodeBehavior determined; supply the default if this is a BNF production node. No assignment is needed. --]
-      [#if isProduction && !settings.nodeDefaultVoid
+                                          'assignment' : null,
+                                          'syntheticNode' : true
+                                       }
+            #endif
+         #endif
+      #endif
+   #endif
+   #if !treeNodeBehavior??
+      #-- There is still no treeNodeBehavior determined; supply the default if this is a BNF production node. No assignment is needed. --
+      #if isProduction && !settings.nodeDefaultVoid
                         && !grammar::nodeIsInterface(expansion.name)
-                        && !grammar::nodeIsAbstract(expansion.name)]
-         [#if settings.smartNodeCreation]
-            [#set treeNodeBehavior = {
+                        && !grammar::nodeIsAbstract(expansion.name)
+         #if settings.smartNodeCreation
+            #set treeNodeBehavior = {
                                        "nodeName" : expansion.name!"nemo",
                                        "condition" : "1",
                                        "gtNode" : true,
                                        "void" :false,
                                        "initialShorthand" : ">",
-                                       'assignment' : null
-                                     }]
-         [#else]
-            [#set treeNodeBehavior = {
+                                       'assignment' : null,
+                                       'syntheticNode' : false
+                                     }
+         #else
+            #set treeNodeBehavior = {
                                        "nodeName" : expansion.name!"nemo",
                                        "condition" : null,
                                        "gtNode" : false,
                                        "void" : false,
-                                       'assignment' : null
-                                     }]
-         [/#if]
-      [/#if]
-   [/#if]
-   [#if treeNodeBehavior?? && treeNodeBehavior.neverInstantiated?? && treeNodeBehavior.neverInstantiated]
-      [#-- Now, if the treeNodeBehavior says it will never be instantiated, throw it all away --]
-      [#return null/]
-   [/#if]
-   [#-- This is the actual treeNodeBehavior for this node --]
-   [#return treeNodeBehavior]
+                                       'assignment' : null,
+                                       'syntheticNode' : false
+                                    }
+         #endif
+      #endif
+   #endif
+   #if (treeNodeBehavior!{}).neverInstantiated?default(false)
+      #-- Now, if the treeNodeBehavior says it will never be instantiated, throw it all away --
+      #return null
+   #endif
+   #-- This is the actual treeNodeBehavior for this node --
+   [#return treeNodeBehavior/]
 [/#function]
 
 [#-- This is primarily to distinguish sequences of syntactic elements from effectively single elements --]
@@ -387,7 +417,7 @@ ${injectDeclaration(treeNodeBehavior.nodeName, treeNodeBehavior.assignment.name,
          [#return classname/]
       [#elseif classname = "OneOrMore"]
          [#return classname/]
-      [#elseif jtbParseTree && classname = "Terminal"]
+      [#elseif isJtbParseTree() && classname = "Terminal"]
          [#return classname/]
       [#elseif classname = "ExpansionChoice"]
          [#return "Choice"/]
@@ -508,10 +538,10 @@ ${is}        self.clear_node_scope()
       [#elseif assignment.namedAssignment!false]
          [#if assignment.addTo]
             [#-- This is the addition of the current node to the named child list of the production node --]
-            [#return "${globals.currentNodeVariableName}" + ".add_to_named_child_list(\"" + globals::translateIdentifier(lhsName) + "\", " + getRhsAssignmentPattern(assignment) + ")" /]
+            [#return "${currentNodeVariableName()}" + ".add_to_named_child_list(\"" + globals::translateIdentifier(lhsName) + "\", " + getRhsAssignmentPattern(assignment) + ")" /]
          [#else]
             [#-- This is an assignment of the current node to a named child of the production node --]
-            [#return "${globals.currentNodeVariableName}" + ".set_named_child(\"" + globals::translateIdentifier(lhsName) + "\", " + getRhsAssignmentPattern(assignment) + ")" /]
+            [#return "${currentNodeVariableName()}" + ".set_named_child(\"" + globals::translateIdentifier(lhsName) + "\", " + getRhsAssignmentPattern(assignment) + ")" /]
          [/#if]
       [/#if]
       [#-- This is the assignment of the current node or it's returned value to an arbitrary LHS "name" (i.e., the legacy JavaCC assignment) --]
@@ -754,7 +784,7 @@ ${is}    self.pop_call_stack()
    [#var lhsClassName = nonterminal.production.nodeName]
    [#var expressedLHS = getLhsPattern(nonterminal.assignment, lhsClassName)]
    [#var impliedLHS = "@"]
-   #if jtbParseTree && isProductionInstantiatingNode(nonterminal.production) && topLevelExpansion
+   #if isJtbParseTree() && isProductionInstantiatingNode(nonterminal.production) && topLevelExpansion
       #var newName = imputedJtbFieldName(nonterminal.production.nodeName)
       #set impliedLHS = globals::translateIdentifier("THIS") + "." + newName + " = @"
    /#if
@@ -904,6 +934,9 @@ ${is}    if self.pending_recovery: raise
   #if expansion.enteredUnconditionally
 ${is}else:
 ${BuildCode(expansion, indent + 4, cardinalitiesVar)}[#rt]
+  [#if isJtbParseTree() && isProductionInstantiatingNode(expansion)]
+${is}    ${currentNodeVariableName()}.${globals::translateIdentifier("setChoice")}(${expansion_index})
+  [/#if]
     #if expansion_has_next
       #var nextExpansion = choice[expansion_index + 1]
 ${is}# Warning: choice at ${nextExpansion.location} is is ignored because the
@@ -914,9 +947,9 @@ ${is}# out of the loop..
   /#if
 ${is}${(expansion_index == 0)?string("if", "elif")} (${ExpansionCondition(expansion, cardinalitiesVar)}):
 ${BuildCode(expansion, indent + 4, cardinalitiesVar)}[#rt]
-  #if jtbParseTree && isProductionInstantiatingNode(expansion)
-${is}    ${globals.currentNodeVariableName}.setChoice(${expansion_index})
-  /#if
+  #if isJtbParseTree() && isProductionInstantiatingNode(expansion)
+${is}    ${currentNodeVariableName()}.${globals::translateIdentifier("setChoice")}(${expansion_index})
+  [/#if]
 /#list
 [#if choice.parent.simpleName == "ZeroOrMore"][#t]
 ${is}else:  # *
