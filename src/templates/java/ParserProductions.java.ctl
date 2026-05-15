@@ -306,7 +306,7 @@
             #exec grammar.errors::addWarning(currentProduction, "Tree building annotation specified on " + treeNodeBehavior.nodeName + " in production node " + currentProduction.name + "; JTB-mode will be suppressed for this node and its descendants in this production.")
             #-- Suppress JTB behavior for this and subordinate expansion elements in this production --
          #endif
-         set treeNodeBehavior = treeNodeBehavior + { 'syntheticNode' : false }
+         [#-- Do not merge {syntheticNode:false} into treeNodeBehavior: bean+hash replace drops nodeName and breaks nodeClassName for explicit TNAs. syntheticNode?? is absent on real TBAs. (Bare "set" here was never a valid CTL directive.) --]
       #elseif expansion.assignment??
          #-- No TNA, but assignment is present. --
          #if settings.syntheticNodesEnabled && settings.treeBuildingEnabled && isProductionInstantiatingNode(expansion)
