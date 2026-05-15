@@ -11,9 +11,11 @@
   </target>
 
   <target name="rust-parser-gen" depends="init" unless="rustparser.uptodate">
+    <echo>Generating parser code...</echo>
     <java jar="../../congocc.jar" failonerror="true" fork="true">
       <assertions> <enable /> </assertions>
       <arg value="-n" />
+      <arg value="-q" />
       <arg value="${basedir}/Rust.ccc" />
     </java>
   </target>

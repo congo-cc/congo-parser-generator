@@ -21,10 +21,8 @@
 			"examples/java",
 			"examples/python",
 			"examples/lua",
-			"examples/csharp"
-		],
-		"java.project.referencedLibraries": [
-			"bin/freemarker3.jar"
+			"examples/csharp",
+		        "examples/rust"
 		],
 		"cSpell.enabled": false,
 		"files.trimTrailingWhitespace": true

@@ -19,6 +19,17 @@ public class CSharpTranslator extends Translator {
         return operator;
     }
 
+    /**
+     * Some embedded Java assertion shapes still emit {@code peekNode(} / {@code popNode(} even though
+     * the C# parser API uses {@code PeekNode} / {@code PopNode}. Normalize the Debug.Assert condition slice.
+     */
+    private static void fixPeekNodeCallsInRange(StringBuilder result, int start) {
+        String cond = result.substring(start);
+        cond = cond.replace("peekNode(", "PeekNode(").replace("popNode(", "PopNode(");
+        result.setLength(start);
+        result.append(cond);
+    }
+
     private static final Set<String> specialPrefixes = new HashSet<>();
 
     private static boolean isSpecialPrefix(String ident) {
@@ -37,6 +48,14 @@ public class CSharpTranslator extends Translator {
 
     @Override public String translateIdentifier(String ident, TranslationContext kind) {
         // TODO proper method name translation
+        if (ident != null) {
+            if (ident.equals("peekNode")) {
+                return "PeekNode";
+            }
+            if (ident.equals("popNode")) {
+                return "PopNode";
+            }
+        }
         if (kind == TranslationContext.TYPE) {
             return translateTypeName(ident);
         }
@@ -750,7 +769,9 @@ public class CSharpTranslator extends Translator {
         }
         else if (stmt instanceof ASTAssertStatement s) {
             result.append("Debug.Assert(");
+            int condStart = result.length();
             internalTranslateExpression(s.getCondition(), TranslationContext.UNKNOWN, result);
+            fixPeekNodeCallsInRange(result, condStart);
             result.append(", ");
             ASTExpression m = s.getMessage();
             if (m == null) {
@@ -761,8 +782,8 @@ public class CSharpTranslator extends Translator {
                 if (!(m instanceof ASTPrimaryExpression) || (((ASTPrimaryExpression) m).getLiteral() == null)) {
                     result.append(".ToString()");
                 }
-                result.append(");\n");
             }
+            result.append(");\n");
         }
         else if (stmt instanceof ASTTryStatement tryStmt) {
             result.append("try {\n");

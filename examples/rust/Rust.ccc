@@ -2,28 +2,33 @@ DEFAULT_LEXICAL_STATE=RUST;
 PARSER_PACKAGE=org.parsers.rust;
 NODE_PACKAGE=org.parsers.rust.ast;
 ENSURE_FINAL_EOL;
-DEACTIVATE_TOKENS=SHEBANG, LT_LT, GT_GT;
+DEACTIVATE_TOKENS=SHE_BANG, LT_LT, GT_GT;
 TAB_SIZE=4;
+TEST_PRODUCTION=Crate;
+TEST_EXTENSION=rs;
 
 INCLUDE "RustLexer.ccc"
 
 #Crate :
-  [
-    SCAN 0
-    {
-        getTokenType(1) == HASH
-        && getTokenType(2) == EXCLAM
-        && getToken(1).getEndOffset() == getToken(2).getBeginOffset()
-        && getTokenType(3) != LBRACKET
-    }
-    => ACTIVATE_TOKENS SHEBANG (<SHEBANG>)
-  ]
+  [Shebang]
   (InnerAttribute)*
   (Item)*
   <EOF>
   {
     return THIS;
   }
+;
+
+Shebang#void :
+  (
+    <SHE_BANG>
+    |
+    ENSURE ("#" "!")
+    ENSURE {getToken(1).getEndOffset() == getToken(2).getBeginOffset()}
+    ENSURE {getTokenType(3) != LBRACKET}
+    ACTIVATE_TOKENS SHE_BANG (<SHE_BANG>)
+  )
+  =>||
 ;
 
 InnerAttribute :
@@ -386,27 +391,28 @@ ForLifetimes : "for" GenericParams ;
 Lifetime#void : <LIFETIME_OR_LABEL>|<STATIC_LIFETIME>|<UNDERLINE_LIFETIME> ;
 
 BlockExpression :
+   {boolean seenLastStatement = false;}
    "{"
    (InnerAttribute)*
    (
-      SCAN ~("}") =>
-      // TODO: No check here for whether
-      // the previous element was necessarily the
-      // last one
-      Statement
+    // TODO/REVISIT The following is completely correct, but maybe can be
+    // handled more elegantly in terms of error messages and fault tolerant
+    // and so on.
+      SCAN 0 {!seenLastStatement && getTokenType(1) != RBRACE}
+      => Statement
+      {seenLastStatement = getTokenType(0) != RBRACE && getTokenType(0) != SEMICOLON;}
    )*
    "}"
 ;
-
 
 Statement :
    ";" #EmptyStatement(1)
    |
    MacroRulesDefinition
    |
-   VisItem
-   |
    LetStatement
+   |
+   VisItem
    |
    (
       MatchExpression (BaseExpressionPostfix)*
@@ -502,8 +508,6 @@ MaybeNamedParam : (OuterAttribute)* [(Identifier | <UNDERSCORE>) ":" =>||] Type 
 
 MaybeNamedFunctionParametersVariadic : (MaybeNamedParam ",")+ (OuterAttribute)* "...";
 
-ExpressionNotStruct#void : Expression ;
-
 Expression :
    (OuterAttribute)*
    =>|+1
@@ -515,10 +519,18 @@ Expression :
         ContinueExpression
         |
         ENSURE \Statement
-        ExpressionWithBlock
+        (
+            BlockExpression (BaseExpressionPostfix)*
+            |
+            IfLetExpression
+            |
+            IfExpression
+            |
+            ForExpression
+        )
         |
         ENSURE \MatchExpression
-        ExpressionWithBlock
+        BlockExpression
         |
         AssignmentExpression
    )
@@ -535,25 +547,22 @@ ExpressionWithBlock#void :
 ;
 
 BaseExpression :
+    IfLetExpression
+    |
+    IfExpression
+    |
     (
+       "_" #Placeholder(1)
+       |
        MacroInvocation
        |
        LiteralExpression
        |
-       // The following is a kludge that needs to be addressed.
-       // We should not be deciding whether to go into
-       // into a StructExpression by just doing a complete
-       // unbounded lookahead here. It is to be avoided
-       // on principle, but is also incorrect here, I'm pretty sure.
-       StructExpression =>||
+       StructExpression
        |
        PathExpression
        |
        ConstBlock
-       |
-       IfLetExpression
-       |
-       IfExpression
        |
        ParentheticalExpression
        |
@@ -632,14 +641,25 @@ MultiplicativeExpression : TypeCastExpression (("*" | "/" | "%") TypeCastExpress
 
 AdditiveExpression : MultiplicativeExpression (("+"|"-") MultiplicativeExpression)* ;
 
-ShiftExpression : AdditiveExpression ((LeftShiftOp|RightShiftOp) AdditiveExpression)* ;
+ShiftExpression :
+    AdditiveExpression
+    (
+        (
+           "<<" | ">>" //If somehow we have previously cached the tokens, we just pick them up.
+           // Otherwise we resort to the the following "synthetic" productions
+           // to turn two succesive '<' or '>' into a single '<<' or >>' token.
+           | SyntheticLeftShift | SyntheticRightShift
+        )
+        AdditiveExpression
+    )*
+;
 
-LeftShiftOp#void :
+SyntheticLeftShift#void :
    SCAN "<" "<" ENSURE {getToken(-1).getEndOffset() == getToken(0).getBeginOffset()}
    => ACTIVATE_TOKENS LT_LT ("<<")
 ;
 
-RightShiftOp#void :
+SyntheticRightShift#void :
    ENSURE
    (
      ">" ">"
@@ -672,7 +692,7 @@ RangeExpression :
 ;
 
 AssignmentExpression :
-   ("_" | RangeExpression)
+   RangeExpression
    [
     AssignmentOperator
     Expression
@@ -699,10 +719,34 @@ ReturnExpression :
     "return" [Expression]
 ;
 
+ConditionExpression#void : Expression ;
+
+INJECT PARSER_CLASS : {
+    private boolean isInConditionButNotParenthesized() {
+        ListIterator<NonTerminalCall> it = stackIteratorBackward();
+        while (it.hasNext()) {
+            // NB. These strings are interned so we can just
+            // use identity comparison.
+            String caller = it.next().productionName;
+            if (caller == "ConditionExpression") return true;
+            if (
+                   caller == "ParentheticalExpression"
+                || caller == "CallParams"
+                || caller == "ArrayExpression"
+                || caller == "BaseExpressionPostfix"
+                || caller == "ClosureExpression"
+                || caller == "BlockExpression"
+            ) {
+                return false;
+            }
+        }
+        return false;
+    }
+}
+
 StructExpression :
    PathInExpression "{"
-   ENSURE ~\...\Expression\ExpressionNotStruct
-//   ENSURE ~\Expression\IfExpression
+   ENSURE {!isInConditionButNotParenthesized()}
    =>||
    (InnerAttribute)*
    [
@@ -749,25 +793,30 @@ LoopLabel : <LIFETIME_OR_LABEL> ":" ;
 
 InfiniteLoopExpression : "loop" BlockExpression ;
 
-WhileExpression : "while" ExpressionNotStruct BlockExpression ;
+WhileExpression : "while" ConditionExpression BlockExpression ;
+
+ChainedLetExp :
+  "let"
+  PatternNoTopAlt [":" Type]
+  ["=" ConditionExpression]
+;
 
 WhileLetExpression :
     "while" "let" =>||
     Pattern
     "="
-    ExpressionNotStruct
-    ("&&" LetExp)*
+    ConditionExpression
+    ("&&" ChainedLetExp)*
     BlockExpression
 ;
 
-ForExpression : "for" Pattern "in" ExpressionNotStruct BlockExpression ;
+ForExpression : "for" Pattern "in" ConditionExpression BlockExpression ;
 
 IfExpression :
     "if"
-    ExpressionNotStruct
-    //Expression
-    ("&&" LetExp)*
-    BlockExpression
+    ConditionExpression
+    ("&&" ChainedLetExp)*
+    ExpressionWithBlock
     [
         "else"
         (
@@ -783,8 +832,8 @@ IfExpression :
 
 IfLetExpression :
     "if" "let" =>||
-    Pattern "=" ExpressionNotStruct
-    ("&&" LetExp)* // Note that this is a bleeding edge language feature
+    Pattern "=" ConditionExpression
+    ("&&" ChainedLetExp)* // Note that this is a bleeding edge language feature
     BlockExpression
     [
         "else"
@@ -799,15 +848,9 @@ IfLetExpression :
     ]
 ;
 
-INJECT PARSER_CLASS : {
-    private String expressionParent() {
-        return null;
-    }
-}
-
 MatchExpression :
     "match"
-    ExpressionNotStruct
+    ConditionExpression
     "{"
     (InnerAttribute)*
     (
@@ -822,16 +865,13 @@ MatchExpression :
 
 MatchArm : (OuterAttribute)* Pattern ["if" Expression] ;
 
-LetExp :
-  "let"
-  PatternNoTopAlt [":" Type]
-  ["=" Expression]
-;
-
 LetStatement :
    (OuterAttribute)*
    =>|+1
-   LetExp
+   "let"
+   PatternNoTopAlt
+   [":" Type]
+   ["=" Expression]
    ["else" BlockExpression] // Note that this is since Rust 1.65.0 (November 2022)
                            // Also note that the else block
                            // cannot just fall through. It must
@@ -920,8 +960,6 @@ StructPatternField :
         ["ref"] ["mut"] Identifier
     )
 ;
-
-INJECT PARSER_CLASS : {private boolean commaSeen;}
 
 // Note that this is used for just a single
 // pattern in parentheses as well. Or an empty
@@ -1116,36 +1154,6 @@ MacroRulesDefinition : 'macro_rules'  "!" Identifier =>|+1 MacroRulesDef ;
 MacroRulesDef :
   DelimTokenTree
   [SCAN 0 {endDelim == RPAREN || endDelim == RBRACKET} => ";"]
-/*
-  (
-   "(" MacroRules ")" ";"
-   |
-   "[" MacroRules "]" ";"
-   |
-   "{" MacroRules "}"
-  )*/
-;
-
-MacroRules : MacroRule (";" =>|+1 MacroRule)* [";"] ;
-
-MacroRule : MacroMatcher "=>" DelimTokenTree ;
-
-MacroMatcher :
-    "(" MacroMatch ")"
-    |
-    "[" MacroMatch "]"
-    |
-    "{" MacroMatch "}"
-;
-
-MacroMatch :
-    SCAN ~("$"|"("|")"|"["|"]"|"{"|"}") => AnyToken
-    |
-    MacroMatcher
-    |
-    "$" IdentifierOrKeywordButNotCrate ":" =>|| MacroFragSpec
-    |
-    "$" (SCAN ~("*"|"+"|"?") => MacroMatch)+ ("*"|"+"|"?")
 ;
 
 IdentifierOrKeywordButNotCrate#void :
@@ -1162,24 +1170,6 @@ IdentifierOrKeywordButNotCrate#void :
         |
         <RAW_IDENTIFIER>
     )
-;
-
-MacroFragSpec#void :
-    'block' |
-    'expr' |
-    'expr_2021' |
-    'ident' |
-    'item' |
-    'lifetime' |
-    'literal' |
-    'meta' |
-    'pat' |
-    'pat_param' |
-    'path' |
-    'stmt' |
-    'tt' |
-    'ty' |
-    'vis'
 ;
 
 Identifier : <ID>|<RAW_IDENTIFIER>;

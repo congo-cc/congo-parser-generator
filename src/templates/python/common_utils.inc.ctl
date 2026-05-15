@@ -82,7 +82,8 @@ ${prefix}${newID()}[#rt]
 [#return val?string("True", "False")/]
 [/#function]
 
-[#macro HandleLexicalStateChange expansion inLookahead indent]
+[#macro HandleLexicalStateChange expansion inLookahead indent cardinalitiesVar]
+[#-- cardinalitiesVar is threaded for parity with Java; not used in lexical reset. --]
 [#var is = ""?right_pad(indent)]
 [#-- ${is}# DBG > HandleLexicalStateChange ${indent} ${expansion.simpleName} --]
 [#var resetToken = inLookahead?string("self.current_lookahead_token", "self.last_consumed_token")]
@@ -148,3 +149,11 @@ ${is}        self._next_token_type = None
 [#-- ${is}# DBG < HandleLexicalStateChange ${indent} ${expansion.simpleName} --]
 [/#macro]
 
+[#--
+  Python literal [[min, max], ...] for RepetitionCardinality (mirrors Java CommonUtils.BuildCardinalities).
+--]
+[#macro BuildCardinalities assertions indent]
+[#-- Second arg is reserved for indentation parity with other CU macros; all current call sites pass "". --]
+[#var is = ""]
+${is}[[#list assertions as range][${range[0]}, ${range[1]}][#if range_has_next], [/#if][/#list]]
+[/#macro]

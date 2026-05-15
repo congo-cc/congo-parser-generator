@@ -66,7 +66,7 @@ private static readonly HashSet<TokenType> ${varName} = Utils.GetOrMakeSet(
 #return val?string("true", "false")
 #endfunction
 
-#macro HandleLexicalStateChange expansion inLookahead
+#macro HandleLexicalStateChange expansion inLookahead cardinalitiesVar
 #-- # DBG > HandleLexicalStateChange ${expansion.simpleName}
 #var resetToken = inLookahead?string("currentLookaheadToken", "LastConsumedToken")
 #if expansion.specifiedLexicalState??
@@ -131,3 +131,7 @@ finally {
 #-- # DBG < HandleLexicalStateChange ${expansion.simpleName}
 #endmacro
 
+#-- Jagged int[][] initializer for RepetitionCardinality (mirrors Java CommonUtils.BuildCardinalities). --
+#macro BuildCardinalities assertions
+new int[][] { [#list assertions as range]new int[] { ${range[0]}, ${range[1]} }[#if range_has_next], [/#if][/#list] }
+#endmacro

@@ -186,7 +186,7 @@
     <ant dir="examples/json" target="test-all" />
     <echo>Testing the CICS parser</echo>
     <ant dir="examples/cics" target="clean" />
-    <ant dir="examples/cics" target="test" />
+    <ant dir="examples/cics" target="test-all" />
     <ant dir="examples/cics" target="test-rust" />
     <echo>Testing the Preprocessor</echo>
     <ant dir="examples/preprocessor" target="clean" />
@@ -216,6 +216,16 @@
     <echo>Testing the Java parser standalone"</echo>
     <!--ant dir="examples/java" target="clean" /-->
     <ant dir="examples/java" target="test-java" />
+  </target>
+
+  <!-- Cardinality oracles: sandbox/cardinality (CardTests.ccc) Java/Python/C# and examples/cics Java. -->
+  <target name="test-cardinality-oracles-java" depends="jar">
+    <echo>Cardinality oracle: sandbox/cardinality</echo>
+    <ant dir="sandbox/cardinality" target="clean" />
+    <ant dir="sandbox/cardinality" target="test-all" />
+    <echo>Cardinality oracle: examples/cics</echo>
+    <ant dir="examples/cics" target="clean" />
+    <ant dir="examples/cics" target="test-java" />
   </target>
 
   <target name="test-rust" depends="jar,-rust-guard" if="rust.on">

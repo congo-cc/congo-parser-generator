@@ -191,6 +191,95 @@ class InvalidNode(BaseNode):
     pass
 <-
 
+#if grammar.usingCardinality
+class CardinalityState:
+    __slots__ = ('_cardinalities', 'is_provisional')
+
+    def __init__(self, cardinalities, is_provisional):
+        self._cardinalities = list(cardinalities)
+        self.is_provisional = is_provisional
+
+    def cardinalities(self):
+        return list(self._cardinalities)
+
+
+class RepetitionCardinality:
+    __slots__ = ('choice_cardinalities', 'cardinalities_stack', 'cardinalities')
+
+    def __init__(self, choice_cardinalities):
+        n = len(choice_cardinalities)
+        self.choice_cardinalities = choice_cardinalities
+        self.cardinalities_stack = [CardinalityState([0] * n, False)]
+        self.cardinalities = [0] * n
+
+    def choose(self, choice_no, is_lookahead):
+        if not is_lookahead:
+            if self.cardinalities[choice_no] < self.choice_cardinalities[choice_no][1]:
+                self.cardinalities[choice_no] += 1
+                return True
+            return False
+        current_state = self.cardinalities_stack[-1]
+        if not current_state.is_provisional:
+            self.push(True)
+        prior_state = self.cardinalities_stack[-2]
+        current_state = self.cardinalities_stack[-1]
+        current_cardinalities = current_state.cardinalities()
+        prior_cardinalities = prior_state.cardinalities()
+        if current_cardinalities[choice_no] != prior_cardinalities[choice_no]:
+            return True
+        if current_cardinalities[choice_no] < self.choice_cardinalities[choice_no][1]:
+            current_cardinalities[choice_no] += 1
+            self.cardinalities_stack.pop()
+            self.cardinalities_stack.append(
+                CardinalityState(current_cardinalities, True))
+            return True
+        return False
+
+    def push(self, is_provisional):
+        if len(self.cardinalities_stack) == 0:
+            n = len(self.choice_cardinalities)
+            self.cardinalities_stack.append(CardinalityState([0] * n, is_provisional))
+            return
+        top = self.cardinalities_stack[-1]
+        self.cardinalities_stack.append(
+            CardinalityState(top.cardinalities(), is_provisional))
+
+    def check_cardinality(self, is_lookahead):
+        if is_lookahead:
+            finalized = CardinalityState([0] * len(self.choice_cardinalities), False)
+            if len(self.cardinalities_stack) == 1:
+                finalized = self.cardinalities_stack.pop()
+            fc = finalized.cardinalities()
+            for i in range(len(fc)):
+                if fc[i] < self.choice_cardinalities[i][0]:
+                    return False
+            return True
+        for i in range(len(self.choice_cardinalities)):
+            if self.cardinalities[i] < self.choice_cardinalities[i][0]:
+                return False
+        return True
+
+    def commit_iteration(self, is_parsing):
+        if self.cardinalities_stack[-1].is_provisional:
+            current = self.cardinalities_stack.pop()
+            self.cardinalities_stack.pop()
+            self.cardinalities_stack.append(
+                CardinalityState(current.cardinalities(), False))
+            return
+        if is_parsing:
+            self.cardinalities_stack.pop()
+            self.cardinalities_stack.append(
+                CardinalityState(list(self.cardinalities), False))
+
+    def commit(self, is_success):
+        if self.cardinalities_stack and self.cardinalities_stack[-1].is_provisional:
+            if not is_success:
+                self.cardinalities_stack.pop()
+                assert not self.cardinalities_stack[-1].is_provisional
+        return is_success
+
+#endif
+
 class Parser:
 
     __slots__ = (
