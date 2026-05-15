@@ -992,7 +992,7 @@
         {
          ${BuildCode(expansion, cardinalitiesVar)}
          #if isJtbParseTree() && isProductionInstantiatingNode(expansion)
-            ${currentNodeVariableName()}.setChoice(${expansion_index});
+            ${currentNodeVariableName()}.${globals::translateIdentifier("setChoice")}(${expansion_index});
          #endif
         }
         #if expansion_has_next
@@ -1006,7 +1006,7 @@
       if (${ExpansionCondition(expansion, cardinalitiesVar)}) {
          ${BuildCode(expansion, cardinalitiesVar)}
          #if isJtbParseTree() && isProductionInstantiatingNode(expansion)
-            ${currentNodeVariableName()}.setChoice(${expansion_index});
+            ${currentNodeVariableName()}.${globals::translateIdentifier("setChoice")}(${expansion_index});
          #endif
       }
       #if expansion_has_next
