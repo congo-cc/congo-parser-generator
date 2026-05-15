@@ -112,17 +112,78 @@ Optional explicit opt-in/out (`#local` / `#delegates`) can be added later if nee
 
 ---
 
-## 4. Phase 1 — Grammar model & static analysis
+## 4. Phase 0 — CardinalityChecker hardening
 
-### 4.1 Discovery
+**Prerequisite** for delegated cardinality and for trustworthy diagnostics on existing grammars. Harden `Grammar.CardinalityChecker` and `ExpansionSequence` scope logic before adding cross-production binding.
+
+### 4.0.1 Current checker (`Grammar.java` ~521–600)
+
+| Check | Severity | Assessment |
+|-------|----------|------------|
+| `constraint[1] == 0` | Warning | **Keep** — almost always erroneous |
+| `constraint[0] > constraint[1]` on one RCA | Error | **Keep** |
+| `rangeStack` non-empty inside `ATTEMPT` | Error | **Keep** until recovery stashes/restores cardinality |
+| ZOM + folded `repetitionRange[0] > 0` | Info | **Revisit** — folding does not match runtime tallies (see below) |
+| `isCardinalityContainer` && !`IteratingExpansion` | Error | **Dead code** — container requires `IteratingExpansion` (`CongoCC.ccc` ~987–990); `ZeroOrOne` does not implement it |
+| TODO: telescoped constraints in one sequence | — | **Not implemented** |
+
+The checker pushes `[0, MAX]` on each cardinality container and, for every constrained `ExpansionSequence`, folds all RCA `[min,max]` into that single slot via `max` of mins / `min` of maxes. **Runtime** uses one tally per RCA (`RepetitionCardinality` in `Parser.java.ctl`). The folded range is only consumed for the ZOM “min > 0” info message, so that message can be misleading (e.g. `( &1:2& A \| & B )*` in a `*` loop).
+
+### 4.0.2 Bugs to fix first
+
+**1. `isInScopeConstraint` (`ExpansionSequence.java` ~49–50)**
+
+When no `ZOM`/`OOM` ancestor exists, `getCardinalitiesContainer()` is `null` and the assertion’s iterating ancestor is also `null`, so `null == null` treats orphan RCAs as in scope. `CardinalityChecker.visit(ExpansionSequence)` then calls `rangeStack.peek()` on an **empty** stack and fails (~596–598) with a production dump instead of a clear error.
+
+**Fix:** in-scope only if the cardinality container is non-null and equals the assertion’s nearest `IteratingExpansion` wrapper (and, after delegation, the linked parent container — see Phase 1).
+
+**2. Orphan RCAs**
+
+Any RCA not under a `ZOM`/`OOM` container (including RCAs in a callee production before delegation exists) should produce an explicit **error**, not a crash.
+
+**3. RCAs under `(...)?` / `ZeroOrOne`**
+
+`ZeroOrOne` is not an `IteratingExpansion` (~1558–1565 in `CongoCC.ccc`); `?` is never a cardinality container. The FIXME at `Grammar.java` ~552 (“warn on constraints within ZeroOrOne — below does not work”) is accurate. Emit a clear **error** (doc: RCAs belong in `*`/`+` only).
+
+**4. Remove or repurpose dead error** at ~551–554.
+
+### 4.0.3 Checker improvements (warnings / errors)
+
+| Situation | Level | Notes |
+|-----------|-------|-------|
+| RCA not under any `*`/`+` container | **Error** | After scope fix; includes “RCAs only in child production, no local iterator” until delegation |
+| RCA under `(...)?` only | **Error** | |
+| Multiple RCAs on **one** `ExpansionSequence` with combined min > combined max | **Warning** | Implements the TODO at ~579 for a single sequence |
+| Production contains RCAs but no local `isCardinalityContainer` | **Info** | “May need a `*`/`+` here or delegated cardinality (e.g. `CommonOptions` + `( CommonOptions )*`)” |
+| ZOM + loop-length RCA semantics | **Info** (optional) | Only when an RCA clearly constrains **loop iteration count** (e.g. `( (A\|B) &5&)+`), not per-branch `&` tallies — do not use broken global folding |
+| `&` on a sequence with no following expansion unit | **Warning** | Likely typo / no-op |
+| ATTEMPT / RECOVER with active cardinality | **Error** | Keep current rule |
+
+Defer until after delegation linking: child with orphan RCAs called from non-iterating sites; sum of per-branch minimums vs iteration count.
+
+### 4.0.4 Tests
+
+Add negative cases to `sandbox/cardinality/CardTests.ccc` (or a small companion grammar) expecting clean **errors/warnings**, not checker crashes:
+
+- RCA in a production with no `*`/`+`
+- RCA inside `(...)?`
+- Two RCAs on one sequence with impossible combined range
+
+**Files:** `Grammar.java`, `ExpansionSequence.java`; optional note in `RepetitionCardinality.md`.
+
+---
+
+## 5. Phase 1 — Grammar model & static analysis
+
+### 5.1 Discovery
 
 Extend `Grammar.CardinalityChecker` (or a dedicated pass) to:
 
-1. For each `IteratingExpansion` `L` in production `P`, find delegatee non-terminals in `L`’s nested expansion (see §4.2).
+1. For each `IteratingExpansion` `L` in production `P`, find delegatee non-terminals in `L`’s nested expansion (see §5.2).
 2. For each delegatee production `C`, collect RCAs not enclosed by an iterator in `C`.
 3. Record link `(L, NT, C)` and merge constraint metadata into `L`’s container.
 
-### 4.2 Validation rules
+### 5.2 Validation rules
 
 | Rule | Action |
 |------|--------|
@@ -131,9 +192,9 @@ Extend `Grammar.CardinalityChecker` (or a dedicated pass) to:
 | **Inner loop wins** | RCAs under `C`’s own `ZOM`/`OOM` bind there; only **non-enclosed** RCAs delegate |
 | **Ambiguous iterators** | Same `C` from two sibling iterators in `P` without clear binding → **error** |
 | **ATTEMPT / RECOVER** | Keep current ban on RCAs inside attempt blocks; delegation through attempt deferred |
-| **Telescoping** | Existing min/max folding in `CardinalityChecker.visit(ExpansionSequence)` applies to **merged** constraints on `L` |
+| **Telescoping** | Per-RCA tallies on `L`; do **not** reuse Phase 0’s broken global fold across unrelated RCAs |
 
-### 4.3 Index & constraint table
+### 5.3 Index & constraint table
 
 Today `ExpansionWithParentheses.close()` assigns `assertionIndex` from `getCardinalityAssertions()` on the loop only (`CongoCC.ccc`).
 
@@ -144,7 +205,7 @@ Today `ExpansionWithParentheses.close()` assigns `assertionIndex` from `getCardi
 
 Parent loop `L` owns `int[][] choiceCardinalities` and global assertion indices for all delegated RCAs.
 
-### 4.4 Scope predicates
+### 5.4 Scope predicates
 
 Update `ExpansionSequence.java`:
 
@@ -156,7 +217,7 @@ Update `ExpansionSequence.java`:
 
 ---
 
-## 5. Phase 2 — Parse codegen (Java → C# → Python)
+## 6. Phase 2 — Parse codegen (Java → C# → Python)
 
 | Location | Change |
 |----------|--------|
@@ -170,7 +231,7 @@ Update `ExpansionSequence.java`:
 
 ---
 
-## 6. Phase 3 — Lookahead / SCAN codegen
+## 7. Phase 3 — Lookahead / SCAN codegen
 
 | Location | Change |
 |----------|--------|
@@ -185,7 +246,7 @@ Reuse existing `RepetitionCardinality` commit/provisional stack so parse and loo
 
 ---
 
-## 7. Phase 4 — Tests & docs
+## 8. Phase 4 — Tests & docs
 
 | Item | Action |
 |------|--------|
@@ -196,18 +257,19 @@ Reuse existing `RepetitionCardinality` commit/provisional stack so parse and loo
 
 ---
 
-## 8. Implementation order
+## 9. Implementation order
 
-1. Phase 1 — analysis + checker only; grammar compile tests for new errors  
-2. Phase 2 — Java parse templates + sandbox parse tests  
-3. Phase 3 — Java lookahead + sandbox (parse + lookahead paths)  
-4. Port C# and Python templates  
-5. CICS `CommonOptions` refactor (optional but strong regression for real usage)  
-6. Update `RepetitionCardinality.md` and this plan’s status  
+1. **Phase 0** — fix scope predicate; orphan/`?` errors; per-sequence telescoping warning; revisit ZOM info; sandbox negative grammar tests  
+2. Phase 1 — delegation analysis + checker extensions  
+3. Phase 2 — Java parse templates + sandbox parse tests  
+4. Phase 3 — Java lookahead + sandbox (parse + lookahead paths)  
+5. Port C# and Python templates  
+6. CICS `CommonOptions` refactor (optional but strong regression for real usage)  
+7. Update `RepetitionCardinality.md` and this plan’s status  
 
 ---
 
-## 9. Reference map (82d331d / master)
+## 10. Reference map (82d331d / master)
 
 | Area | Files |
 |------|--------|
@@ -223,7 +285,7 @@ Reuse existing `RepetitionCardinality` commit/provisional stack so parse and loo
 
 ---
 
-## 10. Non-goals (this branch / phase 1)
+## 11. Non-goals (this branch / phase 1)
 
 - Unlimited upward delegation (stack is ready; checker stays one hop)  
 - RCAs inside `ATTEMPT`/`RECOVER` via delegation  
