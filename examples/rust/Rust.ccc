@@ -334,11 +334,11 @@ PathIdentSegment#void : Identifier | "super" | "self" | "Self" | "crate" | "$cra
 
 GenericArgs :
    "<"
-   (
+   [
       GenericArg
       ("," =>|+1 GenericArg)*
       [","]
-   )*
+   ]
    ">"
 ;
 
