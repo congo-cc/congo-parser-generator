@@ -129,7 +129,6 @@ TOKEN #Punctuation :
   |<DOT_DOT: "..">
   |<SLASH_EQUALS: "/=">
   |<DOUBLE_COLON: "::">
-//  |<LEFT_ARROW: "<-">
   |<LT_LT: "<<">
   |<LTE: "<=">
   |<EQ: "==">
