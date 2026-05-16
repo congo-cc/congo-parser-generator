@@ -47,6 +47,8 @@ __pycache__/*
 /examples/lua/cs-luaparser/*
 /examples/cardinality/org/*
 /examples/cics/org/*
+/examples/cics/cicsparser/*
+/examples/cics/cs-cicsparser/*
 /examples/json/rust-jsonparser/*
 /examples/json/rust-jsoncparser/*
 /examples/lua/rust-luaparser/*
@@ -57,6 +59,7 @@ __pycache__/*
 /examples/python/rust-pythonparser/*
 /examples/csharp/rust-csharpparser/*
 /examples/sqlexpr/rust-sqlparser/*
+/sandbox/peg/*
 /personal.code-workspace
 /.vscode/*
 /.idea/*

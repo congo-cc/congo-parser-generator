@@ -28,6 +28,7 @@
     </uptodate>
     <uptodate property="cscsparser.uptodate" targetfile="cs-csharpparser/Parser.cs">
       <srcfiles dir="." includes="*.ccc" />
+      <srcfiles dir="../../src/templates/csharp" includes="**/*.ctl" />
     </uptodate>
     <uptodate property="linedirective-j.uptodate" targetfile="org/parsers/csharp/ppline/PPDirectiveLineParser.java" srcfile="PPDirectiveLine.ccc" />
     <uptodate property="linedirective-py.uptodate" targetfile="pplineparser/parser.py" srcfile="PPDirectiveLine.ccc"/>

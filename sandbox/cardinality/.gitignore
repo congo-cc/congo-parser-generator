@@ -1,1 +1,6 @@
 /org/*
+/testparser/
+/cs-testparser/
+/build/
+/sandbox/
+*.class

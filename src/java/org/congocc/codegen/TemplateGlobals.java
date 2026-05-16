@@ -9,6 +9,7 @@ import java.util.regex.Pattern;
 import org.congocc.app.*;
 import org.congocc.core.*;
 import org.congocc.codegen.rust.RustTranslator;
+import org.congocc.codegen.csharp.CSharpTranslator;
 import org.congocc.parser.Node;
 import static org.congocc.parser.Node.CodeLang.*;
 import org.congocc.parser.tree.*;
@@ -338,9 +339,32 @@ public class TemplateGlobals {
             translateCodeBlockForRust(javaCodeBlock, indent, result);
         } else {
             translateStatements(javaCodeBlock, indent, result);
+            if (translator instanceof CSharpTranslator) {
+                patchJavaSystemOutCallsForCSharp(result);
+            }
         }
         translator.popSymbols();
         return result.toString();
+    }
+
+    /**
+     * Semantic actions in grammars are often written as Java. Map {@code System.out.print*} to
+     * {@code Console.Write*} after C# translation so the embedded C# formatter/parser accept output.
+     */
+    private static void patchJavaSystemOutCallsForCSharp(StringBuilder buf) {
+        // Longer sequences first so "print" does not truncate "println".
+        replaceAllInBuilder(buf, "System.out.println", "Console.WriteLine");
+        replaceAllInBuilder(buf, "System.out.Println", "Console.WriteLine");
+        replaceAllInBuilder(buf, "System.out.print", "Console.Write");
+        replaceAllInBuilder(buf, "System.out.Print", "Console.Write");
+    }
+
+    private static void replaceAllInBuilder(StringBuilder sb, String from, String to) {
+        int i = 0;
+        while ((i = sb.indexOf(from, i)) >= 0) {
+            sb.replace(i, i + from.length(), to);
+            i += to.length();
+        }
     }
 
     /**

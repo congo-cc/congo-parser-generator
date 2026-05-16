@@ -190,6 +190,126 @@ ${globals::translateParserImports()}
 
         private const uint UNLIMITED = (1U << 31) - 1;
 
+#if grammar.usingCardinality
+        private sealed class CardinalityState {
+            private readonly int[] _cardinalities;
+            public bool IsProvisional { get; }
+
+            public CardinalityState(int[] cardinalities, bool isProvisional) {
+                _cardinalities = (int[])cardinalities.Clone();
+                IsProvisional = isProvisional;
+            }
+
+            public int[] Cardinalities() {
+                return (int[])_cardinalities.Clone();
+            }
+        }
+
+        private sealed class RepetitionCardinality {
+            private readonly int[][] _choiceCardinalities;
+            private readonly Stack<CardinalityState> _cardinalitiesStack = new Stack<CardinalityState>();
+            private readonly int[] _cardinalities;
+
+            public RepetitionCardinality(int[][] choiceCardinalities) {
+                _choiceCardinalities = choiceCardinalities;
+                int n = choiceCardinalities.Length;
+                _cardinalitiesStack.Push(new CardinalityState(new int[n], false));
+                _cardinalities = new int[n];
+            }
+
+            public bool Choose(int choiceNo, bool isLookahead) {
+                if (isLookahead) {
+                    CardinalityState currentState = _cardinalitiesStack.Peek();
+                    CardinalityState priorState = currentState;
+                    if (!currentState.IsProvisional) {
+                        Push(true);
+                    }
+                    else {
+                        CardinalityState provisionalTop = _cardinalitiesStack.Pop();
+                        priorState = _cardinalitiesStack.Peek();
+                        _cardinalitiesStack.Push(provisionalTop);
+                    }
+                    currentState = _cardinalitiesStack.Peek();
+                    int[] currentCardinalities = currentState.Cardinalities();
+                    int[] priorCardinalities = priorState.Cardinalities();
+                    if (currentCardinalities[choiceNo] == priorCardinalities[choiceNo]) {
+                        if (currentCardinalities[choiceNo] < _choiceCardinalities[choiceNo][1]) {
+                            ++currentCardinalities[choiceNo];
+                            _cardinalitiesStack.Pop();
+                            _cardinalitiesStack.Push(new CardinalityState(currentCardinalities, true));
+                            return true;
+                        }
+                    }
+                    else {
+                        return true;
+                    }
+                }
+                else {
+                    if (_cardinalities[choiceNo] < _choiceCardinalities[choiceNo][1]) {
+                        ++_cardinalities[choiceNo];
+                        return true;
+                    }
+                }
+                return false;
+            }
+
+            public void Push(bool isProvisional) {
+                if (_cardinalitiesStack.Count == 0) {
+                    int n = _choiceCardinalities.Length;
+                    _cardinalitiesStack.Push(new CardinalityState(new int[n], isProvisional));
+                }
+                else {
+                    _cardinalitiesStack.Push(new CardinalityState(_cardinalitiesStack.Peek().Cardinalities(), isProvisional));
+                }
+            }
+
+            public bool CheckCardinality(bool isLookahead) {
+                if (isLookahead) {
+                    var finalized = new CardinalityState(new int[_choiceCardinalities.Length], false);
+                    if (_cardinalitiesStack.Count == 1) {
+                        finalized = _cardinalitiesStack.Pop();
+                    }
+                    int[] fc = finalized.Cardinalities();
+                    for (int i = 0; i < fc.Length; i++) {
+                        if (fc[i] < _choiceCardinalities[i][0]) {
+                            return false;
+                        }
+                    }
+                }
+                else {
+                    for (int i = 0; i < _choiceCardinalities.Length; i++) {
+                        if (_cardinalities[i] < _choiceCardinalities[i][0]) {
+                            return false;
+                        }
+                    }
+                }
+                return true;
+            }
+
+            public void CommitIteration(bool isParsing) {
+                if (_cardinalitiesStack.Peek().IsProvisional) {
+                    CardinalityState current = _cardinalitiesStack.Pop();
+                    _cardinalitiesStack.Pop();
+                    _cardinalitiesStack.Push(new CardinalityState(current.Cardinalities(), false));
+                }
+                else if (isParsing) {
+                    _cardinalitiesStack.Pop();
+                    _cardinalitiesStack.Push(new CardinalityState((int[])_cardinalities.Clone(), false));
+                }
+            }
+
+            public bool Commit(bool isSuccess) {
+                if (_cardinalitiesStack.Count > 0 && _cardinalitiesStack.Peek().IsProvisional) {
+                    if (!isSuccess) {
+                        _cardinalitiesStack.Pop();
+                        Debug.Assert(!_cardinalitiesStack.Peek().IsProvisional, "provisional frames should always be on top of a non-provisional frame.");
+                    }
+                }
+                return isSuccess;
+            }
+        }
+#endif
+
         public string InputSource { get; private set; }
         public Token LastConsumedToken { get; private set; }
         private Token currentLookaheadToken;
