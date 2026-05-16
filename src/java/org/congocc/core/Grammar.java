@@ -534,26 +534,54 @@ public class Grammar extends BaseNode {
 
         public void visit(BNFProduction n) {
             recurse(n);
+            boolean hasCardinalityAssertion = false;
+            boolean hasLocalCardinalityContainer = false;
+            for (Assertion assertion : n.descendants(Assertion.class)) {
+                if (assertion.isCardinalityConstraint()) {
+                    hasCardinalityAssertion = true;
+                }
+            }
+            for (ExpansionWithParentheses exp : n.descendants(ExpansionWithParentheses.class)) {
+                if (exp.isCardinalityContainer()) {
+                    hasLocalCardinalityContainer = true;
+                    break;
+                }
+            }
+            if (hasCardinalityAssertion && !hasLocalCardinalityContainer) {
+                context.errors.addInfo(n,
+                    "This production uses repetition cardinality constraints but has no local ZeroOrMore/OneOrMore loop; "
+                    + "a parent production iterator (delegated cardinality) may be required.");
+            }
+        }
+
+        public void visit(Assertion assertion) {
+            if (assertion.isCardinalityConstraint()) {
+                ExpansionWithParentheses iterContainer = assertion.firstAncestorOfType(
+                        ExpansionWithParentheses.class, exp -> exp instanceof IteratingExpansion);
+                if (iterContainer == null) {
+                    if (assertion.hasAncestorOfType(ZeroOrOne.class)) {
+                        context.errors.addError(assertion,
+                            "Repetition cardinality constraints may not be used inside a ZeroOrOne (...)? or [...] optional expansion; "
+                            + "use ZeroOrMore or OneOrMore instead.");
+                    } else {
+                        context.errors.addError(assertion,
+                            "Repetition cardinality constraint is not within a ZeroOrMore or OneOrMore repetition.");
+                    }
+                }
+            }
+            recurse(assertion);
         }
 
         // check repetition cardinality constraints (depth first)
         public void visit(ExpansionWithParentheses n) {
             if (n.isCardinalityContainer()) {
-                rangeStack.push(new int[] {0,Integer.MAX_VALUE});
+                rangeStack.push(new int[] {0, Integer.MAX_VALUE});
             }
-            recurse(n.getNestedExpansion());
+            // visit (not recurse) so a nested ExpansionSequence receives its own visit hook
+            visit(n.getNestedExpansion());
             if (n.isCardinalityContainer()) {
-                int[] repetitionRange = rangeStack.pop();
-                if (repetitionRange[0] > 0 && (n instanceof ZeroOrMore)) {
-                    // This is a very weak warning, as there are valid reasons to do this. Probably it is between info and warning (i.e., a caution).
-                    context.errors.addInfo(n, "This ZeroOrMore expansion contains a minimum cardinality assertion of > 0; this might not behave as intended.");
-                }
-                if (!(n instanceof IteratingExpansion)) {
-                    //FIXME: warn on constraints within ZeroOrOne (below does not work)
-                    context.errors.addError(n, "Cardinality constraints may only allowed be contained in ZeroOrMore and OneOrMore expansions.");
-                }
+                rangeStack.pop();
             }
-
         }
 
         public void visit(AttemptBlock attempt) {
@@ -570,32 +598,46 @@ public class Grammar extends BaseNode {
 
         public void visit(ExpansionSequence s) {
             recurse(s);
-            try {
-                if (s.isCardinalityConstrained()) {
-                    int[] repetitionRange = rangeStack.peek();
-                    int minCardinality = repetitionRange[0];
-                    int maxCardinality = repetitionRange[1];
-                    int numberOfConstraints = 0;
-                    //TODO: warn on improperly telescoped constraints in single sequence (i.e., shrinking the min or expanding the max)
-                    List<Assertion> assertions = s.getCardinalityAssertions();
-                    if (assertions != null) {
-                        for (Assertion a : assertions) {
-                            if (a.isCardinalityConstraint()) {
-                                int[] constraint = a.getCardinalityConstraint();
-                                if (constraint[1] == 0) errors.addWarning(a, "Maximum cardinality is 0; this is likely an error.");
-                                if (constraint[0] > constraint[1]) errors.addError(a, "Maximum cardinality is less than the minimum.");
-
-                                minCardinality = Math.max(constraint[0], minCardinality);
-                                maxCardinality = Math.min(constraint[1], maxCardinality);
-                            }
-                        }
-                    }
-                    repetitionRange[0] = minCardinality;
-                    repetitionRange[1] = maxCardinality;
+            if (!s.isCardinalityConstrained()) {
+                return;
+            }
+            // Combine in-scope RCAs that are direct children of this sequence (telescoping on one sequence).
+            List<Assertion> sequenceAssertions = new ArrayList<>();
+            for (Assertion a : s.childrenOfType(Assertion.class)) {
+                if (s.isInScopeConstraint.test(a)) {
+                    sequenceAssertions.add(a);
                 }
-            } catch (Exception e) {
-                s.firstAncestorOfType(BNFProduction.class).dump();
-                throw e;
+            }
+            if (sequenceAssertions.isEmpty()) {
+                for (Assertion a : s.getCardinalityAssertions()) {
+                    if (!sequenceAssertions.contains(a)) {
+                        sequenceAssertions.add(a);
+                    }
+                }
+            }
+            if (rangeStack.isEmpty() || sequenceAssertions.isEmpty()) {
+                return;
+            }
+            int sequenceMin = 0;
+            int sequenceMax = Integer.MAX_VALUE;
+            for (Assertion a : sequenceAssertions) {
+                if (!a.isCardinalityConstraint()) {
+                    continue;
+                }
+                int[] constraint = a.getCardinalityConstraint();
+                if (constraint[1] == 0) {
+                    context.errors.addWarning(a, "Maximum cardinality is 0; this is likely an error.");
+                }
+                if (constraint[0] > constraint[1]) {
+                    context.errors.addError(a, "Maximum cardinality is less than the minimum.");
+                }
+                sequenceMin = Math.max(constraint[0], sequenceMin);
+                sequenceMax = Math.min(constraint[1], sequenceMax);
+            }
+            if (sequenceMin > sequenceMax) {
+                context.errors.addWarning(s,
+                    "Combined repetition cardinality constraints on this sequence cannot all be satisfied "
+                    + "(effective minimum exceeds effective maximum).");
             }
         }
     }

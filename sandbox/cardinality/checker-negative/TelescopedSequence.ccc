@@ -1,0 +1,5 @@
+// Expect warning: combined min/max on one sequence cannot be satisfied
+PARSER_PACKAGE="org.parsers.test.checker";
+TEST_PRODUCTION=Root;
+
+Root : ( ASSERT {&3:5&} ASSERT {&0:2&} "x" )+ ;

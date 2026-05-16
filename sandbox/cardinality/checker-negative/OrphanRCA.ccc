@@ -1,0 +1,5 @@
+// Expect error: RCA not under ZeroOrMore/OneOrMore (use ASSERT/ENSURE form; bare & requires parens path)
+PARSER_PACKAGE="org.parsers.test.checker";
+TEST_PRODUCTION=Root;
+
+Root : ENSURE {&0:1&} "x" ;

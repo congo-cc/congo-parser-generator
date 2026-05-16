@@ -168,6 +168,10 @@ abstract public class Expansion extends BaseNode {
     	return false;
     }
 
+    public int[][] getCardinalityConstraints() {
+        return new int[0][];
+    }
+
     public boolean getHasNumericalLookahead() {
         return false;
     }

@@ -102,7 +102,15 @@
     </exec>
   </target>
 
-  <target name="test-all" depends="compile,test-java,test-python,test-csharp" />
+  <target name="test-checker-negative" depends="init">
+    <chmod file="checker-negative/run-checker-tests.sh" perm="+x"/>
+    <exec executable="sh" dir="${basedir}" failonerror="true">
+      <arg value="checker-negative/run-checker-tests.sh"/>
+      <arg value="${basedir}/../../congocc.jar"/>
+    </exec>
+  </target>
+
+  <target name="test-all" depends="compile,test-java,test-python,test-csharp,test-checker-negative" />
 
   <!-- Backward-compatible: historically Java-only via CardTestsParse. -->
   <target name="test" depends="test-all" />

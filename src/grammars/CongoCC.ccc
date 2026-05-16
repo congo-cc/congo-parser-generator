@@ -944,6 +944,7 @@ ExpansionWithParentheses :
 INJECT ExpansionWithParentheses :
    import org.congocc.core.*;
    import org.congocc.core.ExpansionSequence.*;
+   import org.congocc.parser.tree.*;
    extends ExpansionWithNested
    implements SyntaxElement
 {
@@ -953,29 +954,40 @@ INJECT ExpansionWithParentheses :
 
     int assertionIndex = -1;
 
-    @Override
-    public void close() {
-        super.close();
-        for (Assertion assertion : getCardinalityAssertions()) {
-            if (assertion.isCardinalityConstraint()) {
-                assertion.setAssertionIndex(++assertionIndex);
+    private void collectInScopeCardinalityAssertions(List<Assertion> assertions) {
+        if (!(this instanceof IteratingExpansion)) {
+            return;
+        }
+        Expansion nested = getNestedExpansion();
+        if (nested == null) {
+            return;
+        }
+        for (Assertion assertion : nested.descendantsOfType(Assertion.class)) {
+            if (!assertion.isCardinalityConstraint()) {
+                continue;
+            }
+            ExpansionWithParentheses container = assertion.firstAncestorOfType(
+                    ExpansionWithParentheses.class, exp -> exp instanceof IteratingExpansion);
+            if (container == this) {
+                assertions.add(assertion);
             }
         }
     }
 
-    public List<Assertion> getCardinalityAssertions() {
-        List<ExpansionSequence> sequences;
-        if (getNestedExpansion() instanceof ExpansionChoice) {
-            sequences = getNestedExpansion().childrenOfType(ExpansionSequence.class);
-        } else {
-            sequences = childrenOfType(ExpansionSequence.class);
-        }
+    @Override
+    public void close() {
+        super.close();
+        assertionIndex = -1;
         List<Assertion> assertions = new ArrayList<>();
-        for (ExpansionSequence es : sequences) {
-            if (es.isCardinalityConstrained()) {
-                assertions.addAll(es.getCardinalityAssertions());
-            }
+        collectInScopeCardinalityAssertions(assertions);
+        for (Assertion assertion : assertions) {
+            assertion.setAssertionIndex(++assertionIndex);
         }
+    }
+
+    public List<Assertion> getCardinalityAssertions() {
+        List<Assertion> assertions = new ArrayList<>();
+        collectInScopeCardinalityAssertions(assertions);
         return assertions;
     }
 

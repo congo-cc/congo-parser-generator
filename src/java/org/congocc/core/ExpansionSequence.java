@@ -46,18 +46,54 @@ public class ExpansionSequence extends Expansion {
         return (expWithParens instanceof IteratingExpansion);
     };
     
+    /** Nearest {@link ExpansionSequence} ancestor (direct parent counts). */
+    static ExpansionSequence nearestContainingSequence(Assertion assertion) {
+        for (Node node = assertion.getParent(); node != null; node = node.getParent()) {
+            if (node instanceof ExpansionSequence es) {
+                return es;
+            }
+        }
+        return null;
+    }
+
     public Predicate<Assertion> isInScopeConstraint = (assertion) -> {
-        return assertion.isCardinalityConstraint() && assertion.firstAncestorOfType(ExpansionWithParentheses.class, isOuterCardinalityScope) == getCardinalitiesContainer();
+        if (!assertion.isCardinalityConstraint()) {
+            return false;
+        }
+        if (nearestContainingSequence(assertion) != this) {
+            return false;
+        }
+        ExpansionWithParentheses assertionContainer =
+                assertion.firstAncestorOfType(ExpansionWithParentheses.class, isOuterCardinalityScope);
+        if (assertionContainer == null) {
+            return false;
+        }
+        ExpansionWithParentheses sequenceContainer = getCardinalitiesContainer();
+        if (sequenceContainer != null) {
+            return sequenceContainer == assertionContainer;
+        }
+        // Assertion sees the iterator; this sequence is its direct ancestor but
+        // getCardinalitiesContainer() did not (parent-chain quirk in some grammars).
+        return true;
     };
     
     @Override
-    public boolean isCardinalityConstrained() { //N.B., this can (erroneously) extend beyond the parent production.
+    public boolean isCardinalityConstrained() {
         Assertion cardinalityAssertion = firstDescendantOfType(Assertion.class, isInScopeConstraint);
         return cardinalityAssertion != null;
     }
     
     public List<Assertion> getCardinalityAssertions() {
         return descendantsOfType(Assertion.class, isInScopeConstraint);
+    }
+
+    public int[][] getCardinalityConstraints() {
+        List<Assertion> assertions = getCardinalityAssertions();
+        int[][] result = new int[assertions.size()][];
+        for (int i = 0; i < assertions.size(); i++) {
+            result[i] = assertions.get(i).getCardinalityConstraint();
+        }
+        return result;
     }
         
     public ExpansionWithParentheses getCardinalitiesContainer() {

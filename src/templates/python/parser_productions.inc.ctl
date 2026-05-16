@@ -993,7 +993,7 @@ ${SingleTokenCondition(expansion)}[#t]
 
 [#-- Generates code for when we need a scanahead --]
 [#macro ScanAheadCondition expansion cardinalitiesVar]
-[#if expansion.lookahead?? && expansion.lookahead.assignment??](${expansion.lookahead.assignment.name} = [/#if][#if expansion.hasSemanticLookahead && !expansion.lookahead.semanticLookaheadNested](${globals::translateExpression(expansion.semanticLookahead)}) and [/#if][#if expansion.cardinalityConstrained && cardinalitiesVar?? && (cardinalitiesVar?length > 0)]self.${expansion.predicateMethodName}(${cardinalitiesVar})[#else]self.${expansion.predicateMethodName}()[/#if][#if expansion.lookahead?? && expansion.lookahead.assignment??])[/#if][#t]
+[#if expansion.lookahead?? && expansion.lookahead.assignment??](${expansion.lookahead.assignment.name} = [/#if][#if expansion.hasSemanticLookahead && !expansion.lookahead.semanticLookaheadNested](${globals::translateExpression(expansion.semanticLookahead)}) and [/#if][#if expansion.cardinalityConstrained && cardinalitiesVar?? && (cardinalitiesVar?length > 0)]self.${expansion.predicateMethodName}(${cardinalitiesVar})[#elseif expansion.cardinalityConstrained]self.${expansion.predicateMethodName}(None)[#else]self.${expansion.predicateMethodName}()[/#if][#if expansion.lookahead?? && expansion.lookahead.assignment??])[/#if][#t]
 [/#macro]
 
 [#-- Generates code for when we don't need any scanahead routine --]
