@@ -475,7 +475,7 @@ InferredType# : "_" ;
 
 ImplTraitType : "impl" =>|+1 TypeParamBounds ;
 
-TraitObjectType : ['dyn'] TypeParamBounds ;
+TraitObjectType : ["dyn"] TypeParamBounds ;
 
 BareFunctionType :
    [ForLifetimes]
@@ -507,7 +507,7 @@ ReferenceType : ("&"|"&&") [Lifetime] ["mut"] TypeNoBounds ;
 
 ImplTraitTypeOneBound : "impl" TraitBound ;
 
-TraitObjectTypeOneBound : 'dyn' TraitBound ;
+TraitObjectTypeOneBound : "dyn" TraitBound ;
 
 FunctionTypeQualifiers : ["unsafe"] ["extern" [Abi]] ;
 
@@ -1113,17 +1113,17 @@ Visibility :
    ]
 ;
 
-MacroInvocationSemi :
-   SimplePath "!" =>|+1
-   DelimTokenTree
-   [SCAN 0 {endDelim != RBRACE} => ";"]
-;
-
 SimplePath : ["::"] =>|+1 SimplePathSegment ("::" =>|+1 SimplePathSegment)* ;
 
 SimplePathSegment : Identifier | "super" | "self" | "crate" | "$crate" | "unsafe";
 
 MacroInvocation: SimplePath "!" =>|+1 DelimTokenTree ;
+
+MacroInvocationSemi :
+   SCAN 3
+   MacroInvocation
+   [SCAN 0 {endDelim != RBRACE} => ";"]
+;
 
 INJECT PARSER_CLASS : {
     private TokenType startDelim, endDelim, mostNestedDelim;
@@ -1171,7 +1171,7 @@ DelimTokenTree :
 AnyToken#void :
   "_"|"abstract"|"as"|"async"|"await"
   | "become"|"break"|"const"|"continue"
-  | "crate"|"$crate"|"do"|"else"
+  | "crate"|"$crate"|"do"|"dyn"|"else"
   | "enum"|"extern"|"false"|"final"|"fn"
   | "for"|"if"|"impl"|"in"|"let"|"loop"
   | "macro"|"match"|"mod"
