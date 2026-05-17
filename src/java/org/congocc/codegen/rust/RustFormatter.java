@@ -1,5 +1,6 @@
 package org.congocc.codegen.rust;
 
+import org.congocc.parser.CongoCCParser;
 import org.congocc.parser.Node;
 import org.congocc.parser.rust.ast.*;
 import org.congocc.parser.rust.RustParser;
@@ -84,8 +85,9 @@ public class RustFormatter extends Node.Visitor {
 
     static void formatFile(String filename) throws IOException {
         Path path = fileSystem.getPath(filename);
-        RustParser parser = new RustParser(path);
-        Crate root = parser.Crate();
+//        RustParser parser = new RustParser(path);
+//        Crate root = parser.Crate();
+        Crate root = CongoCCParser.parseRustFile(path);
         RustFormatter formatter = new RustFormatter();
         formatter.visit(root);
         System.out.println(formatter.buffer);
