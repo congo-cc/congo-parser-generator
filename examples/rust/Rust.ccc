@@ -1,3 +1,12 @@
+/*
+This is the Rust grammar that will be used in the CongoCC
+tool itself internally but is also quite useable on its own.
+As of May 2026, it certainly does seem to parse any Rust code
+"in the wild" that you throw at it.
+Feel free to use it for any purpose in your own projects,
+though it would be nice if you acknowledged your use of it.
+*/
+
 DEFAULT_LEXICAL_STATE=RUST;
 PARSER_PACKAGE=org.parsers.rust;
 NODE_PACKAGE=org.parsers.rust.ast;
@@ -234,8 +243,10 @@ ConstBlock : "const" =>|+1 BlockExpression ;
 Function :
     FunctionQualifiers "fn" =>||
     Identifier [GenericParams]
-    "(" [FunctionParameters] ")"
-    [FunctionReturnType] [WhereClause] (";" | BlockExpression)
+    FunctionParameters
+    [FunctionReturnType]
+    [WhereClause]
+    (";" | BlockExpression)
 ;
 
 
@@ -248,9 +259,13 @@ FunctionQualifiers :
 ;
 
 FunctionParameters :
-   SelfParam [","] ENSURE ~(FunctionParam) =>||
-   |
-   [SelfParam ","] FunctionParam ("," =>|+1 FunctionParam)* [","]
+  "("
+  [
+    SelfParam [","] ENSURE ~(FunctionParam) =>||
+    |
+    [SelfParam ","] FunctionParam ("," =>|+1 FunctionParam)* [","]
+  ]
+  ")"
 ;
 
 FunctionReturnType : "->" Type ;
@@ -269,11 +284,11 @@ Struct : TupleStruct | StructStruct ;
 
 TupleStruct : "struct" Identifier [GenericParams] "(" =>|| [TupleFields] ")" [WhereClause] ";" ;
 
+StructStruct : "struct" Identifier [GenericParams] [WhereClause] ("{" [StructFields] "}" | ";") ;
+
 TupleFields : TupleField ("," =>|+1 TupleField)* [","] ;
 
 TupleField : (OuterAttribute)* [Visibility] Type ;
-
-StructStruct : "struct" Identifier [GenericParams] [WhereClause] ("{" [StructFields] "}" | ";") ;
 
 StructFields : StructField ("," =>|+1 StructField)* [","] ;
 
@@ -283,11 +298,11 @@ GenericParams : "<" [GenericParam ("," =>|+1 GenericParam)* [","]]  ">" ;
 
 GenericParam :  (OuterAttribute)* (TypeParam | ConstParam | LifetimeParam) ;
 
-TypeParam : Identifier [":" [TypeParamBounds]] ["=" Type] ;
+TypeParam# : Identifier [":" [TypeParamBounds]] ["=" Type] ;
 
-TypeParamBounds : TypeParamBound ("+" =>|+1 TypeParamBound)* ["+"] ;
+TypeParamBounds# : TypeParamBound ("+" =>|+1 TypeParamBound)* ["+"] ;
 
-TypeParamBound : Lifetime | TraitBound | UseBound ;
+TypeParamBound#void : Lifetime | TraitBound | UseBound ;
 
 TraitBound :
    ["?"] [ForLifetimes] TypePath
@@ -297,21 +312,21 @@ TraitBound :
 
 UseBound : "use" UseBoundGenericArgs ;
 
-UseBoundGenericArgs :
-   "<" ">" =>||
-   |
+UseBoundGenericArgs#void :
    "<"
-   UseBoundGenericArg
-   ("," =>|+1 UseBoundGenericArg)*
-   [","]
+   [
+       UseBoundGenericArg
+       ("," =>|+1 UseBoundGenericArg)*
+       [","]
+   ]
    ">"
 ;
 
-UseBoundGenericArg : Identifier | "Self" | Lifetime ;
+UseBoundGenericArg#void : Identifier | "Self" | Lifetime ;
 
 LifetimeBounds : (Lifetime "+" =>||)* [Lifetime] ;
 
-TypePath : ["::"] TypePathSegment ("::" TypePathSegment)* ;
+TypePath# : ["::"] TypePathSegment ("::" TypePathSegment)* ;
 
 TypePathSegment : PathIdentSegment ["::" ENSURE ~(PathIdentSegment) =>||] [GenericArgs | TypePathFn] ;
 
@@ -319,15 +334,15 @@ PathIdentSegment#void : Identifier | "super" | "self" | "Self" | "crate" | "$cra
 
 GenericArgs :
    "<"
-   (
+   [
       GenericArg
       ("," =>|+1 GenericArg)*
       [","]
-   )*
+   ]
    ">"
 ;
 
-GenericArg :
+GenericArg# :
     Lifetime
     |
     ["-"] LiteralExpression
@@ -373,14 +388,14 @@ ConstParam :
     ]
 ;
 
-LifetimeParam :
+LifetimeParam# :
     <LIFETIME_OR_LABEL>
     [":" LifetimeBounds]
 ;
 
-WhereClause : "where" [WhereClauseItem ("," =>|+1 WhereClauseItem)* [","]] ;
+WhereClause# : "where" [WhereClauseItem ("," =>|+1 WhereClauseItem)* [","]] ;
 
-WhereClauseItem : LifetimeWhereClauseItem | TypeBoundWhereClauseItem ;
+WhereClauseItem#void : LifetimeWhereClauseItem | TypeBoundWhereClauseItem ;
 
 LifetimeWhereClauseItem : Lifetime ":" LifetimeBounds ;
 
@@ -460,7 +475,7 @@ InferredType# : "_" ;
 
 ImplTraitType : "impl" =>|+1 TypeParamBounds ;
 
-TraitObjectType : ['dyn'] TypeParamBounds ;
+TraitObjectType : ["dyn"] TypeParamBounds ;
 
 BareFunctionType :
    [ForLifetimes]
@@ -492,7 +507,7 @@ ReferenceType : ("&"|"&&") [Lifetime] ["mut"] TypeNoBounds ;
 
 ImplTraitTypeOneBound : "impl" TraitBound ;
 
-TraitObjectTypeOneBound : 'dyn' TraitBound ;
+TraitObjectTypeOneBound : "dyn" TraitBound ;
 
 FunctionTypeQualifiers : ["unsafe"] ["extern" [Abi]] ;
 
@@ -588,33 +603,44 @@ BaseExpression :
 LabeledBlock : LoopLabel =>|+1 BlockExpression ;
 
 BaseExpressionPostfix#void :
-    "." PathExprSegment "(" =>|| [CallParams] ")" #MethodCall(+1)
+    "." PathExprSegment =>|+1 CallParams #MethodCall(4)
     |
-    "." Identifier =>|| #FieldExpression(+1)
+    "." Identifier =>|| #FieldExpression(3)
     |
-    "." "await" =>|| #AwaitExpression(+1)
+    "." "await" =>|| #AwaitExpression(3)
     |
     SCAN "." (<INTEGER_LITERAL> | <FLOATING_POINT_LITERAL>) =>
-    "." DEACTIVATE_TOKENS FLOATING_POINT_LITERAL (<INTEGER_LITERAL>) #TupleIndexingExpression(+1)
+    "." DEACTIVATE_TOKENS FLOATING_POINT_LITERAL (<INTEGER_LITERAL>) #TupleIndexingExpression(3)
     |
-    "(" [CallParams] ")" #CallExpression(+1)
+    CallParams #CallExpression(2)
     |
-    "[" Expression "]" #IndexExpression(+1)
+    "[" Expression "]" #IndexExpression(4)
     |
-    "?" #ErrorPropagationExpression(+1)
+    "?" #ErrorPropagationExpression(2)
 ;
 
-ParentheticalExpression : "(" (InnerAttribute)* [Expression ("," =>|+1 Expression)*] [","]")" ;
+ParentheticalExpression :
+    "("
+    (InnerAttribute)*
+    [
+        Expression ("," =>|+1 Expression)*
+    ]
+    [","]
+    ")"
+;
 
-ArrayExpression : "[" (InnerAttribute)* [ArrayElements] "]" ;
-
-ArrayElements :
-    Expression
-    (
-        ";" Expression
-        |
-        ("," =>|+1 Expression)* [","]
-    )
+ArrayExpression :
+    "["
+    (InnerAttribute)*
+    [
+        Expression
+        (
+            ";" Expression
+            |
+            ("," =>|+1 Expression)* [","]
+        )
+    ]
+    "]"
 ;
 
 // The following production is a bit screwy
@@ -646,7 +672,7 @@ ShiftExpression :
     (
         (
            "<<" | ">>" //If somehow we have previously cached the tokens, we just pick them up.
-           // Otherwise we resort to the the following "synthetic" productions
+           // Otherwise we resort to the following "synthetic" productions
            // to turn two succesive '<' or '>' into a single '<<' or >>' token.
            | SyntheticLeftShift | SyntheticRightShift
         )
@@ -660,11 +686,8 @@ SyntheticLeftShift#void :
 ;
 
 SyntheticRightShift#void :
-   ENSURE
-   (
-     ">" ">"
-     ENSURE {getToken(-1).getEndOffset() == getToken(0).getBeginOffset()}
-   )
+   ENSURE(">" ">")
+   ENSURE {getToken(1).getEndOffset() == getToken(2).getBeginOffset()}
    ACTIVATE_TOKENS GT_GT (">>")
 ;
 
@@ -770,7 +793,16 @@ StructExprField :
 
 StructBase : ".." Expression ;
 
-CallParams : Expression ("," =>|+1 Expression)* [","] ;
+CallParams :
+   "("
+   [
+      Expression
+      ("," =>|+1 Expression)*
+      [","]
+   ]
+   ")"
+;
+
 
 PathExpression : QualifiedPathInExpression | PathInExpression ;
 
@@ -949,7 +981,7 @@ StructPattern :
     "}"
 ;
 
-StructPatternField :
+StructPatternField# :
     (OuterAttribute)*
     =>|+1
     (
@@ -976,13 +1008,26 @@ TuplePattern :
     ")"
 ;
 
-TupleStructPattern : PathInExpression "(" =>|| [TupleStructItems] ")" ;
+TupleStructPattern :
+    PathInExpression
+    "(" =>||
+    [
+        Pattern
+        ("," =>|+1 Pattern)*
+        [","]
+    ]
+    ")"
+;
 
-TupleStructItems : Pattern ("," =>|+1 Pattern)* [","] ;
-
-SlicePattern : "[" [SlicePatternItems] "]" ;
-
-SlicePatternItems : Pattern ("," =>|+1 Pattern)* [","] ;
+SlicePattern :
+   "["
+    [
+        Pattern
+        ("," =>|+1 Pattern)*
+        [","]
+    ]
+    "]"
+;
 
 RangePattern :
    (
@@ -998,7 +1043,7 @@ RangePattern :
    ) #RestPattern(<2)
 ;
 
-RangePatternBound :
+RangePatternBound# :
       <CHAR_LITERAL>
     | <BYTE_LITERAL>
     | ["-"] (<INTEGER_LITERAL>|<FLOATING_POINT_LITERAL>)
@@ -1007,11 +1052,14 @@ RangePatternBound :
 
 
 
-ExternCrate : "extern" "crate" =>|| CrateRef [AsClause] ";" ;
+ExternCrate :
+    "extern"
+    "crate" =>||
+    (Identifier|"self")
+    [ "as" (Identifier | "_") ]
+    ";"
+;
 
-CrateRef : Identifier | "self" ;
-
-AsClause : "as" (Identifier | "_") ;
 
 ExternBlock :
     ["unsafe"]
@@ -1026,7 +1074,7 @@ ExternBlock :
     "}"
 ;
 
-Abi : <STRING_LITERAL> | <RAW_STRING_LITERAL> ;
+Abi#void : <STRING_LITERAL> | <RAW_STRING_LITERAL> ;
 
 Module :
    ["unsafe"]
@@ -1065,17 +1113,17 @@ Visibility :
    ]
 ;
 
-MacroInvocationSemi :
-   SimplePath "!" =>|+1
-   DelimTokenTree
-   [SCAN 0 {endDelim != RBRACE} => ";"]
-;
-
 SimplePath : ["::"] =>|+1 SimplePathSegment ("::" =>|+1 SimplePathSegment)* ;
 
 SimplePathSegment : Identifier | "super" | "self" | "crate" | "$crate" | "unsafe";
 
 MacroInvocation: SimplePath "!" =>|+1 DelimTokenTree ;
+
+MacroInvocationSemi :
+   SCAN 3
+   MacroInvocation
+   [SCAN 0 {endDelim != RBRACE} => ";"]
+;
 
 INJECT PARSER_CLASS : {
     private TokenType startDelim, endDelim, mostNestedDelim;
@@ -1123,7 +1171,7 @@ DelimTokenTree :
 AnyToken#void :
   "_"|"abstract"|"as"|"async"|"await"
   | "become"|"break"|"const"|"continue"
-  | "crate"|"$crate"|"do"|"else"
+  | "crate"|"$crate"|"do"|"dyn"|"else"
   | "enum"|"extern"|"false"|"final"|"fn"
   | "for"|"if"|"impl"|"in"|"let"|"loop"
   | "macro"|"match"|"mod"

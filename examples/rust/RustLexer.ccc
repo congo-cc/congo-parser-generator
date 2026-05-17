@@ -27,6 +27,7 @@ TOKEN #KeyWord :
 | < CRATE: "crate" >
 | < DOLLAR_CRATE: "$crate">
 | < DO: "do" >
+| < DYN: "dyn" >
 | < ELSE: "else" >
 | < ENUM: "enum" >
 | < EXTERN: "extern" >
@@ -43,6 +44,7 @@ TOKEN #KeyWord :
 | < MATCH: "match" >
 | < MOD: "mod" >
 | < MOVE: "move" >
+| < MUT : "mut" >
 | < OVERRIDE: "override" >
 | < PRIV: "priv" >
 | < PUB: "pub">
@@ -129,7 +131,6 @@ TOKEN #Punctuation :
   |<DOT_DOT: "..">
   |<SLASH_EQUALS: "/=">
   |<DOUBLE_COLON: "::">
-//  |<LEFT_ARROW: "<-">
   |<LT_LT: "<<">
   |<LTE: "<=">
   |<EQ: "==">

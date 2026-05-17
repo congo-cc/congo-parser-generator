@@ -93,7 +93,9 @@ INJECT PARSER_CLASS :
     import org.congocc.preprocessor.PreprocessorParser;
     import org.congocc.parser.csharp.CSharpParser;
     import org.congocc.parser.python.PythonParser;
+    import org.congocc.parser.rust.RustParser;
     import org.congocc.parser.python.ast.Module;
+    import org.congocc.parser.rust.ast.Crate;
     import NODE_PACKAGE.TokenProduction.Kind;
 {
     private Grammar grammar;
@@ -148,6 +150,16 @@ INJECT PARSER_CLASS :
     static public org.congocc.parser.csharp.ast.CompilationUnit parseCSharpFile(Path path) throws IOException {
         CSharpParser parser  = new CSharpParser(path);
         return parser.CompilationUnit();
+    }
+
+    static public Crate parseRustFile(String inputSource, CharSequence content) {
+        RustParser parser = new RustParser(inputSource, content);
+        return parser.Crate();
+    }
+
+    static public Crate parseRustFile(Path path) throws IOException {
+        RustParser parser = new RustParser(path);
+        return parser.Crate();
     }
 
     public Grammar getGrammar() {
