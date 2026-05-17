@@ -12,6 +12,8 @@ import java.nio.file.FileSystems;
 import java.nio.file.Path;
 
 public class RustFormatter extends Node.Visitor {
+    {this.visitUnparsedTokens = true;}
+
     private StringBuilder buffer = new StringBuilder();
     private int currentIndentation;
     private final int indentAmount = 4;
@@ -20,7 +22,7 @@ public class RustFormatter extends Node.Visitor {
     void visit(RustToken tok) {
         switch (tok.getType()) {
             case LBRACE -> {
-                buffer.append(' ');
+                addSpaceIfNecessary();
                 buffer.append(tok);
                 indent();
             }
@@ -39,7 +41,7 @@ public class RustFormatter extends Node.Visitor {
 
     void visit(KeyWord kw) {
         buffer.append(kw);
-        buffer.append(' ');
+        addSpaceIfNecessary();
     }
 
     private void dedent() {
@@ -62,6 +64,13 @@ public class RustFormatter extends Node.Visitor {
         for (int i=0; i<currentIndentation; i++) {
             buffer.append(' ');
         }
+    }
+
+    // Add a space if the last output char was not whitespace
+    private void addSpaceIfNecessary() {
+        if (buffer.length()==0) return;
+        int lastChar = buffer.codePointBefore(buffer.length());
+        if (!Character.isWhitespace(lastChar)) buffer.append(' ');
     }
 
     static private FileSystem fileSystem = FileSystems.getDefault();
