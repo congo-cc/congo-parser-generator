@@ -454,7 +454,8 @@ Type :
 ;
 
 TypeNoBounds :
-      ImplTraitTypeOneBound
+      MacroInvocation
+    | ImplTraitTypeOneBound
     | TraitObjectTypeOneBound
     | TypePath
     | TupleType
@@ -466,7 +467,6 @@ TypeNoBounds :
     | InferredType
     | QualifiedPathInType
     | BareFunctionType
-    | MacroInvocation
 ;
 
 NeverType# : "!" ;
@@ -952,7 +952,7 @@ LiteralPattern :
 
 IdentifierPattern : ["ref"] ["mut"] Identifier ENSURE ~("::") =>|| ["@" Pattern] ;
 
-ReferencePattern : ['box'] ("&"|"&&") ["mut"] PatternWithoutRange ;
+ReferencePattern : ("&"|"&&") ["mut"] PatternWithoutRange ;
 
 PathInExpression : ["::"] PathExprSegment ("::" PathExprSegment)* ;
 
@@ -1117,7 +1117,7 @@ SimplePath : ["::"] =>|+1 SimplePathSegment ("::" =>|+1 SimplePathSegment)* ;
 
 SimplePathSegment : Identifier | "super" | "self" | "crate" | "$crate" | "unsafe";
 
-MacroInvocation: SimplePath "!" =>|+1 DelimTokenTree ;
+MacroInvocation: ("try"| SimplePath) "!" =>|+1 DelimTokenTree ;
 
 MacroInvocationSemi :
    SCAN 3
@@ -1178,7 +1178,7 @@ AnyToken#void :
   | "move"|"mut"|"override"|"priv"|"pub"
   | "ref"|"return"|"self"|"Self"
   | "static"|"'static"|"struct"|"super"
-  | "trait"|"true"|"type"|"typeof"
+  | "trait"|"true"|"try"|"type"|"typeof"
   | "unsafe"|"unsized"|"use"|"virtual"
   | "where"|"while"|"yield"
   | "{"|"}"|"["|"]"|"("|")"
