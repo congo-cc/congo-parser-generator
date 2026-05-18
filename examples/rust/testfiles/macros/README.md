@@ -1,4 +1,4 @@
-# Rust macro parse regression matrix (Phases 1–3)
+# Rust macro parse regression matrix (Phases 1–4)
 
 Focused `.rs` fixtures for the CongoCC Rust grammar (`Rust.ccc`). Each file is parsed with `RParse`; success means the grammar accepts the input and builds an AST (no macro expansion).
 
@@ -26,7 +26,7 @@ ant test
 | `macro_rules_repetition.rs` | `macro_rules!`, `$(...)`, `,` / `*` / `+` / `?` repetitions |
 | `builtin_macros.rs` | `println!`, `vec!`, `format!`, `include_str!` |
 | `path_macros.rs` | `std::format!`, `crate::...!`, `$crate::...!` |
-| `attr_macros.rs` | `#[derive(...)]`, `cfg_attr`, `proc_macro_derive`, `proc_macro_attribute` |
+| `attr_macros.rs` | `#[derive(...)]`, `cfg_attr`, `#[proc_macro]`, `proc_macro_derive`, `proc_macro_attribute` |
 | `nested_macro_rules.rs` | `macro_rules!` nested inside another macro's `DelimTokenTree` |
 | `comments_in_macro.rs` | `//` and `/* */` inside a `macro_rules!` body (unparsed token stream) |
 | `macro_stmt_in_block.rs` | `macro_rules!` inside a block; macro invocation as block tail (no `;`) |
@@ -35,6 +35,7 @@ ant test
 | `item_list_macro.rs` | Item-level `macro_rules!` and `...!();` at module scope |
 | `contextual_in_body.rs` | `union` / `raw` / `macro_rules` / `break` spellings inside macro bodies |
 | `decl_macro_item.rs` | `macro name { ... }` items with `pub`, `pub(crate)`, `#[macro_export]` |
+| `proc_macro_surface.rs` | `#[proc_macro]`, derive/attribute proc macros, `TokenStream` fns, `use proc_macro::...`, `extern crate` |
 
 Negative fixtures (expected parse failure): `../../negative-testfiles/` — see that directory’s README.
 
@@ -60,7 +61,8 @@ These pass today and are useful when changing `DelimTokenTree` or macro producti
 
 - **Parsed:** `MacroInvocation`, `MacroRulesDefinition`, `DelimTokenTree`, etc. appear in the tree.
 - **Token soup:** Inside `DelimTokenTree`, bodies are largely flat `AnyToken` children (plus **unparsed** comments/whitespace in the lexer stream, not listed in `AnyToken`).
-- **Not tested:** rustc compatibility, macro expansion, or name resolution.
+- **Not tested:** rustc compatibility, macro expansion, name resolution, or a dedicated `TokenStream` AST (paths/types parse as ordinary items).
+- **`extern crate` proc-macro crates:** parse as normal `ExternCrate` items (e.g. `extern crate proc_macro;` in `proc_macro_surface.rs`).
 
 ## Phase 1 exit criteria
 
@@ -82,4 +84,10 @@ These pass today and are useful when changing `DelimTokenTree` or macro producti
 - [x] Wired into `Item` and `Statement`
 - [x] `decl_macro_item.rs` — `pub macro`, `pub(crate) macro`, `#[macro_export]`
 
-See also `docs/rust_macro_plan.md` for Phases 4+.
+## Phase 4 exit criteria
+
+- [x] `#[proc_macro]`, `#[proc_macro_derive(...)]`, `#[proc_macro_attribute]` on items (`attr_macros.rs`, `proc_macro_surface.rs`)
+- [x] `use proc_macro::TokenStream` and `proc_macro2` paths; `TokenStream` in function signatures
+- [x] Wild corpus still parses: `derive_action.rs`, `dynamic_spacing.rs` (no grammar changes required)
+
+See also `docs/rust_macro_plan.md` for Phases 5+.

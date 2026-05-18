@@ -1,6 +1,7 @@
-// Phase 1: attribute bodies with delimiter trees (parse-only)
+// Phase 1/4: attribute bodies with delimiter trees (parse-only)
 #[derive(Clone, Copy)]
 #[cfg_attr(test, derive(Debug))]
+#[proc_macro]
 #[proc_macro_derive(MyTrait)]
 #[proc_macro_attribute]
 struct Foo {
