@@ -334,29 +334,9 @@ public class FilesGenerator {
     }
 
     void outputRustFile(String code, Path outputFile) throws IOException {
-        org.congocc.parser.rust.ast.Crate crate;
-        Writer out = Files.newBufferedWriter(outputFile);
-        int initialLines = countChars(code, '\n');
-        try {
-            crate = CongoCCParser.parseRustFile(outputFile.getFileName().toString(), code);
-        } catch (Exception e) {
-            errors.addWarning("Could not parse/format generated " + outputFile.getFileName()
-                    + " with the internal Rust tooling; emitting raw template output. ("
-                    + e.getMessage() + ")");
+        // Passthrough: RustFormatter is not yet safe on generated parser output (PR #243).
+        try (Writer out = Files.newBufferedWriter(outputFile)) {
             out.write(code);
-            return;
-        } finally {
-            out.flush();
-            out.close();
-        }
-        try (Writer output = Files.newBufferedWriter(outputFile)) {
-            org.congocc.codegen.rust.RustFormatter formatter = new org.congocc.codegen.rust.RustFormatter();
-            String s = formatter.format(crate);
-            int finalLines = countChars(s, '\n');
-            if (initialLines != finalLines) {
-                logger.fine(String.format("Line count went from %d to %d", initialLines, finalLines));
-            }
-            output.write(s);
         }
     }
 
