@@ -1126,7 +1126,7 @@ MacroInvocationSemi :
 ;
 
 INJECT PARSER_CLASS : {
-    private TokenType startDelim, endDelim, mostNestedDelim;
+    private TokenType startDelim, endDelim;
     private int parenthesisNesting, bracketNesting, braceNesting, delimNesting;
 }
 
@@ -1170,7 +1170,7 @@ DelimTokenTree :
 
 AnyToken#void :
   "_"|"abstract"|"as"|"async"|"await"
-  | "become"|"break"|"const"|"continue"
+  | "become"|"break"|'union'|'raw'|'macro_rules'|"const"|"continue"
   | "crate"|"$crate"|"do"|"dyn"|"else"
   | "enum"|"extern"|"false"|"final"|"fn"
   | "for"|"if"|"impl"|"in"|"let"|"loop"
