@@ -30,6 +30,14 @@
     <echo> Test harness is java RParse &lt;file(s) or directory&gt;</echo>
   </target>
 
+  <target name="test-macros" depends="compile">
+    <java fork="true" classpath="." failonerror="true" classname="RParse">
+      <assertions> <enable /> </assertions>
+      <arg value="-q" />
+      <arg value="testfiles/macros" />
+    </java>
+  </target>
+
   <target name="test" depends="compile">
     <java fork="true" classpath="." failonerror="true" classname="RParse">
       <assertions> <enable /> </assertions>
