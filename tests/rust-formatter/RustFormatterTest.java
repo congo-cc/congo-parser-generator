@@ -15,6 +15,10 @@ import java.nio.file.Path;
  */
 public class RustFormatterTest {
 
+    /** Macro-heavy fixture from the implementation-branch regression corpus. */
+    private static final Path SAMPLE_SOURCE =
+            Path.of("examples/rust/testfiles/macros/delim_nesting.rs");
+
     public static void main(String[] args) throws Exception {
         Path casesDir = Path.of("tests/rust-formatter/cases");
         int failures = 0;
@@ -45,5 +49,25 @@ public class RustFormatterTest {
             System.exit(1);
         }
         System.out.println("All formatter tests passed.");
+        showFormattedSample(args.length > 0 ? Path.of(args[0]) : SAMPLE_SOURCE);
+    }
+
+    /** Print formatted output for a real-world .rs file (demo after golden checks). */
+    private static void showFormattedSample(Path path) throws Exception {
+        if (!Files.isRegularFile(path)) {
+            System.out.println("Sample skipped (not found): " + path.toAbsolutePath());
+            return;
+        }
+        String name = path.getFileName().toString();
+        String source = Files.readString(path);
+        Crate crate = CongoCCParser.parseRustFile(name, source);
+        String formatted = new RustFormatter().format(crate);
+        System.out.println();
+        System.out.println("=== Formatted sample: " + path + " ===");
+        System.out.print(formatted);
+        if (!formatted.isEmpty() && formatted.charAt(formatted.length() - 1) != '\n') {
+            System.out.println();
+        }
+        System.out.println("=== end sample ===");
     }
 }
