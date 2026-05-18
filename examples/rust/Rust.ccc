@@ -58,6 +58,8 @@ Item :
   (
     MacroRulesDefinition
     |
+    MacroDefinition
+    |
     MacroInvocationSemi
     |
     VisItem
@@ -424,6 +426,8 @@ Statement :
    ";" #EmptyStatement(1)
    |
    MacroRulesDefinition
+   |
+   MacroDefinition
    |
    LetStatement
    |
@@ -1198,6 +1202,14 @@ AnyToken#void :
 ;
 
 MacroRulesDefinition : 'macro_rules'  "!" Identifier =>|+1 MacroRulesDef ;
+
+// Declarative macro 2.0 item (`macro name { ... }`), parse-only; see #decl_macro.
+MacroDefinition :
+  [Visibility]
+  'macro'
+  Identifier
+  =>|+1 MacroRulesDef
+;
 
 MacroRulesDef :
   DelimTokenTree

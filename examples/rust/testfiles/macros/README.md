@@ -1,4 +1,4 @@
-# Rust macro parse regression matrix (Phases 1–2)
+# Rust macro parse regression matrix (Phases 1–3)
 
 Focused `.rs` fixtures for the CongoCC Rust grammar (`Rust.ccc`). Each file is parsed with `RParse`; success means the grammar accepts the input and builds an AST (no macro expansion).
 
@@ -34,6 +34,7 @@ ant test
 | `match_arm_macro.rs` | `MacroInvocationSemi` inside a `match` arm |
 | `item_list_macro.rs` | Item-level `macro_rules!` and `...!();` at module scope |
 | `contextual_in_body.rs` | `union` / `raw` / `macro_rules` / `break` spellings inside macro bodies |
+| `decl_macro_item.rs` | `macro name { ... }` items with `pub`, `pub(crate)`, `#[macro_export]` |
 
 Negative fixtures (expected parse failure): `../../negative-testfiles/` — see that directory’s README.
 
@@ -75,4 +76,10 @@ These pass today and are useful when changing `DelimTokenTree` or macro producti
 - [x] `comments_in_macro.rs` — comments remain lexer `UNPARSED` (attached via `precedingUnparsedTokens`, not `AnyToken` alternatives)
 - [x] Negative unbalanced delimiter fixture under `negative-testfiles/` (manual only)
 
-See also `docs/rust_macro_plan.md` on the `rust-macro-plan-docs` branch for Phases 3+.
+## Phase 3 exit criteria
+
+- [x] `MacroDefinition` production (`[Visibility] macro Identifier MacroRulesDef`)
+- [x] Wired into `Item` and `Statement`
+- [x] `decl_macro_item.rs` — `pub macro`, `pub(crate) macro`, `#[macro_export]`
+
+See also `docs/rust_macro_plan.md` for Phases 4+.
