@@ -29,12 +29,14 @@ public class RustFormatter extends Node.Visitor {
     private int parenNesting;
     private int bracketNesting;
     private int braceNesting;
+    /** Nesting depth inside {@link DelimTokenTree} (macro/attr token soup). */
+    private int macroBodyDepth;
 
     private static final EnumSet<TokenType> KEYWORD_SPACE_AFTER = EnumSet.of(
             IF, ELSE, WHILE, FOR, MATCH, LET, FN, RETURN, PUB, USE, WHERE, IN, AS,
             ASYNC, UNSAFE, EXTERN, LOOP, MOVE, MUT, REF, DYN, CONST, STATIC, TRAIT,
             IMPL, ENUM, STRUCT, MOD, CRATE, SUPER, AWAIT, BREAK, CONTINUE, YIELD,
-            MACRO, TYPE, TRY, DO, MACRO_RULES, UNION, RAW
+            MACRO, TYPE, TRY, DO, UNION, RAW
     );
 
     private static final EnumSet<TokenType> BINARY_OPERATOR = EnumSet.of(
@@ -53,6 +55,7 @@ public class RustFormatter extends Node.Visitor {
         buffer.setLength(0);
         currentIndentation = indentLevel * indentAmount;
         parenNesting = bracketNesting = braceNesting = 0;
+        macroBodyDepth = 0;
         visit(node);
         return getText();
     }
@@ -107,7 +110,37 @@ public class RustFormatter extends Node.Visitor {
         }
     }
 
+    void visit(DelimTokenTree tree) {
+        macroBodyDepth++;
+        recurse(tree);
+        macroBodyDepth--;
+    }
+
+    void visit(MacroRulesDefinition def) {
+        ensureMacroItemSeparation(def);
+        recurse(def);
+        newLine(true);
+    }
+
+    void visit(MacroDefinition def) {
+        ensureMacroItemSeparation(def);
+        recurse(def);
+        newLine(true);
+    }
+
+    void visit(MacroInvocation invocation) {
+        recurse(invocation);
+    }
+
+    void visit(MacroInvocationSemi invocation) {
+        recurse(invocation);
+    }
+
     void visit(Delimiter delim) {
+        if (inMacroBody()) {
+            appendMacroDelimiter(delim);
+            return;
+        }
         TokenType type = delim.getType();
         switch (type) {
             case LBRACE -> {
@@ -158,6 +191,17 @@ public class RustFormatter extends Node.Visitor {
         TokenType type = punct.getType();
         Node parent = punct.getParent();
 
+        if (inMacroBody()) {
+            appendMacroPunctuation(punct);
+            return;
+        }
+
+        if (type == EXCLAM) {
+            trimTrailingWhitespace();
+            buffer.append('!');
+            return;
+        }
+
         if (type == DOT) {
             trimTrailingWhitespace();
             buffer.append('.');
@@ -190,7 +234,7 @@ public class RustFormatter extends Node.Visitor {
             addSpaceIfNecessary();
             return;
         }
-        if (type == HASH || type == EXCLAM) {
+        if (type == HASH) {
             trimTrailingWhitespace();
             buffer.append(punct);
             return;
@@ -376,6 +420,82 @@ public class RustFormatter extends Node.Visitor {
         return parenNesting > 0 || bracketNesting > 0;
     }
 
+    private boolean inMacroBody() {
+        return macroBodyDepth > 0;
+    }
+
+    private void ensureMacroItemSeparation(Node node) {
+        Node prev = node.previousSibling();
+        if (prev instanceof MacroRulesDefinition
+                || prev instanceof MacroDefinition
+                || prev instanceof Function
+                || prev instanceof Item) {
+            newLine(true);
+        }
+    }
+
+    private void appendMacroDelimiter(Delimiter delim) {
+        TokenType type = delim.getType();
+        switch (type) {
+            case LBRACE -> {
+                if (!endsWith("=>")) {
+                    addSpaceIfNecessary();
+                }
+                buffer.append('{');
+                braceNesting++;
+            }
+            case RBRACE -> {
+                trimTrailingWhitespace();
+                buffer.append('}');
+                braceNesting--;
+            }
+            case LPAREN -> {
+                trimTrailingWhitespace();
+                buffer.append('(');
+                parenNesting++;
+            }
+            case RPAREN -> {
+                trimTrailingWhitespace();
+                buffer.append(')');
+                parenNesting--;
+            }
+            case LBRACKET -> {
+                trimTrailingWhitespace();
+                buffer.append('[');
+                bracketNesting++;
+            }
+            case RBRACKET -> {
+                trimTrailingWhitespace();
+                buffer.append(']');
+                bracketNesting--;
+            }
+            default -> appendTokenImage(delim);
+        }
+    }
+
+    private void appendMacroPunctuation(Punctuation punct) {
+        TokenType type = punct.getType();
+        switch (type) {
+            case EXCLAM -> {
+                trimTrailingWhitespace();
+                buffer.append('!');
+            }
+            case COLON, COMMA, SEMICOLON -> buffer.append(punct);
+            case RIGHT_ARROW2 -> buffer.append("=>");
+            case DOT, DOUBLE_COLON, HASH -> {
+                trimTrailingWhitespace();
+                buffer.append(punct);
+            }
+            default -> {
+                if (BINARY_OPERATOR.contains(type)) {
+                    buffer.append(punct);
+                } else {
+                    appendTokenImage(punct);
+                }
+            }
+        }
+    }
+
     private static RustToken nextParsed(RustToken tok) {
         RustToken t = tok.nextCachedToken();
         while (t != null && t.isUnparsed()) {
@@ -447,6 +567,13 @@ public class RustFormatter extends Node.Visitor {
                 buffer.setLength(buffer.length() - 1);
             }
         }
+    }
+
+    private boolean endsWith(String suffix) {
+        if (buffer.length() < suffix.length()) {
+            return false;
+        }
+        return buffer.substring(buffer.length() - suffix.length()).equals(suffix);
     }
 
     private boolean atLineStart() {

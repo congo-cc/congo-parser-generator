@@ -1,0 +1,1 @@
+macro_rules!mac{($e:expr)=>{$e};} fn f(){mac!(a{b{c}});}
