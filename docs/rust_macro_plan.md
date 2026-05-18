@@ -32,7 +32,7 @@ MacroInvocationSemi :
 ;
 
 INJECT PARSER_CLASS : {
-    private TokenType startDelim, endDelim, mostNestedDelim;
+    private TokenType startDelim, endDelim;
     private int parenthesisNesting, bracketNesting, braceNesting, delimNesting;
 }
 
@@ -92,7 +92,7 @@ The lexer file notes that **block-comment subtleties** are not fully addressed y
 |-----|----------------|
 | `DelimTokenTree` relies on **Java INJECT** (`startDelim`, `endDelim`, `getTokenType`, etc.) | Fine for Java target; internal parser and `RParse` depend on it |
 | `SCAN {endDelim != RBRACE}` in `MacroInvocationSemi` | Block vs item semicolon disambiguation — fragile; needs golden tests |
-| `mostNestedDelim` injected but lightly used | Audit or remove dead state |
+| `mostNestedDelim` was unused | Removed in Phase 2 (`startDelim` / `endDelim` only) |
 
 ### C. Cross-Cutting: `-lang rust` Codegen (Optional)
 
@@ -161,24 +161,117 @@ flowchart LR
 
 ### Phase 5 — Optional Structured `macro_rules` AST (Later)
 
-Only if tooling (e.g. congocc-lsp) needs it:
+**Status:** Not started. Phases 1–4 (parse-only corpus) do **not** require Phase 5.
 
-- Split `MacroRulesDef` into `Matcher` / `Transcriber` / `MacroRule` nodes instead of flat `DelimTokenTree`.
-- High effort, rustc-level complexity; defer until a concrete consumer exists.
+**Trigger:** Start only when a concrete consumer exists (e.g. congocc-lsp needs rule outline, matcher/transcriber navigation, or metavar-aware features). No current congocc-lsp dependency on macro AST shape was identified.
+
+#### Current AST (after Phases 1–4)
+
+```text
+MacroRulesDefinition / MacroDefinition
+  └── macro_rules | macro, !, Identifier
+        └── MacroRulesDef
+              └── DelimTokenTree          ← entire { ... } is one token soup
+                    └── AnyToken × N
+```
+
+`MacroInvocation`, `AttrInput`, and nested `macro_rules!` inside another macro’s `DelimTokenTree` stay flat — that is correct for parse-only.
+
+#### Rust reference target (full structure)
+
+```text
+MacroRulesDef   →  { MacroRules }   (or (…) / […] + optional ;)
+MacroRules      →  MacroRule ( ; MacroRule )*
+MacroRule       →  MacroMatcher  =>  MacroTranscriber
+MacroMatcher    →  delimited MacroMatch*   (recursive: $id:frag, $(…)*, nested matchers, …)
+MacroTranscriber→  DelimTokenTree / TokenTree*
+```
+
+The hard part is **`MacroMatcher` / `MacroMatch`**: not the same as `AnyToken`; has its own repetition operators, fragment kinds (`expr`, `ty`, `pat`, `expr_2021`, …), and nesting. That is why full Phase 5 is **rustc-level complexity**.
+
+#### Implementation tiers
+
+| Tier | Grammar / AST | Effort (plan-scale human-days) | Tooling value |
+|------|----------------|--------------------------------|---------------|
+| **A — Shallow split** | Wrapper delim → `MacroRules` → `MacroRule` on `;` (depth 0) → `MacroMatcher` + `MacroTranscriber` on `=>` (depth 0). Matcher/transcriber interiors can remain `AnyToken` / inner `DelimTokenTree`. | ~3–5 | Rule outline; jump matcher ↔ transcriber; no real metavar typing |
+| **B — Matcher tree** | Implement `MacroMatch`, `MacroFragSpec`, `MacroRepOp` per [Rust reference — Macros](https://doc.rust-lang.org/reference/macros.html). | ~2–4 weeks | Metavar validation hints, richer hover, refactor metas |
+| **C — Full mirror** | B + structured `TokenTree` in transcribers | Very large | Approaches expansion / rustc tooling; out of CongoCC parse scope |
+
+Tier **A** reuses the same technique as `DelimTokenTree` (`INJECT` + nesting counters), plus a second pass: at outer brace nesting 0, `;` separates rules and `=>` separates matcher from transcriber.
+
+#### Risks
+
+- **False splits:** `;` or `=>` inside string literals or nested matchers breaks naive Tier A unless boundaries respect strings / `AnyToken` (same class of bug as delimiter balancing).
+- **Scope:** Structured parsing applies to **`MacroRulesDef` / `MacroDefinition` bodies only** — not to `macro_rules!` nested inside another macro’s `DelimTokenTree` (e.g. `join.rs` style).
+- **Downstream churn:** New node kinds affect `RustFormatter`, LSP visitors, and Phase 6 generated `NodeKind` variants.
+- **Regression:** All of `testfiles/macros/` + full `testfiles/` corpus must stay green.
+
+#### Recommendation
+
+| Goal | Action |
+|------|--------|
+| Parse real crates (current branch) | **Stop at Phase 4** — sufficient for parse-only. |
+| LSP: “which rule?” / split at `=>` | **Tier A** spike on a branch; document limitations; test with `macro_rules_repetition.rs`, `assertions.rs`. |
+| LSP: understand `$x:expr`, `$(…),*` | **Tier B** only with a concrete feature list from the consumer. |
+| Macro expansion / rustc parity | Different project; not CongoCC grammar scope. |
+
+**Practical next step (when triggered):** Tier A spike — replace `MacroRulesDef : DelimTokenTree` with `MacroRules` inside the outer delimiter, add `MacroRule` / `MacroMatcher` / `MacroTranscriber`, keep invocation and attribute bodies as flat `DelimTokenTree`.
+
+**Exit criteria (Tier A):** AST exposes `MacroRule` children under `MacroRulesDef`; tests in `testfiles/macros/` pass; documented limitations (no `MacroMatch` fragment kinds).
+
+**Exit criteria (Tier B+):** Consumer-defined; not specified here.
 
 ### Phase 6 — Rust Codegen for Macro-Heavy Grammars (Parallel / Later)
 
-If the goal includes `java -jar congocc.jar -lang rust examples/rust/Rust.ccc`:
+**Status:** Not started for `examples/rust/Rust.ccc`. Rust `-lang rust` works for simpler examples (JSON, Lua, arithmetic, etc.); **Rust.ccc is not** in `ant -Drust.enabled=true test-rust` today.
 
-1. Extend `RustTranslator` for parser-action idioms in `DelimTokenTree`:
-   - `getTokenType(0)` → `self.current_token_type()` (or equivalent)
-   - `TokenType.LPAREN` → `TokenType::LPAREN`
-   - `switch` → `match`
-2. Map `INJECT PARSER_CLASS` fields via `getParserFieldStructFields` (extend for `TokenType` if needed).
-3. Consider `#if !__rust__` / Rust-native `INJECT` for `DelimTokenTree` only (see `src/templates/rust/FIXME.md.ctl`).
-4. CI: `ant -Drust.enabled=true test-rust` including generate-from-`Rust.ccc` + `cargo check`.
+**Trigger:** Bootstrapping a **self-hosted Rust parser** (`java -jar congocc.jar -lang rust examples/rust/Rust.ccc` → `cargo check` → parse the macro matrix with the **generated** Rust parser, not only the Java `RParse` harness).
 
-**Exit criteria:** Rust-generated parser compiles and parses the macro test matrix.
+#### Problem
+
+`DelimTokenTree` (and related macro productions) rely on **Java-only** parser machinery that `RustTranslator` does not yet translate:
+
+| In `Rust.ccc` (Java target) | Needed for Rust codegen |
+|-----------------------------|-------------------------|
+| `INJECT PARSER_CLASS` fields (`startDelim`, `endDelim`, nesting counters) | Parser struct fields in generated Rust |
+| Semantic actions `{ getTokenType(0); delimNesting++; … }` | Inline Rust in `parse_*` methods |
+| `switch (getTokenType(0)) { case LPAREN: … }` | `match self.current_token_type() { TokenType::LPAREN => … }` |
+| `SCAN { delimNesting > 0 \|\| !checkNextTokenType(endDelim) }` | Translated predicate on Rust parser state |
+| `ASSERT { parenthesisNesting >= 0 : "…" }` | `if !cond { return Err(...) }` |
+
+Without this, `-lang rust` on `Rust.ccc` emits **FIXME-commented Java** for macro productions and the generated crate will not compile or will not parse macros correctly.
+
+This is **orthogonal** to Phases 1–5: Java parsing via `org.congocc.parser.rust` and `examples/rust/RParse` can be complete while Rust codegen for the same grammar is not.
+
+#### Work items
+
+1. **`RustTranslator`** (`src/java/org/congocc/codegen/rust/RustTranslator.java`):
+   - Map parser API: `getTokenType(0)` → `self.current_token_type()` (or equivalent generated API).
+   - Map `TokenType.LPAREN` → `TokenType::LPAREN`; `switch` → `match`.
+   - Translate `checkNextTokenType`, `delimNesting` / brace / paren / bracket fields used in `DelimTokenTree` and `MacroInvocationSemi` (`SCAN {endDelim != RBRACE}`).
+2. **`INJECT PARSER_CLASS`**: Emit fields on the generated parser struct via `getParserFieldStructFields` (extend for `TokenType` if needed). See `src/templates/rust/parser.rs.ctl`, `inject.rs.ctl`.
+3. **Escape hatch:** `#if __rust__` / `#if !__rust__` — Rust-native `INJECT` or duplicated production bodies for `DelimTokenTree` only (see `docs/rust_plan.md` §1.3, `src/templates/rust/FIXME.md.ctl`).
+4. **Example + CI:**
+   - Add `examples/rust` to the Rust codegen test path (or a dedicated `test-rust-rust-grammar` target).
+   - `congocc.jar -lang rust -d … Rust.ccc` → `cargo check` → run macro fixtures against the **generated** parser (not only Java `RParse`).
+
+#### Relationship to other tracks
+
+| Track | Relationship |
+|-------|----------------|
+| Phases 1–4 (grammar) | Java parser must pass first; Phase 6 does not change `.ccc` unless `#if __rust__` splits are added. |
+| Phase 5 (structured AST) | More node kinds → more `NodeKind` variants in generated Rust AST; do Tier A before or after Phase 6 depending on whether the Rust parser must parse structured matchers. |
+| `docs/rust_plan.md` | Full `-lang rust` roadmap (templates, arena AST, `RustTranslator`, graceful degradation). Phase 6 here is the **macro-specific slice** of that plan. |
+| `RustFormatter` | Java-side pretty-printing; unrelated to Rust parser codegen except both consume the same grammar. |
+
+#### Recommendation
+
+| Goal | Action |
+|------|--------|
+| Parse Rust from Java (LSP, `RParse`, codegen output formatting) | **No Phase 6** required. |
+| Ship `-lang rust` for `Rust.ccc` / self-hosted Rust parser | Phase 6 + general `rust_plan.md` Step 5 (INJECT / semantic actions). Start with `DelimTokenTree` + `MacroInvocationSemi` translations; gate on `cargo check` + macro subdirectory. |
+
+**Exit criteria:** `congocc.jar -lang rust examples/rust/Rust.ccc` produces a crate that `cargo check` passes and that parses all of `testfiles/macros/` (and ideally the full `testfiles/` corpus) without using the Java parser at runtime.
 
 ---
 
@@ -196,11 +289,13 @@ If the goal includes `java -jar congocc.jar -lang rust examples/rust/Rust.ccc`:
 
 ## Success Criteria (Checklist)
 
-- [ ] `ant test` in `examples/rust` passes on macro subdirectory + existing corpus.
-- [ ] `macro_rules!`, `path!`, stmt/item macros, and `#[attr(...)]` bodies parse with balanced delimiters.
-- [ ] `macro` item form (Phase 3) covered if targeting current Rust editions.
-- [ ] Limitations documented: no expansion; comments preserved via unparsed tokens, not via `AnyToken`.
-- [ ] (Optional) `-lang rust` build of `Rust.ccc` passes `cargo check`.
+- [x] `ant test` in `examples/rust` passes on macro subdirectory + existing corpus (Phases 1–4 on `rust-macro-implementation`).
+- [x] `macro_rules!`, `path!`, stmt/item macros, and `#[attr(...)]` bodies parse with balanced delimiters.
+- [x] `macro` item form (Phase 3) covered (`MacroDefinition`, `decl_macro_item.rs`).
+- [x] Proc-macro attribute surface (Phase 4, `proc_macro_surface.rs`).
+- [x] Limitations documented: no expansion; comments preserved via unparsed tokens, not via `AnyToken`.
+- [ ] (Optional, Phase 6) `-lang rust` build of `Rust.ccc` passes `cargo check` and parses the macro matrix.
+- [ ] (Optional, Phase 5) Structured `macro_rules` AST when a consumer requires it.
 
 ---
 
