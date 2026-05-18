@@ -242,6 +242,20 @@
     </java>
   </target>
 
+  <target name="test-java-formatter" depends="jar">
+    <echo>Running JavaFormatter comment regression test</echo>
+    <javac srcdir="tests/java-formatter"
+           destdir="build"
+           classpath="congocc.jar"
+           includeantruntime="false"/>
+    <java classname="JavaFormatterCommentTest" fork="true" failonerror="true">
+      <classpath>
+        <pathelement path="build"/>
+        <pathelement location="congocc.jar"/>
+      </classpath>
+    </java>
+  </target>
+
   <target name="test-rust" depends="jar,-rust-guard" if="rust.on">
     <echo>Testing Rust parser generation</echo>
     <ant dir="examples/json" target="test-rust" />

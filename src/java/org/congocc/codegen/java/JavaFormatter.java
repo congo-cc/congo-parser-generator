@@ -198,10 +198,23 @@ public class JavaFormatter extends Node.Visitor {
     }
 
     void visit(SingleLineComment comment) {
+        Token previousCached = comment.previousCachedToken();
+        boolean endOfLineComment = previousCached != null
+                && previousCached.getEndLine() == comment.getBeginLine();
+        if (endOfLineComment) {
+            // Unparsed comments attach to the next token; join back to the prior source line.
+            if (atLineStart()) {
+                joinToPreviousOutputLine();
+            } else {
+                addSpaceIfNecessary();
+            }
+            buf.append(comment);
+            newLine();
+            return;
+        }
         if (startsNewLine(comment)) {
             newLine();
-        } 
-        else {
+        } else {
             addSpaceIfNecessary();
         }
         buf.append(comment);
@@ -240,6 +253,42 @@ public class JavaFormatter extends Node.Visitor {
     private boolean startsNewLine(Token t) {
         Token previousCachedToken = t.previousCachedToken();
         return previousCachedToken == null || previousCachedToken.getEndLine() != t.getBeginLine();
+    }
+
+    private boolean atLineStart() {
+        if (buf.length() == 0) {
+            return true;
+        }
+        for (int pos = buf.length() - 1; pos >= 0; pos--) {
+            char ch = buf.charAt(pos);
+            if (ch == '\n') {
+                return true;
+            }
+            if (!Character.isWhitespace(ch)) {
+                return false;
+            }
+        }
+        return true;
+    }
+
+    /**
+     * Undo a statement-break newline so a same-line trailing comment can be appended
+     * to the code that precedes it in the source.
+     */
+    private void joinToPreviousOutputLine() {
+        while (buf.length() > 0) {
+            char ch = buf.charAt(buf.length() - 1);
+            if (ch == ' ' || ch == '\t') {
+                buf.setLength(buf.length() - 1);
+                continue;
+            }
+            if (ch == '\n') {
+                buf.setLength(buf.length() - 1);
+                continue;
+            }
+            break;
+        }
+        addSpaceIfNecessary();
     }
 
     private String indentText(String text) {
