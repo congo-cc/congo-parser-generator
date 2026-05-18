@@ -355,8 +355,7 @@ public class RustFormatter extends Node.Visitor {
         while (parent != null) {
             if (parent instanceof GenericParams
                     || parent instanceof GenericArgs
-                    || parent instanceof UseBound
-                    || parent instanceof UseBoundGenericArg) {
+                    || parent instanceof UseBound) {
                 return true;
             }
             parent = parent.getParent();
