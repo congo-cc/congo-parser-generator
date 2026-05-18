@@ -227,6 +227,26 @@ Tier **A** reuses the same technique as `DelimTokenTree` (`INJECT` + nesting cou
 
 **Trigger:** Bootstrapping a **self-hosted Rust parser** (`java -jar congocc.jar -lang rust examples/rust/Rust.ccc` → `cargo check` → parse the macro matrix with the **generated** Rust parser, not only the Java `RParse` harness).
 
+#### Target-specific actions (existing CongoCC feature)
+
+CongoCC already has **three** mechanisms for non-default action code; they partially address Phase 6 but do not replace a polyglot action language.
+
+| Mechanism | Syntax / trigger | Behaviour |
+|-----------|------------------|-----------|
+| **Default Java actions** | `{ ... }` or `{% ... %}` in productions | Parsed as Java (`EmbeddedJavaBlock` / `EmbeddedJavaExpression` via `JavaInternal.ccc`). On `-lang rust`, emitted through `RustTranslator` (`translateCodeBlock`) or **FIXME-commented Java** when translation fails (`TemplateGlobals.translateCodeBlockForRust`). |
+| **Language-tagged raw blocks** | `{J% ... %}`, `{P% ... %}`, `{C% ... %}` (`Lexical.inc.ccc`: `START_UNPARSED : "{" (["J","P","C"])? "%"`) | Content is `RawCode`. Lexer marks the block **unparsed** when the letter does not match the target language’s initial (`J`/`P`/`C`). `RawCode.wrongLanguageIgnore()` skips parse/emit for wrong language; `toString()` can emit a “No output” stub. On Rust target, `${expansion}` in `parser.rs.ctl` emits raw content for matching `RawCode`. **`R` is not implemented yet** in `RawCode.specifiedLanguage()` (only `J`, `P`, `C`). |
+| **Grammar preprocessor** | `#if __rust__` / `#if __java__` etc. | `Grammar` defines `__{codeLang}__` when `-lang` is set (`preprocessorSymbols.put("__" + codeLang + "__", "1")`). Whole productions / `INJECT` blocks can be included or excluded at **grammar parse** time — not per-invocation lowering. |
+
+The `#` suffix on a `Block` in the CongoCC grammar (`#EmbeddedCode`) sets **lookahead** applicability (`setAppliesInLookahead`), not target language.
+
+**Does this solve Phase 6 for `DelimTokenTree`?** **Partly, as an escape hatch:**
+
+- You can duplicate macro logic under `#if __rust__` with hand-written Rust actions, or add `{R% ... %}` once `RawCode` recognises `R` (small codegen change).
+- **`INJECT PARSER_CLASS`** fields (`startDelim`, `delimNesting`, …) are separate from `{ }` actions; they still need parser-struct emission in `parser.rs.ctl` / `inject.rs.ctl`.
+- Default `{ getTokenType(0); ... }` in `Rust.ccc` today is **one Java copy**; Rust generation still hits translator limits unless you maintain parallel branches.
+
+**Longer term (agreed direction):** mechanical Java→Rust translation cannot give **100% fidelity** for arbitrary parser actions. A small **polyglot-aware action DSL** (or first-class Rust/Python/C# action forms) lowered per target would be the general solution; that does not exist today. Phase 6 remains: extend `RustTranslator` where mechanical translation works, use `#if __rust__` / `{R% ... %}` for the rest, and document what must be hand-maintained.
+
 #### Problem
 
 `DelimTokenTree` (and related macro productions) rely on **Java-only** parser machinery that `RustTranslator` does not yet translate:
@@ -250,8 +270,9 @@ This is **orthogonal** to Phases 1–5: Java parsing via `org.congocc.parser.rus
    - Map `TokenType.LPAREN` → `TokenType::LPAREN`; `switch` → `match`.
    - Translate `checkNextTokenType`, `delimNesting` / brace / paren / bracket fields used in `DelimTokenTree` and `MacroInvocationSemi` (`SCAN {endDelim != RBRACE}`).
 2. **`INJECT PARSER_CLASS`**: Emit fields on the generated parser struct via `getParserFieldStructFields` (extend for `TokenType` if needed). See `src/templates/rust/parser.rs.ctl`, `inject.rs.ctl`.
-3. **Escape hatch:** `#if __rust__` / `#if !__rust__` — Rust-native `INJECT` or duplicated production bodies for `DelimTokenTree` only (see `docs/rust_plan.md` §1.3, `src/templates/rust/FIXME.md.ctl`).
-4. **Example + CI:**
+3. **Escape hatches (prefer before growing `RustTranslator`):** `#if __rust__` duplicate productions / `INJECT`; language-tagged `{R% ... %}` (after adding `R` to `RawCode.specifiedLanguage()`); see **Target-specific actions** above.
+4. **Mechanical translation:** extend `RustTranslator` only for idioms that translate reliably (see `docs/rust_plan.md` §1.4).
+5. **CI / example wiring** (was item 4):
    - Add `examples/rust` to the Rust codegen test path (or a dedicated `test-rust-rust-grammar` target).
    - `congocc.jar -lang rust -d … Rust.ccc` → `cargo check` → run macro fixtures against the **generated** parser (not only Java `RParse`).
 
