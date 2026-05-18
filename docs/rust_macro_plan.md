@@ -45,6 +45,14 @@ MacroRulesDefinition : 'macro_rules'  "!" Identifier =>|+1 MacroRulesDef ;
 
 **Explicitly out of scope today:** macro expansion, name resolution, proc-macro execution, or a full `macro_rules` matcher/transcriber AST.
 
+### Comments and unparsed tokens in macro bodies
+
+`AnyToken` lists only **parsed** (regular) token kinds. That is correct: comments are not missing from the grammar because they were forgotten.
+
+In `RustLexer.ccc`, line and block comments are **`UNPARSED`** (`#Comment` / `UNPARSED` productions). They remain in the cached token stream with `isUnparsed() == true`. During tree building, unparsed tokens are attached to the AST via `precedingUnparsedTokens()` on each parsed token, and optionally as child nodes when `unparsedTokensAreNodes` is enabled (see `TreeBuildingCode` in generated parsers). So `//` and `/* ... */` inside a `DelimTokenTree` appear **between** `AnyToken` consumptions in source order, not as alternatives inside the `AnyToken` production.
+
+The lexer file notes that **block-comment subtleties** are not fully addressed yet (`// Some subtleties with comments not being addressed (yet)` in `RustLexer.ccc`). That is a separate lexer concern, not a requirement to duplicate comments in `AnyToken`.
+
 ---
 
 ## Goals and Non-Goals
@@ -76,7 +84,7 @@ MacroRulesDefinition : 'macro_rules'  "!" Identifier =>|+1 MacroRulesDef ;
 | Nested `macro_rules!` in macro bodies | e.g. `join.rs`-style `doc! { macro_rules! ... }` | Stress-test `DelimTokenTree` nesting |
 | Edition / new tokens in macro bodies | New keywords in macro soup | Extend `AnyToken` when lexer adds tokens |
 | `VisItem` vs `Item` macro placement | Macros at `Item`, not inside `VisItem` | Confirm `AssociatedItem` cases; extend if needed |
-| Comments inside token trees | `DelimTokenTree` uses `AnyToken`, not comments | Decide: allow `LINE_COMMENT` in `AnyToken` or document limitation |
+| Block comment edge cases in macro bodies | `RustLexer.ccc` notes multiline comment subtleties remain | Improve `IN_MULTILINE_COMMENT` / nesting if failures appear; unparsed stream already carries comments |
 
 ### B. Parser Implementation Gaps (Java Generated Parser)
 
@@ -129,7 +137,7 @@ flowchart LR
    - macro stmt at end of block (no `;`)
    - macro stmt in item list (with `;`)
    - macro inside `match` arm
-4. Optional: allow **line comments** inside delimiter trees if failures show `//` in `macro_rules!` bodies breaking parse.
+4. Add regression cases with `//` and `/* ... */` inside `macro_rules!` bodies to confirm unparsed comment tokens are preserved in the tree (not an `AnyToken` change).
 5. Regenerate `org/parsers/rust` and internal `org.congocc.parser.rust`; run formatter tests if layout changes matter.
 
 **Exit criteria:** Macro subdirectory green in `RParse`; `join.rs` / `assertions.rs` stable.
@@ -191,7 +199,7 @@ If the goal includes `java -jar congocc.jar -lang rust examples/rust/Rust.ccc`:
 - [ ] `ant test` in `examples/rust` passes on macro subdirectory + existing corpus.
 - [ ] `macro_rules!`, `path!`, stmt/item macros, and `#[attr(...)]` bodies parse with balanced delimiters.
 - [ ] `macro` item form (Phase 3) covered if targeting current Rust editions.
-- [ ] Limitations documented: no expansion; token trees may omit comments unless Phase 2 adds them.
+- [ ] Limitations documented: no expansion; comments preserved via unparsed tokens, not via `AnyToken`.
 - [ ] (Optional) `-lang rust` build of `Rust.ccc` passes `cargo check`.
 
 ---
