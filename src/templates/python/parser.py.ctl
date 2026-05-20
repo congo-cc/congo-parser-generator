@@ -191,8 +191,6 @@ class InvalidNode(BaseNode):
     pass
 <-
 
-# explicitdedent:restore
-
 #if grammar.usingCardinality
 class CardinalityState:
     __slots__ = ('_cardinalities', 'is_provisional')
@@ -283,7 +281,6 @@ class RepetitionCardinality:
 #endif
 
 class Parser:
-# explicitdedent:on
 
     __slots__ = (
         'token_source',
@@ -650,9 +647,6 @@ ${globals::translateParserInjections(true)}
 
 # explicitdedent:restore
 
-${globals::translateParserInjections(false)}
-
-
 #if settings.treeBuildingEnabled
 #
 # AST definitions
@@ -667,3 +661,4 @@ ${globals::translateInjectedClass(node)}
     #endif
   #endlist
 #endif
+${globals::translateParserInjections(false)}

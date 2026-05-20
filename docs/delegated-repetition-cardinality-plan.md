@@ -3,7 +3,7 @@
 **Branch:** `feature/delegated-repetition-cardinality` (from `master`)  
 **Baseline behavior:** current `master` (post cardinality merge)  
 **Original feature:** commit `82d331d` (repetition cardinality); small adjustments since  
-**Status:** plan only — no implementation on this branch yet
+**Status:** Phase 0 (checker / grammar model) in progress on **Java target only**. C#, Python, and Rust template work is deferred; full polyglot lookahead alignment is saved on `feature/delegated-repetition-cardinality-polyglot-backup`.
 
 ---
 
@@ -217,21 +217,22 @@ Update `ExpansionSequence.java`:
 
 ---
 
-## 6. Phase 2 — Parse codegen (Java → C# → Python)
+## 6. Phase 2 — Parse codegen (**Java only** on this branch)
 
 | Location | Change |
 |----------|--------|
-| `Parser.java.ctl` (and C#/Python) | `delegatedCardinalityStack` (+ push/pop helpers) |
+| `Parser.java.ctl` | `delegatedCardinalityStack` (+ push/pop helpers) |
 | `BuildCodeOneOrMore` / `BuildCodeZeroOrMore` | Unchanged local `cardinalitiesN` allocation |
 | `BuildCodeNonTerminal` | If delegatee: push `cardinalitiesN`, call child, pop |
 | `BuildAssertionCode` | Delegated RCAs use stack top |
 | `ErrorHandling.java.ctl` | Eventually stash/restore stack in `ATTEMPT` if delegation allowed there |
 
-**Templates:** `ParserProductions.java.ctl`, `ParserProductions.inc.ctl`, `parser_productions.inc.ctl`, `Parser.cs.ctl`, `Parser.java.ctl`.
+**Templates (this phase):** `ParserProductions.java.ctl`, `Parser.java.ctl`.  
+**Deferred:** `ParserProductions.inc.ctl`, `parser_productions.inc.ctl`, `Parser.cs.ctl`, `parser.py.ctl`.
 
 ---
 
-## 7. Phase 3 — Lookahead / SCAN codegen
+## 7. Phase 3 — Lookahead / SCAN codegen (**Java only** on this branch)
 
 | Location | Change |
 |----------|--------|
@@ -242,7 +243,8 @@ Update `ExpansionSequence.java`:
 
 Reuse existing `RepetitionCardinality` commit/provisional stack so parse and lookahead stay aligned.
 
-**Templates:** `LookaheadRoutines.java.ctl`, `LookaheadRoutines.inc.ctl`, `lookahead_routines.inc.ctl`.
+**Templates (this phase):** `LookaheadRoutines.java.ctl` only.  
+**Deferred:** `LookaheadRoutines.inc.ctl`, `lookahead_routines.inc.ctl` (see polyglot backup branch).
 
 ---
 
@@ -253,17 +255,17 @@ Reuse existing `RepetitionCardinality` commit/provisional stack so parse and loo
 | `sandbox/cardinality/CardTests.ccc` | Parent/Child delegation, inner loop vs delegate, illegal dual call sites |
 | `sandbox/cardinality/RepetitionCardinality.md` | Document delegation, one-level rule, stack rationale |
 | `examples/cics` | Optional refactor to `CommonOptions` production + tests |
-| CI | `ant test-cardinality-oracles-java`; sandbox `test-all` for Java/C#/Python |
+| CI | `ant test-cardinality-oracles-java`; sandbox `test-java` + `test-checker-negative` required; Python/C# sandbox runs optional / unchanged from `master` |
 
 ---
 
 ## 9. Implementation order
 
-1. **Phase 0** — fix scope predicate; orphan/`?` errors; per-sequence telescoping warning; revisit ZOM info; sandbox negative grammar tests  
+1. **Phase 0** — fix scope predicate; orphan/`?` errors; per-sequence telescoping warning; revisit ZOM info; sandbox negative grammar tests (**Java checker / grammar model**)  
 2. Phase 1 — delegation analysis + checker extensions  
-3. Phase 2 — Java parse templates + sandbox parse tests  
+3. Phase 2 — Java parse templates + sandbox Java parse tests  
 4. Phase 3 — Java lookahead + sandbox (parse + lookahead paths)  
-5. Port C# and Python templates  
+5. **Later phase** — port C#, Python (and Rust when applicable); start from `feature/delegated-repetition-cardinality-polyglot-backup`  
 6. CICS `CommonOptions` refactor (optional but strong regression for real usage)  
 7. Update `RepetitionCardinality.md` and this plan’s status  
 

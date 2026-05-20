@@ -1024,8 +1024,6 @@ ${BuildCode(subexp, cardinalitiesVar)}
   #endif
   #if expansion.cardinalityConstrained && cardinalitiesVar?? && (cardinalitiesVar?length > 0)
     ${expansion.predicateMethodName}(${cardinalitiesVar})
-  #elseif expansion.cardinalityConstrained
-    ${expansion.predicateMethodName}(null)
   #else
     ${expansion.predicateMethodName}()
   #endif

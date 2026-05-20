@@ -241,11 +241,7 @@ ${BuildProductionLookaheadMethod(production, indent)}
     [#set cardinalitiesVar = "cardinalities"]
   [/#if]
     # BuildPredicateRoutine: expansion at ${expansion.location}
-    def ${expansion.predicateMethodName}(self[#if expansion.cardinalityConstrained], cardinalities=None[/#if]):
-        #if expansion.cardinalityConstrained
-        if cardinalities is None:
-            cardinalities = RepetitionCardinality([@CU.BuildCardinalities expansion.cardinalityConstraints, ""/])
-        #endif
+    def ${expansion.predicateMethodName}(self[#if expansion.cardinalityConstrained], cardinalities[/#if]):
         self.remaining_lookahead = ${lookaheadAmount}
         self.current_lookahead_token = self.last_consumed_token
         scan_to_end = False
@@ -276,12 +272,8 @@ ${is}# BuildScanRoutine macro
   [#if expansion.cardinalityConstrained]
     [#set cardinalitiesVar = "cardinalities"]
   [/#if]
-${is}def ${expansion.scanRoutineName}(self, scan_to_end[#if expansion.cardinalityConstrained], cardinalities=None[/#if]):
+${is}def ${expansion.scanRoutineName}(self, scan_to_end[#if expansion.cardinalityConstrained], cardinalities[/#if]):
 ${is}    # import pdb; pdb.set_trace()
-  #if expansion.cardinalityConstrained
-${is}    if cardinalities is None:
-${is}        cardinalities = RepetitionCardinality([@CU.BuildCardinalities expansion.cardinalityConstraints, ""/])
-  #endif
   [#var inner = indent + 4]
   #if expansion.hasScanLimit
 ${is}    prev_passed_predicate_threshold = self.passed_predicate_threshold
@@ -595,7 +587,7 @@ ${is}    self.hit_failure = True
 ${is}    ${lhReturnFalse(cardinalitiesVar, parentCardVar)}
 [/#if]
 [#if assertion.cardinalityConstraint?? && cardinalitiesVar?? && (cardinalitiesVar?length > 0)]
-${is}if not ${cardinalitiesVar}.choose([#if parentCardVar?has_content]${assertion.assertionIndex}[#else]0[/#if], True):
+${is}if not ${cardinalitiesVar}.choose(${assertion.assertionIndex}, True):
 ${is}    self.hit_failure = True
 ${is}    ${lhReturnFalse(cardinalitiesVar, parentCardVar)}
 [/#if]
@@ -676,7 +668,7 @@ ${is}try:
 ${is}    while self.remaining_lookahead > 0 and not self.hit_failure:
 ${is}        ${prevTokenName} = self.current_lookahead_token
 ${is}        self.passed_predicate = False
-${is}        if not (${CheckExpansion(zom.nestedExpansion, zomCardVar, zomCardVar)}):
+${is}        if not (${CheckExpansion(zom.nestedExpansion, zomCardVar, parentCardVar)}):
 ${is}            if self.passed_predicate and not self.legacy_glitchy_lookahead:
 ${is}                ${lhReturnFalse(parentCardVar, "")}
 ${is}            self.current_lookahead_token = ${prevTokenName}
@@ -702,7 +694,7 @@ ${is}self.hit_failure = False
 [#set oomCardVar = "cardinality" + repetitionIndex][#set repetitionIndex = repetitionIndex + 1]
 ${is}${oomCardVar} = RepetitionCardinality([@CU.BuildCardinalities oom.cardinalityConstraints, ""/])
 [/#if]
-[@BuildScanCode oom.nestedExpansion, indent, oomCardVar, oomCardVar /]
+[@BuildScanCode oom.nestedExpansion, indent, oomCardVar, cardinalitiesVar /]
 [#if oom.cardinalityContainer]
 ${is}${oomCardVar}.commit_iteration(False)
 [/#if]
@@ -730,12 +722,8 @@ ${is}${oomCardVar}.commit_iteration(False)
   [#if grammar.assertionExpansions?? && grammar.assertionExpansions?seq_contains(expansion)]
       self.${expansion.scanRoutineName}()[#t]
   [#else]
-  [#if expansion.cardinalityConstrained && expansion.cardinalityConstraints?size > 0]
-    [#if cardinalitiesVar?? && (cardinalitiesVar?length > 0)]
+  [#if expansion.cardinalityConstrained && cardinalitiesVar?? && (cardinalitiesVar?length > 0)]
       self.${expansion.scanRoutineName}(False, ${cardinalitiesVar})[#t]
-    [#else]
-      self.${expansion.scanRoutineName}(False, None)[#t]
-    [/#if]
   [#else]
       self.${expansion.scanRoutineName}(False)[#t]
   [/#if]

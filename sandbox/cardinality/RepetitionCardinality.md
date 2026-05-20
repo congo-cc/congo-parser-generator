@@ -90,4 +90,4 @@ Repetition cardinality provides precise control over element occurrences within 
 
 ### 7. Sandbox build (`build.xml`)
 
-`ant clean test-all` regenerates **Java**, **Python**, and **C#** from `CardTests.ccc`, compiles them, and runs the same `testfiles` corpus on each implementation. Java and C# runs are required to pass. The Python step is skipped (with a message) when the generated `parser.py` still contains CongoCC CTL dedent markers (`<-`): that means the bundled internal parse/format pass failed (see the congocc warning); the file is not valid CPython until that step succeeds.
+`ant clean test-all` regenerates **Java**, **Python**, and **C#** from `CardTests.ccc`, compiles them, and runs the same `testfiles` corpus on each implementation. Java and C# runs are required to pass. The Python step is skipped (with a message) when the generated `parser.py` still contains CongoCC CTL dedent markers (`<-`): on very large parsers the bundled Python parse/format pass may not run, in which case the file is not valid CPython until that pipeline succeeds.

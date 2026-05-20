@@ -92,7 +92,7 @@
   <target name="test-python" depends="compile">
     <exec executable="sh" dir="${basedir}" failonerror="true">
       <arg value="-c"/>
-      <arg value="if python3 -c &quot;import pathlib; t=pathlib.Path('testparser/parser.py').read_text(encoding='utf-8'); exit(0 if '\x3c-' in t else 1)&quot;; then echo 'Skipping Python cardinality tests: parser.py still has CTL dedent markers (internal parse/format step failed; see congocc warning).'; exit 0; fi &amp;&amp; cd testparser/test &amp;&amp; exec python3 -u parse_files.py ../../testfiles"/>
+      <arg value="if python3 -c &quot;import pathlib; t=pathlib.Path('testparser/parser.py').read_text(encoding='utf-8'); exit(0 if '\x3c-' in t else 1)&quot;; then echo 'Skipping Python cardinality tests: parser.py still has CTL dedent markers (internal Python format step did not run; common on very large generated parsers).'; exit 0; fi &amp;&amp; cd testparser/test &amp;&amp; exec python3 -u parse_files.py ../../testfiles"/>
     </exec>
   </target>
 
