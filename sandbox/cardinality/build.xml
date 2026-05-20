@@ -1,4 +1,5 @@
 <project name="Cardinality" default="compile" basedir=".">
+  <property name="congocc.jar" location="${basedir}/../../congocc.jar"/>
 
   <target name="clean">
     <delete dir="org" />
@@ -106,7 +107,7 @@
     <chmod file="checker-negative/run-checker-tests.sh" perm="+x"/>
     <exec executable="sh" dir="${basedir}" failonerror="true">
       <arg value="checker-negative/run-checker-tests.sh"/>
-      <arg value="${basedir}/../../congocc.jar"/>
+      <arg value="${congocc.jar}"/>
     </exec>
   </target>
 
