@@ -3,7 +3,8 @@
 **Branch:** `feature/delegated-repetition-cardinality` (from `master`)  
 **Baseline behavior:** current `master` (post cardinality merge)  
 **Original feature:** commit `82d331d` (repetition cardinality); small adjustments since  
-**Status:** Phase 0 (checker / grammar model) in progress on **Java target only**. C#, Python, and Rust template work is deferred; full polyglot lookahead alignment is saved on `feature/delegated-repetition-cardinality-polyglot-backup`.
+**Status:** Phase 0 (checker / grammar model) in progress on **Java target only**. C#, Python, and Rust template work is deferred; full polyglot lookahead alignment is saved on `feature/delegated-repetition-cardinality-polyglot-backup`.  
+**See also:** `docs/parse-debugger-plan.md` (semantic parse trace API for large generated parsers — plan only).
 
 ---
 
