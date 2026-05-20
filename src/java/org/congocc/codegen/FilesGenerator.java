@@ -322,7 +322,7 @@ public class FilesGenerator {
                 org.congocc.codegen.csharp.Reaper reaper = new org.congocc.codegen.csharp.Reaper(cscu);
                 reaper.reap();
             }
-            CSharpFormatter formatter = new CSharpFormatter();
+            var formatter = new CSharpFormatter();
             formatter.visit(cscu);
             String s = formatter.getText();
             int finalLines = countChars(s, '\n');

@@ -53,7 +53,7 @@ OuterAttribute :
    "]"
 ;
 
-Item :
+Item#ItemWithAttributes :
   (OuterAttribute)*
   (
     MacroRulesDefinition
@@ -64,7 +64,7 @@ Item :
   )
 ;
 
-Attr :
+Attr# :
     SimplePath
     [AttrInput]
 ;
@@ -75,7 +75,13 @@ AttrInput :
    DelimTokenTree
 ;
 
-LiteralExpression :
+INJECT LiteralExpression : extends Expression
+INJECT BooleanLiteral : implements LiteralExpression
+INJECT CharLiteral : implements LiteralExpression
+INJECT NumericalLiteral : implements LiteralExpression
+INJECT StringLiteral : implements LiteralExpression
+
+LiteralExpression#interface :
    <CHAR_LITERAL>
    |
    <STRING_LITERAL>
@@ -420,7 +426,7 @@ BlockExpression :
    "}"
 ;
 
-Statement :
+Statement#void :
    ";" #EmptyStatement(1)
    |
    MacroRulesDefinition
@@ -448,7 +454,7 @@ Type :
    |
    ImplTraitType
    |
-   TraitObjectType =>||
+   SCAN TraitObjectType =>||
    |
    TypeNoBounds
 ;
@@ -481,13 +487,11 @@ BareFunctionType :
    [ForLifetimes]
    FunctionTypeQualifiers
    "fn"
-   "("
-   [FunctionParametersMaybeNamedVariadic]
-   ")"
+   MaybeNamedParameters
    [BareFunctionReturnType]
 ;
 
-BareFunctionReturnType : "->" TypeNoBounds ;
+BareFunctionReturnType#FunctionReturnType : "->" TypeNoBounds ;
 
 TupleType :
    "("
@@ -515,7 +519,15 @@ QualifiedPathInType : QualifiedPathType ("::" TypePathSegment)+ ;
 
 QualifiedPathType : "<" Type ["as" TypePath] ">" ;
 
-FunctionParametersMaybeNamedVariadic : MaybeNamedFunctionParametersVariadic =>|| | MaybeNamedFunctionParameters ;
+MaybeNamedParameters :
+    "("
+    [
+        MaybeNamedFunctionParametersVariadic =>||
+        |
+        MaybeNamedFunctionParameters
+    ]
+    ")"
+;
 
 MaybeNamedFunctionParameters : MaybeNamedParam ("," =>|+1 MaybeNamedParam)* [","] ;
 
@@ -523,7 +535,47 @@ MaybeNamedParam : (OuterAttribute)* [(Identifier | <UNDERSCORE>) ":" =>||] Type 
 
 MaybeNamedFunctionParametersVariadic : (MaybeNamedParam ",")+ (OuterAttribute)* "...";
 
-Expression :
+INJECT AdditiveExpression : implements Expression
+INJECT AndExpression : implements Expression
+INJECT ArrayExpression : implements Expression
+INJECT AssignmentExpression : implements Expression
+INJECT AsyncBlockExpression : implements Expression
+INJECT AwaitExpression : implements Expression
+INJECT BlockExpression : implements Expression
+INJECT BreakExpression : implements Expression
+INJECT CallExpression : implements Expression
+INJECT CaretExpression : implements Expression
+INJECT ClosureExpression : implements Expression
+INJECT ComparisonExpression : implements Expression
+INJECT ConstBlock : implements Expression
+INJECT ContinueExpression : implements Expression
+INJECT ErrorPropagationExpression : implements Expression
+INJECT FieldExpression : implements Expression
+INJECT ForExpression : implements Expression
+INJECT IfExpression : implements Expression
+INJECT IfLetExpression : implements Expression
+INJECT IndexExpression : implements Expression
+INJECT LabeledBlock : implements Expression
+INJECT LazyAndExpression : implements Expression
+INJECT LazyOrExpression : implements Expression
+INJECT MacroInvocation : implements Expression
+INJECT MatchExpression : implements Expression
+INJECT MethodCall : implements Expression
+INJECT MultiplicativeExpression : implements Expression
+INJECT OrExpression : implements Expression
+INJECT ParentheticalExpression : implements Expression
+INJECT PathExpression : implements Expression
+INJECT Placeholder : implements Expression
+INJECT RangeExpression : implements Expression
+INJECT ReturnExpression : implements Expression
+INJECT ShiftExpression : implements Expression
+INJECT StructExpression : implements Expression
+INJECT TupleIndexingExpression : implements Expression
+INJECT TypeCastExpression : implements Expression
+INJECT UnaryExpression : implements Expression
+INJECT UnsafeBlockExpression : implements Expression
+
+Expression#interface :
    (OuterAttribute)*
    =>|+1
    (
@@ -561,7 +613,7 @@ ExpressionWithBlock#void :
       BlockExpression
 ;
 
-BaseExpression :
+BaseExpression#void :
     IfLetExpression
     |
     IfExpression
@@ -726,19 +778,19 @@ AssignmentOperator#void :
     ("="|"+="|"-="|"*="|"/="|"%="|"&="|"|="|"^="|"<<="|">>=")
 ;
 
-BreakExpression :
+BreakExpression# :
     "break"
     [<LIFETIME_OR_LABEL>]
     [Expression]
 ;
 
-ContinueExpression :
+ContinueExpression# :
     "continue"
     [<LIFETIME_OR_LABEL>]
     [Expression]
 ;
 
-ReturnExpression :
+ReturnExpression# :
     "return" [Expression]
 ;
 
@@ -803,14 +855,13 @@ CallParams :
    ")"
 ;
 
-
-PathExpression : QualifiedPathInExpression | PathInExpression ;
+PathExpression# : QualifiedPathInExpression | PathInExpression ;
 
 AsyncBlockExpression : "async" ["move"] =>|+1 BlockExpression ;
 
 UnsafeBlockExpression : "unsafe" BlockExpression ;
 
-LoopExpression :
+LoopExpression#LabeledBlock :
     [LoopLabel]
     =>|+1
     (
@@ -911,11 +962,24 @@ LetStatement :
    ";"
 ;
 
-Pattern : ["|"] PatternNoTopAlt ("|" PatternNoTopAlt)* ;
+Pattern#interface : ["|"] PatternNoTopAlt ("|" PatternNoTopAlt)* ;
 
-PatternNoTopAlt : RangePattern | PatternWithoutRange ;
+INJECT IdentifierPattern : implements Pattern
+INJECT LiteralPattern : implements Pattern
+INJECT MacroInvocation : implements Pattern
+INJECT PathPattern : implements Pattern
+INJECT RangePattern : implements Pattern
+INJECT ReferencePattern : implements Pattern
+INJECT RestPattern : implements Pattern
+INJECT SlicePattern : implements Pattern
+INJECT StructPattern : implements Pattern
+INJECT TuplePattern : implements Pattern
+INJECT TupleStructPattern : implements Pattern
+INJECT WildcardPattern : implements Pattern
 
-PatternWithoutRange :
+PatternNoTopAlt#void : RangePattern | PatternWithoutRange ;
+
+PatternWithoutRange#void :
     "_" #WildcardPattern(1)
     |
     ".." #RestPattern(1)
@@ -939,7 +1003,7 @@ PatternWithoutRange :
     PathPattern
 ;
 
-LiteralPattern :
+LiteralPattern# :
     "true"
     | "false"
     | <CHAR_LITERAL>
@@ -950,9 +1014,9 @@ LiteralPattern :
     | ["-"] (<INTEGER_LITERAL>|<FLOATING_POINT_LITERAL>)
 ;
 
-IdentifierPattern : ["ref"] ["mut"] Identifier ENSURE ~("::") =>|| ["@" Pattern] ;
+IdentifierPattern# : ["ref"] ["mut"] Identifier ENSURE ~("::") =>|| ["@" Pattern] ;
 
-ReferencePattern : ("&"|"&&") ["mut"] PatternWithoutRange ;
+ReferencePattern# : ("&"|"&&") ["mut"] PatternWithoutRange ;
 
 PathInExpression : ["::"] PathExprSegment ("::" PathExprSegment)* ;
 
@@ -960,7 +1024,7 @@ PathExprSegment : PathIdentSegment ["::" =>|+1 GenericArgs] ;
 
 PathIdentSegment# : Identifier | "super" | "self" | "Self" | "crate" | "$crate" ;
 
-PathPattern : PathInExpression | QualifiedPathInExpression ;
+PathPattern# : PathInExpression | QualifiedPathInExpression ;
 
 QualifiedPathInExpression : QualifiedPathType ("::" PathExprSegment)+ ;
 
@@ -1059,7 +1123,6 @@ ExternCrate :
     [ "as" (Identifier | "_") ]
     ";"
 ;
-
 
 ExternBlock :
     ["unsafe"]
