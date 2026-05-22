@@ -454,30 +454,38 @@ Type :
    |
    ImplTraitType
    |
-   SCAN TraitObjectType =>||
+   TraitObjectType =>||
    |
    TypeNoBounds
 ;
 
 TypeNoBounds :
-      MacroInvocation
-    | ImplTraitTypeOneBound
-    | TraitObjectTypeOneBound
-    | TypePath
-    | TupleType
-    | NeverType
-    | RawPointerType
-    | ReferenceType
-    | ArrayType
-    | SliceType
-    | InferredType
-    | QualifiedPathInType
-    | BareFunctionType
+    "!" #NeverType(1)
+    |
+    "_" #InferredType(1)
+    |
+    MacroInvocation
+    |
+    ImplTraitTypeOneBound
+    |
+    TraitObjectTypeOneBound
+    |
+    TypePath
+    |
+    TupleType
+    |
+    RawPointerType
+    |
+    ReferenceType
+    |
+    ArrayType
+    |
+    SliceType
+    |
+    QualifiedPathInType
+    |
+    BareFunctionType
 ;
-
-NeverType# : "!" ;
-
-InferredType# : "_" ;
 
 ImplTraitType : "impl" =>|+1 TypeParamBounds ;
 
@@ -876,7 +884,7 @@ LoopLabel : <LIFETIME_OR_LABEL> ":" ;
 
 InfiniteLoopExpression : "loop" BlockExpression ;
 
-WhileExpression : "while" ConditionExpression BlockExpression ;
+WhileExpression : "while" ConditionExpression ("&&" ChainedLetExp)* BlockExpression ;
 
 ChainedLetExp :
   "let"
@@ -1180,10 +1188,15 @@ SimplePath : ["::"] =>|+1 SimplePathSegment ("::" =>|+1 SimplePathSegment)* ;
 
 SimplePathSegment : Identifier | "super" | "self" | "crate" | "$crate" | "unsafe";
 
-MacroInvocation: ("try"| SimplePath) "!" =>|+1 DelimTokenTree ;
+MacroInvocation:
+    ("try"| SimplePath)
+    "!"
+    =>|+1
+    DelimTokenTree
+;
 
 MacroInvocationSemi :
-   SCAN 3
+   SCAN ("try"|SimplePath) "!" ("("|"{"|"[") =>
    MacroInvocation
    [SCAN 0 {endDelim != RBRACE} => ";"]
 ;
