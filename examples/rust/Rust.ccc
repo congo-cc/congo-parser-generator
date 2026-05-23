@@ -311,9 +311,9 @@ TypeParamBounds# : TypeParamBound ("+" =>|+1 TypeParamBound)* ["+"] ;
 TypeParamBound#void : Lifetime | TraitBound | UseBound ;
 
 TraitBound :
-   ["?"] [ForLifetimes] TypePath
-   |
    "(" ["?"] [ForLifetimes] TypePath ")"
+   |
+   ["?"] [ForLifetimes] TypePath
 ;
 
 UseBound : "use" UseBoundGenericArgs ;
@@ -353,18 +353,28 @@ GenericArg# :
     |
     ["-"] LiteralExpression
     |
-    GenericArgsBinding
-    |
-    GenericArgsBounds
-    |
-    Type
-    |
     "{" Expression "}" // The expression inside is restricted to constant expressions in reality. REVISIT
+    |
+    GenericArgBinding
 ;
 
-GenericArgsBinding : Identifier [GenericArgs] "=" =>|| Type ;
-
-GenericArgsBounds : ["const"] Identifier [GenericArgs] ":" =>|| TypeParamBounds ;
+GenericArgBinding#void :
+    ["const"]
+    {
+        boolean seenConst = getTokenType(0) == CONST;
+        boolean maybeMore = getToken(1) instanceof NODE_PACKAGE.Ident
+                && (getTokenType(2) == LT || getTokenType(2) == ASSIGN || getTokenType(2) == COLON);
+        int numNodes = seenConst ? 4 : 3;
+    }
+    Type
+    [
+        SCAN {maybeMore && !seenConst} =>
+        "=" Type #GenericArgsBinding(3)
+        |
+        SCAN {maybeMore} =>
+        ":" TypeParamBounds #GenericArgsBounds(numNodes)
+    ]
+;
 
 TypePathFn :
     "("
@@ -765,12 +775,18 @@ LazyOrExpression : LazyAndExpression ("||" LazyAndExpression)* ;
 
 RangeExpression :
     (".."|"..=")
-    [LazyOrExpression]
+    [
+        ENSURE {getTokenType(1) != LBRACE || !isInConditionButNotParenthesized()}
+        LazyOrExpression
+    ]
     |
     LazyOrExpression
     [
         (".."|"..=")
-        [ENSURE ~("{") LazyOrExpression]
+        [
+            ENSURE {getTokenType(1) != LBRACE || !isInConditionButNotParenthesized()}
+            LazyOrExpression
+        ]
     ]
 ;
 
@@ -924,7 +940,7 @@ IfExpression :
 IfLetExpression :
     "if" "let" =>||
     Pattern "=" ConditionExpression
-    ("&&" ChainedLetExp)* // Note that this is a bleeding edge language feature
+    ("&&" ChainedLetExp)*
     BlockExpression
     [
         "else"
