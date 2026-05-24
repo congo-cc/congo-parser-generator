@@ -31,7 +31,7 @@ TOKEN #KeyWord :
 | < ELSE: "else" >
 | < ENUM: "enum" >
 | < EXTERN: "extern" >
-| < FALSE: "false" >
+| < FALSE: "false" > #BooleanLiteral
 | < FINAL: "final" >
 | < FN: "fn" >
 | < FOR: "for" >
@@ -56,7 +56,7 @@ TOKEN #KeyWord :
 | < STRUCT: "struct" >
 | < SUPER: "super" >
 | < TRAIT: "trait" >
-| < TRUE: "true" >
+| < TRUE: "true" > #BooleanLiteral
 | < TRY: "try" >
 | < TYPE: "type" >
 | < TYPEOF: "typeof" >
@@ -84,7 +84,7 @@ TOKEN #NumericalLiteral :
        |<FLOATING_POINT_LITERAL2>
        |<FLOATING_POINT_LITERAL3>
        |<FLOATING_POINT_LITERAL4>
-    > #FloatingPointLiteral
+    >
     {
       if (charAt(matchEnd-1) == '.' && (charAt(matchEnd) == '.' || Character.isUnicodeIdentifierStart(charAt(matchEnd)))) {
          matchedToken.truncate(1);
@@ -102,7 +102,7 @@ TOKEN #NumericalLiteral :
     |
     <#FLOAT_EXPONENT: ["e","E"] (["+","-"])? ("_")* <DEC_LITERAL>>
     |
-    <INTEGER_LITERAL: (<DEC_LITERAL> | <BIN_LITERAL> | <OCT_LITERAL> | <HEX_LITERAL>) (<INTEGER_SUFFIX>)?> #IntegerLiteral
+    <INTEGER_LITERAL: (<DEC_LITERAL> | <BIN_LITERAL> | <OCT_LITERAL> | <HEX_LITERAL>) (<INTEGER_SUFFIX>)?>
     |
     <#DEC_LITERAL: ["0"-"9"] (["0"-"9","_"])*>
     |
@@ -164,7 +164,7 @@ TOKEN #Punctuation :
 ;
 
 
-TOKEN #Literal :
+TOKEN #CharLiteral :
   <CHAR_LITERAL:
       "'"
       (

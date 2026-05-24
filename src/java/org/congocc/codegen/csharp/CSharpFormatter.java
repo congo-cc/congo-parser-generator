@@ -74,7 +74,7 @@ public class CSharpFormatter extends Node.Visitor {
     }
 
     void visit(Delimiter delimiter) {
-        CSharpToken.TokenType type = delimiter.getType();
+        var type = delimiter.getType();
         if (type == LBRACE) {
             addSpaceIfNecessary();
             buffer.append('{');
@@ -233,19 +233,5 @@ public class CSharpFormatter extends Node.Visitor {
             if (buffer.length() == 0) break;
             lastChar = buffer.codePointBefore(buffer.length());
         }
-    }
-
-    private boolean atLineStart() {
-        int pos = buffer.length() -1;
-        while (pos >= 0) {
-            char ch = buffer.charAt(pos--);
-            if (ch == '\n') return true;
-            if (!Character.isWhitespace(ch)) return false;
-        }
-        return true;
-    }
-
-    private int currentLineLength() {
-        return buffer.length() - buffer.lastIndexOf(eol) - eol.length();
     }
 }

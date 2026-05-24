@@ -53,7 +53,7 @@ OuterAttribute :
    "]"
 ;
 
-Item :
+Item#ItemWithAttributes :
   (OuterAttribute)*
   (
     MacroRulesDefinition
@@ -64,7 +64,7 @@ Item :
   )
 ;
 
-Attr :
+Attr# :
     SimplePath
     [AttrInput]
 ;
@@ -75,7 +75,13 @@ AttrInput :
    DelimTokenTree
 ;
 
-LiteralExpression :
+INJECT LiteralExpression : extends Expression
+INJECT BooleanLiteral : implements LiteralExpression
+INJECT CharLiteral : implements LiteralExpression
+INJECT NumericalLiteral : implements LiteralExpression
+INJECT StringLiteral : implements LiteralExpression
+
+LiteralExpression#interface :
    <CHAR_LITERAL>
    |
    <STRING_LITERAL>
@@ -305,9 +311,9 @@ TypeParamBounds# : TypeParamBound ("+" =>|+1 TypeParamBound)* ["+"] ;
 TypeParamBound#void : Lifetime | TraitBound | UseBound ;
 
 TraitBound :
-   ["?"] [ForLifetimes] TypePath
-   |
    "(" ["?"] [ForLifetimes] TypePath ")"
+   |
+   ["?"] [ForLifetimes] TypePath
 ;
 
 UseBound : "use" UseBoundGenericArgs ;
@@ -347,18 +353,28 @@ GenericArg# :
     |
     ["-"] LiteralExpression
     |
-    GenericArgsBinding
-    |
-    GenericArgsBounds
-    |
-    Type
-    |
     "{" Expression "}" // The expression inside is restricted to constant expressions in reality. REVISIT
+    |
+    GenericArgBinding
 ;
 
-GenericArgsBinding : Identifier [GenericArgs] "=" =>|| Type ;
-
-GenericArgsBounds : ["const"] Identifier [GenericArgs] ":" =>|| TypeParamBounds ;
+GenericArgBinding#void :
+    ["const"]
+    {
+        boolean seenConst = getTokenType(0) == CONST;
+        boolean maybeMore = getToken(1) instanceof NODE_PACKAGE.Ident
+                && (getTokenType(2) == LT || getTokenType(2) == ASSIGN || getTokenType(2) == COLON);
+        int numNodes = seenConst ? 4 : 3;
+    }
+    Type
+    [
+        SCAN {maybeMore && !seenConst} =>
+        "=" Type #GenericArgsBinding(3)
+        |
+        SCAN {maybeMore} =>
+        ":" TypeParamBounds #GenericArgsBounds(numNodes)
+    ]
+;
 
 TypePathFn :
     "("
@@ -420,7 +436,7 @@ BlockExpression :
    "}"
 ;
 
-Statement :
+Statement#void :
    ";" #EmptyStatement(1)
    |
    MacroRulesDefinition
@@ -454,24 +470,32 @@ Type :
 ;
 
 TypeNoBounds :
-      ImplTraitTypeOneBound
-    | TraitObjectTypeOneBound
-    | TypePath
-    | TupleType
-    | NeverType
-    | RawPointerType
-    | ReferenceType
-    | ArrayType
-    | SliceType
-    | InferredType
-    | QualifiedPathInType
-    | BareFunctionType
-    | MacroInvocation
+    "!" #NeverType(1)
+    |
+    "_" #InferredType(1)
+    |
+    MacroInvocation
+    |
+    ImplTraitTypeOneBound
+    |
+    TraitObjectTypeOneBound
+    |
+    TypePath
+    |
+    TupleType
+    |
+    RawPointerType
+    |
+    ReferenceType
+    |
+    ArrayType
+    |
+    SliceType
+    |
+    QualifiedPathInType
+    |
+    BareFunctionType
 ;
-
-NeverType# : "!" ;
-
-InferredType# : "_" ;
 
 ImplTraitType : "impl" =>|+1 TypeParamBounds ;
 
@@ -481,13 +505,11 @@ BareFunctionType :
    [ForLifetimes]
    FunctionTypeQualifiers
    "fn"
-   "("
-   [FunctionParametersMaybeNamedVariadic]
-   ")"
+   MaybeNamedParameters
    [BareFunctionReturnType]
 ;
 
-BareFunctionReturnType : "->" TypeNoBounds ;
+BareFunctionReturnType#FunctionReturnType : "->" TypeNoBounds ;
 
 TupleType :
    "("
@@ -515,7 +537,15 @@ QualifiedPathInType : QualifiedPathType ("::" TypePathSegment)+ ;
 
 QualifiedPathType : "<" Type ["as" TypePath] ">" ;
 
-FunctionParametersMaybeNamedVariadic : MaybeNamedFunctionParametersVariadic =>|| | MaybeNamedFunctionParameters ;
+MaybeNamedParameters :
+    "("
+    [
+        MaybeNamedFunctionParametersVariadic =>||
+        |
+        MaybeNamedFunctionParameters
+    ]
+    ")"
+;
 
 MaybeNamedFunctionParameters : MaybeNamedParam ("," =>|+1 MaybeNamedParam)* [","] ;
 
@@ -523,7 +553,47 @@ MaybeNamedParam : (OuterAttribute)* [(Identifier | <UNDERSCORE>) ":" =>||] Type 
 
 MaybeNamedFunctionParametersVariadic : (MaybeNamedParam ",")+ (OuterAttribute)* "...";
 
-Expression :
+INJECT AdditiveExpression : implements Expression
+INJECT AndExpression : implements Expression
+INJECT ArrayExpression : implements Expression
+INJECT AssignmentExpression : implements Expression
+INJECT AsyncBlockExpression : implements Expression
+INJECT AwaitExpression : implements Expression
+INJECT BlockExpression : implements Expression
+INJECT BreakExpression : implements Expression
+INJECT CallExpression : implements Expression
+INJECT CaretExpression : implements Expression
+INJECT ClosureExpression : implements Expression
+INJECT ComparisonExpression : implements Expression
+INJECT ConstBlock : implements Expression
+INJECT ContinueExpression : implements Expression
+INJECT ErrorPropagationExpression : implements Expression
+INJECT FieldExpression : implements Expression
+INJECT ForExpression : implements Expression
+INJECT IfExpression : implements Expression
+INJECT IfLetExpression : implements Expression
+INJECT IndexExpression : implements Expression
+INJECT LabeledBlock : implements Expression
+INJECT LazyAndExpression : implements Expression
+INJECT LazyOrExpression : implements Expression
+INJECT MacroInvocation : implements Expression
+INJECT MatchExpression : implements Expression
+INJECT MethodCall : implements Expression
+INJECT MultiplicativeExpression : implements Expression
+INJECT OrExpression : implements Expression
+INJECT ParentheticalExpression : implements Expression
+INJECT PathExpression : implements Expression
+INJECT Placeholder : implements Expression
+INJECT RangeExpression : implements Expression
+INJECT ReturnExpression : implements Expression
+INJECT ShiftExpression : implements Expression
+INJECT StructExpression : implements Expression
+INJECT TupleIndexingExpression : implements Expression
+INJECT TypeCastExpression : implements Expression
+INJECT UnaryExpression : implements Expression
+INJECT UnsafeBlockExpression : implements Expression
+
+Expression#interface :
    (OuterAttribute)*
    =>|+1
    (
@@ -561,7 +631,7 @@ ExpressionWithBlock#void :
       BlockExpression
 ;
 
-BaseExpression :
+BaseExpression#void :
     IfLetExpression
     |
     IfExpression
@@ -705,12 +775,18 @@ LazyOrExpression : LazyAndExpression ("||" LazyAndExpression)* ;
 
 RangeExpression :
     (".."|"..=")
-    [LazyOrExpression]
+    [
+        ENSURE {getTokenType(1) != LBRACE || !isInConditionButNotParenthesized()}
+        LazyOrExpression
+    ]
     |
     LazyOrExpression
     [
         (".."|"..=")
-        [ENSURE ~("{") LazyOrExpression]
+        [
+            ENSURE {getTokenType(1) != LBRACE || !isInConditionButNotParenthesized()}
+            LazyOrExpression
+        ]
     ]
 ;
 
@@ -726,19 +802,19 @@ AssignmentOperator#void :
     ("="|"+="|"-="|"*="|"/="|"%="|"&="|"|="|"^="|"<<="|">>=")
 ;
 
-BreakExpression :
+BreakExpression# :
     "break"
     [<LIFETIME_OR_LABEL>]
     [Expression]
 ;
 
-ContinueExpression :
+ContinueExpression# :
     "continue"
     [<LIFETIME_OR_LABEL>]
     [Expression]
 ;
 
-ReturnExpression :
+ReturnExpression# :
     "return" [Expression]
 ;
 
@@ -803,14 +879,13 @@ CallParams :
    ")"
 ;
 
-
-PathExpression : QualifiedPathInExpression | PathInExpression ;
+PathExpression# : QualifiedPathInExpression | PathInExpression ;
 
 AsyncBlockExpression : "async" ["move"] =>|+1 BlockExpression ;
 
 UnsafeBlockExpression : "unsafe" BlockExpression ;
 
-LoopExpression :
+LoopExpression#LabeledBlock :
     [LoopLabel]
     =>|+1
     (
@@ -825,7 +900,7 @@ LoopLabel : <LIFETIME_OR_LABEL> ":" ;
 
 InfiniteLoopExpression : "loop" BlockExpression ;
 
-WhileExpression : "while" ConditionExpression BlockExpression ;
+WhileExpression : "while" ConditionExpression ("&&" ChainedLetExp)* BlockExpression ;
 
 ChainedLetExp :
   "let"
@@ -865,7 +940,7 @@ IfExpression :
 IfLetExpression :
     "if" "let" =>||
     Pattern "=" ConditionExpression
-    ("&&" ChainedLetExp)* // Note that this is a bleeding edge language feature
+    ("&&" ChainedLetExp)*
     BlockExpression
     [
         "else"
@@ -911,11 +986,24 @@ LetStatement :
    ";"
 ;
 
-Pattern : ["|"] PatternNoTopAlt ("|" PatternNoTopAlt)* ;
+Pattern#interface : ["|"] PatternNoTopAlt ("|" PatternNoTopAlt)* ;
 
-PatternNoTopAlt : RangePattern | PatternWithoutRange ;
+INJECT IdentifierPattern : implements Pattern
+INJECT LiteralPattern : implements Pattern
+INJECT MacroInvocation : implements Pattern
+INJECT PathPattern : implements Pattern
+INJECT RangePattern : implements Pattern
+INJECT ReferencePattern : implements Pattern
+INJECT RestPattern : implements Pattern
+INJECT SlicePattern : implements Pattern
+INJECT StructPattern : implements Pattern
+INJECT TuplePattern : implements Pattern
+INJECT TupleStructPattern : implements Pattern
+INJECT WildcardPattern : implements Pattern
 
-PatternWithoutRange :
+PatternNoTopAlt#void : RangePattern | PatternWithoutRange ;
+
+PatternWithoutRange#void :
     "_" #WildcardPattern(1)
     |
     ".." #RestPattern(1)
@@ -939,7 +1027,7 @@ PatternWithoutRange :
     PathPattern
 ;
 
-LiteralPattern :
+LiteralPattern# :
     "true"
     | "false"
     | <CHAR_LITERAL>
@@ -950,9 +1038,9 @@ LiteralPattern :
     | ["-"] (<INTEGER_LITERAL>|<FLOATING_POINT_LITERAL>)
 ;
 
-IdentifierPattern : ["ref"] ["mut"] Identifier ENSURE ~("::") =>|| ["@" Pattern] ;
+IdentifierPattern# : ["ref"] ["mut"] Identifier ENSURE ~("::") =>|| ["@" Pattern] ;
 
-ReferencePattern : ['box'] ("&"|"&&") ["mut"] PatternWithoutRange ;
+ReferencePattern# : ("&"|"&&") ["mut"] PatternWithoutRange ;
 
 PathInExpression : ["::"] PathExprSegment ("::" PathExprSegment)* ;
 
@@ -960,7 +1048,7 @@ PathExprSegment : PathIdentSegment ["::" =>|+1 GenericArgs] ;
 
 PathIdentSegment# : Identifier | "super" | "self" | "Self" | "crate" | "$crate" ;
 
-PathPattern : PathInExpression | QualifiedPathInExpression ;
+PathPattern# : PathInExpression | QualifiedPathInExpression ;
 
 QualifiedPathInExpression : QualifiedPathType ("::" PathExprSegment)+ ;
 
@@ -1060,7 +1148,6 @@ ExternCrate :
     ";"
 ;
 
-
 ExternBlock :
     ["unsafe"]
     "extern" [Abi] =>||
@@ -1117,10 +1204,15 @@ SimplePath : ["::"] =>|+1 SimplePathSegment ("::" =>|+1 SimplePathSegment)* ;
 
 SimplePathSegment : Identifier | "super" | "self" | "crate" | "$crate" | "unsafe";
 
-MacroInvocation: SimplePath "!" =>|+1 DelimTokenTree ;
+MacroInvocation:
+    ("try"| SimplePath)
+    "!"
+    =>|+1
+    DelimTokenTree
+;
 
 MacroInvocationSemi :
-   SCAN 3
+   SCAN ("try"|SimplePath) "!" ("("|"{"|"[") =>
    MacroInvocation
    [SCAN 0 {endDelim != RBRACE} => ";"]
 ;
@@ -1178,7 +1270,7 @@ AnyToken#void :
   | "move"|"mut"|"override"|"priv"|"pub"
   | "ref"|"return"|"self"|"Self"
   | "static"|"'static"|"struct"|"super"
-  | "trait"|"true"|"type"|"typeof"
+  | "trait"|"true"|"try"|"type"|"typeof"
   | "unsafe"|"unsized"|"use"|"virtual"
   | "where"|"while"|"yield"
   | "{"|"}"|"["|"]"|"("|")"

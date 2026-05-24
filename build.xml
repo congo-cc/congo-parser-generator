@@ -228,6 +228,20 @@
     <ant dir="examples/cics" target="test-java" />
   </target>
 
+  <target name="test-rust-formatter" depends="jar,-rust-guard" if="rust.on">
+    <echo>Running RustFormatter golden-file tests</echo>
+    <javac srcdir="tests/rust-formatter"
+           destdir="build"
+           classpath="congocc.jar"
+           includeantruntime="false"/>
+    <java classname="RustFormatterTest" fork="true" failonerror="true">
+      <classpath>
+        <pathelement path="build"/>
+        <pathelement location="congocc.jar"/>
+      </classpath>
+    </java>
+  </target>
+
   <target name="test-rust" depends="jar,-rust-guard" if="rust.on">
     <echo>Testing Rust parser generation</echo>
     <ant dir="examples/json" target="test-rust" />

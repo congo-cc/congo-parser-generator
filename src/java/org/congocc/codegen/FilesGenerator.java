@@ -322,7 +322,7 @@ public class FilesGenerator {
                 org.congocc.codegen.csharp.Reaper reaper = new org.congocc.codegen.csharp.Reaper(cscu);
                 reaper.reap();
             }
-            CSharpFormatter formatter = new CSharpFormatter();
+            var formatter = new CSharpFormatter();
             formatter.visit(cscu);
             String s = formatter.getText();
             int finalLines = countChars(s, '\n');
@@ -333,9 +333,8 @@ public class FilesGenerator {
         }
     }
 
-    // Write raw template output for Rust files.  CongoCC does not have a Rust
-    // parser for AST-based post-processing; users can run rustfmt externally.
     void outputRustFile(String code, Path outputFile) throws IOException {
+        // Passthrough: RustFormatter is not yet safe on generated parser output (PR #243).
         try (Writer out = Files.newBufferedWriter(outputFile)) {
             out.write(code);
         }
