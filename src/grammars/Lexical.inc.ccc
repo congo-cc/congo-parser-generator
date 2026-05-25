@@ -22,35 +22,19 @@ TOKEN :
       ){2,}
        "'"
   > #StringLiteral
-  |
-  <START_UNPARSED : "{" (["J","P","C"])? "%">
-  {
-     char initialChar = matchedToken.charAt(1);
-     char langInitialChar = getGrammar().getAppSettings().getCodeLang().toString().charAt(0);
-     if (initialChar != '%' && initialChar != langInitialChar) {
-        matchedToken.setUnparsed(true);
-     }
-  } : IN_UNPARSED_CODE_BLOCK
-  |
-  <END_UNPARSED : "%}">
-  {%
-    if (matchedToken.previousCachedToken().isUnparsed()) {
-        matchedToken.setUnparsed(true);
-    }
-  %}
+;
+
+MORE :
+  <START_UNPARSED : "{" (["J","P","C","R"])? "%"> : IN_UNPARSED_CODE_BLOCK
+;
+
+<IN_UNPARSED_CODE_BLOCK> MORE :
+  <ANY_CHAR : ~[]>
 ;
 
 <IN_UNPARSED_CODE_BLOCK> TOKEN :
-  <?UNPARSED_CONTENT : (~[])+ <END_UNPARSED>>
-  #UnparsedContent
-  {
-    if (matchedToken.previousCachedToken().isUnparsed()) {
-        matchedToken.setUnparsed(true);
-    }
-    matchedToken.truncate(2);
-  } : JAVA
+  <RAW_CODE_BLOCK : "%}" ("#")?> : JAVA
 ;
-
 
 TokenProduction :
 {

@@ -8,3 +8,13 @@ PARSER_PACKAGE=org.congocc.parser.rust;
 
 INCLUDE "../../examples/rust/Rust.ccc";
 
+BlockNoDelimiters :
+   {boolean seenLastStatement = false;}
+   (InnerAttribute)*
+   (
+      SCAN {!seenLastStatement}
+      => Statement
+      {seenLastStatement = getTokenType(0) != RBRACE && getTokenType(0) != SEMICOLON;}
+   )*
+   <EOF>
+;

@@ -8,6 +8,7 @@ import static org.congocc.parser.Node.CodeLang.*;
 import org.congocc.parser.csharp.CSharpParser;
 import org.congocc.parser.python.PythonParser;
 import org.congocc.parser.python.ast.Module;
+import org.congocc.parser.rust.RustParser;
 import org.congocc.parser.tree.Assertion;
 import org.congocc.parser.tree.CodeInjection;
 import org.congocc.parser.tree.EmbeddedCode;
@@ -29,10 +30,6 @@ public class RawCode extends EmptyExpansion implements EmbeddedCode {
         return this.parseException;
     }
 
-    public Node getParsedContent() {
-        return parsedContent;
-    }
-
     public void parseContent() {
         if (!alreadyParsed && !wrongLanguageIgnore()) {
             try {
@@ -40,7 +37,7 @@ public class RawCode extends EmptyExpansion implements EmbeddedCode {
                     case JAVA -> parseJava();
                     case CSHARP -> parseCSharp();
                     case PYTHON -> parsePython();
-                    case RUST -> {}
+                    case RUST -> parseRust();
                 }
             } catch(ParseException pe) {
                 this.parseException = pe;
@@ -53,8 +50,11 @@ public class RawCode extends EmptyExpansion implements EmbeddedCode {
         return alreadyParsed;
     }
 
-    public Token getRawContent() {
-        return (Token) get(1);
+    public String getRawContent() {
+        String fullContent = get(0).toString();
+        int startIndex = fullContent.indexOf('%')+1;
+        int endIndex = fullContent.lastIndexOf('%');
+        return fullContent.substring(startIndex, endIndex);
     }
 
     public boolean isExpression() {
@@ -72,29 +72,25 @@ public class RawCode extends EmptyExpansion implements EmbeddedCode {
     }
 
     public CodeLang specifiedLanguage() {
-        char initialChar = ((Token) get(1)).charAt(0);
-        return switch (initialChar) {
+        char langChar = ((Token) get(0)).charAt(1);
+        return switch (langChar) {
             case 'P' -> PYTHON;
             case 'C' -> CSHARP;
             case 'J' -> JAVA;
+            case 'R' -> RUST;
             default -> null;
         };
     }
 
     public String toString() {
         if (wrongLanguageIgnore()) {
-            return switch(specifiedLanguage()) {
-                case PYTHON -> "\n# No output. This is Python code.";
-                case JAVA -> "// No output. This is Java code.";
-                case CSHARP -> "// No output. This is CSharp code.";
-                case RUST -> "// No output. This is Rust code.";
-            };
+            return "";
         }
         if (useAltPythonFormat()) {
             parseContent();
             return ((Module) parsedContent).toAltFormat();
         }
-        return getRawContent().toString();
+        return getRawContent();
     }
 
     public boolean getHitError() {
@@ -102,7 +98,10 @@ public class RawCode extends EmptyExpansion implements EmbeddedCode {
     }
 
     public boolean isAppliesInLookahead() {
-        return this.size()>3 || getContainingProduction() != null && getContainingProduction().isOnlyForLookahead();
+        Token content = (Token) get(0);
+        return content.charAt(content.length()-1) == '#'
+               || getContainingProduction() != null
+                  && getContainingProduction().isOnlyForLookahead();
     }
 
     @Override
@@ -110,10 +109,21 @@ public class RawCode extends EmptyExpansion implements EmbeddedCode {
         return isAppliesInLookahead();
     }
 
+    void parseRust() {
+        String code = getRawContent();
+        RustParser rustParser = new RustParser(getInputSource(), code);
+        rustParser.setStartingPos(getBeginLine(), getContentBeginColumn());
+        rustParser.BlockNoDelimiters();
+    }
+
+    private int getContentBeginColumn() {
+        return getBeginColumn() + get(0).toString().indexOf('%') + 1;
+    }
+
     void parseJava() {
-        Token code = getRawContent();
+        String code = getRawContent();
         CongoCCParser cccParser = new CongoCCParser(getInputSource(), code);
-        cccParser.setStartingPos(code.getBeginLine(), code.getBeginColumn());
+        cccParser.setStartingPos(getBeginLine(), getContentBeginColumn());
         if (isExpression()) {
             cccParser.EmbeddedJavaExpression();
         }
@@ -126,13 +136,13 @@ public class RawCode extends EmptyExpansion implements EmbeddedCode {
     }
 
     void parseCSharp() {
-        Token code = getRawContent();
+        String code = getRawContent();
         CSharpParser csParser = new CSharpParser(getInputSource(), code);
-        csParser.setStartingPos(code.getBeginLine(), code.getBeginColumn());
+        csParser.setStartingPos(getBeginLine(), getContentBeginColumn());
         if (isExpression()) {
-            parsedContent = csParser.EmbeddedCSharpExpression();
+            csParser.EmbeddedCSharpExpression();
         } else {
-            parsedContent = csParser.EmbeddedCSharpBlock();
+            csParser.EmbeddedCSharpBlock();
         }
     }
 
@@ -146,19 +156,19 @@ public class RawCode extends EmptyExpansion implements EmbeddedCode {
     }
 
     void parsePythonBlock() {
-        String code = get(1).toString();
+        String code = getRawContent();
         code = normalizePythonBlock(code);
         PythonParser pyParser = new PythonParser(getInputSource(), code);
-        pyParser.setStartingPos(get(1).getBeginLine(), get(1).getBeginColumn());
+        pyParser.setStartingPos(getBeginLine(), getContentBeginColumn());
         pyParser.setExtraIndent(extraIndent);
         parsedContent = pyParser.Module();
     }
 
     void parsePythonExpression() {
-        Token code = getRawContent();
+        String code = getRawContent();
         PythonParser pyParser = new PythonParser(getInputSource(), code);
         pyParser.setLineJoining(true);
-        pyParser.setStartingPos(code.getBeginLine(), code.getBeginColumn());
+        pyParser.setStartingPos(getBeginLine(), getContentBeginColumn());
         parsedContent = pyParser.EmbeddedPythonExpression();
     }
 

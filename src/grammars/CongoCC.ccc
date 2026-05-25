@@ -435,7 +435,7 @@ GrammarInclusion throws IOException :
        "(" <STRING_LITERAL> {locations.add(((StringLiteral)lastConsumedToken).getString());} ")"
    )
    [";"]
-   {%
+   {J%
       if (enterIncludes) {
           Node included = grammar.include(locations, includeToken);
           if (included!=null) {
@@ -444,6 +444,10 @@ GrammarInclusion throws IOException :
               getErrors().addWarning(thisProduction, "File is already included.");
           }
       }
+   %}
+   {R%
+      This raw code block is ignored, so
+      no need for valid Rust code here!
    %}
 ;
 
@@ -1232,7 +1236,7 @@ INJECT Lookahead :
 {
     @Property Expansion expansion, nestedExpansion;
     @Property boolean negated, semanticLookaheadNested;
-    @Property Expression semanticLookahead;
+    @Property EmbeddedCode semanticLookahead;
 
     public boolean getRequiresScanAhead() {
         if (!getLookaheadExpansion().isPossiblyEmpty()) return true;
@@ -1415,10 +1419,7 @@ ExpansionUnit #void :
 ;
 
 RawCode#org.congocc.core.RawCode :
-   <START_UNPARSED>
-   <UNPARSED_CONTENT>
-   <END_UNPARSED>
-   [<HASH>]
+   <RAW_CODE_BLOCK>
 ;
 
 #EmbeddedCode#interface :

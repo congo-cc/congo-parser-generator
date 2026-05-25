@@ -639,7 +639,7 @@
    #if classname = "CodeBlock"
       ${expansion}
    #elif classname = "RawCode"
-      ${expansion.rawContent}
+      ${expansion}
    #elif classname = "UncacheTokens"
          uncacheTokens();
    #elif classname = "Failure"
