@@ -273,7 +273,7 @@ ${is}    self.restore_call_stack(${callStackSizeVar})
             #-- Suppress JTB behavior for this and subordinate expansion elements in this production --
          #endif
          [#-- Do not merge {syntheticNode:false} into treeNodeBehavior: bean+hash replace drops nodeName and breaks nodeClassName for explicit TNAs. syntheticNode?? is absent on real TBAs. --]
-      #elseif expansion.assignment??
+      #elif expansion.assignment??
          #-- No TNA, but assignment is present. --
          #if settings.syntheticNodesEnabled && settings.treeBuildingEnabled && isProductionInstantiatingNode(expansion)
             #-- Assignment is explicitly provided and synthetic nodes are enabled. --
@@ -413,19 +413,19 @@ ${is}    self.restore_call_stack(${callStackSizeVar})
       [#var classname = expansion.simpleName]
       [#if classname = "ZeroOrOne"]
          [#return classname/]
-      [#elseif classname = "ZeroOrMore"]
+      [#elif classname = "ZeroOrMore"]
          [#return classname/]
-      [#elseif classname = "OneOrMore"]
+      [#elif classname = "OneOrMore"]
          [#return classname/]
-      [#elseif isJtbParseTree() && classname = "Terminal"]
+      [#elif isJtbParseTree() && classname = "Terminal"]
          [#return classname/]
-      [#elseif classname = "ExpansionChoice"]
+      [#elif classname = "ExpansionChoice"]
          [#return "Choice"/]
-      [#elseif classname = "ExpansionWithParentheses" || classname = "BNFProduction"]
+      [#elif classname = "ExpansionWithParentheses" || classname = "BNFProduction"]
          [#-- the () will be skipped and the nested expansion processed, so built the tree node for it rather than this --]
          [#var innerExpansion = expansion.nestedExpansion/]
          [#return syntacticNodeName(innerExpansion)/]
-      [#elseif classname = "ExpansionSequence" &&
+      [#elif classname = "ExpansionSequence" &&
                expansion.parent?? &&
                (
                   expansion.parent.simpleName == "ExpansionWithParentheses" ||
@@ -512,7 +512,7 @@ ${is}        self.clear_node_scope()
    [#if assignment.existenceOf!false]
       [#-- replace "@" with "(((@) != null) ? true : false)" --]
       [#return "(True if ((@) != None) else False)" /]
-   [#elseif assignment.stringOf!false]
+   [#elif assignment.stringOf!false]
       [#-- replace "@" with the string value of the node or the empty string if None --]
       [#return "(lambda x = (@) : str(x) if x is not None else '')()" /]
    [/#if]
@@ -535,7 +535,7 @@ ${is}        self.clear_node_scope()
             [#-- This is an assignment of the current node's effective value to the specified property of the production node --]
             [#return globals::translateIdentifier("THIS") + "." + globals::translateIdentifier(lhsName) + " = " + getRhsAssignmentPattern(assignment) /]
          [/#if]
-      [#elseif assignment.namedAssignment!false]
+      [#elif assignment.namedAssignment!false]
          [#if assignment.addTo]
             [#-- This is the addition of the current node to the named child list of the production node --]
             [#return "${currentNodeVariableName()}" + ".add_to_named_child_list(\"" + globals::translateIdentifier(lhsName) + "\", " + getRhsAssignmentPattern(assignment) + ")" /]
@@ -564,9 +564,9 @@ ${is}        self.clear_node_scope()
    [/#if]
    [#if assignment?? && assignment.existenceOf]
       [#set type = "boolean"]
-   [#elseif assignment?? && assignment.existenceOf]
+   [#elif assignment?? && assignment.existenceOf]
       [#set type = "String"]
-   [#elseif assignment?? && assignment.addTo]
+   [#elif assignment?? && assignment.addTo]
       [#set type = "List<Node>"]
       [#set field = field + " = new ArrayList<Node>()"]
    [/#if]
@@ -607,17 +607,17 @@ ${is}        self.clear_node_scope()
 ${globals::translateCodeBlock(expansion, indent)}
    #elif classname = "RawCode"
       ${expansion}
-   [#elseif classname = "UncacheTokens"]
+   [#elif classname = "UncacheTokens"]
 ${is}self.uncache_tokens()
-   [#elseif classname = "Failure"]
+   [#elif classname = "Failure"]
       [@BuildCodeFailure expansion, indent /]
-   [#elseif classname = "Assertion"]
+   [#elif classname = "Assertion"]
       [@BuildAssertionCode expansion, indent, cardinalitiesVar /]
-   [#elseif classname = "TokenTypeActivation"]
+   [#elif classname = "TokenTypeActivation"]
       [@BuildCodeTokenTypeActivation expansion, indent /]
-   [#elseif classname = "TryBlock"]
+   [#elif classname = "TryBlock"]
       [@BuildCodeTryBlock expansion, indent, cardinalitiesVar /]
-   [#elseif classname = "AttemptBlock"]
+   [#elif classname = "AttemptBlock"]
       [@BuildCodeAttemptBlock expansion, indent, cardinalitiesVar /]
    [#else]
       [#-- take care of the tree node (if any) --]
@@ -630,7 +630,7 @@ ${is}self.uncache_tokens()
             [#-- take care of terminal and non-terminal expansions; they cannot contain child expansions --]
             [#if classname = "NonTerminal"]
                [@BuildCodeNonTerminal expansion, indent /]
-            [#elseif classname = "Terminal"]
+            [#elif classname = "Terminal"]
                [@BuildCodeTerminal expansion, indent /]
             [#else]
                [#-- take care of the syntactical expansions (which can contain child expansions) --]
@@ -642,16 +642,16 @@ ${is}self.uncache_tokens()
                [/#if]
                [#if classname = "ZeroOrOne"]
                   [@BuildCodeZeroOrOne expansion, indent, cardinalitiesVar /]
-               [#elseif classname = "ZeroOrMore"]
+               [#elif classname = "ZeroOrMore"]
                   [@BuildCodeZeroOrMore expansion, indent /]
-               [#elseif classname = "OneOrMore"]
+               [#elif classname = "OneOrMore"]
                   [@BuildCodeOneOrMore expansion, indent /]
-               [#elseif classname = "ExpansionChoice"]
+               [#elif classname = "ExpansionChoice"]
                   [@BuildCodeChoice expansion, indent, cardinalitiesVar /]
-               [#elseif classname = "ExpansionWithParentheses"]
+               [#elif classname = "ExpansionWithParentheses"]
                   [#-- Recurse; the real expansion is nested within this one (but the LHS, if any, is on the parent) --]
                   [@BuildExpansionCode expansion.nestedExpansion, indent, cardinalitiesVar /]
-               [#elseif classname = "ExpansionSequence"]
+               [#elif classname = "ExpansionSequence"]
                   [@BuildCodeSequence expansion, indent, cardinalitiesVar /]
                   [#-- leave the topLevelExpansion one-shot alone (see above) --]
                [/#if]
@@ -694,10 +694,13 @@ ${is}pass
 [#if assertion.lookBehind??]
 ${is}if [#if !assertion.lookBehind.negated]not [/#if]self.${assertion.lookBehind.routineName}():
 ${is}    self.fail("${assertionMessage}"${optionalPart})
-[#elseif assertion.assertionExpression??]
+[#elif assertion.assertionExpression??]
 ${is}if not (${globals::translateExpression(assertion.assertionExpression)}):
 ${is}    self.fail("${assertionMessage}"${optionalPart})
-[#elseif assertion.cardinalityConstraint?? && cardinalitiesVar?? && (cardinalitiesVar?length > 0)]
+[#elif assertion.rawCode?? && !assertion.rawCode.wrongLanguageIgnore]
+${is}if not (${assertion.rawCode}):
+${is}    self.fail("${assertionMessage}"${optionalPart})
+[#elif assertion.cardinalityConstraint?? && cardinalitiesVar?? && (cardinalitiesVar?length > 0)]
 ${is}if not ${cardinalitiesVar}.choose(${assertion.assertionIndex}, False):
 ${is}    self.fail('Maximum cardinality constraint at: ${assertion.location?j_string} exceeded.')
 [/#if]
@@ -766,7 +769,7 @@ ${is}self.outer_follow_set = self.${nonterminal.followSetVarName}
       [#else]
 ${is}self.outer_follow_set = None
       [/#if]
-   [#elseif !followSet.empty]
+   [#elif !followSet.empty]
 ${is}if self.outer_follow_set is not None:
 ${is}    new_follow_set = set(self.${nonterminal.followSetVarName}) | self.outer_follow_set
 ${is}    self.outer_follow_set = new_follow_set
@@ -954,13 +957,13 @@ ${is}    ${currentNodeVariableName()}.${globals::translateIdentifier("setChoice"
 [#if choice.parent.simpleName == "ZeroOrMore"][#t]
 ${is}else:  # *
 ${is}    break
-[#elseif choice.parent.simpleName = "OneOrMore"][#t]
+[#elif choice.parent.simpleName = "OneOrMore"][#t]
 ${is}elif (${inFirstVarName}): # +
 ${is}    self.push_onto_call_stack('${currentProduction.name}', '${choice.inputSource?j_string}', ${choice.beginLine}, ${choice.beginColumn})
 ${is}    raise ParseException(self, expected=self.${choice.firstSetVarName})
 ${is}else:
 ${is}    break
-[#elseif choice.parent.simpleName != "ZeroOrOne"][#t]
+[#elif choice.parent.simpleName != "ZeroOrOne"][#t]
 ${is}else:  # not *, +, or ?
 ${is}    self.push_onto_call_stack('${currentProduction.name}', '${choice.inputSource?j_string}', ${choice.beginLine}, ${choice.beginColumn})
 ${is}    raise ParseException(self, expected=self.${choice.firstSetVarName})

@@ -33,7 +33,7 @@
 [#function lhReturnCommit retExpr cardinalitiesVar parentCardVar]
   [#if parentCardVar?? && (parentCardVar?length > 0)]
     [#return "return " + parentCardVar + ".commit(" + retExpr + ")"/]
-  [#elseif cardinalitiesVar?? && (cardinalitiesVar?length > 0)]
+  [#elif cardinalitiesVar?? && (cardinalitiesVar?length > 0)]
     [#return "return " + cardinalitiesVar + ".commit(" + retExpr + ")"/]
   [#else]
     [#return "return " + retExpr/]
@@ -413,7 +413,7 @@ ${is}    stack_iterator = self.${lookBehind.backward?string("stack_iterator_back
 ${is}    if not stack_iterator.has_next:
 ${is}        return False
 ${is}    stack_iterator.next
-  [#elseif element = "..."]
+  [#elif element = "..."]
     [#if element_index = lookBehind.path?size - 1]
       [#if lookBehind.hasEndingSlash]
 ${is}    return not stack_iterator.has_next
@@ -485,29 +485,29 @@ ${is}# at: ${expansion.location}
   --]
    [#if classname = "ExpansionWithParentheses"]
       [@BuildScanCode expansion.nestedExpansion, indent, cardVar, parentCardVar /]
-   [#elseif expansion.singleTokenLookahead]
+   [#elif expansion.singleTokenLookahead]
 ${ScanSingleToken(expansion, indent, cardVar)}
-   [#elseif classname = "Assertion" && expansion.appliesInLookahead]
+   [#elif classname = "Assertion" && expansion.appliesInLookahead]
 ${ScanCodeAssertion(expansion, indent, cardVar, parentCardVar)}
-   [#elseif classname = "Failure"]
+   [#elif classname = "Failure"]
 ${ScanCodeError(expansion, indent, cardVar)}
-   [#elseif classname = "UncacheTokens"]
+   [#elif classname = "UncacheTokens"]
 ${is}self.uncache_tokens()
-   [#elseif classname = "ExpansionSequence"]
+   [#elif classname = "ExpansionSequence"]
 ${ScanCodeSequence(expansion, indent, cardVar, parentCardVar)}
-   [#elseif classname = "ZeroOrOne"]
+   [#elif classname = "ZeroOrOne"]
 ${ScanCodeZeroOrOne(expansion, indent, cardVar, parentCardVar)}
-   [#elseif classname = "ZeroOrMore"]
+   [#elif classname = "ZeroOrMore"]
 ${ScanCodeZeroOrMore(expansion, indent, cardVar, parentCardVar)}
-   [#elseif classname = "OneOrMore"]
+   [#elif classname = "OneOrMore"]
 ${ScanCodeOneOrMore(expansion, indent, cardVar)}
-   [#elseif classname = "NonTerminal"]
+   [#elif classname = "NonTerminal"]
       [@ScanCodeNonTerminal expansion, indent, cardVar /]
-   [#elseif classname = "TryBlock" || classname = "AttemptBlock"]
+   [#elif classname = "TryBlock" || classname = "AttemptBlock"]
       [@BuildScanCode expansion.nestedExpansion, indent, cardVar, parentCardVar /]
-   [#elseif classname = "ExpansionChoice"]
+   [#elif classname = "ExpansionChoice"]
 ${ScanCodeChoice(expansion, indent, cardVar, parentCardVar)}
-   [#elseif classname = "CodeBlock"]
+   [#elif classname = "CodeBlock"]
       [#if expansion.appliesInLookahead || expansion.insideLookahead || expansion.containingProduction.onlyForLookahead]
 ${globals::translateCodeBlock(expansion, indent)}
       [/#if]
@@ -576,8 +576,12 @@ ${is}    ${lhReturnFalse(cardinalitiesVar, "")}
 ${is}if [#if !assertion.lookBehind.negated]not [/#if]self.${assertion.lookBehind.routineName}():
 ${is}    self.hit_failure = True
 ${is}    ${lhReturnFalse(cardinalitiesVar, parentCardVar)}
-[#elseif assertion.assertionExpression??]
+[#elif assertion.assertionExpression??]
 ${is}if not (${globals::translateExpression(assertion.assertionExpression)}):
+${is}    self.hit_failure = True
+${is}    ${lhReturnFalse(cardinalitiesVar, parentCardVar)}
+[#elif assertion.rawCode?? && !assertion.rawCode.wrongLanguageIgnore]
+${is}if not (${assertion.assertionExpression}):
 ${is}    self.hit_failure = True
 ${is}    ${lhReturnFalse(cardinalitiesVar, parentCardVar)}
 [/#if]

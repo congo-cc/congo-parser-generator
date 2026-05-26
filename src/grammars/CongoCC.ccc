@@ -1094,11 +1094,13 @@ int[] CardinalityConstraint#void :
 
 INJECT Assertion :
    import org.congocc.core.Expansion;
+   import org.congocc.core.RawCode;
    extends org.congocc.core.EmptyExpansion
 {
     @Property Expansion expansion;
     @Property int[] cardinalityConstraint = null;
     @Property int assertionIndex = -1;
+    @Property RawCode rawCode;
 
     @Override
     public boolean startsWithGlobalCodeAction(boolean stopAtScanLimit) {
@@ -1131,9 +1133,9 @@ INJECT Assertion :
 
 Assertion# :
     {
-    boolean assertKeywordPresent = false;
-    boolean messageAlreadySeen = false;
-    int[] cardinality = null;
+       boolean assertKeywordPresent = false;
+       boolean messageAlreadySeen = false;
+       int[] cardinality = null;
     }
     (
         (
@@ -1143,6 +1145,8 @@ Assertion# :
         )+
         (
             LookBehind
+            |
+            RawCode {THIS.setRawCode((RawCode)peekNode());}
             |
             (
                 "{"
@@ -1168,19 +1172,19 @@ Assertion# :
                 @assertionExpressionRawCode := RawCode
                 {messageAlreadySeen = true;}
            )
-            [ SCAN {assertKeywordPresent} => @appliedUniversally :=? "#" ]
-            |
-            [ @expansionNegated :=? "~" ]
-            "("
-            ExpansionChoice {thisProduction.setExpansion((Expansion) peekNode());}
-            [
-               @locationExpression := Expression
-            ]
-            [
-                @messageExpression := Expression
-                {messageAlreadySeen = true;}
-            ]
-            ")"
+           [ SCAN {assertKeywordPresent} => @appliedUniversally :=? "#" ]
+           |
+           [ @expansionNegated :=? "~" ]
+           "("
+           ExpansionChoice {thisProduction.setExpansion((Expansion) peekNode());}
+           [
+              @locationExpression := Expression
+           ]
+           [
+               @messageExpression := Expression
+               {messageAlreadySeen = true;}
+           ]
+           ")"
         )
         [
           SCAN {assertKeywordPresent && !messageAlreadySeen} =>

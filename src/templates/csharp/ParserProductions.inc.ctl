@@ -291,7 +291,7 @@ finally {
             #-- Suppress JTB behavior for this and subordinate expansion elements in this production --
          #endif
          [#-- Do not merge {syntheticNode:false} into treeNodeBehavior: bean+hash replace drops nodeName and breaks nodeClassName for explicit TNAs (e.g. token #This under #void). syntheticNode?? is absent on real TBAs, which is the intended false for JTB stack. --]
-      #elseif expansion.assignment??
+      #elif expansion.assignment??
          #-- No TNA, but assignment is present. --
          #if settings.syntheticNodesEnabled && settings.treeBuildingEnabled && isProductionInstantiatingNode(expansion)
             #-- Assignment is explicitly provided and synthetic nodes are enabled. --
@@ -532,7 +532,7 @@ if (BuildTree) {
    #if assignment.existenceOf!false
       #-- replace "@" with "(((@) != null) ? true : false)"
       #return "(((@) != null) ? true : false)"
-   #elseif assignment.stringOf!false
+   #elif assignment.stringOf!false
       #-- replace "@" with the string value of the node
       #return "Convert.ToString(@).Trim()"
    #endif
@@ -556,7 +556,7 @@ if (BuildTree) {
             #-- This is an assignment of the current node's effective value to the specified property of the production node
             #return globals::translateIdentifier("THIS") + "." + lhsName + " = " + getRhsAssignmentPattern(assignment)
          #endif
-      #elseif assignment.namedAssignment!false
+      #elif assignment.namedAssignment!false
          #if assignment.addTo
             #-- This is the addition of the current node to the named child list of the production node
             #return "${currentNodeVariableName()}" + ".AddToNamedChildList(\"" + lhsName + "\", " + getRhsAssignmentPattern(assignment) + ")"
@@ -707,11 +707,15 @@ ${globals::translateCodeBlock(fail.code, 1)}
 if ([#if !assertion.lookBehind.negated]![/#if]${assertion.lookBehind.routineName}()) {
     Fail("${assertionMessage}"${optionalPart});
 }
-   #elseif assertion.assertionExpression??
+   #elif assertion.assertionExpression??
 if (!(${globals::translateExpression(assertion.assertionExpression)})) {
     Fail("${assertionMessage}"${optionalPart});
 }
-   #elseif assertion.cardinalityConstraint?? && cardinalitiesVar?? && (cardinalitiesVar?length > 0)
+   #elif assertion.rawCode?? && !assertion.rawCode.wrongLanguageIgnore
+if (!(${assertion.rawCode})) {
+    Fail("${assertionMessage}"${optionalPart});
+}
+   #elif assertion.cardinalityConstraint?? && cardinalitiesVar?? && (cardinalitiesVar?length > 0)
 if (!${cardinalitiesVar}.Choose(${assertion.assertionIndex}, false)) {
     Fail("Maximum cardinality constraint at: ${assertion.location?j_string} exceeded.");
 }
@@ -979,7 +983,7 @@ ${BuildCode(expansion, cardinalitiesVar)}
 else {
     break;
 }
-#elseif choice.parent.simpleName = "OneOrMore"
+#elif choice.parent.simpleName = "OneOrMore"
 else if (${inFirstVarName}) {
     PushOntoCallStack("${currentProduction.name}", "${choice.inputSource?j_string}", ${choice.beginLine}, ${choice.beginColumn});
     throw new ParseException(this, ${choice.firstSetVarName});
@@ -987,7 +991,7 @@ else if (${inFirstVarName}) {
 else {
     break;
 }
-#elseif choice.parent.simpleName != "ZeroOrOne"
+#elif choice.parent.simpleName != "ZeroOrOne"
 else {
     PushOntoCallStack("${currentProduction.name}", "${choice.inputSource?j_string}", ${choice.beginLine}, ${choice.beginColumn});
     throw new ParseException(this, ${choice.firstSetVarName});

@@ -145,7 +145,12 @@ ImportDeclaration :
     [ <STATIC> | 'module' {isModule=true;}]
     Name
     [
-      ASSERT {!isModule : "No wildcard import in a module import declaration"}
+      //ASSERT {!isModule : "No wildcard import in a module import declaration"}
+      #if __python__
+      ASSERT {% not is_module %}
+      #else
+      ASSERT {% !isModule %}
+      #endif
       <DOT> <STAR> =>||
     ]
     <SEMICOLON>

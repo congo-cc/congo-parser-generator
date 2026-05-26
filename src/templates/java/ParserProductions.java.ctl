@@ -739,6 +739,14 @@
          fail("${assertionMessage}"${optionalPart},
               ${assertion.locationExpression!"getToken(1)"});
       }
+   #elif assertion.rawCode?? && !assertion.rawCode.wrongLanguageIgnore
+      if (!(${assertion.rawCode})) {
+         pushOntoCallStack("${assertion.containingProduction.name}",
+                        "${assertion.inputSource?j_string}",
+                        ${assertion.beginLine}, ${assertion.beginColumn});
+         fail("${assertionMessage}"${optionalPart},
+              ${assertion.locationExpression!"getToken(1)"});
+      }
    #elif assertion.cardinalityConstraint??
       if (!${cardinalitiesVar!"cardinalities"}.choose(${assertion.assertionIndex}, false)) {
          fail("Maximum cardinality constraint at: ${assertion.location?j_string} exceeded.", getToken(1));
