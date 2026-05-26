@@ -24,16 +24,12 @@ TOKEN :
   > #StringLiteral
 ;
 
-MORE :
-  <START_UNPARSED : "{" (["J","P","C","R"])? "%"> : IN_UNPARSED_CODE_BLOCK
-;
-
-<IN_UNPARSED_CODE_BLOCK> MORE :
-  <ANY_CHAR : ~[]>
-;
-
-<IN_UNPARSED_CODE_BLOCK> TOKEN :
-  <RAW_CODE_BLOCK : "%}" ("#")?> : JAVA
+TOKEN :
+   <?UNPARSED_CODE_BLOCK : <UNPARSED_BLOCK1> | <UNPARSED_BLOCK2> ("#")? > #UnparsedCodeBlock
+   |
+   <#UNPARSED_BLOCK1 : "{" (["J","P","C","R"])? "%" (~[])* "%}">
+   |
+   <#UNPARSED_BLOCK2 : "{{" (["J","P","C","R"])? "%%" (~[])* "%%}}">
 ;
 
 TokenProduction :

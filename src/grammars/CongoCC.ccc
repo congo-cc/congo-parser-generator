@@ -1445,7 +1445,7 @@ ExpansionUnit #void :
 ;
 
 RawCode#org.congocc.core.RawCode :
-   <RAW_CODE_BLOCK>
+   <UNPARSED_CODE_BLOCK>
 ;
 
 #EmbeddedCode#interface :

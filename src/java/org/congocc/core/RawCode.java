@@ -53,7 +53,9 @@ public class RawCode extends EmptyExpansion implements EmbeddedCode {
     public String getRawContent() {
         String fullContent = get(0).toString();
         int startIndex = fullContent.indexOf('%')+1;
+        if (fullContent.charAt(startIndex) == '%') startIndex++;
         int endIndex = fullContent.lastIndexOf('%');
+        if (fullContent.charAt(endIndex-1) == '%') endIndex--;
         return fullContent.substring(startIndex, endIndex);
     }
 
@@ -73,6 +75,7 @@ public class RawCode extends EmptyExpansion implements EmbeddedCode {
 
     public CodeLang getSpecifiedLang() {
         char langChar = ((Token) get(0)).charAt(1);
+        if (langChar == '{') langChar = ((Token) get(0)).charAt(2);
         return switch (langChar) {
             case 'P' -> PYTHON;
             case 'C' -> CSHARP;
