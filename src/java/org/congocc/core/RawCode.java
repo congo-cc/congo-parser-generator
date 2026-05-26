@@ -31,7 +31,7 @@ public class RawCode extends EmptyExpansion implements EmbeddedCode {
     }
 
     public void parseContent() {
-        if (!alreadyParsed && !wrongLanguageIgnore()) {
+        if (!alreadyParsed && !isWrongLanguageIgnore()) {
             try {
                 switch(getCodeLang()) {
                     case JAVA -> parseJava();
@@ -67,11 +67,11 @@ public class RawCode extends EmptyExpansion implements EmbeddedCode {
         return getCodeLang() == PYTHON && !isExpression();
     }
 
-    public boolean wrongLanguageIgnore() {
-        return specifiedLanguage() != null && specifiedLanguage() != getCodeLang();
+    public boolean isWrongLanguageIgnore() {
+        return getSpecifiedLang() != null && getSpecifiedLang() != getCodeLang();
     }
 
-    public CodeLang specifiedLanguage() {
+    public CodeLang getSpecifiedLang() {
         char langChar = ((Token) get(0)).charAt(1);
         return switch (langChar) {
             case 'P' -> PYTHON;
@@ -83,7 +83,9 @@ public class RawCode extends EmptyExpansion implements EmbeddedCode {
     }
 
     public String toString() {
-        if (wrongLanguageIgnore()) {
+        if (isWrongLanguageIgnore()) {
+            // If this raw code is in the wrong output
+            // language, it should just get ignored.
             return "";
         }
         if (useAltPythonFormat()) {

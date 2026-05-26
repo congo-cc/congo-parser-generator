@@ -88,7 +88,7 @@ TOKEN #NumericalLiteral :
     {
       if (charAt(matchEnd-1) == '.' && (charAt(matchEnd) == '.' || Character.isUnicodeIdentifierStart(charAt(matchEnd)))) {
          matchedToken.truncate(1);
-         matchedToken.setType(INTEGER_LITERAL);
+         matchedToken=matchedToken.replaceType(INTEGER_LITERAL);
       }
     }
     |

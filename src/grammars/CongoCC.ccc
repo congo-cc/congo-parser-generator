@@ -70,6 +70,11 @@ INJECT TokenSource :
   @Property Grammar grammar;
 }
 
+INJECT interface EmbeddedCode :
+{
+   public CodeLang getSpecifiedLang();
+}
+
 INJECT LEXER_CLASS :
 {
   // Set whether to generate unparsed tokens for WHITESPACE
@@ -1199,7 +1204,7 @@ Lookahead# :
    Token amountToken=null;
    boolean hasExplicitNumericalLookahead=false;
    Expansion expansion = null;
-   Expression exp=null;
+   EmbeddedCode exp=null;
    Name name = null;
    Node lb = null;
 }
@@ -1208,12 +1213,15 @@ Lookahead# :
 [
     <INTEGER_LITERAL> {hasExplicitNumericalLookahead = true;}
 ]
-[
-    "{"
-    exp=Expression {thisProduction.setSemanticLookahead(exp);}
-    "}"
+(
+    (
+      "{" exp=Expression "}"
+      |
+      exp=RawCode
+    )
+    {THIS.addSemanticLookahead(exp);}
     ["#" {thisProduction.setSemanticLookaheadNested(true);}]
-]
+)*
 [LookBehind =>|| {lb = peekNode();}]
 [
     SCAN {!hasExplicitNumericalLookahead} =>
@@ -1236,7 +1244,25 @@ INJECT Lookahead :
 {
     @Property Expansion expansion, nestedExpansion;
     @Property boolean negated, semanticLookaheadNested;
-    @Property EmbeddedCode semanticLookahead;
+    List<EmbeddedCode> semanticLookaheads = new ArrayList<>();
+
+    public void addSemanticLookahead(EmbeddedCode code) {
+        semanticLookaheads.add(code);
+    }
+
+    public EmbeddedCode getSemanticLookahead() {
+        for (EmbeddedCode code : semanticLookaheads) {
+            if (code.getSpecifiedLang() == getGrammar().getCodeLang()) {
+                return code;
+            }
+        }
+        for (EmbeddedCode code : semanticLookaheads) {
+            if (code instanceof Expression) {
+                return code;
+            }
+        }
+        return null;
+    }
 
     public boolean getRequiresScanAhead() {
         if (!getLookaheadExpansion().isPossiblyEmpty()) return true;

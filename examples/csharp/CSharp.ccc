@@ -328,7 +328,7 @@ StructDeclaration :
    [TypeParameterList]
    [<LPAREN> [FormalParameters] <RPAREN>]
    [
-      SCAN {isaRecordStruct}
+      SCAN {%isaRecordStruct%}
       =>
       <LPAREN> [FormalParameters] <RPAREN>
    ]
