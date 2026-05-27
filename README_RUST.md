@@ -490,7 +490,7 @@ the Rust standard library.
 ## Requirements
 
 - CongoCC (`congocc.jar`) with Rust support
-- Java 8+ (to run CongoCC)
+- Java 17+ (to run CongoCC)
 - Rust 1.89+ (2024 edition, for generated code)
 
 ## Acknowledgments

@@ -70,6 +70,11 @@ INJECT TokenSource :
   @Property Grammar grammar;
 }
 
+INJECT interface EmbeddedCode :
+{
+   public CodeLang getSpecifiedLang();
+}
+
 INJECT LEXER_CLASS :
 {
   // Set whether to generate unparsed tokens for WHITESPACE
@@ -435,7 +440,7 @@ GrammarInclusion throws IOException :
        "(" <STRING_LITERAL> {locations.add(((StringLiteral)lastConsumedToken).getString());} ")"
    )
    [";"]
-   {%
+   {J%
       if (enterIncludes) {
           Node included = grammar.include(locations, includeToken);
           if (included!=null) {
@@ -444,6 +449,10 @@ GrammarInclusion throws IOException :
               getErrors().addWarning(thisProduction, "File is already included.");
           }
       }
+   %}
+   {R%
+      This raw code block is ignored, so
+      no need for valid Rust code here!
    %}
 ;
 
@@ -1085,11 +1094,13 @@ int[] CardinalityConstraint#void :
 
 INJECT Assertion :
    import org.congocc.core.Expansion;
+   import org.congocc.core.RawCode;
    extends org.congocc.core.EmptyExpansion
 {
     @Property Expansion expansion;
     @Property int[] cardinalityConstraint = null;
     @Property int assertionIndex = -1;
+    @Property RawCode rawCode;
 
     @Override
     public boolean startsWithGlobalCodeAction(boolean stopAtScanLimit) {
@@ -1122,9 +1133,9 @@ INJECT Assertion :
 
 Assertion# :
     {
-    boolean assertKeywordPresent = false;
-    boolean messageAlreadySeen = false;
-    int[] cardinality = null;
+       boolean assertKeywordPresent = false;
+       boolean messageAlreadySeen = false;
+       int[] cardinality = null;
     }
     (
         (
@@ -1134,6 +1145,8 @@ Assertion# :
         )+
         (
             LookBehind
+            |
+            RawCode {THIS.setRawCode((RawCode)peekNode());}
             |
             (
                 "{"
@@ -1159,19 +1172,19 @@ Assertion# :
                 @assertionExpressionRawCode := RawCode
                 {messageAlreadySeen = true;}
            )
-            [ SCAN {assertKeywordPresent} => @appliedUniversally :=? "#" ]
-            |
-            [ @expansionNegated :=? "~" ]
-            "("
-            ExpansionChoice {thisProduction.setExpansion((Expansion) peekNode());}
-            [
-               @locationExpression := Expression
-            ]
-            [
-                @messageExpression := Expression
-                {messageAlreadySeen = true;}
-            ]
-            ")"
+           [ SCAN {assertKeywordPresent} => @appliedUniversally :=? "#" ]
+           |
+           [ @expansionNegated :=? "~" ]
+           "("
+           ExpansionChoice {thisProduction.setExpansion((Expansion) peekNode());}
+           [
+              @locationExpression := Expression
+           ]
+           [
+               @messageExpression := Expression
+               {messageAlreadySeen = true;}
+           ]
+           ")"
         )
         [
           SCAN {assertKeywordPresent && !messageAlreadySeen} =>
@@ -1195,7 +1208,7 @@ Lookahead# :
    Token amountToken=null;
    boolean hasExplicitNumericalLookahead=false;
    Expansion expansion = null;
-   Expression exp=null;
+   EmbeddedCode exp=null;
    Name name = null;
    Node lb = null;
 }
@@ -1204,12 +1217,15 @@ Lookahead# :
 [
     <INTEGER_LITERAL> {hasExplicitNumericalLookahead = true;}
 ]
-[
-    "{"
-    exp=Expression {thisProduction.setSemanticLookahead(exp);}
-    "}"
+(
+    (
+      "{" exp=Expression "}"
+      |
+      exp=RawCode
+    )
+    {THIS.addSemanticLookahead(exp);}
     ["#" {thisProduction.setSemanticLookaheadNested(true);}]
-]
+)*
 [LookBehind =>|| {lb = peekNode();}]
 [
     SCAN {!hasExplicitNumericalLookahead} =>
@@ -1232,7 +1248,25 @@ INJECT Lookahead :
 {
     @Property Expansion expansion, nestedExpansion;
     @Property boolean negated, semanticLookaheadNested;
-    @Property Expression semanticLookahead;
+    List<EmbeddedCode> semanticLookaheads = new ArrayList<>();
+
+    public void addSemanticLookahead(EmbeddedCode code) {
+        semanticLookaheads.add(code);
+    }
+
+    public EmbeddedCode getSemanticLookahead() {
+        for (EmbeddedCode code : semanticLookaheads) {
+            if (code.getSpecifiedLang() == getGrammar().getCodeLang()) {
+                return code;
+            }
+        }
+        for (EmbeddedCode code : semanticLookaheads) {
+            if (code instanceof Expression) {
+                return code;
+            }
+        }
+        return null;
+    }
 
     public boolean getRequiresScanAhead() {
         if (!getLookaheadExpansion().isPossiblyEmpty()) return true;
@@ -1415,10 +1449,7 @@ ExpansionUnit #void :
 ;
 
 RawCode#org.congocc.core.RawCode :
-   <START_UNPARSED>
-   <UNPARSED_CONTENT>
-   <END_UNPARSED>
-   [<HASH>]
+   <UNPARSED_CODE_BLOCK>
 ;
 
 #EmbeddedCode#interface :
@@ -1632,19 +1663,25 @@ Failure# :
       exp=Expression
       [":"]
       |
-      EmbeddedCode
+      Block {THIS.setHasRunnableBlock(true);}
+      |
+      ["=>" {THIS.setHasRunnableBlock(true);} ] RawCode
    ]
    {%
-       thisProduction.setExp(exp);
+       THIS.setExp(exp);
    %}
 ;
 
 INJECT Failure :
+   import org.congocc.core.RawCode;
    extends org.congocc.core.EmptyExpansion
 {
     @Property Expression exp;
+    @Property boolean hasRunnableBlock;
 
-    public CodeBlock getCode() {
+    public EmbeddedCode getCode() {
+        EmbeddedCode code = firstChildOfType(RawCode.class);
+        if (code != null) return code;
         return firstChildOfType(CodeBlock.class);
     }
 }

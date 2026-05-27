@@ -12,7 +12,11 @@
 
 INCLUDE "../../examples/java/Java.ccc"
 
-INJECT Expression : extends EmbeddedCode
+INJECT Expression : extends EmbeddedCode {
+    default CodeLang getSpecifiedLang() {
+        return CodeLang.JAVA;
+    }
+}
 
 VariableDeclarator# : VariableDeclaratorId [ "=" VariableInitializer ] ;
 
@@ -417,6 +421,10 @@ INJECT CodeBlock :
 
     public CodeBlock getJavaCode() {
         return this;
+    }
+
+    public CodeLang getSpecifiedLang() {
+        return CodeLang.JAVA;
     }
 
     public String toString() {

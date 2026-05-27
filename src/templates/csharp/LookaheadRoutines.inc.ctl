@@ -35,7 +35,7 @@
 #function lhReturnCommit retExpr cardinalitiesVar parentCardVar
    #if parentCardVar?? && (parentCardVar?length > 0)
       #return "return " + parentCardVar + ".Commit(" + retExpr + ");"
-   #elseif cardinalitiesVar?? && (cardinalitiesVar?length > 0)
+   #elif cardinalitiesVar?? && (cardinalitiesVar?length > 0)
       #return "return " + cardinalitiesVar + ".Commit(" + retExpr + ");"
    #else
       #return "return " + retExpr + ";"
@@ -559,8 +559,13 @@ if ([#if !assertion.lookBehind.negated]![/#if]${assertion.lookBehind.routineName
     _hitFailure = true;
     ${lhReturnFalse(cardinalitiesVar, parentCardVar)}
 }
-#elseif assertion.assertionExpression??
+#elif assertion.assertionExpression??
 if (!(${globals::translateExpression(assertion.assertionExpression)})) {
+    _hitFailure = true;
+    ${lhReturnFalse(cardinalitiesVar, parentCardVar)}
+}
+#elif assertion.rawCode?? && !assertion.rawCode.wrongLanguageIgnore
+if (!${assertion.rawCode}) {
     _hitFailure = true;
     ${lhReturnFalse(cardinalitiesVar, parentCardVar)}
 }

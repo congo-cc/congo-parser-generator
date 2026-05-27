@@ -307,7 +307,7 @@
             #-- Suppress JTB behavior for this and subordinate expansion elements in this production --
          #endif
          [#-- Do not merge {syntheticNode:false} into treeNodeBehavior: bean+hash replace drops nodeName and breaks nodeClassName for explicit TNAs. syntheticNode?? is absent on real TBAs. (Bare "set" here was never a valid CTL directive.) --]
-      #elseif expansion.assignment??
+      #elif expansion.assignment??
          #-- No TNA, but assignment is present. --
          #if settings.syntheticNodesEnabled && settings.treeBuildingEnabled && isProductionInstantiatingNode(expansion)
             #-- Assignment is explicitly provided and synthetic nodes are enabled. --
@@ -639,7 +639,7 @@
    #if classname = "CodeBlock"
       ${expansion}
    #elif classname = "RawCode"
-      ${expansion.rawContent}
+      ${expansion}
    #elif classname = "UncacheTokens"
          uncacheTokens();
    #elif classname = "Failure"
@@ -699,7 +699,9 @@
 #-- The following macros build expansions that never build tree nodes. --
 
 #macro BuildCodeFailure fail
-    #if !fail.code??
+    #if fail.hasRunnableBlock
+      ${fail.code}
+    #else
       pushOntoCallStack("${fail.containingProduction.name}",
                         "${fail.inputSource?j_string}",
                         ${fail.beginLine}, ${fail.beginColumn});
@@ -708,8 +710,6 @@
       #else
        fail("Failure", getToken(1));
       #endif
-    #else
-       ${fail.code}
     #endif
 #endmacro
 
@@ -731,7 +731,7 @@
          fail("${assertionMessage}"${optionalPart},
               ${assertion.locationExpression!"getToken(1)"});
        }
-   #elseif assertion.assertionExpression??
+   #elif assertion.assertionExpression??
       if (!(${assertion.assertionExpression})) {
          pushOntoCallStack("${assertion.containingProduction.name}",
                         "${assertion.inputSource?j_string}",
@@ -739,7 +739,15 @@
          fail("${assertionMessage}"${optionalPart},
               ${assertion.locationExpression!"getToken(1)"});
       }
-   #elseif assertion.cardinalityConstraint??
+   #elif assertion.rawCode?? && !assertion.rawCode.wrongLanguageIgnore
+      if (!(${assertion.rawCode})) {
+         pushOntoCallStack("${assertion.containingProduction.name}",
+                        "${assertion.inputSource?j_string}",
+                        ${assertion.beginLine}, ${assertion.beginColumn});
+         fail("${assertionMessage}"${optionalPart},
+              ${assertion.locationExpression!"getToken(1)"});
+      }
+   #elif assertion.cardinalityConstraint??
       if (!${cardinalitiesVar!"cardinalities"}.choose(${assertion.assertionIndex}, false)) {
          fail("Maximum cardinality constraint at: ${assertion.location?j_string} exceeded.", getToken(1));
       }

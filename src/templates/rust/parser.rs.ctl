@@ -537,6 +537,11 @@ ${globals::translateCodeBlock(fail.code, 1)}
         }
 [/#if]
 [/#if]
+[#if assertion.rawCode?? && !assertion.rawCode.wrongLanguageIgnore]
+    if !(${assertion.rawCode}) {
+         self.fail(&("Assertion at: ${assertion.location?replace("\\", "\\\\")?replace("\"", "\\\"")} failed. ".to_string()${optionalPart}))?;
+    }
+[/#if]
 [#if assertion.expansion?? && !assertionSkipped]
         if [#if !assertion.expansionNegated]![/#if]self.${assertion.expansion.scanRoutineName}() {
             self.fail(&("Assertion at: ${assertion.location?replace("\\", "\\\\")?replace("\"", "\\\"")} failed. ".to_string()${optionalPart}))?;
@@ -925,6 +930,11 @@ ${globals::translateCodeBlock(expansion, 12)}
                 self.hit_failure = true;
                 return false;
             }
+[#elif assertion.rawCode?? && !assertion.rawCode.wrongLanguageIgnore]
+    if !(${assertion.rawCode}) {
+        self.hit_failure = true;
+        return false;
+    }
 [/#if]
 [#if assertion.expansion??]
             if [#if !assertion.expansionNegated]![/#if]self.${assertion.expansion.scanRoutineName}() {

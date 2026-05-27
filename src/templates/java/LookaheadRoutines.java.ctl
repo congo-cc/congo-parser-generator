@@ -527,8 +527,13 @@
             hitFailure = true;
             ${returnFalse(cardinalitiesVar, parentCardVar!null)};
          };
-   #elseif assertion.assertionExpression??
+   #elif assertion.assertionExpression??
       if (!(${assertion.assertionExpression})) {
+         hitFailure = true;
+         ${returnFalse(cardinalitiesVar, parentCardVar!null)};
+      }
+   #elif assertion.rawCode??
+      if (!(${assertion.rawCode})) {
          hitFailure = true;
          ${returnFalse(cardinalitiesVar, parentCardVar!null)};
       }
