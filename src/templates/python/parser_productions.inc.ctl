@@ -667,17 +667,17 @@ ${is}self.uncache_tokens()
 
 [#macro BuildCodeFailure fail, indent]
 [#var is = ""?right_pad(indent)]
-[#--${is}# DBG > BuildCodeFailure ${indent} --]
-    [#if !fail.code??]
-      [#if fail.exp??]
-${is}self.fail('Failure: %s' % "${fail.exp?j_string}")
-      [#else]
-${is}self.fail('Failure')
-      [/#if]
-    [#else]
+   #if fail.hasRunnableBlock
+     #if fail.code.class.simpleName = "RawCode"
+${fail.code}
+     #else
 ${globals::translateCodeBlock(fail.code, indent)}[#rt]
-    [/#if]
-[#--${is}# DBG < BuildCodeFailure ${indent} --]
+     #endif
+   #elif fail.exp??
+${is}self.fail('Failure: %s' % "${fail.exp?j_string}")
+   #else
+${is}self.fail('Failure')
+   #endif
 [/#macro]
 
 [#macro BuildAssertionCode assertion indent cardinalitiesVar]

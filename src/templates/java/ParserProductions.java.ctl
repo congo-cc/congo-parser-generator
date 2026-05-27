@@ -699,7 +699,9 @@
 #-- The following macros build expansions that never build tree nodes. --
 
 #macro BuildCodeFailure fail
-    #if !fail.code??
+    #if fail.hasRunnableBlock
+      ${fail.code}
+    #else
       pushOntoCallStack("${fail.containingProduction.name}",
                         "${fail.inputSource?j_string}",
                         ${fail.beginLine}, ${fail.beginColumn});
@@ -708,8 +710,6 @@
       #else
        fail("Failure", getToken(1));
       #endif
-    #else
-       ${fail.code}
     #endif
 #endmacro
 

@@ -148,6 +148,8 @@ ImportDeclaration :
       //ASSERT {!isModule : "No wildcard import in a module import declaration"}
       #if __python__
       ASSERT {% not is_module %}
+      #elif __rust__
+      ASSERT {% !is_module %}
       #else
       ASSERT {% !isModule %}
       #endif

@@ -1663,19 +1663,25 @@ Failure# :
       exp=Expression
       [":"]
       |
-      EmbeddedCode
+      Block {THIS.setHasRunnableBlock(true);}
+      |
+      ["=>" {THIS.setHasRunnableBlock(true);} ] RawCode
    ]
    {%
-       thisProduction.setExp(exp);
+       THIS.setExp(exp);
    %}
 ;
 
 INJECT Failure :
+   import org.congocc.core.RawCode;
    extends org.congocc.core.EmptyExpansion
 {
     @Property Expression exp;
+    @Property boolean hasRunnableBlock;
 
-    public CodeBlock getCode() {
+    public EmbeddedCode getCode() {
+        EmbeddedCode code = firstChildOfType(RawCode.class);
+        if (code != null) return code;
         return firstChildOfType(CodeBlock.class);
     }
 }

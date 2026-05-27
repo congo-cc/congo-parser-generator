@@ -684,17 +684,17 @@ ${globals::translateCodeBlock(expansion, 1)}
 #endmacro
 
 #macro BuildCodeFailure fail
-#-- // DBG > BuildCodeFailure
-    #if !fail.code??
-      #if fail.exp??
-Fail("Failure: " + ${fail.exp});
+    #if fail.hasRunnableBlock
+      #if fail.code.class.simpleName = "RawCode"
+       ${fail.code}
       #else
-Fail("Failure");
+        ${globals::translateCodeBlock(fail.code, 1)}
       #endif
+    #elif fail.exp??
+Fail("Failure: " + ${fail.exp});
     #else
-${globals::translateCodeBlock(fail.code, 1)}
+Fail("Failure");
     #endif
-#-- // DBG < BuildCodeFailure
 #endmacro
 
 #macro BuildAssertionCode assertion cardinalitiesVar
