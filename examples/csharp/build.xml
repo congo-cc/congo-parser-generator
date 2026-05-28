@@ -26,48 +26,24 @@
   </target>
 
   <target name="line-directive-java-parser-gen" depends="init" unless="linedirective-j.uptodate">
-    <echo>Using CongoCC to regenerate preprocessor line parser</echo>
-    <congocc target="PPDirectiveLine.ccc" args="-n"/>
-    <!--java jar="../../congocc.jar" failonerror="true" fork="true">
-      <assertions> <enable /> </assertions>
-      <arg line="-n PPDirectiveLine.ccc" />
-    </java-->
+    <echo>Using Bootstrap CongoCC to regenerate preprocessor</echo>
+    <congocc target="PPDirectiveLine.ccc"/>
   </target>
   <target name="line-directive-py-parser-gen" depends="init" unless="linedirective-py.uptodate">
-    <congocc target="PPDirectiveLine.ccc" lang="python" args="-n"/>
-    <!--java jar="../../congocc.jar" failonerror="true" fork="true">
-      <assertions> <enable /> </assertions>
-      <arg line="-n -lang python ${basedir}/PPDirectiveLine.ccc" />
-    </java-->
+    <congocc target="PPDirectiveLine.ccc" lang="python"/>
   </target>
   <target name="line-directive-cs-parser-gen" depends="init" unless="linedirective-cs.uptodate">
-    <congocc target="PPDirectiveLine.ccc" args="-n" lang="csharp"/>
-    <!-- java jar="../../congocc.jar" failonerror="true" fork="true">
-      <assertions> <enable /> </assertions>
-      <arg line="-n -lang csharp -d cs-csharpparser/ppline ${basedir}/PPDirectiveLine.ccc" />
-    </java -->
+    <congocc target="PPDirectiveLine.ccc" args="-n -d cs-csharpparser/ppline" lang="csharp"/>
   </target>
 
   <target name="java-parser-gen" depends="init,line-directive-java-parser-gen" unless="csjparser.uptodate">
-    <congocc target="CSharp.ccc" args="-n"/>
-    <!--java jar="../../congocc.jar" failonerror="true" fork="true">
-      <assertions> <enable /> </assertions>
-      <arg line="-n ${basedir}/CSharp.ccc" />
-    </java-->
+    <congocc target="CSharp.ccc"/>
   </target>
   <target name="python-parser-gen" depends="init,line-directive-py-parser-gen" unless="cspyparser.uptodate">
-    <congocc target="CSharp.ccc" lang="python" args="-n"/>
-    <!--java jar="../../congocc.jar" failonerror="true" fork="true">
-      <assertions> <enable /> </assertions>
-      <arg line="-n -lang python ${basedir}/CSharp.ccc" />
-    </java-->
+    <congocc target="CSharp.ccc" lang="python"/>
   </target>
   <target name="csharp-parser-gen" depends="init,line-directive-cs-parser-gen" unless="cscsparser.uptodate">
-    <congocc target="CSharp.ccc" args="-n" lang="csharp"/>
-    <!-- java jar="../../congocc.jar" failonerror="true" fork="true">
-      <assertions> <enable /> </assertions>
-      <arg line="-n -lang csharp ${basedir}/CSharp.ccc" />
-    </java-->
+    <congocc target="CSharp.ccc" lang="csharp"/>
   </target>
 
   <target name="compile-java" depends="java-parser-gen">
@@ -109,11 +85,7 @@
 
   <target name="rust-gen" depends="rust-guard" if="rust.available">
     <echo>Building CSharp parser in Rust.</echo>
-    <congocc target="CSharp.ccc" lang="rust" args="-n"/>
-    <!--java jar="../../congocc.jar" fork="true" failonerror="true">
-      <assertions><enable /></assertions>
-      <arg line="-n -lang rust -d ${basedir}/rust-csharpparser ${basedir}/CSharp.ccc" />
-    </java-->
+    <congocc target="CSharp.ccc" args="-n -d rust-csharpparser" lang="rust"/>
   </target>
 
   <target name="compile-rust" depends="rust-guard,rust-gen" if="rust.available">
@@ -127,5 +99,5 @@
   </target>
 
   <target name="build-all" depends="compile-java,python-parser-gen,compile-csharp,compile-rust"/>
-  <target name="test-all" depends="test-java,test-python,test-csharp,test-rust"/>
+  <target name="test-all" depends="test-java,test-csharp,test-python,test-rust"/>
 </project>
