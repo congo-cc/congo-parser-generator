@@ -1,5 +1,5 @@
 <project name="Rust Parser" default="build">
-  <!-- Rust code-generation is off by default. Enable with: ant -Drust.enabled=true ... -->
+  <import file="../../common.xml"/>
   <target name="clean">
     <delete dir="org" />
   </target>
@@ -12,12 +12,7 @@
 
   <target name="rust-parser-gen" depends="init" unless="rustparser.uptodate">
     <echo>Generating parser code...</echo>
-    <java jar="../../congocc.jar" failonerror="true" fork="true">
-      <assertions> <enable /> </assertions>
-      <arg value="-n" />
-      <arg value="-q" />
-      <arg value="${basedir}/Rust.ccc" />
-    </java>
+    <congocc target="Rust.ccc"/>
   </target>
 
   <target name="compile" depends="rust-parser-gen">

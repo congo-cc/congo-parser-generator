@@ -1,14 +1,5 @@
 <project name="Python" default="compile" basedir=".">
-  <!-- Rust code-generation is off by default. Enable with: ant -Drust.enabled=true ... -->
-  <property name="rust.enabled" value="false"/>
-  <target name="-rust-check">
-    <condition property="rust.on">
-      <istrue value="${rust.enabled}"/>
-    </condition>
-  </target>
-  <target name="-rust-guard" depends="-rust-check" unless="rust.on">
-    <echo level="warning">*** Skipping Rust targets (rust.enabled=${rust.enabled}). Enable with: ant -Drust.enabled=true ***</echo>
-  </target>
+  <import file="../../common.xml"/>
 
   <target name="parser-check">
     <uptodate property="pyparser.uptodate" targetfile="org/parsers/python/PythonParser.java">
@@ -27,24 +18,9 @@
   </target>
 
   <target name="parser-gen" unless="pyparser.uptodate">
-    <java jar="../../congocc.jar" failonerror="true" fork="true">
-      <assertions>
-        <enable />
-      </assertions>
-      <arg line="-n ${basedir}/Python.ccc" />
-    </java>
-    <java jar="../../congocc.jar" failonerror="true" fork="true">
-      <assertions>
-        <enable />
-      </assertions>
-      <arg line="-n -lang python ${basedir}/Python.ccc" />
-    </java>
-    <java jar="../../congocc.jar" failonerror="true" fork="true">
-      <assertions>
-        <enable />
-      </assertions>
-      <arg line="-n -lang csharp ${basedir}/Python.ccc" />
-    </java>
+    <congocc target="Python.ccc" lang="java"/>
+    <congocc target="Python.ccc" lang="python"/>
+    <congocc target="Python.ccc" lang="csharp"/>
   </target>
 
   <target name="compile" depends="parser-check,parser-gen">
@@ -102,7 +78,7 @@
     </exec>
   </target>
 
-  <target name="rust-gen" depends="-rust-guard" if="rust.on">
+  <target name="rust-gen" depends="rust-guard" if="rust.available">
     <echo>Building Python parser in Rust.</echo>
     <java jar="../../congocc.jar" fork="true" failonerror="true">
       <assertions><enable /></assertions>
@@ -110,13 +86,13 @@
     </java>
   </target>
 
-  <target name="compile-rust" depends="-rust-guard,rust-gen" if="rust.on">
+  <target name="compile-rust" depends="rust-guard,rust-gen" if="rust.on">
     <exec executable="cargo" dir="${basedir}/rust-pythonparser" failonerror="true">
       <arg line="build" />
     </exec>
   </target>
 
-  <target name="test-rust" depends="-rust-guard,compile-rust" if="rust.on">
+  <target name="test-rust" depends="rust-guard,compile-rust" if="rust.on">
     <!-- Tests disabled until handwritten Rust code is supplied.
          Eventually, the Rust parser will test against the same files as the Python parser.
     <delete dir="${basedir}/rust-pythonparser/test-data" />

@@ -7,7 +7,7 @@ BASE_SRC_DIR="../../build/generated-java";
 
 USES_PREPROCESSOR;
 
-DEACTIVATE_TOKENS=_INCLUDE,_INJECT,_EOF, RECORD, VAR, YIELD, SEALED, NON_SEALED, PERMITS;
+DEACTIVATE_TOKENS=_INCLUDE,_EOF, VAR, YIELD, SEALED, NON_SEALED, PERMITS;
 
 // We can use this symbol to generate code conditionally
 // based on whether we are generating code for internal use
@@ -16,9 +16,9 @@ DEACTIVATE_TOKENS=_INCLUDE,_INJECT,_EOF, RECORD, VAR, YIELD, SEALED, NON_SEALED,
 /* congocc RESERVED WORDS: These are the reserved words congocc but not in Java */
 
 TOKEN #CongoCCKeyWord :
-  < _INJECT: "INJECT" >
-  |
-  < _INCLUDE : "INCLUDE" | "INCLUDE_GRAMMAR">
+//  < _INJECT: "INJECT" >
+//  |
+  < _INCLUDE : "INCLUDE">
   |
   < _FAIL : "FAIL" >
   |
@@ -465,7 +465,7 @@ GrammarInclusion throws IOException :
     ObjectType ot;
     ClassOrInterfaceBody coib;
 }
-        ACTIVATE_TOKENS _INJECT (<_INJECT>)
+        'INJECT'
         {permissibleModifiers = EnumSet.of(ABSTRACT,FINAL,STRICTFP,SEALED,NON_SEALED);}
         Modifiers
         {isSealed = peekNode().getType()==SEALED || peekNode().hasChildOfType(SEALED);}
@@ -580,8 +580,7 @@ CodeInjection2 :
 {
         CompilationUnit jcu;
 }
-        ACTIVATE_TOKENS _INJECT (<_INJECT>)
-        ":" =>|| "{"
+        'INJECT' ":" =>|| "{"
         jcu=CompilationUnit
        "}"
         {
@@ -1206,17 +1205,19 @@ Assertion# :
 Lookahead# :
 {
    Token amountToken=null;
-   boolean hasExplicitNumericalLookahead=false;
+//   boolean hasExplicitNumericalLookahead=false;
    Expansion expansion = null;
    EmbeddedCode exp=null;
    Name name = null;
    Node lb = null;
 }
 [ @assignment := Assignment ] //FIXME: should this have assignment?  It seems to do nothing right now.
-<_SCAN>
+(<_SCAN> | <INTEGER_LITERAL>)
 [
-    <INTEGER_LITERAL> {hasExplicitNumericalLookahead = true;}
+   ENSURE {getTokenType(0) != INTEGER_LITERAL}
+    <INTEGER_LITERAL>
 ]
+{boolean hasExplicitNumericalLookahead = getTokenType(0) == INTEGER_LITERAL;}
 (
     (
       "{" exp=Expression "}"
@@ -1769,5 +1770,3 @@ INJECT TryBlock  :
     }
 
 }
-
-

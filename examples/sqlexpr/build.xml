@@ -1,14 +1,5 @@
 <project name="CongoCC SQL Expression example" default="rust-info">
-  <!-- Rust code-generation is off by default. Enable with: ant -Drust.enabled=true ... -->
-  <property name="rust.enabled" value="false"/>
-  <target name="-rust-check">
-    <condition property="rust.on">
-      <istrue value="${rust.enabled}"/>
-    </condition>
-  </target>
-  <target name="-rust-guard" depends="-rust-check" unless="rust.on">
-    <echo level="warning">*** Skipping Rust targets (rust.enabled=${rust.enabled}). Enable with: ant -Drust.enabled=true ***</echo>
-  </target>
+  <import file="../../common.xml"/>
 
   <!-- The SQL Expression example has no Java entry point; the grammar is
        used only to generate a Rust parser.  The default target reports
@@ -16,8 +7,8 @@
        rather than a misleading "no such target" or a partial Java build. -->
   <target name="rust-info">
     <echo>This example only builds a Rust parser.  Use:</echo>
-    <echo>  ant -Drust.enabled=true rust-gen     # regenerate the parser and restore hand-written files</echo>
-    <echo>  ant -Drust.enabled=true test-rust    # regenerate, restore, and run cargo test</echo>
+    <echo>  ant rust-gen     # regenerate the parser and restore hand-written files</echo>
+    <echo>  ant test-rust    # regenerate, restore, and run cargo test</echo>
     <echo>  ant clean                            # remove the generated rust-sqlparser/ directory</echo>
   </target>
 
@@ -25,7 +16,7 @@
     <delete dir="rust-sqlparser" />
   </target>
 
-  <target name="rust-gen" depends="-rust-guard" if="rust.on">
+  <target name="rust-gen" depends="rust-guard" if="rust.available">
     <java jar="../../congocc.jar" failonerror="true" fork="true">
       <assertions><enable /></assertions>
       <arg line="-n -lang rust -d ${basedir}/rust-sqlparser ${basedir}/SqlExprParser.ccc" />
@@ -45,7 +36,7 @@
     </copy>
   </target>
 
-  <target name="test-rust" depends="-rust-guard,rust-gen" if="rust.on">
+  <target name="test-rust" depends="rust-guard,rust-gen" if="rust.available">
     <exec executable="cargo" dir="${basedir}/rust-sqlparser" failonerror="true">
       <arg line="test -- --nocapture" />
     </exec>

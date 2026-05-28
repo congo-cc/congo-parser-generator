@@ -1,14 +1,5 @@
 <project name="CongoCC Arithmetic example" default="compile">
-  <!-- Rust code-generation is off by default. Enable with: ant -Drust.enabled=true ... -->
-  <property name="rust.enabled" value="false"/>
-  <target name="-rust-check">
-    <condition property="rust.on">
-      <istrue value="${rust.enabled}"/>
-    </condition>
-  </target>
-  <target name="-rust-guard" depends="-rust-check" unless="rust.on">
-    <echo level="warning">*** Skipping Rust targets (rust.enabled=${rust.enabled}). Enable with: ant -Drust.enabled=true ***</echo>
-  </target>
+  <import file="../../common.xml"/>
 
   <target name="clean">
     <delete dir="ex1" />
@@ -24,20 +15,8 @@
   </target>
 
   <target name="parser-gen" depends="init" unless="ccc.uptodate">
-    <java jar="../../congocc.jar" failonerror="true" fork="true">
-      <assertions>
-        <enable />
-      </assertions>
-      <arg value="-q" />
-      <arg value="${basedir}/Arithmetic1.ccc" />
-    </java>
-    <java jar="../../congocc.jar" failonerror="true" fork="true">
-      <assertions>
-        <enable />
-      </assertions>
-      <arg value="-q" />
-      <arg value="${basedir}/Arithmetic2.ccc" />
-    </java>
+    <congocc target="Arithmetic1.ccc"/>
+    <congocc target="Arithmetic2.ccc"/>
   </target>
 
   <target name="compile" depends="parser-gen">
@@ -54,15 +33,9 @@
     </java>
   </target>
 
-  <target name="rust-gen" depends="-rust-guard" if="rust.on">
-    <java jar="../../congocc.jar" failonerror="true" fork="true">
-      <assertions><enable /></assertions>
-      <arg line="-n -lang rust -d ${basedir}/rust-arith1 ${basedir}/Arithmetic1.ccc" />
-    </java>
-    <java jar="../../congocc.jar" failonerror="true" fork="true">
-      <assertions><enable /></assertions>
-      <arg line="-n -lang rust -d ${basedir}/rust-arith2 ${basedir}/Arithmetic2.ccc" />
-    </java>
+  <target name="rust-gen" depends="rust-guard" if="rust.available">
+    <congocc target="Arithmetic1.ccc" args="-n -d rust-arith1" lang="rust"/>
+    <congocc target="Arithmetic2.ccc" args="-n -d rust-arith2" lang="rust"/>
     <delete dir="${basedir}/rust-arith1/test-data" />
     <mkdir dir="${basedir}/rust-arith1/test-data" />
     <copy todir="${basedir}/rust-arith1/test-data">
@@ -83,7 +56,7 @@
     </copy>
   </target>
 
-  <target name="test-rust" depends="-rust-guard,rust-gen" if="rust.on">
+  <target name="test-rust" depends="rust-guard,rust-gen" if="rust.available">
     <exec executable="cargo" dir="${basedir}/rust-arith1" failonerror="true">
       <arg line="test -- --nocapture" />
     </exec>

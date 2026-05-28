@@ -1,15 +1,5 @@
 <project name="CSharp Parser" default="build-all">
-  <!-- Rust code-generation is off by default. Enable with: ant -Drust.enabled=true ... -->
-  <property name="rust.enabled" value="false"/>
-  <target name="-rust-check">
-    <condition property="rust.on">
-      <istrue value="${rust.enabled}"/>
-    </condition>
-  </target>
-  <target name="-rust-guard" depends="-rust-check" unless="rust.on">
-    <echo level="warning">*** Skipping Rust targets (rust.enabled=${rust.enabled}). Enable with: ant -Drust.enabled=true ***</echo>
-  </target>
-
+  <import file="../../common.xml"/>
   <target name="clean">
     <delete dir="org" />
     <delete dir="pplineparser" />
@@ -36,42 +26,48 @@
   </target>
 
   <target name="line-directive-java-parser-gen" depends="init" unless="linedirective-j.uptodate">
-    <echo>Using Bootstrap CongoCC to regenerate preprocessor</echo>
-    <java jar="../../congocc.jar" failonerror="true" fork="true">
+    <echo>Using CongoCC to regenerate preprocessor line parser</echo>
+    <congocc target="PPDirectiveLine.ccc" args="-n"/>
+    <!--java jar="../../congocc.jar" failonerror="true" fork="true">
       <assertions> <enable /> </assertions>
       <arg line="-n PPDirectiveLine.ccc" />
-    </java>
+    </java-->
   </target>
   <target name="line-directive-py-parser-gen" depends="init" unless="linedirective-py.uptodate">
-    <java jar="../../congocc.jar" failonerror="true" fork="true">
+    <congocc target="PPDirectiveLine.ccc" lang="python" args="-n"/>
+    <!--java jar="../../congocc.jar" failonerror="true" fork="true">
       <assertions> <enable /> </assertions>
       <arg line="-n -lang python ${basedir}/PPDirectiveLine.ccc" />
-    </java>
+    </java-->
   </target>
   <target name="line-directive-cs-parser-gen" depends="init" unless="linedirective-cs.uptodate">
-    <java jar="../../congocc.jar" failonerror="true" fork="true">
+    <congocc target="PPDirectiveLine.ccc" args="-n" lang="csharp"/>
+    <!-- java jar="../../congocc.jar" failonerror="true" fork="true">
       <assertions> <enable /> </assertions>
       <arg line="-n -lang csharp -d cs-csharpparser/ppline ${basedir}/PPDirectiveLine.ccc" />
-    </java>
+    </java -->
   </target>
 
   <target name="java-parser-gen" depends="init,line-directive-java-parser-gen" unless="csjparser.uptodate">
-    <java jar="../../congocc.jar" failonerror="true" fork="true">
+    <congocc target="CSharp.ccc" args="-n"/>
+    <!--java jar="../../congocc.jar" failonerror="true" fork="true">
       <assertions> <enable /> </assertions>
       <arg line="-n ${basedir}/CSharp.ccc" />
-    </java>
+    </java-->
   </target>
   <target name="python-parser-gen" depends="init,line-directive-py-parser-gen" unless="cspyparser.uptodate">
-    <java jar="../../congocc.jar" failonerror="true" fork="true">
+    <congocc target="CSharp.ccc" lang="python" args="-n"/>
+    <!--java jar="../../congocc.jar" failonerror="true" fork="true">
       <assertions> <enable /> </assertions>
       <arg line="-n -lang python ${basedir}/CSharp.ccc" />
-    </java>
+    </java-->
   </target>
   <target name="csharp-parser-gen" depends="init,line-directive-cs-parser-gen" unless="cscsparser.uptodate">
-    <java jar="../../congocc.jar" failonerror="true" fork="true">
+    <congocc target="CSharp.ccc" args="-n" lang="csharp"/>
+    <!-- java jar="../../congocc.jar" failonerror="true" fork="true">
       <assertions> <enable /> </assertions>
       <arg line="-n -lang csharp ${basedir}/CSharp.ccc" />
-    </java>
+    </java-->
   </target>
 
   <target name="compile-java" depends="java-parser-gen">
@@ -111,21 +107,22 @@
     </exec>
   </target>
 
-  <target name="rust-gen" depends="-rust-guard" if="rust.on">
+  <target name="rust-gen" depends="rust-guard" if="rust.available">
     <echo>Building CSharp parser in Rust.</echo>
-    <java jar="../../congocc.jar" fork="true" failonerror="true">
+    <congocc target="CSharp.ccc" lang="rust" args="-n"/>
+    <!--java jar="../../congocc.jar" fork="true" failonerror="true">
       <assertions><enable /></assertions>
       <arg line="-n -lang rust -d ${basedir}/rust-csharpparser ${basedir}/CSharp.ccc" />
-    </java>
+    </java-->
   </target>
 
-  <target name="compile-rust" depends="-rust-guard,rust-gen" if="rust.on">
+  <target name="compile-rust" depends="rust-guard,rust-gen" if="rust.available">
     <exec executable="cargo" dir="${basedir}/rust-csharpparser" failonerror="true">
       <arg line="build" />
     </exec>
   </target>
 
-  <target name="test-rust" depends="-rust-guard,compile-rust" if="rust.on">
+  <target name="test-rust" depends="rust-guard,compile-rust" if="rust.available">
     <!-- Tests disabled until handwritten Rust code is supplied. -->
   </target>
 

@@ -1,14 +1,5 @@
 <project name="Lua Parser" default="build">
-  <!-- Rust code-generation is off by default. Enable with: ant -Drust.enabled=true ... -->
-  <property name="rust.enabled" value="false"/>
-  <target name="-rust-check">
-    <condition property="rust.on">
-      <istrue value="${rust.enabled}"/>
-    </condition>
-  </target>
-  <target name="-rust-guard" depends="-rust-check" unless="rust.on">
-    <echo level="warning">*** Skipping Rust targets (rust.enabled=${rust.enabled}). Enable with: ant -Drust.enabled=true ***</echo>
-  </target>
+  <import file="../../common.xml"/>
 
   <target name="clean">
     <delete dir="org" />
@@ -31,25 +22,15 @@
   </target>
 
   <target name="java-parser-gen" depends="init" unless="javaparser.uptodate">
-    <java jar="../../congocc.jar" failonerror="true" fork="true">
-      <assertions> <enable /> </assertions>
-      <arg value="-n" />
-      <arg value="${basedir}/Lua.ccc" />
-    </java>
+    <congocc target="Lua.ccc"/>
   </target>
 
   <target name="python-parser-gen" depends="init" unless="pyparser.uptodate">
-    <java jar="../../congocc.jar" failonerror="true" fork="true">
-      <assertions> <enable /> </assertions>
-      <arg line="-n -lang python ${basedir}/Lua.ccc" />
-    </java>
+    <congocc target="Lua.ccc" lang="python"/>
   </target>
 
-   <target name="csharp-parser-gen" depends="init" unless="csparser.uptodate">
-    <java jar="../../congocc.jar" failonerror="true" fork="true">
-      <assertions> <enable /> </assertions>
-      <arg line="-n -lang csharp ${basedir}/Lua.ccc" />
-    </java>
+  <target name="csharp-parser-gen" depends="init" unless="csparser.uptodate">
+    <congocc target="Lua.ccc" lang="csharp"/>
   </target>
 
   <target name="compile-java" depends="java-parser-gen">
@@ -90,7 +71,7 @@
     </exec>
   </target>
 
-  <target name="rust-parser-gen" depends="-rust-guard" if="rust.on">
+  <target name="rust-parser-gen" depends="rust-guard" if="rust.available">
     <java jar="../../congocc.jar" failonerror="true" fork="true">
       <assertions><enable /></assertions>
       <arg line="-n -lang rust -d ${basedir}/rust-luaparser ${basedir}/Lua.ccc" />
@@ -102,7 +83,7 @@
     </copy>
   </target>
 
-  <target name="test-rust" depends="-rust-guard,rust-parser-gen" if="rust.on">
+  <target name="test-rust" depends="rust-guard,rust-parser-gen" if="rust.available">
     <exec executable="cargo" dir="${basedir}/rust-luaparser" failonerror="true">
       <arg line="test -- --nocapture" />
     </exec>
