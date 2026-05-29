@@ -24,25 +24,15 @@
   </target>
 
   <target name="java-parser-gen" depends="init" unless="javaparser.uptodate">
-    <java jar="../../congocc.jar" failonerror="true" fork="true">
-      <assertions> <enable /> </assertions>
-      <arg value="-n" />
-      <arg value="${basedir}/Cics.ccc" />
-    </java>
+    <congocc target="Cics.ccc" />
   </target>
 
   <target name="python-parser-gen" depends="init" unless="pyparser.uptodate">
-    <java jar="../../congocc.jar" failonerror="true" fork="true">
-      <assertions> <enable /> </assertions>
-      <arg line="-n -lang python ${basedir}/Cics.ccc" />
-    </java>
+    <congocc target="Cics.ccc" lang="python"/>
   </target>
 
   <target name="csharp-parser-gen" depends="init" unless="csparser.uptodate">
-    <java jar="../../congocc.jar" failonerror="true" fork="true">
-      <assertions> <enable /> </assertions>
-      <arg line="-n -lang csharp ${basedir}/Cics.ccc" />
-    </java>
+    <congocc target="Cics.ccc" lang="csharp"/>
   </target>
 
   <target name="compile-java" depends="java-parser-gen">
@@ -85,10 +75,7 @@
   </target>
 
   <target name="rust-gen" depends="rust-guard" if="rust.available">
-    <java jar="../../congocc.jar" failonerror="true" fork="true">
-      <assertions><enable /></assertions>
-      <arg line="-n -lang rust -d ${basedir}/rust-cicsparser ${basedir}/Cics.ccc" />
-    </java>
+    <congocc target="Cics.ccc" lang="rust" args="-n -d ${basedir}/rust-cicsparser"/>
     <delete dir="${basedir}/rust-cicsparser/test-data" />
     <mkdir dir="${basedir}/rust-cicsparser/test-data" />
     <copy todir="${basedir}/rust-cicsparser/test-data">
