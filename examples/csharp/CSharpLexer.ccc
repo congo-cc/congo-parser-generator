@@ -25,6 +25,10 @@ UNPARSED #Comment :
   < SINGLE_LINE_COMMENT : "//" (<NOT_NEW_LINE>)* <NEW_LINE>>
 ;
 
+TOKEN :
+  <SHEBANG : "#!" (<NOT_NEW_LINE>)* <NEW_LINE>>
+;
+
 TOKEN #Literal :
   < INTEGER_LITERAL: (<DECIMAL_LITERAL> | <HEX_LITERAL> | <BINARY_LITERAL>) (<INTEGER_TYPE_SUFFIX>)?> #IntegerLiteral
   |

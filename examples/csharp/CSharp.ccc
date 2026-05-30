@@ -29,17 +29,22 @@ DEACTIVATE_TOKENS= // The following tokens are turned on
                   // The following are the keywords that are
                   // activated when we enter a QueryExpression
                   ASCENDING, DESCENDING, BY, EQUALS, JOIN, GROUP,
-                  LET, INTO, ON, ORDERBY,SELECT, FROM, WHERE;
+                  LET, INTO, ON, ORDERBY,SELECT, FROM, WHERE,
+                  // I should check when shebang was allowed.
+                  SHEBANG ;
 
 INCLUDE "CSharpLexer.ccc"
 
 #CompilationUnit# :
+   [
+      ACTIVATE_TOKENS SHEBANG (<SHEBANG>)
+   ]
    (ExternAliasDirective)*
    (UsingDirective)*
    (GlobalAttributeSection)*
    CompilationUnitBody
    <EOF>
-   {return thisProduction;}
+   {return THIS;}
 ;
 
 CompilationUnitBody#void :
@@ -1198,12 +1203,12 @@ ImplicitAnonymousFunctionSignature :
    <LPAREN>
    [
       (AttributeSection)*
-      [<OUT>|<REF>]
+      [<OUT>|<REF>[<READONLY>]]
       <IDENTIFIER>
       (
          <COMMA>
          (AttributeSection)*
-         [<OUT>|<REF>]
+         [<OUT>|<REF>[<READONLY>]]
          <IDENTIFIER>
       )*
    ]
@@ -1297,7 +1302,10 @@ OrderbyClause :
 ;
 
 AssignmentExpression :
-   ConditionalExpression {Expression lhs = (Expression) peekNode();}
+   ConditionalExpression
+   {
+      if (!(peekNode() instanceof Expression)) System.out.println(peekNode().getLocation());
+      Expression lhs = (Expression) peekNode();}
    [
       AssignmentOperator
       ASSERT {lhs.isAssignableTo(),peekNode()} : "Left-hand side is not assignable." :
@@ -1347,7 +1355,7 @@ SwitchExpressionCase :
 ;
 
 RangeExpression :
-   <RANGE> [UnaryExpression]
+   (<RANGE> [UnaryExpression]) #RangeExpression
    |
    UnaryExpression [<RANGE> [UnaryExpression]]
 ;
@@ -2172,6 +2180,8 @@ SwitchLabel :
    // REVISIT: Why do I need this line?
    // The third choice should be enough, it seems...
    <CASE> Expression [WhenClause] <COLON> =>||
+   |
+   <CASE> TypePattern [<IDENTIFIER>] [WhenClause] <COLON> =>||
    |
    <CASE> Pattern [WhenClause] <COLON>
 ;
