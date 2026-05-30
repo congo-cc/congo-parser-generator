@@ -2,10 +2,10 @@
 // tool itself but it can be used on its own, and you are free to use it
 // in your own projects. It supports the stable feature set of Dotnet 9,
 // i.e. C# version 13. There are a couple of C# 14 features that are currently
-// unsupported, such as extension members. I anticipate adding full support
+// unsupported. I anticipate adding full support
 // for C# 14 once Dotnet 10 has a final release.
 // This grammar serves as a very good showcase for some of the more
-// advanced features of CongoCC, without which, it could well be
+// advanced features of CongoCC, wihout which, it could well be
 // impossible to fully express the current C# language --
 // at least in a clean, elegant way.
 
@@ -724,11 +724,10 @@ ExtensionDeclaration :
    <RPAREN>
    TypeParameterConstraints
    ExtensionBody
+   [<SEMICOLON>]
 ;
 
 ExtensionBody :
-   <SEMICOLON>
-   |
    <LBRACE>
      (
       MethodDeclaration
@@ -1199,12 +1198,12 @@ ImplicitAnonymousFunctionSignature :
    <LPAREN>
    [
       (AttributeSection)*
-      [<OUT>]
+      [<OUT>|<REF>]
       <IDENTIFIER>
       (
          <COMMA>
          (AttributeSection)*
-         [<OUT>]
+         [<OUT>|<REF>]
          <IDENTIFIER>
       )*
    ]
@@ -1655,7 +1654,6 @@ TupleElement :
 ;
 
 PrimitiveTypeAccess :
-//   (PrimitiveType | 'dynamic')
    PrimitiveType
    <DOT> =>||
    <IDENTIFIER>
