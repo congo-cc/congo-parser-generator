@@ -512,6 +512,8 @@ ClassMemberDeclaration :
   |
   OperatorDeclaration
   |
+  ExtensionDeclaration
+  |
   ConstructorDeclaration
   |
   SCAN ~\StructDeclaration
@@ -708,6 +710,34 @@ DestructorDeclaration :
   =>||
   <RPAREN>
   MethodBody
+;
+
+ExtensionDeclaration :
+   'extension'
+   [TypeParameterList]
+   <LPAREN>
+   (AttributeSection)*
+   {permissibleModifiers = EnumSet.of(REF, READONLY, IN, SCOPED);}
+   Modifiers
+   Type
+   [<IDENTIFIER>]
+   <RPAREN>
+   TypeParameterConstraints
+   ExtensionBody
+;
+
+ExtensionBody :
+   <SEMICOLON>
+   |
+   <LBRACE>
+     (
+      MethodDeclaration
+      |
+      PropertyDeclaration
+      |
+      OperatorDeclaration
+     )*
+   <RBRACE>
 ;
 
 ConstructorDeclaration :
