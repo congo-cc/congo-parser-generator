@@ -273,7 +273,6 @@ Modifiers#void : //TODO handle illegal combinations of mods
 
 ClassDeclaration :
   {
-    boolean isaRecordClass = false;
     permissibleModifiers = EnumSet.of(NEW,  PUBLIC, TokenType.PROTECTED,
                                       TokenType.INTERNAL, TokenType.PRIVATE, TokenType.ABSTRACT,
                                       TokenType.SEALED, TokenType.STATIC, TokenType.UNSAFE, TokenType.FILE);
@@ -285,7 +284,6 @@ ClassDeclaration :
      // Record classes are since 10.0
      // and barely mentioned anywhere
      'record'
-     {isaRecordClass =true;}
   ]
   <CLASS>
   =>||
@@ -2440,7 +2438,7 @@ MultiStringInterpolation :
    LEXICAL_STATE IN_MULTI_INTERPOLATION
    (
       (
-         MultiNonInterpolatedText
+         <NON_INTERPOLATED_TEXT2>
          |
          PlaceHolder
       )*
@@ -2468,10 +2466,6 @@ RegularNonInterpolatedText :
    (<NON_INTERPOLATED_TEXT>)
 ;
 
-MultiNonInterpolatedText : IN_MULTI_INTERPOLATION :
-   <NON_INTERPOLATED_TEXT2>
-;
-
 InterpolatedRawString :
    <INTERPOLATED_RAW_STRING_START>
    LEXICAL_STATE IN_INTERPOLATED_RAW_STRING
@@ -2490,7 +2484,10 @@ RawInterpolation :
     LEXICAL_STATE CSHARP
     (
       Expression
-      [<COLON>MultiNonInterpolatedText]
+      [
+         <COLON>
+         LEXICAL_STATE IN_MULTI_INTERPOLATION(<NON_INTERPOLATED_TEXT2>)
+      ]
     )
     <END_RAW_INTERPOLATION>
 ;
