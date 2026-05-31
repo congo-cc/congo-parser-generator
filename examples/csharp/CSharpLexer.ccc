@@ -266,7 +266,7 @@ TOKEN #Literal :
   |
   < REGULAR_INTERPOLATION_START : '$"' >
   |
-  < MULTI_INTERPOLATION_START : '$@"' | '@$"' >
+  < MULTI_INTERPOLATION_START : '$@"' | '@$"' > {startingDollars =1;}
   |
   < INTERPOLATED_RAW_STRING_START : ("$")+ ('"'){3,}>
 ;
@@ -280,7 +280,20 @@ TOKEN :
 <IN_MULTI_INTERPOLATION>
 TOKEN :
   // Just any non-interpolated character in an interpolated string.
-  < NON_INTERPOLATED_TEXT2 : ((~['"',"{","}"] | '""') | "{{" | "}}")+ >
+  < NON_INTERPOLATED_TEXT2 : (~['"',"{","}"] | '""')+ >
+  |
+  <BRACES : ("{{" ("{")*) | ("}}" ("}")*)>
+  {
+      int charsToTruncate = matchedToken.length() - startingDollars - 1;
+      if (charsToTruncate >= 0) {
+         matchedToken.truncate(charsToTruncate);
+         matchedToken.setType(NON_INTERPOLATED_TEXT2);
+         return matchedToken;
+      }
+      matchedToken.setEndOffset(matchedToken.getBeginOffset()+1);
+      if (charAt(0) == '{') matchedToken.setType(LBRACE);
+      else matchedToken.setType(RBRACE);
+  }
 ;
 
 <CSHARP, IN_REGULAR_INTERPOLATION, IN_MULTI_INTERPOLATION >
