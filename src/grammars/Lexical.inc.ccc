@@ -25,7 +25,21 @@ TOKEN :
 ;
 
 TOKEN :
-   <?UNPARSED_CODE_BLOCK : <UNPARSED_BLOCK1> | <UNPARSED_BLOCK2> ("#")? > #UnparsedCodeBlock
+   <?UNPARSED_CODE_BLOCK : <UNPARSED_BLOCK1> | <UNPARSED_BLOCK2>> #UnparsedCodeBlock
+   {
+       if (charAt(matchEnd) == '#') matchedToken.truncate(-1);
+       char langLetter = matchedToken.charAt(1);
+       Node.CodeLang codeLang = switch(langLetter) {
+           case 'C' -> Node.CodeLang.CSHARP;
+           case 'J' -> Node.CodeLang.JAVA;
+           case 'P' -> Node.CodeLang.PYTHON;
+           case 'R' -> Node.CodeLang.RUST;
+           default-> null;
+       };
+       if (codeLang != null && codeLang != getGrammar().getCodeLang()) {
+           matchedToken.setUnparsed(true);
+       }
+   }
    |
    <#UNPARSED_BLOCK1 : "{" (["J","P","C","R"])? "%" (~[])* "%}">
    |

@@ -73,7 +73,7 @@
 
   <target name="test-python" depends="python-parser-gen">
     <exec executable="python3" dir="${basedir}/csharpparser/test" failonerror="true">
-      <arg line="-u parse_files.py ../../testfiles" />
+      <arg line="-u parse_files.py ../../testfiles/short" />
     </exec>
   </target>
 

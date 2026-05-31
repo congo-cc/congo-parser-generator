@@ -72,6 +72,7 @@ public class Grammar extends BaseNode {
 
     public Grammar() {this.appSettings = new AppSettings(this);}
 
+    public Grammar getGrammar() {return this;}
 
     public AppSettings getAppSettings() {return appSettings;}
 
