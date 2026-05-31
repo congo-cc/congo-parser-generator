@@ -1,786 +1,1107 @@
-// Licensed to the .NET Foundation under one or more agreements.
+﻿// Licensed to the .NET Foundation under one or more agreements.
 // The .NET Foundation licenses this file to you under the MIT license.
+// See the LICENSE file in the project root for more information.
+
+#nullable disable
 
 using System;
-using System.Collections.Generic;
-using System.IO.Pipelines;
-using System.Net.Http;
-using System.Net.WebSockets;
+using System.Collections.Immutable;
+using System.Diagnostics;
+using System.Linq;
+using System.Runtime.InteropServices;
 using System.Text;
-using System.Threading;
-using System.Threading.Tasks;
-using Microsoft.AspNetCore.Connections;
-using Microsoft.AspNetCore.Http.Connections;
-using Microsoft.AspNetCore.Http.Connections.Client;
-using Microsoft.AspNetCore.Http.Connections.Client.Internal;
-using Microsoft.AspNetCore.SignalR.Client;
-using Microsoft.AspNetCore.Testing;
-using Microsoft.AspNetCore.WebUtilities;
-using Microsoft.Extensions.Logging;
-using Microsoft.Extensions.Logging.Testing;
-using Moq;
-using Moq.Protected;
+using Microsoft.CodeAnalysis.CSharp.Symbols;
+using Microsoft.CodeAnalysis.CSharp.Syntax;
+using Microsoft.CodeAnalysis.CSharp.Test.Utilities;
+using Microsoft.CodeAnalysis.Diagnostics;
+using Microsoft.CodeAnalysis.FlowAnalysis;
+using Microsoft.CodeAnalysis.Operations;
+using Microsoft.CodeAnalysis.PooledObjects;
+using Microsoft.CodeAnalysis.Test.Utilities;
+using Roslyn.Test.Utilities;
+using Roslyn.Test.Utilities.TestGenerators;
+using Roslyn.Utilities;
 using Xunit;
-using HttpConnectionOptions = Microsoft.AspNetCore.Http.Connections.Client.HttpConnectionOptions;
 
-namespace Microsoft.AspNetCore.SignalR.Tests;
-
-public class EndToEndTestsCollection : ICollectionFixture<InProcessTestServer<Startup>>
+namespace Microsoft.CodeAnalysis.CSharp.UnitTests.EndToEnd
 {
-    public const string Name = nameof(EndToEndTestsCollection);
+    [TestCaseOrderer("XUnit.Project.Orderers.AlphabeticalOrderer", "XUnit.Project")]
+    public class EndToEndTests : EmitMetadataTestBase
+    {
+        /// <summary>
+        /// These tests are very sensitive to stack size hence we use a fresh thread to ensure there
+        /// is a consistent stack size for them to execute in.
+        /// </summary>
+        /// <param name="action"></param>
+        private static void RunInThread(Action action, TimeSpan? timeout = null)
+        {
+            Exception exception = null;
+            var thread = new System.Threading.Thread(() =>
+            {
+                try
+                {
+                    action();
+                }
+                catch (Exception ex)
+                {
+                    exception = ex;
+                }
+            }, 0);
+
+            thread.Start();
+            if (timeout is { } t && !Debugger.IsAttached)
+            {
+                if (!thread.Join(t))
+                {
+                    throw new TimeoutException(t.ToString());
+                }
+            }
+            else
+            {
+                thread.Join();
+            }
+
+            if (exception is object)
+            {
+                Assert.Fail(exception.ToString());
+            }
+        }
+
+        private static void RunTest(int expectedDepth, Action<int> runTest)
+        {
+            if (runTestAndCatch(expectedDepth))
+            {
+                return;
+            }
+
+            int minDepth = 0;
+            int maxDepth = expectedDepth;
+            int actualDepth;
+            while (true)
+            {
+                int depth = (maxDepth - minDepth) / 2 + minDepth;
+                if (depth <= minDepth)
+                {
+                    actualDepth = minDepth;
+                    break;
+                }
+                if (depth >= maxDepth)
+                {
+                    actualDepth = maxDepth;
+                    break;
+                }
+                if (runTestAndCatch(depth))
+                {
+                    minDepth = depth;
+                }
+                else
+                {
+                    maxDepth = depth;
+                }
+            }
+            Assert.Equal(expectedDepth, actualDepth);
+
+            bool runTestAndCatch(int depth)
+            {
+                try
+                {
+                    runTest(depth);
+                    return true;
+                }
+                catch (Exception)
+                {
+                    return false;
+                }
+            }
+        }
+
+        // This test is a canary attempting to make sure that we don't regress the # of fluent calls that
+        // the compiler can handle.
+        [WorkItem(16669, "https://github.com/dotnet/roslyn/issues/16669")]
+        [ConditionalFact(typeof(WindowsOrLinuxOnly)), WorkItem(34880, "https://github.com/dotnet/roslyn/issues/34880")]
+        public void OverflowOnFluentCall()
+        {
+            int numberFluentCalls = (IntPtr.Size, ExecutionConditionUtil.Configuration) switch
+            {
+                (4, ExecutionConfiguration.Debug) => 4000,
+                (4, ExecutionConfiguration.Release) => 4000,
+                (8, ExecutionConfiguration.Debug) => 4000,
+                (8, ExecutionConfiguration.Release) => 4000,
+                _ => throw new Exception($"Unexpected configuration {IntPtr.Size * 8}-bit {ExecutionConditionUtil.Configuration}")
+            };
+
+            // <path>\xunit.console.exe "<path>\CSharpCompilerEmitTest\Roslyn.Compilers.CSharp.Emit.UnitTests.dll"  -noshadow -verbose -class "Microsoft.CodeAnalysis.CSharp.UnitTests.Emit.EndToEndTests"
+            // <path>\xunit.console.x86.exe "<path>\CSharpCompilerEmitTest\Roslyn.Compilers.CSharp.Emit.UnitTests.dll"  -noshadow -verbose -class "Microsoft.CodeAnalysis.CSharp.UnitTests.Emit.EndToEndTests"
+            // Un-comment loop below and use above commands to figure out the new limits
+            //for (int i = 0; i < numberFluentCalls; i = i + 10)
+            //{
+            //    Console.WriteLine($"Depth: {i}");
+            //    tryCompileDeepFluentCalls(i);
+            //}
+
+            tryCompileDeepFluentCalls(numberFluentCalls);
+
+            void tryCompileDeepFluentCalls(int depth)
+            {
+                var builder = new StringBuilder();
+                builder.AppendLine(
+        @"class C {
+    C M(string x) { return this; }
+    void M2() {
+        global::C.GetC()
+");
+                for (int i = 0; i < depth; i++)
+                {
+                    builder.AppendLine(@"            .M(""test"")");
+                }
+                builder.AppendLine(
+                   @"            .M(""test"");
+    }
+
+    static C GetC() => new C();
+}
+");
+
+                var source = builder.ToString();
+                RunInThread(() =>
+                {
+                    var options = TestOptions.DebugDll.WithConcurrentBuild(false);
+                    var compilation = CreateCompilation(source, options: options);
+                    compilation.VerifyDiagnostics();
+                    compilation.EmitToArray();
+                });
+            }
+        }
+
+        // This test is a canary attempting to make sure that we don't regress the # of fluent calls that
+        // the compiler can handle.
+        [Fact(Skip = "https://github.com/dotnet/roslyn/issues/72678"), WorkItem("https://devdiv.visualstudio.com/DevDiv/_workitems/edit/1874763")]
+        public void OverflowOnFluentCall_ExtensionMethods()
+        {
+            int numberFluentCalls = (IntPtr.Size, ExecutionConditionUtil.Configuration, RuntimeUtilities.IsDesktopRuntime, RuntimeInformation.IsOSPlatform(OSPlatform.OSX)) switch
+            {
+                (8, ExecutionConfiguration.Debug, false, false) => 750,
+                (8, ExecutionConfiguration.Release, false, false) => 750, // Should be ~3_400, but is flaky.
+                (4, ExecutionConfiguration.Debug, true, false) => 450,
+                (4, ExecutionConfiguration.Release, true, false) => 1_600,
+                (8, ExecutionConfiguration.Debug, true, false) => 1_100,
+                (8, ExecutionConfiguration.Release, true, false) => 3_300,
+                (_, _, _, true) => 200,
+                _ => throw new Exception($"Unexpected configuration {IntPtr.Size * 8}-bit {ExecutionConditionUtil.Configuration}, Desktop: {RuntimeUtilities.IsDesktopRuntime}")
+            };
+
+            // Un-comment the call below to figure out the new limits.
+            //testLimits();
+
+            try
+            {
+                tryCompileDeepFluentCalls(numberFluentCalls);
+            }
+            catch (Exception e)
+            {
+                testLimits(e);
+            }
+
+            void testLimits(Exception innerException = null)
+            {
+                for (int i = 0; i < int.MaxValue; i += 10)
+                {
+                    try
+                    {
+                        tryCompileDeepFluentCalls(i);
+                    }
+                    catch (Exception e)
+                    {
+                        if (innerException != null)
+                        {
+                            e = new AggregateException(e, innerException);
+                        }
+
+                        throw new Exception($"Depth: {i}, Bytes: {IntPtr.Size}, Config: {ExecutionConditionUtil.Configuration}, Desktop: {RuntimeUtilities.IsDesktopRuntime}", e);
+                    }
+                }
+            }
+
+            void tryCompileDeepFluentCalls(int depth)
+            {
+                var builder = new StringBuilder();
+                builder.AppendLine("""
+                    static class E
+                    {
+                        public static C M(this C c, string x) { return c; }
+                    }
+                    class C
+                    {
+                        static C GetC() => new C();
+                        void M2()
+                        {
+                            GetC()
+                    """);
+                for (int i = 0; i < depth; i++)
+                {
+                    builder.AppendLine(""".M("test")""");
+                }
+                builder.AppendLine("""; } }""");
+
+                var source = builder.ToString();
+                RunInThread(() =>
+                {
+                    var options = TestOptions.DebugDll.WithConcurrentBuild(false);
+                    var compilation = CreateCompilation(source, options: options);
+                    compilation.VerifyEmitDiagnostics();
+                });
+            }
+        }
+
+        [ConditionalFact(typeof(WindowsOrLinuxOnly))]
+        [WorkItem(33909, "https://github.com/dotnet/roslyn/issues/33909")]
+        [WorkItem(34880, "https://github.com/dotnet/roslyn/issues/34880")]
+        [WorkItem(53361, "https://github.com/dotnet/roslyn/issues/53361")]
+        public void DeeplyNestedGeneric()
+        {
+            int nestingLevel = (IntPtr.Size, ExecutionConditionUtil.Configuration) switch
+            {
+                // Legacy baselines are indicated by comments
+                (4, ExecutionConfiguration.Debug) => 370, // 270
+                (4, ExecutionConfiguration.Release) => 1290, // 1290
+                (8, ExecutionConfiguration.Debug) => 270, // 170
+                (8, ExecutionConfiguration.Release) => 730, // 730
+                _ => throw new Exception($"Unexpected configuration {IntPtr.Size * 8}-bit {ExecutionConditionUtil.Configuration}")
+            };
+
+            // Un-comment loop below and use above commands to figure out the new limits
+            //Console.WriteLine($"Using architecture: {ExecutionConditionUtil.Architecture}, configuration: {ExecutionConditionUtil.Configuration}");
+            //for (int i = nestingLevel; i < int.MaxValue; i = i + 10)
+            //{
+            //    var start = DateTime.UtcNow;
+            //    Console.Write($"Depth: {i}");
+            //    runDeeplyNestedGenericTest(i);
+            //    Console.WriteLine($" - {DateTime.UtcNow - start}");
+            //}
+
+            runDeeplyNestedGenericTest(nestingLevel);
+
+            void runDeeplyNestedGenericTest(int nestingLevel)
+            {
+                var builder = new StringBuilder();
+                builder.AppendLine(@"
+#pragma warning disable 168 // Unused local
+using System;
+
+public class Test
+{
+    public static void Main(string[] args)
+    {
+");
+
+                for (var i = 0; i < nestingLevel; i++)
+                {
+                    if (i > 0)
+                    {
+                        builder.Append('.');
+                    }
+                    builder.Append($"MyStruct{i}<int>");
+                }
+
+                builder.AppendLine(" local;");
+                builder.AppendLine(@"
+        Console.WriteLine(""Pass"");
+    }
+}");
+
+                for (int i = 0; i < nestingLevel; i++)
+                {
+                    builder.AppendLine($"public struct MyStruct{i}<T{i}> {{");
+                }
+                for (int i = 0; i < nestingLevel; i++)
+                {
+                    builder.AppendLine("}");
+                }
+
+                var source = builder.ToString();
+                RunInThread(() =>
+                {
+                    var compilation = CreateCompilation(source, options: TestOptions.DebugExe.WithConcurrentBuild(false));
+                    compilation.VerifyDiagnostics();
+
+                    // PEVerify is skipped here as it doesn't scale to this level of nested generics. After
+                    // about 600 levels of nesting it will not return in any reasonable amount of time.
+                    CompileAndVerify(compilation, expectedOutput: "Pass", verify: Verification.Skipped);
+                });
+            }
+        }
+
+        [Theory, CombinatorialData, WorkItem("https://github.com/dotnet/roslyn/issues/69515")]
+        public void GenericInheritanceCascade_CSharp(bool reverse, bool concurrent)
+        {
+            const int number = 17;
+
+            /*
+                class C0<T>;
+                class C1<T> : C0<T>;
+                class C2<T> : C1<T>;
+                ...
+            */
+            var declarations = new string[number];
+            declarations[0] = "class C0<T0> { }";
+            for (int i = 1; i < number; i++)
+            {
+                declarations[i] = $$"""class C{{i}}<T{{i}}> : C{{i - 1}}<T{{i}}> { }""";
+            }
+
+            if (reverse)
+            {
+                Array.Reverse(declarations);
+            }
+
+            var source = string.Join(Environment.NewLine, declarations);
+            var options = TestOptions.DebugDll.WithConcurrentBuild(concurrent);
+
+            RunInThread(() =>
+            {
+                CompileAndVerify(source, options: options).VerifyDiagnostics();
+            }, timeout: TimeSpan.FromSeconds(10));
+        }
+
+        [Theory, CombinatorialData, WorkItem("https://github.com/dotnet/roslyn/issues/69515")]
+        public void GenericInheritanceCascade_VisualBasic(bool reverse, bool concurrent)
+        {
+            const int number = 17;
+
+            /*
+                Class C0(Of T)
+                End Class
+                Class C1(Of T)
+                    Inherits C0(Of T)
+                End Class
+                Class C2(Of T)
+                    Inherits C1(Of T)
+                End Class
+                ...
+            */
+            var declarations = new string[number];
+            declarations[0] = """
+                Class C0(Of T0)
+                End Class
+                """;
+            for (int i = 1; i < number; i++)
+            {
+                declarations[i] = $"""
+                    Class C{i}(Of T{i})
+                        Inherits C{i - 1}(Of T{i})
+                    End Class
+                    """;
+            }
+
+            if (reverse)
+            {
+                Array.Reverse(declarations);
+            }
+
+            var source = string.Join(Environment.NewLine, declarations);
+            var options = new VisualBasic.VisualBasicCompilationOptions(OutputKind.DynamicallyLinkedLibrary)
+                .WithConcurrentBuild(concurrent);
+
+            RunInThread(() =>
+            {
+                CreateVisualBasicCompilation(source, compilationOptions: options).VerifyDiagnostics();
+            }, timeout: TimeSpan.FromSeconds(10));
+        }
+
+        [ConditionalFact(typeof(WindowsOrLinuxOnly), typeof(NoIOperationValidation))]
+        public void NestedIfStatements()
+        {
+            int nestingLevel = (IntPtr.Size, ExecutionConditionUtil.Configuration) switch
+            {
+                (4, ExecutionConfiguration.Debug) => 310,
+                (4, ExecutionConfiguration.Release) => 1400,
+                (8, ExecutionConfiguration.Debug) => 200,
+                (8, ExecutionConfiguration.Release) => 474,
+                _ => throw new Exception($"Unexpected configuration {IntPtr.Size * 8}-bit {ExecutionConditionUtil.Configuration}")
+            };
+
+            RunTest(nestingLevel, runTest);
+
+            static void runTest(int nestingLevel)
+            {
+                var builder = new StringBuilder();
+                builder.AppendLine(
+@"class Program
+{
+    static bool F(int i) => true;
+    static void Main()
+    {");
+                for (int i = 0; i < nestingLevel; i++)
+                {
+                    builder.AppendLine(
+$@"        if (F({i}))
+        {{");
+                }
+                for (int i = 0; i < nestingLevel; i++)
+                {
+                    builder.AppendLine("        }");
+                }
+                builder.AppendLine(
+@"    }
+}");
+                var source = builder.ToString();
+                RunInThread(() =>
+                {
+                    var comp = CreateCompilation(source, options: TestOptions.DebugDll.WithConcurrentBuild(false));
+                    comp.VerifyDiagnostics();
+                });
+            }
+        }
+
+        [WorkItem("https://github.com/dotnet/roslyn/issues/72393")]
+        [ConditionalTheory(typeof(NoIOperationValidation))]
+        [InlineData(2)]
+#if DEBUG
+        [InlineData(2000)]
+#else
+        [InlineData(5000)]
+#endif
+        public void NestedIfElse(int n)
+        {
+            var builder = new System.Text.StringBuilder();
+            builder.AppendLine("""
+                #nullable enable
+                class Program
+                {
+                    static void F(int i)
+                    {
+                        if (i == 0) { }
+                """);
+            for (int i = 0; i < n; i++)
+            {
+                builder.AppendLine($$"""
+                            else if (i == {{i}}) { }
+                    """);
+            }
+            builder.AppendLine("""
+                    }
+                }
+                """);
+
+            var source = builder.ToString();
+            var comp = CreateCompilation(source);
+            comp.VerifyEmitDiagnostics();
+
+            var tree = comp.SyntaxTrees.Single();
+            var model = comp.GetSemanticModel(tree);
+            var node = tree.GetRoot().DescendantNodes().OfType<MethodDeclarationSyntax>().Single();
+
+            // Avoid using ControlFlowGraphVerifier.GetControlFlowGraph() since that calls
+            // TestOperationVisitor.VerifySubTree() which has quadratic behavior using
+            // MemberSemanticModel.GetEnclosingBinderInternalWithinRoot().
+            var operation = (Microsoft.CodeAnalysis.Operations.IMethodBodyOperation)model.GetOperation(node);
+            var graph = Microsoft.CodeAnalysis.FlowAnalysis.ControlFlowGraph.Create(operation);
+
+            if (n == 2)
+            {
+                var symbol = model.GetDeclaredSymbol(node);
+                ControlFlowGraphVerifier.VerifyGraph(comp, """
+                    Block[B0] - Entry
+                        Statements (0)
+                        Next (Regular) Block[B1]
+                    Block[B1] - Block
+                        Predecessors: [B0]
+                        Statements (0)
+                        Jump if False (Regular) to Block[B2]
+                            IBinaryOperation (BinaryOperatorKind.Equals) (OperationKind.Binary, Type: System.Boolean) (Syntax: 'i == 0')
+                              Left:
+                                IParameterReferenceOperation: i (OperationKind.ParameterReference, Type: System.Int32) (Syntax: 'i')
+                              Right:
+                                ILiteralOperation (OperationKind.Literal, Type: System.Int32, Constant: 0) (Syntax: '0')
+                        Next (Regular) Block[B4]
+                    Block[B2] - Block
+                        Predecessors: [B1]
+                        Statements (0)
+                        Jump if False (Regular) to Block[B3]
+                            IBinaryOperation (BinaryOperatorKind.Equals) (OperationKind.Binary, Type: System.Boolean) (Syntax: 'i == 0')
+                              Left:
+                                IParameterReferenceOperation: i (OperationKind.ParameterReference, Type: System.Int32) (Syntax: 'i')
+                              Right:
+                                ILiteralOperation (OperationKind.Literal, Type: System.Int32, Constant: 0) (Syntax: '0')
+                        Next (Regular) Block[B4]
+                    Block[B3] - Block
+                        Predecessors: [B2]
+                        Statements (0)
+                        Jump if False (Regular) to Block[B4]
+                            IBinaryOperation (BinaryOperatorKind.Equals) (OperationKind.Binary, Type: System.Boolean) (Syntax: 'i == 1')
+                              Left:
+                                IParameterReferenceOperation: i (OperationKind.ParameterReference, Type: System.Int32) (Syntax: 'i')
+                              Right:
+                                ILiteralOperation (OperationKind.Literal, Type: System.Int32, Constant: 1) (Syntax: '1')
+                        Next (Regular) Block[B4]
+                    Block[B4] - Exit
+                        Predecessors: [B1] [B2] [B3*2]
+                        Statements (0)
+                    """,
+                    graph, symbol);
+            }
+        }
+
+        [WorkItem(42361, "https://github.com/dotnet/roslyn/issues/42361")]
+        [ConditionalFact(typeof(WindowsOrLinuxOnly))]
+        public void Constraints()
+        {
+            int n = (IntPtr.Size, ExecutionConditionUtil.Configuration) switch
+            {
+                (4, ExecutionConfiguration.Debug) => 420,
+                (4, ExecutionConfiguration.Release) => 1100,
+                (8, ExecutionConfiguration.Debug) => 180,
+                (8, ExecutionConfiguration.Release) => 400,
+                _ => throw new Exception($"Unexpected configuration {IntPtr.Size * 8}-bit {ExecutionConditionUtil.Configuration}")
+            };
+
+            RunTest(n, runTest);
+
+            static void runTest(int n)
+            {
+                // class C0<T> where T : C1<T> { }
+                // class C1<T> where T : C2<T> { }
+                // ...
+                // class CN<T> where T : C0<T> { }
+                var sourceBuilder = new StringBuilder();
+                var diagnosticsBuilder = ArrayBuilder<DiagnosticDescription>.GetInstance();
+                for (int i = 0; i <= n; i++)
+                {
+                    int next = (i == n) ? 0 : i + 1;
+                    sourceBuilder.AppendLine($"class C{i}<T> where T : C{next}<T> {{ }}");
+                    diagnosticsBuilder.Add(Diagnostic(ErrorCode.ERR_GenericConstraintNotSatisfiedRefType, "T").WithArguments($"C{i}<T>", $"C{next}<T>", "T", "T"));
+                }
+                var source = sourceBuilder.ToString();
+                var diagnostics = diagnosticsBuilder.ToArrayAndFree();
+
+                RunInThread(() =>
+                {
+                    var comp = CreateCompilation(source, options: TestOptions.DebugDll.WithConcurrentBuild(false));
+                    var type = comp.GetMember<NamedTypeSymbol>("C0");
+                    var typeParameter = type.TypeParameters[0];
+                    Assert.True(typeParameter.IsReferenceType);
+                    comp.VerifyDiagnostics(diagnostics);
+                });
+            }
+        }
+
+        [ConditionalFact(typeof(WindowsOrMacOSOnly), Reason = "https://github.com/dotnet/roslyn/issues/69210"), WorkItem("https://devdiv.visualstudio.com/DevDiv/_workitems/edit/1819416")]
+        public void LongInitializerList()
+        {
+            var sb = new StringBuilder();
+            sb.AppendLine("""
+                    _ = new System.Collections.Generic.Dictionary<string, string>
+                    {
+                    """);
+
+            for (int i = 0; i < 100; i++)
+            {
+                sb.AppendLine("""    { "a", "b" },""");
+            }
+
+            sb.AppendLine("};");
+
+            var comp = CreateCompilation(sb.ToString());
+            var counter = new MemberSemanticModel.MemberSemanticBindingCounter();
+            comp.TestOnlyCompilationData = counter;
+            comp.VerifyEmitDiagnostics();
+            Assert.Equal(0, counter.BindCount);
+
+            var tree = comp.SyntaxTrees[0];
+            var model = comp.GetSemanticModel(tree);
+
+            var literals = tree.GetRoot().DescendantNodes().OfType<LiteralExpressionSyntax>().ToArray();
+            Assert.Equal(200, literals.Length);
+            foreach (var literal in literals)
+            {
+                var type = model.GetTypeInfo(literal).Type;
+                Assert.Equal(SpecialType.System_String, type.SpecialType);
+            }
+
+            Assert.Equal(1, counter.BindCount);
+        }
+
+        [Fact]
+        public void Interceptors()
+        {
+            const int numberOfInterceptors = 10000;
+
+            // write a program which has many intercepted calls.
+            // each interceptor is in a different file.
+            var files = ArrayBuilder<(string source, string path)>.GetInstance();
+
+            // Build a top-level-statements main like:
+            //    C.M();
+            //    C.M();
+            //    C.M();
+            //    ...
+            var builder = new StringBuilder();
+            for (int i = 0; i < numberOfInterceptors; i++)
+            {
+                builder.AppendLine("C.M();");
+            }
+
+            var program = (builder.ToString(), "Program.cs");
+            var locations = getInterceptableLocations(program);
+            files.Add(program);
+
+            files.Add(("""
+                class C
+                {
+                    public static void M() => throw null!;
+                }
+
+                namespace System.Runtime.CompilerServices
+                {
+                    public class InterceptsLocationAttribute : Attribute
+                    {
+                        public InterceptsLocationAttribute(int version, string data) { }
+                    }
+                }
+                """, "C.cs"));
+
+            for (int i = 0; i < numberOfInterceptors; i++)
+            {
+                var location = locations[i];
+                files.Add(($$"""
+                    using System;
+                    using System.Runtime.CompilerServices;
+
+                    class C{{i}}
+                    {
+                        [InterceptsLocation({{location.Version}}, "{{location.Data}}")]
+                        public static void M()
+                        {
+                            Console.WriteLine({{i}});
+                        }
+                    }
+                    """, $"C{i}.cs"));
+            }
+
+            var verifier = CompileAndVerify(files.ToArrayAndFree(), parseOptions: TestOptions.Regular.WithFeature(Feature.InterceptorsNamespaces, "global"), expectedOutput: makeExpectedOutput());
+            verifier.VerifyDiagnostics();
+
+            string makeExpectedOutput()
+            {
+                builder.Clear();
+                for (int i = 0; i < numberOfInterceptors; i++)
+                {
+                    builder.AppendLine($"{i}");
+                }
+                return builder.ToString();
+            }
+
+            ImmutableArray<InterceptableLocation> getInterceptableLocations(CSharpTestSource source)
+            {
+                var comp = CreateCompilation(source);
+                var tree = comp.SyntaxTrees.Single();
+                var model = comp.GetSemanticModel(tree);
+
+                var nodes = tree.GetRoot().DescendantNodes().OfType<InvocationExpressionSyntax>().SelectAsArray(node => model.GetInterceptableLocation(node));
+                return nodes;
+            }
+        }
+
+        [Theory, CombinatorialData, WorkItem("https://github.com/dotnet/roslyn/issues/69093")]
+        public void NestedLambdas(bool localFunctions)
+        {
+            const int overloads1Number = 20;
+            const int overloads2Number = 10;
+
+            /*
+                interface I0 { }
+                // ...
+                interface I9 { }
+            */
+            var builder1 = new StringBuilder();
+            var interfacesNumber = Math.Max(overloads1Number, overloads2Number);
+            for (int i = 0; i < interfacesNumber; i++)
+            {
+                builder1.AppendLine($$"""interface I{{i}} { }""");
+            }
+
+            /*
+                void M1(System.Action<I0> a) { }
+                // ...
+                void M1(System.Action<I9> a) { }
+            */
+            var builder2 = new StringBuilder();
+            for (int i = 0; i < overloads1Number; i++)
+            {
+                builder2.AppendLine($$"""void M1(System.Action<I{{i}}> a) { }""");
+            }
+
+            /*
+                void M2(I0 x, System.Func<string, I0> f) { }
+                // ...
+                void M2(I9 x, System.Func<string, I9> f) { }
+            */
+            for (int i = 0; i < overloads2Number; i++)
+            {
+                builder2.AppendLine($$"""void M2(I{{i}} x, System.Func<string, I{{i}}> f) { }""");
+            }
+
+            // Local functions should be similarly fast as lambdas.
+            var inner = localFunctions ? """
+                M2(x, L0);
+                static I0 L0(string arg) {
+                    arg = arg + "0";
+                    return default;
+                }
+                """ : """
+                M2(x, static I0 (string arg) => {
+                    arg = arg + "0";
+                    return default;
+                });
+                """;
+
+            var source = $$"""
+                {{builder1}}
+                class C
+                {
+                    {{builder2}}
+                    void Main()
+                    {
+                        M1(x =>
+                        {
+                            {{inner}}
+                        });
+                    }
+                }
+                """;
+            RunInThread(() =>
+            {
+                var comp = CreateCompilation(source, options: TestOptions.DebugDll.WithConcurrentBuild(false));
+                var data = new LambdaBindingData();
+                comp.TestOnlyCompilationData = data;
+                comp.VerifyDiagnostics();
+                Assert.Equal(localFunctions ? 20 : 40, data.LambdaBindingCount);
+            }, timeout: TimeSpan.FromSeconds(5));
+        }
+
+        [Fact, WorkItem("https://github.com/dotnet/roslyn/pull/70791")]
+        public void ForAttributeWithMetadataName_DeepRecursion()
+        {
+            var deeplyRecursive = string.Join("+", Enumerable.Repeat(""" "a" """, 20_000));
+            var source = $$"""
+                class Ex
+                {
+                    void M()
+                    {
+                        var v ={{deeplyRecursive}};
+                    }
+                }
+
+                [N1.X]
+                class C1 { }
+                [N2.X]
+                class C2 { }
+
+                namespace N1
+                {
+                    class XAttribute : System.Attribute { }
+                }
+
+                namespace N2
+                {
+                    class XAttribute : System.Attribute { }
+                }
+                """;
+            var parseOptions = TestOptions.RegularPreview;
+            Compilation compilation = CreateCompilation(source, options: TestOptions.DebugDllThrowing, parseOptions: parseOptions);
+
+            Assert.Single(compilation.SyntaxTrees);
+
+            var generator = new IncrementalGeneratorWrapper(new PipelineCallbackGenerator(ctx =>
+            {
+                var input = ctx.SyntaxProvider.ForAttributeWithMetadataName(
+                    "N1.XAttribute",
+                    (node, _) => node is ClassDeclarationSyntax,
+                    (context, _) => (ClassDeclarationSyntax)context.TargetNode);
+                ctx.RegisterSourceOutput(input, (spc, node) => { });
+            }));
+
+            GeneratorDriver driver = CSharpGeneratorDriver.Create(
+                [generator],
+                parseOptions: parseOptions,
+                driverOptions: TestOptions.GeneratorDriverOptions);
+
+            driver = driver.RunGenerators(compilation);
+            var runResult = driver.GetRunResult().Results[0];
+
+            Assert.Collection(runResult.TrackedSteps["result_ForAttributeWithMetadataName"],
+                step => Assert.True(step.Outputs.Single().Value is ClassDeclarationSyntax { Identifier.ValueText: "C1" }));
+        }
+
+        [Theory]
+        [InlineData("or", "1")]
+        [InlineData("and not", "0")]
+        public void ManyBinaryPatterns_01(string pattern, string expectedOutput)
+        {
+            const string preamble = $"""
+                int i = 2;
+
+                System.Console.Write(i is
+                """;
+            string append = $"""
+
+                {pattern}
+                """;
+            const string postscript = """
+
+                ? 1 : 0);
+                """;
+
+            const int numBinaryExpressions = 5_000;
+
+            var builder = new StringBuilder(preamble.Length + postscript.Length + append.Length * numBinaryExpressions + 5 /* Max num digit characters */ * numBinaryExpressions);
+
+            builder.AppendLine(preamble);
+
+            builder.Append(0.ToString(System.Globalization.CultureInfo.InvariantCulture));
+
+            for (int i = 1; i < numBinaryExpressions; i++)
+            {
+                builder.Append(append);
+                // Make sure the emitter has to handle lots of nodes
+                builder.Append((i * 2).ToString(System.Globalization.CultureInfo.InvariantCulture));
+            }
+
+            builder.AppendLine(postscript);
+
+            var source = builder.ToString();
+            RunInThread(() =>
+            {
+                var comp = CreateCompilation(source, options: TestOptions.DebugExe.WithConcurrentBuild(false));
+                CompileAndVerify(comp, expectedOutput: expectedOutput);
+
+                var tree = comp.SyntaxTrees[0];
+                var isPattern = tree.GetRoot().DescendantNodes().OfType<IsPatternExpressionSyntax>().Single();
+                var model = comp.GetSemanticModel(tree);
+                var operation = model.GetOperation(isPattern);
+                Assert.NotNull(operation);
+
+                for (; operation.Parent is not null; operation = operation.Parent) { }
+
+                Assert.NotNull(ControlFlowGraph.Create((IMethodBodyOperation)operation));
+            });
+        }
+
+        [Fact]
+        public void ManyBinaryPatterns_02()
+        {
+            const int numOfEnumMembers = 5_000;
+            var capacity = RuntimeInformation.IsOSPlatform(OSPlatform.Windows) ? 97973 : 87960;
+
+            var builder = new StringBuilder(capacity);
+
+            builder.Append("""
+#nullable enable
+
+class ErrorFacts
+{
+    static bool Test(E code)
+    {
+        return code switch
+        {
+            E._0
+""");
+
+            for (int i = 1; i < numOfEnumMembers; i++)
+            {
+                builder.Append($"""
+
+or E._{i}
+""");
+            }
+
+            builder.Append("""
+                    => false,
+        };
+    }
 }
 
-[Collection(EndToEndTestsCollection.Name)]
-public class EndToEndTests : FunctionalTestBase
+enum E
 {
-    [Fact]
-    public async Task CanStartAndStopConnectionUsingDefaultTransport()
-    {
-        await 
-        using (var server = await StartServer<Startup>())
-        {
-            var url = server.Url + "/echo";
-            // The test should connect to the server using WebSockets transport on Windows 8 and newer.
-            // On Windows 7/2008R2 it should use ServerSentEvents transport to connect to the server.
-            var connection = new HttpConnection(new Uri(url), HttpTransports.All, LoggerFactory);
-            await connection.StartAsync().DefaultTimeout();
-            await connection.DisposeAsync().DefaultTimeout();
+    _0,
+""");
+
+            for (int i = 1; i < numOfEnumMembers; i++)
+            {
+                builder.Append($"""
+
+_{i},
+""");
+            }
+
+            builder.Append("""
+}
+""");
+
+            Assert.Equal(capacity, builder.Length);
+
+            var source = builder.ToString();
+            RunInThread(() =>
+            {
+                var comp = CreateCompilation(source, options: TestOptions.DebugDll.WithConcurrentBuild(false));
+
+                var tree = comp.SyntaxTrees.Single();
+                var model = comp.GetSemanticModel(tree);
+                var node1 = tree.GetRoot().DescendantNodes().OfType<MemberAccessExpressionSyntax>().First();
+                Assert.Equal("E._0", model.GetSymbolInfo(node1).Symbol.ToTestDisplayString());
+                var node2 = tree.GetRoot().DescendantNodes().OfType<MemberAccessExpressionSyntax>().Last();
+                Assert.Equal($"E._{numOfEnumMembers - 1}", model.GetSymbolInfo(node2).Symbol.ToTestDisplayString());
+
+                var operation = model.GetOperation(node1);
+                Assert.NotNull(operation);
+
+                for (; operation.Parent is not null; operation = operation.Parent) { }
+
+                Assert.NotNull(ControlFlowGraph.Create((IMethodBodyOperation)operation));
+
+                model.GetDiagnostics().Verify(
+                    // (7,21): warning CS8524: The switch expression does not handle some values of its input type (it is not exhaustive) involving an unnamed enum value. For example, the pattern '(E)5000' is not covered.
+                    //         return code switch
+                    Diagnostic(ErrorCode.WRN_SwitchExpressionNotExhaustiveWithUnnamedEnumValue, "switch").WithArguments("(E)" + numOfEnumMembers).WithLocation(7, 21)
+                    );
+            });
         }
+
+        [Fact]
+        public void ManyBinaryPatterns_03()
+        {
+            const int numOfEnumMembers = 4_000;
+            var capacity = RuntimeInformation.IsOSPlatform(OSPlatform.Windows) ? 47065 : 43055;
+
+            var builder = new StringBuilder(capacity);
+
+            builder.Append("""
+#nullable enable
+
+class ErrorFacts
+{
+    static bool Test(E code)
+    {
+        return code switch
+        {
+            E._0
+""");
+
+            for (int i = 1; i < numOfEnumMembers; i++)
+            {
+                builder.Append($"""
+
+or E._{i}
+""");
+            }
+
+            builder.Append("""
+                    => false,
+        };
     }
+}
+""");
 
-    [Fact]
-    public async Task TransportThatFallsbackCreatesNewConnection()
-    {
-        bool ExpectedErrors(WriteContext writeContext)
-        {
-            return writeContext.LoggerName == typeof(HttpConnection).FullName &&
-                   writeContext.EventId.Name == "ErrorStartingTransport";
+            Assert.Equal(capacity, builder.Length);
+
+            var source = builder.ToString();
+            RunInThread(() =>
+            {
+                var comp = CreateCompilation(source, options: TestOptions.DebugDll.WithConcurrentBuild(false));
+
+                var tree = comp.SyntaxTrees.Single();
+                var model = comp.GetSemanticModel(tree);
+                var node1 = tree.GetRoot().DescendantNodes().OfType<MemberAccessExpressionSyntax>().First();
+                SymbolInfo symbolInfo = model.GetSymbolInfo(node1);
+                Assert.Null(symbolInfo.Symbol);
+                Assert.Equal(CandidateReason.None, symbolInfo.CandidateReason);
+                var node2 = tree.GetRoot().DescendantNodes().OfType<MemberAccessExpressionSyntax>().Last();
+                symbolInfo = model.GetSymbolInfo(node2);
+                Assert.Null(symbolInfo.Symbol);
+                Assert.Equal(CandidateReason.None, symbolInfo.CandidateReason);
+
+                var operation = model.GetOperation(node1);
+                Assert.NotNull(operation);
+
+                for (; operation.Parent is not null; operation = operation.Parent) { }
+
+                Assert.NotNull(ControlFlowGraph.Create((IMethodBodyOperation)operation));
+            });
         }
 
-        await 
-        using (var server = await StartServer<Startup>(expectedErrorsFilter: ExpectedErrors))
+        [Fact]
+        [WorkItem("https://github.com/dotnet/roslyn/pull/83087")]
+        public void ManyUnreferencedSuppressMessageAttributes()
         {
-            var url = server.Url + "/echo";
-            // The test should connect to the server using WebSockets transport on Windows 8 and newer.
-            // On Windows 7/2008R2 it should use ServerSentEvents transport to connect to the server.
+            // Stress test for SuppressMessageAttributeState: a large number of
+            // assembly-level SuppressMessageAttributes should not cause excessive work
+            // when only one of the suppressed diagnostic IDs is ever queried.
+            // Only one suppression targets a real type and a real diagnostic ID;
+            // the rest reference IDs that are never produced by any analyzer and
+            // targets that don't resolve to any symbol in the compilation.
+            const int unreferencedSuppressionCount = 50_000;
+            const string realSuppression = $"""[assembly: SuppressMessage("Test", "{ReportOnTypeAnalyzer.DiagnosticId}", Scope = "type", Target = "~T:Targeted")]""";
 
-            // The test logic lives in the TestTransportFactory and FakeTransport.
-            var connection = new HttpConnection(new HttpConnectionOptions { Url = new Uri(url), DefaultTransferFormat = TransferFormat.Text }, LoggerFactory, new TestTransportFactory());
-            await connection.StartAsync().DefaultTimeout();
-            await connection.DisposeAsync().DefaultTimeout();
+            var attributesBuilder = new StringBuilder(capacity: 40 + realSuppression.Length + 2 + unreferencedSuppressionCount * 107);
+            attributesBuilder.AppendLine("using System.Diagnostics.CodeAnalysis;");
+            attributesBuilder.AppendLine();
+
+            // The one real suppression we expect to be honored.
+            attributesBuilder.AppendLine(realSuppression);
+            for (int i = 0; i < unreferencedSuppressionCount; i++)
+            {
+                // Use a unique fake diagnostic ID per suppression so that querying
+                // any single ID resolves at most one target. The targets reference
+                // types that don't exist so resolution would fail if it were ever
+                // attempted.
+                attributesBuilder.AppendLine(
+                    $$"""[assembly: SuppressMessage("Test", "FAKE{{i:D5}}", Scope = "type", Target = "~T:DoesNotExist{{i:D5}}")]""");
+            }
+
+            var attributesSource = attributesBuilder.ToString();
+            var typesSource = """
+                public class Targeted { }
+                public class NotTargeted { }
+                """;
+
+            RunInThread(() =>
+            {
+                var compilation = CreateCompilation(
+                    [attributesSource, typesSource],
+                    options: TestOptions.DebugDll.WithConcurrentBuild(false));
+                compilation.VerifyDiagnostics();
+
+                var analyzers = new DiagnosticAnalyzer[] { new ReportOnTypeAnalyzer() };
+                var analyzerDiagnostics = compilation.GetAnalyzerDiagnostics(analyzers);
+
+                // Only the diagnostic on 'NotTargeted' should remain; the one on 'Targeted'
+                // is suppressed by the SuppressMessageAttribute and filtered out.
+                analyzerDiagnostics.Verify(
+                    Diagnostic("MY00001", "NotTargeted").WithArguments("NotTargeted").WithLocation(2, 14)
+                );
+            }, timeout: TimeSpan.FromMinutes(2));
         }
-    }
 
-    [Theory]
-    [MemberData(nameof(TransportTypes))]
-    [LogLevel(LogLevel.Trace)]
-    public async Task CanStartAndStopConnectionUsingGivenTransport(HttpTransportType transportType)
-    {
-        //await 
-        using (var server = await StartServer<Startup>())
+        [DiagnosticAnalyzer(LanguageNames.CSharp)]
+        private sealed class ReportOnTypeAnalyzer : DiagnosticAnalyzer
         {
-            var url = server.Url + "/echo";
-            var connection = new HttpConnection(new HttpConnectionOptions { Url = new Uri(url), Transports = transportType, DefaultTransferFormat = TransferFormat.Text }, LoggerFactory);
-            await connection.StartAsync().DefaultTimeout();
-            await connection.DisposeAsync().DefaultTimeout();
-        }
-    }
+            public const string DiagnosticId = "MY00001";
 
-    [ConditionalFact]
-    [WebSocketsSupportedCondition]
-    public async Task WebSocketsTest()
-    {
-        await using (var server = await StartServer<Startup>())
-        {
-            var logger = LoggerFactory.CreateLogger<EndToEndTests>();
+            private static readonly DiagnosticDescriptor s_rule = new DiagnosticDescriptor(
+                DiagnosticId, "Title", "Type {0}", "Test",
+                DiagnosticSeverity.Warning, isEnabledByDefault: true);
 
-            const string message = "Hello, World!";
-            using (var ws = new ClientWebSocket())
+            public override ImmutableArray<DiagnosticDescriptor> SupportedDiagnostics => ImmutableArray.Create(s_rule);
+
+            public override void Initialize(AnalysisContext context)
             {
-                var socketUrl = server.WebSocketsUrl + "/echo";
-
-                logger.LogInformation("Connecting WebSocket to {socketUrl}", socketUrl);
-                await ws.ConnectAsync(new Uri(socketUrl), CancellationToken.None).DefaultTimeout();
-
-                var bytes = Encoding.UTF8.GetBytes(message);
-                logger.LogInformation("Sending {length} byte frame", bytes.Length);
-                await ws.SendAsync(new ArraySegment<byte>(bytes), WebSocketMessageType.Binary, endOfMessage: true, CancellationToken.None).DefaultTimeout();
-
-                logger.LogInformation("Receiving frame");
-                var buffer = new ArraySegment<byte>(new byte[1024]);
-                var result = await ws.ReceiveAsync(buffer, CancellationToken.None).DefaultTimeout();
-                logger.LogInformation("Received {length} byte frame", result.Count);
-
-                Assert.Equal(bytes, buffer.Array.AsSpan(0, result.Count).ToArray());
-
-                logger.LogInformation("Closing socket");
-                await ws.CloseOutputAsync(WebSocketCloseStatus.NormalClosure, "", CancellationToken.None).DefaultTimeout();
-                logger.LogInformation("Waiting for close");
-                result = await ws.ReceiveAsync(buffer, CancellationToken.None).DefaultTimeout();
-                Assert.Equal(WebSocketMessageType.Close, result.MessageType);
-                Assert.Equal(WebSocketCloseStatus.NormalClosure, result.CloseStatus);
-                logger.LogInformation("Closed socket");
-            }
-        }
-    }
-
-    [ConditionalFact]
-    [WebSocketsSupportedCondition]
-    public async Task WebSocketsReceivesAndSendsPartialFramesTest()
-    {
-        await using (var server = await StartServer<Startup>())
-        {
-            var logger = LoggerFactory.CreateLogger<EndToEndTests>();
-
-            const string message = "Hello, World!";
-            using (var ws = new ClientWebSocket())
-            {
-                var socketUrl = server.WebSocketsUrl + "/echo";
-
-                logger.LogInformation("Connecting WebSocket to {socketUrl}", socketUrl);
-                await ws.ConnectAsync(new Uri(socketUrl), CancellationToken.None).DefaultTimeout();
-
-                var bytes = Encoding.UTF8.GetBytes(message);
-                logger.LogInformation("Sending {length} byte frame", bytes.Length);
-                // We're sending a partial frame, we should still get the data
-                await ws.SendAsync(new ArraySegment<byte>(bytes), WebSocketMessageType.Binary, endOfMessage: false, CancellationToken.None).DefaultTimeout();
-
-                logger.LogInformation("Receiving frame");
-                var buffer = new ArraySegment<byte>(new byte[1024]);
-                var result = await ws.ReceiveAsync(buffer, CancellationToken.None).DefaultTimeout();
-                logger.LogInformation("Received {length} byte frame", result.Count);
-
-                Assert.Equal(bytes, buffer.Array.AsSpan(0, result.Count).ToArray());
-
-                logger.LogInformation("Closing socket");
-                await ws.CloseOutputAsync(WebSocketCloseStatus.NormalClosure, "", CancellationToken.None).DefaultTimeout();
-                logger.LogInformation("Waiting for close");
-                result = await ws.ReceiveAsync(buffer, CancellationToken.None).DefaultTimeout();
-                Assert.Equal(WebSocketMessageType.Close, result.MessageType);
-                Assert.Equal(WebSocketCloseStatus.NormalClosure, result.CloseStatus);
-                logger.LogInformation("Closed socket");
-            }
-        }
-    }
-
-    [ConditionalFact]
-    [WebSocketsSupportedCondition]
-    public async Task HttpRequestsNotSentWhenWebSocketsTransportRequestedAndSkipNegotiationSet()
-    {
-        await using (var server = await StartServer<Startup>())
-        {
-            var logger = LoggerFactory.CreateLogger<EndToEndTests>();
-            var url = server.Url + "/echo";
-
-            var mockHttpHandler = new Mock<HttpMessageHandler>();
-            mockHttpHandler.Protected()
-                .Setup<Task<HttpResponseMessage>>("SendAsync", ItExpr.IsAny<HttpRequestMessage>(), ItExpr.IsAny<CancellationToken>())
-                .Returns<HttpRequestMessage, CancellationToken>(
-                    (request, cancellationToken) => Task.FromException<HttpResponseMessage>(new InvalidOperationException("HTTP requests should not be sent.")));
-
-            var httpOptions = new HttpConnectionOptions
-            {
-                Url = new Uri(url),
-                Transports = HttpTransportType.WebSockets,
-                SkipNegotiation = true,
-                HttpMessageHandlerFactory = (httpMessageHandler) => mockHttpHandler.Object
-            };
-
-            var connection = new HttpConnection(httpOptions, LoggerFactory);
-
-            try
-            {
-                var message = new byte[] { 42 };
-                await connection.StartAsync().DefaultTimeout();
-
-                await connection.Transport.Output.WriteAsync(message).DefaultTimeout();
-
-                var receivedData = await connection.Transport.Input.ReadAsync(1);
-                Assert.Equal(message, receivedData);
-            }
-            catch (Exception ex)
-            {
-                logger.LogInformation(ex, "Test threw exception");
-                throw;
-            }
-            finally
-            {
-                logger.LogInformation("Disposing Connection");
-                await connection.DisposeAsync().DefaultTimeout();
-                logger.LogInformation("Disposed Connection");
-            }
-        }
-    }
-
-    [Theory]
-    [InlineData(HttpTransportType.LongPolling)]
-    [InlineData(HttpTransportType.ServerSentEvents)]
-    public async Task HttpConnectionThrowsIfSkipNegotiationSetAndTransportIsNotWebSockets(HttpTransportType transportType)
-    {
-        await using (var server = await StartServer<Startup>())
-        {
-            var logger = LoggerFactory.CreateLogger<EndToEndTests>();
-            var url = server.Url + "/echo";
-
-            var mockHttpHandler = new Mock<HttpMessageHandler>();
-            mockHttpHandler.Protected()
-                .Setup<Task<HttpResponseMessage>>("SendAsync", ItExpr.IsAny<HttpRequestMessage>(), ItExpr.IsAny<CancellationToken>())
-                .Returns<HttpRequestMessage, CancellationToken>(
-                    (request, cancellationToken) => Task.FromException<HttpResponseMessage>(new InvalidOperationException("HTTP requests should not be sent.")));
-
-            var httpOptions = new HttpConnectionOptions
-            {
-                Url = new Uri(url),
-                Transports = transportType,
-                SkipNegotiation = true,
-                HttpMessageHandlerFactory = (httpMessageHandler) => mockHttpHandler.Object
-            };
-
-            var connection = new HttpConnection(httpOptions, LoggerFactory);
-
-            try
-            {
-                var exception = await Assert.ThrowsAsync<InvalidOperationException>(() => connection.StartAsync().DefaultTimeout());
-                Assert.Equal("Negotiation can only be skipped when using the WebSocket transport directly.", exception.Message);
-            }
-            catch (Exception ex)
-            {
-                logger.LogInformation(ex, "Test threw exception");
-                throw;
-            }
-            finally
-            {
-                await connection.DisposeAsync().DefaultTimeout();
-            }
-        }
-    }
-
-    [Theory]
-    [MemberData(nameof(TransportTypesAndTransferFormats))]
-    [LogLevel(LogLevel.Trace)]
-    public async Task ConnectionCanSendAndReceiveMessages(HttpTransportType transportType, TransferFormat requestedTransferFormat)
-    {
-        await using (var server = await StartServer<Startup>())
-        {
-            var logger = LoggerFactory.CreateLogger<EndToEndTests>();
-
-            const string message = "Major Key";
-
-            var url = server.Url + "/echo";
-            var connection = new HttpConnection(new HttpConnectionOptions { Url = new Uri(url), Transports = transportType, DefaultTransferFormat = requestedTransferFormat }, LoggerFactory);
-            try
-            {
-                logger.LogInformation("Starting connection to {url}", url);
-                await connection.StartAsync().DefaultTimeout();
-                logger.LogInformation("Started connection to {url}", url);
-
-                var bytes = Encoding.UTF8.GetBytes(message);
-
-                logger.LogInformation("Sending {length} byte message", bytes.Length);
-                try
+                context.ConfigureGeneratedCodeAnalysis(GeneratedCodeAnalysisFlags.None);
+                context.EnableConcurrentExecution();
+                context.RegisterSymbolAction(c =>
                 {
-                    await connection.Transport.Output.WriteAsync(bytes).DefaultTimeout();
-                }
-                catch (OperationCanceledException)
-                {
-                    // Because the server and client are run in the same process there is a race where websocket.SendAsync
-                    // can send a message but before returning be suspended allowing the server to run the EchoConnectionHandler and
-                    // send a close frame which triggers a cancellation token on the client and cancels the websocket.SendAsync.
-                    // Our solution to this is to just catch OperationCanceledException from the sent message if the race happens
-                    // because we know the send went through, and its safe to check the response.
-                }
-
-                logger.LogInformation("Sent message");
-
-                logger.LogInformation("Receiving message");
-                Assert.Equal(message, Encoding.UTF8.GetString(await connection.Transport.Input.ReadAsync(bytes.Length).DefaultTimeout()));
-                logger.LogInformation("Completed receive");
-            }
-            catch (Exception ex)
-            {
-                logger.LogInformation(ex, "Test threw exception");
-                throw;
-            }
-            finally
-            {
-                logger.LogInformation("Disposing Connection");
-                await connection.DisposeAsync().DefaultTimeout();
-                logger.LogInformation("Disposed Connection");
-            }
-        }
-    }
-
-    [ConditionalTheory]
-    [WebSocketsSupportedCondition]
-    [InlineData(5 * 4096)]
-    [InlineData(1000 * 4096 + 32)]
-    [LogLevel(LogLevel.Trace)]
-    public async Task ConnectionCanSendAndReceiveDifferentMessageSizesWebSocketsTransport(int length)
-    {
-        var message = new string('A', length);
-        await using (var server = await StartServer<Startup>())
-        {
-            var logger = LoggerFactory.CreateLogger<EndToEndTests>();
-
-            var url = server.Url + "/echo";
-            var connection = new HttpConnection(new Uri(url), HttpTransportType.WebSockets, LoggerFactory);
-
-            try
-            {
-                logger.LogInformation("Starting connection to {url}", url);
-                await connection.StartAsync().DefaultTimeout();
-                logger.LogInformation("Started connection to {url}", url);
-
-                var bytes = Encoding.UTF8.GetBytes(message);
-
-                async Task SendMessage()
-                {
-                    logger.LogInformation("Sending {length} byte message", bytes.Length);
-                    await connection.Transport.Output.WriteAsync(bytes).DefaultTimeout();
-                    logger.LogInformation("Sent message");
-                }
-
-                async Task ReceiveMessage()
-                {
-                    logger.LogInformation("Receiving message");
-                    // Big timeout here because it can take a while to receive all the bytes
-                    var receivedData = await connection.Transport.Input.ReadAsync(bytes.Length).DefaultTimeout(TimeSpan.FromMinutes(2));
-                    Assert.Equal(message, Encoding.UTF8.GetString(receivedData));
-                    logger.LogInformation("Completed receive");
-                }
-
-                // Send the receive concurrently so that back pressure is released
-                // for server -> client sends
-                var sendingTask = SendMessage();
-                var receivingTask = ReceiveMessage();
-
-                await sendingTask;
-                await receivingTask;
-            }
-            catch (Exception ex)
-            {
-                logger.LogInformation(ex, "Test threw exception");
-                throw;
-            }
-            finally
-            {
-                logger.LogInformation("Disposing Connection");
-                await connection.DisposeAsync().DefaultTimeout();
-                logger.LogInformation("Disposed Connection");
-            }
-        }
-    }
-
-    [ConditionalFact]
-    [WebSocketsSupportedCondition]
-    [LogLevel(LogLevel.Trace)]
-    public async Task UnauthorizedWebSocketsConnectionDoesNotConnect()
-    {
-        bool ExpectedErrors(WriteContext writeContext)
-        {
-            return writeContext.LoggerName == typeof(HttpConnection).FullName &&
-                   writeContext.EventId.Name == "ErrorWithNegotiation";
-        }
-
-        await using (var server = await StartServer<Startup>(ExpectedErrors))
-        {
-            var logger = LoggerFactory.CreateLogger<EndToEndTests>();
-
-            var url = server.Url + "/auth";
-            var connection = new HttpConnection(new Uri(url), HttpTransportType.WebSockets, LoggerFactory);
-
-            var exception = await Assert.ThrowsAsync<HttpRequestException>(() => connection.StartAsync().DefaultTimeout());
-
-            Assert.Contains("401", exception.Message);
-        }
-    }
-
-    [ConditionalFact]
-    [WebSocketsSupportedCondition]
-    [LogLevel(LogLevel.Trace)]
-    public async Task UnauthorizedDirectWebSocketsConnectionDoesNotConnect()
-    {
-        bool ExpectedErrors(WriteContext writeContext)
-        {
-            return writeContext.LoggerName == typeof(HttpConnection).FullName &&
-                   writeContext.EventId.Name == "ErrorStartingTransport";
-        }
-
-        await using (var server = await StartServer<Startup>(ExpectedErrors))
-        {
-            var logger = LoggerFactory.CreateLogger<EndToEndTests>();
-
-            var url = server.Url + "/auth";
-            var options = new HttpConnectionOptions
-            {
-                Url = new Uri(url),
-                Transports = HttpTransportType.WebSockets,
-                SkipNegotiation = true
-            };
-
-            var connection = new HttpConnection(options, LoggerFactory);
-
-            await Assert.ThrowsAsync<WebSocketException>(() => connection.StartAsync().DefaultTimeout());
-        }
-    }
-
-    [Theory]
-    [InlineData(HttpTransportType.LongPolling)]
-    [InlineData(HttpTransportType.ServerSentEvents)]
-    [LogLevel(LogLevel.Trace)]
-    public async Task UnauthorizedConnectionDoesNotConnect(HttpTransportType transportType)
-    {
-        bool ExpectedErrors(WriteContext writeContext)
-        {
-            return writeContext.LoggerName == typeof(HttpConnection).FullName &&
-                   writeContext.EventId.Name == "ErrorWithNegotiation";
-        }
-
-        await using (var server = await StartServer<Startup>(ExpectedErrors))
-        {
-            var logger = LoggerFactory.CreateLogger<EndToEndTests>();
-
-            var url = server.Url + "/auth";
-            var connection = new HttpConnection(new Uri(url), transportType, LoggerFactory);
-
-            try
-            {
-                logger.LogInformation("Starting connection to {url}", url);
-                await connection.StartAsync().DefaultTimeout();
-                Assert.True(false);
-            }
-            catch (Exception ex)
-            {
-                Assert.Equal("Response status code does not indicate success: 401 (Unauthorized).", ex.Message);
-            }
-            finally
-            {
-                logger.LogInformation("Disposing Connection");
-                await connection.DisposeAsync().DefaultTimeout();
-                logger.LogInformation("Disposed Connection");
-            }
-        }
-    }
-
-    [Fact]
-    [LogLevel(LogLevel.Trace)]
-    public async Task AuthorizedConnectionCanConnect()
-    {
-        bool ExpectedErrors(WriteContext writeContext)
-        {
-            return writeContext.LoggerName == typeof(HttpConnection).FullName &&
-                   writeContext.EventId.Name == "ErrorWithNegotiation";
-        }
-
-        await using (var server = await StartServer<Startup>(ExpectedErrors))
-        {
-            var logger = LoggerFactory.CreateLogger<EndToEndTests>();
-
-            string token;
-            using (var client = new HttpClient())
-            {
-                client.BaseAddress = new Uri(server.Url);
-
-                var response = await client.GetAsync("generatetoken?user=bob");
-                token = await response.Content.ReadAsStringAsync();
-            }
-
-            var url = server.Url + "/auth";
-            var connection = new HttpConnection(
-                new HttpConnectionOptions()
-                {
-                    Url = new Uri(url),
-                    AccessTokenProvider = () => Task.FromResult(token),
-                    Transports = HttpTransportType.ServerSentEvents,
-                    DefaultTransferFormat = TransferFormat.Text,
-                },
-                LoggerFactory);
-
-            try
-            {
-                logger.LogInformation("Starting connection to {url}", url);
-                await connection.StartAsync().DefaultTimeout();
-                logger.LogInformation("Connected to {url}", url);
-            }
-            finally
-            {
-                logger.LogInformation("Disposing Connection");
-                await connection.DisposeAsync().DefaultTimeout();
-                logger.LogInformation("Disposed Connection");
-            }
-        }
-    }
-
-    [ConditionalFact]
-    [WebSocketsSupportedCondition]
-    public async Task ServerClosesConnectionWithErrorIfHubCannotBeCreated_WebSocket()
-    {
-        try
-        {
-            await ServerClosesConnectionWithErrorIfHubCannotBeCreated(HttpTransportType.WebSockets);
-            Assert.True(false, "Expected error was not thrown.");
-        }
-        catch
-        {
-            // error is expected
-        }
-    }
-
-    [Fact]
-    public async Task ServerClosesConnectionWithErrorIfHubCannotBeCreated_LongPolling()
-    {
-        try
-        {
-            await ServerClosesConnectionWithErrorIfHubCannotBeCreated(HttpTransportType.LongPolling);
-            Assert.True(false, "Expected error was not thrown.");
-        }
-        catch
-        {
-            // error is expected
-        }
-    }
-
-    private async Task ServerClosesConnectionWithErrorIfHubCannotBeCreated(HttpTransportType transportType)
-    {
-        await using (var server = await StartServer<Startup>())
-        {
-            var logger = LoggerFactory.CreateLogger<EndToEndTests>();
-
-            var url = server.Url + "/uncreatable";
-            var connection = new HubConnectionBuilder()
-                    .WithLoggerFactory(LoggerFactory)
-                    .WithUrl(url, transportType)
-                    .Build();
-            try
-            {
-                var closeTcs = new TaskCompletionSource();
-                connection.Closed += e =>
-                {
-                    if (e != null)
-                    {
-                        closeTcs.SetException(e);
-                    }
-                    else
-                    {
-                        closeTcs.SetResult();
-                    }
-                    return Task.CompletedTask;
-                };
-
-                logger.LogInformation("Starting connection to {url}", url);
-
-                try
-                {
-                    await connection.StartAsync().DefaultTimeout();
-                }
-                catch (OperationCanceledException)
-                {
-                    // Due to a race, this can fail with OperationCanceledException in the SendAsync
-                    // call that HubConnection does to send the handshake message.
-                    // This has only been happening on AppVeyor, likely due to a slower CI machine
-                    // The closed event will still fire with the exception we care about.
-                }
-
-                await closeTcs.Task.DefaultTimeout();
-            }
-            catch (Exception ex)
-            {
-                logger.LogError(ex, "Test threw {exceptionType}: {message}", ex.GetType(), ex.Message);
-                throw;
-            }
-            finally
-            {
-                logger.LogInformation("Disposing Connection");
-                await connection.DisposeAsync().DefaultTimeout();
-                logger.LogInformation("Disposed Connection");
-            }
-        }
-    }
-
-    [Fact]
-    [LogLevel(LogLevel.Trace)]
-    public async Task UnauthorizedHubConnectionDoesNotConnect()
-    {
-        bool ExpectedErrors(WriteContext writeContext)
-        {
-            return writeContext.LoggerName == typeof(HttpConnection).FullName &&
-                   writeContext.EventId.Name == "ErrorWithNegotiation";
-        }
-
-        await using (var server = await StartServer<Startup>(ExpectedErrors))
-        {
-            var logger = LoggerFactory.CreateLogger<EndToEndTests>();
-
-            var url = server.Url + "/authHub";
-            var connection = new HubConnectionBuilder()
-                    .WithLoggerFactory(LoggerFactory)
-                    .WithUrl(url, HttpTransportType.LongPolling)
-                    .Build();
-
-            try
-            {
-                logger.LogInformation("Starting connection to {url}", url);
-                await connection.StartAsync().DefaultTimeout();
-                Assert.True(false);
-            }
-            catch (Exception ex)
-            {
-                Assert.Equal("Response status code does not indicate success: 401 (Unauthorized).", ex.Message);
-            }
-            finally
-            {
-                logger.LogInformation("Disposing Connection");
-                await connection.DisposeAsync().DefaultTimeout();
-                logger.LogInformation("Disposed Connection");
-            }
-        }
-    }
-
-    [Fact]
-    [LogLevel(LogLevel.Trace)]
-    public async Task AuthorizedHubConnectionCanConnect()
-    {
-        bool ExpectedErrors(WriteContext writeContext)
-        {
-            return writeContext.LoggerName == typeof(HttpConnection).FullName &&
-                   writeContext.EventId.Name == "ErrorWithNegotiation";
-        }
-
-        await using (var server = await StartServer<Startup>(ExpectedErrors))
-        {
-            var logger = LoggerFactory.CreateLogger<EndToEndTests>();
-
-            string token;
-            using (var client = new HttpClient())
-            {
-                client.BaseAddress = new Uri(server.Url);
-
-                var response = await client.GetAsync("generatetoken?user=bob");
-                token = await response.Content.ReadAsStringAsync();
-            }
-
-            var url = server.Url + "/authHub";
-            var connection = new HubConnectionBuilder()
-                    .WithLoggerFactory(LoggerFactory)
-                    .WithUrl(url, HttpTransportType.LongPolling, o =>
-                    {
-                        o.AccessTokenProvider = () => Task.FromResult(token);
-                    })
-                    .Build();
-
-            try
-            {
-                logger.LogInformation("Starting connection to {url}", url);
-                await connection.StartAsync().DefaultTimeout();
-                logger.LogInformation("Connected to {url}", url);
-            }
-            finally
-            {
-                logger.LogInformation("Disposing Connection");
-                await connection.DisposeAsync().DefaultTimeout();
-                logger.LogInformation("Disposed Connection");
-            }
-        }
-    }
-
-    // Serves a fake transport that lets us verify fallback behavior
-    private class TestTransportFactory : ITransportFactory
-    {
-        private ITransport _transport;
-
-        public ITransport CreateTransport(HttpTransportType availableServerTransports)
-        {
-            if (_transport == null)
-            {
-                _transport = new FakeTransport();
-            }
-
-            return _transport;
-        }
-    }
-
-    private class FakeTransport : ITransport
-    {
-        private int _tries;
-        private string _prevConnectionId = null;
-        private IDuplexPipe _application;
-        private IDuplexPipe _transport;
-        private readonly int availableTransports = 3;
-
-        public PipeReader Input => _transport.Input;
-
-        public PipeWriter Output => _transport.Output;
-
-        public FakeTransport()
-        {
-            if (!TestHelpers.IsWebSocketsSupported())
-            {
-                availableTransports -= 1;
-            }
-        }
-
-        public Task StartAsync(Uri url, TransferFormat transferFormat, CancellationToken cancellationToken = default)
-        {
-            var options = ClientPipeOptions.DefaultOptions;
-            var pair = DuplexPipe.CreateConnectionPair(options, options);
-
-            _transport = pair.Transport;
-            _application = pair.Application;
-            _tries++;
-            Assert.True(QueryHelpers.ParseQuery(url.Query).TryGetValue("id", out var id));
-            if (_prevConnectionId == null)
-            {
-                _prevConnectionId = id;
-            }
-            else
-            {
-                Assert.True(_prevConnectionId != id);
-                _prevConnectionId = id;
-            }
-
-            if (_tries < availableTransports)
-            {
-                return Task.FromException(new Exception());
-            }
-            else
-            {
-                return Task.CompletedTask;
-            }
-        }
-
-        public Task StopAsync()
-        {
-            _application.Output.Complete();
-            _application.Input.Complete();
-            return Task.CompletedTask;
-        }
-    }
-
-    public static IEnumerable<object[]> TransportTypes
-    {
-        get
-        {
-            if (TestHelpers.IsWebSocketsSupported())
-            {
-                yield return new object[] { HttpTransportType.WebSockets };
-            }
-            yield return new object[] { HttpTransportType.ServerSentEvents };
-            yield return new object[] { HttpTransportType.LongPolling };
-        }
-    }
-
-    public static IEnumerable<object[]> TransportTypesAndTransferFormats
-    {
-        get
-        {
-            foreach (var transport in TransportTypes)
-            {
-                yield return new[] { transport[0], TransferFormat.Text };
-
-                if ((HttpTransportType)transport[0] != HttpTransportType.ServerSentEvents)
-                {
-                    yield return new[] { transport[0], TransferFormat.Binary };
-                }
+                    var symbol = c.Symbol;
+                    c.ReportDiagnostic(CodeAnalysis.Diagnostic.Create(s_rule, symbol.Locations[0], symbol.Name));
+                }, SymbolKind.NamedType);
             }
         }
     }
