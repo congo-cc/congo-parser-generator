@@ -7,7 +7,7 @@ BASE_SRC_DIR="../../build/generated-java";
 
 USES_PREPROCESSOR;
 
-DEACTIVATE_TOKENS=_INCLUDE,_EOF, VAR, YIELD, SEALED, NON_SEALED, PERMITS;
+DEACTIVATE_TOKENS=_EOF, VAR, YIELD, SEALED, NON_SEALED, PERMITS;
 
 // We can use this symbol to generate code conditionally
 // based on whether we are generating code for internal use
@@ -18,8 +18,8 @@ DEACTIVATE_TOKENS=_INCLUDE,_EOF, VAR, YIELD, SEALED, NON_SEALED, PERMITS;
 TOKEN #CongoCCKeyWord :
 //  < _INJECT: "INJECT" >
 //  |
-  < _INCLUDE : "INCLUDE">
-  |
+//  < _INCLUDE : "INCLUDE">
+//  |
   < _FAIL : "FAIL" >
   |
   < _UNCACHE_TOKENS : "UNCACHE_TOKENS">
@@ -417,7 +417,7 @@ GrammarInclusion throws IOException :
    List<String> locations = new ArrayList<>();
    Token includeToken;
 }
-   ACTIVATE_TOKENS _INCLUDE (<_INCLUDE>)
+   'INCLUDE'
    {includeToken = lastConsumedToken;}
    (
        (

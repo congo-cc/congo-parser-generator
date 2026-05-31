@@ -2281,16 +2281,17 @@ PrimaryPattern :
    |
    RelationalPattern
    |
-   // These next three options are a bit ugly.
-   CastExpression =>|| // Maybe there is a better way but I don't see it.
+   // These next few options are a bit ugly, as they involve
+   // unbounded lookaheads.  Maybe there is a better way but I don't see it.
+   PropertyPattern
+   |
+   CastExpression =>||
    |
    ParenthesizedPattern =>||
    |
    NameofExpression
    |
    DeclarationPattern
-   |
-   PropertyPattern
    |
    VarPattern
    |
@@ -2384,7 +2385,7 @@ SubPatterns :
 ;
 
 PropertyPattern :
-   [Type] =>|+1 PropertySubPattern
+   [ParenthesizedPattern =>|| | Type] =>|+1 PropertySubPattern
    [
       SCAN {!checkNextTokenImage("when") || !isInProduction("SwitchExpression", "SwitchStatement")}#
       =><IDENTIFIER>
