@@ -284,15 +284,16 @@ TOKEN :
   |
   <BRACES : ("{{" ("{")*) | ("}}" ("}")*)>
   {
-      int charsToTruncate = matchedToken.length() - startingDollars - 1;
+      String img = matchedToken.toString();
+      int charsToTruncate = img.length() - startingDollars - 1;
       if (charsToTruncate >= 0) {
          matchedToken.truncate(charsToTruncate);
-         matchedToken.setType(NON_INTERPOLATED_TEXT2);
+         matchedToken.setType(TokenType.NON_INTERPOLATED_TEXT2);
          return matchedToken;
       }
       matchedToken.setEndOffset(matchedToken.getBeginOffset()+1);
-      if (charAt(0) == '{') matchedToken.setType(LBRACE);
-      else matchedToken.setType(RBRACE);
+      if (img.charAt(0) == '{') matchedToken.setType(TokenType.LBRACE);
+      else matchedToken.setType(TokenType.RBRACE);
   }
 ;
 
