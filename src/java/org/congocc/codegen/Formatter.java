@@ -8,22 +8,16 @@ abstract public class Formatter extends Node.Visitor {
 
     protected String eol = "\n";
     protected StringBuilder buffer = new StringBuilder();
-    protected String indent = "    ";
-    protected String currentIndent = "";
+    protected int currentIndentation, indentAmount=4;
     protected int maxLineLength = 80;
 
     protected Set<? extends Node.NodeType> alwaysPrependSpace;
     protected Set<? extends Node.NodeType> alwaysAppendSpace;
 
-    public String format(Node code, int indentLevel) {
+    public String format(Node code) {
         buffer = new StringBuilder();
-        currentIndent = indent(currentIndent, indent, indentLevel);
         visit(code);
         return buffer.toString();
-    }
-
-    public String format(Node code) {
-        return format(code, 0);
     }
 
     protected void addSpaceIfNecessary() {
@@ -57,21 +51,13 @@ abstract public class Formatter extends Node.Visitor {
         if (ensureBlankLine) {
             buffer.append(eol);
         }
-        buffer.append(currentIndent);
+        for (int i = 0; i<currentIndentation; i++ ) {
+            buffer.append(' ');
+        }
     }
 
     protected int currentLineLength() {
         return buffer.length() - buffer.lastIndexOf(eol) - eol.length();
-    }
-
-    protected String indent(String current, String indent, int level) {
-        StringBuilder result = new StringBuilder();
-
-        result.append(current);
-        for (int i = 0; i < level; i++) {
-            result.append(indent);
-        }
-        return result.toString();
     }
 
     protected boolean startsNewLine(Node.TerminalNode t) {

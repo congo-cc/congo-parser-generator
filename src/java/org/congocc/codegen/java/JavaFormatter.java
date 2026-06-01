@@ -43,18 +43,10 @@ public class JavaFormatter extends Formatter {
         if (alwaysAppendSpace.contains(tok.getType())) addSpaceIfNecessary();
     }
 
-    private void dedent() {
-        String finalPart = buffer.substring(buffer.length() - indent.length(), buffer.length());
-        if (finalPart.equals(indent)) {
-            buffer.setLength(buffer.length() - indent.length());
-        }
-        currentIndent = currentIndent.substring(0, currentIndent.length() - indent.length());
-    }
-
     private String indentText(String text) {
         StringBuilder buf = new StringBuilder();
         for (String line : text.split("\n")) {
-            buf.append(currentIndent);
+            for (int i = 0; i< currentIndentation;i++) buf.append(' ');
             buf.append(line.trim());
             buf.append("\n");
         }
@@ -156,19 +148,19 @@ public class JavaFormatter extends Formatter {
             case LBRACE -> {
                 outputToken(delimiter);
                 if (!(delimiter.getParent() instanceof ArrayInitializer)) {
-                    currentIndent += indent;
+                    currentIndentation += indentAmount;
                     newLine();
                 }
             }
             case RBRACE -> {
                 boolean endOfArrayInitializer = delimiter.getParent() instanceof ArrayInitializer;
                 if (!endOfArrayInitializer) {
+                    currentIndentation -= indentAmount;
                     newLine();
-                    dedent();
                 }
                 buffer.append(delimiter);
                 Token token = delimiter.getNext();
-                if (!endOfArrayInitializer && null != token && token.getType() != SEMICOLON) {
+                if (!endOfArrayInitializer && token != null && token.getType() != SEMICOLON) {
                     if (token.getType()==CATCH || token.getType() == ELSE || token.getType()==FINALLY)
                         addSpaceIfNecessary(); // space for multi block statements
                     else newLine();
@@ -274,12 +266,12 @@ public class JavaFormatter extends Formatter {
 
     void visit(ClassicCaseStatement ccs)  {
         visit(ccs.firstChildOfType(ClassicSwitchLabel.class));
-        currentIndent += indent;
+        currentIndentation += indentAmount;
         newLine();
         for (Statement stmt : ccs.childrenOfType(Statement.class)) {
             visit(stmt);
         }
-        dedent();
+        currentIndentation-=indentAmount;
         newLine();
     }
 }
