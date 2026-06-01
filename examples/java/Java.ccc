@@ -1,7 +1,7 @@
  // This is the Java grammar that is used (via an INCLUDE) in the CongoCC
  // tool itself but it can be used on its own, and you are free to use it
  // in your own projects. It supports the stable feature set of the Java
- // language up to JDK 26.
+ // language up to JDK 24.
  // This grammar is a forward evolution of the sample Java grammar originally
  // included in the legacy JavaCC distribution in 1997 or thereabouts, but is
  // close to being a total rewrite, and serves as a kind of showcase for the latest
@@ -106,10 +106,7 @@ ProvidesDirective :
 #CompilationUnit# :
   [ PackageDeclaration! ]
   ( ImportDeclaration )*!
-  ( TypeDeclaration
-  // Method and field declarations can now
-  // live outside a class declaration JEP 512
-  | MethodDeclaration | FieldDeclaration)* !
+  ( TypeDeclaration )*!
   [
     //a bit of a kludge so that CodeInjection2 in CongoCC.ccc can work. Maybe revisit.
     ENSURE {getTokenType(1) != RBRACE}

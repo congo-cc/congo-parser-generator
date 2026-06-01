@@ -6,6 +6,8 @@ import org.congocc.parser.csharp.ast.*;
 
 import static org.congocc.parser.csharp.CSharpToken.TokenType.*;
 
+import org.congocc.codegen.AbstractCodeFormatter;
+
 /**
  * A fairly effective CSharp pretty printer. It is far from perfect and
  * will doubtless be refined over the coming while. But it is good enough
@@ -16,19 +18,7 @@ import static org.congocc.parser.csharp.CSharpToken.TokenType.*;
  * only 200 LOC.
  * @author revusky
  */
-public class CSharpFormatter extends Node.Visitor {
-
-    {this.visitUnparsedTokens = true;}
-
-    private final StringBuilder buffer = new StringBuilder();
-    private int currentIndentation;
-    private final int indentAmount = 4;
-    private final String eol = "\n";
-
-    public String getText() {
-        if (buffer.charAt(buffer.length()-1) != '\n') buffer.append('\n');
-        return buffer.toString();
-    }
+public class CSharpFormatter extends AbstractCodeFormatter {
 
     void visit(TypeDeclaration decl) {
         newLine(true);
@@ -61,9 +51,8 @@ public class CSharpFormatter extends Node.Visitor {
         addSpaceIfNecessary();
     }
 
-
     void visit(CSharpToken tok) {
-        buffer.append(tok.toString());
+        defaultTokenOutput(tok);
     }
 
     void visit(Block block) {
@@ -193,45 +182,5 @@ public class CSharpFormatter extends Node.Visitor {
 
     void visit(InterpolatedString irs) {
         buffer.append(irs.getSource());
-    }
-
-    private void addSpaceIfNecessary() {
-        if (buffer.length()==0) return;
-        int lastChar = buffer.codePointBefore(buffer.length());
-        if (!Character.isWhitespace(lastChar)) buffer.append(' ');
-    }
-
-    private void indent() {
-        currentIndentation += indentAmount;
-        newLine();
-    }
-
-    private void dedent() {
-        currentIndentation -= indentAmount;
-        newLine();
-    }
-
-    private void newLine() {
-        newLine(false);
-    }
-
-    private void newLine(boolean ensureBlankLine) {
-        trimTrailingWhitespace();
-        buffer.append(eol);
-        if (ensureBlankLine) {
-            buffer.append(eol);
-        }
-        for (int i = 0; i<currentIndentation; i++) buffer.append(' ');
-    }
-
-    private void trimTrailingWhitespace() {
-        if (buffer.length() ==0) return;
-        int lastChar = buffer.codePointBefore(buffer.length());
-        while (Character.isWhitespace(lastChar)) {
-            buffer.setLength(buffer.length()-1);
-            if (lastChar > 0xFFFF) buffer.setLength(buffer.length()-1);
-            if (buffer.length() == 0) break;
-            lastChar = buffer.codePointBefore(buffer.length());
-        }
     }
 }

@@ -1,9 +1,14 @@
 package org.congocc.codegen;
+import java.util.Collections;
 import java.util.Set;
 
 import org.congocc.parser.Node;
 
-abstract public class Formatter extends Node.Visitor {
+/**
+ * An abstract base class for objects that pretty-print
+ * source code
+ */
+abstract public class AbstractCodeFormatter extends Node.Visitor {
     {this.visitUnparsedTokens = true;}
 
     protected String eol = "\n";
@@ -11,19 +16,61 @@ abstract public class Formatter extends Node.Visitor {
     protected int currentIndentation, indentAmount=4;
     protected int maxLineLength = 80;
 
-    protected Set<? extends Node.NodeType> alwaysPrependSpace;
-    protected Set<? extends Node.NodeType> alwaysAppendSpace;
+    protected Set<? extends Node.NodeType> alwaysPrependSpace = Collections.emptySet();
+    protected Set<? extends Node.NodeType> alwaysAppendSpace = Collections.emptySet();
 
     public String format(Node code) {
         buffer = new StringBuilder();
         visit(code);
+        return getText();
+    }
+
+    public String getText() {
+        if (buffer.charAt(buffer.length()-1) != '\n') buffer.append('\n');
         return buffer.toString();
+    }
+
+    /**
+     * A default routine to append a token to the buffer.
+     */
+    protected void defaultTokenOutput(Node.TerminalNode tok) {
+        if (tok.getType().isEOF()) {
+            buffer.append(eol);
+            return;
+        }
+        if (buffer.length() > 0) {
+            int nextChar = tok.toString().codePointAt(0);
+            int prevChar = buffer.codePointBefore(buffer.length());
+            if ((Character.isUnicodeIdentifierPart(prevChar) || prevChar == ';')
+                    && Character.isUnicodeIdentifierPart(nextChar)) {
+                addSpaceIfNecessary();
+            }
+        }
+        if (alwaysPrependSpace.contains(tok.getType())) addSpaceIfNecessary();
+        buffer.append(tok.toString());
+        if (alwaysAppendSpace.contains(tok.getType())) addSpaceIfNecessary();
     }
 
     protected void addSpaceIfNecessary() {
         if (buffer.length()==0) return;
         int lastChar = buffer.codePointBefore(buffer.length());
         if (!Character.isWhitespace(lastChar)) buffer.append(' ');
+    }
+
+    protected void appendIndentation() {
+        for (int i = 0; i<currentIndentation; i++) {
+            buffer.append(' ');
+        }
+    }
+
+    protected String indentText(String text) {
+        StringBuilder buf = new StringBuilder();
+        text.lines().forEach(line->{
+            appendIndentation();
+            buf.append(line.trim());
+            buf.append(eol);
+        });
+        return buf.toString();
     }
 
     protected void startNewLineIfNecessary() {
@@ -51,9 +98,7 @@ abstract public class Formatter extends Node.Visitor {
         if (ensureBlankLine) {
             buffer.append(eol);
         }
-        for (int i = 0; i<currentIndentation; i++ ) {
-            buffer.append(' ');
-        }
+        appendIndentation();
     }
 
     protected int currentLineLength() {
@@ -74,5 +119,16 @@ abstract public class Formatter extends Node.Visitor {
             if (buffer.length() == 0) break;
             lastChar = buffer.codePointBefore(buffer.length());
         }
+    }
+
+    protected void indent() {
+        currentIndentation += indentAmount;
+        newLine();
+    }
+
+    protected void dedent() {
+        currentIndentation -= indentAmount;
+        assert currentIndentation >= 0 : "Can't dedent into negative territory!";
+        newLine();
     }
 }

@@ -3,7 +3,7 @@ package org.congocc.codegen.java;
 import org.congocc.parser.*;
 import org.congocc.parser.tree.*;
 import org.congocc.parser.Token.TokenType;
-import org.congocc.codegen.Formatter;
+import org.congocc.codegen.AbstractCodeFormatter;
 import static org.congocc.parser.Token.TokenType.*;
 
 import java.util.EnumSet;
@@ -13,7 +13,7 @@ import java.util.EnumSet;
  * Doubtless it has some rough edges, but is good enough for our purposes.
  * @author revusky
  */
-public class JavaFormatter extends Formatter {
+public class JavaFormatter extends AbstractCodeFormatter {
     {
         alwaysPrependSpace = EnumSet.of(ASSIGN, COLON, LBRACE, THROWS, EQ,
             NE, LE, GE, PLUS, MINUS, SLASH, SC_AND, SC_OR, BIT_AND, BIT_OR,
@@ -29,33 +29,8 @@ public class JavaFormatter extends Formatter {
             RUNSIGNEDSHIFTASSIGN, LAMBDA, INSTANCEOF);
     }
 
-    private void outputToken(Token tok) {
-        if (buffer.length() > 0) {
-            int nextChar = tok.toString().codePointAt(0);
-            int prevChar = buffer.codePointBefore(buffer.length());
-            if ((Character.isJavaIdentifierPart(prevChar) || prevChar == ';')
-                    && Character.isJavaIdentifierPart(nextChar)) {
-                addSpaceIfNecessary();
-            }
-        }
-        if (alwaysPrependSpace.contains(tok.getType())) addSpaceIfNecessary();
-        buffer.append(tok.toString());
-        if (alwaysAppendSpace.contains(tok.getType())) addSpaceIfNecessary();
-    }
-
-    private String indentText(String text) {
-        StringBuilder buf = new StringBuilder();
-        for (String line : text.split("\n")) {
-            for (int i = 0; i< currentIndentation;i++) buf.append(' ');
-            buf.append(line.trim());
-            buf.append("\n");
-        }
-        return buf.toString();
-    }
-
     void visit(Token tok) {
-        if (tok.getType().isEOF()) buffer.append("\n");
-        else outputToken(tok);
+        defaultTokenOutput(tok);
     }
 
     void visit(TypeParameters tps) {
@@ -115,12 +90,12 @@ public class JavaFormatter extends Formatter {
                         || !Character.isDigit(nextChar))
                     addSpaceIfNecessary();
                 break;
-            default : outputToken(op);
+            default : defaultTokenOutput(op);
         }
     }
 
     void visit(KeyWord kw) {
-        outputToken(kw);
+        defaultTokenOutput(kw);
         if (kw.getType() == RETURN) {
             if (kw.getNext().getType() != SEMICOLON) addSpaceIfNecessary();
         }
@@ -129,7 +104,7 @@ public class JavaFormatter extends Formatter {
     void visit(Delimiter delimiter) {
         switch (delimiter.getType()) {
             case COMMA -> {
-                outputToken(delimiter);
+                defaultTokenOutput(delimiter);
                 if (currentLineLength() > maxLineLength
                     && (delimiter.getParent() instanceof ArrayInitializer
                         || delimiter.getParent() instanceof EnumBody))
@@ -139,14 +114,14 @@ public class JavaFormatter extends Formatter {
                 else buffer.append(' ');
             }
             case RBRACKET -> {
-                outputToken(delimiter);
+                defaultTokenOutput(delimiter);
                 TokenType nextType = delimiter.getNext().getType();
                 if (nextType != LBRACKET && nextType != SEMICOLON && nextType != GT
                         && nextType != RPAREN && nextType != COMMA && nextType != DOT)
                     addSpaceIfNecessary();
             }
             case LBRACE -> {
-                outputToken(delimiter);
+                defaultTokenOutput(delimiter);
                 if (!(delimiter.getParent() instanceof ArrayInitializer)) {
                     currentIndentation += indentAmount;
                     newLine();
@@ -181,7 +156,7 @@ public class JavaFormatter extends Formatter {
                     if (buffer.charAt(buffer.length() - 1) == ' ' || buffer.charAt(buffer.length() - 1) == '\n')
                         buffer.setLength(buffer.length() - 1);
             }
-            default -> outputToken(delimiter);
+            default -> defaultTokenOutput(delimiter);
         }
     }
 
