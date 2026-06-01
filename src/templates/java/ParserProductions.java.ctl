@@ -120,7 +120,7 @@
                 #endif
                 #if !followingExpansion.followingExpansion??
                  if (outerFollowSet != null) {
-                   if (outerFollowSet.contains(nextTokenType())) {
+                   if (outerFollowSet.contains(nextToken(lastConsumedToken).getType())) {
                       success = true;
                       break;
                    }

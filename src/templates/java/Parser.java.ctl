@@ -215,7 +215,6 @@ static final int UNLIMITED = Integer.MAX_VALUE;
 private final ${settings.baseTokenClassName} DUMMY_START_TOKEN = new ${settings.baseTokenClassName}();
 // The last token successfully "consumed"
 ${settings.baseTokenClassName} lastConsumedToken = DUMMY_START_TOKEN;
-private TokenType nextTokenType;
 // Normally null when parsing, populated when doing lookahead
 private ${settings.baseTokenClassName} currentLookaheadToken;
 private int remainingLookahead;
@@ -319,7 +318,6 @@ public boolean getLegacyGlitchyLookahead() {
 #list grammar.parserTokenHooks as methodName
     result = ${methodName}(result);
 #endlist
-    nextTokenType = null;
     return result;
   }
 
@@ -383,13 +381,6 @@ public boolean getLegacyGlitchyLookahead() {
     return false;
   }
 
-  private TokenType nextTokenType() {
-    if (nextTokenType == null) {
-       nextTokenType = nextToken(lastConsumedToken).getType();
-    }
-    return nextTokenType;
-  }
-
   boolean activateTokenTypes(TokenType... types) {
     if (token_source.activeTokenTypes == null) return false;
     boolean result = false;
@@ -398,7 +389,6 @@ public boolean getLegacyGlitchyLookahead() {
     }
     if (result) {
       token_source.reset(getToken(0));
-      nextTokenType = null;
     }
     return result;
   }
@@ -426,7 +416,6 @@ public boolean getLegacyGlitchyLookahead() {
     }
     if (result) {
         token_source.reset(getToken(0));
-        nextTokenType = null;
     }
     return result;
   }
