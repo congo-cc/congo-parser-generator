@@ -63,14 +63,12 @@ abstract public class AbstractCodeFormatter extends Node.Visitor {
         }
     }
 
-    protected String indentText(String text) {
-        StringBuilder buf = new StringBuilder();
+    protected void appendIndentedText(String text) {
         text.lines().forEach(line->{
             appendIndentation();
-            buf.append(line.trim());
-            buf.append(eol);
+            buffer.append(line.trim());
+            buffer.append(eol);
         });
-        return buf.toString();
     }
 
     protected void startNewLineIfNecessary() {
@@ -118,6 +116,14 @@ abstract public class AbstractCodeFormatter extends Node.Visitor {
             if (lastChar > 0xFFFF) buffer.setLength(buffer.length()-1);
             if (buffer.length() == 0) break;
             lastChar = buffer.codePointBefore(buffer.length());
+        }
+    }
+
+    protected void trimTrailingSpaces() {
+        if (buffer.length() ==0) return;
+        while(buffer.charAt(buffer.length()-1) == ' ') {
+            buffer.setLength(buffer.length()-1);
+            if (buffer.length() == 0) break;
         }
     }
 

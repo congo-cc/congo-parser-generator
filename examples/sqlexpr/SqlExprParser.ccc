@@ -107,7 +107,7 @@ import org.apache.activemq.util.LRUCache;
 
 /* White Space */
 UNPARSED :
-  " " | "\t" | "\n" | "\r" | "\f"
+  <WHITESPACE : " " | "\t" | "\n" | "\r" | "\f">
 ;
 
 
@@ -156,6 +156,38 @@ TOKEN [IGNORE_CASE] :
 
 TOKEN [IGNORE_CASE] :
     < ID : ["a"-"z", "_", "$"] (["a"-"z","0"-"9","_", "$"])* >
+;
+
+TOKEN :
+   <EQUALS : "=">
+   |
+   <DIAMOND : "<>">
+   |
+   <NOT_EQUALS : "!=">
+   |
+   <LT : "<">
+   |
+   <LTE : "<=">
+   |
+   <GT : ">">
+   |
+   <GTE : ">=">
+   |
+   <LPAREN : "(">
+   |
+   <PERCENT : "%">
+   |
+   <PLUS : "+">
+   |
+   <MINUS : "-">
+   |
+   <STAR : "*">
+   |
+   <RPAREN : ")">
+   |
+   <DIV : "/">
+   |
+   <COMMA : ",">
 ;
 
 

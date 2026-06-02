@@ -580,8 +580,9 @@ CodeInjection2 :
 {
         CompilationUnit jcu;
 }
-        'INJECT' ":" =>|| "{"
-        jcu=CompilationUnit
+        'INJECT' ":" =>||
+        "{"
+        jcu=JavaCodeInjection
        "}"
         {
                 if (enterIncludes) {

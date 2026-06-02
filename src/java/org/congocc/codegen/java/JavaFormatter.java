@@ -162,7 +162,7 @@ public class JavaFormatter extends AbstractCodeFormatter {
 
     void visit(MultiLineComment comment) {
         startNewLineIfNecessary();
-        buffer.append(indentText(comment.toString()));
+        appendIndentedText(comment.toString());
         newLine();
     }
 

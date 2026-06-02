@@ -9,8 +9,39 @@
 // In general usage, it is probably better to INCLUDE the (more stable) Java grammar
 // that is in the bootstrap jarfile.
 //INCLUDE JAVA
-
 INCLUDE "../../examples/java/Java.ccc"
+
+// This is actually the CompilationUnit production
+// but without the JEP 512 addition that methods and fields
+// can exist at the top level
+
+#JavaCodeInjection#CompilationUnit :
+  [ PackageDeclaration! ]
+  ( ImportDeclaration )*!
+  ( TypeDeclaration)*!
+  ASSERT ("}")
+  {
+    return thisProduction;
+  }
+;
+
+/*
+#JavaCodeInjection#CompilationUnit :
+  [ PackageDeclaration! ]
+  ( ImportDeclaration )*!
+  ( TypeDeclaration )*!
+  [
+    //a bit of a kludge so that CodeInjection2 in CongoCC.ccc can work. Maybe revisit.
+    ENSURE {getTokenType(1) != RBRACE}
+    <EOF>
+  ]
+  {
+    return thisProduction;
+  }
+;*/
+
+
+
 
 INJECT Expression : extends EmbeddedCode {
     default CodeLang getSpecifiedLang() {
