@@ -22,8 +22,8 @@ INJECT BASE_TOKEN_CLASS :
 }
 
 Node EmbeddedPythonExpression :
-    {Node exp;}
-    Expression {exp = peekNode();}
+    Expression
+    {Node exp = peekNode();}
     <EOF>
     {return exp;}
 ;

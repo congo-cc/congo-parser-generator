@@ -29,10 +29,6 @@ public class JavaFormatter extends AbstractCodeFormatter {
             RUNSIGNEDSHIFTASSIGN, LAMBDA, INSTANCEOF);
     }
 
-    void visit(Token tok) {
-        defaultTokenOutput(tok);
-    }
-
     void visit(TypeParameters tps) {
         addSpaceIfNecessary(); // spaced from method modifiers
         recurse(tps);

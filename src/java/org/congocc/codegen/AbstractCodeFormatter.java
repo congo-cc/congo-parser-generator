@@ -30,6 +30,10 @@ abstract public class AbstractCodeFormatter extends Node.Visitor {
         return buffer.toString();
     }
 
+    protected void visit(Node.TerminalNode tok) {
+        defaultTokenOutput(tok);
+    }
+
     /**
      * A default routine to append a token to the buffer.
      */

@@ -840,7 +840,12 @@ public interface Node extends List<Node> {
             Class<? extends Node> nodeClass = node.getClass();
             Method method = methodCache.get(nodeClass);
             if (method == null) {
-                method = getVisitMethodImpl(nodeClass);
+                Class<? extends Visitor> visitorClass = this.getClass();
+                while (visitorClass != Visitor.class) {
+                    method = getVisitMethodImpl(visitorClass, nodeClass);
+                    if (method != DUMMY_METHOD) break;
+                    visitorClass = (Class<? extends Visitor>) visitorClass.getSuperclass();
+                }
                 methodCache.put(nodeClass, method);
             }
             return method;
@@ -849,10 +854,10 @@ public interface Node extends List<Node> {
         // Find handler method for this node type. If there is none,
         // it checks for a handler for any explicitly marked interfaces
         // If necessary, it climbs the class hierarchy to superclasses
-        private Method getVisitMethodImpl(Class<?> nodeClass) {
-            if (nodeClass == null || !Node.class.isAssignableFrom(nodeClass)) return DUMMY_METHOD;
+        private Method getVisitMethodImpl(Class <? extends Visitor> visitorClass, Class<?> nodeClass) {
+            if (visitorClass == Visitor.class || nodeClass == null || !Node.class.isAssignableFrom(nodeClass)) return DUMMY_METHOD;
             try {
-                Method m = this.getClass().getDeclaredMethod("visit", nodeClass);
+                Method m = visitorClass.getDeclaredMethod("visit", nodeClass);
                 if (!Modifier.isPublic(nodeClass.getModifiers()) || !Modifier.isPublic(m.getModifiers())) {
                     m.setAccessible(true);
                 }
@@ -860,14 +865,14 @@ public interface Node extends List<Node> {
             } catch (NoSuchMethodException e) {}
             for (Class<?> interf : nodeClass.getInterfaces()) {
                 if (Node.class.isAssignableFrom(interf) && !Node.class.equals(interf)) try {
-                    Method m = this.getClass().getDeclaredMethod("visit", interf);
+                    Method m = visitorClass.getDeclaredMethod("visit", interf);
                     if (!Modifier.isPublic(interf.getModifiers()) || !Modifier.isPublic(m.getModifiers())) {
                         m.setAccessible(true);
                     }
                     return m;
                 } catch (NoSuchMethodException e) {}
             }
-            return getVisitMethodImpl(nodeClass.getSuperclass());
+            return getVisitMethodImpl(visitorClass, nodeClass.getSuperclass());
         }
 
         /**
