@@ -526,16 +526,7 @@ public class Grammar extends BaseNode {
             visit(context);
         }
 
-        @Override
-        public void visit(Node n) {
-            super.visit(n);
-        }
-
         Stack<int[]> rangeStack = new Stack<>();
-
-        public void visit(BNFProduction n) {
-            recurse(n);
-        }
 
         // check repetition cardinality constraints (depth first)
         public void visit(ExpansionWithParentheses n) {
