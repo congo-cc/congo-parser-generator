@@ -4,7 +4,7 @@ import java.util.*;
 
 import org.congocc.core.Grammar;
 import org.congocc.codegen.Translator;
-import org.congocc.codegen.java.CodeInjector;
+import org.congocc.codegen.java.JavaCodeInjector;
 import org.congocc.parser.Node;
 import org.congocc.parser.tree.*;
 
@@ -796,7 +796,7 @@ public class PythonTranslator extends Translator {
     }
 
     @Override
-    public String translateInjectedClass(CodeInjector injector, String name) {
+    public String translateInjectedClass(JavaCodeInjector injector, String name) {
         StringBuilder result = new StringBuilder();
         String qualifiedName = String.format("%s.%s", appSettings.getNodePackage(), name);
         List<String> nameList = injector.getParentClasses(qualifiedName);

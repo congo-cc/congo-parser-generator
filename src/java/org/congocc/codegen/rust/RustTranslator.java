@@ -4,7 +4,7 @@ import java.util.*;
 
 import org.congocc.core.Grammar;
 import org.congocc.codegen.Translator;
-import org.congocc.codegen.java.CodeInjector;
+import org.congocc.codegen.java.JavaCodeInjector;
 import org.congocc.parser.Node;
 import org.congocc.parser.tree.*;
 
@@ -487,7 +487,7 @@ public class RustTranslator extends Translator {
      * complex grammars get clear guidance on what needs manual intervention.</p>
      */
     @Override
-    public String translateInjectedClass(CodeInjector injector, String name) {
+    public String translateInjectedClass(JavaCodeInjector injector, String name) {
         String qualifiedName = String.format("%s.%s", appSettings.getNodePackage(), name);
         List<ClassOrInterfaceBodyDeclaration> decls = injector.getBodyDeclarations(qualifiedName);
 
@@ -568,7 +568,7 @@ public class RustTranslator extends Translator {
      * produces:
      *   saw_empty_type_args: bool,
      */
-    public String getParserFieldStructFields(CodeInjector injector) {
+    public String getParserFieldStructFields(JavaCodeInjector injector) {
         String qualifiedName = String.format("%s.%s",
             appSettings.getParserPackage(), appSettings.getParserClassName());
         List<ClassOrInterfaceBodyDeclaration> decls = injector.getBodyDeclarations(qualifiedName);
@@ -629,7 +629,7 @@ public class RustTranslator extends Translator {
      * Returns Rust struct initializer expressions for parser fields from
      * INJECT PARSER_CLASS blocks.  Pairs with {@link #getParserFieldStructFields}.
      */
-    public String getParserFieldInitializers(CodeInjector injector) {
+    public String getParserFieldInitializers(JavaCodeInjector injector) {
         // Use the parserFieldNames map populated by getParserFieldStructFields.
         // This avoids calling translateIdentifier which would add "self." prefix.
         StringBuilder result = new StringBuilder();
@@ -661,7 +661,7 @@ public class RustTranslator extends Translator {
      * @param fields if true, process only field declarations; if false, only methods
      * @return the translated Rust code (or FIXME block comments with original Java)
      */
-    public String translateParserClassInjection(CodeInjector injector, boolean fields) {
+    public String translateParserClassInjection(JavaCodeInjector injector, boolean fields) {
         String qualifiedName = String.format("%s.%s",
             appSettings.getParserPackage(), appSettings.getParserClassName());
         List<ClassOrInterfaceBodyDeclaration> decls = injector.getBodyDeclarations(qualifiedName);

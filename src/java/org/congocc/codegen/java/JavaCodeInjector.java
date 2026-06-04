@@ -9,10 +9,10 @@ import org.congocc.parser.tree.*;
 
 /**
  * Class to hold the code that comes from the grammar file
- * and is later "injected" into the output source files 
+ * and is later "injected" into the output source files
  */
-public class CodeInjector {
-    
+public class JavaCodeInjector extends Node.Visitor {
+
     private final Map<String, TypeDeclaration> types = new HashMap<>();  // Not presently queried ...
     private final Map<String, Set<ImportDeclaration>> injectedImportsMap = new HashMap<>();
     private final Map<String, Set<Annotation>> injectedAnnotationsMap = new HashMap<>();
@@ -23,8 +23,8 @@ public class CodeInjector {
     private final Map<String, List<ClassOrInterfaceBodyDeclaration>> bodyDeclarations = new HashMap<>();
     private final Set<String> overriddenMethods = new LinkedHashSet<>();  // Not presently queried ...
     private final Set<String> typeNames = new LinkedHashSet<>();
-    private final Set<String> interfaces = new LinkedHashSet<>();  
-    private final Set<String> abstractClasses = new LinkedHashSet<>();  
+    private final Set<String> interfaces = new LinkedHashSet<>();
+    private final Set<String> abstractClasses = new LinkedHashSet<>();
     private final Set<String> finalClasses = new LinkedHashSet<>();
     private final Set<String> sealedClasses = new LinkedHashSet<>();
     private final Set<String> nonsealedClasses = new LinkedHashSet<>();
@@ -32,22 +32,21 @@ public class CodeInjector {
     private final Grammar grammar;
     private final AppSettings appSettings;
 
-    public CodeInjector(Grammar grammar, List<Node> codeInjections) {
+    public JavaCodeInjector(Grammar grammar, List<Node> codeInjections) {
         this.grammar = grammar;
         this.appSettings = grammar.getAppSettings();
         for (Node n : codeInjections) {
             if (n instanceof CompilationUnit cu) {
-                inject(cu);
+                visit(cu);
             } else if (n instanceof CodeInjection ci) {
                 inject(ci);
-            } 
-        } 
+            }
+        }
     }
-    
+
     private boolean isInNodePackage(String classname) {
         return !classname.equals(appSettings.getParserClassName())
              && !classname.equals(appSettings.getLexerClassName())
-             //&& !classname.equals(baseNodeClassName)
              && !classname.equals("ParseException")
              && !classname.equals("TokenSource")
              && !classname.equals("NonTerminalCall")
@@ -62,7 +61,7 @@ public class CodeInjector {
 
     public boolean isSealed(String classname) {
         return sealedClasses.contains(classname);
-    } 
+    }
 
     public boolean isNonSealed(String classname) {
         return nonsealedClasses.contains(classname);
@@ -71,70 +70,69 @@ public class CodeInjector {
     public Set<ObjectType> getPermitsList(String classname) {
         return permitsLists.get(classname);
     }
-   
-    private void inject(CompilationUnit jcu) {
-//        List<ImportDeclaration> importDecls = new ArrayList<>((List<ImportDeclaration>)(List)jcu.getImportDeclarations());
-        List<ImportDeclaration> importDecls = jcu.childrenOfType(ImportDeclaration.class);
-        for (TypeDeclaration dec : jcu.getTypeDeclarations()) {
-            String name = dec.getName();
-            typeNames.add(name);
-            String packageName = isInNodePackage(name) ? appSettings.getNodePackage() : appSettings.getParserPackage();
-            if (packageName.length() > 0) {
-                name = packageName + "." + name;
-            }
-            types.put(name, dec);
-            if (dec instanceof InterfaceDeclaration) {
-                interfaces.add(name);
-            }
-            if (!importDecls.isEmpty()) {
-                Set<ImportDeclaration> injectedImports = injectedImportsMap.computeIfAbsent(name, k -> new LinkedHashSet<>());
-                injectedImports.addAll(importDecls);
-            }
-            Set<ObjectType> extendsList = dec.getExtendsList() == null ? new LinkedHashSet<>() : new LinkedHashSet<>(dec.getExtendsList().getTypes());
-            Set<ObjectType> existingOne = extendsLists.get(name);
-            if (existingOne == null) {
-                extendsLists.put(name, extendsList);
+
+    private List<ImportDeclaration> injectedImportDecls;
+
+    void visit(TypeDeclaration dec) {
+        String name = dec.getName();
+        typeNames.add(name);
+        String packageName = isInNodePackage(name) ? appSettings.getNodePackage() : appSettings.getParserPackage();
+        name = packageName + "." + name;
+        types.put(name, dec);
+        if (dec instanceof InterfaceDeclaration) {
+            interfaces.add(name);
+        }
+        Set<ImportDeclaration> injectedImports = injectedImportsMap.computeIfAbsent(name, k -> new LinkedHashSet<>());
+        injectedImports.addAll(injectedImportDecls);
+        Set<ObjectType> extendsList = dec.getExtendsList() == null ? new LinkedHashSet<>() : new LinkedHashSet<>(dec.getExtendsList().getTypes());
+        Set<ObjectType> existingOne = extendsLists.get(name);
+        if (existingOne == null) {
+            extendsLists.put(name, extendsList);
+        } else {
+            existingOne.addAll(extendsList);
+        }
+        Set<ObjectType> implementsList = dec.getImplementsList() == null ? new LinkedHashSet<>() : new LinkedHashSet<>(dec.getImplementsList().getTypes());
+        Set<ObjectType> existing = implementsLists.get(name);
+        if (existing == null) {
+            implementsLists.put(name, implementsList);
+        } else {
+            existing.addAll(implementsList);
+        }
+        TypeParameters typeParameters = dec.getTypeParameters();
+        if (typeParameters != null) {
+            TypeParameters injectedList = typeParameterLists.get(name);
+            if (injectedList == null) {
+                typeParameterLists.put(name, typeParameters);
             } else {
-                existingOne.addAll(extendsList);
-            }
-            Set<ObjectType> implementsList = dec.getImplementsList() == null ? new LinkedHashSet<>() : new LinkedHashSet<>(dec.getImplementsList().getTypes());
-            Set<ObjectType> existing = implementsLists.get(name);
-            if (existing == null) {
-                implementsLists.put(name, implementsList);
-            } else {
-                existing.addAll(implementsList);
-            }
-            TypeParameters typeParameters = dec.getTypeParameters();
-            if (typeParameters != null) {
-                TypeParameters injectedList = typeParameterLists.get(name);
-                if (injectedList == null) {
-                    typeParameterLists.put(name, typeParameters);
-                } else {
-                    injectedList.add(typeParameters);
-                }
-            }
-            List<ClassOrInterfaceBodyDeclaration> injectedCode = new ArrayList<>();
-            for (Node n : dec.getBody()) {
-                if (n instanceof ClassOrInterfaceBodyDeclaration cibd) {
-                    injectedCode.add(cibd);
-                }
-            }
-            List<ClassOrInterfaceBodyDeclaration> existingCode = bodyDeclarations.get(name);
-            if (existingCode == null) {
-                bodyDeclarations.put(name, injectedCode);
-            } else {
-                existingCode.addAll(injectedCode);
-            }
-            for (ClassOrInterfaceBodyDeclaration decl : injectedCode) {
-                String key = null;
-                if (decl instanceof MethodDeclaration md) {
-                    key = md.getFullSignature();
-                }
-                if (key != null) {
-                    overriddenMethods.add(key);
-                }
+                injectedList.add(typeParameters);
             }
         }
+        List<ClassOrInterfaceBodyDeclaration> injectedCode = new ArrayList<>();
+        for (Node n : dec.getBody()) {
+            if (n instanceof ClassOrInterfaceBodyDeclaration cibd) {
+                injectedCode.add(cibd);
+            }
+        }
+        List<ClassOrInterfaceBodyDeclaration> existingCode = bodyDeclarations.get(name);
+        if (existingCode == null) {
+            bodyDeclarations.put(name, injectedCode);
+        } else {
+            existingCode.addAll(injectedCode);
+        }
+        for (ClassOrInterfaceBodyDeclaration decl : injectedCode) {
+            String key = null;
+            if (decl instanceof MethodDeclaration md) {
+                key = md.getFullSignature();
+            }
+            if (key != null) {
+                overriddenMethods.add(key);
+            }
+        }
+    }
+
+    void visit(CompilationUnit jcu) {
+        injectedImportDecls = jcu.childrenOfType(ImportDeclaration.class);
+        recurse(jcu);
     }
 
     public boolean isDeclaredAbstract(String name) {
@@ -154,7 +152,7 @@ public class CodeInjector {
         }
     }
 
-    void inject(CodeInjection injection) 
+    void inject(CodeInjection injection)
     {
         String name = injection.getName();
         Modifiers mods = injection.firstChildOfType(Modifiers.class);
@@ -211,7 +209,7 @@ public class CodeInjector {
         	existingDecls.addAll(injection.body.childrenOfType(ClassOrInterfaceBodyDeclaration.class));
         }
     }
-    
+
     /**
      * Adds a {@link CodeInjection} dynamically (post-parsing).
      * @param ci is the {@code CodeInjection} to be added
@@ -223,7 +221,7 @@ public class CodeInjector {
     public void injectCode(CompilationUnit jcu) {
         String packageName = jcu.getPackageName();
         Set<ImportDeclaration> allInjectedImports = new LinkedHashSet<>();
-        for (TypeDeclaration typeDecl : jcu.getTypeDeclarations()) {
+        for (TypeDeclaration typeDecl : jcu.childrenOfType(TypeDeclaration.class)) {
             String fullName = typeDecl.getName();
             if (packageName !=null) {
                 fullName = packageName + "." + fullName;
@@ -260,7 +258,7 @@ public class CodeInjector {
         }
         injectImportDeclarations(jcu, allInjectedImports);
     }
-    
+
     private void injectImportDeclarations(CompilationUnit jcu, Collection<ImportDeclaration> importDecls) {
         for (ImportDeclaration importDecl : importDecls) {
             if (!jcu.contains(importDecl)) {
@@ -268,7 +266,7 @@ public class CodeInjector {
             }
         }
     }
-    
+
     public boolean hasInjectedCode(String typename) {
         return typeNames.contains(typename);
     }

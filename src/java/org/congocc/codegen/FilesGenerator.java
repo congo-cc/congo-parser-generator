@@ -33,7 +33,7 @@ public class FilesGenerator {
     private final Grammar grammar;
     private final AppSettings appSettings;
     private final Errors errors;
-    private final CodeInjector codeInjector;
+    private final JavaCodeInjector codeInjector;
     private final Set<String> tokenSubclassFileNames = new LinkedHashSet<>();
     private final Map<String, String> superClassLookup = new HashMap<>();
     private final CodeLang codeLang;

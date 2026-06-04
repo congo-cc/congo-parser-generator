@@ -5,7 +5,7 @@ import java.util.*;
 import org.congocc.core.Grammar;
 import org.congocc.app.AppSettings;
 import org.congocc.codegen.csharp.CSharpTranslator;
-import org.congocc.codegen.java.CodeInjector;
+import org.congocc.codegen.java.JavaCodeInjector;
 import org.congocc.codegen.python.PythonTranslator;
 import org.congocc.codegen.rust.RustTranslator;
 import org.congocc.parser.Node;
@@ -1720,7 +1720,7 @@ public class Translator {
         fail();
     }
 
-    public String translateInjectedClass(CodeInjector injector, String name) {
+    public String translateInjectedClass(JavaCodeInjector injector, String name) {
         fail();
         return null;
     }

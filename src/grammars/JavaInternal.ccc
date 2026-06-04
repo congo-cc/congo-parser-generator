@@ -74,15 +74,9 @@ INJECT CompilationUnit :
         return (jpd == null) ? null : jpd.getName();
     }
 
-    public List<TypeDeclaration> getTypeDeclarations() {
-        return childrenOfType(TypeDeclaration.class);
-    }
-
     public void addImportDeclaration(ImportDeclaration decl) {
         PackageDeclaration pd = firstChildOfType(PackageDeclaration.class);
-        if (pd != null) {
-            add(1 + indexOf(pd), decl);
-        }
+        add(1 + indexOf(pd), decl);
     }
 }
 
@@ -478,6 +472,3 @@ INJECT CodeBlock :
         return buf.toString();
     }
 }
-
-
-
