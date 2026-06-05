@@ -14,7 +14,7 @@ abstract public class AbstractCodeFormatter extends Node.Visitor {
     protected String eol = "\n";
     protected StringBuilder buffer = new StringBuilder();
     protected int currentIndentation, indentAmount=4;
-    protected int maxLineLength = 80;
+    protected int maxLineLength = 100;
 
     protected Set<? extends Node.NodeType> alwaysPrependSpace = Collections.emptySet();
     protected Set<? extends Node.NodeType> alwaysAppendSpace = Collections.emptySet();
@@ -35,22 +35,33 @@ abstract public class AbstractCodeFormatter extends Node.Visitor {
     }
 
     /**
-     * A default routine to append a token to the buffer.
+     * A default visit handler to append a token to the buffer.
+     * Takes into account that two identifier-ish tokens
+     * cannot be adjacent. Also prepends/appends a space (if necessary)
+     * based on the token types listed in alwaysPrependSpace and
+     * alwaysAppendSpace
      */
     protected void defaultTokenOutput(Node.TerminalNode tok) {
         if (tok.getType().isEOF()) {
             buffer.append(eol);
             return;
         }
-        if (buffer.length() > 0) {
-            int nextChar = tok.toString().codePointAt(0);
+        if (buffer.length() == 0) {
+            buffer.append(tok);
+            if (alwaysAppendSpace.contains(tok.getType())) buffer.append(' ');
+            return;
+        }
+        boolean prependSpace = alwaysPrependSpace.contains(tok.getType());
+        if (!prependSpace) {
+//            int nextChar = Character.codePointAt((CharSequence) tok, 0);
+            int nextChar = tok.toString().codePointAt(0); // FIX later
             int prevChar = buffer.codePointBefore(buffer.length());
             if ((Character.isUnicodeIdentifierPart(prevChar) || prevChar == ';')
                     && Character.isUnicodeIdentifierPart(nextChar)) {
-                addSpaceIfNecessary();
+                prependSpace = true;
             }
         }
-        if (alwaysPrependSpace.contains(tok.getType())) addSpaceIfNecessary();
+        if (prependSpace) addSpaceIfNecessary();
         buffer.append(tok.toString());
         if (alwaysAppendSpace.contains(tok.getType())) addSpaceIfNecessary();
     }
@@ -104,7 +115,9 @@ abstract public class AbstractCodeFormatter extends Node.Visitor {
     }
 
     protected int currentLineLength() {
-        return buffer.length() - buffer.lastIndexOf(eol) - eol.length();
+        int lastEOL = buffer.lastIndexOf(eol);
+        if (lastEOL == -1) return buffer.length();
+        return buffer.length() - lastEOL - eol.length();
     }
 
     protected boolean startsNewLine(Node.TerminalNode t) {

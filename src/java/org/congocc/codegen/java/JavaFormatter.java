@@ -19,14 +19,15 @@ public class JavaFormatter extends AbstractCodeFormatter {
             NE, LE, GE, PLUS, MINUS, SLASH, SC_AND, SC_OR, BIT_AND, BIT_OR,
             XOR, REM, LSHIFT, PLUSASSIGN, MINUSASSIGN, STARASSIGN, SLASHASSIGN,
             ANDASSIGN, ORASSIGN, XORASSIGN, REMASSIGN, LSHIFTASSIGN, RSIGNEDSHIFT,
-            RUNSIGNEDSHIFT, RSIGNEDSHIFTASSIGN, RUNSIGNEDSHIFTASSIGN, LAMBDA, INSTANCEOF);
+            RUNSIGNEDSHIFT, RSIGNEDSHIFTASSIGN, RUNSIGNEDSHIFTASSIGN, LAMBDA, INSTANCEOF,
+            LT,GT,HOOK,STAR);
 
         alwaysAppendSpace = EnumSet.of(ASSIGN, COLON, DO, CATCH, CASE,
             FOR, IF, WHILE, THROWS, EXTENDS, EQ, NE, LE, GE, PLUS, SLASH,
             SC_AND, SC_OR, BIT_AND, BIT_OR, XOR, REM, LSHIFT, PLUSASSIGN,
             MINUSASSIGN, STARASSIGN, SLASHASSIGN, ANDASSIGN, ORASSIGN, XORASSIGN,
             REMASSIGN, LSHIFTASSIGN, RSIGNEDSHIFT, RUNSIGNEDSHIFT, RSIGNEDSHIFTASSIGN,
-            RUNSIGNEDSHIFTASSIGN, LAMBDA, INSTANCEOF);
+            RUNSIGNEDSHIFTASSIGN, LAMBDA, INSTANCEOF,LT,GT,HOOK,STAR);
     }
 
     void visit(TypeParameters tps) {
@@ -34,22 +35,18 @@ public class JavaFormatter extends AbstractCodeFormatter {
         recurse(tps);
     }
 
-    void visit(Operator op) {
+    protected void visit(Operator op) {
         switch (op.getType()) {
             case LT:
                 if (op.getParent() instanceof RelationalExpression) {
-                    addSpaceIfNecessary();
-                    buffer.append(op);
-                    buffer.append(' ');
+                    defaultTokenOutput(op);
                 } else {
                     buffer.append(op);
                 }
                 break;
             case GT:
                 if (op.getParent() instanceof RelationalExpression) {
-                    addSpaceIfNecessary();
-                    buffer.append(op);
-                    buffer.append(' ');
+                    defaultTokenOutput(op);
                 } else {
                     buffer.append(op);
                     TokenType tokenType = op.nextCachedToken().getType();
@@ -59,9 +56,7 @@ public class JavaFormatter extends AbstractCodeFormatter {
                 break;
             case HOOK:
                 if (op.getParent() instanceof TernaryExpression) {
-                    addSpaceIfNecessary();
-                    buffer.append(op);
-                    buffer.append(' ');
+                    defaultTokenOutput(op);
                 } else {
                     buffer.append(op);
                     if (op.nextCachedToken().getType() != GT) buffer.append(' ');
@@ -71,14 +66,13 @@ public class JavaFormatter extends AbstractCodeFormatter {
                 if (op.getParent() instanceof ImportDeclaration)
                     buffer.append(op); // no spaces for import statements
                 else {
-                    addSpaceIfNecessary();
-                    buffer.append(op);
-                    buffer.append(' ');
+                    defaultTokenOutput(op);
                 }
                 break;
             case MINUS:
-                if (op.getPrevious().getType() == RPAREN || op.getPrevious() instanceof Identifier)
+                if (op.getPrevious().getType() == RPAREN || op.getPrevious() instanceof Identifier) {
                     addSpaceIfNecessary();
+                }
                 buffer.append(op);
                 int nextChar = op.getNext().toString().codePointAt(0);
                 if (op.getPrevious() instanceof Identifier // for -1 or 2 - 1

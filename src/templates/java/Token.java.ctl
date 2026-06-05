@@ -595,7 +595,11 @@ public class ${settings.baseTokenClassName} ${implements} {
    private Boolean spansPPInstruction;
    protected boolean spansPPInstruction() {
       if (spansPPInstruction == null) {
-          spansPPInstruction = getTokenSource().spansPPInstruction(beginOffset, endOffset);
+          TokenSource ts = getTokenSource();
+          if (ts == null) {
+              return spansPPInstruction = false;
+          }
+          spansPPInstruction = ts.spansPPInstruction(beginOffset, endOffset);
       }
       return spansPPInstruction;
    }
