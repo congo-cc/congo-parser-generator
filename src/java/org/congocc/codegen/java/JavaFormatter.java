@@ -182,9 +182,9 @@ public class JavaFormatter extends AbstractCodeFormatter {
 
     void visit(ImportDeclaration id) {
         recurse(id);
-        buffer.append(eol);
+        buffer.append('\n');
         if (!(id.nextSibling() instanceof ImportDeclaration)) {
-            buffer.append(eol);
+            buffer.append('\n');
         }
     }
 

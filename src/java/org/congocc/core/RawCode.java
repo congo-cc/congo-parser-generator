@@ -10,7 +10,7 @@ import org.congocc.parser.python.PythonParser;
 import org.congocc.parser.python.ast.Module;
 import org.congocc.parser.rust.RustParser;
 import org.congocc.parser.tree.Assertion;
-import org.congocc.parser.tree.CodeInjection;
+import org.congocc.parser.tree.JavaCodeInjection1;
 import org.congocc.parser.tree.EmbeddedCode;
 import org.congocc.parser.tree.Failure;
 import org.congocc.parser.tree.Lookahead;
@@ -132,7 +132,7 @@ public class RawCode extends EmptyExpansion implements EmbeddedCode {
         if (isExpression()) {
             cccParser.EmbeddedJavaExpression();
         }
-        else if (getParent() instanceof CodeInjection) {
+        else if (getParent() instanceof JavaCodeInjection1) {
             cccParser.EmbeddedJavaClassOrInterfaceBody();
         }
         else {
