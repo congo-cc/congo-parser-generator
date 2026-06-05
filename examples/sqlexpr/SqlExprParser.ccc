@@ -80,7 +80,7 @@ import org.apache.activemq.util.LRUCache;
 
         protected BooleanExpression parse() throws InvalidSelectorException {
             try {
-                return this.JmsSelector();
+                return this.BooleanExpression();
             } catch (Throwable e) {
                 throw(InvalidSelectorException) new InvalidSelectorException(getInputSource().toString()).initCause(e);
             }
@@ -99,7 +99,10 @@ import org.apache.activemq.util.LRUCache;
     }
 }
 
-
+// ---- A Note About Elided nodes
+// 
+// To declutter the generated tree, non-terminals that have a single non-terminal child
+// will not be included in the final abstract syntax tree.
 
 // ----------------------------------------------------------------------------
 // Tokens
@@ -194,7 +197,7 @@ TOKEN :
 // ----------------------------------------------------------------------------
 // Grammar
 // ----------------------------------------------------------------------------
-BooleanExpression JmsSelector :
+BooleanExpression BooleanExpression :
 {
     Expression left=null;
 }
@@ -208,7 +211,7 @@ BooleanExpression JmsSelector :
 ;
 
 
-Expression orExpression :
+Expression orExpression #orExpression(>1) :
 {
     Expression left;
     Expression right;
@@ -230,7 +233,7 @@ Expression orExpression :
 
 
 
-Expression andExpression :
+Expression andExpression #andExpression(>1) :
 {
     Expression left;
     Expression right;
@@ -250,7 +253,7 @@ Expression andExpression :
 ;
 
 
-Expression equalityExpression :
+Expression equalityExpression #equalityExpression(>1) :
 {
     Expression left;
     Expression right;
@@ -292,7 +295,7 @@ Expression equalityExpression :
 ;
 
 
-Expression comparisonExpression :
+Expression comparisonExpression #comparisonExpression(>1) :
 {
     Expression left;
     Expression right;
@@ -388,7 +391,7 @@ Expression comparisonExpression :
 ;
 
 
-Expression addExpression :
+Expression addExpression #addExpression(>1) :
 {
     Expression left;
     Expression right;
@@ -415,7 +418,7 @@ Expression addExpression :
 ;
 
 
-Expression multExpr :
+Expression multExpr #multExpr(>1) :
 {
     Expression left;
     Expression right;
@@ -445,7 +448,7 @@ Expression multExpr :
 
 
 
-Expression unaryExpr :
+Expression unaryExpr #unaryExpr(>1) :
 {
     String s=null;
     Expression left=null;
@@ -473,7 +476,7 @@ Expression unaryExpr :
 ;
 
 
-Expression primaryExpr :
+Expression primaryExpr #primaryExpr(>1) :
 {
     Expression left=null;
 }

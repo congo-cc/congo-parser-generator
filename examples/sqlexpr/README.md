@@ -103,7 +103,7 @@ ant -Drust.enabled=true rust-gen
 
 ### Optionally Add AST Serialization Support
 
-Make the current directory **rust-sqlparser**.  To include serde serialization for ASTs, copy the following text into the generated Cargo.toml file before the [lib] stanza (blank lines before and after).  
+If Cargo.toml does not already specify the `serde` feature, follow this procedure to define it:  Make the current directory **rust-sqlparser**.  To include serde serialization for ASTs, copy the following text into the generated Cargo.toml file before the [lib] stanza (blank lines before and after).  
 
 ```
 [dependencies]

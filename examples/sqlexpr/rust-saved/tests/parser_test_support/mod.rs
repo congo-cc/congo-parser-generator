@@ -163,8 +163,8 @@ pub fn skip(ast: &Ast, mut id: NodeId) -> NodeId {
         let kind = ast.kind(id).clone();
         let children: Vec<NodeId> = ast.children(id).collect();
         let dominated = match kind {
-            NodeKind::JmsSelector => {
-                // JmsSelector wraps the orExpression and the EOF token.
+            NodeKind::BooleanExpression => {
+                // BooleanExpression wraps the orExpression and the EOF token.
                 // Skip into the orExpression child.
                 operand_children(ast, id).len() == 1
             }
@@ -186,7 +186,7 @@ pub fn skip(ast: &Ast, mut id: NodeId) -> NodeId {
         };
         if dominated {
             // Descend to the first non-token (or only) child.
-            let next = if matches!(kind, NodeKind::JmsSelector) {
+            let next = if matches!(kind, NodeKind::BooleanExpression) {
                 operand_children(ast, id)[0]
             } else if matches!(kind, NodeKind::unaryExpr) {
                 children[0]
@@ -808,7 +808,7 @@ fn validate_in_elements(ast: &Ast, slice: &[NodeId]) -> Result<(), String> {
 
 pub fn is_boolean_expression(ast: &Ast, id: NodeId) -> bool {
     match ast.kind(id) {
-        NodeKind::JmsSelector => {
+        NodeKind::BooleanExpression => {
             // Pass-through to the orExpression child.
             let kids = operand_children(ast, id);
             kids.first().map_or(false, |&c| is_boolean_expression(ast, c))
