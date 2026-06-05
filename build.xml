@@ -32,7 +32,6 @@
     </uptodate>
     <uptodate property="templates.uptodate"
       targetfile="build/generated-java/org/congocc/templates/core/parser/CTLParser.java">
-      <!--srcfiles dir="src/grammars" includes="CTLInternal.ccc"/ -->
       <srcfiles dir="examples/congo-templates" includes="*.ccc"/>
     </uptodate>
     <uptodate property="ppline.uptodate"

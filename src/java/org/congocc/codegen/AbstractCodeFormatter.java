@@ -11,13 +11,12 @@ import org.congocc.parser.Node;
 abstract public class AbstractCodeFormatter extends Node.Visitor {
     {this.visitUnparsedTokens = true;}
 
-    protected String eol = "\n";
     protected StringBuilder buffer = new StringBuilder();
+    protected String eol = "\n";
     protected int currentIndentation, indentAmount=4;
-    protected int maxLineLength = 100;
+    protected int maxLineLength = 80;
 
-    protected Set<? extends Node.NodeType> alwaysPrependSpace = Collections.emptySet();
-    protected Set<? extends Node.NodeType> alwaysAppendSpace = Collections.emptySet();
+    protected Set<? extends Node.NodeType> separatedBySpaces = Collections.emptySet();
 
     public String format(Node code) {
         buffer = new StringBuilder();
@@ -38,8 +37,7 @@ abstract public class AbstractCodeFormatter extends Node.Visitor {
      * A default visit handler to append a token to the buffer.
      * Takes into account that two identifier-ish tokens
      * cannot be adjacent. Also prepends/appends a space (if necessary)
-     * based on the token types listed in alwaysPrependSpace and
-     * alwaysAppendSpace
+     * based on the token types listed in separatedBySpaces
      */
     protected void defaultTokenOutput(Node.TerminalNode tok) {
         if (tok.getType().isEOF()) {
@@ -48,13 +46,13 @@ abstract public class AbstractCodeFormatter extends Node.Visitor {
         }
         if (buffer.length() == 0) {
             buffer.append(tok);
-            if (alwaysAppendSpace.contains(tok.getType())) buffer.append(' ');
+            if (separatedBySpaces.contains(tok.getType())) buffer.append(' ');
             return;
         }
-        boolean prependSpace = alwaysPrependSpace.contains(tok.getType());
+        boolean prependSpace = separatedBySpaces.contains(tok.getType());
         if (!prependSpace) {
 //            int nextChar = Character.codePointAt((CharSequence) tok, 0);
-            int nextChar = tok.toString().codePointAt(0); // FIX later
+            int nextChar = tok.toString().codePointAt(0); // The line commented out above should work. FIX later
             int prevChar = buffer.codePointBefore(buffer.length());
             if ((Character.isUnicodeIdentifierPart(prevChar) || prevChar == ';')
                     && Character.isUnicodeIdentifierPart(nextChar)) {
@@ -63,7 +61,7 @@ abstract public class AbstractCodeFormatter extends Node.Visitor {
         }
         if (prependSpace) addSpaceIfNecessary();
         buffer.append(tok.toString());
-        if (alwaysAppendSpace.contains(tok.getType())) addSpaceIfNecessary();
+        if (separatedBySpaces.contains(tok.getType())) buffer.append(' ');
     }
 
     protected void addSpaceIfNecessary() {

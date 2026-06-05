@@ -21,13 +21,7 @@ import org.congocc.codegen.AbstractCodeFormatter;
  */
 public class CSharpFormatter extends AbstractCodeFormatter {
     {
-        alwaysPrependSpace = EnumSet.of(IF,WHILE,FOR,FOREACH,WHERE,WHEN,CONTINUE,RETURN,
-                                       ASSIGN, PLUSASSIGN,MINUSASSIGN,SLASHASSIGN,
-                                       REMASSIGN,ANDASSIGN,ORASSIGN,XORASSIGN,
-                                       LEFT_SHIFT_ASSIGN,RIGHT_SHIFT_ASSIGN,
-                                       UNSIGNED_RIGHT_SHIFT_ASSIGN, DOUBLE_HOOK_EQUALS,
-                                       IS,ARROW);
-        alwaysAppendSpace = EnumSet.of(IF,WHILE,FOR,FOREACH,WHERE,WHEN,BREAK,CONTINUE,RETURN,
+        separatedBySpaces = EnumSet.of(IF,WHILE,FOR,FOREACH,WHERE,WHEN,BREAK,CONTINUE,RETURN,
                                        ASSIGN, PLUSASSIGN,MINUSASSIGN,SLASHASSIGN,
                                        REMASSIGN,ANDASSIGN,ORASSIGN,XORASSIGN,
                                        LEFT_SHIFT_ASSIGN,RIGHT_SHIFT_ASSIGN,
@@ -152,7 +146,6 @@ public class CSharpFormatter extends AbstractCodeFormatter {
                 }
             }
             default -> defaultTokenOutput(kw);
-
         }
     }
 

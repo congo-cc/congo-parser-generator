@@ -1,7 +1,6 @@
 package org.congocc.templates.core;
 
 import java.io.IOException;
-import java.io.PrintWriter;
 import java.io.StringWriter;
 import java.io.Writer;
 import java.text.Collator;
@@ -12,13 +11,11 @@ import java.util.*;
 
 import org.congocc.templates.core.nodes.generated.ArgsList;
 import org.congocc.templates.core.nodes.generated.Block;
-import org.congocc.templates.core.nodes.generated.IncludeInstruction;
 import org.congocc.templates.core.nodes.generated.Macro;
 import org.congocc.templates.core.nodes.generated.NestedInstruction;
 import org.congocc.templates.core.nodes.generated.PositionalArgsList;
 import org.congocc.templates.core.nodes.ParameterList;
 import org.congocc.templates.core.nodes.generated.TemplateElement;
-import org.congocc.templates.core.nodes.generated.UnifiedCall;
 import org.congocc.templates.core.variables.scope.*;
 import org.congocc.templates.*;
 
