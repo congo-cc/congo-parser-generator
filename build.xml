@@ -1,25 +1,14 @@
 <project name="congocc" default="jar" basedir=".">
+  <import file="common.xml"/>
   <tstamp>
     <format property="timestamp" pattern="yyyy-MM-dd HH:mm:ss" />
   </tstamp>
-
-  <!-- Rust code-generation is off by default. Enable with: ant -Drust.enabled=true ... -->
-  <property name="rust.enabled" value="false"/>
-
-  <target name="-rust-check">
-    <condition property="rust.on">
-      <istrue value="${rust.enabled}"/>
-    </condition>
-  </target>
-
-  <target name="-rust-guard" depends="-rust-check" unless="rust.on">
-    <echo level="warning">*** Skipping Rust targets (rust.enabled=${rust.enabled}). Enable with: ant -Drust.enabled=true ***</echo>
-  </target>
 
   <target name="init">
     <uptodate property="parser.uptodate" targetfile="build/generated-java/org/congocc/parser/CongoCCParser.java">
       <srcfiles dir="src/grammars" includes="CongoCC.ccc"/>
       <srcfiles dir="src/grammars" includes="Lexical.inc.ccc"/>
+      <srcfiles dir="src/grammars" includes="JavaInternal.ccc"/>
       <srcfiles dir="examples/java" includes="*.ccc"/>
     </uptodate>
     <uptodate property="preprocessor.uptodate"
@@ -86,41 +75,28 @@
     <!--ant target="clean" dir="examples/freemarker" /-->
   </target>
 
-  <macrodef name="congocc">
-    <attribute name="target"/>
-    <attribute name="args" default="-n -q"/>
-    <sequential>
-      <echo message="Building parser from @{target}"/>
-      <java fork="true" jar="${basedir}/bin/congocc.jar" failonerror="true">
-        <assertions><enable/></assertions>
-        <arg line="@{args} @{target}"/>
-      </java>
-    </sequential>
-  </macrodef>
-
   <target name="parser-gen" unless="parser.uptodate">
-    <congocc target="src/grammars/CongoCC.ccc"/>
+    <congocc-use-bootstrap target="src/grammars/CongoCC.ccc"/>
   </target>
   <target name="preprocessor-gen" unless="preprocessor.uptodate">
-    <congocc target="examples/preprocessor/Preprocessor.ccc"/>
+    <congocc-use-bootstrap target="examples/preprocessor/Preprocessor.ccc"/>
   </target>
   <target name="ppline-gen" unless="ppline.uptodate">
-    <congocc target="examples/csharp/PPDirectiveLine.ccc" args="-n -q -d ../../build/generated-java" />
+    <congocc-use-bootstrap target="examples/csharp/PPDirectiveLine.ccc" args="-n -q -d ../../build/generated-java" />
   </target>
   <target name="python-gen" unless="python.uptodate">
-    <congocc target="src/grammars/PythonInternal.ccc"/>
+    <congocc-use-bootstrap target="src/grammars/PythonInternal.ccc"/>
   </target>
   <target name="csharp-gen" unless="csharp.uptodate">
-    <congocc target="src/grammars/CSharpInternal.ccc"/>
+    <congocc-use-bootstrap target="src/grammars/CSharpInternal.ccc"/>
   </target>
   <target name="rust-gen" unless="rust.uptodate">
-    <congocc target="src/grammars/RustInternal.ccc"/>
+    <congocc-use-bootstrap target="src/grammars/RustInternal.ccc"/>
   </target>
   <target name="templates-gen" unless="templates.uptodate">
-    <congocc target="examples/congo-templates/CTL.ccc"/>
+    <congocc-use-bootstrap target="examples/congo-templates/CTL.ccc"/>
     <!--congocc target="src/grammars/CTLInternal.ccc"/-->
   </target>
-
 
   <target name="build-parsers" depends="init">
     <parallel>
@@ -228,7 +204,7 @@
     <ant dir="examples/cics" target="test-java" />
   </target>
 
-  <target name="test-rust-formatter" depends="jar,-rust-guard" if="rust.on">
+  <target name="test-rust-formatter" depends="jar,rust-guard" if="rust.on">
     <echo>Running RustFormatter golden-file tests</echo>
     <javac srcdir="tests/rust-formatter"
            destdir="build"
@@ -242,7 +218,7 @@
     </java>
   </target>
 
-  <target name="test-rust" depends="jar,-rust-guard" if="rust.on">
+  <target name="test-rust" depends="jar,rust-guard" if="rust.on">
     <echo>Testing Rust parser generation</echo>
     <ant dir="examples/json" target="test-rust" />
     <ant dir="examples/lua" target="test-rust" />

@@ -35,7 +35,7 @@ Number#void :
 ;
 
 SignedNumber :
-  [<MINUS>]
+  [<PLUS>|<MINUS>]
   Number
   [(<PLUS>|<MINUS>) <COMPLEX>]
 ;
@@ -87,6 +87,8 @@ Statement :
 SimpleStatement#(>2) : SmallStatement (<SEMICOLON> =>|+1 SmallStatement)* [<SEMICOLON>] <NEWLINE> ;
 
 SmallStatement :
+   ImportStatement
+   |
    Assignment
    |
    TypeAlias
@@ -94,8 +96,6 @@ SmallStatement :
    StarExpressions
    |
    ReturnStatement
-   |
-   ImportStatement
    |
    GlobalStatement
    |
@@ -150,7 +150,17 @@ Block :
 
 ElseBlock : <ELSE> <COLON> Block ;
 
-ExceptBlock : <EXCEPT> [ [<STAR>] Expression [<AS> <NAME>] ] <COLON> Block ;
+ExceptBlock :
+    <EXCEPT>
+    [
+      {boolean multipleExpressions=false;}
+      [<STAR>] Expression
+      (<COMMA> {multipleExpressions = true;} Expression)*
+      [SCAN {!multipleExpressions} => <AS> <NAME>]
+    ]
+    <COLON>
+    Block
+;
 
 IfStatement :
     <IF> NamedExpression <COLON> Block
@@ -197,7 +207,7 @@ NamedExpression : [ <NAME> <COLONEQUALS> =>||] Expression ;
 
 DottedName : <NAME> (<DOT> <NAME> =>||)* ;
 
-ImportStatement : ImportName | ImportFrom1 | ImportFrom2 ;
+ImportStatement : ['lazy'] =>|+1 (ImportName | ImportFrom1 | ImportFrom2) ;
 
 ImportName#void : <IMPORT> DottedName [<AS> <NAME>] (<COMMA> DottedName [<AS> <NAME>])* ;
 

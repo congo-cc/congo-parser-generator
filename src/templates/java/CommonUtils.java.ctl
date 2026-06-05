@@ -89,7 +89,6 @@
                 else {
                     token_source.switchTo(${prevLexicalStateVar});
                 }
-                nextTokenType = null;
             }
          }
    #elif expansion.tokenActivation??
@@ -119,7 +118,6 @@
          token_source.activeTokenTypes = ${prevActives};
          if (${somethingChanged}) {
              token_source.reset(${resetToken});
-             nextTokenType = null;
          }
       }
    #else

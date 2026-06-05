@@ -10,7 +10,7 @@ import java.nio.file.Path;
 import java.nio.file.Paths;
 
 import org.congocc.codegen.FilesGenerator;
-import org.congocc.codegen.java.CodeInjector;
+import org.congocc.codegen.java.JavaCodeInjector;
 import org.congocc.codegen.TemplateGlobals;
 import org.congocc.codegen.Translator;
 import org.congocc.app.AppSettings;
@@ -72,6 +72,7 @@ public class Grammar extends BaseNode {
 
     public Grammar() {this.appSettings = new AppSettings(this);}
 
+    public Grammar getGrammar() {return this;}
 
     public AppSettings getAppSettings() {return appSettings;}
 
@@ -228,11 +229,11 @@ public class Grammar extends BaseNode {
         addLexicalState(defaultLexicalState);
     }
 
-    private CodeInjector injector;
+    private JavaCodeInjector injector;
 
-    public CodeInjector getInjector() {
+    public JavaCodeInjector getInjector() {
         if (injector == null) {
-            injector = new CodeInjector(this, codeInjections);
+            injector = new JavaCodeInjector(this, codeInjections);
         }
         return injector;
     }
@@ -525,16 +526,7 @@ public class Grammar extends BaseNode {
             visit(context);
         }
 
-        @Override
-        public void visit(Node n) {
-            super.visit(n);
-        }
-
         Stack<int[]> rangeStack = new Stack<>();
-
-        public void visit(BNFProduction n) {
-            recurse(n);
-        }
 
         // check repetition cardinality constraints (depth first)
         public void visit(ExpansionWithParentheses n) {

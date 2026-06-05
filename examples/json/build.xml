@@ -1,17 +1,8 @@
 <project name="json" default="compile" basedir=".">
+  <import file="../../common.xml"/>
   <uptodate property="parser1.uptodate" srcfile="JSON.ccc" targetfile="${basedir}/org/parsers/json/JSONParser.java" />
   <uptodate property="parser2.uptodate" srcfile="JSONC.ccc" targetfile="${basedir}/org/parsers/jsonc/JSONCParser.java" />
 
-  <!-- Rust code-generation is off by default. Enable with: ant -Drust.enabled=true ... -->
-  <property name="rust.enabled" value="false"/>
-  <target name="-rust-check">
-    <condition property="rust.on">
-      <istrue value="${rust.enabled}"/>
-    </condition>
-  </target>
-  <target name="-rust-guard" depends="-rust-check" unless="rust.on">
-    <echo level="warning">*** Skipping Rust targets (rust.enabled=${rust.enabled}). Enable with: ant -Drust.enabled=true ***</echo>
-  </target>
   <target name="clean">
     <delete>
       <fileset dir="${basedir}" includes="*.class" />
@@ -26,44 +17,14 @@
   </target>
   <target name="parser1-gen" unless="parser1.uptodate">
     <mkdir dir="../../bin" />
-    <java jar="../../congocc.jar" fork="true" failonerror="true">
-      <assertions>
-        <enable />
-      </assertions>
-      <arg line=" -n ${basedir}/JSON.ccc" />
-    </java>
-    <java jar="../../congocc.jar" fork="true" failonerror="true">
-      <assertions>
-        <enable />
-      </assertions>
-      <arg line=" -n -lang python ${basedir}/JSON.ccc" />
-    </java>
-    <java jar="../../congocc.jar" fork="true" failonerror="true">
-      <assertions>
-        <enable />
-      </assertions>
-      <arg line=" -n -lang csharp ${basedir}/JSON.ccc" />
-    </java>
+    <congocc target="JSON.ccc" args="-n"/>
+    <congocc target="JSON.ccc" args="-n" lang="python"/>
+    <congocc target="JSON.ccc" args="-n" lang="csharp"/>
   </target>
   <target name="parser2-gen" depends="parser1-gen" unless="parser2.uptodate">
-    <java jar="../../congocc.jar" failonerror="true" fork="true">
-      <assertions>
-        <enable />
-      </assertions>
-      <arg line=" -n ${basedir}/JSONC.ccc" />
-    </java>
-    <java jar="../../congocc.jar" fork="true" failonerror="true">
-      <assertions>
-        <enable />
-      </assertions>
-      <arg line=" -n -lang python ${basedir}/JSONC.ccc" />
-    </java>
-    <java jar="../../congocc.jar" fork="true" failonerror="true">
-      <assertions>
-        <enable />
-      </assertions>
-      <arg line=" -n -lang csharp ${basedir}/JSONC.ccc" />
-    </java>
+    <congocc target="JSONC.ccc" args="-n"/>
+    <congocc target="JSONC.ccc" args="-n" lang="python"/>
+    <congocc target="JSONC.ccc" args="-n" lang="csharp"/>
   </target>
 
   <target name="compile" depends="parser1-gen, parser2-gen">
@@ -118,15 +79,9 @@
     </exec>
   </target>
 
-  <target name="rust-gen" depends="-rust-guard" if="rust.on">
-    <java jar="../../congocc.jar" fork="true" failonerror="true">
-      <assertions><enable /></assertions>
-      <arg line=" -n -lang rust -d ${basedir}/rust-jsonparser ${basedir}/JSON.ccc" />
-    </java>
-    <java jar="../../congocc.jar" fork="true" failonerror="true">
-      <assertions><enable /></assertions>
-      <arg line=" -n -lang rust -d ${basedir}/rust-jsoncparser ${basedir}/JSONC.ccc" />
-    </java>
+  <target name="rust-gen" depends="rust-guard" if="rust.available">
+    <congocc target="JSON.ccc" args="-d rust-jsonparser -n" lang="rust"/>
+    <congocc target="JSONC.ccc" args="-d rust-jsoncparser -n" lang="rust"/>
     <delete dir="${basedir}/rust-jsonparser/test-data" />
     <mkdir dir="${basedir}/rust-jsonparser/test-data" />
     <copy todir="${basedir}/rust-jsonparser/test-data">
@@ -139,7 +94,7 @@
     </copy>
   </target>
 
-  <target name="test-rust" depends="-rust-guard,rust-gen" if="rust.on">
+  <target name="test-rust" depends="rust-guard,rust-gen" if="rust.available">
     <exec executable="cargo" dir="${basedir}/rust-jsonparser" failonerror="true">
       <arg line="test -- --nocapture" />
     </exec>

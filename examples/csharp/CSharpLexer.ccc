@@ -25,6 +25,10 @@ UNPARSED #Comment :
   < SINGLE_LINE_COMMENT : "//" (<NOT_NEW_LINE>)* <NEW_LINE>>
 ;
 
+TOKEN :
+  <SHEBANG : "#!" (<NOT_NEW_LINE>)* <NEW_LINE>>
+;
+
 TOKEN #Literal :
   < INTEGER_LITERAL: (<DECIMAL_LITERAL> | <HEX_LITERAL> | <BINARY_LITERAL>) (<INTEGER_TYPE_SUFFIX>)?> #IntegerLiteral
   |
@@ -236,7 +240,7 @@ TOKEN #Literal :
   |
   < #ESCAPED_CHAR :  "\\"
                     (
-                      (["0","a","b","f","n", "r","t","v","\\","'",'"'])
+                      (["0","a","b","e", "f","n", "r","t","v","\\","'",'"'])
                       |
                       "x" (["0"-"9", "a"-"f", "A"-"F"]){1,4}
                       |
@@ -246,7 +250,7 @@ TOKEN #Literal :
   |
   < #ESCAPED_CHAR2 :  "\\"
                     (
-                      (["0","a","b","f","n", "r","t","v","\\","'",'"'])
+                      (["0","a","b", "e", "f","n", "r","t","v","\\","'",'"'])
                       |
                       "x" (["0"-"9", "a"-"f", "A"-"F"]){1,4}
                       |
@@ -262,7 +266,7 @@ TOKEN #Literal :
   |
   < REGULAR_INTERPOLATION_START : '$"' >
   |
-  < MULTI_INTERPOLATION_START : '$@"' | '@$"' >
+  < MULTI_INTERPOLATION_START : '$@"' | '@$"' > {startingDollars =1;}
   |
   < INTERPOLATED_RAW_STRING_START : ("$")+ ('"'){3,}>
 ;
@@ -276,7 +280,21 @@ TOKEN :
 <IN_MULTI_INTERPOLATION>
 TOKEN :
   // Just any non-interpolated character in an interpolated string.
-  < NON_INTERPOLATED_TEXT2 : ((~['"',"{","}"] | '""') | "{{" | "}}")+ >
+  < NON_INTERPOLATED_TEXT2 : (~['"',"{","}"] | '""')+ >
+  |
+  <BRACES : ("{{" ("{")*) | ("}}" ("}")*)>
+  {
+      String img = matchedToken.toString();
+      int charsToTruncate = img.length() - startingDollars - 1;
+      if (charsToTruncate >= 0) {
+         matchedToken.truncate(charsToTruncate);
+         matchedToken.setType(TokenType.NON_INTERPOLATED_TEXT2);
+         return matchedToken;
+      }
+      matchedToken.setEndOffset(matchedToken.getBeginOffset()+1);
+      if (img.charAt(0) == '{') matchedToken.setType(TokenType.LBRACE);
+      else matchedToken.setType(TokenType.RBRACE);
+  }
 ;
 
 <CSHARP, IN_REGULAR_INTERPOLATION, IN_MULTI_INTERPOLATION >

@@ -4,7 +4,7 @@ import java.util.*;
 
 import org.congocc.core.Grammar;
 import org.congocc.codegen.Translator;
-import org.congocc.codegen.java.CodeInjector;
+import org.congocc.codegen.java.JavaCodeInjector;
 import org.congocc.parser.tree.*;
 
 public class CSharpTranslator extends Translator {
@@ -895,7 +895,7 @@ public class CSharpTranslator extends Translator {
         }
     }
 
-    @Override  public String translateInjectedClass(CodeInjector injector, String name) {
+    @Override  public String translateInjectedClass(JavaCodeInjector injector, String name) {
         String qualifiedName = String.format("%s.%s", appSettings.getNodePackage(), name);
         List<String> nameList = injector.getParentClasses(qualifiedName);
         List<ClassOrInterfaceBodyDeclaration> decls = injector.getBodyDeclarations(qualifiedName);

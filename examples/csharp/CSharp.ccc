@@ -2,10 +2,10 @@
 // tool itself but it can be used on its own, and you are free to use it
 // in your own projects. It supports the stable feature set of Dotnet 9,
 // i.e. C# version 13. There are a couple of C# 14 features that are currently
-// unsupported, such as extension members. I anticipate adding full support
+// unsupported. I anticipate adding full support
 // for C# 14 once Dotnet 10 has a final release.
 // This grammar serves as a very good showcase for some of the more
-// advanced features of CongoCC, without which, it could well be
+// advanced features of CongoCC, wihout which, it could well be
 // impossible to fully express the current C# language --
 // at least in a clean, elegant way.
 
@@ -29,17 +29,22 @@ DEACTIVATE_TOKENS= // The following tokens are turned on
                   // The following are the keywords that are
                   // activated when we enter a QueryExpression
                   ASCENDING, DESCENDING, BY, EQUALS, JOIN, GROUP,
-                  LET, INTO, ON, ORDERBY,SELECT, FROM, WHERE;
+                  LET, INTO, ON, ORDERBY,SELECT, FROM, WHERE,
+                  // I should check when shebang was allowed.
+                  SHEBANG ;
 
 INCLUDE "CSharpLexer.ccc"
 
 #CompilationUnit# :
+   [
+      ACTIVATE_TOKENS SHEBANG (<SHEBANG>)
+   ]
    (ExternAliasDirective)*
    (UsingDirective)*
    (GlobalAttributeSection)*
    CompilationUnitBody
    <EOF>
-   {return thisProduction;}
+   {return THIS;}
 ;
 
 CompilationUnitBody#void :
@@ -268,7 +273,6 @@ Modifiers#void : //TODO handle illegal combinations of mods
 
 ClassDeclaration :
   {
-    boolean isaRecordClass = false;
     permissibleModifiers = EnumSet.of(NEW,  PUBLIC, TokenType.PROTECTED,
                                       TokenType.INTERNAL, TokenType.PRIVATE, TokenType.ABSTRACT,
                                       TokenType.SEALED, TokenType.STATIC, TokenType.UNSAFE, TokenType.FILE);
@@ -280,7 +284,6 @@ ClassDeclaration :
      // Record classes are since 10.0
      // and barely mentioned anywhere
      'record'
-     {isaRecordClass =true;}
   ]
   <CLASS>
   =>||
@@ -512,6 +515,8 @@ ClassMemberDeclaration :
   |
   OperatorDeclaration
   |
+  ExtensionDeclaration
+  |
   ConstructorDeclaration
   |
   SCAN ~\StructDeclaration
@@ -708,6 +713,33 @@ DestructorDeclaration :
   =>||
   <RPAREN>
   MethodBody
+;
+
+ExtensionDeclaration :
+   'extension'
+   [TypeParameterList]
+   <LPAREN>
+   (AttributeSection)*
+   {permissibleModifiers = EnumSet.of(REF, READONLY, IN, SCOPED);}
+   Modifiers
+   Type
+   [<IDENTIFIER>]
+   <RPAREN>
+   TypeParameterConstraints
+   ExtensionBody
+   [<SEMICOLON>]
+;
+
+ExtensionBody :
+   <LBRACE>
+     (
+      MethodDeclaration
+      |
+      PropertyDeclaration
+      |
+      OperatorDeclaration
+     )*
+   <RBRACE>
 ;
 
 ConstructorDeclaration :
@@ -1169,12 +1201,12 @@ ImplicitAnonymousFunctionSignature :
    <LPAREN>
    [
       (AttributeSection)*
-      [<OUT>]
+      [<OUT>|<REF>[<READONLY>]]
       <IDENTIFIER>
       (
          <COMMA>
          (AttributeSection)*
-         [<OUT>]
+         [<OUT>|<REF>[<READONLY>]]
          <IDENTIFIER>
       )*
    ]
@@ -1268,7 +1300,10 @@ OrderbyClause :
 ;
 
 AssignmentExpression :
-   ConditionalExpression {Expression lhs = (Expression) peekNode();}
+   ConditionalExpression
+   {
+      if (!(peekNode() instanceof Expression)) System.out.println(peekNode().getLocation());
+      Expression lhs = (Expression) peekNode();}
    [
       AssignmentOperator
       ASSERT {lhs.isAssignableTo(),peekNode()} : "Left-hand side is not assignable." :
@@ -1318,7 +1353,7 @@ SwitchExpressionCase :
 ;
 
 RangeExpression :
-   <RANGE> [UnaryExpression]
+   (<RANGE> [UnaryExpression]) #RangeExpression
    |
    UnaryExpression [<RANGE> [UnaryExpression]]
 ;
@@ -1625,7 +1660,6 @@ TupleElement :
 ;
 
 PrimitiveTypeAccess :
-//   (PrimitiveType | 'dynamic')
    PrimitiveType
    <DOT> =>||
    <IDENTIFIER>
@@ -2145,6 +2179,8 @@ SwitchLabel :
    // The third choice should be enough, it seems...
    <CASE> Expression [WhenClause] <COLON> =>||
    |
+   <CASE> TypePattern [<IDENTIFIER>] [WhenClause] <COLON> =>||
+   |
    <CASE> Pattern [WhenClause] <COLON>
 ;
 
@@ -2245,16 +2281,17 @@ PrimaryPattern :
    |
    RelationalPattern
    |
-   // These next three options are a bit ugly.
-   CastExpression =>|| // Maybe there is a better way but I don't see it.
+   // These next few options are a bit ugly, as they involve
+   // unbounded lookaheads.  Maybe there is a better way but I don't see it.
+   PropertyPattern
+   |
+   CastExpression =>||
    |
    ParenthesizedPattern =>||
    |
    NameofExpression
    |
    DeclarationPattern
-   |
-   PropertyPattern
    |
    VarPattern
    |
@@ -2348,7 +2385,7 @@ SubPatterns :
 ;
 
 PropertyPattern :
-   [Type] =>|+1 PropertySubPattern
+   [ParenthesizedPattern =>|| | Type] =>|+1 PropertySubPattern
    [
       SCAN {!checkNextTokenImage("when") || !isInProduction("SwitchExpression", "SwitchStatement")}#
       =><IDENTIFIER>
@@ -2402,7 +2439,7 @@ MultiStringInterpolation :
    LEXICAL_STATE IN_MULTI_INTERPOLATION
    (
       (
-         MultiNonInterpolatedText
+         <NON_INTERPOLATED_TEXT2>
          |
          PlaceHolder
       )*
@@ -2430,10 +2467,6 @@ RegularNonInterpolatedText :
    (<NON_INTERPOLATED_TEXT>)
 ;
 
-MultiNonInterpolatedText : IN_MULTI_INTERPOLATION :
-   <NON_INTERPOLATED_TEXT2>
-;
-
 InterpolatedRawString :
    <INTERPOLATED_RAW_STRING_START>
    LEXICAL_STATE IN_INTERPOLATED_RAW_STRING
@@ -2452,7 +2485,10 @@ RawInterpolation :
     LEXICAL_STATE CSHARP
     (
       Expression
-      [<COLON>MultiNonInterpolatedText]
+      [
+         <COLON>
+         LEXICAL_STATE IN_MULTI_INTERPOLATION(<NON_INTERPOLATED_TEXT2>)*
+      ]
     )
     <END_RAW_INTERPOLATION>
 ;

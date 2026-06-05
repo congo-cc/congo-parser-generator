@@ -106,12 +106,12 @@ ProvidesDirective :
 #CompilationUnit# :
   [ PackageDeclaration! ]
   ( ImportDeclaration )*!
-  ( TypeDeclaration )*!
-  [
-    //a bit of a kludge so that CodeInjection2 in CongoCC.ccc can work. Maybe revisit.
-    ENSURE {getTokenType(1) != RBRACE}
-    <EOF>
-  ]
+  ( TypeDeclaration
+  // JEP 512, allowing method and field
+  // declarations to exist at the top level
+     | MethodDeclaration | FieldDeclaration
+  )*!
+  <EOF>
   {
     return thisProduction;
   }

@@ -184,7 +184,6 @@ void dumpLookaheadCallStack(PrintStream ps) {
             );
         }
         this.lastConsumedToken = nextToken;
-        this.nextTokenType = null;
 #if settings.treeBuildingEnabled
       if (buildTree && tokensAreNodes) {
       lastConsumedToken.open();

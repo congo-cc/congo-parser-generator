@@ -255,7 +255,7 @@ pub fn leaf_image(ast: &Ast, id: NodeId) -> String {
             for d in ast.descendants(id) {
                 if let NodeKind::Token(_) = ast.kind(d) {
                     let tt = ast.token_type(d);
-                    if tt == Some(TokenType::EOF) || tt == Some(TokenType::_TOKEN_24) {
+                    if tt == Some(TokenType::EOF) || tt == Some(TokenType::LPAREN) {
                         continue;
                     }
                     return ast.text(d).to_string();
@@ -291,8 +291,8 @@ pub fn eq_ops(ast: &Ast, id: NodeId) -> Vec<EqualityOp> {
         }
         let tt = ast.token_type(children[i]).expect("token must have type");
         match tt {
-            TokenType::_TOKEN_17 => { ops.push(EqualityOp::Equal); i += 1; }
-            TokenType::_TOKEN_18 | TokenType::_TOKEN_19 => {
+            TokenType::EQUALS => { ops.push(EqualityOp::Equal); i += 1; }
+            TokenType::DIAMOND | TokenType::NOT_EQUALS => {
                 // <>  or  != — both NotEqual.
                 ops.push(EqualityOp::NotEqual);
                 i += 1;
@@ -329,11 +329,11 @@ pub fn cmp_ops(ast: &Ast, id: NodeId) -> Vec<ComparisonOp> {
         }
         let tt = ast.token_type(children[i]).expect("token must have type");
         match tt {
-            // `>` was _TOKEN_19 before `!=` was added; it is now _TOKEN_20.
-            TokenType::_TOKEN_20 => { ops.push(ComparisonOp::GreaterThan); i += 1; }
-            TokenType::_TOKEN_21 => { ops.push(ComparisonOp::GreaterThanEqual); i += 1; }
-            TokenType::_TOKEN_22 => { ops.push(ComparisonOp::LessThan); i += 1; }
-            TokenType::_TOKEN_23 => { ops.push(ComparisonOp::LessThanEqual); i += 1; }
+            // `>` was NOT_EQUALS before `!=` was added; it is now GT.
+            TokenType::GT => { ops.push(ComparisonOp::GreaterThan); i += 1; }
+            TokenType::GTE => { ops.push(ComparisonOp::GreaterThanEqual); i += 1; }
+            TokenType::LT => { ops.push(ComparisonOp::LessThan); i += 1; }
+            TokenType::LTE => { ops.push(ComparisonOp::LessThanEqual); i += 1; }
             TokenType::LIKE => {
                 // LIKE pat  or  LIKE pat ESCAPE escchar
                 let has_escape = children
@@ -389,8 +389,8 @@ pub fn add_ops(ast: &Ast, id: NodeId) -> Vec<AddOp> {
     for c in ast.children(id) {
         if let Some(tt) = ast.token_type(c) {
             match tt {
-                TokenType::_TOKEN_27 => ops.push(AddOp::Plus),
-                TokenType::_TOKEN_28 => ops.push(AddOp::Minus),
+                TokenType::PLUS => ops.push(AddOp::Plus),
+                TokenType::MINUS => ops.push(AddOp::Minus),
                 _ => {}
             }
         }
@@ -405,9 +405,9 @@ pub fn mult_ops(ast: &Ast, id: NodeId) -> Vec<MultExprOp> {
     for c in ast.children(id) {
         if let Some(tt) = ast.token_type(c) {
             match tt {
-                TokenType::_TOKEN_29 => ops.push(MultExprOp::Star),
-                TokenType::_TOKEN_30 => ops.push(MultExprOp::Slash),
-                TokenType::_TOKEN_31 => ops.push(MultExprOp::Percent),
+                TokenType::STAR => ops.push(MultExprOp::Star),
+                TokenType::DIV => ops.push(MultExprOp::Slash),
+                TokenType::PERCENT => ops.push(MultExprOp::Percent),
                 _ => {}
             }
         }
@@ -421,8 +421,8 @@ pub fn unary_op(ast: &Ast, id: NodeId) -> Option<UnaryOp> {
     if let Some(&first) = children.first() {
         if let Some(tt) = ast.token_type(first) {
             return match tt {
-                TokenType::_TOKEN_27 => Some(UnaryOp::Plus),
-                TokenType::_TOKEN_28 => Some(UnaryOp::Negate),
+                TokenType::PLUS => Some(UnaryOp::Plus),
+                TokenType::MINUS => Some(UnaryOp::Negate),
                 TokenType::NOT => Some(UnaryOp::Not),
                 _ => None,
             };
@@ -516,7 +516,7 @@ fn find_matching_rparen(
 ) -> Result<usize, String> {
     // Children at lparen_idx should be `(`, scan forward to the matching `)`.
     for j in lparen_idx + 1..children.len() {
-        if ast.token_type(children[j]) == Some(TokenType::_TOKEN_26) {
+        if ast.token_type(children[j]) == Some(TokenType::RPAREN) {
             return Ok(j);
         }
     }
