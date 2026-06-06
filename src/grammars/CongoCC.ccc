@@ -394,11 +394,7 @@ INJECT Token :
    (
       TokenProduction
       |
-      RawCodeInjection
-      |
-      JavaCodeInjection2
-      |
-      JavaCodeInjection1
+      CodeInjection
       |
       GrammarInclusion =>||
       |
@@ -408,6 +404,14 @@ INJECT Token :
   {
         return thisProduction;
   }
+;
+
+CodeInjection#abstract :
+    RawCodeInjection
+    |
+    JavaCodeInjection2
+    |
+    JavaCodeInjection1
 ;
 
 INJECT GrammarFile :

@@ -71,7 +71,6 @@
     <ant target="clean" dir="examples/cics" />
     <ant target="clean" dir="examples/arithmetic" />
     <ant target="clean" dir="examples/sqlexpr" />
-    <!--ant target="clean" dir="examples/freemarker" /-->
   </target>
 
   <target name="parser-gen" unless="parser.uptodate">

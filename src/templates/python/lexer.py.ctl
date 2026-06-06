@@ -13,7 +13,7 @@ from .tokens import *
 
   #list settings.extraTokenNames as tokenName
 from .tokens import ${settings.extraTokens[tokenName]}
-  /#list
+  #endlist
 from .utils import as_chr, _List, EMPTY_SET, HashSet, HashMap
 
 # See if an accelerated BitSet is available.
@@ -44,15 +44,15 @@ globals().update(TokenType.__members__)
 # NFA code and data
 #if multipleLexicalStates
 # A mapping from lexical state to NFA functions for that state.
-[#-- We only need the mapping if there is more than one lexical state.--]
+#-- We only need the mapping if there is more than one lexical state.
 function_table_map = {}
-/#if
+#endif
 
 # The nitty-gritty of the NFA code follows
 
 #list lexerData.lexicalStates as lexicalState
 [@GenerateStateCode lexicalState/]
-/#list
+#endlist
 
 # Just use binary search to check whether the char is in one of the
 # intervals
@@ -79,34 +79,34 @@ def check_intervals(ranges, ch):
 [@SimpleNfaMethod state.singleState /]
   #else
 [@CompositeNfaMethod state /]
-  /#if
-/#list
+  #endif
+#endlist
 
 #list lexicalState.allNfaStates as nfaState
   #if nfaState.moveRanges?size >= NFA_RANGE_THRESHOLD
 [@GenerateMoveArray nfaState/]
-  /#if
-/#list
+  #endif
+#endlist
 
 def NFA_FUNCTIONS_${lexicalState.name}_init():
     functions = [
   #list lexicalState.canonicalSets as state
-        ${state.methodName}[#if state_has_next],[/#if]
-  /#list
+        ${state.methodName}${state_has_next ?: ","}
+  #endlist
     ]
   #if multipleLexicalStates
     function_table_map[LexicalState.${lexicalState.name}] = functions
   #else
     return functions
-  /#if
+  #endif
 
   #if multipleLexicalStates
 NFA_FUNCTIONS_${lexicalState.name}_init()
   #else
 nfa_functions = NFA_FUNCTIONS_${lexicalState.name}_init()
-  /#if
+  #endif
 
-/#macro
+#endmacro
 
 [#--
    Generate the array representing the characters
@@ -119,42 +119,42 @@ nfa_functions = NFA_FUNCTIONS_${lexicalState.name}_init()
   #var arrayName = nfaState.movesArrayName
 ${arrayName} = [
   #list nfaState.moveRanges as char
-    ${globals.displayChar(char)}[#if char_has_next],[/#if]
-  /#list
+    ${globals.displayChar(char)}${char_has_next ?: ","}
+  #endlist
 ]
-/#macro
+#endmacro
 
 #macro GenerateInitialComposite nfaState
 def ${nfaState.methodName}(ch, next_states, valid_types, already_matched_types):
     type = None
-    [#var states = nfaState.orderedStates, lastBlockStartIndex = 0]
-    [#list states as state]
-      [#if state_index == 0 || state.moveRanges != states[state_index - 1].moveRanges]
-          [#-- In this case we need a new if or possibly else if --]
-         [#var useElif = true]
-         [#if state_index == 0 || state::overlaps(states::subList(lastBlockStartIndex, state_index))]
+    #var states = nfaState.orderedStates, lastBlockStartIndex = 0
+    #list states as state
+      #if state_index == 0 || state.moveRanges != states[state_index - 1].moveRanges
+          #-- In this case we need a new if or possibly else if
+         #var useElif = true
+         #if state_index == 0 || state::overlaps(states::subList(lastBlockStartIndex, state_index))
            [#-- If there is overlap between this state and any of the states
                  handled since the last lone if, we start a new if-else
                  If not, we continue in the same if-else block as before. --]
-           [#set lastBlockStartIndex = state_index, useElif = false]
-         [/#if]
+           #set lastBlockStartIndex = state_index, useElif = false
+         #endif
     ${useElif ?: "elif" : "if"} [@NfaStateCondition state /]:
-      [/#if]
+      #endif
         if valid_types is None or ${state.type.label} in valid_types:
-      [#if state.nextStateIndex >= 0]
+      #if state.nextStateIndex >= 0
             next_states.set(${state.nextStateIndex})
-      [/#if]
-      [#if !state_has_next || state.moveRanges != states[state_index + 1].moveRanges]
-        [#-- We've reached the end of the block. --]
-          [#if state.nextState.final]
-            [#--if (validTypes == null || validTypes.contains(${state.type.label}))--]
+      #endif
+      #if !state_has_next || state.moveRanges != states[state_index + 1].moveRanges
+        #-- We've reached the end of the block.
+          #if state.nextState.final
+            #--if (validTypes == null || validTypes.contains(${state.type.label}))
             type = ${state.type.label}
-          [/#if]
-      [/#if]
-    [/#list]
+          #endif
+      #endif
+    #endlist
     return type
 
-/#macro
+#endmacro
 
 [#--
    Generate the method that represents the transitions
@@ -165,40 +165,40 @@ def ${nfaState.methodName}(ch, next_states, valid_types, already_matched_types):
 #if lexerData::isLazy(nfaState.type)
     if ${nfaState.type.label} in already_matched_types:
         return None
-/#if
+#endif
 #if nfaState.hasFinalState
     type = None
-/#if
+#endif
 #var states = nfaState.orderedStates, lastBlockStartIndex = 0
 #list states as state
-  [#if state_index == 0 || state.moveRanges != states[state_index - 1].moveRanges]
-        [#-- In this case we need a new if or possibly else if --]
+  #if state_index == 0 || state.moveRanges != states[state_index - 1].moveRanges
+        #-- In this case we need a new if or possibly else if
         #var useElif = true
-         [#if state_index == 0 || state::overlaps(states::subList(lastBlockStartIndex, state_index))]
+         #if state_index == 0 || state::overlaps(states::subList(lastBlockStartIndex, state_index))
         [#-- If there is overlap between this state and any of the states
                 handled since the last lone if, we start a new if-else
                 If not, we continue in the same if-else block as before. --]
           #set lastBlockStartIndex = state_index, useElif = false
-        /#if
+        #endif
     ${useElif ?: "elif" : "if"} [@NfaStateCondition state /]:
-  /#if
+  #endif
   #if state.nextStateIndex >= 0
         next_states.set(${state.nextStateIndex})
-  /#if
+  #endif
   #if !state_has_next || state.moveRanges != states[state_index + 1].moveRanges
-    [#-- We've reached the end of the block. --]
+    #-- We've reached the end of the block.
     #if state.nextState.final
         type = ${state.type.label}
-    /#if
-  /#if
-/#list
+    #endif
+  #endif
+#endlist
 #if nfaState.hasFinalState
     return type
 #else
     # return None
-/#if
+#endif
 
-/#macro
+#endmacro
 
 [#--
    Generate a method for a single, i.e. non-composite NFA state
@@ -208,17 +208,17 @@ def ${state.methodName}(ch, next_states, valid_yypes, already_matched_types):
 #if lexerData::isLazy(state.type)
     if ${state.type.label} in already_matched_types:
         return None
-/#if
+#endif
     if [@NfaStateCondition state /]:
 #if state.nextStateIndex >= 0
         next_states.set(${state.nextStateIndex})
-/#if
+#endif
 #if state.nextState.final
         return ${state.type.label}
-/#if
+#endif
     # return None
 
-/#macro
+#endmacro
 
 [#--
 Generate the condition part of the NFA state transition
@@ -233,8 +233,8 @@ it just generates the inline conditional expression
       ([@RangesCondition nfaState.asciiMoveRanges/]) or (ch >= chr(128) and check_intervals(${nfaState.movesArrayName}, ch))[#t]
     #else
       check_intervals(${nfaState.movesArrayName}, ch)[#t]
-    /#if
-/#macro
+    #endif
+#endmacro
 
 [#--
 This is a recursive macro that generates the code corresponding
@@ -255,14 +255,14 @@ if NFA state's moveRanges array is smaller than NFA_RANGE_THRESHOLD
           ch >= ${displayLeft}[#t]
           #if right < 1114111
  and ch <= ${displayRight}[#rt]
-          /#if
+          #endif
        #else
            ch <= ${displayRight}[#t]
-       /#if
+       #endif
     #else
        ([@RangesCondition moveRanges[0..1]/]) or ([@RangesCondition moveRanges[2..]/])[#t]
-    /#if
-/#macro
+    #endif
+#endmacro
 
 # Compute the maximum size of state bitsets
 
@@ -271,10 +271,10 @@ MAX_STATES = ${lexerData.lexicalStates[0].allNfaStates?size}
     #else
 MAX_STATES = max(
       #list lexerData.lexicalStates as state
-    ${state.allNfaStates?size}[#if state_has_next],[/#if]
-      /#list
+    ${state.allNfaStates?size}${state_has_next ?: ","}
+      #endlist
 )
-    /#if
+    #endif
 
 # Lexer code and data
 
@@ -285,16 +285,16 @@ ${is}self.${varName} = EMPTY_SET
     #else
 ${is}self.${varName} = {
    #list tokenNames as type
-${is}    TokenType.${type}[#if type_has_next],[/#if]
-   /#list
+${is}    TokenType.${type}${type_has_next ?: ","}
+   #endlist
 ${is}}
-    /#if
-/#macro
+    #endif
+#endmacro
 
     #if multipleLexicalStates
 # A mapping for lexical state transitions triggered by a certain token type (token type -> lexical state)
 token_type_to_lexical_state_map = {}
-    /#if
+    #endif
 
 def get_function_table_map(lexical_state):
     #if multipleLexicalStates
@@ -302,7 +302,7 @@ def get_function_table_map(lexical_state):
     #else
     # We only have one lexical state in this case, so we return that!
     return nfa_functions
-    /#if
+    #endif
 
 [#var PRESERVE_LINE_ENDINGS = settings.preserveLineEndings?string("True", "False")
       JAVA_UNICODE_ESCAPE = settings.javaUnicodeEscape?string("True", "False")
@@ -365,7 +365,7 @@ class TokenSource:
         'tab_size',
 #if settings.usesPreprocessor
         '_ignored',
-/#if
+#endif
         '_skipped',
         '_token_offsets',
         '_token_location_table',
@@ -397,7 +397,7 @@ class TokenSource:
 #if settings.usesPreprocessor
         self._ignored = IgnoredToken(self, 0, 0)
         self._ignored.is_unparsed = True
-/#if
+#endif
         self._skipped = SkippedToken(self, 0, 0)
         self._skipped.is_unparsed = True
 
@@ -474,14 +474,14 @@ class TokenSource:
     def skip_tokens(self, begin, end):
         tlt = self._token_location_table
         for i in range(begin, end):
-[#if settings.usesPreprocessor]
+#if settings.usesPreprocessor
             if tlt[i] is not self._ignored:
                 tlt[i] = self._skipped
-[#else]
+#else
             tlt[i] = self._skipped
-[/#if]
+#endif
 
-[#if settings.usesPreprocessor]
+#if settings.usesPreprocessor
     def next_unignored_offset(self, offset):
         tlt = self._token_location_table
         limit = len(tlt) - 1
@@ -519,8 +519,8 @@ class TokenSource:
         tok.begin_offset = soff
         tok.end_offset = eoff
 
-[/#if]
-[#if settings.cppContinuationLine]
+#endif
+#if settings.cppContinuationLine
     def handle_c_continuation_lines(self):
         content = self.content
         offset = content.find('\\')
@@ -532,7 +532,7 @@ class TokenSource:
                 self.set_ignored_range(offset, nl_index + 1)
             offset = content.find('\\', offset + 1)
 
-[/#if]
+#endif
     def cache_token(self, tok):
         begin_offset = tok.begin_offset
         end_offset = tok.end_offset
@@ -558,7 +558,7 @@ class TokenSource:
         prev_offset = self._token_offsets.previous_set_bit(offset - 1)
         return self._token_location_table[prev_offset] if prev_offset >= 0 else None
 
-[#if settings.usesPreprocessor]
+#if settings.usesPreprocessor
     #
     # This is used in conjunction with having a preprocessor.
     # We set which lines are actually parsed lines and the
@@ -590,7 +590,7 @@ class TokenSource:
     def set_unparsed_lines(line_set):
         self._set_parsed_lines(line_set, True)
 
-[/#if]
+#endif
     def get_line_start_offset(self, lineno):
         rln = lineno - self.starting_line
         if rln <= 0:
@@ -683,7 +683,7 @@ class TokenSource:
             if tlt[offset] is not self._ignored:
                 chars.append(content[offset])
         return ''.join(chars)
-/#if
+#endif
 
 #
 # We use a 2-element tuple (matched_type, match_len) instead of the
@@ -719,10 +719,10 @@ def _get_match_info(source, pos, active_token_types, nfa_functions,
             current_states = next_states
             next_states = temp
             next_states.clear()
-    [#if settings.usesPreprocessor]
+    #if settings.usesPreprocessor
             if isinstance(source, TokenSource):
                 pos = source.next_unignored_offset(pos)
-    [/#if]
+    #endif
         if pos >= source_len:
             break
         cur_char = source[pos]
@@ -748,7 +748,7 @@ class ${lexerClassName}(TokenSource):
     __slots__ = TokenSource.__slots__ + (
 #if settings.lexerUsesParser
         'parser',
-/#if
+#endif
         'next_states',
         'current_states',
         'active_token_types',
@@ -757,14 +757,14 @@ class ${lexerClassName}(TokenSource):
         'skipped_tokens',
         'more_tokens',
         'lexical_state',
-[#--        '_matcher_hook', --]
+#--        '_matcher_hook',
 #var injectedFields = globals::injectedLexerFieldNames()
 #if injectedFields?size > 0
         # injected fields
   #list injectedFields as fieldName
         '${fieldName}',
-  /#list
-/#if
+  #endlist
+#endif
     )
 
     def __init__(self, input_source, lex_state=LexicalState.${lexerData.lexicalStates[0].name}, line=1, column=1):
@@ -775,8 +775,8 @@ ${globals::translateLexerInjections(true)}
         )
 #if settings.lexerUsesParser
         self.parser = None
-/#if
-[#--        self._matcher_hook = None --]
+#endif
+#--        self._matcher_hook = None
         # The following two BitSets are used to store the current active
         # NFA states in the core tokenization loop
         self.next_states = BitSet(MAX_STATES)
@@ -786,10 +786,10 @@ ${globals::translateLexerInjections(true)}
         self.active_token_types = set(TokenType)
   #list settings.deactivatedTokens as token
         self.active_token_types.remove(TokenType.${token})
-  /#list
+  #endlist
 #else
         self.active_token_types = None
-/#if
+#endif
         # Just used to "bookmark" the starting location for a token
         # for when we put in the location info at the end.
         self.starting_line = line
@@ -801,11 +801,11 @@ ${globals::translateLexerInjections(true)}
 
   #list settings.extraTokenNames as tokenName
         self.regular_tokens.add(${settings.extraTokens[tokenName]})
-  /#list
+  #endlist
         # Token types that do not participate in parsing
         # i.e. declared as UNPARSED (or SPECIAL_TOKEN)
         [@EnumSet "unparsed_tokens", lexerData.unparsedTokens.tokenNames, 8 /]
-        [#-- Tokens that are skipped, i.e. SKIP --]
+        #-- Tokens that are skipped, i.e. SKIP
         [@EnumSet "skipped_tokens", lexerData.skippedTokens.tokenNames, 8 /]
         # Tokens that correspond to a MORE, i.e. that are pending
         # additional input
@@ -815,7 +815,7 @@ ${globals::translateLexerInjections(true)}
             self.switch_to(lex_state)
 #if settings.cppContinuationLine
         self.handle_c_continuation_lines()
-/#if
+#endif
 
     #
     # The public method for getting the next token.
@@ -862,10 +862,10 @@ ${globals::translateLexerInjections(true)}
             # if there aren't multiple lexical states, there should be a
             # module-level nfa_functions list.
             nfa_functions = get_function_table_map(lex_state)
-/#if
+#endif
 #if settings.usesPreprocessor
             pos = self.next_unignored_offset(pos)
-/#if
+#endif
             match_start = pos
             if not in_more:
                 token_begin_offset = pos
@@ -885,7 +885,7 @@ ${globals::translateLexerInjections(true)}
             new_state = token_type_to_lexical_state_map.get(matched_type)
             if new_state:
                 lex_state = self.lexical_state = new_state
-/#if
+#endif
             if matched_type == INVALID:
                 if invalid_region_start == -1:
                     invalid_region_start = token_begin_offset
@@ -901,14 +901,14 @@ ${globals::translateLexerInjections(true)}
                 matched_token.is_unparsed = matched_type not in self.regular_tokens
 #if lexerData.hasTokenActions
             matched_token = self.token_lexical_actions(matched_token, matched_type, token_begin_offset, match_start, pos)
-/#if
+#endif
 #list grammar.lexerTokenHooks as tokenHookMethodName
   #if tokenHookMethodName = "CommonTokenAction"
         self.${globals::translateIdentifier(tokenHookMethodName)}(matched_token)
   #else
         matched_token = self.${globals::translateIdentifier(tokenHookMethodName)}(matched_token)
-  /#if
-/#list
+  #endif
+#endlist
         return matched_token
 
     def do_lexical_state_switch(self, token_type):
@@ -931,14 +931,14 @@ ${globals::translateLexerInjections(true)}
     def reset(self, t, lex_state=None):
 #list grammar.resetTokenHooks as resetTokenHookMethodName
         self.${globals::translateIdentifier(resetTokenHookMethodName)}(t)
-/#list
+#endlist
         self.uncache_tokens(t)
         if lex_state:
             self.switch_to(lex_state)
 #if lexerData.hasLexicalStateTransitions
         else:
             self.do_lexical_state_switch(t.type)
-/#if
+#endif
 
 #if lexerData.hasTokenActions
   # token_begin_offset and match_start can only be different
@@ -947,13 +947,13 @@ ${globals::translateLexerInjections(true)}
   #var idx = 0
   #list lexerData.regularExpressions as regexp
     #if regexp.codeSnippet??
-        [#if idx > 0]el[/#if]if matched_type == TokenType.${regexp.label}:
+        ${idx > 0 ?: "elif" : "if"} matched_type == TokenType.${regexp.label}:
 ${globals::translateCodeBlock(regexp.codeSnippet.javaCode, 12)}
       #set idx = idx + 1
-    /#if
-  /#list
+    #endif
+  #endlist
         return matched_token
-/#if
+#endif
 
 #if settings.tokenChaining
     def cache_token(self, tok):
@@ -968,7 +968,7 @@ ${globals::translateCodeBlock(regexp.codeSnippet.javaCode, 12)}
         super().uncache_tokens(last_token)
         last_token.unset_appended_token()
 
-/#if
+#endif
     def at_line_start(self, tok):
         offset = tok.begin_offset
         while offset > 0:

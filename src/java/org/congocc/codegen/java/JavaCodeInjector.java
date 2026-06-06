@@ -13,7 +13,6 @@ import org.congocc.parser.tree.*;
  */
 public class JavaCodeInjector extends Node.Visitor {
 
-    private final Map<String, TypeDeclaration> types = new HashMap<>();  // Not presently queried ...
     private final Map<String, Set<ImportDeclaration>> injectedImportsMap = new HashMap<>();
     private final Map<String, Set<Annotation>> injectedAnnotationsMap = new HashMap<>();
     private final Map<String, Set<ObjectType>> extendsLists = new HashMap<>();
@@ -21,7 +20,6 @@ public class JavaCodeInjector extends Node.Visitor {
     private final Map<String, Set<ObjectType>> permitsLists = new HashMap<>();
     private final Map<String, TypeParameters> typeParameterLists = new HashMap<>();
     private final Map<String, List<ClassOrInterfaceBodyDeclaration>> bodyDeclarations = new HashMap<>();
-    private final Set<String> overriddenMethods = new LinkedHashSet<>();  // Not presently queried ...
     private final Set<String> typeNames = new LinkedHashSet<>();
     private final Set<String> interfaces = new LinkedHashSet<>();
     private final Set<String> abstractClasses = new LinkedHashSet<>();
@@ -36,11 +34,7 @@ public class JavaCodeInjector extends Node.Visitor {
         this.grammar = grammar;
         this.appSettings = grammar.getAppSettings();
         for (Node n : codeInjections) {
-            if (n instanceof CompilationUnit cu) {
-                visit(cu);
-            } else if (n instanceof JavaCodeInjection1 ci) {
-                inject(ci);
-            }
+            visit(n);
         }
     }
 
@@ -78,7 +72,6 @@ public class JavaCodeInjector extends Node.Visitor {
         typeNames.add(name);
         String packageName = isInNodePackage(name) ? appSettings.getNodePackage() : appSettings.getParserPackage();
         name = packageName + "." + name;
-        types.put(name, dec);
         if (dec instanceof InterfaceDeclaration) {
             interfaces.add(name);
         }
@@ -124,9 +117,6 @@ public class JavaCodeInjector extends Node.Visitor {
             if (decl instanceof MethodDeclaration md) {
                 key = md.getFullSignature();
             }
-            if (key != null) {
-                overriddenMethods.add(key);
-            }
         }
     }
 
@@ -152,8 +142,7 @@ public class JavaCodeInjector extends Node.Visitor {
         }
     }
 
-    void inject(JavaCodeInjection1 injection)
-    {
+    void visit(JavaCodeInjection1 injection) {
         String name = injection.getName();
         Modifiers mods = injection.firstChildOfType(Modifiers.class);
         typeNames.add(name);
@@ -215,7 +204,7 @@ public class JavaCodeInjector extends Node.Visitor {
      * @param ci is the {@code CodeInjection} to be added
      */
     public void add(JavaCodeInjection1 ci) {
-        inject(ci);
+        visit(ci);
     }
 
     public void injectCode(CompilationUnit jcu) {
