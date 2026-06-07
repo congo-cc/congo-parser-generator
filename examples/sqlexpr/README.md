@@ -116,7 +116,7 @@ serde = ["dep:serde"]
 
 ### Compiling the Parser
 
-From the **rust-sqlparser** directory, issue *ONE* of the following commands for debug builds.
+From the **rust-sqlparser** directory, issue *ONE* of the following commands for builds.
 
 ```
 cargo build                              # Debug build

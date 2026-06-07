@@ -484,8 +484,32 @@ disambiguation. Key features:
 
 ## Zero Dependencies
 
-Generated crates have no external dependencies. The `Cargo.toml` requires only
+In general, generated crates have no external dependencies. The `Cargo.toml` requires only
 the Rust standard library.
+
+### Optionally Add AST Serialization Support
+
+If Cargo.toml does not already specify the `serde` feature, follow this procedure to define it:  Go to the generated source directory.  To include serde serialization for ASTs, copy the following text into the generated Cargo.toml file before the [lib] stanza (blank lines before and after).  
+
+```
+[dependencies]
+serde = { version = "1.0", features = ["derive"], optional = true }
+
+[features]
+default = []
+serde = ["dep:serde"]
+```
+
+### Compiling the Parser
+
+From the generated source directory, issue *ONE* of the following commands for builds.
+
+```
+cargo build                              # Debug build
+cargo build --features serde             # Debug build with serde serialization support for AST types
+cargo build --release                    # Optimized build
+cargo build --release --features serde   # Optimized build with serde serialization support for AST types
+```
 
 ## Requirements
 
