@@ -287,16 +287,16 @@ public final class Main {
     }
 
     /**
-     * @param grammarFile The input file
+     * @param grammarPath The input file
      * @param outputDir The output directory, if this is null, just use the directory where the input file is.
      * @param quiet Whether to be silent (or quiet). Currently does nothing!
      * @return error code
      */
-    public static int mainProgram(Path grammarFile, Path outputDir, String codeLang, int jdkTarget, boolean quiet, Map<String, String> symbols)
+    public static int mainProgram(Path grammarPath, Path outputDir, String codeLang, int jdkTarget, boolean quiet, Map<String, String> symbols)
       throws IOException {
         if (!quiet) bannerLine();
         Grammar grammar = new Grammar(outputDir, codeLang, jdkTarget, quiet, symbols);
-        grammar.parse(grammarFile, true);
+        grammar.parse(grammarPath, true);
         Errors errors = grammar.getErrors();
         grammar.doSanityChecks();
         if (errors.getErrorCount() > 0) {

@@ -271,13 +271,13 @@ public class AppSettings {
         String packageName = getParserPackage();
         if (packageName != null && packageName.length() > 0) {
             int dotPosition;
-
             switch (codeLang) {
-                case JAVA:
+                case JAVA -> {
                     packageName = packageName.replace('.', '/');
                     dir = dir.resolve(packageName);
-                    break;
-                case PYTHON:  // Use last part of package, append "parser"
+                }
+                case PYTHON -> {
+                    // Use last part of package, append "parser"
                     dotPosition = packageName.lastIndexOf('.');
 
                     if (dotPosition >= 0) {
@@ -287,8 +287,8 @@ public class AppSettings {
                     // Use a user-specified value if available
                     packageName = grammar.getPreprocessorSymbols().getOrDefault("py.package", packageName);
                     dir = dir.resolve(packageName);
-                    break;
-                case CSHARP:
+                }
+                case CSHARP -> {
                     // Use last part of package, append "parser", prepend "cs-"
                     dotPosition = packageName.lastIndexOf('.');
 
@@ -297,10 +297,9 @@ public class AppSettings {
                     }
                     packageName = "cs-".concat(packageName.concat("parser"));
                     dir = dir.resolve(packageName);
-                    break;
-                case RUST:
-                    // Rust uses the -d flag for output directory; no package path resolution needed
-                    break;
+                }
+                // Rust uses the -d flag for output directory; no package path resolution needed
+                case RUST -> {}
             }
             if (!Files.exists(dir)) {
                 Files.createDirectories(dir);

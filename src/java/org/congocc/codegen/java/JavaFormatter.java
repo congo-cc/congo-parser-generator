@@ -31,14 +31,14 @@ public class JavaFormatter extends AbstractCodeFormatter {
 
     protected void visit(Operator op) {
         switch (op.getType()) {
-            case LT:
+            case LT -> {
                 if (op.getParent() instanceof RelationalExpression) {
                     defaultTokenOutput(op);
                 } else {
                     buffer.append(op);
                 }
-                break;
-            case GT:
+            }
+            case GT -> {
                 if (op.getParent() instanceof RelationalExpression) {
                     defaultTokenOutput(op);
                 } else {
@@ -47,23 +47,23 @@ public class JavaFormatter extends AbstractCodeFormatter {
                     if (tokenType != GT && tokenType != COMMA && tokenType != LPAREN && tokenType != RPAREN && tokenType != LBRACE)
                         addSpaceIfNecessary();
                 }
-                break;
-            case HOOK:
+            }
+            case HOOK -> {
                 if (op.getParent() instanceof TernaryExpression) {
                     defaultTokenOutput(op);
                 } else {
                     buffer.append(op);
                     if (op.nextCachedToken().getType() != GT) buffer.append(' ');
                 }
-                break;
-            case STAR:
+            }
+            case STAR -> {
                 if (op.getParent() instanceof ImportDeclaration)
                     buffer.append(op); // no spaces for import statements
                 else {
                     defaultTokenOutput(op);
                 }
-                break;
-            case MINUS:
+            }
+            case MINUS -> {
                 if (op.getPrevious().getType() == RPAREN || op.getPrevious() instanceof Identifier) {
                     addSpaceIfNecessary();
                 }
@@ -73,8 +73,8 @@ public class JavaFormatter extends AbstractCodeFormatter {
                         || op.getPrevious() instanceof Delimiter
                         || !Character.isDigit(nextChar))
                     addSpaceIfNecessary();
-                break;
-            default : defaultTokenOutput(op);
+            }
+            default -> defaultTokenOutput(op);
         }
     }
 

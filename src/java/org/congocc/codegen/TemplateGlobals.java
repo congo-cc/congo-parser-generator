@@ -440,11 +440,22 @@ public class TemplateGlobals {
             String nameList = m.group(2);
             String rustType, rustDefault;
             switch (javaType) {
-                case "boolean": rustType = "bool"; rustDefault = "false"; break;
-                case "int": rustType = "i32"; rustDefault = "0"; break;
-                case "long": rustType = "i64"; rustDefault = "0"; break;
-                case "String": rustType = "String"; rustDefault = "String::new()"; break;
-                default: continue;
+                case "boolean" -> {
+                    rustType = "bool";
+                    rustDefault = "false";
+                }
+                case "int" -> {
+                    rustType = "i32";
+                    rustDefault = "0";
+                }
+                case "long" -> {
+                    rustType = "i64"; rustDefault = "0";
+                }
+                case "String" -> {
+                    rustType = "String";
+                    rustDefault = "String::new()";
+                }
+                default -> {continue;}
             }
             // Split the name list on commas; "String t, u" -> ["t", "u"].
             for (String javaName : nameList.split("\\s*,\\s*")) {

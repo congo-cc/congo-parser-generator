@@ -42,12 +42,12 @@ public class StringUtil {
         for (int i = 0; i < s.length(); i++) {
             char ch = s.charAt(i);
             switch (ch) {
-                case '<' : buf.append("&lt;"); break;
-                case '>' : buf.append("&gt;"); break;
-                case '&' : buf.append("&amp;"); break;
-                case '"' : buf.append("&quot;"); break;
-                case '\'' : buf.append(aposReplacement); break;
-                default : buf.append(ch);
+                case '<' -> buf.append("&lt;");
+                case '>' -> buf.append("&gt;");
+                case '&' -> buf.append("&amp;");
+                case '"' -> buf.append("&quot;");
+                case '\'' -> buf.append(aposReplacement);
+                default -> buf.append(ch);
             }
         }
         return buf.toString();
@@ -863,5 +863,3 @@ public class StringUtil {
         return res.toString();
     }
 }
-
-
