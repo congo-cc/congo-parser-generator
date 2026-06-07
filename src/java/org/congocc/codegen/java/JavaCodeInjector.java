@@ -38,7 +38,7 @@ public class JavaCodeInjector extends Node.Visitor {
         for (Node n : codeInjections) {
             if (n instanceof CompilationUnit cu) {
                 visit(cu);
-            } else if (n instanceof CodeInjection ci) {
+            } else if (n instanceof JavaCodeInjection1 ci) {
                 inject(ci);
             }
         }
@@ -152,7 +152,7 @@ public class JavaCodeInjector extends Node.Visitor {
         }
     }
 
-    void inject(CodeInjection injection)
+    void inject(JavaCodeInjection1 injection)
     {
         String name = injection.getName();
         Modifiers mods = injection.firstChildOfType(Modifiers.class);
@@ -211,10 +211,10 @@ public class JavaCodeInjector extends Node.Visitor {
     }
 
     /**
-     * Adds a {@link CodeInjection} dynamically (post-parsing).
+     * Adds a {@link JavaCodeInjection1} dynamically (post-parsing).
      * @param ci is the {@code CodeInjection} to be added
      */
-    public void add(CodeInjection ci) {
+    public void add(JavaCodeInjection1 ci) {
         inject(ci);
     }
 

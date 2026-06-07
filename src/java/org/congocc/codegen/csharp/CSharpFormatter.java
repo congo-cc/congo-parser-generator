@@ -1,10 +1,11 @@
 package org.congocc.codegen.csharp;
 
 import org.congocc.parser.*;
-import org.congocc.parser.csharp.CSharpToken;
 import org.congocc.parser.csharp.ast.*;
 
 import static org.congocc.parser.csharp.CSharpToken.TokenType.*;
+
+import java.util.EnumSet;
 
 import org.congocc.codegen.AbstractCodeFormatter;
 
@@ -19,11 +20,62 @@ import org.congocc.codegen.AbstractCodeFormatter;
  * @author revusky
  */
 public class CSharpFormatter extends AbstractCodeFormatter {
+    {
+        separatedBySpaces = EnumSet.of(IF,WHILE,FOR,FOREACH,WHERE,WHEN,BREAK,CONTINUE,RETURN,
+                                       ASSIGN, PLUSASSIGN,MINUSASSIGN,SLASHASSIGN,
+                                       REMASSIGN,ANDASSIGN,ORASSIGN,XORASSIGN,
+                                       LEFT_SHIFT_ASSIGN,RIGHT_SHIFT_ASSIGN,
+                                       UNSIGNED_RIGHT_SHIFT_ASSIGN, DOUBLE_HOOK_EQUALS,
+                                       IS,ARROW,COLON);
+    }
+
+    void visit(Delimiter delimiter) {
+        switch(delimiter.getType()) {
+            case LBRACE -> {
+                addSpaceIfNecessary();
+                buffer.append('{');
+                indent();
+            }
+            case RBRACE -> {
+                dedent();
+                buffer.append('}');
+                Node parent = delimiter.getParent();
+                Node gp = parent.getParent();
+                boolean isControlStatement = (gp instanceof IfStatement || gp instanceof ForStatement ||
+                                            gp instanceof ForeachStatement || gp instanceof WhileStatement ||
+                                            gp instanceof SwitchStatement || gp instanceof TryStatement ||
+                                            gp instanceof CatchClause || gp instanceof FinallyClause);
+                if (gp instanceof TypeDeclaration || isControlStatement || parent instanceof PropertyBody) {
+                    newLine(!isControlStatement);
+                }
+            }
+            case LBRACKET -> {
+                trimTrailingWhitespace();
+                buffer.append('[');
+            }
+            case COMMA -> {
+                trimTrailingWhitespace();
+                buffer.append(", ");
+            }
+            case RPAREN -> {
+                trimTrailingWhitespace();
+                buffer.append(')');
+            }
+            case SEMICOLON -> {
+                buffer.append(';');
+                if (!(delimiter.getParent() instanceof ForStatement)) {
+                    newLine();
+                } else {
+                    buffer.append(' ');
+                }
+            }
+            default -> defaultTokenOutput(delimiter);
+        }
+    }
 
     void visit(TypeDeclaration decl) {
         newLine(true);
         recurse(decl);
-        newLine(true);
     }
 
     void visit(FieldDeclaration fd) {
@@ -39,73 +91,14 @@ public class CSharpFormatter extends AbstractCodeFormatter {
         newLine(true);
     }
 
-    void visit(PropertyDeclaration pd) {
-        recurse(pd);
-        if (!(pd.nextSibling() instanceof PropertyDeclaration)) {
-            newLine(true);
-        }
-    }
-
     void visit(Type type)  {
         recurse(type);
         addSpaceIfNecessary();
     }
 
-    void visit(CSharpToken tok) {
-        defaultTokenOutput(tok);
-    }
-
-    void visit(Block block) {
-        recurse(block);
-        if (block.getParent().getParent() instanceof TypeDeclaration) {
-            newLine(true);
-        }
-    }
-
-    void visit(Delimiter delimiter) {
-        var type = delimiter.getType();
-        if (type == LBRACE) {
-            addSpaceIfNecessary();
-            buffer.append('{');
-            indent();
-        }
-        else if (type == RBRACE) {
-            dedent();
-            buffer.append('}');
-            Node parent = delimiter.getParent();
-            Node gp = parent.getParent();
-            boolean controlStatement = (gp instanceof IfStatement || gp instanceof ForStatement ||
-                                        gp instanceof ForeachStatement || gp instanceof WhileStatement ||
-                                        gp instanceof SwitchStatement || gp instanceof TryStatement ||
-                                        gp instanceof CatchClause || gp instanceof FinallyClause);
-
-            if (gp instanceof TypeDeclaration || controlStatement || parent instanceof PropertyBody) {
-                newLine(!controlStatement);
-            }
-        }
-        else if (type == LBRACKET) {
-            trimTrailingWhitespace();
-            buffer.append('[');
-        }
-        else if (type == COMMA) {
-            trimTrailingWhitespace();
-            buffer.append(", ");
-        }
-        else if (type == RPAREN) {
-            trimTrailingWhitespace();
-            buffer.append(')');
-        }
-        else if (type == SEMICOLON) {
-            buffer.append(';');
-            if (!(delimiter.getParent() instanceof ForStatement)) {
-                newLine();
-            } else {
-                buffer.append(' ');
-            }
-        }
-        else {
-            buffer.append(delimiter);
-        }
+    void visit(MethodDeclaration md) {
+        newLine(true);
+        recurse(md);
     }
 
     void visit(Literal literal) {
@@ -119,22 +112,21 @@ public class CSharpFormatter extends AbstractCodeFormatter {
     }
 
     void visit(Operator op) {
-        CSharpToken.TokenType type = op.getType();
-        if (type == DOT) {
-            trimTrailingWhitespace();
-            buffer.append('.');
-        }
-        else if ((type == LT || type == GT) && (op.getParent() instanceof TypeParameterList || op.getParent() instanceof TypeArgumentList)) {
-            trimTrailingWhitespace();
-            buffer.append(op);
-        }
-        else if (op.getParent() instanceof UnaryExpression) {
-            buffer.append(op);
-        }
-        else {
-            addSpaceIfNecessary();
-            buffer.append(op);
-            buffer.append(' ');
+        switch (op.getType()) {
+            case DOT -> {
+                trimTrailingWhitespace();
+                buffer.append('.');
+            }
+            case LT,GT -> {
+                if (op.getParent() instanceof TypeParameterList || op.getParent() instanceof TypeArgumentList) {
+                    trimTrailingWhitespace();
+                    buffer.append(op);
+                    if (op.getType() == GT && op.nextCachedToken().getType() != GT) buffer.append(' ');
+                } else {
+                    defaultTokenOutput(op);
+                }
+            }
+            default -> defaultTokenOutput(op);
         }
     }
 
@@ -144,40 +136,17 @@ public class CSharpFormatter extends AbstractCodeFormatter {
     }
 
     void visit(KeyWord kw) {
-        if (buffer.length() > 0) {
-            int precedingChar = buffer.codePointBefore(buffer.length());
-            if (Character.isLetterOrDigit(precedingChar) || precedingChar=='}') {
-                buffer.append(' ');
-            }
-            else if (precedingChar == ')') {
-                Node parent = kw.getParent();
-                String s;
-                boolean space = (parent instanceof BreakStatement || parent instanceof ContinueStatement ||
-                                 parent instanceof TypeParameterConstraint || parent instanceof ReturnStatement ||
-                                 parent instanceof This ||
-                                 (s = kw.toString()).equals("is") ||
-                                 s.equals("throw"));
-
-                if (space) {
-                    buffer.append(' ');
+        switch (kw.getType()) {
+            case RETURN,CONTINUE,BREAK -> {
+                if (kw.nextCachedToken().getType() == SEMICOLON) {
+                    addSpaceIfNecessary();
+                    buffer.append(kw);
+                } else {
+                    defaultTokenOutput(kw);
                 }
             }
+            default -> defaultTokenOutput(kw);
         }
-        buffer.append(kw.toString());
-        CSharpToken.TokenType type = kw.getType();
-        if (type == IF || type == WHILE || type == FOR || type == FOREACH || type == WHEN) {
-            buffer.append(' ');
-        }
-    }
-
-    void visit(Identifier id) {
-        if (buffer.length() > 0) {
-            int precedingChar = buffer.codePointBefore(buffer.length());
-            if (Character.isLetterOrDigit(precedingChar) || precedingChar == '}' || precedingChar == ')') {
-                buffer.append(' ');
-            }
-        }
-        buffer.append(id.toString());
     }
 
     void visit(InterpolatedString irs) {

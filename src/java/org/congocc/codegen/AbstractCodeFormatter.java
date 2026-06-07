@@ -11,13 +11,11 @@ import org.congocc.parser.Node;
 abstract public class AbstractCodeFormatter extends Node.Visitor {
     {this.visitUnparsedTokens = true;}
 
-    protected String eol = "\n";
     protected StringBuilder buffer = new StringBuilder();
     protected int currentIndentation, indentAmount=4;
     protected int maxLineLength = 80;
 
-    protected Set<? extends Node.NodeType> alwaysPrependSpace = Collections.emptySet();
-    protected Set<? extends Node.NodeType> alwaysAppendSpace = Collections.emptySet();
+    protected Set<? extends Node.NodeType> separatedBySpaces = Collections.emptySet();
 
     public String format(Node code) {
         buffer = new StringBuilder();
@@ -34,25 +32,44 @@ abstract public class AbstractCodeFormatter extends Node.Visitor {
         defaultTokenOutput(tok);
     }
 
+    static public String toCRLF(String s) {
+        StringBuilder buf = new StringBuilder();
+        s.lines().forEach(line->{
+            buf.append(line);
+            buf.append("\r\n");
+        });
+        return buf.toString();
+    }
+
     /**
-     * A default routine to append a token to the buffer.
+     * A default visit handler to append a token to the buffer.
+     * Takes into account that two identifier-ish tokens
+     * cannot be adjacent. Also prepends/appends a space (if necessary)
+     * based on the token types listed in separatedBySpaces
      */
     protected void defaultTokenOutput(Node.TerminalNode tok) {
         if (tok.getType().isEOF()) {
-            buffer.append(eol);
+            buffer.append('\n');
             return;
         }
-        if (buffer.length() > 0) {
-            int nextChar = tok.toString().codePointAt(0);
+        if (buffer.length() == 0) {
+            buffer.append(tok);
+            if (separatedBySpaces.contains(tok.getType())) buffer.append(' ');
+            return;
+        }
+        boolean prependSpace = separatedBySpaces.contains(tok.getType());
+        if (!prependSpace) {
+//            int nextChar = Character.codePointAt((CharSequence) tok, 0);
+            int nextChar = tok.toString().codePointAt(0); // The line commented out above should work. FIX later
             int prevChar = buffer.codePointBefore(buffer.length());
             if ((Character.isUnicodeIdentifierPart(prevChar) || prevChar == ';')
                     && Character.isUnicodeIdentifierPart(nextChar)) {
-                addSpaceIfNecessary();
+                prependSpace = true;
             }
         }
-        if (alwaysPrependSpace.contains(tok.getType())) addSpaceIfNecessary();
+        if (prependSpace) addSpaceIfNecessary();
         buffer.append(tok.toString());
-        if (alwaysAppendSpace.contains(tok.getType())) addSpaceIfNecessary();
+        if (separatedBySpaces.contains(tok.getType())) buffer.append(' ');
     }
 
     protected void addSpaceIfNecessary() {
@@ -71,7 +88,7 @@ abstract public class AbstractCodeFormatter extends Node.Visitor {
         text.lines().forEach(line->{
             appendIndentation();
             buffer.append(line.trim());
-            buffer.append(eol);
+            buffer.append('\n');
         });
     }
 
@@ -79,15 +96,15 @@ abstract public class AbstractCodeFormatter extends Node.Visitor {
         if (buffer.length() == 0) {
             return;
         }
-        int lastNL = buffer.lastIndexOf(eol);
-        if (lastNL + eol.length() == buffer.length()) {
+        int lastNL = buffer.lastIndexOf("\n");
+        if (lastNL + 1 == buffer.length()) {
             return;
         }
-        String line = buffer.substring(lastNL+ eol.length());
+        String line = buffer.substring(lastNL+ 1);
         if (line.trim().length() ==0) {
-            buffer.setLength(lastNL+eol.length());
+            buffer.setLength(lastNL+1);
         } else {
-            buffer.append(eol);
+            buffer.append('\n');
         }
     }
 
@@ -98,13 +115,15 @@ abstract public class AbstractCodeFormatter extends Node.Visitor {
     protected void newLine(boolean ensureBlankLine) {
         startNewLineIfNecessary();
         if (ensureBlankLine) {
-            buffer.append(eol);
+            buffer.append('\n');
         }
         appendIndentation();
     }
 
     protected int currentLineLength() {
-        return buffer.length() - buffer.lastIndexOf(eol) - eol.length();
+        int lastEOL = buffer.lastIndexOf("\n");
+        if (lastEOL == -1) return buffer.length();
+        return buffer.length() - lastEOL - 1;
     }
 
     protected boolean startsNewLine(Node.TerminalNode t) {

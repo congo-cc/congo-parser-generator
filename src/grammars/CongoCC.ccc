@@ -167,6 +167,21 @@ INJECT PARSER_CLASS :
         return parser.Crate();
     }
 
+    static public Node parseSourceFile(Path path) throws IOException {
+        String ps = path.toString();
+        int dotIndex = ps.lastIndexOf('.');
+        if (dotIndex == -1) {
+            throw new IllegalArgumentException("Need a recognizable extension, like .java or .py etc");
+        }
+        return switch (ps.substring(dotIndex)) {
+            case ".java" -> parseJavaFile(path);
+            case ".py" -> parsePythonFile(path);
+            case ".cs" -> parseCSharpFile(path);
+            case ".rs" -> parseRustFile(path);
+            default -> throw new IllegalArgumentException("File extension must be one of .java, .py, .cs, or .rs\nFound: " + ps.substring(dotIndex));
+        };
+    }
+
     public Grammar getGrammar() {
         return grammar;
     }
@@ -379,9 +394,11 @@ INJECT Token :
    (
       TokenProduction
       |
-      CodeInjection2
+      RawCodeInjection
       |
-      CodeInjection
+      JavaCodeInjection2
+      |
+      JavaCodeInjection1
       |
       GrammarInclusion =>||
       |
@@ -456,7 +473,12 @@ GrammarInclusion throws IOException :
    %}
 ;
 
-#CodeInjection :
+RawCodeInjection :
+   'INJECT' [<IDENTIFIER>] <UNPARSED_CODE_BLOCK>
+   =>||
+;
+
+#JavaCodeInjection1 :
 {
     boolean isInterface = false;
     boolean isSealed=false;
@@ -509,7 +531,7 @@ GrammarInclusion throws IOException :
         }
 ;
 
-INJECT CodeInjection :
+INJECT JavaCodeInjection1 :
    import java.util.List;
    import java.util.ArrayList;
    import org.congocc.core.Grammar;
@@ -523,7 +545,7 @@ INJECT CodeInjection :
         try {
             parser = new CongoCCParser(grammar, "dynamicInjection", inject);
             parser.setEnterIncludes(true);
-            CodeInjection ci = parser.CodeInjection();
+            JavaCodeInjection1 ci = parser.JavaCodeInjection1();
             grammar.getInjector().add(ci);
         } catch (Exception e) {
             //FIXME: need something better here!
@@ -576,7 +598,7 @@ INJECT CodeInjection :
    @Property String name;
 }
 
-CodeInjection2 :
+JavaCodeInjection2 :
 {
         CompilationUnit jcu;
 }

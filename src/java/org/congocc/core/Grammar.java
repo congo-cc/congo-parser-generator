@@ -424,7 +424,7 @@ public class Grammar extends BaseNode {
         if (node == null || node instanceof Token || node instanceof EmptyDeclaration) {
             return;
         }
-        if (node instanceof CodeInjection ci) {
+        if (node instanceof JavaCodeInjection1 ci) {
             if (ci.getName().equals(appSettings.getLexerClassName())) {
                 checkForHooks(ci.body, appSettings.getLexerClassName());
             }
@@ -496,7 +496,7 @@ public class Grammar extends BaseNode {
      * @param fieldName is the name of the field to be injected
      */
     public void addFieldInjection(String nodeName, String modifiers, String typeName, String fieldName) {
-        CodeInjection.inject(this, nodeName, "{" + modifiers + " " + typeName + " " + fieldName + ";}");
+        JavaCodeInjection1.inject(this, nodeName, "{" + modifiers + " " + typeName + " " + fieldName + ";}");
     }
 
     public boolean isInInclude() {

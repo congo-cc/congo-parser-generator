@@ -58,7 +58,7 @@ public class PyFormatter extends AbstractCodeFormatter {
             appendIndentation();
         }
         buffer.append(tok);
-        buffer.append(eol);
+        buffer.append('\n');
     }
 
     void visit(IndentToken tok) {
@@ -70,7 +70,7 @@ public class PyFormatter extends AbstractCodeFormatter {
         currentIndentation -= indentAmount;
         assert currentIndentation >=0;
         if (altFormat) {
-            buffer.append(eol);
+            buffer.append('\n');
             appendIndentation();
             buffer.append("<-");
         }
@@ -78,17 +78,17 @@ public class PyFormatter extends AbstractCodeFormatter {
 
     void visit(Newline tok) {
         if (lineJoining() || !tok.isUnparsed()) {
-            buffer.append(eol);
+            buffer.append('\n');
         }
     }
 
     void visit(ClassDefinition cd) {
-        buffer.append(eol);
+        buffer.append('\n');
         recurse(cd);
     }
 
     void visit(FunctionDefinition fd) {
         recurse(fd);
-        buffer.append(eol);
+        buffer.append('\n');
     }
 }
