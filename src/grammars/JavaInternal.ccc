@@ -163,7 +163,7 @@ INJECT ExtendsList :
         }
         ListIterator<Node> iterator = iterator();
         if (!iterator.hasNext()) {
-            iterator.add(Token.newToken(EXTENDS, this.getTokenSource()));
+            iterator.add(Token.newToken(EXTENDS));
             iterator.next();
             iterator.add(type);
         } else {
@@ -171,7 +171,7 @@ INJECT ExtendsList :
                 if (type.equals(iterator.next()))
                     return;
             }
-            iterator.add(Token.newToken(COMMA, this.getTokenSource()));
+            iterator.add(Token.newToken(COMMA));
             iterator.next();
             iterator.add(type);
         }
@@ -189,7 +189,7 @@ INJECT TypeParameters :
                 iterator.next();
             }
             iterator.previous();
-            iterator.add(Token.newToken(COMMA, this.getTokenSource()));
+            iterator.add(Token.newToken(COMMA));
             iterator.next();
             iterator.add(param);
         }
@@ -313,7 +313,7 @@ INJECT ImplementsList :
     public void addType(ObjectType type) {
         ListIterator<Node> iterator = iterator();
         if (!iterator.hasNext()) {
-            iterator.add(Token.newToken(IMPLEMENTS, this.getTokenSource()));
+            iterator.add(Token.newToken(IMPLEMENTS));
             iterator.next();
             iterator.add(type);
         } else {
@@ -321,7 +321,7 @@ INJECT ImplementsList :
                 if (type.equals(iterator.next()))
                     return;
             }
-            iterator.add(Token.newToken(COMMA, this.getTokenSource()));
+            iterator.add(Token.newToken(COMMA));
             iterator.next();
             iterator.add(type);
         }

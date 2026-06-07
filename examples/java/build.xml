@@ -16,17 +16,14 @@
   </target>
 
   <target name="java-parser-gen" depends="init" unless="javaparser.uptodate">
-    <echo>Building Java parser in Java.</echo>
     <congocc target="Java.ccc"/>
   </target>
 
   <target name="python-parser-gen" depends="init" unless = "pyparser.uptodate">
-    <echo>Building Java parser in Python.</echo>
     <congocc target="Java.ccc" lang="python" args="-n -q"/>
   </target>
 
   <target name="csharp-parser-gen" depends="init" unless="csparser.uptodate">
-    <echo>Building Java parser in CSharp.</echo>
     <congocc target="Java.ccc" lang="csharp" args="-n -q"/>
   </target>
 
@@ -50,7 +47,6 @@
   </target>
 
   <target name="rust-gen" depends="rust-guard" if="rust.available">
-    <echo>Building Java parser in Rust.</echo>
     <congocc target="Java.ccc" args="-d ${basedir}/rust-javaparser -n" lang="rust"/>
   </target>
 

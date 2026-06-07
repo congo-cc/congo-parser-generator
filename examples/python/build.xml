@@ -79,11 +79,7 @@
   </target>
 
   <target name="rust-gen" depends="rust-guard" if="rust.available">
-    <echo>Building Python parser in Rust.</echo>
-    <java jar="../../congocc.jar" fork="true" failonerror="true">
-      <assertions><enable /></assertions>
-      <arg line="-n -lang rust -d ${basedir}/rust-pythonparser ${basedir}/Python.ccc" />
-    </java>
+    <congocc target="Python.ccc" lang="rust" args="-n -q -d ${basedir}/rust-pythonparser"/>
   </target>
 
   <target name="compile-rust" depends="rust-guard,rust-gen" if="rust.on">

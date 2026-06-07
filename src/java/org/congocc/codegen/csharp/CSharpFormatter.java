@@ -32,22 +32,24 @@ public class CSharpFormatter extends AbstractCodeFormatter {
     void visit(Delimiter delimiter) {
         switch(delimiter.getType()) {
             case LBRACE -> {
-                addSpaceIfNecessary();
+                //addSpaceIfNecessary();
+                newLine();
                 buffer.append('{');
                 indent();
             }
             case RBRACE -> {
                 dedent();
                 buffer.append('}');
-                Node parent = delimiter.getParent();
-                Node gp = parent.getParent();
-                boolean isControlStatement = (gp instanceof IfStatement || gp instanceof ForStatement ||
-                                            gp instanceof ForeachStatement || gp instanceof WhileStatement ||
-                                            gp instanceof SwitchStatement || gp instanceof TryStatement ||
-                                            gp instanceof CatchClause || gp instanceof FinallyClause);
-                if (gp instanceof TypeDeclaration || isControlStatement || parent instanceof PropertyBody) {
-                    newLine(!isControlStatement);
-                }
+                newLine();
+//                Node parent = delimiter.getParent();
+//                Node gp = parent.getParent();
+//                boolean isControlStatement = (gp instanceof IfStatement || gp instanceof ForStatement ||
+//                                            gp instanceof ForeachStatement || gp instanceof WhileStatement ||
+//                                            gp instanceof SwitchStatement || gp instanceof TryStatement ||
+//                                            gp instanceof CatchClause || gp instanceof FinallyClause);
+//                if (gp instanceof TypeDeclaration || isControlStatement || parent instanceof PropertyBody) {
+//                    newLine(!isControlStatement);
+//                }
             }
             case LBRACKET -> {
                 trimTrailingWhitespace();
@@ -101,6 +103,11 @@ public class CSharpFormatter extends AbstractCodeFormatter {
         recurse(md);
     }
 
+    void visit(ConstructorDeclaration cd) {
+        newLine(true);
+        recurse(cd);
+    }
+
     void visit(Literal literal) {
         if (buffer.length() > 0) {
             int precedingChar = buffer.codePointBefore(buffer.length());
@@ -146,6 +153,16 @@ public class CSharpFormatter extends AbstractCodeFormatter {
                 }
             }
             default -> defaultTokenOutput(kw);
+        }
+    }
+
+    void visit(Block block)  {
+        if (block.getBeginLine() == block.getEndLine()) {
+            buffer.append(' ');
+            buffer.append(block);
+        }
+        else {
+            recurse(block);
         }
     }
 

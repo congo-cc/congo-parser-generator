@@ -829,6 +829,7 @@ public interface Node extends List<Node> {
         }
         protected boolean visitUnparsedTokens;
 
+        @SuppressWarnings("unchecked")
         protected final Method getVisitMethod(Node node) {
             Class<? extends Node> nodeClass = node.getClass();
             Method method = methodCache.get(nodeClass);

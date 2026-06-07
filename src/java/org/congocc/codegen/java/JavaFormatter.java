@@ -161,6 +161,20 @@ public class JavaFormatter extends AbstractCodeFormatter {
         newLine();
     }
 
+    void visit(CodeBlock cb) {
+        if (cb.size() > 1 && cb.get(1).getType() == RBRACE) {
+            Token tok = (Token) cb.get(1);
+            if (tok.precedingUnparsedTokens().isEmpty()) {
+                buffer.append(" {}");
+                newLine();
+            } else {
+                recurse(cb);
+            }
+        } else {
+            recurse(cb);
+        }
+    }
+
     void visit(Whitespace ws) {}
 
     void visit(TypeDeclaration td) {

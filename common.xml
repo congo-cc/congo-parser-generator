@@ -27,7 +27,6 @@
     <echo message="Rust found" if:true="${rust.available}"/>
     <echo message="Rust not found" unless:true ="${rust.available}"/ -->
   </target>
-
   <target name="rust-guard" depends="rust-check" unless="rust.available">
     <echo level="warning">*** Rust not available. Skipping any Rust targets. ***</echo>
   </target>
