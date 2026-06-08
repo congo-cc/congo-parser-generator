@@ -239,7 +239,7 @@ can copy the validators from that module.
 ## Grammar Summary
 
 ```
-JmsSelector             : orExpression <EOF>
+BooleanExpression       : orExpression <EOF>
 orExpression            : andExpression ( <OR> andExpression )*
 andExpression           : equalityExpression ( <AND> equalityExpression )*
 equalityExpression      : comparisonExpression
