@@ -167,7 +167,6 @@ public final class Main {
         logger.fine(String.format("CongoCC started with command line: %s", String.join(" ", args)));
         Path grammarFile = null, outputDirectory = null;
         String codeLang = "java";
-        int jdkTarget = 0;
         Map<String, String> preprocessorSymbols = new HashMap<>();
         boolean quiet = false, noNewerCheck = false;
         for (int i = 0; i < args.length; i++) {
@@ -218,26 +217,10 @@ public final class Main {
                             System.exit(-1);
                         }
                         codeLang = candidate.toLowerCase();
-                        if (jdkTarget != 0) {
-                            System.err.println("The -jdk flag is only compatible with a Java target.");
-                            System.exit(-1);
-                        }
                     }
                 }
                 else if (arg.toLowerCase().startsWith("-jdk")) {
-                    if (!codeLang.equals("java")) {
-                        System.err.println("The -jdk flag is only compatible with a Java target.");
-                        System.exit(-1);
-                    }
-                    String number = arg.substring(4);
-                    try {
-                       jdkTarget = Integer.parseInt(number);
-                    } catch (NumberFormatException nfe) {
-                        System.err.println("Expecting a number after 'jdk', like -jdk11");
-                    }
-                    if (jdkTarget <8 || jdkTarget > 25) {
-                        System.err.println("The JDK Target currently must be between 8 and 25.");
-                    }
+                    System.err.println("The -jdk flag has been removed. It is currently ignored.");
                 }
                 else {
                     System.err.println("Ignoring unknown flag: " + arg);
@@ -280,8 +263,17 @@ public final class Main {
                 }
             }
         }
-        int errorcode = mainProgram(grammarFile, outputDirectory, codeLang, jdkTarget, quiet, preprocessorSymbols);
+        int errorcode = mainProgram(grammarFile, outputDirectory, codeLang, quiet, preprocessorSymbols);
         System.exit(errorcode);
+    }
+
+    /**
+     * @deprecated Just here for backward compatibility. The jdkTarget parameter is ignored.
+     */
+    @Deprecated
+    public static int mainProgram(Path grammarPath, Path outputDir, String codeLang, int jdkTarget, boolean quiet, Map<String, String> symbols)
+    throws IOException {
+        return mainProgram(grammarPath, outputDir, codeLang, quiet, symbols);
     }
 
     /**
@@ -290,10 +282,10 @@ public final class Main {
      * @param quiet Whether to be silent (or quiet). Currently does nothing!
      * @return error code
      */
-    public static int mainProgram(Path grammarPath, Path outputDir, String codeLang, int jdkTarget, boolean quiet, Map<String, String> symbols)
+    public static int mainProgram(Path grammarPath, Path outputDir, String codeLang, boolean quiet, Map<String, String> symbols)
       throws IOException {
         if (!quiet) bannerLine();
-        Grammar grammar = new Grammar(outputDir, codeLang, jdkTarget, quiet, symbols);
+        Grammar grammar = new Grammar(outputDir, codeLang, quiet, symbols);
         grammar.parse(grammarPath);
         Errors errors = grammar.getErrors();
         grammar.doSanityChecks();

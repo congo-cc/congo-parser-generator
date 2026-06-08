@@ -40,7 +40,6 @@ public class AppSettings {
     private final Set<String> tokensOffByDefault = new HashSet<>();
     private final Map<String, String> extraTokens = new LinkedHashMap<>();
     private boolean ignoreCase, quiet;
-    private int jdkTarget = 8;
 
     public AppSettings(Grammar grammar) {
         this.grammar = grammar;
@@ -233,15 +232,6 @@ public class AppSettings {
 
     public String getStringSetting(String name, String defaultValue) {
         return (String) settings.getOrDefault(name, defaultValue);
-    }
-
-    public int getJdkTarget() {
-        if (jdkTarget == 0) return 8;
-        return jdkTarget;
-    }
-
-    public void setJdkTarget(int jdkTarget) {
-        this.jdkTarget = jdkTarget;
     }
 
     //FIXME.

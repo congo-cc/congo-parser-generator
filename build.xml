@@ -92,7 +92,6 @@
   </target>
   <target name="templates-gen" unless="templates.uptodate">
     <congocc-use-bootstrap target="examples/congo-templates/CTL.ccc"/>
-    <!--congocc target="src/grammars/CTLInternal.ccc"/-->
   </target>
 
   <target name="build-parsers" depends="init">

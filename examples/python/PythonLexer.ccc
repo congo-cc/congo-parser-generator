@@ -219,14 +219,6 @@ INJECT LEXER_CLASS :
    }
 }
 
-#if __java
-INJECT PARSER_CLASS : {
-   public void setLineJoining(boolean b) {
-      token_source.lineJoiningTurnedOn = b;
-   }
-}
-#endif
-
 INJECT BASE_TOKEN_CLASS : {
    public java.util.List<Integer> getIndents() {
       return null;

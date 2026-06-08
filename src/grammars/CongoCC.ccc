@@ -428,11 +428,6 @@ INJECT ReturnType :
     }
 }
 
-INJECT PARSER_CLASS : {
-    private boolean enterIncludes = true, isAlias = false;
-    public void setEnterIncludes(boolean enterIncludes) {this.enterIncludes = enterIncludes;}
-}
-
 GrammarInclusion throws IOException :
 {
    List<String> locations = new ArrayList<>();
@@ -462,13 +457,11 @@ GrammarInclusion throws IOException :
    )
    [";"]
    {J%
-      if (enterIncludes) {
-          Node included = grammar.include(locations, includeToken);
-          if (included!=null) {
-              thisProduction.add(included);
-          } else {
-              getErrors().addWarning(thisProduction, "File is already included.");
-          }
+      Node included = grammar.include(locations, includeToken);
+      if (included!=null) {
+          THIS.add(included);
+      } else {
+          getErrors().addWarning(thisProduction, "File is already included.");
       }
    %}
    {R%
@@ -528,9 +521,7 @@ RawCodeInjection :
         ]
         [coib=ClassOrInterfaceBody {thisProduction.body = coib;}]
         {
-                if (enterIncludes) {
-                    grammar.addCodeInjection(thisProduction);
-                }
+                grammar.addCodeInjection(thisProduction);
                 return thisProduction;
         }
 ;
@@ -548,7 +539,6 @@ INJECT JavaCodeInjection1 :
         CongoCCParser parser;
         try {
             parser = new CongoCCParser(grammar, "dynamicInjection", inject);
-            parser.setEnterIncludes(true);
             JavaCodeInjection1 ci = parser.JavaCodeInjection1();
             grammar.getInjector().add(ci);
         } catch (Exception e) {
@@ -611,11 +601,26 @@ JavaCodeInjection2 :
         jcu=JavaCodeInjection
        "}"
         {
-                if (enterIncludes) {
-                    grammar.addCodeInjection(jcu);
-                }
+           grammar.addCodeInjection(jcu);
         }
 ;
+
+INJECT PARSER_CLASS :
+{
+    private String getCurrentDefaultLexicalState() {
+        return defaultLexicalStateStack.get(defaultLexicalState.size()-1);
+    }
+
+    private void popCurrentDefaultLexicalState() {
+    }
+
+    private List<String> defaultLexicalStateStack = new ArrayList<>();
+    {
+        defaultLexicalStateStack.add("DEFAULT");
+
+    }
+
+}
 
 Options# :
     {HashMap<String, Object> settings = new HashMap<>();}

@@ -88,34 +88,6 @@ public class JavaCodeUtils {
         context.add(index +1, getterMethod);
     }
 
-    static public void removeWrongJDKElements(Node context, int target) {
-        List<Annotation> annotations = context.descendants(Annotation.class,
-            a->a.getName().toLowerCase().startsWith("minjdk") || a.getName().toLowerCase().startsWith("maxjdk"));
-        for (Annotation annotation : annotations) {
-            boolean specifiesMax = annotation.getName().toLowerCase().startsWith("max");
-            String intPart = annotation.getName().substring(6);
-            int specifiedVersion;
-            try {
-                specifiedVersion = Integer.parseInt(intPart);
-            }
-            catch (NumberFormatException nfe) {
-                //okay, do nothing here. Just leave the annotation there and let the
-                // Java compiler deal with the fact that it is wrong!
-                continue;
-            }
-            boolean removeElement = specifiesMax ? target > specifiedVersion : target < specifiedVersion;
-            Node parent = annotation.getParent();
-            parent.remove(annotation);
-            if (parent instanceof Modifiers) {
-                parent = parent.getParent();
-            }
-            Node grandparent = parent.getParent();
-            if (removeElement) {
-                grandparent.remove(parent);
-            }
-        }
-    }
-
     /**
      * Uses the DeadCodeEliminator visitor class to get rid of
      * unused private methods and fields

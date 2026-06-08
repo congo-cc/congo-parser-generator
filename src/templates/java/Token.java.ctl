@@ -355,6 +355,9 @@ public class ${settings.baseTokenClassName} ${implements} {
         return tokenSource != null ? (${settings.baseTokenClassName}) tokenSource.nextCachedToken(getEndOffset()) : null;
     }
 
+    /**
+     * @return the previous token of any sort (parsed or unparsed or invalid)
+     */
     public ${settings.baseTokenClassName} previousCachedToken() {
 #if settings.tokenChaining
         if (prependedToken != null) return prependedToken;
@@ -416,8 +419,6 @@ public class ${settings.baseTokenClassName} ${implements} {
     public void setUnparsed(boolean unparsed) {
         this.unparsed = unparsed;
     }
-
-
 
     /**
      * @return An iterator of the tokens preceding this one.

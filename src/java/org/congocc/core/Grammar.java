@@ -53,7 +53,7 @@ public class Grammar extends GrammarFile {
     private final AppSettings appSettings;
     private Errors errors;
 
-    public Grammar(Path outputDir, String codeLang, int jdkTarget, boolean quiet, Map<String, String> preprocessorSymbols) {
+    public Grammar(Path outputDir, String codeLang, boolean quiet, Map<String, String> preprocessorSymbols) {
         if (preprocessorSymbols == null) {
             preprocessorSymbols = new HashMap<>();
         }
@@ -62,7 +62,6 @@ public class Grammar extends GrammarFile {
         }
         this.preprocessorSymbols = preprocessorSymbols;
         this.appSettings = new AppSettings(this);
-        appSettings.setJdkTarget(jdkTarget);
         appSettings.setOutputDir(outputDir);
         appSettings.setCodeLangString(codeLang);
         preprocessorSymbols.put("__" + codeLang + "__","1");

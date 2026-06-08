@@ -7,6 +7,7 @@ import org.congocc.codegen.AbstractCodeFormatter;
 import static org.congocc.parser.Token.TokenType.*;
 
 import java.util.EnumSet;
+import java.util.Set;
 
 /**
  * A Node.Visitor subclass for pretty-printing java source code.
@@ -22,6 +23,8 @@ public class JavaFormatter extends AbstractCodeFormatter {
             RSIGNEDSHIFT, RSIGNEDSHIFTASSIGN, RUNSIGNEDSHIFT,
             RUNSIGNEDSHIFTASSIGN, SC_AND, SC_OR, SLASH, SLASHASSIGN, STAR,
             STARASSIGN, THROWS, WHILE, XOR, XORASSIGN);
+        requiresVerticalSeparationAbove = Set.of(MethodDeclaration.class,
+            ConstructorDeclaration.class);
     }
 
     void visit(TypeParameters tps) {
@@ -201,7 +204,7 @@ public class JavaFormatter extends AbstractCodeFormatter {
             buffer.append('\n');
         }
     }
-
+/*
     void visit(MethodDeclaration md) {
         if (!(md.previousSibling() instanceof MethodDeclaration) && !(md.previousSibling() instanceof ConstructorDeclaration)) newLine(true);
         recurse(md);
@@ -213,10 +216,10 @@ public class JavaFormatter extends AbstractCodeFormatter {
         recurse(cd);
         newLine(true);
     }
-
+*/
     void visit(FieldDeclaration fd) {
         if (!(fd.previousSibling() instanceof FieldDeclaration)) {
-            newLine();
+            newLine(true);
         }
         recurse(fd);
         newLine();

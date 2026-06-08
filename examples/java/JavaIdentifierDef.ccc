@@ -1,14 +1,27 @@
-// Surprisingly, the various JDK versions I have tested have somewhat
-// different sets of characters permissible in an identifier!
-// There is no change between jdk13 and jdk 14.
-// Also no change between JDK15, JDK16, JDK17, and JDK18.
-// Somehow the JDK version of what an identifier is changed somewhat.
-// It seems that somewhat more extended unicode characters are included.
-// The currently chosen approach is to default to just included definitions
-// for the LTS versions of the JDK, which are 8, 11, 17, and 21.
-// If no JDK level is specified, we just default to the latest
-// of those, which is JDK 21. All of this is unlikely to affect
-// hardly anybody admittedly.
+#if __YouAreInterested__
+Surprisingly, the various JDK versions I have tested have somewhat
+different sets of characters permissible in an identifier!
+Well, there is no change at all between jdk 11 and jdk 14.
+Also no change between JDK15 and JDK 20.
+Still, JDK version of what an identifier is has evolved somewhat over time.
+This might be because they are tracking the work of the Unicode
+standards group, which may have changed their views over time
+about which characters are letters, digits, or punctuation -- very
+likely in quite obscure language scripts!
+It seems that somewhat more extended unicode characters are included.
+
+NB. As of June 2026, the jdkTarget option has been removed on the grounds
+that the whole thing was not really worth the candle. In fact, about the
+only spot we were extracting any value at all from this was here!
+(And even that value was minimal!)
+
+The currently chosen approach is to default to the latest greatest, JDK 26.
+The identifier definitions for the LTS editions of the JDK are included
+for your convenience.
+
+So the following preprocessor logic for deciding on which JavaXXIdentifierDef.ccc
+to include is included mostly for historical interest.
+#endif
 
 #if jdk8 || jdk9 || jdk10
    INCLUDE "Java8IdentifierDef.ccc"
@@ -16,13 +29,30 @@
    INCLUDE "Java11IdentifierDef.ccc"
 #elif jdk15 || jdk16 || jdk17 || jdk18 || jdk19 || jdk20
    INCLUDE "Java17IdentifierDef.ccc"
-#else
+#elif jdk21 || jdk22 || jdk23
    INCLUDE "Java21IdentifierDef.ccc"
+#elif jdk24 || jdk25
+   INCLUDE "Java25IdentifierDef.ccc"
+#else
+   INCLUDE "Java26IdentifierDef.ccc"
 #endif
 
 #if false
+As things stand now, all of the jdkNN preprocessor symbols just
+evaluate to false, so you will end up using the Java26IdentifierDef.ccc
+file.
+
+However, if you do, for example, put
+
+     #define jdk11
+	 INCLUDE JAVA_IDENTIFIER_DEF
+
+in your grammar file, then the logic here will cause you to
+pick up Java11IdentifierDef.ccc and that will be used. But I do not
+anticipate very many people bothering with this!
+
 Below is a program to generate any of the files above. You just run it
-using the JDK in question.
+using the JDK of interest.
 
 public class GenerateJavaIdentifierDef {
 

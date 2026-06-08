@@ -136,6 +136,9 @@ INJECT StringLiteral :
     return removeEscapesAndQuotes(toString());
   }
 
+#if false
+  // Once the minimum supported JDK for output is 17 (soon)
+  this will be the version that is used.
   @MinJDK15
   static public String removeEscapesAndQuotes(String input) {
     if (!input.startsWith("\"\"\""))
@@ -143,8 +146,8 @@ INJECT StringLiteral :
     String content = input.substring(3, input.length()-3);
     return content.translateEscapes().stripIndent();
   }
+#endif
 
-  @MaxJDK14
   static public String removeEscapesAndQuotes(String content) {
       StringBuilder buf = new StringBuilder();
       for (int i = 1; i < content.length()-1; i++) {
