@@ -414,11 +414,6 @@ CodeInjection#abstract :
     JavaCodeInjection1
 ;
 
-INJECT GrammarFile :
-{
-    @Property String defaultLexicalState;
-}
-
 INJECT ReturnType :
     import java.util.List;
 {
@@ -431,10 +426,12 @@ INJECT ReturnType :
 GrammarInclusion throws IOException :
 {
    List<String> locations = new ArrayList<>();
-   Token includeToken;
 }
    'INCLUDE'
-   {includeToken = lastConsumedToken;}
+   {
+    Token includeToken = lastConsumedToken;
+    String savedDefaultLexicalState = this.defaultLexicalState;
+   }
    (
        (
            <STRING_LITERAL> {locations.add(((StringLiteral)lastConsumedToken).getString());}
@@ -458,10 +455,15 @@ GrammarInclusion throws IOException :
    [";"]
    {J%
       Node included = grammar.include(locations, includeToken);
-      if (included!=null) {
-          THIS.add(included);
-      } else {
+      if (included == null) {
           getErrors().addWarning(thisProduction, "File is already included.");
+      }
+      else if (included instanceof GrammarFile) {
+          THIS.add(included);
+          // Since the included grammars might have stomped
+          // all over the defaultLexicalState variable, we need
+          // to restore it.
+          this.defaultLexicalState = savedDefaultLexicalState;
       }
    %}
    {R%
@@ -607,26 +609,16 @@ JavaCodeInjection2 :
 
 INJECT PARSER_CLASS :
 {
-    private String getCurrentDefaultLexicalState() {
-        return defaultLexicalStateStack.get(defaultLexicalState.size()-1);
-    }
-
-    private void popCurrentDefaultLexicalState() {
-    }
-
-    private List<String> defaultLexicalStateStack = new ArrayList<>();
-    {
-        defaultLexicalStateStack.add("DEFAULT");
-
-    }
-
+    private String defaultLexicalState = "DEFAULT";
 }
 
 Options# :
     {HashMap<String, Object> settings = new HashMap<>();}
     Setting(settings) =>||
     (Setting(settings))*
-    {grammar.setSettings(settings);}
+    {
+        grammar.setSettings(settings);
+    }
 ;
 
 Setting(Map<String,Object> settings) #Setting :
@@ -670,6 +662,11 @@ Setting(Map<String,Object> settings) #Setting :
   ]
   ";"
   {
+      if (key.equals("DEFAULT_LEXICAL_STATE")) {
+          assert !settings.containsKey("DEFAULT_LEXICAL_STATE") : "repeated DEFAULT_LEXICAL_STATE setting!";
+          assert LexerData.isJavaIdentifier(value.toString()) : "Default lexical state must be a valid Java identifier!";
+          this.defaultLexicalState = value.toString();
+      }
       settings.put(key, value);
   }
 ;
@@ -1549,7 +1546,8 @@ Terminal# :
   {%
       RegularExpression result = (RegularExpression) peekNode();
       if (result instanceof RegexpStringLiteral rsl) {
-            rsl.setLexicalState(grammar.getDefaultLexicalState());
+            assert this.defaultLexicalState != null :"WTF";
+            rsl.setLexicalState(this.defaultLexicalState);
       }
       thisProduction.setRegexp(result);
   %}
