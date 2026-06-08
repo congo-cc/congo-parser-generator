@@ -224,17 +224,9 @@ public class AppSettings {
                     if (!grammar.isInInclude() && outputDir == null)
                         outputDir = Paths.get((String) value);
                 }
-
             }
-            if (!grammar.isInInclude() && key.equals("JDK_TARGET") && jdkTarget == 0) {
-                int jdkTarget = (Integer) value;
-                if (jdkTarget >= 8 && jdkTarget <= 22) {
-                    this.jdkTarget = (Integer) value;
-                }
-                else {
-                    this.jdkTarget = 8;
-                    errors.addWarning(null, "Invalid JDK Target " + jdkTarget);
-                }
+            if (!grammar.isInInclude() && key.equals("JDK_TARGET")) {
+                errors.addWarning("Option JDK_TARGET is deprecated and currently has no effect. (It never did!)");
             }
         }
     }

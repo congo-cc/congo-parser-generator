@@ -89,7 +89,6 @@ public class ${settings.baseTokenClassName} ${implements} {
     private Node parent;
 #endif
 
-#-- if !settings.minimalToken
     private String cachedImage;
     /**
      * If cachedImage is set, then the various methods
@@ -104,27 +103,12 @@ public class ${settings.baseTokenClassName} ${implements} {
         return this.cachedImage;
     }
 
-    /**
-     * @param type the #TokenType of the token being constructed
-     * @param image the String content of the token
-     * @param tokenSource the object that vended this token.
-     */
-    public ${settings.baseTokenClassName}(TokenType type, String image, TokenSource tokenSource) {
-        this.type = type;
-        this.cachedImage = image;
-        this.tokenSource = tokenSource;
-    }
-
-#-- endif
-
     public void truncate(int amount) {
         int newEndOffset = Math.max(getBeginOffset(), getEndOffset()-amount);
         setEndOffset(newEndOffset);
-   #-- if !settings.minimalToken
         if (cachedImage != null) {
             cachedImage = cachedImage.substring(0, newEndOffset - getBeginOffset());
         }
-   #-- endif
     }
 
 
@@ -136,7 +120,6 @@ public class ${settings.baseTokenClassName} ${implements} {
     private boolean inserted;
 
     public boolean isInserted() {return inserted;}
-
 
     public void preInsert(${settings.baseTokenClassName} prependedToken) {
         if (prependedToken == this.prependedToken) return;
@@ -419,7 +402,7 @@ public class ${settings.baseTokenClassName} ${implements} {
 
     protected ${settings.baseTokenClassName}() {}
 
-    public ${settings.baseTokenClassName}(TokenType type, TokenSource tokenSource, int beginOffset, int endOffset) {
+    protected ${settings.baseTokenClassName}(TokenType type, TokenSource tokenSource, int beginOffset, int endOffset) {
         this.type = type;
         this.tokenSource = tokenSource;
         this.beginOffset = beginOffset;
@@ -530,10 +513,10 @@ public class ${settings.baseTokenClassName} ${implements} {
     #endif
     }
 #endif
+
     /**
      * A constructor for "synthetic" tokens, that were not vended by
-     * a XXXLexer object. A token constructed through this factory
-     * method does not have an associated
+     * a XXXLexer object.
      */
     public static ${settings.baseTokenClassName} newToken(TokenType type) {
         ${settings.baseTokenClassName} result = newToken(type, null, 0, 0);
@@ -543,6 +526,16 @@ public class ${settings.baseTokenClassName} ${implements} {
         #if settings.faultTolerant
         result.virtual = true;
         #endif
+        return result;
+    }
+
+    /**
+     * A constructor for "synthetic" tokens, that were not vended by
+     * a XXXLexer object.
+     */
+    public static ${settings.baseTokenClassName} newToken(TokenType type, String image) {
+        ${settings.baseTokenClassName} result = newToken(type);
+        result.setCachedImage(image);
         return result;
     }
 
@@ -603,18 +596,15 @@ public class ${settings.baseTokenClassName} ${implements} {
 #endif
 
    public int length() {
-      #-- if !settings.minimalToken
-         if (cachedImage != null) return cachedImage.length();
+      if (cachedImage != null) return cachedImage.length();
       #if settings.usesPreprocessor
          if (spansPPInstruction()) return getTokenSource().length(beginOffset, endOffset);
       #endif
-         return endOffset - beginOffset;
+      return endOffset - beginOffset;
    }
 
    public CharSequence subSequence(int start, int end) {
-      #-- if !settings.minimalToken
-          if (cachedImage != null) return cachedImage.substring(start, end);
-      #-- endif
+       if (cachedImage != null) return cachedImage.substring(start, end);
       #if settings.usesPreprocessor
          if (spansPPInstruction()) {
             StringBuilder buf = new StringBuilder();
@@ -642,7 +632,8 @@ public class ${settings.baseTokenClassName} ${implements} {
                 ++index;
              }
           }
-          return ts.charAt(scanTo);
+          return ts != null ? ts.charAt(scanTo)
+                            : this.getType().getLiteralString().charAt(offset);
       #else
           TokenSource ts = getTokenSource();
           return ts != null ? ts.charAt(beginOffset + offset)
@@ -661,15 +652,13 @@ public class ${settings.baseTokenClassName} ${implements} {
 
     @Override
     public String toString() {
-      #-- if !settings.minimalToken
-        if (cachedImage != null) {
-            return cachedImage;
-        }
-      #-- endif
-      String result = getSource();
-      if (result == null) {
-          result = getType().getLiteralString();
-      }
-      return result;
+       if (cachedImage != null) {
+           return cachedImage;
+       }
+       String result = getSource();
+       if (result == null) {
+           result = getType().getLiteralString();
+       }
+       return result;
     }
 }

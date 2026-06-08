@@ -58,7 +58,6 @@
 
   <target name="clean">
     <delete file="congocc.jar" />
-    <delete file="congocc-minimal.jar" />
     <delete dir="build" />
     <delete><fileset dir="." includes="**/*.class"/></delete>
     <ant target="clean" dir="examples/json" />

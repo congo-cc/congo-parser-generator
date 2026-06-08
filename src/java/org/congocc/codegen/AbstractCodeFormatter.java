@@ -59,8 +59,8 @@ abstract public class AbstractCodeFormatter extends Node.Visitor {
         }
         boolean prependSpace = separatedBySpaces.contains(tok.getType());
         if (!prependSpace) {
-//            int nextChar = Character.codePointAt((CharSequence) tok, 0);
-            int nextChar = tok.toString().codePointAt(0); // The line commented out above should work. FIX later
+//            int nextChar = tok.toString().codePointAt(0);
+            int nextChar = Character.codePointAt((CharSequence) tok, 0);
             int prevChar = buffer.codePointBefore(buffer.length());
             if ((Character.isUnicodeIdentifierPart(prevChar) || prevChar == ';')
                     && Character.isUnicodeIdentifierPart(nextChar)) {

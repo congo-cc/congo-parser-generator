@@ -147,8 +147,6 @@ public final class Main {
         System.out.println("   If this is unset, files are generated relative to the grammar file location.");
         System.out.println(" -lang <language>  Specify the language to generate code in (the default is 'java')");
         System.out.println("                     (valid choices are currently " + sb + ")");
-        System.out.println(" -jdkN             Specify the target JDK version. N is a number from 8 to 26. (Default is 8)");
-        System.out.println("                     (this is only useful when the code generation is in Java)");
         System.out.println(" -n                Suppress the check for a newer version");
         System.out.println(" -p                Define one or more comma-separated (no spaces) symbols to pass to the preprocessor.");
         System.out.println("   For example:   -p debug,strict");
@@ -296,7 +294,7 @@ public final class Main {
       throws IOException {
         if (!quiet) bannerLine();
         Grammar grammar = new Grammar(outputDir, codeLang, jdkTarget, quiet, symbols);
-        grammar.parse(grammarPath, true);
+        grammar.parse(grammarPath);
         Errors errors = grammar.getErrors();
         grammar.doSanityChecks();
         if (errors.getErrorCount() > 0) {
