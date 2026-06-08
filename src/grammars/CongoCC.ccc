@@ -394,11 +394,7 @@ INJECT Token :
    (
       TokenProduction
       |
-      RawCodeInjection
-      |
-      JavaCodeInjection2
-      |
-      JavaCodeInjection1
+      CodeInjection
       |
       GrammarInclusion =>||
       |
@@ -408,6 +404,14 @@ INJECT Token :
   {
         return thisProduction;
   }
+;
+
+CodeInjection#abstract :
+    RawCodeInjection
+    |
+    JavaCodeInjection2
+    |
+    JavaCodeInjection1
 ;
 
 INJECT GrammarFile :
@@ -422,11 +426,6 @@ INJECT ReturnType :
         List<Token> lt = getRealTokens();
         return lt.size() != 1 || lt.get(0).getType() != VOID;
     }
-}
-
-INJECT PARSER_CLASS : {
-    private boolean enterIncludes = true, isAlias = false;
-    public void setEnterIncludes(boolean enterIncludes) {this.enterIncludes = enterIncludes;}
 }
 
 GrammarInclusion throws IOException :
@@ -458,13 +457,11 @@ GrammarInclusion throws IOException :
    )
    [";"]
    {J%
-      if (enterIncludes) {
-          Node included = grammar.include(locations, includeToken);
-          if (included!=null) {
-              thisProduction.add(included);
-          } else {
-              getErrors().addWarning(thisProduction, "File is already included.");
-          }
+      Node included = grammar.include(locations, includeToken);
+      if (included!=null) {
+          THIS.add(included);
+      } else {
+          getErrors().addWarning(thisProduction, "File is already included.");
       }
    %}
    {R%
@@ -524,9 +521,7 @@ RawCodeInjection :
         ]
         [coib=ClassOrInterfaceBody {thisProduction.body = coib;}]
         {
-                if (enterIncludes) {
-                    grammar.addCodeInjection(thisProduction);
-                }
+                grammar.addCodeInjection(thisProduction);
                 return thisProduction;
         }
 ;
@@ -544,7 +539,6 @@ INJECT JavaCodeInjection1 :
         CongoCCParser parser;
         try {
             parser = new CongoCCParser(grammar, "dynamicInjection", inject);
-            parser.setEnterIncludes(true);
             JavaCodeInjection1 ci = parser.JavaCodeInjection1();
             grammar.getInjector().add(ci);
         } catch (Exception e) {
@@ -607,11 +601,26 @@ JavaCodeInjection2 :
         jcu=JavaCodeInjection
        "}"
         {
-                if (enterIncludes) {
-                    grammar.addCodeInjection(jcu);
-                }
+           grammar.addCodeInjection(jcu);
         }
 ;
+
+INJECT PARSER_CLASS :
+{
+    private String getCurrentDefaultLexicalState() {
+        return defaultLexicalStateStack.get(defaultLexicalState.size()-1);
+    }
+
+    private void popCurrentDefaultLexicalState() {
+    }
+
+    private List<String> defaultLexicalStateStack = new ArrayList<>();
+    {
+        defaultLexicalStateStack.add("DEFAULT");
+
+    }
+
+}
 
 Options# :
     {HashMap<String, Object> settings = new HashMap<>();}

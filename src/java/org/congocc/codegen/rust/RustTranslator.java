@@ -148,41 +148,28 @@ public class RustTranslator extends Translator {
     @Override
     public String translateTypeName(String name) {
         if (name == null) return name;
-        switch (name) {
-            case "String":   return "String";
-            case "boolean":  return "bool";
-            case "Boolean":  return "bool";
-            case "int":      return "i32";
-            case "Integer":  return "i32";
-            case "long":     return "i64";
-            case "Long":     return "i64";
-            case "float":    return "f32";
-            case "Float":    return "f32";
-            case "double":   return "f64";
-            case "Double":   return "f64";
-            case "char":     return "char";
-            case "Character": return "char";
-            case "void":     return "()";
-            case "Object":   return "Box<dyn std::any::Any>";
-            case "List":     return "Vec";
-            case "ArrayList": return "Vec";
-            case "LinkedList": return "Vec";
-            case "Map":      return "HashMap";
-            case "HashMap":  return "HashMap";
-            case "LinkedHashMap": return "HashMap";
-            case "Set":      return "HashSet";
-            case "HashSet":  return "HashSet";
-            case "LinkedHashSet": return "HashSet";
-            case "Iterator": return "impl Iterator";
-            default:
+        return switch (name) {
+            case "String" -> "String";
+            case "boolean","Boolean" -> "bool";
+            case "int","Integer" -> "i32";
+            case "long", "Long" -> "i64";
+            case "float", "Float" -> "f32";
+            case "double", "Double" -> "f64";
+            case "char", "Character" -> "char";
+            case "void" -> "()";
+            case "Object" -> "Box<dyn std::any::Any>";
+            case "List","ArrayList","LinkedList" -> "Vec";
+            case "Map","HashMap","LinkedHashMap" -> "HashMap";
+            case "Set","HashSet","LinkedHashSet" -> "HashSet";
+            case "Iterator" -> "impl Iterator";
+            default -> {
                 // Strip package prefix from fully-qualified names
                 // e.g. "org.parsers.java.ast.NumericalLiteral" -> "NumericalLiteral"
                 int lastDot = name.lastIndexOf('.');
-                if (lastDot >= 0) {
-                    return name.substring(lastDot + 1);
-                }
-                return name;
-        }
+                name = name.substring(lastDot + 1);
+                yield name;
+            }
+        };
     }
 
     // ----- Operator translation -----

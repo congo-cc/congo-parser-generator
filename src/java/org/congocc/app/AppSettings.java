@@ -40,7 +40,6 @@ public class AppSettings {
     private final Set<String> tokensOffByDefault = new HashSet<>();
     private final Map<String, String> extraTokens = new LinkedHashMap<>();
     private boolean ignoreCase, quiet;
-    private int jdkTarget = 8;
 
     public AppSettings(Grammar grammar) {
         this.grammar = grammar;
@@ -224,32 +223,15 @@ public class AppSettings {
                     if (!grammar.isInInclude() && outputDir == null)
                         outputDir = Paths.get((String) value);
                 }
-
             }
-            if (!grammar.isInInclude() && key.equals("JDK_TARGET") && jdkTarget == 0) {
-                int jdkTarget = (Integer) value;
-                if (jdkTarget >= 8 && jdkTarget <= 22) {
-                    this.jdkTarget = (Integer) value;
-                }
-                else {
-                    this.jdkTarget = 8;
-                    errors.addWarning(null, "Invalid JDK Target " + jdkTarget);
-                }
+            if (!grammar.isInInclude() && key.equals("JDK_TARGET")) {
+                errors.addWarning("Option JDK_TARGET is deprecated and currently has no effect. (It never did!)");
             }
         }
     }
 
     public String getStringSetting(String name, String defaultValue) {
         return (String) settings.getOrDefault(name, defaultValue);
-    }
-
-    public int getJdkTarget() {
-        if (jdkTarget == 0) return 8;
-        return jdkTarget;
-    }
-
-    public void setJdkTarget(int jdkTarget) {
-        this.jdkTarget = jdkTarget;
     }
 
     //FIXME.
@@ -271,13 +253,13 @@ public class AppSettings {
         String packageName = getParserPackage();
         if (packageName != null && packageName.length() > 0) {
             int dotPosition;
-
             switch (codeLang) {
-                case JAVA:
+                case JAVA -> {
                     packageName = packageName.replace('.', '/');
                     dir = dir.resolve(packageName);
-                    break;
-                case PYTHON:  // Use last part of package, append "parser"
+                }
+                case PYTHON -> {
+                    // Use last part of package, append "parser"
                     dotPosition = packageName.lastIndexOf('.');
 
                     if (dotPosition >= 0) {
@@ -287,8 +269,8 @@ public class AppSettings {
                     // Use a user-specified value if available
                     packageName = grammar.getPreprocessorSymbols().getOrDefault("py.package", packageName);
                     dir = dir.resolve(packageName);
-                    break;
-                case CSHARP:
+                }
+                case CSHARP -> {
                     // Use last part of package, append "parser", prepend "cs-"
                     dotPosition = packageName.lastIndexOf('.');
 
@@ -297,10 +279,9 @@ public class AppSettings {
                     }
                     packageName = "cs-".concat(packageName.concat("parser"));
                     dir = dir.resolve(packageName);
-                    break;
-                case RUST:
-                    // Rust uses the -d flag for output directory; no package path resolution needed
-                    break;
+                }
+                // Rust uses the -d flag for output directory; no package path resolution needed
+                case RUST -> {}
             }
             if (!Files.exists(dir)) {
                 Files.createDirectories(dir);

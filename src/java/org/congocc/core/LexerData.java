@@ -27,18 +27,6 @@ public class LexerData {
     private final Set<RegularExpression> overriddenTokens = new HashSet<>();
     private final Set<RegularExpression> lazyTokens = new HashSet<>();
 
-    static public Set<String> JAVA_RESERVED_WORDS = Set.of(
-       "_","abstract","assert","boolean","break",
-       "byte","case","catch","char","class","const",
-       "continue","default","do","double","else","enum",
-       "extends","false","final","finally","float",
-       "for","goto","if","implements","import","instanceof",
-       "int","interface","long","native","new","null",
-       "package","private","protected","public","return",
-       "short","static","strictfp","super","switch","synchronized",
-       "this","throw","throws","transient","true","try",
-       "void","volatile","while");
-
     public LexerData(Grammar grammar) {
         this.grammar = grammar;
         this.errors = grammar.getErrors();

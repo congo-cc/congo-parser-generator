@@ -16,6 +16,7 @@ abstract public class AbstractCodeFormatter extends Node.Visitor {
     protected int maxLineLength = 80;
 
     protected Set<? extends Node.NodeType> separatedBySpaces = Collections.emptySet();
+    protected Set<Class<? extends Node>> requiresVerticalSeparationAbove = Collections.emptySet();
 
     public String format(Node code) {
         buffer = new StringBuilder();
@@ -30,6 +31,14 @@ abstract public class AbstractCodeFormatter extends Node.Visitor {
 
     protected void visit(Node.TerminalNode tok) {
         defaultTokenOutput(tok);
+    }
+
+    @Override
+    public void visit(Node n) {
+        if (requiresVerticalSeparationAbove.contains(n.getClass())) {
+            newLine(true);
+        }
+        super.visit(n);
     }
 
     static public String toCRLF(String s) {
@@ -59,8 +68,7 @@ abstract public class AbstractCodeFormatter extends Node.Visitor {
         }
         boolean prependSpace = separatedBySpaces.contains(tok.getType());
         if (!prependSpace) {
-//            int nextChar = Character.codePointAt((CharSequence) tok, 0);
-            int nextChar = tok.toString().codePointAt(0); // The line commented out above should work. FIX later
+            int nextChar = Character.codePointAt((CharSequence) tok, 0);
             int prevChar = buffer.codePointBefore(buffer.length());
             if ((Character.isUnicodeIdentifierPart(prevChar) || prevChar == ';')
                     && Character.isUnicodeIdentifierPart(nextChar)) {

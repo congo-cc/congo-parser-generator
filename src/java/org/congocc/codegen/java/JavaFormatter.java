@@ -7,6 +7,7 @@ import org.congocc.codegen.AbstractCodeFormatter;
 import static org.congocc.parser.Token.TokenType.*;
 
 import java.util.EnumSet;
+import java.util.Set;
 
 /**
  * A Node.Visitor subclass for pretty-printing java source code.
@@ -22,6 +23,8 @@ public class JavaFormatter extends AbstractCodeFormatter {
             RSIGNEDSHIFT, RSIGNEDSHIFTASSIGN, RUNSIGNEDSHIFT,
             RUNSIGNEDSHIFTASSIGN, SC_AND, SC_OR, SLASH, SLASHASSIGN, STAR,
             STARASSIGN, THROWS, WHILE, XOR, XORASSIGN);
+        requiresVerticalSeparationAbove = Set.of(MethodDeclaration.class,
+            ConstructorDeclaration.class);
     }
 
     void visit(TypeParameters tps) {
@@ -31,14 +34,14 @@ public class JavaFormatter extends AbstractCodeFormatter {
 
     protected void visit(Operator op) {
         switch (op.getType()) {
-            case LT:
+            case LT -> {
                 if (op.getParent() instanceof RelationalExpression) {
                     defaultTokenOutput(op);
                 } else {
                     buffer.append(op);
                 }
-                break;
-            case GT:
+            }
+            case GT -> {
                 if (op.getParent() instanceof RelationalExpression) {
                     defaultTokenOutput(op);
                 } else {
@@ -47,23 +50,23 @@ public class JavaFormatter extends AbstractCodeFormatter {
                     if (tokenType != GT && tokenType != COMMA && tokenType != LPAREN && tokenType != RPAREN && tokenType != LBRACE)
                         addSpaceIfNecessary();
                 }
-                break;
-            case HOOK:
+            }
+            case HOOK -> {
                 if (op.getParent() instanceof TernaryExpression) {
                     defaultTokenOutput(op);
                 } else {
                     buffer.append(op);
                     if (op.nextCachedToken().getType() != GT) buffer.append(' ');
                 }
-                break;
-            case STAR:
+            }
+            case STAR -> {
                 if (op.getParent() instanceof ImportDeclaration)
                     buffer.append(op); // no spaces for import statements
                 else {
                     defaultTokenOutput(op);
                 }
-                break;
-            case MINUS:
+            }
+            case MINUS -> {
                 if (op.getPrevious().getType() == RPAREN || op.getPrevious() instanceof Identifier) {
                     addSpaceIfNecessary();
                 }
@@ -73,8 +76,8 @@ public class JavaFormatter extends AbstractCodeFormatter {
                         || op.getPrevious() instanceof Delimiter
                         || !Character.isDigit(nextChar))
                     addSpaceIfNecessary();
-                break;
-            default : defaultTokenOutput(op);
+            }
+            default -> defaultTokenOutput(op);
         }
     }
 
@@ -161,6 +164,20 @@ public class JavaFormatter extends AbstractCodeFormatter {
         newLine();
     }
 
+    void visit(CodeBlock cb) {
+        if (cb.size() > 1 && cb.get(1).getType() == RBRACE) {
+            Token tok = (Token) cb.get(1);
+            if (tok.precedingUnparsedTokens().isEmpty()) {
+                buffer.append(" {}");
+                newLine();
+            } else {
+                recurse(cb);
+            }
+        } else {
+            recurse(cb);
+        }
+    }
+
     void visit(Whitespace ws) {}
 
     void visit(TypeDeclaration td) {
@@ -187,7 +204,7 @@ public class JavaFormatter extends AbstractCodeFormatter {
             buffer.append('\n');
         }
     }
-
+/*
     void visit(MethodDeclaration md) {
         if (!(md.previousSibling() instanceof MethodDeclaration) && !(md.previousSibling() instanceof ConstructorDeclaration)) newLine(true);
         recurse(md);
@@ -199,10 +216,10 @@ public class JavaFormatter extends AbstractCodeFormatter {
         recurse(cd);
         newLine(true);
     }
-
+*/
     void visit(FieldDeclaration fd) {
         if (!(fd.previousSibling() instanceof FieldDeclaration)) {
-            newLine();
+            newLine(true);
         }
         recurse(fd);
         newLine();

@@ -829,6 +829,7 @@ public interface Node extends List<Node> {
         }
         protected boolean visitUnparsedTokens;
 
+        @SuppressWarnings("unchecked")
         protected final Method getVisitMethod(Node node) {
             Class<? extends Node> nodeClass = node.getClass();
             Method method = methodCache.get(nodeClass);
@@ -878,7 +879,7 @@ public interface Node extends List<Node> {
          * defined in a subclass. If there is none, it just calls the recurse() routine.
          * @param node the Node to "visit"
          */
-        public final void visit(Node node) {
+        public void visit(Node node) {
             if (node == null) return;
             Method visitMethod = getVisitMethod(node);
             if (visitMethod == DUMMY_METHOD) {
@@ -900,7 +901,7 @@ public interface Node extends List<Node> {
          * Just recurses over (i.e. visits) the node's children
          * @param node the node we are traversing
          */
-        public final void recurse(Node node) {
+        public void recurse(Node node) {
             if (node != null) {
                 for (Node child : node.children(visitUnparsedTokens)) {
                     visit(child);

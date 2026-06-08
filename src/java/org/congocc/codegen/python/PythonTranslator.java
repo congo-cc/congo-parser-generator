@@ -17,20 +17,12 @@ public class PythonTranslator extends Translator {
     }
 
     public String translateOperator(String operator) {
-        String result = operator;
-
-        switch (result) {
-            case "||":
-                result = "or";
-                break;
-            case "&&":
-                result = "and";
-                break;
-            case "!":
-                result = "not";
-                break;
-        }
-        return result;
+        return switch (operator) {
+            case "||" -> "or";
+            case "&&" -> "and";
+            case "!" -> "not";
+            default -> operator;
+        };
     }
 
     private static final Set<String> specialPrefixes = new HashSet<>();
@@ -159,20 +151,13 @@ public class PythonTranslator extends Translator {
             isName = true;
         }
         else {
-            switch (s) {
-                case "null":
-                    s = "None";
-                    break;
-                case "true":
-                    s = "True";
-                    break;
-                case "false":
-                    s = "False";
-                    break;
-                case "this":
-                    s = "self";
-                    break;
-            }
+            s = switch (s) {
+                case "null" -> "None";
+                case "true" -> "True";
+                case "false" -> "False";
+                case "this" -> "self";
+                default -> s;
+            };
         }
         if (isName && !isParameterName(n) && (findSymbol(n) == null) && fields.containsKey(n)) {  // must be a field, then
             boolean addSelf = shouldAddSelf(expr);

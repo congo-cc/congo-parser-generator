@@ -1125,7 +1125,6 @@ public class Translator {
         }
         else {
             // it's a ConstructorDeclaration (alternative using property)
-//            List<Node> statements = ((ConstructorDeclaration) node).getStatements();
             var statements = node.childrenOfType(Statement.class);
             if (!statements.isEmpty()) {
                 result.statements = new ASTStatementList();

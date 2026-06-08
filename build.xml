@@ -58,7 +58,6 @@
 
   <target name="clean">
     <delete file="congocc.jar" />
-    <delete file="congocc-minimal.jar" />
     <delete dir="build" />
     <delete><fileset dir="." includes="**/*.class"/></delete>
     <ant target="clean" dir="examples/json" />
@@ -71,7 +70,6 @@
     <ant target="clean" dir="examples/cics" />
     <ant target="clean" dir="examples/arithmetic" />
     <ant target="clean" dir="examples/sqlexpr" />
-    <!--ant target="clean" dir="examples/freemarker" /-->
   </target>
 
   <target name="parser-gen" unless="parser.uptodate">
@@ -94,7 +92,6 @@
   </target>
   <target name="templates-gen" unless="templates.uptodate">
     <congocc-use-bootstrap target="examples/congo-templates/CTL.ccc"/>
-    <!--congocc target="src/grammars/CTLInternal.ccc"/-->
   </target>
 
   <target name="build-parsers" depends="init">

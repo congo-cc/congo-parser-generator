@@ -149,7 +149,6 @@ public class Configuration extends Configurable {
         }
         byte[] bb = rawStream.readAllBytes();
         rawStream.close();
-        //String content = new String(bb, defaultEncoding);
         String content = TokenSource.stringFromBytes(bb);
         result = new Template(name, content, this, defaultEncoding);
         if (result.hasParsingProblems()) {

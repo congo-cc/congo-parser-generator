@@ -24,7 +24,7 @@ import static org.congocc.parser.Node.CodeLang.*;
  * information regarding a congocc processing job.
  */
 @SuppressWarnings("unused")
-public class Grammar extends BaseNode {
+public class Grammar extends GrammarFile {
     private String defaultLexicalState;
     private final LexerData lexerData = new LexerData(this);
     private int includeNesting;
@@ -53,7 +53,7 @@ public class Grammar extends BaseNode {
     private final AppSettings appSettings;
     private Errors errors;
 
-    public Grammar(Path outputDir, String codeLang, int jdkTarget, boolean quiet, Map<String, String> preprocessorSymbols) {
+    public Grammar(Path outputDir, String codeLang, boolean quiet, Map<String, String> preprocessorSymbols) {
         if (preprocessorSymbols == null) {
             preprocessorSymbols = new HashMap<>();
         }
@@ -62,7 +62,6 @@ public class Grammar extends BaseNode {
         }
         this.preprocessorSymbols = preprocessorSymbols;
         this.appSettings = new AppSettings(this);
-        appSettings.setJdkTarget(jdkTarget);
         appSettings.setOutputDir(outputDir);
         appSettings.setCodeLangString(codeLang);
         preprocessorSymbols.put("__" + codeLang + "__","1");
@@ -158,12 +157,11 @@ public class Grammar extends BaseNode {
         return lexicalStates.toArray(new String[0]);
     }
 
-    public GrammarFile parse(Path file, boolean enterIncludes) throws IOException {
+    public GrammarFile parse(Path file) throws IOException {
         Path canonicalPath = file.normalize();
         if (alreadyIncluded.contains(canonicalPath)) return null;
         else alreadyIncluded.add(canonicalPath);
         CongoCCParser parser = new CongoCCParser(this, canonicalPath, preprocessorSymbols);
-        parser.setEnterIncludes(enterIncludes);
         Path prevIncludedFileDirectory = appSettings.getIncludedFileDirectory();
         if (!isInInclude()) {
             appSettings.setFilename(file);
@@ -196,7 +194,7 @@ public class Grammar extends BaseNode {
             String prevDefaultLexicalState = this.defaultLexicalState;
             boolean prevIgnoreCase = appSettings.isIgnoreCase();
             includeNesting++;
-            GrammarFile root = parse(path, true);
+            GrammarFile root = parse(path);
             if (root==null) return null;
             includeNesting--;
             appSettings.setFilename(prevLocation);

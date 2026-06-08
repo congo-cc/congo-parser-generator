@@ -26,7 +26,7 @@
   </target>
 
   <target name="line-directive-java-parser-gen" depends="init" unless="linedirective-j.uptodate">
-    <echo>Using Bootstrap CongoCC to regenerate preprocessor</echo>
+    <echo>Regenerating preprocessor</echo>
     <congocc target="PPDirectiveLine.ccc"/>
   </target>
   <target name="line-directive-py-parser-gen" depends="init" unless="linedirective-py.uptodate">
@@ -84,7 +84,6 @@
   </target>
 
   <target name="rust-gen" depends="rust-guard" if="rust.available">
-    <echo>Building CSharp parser in Rust.</echo>
     <congocc target="CSharp.ccc" args="-n -d rust-csharpparser" lang="rust"/>
   </target>
 

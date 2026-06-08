@@ -359,7 +359,6 @@ public class FilesGenerator {
         }
         try (Writer output = Files.newBufferedWriter(outputFile)) {
             codeInjector.injectCode(jcu);
-            JavaCodeUtils.removeWrongJDKElements(jcu, grammar.getAppSettings().getJdkTarget());
             JavaCodeUtils.addGetterSetters(jcu);
             JavaCodeUtils.stripUnused(jcu);
             JavaFormatter formatter = new JavaFormatter();
