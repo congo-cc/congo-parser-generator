@@ -12,11 +12,13 @@ use crate::tokens::TokenType;
 /// `NodeId` is `Copy`, `Send`, `Sync`, and has no lifetime.  It is just a
 /// `u32` wrapped for type safety.
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
+#[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
 #[repr(transparent)]
 pub struct NodeId(pub u32);
 
 /// A typed index into the token storage.
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
+#[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
 #[repr(transparent)]
 pub struct TokenId(pub u32);
 
@@ -25,6 +27,7 @@ pub struct TokenId(pub u32);
 /// Each grammar production that creates a tree node generates a variant here.
 /// The `Token` variant represents leaf nodes that hold a reference to a stored token.
 #[derive(Debug, Clone, PartialEq)]
+#[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
 pub enum NodeKind {
 [#list grammar.nodeNames as nodeName]
     /// Node for the `${nodeName}` production.
@@ -57,6 +60,7 @@ impl std::fmt::Display for NodeKind {
 /// Nodes are stored in a contiguous `Vec` in the `Ast` struct, indexed by `NodeId`.
 /// This design is cache-friendly and avoids pointer-based ownership complexity.
 #[derive(Debug, Clone)]
+#[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
 pub struct Node {
     /// What kind of node this is (production variant or token leaf).
     pub kind: NodeKind,
@@ -87,6 +91,7 @@ pub struct Node {
 /// inserted anywhere in the tree without coordinating with the
 /// `source` string.
 #[derive(Debug, Clone)]
+#[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
 pub enum TokenSource {
     /// Token text lives in `Ast::source` at the given byte range.
     Original { start: u32, end: u32 },
@@ -97,6 +102,7 @@ pub enum TokenSource {
 
 /// A stored token in the AST arena.
 #[derive(Debug, Clone)]
+#[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
 pub struct StoredToken {
     /// The token's type.
     pub kind: TokenType,
@@ -121,6 +127,8 @@ pub struct StoredToken {
 /// println!("Root: {:?}", ast.root());
 /// println!("Nodes: {}", ast.node_count());
 /// ```
+#[derive(Debug)]
+#[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
 pub struct Ast {
     nodes: Vec<Node>,
     tokens: Vec<StoredToken>,
@@ -709,6 +717,7 @@ impl<'a> Iterator for DescendantIter<'a> {
 /// The builder accumulates nodes and tokens, wiring up parent/child/sibling
 /// links. It uses a node scope stack to manage tree construction during
 /// recursive descent parsing.
+#[derive(Debug)]
 pub struct AstBuilder {
     nodes: Vec<Node>,
     tokens: Vec<StoredToken>,

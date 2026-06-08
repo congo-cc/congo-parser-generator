@@ -21,6 +21,7 @@ use std::fmt;
 /// assert!(format!("{}", err).contains("unexpected end of input"));
 /// ```
 #[derive(Debug, Clone)]
+#[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
 pub struct ParseError {
     /// Human-readable description of the error.
     pub message: String,
