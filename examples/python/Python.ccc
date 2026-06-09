@@ -35,9 +35,9 @@ Number#void :
 ;
 
 SignedNumber :
-  [<PLUS>|<MINUS>]
+  ["+"|"-"]
   Number
-  [(<PLUS>|<MINUS>) <COMPLEX>]
+  [("+"|"-") <COMPLEX>]
 ;
 
 Strings : (<STRING_LITERAL> | FString)+ ;
@@ -49,13 +49,13 @@ AtomicExpression#void :
     |
     Strings
     |
-    <TRUE>
+    "True"
     |
-    <FALSE>
+    "False"
     |
-    <NONE>
+    "None"
     |
-    <PEG_PARSER>
+    "__peg_parser__"
     |
     (Tuple | GenExp | Group)
     |
@@ -63,18 +63,18 @@ AtomicExpression#void :
     |
     (SetComp | DictComp | Dict | Set)
     |
-    <ELLIPSIS>
+    "..."
 ;
 
 Slice :
-    [Expression] <COLON> =>|| [Expression] [<COLON> [Expression]]
+    [Expression] ":" =>|| [Expression] [":" [Expression]]
     |
-    [<NAME> <COLONEQUALS> =>||] Expression
+    [<NAME> ":=" =>||] Expression
     |
     StarExpression
 ;
 
-Slices : <LBRACKET> Slice (<COMMA> =>|+1 Slice)* [<COMMA>] <RBRACKET> ;
+Slices : "[" Slice ("," =>|+1 Slice)* [","] "]" ;
 
 Statement :
    MatchStatement
@@ -84,7 +84,7 @@ Statement :
    CompoundStatement
 ;
 
-SimpleStatement#(>2) : SmallStatement (<SEMICOLON> =>|+1 SmallStatement)* [<SEMICOLON>] <NEWLINE> ;
+SimpleStatement#(>2) : SmallStatement (";" =>|+1 SmallStatement)* [";"] <NEWLINE> ;
 
 SmallStatement :
    ImportStatement
@@ -101,11 +101,11 @@ SmallStatement :
    |
    NonlocalStatement
    |
-   <BREAK>
+   "break"
    |
-   <CONTINUE>
+   "continue"
    |
-   <PASS>
+   "pass"
    |
    DelStatement
    |
@@ -132,15 +132,15 @@ CompoundStatement :
     TryStatement
 ;
 
-ReturnStatement : <RETURN> [StarExpressions] ;
+ReturnStatement : "return" [StarExpressions] ;
 
-GlobalStatement : <GLOBAL> <NAME> (<COMMA> <NAME>)* ;
+GlobalStatement : "global" <NAME> ("," <NAME>)* ;
 
-NonlocalStatement : <NONLOCAL> <NAME> (<COMMA> <NAME>)* ;
+NonlocalStatement : "nonlocal" <NAME> ("," <NAME>)* ;
 
-AssertStatement : <_ASSERT> Expression (<COMMA> Expression)* ;
+AssertStatement : "assert" Expression ("," Expression)* ;
 
-RaiseStatement : <RAISE> [ Expression [<FROM> Expression ] ];
+RaiseStatement : "raise" [ Expression ["from" Expression ] ];
 
 Block :
     SimpleStatement
@@ -148,52 +148,52 @@ Block :
     <NEWLINE><INDENT>(Statement)+<DEDENT>
 ;
 
-ElseBlock : <ELSE> <COLON> Block ;
+ElseBlock : "else" ":" Block ;
 
 ExceptBlock :
-    <EXCEPT>
+    "except"
     [
       {boolean multipleExpressions=false;}
-      [<STAR>] Expression
-      (<COMMA> {multipleExpressions = true;} Expression)*
-      [SCAN {!multipleExpressions} => <AS> <NAME>]
+      ["*"] Expression
+      ("," {multipleExpressions = true;} Expression)*
+      [SCAN {!multipleExpressions} => "as" <NAME>]
     ]
-    <COLON>
+    ":"
     Block
 ;
 
 IfStatement :
-    <IF> NamedExpression <COLON> Block
-     (<ELIF> NamedExpression <COLON> Block)*
-     [<ELSE> <COLON> Block]
+    "if" NamedExpression ":" Block
+     ("elif" NamedExpression ":" Block)*
+     ["else" ":" Block]
 ;
 
-FinallyBlock : <FINALLY> <COLON> Block ;
+FinallyBlock : "finally" ":" Block ;
 
-WhileStatement : <WHILE> NamedExpression <COLON> Block [ElseBlock] ;
+WhileStatement : "while" NamedExpression ":" Block [ElseBlock] ;
 
 WithStatement :
-    [<ASYNC>] <WITH> =>||
+    ["async"] "with" =>||
     (
-        WithItemsInParentheses ENSURE (<COLON>) =>||
+        WithItemsInParentheses ENSURE (":") =>||
         |
-        WithItem (<COMMA> WithItem)*
+        WithItem ("," WithItem)*
     )
-    <COLON> Block
+    ":" Block
 ;
 
-WithItemsInParentheses#void : <LPAREN> WithItem (SCAN 2 <COMMA> WithItem)* [<COMMA>] <RPAREN> ;
+WithItemsInParentheses#void : "(" WithItem (SCAN 2 "," WithItem)* [","] ")" ;
 
-WithItem : Expression [<AS> StarTarget] ;
+WithItem : Expression ["as" StarTarget] ;
 
 ForStatement :
-   [<ASYNC>] <FOR> =>||
-   StarTargets <IN> StarExpressions <COLON>
+   ["async"] "for" =>||
+   StarTargets "in" StarExpressions ":"
    Block [ElseBlock]
 ;
 
 TryStatement :
-   <TRY> <COLON> Block
+   "try" ":" Block
    (
        FinallyBlock
        |
@@ -201,73 +201,73 @@ TryStatement :
    )
 ;
 
-DelStatement : <DEL> PrimaryExpression (SCAN 2 <COMMA> PrimaryExpression)* [<COMMA>] ;
+DelStatement : "del" PrimaryExpression (SCAN 2 "," PrimaryExpression)* [","] ;
 
-NamedExpression : [ <NAME> <COLONEQUALS> =>||] Expression ;
+NamedExpression : [ <NAME> ":=" =>||] Expression ;
 
-DottedName : <NAME> (<DOT> <NAME> =>||)* ;
+DottedName : <NAME> ("." <NAME> =>||)* ;
 
 ImportStatement : ['lazy'] =>|+1 (ImportName | ImportFrom1 | ImportFrom2) ;
 
-ImportName#void : <IMPORT> DottedName [<AS> <NAME>] (<COMMA> DottedName [<AS> <NAME>])* ;
+ImportName#void : "import" DottedName ["as" <NAME>] ("," DottedName ["as" <NAME>])* ;
 
-ImportFrom1#void : <FROM> (<DOT> | <ELLIPSIS>)* DottedName =>|| <IMPORT>  ImportFromTargets ;
+ImportFrom1#void : "from" ("." | "...")* DottedName =>|| "import"  ImportFromTargets ;
 
-ImportFrom2#void : <FROM> (<DOT> | <ELLIPSIS>)+ <IMPORT> =>|| ImportFromTargets ;
+ImportFrom2#void : "from" ("." | "...")+ "import" =>|| ImportFromTargets ;
 
 ImportFromTargets :
-   <STAR>
+   "*"
    |
-   <NAME> [<AS> <NAME>] (<COMMA> <NAME> =>|| [<AS> <NAME>])* [<COMMA>]
+   <NAME> ["as" <NAME>] ("," <NAME> =>|| ["as" <NAME>])* [","]
    |
-   <LPAREN> <NAME> [<AS> <NAME>] (<COMMA> <NAME> =>|| [<AS> <NAME>])* [<COMMA>] <RPAREN>
+   "(" <NAME> ["as" <NAME>] ("," <NAME> =>|| ["as" <NAME>])* [","] ")"
 ;
 
 StarNamedExpression :
-     <STAR> BitwiseOr
+     "*" BitwiseOr
      |
      NamedExpression
 ;
 
 StarExpression :
-    <STAR> BitwiseOr
+    "*" BitwiseOr
     |
     Expression
 ;
 
-StarExpressions : StarExpression (<COMMA> =>|+1 StarExpression)* [<COMMA>] ;
+StarExpressions : StarExpression ("," =>|+1 StarExpression)* [","] ;
 
-StarNamedExpressions : StarNamedExpression (<COMMA> =>|+1 StarNamedExpression)* [<COMMA>] ;
+StarNamedExpressions : StarNamedExpression ("," =>|+1 StarNamedExpression)* [","] ;
 
-BitwiseOr : BitwiseXor (<BIT_OR> BitwiseXor)* ;
+BitwiseOr : BitwiseXor ("|" BitwiseXor)* ;
 
-BitwiseXor : BitwiseAnd (<XOR> BitwiseAnd)* ;
+BitwiseXor : BitwiseAnd ("^" BitwiseAnd)* ;
 
-BitwiseAnd : ShiftExpression (<BIT_AND> ShiftExpression)* ;
+BitwiseAnd : ShiftExpression ("&" ShiftExpression)* ;
 
-ShiftExpression : AdditiveExpression ((<LSHIFT> | <RSHIFT>) AdditiveExpression)* ;
+ShiftExpression : AdditiveExpression (("<<" | ">>") AdditiveExpression)* ;
 
-AdditiveExpression : MultiplicativeExpression ((<PLUS>|<MINUS>) MultiplicativeExpression)* ;
+AdditiveExpression : MultiplicativeExpression (("+"|"-") MultiplicativeExpression)* ;
 
-MultiplicativeExpression : UnaryExpression ((<STAR>|<SLASH>|<SLASHSLASH>|<PERCENT>|<AT>) UnaryExpression)* ;
+MultiplicativeExpression : UnaryExpression (("*"|"/"|"//"|"%"|"@") UnaryExpression)* ;
 
-UnaryExpression : Power | (<PLUS> | <MINUS> | <TILDE>) UnaryExpression ;
+UnaryExpression : Power | ("+" | "-" | "~") UnaryExpression ;
 
-Power : AwaitPrimary [<STAR_STAR> UnaryExpression] ;
+Power : AwaitPrimary ["**" UnaryExpression] ;
 
 Tuple :
-   SCAN <LPAREN> (<RPAREN> | StarNamedExpression <COMMA>) =>
-   <LPAREN> [StarNamedExpression <COMMA> [StarNamedExpressions]] <RPAREN>
+   SCAN "(" (")" | StarNamedExpression ",") =>
+   "(" [StarNamedExpression "," [StarNamedExpressions]] ")"
 ;
 
-Group : <LPAREN> (YieldExpression | NamedExpression) <RPAREN> ;
+Group : "(" (YieldExpression | NamedExpression) ")" ;
 
-AwaitPrimary : [<AWAIT>] PrimaryExpression ;
+AwaitPrimary : ["await"] PrimaryExpression ;
 
 PrimaryExpression#void :
    AtomicExpression
    (
-       <DOT> <NAME> #DotName(3)
+       "." <NAME> #DotName(3)
        |
        Slices #SliceExpression(2)
        |
@@ -278,21 +278,21 @@ PrimaryExpression#void :
 ;
 
 YieldExpression :
-    <YIELD> <FROM> =>|| Expression
+    "yield" "from" =>|| Expression
     |
-    <YIELD> [StarExpressions]
+    "yield" [StarExpressions]
 ;
 
 YieldStatement# : YieldExpression ;
 
 AnnotatedRhs : YieldExpression | StarExpressions ;
 
-Decorators : (<AT> NamedExpression <NEWLINE>)+ ;
+Decorators : ("@" NamedExpression <NEWLINE>)+ ;
 
-Annotation : <COLON> Expression ;
+Annotation : ":" Expression ;
 
 InvocationArguments :
-   <LPAREN>
+   "("
    [
       Argument(false, false)
       {
@@ -306,109 +306,109 @@ InvocationArguments :
       }
       (
          SCAN 3
-         <COMMA>
+         ","
          Argument(seenEquals, seenDoubleStar)
          {
             seenEquals |= peekNode().firstChildOfType(TokenType.ASSIGN) != null;
             seenDoubleStar |= peekNode().firstChildOfType(TokenType.STAR_STAR) != null;
          }
       )*
-      [<COMMA>]
+      [","]
    ]
-   <RPAREN>
+   ")"
 ;
 
 Argument(boolean seenEquals, boolean seenDoubleStar) :
    <NAME>
    (
       SCAN {!seenEquals} =>
-      <COLONEQUALS>
+      ":="
       |
-      <ASSIGN>
+      "="
    )
    =>||
    Expression
    |
    [
-      SCAN {!seenDoubleStar} => <STAR>
+      SCAN {!seenDoubleStar} => "*"
       |
-      <STAR_STAR>
+      "**"
    ]
    Expression
 ;
 
-KeyValuePair : Expression <COLON> Expression ;
+KeyValuePair : Expression ":" Expression ;
 
 DoubleStarredKeyValuePair :
-    <STAR_STAR> BitwiseOr
+    "**" BitwiseOr
     |
     KeyValuePair
 ;
 
-DoubleStarredKeyValuePairs : DoubleStarredKeyValuePair (<COMMA> =>|+1 DoubleStarredKeyValuePair)* [<COMMA>] ;
+DoubleStarredKeyValuePairs : DoubleStarredKeyValuePair ("," =>|+1 DoubleStarredKeyValuePair)* [","] ;
 
 Dict :
-  SCAN <LBRACE> (<RBRACE> | DoubleStarredKeyValuePair) =>
+  SCAN "{" ("}" | DoubleStarredKeyValuePair) =>
   (
-    <LBRACE>
+    "{"
     [DoubleStarredKeyValuePairs]
-    <RBRACE>
+    "}"
   )
 ;
 
-DictComp : <LBRACE> KeyValuePair =>|+2 (ForIfClause)+ <RBRACE> ;
+DictComp : "{" KeyValuePair =>|+2 (ForIfClause)+ "}" ;
 
-Set : <LBRACE> StarNamedExpressions <RBRACE> ;
+Set : "{" StarNamedExpressions "}" ;
 
-SetComp : <LBRACE> NamedExpression =>|+2 (ForIfClause)+ <RBRACE> ;
+SetComp : "{" NamedExpression =>|+2 (ForIfClause)+ "}" ;
 
 ClassDefinition :
-    [Decorators] <CLASS> =>||
+    [Decorators] "class" =>||
     <NAME>
     [TypeParameters]
     [InvocationArguments]
-    <COLON>
+    ":"
     Block
 ;
 
 FunctionDefinition :
     [Decorators]
-    [<ASYNC>]
-    <DEF> =>||
+    ["async"]
+    "def" =>||
     <NAME>
     [TypeParameters]
     <LPAREN>
     Parameters
-    <RPAREN>
-    [<RARROW> Expression]
-    <COLON> Block
+    ")"
+    ["->" Expression]
+    ":" Block
 ;
 
 TypeParameters :
-    <LBRACKET>
-    TypeParameter (<COMMA> =>|+1 TypeParameter)*
-    [<COMMA>]
-    <RBRACKET>
+    "["
+    TypeParameter ("," =>|+1 TypeParameter)*
+    [","]
+    "]"
 ;
 
 TypeParameter :
-    [<STAR> | <STAR_STAR>]
-    <NAME> [<COLON> Expression] [<ASSIGN> Expression]
+    ["*" | "**"]
+    <NAME> [":" Expression] ["=" Expression]
 ;
 
 TypeAlias :
     'type'
     <NAME>
     [TypeParameters]
-    <ASSIGN>
+    "="
     =>||
     Expression
 ;
 
 LambdaDefinition :
-    <LAMBDA>
+    "lambda"
     Parameters
-    <COLON>
+    ":"
     Expression
 ;
 
@@ -417,57 +417,57 @@ LambdaDefinition :
  */
 
 Expression :
-    Disjunction [<IF> Disjunction <ELSE> Expression]
+    Disjunction ["if" Disjunction "else" Expression]
     |
     SCAN ~\.\.\PlaceHolder =>
     LambdaDefinition
     |
-    <LAMBDA> FAIL "Lambda is not allowed here without parenthesis."
+    "lambda" FAIL "Lambda is not allowed here without parenthesis."
 ;
 
-Disjunction : Conjunction (<OR> Conjunction)* ;
+Disjunction : Conjunction ("or" Conjunction)* ;
 
-Conjunction : Inversion (<AND> Inversion)* ;
+Conjunction : Inversion ("and" Inversion)* ;
 
-Inversion : (<NOT>)* Comparison ;
+Inversion : ("not")* Comparison ;
 
 Comparison : BitwiseOr (ComparisonOperator BitwiseOr)* ;
 
 ComparisonOperator#void :
-   <LT> | <GT> | <EQ> | <GE> | <LE> | <NE>
+   "<" | ">" | "==" | ">=" | "<=" | "!="
    |
-   [<NOT>] <IN>
+   ["not"] "in"
    |
-   <IS> [<NOT>]
+   "is" ["not"]
 ;
 
-StarTarget : [<STAR>] PrimaryExpression ;
+StarTarget : ["*"] PrimaryExpression ;
 
-StarTargets : StarTarget (<COMMA> =>|+1 StarTarget)* [<COMMA>];
+StarTargets : StarTarget ("," =>|+1 StarTarget)* [","];
 
-ForIfClause : [<ASYNC>] <FOR> StarTargets <IN> Disjunction (<IF> Disjunction)* ;
+ForIfClause : ["async"] "for" StarTargets "in" Disjunction ("if" Disjunction)* ;
 
-GenExp : <LPAREN> NamedExpression =>|+2 (ForIfClause)+ <RPAREN> ;
+GenExp : "(" NamedExpression =>|+2 (ForIfClause)+ ")" ;
 
-List : <LBRACKET> [StarNamedExpressions] <RBRACKET> ;
+List : "[" [StarNamedExpressions] "]" ;
 
-ListComp : <LBRACKET> NamedExpression =>|+2 (ForIfClause)+ <RBRACKET> ;
+ListComp : "[" NamedExpression =>|+2 (ForIfClause)+ "]" ;
 
 StarEtc :
    KeyWords
    |
-   <STAR> <COMMA> =>|| ParamMaybeDefault (<COMMA> =>|+1 ParamMaybeDefault)* [<COMMA> [KeyWords]]
+   "*" "," =>|| ParamMaybeDefault ("," =>|+1 ParamMaybeDefault)* ["," [KeyWords]]
    |
-   <STAR> <NAME> [SCAN \.\FunctionDefinition => <COLON> (Expression|SCAN <STAR> => StarExpression)] (<COMMA> =>|+1 ParamMaybeDefault)* [<COMMA> [KeyWords]]
+   "*" <NAME> [SCAN \.\FunctionDefinition => ":" (Expression|SCAN "*" => StarExpression)] ("," =>|+1 ParamMaybeDefault)* ["," [KeyWords]]
 ;
 
-ParamMaybeDefault : <NAME> [<COLON> Expression] [<ASSIGN> Expression] ;
+ParamMaybeDefault : <NAME> [":" Expression] ["=" Expression] ;
 
 KeyWords :
-   <STAR_STAR> <NAME>
+   "**" <NAME>
    [
        SCAN ~\...\LambdaDefinition =>
-       <COLON> Expression
+       ":" Expression
    ]
 ;
 
@@ -477,11 +477,11 @@ Parameters :
       <NAME>
 // Using a contextual predicate, we manage to use the same production
 // for the parameters of a function def or a lambda.
-      [SCAN \FunctionDefinition => <COLON> (Expression|SCAN <STAR> => StarExpression)]
-      [<ASSIGN> Expression {seenDefault = true;}]
-      (<COMMA> =>|+1
+      [SCAN \FunctionDefinition => ":" (Expression|SCAN "*" => StarExpression)]
+      ["=" Expression {seenDefault = true;}]
+      ("," =>|+1
         (
-          <SLASH>
+          "/"
           ASSERT {
             !seenSlash,
             lastConsumedToken
@@ -489,7 +489,7 @@ Parameters :
           }
           {seenSlash = true;}
           |
-          <NAME> [SCAN \FunctionDefinition => <COLON> Expression]
+          <NAME> [SCAN \FunctionDefinition => ":" Expression]
           // If we've already seen a param with a default value,
           // the remaining ones also have to have a default value.
           ASSERT {
@@ -497,38 +497,38 @@ Parameters :
               : "This parameter must have a default value."
           }
           [
-             <ASSIGN> Expression {seenDefault = true;}
+             "=" Expression {seenDefault = true;}
           ]
         )
       )*
-      [ <COMMA> ]
+      [ "," ]
     ]
     [
-      SCAN ~(<RPAREN>|<COLON>) => StarEtc
+      SCAN ~(")"|":") => StarEtc
     ]
-    [<COMMA>]
+    [","]
 ;
 
 AugAssign#void :
-    <PLUSASSIGN> | <MINUSASSIGN> | <STARASSIGN> | <ATASSIGN> | <SLASHASSIGN>
-    | <REMASSIGN> | <ANDASSIGN> | <ORASSIGN> | <XORASSIGN> | <LSHIFTASSIGN>
-    | <RSHIFTASSIGN> | <STARSTARASSIGN> | <SLASHSLASHASSIGN>
+    "+=" | "-=" | "*=" | "@=" | "/="
+    | "%=" | "&=" | "|=" | "^=" | "<<="
+    | ">>=" | "**=" | "//="
 ;
 
 SimpleAssignTarget :
    PrimaryExpression
    //|
-   //<LPAREN> SimpleAssignTarget <RPAREN>
+   //"(" SimpleAssignTarget ")"
 ;
 
 Assignment :
- SCAN SimpleAssignTarget (<COLON> | AugAssign) =>|| | StarTargets <ASSIGN> =>
+ SCAN SimpleAssignTarget (":" | AugAssign) =>|| | StarTargets "=" =>
  (
-  SimpleAssignTarget <COLON> =>|| Expression [<ASSIGN> AnnotatedRhs]
+  SimpleAssignTarget ":" =>|| Expression ["=" AnnotatedRhs]
   |
   SimpleAssignTarget AugAssign =>|| (YieldExpression | StarExpressions)
   |
-  (StarTargets <ASSIGN> =>||)+ (YieldExpression | StarExpressions)
+  (StarTargets "=" =>||)+ (YieldExpression | StarExpressions)
  )
 ;
 
@@ -538,7 +538,7 @@ Assignment :
 MatchStatement :
    'match'
    SubjectExpression
-   <COLON>
+   ":"
    =>||
    <NEWLINE>
    <INDENT>
@@ -549,8 +549,8 @@ MatchStatement :
 CaseBlock :
     'case'
     Patterns
-    [<IF> NamedExpression]
-    <COLON>
+    ["if" NamedExpression]
+    ":"
     Block
 ;
 
@@ -562,7 +562,7 @@ Patterns :
 ;
 
 StarPattern :
-   <STAR> <NAME>
+   "*" <NAME>
 ;
 
 MaybeStarPattern#void : StarPattern | Pattern ;
@@ -581,30 +581,30 @@ ClosedPattern :
    MappingPattern
 ;
 
-GroupPattern : <LPAREN> Pattern <RPAREN> ;
+GroupPattern : "(" Pattern ")" ;
 
-KeyValuePattern: (LiteralPattern | Attribute) <COLON> Pattern ;
+KeyValuePattern: (LiteralPattern | Attribute) ":" Pattern ;
 
-ItemsPattern : KeyValuePattern (<COMMA> =>|+1 KeyValuePattern)* ;
+ItemsPattern : KeyValuePattern ("," =>|+1 KeyValuePattern)* ;
 
 MappingPattern :
-  <LBRACE>
+  "{"
      [
-         ItemsPattern [<COMMA> =>|+1 DoubleStarPattern] [<COMMA>]
+         ItemsPattern ["," =>|+1 DoubleStarPattern] [","]
          |
-         DoubleStarPattern [<COMMA>]
+         DoubleStarPattern [","]
      ]
-  <RBRACE>
+  "}"
 ;
 
-DoubleStarPattern : <STAR_STAR> <NAME> ;
+DoubleStarPattern : "**" <NAME> ;
 
 LiteralPattern :
-   <NONE>
+   "None"
    |
-   <TRUE>
+   "True"
    |
-   <FALSE>
+   "False"
    |
    SignedNumber
    |
@@ -612,61 +612,61 @@ LiteralPattern :
 ;
 
 MaybeSequencePattern :
-   MaybeStarPattern (<COMMA> =>|+1 MaybeStarPattern)* [<COMMA>]
+   MaybeStarPattern ("," =>|+1 MaybeStarPattern)* [","]
 ;
 
 OpenSequencePattern :
-   MaybeStarPattern <COMMA> =>|| [MaybeSequencePattern]
+   MaybeStarPattern "," =>|| [MaybeSequencePattern]
 ;
 
 SequencePattern :
-    <LBRACKET> [MaybeSequencePattern] <RBRACKET>
+    "[" [MaybeSequencePattern] "]"
     |
-    <LPAREN> [OpenSequencePattern] <RPAREN>
+    "(" [OpenSequencePattern] ")"
 ;
 
 ClassPattern :
    NameOrAttribute
-   <LPAREN>
+   "("
    =>||
       [
-          SCAN <NAME> <ASSIGN> =>
-          KeywordPatterns [<COMMA>]
+          SCAN <NAME> "=" =>
+          KeywordPatterns [","]
           |
-          PositionalPatterns [<COMMA> =>|+1 KeywordPatterns] [<COMMA>]
+          PositionalPatterns ["," =>|+1 KeywordPatterns] [","]
       ]
-   <RPAREN>
+   ")"
 ;
 
 PositionalPatterns :
    Pattern
    (
-       <COMMA>
+       ","
        // If the next two tokens are an identifier followed by =
        // we need to end this production and go into KeywordPatterns.
-       ENSURE ~(<NAME><ASSIGN>)
+       ENSURE ~(<NAME> "=")
        =>||
        Pattern
    )*
 ;
 
-KeywordPattern : <NAME> <ASSIGN> Pattern ;
+KeywordPattern : <NAME> "=" Pattern ;
 
-KeywordPatterns : KeywordPattern (<COMMA> =>|+2 KeywordPattern)* ;
+KeywordPatterns : KeywordPattern ("," =>|+2 KeywordPattern)* ;
 
-OrPattern : ClosedPattern (<BIT_OR> ClosedPattern)* ;
+OrPattern : ClosedPattern ("|" ClosedPattern)* ;
 
-Pattern : OrPattern [<AS> <NAME>] ;
+Pattern : OrPattern ["as" <NAME>] ;
 
 SubjectExpression :
-   StarNamedExpression <COMMA> =>|| [StarNamedExpressions]
+   StarNamedExpression "," =>|| [StarNamedExpressions]
    |
    NamedExpression
 ;
 
-Attribute : <NAME> (<DOT> <NAME>)+ ;
+Attribute : <NAME> ("." <NAME>)+ ;
 
-NameOrAttribute #Attribute(>1) : <NAME> (<DOT> <NAME>)* ;
+NameOrAttribute #Attribute(>1) : <NAME> ("." <NAME>)* ;
 
 // Implementation of 3.12 F-strings follows.
 
@@ -706,7 +706,7 @@ DoubleQuoteFString :
          |
          PlaceHolder
        )*
-       <DOUBLE_QUOTE>
+       '"'
    )
 ;
 
@@ -719,7 +719,7 @@ RawDoubleQuoteFString :
          |
          PlaceHolder
        )*
-       <DOUBLE_QUOTE>
+       '"'
    )
 ;
 
@@ -732,7 +732,7 @@ SingleQuoteFString :
          |
          PlaceHolder
        )*
-       <SINGLE_QUOTE>
+       "'"
    )
 ;
 
@@ -745,7 +745,7 @@ RawSingleQuoteFString :
          |
          PlaceHolder
        )*
-       <SINGLE_QUOTE>
+       "'"
    )
 ;
 
@@ -758,7 +758,7 @@ LongDoubleQuoteFString :
          |
          PlaceHolder
        )*
-       <LONG_DOUBLE_QUOTE>
+       '"""'
    )
 ;
 
@@ -771,7 +771,7 @@ RawLongDoubleQuoteFString :
          |
          PlaceHolder
        )*
-       <LONG_DOUBLE_QUOTE>
+       '"""'
    )
 ;
 
@@ -784,7 +784,7 @@ LongSingleQuoteFString :
          |
          PlaceHolder
        )*
-       <LONG_SINGLE_QUOTE>
+       "'''"
    )
 ;
 
@@ -797,26 +797,26 @@ RawLongSingleQuoteFString :
          |
          PlaceHolder
        )*
-       <LONG_SINGLE_QUOTE>
+       "'''"
    )
 ;
 
 PlaceHolder :
-   <LBRACE>
+   "{"
    LEXICAL_STATE PYTHON
    (
       (YieldExpression | StarExpressions)
-      [<ASSIGN>]
+      ["="]
       ACTIVATE_TOKENS EXCLAM
       (
-         [<EXCLAM><NAME>]
+         ["!" <NAME>]
       )
       DEACTIVATE_TOKENS COLONEQUALS
-      (<COLON>|<RBRACE>)
+      (":"|"}")
    )
    [
       ENSURE {getTokenType(0) == COLON} =>||
-      FormatSpecifier <RBRACE>
+      FormatSpecifier "}"
    ]
 ;
 
