@@ -217,7 +217,6 @@ public class LexerData {
         return new ArrayList<>(namedTokensTable.values());
     }
 
-    // This method still really needs to be cleaned up!
     void buildData() {
         dealWithDeclaredStringLiterals();
         dealWithUndeclaredStringLiterals();
@@ -267,6 +266,7 @@ public class LexerData {
             RegexpStringLiteral other = (RegexpStringLiteral) r;
             if (other.getIgnoreCase() && !image.equalsIgnoreCase(other.getLiteralString())) continue;
             if (!other.getIgnoreCase() && !image.equals(other.getLiteralString())) continue;
+            if (!other.isInLexicalState(rsl.getImplicitLexicalState())) continue;
             return other;
         }
         return null;

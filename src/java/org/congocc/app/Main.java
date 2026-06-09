@@ -286,7 +286,7 @@ public final class Main {
       throws IOException {
         if (!quiet) bannerLine();
         Grammar grammar = new Grammar(outputDir, codeLang, quiet, symbols);
-        grammar.parse(grammarPath);
+        grammar.parse(grammarPath, "DEFAULT");
         Errors errors = grammar.getErrors();
         grammar.doSanityChecks();
         if (errors.getErrorCount() > 0) {

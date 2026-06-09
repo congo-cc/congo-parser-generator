@@ -157,11 +157,11 @@ public class Grammar extends GrammarFile {
         return lexicalStates.toArray(new String[0]);
     }
 
-    public GrammarFile parse(Path file) throws IOException {
+    public GrammarFile parse(Path file, String defaultLexicalState) throws IOException {
         Path canonicalPath = file.normalize();
         if (alreadyIncluded.contains(canonicalPath)) return null;
         else alreadyIncluded.add(canonicalPath);
-        CongoCCParser parser = new CongoCCParser(this, canonicalPath, preprocessorSymbols);
+        CongoCCParser parser = new CongoCCParser(this, canonicalPath, preprocessorSymbols, defaultLexicalState);
         Path prevIncludedFileDirectory = appSettings.getIncludedFileDirectory();
         if (!isInInclude()) {
             appSettings.setFilename(file);
@@ -176,7 +176,7 @@ public class Grammar extends GrammarFile {
         return rootNode;
     }
 
-    public Node include(List<String> locations, Node includeLocation) throws IOException {
+    public Node include(List<String> locations, Node includeLocation, String defaultLexicalState) throws IOException {
         Path path = appSettings.resolveLocation(locations);
         if (path == null) {
             errors.addError(includeLocation, "Could not resolve location of include file");
@@ -194,7 +194,7 @@ public class Grammar extends GrammarFile {
             String prevDefaultLexicalState = this.defaultLexicalState;
             boolean prevIgnoreCase = appSettings.isIgnoreCase();
             includeNesting++;
-            GrammarFile root = parse(path);
+            GrammarFile root = parse(path, defaultLexicalState);
             if (root==null) return null;
             includeNesting--;
             appSettings.setFilename(prevLocation);

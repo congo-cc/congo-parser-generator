@@ -102,5 +102,5 @@
     -->
   </target>
 
-   <target name="test-all" depends="compile,test-java,test-csharp,test-python,test-rust"/>
+   <target name="test-all" depends="test-java,test-csharp,test-python,test-rust"/>
 </project>

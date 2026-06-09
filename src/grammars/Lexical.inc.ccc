@@ -48,7 +48,6 @@ TOKEN :
 
 TokenProduction :
 {
-    Token t = null;
     String tokenClassName = null;
     String firstSpecifiedLexicalState = null;
     boolean multipleStatesSpecified = false;
@@ -92,7 +91,7 @@ TokenProduction :
    {
       if (!multipleStatesSpecified) {
           if (firstSpecifiedLexicalState == null) {
-              firstSpecifiedLexicalState = grammar.getDefaultLexicalState();
+              firstSpecifiedLexicalState = this.defaultLexicalState;
           }
           thisProduction.setImplicitLexicalState(firstSpecifiedLexicalState);
       }
@@ -179,8 +178,6 @@ RegexpSpec(String tokenClassName, boolean isContextual)#org.congocc.core.RegexpS
         RegexpStringLiteral
         {%
             regexp = (RegularExpression) peekNode();
-            ((RegexpStringLiteral)regexp).setLexicalState(this.defaultLexicalState);
-            //((RegexpStringLiteral)regexp).setLexicalState(getGrammar().getDefaultLexicalState());
         %}
         |
         <LT>
@@ -245,8 +242,10 @@ INJECT RegexpStringLiteral :
    import org.congocc.core.*;
    extends RegularExpression;
 {
-  @Property String literalString, lexicalState;
+  @Property String literalString;
   @Property boolean singleQuoted;
+
+  private String implicitLexicalState;
 
   public boolean isContextual() {
     TokenProduction tp = firstAncestorOfType(TokenProduction.class);
@@ -265,7 +264,23 @@ INJECT RegexpStringLiteral :
 
   public String[] getLexicalStateNames() {
      TokenProduction tp = getTokenProduction();
-     return tp != null ? tp.getLexicalStateNames() : new String[]{lexicalState};
+     return tp != null ? tp.getLexicalStateNames() : new String[]{implicitLexicalState};
+  }
+
+  public void setImplicitLexicalState(String implicitLexicalState) {
+      assert getTokenProduction() == null;
+      this.implicitLexicalState = implicitLexicalState;
+  }
+
+  public String getImplicitLexicalState() {
+      return this.implicitLexicalState;
+  }
+
+  public boolean isInLexicalState(String lexicalState) {
+       for (String name : getLexicalStateNames()) {
+          if (name.equals(lexicalState)) return true;
+       }
+       return false;
   }
 }
 

@@ -105,10 +105,11 @@ INJECT PARSER_CLASS :
 {
     private Grammar grammar;
 
-    public PARSER_CLASS(Grammar grammar, Path path, Map<String, String> definedSymbols) throws IOException {
+    public PARSER_CLASS(Grammar grammar, Path path, Map<String, String> definedSymbols, String defaultLexicalState) throws IOException {
         this(path.toString(), path);
         assert grammar != null;
         this.grammar = grammar;
+        this.defaultLexicalState = defaultLexicalState;
         token_source.setGrammar(grammar);
         PreprocessorParser parser = new PreprocessorParser(path);
         parser.setSymbols(definedSymbols);
@@ -116,11 +117,18 @@ INJECT PARSER_CLASS :
         token_source.setParsedLines(lineMarkers);
     }
 
+    // Leaving a constructor of this signature as a courtesy, in case it was
+    // being used
+    public PARSER_CLASS(Grammar grammar, Path path, Map<String, String> definedSymbols) throws IOException {
+        this(grammar, path, definedSymbols, grammar.getDefaultLexicalState());
+    }
+
     public PARSER_CLASS(Grammar grammar, String inputSource, CharSequence content) throws IOException {
         this(inputSource, content);
         assert grammar != null;
         this.grammar = grammar;
         token_source.setGrammar(grammar);
+        this.defaultLexicalState = grammar.getDefaultLexicalState();
         PreprocessorParser parser = new PreprocessorParser(inputSource, content);
         parser.setSymbols(grammar.getPreprocessorSymbols());
         BitSet lineMarkers = parser.PP_Root();
@@ -430,7 +438,6 @@ GrammarInclusion throws IOException :
    'INCLUDE'
    {
     Token includeToken = lastConsumedToken;
-    String savedDefaultLexicalState = this.defaultLexicalState;
    }
    (
        (
@@ -454,16 +461,12 @@ GrammarInclusion throws IOException :
    )
    [";"]
    {J%
-      Node included = grammar.include(locations, includeToken);
+      Node included = grammar.include(locations, includeToken, defaultLexicalState);
       if (included == null) {
           getErrors().addWarning(thisProduction, "File is already included.");
       }
       else if (included instanceof GrammarFile) {
           THIS.add(included);
-          // Since the included grammars might have stomped
-          // all over the defaultLexicalState variable, we need
-          // to restore it.
-          this.defaultLexicalState = savedDefaultLexicalState;
       }
    %}
    {R%
@@ -666,6 +669,9 @@ Setting(Map<String,Object> settings) #Setting :
           assert !settings.containsKey("DEFAULT_LEXICAL_STATE") : "repeated DEFAULT_LEXICAL_STATE setting!";
           assert LexerData.isJavaIdentifier(value.toString()) : "Default lexical state must be a valid Java identifier!";
           this.defaultLexicalState = value.toString();
+          if (!grammar.isInInclude()) {
+              grammar.setDefaultLexicalState(this.defaultLexicalState);
+          }
       }
       settings.put(key, value);
   }
@@ -1547,7 +1553,7 @@ Terminal# :
       RegularExpression result = (RegularExpression) peekNode();
       if (result instanceof RegexpStringLiteral rsl) {
             assert this.defaultLexicalState != null :"WTF";
-            rsl.setLexicalState(this.defaultLexicalState);
+            rsl.setImplicitLexicalState(this.defaultLexicalState);
       }
       thisProduction.setRegexp(result);
   %}
