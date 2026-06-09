@@ -682,6 +682,7 @@ BNFProduction #org.congocc.core.BNFProduction :
     TreeBuildingAnnotation tba = null;
     Token firstToken=getToken(1), id;
     Expansion exp;
+    String savedLexicalState = this.defaultLexicalState;
 }
     [
         "public" | "private" | "protected"
@@ -712,7 +713,10 @@ BNFProduction #org.congocc.core.BNFProduction :
     [
         SCAN 2 => <IDENTIFIER>
         // SCAN 2 => @lexicalState =$ <IDENTIFIER>
-        {thisProduction.setLexicalState(lastConsumedToken.toString());}
+        {
+            thisProduction.setLexicalState(lastConsumedToken.toString());
+            this.defaultLexicalState = lastConsumedToken.toString();
+        }
         ":"
     ]
     ExpansionChoice
@@ -723,6 +727,7 @@ BNFProduction #org.congocc.core.BNFProduction :
         if (tba == null && !grammar.getAppSettings().getNodeDefaultVoid()) {
            grammar.addNodeType(thisProduction.getName(),thisProduction.getName());
         }
+        this.defaultLexicalState = savedLexicalState;
     }
 ;
 
@@ -960,6 +965,9 @@ ExpansionWithParentheses :
     Token atPrefix = null;
     EmbeddedCode recoveryBlock = null;
     ExpansionChoice choice;
+    // Only necessary if we have a lexical state switch
+    // but we might as well always do it
+    String savedLexicalState = this.defaultLexicalState;
 }
    [lss=LexicalStateSwitch | TokenActivation]
    [
@@ -975,6 +983,8 @@ ExpansionWithParentheses :
    ]
    {
         thisProduction.setAssignment(assignment);
+        // Only necessary if we had a lexical state switch
+        this.defaultLexicalState = savedLexicalState;
    }
    [
        SCAN ~\...\Lookahead =>
@@ -1723,7 +1733,10 @@ INJECT Failure :
     }
 }
 
-LexicalStateSwitch : "LEXICAL_STATE" <IDENTIFIER> ;
+LexicalStateSwitch :
+    "LEXICAL_STATE" <IDENTIFIER>
+    {this.defaultLexicalState = lastConsumedToken.toString();}
+;
 
 INJECT LexicalStateSwitch : {
    public String getLexicalStateName() {

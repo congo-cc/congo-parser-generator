@@ -139,7 +139,10 @@ public class ParseException extends ${BASE_EXCEPTION_TYPE} {
      }
      else {
        if (content.length() > 32) content = content.substring(0, 32) + "...";
-       buf.append("\nFound string \"" + addEscapes(content) + "\" of type " + location.getType());
+       buf.append("\nFound string \"" + addEscapes(content) + "\" ");
+       if (location.getType().getLiteralString() == null && !location.getType().isContextualKeyword()) {
+            buf.append("of type " + location.getType());
+       }
      }
      if (expectedTypes.size() == 1) {
         buf.append("\nWas expecting: " + expectedTypes.iterator().next());

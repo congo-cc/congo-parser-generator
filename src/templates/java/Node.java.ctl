@@ -17,6 +17,9 @@ public interface Node extends List<Node> {
         boolean isUndefined();
         boolean isInvalid();
         boolean isEOF();
+        default boolean isContextualKeyword() {
+            return false;
+        }
         default String getLiteralString() {
             return null; // unimplemented currently.
         }
