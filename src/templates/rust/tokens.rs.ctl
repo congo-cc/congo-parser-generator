@@ -10,6 +10,7 @@
 /// The discriminant values match the order in which tokens are defined,
 /// enabling efficient set membership tests.
 #[derive(Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Hash)]
+#[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
 #[repr(u16)]
 pub enum TokenType {
 [#list lexerData.regularExpressions as regexp]

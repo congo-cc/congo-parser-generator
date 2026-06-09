@@ -12,6 +12,7 @@ use std::collections::HashSet;
 
 /// A single token produced by the lexer.
 #[derive(Debug, Clone)]
+#[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
 pub struct Token {
     /// The type of this token.
     pub kind: TokenType,

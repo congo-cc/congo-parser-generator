@@ -1076,7 +1076,7 @@ use crate::tokens::{is_contextual_token, literal_string};
 [/#list]
 
 /// A call stack entry for tracking parser production context.
-#[derive(Clone)]
+#[derive(Debug, Clone)]
 struct NonTerminalCall {
     production_name: &'static str,
     source_file: &'static str,
@@ -1106,6 +1106,7 @@ struct NonTerminalCall {
   [#set rootProductionName = production.name]
   [#break]
 [/#list]
+#[derive(Debug)]
 pub struct Parser<'src> {
     /// Pre-computed token list (regular tokens + EOF only).
     tokens: Vec<Token>,
