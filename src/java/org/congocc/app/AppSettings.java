@@ -192,7 +192,11 @@ public class AppSettings {
             Object value = settings.get(key);
             switch (key) {
                 case "IGNORE_CASE" -> setIgnoreCase((Boolean) value);
-                case "DEFAULT_LEXICAL_STATE" -> grammar.setDefaultLexicalState((String) value);
+                case "DEFAULT_LEXICAL_STATE" -> {
+                    if (!grammar.isInInclude()) {
+                        grammar.setDefaultLexicalState((String) value);
+                    }
+                }
                 case "DEACTIVATE_TOKENS" -> {
                     String tokens = (String) settings.get(key);
                     for (StringTokenizer st = new StringTokenizer(tokens, ", \t\n\r"); st.hasMoreTokens(); ) {

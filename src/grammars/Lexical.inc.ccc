@@ -179,7 +179,8 @@ RegexpSpec(String tokenClassName, boolean isContextual)#org.congocc.core.RegexpS
         RegexpStringLiteral
         {%
             regexp = (RegularExpression) peekNode();
-            ((RegexpStringLiteral)regexp).setLexicalState(getGrammar().getDefaultLexicalState());
+            ((RegexpStringLiteral)regexp).setLexicalState(this.defaultLexicalState);
+            //((RegexpStringLiteral)regexp).setLexicalState(getGrammar().getDefaultLexicalState());
         %}
         |
         <LT>
