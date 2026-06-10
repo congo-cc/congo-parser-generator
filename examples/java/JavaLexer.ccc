@@ -38,6 +38,8 @@ CONTEXTUAL #KeyWord :
    |
    <REQUIRES : 'requires'>
    |
+   <SEALED : 'sealed'>
+   |
    <TO : "to">
    |
    <TRANSITIVE : 'transitive'>
@@ -110,10 +112,6 @@ TOKEN #KeyWord :
 | < VOLATILE: "volatile" >
 | < WHILE: "while" >
 | < NON_SEALED : "non-sealed">
-;
-
-CONTEXTUAL #KeyWord :
-  <SEALED : "sealed">
 ;
 
 TOKEN #Literal :

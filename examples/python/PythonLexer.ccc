@@ -307,7 +307,7 @@ INJECT PARSER_CLASS :
 }
 #endif
 
-CONTEXTUAL #KeyWord :
+CONTEXTUAL #Keyword :
    <LAZY : 'lazy'>
    |
    <TYPE : 'type'>
