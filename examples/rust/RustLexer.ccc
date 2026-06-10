@@ -14,6 +14,18 @@ UNPARSED #Comment :
   < LINE_COMMENT : "//" (~["\n"])* "\n" > #LineComment
 ;
 
+CONTEXTUAL #KeyWord :
+   <MACRO_RULES : 'macro_rules'>
+   |
+   <RAW : 'raw'>
+   |
+   <SAFE : 'safe'>
+   |
+   <UNION : 'union'>
+   |
+   <STATIC_LIFETIME : "'static">
+;
+
 TOKEN #KeyWord :
   <UNDERSCORE : "_">
 | < ABSTRACT: "abstract" >
@@ -21,6 +33,7 @@ TOKEN #KeyWord :
 | < ASYNC: "async" >
 | < AWAIT: "await" >
 | < BECOME: "become" >
+| < BREAK : "break" >
 //| < BOX: "box" >
 | < CONST: "const" >
 | < CONTINUE: "continue" >
@@ -340,8 +353,6 @@ INJECT LEXER_CLASS :
 
 TOKEN :
    <UNDERLINE_LIFETIME : "'_">
-   |
-   <STATIC_LIFETIME : "'static">
    |
    <LIFETIME_OR_LABEL : "'" <ID>>
 ;

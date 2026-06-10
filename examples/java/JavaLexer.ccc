@@ -21,6 +21,39 @@ UNPARSED #Comment :
   < ?MULTI_LINE_COMMENT : "/*" (~[])* "*/" > #MultiLineComment
 ;
 
+CONTEXTUAL #KeyWord :
+   <EXPORTS : 'exports'>
+   |
+   <MODULE : 'module'>
+   |
+   <OPEN : 'open'>
+   |
+   <OPENS : 'opens'>
+   |
+   <PERMITS : 'permits'>
+   |
+   <PROVIDES : 'provides'>
+   |
+   <RECORD : 'record'>
+   |
+   <REQUIRES : 'requires'>
+   |
+   <TO : "to">
+   |
+   <TRANSITIVE : 'transitive'>
+   |
+   <USES : 'uses'>
+   |
+   <VAR : 'var'>
+   |
+   <WHEN : 'when'>
+   |
+   <WITH : 'with'>
+   |
+   <YIELD : 'yield'>
+;
+
+
 TOKEN #KeyWord :
   <UNDERSCORE : "_">
 |  < ABSTRACT: "abstract" >

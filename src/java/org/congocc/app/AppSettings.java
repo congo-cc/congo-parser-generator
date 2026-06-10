@@ -50,16 +50,16 @@ public class AppSettings {
             + "JAVA_UNICODE_ESCAPE,IGNORE_CASE,LEXER_USES_PARSER,NODE_DEFAULT_VOID,SMART_NODE_CREATION,"
             + "NODE_USES_PARSER,TREE_BUILDING_DEFAULT,TREE_BUILDING_ENABLED,TOKENS_ARE_NODES,"
             + "SPECIAL_TOKENS_ARE_NODES,UNPARSED_TOKENS_ARE_NODES,"
-            + "TOKEN_MANAGER_USES_PARSER,ENSURE_FINAL_EOL,MINIMAL_TOKEN,C_CONTINUATION_LINE,"
+            + "TOKEN_MANAGER_USES_PARSER,ENSURE_FINAL_EOL,C_CONTINUATION_LINE,"
             + "USE_CHECKED_EXCEPTION,LEGACY_GLITCHY_LOOKAHEAD,TOKEN_CHAINING,USES_PREPROCESSOR,X_JTB_PARSE_TREE,X_SYNTHETIC_NODES_ENABLED,"
-            + "ASSERT_APPLIES_IN_LOOKAHEAD,";
+            + "ASSERT_APPLIES_IN_LOOKAHEAD,REQUIRE_TOKEN_DECLARATION,";
 
     private final String stringSettings = ",BASE_NAME,PARSER_PACKAGE,PARSER_CLASS,LEXER_CLASS,BASE_SRC_DIR,BASE_NODE_CLASS,"
             + "BASE_TOKEN_CLASS,NODE_PREFIX,NODE_CLASS,NODE_PACKAGE,DEFAULT_LEXICAL_STATE,"
             + "NODE_CLASS,OUTPUT_DIRECTORY,DEACTIVATE_TOKENS,EXTRA_TOKENS,ROOT_API_PACKAGE,"
             + "COPYRIGHT_BLURB,TERMINATING_STRING,TEST_PRODUCTION,TEST_EXTENSION,";
 
-    private final String integerSettings = ",TAB_SIZE,TABS_TO_SPACES,JDK_TARGET,";
+    private final String integerSettings = ",TAB_SIZE,TABS_TO_SPACES,";
 
     private static final Map<String, String> locationAliases = new HashMap<String, String>() {
         {
@@ -514,6 +514,11 @@ public class AppSettings {
         return getTabSize() == 0;
     }
 
+    public boolean getRequireTokenDeclaration() {
+        Boolean b = (Boolean) settings.get("REQUIRE_TOKEN_DECLARATION");
+        return b != null && b;
+    }
+
     public boolean getPreserveLineEndings() {
         Boolean b = (Boolean) settings.get("PRESERVE_LINE_ENDINGS");
         return b != null && b;
@@ -528,13 +533,6 @@ public class AppSettings {
         Boolean b = (Boolean) settings.get("TOKEN_CHAINING");
         if (b != null) return b;
         return checkForMethodName("preInsert");
-    }
-
-    public boolean getMinimalToken() {
-        if (getTokenChaining()) return false;
-        Boolean b = (Boolean) settings.get("MINIMAL_TOKEN");
-        if (b != null) return b;
-        return !checkForMethodName("setImage") && !checkForMethodName("setCachedImage");
     }
 
     public boolean getNodeUsesParser() {

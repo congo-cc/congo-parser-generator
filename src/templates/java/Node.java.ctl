@@ -21,7 +21,7 @@ public interface Node extends List<Node> {
             return false;
         }
         default String getLiteralString() {
-            return null; // unimplemented currently.
+            return null;
         }
     }
 

@@ -6,6 +6,8 @@
 // based on whether we are generating code for internal use
 #define __congo_internal__
 
+REQUIRE_TOKEN_DECLARATION;
+
 // In general usage, it is probably better to INCLUDE the (more stable) Java grammar
 // that is in the bootstrap jarfile.
 //INCLUDE JAVA

@@ -613,6 +613,7 @@ JavaCodeInjection2 :
 INJECT PARSER_CLASS :
 {
     private String defaultLexicalState = "DEFAULT";
+    private boolean requireTokenDeclaration = false;
 }
 
 Options# :
@@ -672,6 +673,10 @@ Setting(Map<String,Object> settings) #Setting :
           if (!grammar.isInInclude()) {
               grammar.setDefaultLexicalState(this.defaultLexicalState);
           }
+      }
+      if (key.equals("REQUIRE_TOKEN_DECLARATION")) {
+          assert !settings.containsKey("REQUIRE_TOKEN_DECLARATION") : "repeated REQUIRE_TOKEN_DECLARATION setting!";
+          this.requireTokenDeclaration = (boolean) value;
       }
       settings.put(key, value);
   }
@@ -1562,8 +1567,8 @@ Terminal# :
   {%
       RegularExpression result = (RegularExpression) peekNode();
       if (result instanceof RegexpStringLiteral rsl) {
-            assert this.defaultLexicalState != null :"WTF";
             rsl.setImplicitLexicalState(this.defaultLexicalState);
+            rsl.setRequireTokenDeclaration(this.requireTokenDeclaration);
       }
       thisProduction.setRegexp(result);
   %}

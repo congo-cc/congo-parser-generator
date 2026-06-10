@@ -244,6 +244,7 @@ INJECT RegexpStringLiteral :
 {
   @Property String literalString;
   @Property boolean singleQuoted;
+  @Property boolean requireTokenDeclaration;
 
   private String implicitLexicalState;
 

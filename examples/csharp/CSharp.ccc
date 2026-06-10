@@ -23,6 +23,8 @@ FAULT_TOLERANT;
 FAULT_TOLERANT_DEFAULT=false;
 #endif
 
+REQUIRE_TOKEN_DECLARATION;
+
 DEACTIVATE_TOKENS= // The following tokens are turned on
                    // when we enter a Pattern
                   AND, OR, NOT,
@@ -252,7 +254,7 @@ Modifiers#void : //TODO handle illegal combinations of mods
       =>
       ("new"|"public"|"protected"|"internal"|"private"|"abstract"
       |"sealed"|"static"|"unsafe"|"override"|"virtual"|"extern"
-      |"async"|"required"|"file"
+      |'async'|'required'|'file'
       // This is allowed on methods in some cases,
       // but not sure where exactly or when this was added
       // Have to check where this is possible and since when

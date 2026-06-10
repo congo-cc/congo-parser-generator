@@ -22,6 +22,8 @@ FAULT_TOLERANT;
 FAULT_TOLERANT_DEFAULT=false;
 #endif
 
+REQUIRE_TOKEN_DECLARATION;
+
 INCLUDE "PythonLexer.ccc"
 
 #Module :

@@ -213,13 +213,31 @@ TOKEN #KeyWord :
 ;
 
 CONTEXTUAL #KeyWord :
-   <ARGLIST : '__arglist'>
-   | <GET : 'get'>
-   | <SET : 'get'>
-   | <INIT : 'init'>
+   <ADD : 'add'>
+   | <ALIAS : 'alias'>
+   | <ARGLIST : '__arglist'>
+   | <ASSEMBLY : 'assembly'>
    | <ASYNC : 'async'>
-   | <REQUIRED : 'required'>
+   | <AWAIT : 'await'>
+   | <DYNAMIC : 'dynamic'>
+   | <EXTENSION : 'extension'>
    | <FILE : 'file'>
+   | <GET : 'get'>
+   | <INIT : 'init'>
+   | <MANAGED : 'managed'>
+   | <MODULE : 'module'>
+   | <NAMEOF : 'nameof'>
+   | <PARTIAL : 'partial'>
+   | <RECORD : 'record'>
+   | <REMOVE : 'remove'>
+   | <REQUIRED : 'required'>
+   | <SCOPED : 'scoped'>
+   | <SET : 'set'>
+   | <UNMANAGED : 'unmanaged'>
+   | <VAR : 'var'>
+   | <WHEN : 'when'>
+   | <WITH : 'with'>
+   | <YIELD : 'yield'>
 ;
 
 INCLUDE "CSharpIdentifierDef.ccc"

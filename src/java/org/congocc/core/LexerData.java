@@ -279,11 +279,35 @@ public class LexerData {
             String image = stringLiteral.getLiteralString();
             RegexpStringLiteral alreadyPresent = getAlreadyPresent(stringLiteral);
             if (alreadyPresent == null) {
+                if (stringLiteral.isRequireTokenDeclaration()) {
+                    errors.addError(stringLiteral, "String literal token " + stringLiteral.getSource() + " is not declared.");
+                }
                 if (stringLiteral.isContextual()) {
                     contextualStrings.add(image);
                 }
                 addRegularExpression(stringLiteral);
             } else {
+                boolean usesSingleQuote = stringLiteral.getSource().charAt(0) == '\'';
+                if (usesSingleQuote)  {
+                    if (!alreadyPresent.isContextual() && image.indexOf('"')==-1) {
+                      errors.addWarning(stringLiteral,
+                        "String literal token "
+                        + stringLiteral.getSource()
+                        + " uses single quotes, but is declared at "
+                        + alreadyPresent.getLocation()
+                        + " and thus is not a contextual keyword.");
+                    }
+                }
+                else {
+                    if (alreadyPresent.isContextual() && image.indexOf('\'') == -1) {
+                        errors.addWarning(stringLiteral,
+                            "String literal token "
+                             + stringLiteral.getSource()
+                             + " uses double quotes, but is declared at "
+                             + alreadyPresent.getLocation()
+                             + " as a contextual keyword.");
+                    }
+                }
                 stringLiteral.setOrdinal(alreadyPresent.getOrdinal());
                 stringLiteral.setLabel(alreadyPresent.getLabel());
                 Kind kind = alreadyPresent.getTokenProduction() == null ? TOKEN

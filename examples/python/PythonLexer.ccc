@@ -307,6 +307,16 @@ INJECT PARSER_CLASS :
 }
 #endif
 
+CONTEXTUAL #KeyWord :
+   <LAZY : 'lazy'>
+   |
+   <TYPE : 'type'>
+   |
+   <MATCH : 'match'>
+   |
+   <CASE : 'case'>
+;
+
 TOKEN :
    <NEWLINE : (<SPACE>)? "\n"> #Newline
 ;
