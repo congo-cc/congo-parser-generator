@@ -129,42 +129,22 @@ INJECT TokenProduction :
     /**
      * The states in which this regular expression production exists.
      */
-    public String[] getLexicalStateNames() {
-
-        if (implicitLexicalState != null) {
-            return new String[] {implicitLexicalState};
-        }
-        if (isInAllLexStates()) {
-             return getGrammar().getLexicalStates();
-        }
+    public Set<String> getLexicalStateNames() {
         Set<String> states = new LinkedHashSet<String>();
         for (Token t : childrenOfType(Token.class)) {
-            if (t.getType() == HASH) break;
+            if (t.getType() == HASH || t.getType() == COLON) break;
+            if (t.getType() == STAR) {
+                states.addAll(getGrammar().getLexicalStates());
+                break;
+            }
             if (t.getType() == IDENTIFIER) {
                 states.add(t.toString());
             }
         }
         if (states.isEmpty()) {
-           return new String[] {getGrammar().getDefaultLexicalState()};
+            states.add(implicitLexicalState);
         }
-        String[] lexStates = new String[states.size()];
-        int i=0;
-        for (String s : states) {
-           lexStates[i++] = s;
-        }
-        return lexStates;
-    }
-
-    private boolean isInAllLexStates() {
-       for (Node n : children()) {
-          if (n instanceof Token) {
-          Token t = (Token) n;
-              if (t.getType() == STAR) {
-                  return true;
-              }
-          }
-       }
-       return false;
+        return states;
     }
 }
 
@@ -263,9 +243,9 @@ INJECT RegexpStringLiteral :
       return literalString.length() == 0;
   }
 
-  public String[] getLexicalStateNames() {
+  public Set<String> getLexicalStateNames() {
      TokenProduction tp = getTokenProduction();
-     return tp != null ? tp.getLexicalStateNames() : new String[]{implicitLexicalState};
+     return tp != null ? tp.getLexicalStateNames() : Set.of(implicitLexicalState);
   }
 
   public void setImplicitLexicalState(String implicitLexicalState) {

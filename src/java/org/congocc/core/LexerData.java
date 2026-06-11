@@ -139,16 +139,16 @@ public class LexerData {
                 && s.codePoints().allMatch(Character::isJavaIdentifierPart);
     }
 
-    boolean regexpLabelAlreadyUsed(String label, RegularExpression re) {
+    RegularExpression regexpLabelAlreadyUsed(String label, RegularExpression re) {
         for (RegularExpression regexp : regularExpressions) {
             if (regexp == re || regexp.label == null) continue;
             if (label.contentEquals(regexp.label))
-                return true;
+                return regexp;
             if (label.equalsIgnoreCase(regexp.getLiteralString())) {
-                return true;
+                return regexp;
             }
         }
-        return false;
+        return null;
     }
 
     public int getTokenCount() {

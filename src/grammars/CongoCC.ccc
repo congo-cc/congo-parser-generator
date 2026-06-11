@@ -670,6 +670,7 @@ Setting(Map<String,Object> settings) #Setting :
           assert !settings.containsKey("DEFAULT_LEXICAL_STATE") : "repeated DEFAULT_LEXICAL_STATE setting!";
           assert LexerData.isJavaIdentifier(value.toString()) : "Default lexical state must be a valid Java identifier!";
           this.defaultLexicalState = value.toString();
+          grammar.addLexicalState(value.toString());
           if (!grammar.isInInclude()) {
               grammar.setDefaultLexicalState(this.defaultLexicalState);
           }

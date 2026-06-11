@@ -153,8 +153,8 @@ public class Grammar extends GrammarFile {
         return preprocessorSymbols;
     }
 
-    public String[] getLexicalStates() {
-        return lexicalStates.toArray(new String[0]);
+    public Set<String> getLexicalStates() {
+        return lexicalStates;
     }
 
     public GrammarFile parse(Path file, String defaultLexicalState) throws IOException {
