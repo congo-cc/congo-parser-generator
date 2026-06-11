@@ -260,16 +260,18 @@ public class LexerData {
 
     private RegexpStringLiteral getAlreadyPresent(RegexpStringLiteral rsl) {
         String image = rsl.getLiteralString();
-        for (int i = 0; i< regularExpressions.size(); i++) {
-            RegularExpression r = regularExpressions.get(i);
-            if (!(r instanceof RegexpStringLiteral)) continue;
-            RegexpStringLiteral other = (RegexpStringLiteral) r;
-            if (other.getIgnoreCase() && !image.equalsIgnoreCase(other.getLiteralString())) continue;
-            if (!other.getIgnoreCase() && !image.equals(other.getLiteralString())) continue;
-            if (!other.isInLexicalState(rsl.getImplicitLexicalState())) continue;
-            return other;
+        RegexpStringLiteral result = null;
+        for (RegularExpression r : regularExpressions) {
+            if (r instanceof RegexpStringLiteral other) {
+                if (other.getIgnoreCase() && !image.equalsIgnoreCase(other.getLiteralString())) continue;
+                if (!other.getIgnoreCase() && !image.equals(other.getLiteralString())) continue;
+                result = other;
+                if (other.isInLexicalState(rsl.getImplicitLexicalState())) {
+                    break;
+                }
+            }
         }
-        return null;
+        return result;
     }
 
     private void dealWithUndeclaredStringLiterals() {
@@ -281,12 +283,28 @@ public class LexerData {
             if (alreadyPresent == null) {
                 if (stringLiteral.isRequireTokenDeclaration()) {
                     errors.addError(stringLiteral, "String literal token " + stringLiteral.getSource() + " is not declared.");
+                    continue;
                 }
                 if (stringLiteral.isContextual()) {
                     contextualStrings.add(image);
                 }
                 addRegularExpression(stringLiteral);
-            } else {
+            }
+            else if (!alreadyPresent.isInLexicalState(stringLiteral.getImplicitLexicalState())) {
+                if (stringLiteral.isRequireTokenDeclaration()) {
+                    errors.addError(stringLiteral,
+                                    "String literal " + alreadyPresent.getSource()
+                                    + " declared at " + alreadyPresent.getLocation()
+                                    + " is not in lexical state "
+                                    + stringLiteral.getImplicitLexicalState());
+                    continue;
+                }
+                if (stringLiteral.isContextual()) {
+                    contextualStrings.add(stringLiteral.getLiteralString());
+                }
+                addRegularExpression(stringLiteral);
+            }
+            else {
                 boolean usesSingleQuote = stringLiteral.getSource().charAt(0) == '\'';
                 if (usesSingleQuote)  {
                     if (!alreadyPresent.isContextual() && image.indexOf('"')==-1) {

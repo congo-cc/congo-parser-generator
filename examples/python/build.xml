@@ -55,24 +55,22 @@
     <java classname="org.parsers.python.test.ParseFiles" classpath="${basedir}" failonerror="true" fork="true">
       <arg line = "altsyntax/test_unicode_identifiers.py"/>
     </java>
-    <echo>Now let's try the python parser (in python!)
-      We won't do as many files as we did with the Java parser!
-    </echo>
-    <antcall target="test-python"/>
-    <echo>
-      Now let's try the csharp parser (for python!)
-      on the test files.
-    </echo>
-    <antcall target="test-csharp"/>
   </target>
 
   <target name="test-python">
+    <echo>Now let's try the python parser (in python!)
+      We won't do as many files as we did with the Java parser!
+    </echo>
     <exec executable="python3" dir="${basedir}/pythonparser/test" failonerror="true">
       <arg line="-u parse_files.py ../../testfiles" />
     </exec>
   </target>
 
   <target name="test-csharp" depends="compile">
+    <echo>
+      Now let's try the csharp parser (for python!)
+      on the test files.
+    </echo>
     <exec executable="dotnet" dir="${basedir}/cs-pythonparser/test" failonerror="true">
       <arg line="run --roll-forward LatestMajor ../../testfiles" />
     </exec>
