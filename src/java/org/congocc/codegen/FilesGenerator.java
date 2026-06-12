@@ -40,6 +40,7 @@ public class FilesGenerator {
     private final boolean generateRootApi;
     private final Path parserOutputDirectory;
     private final Path nodeOutputDirectory;
+    private boolean generateTestHarness;
 
     void initializeTemplateEngine() throws IOException {
         Path filename = appSettings.getFilename().toAbsolutePath();
@@ -68,8 +69,9 @@ public class FilesGenerator {
         templatesConfig.setSharedVariable("settings", grammar.getAppSettings());
         templatesConfig.setSharedVariable("lexerData", grammar.getLexerData());
         templatesConfig.setSharedVariable("generated_by", org.congocc.app.Main.PROG_NAME);
-        if (codeLang == JAVA)
+        if (codeLang == JAVA) {
            templatesConfig.addAutoImport("CU", "CommonUtils.java.ctl");
+        }
     }
 
     public FilesGenerator(Grammar grammar) throws IOException {
@@ -81,6 +83,8 @@ public class FilesGenerator {
         this.codeInjector = grammar.getInjector();
         this.parserOutputDirectory = appSettings.getParserOutputDirectory();
         this.nodeOutputDirectory = appSettings.getNodeOutputDirectory();
+        this.generateTestHarness = !appSettings.getStringSetting("TEST_EXTENSION", "").equals("")
+                      && !appSettings.getStringSetting("TEST_PRODUCTION", "").equals("");
     }
 
     public void generateAll() throws IOException {
@@ -370,7 +374,8 @@ public class FilesGenerator {
         if (generateRootApi) {
             generate(parserOutputDirectory, "TokenSource.java");
             generate(parserOutputDirectory, "NonTerminalCall.java");
-            generate(parserOutputDirectory, "test/ParseFiles.java");
+            if (generateTestHarness)
+                generate(parserOutputDirectory, "test/ParseFiles.java");
         }
     }
 

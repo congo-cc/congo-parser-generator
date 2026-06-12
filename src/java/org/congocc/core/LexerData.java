@@ -245,7 +245,7 @@ public class LexerData {
                 String label = stringLiteral.getLabel();
                 RegularExpression regexp = namedTokensTable.get(label);
                 if (regexp != null) {
-                    errors.addInfo(stringLiteral, "Token name \"" + label + " is redefined.");
+                    errors.addInfo(stringLiteral, "Token name " + label + " is redefined here.\n  It was previously declared at: " + regexp.getLocation());
                 }
                 addNamedToken(label, stringLiteral);
             }
@@ -282,7 +282,12 @@ public class LexerData {
             RegexpStringLiteral alreadyPresent = getAlreadyPresent(stringLiteral);
             if (alreadyPresent == null) {
                 if (stringLiteral.isRequireTokenDeclaration()) {
-                    errors.addError(stringLiteral, "String literal token " + stringLiteral.getSource() + " is not declared.");
+                    errors.addError(stringLiteral,
+                         "String literal token "
+                         + stringLiteral.getSource()
+                         + " is not declared in the "
+                         + stringLiteral.getImplicitLexicalState()
+                         + " lexical state.");
                     continue;
                 }
                 if (stringLiteral.isContextual()) {
@@ -295,8 +300,9 @@ public class LexerData {
                     errors.addError(stringLiteral,
                                     "String literal " + alreadyPresent.getSource()
                                     + " declared at " + alreadyPresent.getLocation()
-                                    + " is not in lexical state "
-                                    + stringLiteral.getImplicitLexicalState());
+                                    + " is not declared in the "
+                                    + stringLiteral.getImplicitLexicalState()
+                                    + " lexical state.");
                     continue;
                 }
                 if (stringLiteral.isContextual()) {
@@ -351,7 +357,8 @@ public class LexerData {
                     String label = re.getLabel();
                     RegularExpression regexp = namedTokensTable.get(label);
                     if (regexp != null) {
-                        errors.addInfo(res.getRegexp(), "Token name \"" + label + " is redefined.");
+                        errors.addInfo(res.getRegexp(), "Token name \"" + label + " is redefined here.\n"
+                                        + " It was previously declared at: " + regexp.getLocation());
                     }
                     addNamedToken(label, re);
                 }

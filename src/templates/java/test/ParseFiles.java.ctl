@@ -14,10 +14,10 @@ import java.util.stream.Stream;
 import java.nio.file.Path;
 import ${settings.parserPackage}.${settings.parserClassName};
 
-/#if
+#endif
 
 /**
- * A test harness for parsing Java files from the command line.
+ * A test harness for parsing .${extension} files from the command line.
  */
 public class ParseFiles {
 #if !extension.empty && !testProduction.empty
@@ -65,13 +65,13 @@ public class ParseFiles {
         }
     }
 
-/#if
+#endif
 
 #if !extension.empty && !testProduction.empty
     static public void main(String args[]) throws IOException {
 #else
     static public void main(String args[]) {
-/#if
+#endif
 #if extension.empty
         System.out.println();
 #elif testProduction.empty
@@ -94,6 +94,6 @@ public class ParseFiles {
         System.out.println("\nParsed " + successes.size() + " files successfully");
         System.out.println("Failed on " + failures.size() + " files");
         System.out.println("\nDuration: " + (System.currentTimeMillis() - startTime) + " milliseconds");
-/#if
+#endif
     }
 }

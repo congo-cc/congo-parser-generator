@@ -98,7 +98,7 @@ public abstract class RegularExpression extends BaseNode {
         }
         String lexState = ((RegexpStringLiteral) this).getImplicitLexicalState();
         if (!alreadyUsing.isInLexicalState(lexState)) {
-            newLabel = "_" + lexState + newLabel;
+            newLabel = lexState + "_" + newLabel;
             alreadyUsing = getGrammar().getLexerData().regexpLabelAlreadyUsed(newLabel, this);
             if (alreadyUsing == null) {
                 return this.label = newLabel;
@@ -120,7 +120,7 @@ public abstract class RegularExpression extends BaseNode {
             // special case
             return "_UNDERSCORE";
         }
-        StringBuilder buf = new StringBuilder("_");
+        StringBuilder buf = new StringBuilder();
         int firstCodePoint = s.codePointAt(0);
         int startRest = 0;
         if (Character.isJavaIdentifierStart(firstCodePoint)) {
