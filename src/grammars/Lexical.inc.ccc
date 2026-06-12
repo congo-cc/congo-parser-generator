@@ -53,6 +53,7 @@ TokenProduction :
     boolean multipleStatesSpecified = false;
     boolean ignoreCase = false;
     boolean isContextual = false;
+    THIS.setIgnoreCase(this.ignoreCase);
 }
   [
     "<" "*" =>|| ">" {multipleStatesSpecified = true;}
@@ -227,6 +228,21 @@ INJECT RegexpStringLiteral :
   @Property boolean requireTokenDeclaration;
 
   private String implicitLexicalState;
+
+  private Boolean ignoreCase;
+
+  @Override
+  public boolean isIgnoreCase() {
+     if (ignoreCase != null) return ignoreCase;
+     TokenProduction tp = getTokenProduction();
+     if (tp != null) return tp.isIgnoreCase();
+     return getAppSettings().isIgnoreCase();
+  }
+
+  public void setIgnoreCase(boolean ignoreCase) {
+    this.ignoreCase = ignoreCase;
+  }
+
 
   public boolean isContextual() {
     TokenProduction tp = firstAncestorOfType(TokenProduction.class);

@@ -42,11 +42,12 @@ public abstract class RegularExpression extends BaseNode {
         this.codeSnippet = codeSnippet;
     }
 
-    public boolean getIgnoreCase() {
+    public boolean isIgnoreCase() {
         TokenProduction tp = firstAncestorOfType(TokenProduction.class);
-        if (tp != null)
+        if (tp != null) {
             return tp.isIgnoreCase();
-        return getAppSettings().isIgnoreCase();// REVISIT
+        }
+        return getAppSettings().isIgnoreCase();
     }
 
     /**
@@ -97,7 +98,7 @@ public abstract class RegularExpression extends BaseNode {
         }
         String lexState = ((RegexpStringLiteral) this).getImplicitLexicalState();
         if (!alreadyUsing.isInLexicalState(lexState)) {
-            newLabel = "_" + lexState + "_" + newLabel;
+            newLabel = "_" + lexState + newLabel;
             alreadyUsing = getGrammar().getLexerData().regexpLabelAlreadyUsed(newLabel, this);
             if (alreadyUsing == null) {
                 return this.label = newLabel;
@@ -119,7 +120,7 @@ public abstract class RegularExpression extends BaseNode {
             // special case
             return "_UNDERSCORE";
         }
-        StringBuilder buf = new StringBuilder();
+        StringBuilder buf = new StringBuilder("_");
         int firstCodePoint = s.codePointAt(0);
         int startRest = 0;
         if (Character.isJavaIdentifierStart(firstCodePoint)) {
@@ -137,15 +138,21 @@ public abstract class RegularExpression extends BaseNode {
             return codePointToString(ch);
         }
         return switch(ch) {
-            case '&' -> "_AMPERSAND";
+            case '&' -> "_AND";
             case '@' -> "_AT";
+            case '`' -> "_BACKQUOTE";
             case '\\' -> "_BACKSLASH";
             case ':' -> "_COLON";
+            case ',' -> "_COMMA";
+            case '$' -> "_DOLLAR";
             case '=' -> "_EQUALS";
+            case '#' -> "_HASH";
+            case '^' -> "_HAT";
             case '{' -> "_LBRACE";
             case '[' -> "_LBRACKET";
             case '(' -> "_LPAREN";
             case '-' -> "_MINUS";
+            case '|' -> "_OR";
             case '%' -> "_PERCENT";
             case '+' -> "_PLUS";
             case '?' -> "_QUESTION";
@@ -153,7 +160,9 @@ public abstract class RegularExpression extends BaseNode {
             case ']' -> "_RBRACKET";
             case ')' -> "_RPAREN";
             case ';' -> "_SEMICOLON";
+            case '\'' -> "_SINGLE_QUOTE";
             case '/' -> "_SLASH";
+            case ' ' -> "_SPACE";
             case '*' -> "_STAR";
             case '~' -> "_TILDE";
             default -> codePointToString(ch);

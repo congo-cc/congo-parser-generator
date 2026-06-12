@@ -193,7 +193,7 @@ public class LexerData {
     public Set<RegularExpression> getLiteralsThatDifferInCaseFromDefault() {
         Set<RegularExpression> result = new LinkedHashSet<>();
         for (RegularExpression re : getRegularExpressions()) {
-            if (re instanceof RegexpStringLiteral && re.getIgnoreCase() != grammar.getAppSettings().isIgnoreCase()) {
+            if (re instanceof RegexpStringLiteral && re.isIgnoreCase() != grammar.getAppSettings().isIgnoreCase()) {
                 result.add(re);
             }
         }
@@ -263,8 +263,8 @@ public class LexerData {
         RegexpStringLiteral result = null;
         for (RegularExpression r : regularExpressions) {
             if (r instanceof RegexpStringLiteral other) {
-                if (other.getIgnoreCase() && !image.equalsIgnoreCase(other.getLiteralString())) continue;
-                if (!other.getIgnoreCase() && !image.equals(other.getLiteralString())) continue;
+                if (other.isIgnoreCase() && !image.equalsIgnoreCase(other.getLiteralString())) continue;
+                if (!other.isIgnoreCase() && !image.equals(other.getLiteralString())) continue;
                 result = other;
                 if (other.isInLexicalState(rsl.getImplicitLexicalState())) {
                     break;
@@ -326,6 +326,7 @@ public class LexerData {
                              + " as a contextual keyword.");
                     }
                 }
+                stringLiteral.setIgnoreCase(alreadyPresent.isIgnoreCase());
                 stringLiteral.setOrdinal(alreadyPresent.getOrdinal());
                 stringLiteral.setLabel(alreadyPresent.getLabel());
                 Kind kind = alreadyPresent.getTokenProduction() == null ? TOKEN

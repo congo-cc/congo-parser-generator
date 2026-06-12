@@ -613,6 +613,7 @@ JavaCodeInjection2 :
 INJECT PARSER_CLASS :
 {
     private String defaultLexicalState = "DEFAULT";
+    private boolean ignoreCase = false;
     private boolean requireTokenDeclaration = false;
 }
 
@@ -674,6 +675,10 @@ Setting(Map<String,Object> settings) #Setting :
           if (!grammar.isInInclude()) {
               grammar.setDefaultLexicalState(this.defaultLexicalState);
           }
+      }
+      if (key.equals("IGNORE_CASE")) {
+          assert !settings.containsKey("IGNORE_CASE") : "repeated IGNORE_CASE setting!";
+          this.ignoreCase = (boolean) value;
       }
       if (key.equals("REQUIRE_TOKEN_DECLARATION")) {
           assert !settings.containsKey("REQUIRE_TOKEN_DECLARATION") : "repeated REQUIRE_TOKEN_DECLARATION setting!";
@@ -1570,6 +1575,7 @@ Terminal# :
       if (result instanceof RegexpStringLiteral rsl) {
             rsl.setImplicitLexicalState(this.defaultLexicalState);
             rsl.setRequireTokenDeclaration(this.requireTokenDeclaration);
+            rsl.setIgnoreCase(this.ignoreCase);
       }
       thisProduction.setRegexp(result);
   %}
