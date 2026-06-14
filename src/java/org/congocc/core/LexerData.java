@@ -299,7 +299,7 @@ public class LexerData {
                 if (stringLiteral.isRequireTokenDeclaration()) {
                     errors.addError(stringLiteral,
                                     "String literal " + alreadyPresent.getSource()
-                                    + " declared at " + alreadyPresent.getLocation()
+                                    + " at " + alreadyPresent.getLocation()
                                     + " is not declared in the "
                                     + stringLiteral.getImplicitLexicalState()
                                     + " lexical state.");

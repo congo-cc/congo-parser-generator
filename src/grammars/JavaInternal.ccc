@@ -27,24 +27,6 @@ INCLUDE "../../examples/java/Java.ccc"
   }
 ;
 
-/*
-#JavaCodeInjection#CompilationUnit :
-  [ PackageDeclaration! ]
-  ( ImportDeclaration )*!
-  ( TypeDeclaration )*!
-  [
-    //a bit of a kludge so that CodeInjection2 in CongoCC.ccc can work. Maybe revisit.
-    ENSURE {getTokenType(1) != RBRACE}
-    <EOF>
-  ]
-  {
-    return thisProduction;
-  }
-;*/
-
-
-
-
 INJECT Expression : extends EmbeddedCode {
     default CodeLang getSpecifiedLang() {
         return CodeLang.JAVA;

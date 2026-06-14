@@ -340,9 +340,19 @@ TOKEN :
       } else if (trimmed.startsWith("endif")) {
          matchedToken.setType(TokenType.PP_ENDIF);
       } else if (trimmed.startsWith("define")) {
-         matchedToken.setType(TokenType.PP_DEFINE);
+         if (noPPDefineAllowed) {
+            matchedToken.setType(TokenType.INVALID);
+            matchedToken.setUnparsed(false);
+         } else {
+            matchedToken.setType(TokenType.PP_DEFINE);
+         }
       } else if (trimmed.startsWith("undef")) {
-         matchedToken.setType(TokenType.PP_UNDEF);
+         if (noPPDefineAllowed) {
+            matchedToken.setType(TokenType.INVALID);
+            matchedToken.setUnparsed(false);
+         } else {
+            matchedToken.setType(TokenType.PP_UNDEF);
+         }
       }
    }
 ;
@@ -516,8 +526,13 @@ INJECT LEXER_CLASS :
 
 // Token hook to handle preprocessor directives.
 
+   private boolean noPPDefineAllowed;
+
    private BASE_TOKEN_CLASS TOKEN_HOOK(BASE_TOKEN_CLASS tok) {
       TokenType type = tok.getType();
+      if (!tok.isUnparsed()) {
+         noPPDefineAllowed = true;
+      }
       if (type == TokenType.EOF && ifNesting != 0) {
          tok.setType(TokenType.INVALID);
          return tok;

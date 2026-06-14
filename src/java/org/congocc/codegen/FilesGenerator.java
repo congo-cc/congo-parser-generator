@@ -373,9 +373,12 @@ public class FilesGenerator {
     void generateOtherFiles() throws IOException {
         if (generateRootApi) {
             generate(parserOutputDirectory, "TokenSource.java");
-            generate(parserOutputDirectory, "NonTerminalCall.java");
-            if (generateTestHarness)
-                generate(parserOutputDirectory, "test/ParseFiles.java");
+            if (!grammar.getProductionTable().isEmpty()) {
+                generate(parserOutputDirectory, "NonTerminalCall.java");
+                if (generateTestHarness) {
+                    generate(parserOutputDirectory, "test/ParseFiles.java");
+                }
+            }
         }
     }
 
