@@ -118,17 +118,17 @@ UsingDirective :
 ;
 
 UsingStaticDirective :
-    <USING> "static" =>|| Name ";"
+    ['global'] "using" "static" =>|| Name ";"
 ;
 
 UsingAliasDirective :
-   <USING> <IDENTIFIER> "=" =>||
+   ['global'] "using" <IDENTIFIER> "=" =>||
    Type
    ";"
 ;
 
 UsingNamespaceDirective :
-    <USING> Name ";" =>||
+    ['global'] "using" Name ";" =>||
 ;
 
 GlobalAttributeSection :
@@ -1917,7 +1917,7 @@ EmbeddedStatement :
 ;
 
 LocalVariableDeclarationLA#scan :
-   [ <USING> ]
+   [ "using" ]
    ENSURE {!checkNextTokenImage("await")} // Is there any possibility that a local type is named "await"?
    [SCAN 0 {checkNextTokenImage("scoped")} => <IDENTIFIER>]
    ["ref"] ["readonly"]
@@ -1935,7 +1935,7 @@ LocalVariableDeclarationLA#scan :
 
 LocalVariableDeclaration :
   SCAN LocalVariableDeclarationLA =>
-  [<USING>] // since 8.0
+  ["using"] // since 8.0
   (
      VarDeclaration
      |
@@ -2111,7 +2111,7 @@ YieldStatement :
 
 UsingStatement :
    ['await']
-   <USING>
+   "using"
    {boolean hasParenthesis = false;}
    ["(" {hasParenthesis=true;}]
    =>||

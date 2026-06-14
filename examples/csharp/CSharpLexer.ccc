@@ -187,7 +187,7 @@ TOKEN #KeyWord :
    | < UNCHECKED : "unchecked" >
    | < UNSAFE : "unsafe" >
    | < USHORT : "ushort" > #PrimitiveType
-   | < USING : ("global" <WHITESPACE>)? "using" >
+   | < USING : "using" >
    | < VIRTUAL : "virtual" >
    | < VOID : "void" >
    | < VOLATILE : "volatile" >
@@ -223,6 +223,7 @@ CONTEXTUAL #KeyWord :
    | <EXTENSION : 'extension'>
    | <FILE : 'file'>
    | <GET : 'get'>
+   | <GLOBAL : 'global'>
    | <INIT : 'init'>
    | <MANAGED : 'managed'>
    | <MODULE : 'module'>
@@ -344,6 +345,7 @@ TOKEN :
             matchedToken.setType(TokenType.INVALID);
             matchedToken.setUnparsed(false);
          } else {
+            assert matchedToken.isUnparsed() : "Huh?";
             matchedToken.setType(TokenType.PP_DEFINE);
          }
       } else if (trimmed.startsWith("undef")) {
@@ -400,6 +402,21 @@ MORE :
 <IN_RAW_STRING> TOKEN :
     <RAW_STRING_LITERAL : ('"'){3,}("u8")?> #StringLiteral
 ;
+
+#if __java__
+// This does not work with Python. Must REVISIT
+// For now the CSharp and Python impls allow #define and #undef
+// anywhere in a C# source file. Oh well.
+INJECT PARSER_CLASS :
+{
+   private BASE_TOKEN_CLASS TOKEN_HOOK(BASE_TOKEN_CLASS tok) {
+      if (lastConsumedToken != DUMMY_START_TOKEN && !lastConsumedToken.isUnparsed()) {
+         token_source.noPPDefineAllowed = true;
+      }
+      return tok;
+   }
+}
+#endif
 
 INJECT LEXER_CLASS :
 {
@@ -526,13 +543,10 @@ INJECT LEXER_CLASS :
 
 // Token hook to handle preprocessor directives.
 
-   private boolean noPPDefineAllowed;
+   boolean noPPDefineAllowed;
 
    private BASE_TOKEN_CLASS TOKEN_HOOK(BASE_TOKEN_CLASS tok) {
       TokenType type = tok.getType();
-      if (!tok.isUnparsed()) {
-         noPPDefineAllowed = true;
-      }
       if (type == TokenType.EOF && ifNesting != 0) {
          tok.setType(TokenType.INVALID);
          return tok;
