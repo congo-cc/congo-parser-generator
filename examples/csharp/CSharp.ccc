@@ -1,9 +1,7 @@
-// This is the Java grammar that is used in the CongoCC
+
 // tool itself but it can be used on its own, and you are free to use it
-// in your own projects. It supports the stable feature set of Dotnet 9,
-// i.e. C# version 13. There are a couple of C# 14 features that are currently
-// unsupported. I anticipate adding full support
-// for C# 14 once Dotnet 10 has a final release.
+// in your own projects. It supports the stable feature set of Dotnet 10,
+// i.e. C# version 14.
 // This grammar serves as a very good showcase for some of the more
 // advanced features of CongoCC, wihout which, it could well be
 // impossible to fully express the current C# language --

@@ -205,8 +205,9 @@ public class LexerData {
             RegularExpression oldValue = namedTokensTable.get(name);
             namedTokensTable.replace(name, oldValue, regexp);
             overriddenTokens.add(oldValue);
-        } else
+        } else {
             namedTokensTable.put(name, regexp);
+        }
     }
 
     public boolean isOverridden(RegularExpression regexp) {
@@ -245,7 +246,10 @@ public class LexerData {
                 String label = stringLiteral.getLabel();
                 RegularExpression regexp = namedTokensTable.get(label);
                 if (regexp != null) {
-                    errors.addInfo(stringLiteral, "Token name " + label + " is redefined here.\n  It was previously declared at: " + regexp.getLocation());
+                    errors.addInfo(stringLiteral, "Token label " + label + " is redefined here.\n  It was previously declared at: " + regexp.getLocation());
+                    if (regexp instanceof RegexpStringLiteral rsl) {
+                        removeStringLiteral(rsl);
+                    }
                 }
                 addNamedToken(label, stringLiteral);
             }
@@ -414,6 +418,12 @@ public class LexerData {
                     errors.addError(ref, "Self-referential loop detected");
                 }
             }
+        }
+    }
+
+    public void removeStringLiteral(RegexpStringLiteral rsl) {
+        for (String lexicalStateName : rsl.getLexicalStateNames()){
+            getLexicalState(lexicalStateName).removeStringLiteral(rsl);
         }
     }
 }

@@ -319,7 +319,7 @@ public final class Main {
         for (String warning : errors.getWarningMessages()) {
             System.err.println(warning);
         }
-        if (!quiet && !errors.getErrorMessages().isEmpty()) for (String info: errors.getInfoMessages()) {
+        if (!quiet) for (String info: errors.getInfoMessages()) {
             System.err.println(info);
         }
     }
