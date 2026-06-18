@@ -1,6 +1,7 @@
 package org.congocc.templates.core.variables;
 
 import java.lang.reflect.Method;
+import java.lang.reflect.Constructor;
 import java.math.BigDecimal;
 import java.math.BigInteger;
 import java.util.Map;
@@ -9,6 +10,8 @@ import java.util.concurrent.ConcurrentHashMap;
 import org.congocc.templates.TemplateBoolean;
 
 import java.lang.reflect.Array;
+import java.lang.reflect.Executable;
+
 import org.congocc.templates.core.parser.Node;
 import static org.congocc.templates.core.variables.Wrap.*;
 
@@ -18,6 +21,7 @@ import static org.congocc.templates.core.variables.Wrap.*;
 public class ReflectionCode {
 
     private static Map<String,Method> methodCache = new ConcurrentHashMap<>();
+    private static Map<String,Constructor<?>> constructorCache = new ConcurrentHashMap<>();
     private static Map<String, Method> getterCache = new ConcurrentHashMap<>();
     private static Map<String, Method> setterCache = new ConcurrentHashMap<>();
     private static final Object CAN_NOT_UNWRAP = new Object();
@@ -49,6 +53,19 @@ public class ReflectionCode {
         return result;
     }
 
+    public static Object invokeConstructor(Constructor<?> cons, Object[] params, Node location) {
+        if (isBannedMethod(cons)) {
+            throw new EvaluationException("Cannot run constructor at: " + location.getLocation());
+        }
+        Object[] args = unwrapArgsForMethod(cons, params);
+        try {
+            return cons.newInstance(args);
+        } catch (Exception e) {
+            throw new EvaluationException("Error invoking constructor " + cons + " at location " + location.getLocation(),
+                    e);
+        }
+    }
+
     public static Object getProperty(Object object, String key) {
         Method getter = getGetter(object, key);
         if (getter != NO_SUCH_METHOD) {
@@ -78,11 +95,19 @@ public class ReflectionCode {
         return methodCache.get(getLookupKey(target, methodName, params));
     }
 
+    static Constructor<?> getCachedConstructor(Class<?> clazz, Object[] params) {
+        return constructorCache.get(getLookupKey(clazz, "new", params ));
+    }
+
     static void cacheMethod(Method m, Object target, Object[] params) {
         methodCache.put(getLookupKey(target, m.getName(), params), m);
     }
 
-    static boolean isCompatibleMethod(Method method, Object[] params) {
+    static void cacheConstructor(Constructor<?> c, Object[] params) {
+        constructorCache.put(getLookupKey(c.getDeclaringClass(), "new", params), c);
+    }
+
+    static boolean isCompatibleMethod(Executable method, Object[] params) {
         Class<?>[] paramTypes = method.getParameterTypes();
         if (!method.isVarArgs() && paramTypes.length != params.length) {
             return false;
@@ -106,7 +131,7 @@ public class ReflectionCode {
         return true;
     }
 
-    static boolean isMoreSpecific(Method method1, Method method2, Object[] params) {
+    static boolean isMoreSpecific(Executable method1, Executable method2, Object[] params) {
         if (!method1.isVarArgs() && method2.isVarArgs()) return true;
         if (method1.isVarArgs() && !method2.isVarArgs()) return false;
         Class<?>[] types1 = method1.getParameterTypes();
@@ -201,7 +226,7 @@ public class ReflectionCode {
     }
 
 
-    private static Object[] unwrapArgsForMethod(Method method, Object[] params) {
+    private static Object[] unwrapArgsForMethod(Executable method, Object[] params) {
         Class<?>[] paramTypes = method.getParameterTypes();
         Object[] args = new Object[paramTypes.length];
         int numFixedParams = paramTypes.length;
@@ -209,7 +234,11 @@ public class ReflectionCode {
             numFixedParams--;
         }
         if (numFixedParams > params.length) {
-            throw new EvaluationException("For method " + method.getName() + " expecting " +numFixedParams + " parameters, received " +params.length + " parameters.");
+            String methodName = "constructor";
+            if (method instanceof Method meth) {
+                methodName = "method " + meth.getName();
+            }
+            throw new EvaluationException("For " + methodName + " expecting " +numFixedParams + " parameters, received " +params.length + " parameters.");
         }
         for (int i = 0; i< numFixedParams; i++) {
             Object param = params[i];
@@ -229,7 +258,7 @@ public class ReflectionCode {
     }
 
     // For now, this is good enough, I reckon.
-    private static boolean isBannedMethod(Method method) {
+    private static boolean isBannedMethod(Executable method) {
         Class<?> clazz = method.getDeclaringClass();
         if (clazz == Object.class) {
             if (method.getName().equals("wait") || method.getName().startsWith("notify")) {

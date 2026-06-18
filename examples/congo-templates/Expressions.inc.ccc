@@ -1375,6 +1375,7 @@ INJECT HashLiteral :
 INJECT MethodReference :
     import org.congocc.templates.core.Environment;
     import org.congocc.templates.core.variables.JavaMethodCall;
+    import org.congocc.templates.core.variables.JavaConstructorCall;
     implements Expression
 {
     public Expression getTarget() {
@@ -1384,6 +1385,9 @@ INJECT MethodReference :
     public Object evaluate(Environment env) {
         Object target = getTarget().evaluate(env);
         String methodName = get(2).toString();
+        if (methodName.equals("new")) {
+            return new JavaConstructorCall(target, this);
+        }
         return new JavaMethodCall(target, methodName, this);
     }
 }

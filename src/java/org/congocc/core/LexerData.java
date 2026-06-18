@@ -435,7 +435,7 @@ public class LexerData {
         for (RegularExpression re : getRegularExpressions()) {
             String label = re.getLabel();
             if (getLexicalState(label) != null) {
-                errors.addError(re, "Regular Expression " + label + " cannot be the same as the name of a lexical state.");
+                errors.addError(re, "Regular Expression label " + label + " cannot be the same as the name of a lexical state.");
             }
         }
     }
