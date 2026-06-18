@@ -247,6 +247,7 @@ public class LexerData {
                 RegularExpression regexp = namedTokensTable.get(label);
                 if (regexp != null) {
                     errors.addInfo(stringLiteral, "Token label " + label + " is redefined here.\n  It was previously declared at: " + regexp.getLocation());
+                    overriddenTokens.add(regexp);
                     if (regexp instanceof RegexpStringLiteral rsl) {
                         removeStringLiteral(rsl);
                     }
@@ -266,6 +267,7 @@ public class LexerData {
         String image = rsl.getLiteralString();
         RegexpStringLiteral result = null;
         for (RegularExpression r : regularExpressions) {
+            if (isOverridden(r)) continue;
             if (r instanceof RegexpStringLiteral other) {
                 if (other.isIgnoreCase() && !image.equalsIgnoreCase(other.getLiteralString())) continue;
                 if (!other.isIgnoreCase() && !image.equals(other.getLiteralString())) continue;
@@ -361,6 +363,7 @@ public class LexerData {
                     String label = re.getLabel();
                     RegularExpression regexp = namedTokensTable.get(label);
                     if (regexp != null) {
+                        overriddenTokens.add(regexp);
                         errors.addInfo(res.getRegexp(), "Token name \"" + label + " is redefined here.\n"
                                         + " It was previously declared at: " + regexp.getLocation());
                     }
