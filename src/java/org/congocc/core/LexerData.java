@@ -223,6 +223,7 @@ public class LexerData {
         dealWithUndeclaredStringLiterals();
         dealWithDeclaredPatterns();
         dealWithRegexpRefs();
+        sanityCheckTokenNames();
         if (errors.getErrorCount()>0) return;
         // Check for self-referential loops in regular expressions
         new RegexpVisitor().visit(grammar);
@@ -427,6 +428,15 @@ public class LexerData {
     public void removeStringLiteral(RegexpStringLiteral rsl) {
         for (String lexicalStateName : rsl.getLexicalStateNames()){
             getLexicalState(lexicalStateName).removeStringLiteral(rsl);
+        }
+    }
+
+    private void sanityCheckTokenNames() {
+        for (RegularExpression re : getRegularExpressions()) {
+            String label = re.getLabel();
+            if (getLexicalState(label) != null) {
+                errors.addError(re, "Regular Expression " + label + " cannot be the same as the name of a lexical state.");
+            }
         }
     }
 }
