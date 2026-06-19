@@ -94,20 +94,18 @@
     <congocc-use-bootstrap target="examples/congo-templates/CTL.ccc"/>
   </target>
 
-  <target name="build-parsers" depends="init">
-    <parallel>
-      <antcall target="parser-gen"/>
-      <antcall target="preprocessor-gen"/>
-      <antcall target="ppline-gen"/>
-      <antcall target="python-gen"/>
-      <antcall target="csharp-gen"/>
-      <antcall target="rust-gen"/>
-      <antcall target="templates-gen"/>
-    </parallel>
-  </target>
+  <target name="build-parsers"
+      depends="init,
+               parser-gen,
+               preprocessor-gen,
+               ppline-gen,
+               python-gen,
+               csharp-gen,
+               rust-gen,
+               templates-gen"
+  />
 
   <target name="compile" depends="build-parsers">
-    <mkdir dir="build" />
     <javac destdir="build"
       deprecation="off"
       debug="on"
@@ -119,6 +117,7 @@
       <src path="build/generated-java"/>
       <compilerarg value="-Xlint:deprecation" />
     </javac>
+    <copy todir="build" file="LICENSE"/>
     <copy todir="build/templates">
       <fileset dir="src/templates">
         <include name="**/*.ctl" />
@@ -136,17 +135,18 @@
     </copy>
   </target>
 
-  <target name="templates-compile" depends="templates-gen">
-    <mkdir dir="build" />
+  <target name="templates-compile" depends="init,templates-gen">
+    <copy todir="build" file="LICENSE"/>
     <javac destdir="build"
       deprecation="off"
       debug="on"
       optimize="off"
       failonerror="true"
       includeantruntime="false"
-      release="17">
-      <src path="src/java/org/congocc/templates/"/>
-      <src path="build/generated-java/org/congocc/templates/" />
+      release="17" >
+      <src path="src/java/"/>
+      <src path="build/generated-java/" />
+      <include name="org/congocc/templates/**"/>
       <compilerarg value="-Xlint:deprecation" />
     </javac>
   </target>
@@ -230,9 +230,8 @@
   </target>
 
   <target name="jar" depends="compile">
-    <echo>Creating jar with all dependencies included</echo>
     <jar jarfile="congocc.jar" compress="true" excludes="**/*.java">
-      <fileset dir="build" includes="include/,org/,templates/"/>
+      <fileset dir="build" includes="LICENSE,include/,org/,templates/"/>
       <manifest>
         <attribute name="Main-Class" value="org.congocc.app.Main" />
         <attribute name="Built-By" value="${user.name}" />
@@ -242,11 +241,12 @@
   </target>
 
   <target name="templates-jar" depends="templates-compile">
-     <jar jarfile="congo-templates.jar" basedir="build" compress="true" includes="org/congocc/templates/**/*.class">
+     <jar jarfile="congo-templates.jar"
+          basedir="build"
+          compress="true"
+          includes="LICENSE,org/congocc/templates/**/*.class">
         <manifest>
            <attribute name="Main-Class" value="org.congocc.templates.core.CommandLine"/>
-           <attribute name="Built-By" value="${user.name}"/>
-           <attribute name="Build-Date"   value="${timestamp}"/>
         </manifest>
      </jar>
   </target>
