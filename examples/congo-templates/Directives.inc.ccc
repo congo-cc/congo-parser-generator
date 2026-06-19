@@ -131,6 +131,24 @@ INJECT AttemptBlock :
     }
 }
 
+LoopBlock :
+   {Token start;}
+   start=<LOOP>
+   <DIRECTIVE_END>
+   Block
+   CloseDirectiveBlock(start)
+;
+
+INJECT LoopBlock :
+    import java.io.IOException;
+    import org.congocc.templates.core.*;
+    implements TemplateElement
+{
+    public void execute(Environment env) throws IOException {
+        env.loop(getNestedBlock());
+    }
+}
+
 ListBlock#IteratorBlock :
 {Token start;}
    start=<LIST>
@@ -1089,6 +1107,8 @@ TemplateElement#interface :
    IfBlock
    |
    ListBlock
+   |
+   LoopBlock
    |
    AssignmentInstruction
    |

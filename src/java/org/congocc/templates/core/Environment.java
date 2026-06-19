@@ -234,6 +234,22 @@ public final class Environment extends Configurable implements Scope {
         }
     }
 
+    public void loop(Block block) throws IOException {
+        Scope prevScope = currentScope;
+        try {
+            while (true) {
+                render(block);
+            }
+        }
+        catch (BreakException br) {}
+        catch (TemplateException te) {
+            handleTemplateException(te);
+        }
+        finally {
+            currentScope = prevScope;
+        }
+    }
+
     /**
      * Loop over a block, using the iterator passed in and
      * the given variable name for the loop variable.

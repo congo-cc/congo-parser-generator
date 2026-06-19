@@ -209,7 +209,7 @@
     #else
        boolean reachedScanCode = false;
        int passedPredicateThreshold = remainingLookahead - ${expansion.lookaheadAmount};
-    /#if
+    #endif
     try {
        lookaheadRoutineNesting++;
        ${BuildPredicateCode(expansion, cardinalitiesVar)}

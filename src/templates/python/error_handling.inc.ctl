@@ -136,7 +136,7 @@
             <-
 #if settings.treeBuildingEnabled
             self.push_node(next_token)
-/#if
+#endif
             # self.last_consumed_token.next = next_next
             return next_next
         <-

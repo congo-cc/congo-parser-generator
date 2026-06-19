@@ -1,4 +1,4 @@
-[#-- This template contains the core logic for generating the various parser routines. --]
+#-- This template contains the core logic for generating the various parser routines.
 [#import "common_utils.inc.ctl" as CU]
 [#var nodeNumbering = 0]
 [#var exceptionNesting = 0]
@@ -87,7 +87,7 @@ ${is}            success = True
 ${is}            break
    #if expansion.simpleName = "ZeroOrMore" || expansion.simpleName = "OneOrMore"
       #var followingExpansion = expansion.followingExpansion
-      #list 1..1000000 as unused
+      #loop
       [#if !followingExpansion??][#break][/#if]
       #if followingExpansion.maximumSize > 0
          #if followingExpansion.simpleName = "OneOrMore" || followingExpansion.simpleName = "ZeroOrOne" || followingExpansion.simpleName = "ZeroOrMore"
@@ -107,7 +107,7 @@ ${is}                break
          #break
       #endif
       #set followingExpansion = followingExpansion.followingExpansion
-      #endlist
+      #endloop
    #endif
 ${is}        self.last_consumed_token = self.next_token(self.last_consumed_token)
 ${is}        skipped_tokens.append(self.last_consumed_token)

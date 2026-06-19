@@ -34,7 +34,7 @@ INJECT LEXER_CLASS :
     String templateName;
 
     private static EnumSet<TokenType> directiveNames = EnumSet.of(
-        _ATTEMPT, _ASSERT, _RECOVER, IF, ELSE_IF, EXEC, LIST,
+        _ATTEMPT, _ASSERT, _RECOVER, IF, ELSE_IF, EXEC, LIST, LOOP,
         SET, _INCLUDE, IMPORT, FUNCTION, _MACRO, STOP, RETURN, SETTING,
         EMBED, VAR, ELSE, BREAK, TRIM, LTRIM, RTRIM,
         NESTED, CTL_HEADER, UNKNOWN_DIRECTIVE
@@ -89,6 +89,7 @@ INJECT LEXER_CLASS :
             case "#import" : return IMPORT;
             case "#include" : return _INCLUDE;
             case "#list" : return LIST;
+            case "#loop" : return LOOP;
             case "#macro" : return _MACRO;
             case "#nested" : return NESTED;
             case "#recover" : return _RECOVER;
@@ -120,7 +121,9 @@ INJECT LEXER_CLASS :
             }
         }
         else if (type == POSSIBLE_END_DIRECTIVE) {
-            if (!atLineStart(token) && !atLineEnd(token)) return token;
+            //if (!atLineStart(token) && !atLineEnd(token)) return token;
+            //if (!atLineStart(token) || !atLineEnd(token)) return token;
+            if (!atLineStart(token)) return token;
             token.setType(CLOSE_DIRECTIVE_BLOCK);
         }
         else if (type == EOL) {
@@ -287,6 +290,8 @@ TOKEN#Text :
     <_INCLUDE : "include">
     |
     <LIST : "list">
+    |
+    <LOOP : "loop">
     |
     <LTRIM : "lt" <CLOSE_TAG2>>
     |

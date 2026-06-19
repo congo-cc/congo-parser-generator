@@ -101,7 +101,8 @@
              }
              #if expansion.simpleName = "ZeroOrMore" || expansion.simpleName = "OneOrMore"
                #var followingExpansion = expansion.followingExpansion
-               #list 1..1000000 as unused
+               #--list 1..1000000 as unused
+               #loop
                 #if !followingExpansion??
                   #break
                 #endif
@@ -128,7 +129,8 @@
                  #break
                 #endif
                 #set followingExpansion = followingExpansion.followingExpansion
-               #endlist
+               #--endlist
+               #endloop
              #endif
              lastConsumedToken = nextToken(lastConsumedToken);
              skippedTokens.add(lastConsumedToken);
@@ -986,7 +988,7 @@
              #if loopExpansion.recoveryBlock??
                  // Recovery code action at ${loopExpansion.recoveryBlock.location} when recovery succeeded and pushed an InvalidNode
                  ${loopExpansion.recoveryBlock.javaCode}
-             /#if
+             #endif
              pendingRecovery = false;
           }
           if (pendingRecovery) throw pe;
