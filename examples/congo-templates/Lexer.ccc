@@ -65,6 +65,10 @@ INJECT LEXER_CLASS :
         for (int i = tok.getEndOffset(); i < length(); i++) {
             int ch = charAt(i);
             if (ch == '\n') break;
+            if (ch == '#') {
+                if (i+2 < length() && charAt(i+1) == '-' && charAt(i+2) == '-') break;
+                else return false;
+            }
             if (!Character.isWhitespace(ch)) return false;
         }
         return true;
@@ -225,7 +229,9 @@ MORE :
 ;
 
 TOKEN#Delimiter :
-    <CLOSE_DIRECTIVE_BLOCK : ("[/#" (["a"-"z"])* (<BLANK>)* "]") | ("</#" (["a"-"z"])* (<BLANK>)* ">")>
+    <CLOSE_DIRECTIVE_BLOCK : ("[" ("/#"|"#end") (["a"-"z"])* (<BLANK>)* "]")
+                             | ("<" ("/#"|"#end") (["a"-"z"])* (<BLANK>)* ">")
+    >
     |
     <UNIFIED_CALL : "<@" | "[@" >
     |

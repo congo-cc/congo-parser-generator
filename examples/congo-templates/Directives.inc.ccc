@@ -134,6 +134,10 @@ INJECT AttemptBlock :
 LoopBlock :
    {Token start;}
    start=<LOOP>
+   [
+      ('while' | 'until')
+      Expression
+   ]
    <DIRECTIVE_END>
    Block
    CloseDirectiveBlock(start)
@@ -145,7 +149,8 @@ INJECT LoopBlock :
     implements TemplateElement
 {
     public void execute(Environment env) throws IOException {
-        env.loop(getNestedBlock());
+        boolean until = get(1).getType() == UNTIL;
+        env.loop(getNestedBlock(), firstChildOfType(Expression.class), until);
     }
 }
 
@@ -937,9 +942,9 @@ INJECT NoParseBlock :
 CloseDirectiveBlock(Token startToken)#void :
     <CLOSE_DIRECTIVE_BLOCK>
 	{
-        String image = lastConsumedToken.toString();
-        String nameAtEnd = image.startsWith("#end") ? image.substring(4) : stripNonLetter(image);
-        String nameAtStart = stripNonLetter(startToken.toString());
+        String image = stripNonLetters(lastConsumedToken.toString());
+        String nameAtEnd = image.startsWith("end") ? image.substring(3) : image;
+        String nameAtStart = stripNonLetters(startToken.toString());
         if (nameAtEnd.length() > 0) {
             if (!nameAtStart.equals(nameAtEnd)) {
                 if (!(nameAtStart.equals("attempt") && nameAtEnd.equals("recover"))) {
@@ -959,7 +964,7 @@ CloseDirectiveBlock(Token startToken)#void :
 
 INJECT PARSER_CLASS :
 {
-    static String stripNonLetter(String s) {
+    static String stripNonLetters(String s) {
         StringBuilder buf = new StringBuilder();
         for (int i = 0; i < s.length(); i++) {
             if (Character.isLetter(s.charAt(i))) {

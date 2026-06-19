@@ -87,7 +87,7 @@
             }
   #if expansion.simpleName = "ZeroOrMore" || expansion.simpleName = "OneOrMore"
     #var followingExpansion = expansion.followingExpansion
-    #list 1..1000000 as unused
+    #loop
       #if !followingExpansion??
          #break
       #endif
@@ -114,7 +114,7 @@
         #break
       #endif
       #set followingExpansion = followingExpansion.followingExpansion
-    #endlist
+    #endloop
   #endif
             LastConsumedToken = NextToken(LastConsumedToken);
             skippedTokens.Add(LastConsumedToken);

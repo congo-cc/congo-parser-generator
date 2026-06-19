@@ -61,7 +61,9 @@
     ${production.name}(${production!.parameterList!})
    #if settings.useCheckedException
     throws ParseException
-    [#list (production.throwsList.types)! as throw], ${throw}[/#list]
+    #list (production.throwsList.types)! as throw
+       , ${throw}
+    #endlist
    #elif (production.throwsList.types)??
      #list production.throwsList.types as throw
         #if throw_index == 0
@@ -755,7 +757,7 @@
       }
    #endif
    #if assertion.expansion??
-      if ( [#if !assertion.expansionNegated]![/#if]
+      if (${!assertion.expansionNegated ?: "!"}
       ${assertion.expansion.scanRoutineName}()) {
          pushOntoCallStack("${assertion.containingProduction.name}",
                         "${assertion.inputSource?j_string}",
