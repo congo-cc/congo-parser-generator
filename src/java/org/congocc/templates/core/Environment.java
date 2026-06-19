@@ -11,6 +11,7 @@ import java.util.*;
 
 import org.congocc.templates.core.nodes.generated.ArgsList;
 import org.congocc.templates.core.nodes.generated.Block;
+import org.congocc.templates.core.nodes.generated.Expression;
 import org.congocc.templates.core.nodes.generated.Macro;
 import org.congocc.templates.core.nodes.generated.NestedInstruction;
 import org.congocc.templates.core.nodes.generated.PositionalArgsList;
@@ -234,11 +235,23 @@ public final class Environment extends Configurable implements Scope {
         }
     }
 
-    public void loop(Block block) throws IOException {
+    public void loop(Block block, Expression condition, boolean until) throws IOException {
         Scope prevScope = currentScope;
         try {
-            while (true) {
-                render(block);
+            if (condition == null) {
+                while (true) {
+                    render(block);
+                }
+            }
+            else if (until) {
+                do {
+                    render(block);
+                } while(condition.isTrue(this));
+            }
+            else {
+                while (condition.isTrue(this)) {
+                    render(block);
+                }
             }
         }
         catch (BreakException br) {}
