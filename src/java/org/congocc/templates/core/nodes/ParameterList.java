@@ -5,7 +5,6 @@ import org.congocc.templates.TemplateException;
 import org.congocc.templates.core.TemplateRunnable;
 import org.congocc.templates.core.variables.InvalidReferenceException;
 import org.congocc.templates.core.variables.scope.Scope;
-import org.congocc.templates.core.variables.scope.NamedParameterListScope;
 import org.congocc.templates.core.variables.scope.NamedParameterMapScope;
 import static org.congocc.templates.core.variables.Wrap.assertIsDefined;
 import static org.congocc.templates.core.variables.Wrap.assertNonNull;
@@ -127,76 +126,6 @@ public class ParameterList extends TemplateNode {
                 assertNonNull(null, firstUnresolvedExpression);
             }
         }
-    }
-
-    /**
-    * Given a positional list of argument expressions, create a positional
-    * list of variables. Used to pass positional arguments to a template
-    * method model.
-    */
-    public List<Object> getParameterSequence(final PositionalArgsList args, final Environment env) {
-        final List<Object> result = new ArrayList<>(params.size());
-        int argsSize = args.size();
-        int paramsSize = params.size();
-        int commonSize = Math.min(argsSize, paramsSize);
-        // Set formal args that have matching actual args
-        for (int i = 0; i < commonSize;++i) {
-            result.add(args.getValueAt(i, env));
-        }
-        if (commonSize < argsSize) {
-            // More actual args than formal args -- use catchall if present
-            if (catchall == null) {
-                throw new TemplateException("Extraneous parameters provided; expected " + paramsSize + ", got " + argsSize);
-            }
-            for (int i = commonSize; i < argsSize; i++) {
-                result.add(args.getValueAt(i, env));
-            }
-        } else if (commonSize < paramsSize) {
-            // More formal args than actual args -- fill in defaults
-            // Create a scope that provides live access to the parameter list
-            // so we can reference already defined parameters
-            Scope scope = new NamedParameterListScope(env.getCurrentScope(), params, result, false);
-            fillInDefaults(env, scope, params.subList(args.size(), params.size()));
-        }
-        return result;
-    }
-
-    /**
-    * Given a named list of argument expressions, create a positional
-    * list of template models. Used to pass named arguments to a template
-    * method model.
-    */
-    public List<Object> getParameterSequence(final NamedArgsList args, final Environment env) {
-        int argsSize = args.size();
-        int paramsSize = params.size();
-        if (argsSize > paramsSize) {
-            Collection<String> l = new LinkedHashSet<String>(args.getArgs().keySet());
-            l.removeAll(params);
-            throw new TemplateException("Extraneous parameters " + l);
-        }
-        final List<Object> result = new ArrayList<>();
-        List<String> unresolvedParamNames = null;
-        Map<String, Expression> argsMap = args.getCopyOfMap();
-        for (String paramName : params) {
-            Expression argExp = argsMap.remove(paramName);
-            if (argExp != null) {
-                Object argModel = argExp.evaluate(env);
-                assertIsDefined(argModel, argExp);
-                result.add(argModel);
-            } else {
-                if (unresolvedParamNames == null) {
-                    unresolvedParamNames = new LinkedList<String>();
-                }
-                unresolvedParamNames.add(paramName);
-            }
-        }
-        if (unresolvedParamNames != null) {
-            // Create a scope that provides live access to the parameter list
-            // so we can reference already defined parameters
-            final Scope scope = new NamedParameterListScope(env.getCurrentScope(), params, result, false);
-            fillInDefaults(env, scope, unresolvedParamNames);
-        }
-        return result;
     }
 
     /**

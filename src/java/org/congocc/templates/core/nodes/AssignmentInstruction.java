@@ -63,7 +63,7 @@ public class AssignmentInstruction extends TemplateNode implements TemplateEleme
         }
     }
 
-    public static void set(Expression lhs, Object value, Environment env, Map scope) {
+    public static void set(Expression lhs, Object value, Environment env, Map<String,Object> scope) {
         while (lhs instanceof ParentheticalExpression pe) {
             lhs = pe.getNested();
         }

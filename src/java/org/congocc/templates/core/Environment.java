@@ -43,7 +43,6 @@ import static org.congocc.templates.core.variables.Wrap.*;
  * @author <a href="mailto:jon@revusky.com">Jonathan Revusky</a>
  * @author Attila Szegedi
  */
-@SuppressWarnings("rawtypes")
 public final class Environment extends Configurable implements Scope {
     private static final ThreadLocal<Environment> threadEnv = new ThreadLocal<Environment>();
 
@@ -238,20 +237,13 @@ public final class Environment extends Configurable implements Scope {
     public void loop(Block block, Expression condition, boolean until) throws IOException {
         Scope prevScope = currentScope;
         try {
-            if (condition == null) {
-                while (true) {
-                    render(block);
-                }
-            }
-            else if (until) {
-                do {
-                    render(block);
-                } while(condition.isTrue(this));
-            }
-            else {
-                while (condition.isTrue(this)) {
-                    render(block);
-                }
+            if (until) do {
+                currentScope = new BlockScope(block, prevScope);
+                render(block);
+            } while(!condition.isTrue(this));
+            else while (condition == null || condition.isTrue(this)) {
+                currentScope = new BlockScope(block, prevScope);
+                render(block);
             }
         }
         catch (BreakException br) {}
@@ -630,6 +622,7 @@ public final class Environment extends Configurable implements Scope {
         try {
             scope.put(name, value);
         } catch (UndeclaredVariableException uve) {
+            // Is this really necessary? REVISIT
             if (globalVariables.containsKey(name)) {
                 globalVariables.put(name, value);
             } else {
