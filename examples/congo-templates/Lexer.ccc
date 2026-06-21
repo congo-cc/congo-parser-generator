@@ -41,8 +41,7 @@ INJECT LEXER_CLASS :
     );
 
     private static EnumSet<TokenType> emptyDirectives = EnumSet.of(
-        _ATTEMPT, _RECOVER, ELSE, BREAK, TRIM, LTRIM,
-        RTRIM, DEFAUL
+        _ATTEMPT, _RECOVER, ELSE, BREAK, TRIM, LTRIM, RTRIM
     );
 
     private static EnumSet<TokenType> continueLineTokens = EnumSet.of(
@@ -79,8 +78,6 @@ INJECT LEXER_CLASS :
             case "#assert" : return _ASSERT;
             case "#attempt" : return _ATTEMPT;
             case "#break" : return BREAK;
-            case "#case" : return CASE;
-            case "#default" : return DEFAUL;
             case "#embed" : return EMBED;
             case "#else" : return ELSE;
             case "#elif" : return ELSE_IF;
@@ -101,7 +98,6 @@ INJECT LEXER_CLASS :
             case "#set" : return SET;
             case "#setting" : return SETTING;
             case "#stop" : return STOP;
-            case "#switch" : return SWITCH;
             case "#var" : return VAR;
         }
         return UNKNOWN_DIRECTIVE;
@@ -241,7 +237,7 @@ TOKEN#Delimiter :
     |
     <?NOPARSE : <NOPARSE_BEGIN> (~[])* <NOPARSE_END> > #LegacyNoParse
     |
-    <#NOPARSE_BEGIN :   ("<#noparse" (<BLANK>)* ">") | ("/#noparse" (<BLANK>)* "]")>
+    <#NOPARSE_BEGIN :   ("<#noparse" (<BLANK>)* ">") | ("[#noparse" (<BLANK>)* "]")>
     |
     <#NOPARSE_END :  ("</#noparse" (<BLANK>)* ">") | ("[/#noparse" (<BLANK>)* "]")>
 ;
@@ -272,10 +268,6 @@ TOKEN#Text :
     <_ATTEMPT : "attempt" <CLOSE_TAG1>>
     |
     <BREAK : "break" <CLOSE_TAG2>>
-    |
-    <CASE : "case">
-    |
-    <DEFAUL : "default" <CLOSE_TAG1>>
     |
     <ELSE : "else" <CLOSE_TAG2>>
     |
@@ -316,8 +308,6 @@ TOKEN#Text :
     <SETTING : "setting">
     |
     <STOP : "stop">
-    |
-    <SWITCH : "switch">
     |
     <TRIM : "t" <CLOSE_TAG2>>
     |
@@ -433,7 +423,7 @@ TOKEN#Text :
 INCLUDE JAVA_IDENTIFIER_DEF
 
 <EXPRESSION> TOKEN:
-   <ID: ("@"|<JAVA_IDENTIFIER_START>)("@"|<JAVA_IDENTIFIER_PART>)*> #Identifier
+   <ID: <JAVA_IDENTIFIER_START> (<JAVA_IDENTIFIER_PART>)*> #Identifier
 ;
 
 INJECT Identifier :

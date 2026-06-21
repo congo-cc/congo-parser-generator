@@ -226,10 +226,11 @@ public class JavaFormatter extends AbstractCodeFormatter {
     }
 
     void visit(LocalVariableDeclaration lvd) {
-        boolean inForStatement = (lvd.getParent() instanceof ForStatement);
-        if (!inForStatement) newLine();
+        boolean inline = lvd.getParent() instanceof ForStatement
+                                  || lvd.getParent() instanceof InstanceOfExpression;
+        if (!inline) newLine();
         recurse(lvd);
-        if (!inForStatement) newLine();
+        if (!inline) newLine();
     }
 
     void visit(Annotation ann) {

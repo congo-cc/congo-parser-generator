@@ -5,7 +5,7 @@ import java.util.Map;
 public class NamedParameterMapScope implements Scope {
     private final Map<String, Object> parameters;
     private Scope enclosingScope;
-    
+
     public NamedParameterMapScope(Scope enclosingScope, Map<String, Object> parameters) {
         this.enclosingScope = enclosingScope;
         this.parameters = parameters;

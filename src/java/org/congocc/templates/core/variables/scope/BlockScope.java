@@ -5,10 +5,10 @@ import org.congocc.templates.core.nodes.generated.Block;
 import org.congocc.templates.*;
 
 public class BlockScope extends HashMap<String,Object> implements Scope {
-	
+
 	private Block block;
 	private Scope enclosingScope;
-	
+
 	public BlockScope(Block block, Scope enclosingScope) {
 		this.block = block;
 		this.enclosingScope = enclosingScope;
@@ -21,12 +21,12 @@ public class BlockScope extends HashMap<String,Object> implements Scope {
 	public Template getTemplate() {
 		return block.getTemplate();
 	}
-	
-	public Object put(String key, Object tm) {
+
+	public Object put(String key, Object value) {
 		if (!definesVariable(key)) {
 			throw new IllegalArgumentException("The variable " + key + " is not declared here.");
 		}
-		return super.put(key, tm);
+		return super.put(key, value);
 	}
 
 	protected void putUnconditionally(String key, Object var) {
@@ -36,7 +36,7 @@ public class BlockScope extends HashMap<String,Object> implements Scope {
 	public Block getBlock() {
 		return block;
 	}
-	
+
 	public boolean definesVariable(String name) {
 		return getBlock().declaresVariable(name);
 	}

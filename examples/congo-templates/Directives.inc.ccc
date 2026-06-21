@@ -551,10 +551,10 @@ INJECT IncludeInstruction :
         boolean parse = true;
         Expression parseExp = getParamByName("parse");
         if (parseExp != null) {
-            Object tm = parseExp.evaluate(env);
-            assertNonNull(tm, parseExp);
-            if (tm instanceof CharSequence) {
-                parse = StringUtil.getYesNo(asString(tm));
+            Object result = parseExp.evaluate(env);
+            assertNonNull(result, parseExp);
+            if (result instanceof CharSequence) {
+                parse = StringUtil.getYesNo(asString(result));
             }
             else {
                 parse = parseExp.isTrue(env);
@@ -864,11 +864,11 @@ INJECT UnifiedCall :
 
     public void execute(Environment env) throws IOException {
         Expression nameExp = getNameExp();
-        Object tm = nameExp.evaluate(env);
+        Object executable = nameExp.evaluate(env);
         ArgsList args = getArgs();
         ParameterList bodyParameters = getBodyParameters();
-        if (tm == Macro.DO_NOTHING_MACRO || tm ==LOOSE_NULL) return; // shortcut here.
-        if (tm instanceof Macro macro) {
+        if (executable == Macro.DO_NOTHING_MACRO || executable ==LOOSE_NULL) return; // shortcut here.
+        if (executable instanceof Macro macro) {
             if (macro.isFunction()) {
                 throw new TemplateException("Routine " + macro.getName()
                         + " is a function. A function can only be called " +
@@ -877,7 +877,7 @@ INJECT UnifiedCall :
             env.render(macro, args, bodyParameters, firstChildOfType(Block.class));
         }
         else {
-            assertNonNull(tm, nameExp);
+            assertNonNull(executable, nameExp);
             throw new TemplateException(getLocation() + ": " + getNameExp() +
                     " is not a macro.");
         }
@@ -952,7 +952,7 @@ CloseDirectiveBlock(Token startToken)#void :
                                      + nameAtStart
                                      + " to close the block starting on line "
                                      + startToken.getBeginLine()
-                                     + " but found " + nameAtEnd;
+                                     + " but found " + lastConsumedToken;
                     throw new ParseException(message, lastConsumedToken, parsingStack);
                 }
             }
@@ -1077,9 +1077,9 @@ INJECT VarDirective :
                 }
             }
             else {
-                Object tm = exp.evaluate(env);
-                assertIsDefined(tm, exp);
-                scope.put(varname, tm);
+                Object value = exp.evaluate(env);
+                assertIsDefined(value, exp);
+                scope.put(varname, value);
             }
         }
     }
@@ -1365,26 +1365,26 @@ INJECT TemplateHeaderElement :
     }
 
 	public String getStringParameter(String name) {
-		Object tm = getParameter(name);
-        if (tm == null) return null;
+		Object param = getParameter(name);
+        if (param == null) return null;
 		try {
-			return asString(tm);
+			return asString(param);
 		} catch (ClassCastException cce) {
 		    throw new IllegalArgumentException("Parameter " + name + " is not a string.");
 		}
 	}
 
 	public boolean getBooleanParameter(String name) {
-		Object tm = getParameter(name);
-		if (tm == null) {
+		Object param = getParameter(name);
+		if (param == null) {
 			throw new IllegalArgumentException("No parameter " + name);
 		}
-		if (isBoolean(tm)) {
-			return asBoolean(tm);
+		if (isBoolean(param)) {
+			return asBoolean(param);
 		}
-		if (tm instanceof CharSequence) {
+		if (param instanceof CharSequence) {
 			try {
-				return getYesNo(asString(tm));
+				return getYesNo(asString(param));
 			} catch (Exception e) {
 				throw new IllegalArgumentException(e);
 			}

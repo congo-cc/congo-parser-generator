@@ -237,8 +237,8 @@ public class Configuration extends Configurable {
      * @see #setSharedVariable(String,Object)
      * @see #setAllSharedVariables
      */
-    public void setSharedVariable(String name, Object tm) {
-        variables.put(name, wrap(tm));
+    public void setSharedVariable(String name, Object value) {
+        variables.put(name, wrap(value));
     }
 
     public void put(String key, Object obj) {

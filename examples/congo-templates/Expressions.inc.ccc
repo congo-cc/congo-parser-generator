@@ -66,7 +66,6 @@ INJECT Expression :
             return cs.length() > 0;
         }
         throw new EvaluationException("Expression is not boolean.");
-        //return true;
     }
 }
 
@@ -737,9 +736,9 @@ INJECT ListLiteral :
     public Object evaluate(Environment env) {
         List<Object> result = new ArrayList<>();
         for (Expression exp : getElements()) {
-            Object tm = exp.evaluate(env);
-            assertIsDefined(tm, exp);
-            result.add(tm);
+            Object value = exp.evaluate(env);
+            assertIsDefined(value, exp);
+            result.add(value);
         }
         return result;
     }
@@ -1103,28 +1102,18 @@ INJECT PositionalArgsList :
     extends ArgsList
 {
    public List getParameterSequence(Object target, Environment env) {
-        ParameterList annotatedParameterList = getParameterList(target);
-        if (annotatedParameterList == null) {
-            List<Object> result = new ArrayList<>();
-            for (Expression exp : childrenOfType(Expression.class)) {
-               result.add(exp.evaluate(env));
-            }
-            return result;
+        List<Object> result = new ArrayList<>();
+        for (Expression exp : childrenOfType(Expression.class)) {
+           result.add(exp.evaluate(env));
         }
-        return annotatedParameterList.getParameterSequence(this, env);
+        return result;
     }
 
     public Map<String, Object> getParameterMap(Object target, Environment env)
     {
-        Map<String, Object> result = new HashMap<String, Object>();
-        ParameterList annotatedParameterList = getParameterList(target);
-        if (annotatedParameterList == null) {
-            if (firstChildOfType(Expression.class) != null) {
-                throw new EvaluationException("Cannot pass positional arguments to this UserDirective");
-            }
-        }
-        else {
-            result = annotatedParameterList.getParameterMap(this, env, false);
+        Map<String, Object> result = new HashMap<>();
+        if (firstChildOfType(Expression.class) != null) {
+            throw new EvaluationException("Cannot pass positional arguments to this UserDirective");
         }
         return result;
     }
@@ -1189,32 +1178,22 @@ INJECT NamedArgsList :
         return (Map<String,Expression>)namedArgs.clone();
     }
 
-    public Map<String, Object> getParameterMap(Object tm, Environment env) {
+    public Map<String, Object> getParameterMap(Object target, Environment env) {
         Map<String, Object> result = null;
-        ParameterList annotatedParameterList = ArgsList.getParameterList(tm);
-        if (annotatedParameterList == null) {
-            result = new HashMap<String, Object>();
-            for (String paramName : namedArgs.keySet()) {
-                Expression exp = namedArgs.get(paramName);
-                Object value = exp.evaluate(env);
-                assertIsDefined(value,exp);
-                result.put(paramName, value);
-            }
-        }
-        else {
-            result = annotatedParameterList.getParameterMap(this, env);
+        result = new HashMap<String, Object>();
+        for (String paramName : namedArgs.keySet()) {
+            Expression exp = namedArgs.get(paramName);
+            Object value = exp.evaluate(env);
+            assertIsDefined(value,exp);
+            result.put(paramName, value);
         }
         return result;
     }
 
     public List<Object> getParameterSequence(Object target, Environment env) {
-        ParameterList annotatedParameterList = getParameterList(target);
-        if (annotatedParameterList == null) {
             String msg = "Error at: " + getLocation()
-            + "\nCannot invoke method " + target + " with a key=value parameter list because it is not annotated.";
+            + "\nCannot invoke method " + target + " with a key=value parameter list.";
             throw new TemplateException(msg);
-        }
-        return annotatedParameterList.getParameterSequence(this, env);
     }
 }
 
@@ -1229,92 +1208,14 @@ ArgsList#abstract :
 
 INJECT ArgsList :
     import java.util.*;
-    import java.util.concurrent.ConcurrentHashMap;
-    import java.lang.reflect.*;
-
-    import org.congocc.templates.annotations.Parameters;
     import org.congocc.templates.core.Environment;
-    import org.congocc.templates.core.variables.*;
-    import org.congocc.templates.core.parser.*;
-    import org.congocc.templates.core.parser.CTLLexer.LexicalState;
-    import org.congocc.templates.core.nodes.ParameterList;
-    import org.congocc.templates.TemplateException;
 {
 	/**
-	 * Cache the retrieved annotation information, since it seems like
-	 * this operation could be a bit expensive.
-	 */
-	private static Map<String, ParameterList> parameterListCache = new ConcurrentHashMap<String, ParameterList>();
-   // Placeholder for null - ConcurrentHashMap doesn't tolerate null values
-	private static final ParameterList NO_PARAM_LIST = new ParameterList();
-
-	/**
 	 * The target will be a TemplateTranformModel.
-	 * This returns a key-value map of the arguments to be passed to the target.
-	 * A TemplateException will be thrown if the target's parameters do not match
-	 * this ArgList in some way.
 	 */
 	public abstract Map<String, Object> getParameterMap(Object target, Environment env);
 
 	public abstract List<Object> getParameterSequence(Object target, Environment env);
-
-	public static ParameterList getParameterList(Object target) {
-            String keyName = target.getClass().getName();
-            ParameterList result = parameterListCache.get(keyName);
-            if(result == NO_PARAM_LIST) {
-                return null;
-            }
-            if(result != null) {
-                return result;
-            }
-            Parameters params = getAnnotatedParameters(target);
-            if (params != null) {
-                String paramString = params.value();
-                if("".equals(paramString)) {
-                    result = new ParameterList();
-                }
-                else try {
-                    result = getParameterList(paramString);
-                } catch (Exception pe) {
-                    throw new TemplateException("Can't parse parameter list [" + paramString + "] on " + target, pe);
-                }
-                parameterListCache.put(keyName, result);
-                return result;
-            } else {
-                parameterListCache.put(keyName, NO_PARAM_LIST);
-                return null;
-            }
-	}
-
-	private static ParameterList getParameterList(String s) {
-		CTLLexer token_source = new CTLLexer(s);
-		token_source.switchTo(LexicalState.EXPRESSION);
-		CTLParser parser = new CTLParser(token_source);
-		return parser.ParameterList();
-	}
-
-    @SuppressWarnings("deprecation")
-    private static Parameters getAnnotatedParameters(Object target) {
-        Parameters params = null;
-        Method keyMethod = null;
-        if (target instanceof VarArgsFunction<?>) {
-            try {
-                keyMethod = target.getClass().getMethod("apply", new Class[] {new Object[0].getClass()});
-            } catch (Exception e) {
-                // Again, this condition should be impossible. If something is
-                // a VarArgsFunction, it must implement this method.
-                throw new InternalError(e.getMessage());
-            }
-        }
-        if (keyMethod != null) {
-            params = keyMethod.getAnnotation(Parameters.class);
-        }
-        if (params == null) {
-            // Check if the class is annotated now
-            params = target.getClass().getAnnotation(Parameters.class);
-        }
-        return params;
-    }
 }
 
 HashLiteral :

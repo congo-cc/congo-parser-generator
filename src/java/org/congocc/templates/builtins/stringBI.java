@@ -4,7 +4,6 @@ import java.text.NumberFormat;
 import java.util.function.BiFunction;
 import java.util.function.Function;
 
-import org.congocc.templates.annotations.Parameters;
 import org.congocc.templates.core.Environment;
 import org.congocc.templates.core.nodes.generated.BuiltInExpression;
 import org.congocc.templates.TemplateHash;
@@ -12,14 +11,14 @@ import org.congocc.templates.TemplateHash;
 import static org.congocc.templates.core.variables.Wrap.*;
 
 /**
- * Implementation of ?string built-in 
+ * Implementation of ?string built-in
  */
 
 public class stringBI extends ExpressionEvaluatingBuiltIn {
-	
+
     @Override
     public Object get(Environment env, BuiltInExpression caller,
-        Object model) 
+        Object model)
     {
         if (model instanceof Number n) {
             return new NumberFormatter(n, env);
@@ -29,12 +28,12 @@ public class stringBI extends ExpressionEvaluatingBuiltIn {
         }
         return model.toString();
     }
-	
-	
+
+
     static class BooleanFormatter implements BiFunction<Object,Object,String>  {
         private final Object bool;
         private final Environment env;
-        
+
         BooleanFormatter(Object bool, Environment env) {
             this.bool = bool;
             this.env = env;
@@ -52,8 +51,8 @@ public class stringBI extends ExpressionEvaluatingBuiltIn {
             return asString(asBoolean(bool) ? left : right);
         }
     }
-    
-    
+
+
     static class NumberFormatter implements TemplateHash, Function<String,Object> {
         private final Number number;
         private final Environment env;
@@ -76,12 +75,11 @@ public class stringBI extends ExpressionEvaluatingBuiltIn {
         public Object get(String key) {
             return env.getNumberFormatObject(key).format(number);
         }
-        
-        @Parameters("format")
+
         public Object apply(String arg) {
             return get(arg);
         }
     }
 }
 
-	
+

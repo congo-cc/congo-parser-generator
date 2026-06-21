@@ -103,10 +103,7 @@ public class Template extends Configurable {
 
     /**
      * Processes the template, using data from the map, and outputs
-     * the resulting text to the supplied <tt>Writer</tt> The elements of the
-     * map are converted to template models using the default object wrapper
-     * returned by the {@link Configuration#getObjectWrapper() getObjectWrapper()}
-     * method of the <tt>Configuration</tt>.
+     * the resulting text to the supplied <tt>Writer</tt>
      * @param rootMap the root node of the data model.
      * @param out a <tt>Writer</tt> to output the text to.
      * @throws TemplateException if an exception occurs during template processing
@@ -114,51 +111,7 @@ public class Template extends Configurable {
      */
     public void process(Map<String,Object> rootMap, Writer out) throws IOException
     {
-        createProcessingEnvironment(rootMap, out).process();
-    }
-
-   /**
-    * Creates a {@link org.congocc.templates.core.Environment Environment} object,
-    * using this template, the data model provided as the root map object, and
-    * the supplied object wrapper to convert map elements to template models.
-    * You can then call Environment.process() on the returned environment
-    * to set off the actual rendering.
-    * Use this method if you want to do some special initialization on the environment
-    * before template processing, or if you want to read the environment after template
-    * processing.
-    *
-    * <p>Example:
-    *
-    * <p>This:
-    * <pre>
-    * Environment env = myTemplate.createProcessingEnvironment(root, out, null);
-    * env.process();
-    * </pre>
-    * is equivalent with this:
-    * <pre>
-    * myTemplate.process(root, out);
-    * </pre>
-    * But with <tt>createProcessingEnvironment</tt>, you can manipulate the environment
-    * before and after the processing:
-    * <pre>
-    * Environment env = myTemplate.createProcessingEnvironment(root, out);
-    * env.include("include/common.ctl", null, true);  // before processing
-    * env.process();
-    * WrappedVariable x = env.getVariable("x");  // after processing
-    * </pre>
-    *
-    * @param rootMap the root node of the data model.  If null, an
-    * empty data model is used. Can be any object that the effective object
-    * wrapper can turn into a <tt>WrappedHash</tt> Basically, simple and
-    * beans wrapper can turn <tt>java.util.Map</tt> objects into hashes.
-    * Naturally, you can pass any object directly implementing
-    * <tt>WrappedHash</tt> as well.
-    * @param out the writer to output the text to.
-    * @return the {@link org.congocc.templates.core.Environment Environment} object created for processing
-    * @throws TemplateException if an exception occurs while setting up the Environment object.
-    */
-    public Environment createProcessingEnvironment(Map<String,Object> rootMap, Writer out) {
-        return new Environment(this, rootMap, out);
+        new Environment(this, rootMap, out).process();
     }
 
     /**

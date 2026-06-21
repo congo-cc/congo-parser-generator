@@ -7,11 +7,11 @@ public class NamedParameterListScope implements Scope {
     private final List<Object> paramValues;
     private final boolean readOnly;
     private Scope enclosingScope;
-    
-    public NamedParameterListScope(Scope enclosingScope, 
-                                   List<String> paramNames, 
-                                   List<Object> paramValues, 
-                                   boolean readOnly) 
+
+    public NamedParameterListScope(Scope enclosingScope,
+                                   List<String> paramNames,
+                                   List<Object> paramValues,
+                                   boolean readOnly)
     {
         this.enclosingScope = enclosingScope;
         this.paramNames = paramNames;
