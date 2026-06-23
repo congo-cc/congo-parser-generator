@@ -48,24 +48,7 @@ public class Wrap {
         }
     }
 
-    private static final Class<?> RECORD_CLASS;
-
-    static {
-        Class<?> clazz = null;
-        try {
-            clazz = Class.forName("java.lang.Record");
-        } catch (Exception e) {
-        }
-        finally {
-            RECORD_CLASS = clazz;
-        }
-    }
-
     private Wrap() {}
-
-    public static boolean isRecord(Object obj) {
-        return RECORD_CLASS != null && RECORD_CLASS.isInstance(obj);
-    }
 
     public static boolean isMap(Object obj) {
         if (obj instanceof WrappedVariable) {

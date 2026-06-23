@@ -13,7 +13,6 @@ import java.net.URLConnection;
 
 import org.congocc.templates.core.Configurable;
 import org.congocc.templates.core.Environment;
-import org.congocc.templates.core.variables.WrappedVariable;
 import org.congocc.templates.core.parser.ParseException;
 import org.congocc.templates.core.parser.ParsingProblemImpl;
 import org.congocc.templates.core.parser.TokenSource;
@@ -39,19 +38,11 @@ public class Configuration extends Configurable {
     private ArrayList<String> autoImports = new ArrayList<String>();
     private ArrayList<String> autoIncludes = new ArrayList<String>();
     private String defaultEncoding = "UTF-8";
-    private boolean tolerateParsingProblems = false;
+    private boolean tolerateParsingProblems;
 
     private Class<?> classForTemplateLoading;
     private String pathPrefix = "";
     private Path directoryForTemplateLoading = Paths.get(".");
-
-    public Configuration() {
-        loadBuiltInSharedVariables();
-    }
-
-    private void loadBuiltInSharedVariables() {
-        //None here at the moment!
-    }
 
     /**
      *
@@ -227,15 +218,6 @@ public class Configuration extends Configurable {
      * as top-level variables for all templates which use this
      * configuration, if the data model does not contain a
      * variable with the same name.
-     *
-     * <p>Never use <tt>WrappedVariable</tt> implementation that is not thread-safe for shared variables,
-     * if the configuration is used by multiple threads! It is the typical situation for Servlet based Web sites.
-     *
-     * @param name the name used to access the data object from your template.
-     *     If a shared variable with this name already exists, it will replace
-     *     that.
-     * @see #setSharedVariable(String,Object)
-     * @see #setAllSharedVariables
      */
     public void setSharedVariable(String name, Object value) {
         variables.put(name, wrap(value));
@@ -264,28 +246,10 @@ public class Configuration extends Configurable {
      * for a comprehensive list of them.
      *
      * @see #setSharedVariable(String,Object)
-     * @see #setSharedVariable(String,WrappedVariable)
      * @see #setAllSharedVariables
      */
     public Object getSharedVariable(String name) {
         return variables.get(name);
-    }
-
-    /**
-     * Removes all shared variables, except the predefined ones (compress, html_escape, etc.).
-     */
-    public void clearSharedVariables() {
-        variables.clear();
-        loadBuiltInSharedVariables();
-    }
-
-    /**
-     * Removes all entries from the template cache, thus forcing reloading of templates
-     * on subsequent <code>getTemplate</code> calls.
-     * This method is thread-safe and can be called while the engine works.
-     */
-    public void clearTemplateCache() {
-        // TODO
     }
 
     /**
@@ -458,17 +422,5 @@ public class Configuration extends Configurable {
      */
     public static String getVersionNumber() {
     	return "3.0 Preview";
-    }
-
-    /**
-     * Set whether the getTemplate() methods throw exceptions
-     * when there is a (recoverable) parsing problem in the template.
-     * This would only be set true by certain tools such as CTL-aware
-     * editors that work with CTL code that contains syntactical errors.
-     * @param tolerateParsingProblems
-     */
-
-    public void setTolerateParsingProblems(boolean tolerateParsingProblems) {
-    	this.tolerateParsingProblems = tolerateParsingProblems;
     }
 }

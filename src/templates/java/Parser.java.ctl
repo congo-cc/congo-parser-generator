@@ -428,7 +428,8 @@ public boolean getLegacyGlitchyLookahead() {
    * the hitFailure flag to true, so that the lookahead routine we're in will
    * fail at the first opportunity.
    */
-  private void fail(String message, ${LOCATION_TYPE} location) [#if settings.useCheckedException] throws ParseException [/#if]
+  private void fail(String message, ${LOCATION_TYPE} location)
+  [#if settings.useCheckedException] throws ParseException [#endif]
   {
     if (currentLookaheadToken == null) {
       if (message == null) message = "";

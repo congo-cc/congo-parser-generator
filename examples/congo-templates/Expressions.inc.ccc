@@ -131,7 +131,7 @@ PrimaryExpression(boolean noSpace)#void :
       (
         <DOT>
         DEACTIVATE_TOKENS IN, AS, TRUE, FALSE, NULL
-        (<ID>|<TIMES>|<DOUBLE_STAR>)
+        (<ID>)
       ) #DotVariable(+1)
       |
       <OPEN_BRACKET> Expression <CLOSE_BRACKET> #org.congocc.templates.core.nodes.DynamicKeyName(4)

@@ -17,8 +17,9 @@ import static ${settings.parserPackage}.${settings.baseTokenClassName}.TokenType
 public ${isAbstract ?: "abstract"} ${isFinal ?: "final"} ${isSealed ?: "sealed"} ${isNonSealed ?: "non-sealed"}
 class ${classname} extends ${superclass}
    #list permitsList as item
-     [#if item_index == 0]permits[/#if]
-     ${item}[#if item_has_next],[/#if]
+     [#if item_index == 0]permits[#endif]
+     ${item}
+     [#if item_has_next],[#endif]
    #endlist
 {
     public ${classname}(TokenType type, TokenSource tokenSource, int beginOffset, int endOffset) {

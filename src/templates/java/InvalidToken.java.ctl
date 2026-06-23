@@ -9,13 +9,13 @@ package ${settings.parserPackage};
  * ${settings.baseTokenClassName} subclass to represent lexically invalid input
  */
 public class InvalidToken extends ${settings.baseTokenClassName}
-[#if settings.faultTolerant] implements ParsingProblem [/#if] {
+[#if settings.faultTolerant] implements ParsingProblem [#endif] {
 
     public InvalidToken(TokenSource tokenSource, int beginOffset, int endOffset) {
         super(TokenType.INVALID, tokenSource, beginOffset, endOffset);
-[#if settings.faultTolerant]
+#if settings.faultTolerant
         this.setDirty(true);
-[/#if]
+#endif
     }
 
  [#if settings.faultTolerant]
@@ -35,6 +35,6 @@ public class InvalidToken extends ${settings.baseTokenClassName}
         if (errorMessage != null) return errorMessage;
         return "lexically invalid input"; // REVISIT
     }
- [/#if]
+ #endif
 
 }

@@ -17,12 +17,12 @@ import java.util.*;
 public ${isSealed ?: "sealed"} ${isNonSealed ?: "non-sealed"}
 interface ${classname} extends Node
    #list permitsList as item
-     [#if item_index == 0]permits[/#if]
-     ${item}[#if item_has_next],[/#if]
+     [#if item_index == 0]permits[#endif]
+     ${item}[#if item_has_next],[#endif]
    #endlist
 {}
 
-[#else]
+#else
 
 import ${settings.parserPackage}.${settings.baseTokenClassName}.TokenType;
 import static ${settings.parserPackage}.${settings.baseTokenClassName}.TokenType.*;
@@ -30,8 +30,8 @@ import static ${settings.parserPackage}.${settings.baseTokenClassName}.TokenType
 public ${isAbstract ?: "abstract"} ${isFinal ?: "final"} ${isSealed ?: "sealed"} ${isNonSealed ?: "non-sealed"}
 class ${classname} extends ${settings.baseNodeClassName}
    #list permitsList as item
-     [#if item_index == 0]permits[/#if]
-     ${item}[#if item_has_next],[/#if]
+     [#if item_index == 0]permits[#endif]
+     ${item}[#if item_has_next],[#endif]
    #endlist
 {}
 #endif

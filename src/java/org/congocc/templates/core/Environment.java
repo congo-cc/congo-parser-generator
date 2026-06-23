@@ -586,8 +586,7 @@ public final class Environment extends Configurable implements Scope {
     }
 
     /**
-     * Sets a variable that is visible globally. This is correspondent to CTL
-     * <code><#global <i>name</i>=<i>model</i>></code>.
+     * Sets a variable that is visible globally.
      */
     public void setGlobalVariable(String name, Object value) {
         globalVariables.put(name, value);

@@ -122,10 +122,29 @@ abstract public class AbstractCodeFormatter extends Node.Visitor {
 
     protected void newLine(boolean ensureBlankLine) {
         startNewLineIfNecessary();
-        if (ensureBlankLine) {
+        if (ensureBlankLine && !bufEndsWithVerticalWhitespace()) {
             buffer.append('\n');
         }
         appendIndentation();
+    }
+
+    private boolean bufEndsWithVerticalWhitespace() {
+        boolean result = false;
+        boolean seenNewline = false;
+        for (int i = buffer.length()-1; i>=0; i--) {
+            char lastChar = buffer.charAt(i);
+            if (!Character.isWhitespace(lastChar)) break;
+            if (lastChar == '\n') {
+                if (!seenNewline) {
+                    seenNewline = true;
+                }
+                else {
+                    result = true;
+                    break;
+                }
+            }
+        }
+        return result;
     }
 
     protected int currentLineLength() {

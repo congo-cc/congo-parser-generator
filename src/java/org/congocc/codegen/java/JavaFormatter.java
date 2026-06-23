@@ -24,7 +24,8 @@ public class JavaFormatter extends AbstractCodeFormatter {
             RUNSIGNEDSHIFTASSIGN, SC_AND, SC_OR, SLASH, SLASHASSIGN, STAR,
             STARASSIGN, THROWS, WHILE, XOR, XORASSIGN);
         requiresVerticalSeparationAbove = Set.of(MethodDeclaration.class,
-            ConstructorDeclaration.class);
+            ConstructorDeclaration.class, EnumDeclaration.class,
+            ClassDeclaration.class, InterfaceDeclaration.class);
     }
 
     void visit(TypeParameters tps) {
@@ -142,6 +143,10 @@ public class JavaFormatter extends AbstractCodeFormatter {
                 } else for (int i = 1; i <= 6; i++) // remove rogue semicolons
                     if (buffer.charAt(buffer.length() - 1) == ' ' || buffer.charAt(buffer.length() - 1) == '\n')
                         buffer.setLength(buffer.length() - 1);
+            }
+            case VAR_ARGS -> {
+                buffer.append(delimiter);
+                addSpaceIfNecessary();
             }
             default -> defaultTokenOutput(delimiter);
         }

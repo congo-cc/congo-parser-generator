@@ -762,8 +762,7 @@ Function#Macro :
 INJECT Macro :
     import org.congocc.templates.core.Environment;
     import org.congocc.templates.core.nodes.ParameterList;
-    import org.congocc.templates.core.variables.WrappedVariable;
-    implements TemplateElement, WrappedVariable
+    implements TemplateElement
 {
     static public final Macro DO_NOTHING_MACRO = new Macro();
     static {

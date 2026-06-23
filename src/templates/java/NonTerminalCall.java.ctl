@@ -19,7 +19,17 @@ public class NonTerminalCall {
 #if settings.faultTolerant
     final Set<${BaseTokenType}> followSet;
 #endif
-    public NonTerminalCall(String parserClassName, ${LocationType} location, String sourceFile, String productionName, int line, int column[#if settings.faultTolerant], Set<${BaseTokenType}> followSet[/#if]) {
+    public NonTerminalCall(String parserClassName,
+                          ${LocationType} location,
+                          String sourceFile,
+                          String productionName,
+                          int line,
+                          int column
+                          #if settings.faultTolerant
+                             , Set<${BaseTokenType}> followSet
+                          #endif
+    )
+    {
         this.parserClassName = parserClassName;
         this.tokenSource = location.getTokenSource();
         this.position = location.getBeginOffset();

@@ -167,7 +167,7 @@ public class ReflectionCode {
         if (cachedMethod != null) {
             return cachedMethod;
         }
-        if (isRecord(object)) {
+        if (object instanceof Record) {
             try {
                 Method m = object.getClass().getMethod(name);
                 if (m.getReturnType() != Void.TYPE) {
@@ -265,7 +265,7 @@ public class ReflectionCode {
                 return true;
             }
         }
-        return clazz == java.lang.System.class
+        return clazz == System.class
                || clazz == Runtime.class
                || clazz == Thread.class
                || clazz == ThreadGroup.class

@@ -88,7 +88,10 @@ private void pushOntoLookaheadStack(String methodName, String fileName, int line
           fileName,
           methodName,
           line,
-          column[#if settings.faultTolerant], null[/#if]));
+          column
+          ${settings.faultTolerant ?: ", null"}
+       )
+    );
 }
 
 private void popLookaheadStack() {
@@ -167,7 +170,7 @@ void dumpLookaheadCallStack(PrintStream ps) {
           , boolean tolerant, EnumSet<TokenType> followSet, Runnable recoveryAction
         #endif
       )
-      [#if settings.useCheckedException] throws ParseException [/#if]
+      ${settings.useCheckedException ?: "throws ParseException"}
       {
         ${settings.baseTokenClassName} nextToken = nextToken(lastConsumedToken);
         if (nextToken.getType() != expectedType) {
