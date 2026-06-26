@@ -485,6 +485,8 @@ ArrayInitializer :
 
 #MethodDeclaration :
   (
+    SCAN {currentLookaheadToken != null} => {permissibleModifiers=null;}
+    |
     SCAN \.\.\InterfaceDeclaration
     =>
     {permissibleModifiers = EnumSet.of(PUBLIC,
@@ -1484,7 +1486,7 @@ MemberValueArrayInitializer :
 AnnotationTypeDeclaration :
   {permissibleModifiers = EnumSet.of(PUBLIC, PROTECTED,
                                     PRIVATE, ABSTRACT,
-                                    STATIC, STRICTFP);}#
+                                    STATIC, STRICTFP);}
   Modifiers
   "@" "interface" =>|| TypeIdentifier AnnotationTypeBody
 ;
@@ -1494,7 +1496,7 @@ AnnotationTypeBody :
 ;
 
 AnnotationMethodDeclaration :
-   {permissibleModifiers = EnumSet.of(PUBLIC, ABSTRACT);}#
+   {permissibleModifiers = EnumSet.of(PUBLIC, ABSTRACT);}
    Modifiers
    Type <IDENTIFIER> "(" =>|| ")" [ DefaultValue ] ";"
 ;
