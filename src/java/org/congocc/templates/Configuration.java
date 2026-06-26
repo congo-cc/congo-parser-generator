@@ -13,12 +13,13 @@ import java.net.URLConnection;
 
 import org.congocc.templates.core.Configurable;
 import org.congocc.templates.core.Environment;
+import org.congocc.templates.core.variables.WrappedVariable;
 import org.congocc.templates.core.parser.ParseException;
 import org.congocc.templates.core.parser.ParsingProblemImpl;
-import org.congocc.templates.core.parser.TokenSource;
 import org.congocc.templates.utility.StringUtil;
 
 import static org.congocc.templates.core.variables.Wrap.*;
+import static org.congocc.templates.core.parser.TokenSource.stringFromBytes;
 
 /**
  * Main entry point into the Congo Templates API, this class encapsulates the
@@ -140,7 +141,7 @@ public class Configuration extends Configurable {
         }
         byte[] bb = rawStream.readAllBytes();
         rawStream.close();
-        String content = TokenSource.stringFromBytes(bb);
+        String content = stringFromBytes(bb);
         result = new Template(name, content, this, defaultEncoding);
         if (result.hasParsingProblems()) {
             for (ParsingProblemImpl pp : result.getParsingProblems()) {

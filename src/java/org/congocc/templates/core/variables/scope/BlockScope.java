@@ -24,7 +24,7 @@ public class BlockScope extends HashMap<String,Object> implements Scope {
 
 	public Object put(String key, Object value) {
 		if (!definesVariable(key)) {
-			throw new IllegalArgumentException("The variable " + key + " is not declared here.");
+			throw new UndeclaredVariableException("The variable " + key + " is not declared here.");
 		}
 		return super.put(key, value);
 	}

@@ -373,7 +373,6 @@ public final class Environment extends Configurable implements Scope {
     public void visitMacroDef(Macro macro) {
         if (currentMacroContext == null) {
             macroToNamespaceLookup.put(macro, getCurrentNamespace());
-            // getCurrentNamespace().put(macro.getName(), macro);
             this.unqualifiedSet(macro.getName(), macro);
         }
     }
@@ -611,23 +610,14 @@ public final class Environment extends Configurable implements Scope {
      */
     public void unqualifiedSet(String name, Object value) {
         Scope scope = this.currentScope;
-        while (!scope.isTemplateNamespace()) {
-            if (scope.get(name) != null) {
+        while (scope != null) {
+            if (scope.definesVariable(name)) {
                 scope.put(name, value);
                 return;
             }
             scope = scope.getEnclosingScope();
         }
-        try {
-            scope.put(name, value);
-        } catch (UndeclaredVariableException uve) {
-            // Is this really necessary? REVISIT
-            if (globalVariables.containsKey(name)) {
-                globalVariables.put(name, value);
-            } else {
-                throw uve;
-            }
-        }
+        throw new UndeclaredVariableException("The variable " + name + " is not declared here.");
     }
 
     public Environment getEnvironment() {
@@ -647,13 +637,16 @@ public final class Environment extends Configurable implements Scope {
     }
 
     public Object put(String varname, Object value) {
-        return globalVariables.put(varname, value);
+        if (definesVariable(varname)) {
+            return globalVariables.put(varname, value);
+        }
+        throw new UndeclaredVariableException("Variable " + varname + " is undeclared.");
     }
-
+/*
     public Object remove(Object varname) {
         return globalVariables.remove(varname);
     }
-
+*/
     /**
      * Returns the main name-space. This is correspondent of CTL
      * <code>.main</code> hash.
@@ -857,7 +850,7 @@ public final class Environment extends Configurable implements Scope {
                 if (getCurrentNamespace() == mainNamespace) {
                     // We make libs imported into the main namespace globally visible
                     // for least surprise reasons. (Is this right???)
-                    this.put(namespace, newNamespace);
+                    globalVariables.put(namespace, newNamespace);
                 }
             }
             loadedLibs.put(templateName, newNamespace);
