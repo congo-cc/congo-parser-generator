@@ -236,14 +236,14 @@ public final class Environment extends Configurable implements Scope {
 
     public void loop(Block block, Expression condition, boolean until) throws IOException {
         Scope prevScope = currentScope;
+        int index = 0;
         try {
-            if (until) do {
+            while (true) {
                 currentScope = new BlockScope(block, prevScope);
+                currentScope.put("__index", index++);
+                if (!until && condition != null && !condition.isTrue(this)) break;
                 render(block);
-            } while(!condition.isTrue(this));
-            else while (condition == null || condition.isTrue(this)) {
-                currentScope = new BlockScope(block, prevScope);
-                render(block);
+                if (until && condition != null && condition.isTrue(this)) break;
             }
         }
         catch (BreakException br) {}

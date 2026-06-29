@@ -103,9 +103,14 @@ class PostParseVisitor extends Node.Visitor {
 		recurse(node);
 	}
 
+	void visit(LoopBlock node) {
+		node.getNestedBlock().declareVariable("__index");
+	}
+
 	void visit(BreakInstruction node) {
 		recurse(node);
-		if (node.firstAncestorOfType(IteratorBlock.class) == null) {
+		if (node.firstAncestorOfType(IteratorBlock.class) == null
+		    && node.firstAncestorOfType(LoopBlock.class) == null) {
 			template.addParsingProblem(new ParsingProblemImpl("The break directive can only be used within a loop.", node));
 		}
 	}

@@ -678,11 +678,17 @@ INJECT PreIncrementExpression : implements Expression
 INJECT RelationalExpression : implements Expression
 INJECT ShiftExpression : implements Expression
 INJECT StatementExpression : implements Expression
-INJECT SwitchExpression : implements Expression
 INJECT UnaryExpression : implements Expression
 INJECT UnaryExpressionNotPlusMinus : implements Expression
 INJECT AllocationExpression : implements PrimaryExpression
 INJECT LiteralExpression : implements PrimaryExpression
+
+INJECT SwitchExpression : implements Expression {
+  // This doesnt check any deeper (Maybe REVISIT)
+  public boolean canBeThrown() {
+    return true;
+  }
+}
 
 INJECT DotNew : extends AllocationExpression {
   public boolean canBeThrown() {return true;}

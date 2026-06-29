@@ -13,7 +13,6 @@ import java.net.URLConnection;
 
 import org.congocc.templates.core.Configurable;
 import org.congocc.templates.core.Environment;
-import org.congocc.templates.core.variables.WrappedVariable;
 import org.congocc.templates.core.parser.ParseException;
 import org.congocc.templates.core.parser.ParsingProblemImpl;
 import org.congocc.templates.utility.StringUtil;

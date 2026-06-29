@@ -14,6 +14,7 @@ INJECT Expression :
    import org.congocc.templates.core.variables.EvaluationException;
    import org.congocc.templates.TemplateSequence;
    import java.lang.reflect.Array;
+   import org.congocc.templates.core.variables.WrappedVariable;
    import static org.congocc.templates.core.variables.Wrap.*;
 {
     public abstract Object evaluate(Environment env);
@@ -38,7 +39,15 @@ INJECT Expression :
         if (referent instanceof Number n) {
             return env.formatNumber(n);
         }
+        if (referent instanceof WrappedVariable w) {
+            return w.getAsString();
+        }
+        if (referent instanceof CharSequence cs) {
+            return cs.toString();
+        }
+        // For now we do this, but maybe need to REVISIT
         return referent.toString();
+        //throw new EvaluationException("Expression is not a string or number.");
     }
 
     default boolean isTrue(Environment env) {
@@ -65,7 +74,7 @@ INJECT Expression :
         if (referent instanceof CharSequence cs) {
             return cs.length() > 0;
         }
-        throw new EvaluationException("Expression is not boolean.");
+        throw new EvaluationException("Expression cannot be evaluated to true/false.");
     }
 }
 
