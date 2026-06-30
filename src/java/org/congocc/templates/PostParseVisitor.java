@@ -105,6 +105,7 @@ class PostParseVisitor extends Node.Visitor {
 
 	void visit(LoopBlock node) {
 		node.getNestedBlock().declareVariable("__index");
+		recurse(node);
 	}
 
 	void visit(BreakInstruction node) {

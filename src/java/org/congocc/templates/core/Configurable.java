@@ -462,7 +462,7 @@ abstract public class Configurable {
             } else if (URL_ESCAPING_CHARSET_KEY.equals(key)) {
                 setURLEscapingCharset(value);
             } else {
-                throw unknownSettingException(key);
+                throw new IllegalArgumentException("Unknown setting: " +key);
             }
         } catch (TemplateException e) {
             throw e;
@@ -472,19 +472,8 @@ abstract public class Configurable {
         }
     }
 
-    protected TemplateException unknownSettingException(String name) {
-        return new UnknownSettingException(name);
-    }
-
     protected TemplateException invalidSettingValueException(String name, String value) {
         return new TemplateException("Invalid value for setting " + name + ": " + value);
-    }
-
-    public static class UnknownSettingException extends TemplateException {
-
-        private UnknownSettingException(String name) {
-            super("Unknown setting: " + name);
-        }
     }
 
     /**

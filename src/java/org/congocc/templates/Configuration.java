@@ -44,14 +44,8 @@ public class Configuration extends Configurable {
     private String pathPrefix = "";
     private Path directoryForTemplateLoading = Paths.get(".");
 
-    /**
-     *
-     * @return the {@link Configuration} object that is being used
-     * in this template processing thread.
-     */
-    static public Configuration getCurrentConfiguration() {
-    	Environment env = Environment.getCurrentEnvironment();
-    	return env != null ? env.getConfiguration() : defaultConfig;
+    static public Configuration getDefaultConfiguration() {
+        return defaultConfig;
     }
 
     /**
@@ -285,44 +279,12 @@ public class Configuration extends Configurable {
      *       <code>"t"</code>, <code>"f"</code>, <code>"y"</code>, <code>"n"</code>.
      *       Case insensitive.
      *      See: {@link #setLocalizedLookup}
-     *   <li><code>"strict_vars"</code>: <code>"true"</code>, <code>"false"</code>, etc.
-     *       See: {@link #setStrictVariableDefinition}
-     *   <li><code>"cache_storage"</code>: If the value contains dot, then it is
-     *       interpreted as class name, and the object will be created with
-     *       its parameterless constructor. If the value does not contain dot,
-     *       then a {@link org.congocc.templates.cache.MruCacheStorage} will be used with the
-     *       maximum strong and soft sizes specified with the setting value. Examples
-     *       of valid setting values:
-     *       <table border=1 cellpadding=4>
-     *         <tr><th>Setting value<th>max. strong size<th>max. soft size
-     *         <tr><td><code>"strong:50, soft:500"</code><td>50<td>500
-     *         <tr><td><code>"strong:100, soft"</code><td>100<td><code>Integer.MAX_VALUE</code>
-     *         <tr><td><code>"strong:100"</code><td>100<td>0
-     *         <tr><td><code>"soft:100"</code><td>0<td>100
-     *         <tr><td><code>"strong"</code><td><code>Integer.MAX_VALUE</code><td>0
-     *         <tr><td><code>"soft"</code><td>0<td><code>Integer.MAX_VALUE</code>
-     *       </table>
-     *       The value is not case sensitive. The order of <tt>soft</tt> and <tt>strong</tt>
-     *       entries is not significant.
-     *       See also: {@link #setCacheStorage}
-     *   <li><code>"template_update_delay"</code>: Valid positive integer, the
-     *       update delay measured in seconds.
-     *       See: {@link #setTemplateUpdateDelay}
      * </ul>
      *
      * @param key the name of the setting.
      * @param value the string that describes the new value of the setting.
-     *
-     * @throws UnknownSettingException if the key is wrong.
-     * @throws TemplateException if the new value of the setting can't be set
-     *     for any other reasons.
      */
     public void setSetting(String key, String value) {
-        if ("TemplateUpdateInterval".equalsIgnoreCase(key)) {
-            key = "template_update_delay";
-        } else if ("DefaultEncoding".equalsIgnoreCase(key)) {
-            key = "default_encoding";
-        }
         try {
             if ("default_encoding".equalsIgnoreCase(key)) {
                 setDefaultEncoding(value);

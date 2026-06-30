@@ -49,15 +49,13 @@ public class Template extends Configurable {
     private Block rootElement;
     private Map<String, Macro> macros = new HashMap<String, Macro>();
     private List<ImportDeclaration> imports = new ArrayList<>();
-    private String encoding;
-    private final String name;
+    private String encoding = "UTF-8";
+    private String name = "template";
 
     private List<ParsingProblemImpl> parsingProblems = new ArrayList<>();
     private TemplateHeaderElement headerElement;
 
     private long lastModified;
-
-
 
     /**
      * A prime constructor to which all other constructors should
@@ -69,6 +67,7 @@ public class Template extends Configurable {
         this.name = name;
         this.lastModified = System.currentTimeMillis();
     }
+
 	public Template(String name, CharSequence input, Configuration cfg,
 			String encoding) throws IOException
     {
@@ -80,6 +79,12 @@ public class Template extends Configurable {
         PostParseVisitor ppv = new PostParseVisitor(this);
         ppv.visit(this);
 	}
+
+    public Template(String content) {
+        CTLParser parser = new CTLParser(this, content);
+        this.rootElement = parser.Root();
+        new PostParseVisitor(this).visit(this);
+    }
 
     /**
      * Returns a trivial template, one that is just a single block of
@@ -127,11 +132,12 @@ public class Template extends Configurable {
         return name;
     }
 
-    /**
-     * Returns the Configuration object associated with this template.
-     */
     public Configuration getConfiguration() {
-        return (Configuration) getFallback();
+        Configuration config = (Configuration)getFallback();
+        if (config == null) {
+            config = Configuration.getDefaultConfiguration();
+        }
+        return config;
     }
 
     public List<ParsingProblemImpl> getParsingProblems() {
