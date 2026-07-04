@@ -76,6 +76,7 @@ INJECT LEXER_CLASS :
    #endif
 
    private BASE_TOKEN_CLASS handleIndentation(BASE_TOKEN_CLASS tok) {
+      if (tok.getBeginOffset() == 0) return tok;
       int beginColumn = tok.getBeginColumn();
       int indentation = indentationStack.get(indentationStack.size()-1);
       boolean expectingIndent = expectingIndent(tok);

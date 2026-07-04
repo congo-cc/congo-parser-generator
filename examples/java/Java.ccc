@@ -32,9 +32,14 @@ ENSURE_FINAL_EOL;
 INCLUDE "JavaLexer.ccc"
 
 Node Root#void :
-   ModularCompilationUnit {return peekNode();}
+  (
+   ModularCompilationUnit
    |
-   CompilationUnit {return peekNode();}
+   CompilationUnit
+  )
+  {J% return peekNode(); %}
+  {C% return PeekNode(); %}
+  {P% return self.peek_node() %}
 ;
 
 ModularCompilationUnit :

@@ -269,7 +269,7 @@ public class ReflectionCode {
                || clazz == Runtime.class
                || clazz == Thread.class
                || clazz == ThreadGroup.class
-               || clazz == Class.class
+               || clazz == Class.class && !method.getName().equals("getName")
                || clazz == ClassLoader.class
                || clazz.getPackage().getName().equals("java.lang.reflect");
     }

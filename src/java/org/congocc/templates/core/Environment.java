@@ -12,6 +12,8 @@ import java.util.*;
 import org.congocc.templates.core.nodes.generated.ArgsList;
 import org.congocc.templates.core.nodes.generated.Block;
 import org.congocc.templates.core.nodes.generated.Expression;
+import org.congocc.templates.core.nodes.generated.IteratorBlock;
+import org.congocc.templates.core.nodes.generated.LoopBlock;
 import org.congocc.templates.core.nodes.generated.Macro;
 import org.congocc.templates.core.nodes.generated.NestedInstruction;
 import org.congocc.templates.core.nodes.generated.PositionalArgsList;
@@ -155,6 +157,8 @@ public final class Environment extends Configurable implements Scope {
         boolean createNewScope = nestedBlock != null
                                  && !nestedBlock.isTemplateRoot()
                                  && !(nestedBlock.getParent() instanceof Macro)
+                                 && !(nestedBlock.getParent() instanceof LoopBlock)
+                                 && !(nestedBlock.getParent() instanceof IteratorBlock)
                                  && nestedBlock.createsScope();
         Scope prevScope = currentScope;
         if (createNewScope) {
@@ -234,7 +238,7 @@ public final class Environment extends Configurable implements Scope {
         }
     }
 
-    public void loop(Block block, Expression condition, boolean until) throws IOException {
+    public void loop(Block block, Expression condition, final boolean until) throws IOException {
         Scope prevScope = currentScope;
         int index = 0;
         try {

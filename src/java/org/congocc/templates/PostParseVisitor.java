@@ -131,6 +131,9 @@ class PostParseVisitor extends Node.Visitor {
 		}
 	}
 
+	// This is a VERY important point in the code,
+	// where variables declared via #var are
+	// "declared" in their respective scopes.
 	void visit(VarDirective node) {
         Block parent = (Block) node.getParent();
        	for (String key : node.getVariables().keySet()) {

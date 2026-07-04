@@ -538,7 +538,7 @@ abstract public class TokenSource implements CharSequence
     * @param bytes the raw byte array
     * @param charset The encoding to use to decode the bytes. If this is null, we check for the
     * initial byte order mark (used by Microsoft a lot seemingly)
-    * See: https://docs.microsoft.com/es-es/globalization/encoding/byte-order-markc
+    * See: https://en.wikipedia.org/wiki/Byte_order_mark
     * @return A String taking into account the encoding passed in or in the byte order mark (if it was present).
     * And if no encoding was passed in and no byte-order mark was present, we assume the raw input
     * is in UTF-8.

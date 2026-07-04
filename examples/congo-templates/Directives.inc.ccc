@@ -805,6 +805,10 @@ INJECT Macro :
     public String getDescription() {
         return (isFunction() ? "function " : "macro ") + getName();
     }
+
+    public String toString() {
+        return getDescription() + " " + getLocation();
+    }
 }
 
 UnifiedCall :
