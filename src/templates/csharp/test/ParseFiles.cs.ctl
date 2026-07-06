@@ -1,6 +1,6 @@
-#var csPackage = globals::getPreprocessorSymbol('cs.package', settings.parserPackage)
-#var extension = globals::getStringSetting("TEST_EXTENSION", "")
-#var testProduction = globals::getStringSetting("TEST_PRODUCTION", "")
+#var csPackage = globals.getPreprocessorSymbol('cs.package', settings::parserPackage)
+#var extension = globals.getStringSetting("TEST_EXTENSION", "")
+#var testProduction = globals.getStringSetting("TEST_PRODUCTION", "")
 namespace ${csPackage}.test
 {
     using System;
@@ -9,7 +9,7 @@ namespace ${csPackage}.test
 
     public static class ParseFiles
     {
-#if !extension.empty && !testProduction.empty
+#if !extension::empty && !testProduction::empty
 
         private static int successes = 0;
         private static int failures = 0;
@@ -32,10 +32,10 @@ namespace ${csPackage}.test
 
         public static void Main(string[] args)
         {
-#if extension.empty
+#if extension::empty
             Console.WriteLine("No TEST_EXTENSION setting defined in grammar");
             Environment.Exit(1);
-#elif testProduction.empty
+#elif testProduction::empty
             Console.WriteLine("No TEST_PRODUCTION setting defined in grammar");
             Environment.Exit(1);
 #else

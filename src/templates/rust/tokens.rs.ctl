@@ -13,11 +13,11 @@
 #[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
 #[repr(u16)]
 pub enum TokenType {
-[#list lexerData.regularExpressions as regexp]
-    ${regexp.label} = ${regexp_index},
+[#list lexerData::regularExpressions as regexp]
+    ${regexp::label} = ${regexp_index},
 [/#list]
-[#var nextOrdinal = lexerData.regularExpressions?size]
-[#list settings.extraTokenNames as extraToken]
+[#var nextOrdinal = lexerData::regularExpressions?size]
+[#list settings::extraTokenNames as extraToken]
     ${extraToken} = ${nextOrdinal},
     [#set nextOrdinal = nextOrdinal + 1]
 [/#list]
@@ -29,23 +29,23 @@ pub enum TokenType {
 
 impl TokenType {
     /// Total number of defined token types (excluding DUMMY and INVALID).
-    pub const COUNT: usize = ${lexerData.regularExpressions?size + settings.extraTokenNames?size};
+    pub const COUNT: usize = ${lexerData::regularExpressions?size + settings::extraTokenNames?size};
 
     /// Returns `true` if this token type is a regular (parsing) token.
     pub fn is_regular(self) -> bool {
         matches!(self,
-[#list lexerData.regularTokens.tokenNames as name]
+[#list lexerData::regularTokens::tokenNames as name]
             TokenType::${name}[#if name_has_next] |[#else])[/#if]
 [/#list]
     }
 
     /// Returns `true` if this token type is skipped (e.g., whitespace, comments).
     pub fn is_skipped(self) -> bool {
-[#if lexerData.skippedTokens.tokenNames?size == 0]
+[#if lexerData::skippedTokens::tokenNames?size == 0]
         false
 [#else]
         matches!(self,
-[#list lexerData.skippedTokens.tokenNames as name]
+[#list lexerData::skippedTokens::tokenNames as name]
             TokenType::${name}[#if name_has_next] |[#else])[/#if]
 [/#list]
 [/#if]
@@ -53,11 +53,11 @@ impl TokenType {
 
     /// Returns `true` if this token type is unparsed (SPECIAL_TOKEN / UNPARSED).
     pub fn is_unparsed(self) -> bool {
-[#if lexerData.unparsedTokens.tokenNames?size == 0]
+[#if lexerData::unparsedTokens::tokenNames?size == 0]
         false
 [#else]
         matches!(self,
-[#list lexerData.unparsedTokens.tokenNames as name]
+[#list lexerData::unparsedTokens::tokenNames as name]
             TokenType::${name}[#if name_has_next] |[#else])[/#if]
 [/#list]
 [/#if]
@@ -65,11 +65,11 @@ impl TokenType {
 
     /// Returns `true` if this token type is a MORE token (pending additional input).
     pub fn is_more(self) -> bool {
-[#if lexerData.moreTokens.tokenNames?size == 0]
+[#if lexerData::moreTokens::tokenNames?size == 0]
         false
 [#else]
         matches!(self,
-[#list lexerData.moreTokens.tokenNames as name]
+[#list lexerData::moreTokens::tokenNames as name]
             TokenType::${name}[#if name_has_next] |[#else])[/#if]
 [/#list]
 [/#if]
@@ -79,10 +79,10 @@ impl TokenType {
 impl std::fmt::Display for TokenType {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         match self {
-[#list lexerData.regularExpressions as regexp]
-            TokenType::${regexp.label} => write!(f, "${regexp.label}"),
+[#list lexerData::regularExpressions as regexp]
+            TokenType::${regexp::label} => write!(f, "${regexp::label}"),
 [/#list]
-[#list settings.extraTokenNames as extraToken]
+[#list settings::extraTokenNames as extraToken]
             TokenType::${extraToken} => write!(f, "${extraToken}"),
 [/#list]
             TokenType::DUMMY => write!(f, "DUMMY"),
@@ -91,15 +91,15 @@ impl std::fmt::Display for TokenType {
     }
 }
 
-[#if lexerData.hasContextualTokens]
+[#if lexerData::hasContextualTokens]
 /// Returns `true` if this token type is a contextual token.
 ///
 /// Contextual tokens can match against identifier-like tokens based on
 /// their string content rather than their lexed type.
 pub fn is_contextual_token(tt: TokenType) -> bool {
     matches!(tt,
-[#list lexerData.contextualTokens as ctok]
-        TokenType::${ctok.label}[#if ctok_has_next] |[#else])[/#if]
+[#list lexerData::contextualTokens as ctok]
+        TokenType::${ctok::label}[#if ctok_has_next] |[#else])[/#if]
 [/#list]
 }
 
@@ -109,9 +109,9 @@ pub fn is_contextual_token(tt: TokenType) -> bool {
 /// the parser checks whether its text matches a contextual keyword's literal.
 pub fn literal_string(tt: TokenType) -> Option<&'static str> {
     match tt {
-[#list lexerData.regularExpressions as regexp]
-    [#if regexp.literalString??]
-        TokenType::${regexp.label} => Some("${regexp.literalString?replace("\\", "\\\\")?replace("\"", "\\\"")}"),
+[#list lexerData::regularExpressions as regexp]
+    [#if regexp::literalString??]
+        TokenType::${regexp::label} => Some("${regexp::literalString?replace("\\", "\\\\")?replace("\"", "\\\"")}"),
     [/#if]
 [/#list]
         _ => None,
@@ -133,25 +133,25 @@ pub fn is_contextual_token(_tt: TokenType) -> bool {
 /// set of NFA transition functions for token recognition.
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
 pub enum LexicalState {
-[#list lexerData.lexicalStates as lexicalState]
-    ${lexicalState.name},
+[#list lexerData::lexicalStates as lexicalState]
+    ${lexicalState::name},
 [/#list]
 }
 
 impl Default for LexicalState {
     fn default() -> Self {
-        LexicalState::${lexerData.lexicalStates[0].name}
+        LexicalState::${lexerData::lexicalStates[0]::name}
     }
 }
 
-[#if lexerData.hasLexicalStateTransitions]
+[#if lexerData::hasLexicalStateTransitions]
 /// Returns the lexical state to transition to after matching the given token type,
 /// or `None` if no transition is defined.
 pub fn lexical_state_for(tt: TokenType) -> Option<LexicalState> {
     match tt {
-[#list lexerData.regularExpressions as regexp]
-    [#if regexp.newLexicalState??]
-        TokenType::${regexp.label} => Some(LexicalState::${regexp.newLexicalState.name}),
+[#list lexerData::regularExpressions as regexp]
+    [#if regexp::newLexicalState??]
+        TokenType::${regexp::label} => Some(LexicalState::${regexp::newLexicalState::name}),
     [/#if]
 [/#list]
         _ => None,

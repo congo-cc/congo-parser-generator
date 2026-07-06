@@ -320,7 +320,7 @@ TOKEN#Text :
     <EOL : "\n">
 ;
 
-<EXPRESSION> SKIP :
+<EXPRESSION> UNPARSED : // Changed (probably temporarily) from SKIP so that I can write a little conversion utility.
     <IGNORED_WS : " " | "\t" | "\n" | "\r" >
 ;
 

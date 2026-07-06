@@ -1,6 +1,6 @@
-#var pyPackage = globals::getParserOutputDirectory()
-#var extension = globals::getStringSetting("TEST_EXTENSION", "")
-#var testProduction = globals::getStringSetting("TEST_PRODUCTION", "")
+#var pyPackage = globals.getParserOutputDirectory()
+#var extension = globals.getStringSetting("TEST_EXTENSION", "")
+#var testProduction = globals.getStringSetting("TEST_PRODUCTION", "")
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 #
