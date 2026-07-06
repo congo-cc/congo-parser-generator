@@ -1,8 +1,8 @@
-#var extension = globals::getStringSetting("TEST_EXTENSION", "")
-#var testProduction = globals::getStringSetting("TEST_PRODUCTION", "")
-package ${settings.parserPackage}.test;
+#var extension = globals.getStringSetting("TEST_EXTENSION", "")
+#var testProduction = globals.getStringSetting("TEST_PRODUCTION", "")
+package ${settings::parserPackage}.test;
 
-#if !extension.empty && !testProduction.empty
+#if !extension::empty && !testProduction::empty
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.FileSystem;
@@ -12,7 +12,7 @@ import java.util.Collections;
 import java.util.List;
 import java.util.stream.Stream;
 import java.nio.file.Path;
-import ${settings.parserPackage}.${settings.parserClassName};
+import ${settings::parserPackage}.${settings::parserClassName};
 
 #endif
 
@@ -20,7 +20,7 @@ import ${settings.parserPackage}.${settings.parserClassName};
  * A test harness for parsing .${extension} files from the command line.
  */
 public class ParseFiles {
-#if !extension.empty && !testProduction.empty
+#if !extension::empty && !testProduction::empty
     static private List<Path> paths = new ArrayList<>(),
                               failures = new ArrayList<>(),
                               successes = new ArrayList<>();
@@ -49,7 +49,7 @@ public class ParseFiles {
 
     static private void parseFile(Path path) {
         try {
-            ${settings.parserClassName} parser = new ${settings.parserClassName}(path);
+            ${settings::parserClassName} parser = new ${settings::parserClassName}(path);
 
             parser.${testProduction}();
             String s = String.format("The Java impl parsed %s.", path);
@@ -67,14 +67,14 @@ public class ParseFiles {
 
 #endif
 
-#if !extension.empty && !testProduction.empty
+#if !extension::empty && !testProduction::empty
     static public void main(String args[]) throws IOException {
 #else
     static public void main(String args[]) {
 #endif
-#if extension.empty
+#if extension::empty
         System.out.println();
-#elif testProduction.empty
+#elif testProduction::empty
 #else
         for (String arg : args) {
             Path path = fileSystem.getPath(arg);

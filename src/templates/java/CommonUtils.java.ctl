@@ -30,15 +30,15 @@
 #endmacro
 
 #macro firstSetVar expansion
-    ${enumSet(expansion.firstSetVarName, expansion.firstSet.tokenNames)}
+    ${enumSet(expansion::firstSetVarName, expansion::firstSet::tokenNames)}
 #endmacro
 
 #macro finalSetVar expansion
-    ${enumSet(expansion.finalSetVarName, expansion.finalSet.tokenNames)}
+    ${enumSet(expansion::finalSetVarName, expansion::finalSet::tokenNames)}
 #endmacro
 
 #macro followSetVar expansion
-    ${enumSet(expansion.followSetVarName, expansion.followSet.tokenNames)}
+    ${enumSet(expansion::followSetVarName, expansion::followSet::tokenNames)}
 #endmacro
 
 
@@ -75,14 +75,14 @@
 #macro HandleLexicalStateChange expansion inLookahead cardinalitiesVar
    #var resetToken = inLookahead ?: "currentLookaheadToken" : "lastConsumedToken"
    #var prevLexicalStateVar = newVarName("previousLexicalState")
-   #if expansion.specifiedLexicalState??
+   #if expansion::specifiedLexicalState??
          LexicalState ${prevLexicalStateVar} = token_source.lexicalState;
-         token_source.reset(${resetToken}, LexicalState.${expansion.specifiedLexicalState});
+         token_source.reset(${resetToken}, LexicalState.${expansion::specifiedLexicalState});
          try {
            #nested
          }
          finally {
-            if (${prevLexicalStateVar} != LexicalState.${expansion.specifiedLexicalState}) {
+            if (${prevLexicalStateVar} != LexicalState.${expansion::specifiedLexicalState}) {
                 if (${resetToken}.getNext() != null) {
                     token_source.reset(${resetToken}, ${prevLexicalStateVar});
                 }
@@ -91,22 +91,22 @@
                 }
             }
          }
-   #elif expansion.tokenActivation??
-      #var tokenActivation = expansion.tokenActivation
+   #elif expansion::tokenActivation??
+      #var tokenActivation = expansion::tokenActivation
       #var prevActives = newVarName("previousActives")
       #var somethingChanged = newVarName("somethingChanged")
       EnumSet<TokenType> ${prevActives} = EnumSet.copyOf(token_source.activeTokenTypes);
       boolean ${somethingChanged} = false;
-      #if tokenActivation.activatedTokens
+      #if tokenActivation::activatedTokens
          ${somethingChanged} = activateTokenTypes(
-         #list tokenActivation.activatedTokens as tokenName
+         #list tokenActivation::activatedTokens as tokenName
              ${tokenName}[#if tokenName_has_next],[/#if]
          #endlist
          );
       #endif
-      #if tokenActivation.deactivatedTokens
+      #if tokenActivation::deactivatedTokens
          ${somethingChanged} = ${somethingChanged} |= deactivateTokenTypes(
-         #list tokenActivation.deactivatedTokens as tokenName
+         #list tokenActivation::deactivatedTokens as tokenName
              ${tokenName}[#if tokenName_has_next],[/#if]
          #endlist
          );

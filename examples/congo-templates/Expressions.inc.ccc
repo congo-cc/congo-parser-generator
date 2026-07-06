@@ -138,7 +138,7 @@ PrimaryExpression(boolean noSpace)#void :
     SCAN {!noSpace || getToken(0).getEndOffset() == getToken(1).getBeginOffset()} =>
     (
       (
-        <DOT>
+        <DOUBLE_COLON>
         DEACTIVATE_TOKENS IN, AS, TRUE, FALSE, NULL
         (<ID>)
       ) #DotVariable(+1)
@@ -154,14 +154,14 @@ PrimaryExpression(boolean noSpace)#void :
       (
         <EXCLAM>
         [
-            ENSURE ~(<DOT>)
+            ENSURE ~(<DOUBLE_COLON>)
             ENSURE {!(getTokenType(1) == ID && getTokenType(2) == EQUALS)
                    || !isInProduction("NamedArgs")}
             PrimaryExpression(false)
         ]
       ) #DefaultToExpression(+1)
       |
-      <DOUBLE_COLON> <ID> #MethodReference(3)
+      <DOT> <ID> #MethodReference(3)
     )
   )*
 ;
@@ -754,7 +754,7 @@ INJECT ListLiteral :
 }
 
 BuiltinVariable :
-   <DOT>
+   <DOUBLE_COLON>
    <ID>
    {
       thisProduction.setName(lastConsumedToken.toString());

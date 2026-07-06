@@ -18,15 +18,15 @@ private static readonly HashSet<TokenType> ${varName} = Utils.GetOrMakeSet(
 #endmacro
 
 #macro firstSetVar expansion
-    [@enumSet expansion.firstSetVarName, expansion.firstSet.tokenNames /]
+    [@enumSet expansion::firstSetVarName, expansion::firstSet::tokenNames /]
 #endmacro
 
 #macro finalSetVar expansion
-    [@enumSet expansion.finalSetVarName, expansion.finalSet.tokenNames /]
+    [@enumSet expansion::finalSetVarName, expansion::finalSet::tokenNames /]
 #endmacro
 
 #macro followSetVar expansion
-    [@enumSet expansion.followSetVarName, expansion.followSet.tokenNames /]
+    [@enumSet expansion::followSetVarName, expansion::followSet::tokenNames /]
 #endmacro
 
 
@@ -69,19 +69,19 @@ private static readonly HashSet<TokenType> ${varName} = Utils.GetOrMakeSet(
 #macro HandleLexicalStateChange expansion inLookahead cardinalitiesVar
 #-- # DBG > HandleLexicalStateChange ${expansion.simpleName}
 #var resetToken = inLookahead?string("currentLookaheadToken", "LastConsumedToken")
-#if expansion.specifiedLexicalState??
+#if expansion::specifiedLexicalState??
   #var prevLexicalStateVar = newVarName("previousLexicalState")
   #if inLookahead
 if (_hitFailure) return false;
 if (_remainingLookahead <= 0) return true;
   #endif
 LexicalState ${prevLexicalStateVar} = tokenSource.LexicalState;
-tokenSource.Reset(${resetToken}, LexicalState.${expansion.specifiedLexicalState});
+tokenSource.Reset(${resetToken}, LexicalState.${expansion::specifiedLexicalState});
 try {
 #nested
 }
 finally {
-    if (${prevLexicalStateVar} != LexicalState.${expansion.specifiedLexicalState}) {
+    if (${prevLexicalStateVar} != LexicalState.${expansion::specifiedLexicalState}) {
         if (${resetToken}.Next != null) {
             tokenSource.Reset(${resetToken}, ${prevLexicalStateVar});
         }
@@ -91,8 +91,8 @@ finally {
         _nextTokenType = null;
     }
 }
-#elif expansion.tokenActivation??
-  #var tokenActivation = expansion.tokenActivation
+#elif expansion::tokenActivation??
+  #var tokenActivation = expansion::tokenActivation
   #var prevActives = newVarName("previousActives")
   #var somethingChanged = newVarName("somethingChanged")
   #if inLookahead
@@ -101,16 +101,16 @@ if (_remainingLookahead <= 0) return true;
   #endif
 var ${prevActives} = new HashSet<TokenType>(tokenSource.ActiveTokenTypes);
 var ${somethingChanged} = false;
-#if tokenActivation.activatedTokens?size > 0
+#if tokenActivation::activatedTokens?size > 0
 ${somethingChanged} = ActivateTokenTypes(
-  #list tokenActivation.activatedTokens as tokenName
+  #list tokenActivation::activatedTokens as tokenName
     ${TT}${tokenName}${tokenName_has_next ?: ","}
   #endlist
 );
 #endif
-#if tokenActivation.deactivatedTokens?size > 0
+#if tokenActivation::deactivatedTokens?size > 0
 ${somethingChanged} = ${somethingChanged} || DeactivateTokenTypes(
-  #list tokenActivation.deactivatedTokens as tokenName
+  #list tokenActivation::deactivatedTokens as tokenName
     ${TT}${tokenName}[#if tokenName_has_next],[/#if]
   #endlist
 );

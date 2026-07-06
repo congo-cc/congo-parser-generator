@@ -209,26 +209,6 @@ INJECT ClassOrInterfaceBody :
             iterator.next();
         }
     }
-
-    // REVISIT. fix token chaining
-    public void removeDuplicateMethods() {
-        Set<String> sigs = new HashSet<String>();
-        ListIterator<Node> decls = iterator();
-        while (decls.hasNext()) {
-           Node n = decls.next();
-           if (n instanceof MethodDeclaration) {
-               MethodDeclaration decl = (MethodDeclaration) n;
-               String sig = decl.getFullSignature();
-               if (sig != null) {
-                    if (sigs.contains(sig)) {
-                        decls.remove();
-                    } else {
-                        sigs.add(sig);
-                    }
-               }
-           }
-        }
-    }
 }
 
 INJECT FieldDeclaration :
