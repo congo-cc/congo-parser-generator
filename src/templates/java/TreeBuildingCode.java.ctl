@@ -1,6 +1,6 @@
-private boolean buildTree = ${settings.treeBuildingDefault ?: "true" : "false"};
-private boolean tokensAreNodes = ${settings.tokensAreNodes ?: "true" : "false"};
-private boolean unparsedTokensAreNodes = ${settings.unparsedTokensAreNodes ?: "true" : "false"};
+private boolean buildTree = ${settings::treeBuildingDefault ?: "true" : "false"};
+private boolean tokensAreNodes = ${settings::tokensAreNodes ?: "true" : "false"};
+private boolean unparsedTokensAreNodes = ${settings::unparsedTokensAreNodes ?: "true" : "false"};
 
     public boolean isTreeBuildingEnabled() {
         return buildTree;
@@ -101,7 +101,7 @@ private boolean unparsedTokensAreNodes = ${settings.unparsedTokensAreNodes ?: "t
             n.setEndOffset(n.getBeginOffset());
             n.setTokenSource(this.token_source);
             n.open();
-  #list grammar.openNodeScopeHooks as hook
+  #list grammar::openNodeScopeHooks as hook
             ${hook}(n);
   #endlist
         }
@@ -131,8 +131,8 @@ private boolean unparsedTokensAreNodes = ${settings.unparsedTokensAreNodes ?: "t
             }
         }
         for (Node child : nodes) {
-            if (unparsedTokensAreNodes && child instanceof ${settings.baseTokenClassName}) {
-                ${settings.baseTokenClassName} tok = (${settings.baseTokenClassName}) child;
+            if (unparsedTokensAreNodes && child instanceof ${settings::baseTokenClassName}) {
+                ${settings::baseTokenClassName} tok = (${settings::baseTokenClassName}) child;
                 while (tok.previousCachedToken() != null && tok.previousCachedToken().isUnparsed()) {
                     tok = tok.previousCachedToken();
                 }
@@ -153,7 +153,7 @@ private boolean unparsedTokensAreNodes = ${settings.unparsedTokensAreNodes ?: "t
         }
         n.close();
         pushNode(n);
-#list grammar.closeNodeScopeHooks as hook
+#list grammar::closeNodeScopeHooks as hook
        ${hook}(n);
 #endlist
        return true;
@@ -187,8 +187,8 @@ private boolean unparsedTokensAreNodes = ${settings.unparsedTokensAreNodes ?: "t
     class NodeScope extends ArrayList<Node> {
         NodeScope parentScope;
         NodeScope() {
-            this.parentScope = ${settings.parserClassName}.this.currentNodeScope;
-            ${settings.parserClassName}.this.currentNodeScope = this;
+            this.parentScope = ${settings::parserClassName}.this.currentNodeScope;
+            ${settings::parserClassName}.this.currentNodeScope = this;
         }
 
         boolean isRootScope() {
@@ -225,7 +225,7 @@ private boolean unparsedTokensAreNodes = ${settings.unparsedTokensAreNodes ?: "t
 
         void close() {
             parentScope.addAll(this);
-            ${settings.parserClassName}.this.currentNodeScope = parentScope;
+            ${settings::parserClassName}.this.currentNodeScope = parentScope;
         }
 
         int nestingLevel() {

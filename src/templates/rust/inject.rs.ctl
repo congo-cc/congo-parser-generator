@@ -39,8 +39,8 @@
      includes productions). We also check for PARSER_CLASS injections. --]
 [#var hasAnyInject = false]
 [#var injectNodes = []]
-[#list grammar.nodeNames as node]
-[#if injector::hasInjectedCode(node)]
+[#list grammar::nodeNames as node]
+[#if injector.hasInjectedCode(node)]
 [#set hasAnyInject = true]
 [#set injectNodes = injectNodes + [node]]
 [/#if]
@@ -48,8 +48,8 @@
 [#-- Check for PARSER_CLASS injections via translateParserClassInjection which
      uses the correct parserPackage.parserClassName lookup key and includes
      original Java source in FIXME block comments. --]
-[#var parserFieldInject = globals::translateParserClassInjection(true)]
-[#var parserMethodInject = globals::translateParserClassInjection(false)]
+[#var parserFieldInject = globals.translateParserClassInjection(true)]
+[#var parserMethodInject = globals.translateParserClassInjection(false)]
 [#if parserFieldInject?has_content || parserMethodInject?has_content]
 [#set hasAnyInject = true]
 [/#if]
@@ -62,7 +62,7 @@ use crate::tokens::TokenType;
 
 [#-- Emit per-node injections (productions and token types) --]
 [#list injectNodes as node]
-[#var translated = globals::translateInjectedClass(node)]
+[#var translated = globals.translateInjectedClass(node)]
 [#if translated?has_content]
 // ---------------------------------------------------------------------------
 // INJECT ${node}
@@ -81,7 +81,7 @@ ${translated}
 [#-- Emit PARSER_CLASS injections --]
 [#if parserFieldInject?has_content || parserMethodInject?has_content]
 // ---------------------------------------------------------------------------
-// INJECT PARSER_CLASS (${settings.parserClassName})
+// INJECT PARSER_CLASS (${settings::parserClassName})
 //
 // Parser class injections typically add utility methods (e.g., main()) to the
 // parser.  In Rust, the parser is a struct with parsing methods; injected
