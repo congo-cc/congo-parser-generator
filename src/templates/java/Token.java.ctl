@@ -370,6 +370,17 @@ public class ${settings::baseTokenClassName} ${implements} {
         return previousCachedToken();
     }
 
+    /**
+     * @return the SKIPped characters before this token
+     */
+    public String getPrecedingSkippedChars() {
+        ${settings::baseTokenClassName} prevToken = previousCachedToken();
+        if (prevToken == null) return "";
+        int prevTokenEnd = prevToken.getEndOffset();
+        if (prevTokenEnd == this.getBeginOffset()) return "";
+        return getTokenSource().subSequence(prevTokenEnd, this.getBeginOffset()).toString();
+    }
+
     public ${settings::baseTokenClassName} replaceType(TokenType type) {
         if (type == this.getType()) {
             return this;
