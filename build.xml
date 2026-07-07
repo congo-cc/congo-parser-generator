@@ -246,7 +246,7 @@
           compress="true"
           includes="LICENSE,org/congocc/templates/**/*.class">
         <manifest>
-           <attribute name="Main-Class" value="org.congocc.templates.core.CommandLine"/>
+           <attribute name="Main-Class" value="org.congocc.templates.cli.CommandLine"/>
         </manifest>
      </jar>
   </target>
