@@ -1,11 +1,11 @@
-package org.congocc.templates.core;
+package org.congocc.templates.cli;
 
 import org.congocc.templates.*;
 import java.io.*;
 import java.util.HashMap;
 
 /**
- * Command-line utility, the Main-Class of <tt>CTL.jar</tt>.
+ * Command-line utility, the Main-Class in <tt>congo-templates.jar</tt>.
  * If invoked with no parameters it just prints the version number.
  * If you invoke it with filename, it reads int the file as a template
  * and processes it with an empty data model, sending the output to stdout.
