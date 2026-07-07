@@ -102,7 +102,6 @@ public class AssignmentInstruction extends TemplateNode implements TemplateEleme
         if (key instanceof String && ReflectionCode.setProperty(target, (String) key, value)) {
             return;
         }
-        // TODO: check for the beans setter setXXX method
         // TODO: improve error message a bit
         throw new EvaluationException("Could not set " + lhs);
     }

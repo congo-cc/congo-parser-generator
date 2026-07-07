@@ -1,6 +1,8 @@
 // This file defines the expression
 // grammar. It is INCLUDEd from the main template.
 
+DEFAULT_LEXICAL_STATE=EXPRESSION;
+
 #Expression#interface :
     TernaryExpression
     {
@@ -81,10 +83,10 @@ INJECT Expression :
 TernaryExpression :
     OrExpression
     [
-        <TERNARY>
+        "?:"
         Expression
         [
-          <COLON>
+          ":"
           Expression
         ]
     ]
@@ -107,11 +109,11 @@ INJECT TernaryExpression :
 }
 
 Literal#void :
-  <NULL>
+  "null"
   |
-  <TRUE>
+  "true"
   |
-  <FALSE>
+  "false"
   |
   <NUMBER>
   |
@@ -138,39 +140,35 @@ PrimaryExpression(boolean noSpace)#void :
     SCAN {!noSpace || getToken(0).getEndOffset() == getToken(1).getBeginOffset()} =>
     (
       (
-        <DOUBLE_COLON>
+        "::"
         DEACTIVATE_TOKENS IN, AS, TRUE, FALSE, NULL
         (<ID>)
       ) #DotVariable(+1)
       |
-      <OPEN_BRACKET> Expression <CLOSE_BRACKET> #org.congocc.templates.core.nodes.DynamicKeyName(4)
+      "[" Expression "]" #org.congocc.templates.core.nodes.DynamicKeyName(4)
       |
-      (<OPEN_PAREN> [ArgsList] <CLOSE_PAREN>) #MethodCall(+1)
+      ("(" [ArgsList] ")") #MethodCall(+1)
       |
-      <BUILT_IN><ID> #BuiltInExpression(3)
+      "?" <ID> #BuiltInExpression(3)
       |
-      <EXISTS>#ExistsExpression(2)
+      "??" #ExistsExpression(2)
       |
       (
-        <EXCLAM>
+        "!"
         [
-            ENSURE ~(<DOUBLE_COLON>)
+            ENSURE ~("::")
             ENSURE {!(getTokenType(1) == ID && getTokenType(2) == EQUALS)
                    || !isInProduction("NamedArgs")}
             PrimaryExpression(false)
         ]
       ) #DefaultToExpression(+1)
       |
-      <DOT> <ID> #MethodReference(3)
+      "." <ID> #MethodReference(3)
     )
   )*
 ;
 
-ParentheticalExpression :
-    <OPEN_PAREN>
-    Expression
-    <CLOSE_PAREN>
-;
+ParentheticalExpression : "(" Expression ")" ;
 
 INJECT ParentheticalExpression :
    import org.congocc.templates.core.Environment;
@@ -242,7 +240,7 @@ UnaryExpression#void :
 ;
 
 NotExpression :
-   <EXCLAM>
+   "!"
    (
       PrimaryExpression(false)
       |
@@ -269,9 +267,9 @@ INJECT NotExpression :
 
 UnaryPlusMinusExpression :
    (
-      <PLUS>
+      "+"
       |
-      <MINUS>
+      "-"
    )
    (
       UnaryPlusMinusExpression
@@ -317,9 +315,9 @@ AdditiveExpression :
    MultiplicativeExpression
    (
       (
-         <PLUS>
+         "+"
          |
-         <MINUS>
+         "-"
       )
       MultiplicativeExpression
    )*
@@ -396,11 +394,11 @@ MultiplicativeExpression :
    UnaryExpression
    (
       (
-         <TIMES>
+         "*"
          |
-         <DIVIDE>
+         "/"
          |
-         <PERCENT>
+         "%"
       )
       UnaryExpression
    )*
@@ -468,11 +466,11 @@ EqualityExpression :
    RelationalExpression
    [
      (
-      <NOT_EQUALS>
+      "!="
       |
-      <EQUALS>
+      "="
       |
-      <DOUBLE_EQUALS>
+      "=="
      )
      RelationalExpression
    ]
@@ -586,7 +584,7 @@ INJECT RelationalExpression :
 RangeExpression :
    AdditiveExpression
    [
-    <DOT_DOT>
+    ".."
     [
        AdditiveExpression
     ]
@@ -717,15 +715,15 @@ INJECT OrExpression :
 }
 
 ListLiteral :
-    <OPEN_BRACKET>
+    "["
     [
       Expression
       (
-         <COMMA>
+         ","
          Expression
       )*
     ]
-    <CLOSE_BRACKET>
+    "]"
 ;
 
 INJECT ListLiteral :
@@ -754,7 +752,7 @@ INJECT ListLiteral :
 }
 
 BuiltinVariable :
-   <DOUBLE_COLON>
+   "::"
    <ID>
    {
       thisProduction.setName(lastConsumedToken.toString());
@@ -1096,7 +1094,7 @@ INJECT MethodCall :
 PositionalArgsList# :
 	Expression
 	(
-	   <COMMA>
+	   ","
 	   Expression
 	)*
 ;
@@ -1141,15 +1139,15 @@ NamedArgsList :
 	Expression arg;
 }
 	<ID> {param = lastConsumedToken.toString();}
-	<EQUALS>
+	"="
 	arg=Expression
 	{
 		thisProduction.addNamedArg(param, arg);
 	}
 	(
-	   [<COMMA>]
+	   [","]
 	   <ID> {param = lastConsumedToken.toString();}
-	   <EQUALS>
+	   "="
 	   arg=Expression
 	   {thisProduction.addNamedArg(param, arg);}
 	)*
@@ -1208,7 +1206,7 @@ INJECT NamedArgsList :
 
 ArgsList#abstract :
 	(
-	   SCAN <ID><EQUALS> =>
+	   SCAN <ID> "=" =>
        NamedArgsList
        |
        PositionalArgsList
@@ -1228,19 +1226,19 @@ INJECT ArgsList :
 }
 
 HashLiteral :
-   <OPEN_BRACE>
+   "{"
    [
        Expression
-       <COLON>
+       ":"
        Expression
        (
-          <COMMA>
+          ","
            Expression
-           <COLON>
+           ":"
            Expression
        )*
    ]
-   <CLOSE_BRACE>
+   "}"
 ;
 
 INJECT HashLiteral :
