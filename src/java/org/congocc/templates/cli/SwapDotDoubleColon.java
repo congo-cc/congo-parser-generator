@@ -12,7 +12,7 @@ public class SwapDotDoubleColon {
     StringBuilder buf = new StringBuilder();
     static public void main(String[] args) throws IOException {
         if (args.length == 0) {
-            System.out.println("Usage: java -cp congocc.jar SwapDotDoubleColon.java <template files>");
+            System.out.println("Usage: java -cp congocc.jar org.congocc.templates.cli.SwapDotDoubleColon <template files>");
         }
         for (String arg : args) {
             var path = FileSystems.getDefault().getPath(".", arg);

@@ -143,7 +143,7 @@ PrimaryExpression(boolean noSpace)#void :
         "::"
         DEACTIVATE_TOKENS IN, AS, TRUE, FALSE, NULL
         (<ID>)
-      ) #DotVariable(+1)
+      ) #PropertyReference(+1)
       |
       "[" Expression "]" #org.congocc.templates.core.nodes.DynamicKeyName(4)
       |
@@ -191,7 +191,7 @@ INJECT ParentheticalExpression :
     }
 }
 
-INJECT DotVariable :
+INJECT PropertyReference :
     import org.congocc.templates.core.Environment;
     import org.congocc.templates.core.variables.*;
     import org.congocc.templates.core.variables.scope.Scope;

@@ -78,11 +78,7 @@ abstract public class Configurable {
         properties.setProperty(BOOLEAN_FORMAT_KEY, "true,false");
     }
 
-    /**
-     * Creates a new instance. Normally you do not need to use this constructor,
-     * as you don't use <code>Configurable</code> directly, but its subclasses.
-     */
-    public Configurable(Configurable fallback) {
+    protected Configurable(Configurable fallback) {
         this.fallback = fallback;
         locale = null;
         numberFormat = null;
