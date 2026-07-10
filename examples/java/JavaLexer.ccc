@@ -170,7 +170,6 @@ INJECT StringLiteral :
 #if false
   // Once the minimum supported JDK for output is 17 (soon)
   this will be the version that is used.
-  @MinJDK15
   static public String removeEscapesAndQuotes(String input) {
     if (!input.startsWith("\"\"\""))
        return input.substring(1, input.length()-1).translateEscapes();
