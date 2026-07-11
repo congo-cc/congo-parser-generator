@@ -27,7 +27,9 @@ INJECT Interpolation :
      */
     public void execute(Environment env) throws IOException {
         Expression exp = getExpression();
-        env.getOut().write(exp.getStringValue(env));
+        String output = exp.getStringValue(env);
+        env.getOut().write(output);
+        env.getBuffer().append(output);
     }
 
     public String getDescription() {
@@ -458,15 +460,19 @@ INJECT BlockAssignment :
     		}
     	}
         Writer existingWriter = env.getOut();
+        StringBuilder existingBuffer = env.getBuffer();
         StringWriter bufferWriter = new StringWriter();
+        StringBuilder newBuffer = new StringBuilder();
         try {
             Block block = firstChildOfType(Block.class);
             if (block != null) {
                 env.setOut(bufferWriter);
+                env.setBuffer(newBuffer);
                 env.render(block);
             }
         } finally {
             env.setOut(existingWriter);
+            env.setBuffer(existingBuffer);
         }
         AssignmentInstruction.set(getTargetExpression(), bufferWriter.toString(), env, scope);
     }
@@ -939,6 +945,7 @@ INJECT NoParseBlock :
             }
         }
         env.getOut().write(source);
+        env.getBuffer().append(source);
     }
 }
 
@@ -1228,6 +1235,7 @@ INJECT TextElement :
 
     public void execute(Environment env) throws IOException {
         env.getOut().write(getOutputText());
+        env.getBuffer().append(getOutputText());
  	}
 
 	private boolean ignoresSandwichedWhitespace(Node elem) {

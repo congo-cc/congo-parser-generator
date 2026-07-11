@@ -1073,8 +1073,10 @@ INJECT MethodCall :
             StringWriter sw = null;
             env.setLastReturnValue(null);
             Writer prevOut = env.getOut();
+            StringBuilder prevBuffer = env.getBuffer();
             try {
                 env.setOut(Environment.NULL_WRITER);
+                env.setBuffer(new StringBuilder());
                 if (!func.isFunction()) {
                     sw = new StringWriter();
                     env.setOut(sw);
@@ -1084,6 +1086,7 @@ INJECT MethodCall :
                 throw new InternalError("This should be impossible.");
             } finally {
                 env.setOut(prevOut);
+                env.setBuffer(prevBuffer);
             }
             return sw != null ? sw.getBuffer().toString() : env.getLastReturnValue();
         }
