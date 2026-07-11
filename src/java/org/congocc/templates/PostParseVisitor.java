@@ -2,6 +2,7 @@ package org.congocc.templates;
 
 import org.congocc.templates.core.Configurable;
 import org.congocc.templates.core.nodes.generated.*;
+import org.congocc.templates.core.nodes.BuiltInExpression;
 import org.congocc.templates.core.parser.Node;
 import org.congocc.templates.core.parser.ParseException;
 import org.congocc.templates.core.parser.ParsingProblemImpl;
@@ -175,10 +176,6 @@ class PostParseVisitor extends Node.Visitor {
     	String key = node.getKey();
         if (!key.equals(Configurable.LOCALE_KEY) &&
                 !key.equals(Configurable.NUMBER_FORMAT_KEY) &&
-                !key.equals(Configurable.TIME_FORMAT_KEY) &&
-                !key.equals(Configurable.DATE_FORMAT_KEY) &&
-                !key.equals(Configurable.DATETIME_FORMAT_KEY) &&
-                !key.equals(Configurable.TIME_ZONE_KEY) &&
                 !key.equals(Configurable.BOOLEAN_FORMAT_KEY) &&
                 !key.equals(Configurable.URL_ESCAPING_CHARSET_KEY))
             {

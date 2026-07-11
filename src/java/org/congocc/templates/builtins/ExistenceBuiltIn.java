@@ -1,11 +1,10 @@
 package org.congocc.templates.builtins;
 
 import java.util.Map;
-//import java.util.function.Supplier;
 import java.util.function.Function;
 
 import org.congocc.templates.core.Environment;
-import org.congocc.templates.core.nodes.generated.BuiltInExpression;
+import org.congocc.templates.core.nodes.BuiltInExpression;
 import org.congocc.templates.core.nodes.generated.Expression;
 import org.congocc.templates.core.nodes.generated.ParentheticalExpression;
 import org.congocc.templates.core.variables.VarArgsFunction;
@@ -15,7 +14,7 @@ import org.congocc.templates.TemplateHash;
 import static org.congocc.templates.core.variables.Wrap.*;
 
 public abstract class ExistenceBuiltIn implements BuiltIn {
-    public Object get(Environment env, BuiltInExpression caller) 
+    public Object get(Environment env, BuiltInExpression caller)
     {
         final Expression target = caller.getTarget();
         try {
@@ -51,7 +50,7 @@ public abstract class ExistenceBuiltIn implements BuiltIn {
             return model != null && model != JAVA_NULL;
         }
     };
-        
+
     public static class HasContentBuiltIn extends ExistenceBuiltIn {
         public Object apply(final Object value) {
             if (value == null || value == JAVA_NULL || value == LOOSE_NULL) return false;

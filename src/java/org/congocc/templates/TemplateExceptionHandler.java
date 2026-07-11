@@ -1,6 +1,5 @@
 package org.congocc.templates;
 
-import java.io.Writer;
 import java.io.PrintWriter;
 import java.io.StringWriter;
 
@@ -46,11 +45,11 @@ public interface TemplateExceptionHandler {
      */
 	TemplateExceptionHandler DEBUG_HANDLER =new TemplateExceptionHandler() {
 		  public void handleTemplateException(TemplateException te, Environment env, StringBuilder buffer) {
-          StringWriter sw = new StringWriter();
-          PrintWriter pw = new PrintWriter(sw);
-          te.printStackTrace(pw);
-          buffer.append(sw.toString());
-          throw te;
+            StringWriter sw = new StringWriter();
+            PrintWriter pw = new PrintWriter(sw);
+            te.printStackTrace(pw);
+            buffer.append(sw.toString());
+            throw te;
 		}
 	};
 

@@ -1,7 +1,7 @@
 package org.congocc.templates.builtins;
 
 import org.congocc.templates.core.Environment;
-import org.congocc.templates.core.nodes.generated.BuiltInExpression;
+import org.congocc.templates.core.nodes.BuiltInExpression;
 import org.congocc.templates.core.nodes.generated.Macro;
 import org.congocc.templates.core.nodes.generated.TemplateNode;
 import static org.congocc.templates.core.variables.Wrap.JAVA_NULL;

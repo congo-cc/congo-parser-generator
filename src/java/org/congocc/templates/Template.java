@@ -1,7 +1,6 @@
 package org.congocc.templates;
 
 import java.io.IOException;
-import java.io.Writer;
 import java.util.*;
 
 import org.congocc.templates.core.Configurable;
@@ -69,7 +68,7 @@ public class Template extends Configurable {
     }
 
 	public Template(String name, CharSequence input, Configuration cfg,
-			String encoding) throws IOException
+			String encoding)
     {
         this(name, cfg);
         this.encoding = encoding;
@@ -117,7 +116,7 @@ public class Template extends Configurable {
     {
         Environment env = new Environment(this, rootMap);
         env.process();
-        return env.getBuffer().toString();
+        return env.getOutput();
     }
 
     /**

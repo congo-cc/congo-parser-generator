@@ -2,7 +2,7 @@ package org.congocc.templates.builtins;
 
 import org.congocc.templates.core.Environment;
 import org.congocc.templates.core.ArithmeticEngine;
-import org.congocc.templates.core.nodes.generated.BuiltInExpression;
+import org.congocc.templates.core.nodes.BuiltInExpression;
 import org.congocc.templates.core.nodes.generated.TemplateNode;
 import org.congocc.templates.TemplateException;
 

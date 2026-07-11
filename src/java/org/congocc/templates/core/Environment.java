@@ -460,6 +460,10 @@ public final class Environment extends Configurable implements Scope {
         return buffer;
     }
 
+    public String getOutput() {
+        return buffer.toString();
+    }
+
     public String formatNumber(Number number) {
         if (numberFormat == null) {
             numberFormat = getNumberFormatObject(getNumberFormat());
