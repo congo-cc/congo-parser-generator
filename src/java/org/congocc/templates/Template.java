@@ -101,6 +101,7 @@ public class Template extends Configurable {
         template.rootElement = new Block() {
         	public void execute(Environment env) throws IOException {
         		env.getOut().write(content);
+                env.getBuffer().append(content);
         	}
         };
         return template;

@@ -422,9 +422,6 @@ abstract public class Configurable {
                     if ("debug".equalsIgnoreCase(value)) {
                         setTemplateExceptionHandler(
                                 TemplateExceptionHandler.DEBUG_HANDLER);
-                    } else if ("html_debug".equalsIgnoreCase(value)) {
-                        setTemplateExceptionHandler(
-                                TemplateExceptionHandler.HTML_DEBUG_HANDLER);
                     } else if ("ignore".equalsIgnoreCase(value)) {
                         setTemplateExceptionHandler(
                                 TemplateExceptionHandler.IGNORE_HANDLER);

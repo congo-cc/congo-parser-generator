@@ -76,6 +76,8 @@ public final class Environment extends Configurable implements Scope {
 
     private Writer out;
 
+    private StringBuilder buffer = new StringBuilder();
+
     private MacroContext currentMacroContext;
 
     private Scope mainNamespace;
@@ -179,6 +181,7 @@ public final class Environment extends Configurable implements Scope {
      */
     public void render(Block attemptBlock, Block recoveryBlock) throws IOException {
         Writer prevOut = this.out;
+        int prevBufferLength = buffer.length();
         StringWriter sw = new StringWriter();
         this.out = sw;
         TemplateException thrownException = null;
@@ -190,8 +193,9 @@ public final class Environment extends Configurable implements Scope {
             this.out = prevOut;
         }
         if (thrownException != null) {
+            buffer.setLength(prevBufferLength);
+            recoveredErrorStack.add(thrownException.getMessage());
             try {
-                recoveredErrorStack.add(thrownException.getMessage());
                 render(recoveryBlock);
             } finally {
                 recoveredErrorStack.remove(recoveredErrorStack.size() - 1);
@@ -410,7 +414,7 @@ public final class Environment extends Configurable implements Scope {
             throw te;
         }
         // Finally, pass the exception to the handler
-        getTemplateExceptionHandler().handleTemplateException(te, this, out);
+        getTemplateExceptionHandler().handleTemplateException(te, this, out, buffer);
     }
 
     public void setTemplateExceptionHandler(
@@ -465,6 +469,14 @@ public final class Environment extends Configurable implements Scope {
 
     public Writer getOut() {
         return out;
+    }
+
+    public void setBuffer(StringBuilder buffer) {
+        this.buffer = buffer;
+    }
+
+    public StringBuilder getBuffer() {
+        return buffer;
     }
 
     public String formatNumber(Number number) {
@@ -863,11 +875,13 @@ public final class Environment extends Configurable implements Scope {
             Writer prevOut = out;
             Configurable prevParent = getFallback();
             this.out = NULL_WRITER;
+            int prevBufferLength = buffer.length();
             setFallback(loadedTemplate);
             try {
                 render(loadedTemplate.getRootElement());
             } finally {
                 this.out = prevOut;
+                buffer.setLength(prevBufferLength);
                 currentScope = prevScope;
                 setFallback(prevParent);
             }
@@ -877,6 +891,8 @@ public final class Environment extends Configurable implements Scope {
 
     public String renderElementToString(TemplateElement te) throws IOException {
         Writer prevOut = out;
+        StringBuilder prevBuffer = buffer;
+        this.buffer = new StringBuilder();
         try {
             StringWriter sw = new StringWriter();
             this.out = sw;
@@ -884,6 +900,7 @@ public final class Environment extends Configurable implements Scope {
             return sw.toString();
         } finally {
             this.out = prevOut;
+            this.buffer = prevBuffer;
         }
     }
 
