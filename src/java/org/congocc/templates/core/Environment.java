@@ -74,8 +74,6 @@ public final class Environment extends Configurable implements Scope {
 
     private Collator collator;
 
-    private Writer out;
-
     private StringBuilder buffer = new StringBuilder();
 
     private MacroContext currentMacroContext;
@@ -110,10 +108,9 @@ public final class Environment extends Configurable implements Scope {
         return threadEnv.get();
     }
 
-    public Environment(Template template, Map<String,Object> rootDataModel, Writer out) {
+    public Environment(Template template, Map<String,Object> rootDataModel) {
         super(template);
         this.currentScope = mainNamespace = new BlockScope(template.getRootElement(), this);
-        this.out = out;
         this.rootDataModel = rootDataModel;
         importMacros(template);
     }
@@ -144,7 +141,6 @@ public final class Environment extends Configurable implements Scope {
             Template template = getTemplate();
             render(template.getRootElement());
             // Do not flush if there was an exception.
-            out.flush();
         } finally {
             threadEnv.set(savedEnv);
         }
@@ -180,17 +176,12 @@ public final class Environment extends Configurable implements Scope {
      * Visit a block using buffering/recovery
      */
     public void render(Block attemptBlock, Block recoveryBlock) throws IOException {
-        Writer prevOut = this.out;
         int prevBufferLength = buffer.length();
-        StringWriter sw = new StringWriter();
-        this.out = sw;
         TemplateException thrownException = null;
         try {
             render(attemptBlock);
         } catch (TemplateException te) {
             thrownException = te;
-        } finally {
-            this.out = prevOut;
         }
         if (thrownException != null) {
             buffer.setLength(prevBufferLength);
@@ -200,8 +191,6 @@ public final class Environment extends Configurable implements Scope {
             } finally {
                 recoveredErrorStack.remove(recoveredErrorStack.size() - 1);
             }
-        } else {
-            out.write(sw.toString());
         }
     }
 
@@ -414,7 +403,7 @@ public final class Environment extends Configurable implements Scope {
             throw te;
         }
         // Finally, pass the exception to the handler
-        getTemplateExceptionHandler().handleTemplateException(te, this, out, buffer);
+        getTemplateExceptionHandler().handleTemplateException(te, this, buffer);
     }
 
     public void setTemplateExceptionHandler(
@@ -461,14 +450,6 @@ public final class Environment extends Configurable implements Scope {
             collator = Collator.getInstance(getLocale());
         }
         return collator;
-    }
-
-    public void setOut(Writer out) {
-        this.out = out;
-    }
-
-    public Writer getOut() {
-        return out;
     }
 
     public void setBuffer(StringBuilder buffer) {
@@ -773,7 +754,7 @@ public final class Environment extends Configurable implements Scope {
 
     /**
      * Processes a Template in the context of this <code>Environment</code>,
-     * including its output in the <code>Environment</code>'s Writer.
+     * including its output in the <code>Environment</code>'s buffer.
      *
      * @param includedTemplate
      *                         the template to process. Note that it does
@@ -872,15 +853,12 @@ public final class Environment extends Configurable implements Scope {
             loadedLibs.put(templateName, newNamespace);
             Scope prevScope = currentScope;
             currentScope = newNamespace;
-            Writer prevOut = out;
             Configurable prevParent = getFallback();
-            this.out = NULL_WRITER;
             int prevBufferLength = buffer.length();
             setFallback(loadedTemplate);
             try {
                 render(loadedTemplate.getRootElement());
             } finally {
-                this.out = prevOut;
                 buffer.setLength(prevBufferLength);
                 currentScope = prevScope;
                 setFallback(prevParent);
@@ -890,16 +868,13 @@ public final class Environment extends Configurable implements Scope {
     }
 
     public String renderElementToString(TemplateElement te) throws IOException {
-        Writer prevOut = out;
         StringBuilder prevBuffer = buffer;
-        this.buffer = new StringBuilder();
+        StringBuilder newBuffer = new StringBuilder();
+        this.buffer = newBuffer;
         try {
-            StringWriter sw = new StringWriter();
-            this.out = sw;
             render(te);
-            return sw.toString();
+            return newBuffer.toString();
         } finally {
-            this.out = prevOut;
             this.buffer = prevBuffer;
         }
     }

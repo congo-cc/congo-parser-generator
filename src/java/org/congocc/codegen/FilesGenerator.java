@@ -245,12 +245,10 @@ public class FilesGenerator {
             if (superClassName == null) superClassName = appSettings.getBaseTokenClassName();
             dataModel.put("superclass", superClassName);
         }
-        Writer out = new StringWriter();
         Template template = templatesConfig.getTemplate(templateName);
         // Sometimes needed in templates for e.g. injector.hasInjectedCode(node)
         dataModel.put("injector", grammar.getInjector());
-        template.process(dataModel, out);
-        String code = out.toString();
+        String code = template.process(dataModel);
         if (!appSettings.isQuiet()) {
             System.out.println("Outputting: " + outputPath.normalize());
         }

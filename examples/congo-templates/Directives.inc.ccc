@@ -28,7 +28,6 @@ INJECT Interpolation :
     public void execute(Environment env) throws IOException {
         Expression exp = getExpression();
         String output = exp.getStringValue(env);
-        env.getOut().write(output);
         env.getBuffer().append(output);
     }
 
@@ -459,22 +458,18 @@ INJECT BlockAssignment :
                 throw new InvalidReferenceException(getLocation() + "\nInvalid reference to namespace: " + namespaceExp);
     		}
     	}
-        Writer existingWriter = env.getOut();
         StringBuilder existingBuffer = env.getBuffer();
-        StringWriter bufferWriter = new StringWriter();
         StringBuilder newBuffer = new StringBuilder();
         try {
             Block block = firstChildOfType(Block.class);
             if (block != null) {
-                env.setOut(bufferWriter);
                 env.setBuffer(newBuffer);
                 env.render(block);
             }
         } finally {
-            env.setOut(existingWriter);
             env.setBuffer(existingBuffer);
         }
-        AssignmentInstruction.set(getTargetExpression(), bufferWriter.toString(), env, scope);
+        AssignmentInstruction.set(getTargetExpression(), newBuffer.toString(), env, scope);
     }
 
     public String getDescription() {
@@ -944,7 +939,6 @@ INJECT NoParseBlock :
                 break;
             }
         }
-        env.getOut().write(source);
         env.getBuffer().append(source);
     }
 }
@@ -1234,7 +1228,6 @@ INJECT TextElement :
     }
 
     public void execute(Environment env) throws IOException {
-        env.getOut().write(getOutputText());
         env.getBuffer().append(getOutputText());
  	}
 

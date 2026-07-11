@@ -100,7 +100,6 @@ public class Template extends Configurable {
         Template template = new Template(name, config);
         template.rootElement = new Block() {
         	public void execute(Environment env) throws IOException {
-        		env.getOut().write(content);
                 env.getBuffer().append(content);
         	}
         };
@@ -111,13 +110,14 @@ public class Template extends Configurable {
      * Processes the template, using data from the map, and outputs
      * the resulting text to the supplied <tt>Writer</tt>
      * @param rootMap the root node of the data model.
-     * @param out a <tt>Writer</tt> to output the text to.
      * @throws TemplateException if an exception occurs during template processing
      * @throws IOException if an I/O exception occurs during writing to the writer.
      */
-    public void process(Map<String,Object> rootMap, Writer out) throws IOException
+    public String process(Map<String,Object> rootMap) throws IOException
     {
-        new Environment(this, rootMap, out).process();
+        Environment env = new Environment(this, rootMap);
+        env.process();
+        return env.getBuffer().toString();
     }
 
     /**

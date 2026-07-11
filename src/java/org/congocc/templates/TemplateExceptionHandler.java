@@ -2,6 +2,7 @@ package org.congocc.templates;
 
 import java.io.Writer;
 import java.io.PrintWriter;
+import java.io.StringWriter;
 
 import org.congocc.templates.core.Environment;
 
@@ -16,9 +17,9 @@ public interface TemplateExceptionHandler {
     * handle the exception.
     * @param te the exception that occurred.
     * @param env The environment object that represents the rendering context
-    * @param out the character output stream to output to.
+    * @param buffer the buffer to output to.
     */
-    void handleTemplateException(TemplateException te, Environment env, Writer out, StringBuilder buffer);
+    void handleTemplateException(TemplateException te, Environment env, StringBuilder buffer);
 
 
   /**
@@ -26,7 +27,7 @@ public interface TemplateExceptionHandler {
    * to handle the event.
    */
     TemplateExceptionHandler IGNORE_HANDLER = new TemplateExceptionHandler() {
-        public void handleTemplateException(TemplateException te, Environment env, Writer out, StringBuilder buffer) {}
+        public void handleTemplateException(TemplateException te, Environment env, StringBuilder buffer) {}
     };
 
     /**
@@ -34,7 +35,7 @@ public interface TemplateExceptionHandler {
      * Note that the exception is logged before being rethrown.
      */
     TemplateExceptionHandler RETHROW_HANDLER =new TemplateExceptionHandler() {
-	    public void handleTemplateException(TemplateException te, Environment env, Writer out, StringBuilder buffer) {
+	    public void handleTemplateException(TemplateException te, Environment env, StringBuilder buffer) {
             throw te;
         }
 	};
@@ -44,12 +45,11 @@ public interface TemplateExceptionHandler {
      * outputs the stack trace information to the client and then rethrows the exception.
      */
 	TemplateExceptionHandler DEBUG_HANDLER =new TemplateExceptionHandler() {
-		  public void handleTemplateException(TemplateException te, Environment env, Writer out, StringBuilder buffer) {
-          PrintWriter pw = (out instanceof PrintWriter)
-                            ? (PrintWriter) out
-                           : new PrintWriter(out);
+		  public void handleTemplateException(TemplateException te, Environment env, StringBuilder buffer) {
+          StringWriter sw = new StringWriter();
+          PrintWriter pw = new PrintWriter(sw);
           te.printStackTrace(pw);
-          pw.flush();
+          buffer.append(sw.toString());
           throw te;
 		}
 	};
@@ -60,11 +60,8 @@ public interface TemplateExceptionHandler {
           * surrounds it with tags to make the error message readable with the browser.
           */
     TemplateExceptionHandler HTML_DEBUG_HANDLER =new TemplateExceptionHandler() {
-        public void handleTemplateException(TemplateException te, Environment env, Writer out, StringBuilder buffer) {
-            PrintWriter pw = (out instanceof PrintWriter)
-                        ? (PrintWriter) out
-                        : new PrintWriter(out);
-            pw.println("<!-- CONGO TEMPLATE ENGINE ERROR MESSAGE STARTS HERE -->"
+        public void handleTemplateException(TemplateException te, Environment env, StringBuilder buffer) {
+            buffer.append("<!-- CONGO TEMPLATE ENGINE ERROR MESSAGE STARTS HERE -->"
                   + "<script language=javascript>//\"></script>"
                   + "<script language=javascript>//\'></script>"
                   + "<script language=javascript>//\"></script>"
@@ -80,9 +77,8 @@ public interface TemplateExceptionHandler {
                   + "font-weight: normal; text-decoration: none; "
                   + "text-transform: none'>"
                   + "<b style='font-size:medium'>Congo template error!</b>"
-                  + "<pre><xmp>");
-            pw.println("</xmp></pre></div></html>");
-            pw.flush();
+                  + "<pre><xmp>\n");
+            buffer.append("</xmp></pre></div></html>\n");
             throw te;
         }
 	};

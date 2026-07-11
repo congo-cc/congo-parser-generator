@@ -35,7 +35,7 @@ public class CommandLine {
 		conf.setDirectoryForTemplateLoading(file.getParentFile().toString());
 		Template template = conf.getTemplate(file.getName());
 		Writer out = new OutputStreamWriter(System.out);
-		template.process(new HashMap<String, Object>(), out);
+		template.process(new HashMap<String, Object>());
 	}
 
     public static void info() {
