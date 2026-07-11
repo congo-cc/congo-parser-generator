@@ -99,7 +99,7 @@ public class Template extends Configurable {
             Configuration config) {
         Template template = new Template(name, config);
         template.rootElement = new Block() {
-        	public void execute(Environment env) throws IOException {
+        	public void execute(Environment env) {
                 env.getBuffer().append(content);
         	}
         };

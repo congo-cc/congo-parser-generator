@@ -13,7 +13,6 @@ Interpolation :
 ;
 
 INJECT Interpolation :
-    import java.io.IOException;
     import org.congocc.templates.core.Environment;
     import org.congocc.templates.TemplateException;
     implements TemplateElement
@@ -25,7 +24,7 @@ INJECT Interpolation :
     /**
      * Outputs the string value of the enclosed expression.
      */
-    public void execute(Environment env) throws IOException {
+    public void execute(Environment env) {
         Expression exp = getExpression();
         String output = exp.getStringValue(env);
         env.getBuffer().append(output);
@@ -61,11 +60,10 @@ IfBlock :
 
 INJECT IfBlock :
     import java.util.*;
-    import java.io.IOException;
     import org.congocc.templates.core.Environment;
     implements TemplateElement
 {
-    public void execute(Environment env) throws IOException {
+    public void execute(Environment env) {
         for (ConditionalBlock cblock : childrenOfType(ConditionalBlock.class)) {
             Expression condition = cblock.getCondition();
             if (condition == null || condition.isTrue(env)) {
@@ -83,7 +81,6 @@ INJECT IfBlock :
 }
 
 INJECT ConditionalBlock :
-    import java.io.IOException;
     import org.congocc.templates.core.Environment;
     implements TemplateElement
 {
@@ -91,7 +88,7 @@ INJECT ConditionalBlock :
     	return firstChildOfType(Expression.class);
     }
 
-    public void execute(Environment env) throws IOException {
+    public void execute(Environment env) {
         env.render(firstChildOfType(Block.class));
     }
 
@@ -110,7 +107,6 @@ AttemptBlock :
 ;
 
 INJECT AttemptBlock :
-    import java.io.IOException;
     import org.congocc.templates.core.Environment;
     implements TemplateElement
 {
@@ -122,8 +118,7 @@ INJECT AttemptBlock :
         return childrenOfType(Block.class).get(1);
     }
 
-    public void execute(Environment env) throws IOException
-    {
+    public void execute(Environment env) {
         env.render(getAttemptBlock(), getRecoverBlock());
     }
 
@@ -145,11 +140,10 @@ LoopBlock :
 ;
 
 INJECT LoopBlock :
-    import java.io.IOException;
     import org.congocc.templates.core.*;
     implements TemplateElement
 {
-    public void execute(Environment env) throws IOException {
+    public void execute(Environment env) {
         boolean until = get(1).getType() == UNTIL;
         env.loop(getNestedBlock(), firstChildOfType(Expression.class), until);
     }
@@ -171,7 +165,6 @@ ListBlock#IteratorBlock :
 ;
 
 INJECT IteratorBlock :
-    import java.io.IOException;
     import org.congocc.templates.core.*;
     import org.congocc.templates.core.variables.*;
     import org.congocc.templates.core.variables.scope.BlockScope;
@@ -197,7 +190,7 @@ INJECT IteratorBlock :
         return (Expression) get(1);
     }
 
-    public void execute(Environment env) throws IOException {
+    public void execute(Environment env) {
         Object listVar = getListExpression().evaluate(env);
         if (listVar == LOOSE_NULL) return;
         assertNonNull(listVar, getListExpression());
@@ -351,7 +344,6 @@ NestedInstruction# :
 ;
 
 INJECT NestedInstruction :
-    import java.io.IOException;
     import org.congocc.templates.core.*;
     implements TemplateElement
 {
@@ -368,7 +360,7 @@ INJECT NestedInstruction :
      * what it was before macro invocation to implement this properly.
      * I (JR) realized this thanks to some incisive comments from Daniel Dekany.
      */
-    public void execute(Environment env) throws IOException {
+    public void execute(Environment env) {
         env.render(this);
     }
 
@@ -424,7 +416,6 @@ BlockAssignment :
 ;
 
 INJECT BlockAssignment :
-    import java.io.IOException;
     import java.io.StringWriter;
     import java.io.Writer;
     import org.congocc.templates.core.Environment;
@@ -448,7 +439,7 @@ INJECT BlockAssignment :
         return null;
     }
 
-    public void execute(Environment env) throws IOException {
+    public void execute(Environment env) {
     	Map scope = null;
         Expression namespaceExp = getNamespaceExp();
     	if (namespaceExp != null) {
@@ -513,7 +504,6 @@ IncludeInstruction :
 
 INJECT IncludeInstruction :
     import java.io.IOException;
-    import java.io.IOException;
     import org.congocc.templates.*;
     import org.congocc.templates.utility.StringUtil;
     import org.congocc.templates.core.Environment;
@@ -537,7 +527,7 @@ INJECT IncludeInstruction :
         return null;
     }
 
-    public void execute(Environment env) throws IOException {
+    public void execute(Environment env) {
         String templateNameString = ((Expression) get(1)).getStringValue(env);
         if( templateNameString == null ) {
             String msg = "Error " + getLocation()
@@ -571,6 +561,7 @@ INJECT IncludeInstruction :
         try {
             //REVISIT
             includedTemplate = env.getTemplateForInclusion(templateNameString, encoding, parse);
+            env.include(includedTemplate, useFreshNamespace());
         }
         catch (ParseException pe) {
             String msg = "Error parsing included template "
@@ -582,7 +573,6 @@ INJECT IncludeInstruction :
                         + templateNameString;
             throw new TemplateException(msg, ioe);
         }
-        env.include(includedTemplate, useFreshNamespace());
     }
 }
 
@@ -616,7 +606,7 @@ INJECT ImportDeclaration :
     	return (Expression) get(1);
     }
 
-    public void execute(Environment env) throws IOException {
+    public void execute(Environment env) {
         String templateNameString = getTemplateNameExpression().getStringValue(env);
         if( templateNameString == null ) {
             String msg = "Error " + getLocation()
@@ -640,6 +630,7 @@ INJECT ImportDeclaration :
                 templateNameString = templatePath + templateNameString;
             }
             importedTemplate = env.getTemplateForImporting(templateNameString);
+            env.importLib(importedTemplate, getNamespace(), false);
         }
         catch (ParseException pe) {
             String msg = "Error parsing imported template "
@@ -651,7 +642,6 @@ INJECT ImportDeclaration :
                         + templateNameString;
             throw new TemplateException(msg, ioe);
         }
-        env.importLib(importedTemplate, getNamespace(), false);
     }
 
     public String getDescription() {
@@ -830,7 +820,6 @@ UnifiedCall :
 ;
 
 INJECT UnifiedCall :
-    import java.io.IOException;
     import java.util.*;
     import org.congocc.templates.core.Environment;
     import org.congocc.templates.core.nodes.ParameterList;
@@ -866,7 +855,7 @@ INJECT UnifiedCall :
     	}
     }
 
-    public void execute(Environment env) throws IOException {
+    public void execute(Environment env) {
         Expression nameExp = getNameExp();
         Object executable = nameExp.evaluate(env);
         ArgsList args = getArgs();
@@ -921,11 +910,10 @@ NoParseBlock# :
 ;
 
 INJECT NoParseBlock :
-    import java.io.IOException;
     import org.congocc.templates.core.Environment;
     implements TemplateElement
 {
-    public void execute(Environment env) throws IOException {
+    public void execute(Environment env) {
         String source = getSource();
         for (int i = 0; i < source.length(); i++) {
             if (source.charAt(i) == '>' || source.charAt(i) == ']') {
@@ -1159,7 +1147,6 @@ TemplateElement#interface :
 
 INJECT TemplateElement :
    import java.util.*;
-   import java.io.IOException;
    import org.congocc.templates.core.Environment;
 {
     /**
@@ -1168,7 +1155,7 @@ INJECT TemplateElement :
      *
      * @param env The runtime environment
      */
-    void execute(Environment env) throws IOException;
+    void execute(Environment env);
 
     String getDescription();
 
@@ -1200,7 +1187,6 @@ TextElement# :
 ;
 
 INJECT TextElement :
-   import java.io.IOException;
    import org.congocc.templates.core.Environment;
    import org.congocc.templates.core.nodes.Whitespace;
    import org.congocc.templates.core.nodes.AssignmentInstruction;
@@ -1227,7 +1213,7 @@ INJECT TextElement :
         return outputText = buf.toString();
     }
 
-    public void execute(Environment env) throws IOException {
+    public void execute(Environment env) {
         env.getBuffer().append(getOutputText());
  	}
 
@@ -1253,7 +1239,6 @@ Block#(true) :
 ;
 
 INJECT Block :
-    import java.io.IOException;
     import org.congocc.templates.core.Environment;
     implements TemplateElement
 {
@@ -1274,7 +1259,7 @@ INJECT Block :
     	return declaredVariables != null && !declaredVariables.isEmpty();
     }
 
-    public void execute(Environment env) throws IOException {
+    public void execute(Environment env) {
         for (TemplateElement element : childrenOfType(TemplateElement.class)) {
             env.render(element);
         }

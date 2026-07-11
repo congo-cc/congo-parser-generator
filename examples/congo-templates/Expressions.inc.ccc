@@ -727,7 +727,6 @@ ListLiteral :
 ;
 
 INJECT ListLiteral :
-  import java.io.IOException;
   import java.util.ArrayList;
   import java.util.List;
   import org.congocc.templates.core.Environment;
@@ -983,7 +982,6 @@ INJECT MethodCall :
     import java.util.ArrayList;
     import java.util.List;
     import java.io.Writer;
-    import java.io.IOException;
     import java.io.StringWriter;
     import java.util.function.BiFunction;
     import java.util.function.Function;
@@ -1076,8 +1074,6 @@ INJECT MethodCall :
             try {
                 env.setBuffer(newBuffer);
                 env.render(func, getArgs(), null, null);
-            } catch (IOException ioe) {
-                throw new InternalError("This should be impossible.");
             } finally {
                 env.setBuffer(prevBuffer);
             }

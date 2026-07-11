@@ -339,7 +339,6 @@ public class Configuration extends Configurable {
        	autoImportMap = new HashMap<String, String>(map);
     }
 
-    @Override
     protected void doAutoImportsAndIncludes(Environment env) throws IOException {
     	for (String namespace : autoImports) {
             String templateName = autoImportMap.get(namespace);

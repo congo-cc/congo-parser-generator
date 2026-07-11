@@ -1,6 +1,5 @@
 package org.congocc.templates.core.nodes;
 
-import java.io.IOException;
 import java.util.*;
 import java.lang.reflect.Array;
 import org.congocc.templates.core.Environment;
@@ -45,7 +44,7 @@ public class AssignmentInstruction extends TemplateNode implements TemplateEleme
         return null;
     }
 
-    public void execute(Environment env) throws IOException {
+    public void execute(Environment env) {
     	Map<String,Object> scope = null;
         Expression namespaceExp = getNamespaceExp();
     	if (namespaceExp != null) {

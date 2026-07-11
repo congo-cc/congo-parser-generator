@@ -140,16 +140,16 @@ public final class Environment extends Configurable implements Scope {
             doAutoImportsAndIncludes(this);
             Template template = getTemplate();
             render(template.getRootElement());
-            // Do not flush if there was an exception.
         } finally {
             threadEnv.set(savedEnv);
         }
     }
 
+
     /**
      * "Visit" the template element.
      */
-    public void render(TemplateElement element) throws IOException {
+    public void render(TemplateElement element) {
         pushElement(element);
         Block nestedBlock = element.getNestedBlock();
         boolean createNewScope = nestedBlock != null
@@ -175,7 +175,7 @@ public final class Environment extends Configurable implements Scope {
     /**
      * Visit a block using buffering/recovery
      */
-    public void render(Block attemptBlock, Block recoveryBlock) throws IOException {
+    public void render(Block attemptBlock, Block recoveryBlock) {
         int prevBufferLength = buffer.length();
         TemplateException thrownException = null;
         try {
@@ -202,7 +202,7 @@ public final class Environment extends Configurable implements Scope {
         return recoveredErrorStack.get(recoveredErrorStack.size() - 1);
     }
 
-    public void render(NestedInstruction nestedInstruction) throws IOException {
+    public void render(NestedInstruction nestedInstruction) {
         BlockScope blockScope = new BlockScope(currentMacroContext.getBody(), currentMacroContext.getInvokingScope());
         ParameterList bodyParameters = currentMacroContext.getBodyParameters();
         PositionalArgsList bodyArgs = (PositionalArgsList) nestedInstruction.getArgs();
@@ -231,7 +231,7 @@ public final class Environment extends Configurable implements Scope {
         }
     }
 
-    public void loop(Block block, Expression condition, final boolean until) throws IOException {
+    public void loop(Block block, Expression condition, final boolean until) {
         Scope prevScope = currentScope;
         int index = 0;
         try {
@@ -256,7 +256,7 @@ public final class Environment extends Configurable implements Scope {
      * Loop over a block, using the iterator passed in and
      * the given variable name for the loop variable.
      */
-    public void process(Iterator<?> it, Block block, String loopVarName) throws IOException {
+    public void process(Iterator<?> it, Block block, String loopVarName) {
         Scope prevScope = currentScope;
         int index = 0;
         String hasNextName = loopVarName + "_has_next";
@@ -277,7 +277,7 @@ public final class Environment extends Configurable implements Scope {
         }
     }
 
-    public void process(Object mapOrHash, Block block, String keyName, String valueName) throws IOException {
+    public void process(Object mapOrHash, Block block, String keyName, String valueName) {
         Iterator it = null;
         TemplateHash hash = null;
         Map map = null;
@@ -329,7 +329,7 @@ public final class Environment extends Configurable implements Scope {
     /**
      * "visit" a macro.
      */
-    public void render(Macro macro, ArgsList args, ParameterList bodyParameters, Block nestedBlock) throws IOException {
+    public void render(Macro macro, ArgsList args, ParameterList bodyParameters, Block nestedBlock) {
         if (macro == Macro.DO_NOTHING_MACRO) {
             return;
         }
@@ -867,7 +867,7 @@ public final class Environment extends Configurable implements Scope {
         return loadedLibs.get(templateName);
     }
 
-    public String renderElementToString(TemplateElement te) throws IOException {
+    public String renderElementToString(TemplateElement te) {
         StringBuilder prevBuffer = buffer;
         StringBuilder newBuffer = new StringBuilder();
         this.buffer = newBuffer;

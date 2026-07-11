@@ -498,7 +498,6 @@ INJECT StringLiteral :
    import org.congocc.templates.TemplateException;
    import org.congocc.templates.TemplateExceptionHandler;
    import org.congocc.templates.core.Environment;
-   import java.io.IOException;
    import static org.congocc.templates.utility.StringUtil.CTLStringLiteralDec;
    implements Expression
 {
@@ -548,9 +547,6 @@ INJECT StringLiteral :
             env.setTemplateExceptionHandler(TemplateExceptionHandler.RETHROW_HANDLER);
             try {
                return env.renderElementToString(interpolatedOutput);
-            }
-            catch (IOException ioe) {
-                throw new TemplateException(ioe);
             }
             finally {
                 env.setTemplateExceptionHandler(teh);
