@@ -6,7 +6,7 @@ import org.congocc.templates.*;
 import org.congocc.templates.utility.StringUtil;
 
 /**
- * This is a common superclass of {@link org.congocc.templates.Configuration},
+ * This is a common superclass of {@link org.congocc.templates.TemplateFactory},
  * {@link org.congocc.templates.Template}, and {@link Environment} classes.
  * It provides settings that are common to each of them. We
  * use a three-level setting hierarchy - the return value of every setting
@@ -66,7 +66,7 @@ abstract public class Configurable {
      * Returns the fallback <tt>Configurable</tt> object of this object.
      * The fallback stores the default values for this configurable. For example,
      * the fallback of the {@link org.congocc.templates.Template} object is the
-     * {@link org.congocc.templates.Configuration} object, so setting values not
+     * {@link org.congocc.templates.TemplateFactory} object, so setting values not
      * specfied on template level are specified by the confuration object.
      *
      * @return the fallback <tt>Configurable</tt> object, or null, if this is

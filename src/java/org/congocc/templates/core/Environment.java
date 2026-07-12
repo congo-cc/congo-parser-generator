@@ -483,7 +483,7 @@ public final class Environment extends Configurable implements Scope {
         numberFormat = null;
     }
 
-    public Configuration getConfiguration() {
+    public TemplateFactory getConfiguration() {
         return getTemplate().getConfiguration();
     }
 

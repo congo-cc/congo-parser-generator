@@ -762,7 +762,7 @@ INJECT BuiltinVariable :
     import org.congocc.templates.core.variables.*;
     import org.congocc.templates.core.Environment;
     import org.congocc.templates.core.parser.ParseException;
-    import org.congocc.templates.Configuration;
+    import org.congocc.templates.TemplateFactory;
     import org.congocc.templates.TemplateException;
     import org.congocc.templates.TemplateHash;
     implements Expression
@@ -790,7 +790,7 @@ INJECT BuiltinVariable :
            case "lang" : return env.getLocale().getLanguage();
            case "pass" : return Macro.DO_NOTHING_MACRO;
            case "name" : return env.getTemplate().getName();
-           case "version" : return Configuration.getVersionNumber();
+           case "version" : return TemplateFactory.getVersionNumber();
            case "output_encoding" : return env.getOutputEncoding();
            case "url_escaping_charset" : return env.getURLEscapingCharset();
            case "error" : return env.getCurrentRecoveredErrorMessage();

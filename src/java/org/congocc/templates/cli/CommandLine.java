@@ -31,7 +31,7 @@ public class CommandLine {
 	 */
 	public static void processTemplate(String filename) throws IOException {
 		File file = new File(filename).getCanonicalFile();
-		Configuration conf = new Configuration();
+		TemplateFactory conf = new TemplateFactory();
 		conf.setDirectoryForTemplateLoading(file.getParentFile().toString());
 		Template template = conf.getTemplate(file.getName());
 		Writer out = new OutputStreamWriter(System.out);
@@ -41,7 +41,7 @@ public class CommandLine {
     public static void info() {
         System.out.println();
         System.out.print("Congo Templates version ");
-        System.out.println(Configuration.getVersionNumber());
+        System.out.println(TemplateFactory.getVersionNumber());
         System.out.println();
         System.out.println("Copyright (c) 2023-2026 Jonathan Revusky.");
         System.out.println("All rights reserved.");

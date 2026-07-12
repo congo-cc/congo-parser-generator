@@ -14,7 +14,7 @@ import org.congocc.templates.core.parser.*;
 
 /**
  * <p>A core Congo Templates API that represents a compiled template.
- * Typically, you will use a {@link Configuration} object to instantiate a template.
+ * Typically, you will use a {@link TemplateFactory} object to instantiate a template.
  *
  * <PRE>
       Configuration cfg = new Configuration();
@@ -60,14 +60,14 @@ public class Template extends Configurable {
      * A prime constructor to which all other constructors should
      * delegate directly or indirectly.
      */
-    protected Template(String name, Configuration cfg)
+    protected Template(String name, TemplateFactory cfg)
     {
         super(cfg);
         this.name = name;
         this.lastModified = System.currentTimeMillis();
     }
 
-	public Template(String name, CharSequence input, Configuration cfg, String encoding)
+	public Template(String name, CharSequence input, TemplateFactory cfg, String encoding)
     {
         this(name, cfg);
         this.encoding = encoding;
@@ -94,7 +94,7 @@ public class Template extends Configurable {
      * @param config the configuration to which this template belongs
      */
     static public Template getPlainTextTemplate(String name, String content,
-            Configuration config) {
+            TemplateFactory config) {
         Template template = new Template(name, config);
         template.rootElement = new Block() {
         	public void execute(Environment env) {
@@ -139,7 +139,7 @@ public class Template extends Configurable {
      * The path of the template file relative to the directory what you use to store the templates.
      * For example, if the real path of template is <tt>"/www/templates/community/forum.fm"</tt>,
      * and you use "<tt>"/www/templates"</tt> as
-     * {@link Configuration#setDirectoryForTemplateLoading "directoryForTemplateLoading"},
+     * {@link TemplateFactory#setDirectoryForTemplateLoading "directoryForTemplateLoading"},
      * then <tt>name</tt> should be <tt>"community/forum.fm"</tt>. The <tt>name</tt> is used for example when you
      * use <tt>&lt;include ...></tt> and you give a path that is relative to the current
      * template, or in error messages when the template engine logs an error while it processes the template.
@@ -148,10 +148,10 @@ public class Template extends Configurable {
         return name;
     }
 
-    public Configuration getConfiguration() {
-        Configuration config = (Configuration)getFallback();
+    public TemplateFactory getConfiguration() {
+        TemplateFactory config = (TemplateFactory)getFallback();
         if (config == null) {
-            config = Configuration.getDefault();
+            config = TemplateFactory.getDefault();
         }
         return config;
     }

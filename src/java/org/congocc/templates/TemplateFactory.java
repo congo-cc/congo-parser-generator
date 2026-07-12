@@ -28,9 +28,9 @@ import static org.congocc.templates.core.parser.TokenSource.stringFromBytes;
  * and caching templates.
  */
 
-public class Configuration extends Configurable {
+public class TemplateFactory extends Configurable {
 
-    private static Configuration defaultConfig = new Configuration();
+    private static TemplateFactory defaultConfig = new TemplateFactory();
     private boolean localizedLookup = true;
     private HashMap<String, Object> variables = new HashMap<String, Object>();
     private HashMap<String, String> encodingMap = new HashMap<String, String>();
@@ -45,7 +45,7 @@ public class Configuration extends Configurable {
     private String pathPrefix = "";
     private Path directoryForTemplateLoading = Paths.get(".");
 
-    static public Configuration getDefault() {
+    static public TemplateFactory getDefault() {
         return defaultConfig;
     }
 
@@ -69,10 +69,8 @@ public class Configuration extends Configurable {
         this.pathPrefix = pathPrefix;
     }
 
-    public Template getTemplate(String name, Locale locale) throws IOException {
-        Template template = getTemplate(name);
-        template.setLocale(locale);
-        return template;
+    public Template getTemplate(String name) throws IOException {
+        return getTemplate(name, getLocale());
     }
 
     /** Retrieves a template specified by name
@@ -81,8 +79,9 @@ public class Configuration extends Configurable {
      * @throws IOException if there was a problem loading the template.
      * @throws ParseException if the template is syntactically bad.
      */
-    public Template getTemplate(String name) throws IOException {
-        Template cachedTemplate = templateCache.get(name);
+    public Template getTemplate(String name, Locale locale) throws IOException {
+        String lookupKey = name + "#" + locale;
+        Template cachedTemplate = templateCache.get(lookupKey);
         if (cachedTemplate != null && !needsReparse(cachedTemplate)) {
             return cachedTemplate;
         }
@@ -127,7 +126,8 @@ public class Configuration extends Configurable {
             }
         }
         result.setLastModified(lastModified);
-        templateCache.put(name, result);
+        result.setLocale(locale);
+        templateCache.put(lookupKey, result);
         return result;
     }
 

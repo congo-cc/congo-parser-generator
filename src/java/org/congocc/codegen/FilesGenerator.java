@@ -29,7 +29,7 @@ import org.congocc.templates.*;
 public class FilesGenerator {
     private static final Logger logger = Logger.getLogger("filegen");
 
-    private final Configuration templatesConfig = new org.congocc.templates.Configuration();
+    private final TemplateFactory templatesConfig = new org.congocc.templates.TemplateFactory();
     private final Grammar grammar;
     private final AppSettings appSettings;
     private final Errors errors;
