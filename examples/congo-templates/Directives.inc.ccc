@@ -27,7 +27,7 @@ INJECT Interpolation :
     public void execute(Environment env) {
         Expression exp = getExpression();
         String output = exp.getStringValue(env);
-        env.getBuffer().append(output);
+        env.append(output);
     }
 
     public String getDescription() {
@@ -449,7 +449,7 @@ INJECT BlockAssignment :
                 throw new InvalidReferenceException(getLocation() + "\nInvalid reference to namespace: " + namespaceExp);
     		}
     	}
-        StringBuilder existingBuffer = env.getBuffer();
+        Appendable existingBuffer = env.getBuffer();
         StringBuilder newBuffer = new StringBuilder();
         try {
             Block block = firstChildOfType(Block.class);
@@ -560,7 +560,8 @@ INJECT IncludeInstruction :
     	}
         try {
             //REVISIT
-            includedTemplate = env.getTemplateForInclusion(templateNameString, encoding, parse);
+            //includedTemplate = env.getTemplateForInclusion(templateNameString, encoding, parse);
+            includedTemplate = env.getTemplateForInclusion(templateNameString);
             env.include(includedTemplate, useFreshNamespace());
         }
         catch (ParseException pe) {
@@ -927,7 +928,7 @@ INJECT NoParseBlock :
                 break;
             }
         }
-        env.getBuffer().append(source);
+        env.append(source);
     }
 }
 
@@ -1214,7 +1215,7 @@ INJECT TextElement :
     }
 
     public void execute(Environment env) {
-        env.getBuffer().append(getOutputText());
+        env.append(getOutputText());
  	}
 
 	private boolean ignoresSandwichedWhitespace(Node elem) {
@@ -1416,9 +1417,10 @@ Expression IdentifierOrStringLiteral#void :
  */
 Block Root#void :
 {
-   TemplateHeaderElement header;
+   //TemplateHeaderElement header;
    Block doc;
 }
+#if false
    [
        header=TemplateHeaderElement
        {
@@ -1435,6 +1437,7 @@ Block Root#void :
        	   }
        }
    ]
+#endif
    doc=Block
    {assert doc.getParent() == null;}
    <EOF>

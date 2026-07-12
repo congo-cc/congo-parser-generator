@@ -99,24 +99,41 @@ public class Template extends Configurable {
         Template template = new Template(name, config);
         template.rootElement = new Block() {
         	public void execute(Environment env) {
-                env.getBuffer().append(content);
+                env.append(content);
         	}
         };
         return template;
     }
 
     /**
-     * Processes the template, using data from the map, and outputs
-     * the resulting text to the supplied <tt>Writer</tt>
+     * Processes the template, using data from the map, and
+     * returns the output.
      * @param rootMap the root node of the data model.
+     * @return the result of the template processing job
      * @throws TemplateException if an exception occurs during template processing
-     * @throws IOException if an I/O exception occurs during writing to the writer.
+     * @throws IOException if an I/O exception occurs
      */
     public String process(Map<String,Object> rootMap) throws IOException
     {
         Environment env = new Environment(this, rootMap);
+        getConfiguration().doAutoImportsAndIncludes(env);
         env.process();
         return env.getOutput();
+    }
+
+    /**
+     * Processes the template, using data from the map, and outputs
+     * the resulting text to the supplied <tt>Appendable</tt>
+     * @param rootMap the root node of the data model.
+     * @throws TemplateException if an exception occurs during template processing
+     * @throws IOException if an I/O exception occurs
+     */
+    public void process(Map<String,Object> rootMap, Appendable appendable) throws IOException
+    {
+        Environment env = new Environment(this, rootMap);
+        env.setBuffer(appendable);
+        getConfiguration().doAutoImportsAndIncludes(env);
+        env.process();
     }
 
     /**
@@ -135,7 +152,7 @@ public class Template extends Configurable {
     public Configuration getConfiguration() {
         Configuration config = (Configuration)getFallback();
         if (config == null) {
-            config = Configuration.getDefaultConfiguration();
+            config = Configuration.getDefault();
         }
         return config;
     }

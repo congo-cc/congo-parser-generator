@@ -1,7 +1,6 @@
 package org.congocc.templates.core;
 
 import java.io.IOException;
-import java.io.StringWriter;
 import java.io.Writer;
 import java.text.Collator;
 import java.text.DecimalFormat;
@@ -74,7 +73,7 @@ public final class Environment extends Configurable implements Scope {
 
     private Collator collator;
 
-    private StringBuilder buffer = new StringBuilder();
+    private Appendable buffer = new StringBuilder();
 
     private MacroContext currentMacroContext;
 
@@ -133,11 +132,10 @@ public final class Environment extends Configurable implements Scope {
     /**
      * Processes the template to which this environment belongs.
      */
-    public void process() throws IOException {
+    public void process() {
         Environment savedEnv = threadEnv.get();
         threadEnv.set(this);
         try {
-            doAutoImportsAndIncludes(this);
             Template template = getTemplate();
             render(template.getRootElement());
         } finally {
@@ -176,7 +174,7 @@ public final class Environment extends Configurable implements Scope {
      * Visit a block using buffering/recovery
      */
     public void render(Block attemptBlock, Block recoveryBlock) {
-        int prevBufferLength = buffer.length();
+        Appendable prevBuffer = this.buffer;
         TemplateException thrownException = null;
         try {
             render(attemptBlock);
@@ -184,7 +182,7 @@ public final class Environment extends Configurable implements Scope {
             thrownException = te;
         }
         if (thrownException != null) {
-            buffer.setLength(prevBufferLength);
+            this.buffer = prevBuffer;
             recoveredErrorStack.add(thrownException.getMessage());
             try {
                 render(recoveryBlock);
@@ -403,7 +401,7 @@ public final class Environment extends Configurable implements Scope {
             throw te;
         }
         // Finally, pass the exception to the handler
-        getTemplateExceptionHandler().handleTemplateException(te, this, buffer);
+        getTemplateExceptionHandler().handleTemplateException(te, this);
     }
 
     public void setTemplateExceptionHandler(
@@ -452,12 +450,21 @@ public final class Environment extends Configurable implements Scope {
         return collator;
     }
 
-    public void setBuffer(StringBuilder buffer) {
+    public void setBuffer(Appendable buffer) {
         this.buffer = buffer;
     }
 
-    public StringBuilder getBuffer() {
+    public Appendable getBuffer() {
         return buffer;
+    }
+
+    public void append(CharSequence cs) {
+        try {
+           buffer.append(cs);
+        }
+        catch (IOException ioe) {
+            throw new TemplateException(ioe);
+        }
     }
 
     public String getOutput() {
@@ -704,68 +711,16 @@ public final class Environment extends Configurable implements Scope {
         elementStack.remove(elementStack.size() - 1);
     }
 
-    /**
-     * Emulates <code>include</code> directive, except that <code>name</code>
-     * must be tempate root relative.
-     *
-     * <p>
-     * It's the same as
-     * <code>include(getTemplateForInclusion(name, encoding, parse))</code>.
-     * But, you may want to separately call these two methods, so you can
-     * determine the source of exceptions more precisely, and thus achieve more
-     * intelligent error handling.
-     *
-     * @see #getTemplateForInclusion(String name, String encoding, boolean
-     *      parse)
-     * @see #include(Template includedTemplate, boolean freshNamespace)
-     */
     public void include(String name, String encoding, boolean parse) throws IOException {
-        include(getTemplateForInclusion(name, encoding, parse), false);
+        include(getTemplateForInclusion(name), false);
     }
 
-    /**
-     * Gets a template for inclusion; used with
-     * {@link #include(Template includedTemplate, boolean freshNamespace)}. The
-     * advantage over simply
-     * using <code>config.getTemplate(...)</code> is that it chooses the
-     * default encoding as the <code>include</code> directive does.
-     *
-     * @param name
-     *                 the name of the template, relatively to the template root
-     *                 directory (not the to the directory of the currently
-     *                 executing
-     *                 template file!). (Note that you can use
-     *                 {@link org.congocc.templates.cache.TemplateCache#getFullTemplatePath} to
-     *                 convert paths to template root relative paths.)
-     * @param encoding
-     *                 the encoding of the obtained template. If null, the encoding
-     *                 of the Template that is currently being processed in this
-     *                 Environment is used.
-     * @param parse
-     *                 whether to process a parsed template or just include the
-     *                 unparsed template source.
-     */
-    public Template getTemplateForInclusion(String name, String encoding, boolean parse) throws IOException {
-        if (encoding == null) {
-            encoding = getTemplate().getEncoding();
-        }
-        if (encoding == null) {
-            encoding = getConfiguration().getEncoding(this.getLocale());
-        }
-        return getConfiguration().getTemplate(name, getLocale(), encoding,
-                parse);
+    public Template getTemplateForInclusion(String name) throws IOException {
+        // REVISIT
+        //return getConfiguration().getTemplate(name, getLocale(), encoding, parse);
+        return getConfiguration().getTemplate(name);
     }
 
-    /**
-     * Processes a Template in the context of this <code>Environment</code>,
-     * including its output in the <code>Environment</code>'s buffer.
-     *
-     * @param includedTemplate
-     *                         the template to process. Note that it does
-     *                         <em>not</em> need
-     *                         to be a template returned by
-     *                         {@link #getTemplateForInclusion(String name, String encoding, boolean parse)}.
-     */
     public void include(Template includedTemplate, boolean freshNamespace) throws IOException {
         Template prevTemplate = getTemplate();
         setFallback(includedTemplate);
@@ -785,20 +740,6 @@ public final class Environment extends Configurable implements Scope {
         }
     }
 
-    /**
-     * Emulates <code>import</code> directive, except that <code>name</code>
-     * must be tempate root relative.
-     *
-     * <p>
-     * It's the same as
-     * <code>importLib(getTemplateForImporting(name), namespace)</code>. But,
-     * you may want to separately call these two methods, so you can determine
-     * the source of exceptions more precisely, and thus achieve more
-     * intelligent error handling.
-     *
-     * @see #getTemplateForImporting(String name)
-     * @see #importLib(Template includedTemplate, String namespace, boolean global)
-     */
     public Scope importLib(String name, String namespace) throws IOException {
         return importLib(getTemplateForImporting(name), namespace, true);
     }
@@ -818,7 +759,7 @@ public final class Environment extends Configurable implements Scope {
      *             convert paths to template root relative paths.)
      */
     public Template getTemplateForImporting(String name) throws IOException {
-        return getTemplateForInclusion(name, null, true);
+        return getTemplateForInclusion(name);
     }
 
     /**
@@ -858,12 +799,13 @@ public final class Environment extends Configurable implements Scope {
             Scope prevScope = currentScope;
             currentScope = newNamespace;
             Configurable prevParent = getFallback();
-            int prevBufferLength = buffer.length();
+            Appendable prevBuffer = this.buffer;
+            setBuffer(NULL_WRITER);
             setFallback(loadedTemplate);
             try {
                 render(loadedTemplate.getRootElement());
             } finally {
-                buffer.setLength(prevBufferLength);
+                this.buffer = prevBuffer;
                 currentScope = prevScope;
                 setFallback(prevParent);
             }
@@ -872,7 +814,7 @@ public final class Environment extends Configurable implements Scope {
     }
 
     public String renderElementToString(TemplateElement te) {
-        StringBuilder prevBuffer = buffer;
+        Appendable prevBuffer = buffer;
         StringBuilder newBuffer = new StringBuilder();
         this.buffer = newBuffer;
         try {
@@ -913,9 +855,7 @@ public final class Environment extends Configurable implements Scope {
 
     static public final Writer NULL_WRITER = new Writer() {
         public void write(char cbuf[], int off, int len) {}
-
         public void flush() {}
-
         public void close() {}
     };
 }

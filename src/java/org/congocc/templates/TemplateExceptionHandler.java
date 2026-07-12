@@ -18,7 +18,7 @@ public interface TemplateExceptionHandler {
     * @param env The environment object that represents the rendering context
     * @param buffer the buffer to output to.
     */
-    void handleTemplateException(TemplateException te, Environment env, StringBuilder buffer);
+    void handleTemplateException(TemplateException te, Environment env);
 
 
   /**
@@ -26,7 +26,7 @@ public interface TemplateExceptionHandler {
    * to handle the event.
    */
     TemplateExceptionHandler IGNORE_HANDLER = new TemplateExceptionHandler() {
-        public void handleTemplateException(TemplateException te, Environment env, StringBuilder buffer) {}
+        public void handleTemplateException(TemplateException te, Environment env) {}
     };
 
     /**
@@ -34,7 +34,7 @@ public interface TemplateExceptionHandler {
      * Note that the exception is logged before being rethrown.
      */
     TemplateExceptionHandler RETHROW_HANDLER =new TemplateExceptionHandler() {
-	    public void handleTemplateException(TemplateException te, Environment env, StringBuilder buffer) {
+	    public void handleTemplateException(TemplateException te, Environment env) {
             throw te;
         }
 	};
@@ -44,11 +44,11 @@ public interface TemplateExceptionHandler {
      * outputs the stack trace information to the client and then rethrows the exception.
      */
 	TemplateExceptionHandler DEBUG_HANDLER =new TemplateExceptionHandler() {
-		  public void handleTemplateException(TemplateException te, Environment env, StringBuilder buffer) {
+		  public void handleTemplateException(TemplateException te, Environment env) {
             StringWriter sw = new StringWriter();
             PrintWriter pw = new PrintWriter(sw);
             te.printStackTrace(pw);
-            buffer.append(sw.toString());
+            env.append(sw.toString());
             throw te;
 		}
 	};
@@ -59,8 +59,8 @@ public interface TemplateExceptionHandler {
           * surrounds it with tags to make the error message readable with the browser.
           */
     TemplateExceptionHandler HTML_DEBUG_HANDLER =new TemplateExceptionHandler() {
-        public void handleTemplateException(TemplateException te, Environment env, StringBuilder buffer) {
-            buffer.append("<!-- CONGO TEMPLATE ENGINE ERROR MESSAGE STARTS HERE -->"
+        public void handleTemplateException(TemplateException te, Environment env) {
+            env.append("<!-- CONGO TEMPLATE ENGINE ERROR MESSAGE STARTS HERE -->"
                   + "<script language=javascript>//\"></script>"
                   + "<script language=javascript>//\'></script>"
                   + "<script language=javascript>//\"></script>"
@@ -77,7 +77,7 @@ public interface TemplateExceptionHandler {
                   + "text-transform: none'>"
                   + "<b style='font-size:medium'>Congo template error!</b>"
                   + "<pre><xmp>\n");
-            buffer.append("</xmp></pre></div></html>\n");
+            env.append("</xmp></pre></div></html>\n");
             throw te;
         }
 	};

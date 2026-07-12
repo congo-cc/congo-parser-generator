@@ -44,7 +44,7 @@ public class Configuration extends Configurable {
     private String pathPrefix = "";
     private Path directoryForTemplateLoading = Paths.get(".");
 
-    static public Configuration getDefaultConfiguration() {
+    static public Configuration getDefault() {
         return defaultConfig;
     }
 
@@ -68,44 +68,19 @@ public class Configuration extends Configurable {
         this.pathPrefix = pathPrefix;
     }
 
-    /**
-     * Equivalent to <tt>getTemplate(name, thisCfg.getLocale(), thisCfg.getEncoding(thisCfg.getLocale()), true)</tt>.
-     */
-    public Template getTemplate(String name) throws IOException {
-        Locale loc = getLocale();
-        return getTemplate(name, loc, getEncoding(loc), true);
-    }
-
-    /**
-     * Equivalent to <tt>getTemplate(name, locale, thisCfg.getEncoding(locale), true)</tt>.
-     */
     public Template getTemplate(String name, Locale locale) throws IOException {
-        return getTemplate(name, locale, getEncoding(locale), true);
+        Template template = getTemplate(name);
+        template.setLocale(locale);
+        return template;
     }
 
-    /**
-     * Equivalent to <tt>getTemplate(name, thisCfg.getLocale(), encoding, true)</tt>.
-     */
-    public Template getTemplate(String name, String encoding) throws IOException {
-        return getTemplate(name, getLocale(), encoding, true);
-    }
-
-    /**
-     * Equivalent to <tt>getTemplate(name, locale, encoding, true)</tt>.
-     */
-    public Template getTemplate(String name, Locale locale, String encoding) throws IOException {
-        return getTemplate(name, locale, encoding, true);
-    }
-
-    /**
-     * Retrieves a template specified by a name and locale, interpreted using
-     * the specified character encoding, either parsed or unparsed.
+    /** Retrieves a template specified by name
      * @return the requested template.
      * @throws FileNotFoundException if the template could not be found.
      * @throws IOException if there was a problem loading the template.
      * @throws ParseException if the template is syntactically bad.
      */
-    public Template getTemplate(String name, Locale locale, String encoding, boolean parse) throws IOException {
+    public Template getTemplate(String name) throws IOException {
         Template result = null;
         URL url = null;
         URLConnection connection = null;
@@ -339,7 +314,7 @@ public class Configuration extends Configurable {
        	autoImportMap = new HashMap<String, String>(map);
     }
 
-    protected void doAutoImportsAndIncludes(Environment env) throws IOException {
+    void doAutoImportsAndIncludes(Environment env) throws IOException {
     	for (String namespace : autoImports) {
             String templateName = autoImportMap.get(namespace);
             env.importLib(templateName, namespace);

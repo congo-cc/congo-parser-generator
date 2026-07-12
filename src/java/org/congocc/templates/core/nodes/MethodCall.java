@@ -11,9 +11,7 @@ import java.util.function.Function;
 import java.util.function.BiFunction;
 import java.util.List;
 import java.util.ArrayList;
-import org.congocc.templates.core.parser.*;
 import org.congocc.templates.core.nodes.generated.*;
-import java.util.*;
 
 public class MethodCall extends TemplateNode implements Expression {
 
@@ -25,10 +23,7 @@ public class MethodCall extends TemplateNode implements Expression {
         return (Expression) get(0);
     }
 
-    @SuppressWarnings( {
-        "unchecked", "rawtypes"
-    }
-    )
+    @SuppressWarnings("unchecked")
     public Object evaluate(Environment env) {
         Object value = getTarget().evaluate(env);
         if (value == LOOSE_NULL) return JAVA_NULL;
@@ -88,7 +83,7 @@ public class MethodCall extends TemplateNode implements Expression {
             return wrap(quadf.apply(firstArg, secondArg, thirdArg, fourthArg));
         } else if (value instanceof Macro func) {
             env.setLastReturnValue(null);
-            StringBuilder prevBuffer = env.getBuffer();
+            Appendable prevBuffer = env.getBuffer();
             StringBuilder newBuffer = new StringBuilder();
             try {
                 env.setBuffer(newBuffer);

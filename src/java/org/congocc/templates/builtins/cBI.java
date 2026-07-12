@@ -4,7 +4,6 @@ import org.congocc.templates.core.Environment;
 import org.congocc.templates.core.variables.EvaluationException;
 import org.congocc.templates.core.variables.InvalidReferenceException;
 import org.congocc.templates.core.nodes.BuiltInExpression;
-import org.congocc.templates.TemplateException;
 
 /**
  * Implementation of ?c built-in

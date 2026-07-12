@@ -1,7 +1,5 @@
 package org.congocc.templates.core;
 
-import java.io.IOException;
-import java.io.InputStream;
 import java.util.*;
 
 import org.congocc.templates.*;
@@ -28,8 +26,6 @@ abstract public class Configurable {
     public static final String BOOLEAN_FORMAT_KEY = "boolean_format";
     public static final String OUTPUT_ENCODING_KEY = "output_encoding";
     public static final String URL_ESCAPING_CHARSET_KEY = "url_escaping_charset";
-
-    private static final char COMMA = ',';
 
     private Configurable fallback;
     private Properties properties;
@@ -274,43 +270,5 @@ abstract public class Configurable {
 
     protected TemplateException invalidSettingValueException(String name, String value) {
         return new TemplateException("Invalid value for setting " + name + ": " + value);
-    }
-
-    /**
-     * Set the settings stored in a <code>Properties</code> object.
-     *
-     * @throws TemplateException if the <code>Properties</code> object contains
-     *                           invalid keys, or invalid setting values, or any
-     *                           other error occurs
-     *                           while changing the settings.
-     */
-    public void setSettings(Properties props) {
-        Iterator<Object> it = props.keySet().iterator();
-        while (it.hasNext()) {
-            String key = (String) it.next();
-            setSetting(key, props.getProperty(key).trim());
-        }
-    }
-
-    /**
-     * Reads a setting list (key and element pairs) from the input stream.
-     * The stream has to follow the usual <code>.properties</code> format.
-     *
-     * @throws TemplateException if the stream contains
-     *                           invalid keys, or invalid setting values, or any
-     *                           other error occurs
-     *                           while changing the settings.
-     * @throws IOException       if an error occurred when reading from the input
-     *                           stream.
-     */
-    public void setSettings(InputStream propsIn) throws IOException {
-        Properties p = new Properties();
-        p.load(propsIn);
-        setSettings(p);
-    }
-
-    protected void doAutoImportsAndIncludes(Environment env) throws IOException {
-        if (fallback != null)
-            fallback.doAutoImportsAndIncludes(env);
     }
 }
