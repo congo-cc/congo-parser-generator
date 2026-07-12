@@ -44,7 +44,7 @@ import static org.congocc.templates.core.variables.Wrap.*;
  * @author <a href="mailto:jon@revusky.com">Jonathan Revusky</a>
  * @author Attila Szegedi
  */
-public final class Environment extends Configurable implements Scope {
+public final class Environment extends Settings implements Scope {
     private static final ThreadLocal<Environment> threadEnv = new ThreadLocal<Environment>();
 
     private static final Map<NumberFormatKey, NumberFormat> localizedNumberFormats = new HashMap<NumberFormatKey, NumberFormat>();
@@ -214,7 +214,7 @@ public final class Environment extends Configurable implements Scope {
         TemplateElement body = invokingMacroContext.getBody();
         if (body != null) {
             this.currentMacroContext = invokingMacroContext.getInvokingMacroContext();
-            Configurable prevParent = getFallback();
+            Settings prevParent = getFallback();
             Scope prevScope = currentScope;
             setFallback(getCurrentNamespace().getTemplate());
             currentScope = blockScope;
@@ -343,7 +343,7 @@ public final class Environment extends Configurable implements Scope {
                 }
             }
             Scope prevScope = currentScope;
-            Configurable prevParent = getFallback();
+            Settings prevParent = getFallback();
             currentScope = currentMacroContext = mc;
             try {
                 render(macro.getNestedBlock());
@@ -798,7 +798,7 @@ public final class Environment extends Configurable implements Scope {
             loadedLibs.put(templateName, newNamespace);
             Scope prevScope = currentScope;
             currentScope = newNamespace;
-            Configurable prevParent = getFallback();
+            Settings prevParent = getFallback();
             Appendable prevBuffer = this.buffer;
             setBuffer(NULL_WRITER);
             setFallback(loadedTemplate);

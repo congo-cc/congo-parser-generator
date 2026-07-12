@@ -18,7 +18,7 @@ import org.congocc.templates.utility.StringUtil;
  * fallback of a <code>Template</code> object is a <code>Configuration</code>
  * object.
  */
-abstract public class Configurable {
+public class Settings {
     public static final String LOCALE_KEY = "locale";
     public static final String NUMBER_FORMAT_KEY = "number_format";
     public static final String TEMPLATE_EXCEPTION_HANDLER_KEY = "template_exception_handler";
@@ -27,7 +27,7 @@ abstract public class Configurable {
     public static final String OUTPUT_ENCODING_KEY = "output_encoding";
     public static final String URL_ESCAPING_CHARSET_KEY = "url_escaping_charset";
 
-    private Configurable fallback;
+    private Settings fallback;
     private Properties properties;
 
     private Locale locale;
@@ -39,7 +39,7 @@ abstract public class Configurable {
     private String urlEscapingCharset;
     private boolean urlEscapingCharsetSet;
 
-    public Configurable() {
+    public Settings() {
         fallback = null;
         locale = Locale.getDefault();
         numberFormat = "number";
@@ -54,7 +54,7 @@ abstract public class Configurable {
         properties.setProperty(BOOLEAN_FORMAT_KEY, "true,false");
     }
 
-    protected Configurable(Configurable fallback) {
+    protected Settings(Settings fallback) {
         this.fallback = fallback;
         locale = null;
         numberFormat = null;
@@ -72,7 +72,7 @@ abstract public class Configurable {
      * @return the fallback <tt>Configurable</tt> object, or null, if this is
      *         the root <tt>Configurable</tt> object.
      */
-    public final Configurable getFallback() {
+    public final Settings getFallback() {
         return fallback;
     }
 
@@ -81,7 +81,7 @@ abstract public class Configurable {
      * template - the included template becomes the fallback configurable during
      * its evaluation.
      */
-    public void setFallback(Configurable fallback) {
+    public void setFallback(Settings fallback) {
         this.fallback = fallback;
     }
 

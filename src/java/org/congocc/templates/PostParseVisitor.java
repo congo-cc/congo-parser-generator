@@ -1,6 +1,6 @@
 package org.congocc.templates;
 
-import org.congocc.templates.core.Configurable;
+import org.congocc.templates.core.Settings;
 import org.congocc.templates.core.nodes.generated.*;
 import org.congocc.templates.core.nodes.BuiltInExpression;
 import org.congocc.templates.core.parser.Node;
@@ -174,10 +174,10 @@ class PostParseVisitor extends Node.Visitor {
 
     void visit(PropertySetting node) {
     	String key = node.getKey();
-        if (!key.equals(Configurable.LOCALE_KEY) &&
-                !key.equals(Configurable.NUMBER_FORMAT_KEY) &&
-                !key.equals(Configurable.BOOLEAN_FORMAT_KEY) &&
-                !key.equals(Configurable.URL_ESCAPING_CHARSET_KEY))
+        if (!key.equals(Settings.LOCALE_KEY) &&
+                !key.equals(Settings.NUMBER_FORMAT_KEY) &&
+                !key.equals(Settings.BOOLEAN_FORMAT_KEY) &&
+                !key.equals(Settings.URL_ESCAPING_CHARSET_KEY))
             {
         		ParsingProblemImpl problem = new ParsingProblemImpl("Invalid setting name, or it is not allowed to change the"
                         + "value of the setting with CTL: "

@@ -11,7 +11,7 @@ import java.nio.file.Files;
 import java.net.URL;
 import java.net.URLConnection;
 
-import org.congocc.templates.core.Configurable;
+import org.congocc.templates.core.Settings;
 import org.congocc.templates.core.Environment;
 import org.congocc.templates.core.parser.ParseException;
 import org.congocc.templates.core.parser.ParsingProblemImpl;
@@ -28,9 +28,9 @@ import static org.congocc.templates.core.parser.TokenSource.stringFromBytes;
  * and caching templates.
  */
 
-public class TemplateFactory extends Configurable {
+public class TemplateFactory extends Settings {
 
-    private static TemplateFactory defaultConfig = new TemplateFactory();
+    private static TemplateFactory defaultFactory = new TemplateFactory();
     private boolean localizedLookup = true;
     private HashMap<String, Object> variables = new HashMap<String, Object>();
     private HashMap<String, String> encodingMap = new HashMap<String, String>();
@@ -46,14 +46,15 @@ public class TemplateFactory extends Configurable {
     private Path directoryForTemplateLoading = Paths.get(".");
 
     static public TemplateFactory getDefault() {
-        return defaultConfig;
+        return defaultFactory;
     }
 
     /**
      * Set the explicit directory from which to load templates.
      */
     public void setDirectoryForTemplateLoading(String dir) throws IOException {
-        directoryForTemplateLoading = FileSystems.getDefault().getPath(dir);
+        Path path = FileSystems.getDefault().getPath(dir);
+        directoryForTemplateLoading = path.toAbsolutePath();
         if (!Files.isDirectory(directoryForTemplateLoading)) {
             directoryForTemplateLoading = null;
             throw new IllegalArgumentException("Directory " + dir + " is not a directory.");
@@ -90,7 +91,10 @@ public class TemplateFactory extends Configurable {
         InputStream rawStream = null;
         long lastModified=0L;
         if (directoryForTemplateLoading != null) {
-            Path path = directoryForTemplateLoading.resolve(name);
+            Path path = directoryForTemplateLoading.resolve(name).toAbsolutePath();
+            if (!path.startsWith(directoryForTemplateLoading)) {
+                throw new IllegalArgumentException("Specified path: " + path + " must be in the directory " + directoryForTemplateLoading + " or a directory underneath it for security reasons.");
+            }
             if (Files.exists(path)) {
                 url = path.toUri().toURL();
                 connection = url.openConnection();
@@ -266,7 +270,7 @@ public class TemplateFactory extends Configurable {
      * Sets a setting by name and string value.
      *
      * In additional to the settings understood by
-     * {@link Configurable#setSetting the super method}, it understands these:
+     * {@link Settings#setSetting the super method}, it understands these:
      * <ul>
      *   <li><code>"auto_import"</code>: Sets the list of auto-imports. Example of valid value:
      *       <br><code>/lib/form.ctl as f, /lib/widget as w, "/lib/evil name.ctl" as odd</code>

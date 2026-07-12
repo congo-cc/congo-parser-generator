@@ -3,7 +3,7 @@ package org.congocc.templates;
 import java.io.IOException;
 import java.util.*;
 
-import org.congocc.templates.core.Configurable;
+import org.congocc.templates.core.Settings;
 import org.congocc.templates.core.Environment;
 import org.congocc.templates.core.nodes.generated.Block;
 import org.congocc.templates.core.nodes.generated.ImportDeclaration;
@@ -33,7 +33,7 @@ import org.congocc.templates.core.parser.*;
  * <p>Any error messages from exceptions thrown during compilation will be
  * included in the output stream and thrown back to the calling code.
  * To change this behavior, you can install custom exception handlers using
- * {@link Configurable#setTemplateExceptionHandler(TemplateExceptionHandler)} on
+ * {@link Settings#setTemplateExceptionHandler(TemplateExceptionHandler)} on
  * a Configuration object (for all templates belonging to a configuration) or on
  * a Template object (for a single template).
  *
@@ -44,7 +44,7 @@ import org.congocc.templates.core.parser.*;
  * @version $Id: Template.java,v 1.218 2005/12/07 00:31:18 revusky Exp $
  */
 
-public class Template extends Configurable {
+public class Template extends Settings {
     private Block rootElement;
     private Map<String, Macro> macros = new HashMap<String, Macro>();
     private List<ImportDeclaration> imports = new ArrayList<>();
@@ -91,11 +91,10 @@ public class Template extends Configurable {
      * @param name the path of the template file relative to the directory what you use to store
      *        the templates. See {@link #getName} for more details.
      * @param content the block of text that this template represents
-     * @param config the configuration to which this template belongs
+     * @param factory the configuration to which this template belongs
      */
-    static public Template getPlainTextTemplate(String name, String content,
-            TemplateFactory config) {
-        Template template = new Template(name, config);
+    static public Template getPlainTextTemplate(String name, String content, TemplateFactory factory) {
+        Template template = new Template(name, factory);
         template.rootElement = new Block() {
         	public void execute(Environment env) {
                 env.append(content);
