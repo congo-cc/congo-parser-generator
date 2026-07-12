@@ -43,7 +43,7 @@ public class TemplateFactory extends Settings {
 
     private Class<?> classForTemplateLoading;
     private String pathPrefix = "";
-    private Path directoryForTemplateLoading = Paths.get(".");
+    private Path directoryForTemplateLoading = Paths.get(".").toAbsolutePath().normalize();
 
     static public TemplateFactory getDefault() {
         return defaultFactory;
@@ -54,7 +54,7 @@ public class TemplateFactory extends Settings {
      */
     public void setDirectoryForTemplateLoading(String dir) throws IOException {
         Path path = FileSystems.getDefault().getPath(dir);
-        directoryForTemplateLoading = path.toAbsolutePath();
+        directoryForTemplateLoading = path.toAbsolutePath().normalize();
         if (!Files.isDirectory(directoryForTemplateLoading)) {
             directoryForTemplateLoading = null;
             throw new IllegalArgumentException("Directory " + dir + " is not a directory.");
@@ -86,16 +86,23 @@ public class TemplateFactory extends Settings {
         if (cachedTemplate != null && !needsReparse(cachedTemplate)) {
             return cachedTemplate;
         }
+        if (directoryForTemplateLoading == null && classForTemplateLoading == null) {
+            throw new IOException("""
+                You must specify either a directory from which to load templates or a
+                Class for template loading if you wish to use the ClassLoader mechanism,
+                one or the other.
+            """);
+        }
         URL url = null;
         URLConnection connection = null;
         InputStream rawStream = null;
         long lastModified=0L;
         if (directoryForTemplateLoading != null) {
-            Path path = directoryForTemplateLoading.resolve(name).toAbsolutePath();
-            if (!path.startsWith(directoryForTemplateLoading)) {
-                throw new IllegalArgumentException("Specified path: " + path + " must be in the directory " + directoryForTemplateLoading + " or a directory underneath it for security reasons.");
-            }
+            Path path = directoryForTemplateLoading.resolve(name).toAbsolutePath().normalize();
             if (Files.exists(path)) {
+                if (!path.startsWith(directoryForTemplateLoading)) {
+                    throw new IllegalArgumentException("Specified path: " + path + " must be in the directory " + directoryForTemplateLoading + " or a directory underneath it for security reasons.");
+                }
                 url = path.toUri().toURL();
                 connection = url.openConnection();
                 lastModified = connection.getLastModified();

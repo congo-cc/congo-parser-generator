@@ -85,25 +85,6 @@ public class Template extends Settings {
     }
 
     /**
-     * Returns a trivial template, one that is just a single block of
-     * plain text, no dynamic content. (Used by the cache module to create
-     * unparsed templates.)
-     * @param name the path of the template file relative to the directory what you use to store
-     *        the templates. See {@link #getName} for more details.
-     * @param content the block of text that this template represents
-     * @param factory the configuration to which this template belongs
-     */
-    static public Template getPlainTextTemplate(String name, String content, TemplateFactory factory) {
-        Template template = new Template(name, factory);
-        template.rootElement = new Block() {
-        	public void execute(Environment env) {
-                env.append(content);
-        	}
-        };
-        return template;
-    }
-
-    /**
      * Processes the template, using data from the map, and
      * returns the output.
      * @param rootMap the root node of the data model.
