@@ -67,8 +67,7 @@ public class Template extends Configurable {
         this.lastModified = System.currentTimeMillis();
     }
 
-	public Template(String name, CharSequence input, Configuration cfg,
-			String encoding)
+	public Template(String name, CharSequence input, Configuration cfg, String encoding)
     {
         this(name, cfg);
         this.encoding = encoding;

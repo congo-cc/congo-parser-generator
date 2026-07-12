@@ -39,6 +39,7 @@ public class Configuration extends Configurable {
     private ArrayList<String> autoIncludes = new ArrayList<String>();
     private String defaultEncoding = "UTF-8";
     private boolean tolerateParsingProblems;
+    private Map<String,Template> templateCache = Collections.synchronizedMap(new HashMap<>());
 
     private Class<?> classForTemplateLoading;
     private String pathPrefix = "";
@@ -81,15 +82,20 @@ public class Configuration extends Configurable {
      * @throws ParseException if the template is syntactically bad.
      */
     public Template getTemplate(String name) throws IOException {
-        Template result = null;
+        Template cachedTemplate = templateCache.get(name);
+        if (cachedTemplate != null && !needsReparse(cachedTemplate)) {
+            return cachedTemplate;
+        }
         URL url = null;
         URLConnection connection = null;
         InputStream rawStream = null;
+        long lastModified=0L;
         if (directoryForTemplateLoading != null) {
             Path path = directoryForTemplateLoading.resolve(name);
             if (Files.exists(path)) {
                 url = path.toUri().toURL();
                 connection = url.openConnection();
+                lastModified = connection.getLastModified();
                 if (connection != null) {
                     rawStream = connection.getInputStream();
                 }
@@ -99,6 +105,7 @@ public class Configuration extends Configurable {
             url = classForTemplateLoading.getResource(pathPrefix + "/" + name);
             if (url != null) {
                 connection = url.openConnection();
+                lastModified = connection.getLastModified();
                 if (connection!= null) {
                     rawStream = connection.getInputStream();
                 }
@@ -110,7 +117,7 @@ public class Configuration extends Configurable {
         byte[] bb = rawStream.readAllBytes();
         rawStream.close();
         String content = stringFromBytes(bb);
-        result = new Template(name, content, this, defaultEncoding);
+        Template result = new Template(name, content, this, defaultEncoding);
         if (result.hasParsingProblems()) {
             for (ParsingProblemImpl pp : result.getParsingProblems()) {
                 System.err.println(pp.getMessage());
@@ -119,7 +126,27 @@ public class Configuration extends Configurable {
                 throw new ParseException(result.getParsingProblems());
             }
         }
+        result.setLastModified(lastModified);
+        templateCache.put(name, result);
         return result;
+    }
+
+    private boolean needsReparse(Template template) throws IOException {
+        if (directoryForTemplateLoading != null) {
+            Path path = directoryForTemplateLoading.resolve(template.getName());
+            if (Files.exists(path)) {
+                long lastModified = Files.getLastModifiedTime(path).toMillis();
+                return template.getLastModified() < lastModified;
+            }
+        }
+        if (classForTemplateLoading != null) {
+            URL url = classForTemplateLoading.getResource(pathPrefix + "/" + template.getName());
+            if (url != null) {
+                return url.openConnection().getLastModified() > template.getLastModified();
+            }
+        }
+        return true;
+
     }
 
     /**
