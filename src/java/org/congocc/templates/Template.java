@@ -3,7 +3,7 @@ package org.congocc.templates;
 import java.io.IOException;
 import java.util.*;
 
-import org.congocc.templates.core.Settings;
+import org.congocc.templates.core.ArithmeticEngine;
 import org.congocc.templates.core.Environment;
 import org.congocc.templates.core.nodes.generated.Block;
 import org.congocc.templates.core.nodes.generated.ImportDeclaration;
@@ -12,39 +12,7 @@ import org.congocc.templates.core.nodes.generated.TemplateElement;
 import org.congocc.templates.core.nodes.generated.TemplateHeaderElement;
 import org.congocc.templates.core.parser.*;
 
-/**
- * <p>A core Congo Templates API that represents a compiled template.
- * Typically, you will use a {@link TemplateFactory} object to instantiate a template.
- *
- * <PRE>
-      Configuration cfg = new Configuration();
-      ...
-      Template myTemplate = cfg.getTemplate("myTemplate.html");
-   </PRE>
- *
- * <P>However, you can also construct a template directly by passing in to
- * the appropriate constructor a java.lang.CharSequence instance that contains
- * the raw template text. The compiled template is
- * stored in an an efficient data structure for later use.
- *
- * <p>To render the template, i.e. to merge it with a data model, and
- * thus produce "cooked" output, call the <tt>process</tt> method.
- *
- * <p>Any error messages from exceptions thrown during compilation will be
- * included in the output stream and thrown back to the calling code.
- * To change this behavior, you can install custom exception handlers using
- * {@link Settings#setTemplateExceptionHandler(TemplateExceptionHandler)} on
- * a Configuration object (for all templates belonging to a configuration) or on
- * a Template object (for a single template).
- *
- * <p>It's not legal to modify the values of the Template engine settings: a) while the
- * template is executing; b) if the template object is already accessible from
- * multiple threads.
- *
- * @version $Id: Template.java,v 1.218 2005/12/07 00:31:18 revusky Exp $
- */
-
-public class Template extends Settings {
+public class Template {
     private Block rootElement;
     private Map<String, Macro> macros = new HashMap<String, Macro>();
     private List<ImportDeclaration> imports = new ArrayList<>();
@@ -55,15 +23,19 @@ public class Template extends Settings {
     private TemplateHeaderElement headerElement;
 
     private long lastModified;
+    private TemplateFactory factory;
+    private ArithmeticEngine arithmeticEngine;
+    private Locale locale;
+    private String numberFormat;
 
     /**
      * A prime constructor to which all other constructors should
      * delegate directly or indirectly.
      */
-    protected Template(String name, TemplateFactory cfg)
+    protected Template(String name, TemplateFactory factory)
     {
-        super(cfg);
         this.name = name;
+        this.factory = factory;
         this.lastModified = System.currentTimeMillis();
     }
 
@@ -84,6 +56,39 @@ public class Template extends Settings {
         new PostParseVisitor(this).visit(this);
     }
 
+    public TemplateFactory getTemplateFactory() {
+        return factory;
+    }
+
+    public ArithmeticEngine getArithmeticEngine() {
+        if (arithmeticEngine != null) {
+            return arithmeticEngine;
+        }
+        return factory.getArithmeticEngine();
+    }
+
+    public Locale getLocale() {
+        if (this.locale != null) {
+            return locale;
+        }
+        return factory.getLocale();
+    }
+
+    public void setLocale(Locale locale) {
+        this.locale = locale;
+    }
+
+    public String getNumberFormat() {
+        if (numberFormat == null) {
+            return factory.getNumberFormat();
+        }
+        return numberFormat;
+    }
+
+    public void setNumberFormat(String numberFormat) {
+        this.numberFormat = numberFormat;
+    }
+
     /**
      * Processes the template, using data from the map, and
      * returns the output.
@@ -95,7 +100,6 @@ public class Template extends Settings {
     public String process(Map<String,Object> rootMap) throws IOException
     {
         Environment env = new Environment(this, rootMap);
-        env.setLocale(getLocale());
         getConfiguration().doAutoImportsAndIncludes(env);
         env.process();
         return env.getOutput();
@@ -131,11 +135,7 @@ public class Template extends Settings {
     }
 
     public TemplateFactory getConfiguration() {
-        TemplateFactory config = (TemplateFactory)getFallback();
-        if (config == null) {
-            config = TemplateFactory.getDefault();
-        }
-        return config;
+        return factory;
     }
 
     public List<ParsingProblemImpl> getParsingProblems() {

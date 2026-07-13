@@ -40,11 +40,8 @@ import static org.congocc.templates.core.variables.Wrap.*;
  * <p>
  * If you need to modify or read this object before or after the
  * <tt>process</tt> call, use
- *
- * @author <a href="mailto:jon@revusky.com">Jonathan Revusky</a>
- * @author Attila Szegedi
  */
-public final class Environment extends Settings implements Scope {
+public final class Environment implements Scope {
     private static final ThreadLocal<Environment> threadEnv = new ThreadLocal<Environment>();
 
     private static final Map<NumberFormatKey, NumberFormat> localizedNumberFormats = new HashMap<NumberFormatKey, NumberFormat>();
@@ -59,42 +56,29 @@ public final class Environment extends Settings implements Scope {
         C_NUMBER_FORMAT.setDecimalSeparatorAlwaysShown(false);
     }
 
+    private Template template;
+    private Locale locale;
+    private ArithmeticEngine arithmeticEngine;
+    private String numberFormat;
+    private TemplateExceptionHandler templateExceptionHandler;
     private final Map<String,Object> rootDataModel;
-
     private final List<TemplateElement> elementStack = new ArrayList<TemplateElement>();
-
     private final List<String> recoveredErrorStack = new ArrayList<String>();
-
-    private NumberFormat numberFormat;
-
+    private NumberFormat numberFormatter;
     private Map<String, NumberFormat> numberFormats;
-
     private NumberFormat cNumberFormat;
-
     private Collator collator;
-
     private Appendable buffer = new StringBuilder();
-
     private MacroContext currentMacroContext;
-
     private Scope mainNamespace;
-
     private Scope currentScope;
-
     private Map<Macro, MacroContext> macroContextLookup = new HashMap<>();
-
     private Map<Macro, Scope> macroToNamespaceLookup = new HashMap<>();
-
     private HashMap<String, Object> globalVariables = new HashMap<>();
-
     private HashMap<String, Scope> loadedLibs;
-
     private Throwable lastThrowable;
-
     private Object lastReturnValue;
-
     private String cachedURLEscapingCharset;
-
     private boolean urlEscapingCharsetCached;
 
     /**
@@ -108,7 +92,7 @@ public final class Environment extends Settings implements Scope {
     }
 
     public Environment(Template template, Map<String,Object> rootDataModel) {
-        super(template);
+        this.template = template;
         this.currentScope = mainNamespace = new BlockScope(template.getRootElement(), this);
         this.rootDataModel = rootDataModel;
         importMacros(template);
@@ -126,7 +110,11 @@ public final class Environment extends Settings implements Scope {
      * Retrieves the currently processed template.
      */
     public Template getTemplate() {
-        return (Template) getFallback();
+        return template;
+    }
+
+    public void setTemplate(Template template) {
+        this.template = template;
     }
 
     /**
@@ -214,16 +202,16 @@ public final class Environment extends Settings implements Scope {
         TemplateElement body = invokingMacroContext.getBody();
         if (body != null) {
             this.currentMacroContext = invokingMacroContext.getInvokingMacroContext();
-            Settings prevParent = getFallback();
+            Template prevTemplate = getTemplate();
             Scope prevScope = currentScope;
-            setFallback(getCurrentNamespace().getTemplate());
+            setTemplate(getCurrentNamespace().getTemplate());
             currentScope = blockScope;
             try {
                 render(body);
             } finally {
                 currentScope = prevScope;
                 this.currentMacroContext = invokingMacroContext;
-                setFallback(prevParent);
+                setTemplate(prevTemplate);
                 this.currentScope = prevScope;
             }
         }
@@ -324,6 +312,35 @@ public final class Environment extends Settings implements Scope {
         }
     }
 
+    public TemplateExceptionHandler getTemplateExceptionHandler() {
+        if (templateExceptionHandler != null) {
+            return templateExceptionHandler;
+        }
+        return template.getTemplateFactory().getTemplateExceptionHandler();
+    }
+
+    public void setTemplateExceptionHandler(TemplateExceptionHandler teh) {
+        templateExceptionHandler = teh;
+    }
+
+    public ArithmeticEngine getArithmeticEngine() {
+        if (arithmeticEngine !=null) {
+            return arithmeticEngine;
+        }
+        return template.getArithmeticEngine();
+    }
+
+    public Locale getLocale() {
+        if (locale!=null) {
+            return locale;
+        }
+        return template.getLocale();
+    }
+
+    public void setLocale(Locale locale) {
+        this.locale = locale;
+    }
+
     /**
      * "visit" a macro.
      */
@@ -343,7 +360,7 @@ public final class Environment extends Settings implements Scope {
                 }
             }
             Scope prevScope = currentScope;
-            Settings prevParent = getFallback();
+            Template prevTemplate = getTemplate();
             currentScope = currentMacroContext = mc;
             try {
                 render(macro.getNestedBlock());
@@ -358,7 +375,7 @@ public final class Environment extends Settings implements Scope {
                 }
                 currentMacroContext = mc.getInvokingMacroContext();
                 currentScope = prevScope;
-                setFallback(prevParent);
+                setTemplate(prevTemplate);
             }
         } finally {
             popElement();
@@ -404,43 +421,13 @@ public final class Environment extends Settings implements Scope {
         getTemplateExceptionHandler().handleTemplateException(te, this);
     }
 
-    public void setTemplateExceptionHandler(
-            TemplateExceptionHandler templateExceptionHandler) {
-        super.setTemplateExceptionHandler(templateExceptionHandler);
-        lastThrowable = null;
-    }
-
-    public void setURLEscapingCharset(String urlEscapingCharset) {
-        urlEscapingCharsetCached = false;
-        super.setURLEscapingCharset(urlEscapingCharset);
-    }
-
-    /*
-     * Note that although it is not allowed to set this setting with the
-     * <tt>setting</tt>
-     * directive, it still must be allowed to set it from Java code while the
-     * template executes, since some frameworks allow templates to actually
-     * change the output encoding on-the-fly.
-     */
-    public void setOutputEncoding(String outputEncoding) {
-        urlEscapingCharsetCached = false;
-        super.setOutputEncoding(outputEncoding);
-    }
-
     /**
      * Returns the name of the charset that should be used for URL encoding.
      * This will be <code>null</code> if the information is not available. The
      * function caches the return value, so it is quick to call it repeately.
      */
     public String getEffectiveURLEscapingCharset() {
-        if (!urlEscapingCharsetCached) {
-            cachedURLEscapingCharset = getURLEscapingCharset();
-            if (cachedURLEscapingCharset == null) {
-                cachedURLEscapingCharset = getOutputEncoding();
-            }
-            urlEscapingCharsetCached = true;
-        }
-        return cachedURLEscapingCharset;
+        return "UTF-8"; // REVISIT. Is anything else ever really used?
     }
 
     public Collator getCollator() {
@@ -471,16 +458,24 @@ public final class Environment extends Settings implements Scope {
         return buffer.toString();
     }
 
+    //Not sure about this. REVISIT
     public String formatNumber(Number number) {
-        if (numberFormat == null) {
-            numberFormat = getNumberFormatObject(getNumberFormat());
+        if (numberFormatter == null) {
+            numberFormatter = getNumberFormatObject(template.getNumberFormat());
+            if (numberFormatter == null) {
+                numberFormatter = getNumberFormatObject(getNumberFormat());
+            }
         }
-        return numberFormat.format(number);
+        return numberFormatter.format(number);
+    }
+
+    public String getNumberFormat() {
+        return numberFormat;
     }
 
     public void setNumberFormat(String formatName) {
-        super.setNumberFormat(formatName);
-        numberFormat = null;
+        this.numberFormat = formatName;
+        numberFormatter = null;
     }
 
     public TemplateFactory getConfiguration() {
@@ -723,7 +718,7 @@ public final class Environment extends Settings implements Scope {
 
     public void include(Template includedTemplate, boolean freshNamespace) throws IOException {
         Template prevTemplate = getTemplate();
-        setFallback(includedTemplate);
+        setTemplate(includedTemplate);
         Scope prevScope = this.currentScope;
         if (freshNamespace) {
             this.currentScope = new BlockScope(includedTemplate.getRootElement(), this);
@@ -736,7 +731,7 @@ public final class Environment extends Settings implements Scope {
             render(includedTemplate.getRootElement());
         } finally {
             this.currentScope = prevScope;
-            setFallback(prevTemplate);
+            setTemplate(prevTemplate);
         }
     }
 
@@ -798,16 +793,16 @@ public final class Environment extends Settings implements Scope {
             loadedLibs.put(templateName, newNamespace);
             Scope prevScope = currentScope;
             currentScope = newNamespace;
-            Settings prevParent = getFallback();
+            Template prevTemplate = getTemplate();
             Appendable prevBuffer = this.buffer;
             setBuffer(NULL_WRITER);
-            setFallback(loadedTemplate);
+            setTemplate(loadedTemplate);
             try {
                 render(loadedTemplate.getRootElement());
             } finally {
                 this.buffer = prevBuffer;
                 currentScope = prevScope;
-                setFallback(prevParent);
+                setTemplate(prevTemplate);
             }
         }
         return loadedLibs.get(templateName);

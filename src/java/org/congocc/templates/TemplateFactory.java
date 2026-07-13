@@ -11,7 +11,7 @@ import java.nio.file.Files;
 import java.net.URL;
 import java.net.URLConnection;
 
-import org.congocc.templates.core.Settings;
+import org.congocc.templates.core.ArithmeticEngine;
 import org.congocc.templates.core.Environment;
 import org.congocc.templates.core.parser.ParseException;
 import org.congocc.templates.core.parser.ParsingProblemImpl;
@@ -28,7 +28,7 @@ import static org.congocc.templates.core.parser.TokenSource.stringFromBytes;
  * and caching templates.
  */
 
-public class TemplateFactory extends Settings {
+public class TemplateFactory {
 
     private static TemplateFactory defaultFactory = new TemplateFactory();
     private boolean localizedLookup = true;
@@ -40,10 +40,14 @@ public class TemplateFactory extends Settings {
     private String defaultEncoding = "UTF-8";
     private boolean tolerateParsingProblems;
     private Map<String,Template> templateCache = Collections.synchronizedMap(new HashMap<>());
+    private ArithmeticEngine arithmeticEngine = ArithmeticEngine.BIGDECIMAL_ENGINE;
+    private String numberFormat = "number";
+    TemplateExceptionHandler templateExceptionHandler = TemplateExceptionHandler.DEBUG_HANDLER;
 
     private Class<?> classForTemplateLoading;
     private String pathPrefix = "";
     private Path directoryForTemplateLoading = Paths.get(".").toAbsolutePath().normalize();
+    private Locale locale = Locale.getDefault();
 
     static public TemplateFactory getDefault() {
         return defaultFactory;
@@ -157,7 +161,40 @@ public class TemplateFactory extends Settings {
             }
         }
         return true;
+    }
 
+    public ArithmeticEngine getArithmeticEngine() {
+        return arithmeticEngine;
+    }
+
+    public void setArithmeticEngine(ArithmeticEngine arithmeticEngine) {
+        this.arithmeticEngine = arithmeticEngine;
+    }
+
+    public Locale getLocale() {
+        return locale;
+    }
+
+    public void setLocale(Locale locale) {
+        this.locale = locale;
+    }
+
+    public void setNumberFormat(String numberFormat) {
+        if (numberFormat == null)
+            throw new IllegalArgumentException("Setting \"number_format\" can't be null");
+        this.numberFormat = numberFormat;
+    }
+
+    public String getNumberFormat() {
+        return numberFormat;
+    }
+
+    public void setTemplateExceptionHandler(TemplateExceptionHandler templateExceptionHandler) {
+        this.templateExceptionHandler = templateExceptionHandler;
+    }
+
+    public TemplateExceptionHandler getTemplateExceptionHandler() {
+        return templateExceptionHandler;
     }
 
     /**
@@ -272,52 +309,6 @@ public class TemplateFactory extends Settings {
     public void setLocalizedLookup(boolean localizedLookup) {
         this.localizedLookup = localizedLookup;
     }
-
-    /**
-     * Sets a setting by name and string value.
-     *
-     * In additional to the settings understood by
-     * {@link Settings#setSetting the super method}, it understands these:
-     * <ul>
-     *   <li><code>"auto_import"</code>: Sets the list of auto-imports. Example of valid value:
-     *       <br><code>/lib/form.ctl as f, /lib/widget as w, "/lib/evil name.ctl" as odd</code>
-     *       See: {@link #setAutoImports}
-     *   <li><code>"auto_include"</code>: Sets the list of auto-includes. Example of valid value:
-     *       <br><code>/include/common.ctl, "/include/evil name.ctl"</code>
-     *       See: {@link #setAutoIncludes}
-     *   <li><code>"default_encoding"</code>: The name of the charset, such as <code>"UTF-8"</code>.
-     *       See: {@link #setDefaultEncoding}
-     *   <li><code>"localized_lookup"</code>:
-     *       <code>"true"</code>, <code>"false"</code>, <code>"yes"</code>, <code>"no"</code>,
-     *       <code>"t"</code>, <code>"f"</code>, <code>"y"</code>, <code>"n"</code>.
-     *       Case insensitive.
-     *      See: {@link #setLocalizedLookup}
-     * </ul>
-     *
-     * @param key the name of the setting.
-     * @param value the string that describes the new value of the setting.
-     *//*
-    public void setSetting(String key, String value) {
-        try {
-            if ("default_encoding".equalsIgnoreCase(key)) {
-                setDefaultEncoding(value);
-            } else if ("localized_lookup".equalsIgnoreCase(key)) {
-                setLocalizedLookup(StringUtil.getYesNo(value));
-            } else if ("auto_include".equalsIgnoreCase(key)) {
-                setAutoIncludes(new SettingStringParser(value).parseAsList());
-            } else if ("auto_import".equalsIgnoreCase(key)) {
-                setAutoImports(new SettingStringParser(value).parseAsImportList());
-            } else {
-                super.setSetting(key, value);
-            }
-        } catch(TemplateException e) {
-            throw e;
-        } catch(Exception e) {
-            throw new TemplateException(
-                    "Failed to set setting " + key + " to value " + value, e);
-        }
-    }*/
-
 
     /**
      * Add an auto-imported template.

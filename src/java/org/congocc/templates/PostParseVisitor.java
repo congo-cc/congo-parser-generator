@@ -1,6 +1,5 @@
 package org.congocc.templates;
 
-import org.congocc.templates.core.Settings;
 import org.congocc.templates.core.nodes.generated.*;
 import org.congocc.templates.core.nodes.BuiltInExpression;
 import org.congocc.templates.core.parser.Node;

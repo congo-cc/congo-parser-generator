@@ -419,31 +419,19 @@ public abstract class StringFunctions extends ExpressionEvaluatingBuiltIn {
     static class urlBIResult implements Function<String,String> {
 
         private final String target;
-        private final Environment env;
+        //private final Environment env;
         private String cachedResult;
 
         private urlBIResult(String target, Environment env) {
             this.target = target;
-            this.env = env;
+          //  this.env = env;
         }
 
         public String toString() {
             if (cachedResult == null) {
-                String cs = env.getEffectiveURLEscapingCharset();
-                if (cs == null) {
-                    throw new EvaluationException(
-                            "To do URL encoding, the framework that encloses "
-                            + "the template engine must specify the output encoding "
-                            + "or the URL encoding charset, so ask the "
-                            + "programmers to fix it. Or, as a last chance, "
-                            + "you can set the url_encoding_charset setting in "
-                            + "the template, e.g. "
-                            + "<#setting url_escaping_charset='ISO-8859-1'>, or "
-                            + "give the charset explicitly to the buit-in, e.g. "
-                            + "foo?url('ISO-8859-1').");
-                }
                 try {
-                    cachedResult = StringUtil.URLEnc(target, cs);
+                    // Do we ever use anything other than UTF-8? REVISIT.
+                    cachedResult = StringUtil.URLEnc(target, "UTF-8");
                 } catch (UnsupportedEncodingException e) {
                     throw new EvaluationException(
                             "Failed to execute URL encoding.", e);
