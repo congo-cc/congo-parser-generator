@@ -7,9 +7,9 @@
   Rewritten version of this macro to try to get around the Code too large problem.
 --]
 #macro enumSet varName tokenNames
-   #if tokenNames?size = 0
+   #if tokenNames.size() == 0
      private static final EnumSet<TokenType> ${varName} = EnumSet.noneOf(TokenType.class);
-   #elif tokenNames?size < 8
+   #elif tokenNames.size() < 8
     private static final EnumSet<TokenType> ${varName} = tokenTypeSet(
        #list tokenNames as type
          [#if type_index > 0],[/#if]

@@ -243,8 +243,8 @@
          #-- Build the tree node (part 2).
          ${buildTreeNodeEpilogue(treeNodeBehavior, nodeVarName, parseExceptionVar)}
          #-- Pop this node from the node construction stack.
-         #if treeNodeStack?size > 1
-            #set treeNodeStack = treeNodeStack[0..treeNodeStack?size - 2]
+         #if treeNodeStack.size() > 1
+            #set treeNodeStack = treeNodeStack[0..treeNodeStack.size() - 2]
          #else
             #set treeNodeStack = []
          #endif
@@ -254,13 +254,13 @@
 #endmacro
 
 #function currentNodeVariableName()
-  #return treeNodeStack[treeNodeStack?size - 1][0]
+  #return treeNodeStack[treeNodeStack.size() - 1][0]
 #endfunction
 
 #function isJtbParseTree()
-  #if treeNodeStack?size > 0
+  #if !treeNodeStack.isEmpty()
     #-- Use the stacked JTB state.
-    #return (treeNodeStack[treeNodeStack?size - 1])[1]
+    #return (treeNodeStack[treeNodeStack.size() - 1])[1]
   #else
     #-- Use the setting JTB state.
     #return settings::syntheticNodesEnabled && settings::treeBuildingEnabled && settings::jtbParseTree
@@ -1088,7 +1088,7 @@
    #if expansion::hasSemanticLookahead
       (${expansion::semanticLookahead}) &&
    #endif
-   #if expansion::firstSet::tokenNames?size < CU::USE_FIRST_SET_THRESHOLD
+   #if expansion::firstSet::tokenNames.size() < CU::USE_FIRST_SET_THRESHOLD
       #list expansion::firstSet::tokenNames as name
           typeMatches(${name}, getToken(1))
           ${name_has_next ?: "||"}

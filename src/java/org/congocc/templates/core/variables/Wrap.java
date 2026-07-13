@@ -7,7 +7,6 @@ import org.congocc.templates.core.nodes.generated.Expression;
 import org.congocc.templates.core.parser.Node;
 import org.congocc.templates.TemplateBoolean;
 import org.congocc.templates.TemplateException;
-import org.congocc.templates.TemplateSequence;
 
 public class Wrap {
     /**
@@ -58,9 +57,6 @@ public class Wrap {
     }
 
     public static boolean isList(Object obj) {
-        if (obj instanceof TemplateSequence) {
-            return true;
-        }
         if (obj.getClass().isArray()) {
             return true;
         }
@@ -68,13 +64,6 @@ public class Wrap {
     }
 
     public static List<?> asList(Object obj) {
-        if (obj instanceof TemplateSequence) {
-            TemplateSequence tsm = (TemplateSequence) obj;
-            List<Object> result = new ArrayList<>();
-            for (int i = 0; i < tsm.size(); i++)
-                result.add(tsm.get(i));
-            return result;
-        }
         if (obj.getClass().isArray()) {
             List<Object> result = new ArrayList<>();
             for (int i = 0; i < Array.getLength(obj); i++) {

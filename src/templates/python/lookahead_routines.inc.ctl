@@ -723,7 +723,7 @@ ${is}${oomCardVar}.commit_iteration(False)
     #endif
   #endif
 #else
-  [#if grammar::assertionExpansions?? && grammar::assertionExpansions?seq_contains(expansion)]
+  [#if grammar::assertionExpansions?? && grammar::assertionExpansions.contains(expansion)]
       self.${expansion::scanRoutineName}()[#t]
   [#else]
   [#if expansion::cardinalityConstrained && cardinalitiesVar?? && (cardinalitiesVar?length > 0)]

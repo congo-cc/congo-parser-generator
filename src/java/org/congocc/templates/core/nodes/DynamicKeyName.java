@@ -9,7 +9,6 @@ import org.congocc.templates.core.nodes.generated.RangeExpression;
 import org.congocc.templates.core.nodes.generated.TemplateNode;
 import org.congocc.templates.TemplateException;
 import org.congocc.templates.TemplateHash;
-import org.congocc.templates.TemplateSequence;
 
 import java.util.Map;
 import java.util.ArrayList;
@@ -51,14 +50,6 @@ public class DynamicKeyName extends TemplateNode implements Expression {
     }
 
     private Object dealWithNumericalKey(Object target, int index, Environment env) {
-        if (target instanceof TemplateSequence ts) {
-            int size = Integer.MAX_VALUE;
-            try {
-                size = ts.size();
-            } catch (Exception e) {
-            }
-            return index < size ? ts.get(index) : JAVA_NULL;
-        }
         if (isList(target)) {
             try {
                 return wrap(asList(target).get(index));

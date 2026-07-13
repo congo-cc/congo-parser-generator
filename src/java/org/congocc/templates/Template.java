@@ -95,6 +95,7 @@ public class Template extends Settings {
     public String process(Map<String,Object> rootMap) throws IOException
     {
         Environment env = new Environment(this, rootMap);
+        env.setLocale(getLocale());
         getConfiguration().doAutoImportsAndIncludes(env);
         env.process();
         return env.getOutput();
@@ -110,6 +111,7 @@ public class Template extends Settings {
     public void process(Map<String,Object> rootMap, Appendable appendable) throws IOException
     {
         Environment env = new Environment(this, rootMap);
+        env.setLocale(getLocale());
         env.setBuffer(appendable);
         getConfiguration().doAutoImportsAndIncludes(env);
         env.process();

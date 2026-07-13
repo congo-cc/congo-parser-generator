@@ -12,7 +12,6 @@ import org.congocc.templates.core.nodes.BuiltInExpression;
 import org.congocc.templates.core.nodes.generated.TemplateNode;
 import org.congocc.templates.core.variables.*;
 import org.congocc.templates.TemplateHash;
-import org.congocc.templates.TemplateSequence;
 import org.congocc.templates.utility.StringUtil;
 
 import static org.congocc.templates.core.variables.Wrap.*;
@@ -80,13 +79,6 @@ public abstract class SequenceFunctions extends ExpressionEvaluatingBuiltIn {
         }
     }
 
-    public static class Chunk extends SequenceFunctions {
-        @Override
-        public Object apply(Object sequence) {
-            return new ChunkFunction(asList(sequence));
-        }
-    }
-
     public static class IndexOf extends SequenceFunctions {
         @Override
         public Object apply(Object sequence) {
@@ -100,90 +92,6 @@ public abstract class SequenceFunctions extends ExpressionEvaluatingBuiltIn {
             List list = asList(sequence);
             return new SequenceIndexOf(list, true);
         }
-    }
-
-    static class ChunkFunction implements VarArgsFunction {
-
-        private final List tsm;
-
-        private ChunkFunction(List tsm) {
-            this.tsm = tsm;
-        }
-
-        public Object apply(Object... args) {
-            int numArgs = args.length;
-            if (numArgs != 1 && numArgs != 2) {
-                throw new EvaluationException(
-                "?chunk(...) expects 1 or 2 arguments.");
-            }
-            Object chunkSize = args[0];
-            if (!(chunkSize instanceof Number)) {
-                throw new EvaluationException(
-                        "?chunk(...) expects a number as "
-                        + "its 1st argument.");
-            }
-            return new ChunkedSequence(tsm, ((Number)chunkSize).intValue(),
-                    numArgs > 1 ? args[1] : null);
-        }
-    }
-
-    static class ChunkedSequence implements TemplateSequence {
-
-        private final List wrappedTsm;
-
-        private final int chunkSize;
-
-        private final Object fillerItem;
-
-        private final int numberOfChunks;
-
-        private ChunkedSequence(List wrappedTsm,
-                int chunkSize, Object fillerItem)
-        {
-            if (chunkSize < 1) {
-                throw new EvaluationException(
-                "The 1st argument to ?chunk(...) must be at least 1.");
-            }
-            this.wrappedTsm = wrappedTsm;
-            this.chunkSize = chunkSize;
-            this.fillerItem = fillerItem;
-            numberOfChunks = (wrappedTsm.size() + chunkSize - 1) / chunkSize;
-        }
-
-        public Object get(final int chunkIndex)
-        {
-            if (chunkIndex >= numberOfChunks) {
-                return null;
-            }
-
-            return new TemplateSequence() {
-
-                private final int baseIndex = chunkIndex * chunkSize;
-
-                public Object get(int relIndex)
-                {
-                    int absIndex = baseIndex + relIndex;
-                    if (absIndex < wrappedTsm.size()) {
-                        return wrappedTsm.get(absIndex);
-                    } else {
-                        return absIndex < numberOfChunks * chunkSize ? fillerItem
-                                : null;
-                    }
-                }
-
-                public int size() {
-                    return fillerItem != null
-                    || chunkIndex + 1 < numberOfChunks ? chunkSize
-                            : wrappedTsm.size() - baseIndex;
-                }
-
-            };
-        }
-
-        public int size() {
-            return numberOfChunks;
-        }
-
     }
 
     static Object sort(List seq, String[] keys)
@@ -411,28 +319,10 @@ public abstract class SequenceFunctions extends ExpressionEvaluatingBuiltIn {
             Object obj = params[0];
             if ((obj instanceof CharSequence)) {
                 subvars = new String[]{obj.toString()};
-            } else if (obj instanceof TemplateSequence seq) {
-                int ln = seq.size();
-                subvars = new String[ln];
-                for (int i = 0; i < ln; i++) {
-                    Object item = seq.get(i);
-                    try {
-                        subvars[i] = asString(item);
-                    } catch (ClassCastException e) {
-                        if (!(item instanceof CharSequence)) {
-                            throw new EvaluationException(
-                                    "The argument to ?sort_by(key), when it "
-                                    + "is a sequence, must be a sequence of "
-                                    + "strings, but the item at index " + i
-                                    + " is not a string." );
-                        }
-                    }
-                }
             } else {
                 throw new EvaluationException(
                         "The argument to ?sort_by(key) must be a string "
-                        + "(the name of the subvariable), or a sequence of "
-                        + "strings (the \"path\" to the subvariable).");
+                        + "(the name of the subvariable)");
             }
             return sort(seq, subvars);
         }

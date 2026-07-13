@@ -1,6 +1,7 @@
 package org.congocc.templates.builtins;
 
 import java.io.UnsupportedEncodingException;
+import java.util.AbstractList;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Iterator;
@@ -16,7 +17,6 @@ import org.congocc.templates.core.Environment;
 import org.congocc.templates.core.nodes.BuiltInExpression;
 import org.congocc.templates.core.variables.*;
 import org.congocc.templates.TemplateBoolean;
-import org.congocc.templates.TemplateSequence;
 import org.congocc.templates.utility.StringUtil;
 
 import static org.congocc.templates.core.variables.Wrap.*;
@@ -240,13 +240,11 @@ public abstract class StringFunctions extends ExpressionEvaluatingBuiltIn {
         }
     }
 
-
-    static class RegexMatchModel
-    implements TemplateBoolean, TemplateSequence {
+    static class RegexMatchModel extends AbstractList<Object> implements TemplateBoolean {
         Matcher matcher;
         String input;
         final boolean matches;
-        TemplateSequence groups;
+        List<String> groups;
         private ArrayList<Object> data;
 
         RegexMatchModel(Matcher matcher, String input) {
@@ -279,7 +277,7 @@ public abstract class StringFunctions extends ExpressionEvaluatingBuiltIn {
 
         public Object getGroups() {
             if (groups == null) {
-                groups = new TemplateSequence() {
+                groups = new AbstractList<String>() {
                     public int size() {
                         try {
                             return matcher.groupCount() + 1;
@@ -288,7 +286,7 @@ public abstract class StringFunctions extends ExpressionEvaluatingBuiltIn {
                             throw new EvaluationException(e);
                         }
                     }
-                    public Object get(int i) {
+                    public String get(int i) {
                         try {
                             return matcher.group(i);
                         }

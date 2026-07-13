@@ -45,7 +45,7 @@ import static ${settings::parserPackage}.${settings::baseTokenClassName}.TokenTy
 
 #if settings::treeBuildingEnabled
   #list grammar::nodeNames as node
-    #if node?index_of('.') > 0
+    #if node.indexOf(".") > 0
       import ${node};
     #else
       import ${settings::nodePackage}.${grammar::nodePrefix}${node};

@@ -1,5 +1,5 @@
 #var NFA_RANGE_THRESHOLD = 16,
-     multipleLexicalStates = lexerData::lexicalStates?size > 1
+     multipleLexicalStates = lexerData::lexicalStates.size() > 1
 
 #--  Generate all the NFA transition code
 #--  for the given lexical state
@@ -16,7 +16,7 @@
   #endlist
 
   #list lexicalState::allNfaStates as state
-    #if state::moveRanges?size >= NFA_RANGE_THRESHOLD
+    #if state::moveRanges.size() >= NFA_RANGE_THRESHOLD
       ${GenerateMoveArray(state)}
     #endif
   #endlist
@@ -28,11 +28,11 @@
   #-- user ngx reported running into this with his SQL grammar
 
   #var chunkSize = 2000 #-- arbitrary number. I think it could actually be up to a bit over 6000.
-  #var numChunks = 1 + (lexicalState::canonicalSets?size / chunkSize)?int
+  #var numChunks = 1 + (lexicalState::canonicalSets.size() / chunkSize)?int
   #var canonicalSets = lexicalState::canonicalSets
 
   private static void NFA_FUNCTIONS_init() {
-    NfaFunction[] functions = new NfaFunction[${numChunks > 1 ?: lexicalState::canonicalSets?size}]
+    NfaFunction[] functions = new NfaFunction[${numChunks > 1 ?: lexicalState::canonicalSets.size()}]
     #if numChunks == 1
     {
      #list canonicalSets as state
@@ -58,7 +58,7 @@
      private static void NFA_FUNCTIONS_init${index}(NfaFunction[] funcArray) {
          #list 1..chunkSize as index2
             #var offset = index*chunkSize + index2 -chunkSize -1
-            #if offset >= canonicalSets?size
+            #if offset >= canonicalSets.size()
               #break
             #endif
             #var state = canonicalSets[offset]
@@ -200,7 +200,7 @@ it uses the canned binary search routine. For the smaller moveRanges
 it just generates the inline conditional expression
 --]
 #macro NfaStateCondition nfaState
-    #if nfaState::moveRanges?size < NFA_RANGE_THRESHOLD
+    #if nfaState::moveRanges.size() < NFA_RANGE_THRESHOLD
       ${RangesCondition(nfaState::moveRanges)}
     #elif nfaState::hasAsciiMoves && nfaState::hasNonAsciiMoves
       ${RangesCondition(nfaState::asciiMoveRanges)}
@@ -221,7 +221,7 @@ if NFA state's moveRanges array is smaller than NFA_RANGE_THRESHOLD
     #var displayLeft = globals::displayChar(left),
          displayRight = globals.displayChar(right)
     #var singleChar = left == right
-    #if moveRanges?size == 2
+    #if moveRanges.size() == 2
        #if singleChar
           ch == ${displayLeft}
        #elif left + 1 == right

@@ -349,7 +349,7 @@
               }
               stackIterator.next();
           #elif element = "..."
-             #if element_index = lookBehind::path?size - 1
+             #if element_index = lookBehind::path.size() - 1
                  #if lookBehind::hasEndingSlash
                       return !stackIterator.hasNext();
                  #else
@@ -508,7 +508,7 @@
 
 #macro ScanSingleToken expansion cardinalitiesVar
     #var firstSet = expansion::firstSet::tokenNames
-    #if firstSet?size < CU::USE_FIRST_SET_THRESHOLD
+    #if firstSet.size() < CU::USE_FIRST_SET_THRESHOLD
       if (!scanToken(
         #list expansion::firstSet::tokenNames as name
           ${name}
@@ -663,7 +663,7 @@
 
 #macro CheckExpansion expansion cardinalitiesVar parentCardVar
    #if expansion::singleTokenLookahead
-     #if expansion::firstSet::tokenNames?size < CU::USE_FIRST_SET_THRESHOLD
+     #if expansion::firstSet::tokenNames.size() < CU::USE_FIRST_SET_THRESHOLD
       scanToken(
         #list expansion::firstSet::tokenNames as name
           ${name} ${name_has_next ?: ","}
@@ -673,7 +673,7 @@
       scanToken(${expansion::firstSetVarName})
      #endif
    #else
-     #if grammar::assertionExpansions?? && grammar::assertionExpansions?seq_contains(expansion)
+     #if grammar::assertionExpansions?? && grammar::assertionExpansions.contains(expansion)
       ${expansion::scanRoutineName}()
      #else
       ${expansion::scanRoutineName}(false[#if expansion::cardinalityConstrained && cardinalitiesVar??], ${cardinalitiesVar}[/#if])

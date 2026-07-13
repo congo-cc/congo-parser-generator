@@ -46,8 +46,8 @@ public abstract class ExistenceBuiltIn implements BuiltIn {
     };
 
     public static class ExistsBuiltIn extends ExistenceBuiltIn {
-        public Object apply(final Object model) {
-            return model != null && model != JAVA_NULL;
+        public Object apply(final Object obj) {
+            return obj != null && obj != JAVA_NULL && obj != LOOSE_NULL;
         }
     };
 

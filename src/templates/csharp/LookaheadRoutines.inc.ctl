@@ -710,7 +710,7 @@ ${oomCardVar}.CommitIteration(false);
       ScanToken(${expansion::firstSetVarName})
      #endif
    #else
-     #if grammar::assertionExpansions?? && grammar::assertionExpansions?seq_contains(expansion)
+     #if grammar::assertionExpansions?? && grammar::assertionExpansions.contains(expansion)
       ${expansion::scanRoutineName}()[#t]
      #else
       ${expansion::scanRoutineName}(false[#if expansion::cardinalityConstrained && cardinalitiesVar?? && (cardinalitiesVar?length > 0)], ${cardinalitiesVar}[/#if])[#t]

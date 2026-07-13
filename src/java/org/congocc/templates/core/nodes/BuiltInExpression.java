@@ -24,7 +24,6 @@ public class BuiltInExpression extends TemplateNode implements Expression {
         knownBuiltins.put("size", new sizeBI());
         knownBuiltins.put("string", new stringBI());
         knownBuiltins.put("eval", new evalBI());
-        knownBuiltins.put("resolve", new resolveBI());
         NumericalCast numericalCast = new NumericalCast();
         knownBuiltins.put("byte", numericalCast);
         knownBuiltins.put("double", numericalCast);
@@ -65,8 +64,7 @@ public class BuiltInExpression extends TemplateNode implements Expression {
         knownBuiltins.put("last", new SequenceFunctions.Last());
         knownBuiltins.put("reverse", new SequenceFunctions.Reverse());
         knownBuiltins.put("sort", new SequenceFunctions.Sort());
-        knownBuiltins.put("chunk", new SequenceFunctions.Chunk());
-        knownBuiltins.put("seq_contains", new SequenceContainsBuiltIn());
+        //knownBuiltins.put("chunk", new SequenceFunctions.Chunk());
         knownBuiltins.put("scope", new MacroBuiltins.Scope());
         knownBuiltins.put("namespace", new MacroBuiltins.Namespace());
         knownBuiltins.put("keys", new HashBuiltin.Keys());

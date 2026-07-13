@@ -561,7 +561,7 @@ public class ${settings::baseTokenClassName} ${implements} {
            #list lexerData::orderedNamedTokens as re
             #if re::generatedClassName != "${settings.baseTokenClassName}" && !re::private
               #var generatedClassName = re::generatedClassName
-              #if generatedClassName?index_of('.') < 0
+              #if !generatedClassName.contains(".")
                  #set generatedClassName = grammar::nodePrefix + generatedClassName
               #endif
               case ${re::label} : return new ${generatedClassName}(TokenType.${re::label}, tokenSource, beginOffset, endOffset);

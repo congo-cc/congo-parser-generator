@@ -8,7 +8,7 @@ import static org.congocc.templates.core.variables.Wrap.JAVA_NULL;
 
 /**
  * Implementations of ?scope and ?namespace built-ins
- * that expect  macro on the lhs.
+ * that expect macro on the lhs.
  */
 public abstract class MacroBuiltins extends ExpressionEvaluatingBuiltIn {
 

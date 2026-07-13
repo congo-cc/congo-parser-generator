@@ -521,14 +521,14 @@ ${globals.translateCodeBlock(fail::code, 1)}
 [#var assertionSkipped = false]
 [#if assertion::assertionExpression??]
 [#var assertCondition = globals.translateExpressionSafe(assertion::assertionExpression, "true")]
-[#if assertCondition?contains("FIXME")]
+[#if assertCondition.contains("FIXME")]
 [#set assertionSkipped = true]
         // Assertion at ${assertion::location} skipped — condition not yet translatable to Rust
         // ${assertCondition}
 [#else]
 [#if assertion::messageExpression??]
   [#var msgTranslated = globals.translateExpressionSafe(assertion::messageExpression, "\"(message unavailable)\".to_string()")]
-  [#if !msgTranslated?contains("FIXME")]
+  [#if !msgTranslated.contains("FIXME")]
     [#set optionalPart = " + &" + msgTranslated]
   [/#if]
 [/#if]

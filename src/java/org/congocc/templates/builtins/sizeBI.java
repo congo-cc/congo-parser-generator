@@ -4,7 +4,6 @@ import org.congocc.templates.core.Environment;
 import org.congocc.templates.core.nodes.BuiltInExpression;
 import org.congocc.templates.core.nodes.generated.TemplateNode;
 import org.congocc.templates.TemplateHash;
-import org.congocc.templates.TemplateSequence;
 
 import java.lang.reflect.Array;
 import java.util.Collection;
@@ -22,9 +21,6 @@ public class sizeBI extends ExpressionEvaluatingBuiltIn {
         }
         else if (value instanceof Map m) {
             return m.size();
-        }
-        else if (value instanceof TemplateSequence ts) {
-            return ts.size();
         }
         else if (value instanceof TemplateHash th) {
             return th.size();
