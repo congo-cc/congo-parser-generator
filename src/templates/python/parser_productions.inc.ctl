@@ -821,8 +821,8 @@ ${is}    ${expressedLHS?replace("@", impliedLHS?replace("@", "None"))}
    [#if !settings::faultTolerant]
 ${is}${LHS?replace("@", "self.consume_token(" + regexp::label + ")")}
    [#else]
-      [#var tolerant = terminal::tolerantParsing?string("True", "False")]
-      [#var followSetVarName = "self." + terminal::followSetVarName]
+      #var tolerant = terminal::tolerantParsing ?: "True" : "False",
+           followSetVarName = "self." + terminal::followSetVarName
       [#if terminal::followSet::incomplete]
          [#set followSetVarName = "follow_set" + CU::newID()]
 ${is}${followSetVarName} = None
@@ -948,7 +948,7 @@ ${is}# out of the loop..
     /#if
     #return
   /#if
-${is}${(expansion_index == 0)?string("if", "elif")} (${ExpansionCondition(expansion, cardinalitiesVar)}):
+${is}${(expansion_index == 0) ?: "if": "elif"} (${ExpansionCondition(expansion, cardinalitiesVar)}):
 ${BuildCode(expansion, indent + 4, cardinalitiesVar)}[#rt]
   #if isJtbParseTree() && isProductionInstantiatingNode(expansion)
 ${is}    ${currentNodeVariableName()}.${globals.translateIdentifier("setChoice")}(${expansion_index})

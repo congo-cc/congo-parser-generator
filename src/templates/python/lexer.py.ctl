@@ -304,12 +304,11 @@ def get_function_table_map(lexical_state):
     return nfa_functions
     #endif
 
-[#var PRESERVE_LINE_ENDINGS = settings::preserveLineEndings?string("True", "False")
-      JAVA_UNICODE_ESCAPE = settings::javaUnicodeEscape?string("True", "False")
-      ENSURE_FINAL_EOL = settings::ensureFinalEOL?string("True", "False")
+#var PRESERVE_LINE_ENDINGS = settings::preserveLineEndings ?: "True" : "False",
+      JAVA_UNICODE_ESCAPE = settings::javaUnicodeEscape ?: "True" : "False",
+      PRESERVE_TABS = settings::preserveTabs ?: "True" : "False",
+      ENSURE_FINAL_EOL = settings::ensureFinalEOL ?: "True" : "False",
       TERMINATING_STRING = "\"" + settings::terminatingString?j_string + "\""
-      PRESERVE_TABS = settings::preserveTabs?string("True", "False")
-]
 
 CODING_PATTERN = re.compile(rb'^[ \t\f]*#.*coding[:=][ \t]*([-_.a-zA-Z0-9]+)')
 

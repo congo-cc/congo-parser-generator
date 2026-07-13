@@ -405,7 +405,7 @@ ${is}        self.hit_failure = prev_hit_failure
 [#-- ${is}# DBG > BuildLookBehindRoutine ${indent} --]
 ${is}# Look behind
 ${is}def ${lookBehind::routineName}(self):
-${is}    stack_iterator = self.${lookBehind::backward?string("stack_iterator_backward", "stack_iterator_forward")}()
+${is}    stack_iterator = self.${lookBehind::backward ?: "stack_iterator_backward" : "stack_iterator_forward"}()
 [#list lookBehind::path as element]
   [#var elementNegated = (element[0] == "~")]
   [#if elementNegated][#set element = element?substring(1)][/#if]
@@ -426,7 +426,7 @@ ${is}    return True
       [#if nextElementNegated][#set nextElement = nextElement?substring(1)][/#if]
 ${is}    while stack_iterator.has_next:
 ${is}        ntc = stack_iterator.next
-      [#var equalityOp = nextElementNegated?string("!=", "==")]
+      #var equalityOp = nextElementNegated ?: "!=" : "=="
 ${is}        if ntc.production_name ${equalityOp} "${nextElement}":
 ${is}            stack_iterator.previous
 ${is}            break
@@ -437,7 +437,7 @@ ${is}            return False
 ${is}    if not stack_iterator.has_next:
 ${is}        return False
 ${is}    ntc = stack_iterator.next
-     [#var equalityOp = elementNegated?string("==", "!=")]
+     #var equalityOp = elementNegated ?: "==" : "!="
 ${is}    if ntc.production_name ${equalityOp} "${element}":
 ${is}        return False
   [/#if]

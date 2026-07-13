@@ -12,7 +12,7 @@ import com.github.javaparser.ParserConfiguration.LanguageLevel;
 
 ArrayList<String> failures = new ArrayList<>();
 ArrayList<Object> roots = new ArrayList<>();
-boolean parallel, retainTrees;
+boolean parallel, retainTrees, quiet;
 
 public void main(String[] args) {
     long startTime = System.currentTimeMillis();

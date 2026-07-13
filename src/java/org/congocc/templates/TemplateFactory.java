@@ -52,7 +52,7 @@ public class TemplateFactory extends Settings {
     /**
      * Set the explicit directory from which to load templates.
      */
-    public void setDirectoryForTemplateLoading(String dir) throws IOException {
+    public void setDirectoryForTemplateLoading(String dir) {
         Path path = FileSystems.getDefault().getPath(dir);
         directoryForTemplateLoading = path.toAbsolutePath().normalize();
         if (!Files.isDirectory(directoryForTemplateLoading)) {

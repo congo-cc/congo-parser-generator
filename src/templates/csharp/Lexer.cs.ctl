@@ -4,11 +4,11 @@ ${"#"}pragma warning disable 8632
 #import "CommonUtils.inc.ctl" as CU
 #var NFA_RANGE_THRESHOLD = 16, MAX_INT = 2147483647, multipleLexicalStates = lexerData::lexicalStates?size > 1
 #var TT = "TokenType."
-#var PRESERVE_LINE_ENDINGS = settings::preserveLineEndings?string("true", "false"),
-      JAVA_UNICODE_ESCAPE = settings::javaUnicodeEscape?string("true", "false"),
-      ENSURE_FINAL_EOL = settings::ensureFinalEOL?string("true", "false"),
-      TERMINATING_STRING = "\"" + settings::terminatingString?j_string + "\"",
-      PRESERVE_TABS = settings::preserveTabs?string("true", "false")
+#var PRESERVE_LINE_ENDINGS = settings::preserveLineEndings ?: "true" : "false",
+      JAVA_UNICODE_ESCAPE = settings::javaUnicodeEscape ?: "true" : "false",
+      ENSURE_FINAL_EOL = settings::ensureFinalEOL ?: "true" : "false",
+      PRESERVE_TABS = settings::preserveTabs ?: "true" : "false",
+      TERMINATING_STRING = "\"" + settings::terminatingString?j_string + "\""
 #var BaseToken = settings::baseTokenClassName
 [#-- if settings.treeBuildingEnabled || settings.rootAPIPackage]
   #set BaseToken = "Node.TerminalNode"

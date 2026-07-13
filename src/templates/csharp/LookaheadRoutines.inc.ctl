@@ -383,7 +383,7 @@ ${BuildScanCode(lookahead::nestedExpansion, "", "")}
 #macro BuildLookBehindRoutine lookBehind
 #-- # DBG > BuildLookBehindRoutine
 private bool ${lookBehind::routineName}() {
-    var stackIterator = new ${lookBehind::backward?string("BackwardIterator", "ForwardIterator")}<NonTerminalCall>(ParsingStack, _lookaheadStack);
+    var stackIterator = new ${lookBehind::backward ?: "BackwardIterator" : "ForwardIterator"}<NonTerminalCall>(ParsingStack, _lookaheadStack);
     NonTerminalCall ntc;
 #list lookBehind::path as element
   #var elementNegated = (element[0] == "~")
@@ -406,7 +406,7 @@ private bool ${lookBehind::routineName}() {
       [#if nextElementNegated][#set nextElement = nextElement?substring(1)][/#if]
     while (stackIterator.HasNext()) {
         ntc = stackIterator.Next();
-      #var equalityOp = nextElementNegated?string("!=", "==")
+      #var equalityOp = nextElementNegated ?: "!=" : "=="
         if (ntc.ProductionName ${equalityOp} "${nextElement}") {
             stackIterator.Previous();
             break;
@@ -421,7 +421,7 @@ private bool ${lookBehind::routineName}() {
         return false;
     }
     ntc = stackIterator.Next();
-     #var equalityOp = elementNegated?string("==", "!=")
+     #var equalityOp = elementNegated ?: "==" : "!="
     if (ntc.ProductionName ${equalityOp} "${element}") {
         return false;
     }

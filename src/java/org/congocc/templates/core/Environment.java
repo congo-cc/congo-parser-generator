@@ -677,7 +677,7 @@ public final class Environment extends Settings implements Scope {
 
     /**
      * Returns the data model hash. This is correspondent of CTL
-     * <code>.datamodel</code> hash. That is, it contains both the variables
+     * <code>::datamodel</code> hash. That is, it contains both the variables
      * of the root hash passed to the <code>Template.process(...)</code>, and
      * the shared variables in the <code>Configuration</code>.
      */

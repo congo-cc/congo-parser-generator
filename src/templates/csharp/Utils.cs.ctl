@@ -160,9 +160,9 @@ namespace ${csPackage} {
         }
     }
 
-#var ENSURE_FINAL_EOL = settings::ensureFinalEOL?string("true", "false")
-#var PRESERVE_LINE_ENDINGS = settings::preserveLineEndings?string("true","false")
-#var JAVA_UNICODE_ESCAPE = settings::javaUnicodeEscape?string("true", "false")
+#var ENSURE_FINAL_EOL = settings::ensureFinalEOL ?: "true" : "false"
+#var PRESERVE_LINE_ENDINGS = settings::preserveLineEndings ?: "true" : "false"
+#var JAVA_UNICODE_ESCAPE = settings::javaUnicodeEscape ?: "true" : "false"
 
     public static class Utils {
 

@@ -338,7 +338,7 @@
 #macro BuildLookBehindRoutine lookBehind
   #set newVarIndex = 0 in CU
     private boolean ${lookBehind::routineName}() {
-       ListIterator<NonTerminalCall> stackIterator = ${lookBehind::backward?string("stackIteratorBackward", "stackIteratorForward")}();
+       ListIterator<NonTerminalCall> stackIterator = ${lookBehind::backward ?: "stackIteratorBackward" : "stackIteratorForward"}();
        NonTerminalCall ntc = null;
        #list lookBehind::path as element
           #var elementNegated = (element[0] == "~")
@@ -361,7 +361,7 @@
                  [#if nextElementNegated][#set nextElement = nextElement?substring(1)][/#if]
                  while (stackIterator.hasNext()) {
                     ntc = stackIterator.next();
-                    #var equalityOp = nextElementNegated?string("!=", "==")
+                    #var equalityOp = nextElementNegated ?: "!=" : "=="
                     if (ntc.productionName ${equalityOp} "${nextElement}") {
                        stackIterator.previous();
                        break;
@@ -372,7 +372,7 @@
           #else
              if (!stackIterator.hasNext()) ${returnFalse(cardinalitiesVar!null)};
              ntc = stackIterator.next();
-             #var equalityOp = elementNegated?string("==", "!=")
+             #var equalityOp = elementNegated ?: "==" : "!="
                if (ntc.productionName ${equalityOp} "${element}") ${returnFalse(cardinalitiesVar!null)};
           #endif
        #endlist

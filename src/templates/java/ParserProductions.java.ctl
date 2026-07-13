@@ -884,7 +884,7 @@
          popCallStack();
        }
    #else
-       #var tolerant = terminal::tolerantParsing?string("true", "false"),
+       #var tolerant = terminal::tolerantParsing ?: "true" : "false" ,
             followSetVarName = terminal::followSetVarName
        #if terminal::followSet::incomplete
          #set followSetVarName = "followSet" + CU::newID()

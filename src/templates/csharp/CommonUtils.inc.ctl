@@ -63,12 +63,12 @@ private static readonly HashSet<TokenType> ${varName} = Utils.GetOrMakeSet(
 #endmacro
 
 #function bool val
-#return val?string("true", "false")
-#endfunction
+  #return val ?: "true" : "false"
+#end
 
 #macro HandleLexicalStateChange expansion inLookahead cardinalitiesVar
 #-- # DBG > HandleLexicalStateChange ${expansion.simpleName}
-#var resetToken = inLookahead?string("currentLookaheadToken", "LastConsumedToken")
+#var resetToken = inLookahead ?: "currentLookaheadToken" : "LastConsumedToken"
 #if expansion::specifiedLexicalState??
   #var prevLexicalStateVar = newVarName("previousLexicalState")
   #if inLookahead
