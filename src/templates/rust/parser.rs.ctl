@@ -61,7 +61,7 @@
          [#var condStr = "" + treeNodeBehavior::condition]
          [#if treeNodeBehavior::initialShorthand = ">=" && condStr = "0"]
             [#return "true"]
-         [#elseif treeNodeBehavior::initialShorthand?starts_with(">") || treeNodeBehavior::initialShorthand?starts_with("!") || treeNodeBehavior::initialShorthand?starts_with("<")]
+         [#elseif treeNodeBehavior::initialShorthand.startsWith(">") || treeNodeBehavior::initialShorthand.startsWith("!") || treeNodeBehavior::initialShorthand.startsWith("<")]
             [#return "self.builder.node_arity()" + treeNodeBehavior::initialShorthand + treeNodeBehavior::condition]
          [#else]
             [#-- Non-comparison (e.g., +1): always create the node --]
@@ -78,7 +78,7 @@
             [#return "true"]
          [#elseif condStr = "0"]
             [#return "false"]
-         [#elseif condStr?length = 1 || condStr?length = 2]
+         [#elseif condStr.length() = 1 || condStr.length() = 2]
             [#-- Small number from #(N) annotation — always create the node --]
             #var firstChar = condStr.substring(0, 1)
             [#if firstChar = "2" || firstChar = "3" || firstChar = "4" || firstChar = "5" || firstChar = "6" || firstChar = "7" || firstChar = "8" || firstChar = "9"]
@@ -291,7 +291,7 @@ if self.remaining_lookahead <= 0 { return true; }
     [#set newVarIndex = 0]
     ${production::leadingComments}
     // ${production::location}
-    ${globals.startProduction()}pub fn parse_${production::name?lower_case}(&mut self[#if production::parameterList??], ${globals.translateParameters(production::parameterList)}[/#if]) -> Result<(), ParseError> {
+    ${globals.startProduction()}pub fn parse_${production::name.toLowerCase()}(&mut self[#if production::parameterList??], ${globals.translateParameters(production::parameterList)}[/#if]) -> Result<(), ParseError> {
         self.currently_parsed_production = "${production::name}";
         [@BuildCode production /]
     }${globals.endProduction()}
@@ -408,7 +408,7 @@ ${globals.translateCodeBlock(expansion, 1)}
             line: ${nonterminal::beginLine},
             column: ${nonterminal::beginColumn},
         });
-        let _nt_r_${newID()} = self.parse_${nonterminal::name?lower_case}(${globals.translateNonterminalArgs(nonterminal::args)!});
+        let _nt_r_${newID()} = self.parse_${nonterminal::name.toLowerCase()}(${globals.translateNonterminalArgs(nonterminal::args)!});
         self.call_stack.pop();
         _nt_r_${newVarIndex}?;
 [/#macro]
@@ -1208,7 +1208,7 @@ impl<'src> Parser<'src> {
             active_token_types: None,
 [/#if]
 ${globals.getParserFieldInitializers()}        };
-        parser.parse_${rootProductionName?lower_case}()?;
+        parser.parse_${rootProductionName.toLowerCase()}()?;
         let root = parser.builder.peek_node();
         if let Some(root_id) = root {
             parser.builder.set_root(root_id);

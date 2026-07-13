@@ -715,7 +715,7 @@ if (!(${globals.translateExpression(assertion::assertionExpression)})) {
 if (!(${assertion::rawCode})) {
     Fail("${assertionMessage}"${optionalPart});
 }
-   #elif assertion::cardinalityConstraint?? && cardinalitiesVar?? && (cardinalitiesVar?length > 0)
+   #elif assertion::cardinalityConstraint?? && cardinalitiesVar?? && (cardinalitiesVar.length() > 0)
 if (!${cardinalitiesVar}.Choose(${assertion::assertionIndex}, false)) {
     Fail("Maximum cardinality constraint at: ${assertion::location?j_string} exceeded.");
 }
@@ -1026,7 +1026,7 @@ ${BuildCode(subexp, cardinalitiesVar)}
   #if expansion::hasSemanticLookahead && !expansion::lookahead::semanticLookaheadNested
     (${globals.translateExpression(expansion::semanticLookahead)}) &&
   #endif
-  #if expansion::cardinalityConstrained && cardinalitiesVar?? && (cardinalitiesVar?length > 0)
+  #if expansion::cardinalityConstrained && cardinalitiesVar?? && (cardinalitiesVar.length() > 0)
     ${expansion::predicateMethodName}(${cardinalitiesVar})
   #else
     ${expansion::predicateMethodName}()

@@ -9,8 +9,8 @@
 
 [#-- Lookahead cardinality: mirror Java LookaheadRoutines returnFalse/returnTrue/return(commit) --]
 [#function lhReturnFalse cardinalitiesVar parentCardVar]
-  [#if cardinalitiesVar?? && (cardinalitiesVar?length > 0)]
-    [#if parentCardVar?? && (parentCardVar?length > 0)]
+  [#if cardinalitiesVar?? && (cardinalitiesVar.length() > 0)]
+    [#if parentCardVar?? && (parentCardVar.length() > 0)]
       [#return "return " + parentCardVar + ".commit(False)"/]
     [#else]
       [#return "return " + cardinalitiesVar + ".commit(False)"/]
@@ -20,8 +20,8 @@
   [/#if]
 [/#function]
 [#function lhReturnTrue cardinalitiesVar parentCardVar]
-  [#if cardinalitiesVar?? && (cardinalitiesVar?length > 0)]
-    [#if parentCardVar?? && (parentCardVar?length > 0)]
+  [#if cardinalitiesVar?? && (cardinalitiesVar.length() > 0)]
+    [#if parentCardVar?? && (parentCardVar.length() > 0)]
       [#return "return " + parentCardVar + ".commit(True)"/]
     [#else]
       [#return "return " + cardinalitiesVar + ".commit(True)"/]
@@ -31,9 +31,9 @@
   [/#if]
 [/#function]
 [#function lhReturnCommit retExpr cardinalitiesVar parentCardVar]
-  [#if parentCardVar?? && (parentCardVar?length > 0)]
+  [#if parentCardVar?? && (parentCardVar.length() > 0)]
     [#return "return " + parentCardVar + ".commit(" + retExpr + ")"/]
-  [#elif cardinalitiesVar?? && (cardinalitiesVar?length > 0)]
+  [#elif cardinalitiesVar?? && (cardinalitiesVar.length() > 0)]
     [#return "return " + cardinalitiesVar + ".commit(" + retExpr + ")"/]
   [#else]
     [#return "return " + retExpr/]
@@ -590,7 +590,7 @@ ${is}if [#if !assertion::expansionNegated]not [/#if]self.${assertion::expansion:
 ${is}    self.hit_failure = True
 ${is}    ${lhReturnFalse(cardinalitiesVar, parentCardVar)}
 [/#if]
-[#if assertion::cardinalityConstraint?? && cardinalitiesVar?? && (cardinalitiesVar?length > 0)]
+[#if assertion::cardinalityConstraint?? && cardinalitiesVar?? && (cardinalitiesVar.length() > 0)]
 ${is}if not ${cardinalitiesVar}.choose(${assertion::assertionIndex}, True):
 ${is}    self.hit_failure = True
 ${is}    ${lhReturnFalse(cardinalitiesVar, parentCardVar)}
@@ -726,7 +726,7 @@ ${is}${oomCardVar}.commit_iteration(False)
   [#if grammar::assertionExpansions?? && grammar::assertionExpansions.contains(expansion)]
       self.${expansion::scanRoutineName}()[#t]
   [#else]
-  [#if expansion::cardinalityConstrained && cardinalitiesVar?? && (cardinalitiesVar?length > 0)]
+  [#if expansion::cardinalityConstrained && cardinalitiesVar?? && (cardinalitiesVar.length() > 0)]
       self.${expansion::scanRoutineName}(False, ${cardinalitiesVar})[#t]
   [#else]
       self.${expansion::scanRoutineName}(False)[#t]

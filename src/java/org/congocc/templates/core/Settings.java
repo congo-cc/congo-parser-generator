@@ -213,61 +213,6 @@ public class Settings {
                 : (fallback != null ? fallback.getURLEscapingCharset() : null);
     }
 
-    /**
-     * Sets a setting by a name and string value.
-     */
-    public void setSetting(String key, String value) {
-        try {
-            if (LOCALE_KEY.equals(key)) {
-                setLocale(StringUtil.deduceLocale(value));
-            } else if (NUMBER_FORMAT_KEY.equals(key)) {
-                setNumberFormat(value);
-            } else if (TEMPLATE_EXCEPTION_HANDLER_KEY.equals(key)) {
-                if (value.indexOf('.') == -1) {
-                    if ("debug".equalsIgnoreCase(value)) {
-                        setTemplateExceptionHandler(
-                                TemplateExceptionHandler.DEBUG_HANDLER);
-                    } else if ("ignore".equalsIgnoreCase(value)) {
-                        setTemplateExceptionHandler(
-                                TemplateExceptionHandler.IGNORE_HANDLER);
-                    } else if ("rethrow".equalsIgnoreCase(value)) {
-                        setTemplateExceptionHandler(
-                                TemplateExceptionHandler.RETHROW_HANDLER);
-                    } else {
-                        throw invalidSettingValueException(key, value);
-                    }
-                } else {
-                    setTemplateExceptionHandler(
-                            (TemplateExceptionHandler) Class.forName(value).getConstructor().newInstance());
-                }
-            } else if (ARITHMETIC_ENGINE_KEY.equals(key)) {
-                if (value.indexOf('.') == -1) {
-                    if ("bigdecimal".equalsIgnoreCase(value)) {
-                        setArithmeticEngine(ArithmeticEngine.BIGDECIMAL_ENGINE);
-                    } else if ("conservative".equalsIgnoreCase(value)) {
-                        setArithmeticEngine(ArithmeticEngine.CONSERVATIVE_ENGINE);
-                    } else {
-                        throw invalidSettingValueException(key, value);
-                    }
-                } else {
-                    setArithmeticEngine(
-                            (ArithmeticEngine) Class.forName(value).getConstructor().newInstance());
-                }
-            } else if (OUTPUT_ENCODING_KEY.equals(key)) {
-                setOutputEncoding(value);
-            } else if (URL_ESCAPING_CHARSET_KEY.equals(key)) {
-                setURLEscapingCharset(value);
-            } else {
-                throw new IllegalArgumentException("Unknown setting: " +key);
-            }
-        } catch (TemplateException e) {
-            throw e;
-        } catch (Exception e) {
-            throw new TemplateException(
-                    "Failed to set setting " + key + " to value " + value, e);
-        }
-    }
-
     protected TemplateException invalidSettingValueException(String name, String value) {
         return new TemplateException("Invalid value for setting " + name + ": " + value);
     }

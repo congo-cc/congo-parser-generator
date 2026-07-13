@@ -104,27 +104,6 @@ public abstract class StringFunctions extends ExpressionEvaluatingBuiltIn {
         }
     }
 
-    public static class Split extends StringFunctions {
-        @Override
-        public Object apply(String string, Environment env, BuiltInExpression caller) {
-            return new JavaMethodCall(string, "split", caller);
-        }
-    }
-
-    public static class StartsWith extends StringFunctions {
-        @Override
-        public Object apply(String string, Environment env, BuiltInExpression caller) {
-            return new JavaMethodCall(string, "startsWith", caller);
-        }
-    }
-
-    public static class EndsWith extends StringFunctions {
-        @Override
-        public Object apply(String string, Environment env, BuiltInExpression caller) {
-            return new JavaMethodCall(string, "endsWith", caller);
-        }
-    }
-
     public static class Matches extends StringFunctions {
         @Override
         public Object apply(String string, Environment env, BuiltInExpression caller) {

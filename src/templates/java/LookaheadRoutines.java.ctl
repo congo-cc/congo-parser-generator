@@ -572,7 +572,7 @@
   #list choice::choices as subseq
      passedPredicate = false;
      if (!${CheckExpansion(subseq, cardinalitiesVar!null, parentCardVar!null)}) {
-     currentLookaheadToken = ${settings::baseTokenClassName?lower_case}${CU::newVarIndex};
+     currentLookaheadToken = ${settings::baseTokenClassName.toLowerCase()}${CU::newVarIndex};
      remainingLookahead = remainingLookahead${CU::newVarIndex};
      hitFailure = hitFailure${CU::newVarIndex};
      #if !subseq_has_next
@@ -598,7 +598,7 @@
         #if !settings::legacyGlitchyLookahead
          if (passedPredicate) ${returnFalse(cardVar!null)};
         #endif
-         currentLookaheadToken = ${settings::baseTokenClassName?lower_case}${CU::newVarIndex};
+         currentLookaheadToken = ${settings::baseTokenClassName.toLowerCase()}${CU::newVarIndex};
          hitFailure = false;
       }
    } finally {passedPredicate = passedPredicate${CU::newVarIndex};}
@@ -625,7 +625,7 @@
            #if !settings::legacyGlitchyLookahead
             if (passedPredicate) ${returnFalse(cardinalitiesVar!null)};
            #endif
-            currentLookaheadToken = ${settings::baseTokenClassName?lower_case}${CU::newVarIndex};
+            currentLookaheadToken = ${settings::baseTokenClassName.toLowerCase()}${CU::newVarIndex};
             break;
         }
         #if zom::cardinalityContainer

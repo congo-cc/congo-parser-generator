@@ -50,7 +50,7 @@
   onto the type name, and optionally initializes it to some value
 [#macro newVar type init = null]
    [#set newVarIndex = newVarIndex + 1]
-   ${type} ${type?lower_case}${newVarIndex}
+   ${type} ${type.toLowerCase()}${newVarIndex}
    [#if init??]
       = ${init}
    [/#if]

@@ -332,7 +332,7 @@ pub trait PrettyPrinter {
     fn pp(&self, ast: &Ast, id: NodeId) -> Doc {
         match ast.kind(id) {
 [#list grammar::nodeNames as nodeName]
-            NodeKind::${nodeName} => self.pp_${nodeName?lower_case}(ast, id),
+            NodeKind::${nodeName} => self.pp_${nodeName.toLowerCase()}(ast, id),
 [/#list]
             NodeKind::Token(_) => self.pp_token(ast, id),
         }
@@ -340,7 +340,7 @@ pub trait PrettyPrinter {
 
 [#list grammar::nodeNames as nodeName]
     /// Pretty-print a `${nodeName}` node.
-    fn pp_${nodeName?lower_case}(&self, ast: &Ast, id: NodeId) -> Doc {
+    fn pp_${nodeName.toLowerCase()}(&self, ast: &Ast, id: NodeId) -> Doc {
         self.pp_default(ast, id)
     }
 

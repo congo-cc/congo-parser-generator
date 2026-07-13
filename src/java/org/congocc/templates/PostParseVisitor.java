@@ -171,18 +171,4 @@ class PostParseVisitor extends Node.Visitor {
 		template.declareVariable(namespaceName);
 		recurse(node);
 	}
-
-    void visit(PropertySetting node) {
-    	String key = node.getKey();
-        if (!key.equals(Settings.LOCALE_KEY) &&
-                !key.equals(Settings.NUMBER_FORMAT_KEY) &&
-                !key.equals(Settings.BOOLEAN_FORMAT_KEY) &&
-                !key.equals(Settings.URL_ESCAPING_CHARSET_KEY))
-            {
-        		ParsingProblemImpl problem = new ParsingProblemImpl("Invalid setting name, or it is not allowed to change the"
-                        + "value of the setting with CTL: "
-                        + key, node);
-        		template.addParsingProblem(problem);
-            }
-    }
 }

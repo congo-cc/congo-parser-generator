@@ -9,8 +9,8 @@
 #var repetitionIndex = 0
 
 #function lhReturnFalse cardinalitiesVar parentCardVar
-   #if cardinalitiesVar?? && (cardinalitiesVar?length > 0)
-      #if parentCardVar?? && (parentCardVar?length > 0)
+   #if cardinalitiesVar?? && (cardinalitiesVar.length() > 0)
+      #if parentCardVar?? && (parentCardVar.length() > 0)
          #return "return " + parentCardVar + ".Commit(false);"
       #else
          #return "return " + cardinalitiesVar + ".Commit(false);"
@@ -21,8 +21,8 @@
 #endfunction
 
 #function lhReturnTrue cardinalitiesVar parentCardVar
-   #if cardinalitiesVar?? && (cardinalitiesVar?length > 0)
-      #if parentCardVar?? && (parentCardVar?length > 0)
+   #if cardinalitiesVar?? && (cardinalitiesVar.length() > 0)
+      #if parentCardVar?? && (parentCardVar.length() > 0)
          #return "return " + parentCardVar + ".Commit(true);"
       #else
          #return "return " + cardinalitiesVar + ".Commit(true);"
@@ -33,9 +33,9 @@
 #endfunction
 
 #function lhReturnCommit retExpr cardinalitiesVar parentCardVar
-   #if parentCardVar?? && (parentCardVar?length > 0)
+   #if parentCardVar?? && (parentCardVar.length() > 0)
       #return "return " + parentCardVar + ".Commit(" + retExpr + ");"
-   #elif cardinalitiesVar?? && (cardinalitiesVar?length > 0)
+   #elif cardinalitiesVar?? && (cardinalitiesVar.length() > 0)
       #return "return " + cardinalitiesVar + ".Commit(" + retExpr + ");"
    #else
       #return "return " + retExpr + ";"
@@ -576,7 +576,7 @@ if ([#if !assertion::expansionNegated]![/#if]${assertion::expansion::scanRoutine
     ${lhReturnFalse(cardinalitiesVar, parentCardVar)}
 }
 #endif
-#if assertion::cardinalityConstraint?? && cardinalitiesVar?? && (cardinalitiesVar?length > 0)
+#if assertion::cardinalityConstraint?? && cardinalitiesVar?? && (cardinalitiesVar.length() > 0)
     if (!${cardinalitiesVar}.Choose(${assertion::assertionIndex}, true)) {
         _hitFailure = true;
         ${lhReturnFalse(cardinalitiesVar, parentCardVar)}
@@ -713,7 +713,7 @@ ${oomCardVar}.CommitIteration(false);
      #if grammar::assertionExpansions?? && grammar::assertionExpansions.contains(expansion)
       ${expansion::scanRoutineName}()[#t]
      #else
-      ${expansion::scanRoutineName}(false[#if expansion::cardinalityConstrained && cardinalitiesVar?? && (cardinalitiesVar?length > 0)], ${cardinalitiesVar}[/#if])[#t]
+      ${expansion::scanRoutineName}(false[#if expansion::cardinalityConstrained && cardinalitiesVar?? && (cardinalitiesVar.length() > 0)], ${cardinalitiesVar}[/#if])[#t]
      #endif
    #endif
 #endmacro

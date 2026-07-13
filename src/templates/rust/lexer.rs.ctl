@@ -43,7 +43,7 @@ type NfaFunction = fn(u32, &mut [u64], Option<&HashSet<TokenType>>, &mut HashSet
 [#list lexicalState::allNfaStates as nfaState]
 [#if nfaState::moveRanges.size() >= NFA_RANGE_THRESHOLD]
 /// Character ranges for NFA state in lexical state ${lexicalState::name}.
-static ${nfaState::movesArrayName?upper_case}: &[u32] = &[
+static ${nfaState::movesArrayName.toUpperCase()}: &[u32] = &[
 [#list nfaState::moveRanges as char]
     ${char}[#if char_has_next],[/#if]
 [/#list]
@@ -109,7 +109,7 @@ fn ${state::methodName}(ch: u32, next_states: &mut [u64], valid_types: Option<&H
 [/#list]
 
 /// NFA function table for lexical state ${lexicalState::name}.
-static NFA_FUNCTIONS_${lexicalState::name?upper_case}: &[NfaFunction] = &[
+static NFA_FUNCTIONS_${lexicalState::name.toUpperCase()}: &[NfaFunction] = &[
 [#list lexicalState::canonicalSets as state]
     ${state::methodName}[#if state_has_next],[/#if]
 [/#list]
@@ -174,7 +174,7 @@ fn bitset_next_set(bits: &[u64], from: usize) -> Option<usize> {
 fn get_nfa_functions(state: LexicalState) -> &'static [NfaFunction] {
     match state {
 [#list lexerData::lexicalStates as lexicalState]
-        LexicalState::${lexicalState::name} => NFA_FUNCTIONS_${lexicalState::name?upper_case},
+        LexicalState::${lexicalState::name} => NFA_FUNCTIONS_${lexicalState::name.toUpperCase()},
 [/#list]
     }
 }
@@ -586,9 +586,9 @@ impl Lexer {
 [#if nfaState::moveRanges.size() < NFA_RANGE_THRESHOLD]
 [@RangesCondition nfaState::moveRanges /]
 [#elseif nfaState::hasAsciiMoves && nfaState::hasNonAsciiMoves]
-([@RangesCondition nfaState::asciiMoveRanges /]) || (ch >= 128 && check_intervals(${nfaState::movesArrayName?upper_case}, ch))
+([@RangesCondition nfaState::asciiMoveRanges /]) || (ch >= 128 && check_intervals(${nfaState::movesArrayName.toUpperCase()}, ch))
 [#else]
-check_intervals(${nfaState::movesArrayName?upper_case}, ch)
+check_intervals(${nfaState::movesArrayName.toUpperCase()}, ch)
 [/#if]
 [/#macro]
 

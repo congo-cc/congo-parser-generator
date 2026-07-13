@@ -972,49 +972,7 @@ INJECT PARSER_CLASS :
 /**
  * Production to terminate potentially empty elements. Either a ">" or "/>"
  */
-LooseDirectiveEnd : <DIRECTIVE_END> | <EMPTY_DIRECTIVE_END> ;
-
-PropertySetting :
-   <SETTING>
-   <ID>
-   <EQUALS>
-   Expression
-   LooseDirectiveEnd
-;
-
-INJECT PropertySetting :
-    import org.congocc.templates.core.Environment;
-    import static org.congocc.templates.core.variables.Wrap.*;
-    implements TemplateElement
-{
-    public String getKey() {
-    	return firstChildOfType(ID).toString();
-    }
-
-    public Expression getValue() {
-    	return (Expression) get(3);
-    }
-
-    public void execute(Environment env) {
-        Object mval = getValue().evaluate(env);
-        String strval;
-        if (mval instanceof CharSequence) {
-            strval = mval.toString();
-        } else if (isBoolean(mval)) {
-            strval = asBoolean(mval) ? "true" : "false";
-        } else if (mval instanceof Number n) {
-            strval = n.toString();
-        } else {
-            strval = getValue().getStringValue(env);
-        }
-        env.setSetting(getKey(), strval);
-    }
-
-    public String getDescription() {
-        return "setting " + getKey() + " set to " + "\"" + getValue() + "\" "
-	    + "[" + getLocation() + "]";
-    }
-}
+LooseDirectiveEnd#void : <DIRECTIVE_END> | <EMPTY_DIRECTIVE_END> ;
 
 VarDirective :
 {
@@ -1124,8 +1082,8 @@ TemplateElement#interface :
    |
    NoParseBlock
    |
-   PropertySetting
-   |
+//   PropertySetting
+//   |
    VarDirective
    |
    BreakInstruction
@@ -1224,8 +1182,7 @@ INJECT TextElement :
 		       || (elem instanceof BlockAssignment)
 		       || (elem instanceof VarDirective)
 		       || (elem instanceof ImportDeclaration)
-		       || (elem instanceof ExecInstruction)
-		       || (elem instanceof PropertySetting);
+		       || (elem instanceof ExecInstruction);
  	}
 }
 

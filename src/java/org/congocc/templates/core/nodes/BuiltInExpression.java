@@ -53,18 +53,14 @@ public class BuiltInExpression extends TemplateNode implements Expression {
         knownBuiltins.put("left_pad", new StringFunctions.LeftPad());
         knownBuiltins.put("right_pad", new StringFunctions.RightPad());
         knownBuiltins.put("replace", new StringFunctions.Replace());
-        knownBuiltins.put("split", new StringFunctions.Split());
         knownBuiltins.put("groups", new groupsBI());
         knownBuiltins.put("matches", new StringFunctions.Matches());
-        knownBuiltins.put("starts_with", new StringFunctions.StartsWith());
-        knownBuiltins.put("ends_with", new StringFunctions.EndsWith());
         knownBuiltins.put("word_list", new StringFunctions.WordList());
         knownBuiltins.put("url", new StringFunctions.Url());
         knownBuiltins.put("first", new SequenceFunctions.First());
         knownBuiltins.put("last", new SequenceFunctions.Last());
         knownBuiltins.put("reverse", new SequenceFunctions.Reverse());
         knownBuiltins.put("sort", new SequenceFunctions.Sort());
-        //knownBuiltins.put("chunk", new SequenceFunctions.Chunk());
         knownBuiltins.put("scope", new MacroBuiltins.Scope());
         knownBuiltins.put("namespace", new MacroBuiltins.Namespace());
         knownBuiltins.put("keys", new HashBuiltin.Keys());

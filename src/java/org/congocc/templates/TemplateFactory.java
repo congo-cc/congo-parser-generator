@@ -296,7 +296,7 @@ public class TemplateFactory extends Settings {
      *
      * @param key the name of the setting.
      * @param value the string that describes the new value of the setting.
-     */
+     *//*
     public void setSetting(String key, String value) {
         try {
             if ("default_encoding".equalsIgnoreCase(key)) {
@@ -316,7 +316,7 @@ public class TemplateFactory extends Settings {
             throw new TemplateException(
                     "Failed to set setting " + key + " to value " + value, e);
         }
-    }
+    }*/
 
 
     /**

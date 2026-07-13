@@ -48,7 +48,7 @@ pub trait Visitor {
     fn visit(&mut self, ast: &Ast, id: NodeId) {
         match ast.kind(id) {
 [#list grammar::nodeNames as nodeName]
-            NodeKind::${nodeName} => self.visit_${nodeName?lower_case}(ast, id),
+            NodeKind::${nodeName} => self.visit_${nodeName.toLowerCase()}(ast, id),
 [/#list]
             NodeKind::Token(_) => self.visit_token(ast, id),
         }
@@ -56,7 +56,7 @@ pub trait Visitor {
 
 [#list grammar::nodeNames as nodeName]
     /// Visit a `${nodeName}` node.
-    fn visit_${nodeName?lower_case}(&mut self, ast: &Ast, id: NodeId) {
+    fn visit_${nodeName.toLowerCase()}(&mut self, ast: &Ast, id: NodeId) {
         self.default_visit(ast, id);
     }
 
@@ -142,7 +142,7 @@ pub trait AstMapper {
     /// Map a `${nodeName}` node.
     ///
     /// Default: preserve the node kind and pass through mapped children.
-    fn map_${nodeName?lower_case}(
+    fn map_${nodeName.toLowerCase()}(
         &mut self,
         source_id: NodeId,
         source: &Ast,
@@ -240,7 +240,7 @@ pub trait AstMapper {
                     // Dispatch to the appropriate map method.
                     let result = match source.kind(source_id) {
 [#list grammar::nodeNames as nodeName]
-                        NodeKind::${nodeName} => self.map_${nodeName?lower_case}(source_id, source, &mapped_children, &mut builder),
+                        NodeKind::${nodeName} => self.map_${nodeName.toLowerCase()}(source_id, source, &mapped_children, &mut builder),
 [/#list]
                         NodeKind::Token(_) => unreachable!(),
                     };

@@ -36,7 +36,7 @@ private static readonly HashSet<TokenType> ${varName} = Utils.GetOrMakeSet(
   onto the type name, and optionally initializes it to some value
 #macro newVar type init = null
    #set newVarIndex = newVarIndex + 1
-   ${type} ${type?lower_case}${newVarIndex}
+   ${type} ${type.toLowerCase()}${newVarIndex}
    #if init??
       = ${init}
    #endif
@@ -56,7 +56,7 @@ private static readonly HashSet<TokenType> ${varName} = Utils.GetOrMakeSet(
 #macro comment
 #var content, lines
 [#set content][#nested/][/#set]
-#set lines = content?split("\n")
+#set lines = content.split("\n")
 #list lines as line
 // ${line}
 #endlist
