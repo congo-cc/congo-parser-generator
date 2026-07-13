@@ -33,11 +33,9 @@ public class TemplateFactory {
     private static TemplateFactory defaultFactory = new TemplateFactory();
     private boolean localizedLookup = true;
     private HashMap<String, Object> variables = new HashMap<String, Object>();
-    private HashMap<String, String> encodingMap = new HashMap<String, String>();
     private Map<String, String> autoImportMap = new HashMap<String, String>();
     private ArrayList<String> autoImports = new ArrayList<String>();
     private ArrayList<String> autoIncludes = new ArrayList<String>();
-    private String defaultEncoding = "UTF-8";
     private boolean tolerateParsingProblems;
     private Map<String,Template> templateCache = Collections.synchronizedMap(new HashMap<>());
     private ArithmeticEngine arithmeticEngine = ArithmeticEngine.BIGDECIMAL_ENGINE;
@@ -131,7 +129,7 @@ public class TemplateFactory {
         byte[] bb = rawStream.readAllBytes();
         rawStream.close();
         String content = stringFromBytes(bb);
-        Template result = new Template(name, content, this, defaultEncoding);
+        Template result = new Template(name, content, this);
         if (result.hasParsingProblems()) {
             for (ParsingProblemImpl pp : result.getParsingProblems()) {
                 System.err.println(pp.getMessage());
@@ -195,65 +193,6 @@ public class TemplateFactory {
 
     public TemplateExceptionHandler getTemplateExceptionHandler() {
         return templateExceptionHandler;
-    }
-
-    /**
-     * Sets the default encoding for converting bytes to characters when
-     * reading template files in a locale for which no explicit encoding
-     * was specified. Defaults to default system encoding.
-     */
-    public void setDefaultEncoding(String encoding) {
-        defaultEncoding = encoding;
-    }
-
-    /**
-     * Gets the default encoding for converting bytes to characters when
-     * reading template files in a locale for which no explicit encoding
-     * was specified. Defaults to default system encoding.
-     */
-    public String getDefaultEncoding() {
-        return defaultEncoding;
-    }
-
-    /**
-     * Gets the preferred character encoding for the given locale, or the
-     * default encoding if no encoding is set explicitly for the specified
-     * locale. You can associate encodings with locales using
-     * {@link #setEncoding(Locale, String)} or {@link #loadBuiltInEncodingMap()}.
-     * @param loc the locale
-     * @return the preferred character encoding for the locale.
-     */
-    public String getEncoding(Locale loc) {
-        // Try for a full name match (may include country and variant)
-        String charset = encodingMap.get(loc.toString());
-        if (charset == null) {
-            if (loc.getVariant().length() > 0) {
-                @SuppressWarnings("deprecation")
-                Locale l = new Locale(loc.getLanguage(), loc.getCountry());
-                charset = encodingMap.get(l.toString());
-                if (charset != null) {
-                    encodingMap.put(loc.toString(), charset);
-                }
-            }
-            charset = encodingMap.get(loc.getLanguage());
-            if (charset != null) {
-                encodingMap.put(loc.toString(), charset);
-            }
-        }
-        return charset != null ? charset : defaultEncoding;
-    }
-
-    /**
-     * Sets the character set encoding to use for templates of
-     * a given locale. If there is no explicit encoding set for some
-     * locale, then the default encoding will be used, what you can
-     * set with {@link #setDefaultEncoding}.
-     *
-     * @see #clearEncodingMap
-     * @see #loadBuiltInEncodingMap
-     */
-    public void setEncoding(Locale locale, String encoding) {
-        encodingMap.put(locale.toString(), encoding);
     }
 
     /**

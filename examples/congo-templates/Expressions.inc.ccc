@@ -791,8 +791,6 @@ INJECT BuiltinVariable :
            case "pass" : return Macro.DO_NOTHING_MACRO;
            case "name" : return env.getTemplate().getName();
            case "version" : return TemplateFactory.getVersionNumber();
-           case "output_encoding" : return env.getOutputEncoding();
-           case "url_escaping_charset" : return env.getURLEscapingCharset();
            case "error" : return env.getCurrentRecoveredErrorMessage();
         }
         throw new TemplateException("Invalid built-in variable: " + this);

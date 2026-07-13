@@ -39,10 +39,9 @@ public class Template {
         this.lastModified = System.currentTimeMillis();
     }
 
-	public Template(String name, CharSequence input, TemplateFactory cfg, String encoding)
+	public Template(String name, CharSequence input, TemplateFactory cfg)
     {
         this(name, cfg);
-        this.encoding = encoding;
         CTLParser parser = new CTLParser(this, input);
         parser.setInputSource(getName());
         this.rootElement = parser.Root();
@@ -151,16 +150,6 @@ public class Template {
     }
 
     /**
-     * Sets the character encoding to use for
-     * included files. Usually you don't set this value manually,
-     * instead it is assigned to the template upon loading.
-     */
-
-    public void setEncoding(String encoding) {
-        this.encoding = encoding;
-    }
-
-    /**
      * Returns the character encoding used for reading included files.
      */
     public String getEncoding() {
@@ -208,16 +197,6 @@ public class Template {
 
     public void setLastModified(long lastModified) {
         this.lastModified = lastModified;
-    }
-
-    static public class WrongEncodingException extends RuntimeException {
-
-        public String specifiedEncoding;
-
-        public WrongEncodingException(String specifiedEncoding) {
-            this.specifiedEncoding = specifiedEncoding;
-        }
-
     }
 
     /**

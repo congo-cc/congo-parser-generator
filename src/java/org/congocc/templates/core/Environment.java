@@ -421,15 +421,6 @@ public final class Environment implements Scope {
         getTemplateExceptionHandler().handleTemplateException(te, this);
     }
 
-    /**
-     * Returns the name of the charset that should be used for URL encoding.
-     * This will be <code>null</code> if the information is not available. The
-     * function caches the return value, so it is quick to call it repeately.
-     */
-    public String getEffectiveURLEscapingCharset() {
-        return "UTF-8"; // REVISIT. Is anything else ever really used?
-    }
-
     public Collator getCollator() {
         if (collator == null) {
             collator = Collator.getInstance(getLocale());
