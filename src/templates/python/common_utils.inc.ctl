@@ -10,7 +10,7 @@
 --]
 [#var cache_sets = true]
 [#macro enumSet varName tokenNames]
-[#var size = tokenNames?size]
+[#var size = tokenNames.size()]
 [#if size = 0]
     ${varName} = EMPTY_SET
 [#elseif cache_sets]
@@ -122,14 +122,14 @@ ${is}    return True
   #endif
 ${is}${somethingChanged} = False
 ${is}${prevActives} = _Set(self.token_source.active_token_types)
-[#if expansion::tokenActivation::activatedTokens?size > 0]
+[#if expansion::tokenActivation::activatedTokens.size() > 0]
 ${is}${somethingChanged} = ${somethingChanged} or self.activate_token_types(
   [#list tokenActivation::activatedTokens as tokenName]
 ${is}    ${tokenName}[#if tokenName_has_next],[/#if]
   [/#list]
 ${is})
 [/#if]
-[#if expansion::tokenActivation::deactivatedTokens?size > 0]
+[#if expansion::tokenActivation::deactivatedTokens.size() > 0]
 ${is}${somethingChanged} = ${somethingChanged} or self.deactivate_token_types(
   [#list tokenActivation::deactivatedTokens as tokenName]
 ${is}    ${tokenName}[#if tokenName_has_next],[/#if]

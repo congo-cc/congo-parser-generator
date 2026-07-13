@@ -527,9 +527,9 @@
    #if treeNodeBehavior?? && treeNodeBehavior::assignment??
       #var LHS = getLhsPattern(treeNodeBehavior::assignment, null)
          if (closeNodeScope(${nodeVarName}, ${closeCondition(treeNodeBehavior)})) {
-            ${LHS?replace("@", "(" + nodeClassName(treeNodeBehavior) + ") peekNode()")};
+            ${LHS.replace("@", "(" + nodeClassName(treeNodeBehavior) + ") peekNode()")};
          } else{
-            ${LHS?replace("@", "null")};
+            ${LHS.replace("@", "null")};
          }
    #else
          closeNodeScope(${nodeVarName}, ${closeCondition(treeNodeBehavior)});
@@ -847,7 +847,7 @@
    #-- Accept the non-terminal expansion --
    #if nonterminal::production::returnType != "void" && expressedLHS != "@" && !nonterminal::assignment::namedAssignment && !nonterminal::assignment::propertyAssignment
       #-- Not a void production, so accept and clear the expressedLHS, it has already been applied. --
-      ${expressedLHS?replace("@", nonterminal::name + "(" + nonterminal::args! + ")")};
+      ${expressedLHS.replace("@", nonterminal::name + "(" + nonterminal::args! + ")")};
       #set expressedLHS = "@"
    #else
       ${nonterminal::name}(${nonterminal::args!});
@@ -856,17 +856,17 @@
       #if nonterminal::assignment?? && (nonterminal::assignment::addTo!false || nonterminal::assignment::namedAssignment)
          if (buildTree) {
             #if impliedLHS == "@"
-               ${expressedLHS?replace("@", impliedLHS?replace("@", "peekNode()"))};
+               ${expressedLHS.replace("@", impliedLHS.replace("@", "peekNode()"))};
             #else
-               ${expressedLHS?replace("@", impliedLHS?replace("@", "(" + nonterminal::production::nodeName + ") peekNode()"))};
+               ${expressedLHS.replace("@", impliedLHS.replace("@", "(" + nonterminal::production::nodeName + ") peekNode()"))};
             #endif
          }
       #else
          try {
             #-- There had better be a node here! --
-            ${expressedLHS?replace("@", impliedLHS?replace("@", "(" + nonterminal::production::nodeName + ") peekNode()"))};
+            ${expressedLHS.replace("@", impliedLHS.replace("@", "(" + nonterminal::production::nodeName + ") peekNode()"))};
          } catch (ClassCastException cce) {
-            ${expressedLHS?replace("@", impliedLHS?replace("@", "null"))};
+            ${expressedLHS.replace("@", impliedLHS.replace("@", "null"))};
          }
       #endif
    #endif
@@ -878,7 +878,7 @@
    #if !settings::faultTolerant
        pushOntoCallStack("${currentProduction::name}","${terminal::inputSource?j_string}", ${terminal::beginLine}, ${terminal::beginColumn});
        try {
-           ${LHS?replace("@", "consumeToken(" + regexp::label + ")")};
+           ${LHS.replace("@", "consumeToken(" + regexp::label + ")")};
        }
        finally {
          popCallStack();
@@ -896,7 +896,7 @@
        #endif
        pushOntoCallStack("${currentProduction::name}","${terminal::inputSource?j_string})", ${terminal::beginLine}, ${terminal::endLine});
        try {
-           ${LHS?replace("@", "consumeToken(" + regexp::label + ", " + tolerant + ", " + followSetVarName + ", () -> {" + lambda + ";})")};
+           ${LHS.replace("@", "consumeToken(" + regexp::label + ", " + tolerant + ", " + followSetVarName + ", () -> {" + lambda + ";})")};
        }
        finally {
          popCallStack();

@@ -13,7 +13,7 @@
 //! # Quick start
 //!
 //! ```no_run
-//! use ${settings::parserPackage?replace(".", "_")}::parser::Parser;
+//! use ${settings::parserPackage.replace(".", "_")}::parser::Parser;
 //!
 //! let ast = Parser::parse("your input here", Some("input.txt")).unwrap();
 //! if let Some(root) = ast.root() {

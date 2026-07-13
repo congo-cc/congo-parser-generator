@@ -46,7 +46,7 @@
   #if settings::faultTolerant
     [@followSetVars /]
   #endif
-  #if grammar::choicePointExpansions?size != 0
+  #if grammar::choicePointExpansions.size() != 0
     [@BuildLookaheads 4 /]
   #endif
 #endmacro
@@ -408,13 +408,13 @@ ${is}def ${lookBehind::routineName}(self):
 ${is}    stack_iterator = self.${lookBehind::backward ?: "stack_iterator_backward" : "stack_iterator_forward"}()
 [#list lookBehind::path as element]
   [#var elementNegated = (element[0] == "~")]
-  [#if elementNegated][#set element = element?substring(1)][/#if]
+  [#if elementNegated][#set element = element.substring(1)][/#if]
   [#if element = "."]
 ${is}    if not stack_iterator.has_next:
 ${is}        return False
 ${is}    stack_iterator.next
   [#elif element = "..."]
-    [#if element_index = lookBehind::path?size - 1]
+    [#if element_index = lookBehind::path.size() - 1]
       [#if lookBehind::hasEndingSlash]
 ${is}    return not stack_iterator.has_next
       [#else]
@@ -423,7 +423,7 @@ ${is}    return True
     [#else]
       [#var nextElement = lookBehind::path[element_index + 1]]
       [#var nextElementNegated = (nextElement[0]=="~")]
-      [#if nextElementNegated][#set nextElement = nextElement?substring(1)][/#if]
+      [#if nextElementNegated][#set nextElement = nextElement.substring(1)][/#if]
 ${is}    while stack_iterator.has_next:
 ${is}        ntc = stack_iterator.next
       #var equalityOp = nextElementNegated ?: "!=" : "=="
@@ -551,7 +551,7 @@ ${is}    self.pop_lookahead_stack()
 [#var is = ""?right_pad(indent)]
 [#var firstSet = expansion::firstSet::tokenNames]
 [#-- ${is}# DBG > ScanSingleToken ${indent} --]
-[#if firstSet?size = 1]
+[#if firstSet.size() = 1]
 [#if optimize_scan_token]
 ${is}if not self.scan_token_one(${firstSet[0]}):
 [#else]
@@ -709,7 +709,7 @@ ${is}${oomCardVar}.commit_iteration(False)
 
 #macro CheckExpansion expansion cardinalitiesVar parentCardVar
 #if expansion::singleTokenLookahead
-  #if expansion::firstSet::tokenNames?size = 1
+  #if expansion::firstSet::tokenNames.size() = 1
     #if optimize_scan_token
       self.scan_token_one(${expansion::firstSet::tokenNames[0]})[#t]
     #else

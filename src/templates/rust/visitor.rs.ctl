@@ -19,8 +19,8 @@ use crate::tokens::TokenType;
 /// # Examples
 ///
 /// ```
-/// use ${settings::parserPackage?replace(".", "_")}::visitor::Visitor;
-/// use ${settings::parserPackage?replace(".", "_")}::ast::{Ast, NodeId, NodeKind};
+/// use ${settings::parserPackage.replace(".", "_")}::visitor::Visitor;
+/// use ${settings::parserPackage.replace(".", "_")}::ast::{Ast, NodeId, NodeKind};
 ///
 /// struct NodeCounter { count: usize }
 ///
@@ -123,8 +123,8 @@ pub enum MappedNode {
 /// # Examples
 ///
 /// ```no_run
-/// use ${settings::parserPackage?replace(".", "_")}::visitor::{AstMapper, MappedNode};
-/// use ${settings::parserPackage?replace(".", "_")}::ast::{Ast, AstBuilder, NodeId, NodeKind};
+/// use ${settings::parserPackage.replace(".", "_")}::visitor::{AstMapper, MappedNode};
+/// use ${settings::parserPackage.replace(".", "_")}::ast::{Ast, AstBuilder, NodeId, NodeKind};
 ///
 /// struct RemoveNulls;
 ///

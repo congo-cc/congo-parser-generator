@@ -298,7 +298,7 @@ class Token[#if settings::treeBuildingEnabled](${settings::baseNodeClassName})[/
         'previous_token',
         'next_token',
 #var injectedFields = globals.injectedTokenFieldNames()
-#if injectedFields?size > 0
+#if injectedFields.size() > 0
         # injected fields
 #list injectedFields as fieldName
         '${fieldName}',
@@ -598,7 +598,7 @@ class SkippedToken(InvalidToken): pass
 class ${name}(${tokenSubClassInfo::tokenClassMap[name]}): pass
 
 [/#list]
-[#if settings::extraTokens?size > 0]
+[#if settings::extraTokens.size() > 0]
   [#list settings::extraTokenNames as name]
     [#var cn = settings::extraTokens[name]]
 class ${cn}(Token):

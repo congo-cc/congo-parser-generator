@@ -224,8 +224,8 @@ finally {
     #-- Build the tree node (part 2).
     [@buildTreeNodeEpilogue treeNodeBehavior, nodeVarName, parseExceptionVar /]
          #-- Pop this node from the node construction stack.
-         #if treeNodeStack?size > 1
-            #set treeNodeStack = treeNodeStack[0..treeNodeStack?size - 2]
+         #if treeNodeStack.size() > 1
+            #set treeNodeStack = treeNodeStack[0..treeNodeStack.size() - 2]
          #else
             #set treeNodeStack = []
          #endif
@@ -236,12 +236,12 @@ finally {
 #endmacro
 
 #function currentNodeVariableName()
-  #return treeNodeStack[treeNodeStack?size - 1][0]
+  #return treeNodeStack[treeNodeStack.size() - 1][0]
 #endfunction
 
 #function isJtbParseTree()
-  #if treeNodeStack?size > 0
-    #return (treeNodeStack[treeNodeStack?size - 1])[1]
+  #if treeNodeStack.size() > 0
+    #return (treeNodeStack[treeNodeStack.size() - 1])[1]
   #else
     #return settings::syntheticNodesEnabled && settings::treeBuildingEnabled && settings::jtbParseTree
   #endif
@@ -507,9 +507,9 @@ if (BuildTree) {
    #if treeNodeBehavior?? && treeNodeBehavior::assignment??
       #var LHS = getLhsPattern(treeNodeBehavior::assignment, null)
          if (CloseNodeScope(${nodeVarName}, ${closeCondition(treeNodeBehavior)})) {
-            ${LHS?replace("@", "(" + nodeClassName(treeNodeBehavior) + ") PeekNode()")};
+            ${LHS.replace("@", "(" + nodeClassName(treeNodeBehavior) + ") PeekNode()")};
          } else{
-            ${LHS?replace("@", "null")};
+            ${LHS.replace("@", "null")};
          }
    #else
          CloseNodeScope(${nodeVarName}, ${closeCondition(treeNodeBehavior)});
@@ -810,7 +810,7 @@ finally {
    #-- Accept the non-terminal expansion
    #if nonterminal::production::returnType != "void" && expressedLHS != "@" && !nonterminal::assignment::namedAssignment && !nonterminal::assignment::propertyAssignment
       #-- Not a void production, so accept and clear the expressedLHS, it has already been applied.
-      ${expressedLHS?replace("@", "Parse" + nonterminal::name + "(" + globals.translateNonterminalArgs(nonterminal::args)! + ")")};
+      ${expressedLHS.replace("@", "Parse" + nonterminal::name + "(" + globals.translateNonterminalArgs(nonterminal::args)! + ")")};
       #set expressedLHS = "@"
    #else
       Parse${nonterminal::name}(${globals.translateNonterminalArgs(nonterminal::args)!});
@@ -819,17 +819,17 @@ finally {
       #if nonterminal::assignment?? && (nonterminal::assignment::addTo!false || nonterminal::assignment::namedAssignment)
          if (BuildTree) {
             #if impliedLHS == "@"
-               ${expressedLHS?replace("@", impliedLHS?replace("@", "PeekNode()"))};
+               ${expressedLHS.replace("@", impliedLHS.replace("@", "PeekNode()"))};
             #else
-               ${expressedLHS?replace("@", impliedLHS?replace("@", "(" + nonterminal::production::nodeName + ") PeekNode()"))};
+               ${expressedLHS.replace("@", impliedLHS.replace("@", "(" + nonterminal::production::nodeName + ") PeekNode()"))};
             #endif
          }
       #else
          try {
             #-- There had better be a node here!
-            ${expressedLHS?replace("@", impliedLHS?replace("@", "(" + nonterminal::production::nodeName + ") PeekNode()"))};
+            ${expressedLHS.replace("@", impliedLHS.replace("@", "(" + nonterminal::production::nodeName + ") PeekNode()"))};
          } catch (InvalidCastException) {
-            ${expressedLHS?replace("@", impliedLHS?replace("@", "null"))};
+            ${expressedLHS.replace("@", impliedLHS.replace("@", "null"))};
          }
       [/#if]
    [/#if]
@@ -839,7 +839,7 @@ finally {
 #var LHS = getLhsPattern(terminal::assignment, "Token"), regexp = terminal::regexp
 #-- // DBG > BuildCodeRegexp
 #if !settings::faultTolerant
-${LHS?replace("@", "ConsumeToken(" + CU::TT + regexp::label + ")")};
+${LHS.replace("@", "ConsumeToken(" + CU::TT + regexp::label + ")")};
 #else
   #var tolerant = terminal::tolerantParsing ?: "true" : "false"
   #var followSetVarName = terminal::followSetVarName
@@ -851,7 +851,7 @@ if (OuterFollowSet != null) {
     ${followSetVarName}.UnionWith(OuterFollowSet);
 }
   /#if
-${LHS?replace("@", "ConsumeToken(" + CU::TT + regexp::label + ", " + tolerant + ", " + followSetVarName + ")")};
+${LHS.replace("@", "ConsumeToken(" + CU::TT + regexp::label + ", " + tolerant + ", " + followSetVarName + ")")};
 /#if
 #-- // DBG < BuildCodeRegexp
 #endmacro
@@ -1042,7 +1042,7 @@ ${BuildCode(subexp, cardinalitiesVar)}
   #if expansion::hasSemanticLookahead
      (${globals.translateExpression(expansion::semanticLookahead)}) &&
   #endif
-  #if expansion::firstSet::tokenNames?size < 5
+  #if expansion::firstSet::tokenNames.size() < 5
      #list expansion::firstSet::tokenNames as name
         TypeMatches(TokenType.${name}, GetToken(1))
         ${name_has_next ?: "||"}

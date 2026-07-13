@@ -194,7 +194,7 @@ my-calculator/
 ```toml
 # my-calculator/Cargo.toml
 [dependencies]
-${settings::parserPackage?replace(".", "-")} = { path = "../${settings::parserPackage?replace(".", "-")}" }
+${settings::parserPackage.replace(".", "-")} = { path = "../${settings::parserPackage.replace(".", "-")}" }
 ```
 
 ### Approach 2: Grammar Preprocessor

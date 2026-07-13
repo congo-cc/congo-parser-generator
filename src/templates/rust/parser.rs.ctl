@@ -80,7 +80,7 @@
             [#return "false"]
          [#elseif condStr?length = 1 || condStr?length = 2]
             [#-- Small number from #(N) annotation — always create the node --]
-            [#var firstChar = condStr?substring(0, 1)]
+            #var firstChar = condStr.substring(0, 1)
             [#if firstChar = "2" || firstChar = "3" || firstChar = "4" || firstChar = "5" || firstChar = "6" || firstChar = "7" || firstChar = "8" || firstChar = "9"]
                [#return "true"]
             [#else]
@@ -99,7 +99,7 @@
      ==================================================================== --]
 [#macro firstSetVar expansion]
 [#var tokenNames = expansion::firstSet::tokenNames]
-[#if tokenNames?size > 0]
+[#if tokenNames.size() > 0]
 const ${expansion::firstSetVarName}: &[TokenType] = &[
 [#list tokenNames as name]
     TokenType::${name}[#if name_has_next],[/#if]
@@ -112,7 +112,7 @@ const ${expansion::firstSetVarName}: &[TokenType] = &[];
 
 [#macro followSetVar expansion]
 [#var tokenNames = expansion::followSet::tokenNames]
-[#if tokenNames?size > 0]
+[#if tokenNames.size() > 0]
 const ${expansion::followSetVarName}: &[TokenType] = &[
 [#list tokenNames as name]
     TokenType::${name}[#if name_has_next],[/#if]
@@ -141,7 +141,7 @@ const ${expansion::followSetVarName}: &[TokenType] = &[];
 [#if expansion::hasSemanticLookahead]
     (${globals.translateExpressionSafe(expansion::semanticLookahead, "true")}) &&
 [/#if]
-[#if expansion::firstSet::tokenNames?size < 5]
+[#if expansion::firstSet::tokenNames.size() < 5]
 [#list expansion::firstSet::tokenNames as name]
     self.type_matches(TokenType::${name}, self.pos)[#if name_has_next] || [/#if]
 [/#list]
@@ -223,14 +223,14 @@ if self.remaining_lookahead <= 0 { return true; }
     [#var taIdx = newID()]
     let _prev_active_${taIdx} = self.active_token_types.clone();
     let mut _something_changed_${taIdx} = false;
-  [#if tokenActivation::activatedTokens?size > 0]
+  [#if tokenActivation::activatedTokens.size() > 0]
     _something_changed_${taIdx} = self.activate_token_types(&[
     [#list tokenActivation::activatedTokens as tokenName]
         TokenType::${tokenName}[#if tokenName_has_next],[/#if]
     [/#list]
     ]);
   [/#if]
-  [#if tokenActivation::deactivatedTokens?size > 0]
+  [#if tokenActivation::deactivatedTokens.size() > 0]
     _something_changed_${taIdx} = _something_changed_${taIdx} || self.deactivate_token_types(&[
     [#list tokenActivation::deactivatedTokens as tokenName]
         TokenType::${tokenName}[#if tokenName_has_next],[/#if]
@@ -404,7 +404,7 @@ ${globals.translateCodeBlock(expansion, 1)}
 [#macro BuildCodeNonTerminal nonterminal]
         self.call_stack.push(NonTerminalCall {
             production_name: "${nonterminal::containingProduction::name}",
-            source_file: "${nonterminal::inputSource?replace("\\", "\\\\")?replace("\"", "\\\"")}",
+            source_file: "${nonterminal::inputSource.replace("\\", "\\\\").replace("\"", "\\\"")}",
             line: ${nonterminal::beginLine},
             column: ${nonterminal::beginColumn},
         });
@@ -434,7 +434,7 @@ ${globals.translateCodeBlock(expansion, 1)}
         else if ${inFirstVarName} {
             self.call_stack.push(NonTerminalCall {
                 production_name: "${currentProduction::name}",
-                source_file: "${choice::inputSource?replace("\\", "\\\\")?replace("\"", "\\\"")}",
+                source_file: "${choice::inputSource.replace("\\", "\\\\").replace("\"", "\\\"")}",
                 line: ${choice::beginLine},
                 column: ${choice::beginColumn},
             });
@@ -447,7 +447,7 @@ ${globals.translateCodeBlock(expansion, 1)}
         else {
             self.call_stack.push(NonTerminalCall {
                 production_name: "${currentProduction::name}",
-                source_file: "${choice::inputSource?replace("\\", "\\\\")?replace("\"", "\\\"")}",
+                source_file: "${choice::inputSource.replace("\\", "\\\\").replace("\"", "\\\"")}",
                 line: ${choice::beginLine},
                 column: ${choice::beginColumn},
             });
@@ -533,18 +533,18 @@ ${globals.translateCodeBlock(fail::code, 1)}
   [/#if]
 [/#if]
         if !(${assertCondition}) {
-            self.fail(&("Assertion at: ${assertion::location?replace("\\", "\\\\")?replace("\"", "\\\"")} failed. ".to_string()${optionalPart}))?;
+            self.fail(&("Assertion at: ${assertion::location.replace("\\", "\\\\").replace("\"", "\\\"")} failed. ".to_string()${optionalPart}))?;
         }
 [/#if]
 [/#if]
 [#if assertion::rawCode?? && !assertion::rawCode::wrongLanguageIgnore]
     if !(${assertion::rawCode}) {
-         self.fail(&("Assertion at: ${assertion::location?replace("\\", "\\\\")?replace("\"", "\\\"")} failed. ".to_string()${optionalPart}))?;
+         self.fail(&("Assertion at: ${assertion::location.replace("\\", "\\\\").replace("\"", "\\\"")} failed. ".to_string()${optionalPart}))?;
     }
 [/#if]
 [#if assertion::expansion?? && !assertionSkipped]
         if [#if !assertion::expansionNegated]![/#if]self.${assertion::expansion::scanRoutineName}() {
-            self.fail(&("Assertion at: ${assertion::location?replace("\\", "\\\\")?replace("\"", "\\\"")} failed. ".to_string()${optionalPart}))?;
+            self.fail(&("Assertion at: ${assertion::location.replace("\\", "\\\\").replace("\"", "\\\"")} failed. ".to_string()${optionalPart}))?;
         }
 [/#if]
 [/#macro]
@@ -593,7 +593,7 @@ ${globals.translateCodeBlock(fail::code, 1)}
     // =================================================================
     // Lookahead routines
     // =================================================================
-[#if grammar::choicePointExpansions?size != 0]
+[#if grammar::choicePointExpansions.size() != 0]
 [#list grammar::choicePointExpansions as expansion]
   [#if expansion::parent::class::simpleName != "BNFProduction"]
 [@BuildScanRoutine expansion /]
@@ -776,12 +776,12 @@ ${globals.translateCodeBlock(fail::code, 1)}
         let mut idx = 0usize;
 [#list lookBehind::path as element]
   [#var elementNegated = (element[0] == "~")]
-  [#if elementNegated][#set element = element?substring(1)][/#if]
+  [#if elementNegated][#set element = element.substring(1)][/#if]
   [#if element = "."]
         if idx >= stack.len() { return false; }
         idx += 1;
   [#elseif element = "..."]
-    [#if element_index = lookBehind::path?size - 1]
+    [#if element_index = lookBehind::path.size() - 1]
       [#if lookBehind::hasEndingSlash]
         return idx >= stack.len();
       [#else]
@@ -790,7 +790,7 @@ ${globals.translateCodeBlock(fail::code, 1)}
     [#else]
       [#var nextElement = lookBehind::path[element_index + 1]]
       [#var nextElementNegated = (nextElement[0] == "~")]
-      [#if nextElementNegated][#set nextElement = nextElement?substring(1)][/#if]
+      [#if nextElementNegated][#set nextElement = nextElement.substring(1)][/#if]
         while idx < stack.len() {
       [#if nextElementNegated]
             if stack[idx].production_name != "${nextElement}" {
@@ -894,7 +894,7 @@ ${globals.translateCodeBlock(expansion, 12)}
             // NonTerminal ${nt::name} at ${nt::location}
             self.lookahead_stack.push(NonTerminalCall {
                 production_name: "${nt::containingProduction::name}",
-                source_file: "${nt::inputSource?replace("\\", "\\\\")?replace("\"", "\\\"")}",
+                source_file: "${nt::inputSource.replace("\\", "\\\\").replace("\"", "\\\"")}",
                 line: ${nt::beginLine},
                 column: ${nt::beginColumn},
             });
@@ -913,7 +913,7 @@ ${globals.translateCodeBlock(expansion, 12)}
 
 [#macro ScanSingleToken expansion]
 [#var firstSet = expansion::firstSet::tokenNames]
-[#if firstSet?size = 1]
+[#if firstSet.size() = 1]
             if !self.scan_token(&[TokenType::${firstSet[0]}]) {
                 return false;
             }
@@ -1036,7 +1036,7 @@ ${globals.translateCodeBlock(expansion, 12)}
 
 [#macro CheckExpansion expansion]
 [#if expansion::singleTokenLookahead]
-  [#if expansion::firstSet::tokenNames?size = 1]
+  [#if expansion::firstSet::tokenNames.size() = 1]
 self.scan_token(&[TokenType::${expansion::firstSet::tokenNames[0]}])
   [#else]
 self.scan_token(${expansion::firstSetVarName})
@@ -1092,7 +1092,7 @@ struct NonTerminalCall {
 /// # Examples
 ///
 /// ```no_run
-/// use ${settings::parserPackage?replace(".", "_")}::parser::Parser;
+/// use ${settings::parserPackage.replace(".", "_")}::parser::Parser;
 ///
 /// let result = Parser::parse("input text", Some("example.txt"));
 /// match result {

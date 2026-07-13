@@ -855,7 +855,7 @@ ${globals.translateTokenInjections(false)}
 
 [/#list]
 
-#if settings::extraTokens?size > 0
+#if settings::extraTokens.size() > 0
   #list settings::extraTokenNames as name
     #var cn = settings::extraTokens[name]
     public class ${cn} : Token {

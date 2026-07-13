@@ -28,7 +28,7 @@ ${globals.translateLexerImports()}
 
 #var NFA_RANGE_THRESHOLD = 16,
      MAX_INT = 2147483647,
-     multipleLexicalStates = lexerData::lexicalStates?size > 1,
+     multipleLexicalStates = lexerData::lexicalStates.size() > 1,
      TT = "TokenType."
 
 logger = logging.getLogger(__name__)
@@ -83,7 +83,7 @@ def check_intervals(ranges, ch):
 #endlist
 
 #list lexicalState::allNfaStates as nfaState
-  #if nfaState::moveRanges?size >= NFA_RANGE_THRESHOLD
+  #if nfaState::moveRanges.size() >= NFA_RANGE_THRESHOLD
 [@GenerateMoveArray nfaState/]
   #endif
 #endlist
@@ -227,7 +227,7 @@ it uses the canned binary search routine. For the smaller moveRanges
 it just generates the inline conditional expression
 --]
 #macro NfaStateCondition nfaState
-    #if nfaState::moveRanges?size < NFA_RANGE_THRESHOLD
+    #if nfaState::moveRanges.size() < NFA_RANGE_THRESHOLD
       [@RangesCondition nfaState::moveRanges /][#t]
     #elseif nfaState::hasAsciiMoves && nfaState::hasNonAsciiMoves
       ([@RangesCondition nfaState::asciiMoveRanges/]) or (ch >= chr(128) and check_intervals(${nfaState::movesArrayName}, ch))[#t]
@@ -246,7 +246,7 @@ if NFA state's moveRanges array is smaller than NFA_RANGE_THRESHOLD
     #var left = moveRanges[0], right = moveRanges[1]
     #var displayLeft = globals::displayChar(left), displayRight = globals::displayChar(right)
     #var singleChar = left == right
-    #if moveRanges?size == 2
+    #if moveRanges.size() == 2
        #if singleChar
           ch == ${displayLeft}[#t]
        #elseif left + 1 == right
@@ -267,11 +267,11 @@ if NFA state's moveRanges array is smaller than NFA_RANGE_THRESHOLD
 # Compute the maximum size of state bitsets
 
     #if !multipleLexicalStates
-MAX_STATES = ${lexerData::lexicalStates[0]::allNfaStates?size}
+MAX_STATES = ${lexerData::lexicalStates[0]::allNfaStates.size()}
     #else
 MAX_STATES = max(
       #list lexerData::lexicalStates as state
-    ${state::allNfaStates?size}${state_has_next ?: ","}
+    ${state::allNfaStates.size()}${state_has_next ?: ","}
       #endlist
 )
     #endif
@@ -280,7 +280,7 @@ MAX_STATES = max(
 
 #macro EnumSet varName tokenNames indent = 0
     #var is = ""?right_pad(indent)
-    #if tokenNames?size == 0
+    #if tokenNames.size() == 0
 ${is}self.${varName} = EMPTY_SET
     #else
 ${is}self.${varName} = {
@@ -758,7 +758,7 @@ class ${lexerClassName}(TokenSource):
         'lexical_state',
 #--        '_matcher_hook',
 #var injectedFields = globals.injectedLexerFieldNames()
-#if injectedFields?size > 0
+#if injectedFields.size() > 0
         # injected fields
   #list injectedFields as fieldName
         '${fieldName}',

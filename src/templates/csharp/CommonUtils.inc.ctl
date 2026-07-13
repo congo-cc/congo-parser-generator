@@ -4,7 +4,7 @@
 #var TT = "TokenType."
 
 #macro enumSet varName tokenNames
-#var size = tokenNames?size
+#var size = tokenNames.size()
 #if size = 0
 private static readonly HashSet<TokenType> ${varName} = Utils.GetOrMakeSet();
 #else
@@ -101,14 +101,14 @@ if (_remainingLookahead <= 0) return true;
   #endif
 var ${prevActives} = new HashSet<TokenType>(tokenSource.ActiveTokenTypes);
 var ${somethingChanged} = false;
-#if tokenActivation::activatedTokens?size > 0
+#if tokenActivation::activatedTokens.size() > 0
 ${somethingChanged} = ActivateTokenTypes(
   #list tokenActivation::activatedTokens as tokenName
     ${TT}${tokenName}${tokenName_has_next ?: ","}
   #endlist
 );
 #endif
-#if tokenActivation::deactivatedTokens?size > 0
+#if tokenActivation::deactivatedTokens.size() > 0
 ${somethingChanged} = ${somethingChanged} || DeactivateTokenTypes(
   #list tokenActivation::deactivatedTokens as tokenName
     ${TT}${tokenName}[#if tokenName_has_next],[/#if]

@@ -121,7 +121,7 @@ pub struct StoredToken {
 /// # Examples
 ///
 /// ```no_run
-/// use ${settings::parserPackage?replace(".", "_")}::parser::Parser;
+/// use ${settings::parserPackage.replace(".", "_")}::parser::Parser;
 ///
 /// let ast = Parser::parse("example", Some("test")).unwrap();
 /// println!("Root: {:?}", ast.root());

@@ -48,7 +48,7 @@
 #if settings::faultTolerant
     [@followSetVars /]
 #endif
-    #if grammar::choicePointExpansions?size != 0
+    #if grammar::choicePointExpansions.size() != 0
        [@BuildLookaheads /]
     #endif
 #endmacro
@@ -387,14 +387,14 @@ private bool ${lookBehind::routineName}() {
     NonTerminalCall ntc;
 #list lookBehind::path as element
   #var elementNegated = (element[0] == "~")
-  [#if elementNegated][#set element = element?substring(1)][/#if]
+  [#if elementNegated][#set element = element.substring(1)][/#if]
   #if element = "."
     if (!stackIterator.HasNext()) {
         return false;
     }
     stackIterator.Next();
   #elif element = "..."
-    #if element_index = lookBehind::path?size-1
+    #if element_index = lookBehind::path.size()-1
       #if lookBehind::hasEndingSlash
     return !stackIterator.HasNext();
       #else
@@ -403,7 +403,7 @@ private bool ${lookBehind::routineName}() {
     #else
       #var nextElement = lookBehind::path[element_index + 1]
       #var nextElementNegated = (nextElement[0] == "~")
-      [#if nextElementNegated][#set nextElement = nextElement?substring(1)][/#if]
+      [#if nextElementNegated][#set nextElement = nextElement.substring(1)][/#if]
     while (stackIterator.HasNext()) {
         ntc = stackIterator.Next();
       #var equalityOp = nextElementNegated ?: "!=" : "=="
@@ -540,7 +540,7 @@ finally {
 #macro ScanSingleToken expansion cardinalitiesVar
 #var firstSet = expansion::firstSet::tokenNames
 #-- # DBG > ScanSingleToken
-#if firstSet?size = 1
+#if firstSet.size() = 1
 if (!ScanToken(${CU::TT}${firstSet[0]})) {
     ${lhReturnFalse(cardinalitiesVar, "")}
 }
@@ -704,7 +704,7 @@ ${oomCardVar}.CommitIteration(false);
 
 #macro CheckExpansion expansion cardinalitiesVar parentCardVar
    #if expansion::singleTokenLookahead
-     #if expansion::firstSet::tokenNames?size = 1
+     #if expansion::firstSet::tokenNames.size() = 1
       ScanToken(${CU::TT}${expansion::firstSet::tokenNames[0]})
      #else
       ScanToken(${expansion::firstSetVarName})

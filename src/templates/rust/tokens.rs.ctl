@@ -16,7 +16,7 @@ pub enum TokenType {
 [#list lexerData::regularExpressions as regexp]
     ${regexp::label} = ${regexp_index},
 [/#list]
-[#var nextOrdinal = lexerData::regularExpressions?size]
+[#var nextOrdinal = lexerData::regularExpressions.size()]
 [#list settings::extraTokenNames as extraToken]
     ${extraToken} = ${nextOrdinal},
     [#set nextOrdinal = nextOrdinal + 1]
@@ -29,7 +29,7 @@ pub enum TokenType {
 
 impl TokenType {
     /// Total number of defined token types (excluding DUMMY and INVALID).
-    pub const COUNT: usize = ${lexerData::regularExpressions?size + settings::extraTokenNames?size};
+    pub const COUNT: usize = ${lexerData::regularExpressions.size() + settings::extraTokenNames.size()};
 
     /// Returns `true` if this token type is a regular (parsing) token.
     pub fn is_regular(self) -> bool {
@@ -41,7 +41,7 @@ impl TokenType {
 
     /// Returns `true` if this token type is skipped (e.g., whitespace, comments).
     pub fn is_skipped(self) -> bool {
-[#if lexerData::skippedTokens::tokenNames?size == 0]
+[#if lexerData::skippedTokens::tokenNames.size() == 0]
         false
 [#else]
         matches!(self,
@@ -53,7 +53,7 @@ impl TokenType {
 
     /// Returns `true` if this token type is unparsed (SPECIAL_TOKEN / UNPARSED).
     pub fn is_unparsed(self) -> bool {
-[#if lexerData::unparsedTokens::tokenNames?size == 0]
+[#if lexerData::unparsedTokens::tokenNames.size() == 0]
         false
 [#else]
         matches!(self,
@@ -65,7 +65,7 @@ impl TokenType {
 
     /// Returns `true` if this token type is a MORE token (pending additional input).
     pub fn is_more(self) -> bool {
-[#if lexerData::moreTokens::tokenNames?size == 0]
+[#if lexerData::moreTokens::tokenNames.size() == 0]
         false
 [#else]
         matches!(self,
@@ -111,7 +111,7 @@ pub fn literal_string(tt: TokenType) -> Option<&'static str> {
     match tt {
 [#list lexerData::regularExpressions as regexp]
     [#if regexp::literalString??]
-        TokenType::${regexp::label} => Some("${regexp::literalString?replace("\\", "\\\\")?replace("\"", "\\\"")}"),
+        TokenType::${regexp::label} => Some("${regexp::literalString.replace("\\", "\\\\").replace("\"", "\\\"")}"),
     [/#if]
 [/#list]
         _ => None,

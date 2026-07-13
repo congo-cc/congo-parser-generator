@@ -207,8 +207,8 @@ ${is}    self.restore_call_stack(${callStackSizeVar})
          [#-- Build the tree node (part 2). --]
 [@buildTreeNodeEpilogue treeNodeBehavior, nodeVarName, parseExceptionVar, indent /]
          [#-- Pop this node from the node construction stack. --]
-         [#if treeNodeStack?size > 1]
-            [#set treeNodeStack = treeNodeStack[0..treeNodeStack?size - 2]]
+         [#if treeNodeStack.size() > 1]
+            [#set treeNodeStack = treeNodeStack[0..treeNodeStack.size() - 2]]
          [#else]
             [#set treeNodeStack = []]
          [/#if]
@@ -218,12 +218,12 @@ ${is}    self.restore_call_stack(${callStackSizeVar})
 [/#macro]
 
 [#function currentNodeVariableName]
-   [#return treeNodeStack[treeNodeStack?size - 1][0]/]
+   [#return treeNodeStack[treeNodeStack.size() - 1][0]/]
 [/#function]
 
 [#function isJtbParseTree]
-   [#if treeNodeStack?size > 0]
-      [#return (treeNodeStack[treeNodeStack?size - 1])[1]/]
+   [#if treeNodeStack.size() > 0]
+      [#return (treeNodeStack[treeNodeStack.size() - 1])[1]/]
    [#else]
       [#return settings::syntheticNodesEnabled && settings::treeBuildingEnabled && settings::jtbParseTree/]
    [/#if]
@@ -490,9 +490,9 @@ ${is}        if ${parseExceptionVar} is None:
       [#if treeNodeBehavior?? && treeNodeBehavior::assignment??]
          [#var LHS = getLhsPattern(treeNodeBehavior::assignment, null)]
 ${is}            if self.close_node_scope(${nodeVarName}, ${closeCondition(treeNodeBehavior)}):
-${is}                ${LHS?replace("@", "self.peek_node()")}
+${is}                ${LHS.replace("@", "self.peek_node()")}
 ${is}            else:
-${is}                ${LHS?replace("@", "None")}
+${is}                ${LHS.replace("@", "None")}
       [#else]
 ${is}            self.close_node_scope(${nodeVarName}, ${closeCondition(treeNodeBehavior)})
       [/#if]
@@ -794,7 +794,7 @@ ${is}    self.pop_call_stack()
    [#-- Accept the non-terminal expansion --]
    [#if nonterminal::production::returnType != "void" && expressedLHS != "@" && !nonterminal::assignment::namedAssignment && !nonterminal::assignment::propertyAssignment]
       [#-- Not a void production, so accept and clear the expressedLHS, it has already been applied. --]
-${is}${expressedLHS?replace("@", "self.parse_" + nonterminal::name + "(" + globals.translateNonterminalArgs(nonterminal::args) + ")")}
+${is}${expressedLHS.replace("@", "self.parse_" + nonterminal::name + "(" + globals.translateNonterminalArgs(nonterminal::args) + ")")}
       [#set expressedLHS = "@"]
    [#else]
 ${is}${"self.parse_" + nonterminal::name + "(" + globals.translateNonterminalArgs(nonterminal::args) + ")"}
@@ -802,13 +802,13 @@ ${is}${"self.parse_" + nonterminal::name + "(" + globals.translateNonterminalArg
    [#if expressedLHS != "@" || impliedLHS != "@"]
       [#if nonterminal::assignment?? && (nonterminal::assignment::addTo!false || nonterminal::assignment::namedAssignment)]
 ${is}if self.build_tree:
-${is}    ${expressedLHS?replace("@", impliedLHS?replace("@", "self.peek_node()"))}
+${is}    ${expressedLHS.replace("@", impliedLHS.replace("@", "self.peek_node()"))}
       [#else]
 ${is}try:
       [#-- There had better be a node here! --]
-${is}    ${expressedLHS?replace("@", impliedLHS?replace("@", "self.peek_node()"))}
+${is}    ${expressedLHS.replace("@", impliedLHS.replace("@", "self.peek_node()"))}
 ${is}except Exception:
-${is}    ${expressedLHS?replace("@", impliedLHS?replace("@", "None"))}
+${is}    ${expressedLHS.replace("@", impliedLHS.replace("@", "None"))}
       [/#if]
    [/#if]
 [/#macro]
@@ -819,7 +819,7 @@ ${is}    ${expressedLHS?replace("@", impliedLHS?replace("@", "None"))}
    [#var LHS = getLhsPattern(terminal::assignment, "Token"),
          regexp = terminal::regexp ]
    [#if !settings::faultTolerant]
-${is}${LHS?replace("@", "self.consume_token(" + regexp::label + ")")}
+${is}${LHS.replace("@", "self.consume_token(" + regexp::label + ")")}
    [#else]
       #var tolerant = terminal::tolerantParsing ?: "True" : "False",
            followSetVarName = "self." + terminal::followSetVarName
@@ -829,7 +829,7 @@ ${is}${followSetVarName} = None
 ${is}if self.outer_follow_set is not None:
 ${is}    ${followSetVarName} = set(self.${terminal::followSetVarName}) | self.outer_follow_set
       [/#if]
-${is}${LHS?replace("@", "self.consume_token(" + regexp::label + ", " + tolerant + ", " + followSetVarName + ")")}
+${is}${LHS.replace("@", "self.consume_token(" + regexp::label + ", " + tolerant + ", " + followSetVarName + ")")}
    [/#if]
 [#--${is}# DBG < BuildCodeRegexp ${indent} --]
 [/#macro]
@@ -1004,7 +1004,7 @@ ${SingleTokenCondition(expansion)}[#t]
   #if expansion::hasSemanticLookahead
    (${globals.translateExpression(expansion::semanticLookahead)}) and [#t]
   #endif
-  #if expansion::firstSet::tokenNames?size < 5
+  #if expansion::firstSet::tokenNames.size() < 5
      #list expansion::firstSet::tokenNames as name
           (self.type_matches(${name}, self.get_token(1)))${name_has_next?:" or "} [#t]
      #endlist

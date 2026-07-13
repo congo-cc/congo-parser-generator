@@ -312,7 +312,7 @@ class Parser:
         'currently_parsed_production',
         'current_lookahead_production',
 [#var injectedFields = globals.injectedParserFieldNames()]
-[#if injectedFields?size > 0]
+[#if injectedFields.size() > 0]
         # injected fields
 [#list injectedFields as fieldName]
         '${fieldName}',

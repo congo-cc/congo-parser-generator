@@ -342,7 +342,7 @@
        NonTerminalCall ntc = null;
        #list lookBehind::path as element
           #var elementNegated = (element[0] == "~")
-          [#if elementNegated][#set element = element?substring(1)][/#if]
+          [#if elementNegated][#set element = element.substring(1)][/#if]
           #if element = "."
               if (!stackIterator.hasNext()) {
                  ${returnFalse(cardinalitiesVar!null)};
@@ -358,7 +358,7 @@
              #else
                  #var nextElement = lookBehind::path[element_index + 1]
                  #var nextElementNegated = (nextElement[0] == "~")
-                 [#if nextElementNegated][#set nextElement = nextElement?substring(1)][/#if]
+                 [#if nextElementNegated][#set nextElement = nextElement.substring(1)][/#if]
                  while (stackIterator.hasNext()) {
                     ntc = stackIterator.next();
                     #var equalityOp = nextElementNegated ?: "!=" : "=="

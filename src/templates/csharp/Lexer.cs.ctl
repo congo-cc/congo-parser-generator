@@ -2,7 +2,7 @@
 // ReSharper disable InconsistentNaming
 ${"#"}pragma warning disable 8632
 #import "CommonUtils.inc.ctl" as CU
-#var NFA_RANGE_THRESHOLD = 16, MAX_INT = 2147483647, multipleLexicalStates = lexerData::lexicalStates?size > 1
+#var NFA_RANGE_THRESHOLD = 16, MAX_INT = 2147483647, multipleLexicalStates = lexerData::lexicalStates.size() > 1
 #var TT = "TokenType."
 #var PRESERVE_LINE_ENDINGS = settings::preserveLineEndings ?: "true" : "false",
       JAVA_UNICODE_ESCAPE = settings::javaUnicodeEscape ?: "true" : "false",
@@ -23,7 +23,7 @@ private static HashSet<TokenType> ${varName} = Utils.GetOrMakeSet();
 private static HashSet<TokenType> ${varName} = Utils.GetOrMakeSet(
 #list tokenNames as type
     TokenType.${type}
-    ${type_index < (tokenNames?size-1) ?: ","}
+    ${type_index < (tokenNames.size()-1) ?: ","}
 #endlist
 );
 #endif
@@ -43,7 +43,7 @@ private static HashSet<TokenType> ${varName} = Utils.GetOrMakeSet(
   #endlist
 
   #list lexicalState::allNfaStates as nfaState
-    #if nfaState::moveRanges?size >= NFA_RANGE_THRESHOLD
+    #if nfaState::moveRanges.size() >= NFA_RANGE_THRESHOLD
       [@GenerateMoveArray nfaState /]
     #endif
   #endlist
@@ -169,7 +169,7 @@ it uses the canned binary search routine. For the smaller moveRanges
 it just generates the inline conditional expression
 --]
 #macro NfaStateCondition nfaState
-    #if nfaState::moveRanges?size < NFA_RANGE_THRESHOLD
+    #if nfaState::moveRanges.size() < NFA_RANGE_THRESHOLD
       [@RangesCondition nfaState::moveRanges /]
     #elseif nfaState::hasAsciiMoves && nfaState::hasNonAsciiMoves
       ([@RangesCondition nfaState::asciiMoveRanges/]) || ((ch >= (char) 128) && CheckIntervals(${nfaState::movesArrayName}, ch))
@@ -188,7 +188,7 @@ if NFA state's moveRanges array is smaller than NFA_RANGE_THRESHOLD
     #var left = moveRanges[0], right = moveRanges[1]
     #var displayLeft = globals::displayChar(left), displayRight = globals::displayChar(right)
     #var singleChar = left == right
-    #if moveRanges?size == 2
+    #if moveRanges.size() == 2
        #if singleChar
           ch == ${displayLeft}
        #elif left + 1 == right
@@ -861,11 +861,11 @@ ${globals.translateLexerImports()}
 
         #-- Compute the maximum size of state bitsets
 #if !multipleLexicalStates
-            private const int MaxStates = ${lexerData::lexicalStates[0]::allNfaStates?size};
+            private const int MaxStates = ${lexerData::lexicalStates[0]::allNfaStates.size()};
 #else
             private static int MaxStates = Utils.MaxOf(
 #list lexerData::lexicalStates as state
-                ${state::allNfaStates?size}${state_has_next ?: ","}
+                ${state::allNfaStates.size()}${state_has_next ?: ","}
 #endlist
             );
 #endif
