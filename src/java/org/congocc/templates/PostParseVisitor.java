@@ -7,14 +7,10 @@ import org.congocc.templates.core.parser.ParseException;
 import org.congocc.templates.core.parser.ParsingProblemImpl;
 import org.congocc.templates.core.nodes.AssignmentInstruction;
 
-import java.util.*;
-
 /**
  * A class that visits the AST after the parsing step proper,
  * and makes various checks and adjustments.
- * @author revusky
  */
-
 class PostParseVisitor extends Node.Visitor {
 
 	private Template template;
@@ -27,22 +23,6 @@ class PostParseVisitor extends Node.Visitor {
 		TemplateHeaderElement header = template.getHeaderElement();
 		if (header != null) visit(header);
 		visit(template.getRootTreeNode());
-	}
-
-	void visit(TemplateHeaderElement header) {
-		if (header == null) return;
-		for (Map.Entry<String, Expression> entry : header.getParams().entrySet()) {
-			String key = entry.getKey();
-			try {
-				if (!key.equals("encoding")) {
-					ParsingProblemImpl problem  = new ParsingProblemImpl("Unknown ctl header parameter: " + entry.getKey(), header);
-					template.addParsingProblem(problem);
-				}
-			} catch (Exception e) {
-				ParsingProblemImpl problem = new ParsingProblemImpl(e.getMessage(), header);
-				template.addParsingProblem(problem);
-			}
-		}
 	}
 
 	void visit(AssignmentInstruction node) {

@@ -78,8 +78,6 @@ public final class Environment implements Scope {
     private HashMap<String, Scope> loadedLibs;
     private Throwable lastThrowable;
     private Object lastReturnValue;
-    private String cachedURLEscapingCharset;
-    private boolean urlEscapingCharsetCached;
 
     /**
      * Retrieves the environment object associated with the current thread. Data
@@ -130,7 +128,6 @@ public final class Environment implements Scope {
             threadEnv.set(savedEnv);
         }
     }
-
 
     /**
      * "Visit" the template element.
@@ -513,7 +510,6 @@ public final class Environment implements Scope {
                 localizedNumberFormats.put(fk, format);
             }
         }
-
         // Clone it and store the clone in the local cache
         format = (NumberFormat) format.clone();
         numberFormats.put(pattern, format);

@@ -5,8 +5,6 @@ import org.congocc.templates.core.variables.InvalidReferenceException;
 import org.congocc.templates.core.nodes.BuiltInExpression;
 import org.congocc.templates.utility.StringUtil;
 
-import static org.congocc.templates.core.variables.Wrap.asString;
-
 /**
  * Implementations of ?cap_first, ?lower_case, ?upper_case and other
  * built-ins that change a string into another string

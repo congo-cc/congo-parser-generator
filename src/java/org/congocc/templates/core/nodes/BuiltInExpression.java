@@ -52,7 +52,6 @@ public class BuiltInExpression extends TemplateNode implements Expression {
         knownBuiltins.put("number", new numberBI());
         knownBuiltins.put("left_pad", new StringFunctions.LeftPad());
         knownBuiltins.put("right_pad", new StringFunctions.RightPad());
-        knownBuiltins.put("replace", new StringFunctions.Replace());
         knownBuiltins.put("groups", new groupsBI());
         knownBuiltins.put("matches", new StringFunctions.Matches());
         knownBuiltins.put("word_list", new StringFunctions.WordList());

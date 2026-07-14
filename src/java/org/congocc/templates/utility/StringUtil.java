@@ -302,63 +302,6 @@ public class StringUtil {
         throw new IllegalArgumentException("Illegal boolean value: " + s);
     }
 
-
-    /**
-     * Replaces all occurrences of a sub-string in a string.
-     * @param text The string where it will replace <code>oldsub</code> with
-     *     <code>newsub</code>.
-     * @return String The string after the replacements.
-     */
-    public static String replace(String text,
-                                  String oldsub,
-                                  String newsub,
-                                  boolean caseInsensitive,
-                                  boolean firstOnly)
-    {
-        StringBuilder buf;
-        int tln;
-        int oln = oldsub.length();
-
-        if (oln == 0) {
-            int nln = newsub.length();
-            if (nln == 0) {
-                return text;
-            } else {
-                if (firstOnly) {
-                    return newsub + text;
-                } else {
-                    tln = text.length();
-                    buf = new StringBuilder(tln + (tln + 1) * nln);
-                    buf.append(newsub);
-                    for (int i = 0; i < tln; i++) {
-                        buf.append(text.charAt(i));
-                        buf.append(newsub);
-                    }
-                    return buf.toString();
-                }
-            }
-        } else {
-            oldsub = caseInsensitive ? oldsub.toLowerCase() : oldsub;
-            String input = caseInsensitive ? text.toLowerCase() : text;
-            int e = input.indexOf(oldsub);
-            if (e == -1) {
-                return text;
-            }
-            int b = 0;
-            tln = text.length();
-            buf = new StringBuilder(
-                    tln + Math.max(newsub.length() - oln, 0) * 3);
-            do {
-                buf.append(text.substring(b, e));
-                buf.append(newsub);
-                b = e + oln;
-                e = input.indexOf(oldsub, b);
-            } while (e != -1 && !firstOnly);
-            buf.append(text.substring(b));
-            return buf.toString();
-        }
-    }
-
     /**
      * Removes the line-break from the end of the string.
      */
@@ -484,88 +427,49 @@ public class StringUtil {
         for (int i = 0; i < ln; i++) {
             char c = s.charAt(i);
             if (c == '"' || c == '\'' || c == '\\' || c == '>' || c < 0x20) {
-                StringBuilder b = new StringBuilder(ln + 4);
-                b.append(s.substring(0, i));
+                StringBuilder buf = new StringBuilder(ln + 4);
+                buf.append(s.substring(0, i));
                 while (true) {
                     if (c == '"') {
-                        b.append("\\\"");
+                        buf.append("\\\"");
                     } else if (c == '\'') {
-                        b.append("\\'");
+                        buf.append("\\'");
                     } else if (c == '\\') {
-                        b.append("\\\\");
+                        buf.append("\\\\");
                     } else if (c == '>') {
-                        b.append("\\>");
+                        buf.append("\\>");
                     } else if (c < 0x20) {
                         if (c == '\n') {
-                            b.append("\\n");
+                            buf.append("\\n");
                         } else if (c == '\r') {
-                            b.append("\\r");
+                            buf.append("\\r");
                         } else if (c == '\f') {
-                            b.append("\\f");
+                            buf.append("\\f");
                         } else if (c == '\b') {
-                            b.append("\\b");
+                            buf.append("\\b");
                         } else if (c == '\t') {
-                            b.append("\\t");
+                            buf.append("\\t");
                         } else {
-                            b.append("\\x");
+                            buf.append("\\x");
                             int x = c / 0x10;
-                            b.append((char)
+                            buf.append((char)
                                     (x < 0xA ? x + '0' : x - 0xA + 'A'));
                             x = c & 0xF;
-                            b.append((char)
+                            buf.append((char)
                                     (x < 0xA ? x + '0' : x - 0xA + 'A'));
                         }
                     } else {
-                        b.append(c);
+                        buf.append(c);
                     }
                     i++;
                     if (i >= ln) {
-                        return b.toString();
+                        return buf.toString();
                     }
                     c = s.charAt(i);
                 }
             } // if has to be escaped
         } // for each characters
         return s;
-    }
-
-    /**
-     * Pads the string at the left with spaces until it reaches the desired
-     * length. If the string is longer than this length, then it returns the
-     * unchanged string.
-     *
-     * @param s the string that will be padded.
-     * @param minLength the length to reach.
-     */
-    public static String leftPad(String s, int minLength) {
-        return leftPad(s, minLength, ' ');
-    }
-
-    /**
-     * Pads the string at the left with the specified character until it reaches
-     * the desired length. If the string is longer than this length, then it
-     * returns the unchanged string.
-     *
-     * @param s the string that will be padded.
-     * @param minLength the length to reach.
-     * @param filling the filling pattern.
-     */
-    public static String leftPad(String s, int minLength, char filling) {
-        int ln = s.length();
-        if (minLength <= ln) {
-            return s;
-        }
-
-        StringBuilder res = new StringBuilder(minLength);
-
-        int dif = minLength - ln;
-        for (int i = 0; i < dif; i++) {
-            res.append(filling);
-        }
-
-        res.append(s);
-
-        return res.toString();
     }
 
     /**
@@ -580,70 +484,21 @@ public class StringUtil {
      *     Can't be <code>null</code>.
      */
     public static String leftPad(String s, int minLength, String filling) {
-        int ln = s.length();
-        if (minLength <= ln) {
+        int paddingLength = minLength - s.length();
+        if (paddingLength<=0) {
             return s;
         }
-
-        StringBuilder res = new StringBuilder(minLength);
-
-        int dif = minLength - ln;
-        int fln = filling.length();
-        if (fln == 0) {
+        if (filling.length() == 0) {
             throw new IllegalArgumentException(
-                    "The \"filling\" argument can't be 0 length string.");
+                    "The \"filling\" argument can't be the empty string.");
         }
-        int cnt = dif / fln;
-        for (int i = 0; i < cnt; i++) {
-            res.append(filling);
+        StringBuilder buf = new StringBuilder();
+        while (buf.length() < paddingLength) {
+            buf.append(filling);
         }
-        cnt = dif % fln;
-        for (int i = 0; i < cnt; i++) {
-            res.append(filling.charAt(i));
-        }
-
-        res.append(s);
-
-        return res.toString();
-    }
-
-    /**
-     * Pads the string at the right with spaces until it reaches the desired
-     * length. If the string is longer than this length, then it returns the
-     * unchanged string.
-     *
-     * @param s the string that will be padded.
-     * @param minLength the length to reach.
-     */
-    public static String rightPad(String s, int minLength) {
-        return rightPad(s, minLength, ' ');
-    }
-
-    /**
-     * Pads the string at the right with the specified character until it
-     * reaches the desired length. If the string is longer than this length,
-     * then it returns the unchanged string.
-     *
-     * @param s the string that will be padded.
-     * @param minLength the length to reach.
-     * @param filling the filling pattern.
-     */
-    public static String rightPad(String s, int minLength, char filling) {
-        int ln = s.length();
-        if (minLength <= ln) {
-            return s;
-        }
-
-        StringBuilder res = new StringBuilder(minLength);
-
-        res.append(s);
-
-        int dif = minLength - ln;
-        for (int i = 0; i < dif; i++) {
-            res.append(filling);
-        }
-
-        return res.toString();
+        buf.setLength(paddingLength);
+        buf.append(s);
+        return buf.toString();
     }
 
     /**
@@ -660,38 +515,18 @@ public class StringUtil {
      *     Can't be <code>null</code>.
      */
     public static String rightPad(String s, int minLength, String filling) {
-        int ln = s.length();
-        if (minLength <= ln) {
+        int paddingLength = minLength - s.length();
+        if (paddingLength <= 0) {
             return s;
         }
-
-        StringBuilder res = new StringBuilder(minLength);
-
-        res.append(s);
-
-        int dif = minLength - ln;
-        int fln = filling.length();
-        if (fln == 0) {
+        if (filling.length() == 0) {
             throw new IllegalArgumentException(
                     "The \"filling\" argument can't be 0 length string.");
         }
-        int start = ln % fln;
-        int end = fln - start <= dif
-                ? fln
-                : start + dif;
-        for (int i = start; i < end; i++) {
-            res.append(filling.charAt(i));
-        }
-        dif -= end - start;
-        int cnt = dif / fln;
-        for (int i = 0; i < cnt; i++) {
-            res.append(filling);
-        }
-        cnt = dif % fln;
-        for (int i = 0; i < cnt; i++) {
-            res.append(filling.charAt(i));
-        }
-
-        return res.toString();
+        StringBuilder buf = new StringBuilder(filling);
+        while (buf.length()<paddingLength) buf.append(filling);
+        String padding = buf.toString();
+        padding = padding.substring(padding.length() - paddingLength);
+        return s + padding;
     }
 }

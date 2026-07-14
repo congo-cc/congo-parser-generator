@@ -90,13 +90,6 @@ public abstract class StringFunctions extends ExpressionEvaluatingBuiltIn {
         }
     }
 
-    public static class Replace extends StringFunctions {
-        @Override
-        public Object apply(String string, Environment env, BuiltInExpression caller) {
-            return new ReplaceMethod(string);
-        }
-    }
-
     public static class Join extends StringFunctions {
         @Override
         public Object apply(String string, Environment env, BuiltInExpression caller) {
@@ -162,36 +155,6 @@ public abstract class StringFunctions extends ExpressionEvaluatingBuiltIn {
         @Override
         public Object apply(String string, Environment env, BuiltInExpression caller) {
             return new urlBIResult(string, env);
-        }
-    }
-
-    static class ReplaceMethod implements VarArgsFunction<String> {
-        String string;
-
-        ReplaceMethod(String string) {
-            this.string = string;
-        }
-
-        public String apply(Object... args) {
-            if (args.length < 2 || args.length >3 ) {
-                throw new EvaluationException(
-                "?replace(...) needs 2 or 3 arguments.");
-            }
-            String first = (String) args[0];
-            String second = (String) args[1];
-            String flags = args.length == 3 ? (String) args[2] : "";
-            boolean caseInsensitive = flags.indexOf('i') >=0;
-            boolean useRegexp = flags.indexOf('r') >=0;
-            boolean firstOnly = flags.indexOf('f') >=0;
-            String result = null;
-            if (!useRegexp) {
-                result = StringUtil.replace(string, first, second, caseInsensitive, firstOnly);
-            } else {
-                Pattern pattern = getPattern(first, flags);
-                Matcher matcher = pattern.matcher(string);
-                result = firstOnly ? matcher.replaceFirst(second) : matcher.replaceAll(second);
-            }
-            return result;
         }
     }
 
@@ -359,7 +322,7 @@ public abstract class StringFunctions extends ExpressionEvaluatingBuiltIn {
                     }
                 }
             } else {
-                return StringUtil.leftPad(string, width);
+                return StringUtil.leftPad(string, width, " ");
             }
         }
     }
@@ -410,7 +373,7 @@ public abstract class StringFunctions extends ExpressionEvaluatingBuiltIn {
                     }
                 }
             } else {
-                return StringUtil.rightPad(string, width);
+                return StringUtil.rightPad(string, width, " ");
             }
         }
 

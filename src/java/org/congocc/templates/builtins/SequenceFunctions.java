@@ -49,8 +49,8 @@ public abstract class SequenceFunctions extends ExpressionEvaluatingBuiltIn {
     public static class Last extends SequenceFunctions {
         @Override
         public Object apply(Object sequence) {
-            List list = asList(sequence);
-            return list.size() > 0 ? list.get(list.size() - 1) : null;
+            List<?> list = asList(sequence);
+            return list.isEmpty() ? null : list.get(list.size() - 1);
         }
     }
 
@@ -67,7 +67,6 @@ public abstract class SequenceFunctions extends ExpressionEvaluatingBuiltIn {
     public static class Sort extends SequenceFunctions {
         @Override
         public Object apply(Object sequence) {
-            List list = asList(sequence);
             return sort(asList(sequence), null);
         }
     }
@@ -79,28 +78,13 @@ public abstract class SequenceFunctions extends ExpressionEvaluatingBuiltIn {
         }
     }
 
-    public static class IndexOf extends SequenceFunctions {
-        @Override
-        public Object apply(Object sequence) {
-            return new SequenceIndexOf(asList(sequence), false);
-        }
-    }
-
-    public static class LastIndexOf extends SequenceFunctions {
-        @Override
-        public Object apply(Object sequence) {
-            List list = asList(sequence);
-            return new SequenceIndexOf(list, true);
-        }
-    }
-
-    static Object sort(List seq, String[] keys)
+    static Object sort(List<?> seq, String[] keys)
     {
         int i;
         int keyCnt;
 
         int ln = seq.size();
-        if (ln == 0) {
+        if (ln == 0 || ln == 1) {
             return seq;
         }
 
@@ -327,55 +311,4 @@ public abstract class SequenceFunctions extends ExpressionEvaluatingBuiltIn {
             return sort(seq, subvars);
         }
     }
-
-    static class SequenceIndexOf implements VarArgsFunction<Integer> {
-
-        private final List sequence;
-        private final boolean reverse;
-
-        SequenceIndexOf(List sequence, boolean reverse) {
-            this.sequence = sequence;
-            this.reverse = reverse;
-        }
-
-        public Integer apply(Object... args) {
-            final int argc = args.length;
-            int startIndex;
-            if (argc != 1 && argc != 2) {
-                throw new EvaluationException("Expecting one or two arguments for ?seq_" + (reverse ? "last_" : "") + "index_of");
-            }
-            Object compareToThis = args[0];
-            if (argc == 2) {
-                try {
-                    startIndex = ((Number)args[1]).intValue();
-                } catch (ClassCastException cce) {
-                    throw new EvaluationException("Expecting number as second argument to ?seq_" + (reverse ? "last_" : "") + "index_of");
-                }
-            }
-            else {
-                startIndex = reverse ? sequence.size() - 1 : 0;
-            }
-            if (startIndex>=sequence.size()) startIndex = sequence.size()-1;
-            if (startIndex<0) startIndex = 0;
-            final Environment env = Environment.getCurrentEnvironment();
-            final DefaultComparator comparator = new DefaultComparator(env);
-            if (reverse) {
-                for (int i = startIndex; i > -1; --i) {
-                    if (comparator.areEqual(sequence.get(i), compareToThis)) {
-                        return i;
-                    }
-                }
-            }
-            else {
-                final int s = sequence.size();
-                for (int i = startIndex; i < s; ++i) {
-                    if (comparator.areEqual(sequence.get(i), compareToThis)) {
-                        return i;
-                    }
-                }
-            }
-            return -1;
-        }
-    }
-
 }
