@@ -56,6 +56,9 @@ public class Template {
     }
 
     public TemplateFactory getTemplateFactory() {
+        if (factory == null) {
+            return TemplateFactory.getDefault();
+        }
         return factory;
     }
 
@@ -63,14 +66,14 @@ public class Template {
         if (arithmeticEngine != null) {
             return arithmeticEngine;
         }
-        return factory.getArithmeticEngine();
+        return getTemplateFactory().getArithmeticEngine();
     }
 
     public Locale getLocale() {
         if (this.locale != null) {
             return locale;
         }
-        return factory.getLocale();
+        return getTemplateFactory().getLocale();
     }
 
     public void setLocale(Locale locale) {
@@ -79,7 +82,7 @@ public class Template {
 
     public String getNumberFormat() {
         if (numberFormat == null) {
-            return factory.getNumberFormat();
+            return getTemplateFactory().getNumberFormat();
         }
         return numberFormat;
     }
@@ -99,7 +102,7 @@ public class Template {
     public String process(Map<String,Object> rootMap) throws IOException
     {
         Environment env = new Environment(this, rootMap);
-        getConfiguration().doAutoImportsAndIncludes(env);
+        getTemplateFactory().doAutoImportsAndIncludes(env);
         env.process();
         return env.getOutput();
     }
@@ -116,7 +119,7 @@ public class Template {
         Environment env = new Environment(this, rootMap);
         env.setLocale(getLocale());
         env.setBuffer(appendable);
-        getConfiguration().doAutoImportsAndIncludes(env);
+        getTemplateFactory().doAutoImportsAndIncludes(env);
         env.process();
     }
 
@@ -131,10 +134,6 @@ public class Template {
      */
     public String getName() {
         return name;
-    }
-
-    public TemplateFactory getConfiguration() {
-        return factory;
     }
 
     public List<ParsingProblemImpl> getParsingProblems() {

@@ -13,15 +13,9 @@ public class BuiltInExpression extends TemplateNode implements Expression {
     private static final HashMap<String, BuiltIn> knownBuiltins = new HashMap<String, BuiltIn>();
     {
         knownBuiltins.put("source", (env, caller) -> caller.getTarget().getSource());
-        knownBuiltins.put("upper_case", (env, caller) -> asString(caller.getTarget().evaluate(env)).toUpperCase(env.getLocale()));
-        knownBuiltins.put("lower_case", (env, caller) -> asString(caller.getTarget().evaluate(env)).toLowerCase(env.getLocale()));
-        knownBuiltins.put("length", (env, caller) -> asString(caller.getTarget().evaluate(env)).length());
-        knownBuiltins.put("trim", (env, caller) -> asString(caller.getTarget().evaluate(env)).trim());
-        knownBuiltins.put("substring", (env, caller) -> new JavaMethodCall(asString(caller.getTarget().evaluate(env)), "substring", caller));
         knownBuiltins.put("instanceof", new instanceofBI());
         knownBuiltins.put("exists", new ExistenceBuiltIn.ExistsBuiltIn());
         knownBuiltins.put("c", new cBI());
-        knownBuiltins.put("size", new sizeBI());
         knownBuiltins.put("string", new stringBI());
         knownBuiltins.put("eval", new evalBI());
         NumericalCast numericalCast = new NumericalCast();
@@ -46,9 +40,6 @@ public class BuiltInExpression extends TemplateNode implements Expression {
         knownBuiltins.put("xml", new StringTransformations.Xml());
         knownBuiltins.put("xhtml", new StringTransformations.Xhtml());
         knownBuiltins.put("join", new StringFunctions.Join());
-        knownBuiltins.put("index_of", new StringFunctions.IndexOf());
-        knownBuiltins.put("last_index_of", new StringFunctions.LastIndexOf());
-        knownBuiltins.put("contains", new StringFunctions.Contains());
         knownBuiltins.put("number", new numberBI());
         knownBuiltins.put("left_pad", new StringFunctions.LeftPad());
         knownBuiltins.put("right_pad", new StringFunctions.RightPad());

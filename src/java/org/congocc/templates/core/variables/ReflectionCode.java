@@ -331,7 +331,11 @@ public class ReflectionCode {
         buf.append(methodName);
         buf.append('#');
         if (params != null) for (Object param : params) {
-            buf.append(param.getClass());
+            if (param == null) {
+                buf.append("NULL");
+            } else {
+                buf.append(param.getClass());
+            }
             buf.append(':');
         }
         return buf.toString();

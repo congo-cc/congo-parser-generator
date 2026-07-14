@@ -83,13 +83,6 @@ public abstract class StringFunctions extends ExpressionEvaluatingBuiltIn {
 
     public abstract Object apply(final String string, final Environment env, final BuiltInExpression callingExpression);
 
-    public static class Substring extends StringFunctions {
-        @Override
-        public Object apply(String string, Environment env, BuiltInExpression caller) {
-            return new JavaMethodCall(string, "substring", caller);
-        }
-    }
-
     public static class Join extends StringFunctions {
         @Override
         public Object apply(String string, Environment env, BuiltInExpression caller) {
@@ -101,27 +94,6 @@ public abstract class StringFunctions extends ExpressionEvaluatingBuiltIn {
         @Override
         public Object apply(String string, Environment env, BuiltInExpression caller) {
             return new MatcherBuilder(string);
-        }
-    }
-
-    public static class IndexOf extends StringFunctions {
-        @Override
-        public Object apply(String string, Environment env, BuiltInExpression caller) {
-            return new IndexOfMethod(string, false);
-        }
-    }
-
-    public static class LastIndexOf extends StringFunctions {
-        @Override
-        public Object apply(String string, Environment env, BuiltInExpression caller) {
-            return new IndexOfMethod(string, true);
-        }
-    }
-
-    public static class Contains extends StringFunctions {
-        @Override
-        public Function<String,Boolean> apply(String string, Environment env, BuiltInExpression caller) {
-            return s->string.indexOf(s) >=0;
         }
     }
 
@@ -413,58 +385,4 @@ public abstract class StringFunctions extends ExpressionEvaluatingBuiltIn {
         }
     }
 
-    static class IndexOfMethod implements VarArgsFunction<Integer> {
-        private final String s;
-        private final boolean reverse;
-
-        IndexOfMethod(String s, boolean reverse) {
-            this.s = s;
-            this.reverse = reverse;
-        }
-
-        private String getName() {
-            return "?" + (reverse ? "last_" : "") + "index_of";
-        }
-
-        public Integer apply(Object... args) {
-            Object obj;
-            String sub;
-            int fidx;
-
-            int ln  = args.length;
-            if (ln == 0) {
-                throw new EvaluationException(getName() + "(...) expects at least one argument.");
-            }
-            if (ln > 2) {
-                throw new EvaluationException(getName() + "(...) expects at most two arguments.");
-            }
-
-            obj = args[0];
-            if (!(obj instanceof CharSequence)) {
-                throw new EvaluationException(getName() + "(...) expects a string as its first argument.");
-            }
-            sub = asString(obj);
-
-            if (ln > 1) {
-                obj = args[1];
-                if (!(obj instanceof Number)) {
-                    throw new EvaluationException(getName() + "(...) expects a number as "
-                            + "its second argument.");
-                }
-                fidx = ((Number)obj).intValue();
-            } else {
-                fidx = 0;
-            }
-            int index;
-            if (reverse) {
-                if (ln >1)
-                    index = s.lastIndexOf(sub, fidx);
-                else
-                    index = s.lastIndexOf(sub);
-            } else {
-                index = s.indexOf(sub, fidx);
-            }
-            return index;
-        }
-    }
 }

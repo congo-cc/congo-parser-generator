@@ -218,6 +218,9 @@ INJECT PropertyReference :
         if (lhs instanceof Map m) {
             Object key = getKey();
             Object value = m.get(key);
+//            if (value == null && !m.containsKey(key)) {
+//                assertNonNull(value, getTarget());
+//            }
             return wrap(value);
         }
         if (lhs instanceof TemplateHash hash) {
@@ -819,6 +822,7 @@ INJECT DefaultToExpression :
     import org.congocc.templates.core.variables.*;
     import static org.congocc.templates.core.variables.Wrap.LOOSE_NULL;
     import static org.congocc.templates.core.variables.Wrap.JAVA_NULL;
+    import static org.congocc.templates.core.variables.Wrap.assertIsDefined;
     implements Expression
 {
 	public Expression getLeft() {
@@ -884,12 +888,15 @@ INJECT PositionalArgsList :
     import org.congocc.templates.utility.UndeclaredThrowableException;
     import org.congocc.templates.core.nodes.ParameterList;
     import static org.congocc.templates.core.variables.Wrap.assertIsDefined;
+    import static org.congocc.templates.core.variables.Wrap.JAVA_NULL;
     extends ArgsList
 {
-   public List getParameterSequence(Object target, Environment env) {
+   public List<Object> getParameterSequence(Object target, Environment env) {
         List<Object> result = new ArrayList<>();
         for (Expression exp : childrenOfType(Expression.class)) {
-           result.add(exp.evaluate(env));
+            Object obj = exp.evaluate(env);
+            assertIsDefined(obj, exp);
+            result.add(obj);
         }
         return result;
     }
@@ -906,7 +913,7 @@ INJECT PositionalArgsList :
     public Object getValueAt(int i, Environment env) {
         Expression exp = childrenOfType(Expression.class).get(i);
         Object value = exp.evaluate(env);
-        assertIsDefined(value, exp);
+        if (value == null) value = JAVA_NULL;
         return value;
     }
 }

@@ -466,8 +466,8 @@ public final class Environment implements Scope {
         numberFormatter = null;
     }
 
-    public TemplateFactory getConfiguration() {
-        return getTemplate().getConfiguration();
+    public TemplateFactory getTemplateFactory() {
+        return getTemplate().getTemplateFactory();
     }
 
     public Object getLastReturnValue() {
@@ -569,7 +569,7 @@ public final class Environment implements Scope {
             result = rootDataModel.get(name);
         }
         if (result == null) {
-            result = getConfiguration().getSharedVariable(name.toString());
+            result = getTemplateFactory().getSharedVariable(name.toString());
         }
         return result;
     }
@@ -671,7 +671,7 @@ public final class Environment implements Scope {
             public Object get(String key) {
                 Object value = rootDataModel.get(key);
                 if (value == null) {
-                    value = getConfiguration().getSharedVariable(key);
+                    value = getTemplateFactory().getSharedVariable(key);
                 }
                 return value;
             }
@@ -700,7 +700,7 @@ public final class Environment implements Scope {
     public Template getTemplateForInclusion(String name) throws IOException {
         // REVISIT
         //return getConfiguration().getTemplate(name, getLocale(), encoding, parse);
-        return getConfiguration().getTemplate(name);
+        return getTemplateFactory().getTemplate(name);
     }
 
     public void include(Template includedTemplate, boolean freshNamespace) throws IOException {

@@ -5,6 +5,7 @@ import static org.congocc.templates.core.variables.Wrap.LOOSE_NULL;
 import static org.congocc.templates.core.variables.Wrap.unwrap;
 import static org.congocc.templates.core.variables.Wrap.wrap;
 import org.congocc.templates.core.variables.*;
+import org.congocc.templates.TemplateException;
 import org.congocc.templates.core.Environment;
 import java.util.function.Supplier;
 import java.util.function.Function;
@@ -27,71 +28,60 @@ public class MethodCall extends TemplateNode implements Expression {
     public Object evaluate(Environment env) {
         Object value = getTarget().evaluate(env);
         if (value == LOOSE_NULL) return JAVA_NULL;
-        if (value instanceof VarArgsFunction<?> targetMethod) {
-            ArgsList args = getArgs();
-            List<Object> argumentList;
-            if (args != null) {
-                argumentList = args.getParameterSequence(targetMethod, env);
-            } else {
-                argumentList = new ArrayList<>();
-            }
-            Object result = targetMethod.apply(argumentList.toArray(new Object[argumentList.size()]));
-            return wrap(result);
-        } else if (value instanceof Supplier<?> supplier) {
-            ArgsList argsList = getArgs();
-            if (argsList != null && argsList.firstChildOfType(Expression.class) != null) {
-                throw new EvaluationException("The method " + getTarget() + " takes no arguments.");
-            }
-            return wrap(supplier.get());
-        } else if (value instanceof Function func) {
-            ArgsList args = getArgs();
-            if (args == null || args.childrenOfType(Expression.class).size() != 1) {
-                throw new EvaluationException("The method " + getTarget() + " takes exactly one argument.");
-            }
-            Expression argExp = (Expression) getArgs().get(0);
-            Object arg = unwrap(argExp.evaluate(env));
-            return wrap(func.apply(arg));
-        } else if (value instanceof BiFunction bif) {
-            ArgsList args = getArgs();
-            List<Expression> argExpressions = args == null ? new ArrayList<>() : args.childrenOfType(Expression.class);
-            if (argExpressions.size() != 2) {
-                throw new EvaluationException("The method " + getTarget() + " takes exactly two arguments.");
-            }
-            Object firstArg = argExpressions.get(0).evaluate(env);
-            Object secondArg = argExpressions.get(1).evaluate(env);
-            return wrap(bif.apply(firstArg, secondArg));
-        } else if (value instanceof TriFunction trif) {
-            ArgsList args = getArgs();
-            List<Expression> argExpressions = args == null ? new ArrayList<>() : args.childrenOfType(Expression.class);
-            if (argExpressions.size() != 3) {
-                throw new EvaluationException("The method " + getTarget() + " takes exactly three arguments.");
-            }
-            Object firstArg = argExpressions.get(0).evaluate(env);
-            Object secondArg = argExpressions.get(1).evaluate(env);
-            Object thirdArg = argExpressions.get(2).evaluate(env);
-            return wrap(trif.apply(firstArg, secondArg, thirdArg));
-        } else if (value instanceof QuadFunction quadf) {
-            ArgsList args = getArgs();
-            List<Expression> argExpressions = args == null ? new ArrayList<>() : args.childrenOfType(Expression.class);
-            if (argExpressions.size() != 4) {
-                throw new EvaluationException("The method " + getTarget() + " takes exactly four arguments.");
-            }
-            Object firstArg = argExpressions.get(0).evaluate(env);
-            Object secondArg = argExpressions.get(1).evaluate(env);
-            Object thirdArg = argExpressions.get(2).evaluate(env);
-            Object fourthArg = argExpressions.get(3).evaluate(env);
-            return wrap(quadf.apply(firstArg, secondArg, thirdArg, fourthArg));
-        } else if (value instanceof Macro func) {
+        ArgsList args = getArgs();
+        if (value instanceof Macro func) {
             env.setLastReturnValue(null);
             Appendable prevBuffer = env.getBuffer();
             StringBuilder newBuffer = new StringBuilder();
             try {
                 env.setBuffer(newBuffer);
-                env.render(func, getArgs(), null, null);
+                env.render(func, args, null, null);
             } finally {
                 env.setBuffer(prevBuffer);
             }
             return func.isFunction() ? env.getLastReturnValue() : newBuffer.toString();
+        }
+        if (args instanceof NamedArgsList) {
+            throw new TemplateException("Named arguments not supported for Java method calls");
+        }
+        if (value instanceof Supplier<?> supplier) {
+            if (args != null && args.firstChildOfType(Expression.class) != null) {
+                throw new EvaluationException("The method " + getTarget() + " takes no arguments.");
+            }
+            return wrap(supplier.get());
+        }
+        List<Object> argumentList = args != null ? args.getParameterSequence(value, env) : new ArrayList<>();
+        if (value instanceof VarArgsFunction<?> targetMethod) {
+            Object[] argArray =  argumentList.toArray();
+            for (int i = 0; i < argArray.length; i++) {
+                argArray[i] = unwrap(argArray[i]);
+            }
+            return wrap(targetMethod.apply(argArray));
+        }
+        if (value instanceof Function func) {
+            if (args == null || args.childrenOfType(Expression.class).size() != 1) {
+                throw new EvaluationException("The method " + getTarget() + " takes exactly one argument.");
+            }
+            Object arg = unwrap(argumentList.get(0));
+            return wrap(func.apply(arg));
+        }
+        if (value instanceof BiFunction bif) {
+            if (argumentList.size() != 2) {
+                throw new EvaluationException("The method " + getTarget() + " takes exactly two arguments.");
+            }
+            return wrap(bif.apply(unwrap(argumentList.get(0)), unwrap(argumentList.get(1))));
+        }
+        if (value instanceof TriFunction trif) {
+            if (argumentList.size() != 3) {
+                throw new EvaluationException("The method " + getTarget() + " takes exactly three arguments.");
+            }
+            return wrap(trif.apply(unwrap(argumentList.get(0)), unwrap(argumentList.get(1)), unwrap(argumentList.get(2))));
+        }
+        if (value instanceof QuadFunction quadf) {
+            if (argumentList.size() != 4) {
+                throw new EvaluationException("The method " + getTarget() + " takes exactly four arguments.");
+            }
+            return wrap(quadf.apply(argumentList.get(0), argumentList.get(1), argumentList.get(2), argumentList.get(3)));
         }
         throw invalidTypeException(value, getTarget(), "method");
     }
