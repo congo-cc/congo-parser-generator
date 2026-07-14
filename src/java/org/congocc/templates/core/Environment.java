@@ -299,16 +299,6 @@ public final class Environment implements Scope {
         }
     }
 
-    public <T> T runInScope(Scope scope, TemplateRunnable<T> runnable) throws IOException {
-        Scope currentScope = this.currentScope;
-        this.currentScope = scope;
-        try {
-            return runnable.run();
-        } finally {
-            this.currentScope = currentScope;
-        }
-    }
-
     public TemplateExceptionHandler getTemplateExceptionHandler() {
         if (templateExceptionHandler != null) {
             return templateExceptionHandler;

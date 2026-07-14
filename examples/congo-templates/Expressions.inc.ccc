@@ -916,6 +916,10 @@ INJECT PositionalArgsList :
         if (value == null) value = JAVA_NULL;
         return value;
     }
+
+    public int numArgs() {
+        return childrenOfType(Expression.class).size();
+    }
 }
 
 NamedArgsList :

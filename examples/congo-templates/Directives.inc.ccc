@@ -666,7 +666,7 @@ INJECT ImportDeclaration :
 #ParameterList#org.congocc.templates.core.nodes.ParameterList(true) :
 {
 	Token arg=null, firstArg=null, ellipsis = null;
-	Expression defValue = null;
+	Expression defaultValue = null;
 	String catchAll = null;
 	boolean isCatchAll = false, hasDefaults = false;
 	Set<String> paramNames = new HashSet<String>();
@@ -675,7 +675,7 @@ INJECT ImportDeclaration :
           arg=<ID>
           {
           	if (firstArg == null) firstArg = arg;
-          	defValue = null;
+          	defaultValue = null;
           	if (paramNames.contains(arg.toString())) {
           		throw new ParseException(getErrorStart(arg) + "\nThe parameter " + arg.toString() + " cannot be repeated.");
           	}
@@ -686,37 +686,37 @@ INJECT ImportDeclaration :
           ]
           [
             <EQUALS>
-          	defValue=Expression
+          	defaultValue=Expression
             {
 		      hasDefaults = true;
             }
           ]
           [<COMMA>]
-	  {
+	      {
           if (catchAll != null) {
               throw new ParseException(getErrorStart(arg)
                 + "\nThere may only be one \"catch-all\" parameter in a macro declaration, "
                 + "and it must be the last parameter.", arg.getBeginLine(), arg.getEndLine());
           }
           if (isCatchAll) {
-              if (defValue != null) {
+              if (defaultValue != null) {
                   throw new ParseException(getErrorStart(arg)
                     + "\n\"Catch-all\" macro parameter may not have a default value.",
                     arg.getBeginLine(), arg.getEndLine());
               }
-              thisProduction.setCatchAll(arg.toString());
+              THIS.setCatchAll(arg.toString());
           }
-          else if (defValue == null) {
+          else if (defaultValue == null) {
              if (hasDefaults) {
                   throw new ParseException(getErrorStart(arg)
                     + "\nIn a macro declaration, parameters without a default value "
                     + "must all occur before the parameters with default values.",
                     arg.getBeginLine(), arg.getEndLine());
              }
-          	 thisProduction.addParam(arg.toString());
+          	 THIS.addParam(arg.toString());
           }
           else {
-              thisProduction.addParam(arg.toString(), defValue);
+              THIS.addParamWithDefaultValue(arg.toString(), defaultValue);
           	  hasDefaults = true;
           }
 	  }

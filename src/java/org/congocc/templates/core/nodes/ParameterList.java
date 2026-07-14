@@ -1,26 +1,14 @@
 package org.congocc.templates.core.nodes;
 
-import org.congocc.templates.core.variables.EvaluationException;
 import org.congocc.templates.TemplateException;
-import org.congocc.templates.core.TemplateRunnable;
-import org.congocc.templates.core.variables.InvalidReferenceException;
-import org.congocc.templates.core.variables.scope.Scope;
-import org.congocc.templates.core.variables.scope.NamedParameterMapScope;
-import static org.congocc.templates.core.variables.Wrap.assertIsDefined;
-import static org.congocc.templates.core.variables.Wrap.assertNonNull;
 import org.congocc.templates.core.Environment;
-import java.util.*;
-import java.io.IOException;
 import org.congocc.templates.core.nodes.generated.*;
+import java.util.*;
 
 public class ParameterList extends TemplateNode {
     private List<String> params = new ArrayList<String>();
     private Map<String, Expression> defaults;
     private String catchall;
-
-    public void addParam(String paramName) {
-        params.add(paramName);
-    }
 
     public List<String> getParams() {
         return params;
@@ -36,7 +24,11 @@ public class ParameterList extends TemplateNode {
         return params.contains(name);
     }
 
-    public void addParam(String paramName, Expression defaultExp) {
+    public void addParam(String paramName) {
+        params.add(paramName);
+    }
+
+    public void addParamWithDefaultValue(String paramName, Expression defaultExp) {
         if (defaults == null) defaults = new HashMap<String, Expression>();
         defaults.put(paramName, defaultExp);
         addParam(paramName);
@@ -58,74 +50,11 @@ public class ParameterList extends TemplateNode {
         return defaults == null ? null : defaults.get(paramName);
     }
 
-    public Expression getDefaultExpression(int paramIndex) {
-        if (params == null || paramIndex >= params.size()) {
-            return null;
-        }
-        return getDefaultExpression(params.get(paramIndex));
-    }
-
-    private void fillInDefaults(final Environment env, final Scope scope, final Collection<String> paramNames) {
-        try {
-            env.runInScope(scope, new TemplateRunnable<Object>() {
-
-                public Object run() throws IOException {
-                    fillInDefaultsInternal(env, scope, paramNames);
-                    return null;
-                }
-
-            }
-            );
-        } catch (IOException e) {
-            throw new TemplateException(e);
-        }
-    }
-
-    private void fillInDefaultsInternal(Environment env, Scope scope, Collection<String> paramNames) {
-        boolean resolvedAnArg, hasUnresolvedArg;
-        Expression firstUnresolvedExpression;
-        InvalidReferenceException firstReferenceException;
-        do {
-            firstUnresolvedExpression = null;
-            firstReferenceException = null;
-            resolvedAnArg = hasUnresolvedArg = false;
-            for (String paramName : paramNames) {
-                Object arg = scope.get(paramName);
-                if (arg == null) {
-                    Expression defaultExp = getDefaultExpression(paramName);
-                    if (defaultExp != null) {
-                        try {
-                            Object value = defaultExp.evaluate(env);
-                            if (value == null) {
-                                if (!hasUnresolvedArg) {
-                                    firstUnresolvedExpression = defaultExp;
-                                    hasUnresolvedArg = true;
-                                }
-                            } else {
-                                scope.put(paramName, value);
-                                resolvedAnArg = true;
-                            }
-                        } catch (InvalidReferenceException e) {
-                            if (!hasUnresolvedArg) {
-                                hasUnresolvedArg = true;
-                                firstReferenceException = e;
-                            }
-                        }
-                    } else if (arg == null) {
-                        throw new EvaluationException("Missing required parameter " + paramName);
-                    }
-                }
-            }
-        }
-        while (resolvedAnArg && hasUnresolvedArg);
-        if (hasUnresolvedArg) {
-            if (firstReferenceException != null) {
-                throw firstReferenceException;
-            } else {
-                assert firstUnresolvedExpression != null;
-                assertNonNull(null, firstUnresolvedExpression);
-            }
-        }
+    private int numRequiredParams() {
+        int result = getParams().size();
+        if (defaults != null) result -= defaults.size();
+        if (catchall != null) result--;
+        return result;
     }
 
     /**
@@ -133,73 +62,70 @@ public class ParameterList extends TemplateNode {
     * on the named parameter info encapsulated in this object.
     */
     public Map<String, Object> getParameterMap(final PositionalArgsList args, final Environment env, boolean ignoreExtraParams) {
-        final int argsSize = args.childrenOfType(Expression.class).size();
-        final int paramsSize = params.size();
-        final Map<String, Object> result = new HashMap<>();
-        if (catchall == null && argsSize > paramsSize && !ignoreExtraParams) {
-            throw new TemplateException("Expecting exactly " + paramsSize + " arguments, received " + argsSize + ".");
+        int numArgs = args.numArgs();
+        if (numArgs < numRequiredParams()) {
+            String message = "Expecting exactly " + numRequiredParams() + " arguments, received " + numArgs + ".";
+            if (catchall != null || hasDefaultExpressions()) {
+                message = message.replace("exactly", "at least");
+            }
+            throw new TemplateException(message);
         }
-        int min = Math.min(paramsSize, argsSize);
-        for (int i = 0; i < min; i++) {
-            result.put(params.get(i), args.getValueAt(i, env));
+        if (!ignoreExtraParams && catchall == null && numArgs > params.size()) {
+            String message = "Expecting exactly " + params.size() + " arguments, received " + args.numArgs() + ".";
+            if (defaults != null && !defaults.isEmpty()) {
+                message = message.replace("exactly", "at most");
+            }
+            throw new TemplateException(message);
         }
-        if (hasDefaultExpressions() && argsSize < paramsSize) {
-            // Create a scope that provides live access to the parameter list
-            // so we can reference already defined parameters
-            Scope scope = new NamedParameterMapScope(env.getCurrentScope(), result);
-            fillInDefaults(env, scope, params.subList(argsSize, paramsSize));
+        Map<String,Object> result = new HashMap<>();
+        int i = 0;
+        boolean dealWithCatchall = false;
+        while (i < params.size() && i<numArgs) {
+            String param = params.get(i);
+            if (param.equals(catchall)) {
+                dealWithCatchall = true;
+                break;
+            }
+            result.put(param, args.getValueAt(i++, env));
         }
-        if (catchall != null) {
-            List<Object> catchAllVars = new ArrayList<>();
-            result.put(catchall, catchAllVars);
-            for (int i = paramsSize; i < argsSize; i++) {
-                catchAllVars.add(args.getValueAt(i, env));
+        if (dealWithCatchall) {
+            List<Object> catchAllArgs = new ArrayList<>();
+            while (i++ < numArgs) {
+                catchAllArgs.add(args.getValueAt(i,env));
+            }
+            result.put(catchall, catchAllArgs);
+        }
+        if (hasDefaultExpressions()) {
+            for (String param : defaults.keySet()) {
+                if (!result.containsKey(param)) {
+                    Expression exp = defaults.get(param);
+                    Object value = exp.evaluate(env);
+                    result.put(param, value);
+                }
             }
         }
         return result;
     }
 
     public Map<String, Object> getParameterMap(NamedArgsList args, Environment env) {
-        Map<String, Object> result = new HashMap<>();
-        Collection<String> unresolvedParamNames = null;
-        Map<String, Expression> argsMap = args.getCopyOfMap();
-        for (String paramName : params) {
-            Expression argExp = argsMap.remove(paramName);
-            if (argExp != null) {
-                Object value = argExp.evaluate(env);
-                assertIsDefined(value, argExp);
-                result.put(paramName, value);
-            } else if (defaults != null && defaults.containsKey(paramName)) {
-                if (unresolvedParamNames == null) {
-                    unresolvedParamNames = new LinkedList<String>();
+        Map<String,Object> result = args.getParameterMap(null, env);
+        if (defaults != null) {
+            for (String param : defaults.keySet()) {
+                if (!result.containsKey(param)) {
+                    Expression exp = defaults.get(param);
+                    Object value = exp.evaluate(env);
+                    result.put(param, value);
                 }
-                unresolvedParamNames.add(paramName);
-            } else {
-                throw new TemplateException("Missing required parameter " + paramName);
             }
         }
-        if (unresolvedParamNames != null) {
-            // Create a scope that provides live access to the parameter list
-            // so we can reference already defined parameters
-            Scope scope = new NamedParameterMapScope(env.getCurrentScope(), result);
-            fillInDefaults(env, scope, unresolvedParamNames);
-        }
-        Map<Object, Object> catchAllMap = null;
-        if (catchall != null) {
-            catchAllMap = new HashMap<>();
-            result.put(catchall, catchAllMap);
-        }
-        if (!argsMap.isEmpty()) {
-            if (catchall != null) {
-                for (Map.Entry<String, Expression> entry : argsMap.entrySet()) {
-                    Expression exp = entry.getValue();
-                    Object val = exp.evaluate(env);
-                    assertIsDefined(val,exp);
-                    catchAllMap.put(entry.getKey(), val);
-                }
-            } else {
-                throw new TemplateException("Extraneous parameters " + argsMap.keySet() + " provided.");
+        int  minParameters = params.size();
+        if (defaults != null) minParameters -= defaults.size();
+        if (result.size() < minParameters) {
+                String message = "Expecting exactly " + minParameters + " arguments, received " + result.size() + ".";
+            if (defaults != null && !defaults.isEmpty()) {
+                message = message.replace("exactly", "at least");
             }
+            throw new TemplateException(message);
         }
         return result;
     }

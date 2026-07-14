@@ -123,7 +123,7 @@
    #endlist
 #endmacro
 
-#function returnFalse cardinalitiesVar parentCardVar
+#function returnFalse cardinalitiesVar=null parentCardVar=null
    #if cardinalitiesVar??
       #if parentCardVar??
          #return "return ${parentCardVar}.commit(false)"
@@ -135,7 +135,7 @@
    #endif
 #endfunction
 
-#function returnTrue cardinalitiesVar parentCardVar
+#function returnTrue cardinalitiesVar=null parentCardVar=null
    #if cardinalitiesVar??
       #if parentCardVar??
          #return "return ${parentCardVar}.commit(true)"
@@ -147,7 +147,7 @@
    #endif
 #endfunction
 
-#function return retVal cardinalitiesVar parentCardVar
+#function return retVal cardinalitiesVar=null parentCardVar=null
    #if cardinalitiesVar??
       #if parentCardVar??
          #return "return ${parentCardVar}.commit(${retVal})"
@@ -399,7 +399,7 @@
    This macro just delegates to the various sub-macros
    based on the Expansion's class name.
 --]
-#macro BuildScanCode expansion cardVar parentCardVar
+#macro BuildScanCode expansion cardVar=null parentCardVar=null
   #var classname = expansion::simpleName
   #var skipCheck = classname == "ExpansionSequence" ||
                   #-- We can skip the check if this is a semantically meaningless
@@ -589,7 +589,7 @@
    }
 #endmacro
 
-#macro ScanCodeZeroOrOne zoo cardVar parentCardVar
+#macro ScanCodeZeroOrOne zoo cardVar=null parentCardVar=null
    ${CU::newVar(settings::baseTokenClassName, "currentLookaheadToken")}
    boolean passedPredicate${CU::newVarIndex} = passedPredicate;
    passedPredicate = false;
@@ -607,7 +607,7 @@
 [#--
   Generates lookahead code for a ZeroOrMore construct]
 --]
-#macro ScanCodeZeroOrMore zom cardVar cardinalitiesVar
+#macro ScanCodeZeroOrMore zom cardVar=null cardinalitiesVar=null
    #var prevPassPredicateVarName = "passedPredicate" + CU::newID()
     #var zomCardVar = cardVar!false
     #if zom::cardinalityContainer & !zomCardVar

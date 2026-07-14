@@ -154,22 +154,22 @@
    #endlist
 #endmacro
 
-#macro BuildCode expansion cardinalitiesVar
+#macro BuildCode expansion cardinalitiesVar=null
   #if expansion::simpleName != "ExpansionSequence" && expansion::simpleName != "ExpansionWithParentheses"
   // Code for ${expansion::simpleName} specified at ${expansion::location}
   #endif
-     [@CU::HandleLexicalStateChange expansion, false, cardinalitiesVar!null]
+     [@CU::HandleLexicalStateChange expansion, false, cardinalitiesVar]
          #if settings::faultTolerant && expansion::requiresRecoverMethod && !expansion::possiblyEmpty
          if (pendingRecovery) {
             pendingRecovery = !${expansion::recoverMethodName}(null);
          }
          #endif
-         ${BuildExpansionCode(expansion, cardinalitiesVar!null)}
+         ${BuildExpansionCode(expansion, cardinalitiesVar)}
      [/@]
 #endmacro
 
 #-- The following macro wraps expansions that might build tree nodes. --
-#macro TreeBuildingAndRecovery expansion cardinalitiesVar
+#macro TreeBuildingAndRecovery expansion cardinalitiesVar=null
    #var production,
          treeNodeBehavior,
          buildingTreeNode = false,
@@ -636,7 +636,7 @@
    #return NODE_PREFIX + currentProduction::name
 #endfunction
 
-#macro BuildExpansionCode expansion cardinalitiesVar
+#macro BuildExpansionCode expansion cardinalitiesVar=null
    #var classname = expansion::simpleName
    #var prevLexicalStateVar = CU::newVarName("previousLexicalState")
    #-- take care of the non-tree-building classes --
@@ -780,7 +780,7 @@
        );
 #endmacro
 
-#macro BuildCodeTryBlock tryblock cardinalitiesVar
+#macro BuildCodeTryBlock tryblock cardinalitiesVar=null
      try {
         ${BuildCode(tryblock::nestedExpansion, cardinalitiesVar)}
      }
@@ -790,7 +790,7 @@
      ${tryblock::finallyBlock!}
 #endmacro
 
-#macro BuildCodeAttemptBlock attemptBlock cardinalitiesVar
+#macro BuildCodeAttemptBlock attemptBlock cardinalitiesVar=null
    #-- REVISIT: Cardinality assertions are currently not allowed (sanity check) within the ATTEMPT block, but this could be relaxed --
    try {
       stashParseState(${cardinalitiesVar!""});
@@ -904,7 +904,7 @@
    #endif
 #endmacro
 
-#macro BuildCodeZeroOrOne zoo cardinalitiesVar
+#macro BuildCodeZeroOrOne zoo cardinalitiesVar=null
     #if zoo::nestedExpansion::class::simpleName = "ExpansionChoice"
        ${BuildCode(zoo::nestedExpansion, cardinalitiesVar)}
     #else
@@ -970,7 +970,7 @@
    #endif
 #endmacro
 
-#macro RecoveryLoop loopExpansion cardinalitiesVar
+#macro RecoveryLoop loopExpansion cardinalitiesVar=null
    #if !settings::faultTolerant || !loopExpansion::requiresRecoverMethod
        ${BuildCode(loopExpansion::nestedExpansion, cardinalitiesVar)}
    #else
@@ -998,7 +998,7 @@
    #endif
 #endmacro
 
-#macro BuildCodeChoice choice cardinalitiesVar
+#macro BuildCodeChoice choice cardinalitiesVar=null
    #list choice::choices as expansion
       #if expansion::enteredUnconditionally
         {
@@ -1044,7 +1044,7 @@
    #endif
 #endmacro
 
-#macro BuildCodeSequence expansion cardinalitiesVar
+#macro BuildCodeSequence expansion cardinalitiesVar=null
        #list expansion::units as subexp
            ${BuildCode(subexp, cardinalitiesVar)}
        #endlist
@@ -1056,7 +1056,7 @@
      Macro to generate the condition for entering an expansion
      including the default single-token lookahead
 --]
-#macro ExpansionCondition expansion cardinalitiesVar
+#macro ExpansionCondition expansion cardinalitiesVar=null
     #if expansion::requiresPredicateMethod
        ${ScanAheadCondition(expansion, cardinalitiesVar!null)}
     #else
@@ -1065,7 +1065,7 @@
 #endmacro
 
 #-- Generates code for when we need a scanahead --
-#macro ScanAheadCondition expansion cardinalitiesVar
+#macro ScanAheadCondition expansion cardinalitiesVar=null
    #if expansion::lookahead?? && expansion::lookahead::assignment??
       (${expansion::lookahead::assignment::name} =
    #endif
@@ -1084,7 +1084,7 @@
 
 
 #-- Generates code for when we don't need any scanahead routine. --
-#macro SingleTokenCondition expansion cardinalitiesVar [#-- JB:REVISIT probably don't need this arg here --]
+#macro SingleTokenCondition expansion cardinalitiesVar=null [#-- JB:REVISIT probably don't need this arg here --]
    #if expansion::hasSemanticLookahead
       (${expansion::semanticLookahead}) &&
    #endif
