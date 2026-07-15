@@ -21,16 +21,16 @@ public class MethodCall extends TemplateNode implements Expression {
         return firstChildOfType(ArgsList.class);
     }
 
-    public Expression getTarget() {
+    public Expression lhs() {
         return (Expression) get(0);
     }
 
     @SuppressWarnings("unchecked")
     public Object evaluate(Environment env) {
-        Object value = getTarget().evaluate(env);
-        if (value == LOOSE_NULL) return JAVA_NULL;
+        Object leftSide = lhs().evaluate(env);
+        if (leftSide == LOOSE_NULL) return JAVA_NULL;
         ArgsList args = getArgs();
-        if (value instanceof Macro func) {
+        if (leftSide instanceof Macro func) {
             env.setLastReturnValue(null);
             Appendable prevBuffer = env.getBuffer();
             StringBuilder newBuffer = new StringBuilder();
@@ -45,46 +45,46 @@ public class MethodCall extends TemplateNode implements Expression {
         if (args instanceof NamedArgsList) {
             throw new TemplateException("Named arguments not supported for Java method calls");
         }
-        if (value instanceof Supplier<?> supplier) {
+        if (leftSide instanceof Supplier<?> supplier) {
             if (args != null && args.firstChildOfType(Expression.class) != null) {
-                throw new EvaluationException("The method " + getTarget() + " takes no arguments.");
+                throw new EvaluationException("The method " + lhs() + " takes no arguments.");
             }
             return wrap(supplier.get());
         }
-        List<Object> argumentList = args != null ? args.getParameterSequence(value, env) : new ArrayList<>();
-        if (value instanceof VarArgsFunction<?> targetMethod) {
+        List<Object> argumentList = args != null ? args.getParameterSequence(leftSide, env) : new ArrayList<>();
+        if (leftSide instanceof VarArgsFunction<?> targetMethod) {
             Object[] argArray =  argumentList.toArray();
             for (int i = 0; i < argArray.length; i++) {
                 argArray[i] = unwrap(argArray[i]);
             }
             return wrap(targetMethod.apply(argArray));
         }
-        if (value instanceof Function func) {
+        if (leftSide instanceof Function func) {
             if (args == null || args.childrenOfType(Expression.class).size() != 1) {
-                throw new EvaluationException("The method " + getTarget() + " takes exactly one argument.");
+                throw new EvaluationException("The method " + lhs() + " takes exactly one argument.");
             }
             Object arg = unwrap(argumentList.get(0));
             return wrap(func.apply(arg));
         }
-        if (value instanceof BiFunction bif) {
+        if (leftSide instanceof BiFunction bif) {
             if (argumentList.size() != 2) {
-                throw new EvaluationException("The method " + getTarget() + " takes exactly two arguments.");
+                throw new EvaluationException("The method " + lhs() + " takes exactly two arguments.");
             }
             return wrap(bif.apply(unwrap(argumentList.get(0)), unwrap(argumentList.get(1))));
         }
-        if (value instanceof TriFunction trif) {
+        if (leftSide instanceof TriFunction trif) {
             if (argumentList.size() != 3) {
-                throw new EvaluationException("The method " + getTarget() + " takes exactly three arguments.");
+                throw new EvaluationException("The method " + lhs() + " takes exactly three arguments.");
             }
             return wrap(trif.apply(unwrap(argumentList.get(0)), unwrap(argumentList.get(1)), unwrap(argumentList.get(2))));
         }
-        if (value instanceof QuadFunction quadf) {
+        if (leftSide instanceof QuadFunction quadf) {
             if (argumentList.size() != 4) {
-                throw new EvaluationException("The method " + getTarget() + " takes exactly four arguments.");
+                throw new EvaluationException("The method " + lhs() + " takes exactly four arguments.");
             }
             return wrap(quadf.apply(argumentList.get(0), argumentList.get(1), argumentList.get(2), argumentList.get(3)));
         }
-        throw invalidTypeException(value, getTarget(), "method");
+        throw invalidTypeException(leftSide, lhs(), "method");
     }
 }
 

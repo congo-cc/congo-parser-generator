@@ -21,7 +21,7 @@ public abstract class HashBuiltin extends ExpressionEvaluatingExtension {
     {
         if (!(lhs instanceof TemplateHash) && !isMap(lhs)) {
             throw TemplateNode.invalidTypeException(lhs,
-                    caller.getTarget(), "hash");
+                    caller.lhs(), "hash");
         }
         return apply(unwrap(lhs));
     }

@@ -5,5 +5,5 @@ import org.congocc.templates.core.nodes.ExtensionExpression;
 
 @FunctionalInterface
 public interface Extension {
-    Object get(Environment env, ExtensionExpression caller);
+    Object get(ExtensionExpression caller, Environment env);
 }

@@ -13,10 +13,9 @@ import static org.congocc.templates.core.Wrap.JAVA_NULL;
 public abstract class MacroBuiltins extends ExpressionEvaluatingExtension {
 
     @Override
-    public Object get(Environment env, ExtensionExpression caller,
-            Object model) {
+    public Object get(Environment env, ExtensionExpression caller, Object model) {
         if (!(model instanceof Macro)) {
-            throw TemplateNode.invalidTypeException(model, caller.getTarget(), "macro");
+            throw TemplateNode.invalidTypeException(model, caller.lhs(), "macro");
         }
         return apply(env, (Macro)model);
     }

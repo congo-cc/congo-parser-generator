@@ -20,31 +20,31 @@ public class DynamicKeyName extends TemplateNode implements Expression {
         return (Expression) get(2);
     }
 
-    public Expression getTarget() {
+    public Expression lhs() {
         return (Expression) get(0);
     }
 
     public Object evaluate(Environment env) {
-        Object lhs = getTarget().evaluate(env);
-        assertNonNull(lhs, getTarget());
-        if (lhs == LOOSE_NULL) {
+        Object leftSide = lhs().evaluate(env);
+        assertNonNull(leftSide, lhs());
+        if (leftSide == LOOSE_NULL) {
             return JAVA_NULL;
         }
         if (getNameExpression() instanceof RangeExpression re) {
-            return dealWithRangeKey(lhs, re, env);
+            return dealWithRangeKey(leftSide, re, env);
         }
         Object key = getNameExpression().evaluate(env);
         if (key == null) {
             assertNonNull(key, getNameExpression());
         }
         if (key instanceof Number n) {
-            return dealWithNumericalKey(lhs, n.intValue(), env);
+            return dealWithNumericalKey(leftSide, n.intValue(), env);
         }
         if (key instanceof CharSequence) {
-            return dealWithStringKey(lhs, key.toString(), env);
+            return dealWithStringKey(leftSide, key.toString(), env);
         }
-        if (isMap(lhs)) {
-            return ((Map<?,?>) unwrap(lhs)).get(unwrap(key));
+        if (isMap(leftSide)) {
+            return ((Map<?,?>) unwrap(leftSide)).get(unwrap(key));
         }
         throw invalidTypeException(key, getNameExpression(), "number, range, or string");
     }
@@ -57,7 +57,7 @@ public class DynamicKeyName extends TemplateNode implements Expression {
                 return JAVA_NULL;
             }
         }
-        String s = getTarget().getStringValue(env);
+        String s = lhs().getStringValue(env);
         try {
             return s.substring(index, index + 1);
         } catch (RuntimeException re) {
@@ -117,7 +117,7 @@ public class DynamicKeyName extends TemplateNode implements Expression {
             }
             return result;
         }
-        String s = getTarget().getStringValue(env);
+        String s = lhs().getStringValue(env);
         if (!hasRhs) end = s.length() - 1;
         if (start < 0) {
             String msg = range.getLeft().getLocation() + "\nNegative starting index for range " + range + " : " + start;

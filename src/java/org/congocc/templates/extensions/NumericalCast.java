@@ -23,7 +23,7 @@ public class NumericalCast extends ExpressionEvaluatingExtension {
         try {
             return getNumber((Number)model, caller.getName());
         } catch (ClassCastException cce) {
-            throw TemplateNode.invalidTypeException(model, caller.getTarget(), "number");
+            throw TemplateNode.invalidTypeException(model, caller.lhs(), "number");
         } catch (NullPointerException npe) {
             throw new InvalidReferenceException("Undefined number");
         }
@@ -37,10 +37,10 @@ public class NumericalCast extends ExpressionEvaluatingExtension {
             case "float" -> num.floatValue();
             case "byte" -> num.byteValue();
             case "short" -> num.shortValue();
-            case "floor" -> BigDecimal.valueOf(num.doubleValue()).divide(BigDecimal.ONE, 0, RoundingMode.FLOOR);
-            case "ceiling" -> BigDecimal.valueOf(num.doubleValue()).divide(BigDecimal.ONE, 0, RoundingMode.CEILING);
-            case "round" -> BigDecimal.valueOf(num.doubleValue()).add(half, mc).divide(BigDecimal.ONE, 0, RoundingMode.FLOOR);
-            default -> throw new InternalError("The only numerical cast built-ins available are ?int, ?long, ?short, ?byte, ?float, ?double, ?floor, ?ceiling, and ?round.");
+            case "_floor" -> BigDecimal.valueOf(num.doubleValue()).divide(BigDecimal.ONE, 0, RoundingMode.FLOOR);
+            case "_ceiling" -> BigDecimal.valueOf(num.doubleValue()).divide(BigDecimal.ONE, 0, RoundingMode.CEILING);
+            case "_round" -> BigDecimal.valueOf(num.doubleValue()).add(half, mc).divide(BigDecimal.ONE, 0, RoundingMode.FLOOR);
+            default -> throw new InternalError("The only numerical cast built-ins available are int, long, short, byte, float, double, _floor, _ceiling, and _round.");
         };
     }
 }

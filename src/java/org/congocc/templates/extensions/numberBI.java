@@ -20,7 +20,7 @@ public class numberBI extends ExpressionEvaluatingExtension
             string = asString(value);
         }
         catch(ClassCastException ex) {
-            throw TemplateNode.invalidTypeException(value, caller.getTarget(), "string or number");
+            throw TemplateNode.invalidTypeException(value, caller.lhs(), "string or number");
         }
         ArithmeticEngine e = env == null ? caller.getTemplate().getArithmeticEngine() : env.getArithmeticEngine();
         try {

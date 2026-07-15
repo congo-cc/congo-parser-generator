@@ -137,7 +137,7 @@
         switch(type) {
             #list lexerData::regularExpressions as regexp
                #if regexp::literalString??
-                  case TokenType.${regexp::label} : return "${regexp::literalString?j_string}";
+                  case TokenType.${regexp::label} : return "${regexp::literalString.j_string}";
                #endif
             #endlist
             default : return null;
@@ -523,7 +523,7 @@ ${globals.translateCodeBlock(expansion, 12)}
 
 [#macro ScanCodeNonTerminal nt cardinalitiesVar]
 // NonTerminal ${nt::name} at ${nt::location}
-PushOntoLookaheadStack("${nt::containingProduction::name}", "${nt::inputSource?j_string}", ${nt::beginLine}, ${nt::beginColumn});
+PushOntoLookaheadStack("${nt::containingProduction::name}", "${nt::inputSource.j_string}", ${nt::beginLine}, ${nt::beginColumn});
 #var prevScanToEndVarName = "prevScanToEnd" + CU::newID()
 bool ${prevScanToEndVarName} = ScanToEnd;
 _currentLookaheadProduction = "${nt::production::name}";

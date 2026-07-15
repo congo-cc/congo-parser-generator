@@ -18,7 +18,7 @@ public abstract class StringTransformations extends ExpressionEvaluatingExtensio
             string = lhs.toString();
         }
         else {
-            string = caller.getTarget().getStringValue(env);
+            string = caller.lhs().getStringValue(env);
         }
         if (string == null) {
             throw new InvalidReferenceException("String is undefined");

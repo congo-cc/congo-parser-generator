@@ -46,7 +46,7 @@
 #endmacro
 
 #macro ParserProduction production indent
-#var is = ""?right_pad(indent)
+#var is = "".right_pad(indent)
    #set nodeNumbering = 0
    #set nodeFieldOrdinal = {}
    #set injectedFields = {}
@@ -71,7 +71,7 @@ ${is}# end of parse_${production::name}${globals.endProduction()}
    as part of a recovery routine
 --]
 #macro BuildRecoverRoutines indent
-#var is = ""?right_pad(indent)
+#var is = "".right_pad(indent)
 #list grammar::expansionsNeedingRecoverMethod as expansion
 ${is}def ${expansion::recoverMethodName}(self, pe):
 ${is}    initial_token = self.last_consumed_token
@@ -126,14 +126,14 @@ ${is}    return success
 #endmacro
 
 #macro BuildCode expansion indent cardinalitiesVar
-#var is = ""?right_pad(indent)
+#var is = "".right_pad(indent)
 [#--${is}# DBG > BuildCode ${indent} ${expansion.simpleName} --]
 #if expansion::simpleName != "ExpansionSequence" && expansion::simpleName != "ExpansionWithParentheses"
 ${is}# Code for ${expansion::simpleName} specified at ${expansion::location}
 /#if
 [@CU::HandleLexicalStateChange expansion, false, indent, cardinalitiesVar; indent]
   #if settings::faultTolerant && expansion::requiresRecoverMethod && !expansion::possiblyEmpty
-    [#var is = ""?right_pad(indent)][#-- needed for when passed as nested content --]
+    [#var is = "".right_pad(indent)][#-- needed for when passed as nested content --]
 ${is}if self.pending_recovery:
 ${is}    self.${expansion::recoverMethodName}(None)
   /#if
@@ -143,7 +143,7 @@ ${is}    self.${expansion::recoverMethodName}(None)
 /#macro
 
 [#macro TreeBuildingAndRecovery expansion indent cardinalitiesVar]
-[#var is = ""?right_pad(indent)]
+[#var is = "".right_pad(indent)]
 [#--${is}# DBG > TreeBuildingAndRecovery ${indent} --]
    [#var production = null,
          treeNodeBehavior,
@@ -232,7 +232,7 @@ ${is}    self.restore_call_stack(${callStackSizeVar})
 [#function imputedJtbFieldName nodeClass]
    [#if nodeClass?? && isJtbParseTree() && topLevelExpansion]
       [#-- Determine the name of the node field containing the reference to a synthetic syntax node --]
-      [#var fieldName = nodeClass?uncap_first]
+      [#var fieldName = nodeClass.uncap_first]
       [#var fieldOrdinal]
       [#if jtbNameMap[nodeClass]??]
          [#-- Allow for JTB-style syntactic node names (but exclude Token and <non-terminal> ). --]
@@ -470,13 +470,13 @@ ${is}    self.restore_call_stack(${callStackSizeVar})
 
 [#macro buildTreeNode production treeNodeBehavior nodeVarName indent]
 [#-- FIXME: production is not used here --]
-[#var is = ""?right_pad(indent)]
+[#var is = "".right_pad(indent)]
 [@createNode nodeClassName(treeNodeBehavior), nodeVarName, indent /]
 [/#macro]
 
 [#--  Boilerplate code to create the node variable --]
 [#macro createNode nodeName nodeVarName indent]
-[#var is = ""?right_pad(indent)]
+[#var is = "".right_pad(indent)]
 ${is}${nodeVarName} = None
 ${is}if self.build_tree:
 ${is}    ${nodeVarName} = ${nodeName}([#if settings::nodeUsesParser]self[#else]self.input_source[/#if])
@@ -484,7 +484,7 @@ ${is}    self.open_node_scope(${nodeVarName})
 [/#macro]
 
 [#macro buildTreeNodeEpilogue treeNodeBehavior nodeVarName parseExceptionVar indent]
-[#var is = ""?right_pad(indent)]
+[#var is = "".right_pad(indent)]
 ${is}    if ${nodeVarName}:
 ${is}        if ${parseExceptionVar} is None:
       [#if treeNodeBehavior?? && treeNodeBehavior::assignment??]
@@ -598,7 +598,7 @@ ${is}        self.clear_node_scope()
 [/#function]
 
 [#macro BuildExpansionCode expansion indent cardinalitiesVar]
-[#var is = ""?right_pad(indent)]
+[#var is = "".right_pad(indent)]
 [#var classname = expansion::simpleName]
 [#--${is}# DBG > BuildExpansionCode ${indent} ${classname} --]
     [#var prevLexicalStateVar = CU::newVarName("previousLexicalState")]
@@ -666,7 +666,7 @@ ${is}self.uncache_tokens()
 [#-- The following macros build expansions that never build tree nodes. --]
 
 [#macro BuildCodeFailure fail, indent]
-[#var is = ""?right_pad(indent)]
+[#var is = "".right_pad(indent)]
    #if fail::hasRunnableBlock
      #if fail::code::class::simpleName = "RawCode"
 ${fail::code}
@@ -674,14 +674,14 @@ ${fail::code}
 ${globals.translateCodeBlock(fail::code, indent)}[#rt]
      #endif
    #elif fail::exp??
-${is}self.fail('Failure: %s' % "${fail::exp?j_string}")
+${is}self.fail('Failure: %s' % "${fail::exp.j_string}")
    #else
 ${is}self.fail('Failure')
    #endif
 [/#macro]
 
 [#macro BuildAssertionCode assertion indent cardinalitiesVar]
-[#var is = ""?right_pad(indent)]
+[#var is = "".right_pad(indent)]
    #if !assertion::appliesInRegularParsing
 ${is}pass
      #return
@@ -690,7 +690,7 @@ ${is}pass
 [#if assertion::messageExpression??]
   [#set optionalPart = " + " + globals.translateExpression(assertion::messageExpression)]
 [/#if]
-[#var assertionMessage = "Assertion at: " + assertion::location?j_string + " failed."]
+[#var assertionMessage = "Assertion at: " + assertion::location.j_string + " failed."]
 [#if assertion::lookBehind??]
 ${is}if [#if !assertion::lookBehind::negated]not [/#if]self.${assertion::lookBehind::routineName}():
 ${is}    self.fail("${assertionMessage}"${optionalPart})
@@ -702,7 +702,7 @@ ${is}if not (${assertion::rawCode}):
 ${is}    self.fail("${assertionMessage}"${optionalPart})
 [#elif assertion::cardinalityConstraint?? && cardinalitiesVar?? && (cardinalitiesVar.length() > 0)]
 ${is}if not ${cardinalitiesVar}.choose(${assertion::assertionIndex}, False):
-${is}    self.fail('Maximum cardinality constraint at: ${assertion::location?j_string} exceeded.')
+${is}    self.fail('Maximum cardinality constraint at: ${assertion::location.j_string} exceeded.')
 [/#if]
 [#if assertion::expansion??]
 ${is}if [#if !assertion::expansionNegated]not [/#if]self.${assertion::expansion::scanRoutineName}():
@@ -711,7 +711,7 @@ ${is}    self.fail("${assertionMessage}"${optionalPart})
 [/#macro]
 
 [#macro BuildCodeTokenTypeActivation activation indent]
-[#var is = ""?right_pad(indent)]
+[#var is = "".right_pad(indent)]
 [#--${is}# DBG > BuildCodeTokenTypeActivation ${indent} --]
 [#if activation::deactivate]
 ${is}self.deactivate_token_types(
@@ -726,7 +726,7 @@ ${is})
 [/#macro]
 
 [#macro BuildCodeTryBlock tryblock indent cardinalitiesVar]
-[#var is = ""?right_pad(indent)]
+[#var is = "".right_pad(indent)]
 [#--${is}# DBG > BuildCodeTryBlock ${indent} --]
 ${is}try:
 ${BuildCode(tryblock::nestedExpansion, indent + 4, cardinalitiesVar)}[#rt]
@@ -740,7 +740,7 @@ ${is}${tryblock::finallyBlock!}
 [/#macro]
 
 [#macro BuildCodeAttemptBlock attemptBlock indent cardinalitiesVar]
-[#var is = ""?right_pad(indent)]
+[#var is = "".right_pad(indent)]
 [#--${is}# DBG > BuildCodeAttemptBlock ${indent} --]
 ${is}try:
 ${is}    self.stash_parse_state()
@@ -757,10 +757,10 @@ ${BuildCode(attemptBlock::recoveryExpansion, indent + 4, "")}
 [#-- The following macros build expansions that might build tree nodes (could be called "syntactic" nodes). --]
 
 [#macro BuildCodeNonTerminal nonterminal indent]
-[#var is = ""?right_pad(indent)]
+[#var is = "".right_pad(indent)]
 [#--${is}# DBG > BuildCodeNonTerminal ${indent} ${nonterminal.production.name} --]
    [#var production = nonterminal::production]
-${is}self.push_onto_call_stack('${nonterminal::containingProduction::name}', '${nonterminal::inputSource?j_string}', ${nonterminal::beginLine}, ${nonterminal::beginColumn})
+${is}self.push_onto_call_stack('${nonterminal::containingProduction::name}', '${nonterminal::inputSource.j_string}', ${nonterminal::beginLine}, ${nonterminal::beginColumn})
 [#if settings::faultTolerant]
    [#var followSet = nonterminal::followSet]
    [#if !followSet::incomplete]
@@ -783,7 +783,7 @@ ${is}    self.pop_call_stack()
 [/#macro]
 
 [#macro AcceptNonTerminal nonterminal indent]
-[#var is = ""?right_pad(indent)]
+[#var is = "".right_pad(indent)]
    [#var lhsClassName = nonterminal::production::nodeName]
    [#var expressedLHS = getLhsPattern(nonterminal::assignment, lhsClassName)]
    [#var impliedLHS = "@"]
@@ -814,7 +814,7 @@ ${is}    ${expressedLHS.replace("@", impliedLHS.replace("@", "None"))}
 [/#macro]
 
 [#macro BuildCodeTerminal terminal indent]
-[#var is = ""?right_pad(indent)]
+[#var is = "".right_pad(indent)]
 [#--${is}# DBG > BuildCodeRegexp ${indent} --]
    [#var LHS = getLhsPattern(terminal::assignment, "Token"),
          regexp = terminal::regexp ]
@@ -835,7 +835,7 @@ ${is}${LHS.replace("@", "self.consume_token(" + regexp::label + ", " + tolerant 
 [/#macro]
 
 [#macro BuildCodeZeroOrOne zoo indent cardinalitiesVar]
-[#var is = ""?right_pad(indent)]
+[#var is = "".right_pad(indent)]
 [#--${is}# DBG > BuildCodeZeroOrOne ${indent} ${zoo.nestedExpansion.class.simpleName} --]
     [#if zoo::nestedExpansion::class::simpleName = "ExpansionChoice"]
 ${BuildCode(zoo::nestedExpansion, indent, cardinalitiesVar)}[#rt]
@@ -847,7 +847,7 @@ ${BuildCode(zoo::nestedExpansion, indent + 4, cardinalitiesVar)}[#rt]
 [/#macro]
 
 [#macro BuildCodeOneOrMore oom indent]
-[#var is = ""?right_pad(indent)]
+[#var is = "".right_pad(indent)]
 [#--${is}# DBG > BuildCodeOneOrMore ${indent} --]
 [#var nestedExp = oom::nestedExpansion, prevInFirstVarName = inFirstVarName/]
 [#var cardinalitiesVar = ""]
@@ -871,14 +871,14 @@ ${is}    if not (${ExpansionCondition(oom::nestedExpansion, cardinalitiesVar)}):
       [/#if]
 [#if oom::minCardinalityConstrained && oom::cardinalityContainer]
 ${is}if not ${cardinalitiesVar}.check_cardinality(False):
-${is}    self.fail('Minimum cardinality constraint(s) for: ${oom::location?j_string} not met.')
+${is}    self.fail('Minimum cardinality constraint(s) for: ${oom::location.j_string} not met.')
 [/#if]
    [#set inFirstVarName = prevInFirstVarName /]
 [#--${is}# DBG < BuildCodeOneOrMore ${indent} --]
 [/#macro]
 
 [#macro BuildCodeZeroOrMore zom indent]
-[#var is = ""?right_pad(indent)]
+[#var is = "".right_pad(indent)]
 [#--${is}# DBG > BuildCodeZeroOrMore ${indent} --]
 [#var cardinalitiesVar = ""]
 [#if zom::cardinalityContainer]
@@ -895,13 +895,13 @@ ${is}    ${cardinalitiesVar}.commit_iteration(True)
 [/#if]
 [#if zom::minCardinalityConstrained && zom::cardinalityContainer]
 ${is}if not ${cardinalitiesVar}.check_cardinality(False):
-${is}    self.fail('Minimum cardinality constraint(s) for: ${zom::location?j_string} not met.')
+${is}    self.fail('Minimum cardinality constraint(s) for: ${zom::location.j_string} not met.')
 [/#if]
 [#--${is}# DBG < BuildCodeZeroOrMore ${indent} --]
 [/#macro]
 
 [#macro RecoveryLoop loopExpansion indent cardinalitiesVar]
-[#var is = ""?right_pad(indent)]
+[#var is = "".right_pad(indent)]
 [#--${is}# DBG > RecoveryLoop ${indent} --]
    [#if !settings::faultTolerant || !loopExpansion::requiresRecoverMethod]
 ${BuildCode(loopExpansion::nestedExpansion, indent, cardinalitiesVar)}[#rt]
@@ -923,7 +923,7 @@ ${is}        self.last_consumed_token.skipped = True
 ${is}        if self.debug_fault_tolerant:
 ${is}            logger.info('Skipping token %s at: %s', self.last_consumed_token.image, self.last_consumed_token.location)
 ${is}    if self.debug_fault_tolerant:
-${is}        logger.info('Repeat re-sync for expansion at: ${loopExpansion::location?j_string}');
+${is}        logger.info('Repeat re-sync for expansion at: ${loopExpansion::location.j_string}');
 ${is}    self.${loopExpansion::recoverMethodName}();
 ${is}    if self.pending_recovery: raise
    [/#if]
@@ -931,7 +931,7 @@ ${is}    if self.pending_recovery: raise
 [/#macro]
 
 #macro BuildCodeChoice choice indent cardinalitiesVar
-#var is = ""?right_pad(indent)
+#var is = "".right_pad(indent)
 [#--${is}# DBG > BuildCodeChoice ${indent} --]
 #list choice::choices as expansion
   #if expansion::enteredUnconditionally
@@ -959,20 +959,20 @@ ${is}else:  # *
 ${is}    break
 [#elif choice::parent::simpleName = "OneOrMore"][#t]
 ${is}elif (${inFirstVarName}): # +
-${is}    self.push_onto_call_stack('${currentProduction::name}', '${choice::inputSource?j_string}', ${choice::beginLine}, ${choice::beginColumn})
+${is}    self.push_onto_call_stack('${currentProduction::name}', '${choice::inputSource.j_string}', ${choice::beginLine}, ${choice::beginColumn})
 ${is}    raise ParseException(self, expected=self.${choice::firstSetVarName})
 ${is}else:
 ${is}    break
 [#elif choice::parent::simpleName != "ZeroOrOne"][#t]
 ${is}else:  # not *, +, or ?
-${is}    self.push_onto_call_stack('${currentProduction::name}', '${choice::inputSource?j_string}', ${choice::beginLine}, ${choice::beginColumn})
+${is}    self.push_onto_call_stack('${currentProduction::name}', '${choice::inputSource.j_string}', ${choice::beginLine}, ${choice::beginColumn})
 ${is}    raise ParseException(self, expected=self.${choice::firstSetVarName})
 [/#if]
 [#--${is}# DBG < BuildCodeChoice ${indent} --]
 /#macro
 
 [#macro BuildCodeSequence expansion indent cardinalitiesVar]
-[#var is = ""?right_pad(indent)]
+[#var is = "".right_pad(indent)]
 [#--${is}# DBG > BuildCodeSequence ${indent} --]
    [#list expansion::units as subexp]
 ${BuildCode(subexp, indent, cardinalitiesVar)}[#rt]

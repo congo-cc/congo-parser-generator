@@ -28,7 +28,7 @@
   #-- user ngx reported running into this with his SQL grammar
 
   #var chunkSize = 2000 #-- arbitrary number. I think it could actually be up to a bit over 6000.
-  #var numChunks = 1 + (lexicalState::canonicalSets.size() / chunkSize)?int
+  #var numChunks = 1 + (lexicalState::canonicalSets.size() / chunkSize).int
   #var canonicalSets = lexicalState::canonicalSets
 
   private static void NFA_FUNCTIONS_init() {

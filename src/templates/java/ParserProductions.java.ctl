@@ -270,7 +270,7 @@
 #function imputedJtbFieldName nodeClass
    #if nodeClass?? && isJtbParseTree() && topLevelExpansion
       #-- Determine the name of the node field containing the reference to a synthetic syntax node --
-      #var fieldName = nodeClass?uncap_first,
+      #var fieldName = nodeClass.uncap_first,
            fieldOrdinal
       #if jtbNameMap[nodeClass]??
          #-- Allow for JTB-style syntactic node names (but exclude Token and <non-terminal> ). --
@@ -564,7 +564,7 @@
       #var lhsName = assignment::name
       #if assignment::propertyAssignment
          #-- This is the assignment of the current node's effective value to a property of the production node --
-         #set lhsName = lhsName?cap_first
+         #set lhsName = lhsName.cap_first
          #if lhsType?? && assignment::declarationOf
             #-- This is a declaration assignment; inject required property --
             ${injectDeclaration(lhsType, assignment::name, assignment)}
@@ -707,7 +707,7 @@
       ${fail::code}
     #else
       pushOntoCallStack("${fail::containingProduction::name}",
-                        "${fail::inputSource?j_string}",
+                        "${fail::inputSource.j_string}",
                         ${fail::beginLine}, ${fail::beginColumn});
       #if fail::exp??
        fail("Failure: " + ${fail::exp}, getToken(1));
@@ -722,7 +722,7 @@
    #if assertion::messageExpression??
       #set optionalPart = " + " + assertion::messageExpression
    #endif
-   #var assertionMessage = "Assertion at: " + assertion::location?j_string + " failed. "
+   #var assertionMessage = "Assertion at: " + assertion::location.j_string + " failed. "
    #if assertion::lookBehind??
        if (
          ${!assertion::lookBehind::negated ?: "!"}
@@ -730,7 +730,7 @@
        )
        {
          pushOntoCallStack("${assertion::containingProduction::name}",
-                        "${assertion::inputSource?j_string}",
+                        "${assertion::inputSource.j_string}",
                         ${assertion::beginLine}, ${assertion::beginColumn});
          fail("${assertionMessage}"${optionalPart},
               ${assertion::locationExpression!"getToken(1)"});
@@ -738,7 +738,7 @@
    #elif assertion::assertionExpression??
       if (!(${assertion::assertionExpression})) {
          pushOntoCallStack("${assertion::containingProduction::name}",
-                        "${assertion::inputSource?j_string}",
+                        "${assertion::inputSource.j_string}",
                         ${assertion::beginLine}, ${assertion::beginColumn});
          fail("${assertionMessage}"${optionalPart},
               ${assertion::locationExpression!"getToken(1)"});
@@ -746,21 +746,21 @@
    #elif assertion::rawCode?? && !assertion::rawCode::wrongLanguageIgnore
       if (!(${assertion::rawCode})) {
          pushOntoCallStack("${assertion::containingProduction::name}",
-                        "${assertion::inputSource?j_string}",
+                        "${assertion::inputSource.j_string}",
                         ${assertion::beginLine}, ${assertion::beginColumn});
          fail("${assertionMessage}"${optionalPart},
               ${assertion::locationExpression!"getToken(1)"});
       }
    #elif assertion::cardinalityConstraint??
       if (!${cardinalitiesVar!"cardinalities"}.choose(${assertion::assertionIndex}, false)) {
-         fail("Maximum cardinality constraint at: ${assertion::location?j_string} exceeded.", getToken(1));
+         fail("Maximum cardinality constraint at: ${assertion::location.j_string} exceeded.", getToken(1));
       }
    #endif
    #if assertion::expansion??
       if (${!assertion::expansionNegated ?: "!"}
       ${assertion::expansion::scanRoutineName}()) {
          pushOntoCallStack("${assertion::containingProduction::name}",
-                        "${assertion::inputSource?j_string}",
+                        "${assertion::inputSource.j_string}",
                         ${assertion::beginLine}, ${assertion::beginColumn});
          fail("${assertionMessage}"${optionalPart},
              ${assertion::locationExpression!"getToken(1)"});
@@ -812,7 +812,7 @@
 #-- The following macros build expansions that might build tree nodes (could be called "syntactic" nodes). --
 
 #macro BuildCodeNonTerminal nonterminal
-   pushOntoCallStack("${nonterminal::containingProduction::name}", "${nonterminal::inputSource?j_string}", ${nonterminal::beginLine}, ${nonterminal::beginColumn});
+   pushOntoCallStack("${nonterminal::containingProduction::name}", "${nonterminal::inputSource.j_string}", ${nonterminal::beginLine}, ${nonterminal::beginColumn});
    #if settings::faultTolerant
       #var followSet = nonterminal::followSet
       #if !followSet::incomplete
@@ -876,7 +876,7 @@
    #var LHS = getLhsPattern(terminal::assignment, "Token"), regexp = terminal::regexp
    #var lambda = terminal::recoveryBlock!
    #if !settings::faultTolerant
-       pushOntoCallStack("${currentProduction::name}","${terminal::inputSource?j_string}", ${terminal::beginLine}, ${terminal::beginColumn});
+       pushOntoCallStack("${currentProduction::name}","${terminal::inputSource.j_string}", ${terminal::beginLine}, ${terminal::beginColumn});
        try {
            ${LHS.replace("@", "consumeToken(" + regexp::label + ")")};
        }
@@ -894,7 +894,7 @@
             ${followSetVarName}.addAll(outerFollowSet);
          }
        #endif
-       pushOntoCallStack("${currentProduction::name}","${terminal::inputSource?j_string})", ${terminal::beginLine}, ${terminal::endLine});
+       pushOntoCallStack("${currentProduction::name}","${terminal::inputSource.j_string})", ${terminal::beginLine}, ${terminal::endLine});
        try {
            ${LHS.replace("@", "consumeToken(" + regexp::label + ", " + tolerant + ", " + followSetVarName + ", () -> {" + lambda + ";})")};
        }
@@ -941,7 +941,7 @@
    }
    #if oom::minCardinalityConstrained
       if (!${cardinalitiesVar}.checkCardinality(false))  {
-         fail("Minimum cardinality constraint(s) for: ${oom::location?j_string} not met.", getToken(1));
+         fail("Minimum cardinality constraint(s) for: ${oom::location.j_string} not met.", getToken(1));
       }
    #endif
    #set inFirstVarName = prevInFirstVarName
@@ -965,7 +965,7 @@
    }
    #if zom::minCardinalityConstrained
       if (!${cardinalitiesVar}.checkCardinality(false))  {
-         fail("Minimum cardinality constraint(s) for: ${zom::location?j_string} not met.", getToken(1));
+         fail("Minimum cardinality constraint(s) for: ${zom::location.j_string} not met.", getToken(1));
       }
    #endif
 #endmacro
@@ -1031,14 +1031,14 @@
       }
    #elif choice::parent::simpleName = "OneOrMore"
        else if (${inFirstVarName}) {
-           pushOntoCallStack("${currentProduction::name}", "${choice::inputSource?j_string}", ${choice::beginLine}, ${choice::beginColumn});
+           pushOntoCallStack("${currentProduction::name}", "${choice::inputSource.j_string}", ${choice::beginLine}, ${choice::beginColumn});
            throw new ParseException(getToken(1), ${choice::firstSetVarName}, parsingStack);
        } else {
            break;
        }
    #elif choice::parent::simpleName != "ZeroOrOne"
        else {
-           pushOntoCallStack("${currentProduction::name}", "${choice::inputSource?j_string}", ${choice::beginLine}, ${choice::beginColumn});
+           pushOntoCallStack("${currentProduction::name}", "${choice::inputSource.j_string}", ${choice::beginLine}, ${choice::beginColumn});
            throw new ParseException(getToken(1), ${choice::firstSetVarName}, parsingStack);
         }
    #endif

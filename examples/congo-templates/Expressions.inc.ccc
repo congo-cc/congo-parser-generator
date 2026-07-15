@@ -163,7 +163,7 @@ PrimaryExpression(boolean noSpace)#void :
         ]
       ) #DefaultToExpression(+1)
       |
-      "." <ID> #MethodReference(3)
+      "." <ID> #ExtensionOrMethod(3)
     )
   )*
 ;
@@ -1067,7 +1067,7 @@ INJECT HashLiteral :
     }
 }
 
-INJECT MethodReference :
+INJECT ExtensionOrMethod :
     import org.congocc.templates.core.Environment;
     import org.congocc.templates.core.reflection.JavaMethodCall;
     import org.congocc.templates.core.reflection.JavaConstructorCall;
@@ -1085,7 +1085,7 @@ INJECT MethodReference :
         String methodName = get(2).toString();
         Extension ext = getExtension(methodName);
         if (ext != null) {
-            return ext.get(env, this);
+            return ext.get(this, env);
         }
         if (methodName.equals("new")) {
             return new JavaConstructorCall(target, this);

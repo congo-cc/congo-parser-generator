@@ -8,7 +8,7 @@ ${"#"}pragma warning disable 8632
       JAVA_UNICODE_ESCAPE = settings::javaUnicodeEscape ?: "true" : "false",
       ENSURE_FINAL_EOL = settings::ensureFinalEOL ?: "true" : "false",
       PRESERVE_TABS = settings::preserveTabs ?: "true" : "false",
-      TERMINATING_STRING = "\"" + settings::terminatingString?j_string + "\""
+      TERMINATING_STRING = "\"" + settings::terminatingString.j_string + "\""
 #var BaseToken = settings::baseTokenClassName
 [#-- if settings.treeBuildingEnabled || settings.rootAPIPackage]
   #set BaseToken = "Node.TerminalNode"

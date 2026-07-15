@@ -17,8 +17,7 @@ import static org.congocc.templates.core.Wrap.*;
 public class stringBI extends ExpressionEvaluatingExtension {
 
     @Override
-    public Object get(Environment env, ExtensionExpression caller,
-        Object model)
+    public Object get(Environment env, ExtensionExpression caller, Object model)
     {
         if (model instanceof Number n) {
             return new NumberFormatter(n, env);
