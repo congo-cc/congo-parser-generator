@@ -6,7 +6,7 @@ import org.congocc.templates.core.nodes.generated.TemplateNode;
 import org.congocc.templates.extensions.StringFunctions.RegexMatchModel;
 import static org.congocc.templates.core.Wrap.unwrap;
 
-public class groupsBI extends ExpressionEvaluatingExpression
+public class groupsBI extends ExpressionEvaluatingExtension
 {
     @Override
     public Object get(Environment env, ExtensionExpression caller, Object model) {

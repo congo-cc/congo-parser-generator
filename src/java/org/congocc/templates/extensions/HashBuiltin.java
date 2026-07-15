@@ -14,7 +14,7 @@ import java.util.Map;
  * Implementation of ?resolve built-in
  */
 
-public abstract class HashBuiltin extends ExpressionEvaluatingExpression {
+public abstract class HashBuiltin extends ExpressionEvaluatingExtension {
 
     @Override
     public Object get(Environment env, ExtensionExpression caller, Object lhs)

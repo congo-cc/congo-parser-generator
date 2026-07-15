@@ -26,7 +26,7 @@ import static org.congocc.templates.core.Wrap.*;
  * Implementations of ?substring and other
  * standard functions that operate on strings
  */
-public abstract class StringFunctions extends ExpressionEvaluatingExpression {
+public abstract class StringFunctions extends ExpressionEvaluatingExtension {
 
     static private HashMap<String, Pattern> patternLookup = new HashMap<String, Pattern>();
     static private LinkedList<String> patterns = new LinkedList<String>();

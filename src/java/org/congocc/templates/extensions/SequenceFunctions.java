@@ -20,7 +20,7 @@ import static org.congocc.templates.core.Wrap.*;
 /**
  * Implementations of builtins for standard functions that operate on sequences
  */
-public abstract class SequenceFunctions extends ExpressionEvaluatingExpression {
+public abstract class SequenceFunctions extends ExpressionEvaluatingExtension {
 
     static final int KEY_TYPE_STRING = 1;
     static final int KEY_TYPE_NUMBER = 2;

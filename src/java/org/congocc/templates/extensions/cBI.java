@@ -8,7 +8,7 @@ import org.congocc.templates.core.nodes.ExtensionExpression;
 /**
  * Implementation of ?c built-in
  */
-public class cBI extends ExpressionEvaluatingExpression {
+public class cBI extends ExpressionEvaluatingExtension {
 
     @Override
     public Object get(Environment env, ExtensionExpression caller, Object model)

@@ -6,10 +6,10 @@ import org.congocc.templates.core.nodes.ExtensionExpression;
 public abstract class ExpressionEvaluatingExtension implements Extension {
 
     @Override
-    public Object get(Environment env, ExtensionExtension caller)
+    public Object get(Environment env, ExtensionExpression caller)
     {
         return get(env, caller, caller.getTarget().evaluate(env));
     }
 
-    public abstract Object get(Environment env, Extensiontension caller, Object lhs);
+    public abstract Object get(Environment env, ExtensionExpression caller, Object lhs);
 }

@@ -8,7 +8,7 @@ import java.util.function.Function;
 /**
  * Implementation of ?instanceof built-in
  */
-public class instanceofBI extends ExpressionEvaluatingExpression {
+public class instanceofBI extends ExpressionEvaluatingExtension {
 
     @Override
     public Function<String,Boolean> get(Environment env, ExtensionExpression caller, Object object) {

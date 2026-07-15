@@ -8,7 +8,7 @@ import org.congocc.templates.TemplateException;
 
 import static org.congocc.templates.core.Wrap.*;
 
-public class numberBI extends ExpressionEvaluatingExpression
+public class numberBI extends ExpressionEvaluatingExtension
 {
     @Override
     public Object get(Environment env, ExtensionExpression caller, Object value) {

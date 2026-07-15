@@ -6,7 +6,7 @@ import org.congocc.templates.core.nodes.generated.Expression;
 import org.congocc.templates.core.parser.CTLLexer;
 import org.congocc.templates.core.parser.CTLParser;
 
-public class evalBI extends ExpressionEvaluatingExpression {
+public class evalBI extends ExpressionEvaluatingExtension {
 
     @Override
     public Object get(Environment env, ExtensionExpression caller, Object model) {

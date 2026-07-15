@@ -13,7 +13,7 @@ import java.math.RoundingMode;
  * Implementation of ?byte, ?int, ?double, ?float,
  * ?short and ?long built-ins
  */
-public class NumericalCast extends ExpressionEvaluatingExpression {
+public class NumericalCast extends ExpressionEvaluatingExtension {
     private static final BigDecimal half = new BigDecimal("0.5");
     private static final MathContext mc = new MathContext(0, RoundingMode.FLOOR);
 

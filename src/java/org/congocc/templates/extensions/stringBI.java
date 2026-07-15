@@ -14,7 +14,7 @@ import static org.congocc.templates.core.Wrap.*;
  * Implementation of ?string built-in
  */
 
-public class stringBI extends ExpressionEvaluatingExpression {
+public class stringBI extends ExpressionEvaluatingExtension {
 
     @Override
     public Object get(Environment env, ExtensionExpression caller,

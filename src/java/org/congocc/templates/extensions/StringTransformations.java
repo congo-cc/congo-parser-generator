@@ -9,7 +9,7 @@ import org.congocc.templates.core.nodes.ExtensionExpression;
  * built-ins that change a string into another string
  */
 
-public abstract class StringTransformations extends ExpressionEvaluatingExpression {
+public abstract class StringTransformations extends ExpressionEvaluatingExtension {
 
     @Override
     public Object get(Environment env, ExtensionExpression caller, Object lhs) {

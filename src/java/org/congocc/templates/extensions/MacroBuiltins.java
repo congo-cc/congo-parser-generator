@@ -10,7 +10,7 @@ import static org.congocc.templates.core.Wrap.JAVA_NULL;
  * Implementations of ?scope and ?namespace built-ins
  * that expect macro on the lhs.
  */
-public abstract class MacroBuiltins extends ExpressionEvaluatingExpression {
+public abstract class MacroBuiltins extends ExpressionEvaluatingExtension {
 
     @Override
     public Object get(Environment env, ExtensionExpression caller,
