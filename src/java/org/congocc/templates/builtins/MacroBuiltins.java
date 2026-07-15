@@ -4,7 +4,7 @@ import org.congocc.templates.core.Environment;
 import org.congocc.templates.core.nodes.BuiltInExpression;
 import org.congocc.templates.core.nodes.generated.Macro;
 import org.congocc.templates.core.nodes.generated.TemplateNode;
-import static org.congocc.templates.core.variables.Wrap.JAVA_NULL;
+import static org.congocc.templates.core.Wrap.JAVA_NULL;
 
 /**
  * Implementations of ?scope and ?namespace built-ins

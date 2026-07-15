@@ -3,7 +3,7 @@ package org.congocc.templates.builtins;
 import org.congocc.templates.core.Environment;
 import org.congocc.templates.core.nodes.BuiltInExpression;
 import org.congocc.templates.core.nodes.generated.TemplateNode;
-import org.congocc.templates.core.variables.InvalidReferenceException;
+import org.congocc.templates.core.InvalidReferenceException;
 
 import java.math.BigDecimal;
 import java.math.MathContext;

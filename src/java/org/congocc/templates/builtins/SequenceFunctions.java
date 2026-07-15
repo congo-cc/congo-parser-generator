@@ -16,7 +16,7 @@ import org.congocc.templates.core.reflection.VarArgsFunction;
 import org.congocc.templates.TemplateHash;
 import org.congocc.templates.utility.StringUtil;
 
-import static org.congocc.templates.core.variables.Wrap.*;
+import static org.congocc.templates.core.Wrap.*;
 
 /**
  * Implementations of builtins for standard functions that operate on sequences

@@ -4,7 +4,7 @@ import org.congocc.templates.core.Environment;
 import org.congocc.templates.core.nodes.BuiltInExpression;
 import org.congocc.templates.core.nodes.generated.TemplateNode;
 import org.congocc.templates.builtins.StringFunctions.RegexMatchModel;
-import static org.congocc.templates.core.variables.Wrap.unwrap;
+import static org.congocc.templates.core.Wrap.unwrap;
 
 public class groupsBI extends ExpressionEvaluatingBuiltIn
 {

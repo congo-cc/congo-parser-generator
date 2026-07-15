@@ -16,8 +16,8 @@ INJECT Expression :
    import org.congocc.templates.core.EvaluationException;
    import org.congocc.templates.TemplateSequence;
    import java.lang.reflect.Array;
-   import org.congocc.templates.core.variables.WrappedVariable;
-   import static org.congocc.templates.core.variables.Wrap.*;
+   import org.congocc.templates.core.WrappedVariable;
+   import static org.congocc.templates.core.Wrap.*;
 {
     public abstract Object evaluate(Environment env);
 
@@ -94,7 +94,7 @@ TernaryExpression :
 
 INJECT TernaryExpression :
    import org.congocc.templates.core.Environment;
-   import static org.congocc.templates.core.variables.Wrap.LOOSE_NULL;
+   import static org.congocc.templates.core.Wrap.LOOSE_NULL;
    implements Expression
 {
     public Object evaluate(Environment env) {
@@ -194,9 +194,9 @@ INJECT ParentheticalExpression :
 INJECT PropertyReference :
     import org.congocc.templates.core.Environment;
     import org.congocc.templates.core.reflection.ReflectionCode;
-    import org.congocc.templates.core.variables.scope.Scope;
+    import org.congocc.templates.core.scope.Scope;
     import org.congocc.templates.TemplateHash;
-    import static org.congocc.templates.core.variables.Wrap.*;
+    import static org.congocc.templates.core.Wrap.*;
     implements Expression
 {
     public Expression getTarget() {
@@ -331,7 +331,7 @@ INJECT AdditiveExpression :
     import org.congocc.templates.core.ArithmeticEngine;
     import org.congocc.templates.core.Environment;
     import org.congocc.templates.core.EvaluationException;
-    import static org.congocc.templates.core.variables.Wrap.*;
+    import static org.congocc.templates.core.Wrap.*;
     implements Expression;
 {
 
@@ -411,7 +411,7 @@ INJECT MultiplicativeExpression :
    import org.congocc.templates.TemplateException;
    import org.congocc.templates.core.Environment;
    import org.congocc.templates.core.ArithmeticEngine;
-   import static org.congocc.templates.core.variables.Wrap.getNumber;
+   import static org.congocc.templates.core.Wrap.getNumber;
    implements Expression
 {
     public Expression getLeft() {
@@ -482,7 +482,7 @@ EqualityExpression :
 INJECT EqualityExpression :
     import org.congocc.templates.core.Environment;
     import org.congocc.templates.core.ArithmeticEngine;
-    import static org.congocc.templates.core.variables.Wrap.*;
+    import static org.congocc.templates.core.Wrap.*;
     implements Expression
 {
     public Expression getLeft() {
@@ -548,7 +548,7 @@ INJECT RelationalExpression :
     import org.congocc.templates.TemplateException;
     import org.congocc.templates.core.Environment;
     import org.congocc.templates.core.ArithmeticEngine;
-    import static org.congocc.templates.core.variables.Wrap.*;
+    import static org.congocc.templates.core.Wrap.*;
     implements Expression;
 {
     public Expression getLeft() {
@@ -598,7 +598,7 @@ INJECT RangeExpression :
    import org.congocc.templates.core.EvaluationException;
    import org.congocc.templates.core.Environment;
    import org.congocc.templates.TemplateException;
-   import static org.congocc.templates.core.variables.Wrap.getNumber;
+   import static org.congocc.templates.core.Wrap.getNumber;
    implements Expression
 {
     public Expression getLeft() {
@@ -734,8 +734,8 @@ INJECT ListLiteral :
   import java.util.List;
   import org.congocc.templates.core.Environment;
   import org.congocc.templates.TemplateException;
-  import org.congocc.templates.core.variables.scope.Scope;
-  import static org.congocc.templates.core.variables.Wrap.assertIsDefined;
+  import org.congocc.templates.core.scope.Scope;
+  import static org.congocc.templates.core.Wrap.assertIsDefined;
   implements Expression
 {
     public List<Expression> getElements() {
@@ -762,7 +762,7 @@ BuiltinVariable :
 ;
 
 INJECT BuiltinVariable :
-    import org.congocc.templates.core.variables.*;
+    import org.congocc.templates.core.*;
     import org.congocc.templates.core.Environment;
     import org.congocc.templates.core.parser.ParseException;
     import org.congocc.templates.TemplateFactory;
@@ -818,11 +818,10 @@ INJECT BuiltinVariable :
 }
 
 INJECT DefaultToExpression :
-    import org.congocc.templates.core.Environment;
-    import org.congocc.templates.core.variables.*;
-    import static org.congocc.templates.core.variables.Wrap.LOOSE_NULL;
-    import static org.congocc.templates.core.variables.Wrap.JAVA_NULL;
-    import static org.congocc.templates.core.variables.Wrap.assertIsDefined;
+    import org.congocc.templates.core.*;
+    import static org.congocc.templates.core.Wrap.LOOSE_NULL;
+    import static org.congocc.templates.core.Wrap.JAVA_NULL;
+    import static org.congocc.templates.core.Wrap.assertIsDefined;
     implements Expression
 {
 	public Expression getLeft() {
@@ -851,9 +850,9 @@ INJECT DefaultToExpression :
 
 INJECT ExistsExpression :
     import org.congocc.templates.core.Environment;
-    import org.congocc.templates.core.variables.InvalidReferenceException;
-    import static org.congocc.templates.core.variables.Wrap.JAVA_NULL;
-    import static org.congocc.templates.core.variables.Wrap.LOOSE_NULL;
+    import org.congocc.templates.core.InvalidReferenceException;
+    import static org.congocc.templates.core.Wrap.JAVA_NULL;
+    import static org.congocc.templates.core.Wrap.LOOSE_NULL;
     implements Expression
 {
 	public Expression getExpression() {
@@ -887,8 +886,8 @@ INJECT PositionalArgsList :
     import org.congocc.templates.core.EvaluationException;
     import org.congocc.templates.utility.UndeclaredThrowableException;
     import org.congocc.templates.core.nodes.ParameterList;
-    import static org.congocc.templates.core.variables.Wrap.assertIsDefined;
-    import static org.congocc.templates.core.variables.Wrap.JAVA_NULL;
+    import static org.congocc.templates.core.Wrap.assertIsDefined;
+    import static org.congocc.templates.core.Wrap.JAVA_NULL;
     extends ArgsList
 {
    public List<Object> getParameterSequence(Object target, Environment env) {
@@ -948,7 +947,7 @@ INJECT NamedArgsList :
     import org.congocc.templates.core.nodes.ParameterList;
     import org.congocc.templates.core.parser.ParseException;
     import org.congocc.templates.*;
-    import static org.congocc.templates.core.variables.Wrap.*;
+    import static org.congocc.templates.core.Wrap.*;
     extends ArgsList;
 {
 
@@ -1032,8 +1031,7 @@ HashLiteral :
 
 INJECT HashLiteral :
     import java.util.*;
-    import org.congocc.templates.core.Environment;
-    import org.congocc.templates.core.variables.*;
+    import org.congocc.templates.core.*;
     import org.congocc.templates.core.ast.CollectionAndSequence;
     implements Expression
 {

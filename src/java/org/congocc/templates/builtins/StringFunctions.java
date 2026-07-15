@@ -15,13 +15,13 @@ import java.util.function.Function;
 
 import org.congocc.templates.core.Environment;
 import org.congocc.templates.core.EvaluationException;
+import org.congocc.templates.core.TemplateBoolean;
 import org.congocc.templates.core.nodes.BuiltInExpression;
 import org.congocc.templates.core.reflection.JavaMethodCall;
 import org.congocc.templates.core.reflection.VarArgsFunction;
-import org.congocc.templates.TemplateBoolean;
 import org.congocc.templates.utility.StringUtil;
 
-import static org.congocc.templates.core.variables.Wrap.*;
+import static org.congocc.templates.core.Wrap.*;
 
 /**
  * Implementations of ?substring and other

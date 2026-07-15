@@ -446,7 +446,7 @@ INJECT Identifier :
 
 INJECT NullLiteral :
    import org.congocc.templates.core.Environment;
-   import static org.congocc.templates.core.variables.Wrap.JAVA_NULL;
+   import static org.congocc.templates.core.Wrap.JAVA_NULL;
    implements Expression
 {
     public Object evaluate(Environment env) {
@@ -456,7 +456,6 @@ INJECT NullLiteral :
 
 INJECT BooleanLiteral :
     import org.congocc.templates.core.Environment;
-    import org.congocc.templates.core.variables.*;
     implements Expression
 {
     public boolean isTrue(Environment env) {

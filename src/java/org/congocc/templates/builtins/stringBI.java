@@ -8,7 +8,7 @@ import org.congocc.templates.core.Environment;
 import org.congocc.templates.core.nodes.BuiltInExpression;
 import org.congocc.templates.TemplateHash;
 
-import static org.congocc.templates.core.variables.Wrap.*;
+import static org.congocc.templates.core.Wrap.*;
 
 /**
  * Implementation of ?string built-in

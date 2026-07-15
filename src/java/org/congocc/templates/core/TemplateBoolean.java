@@ -1,6 +1,4 @@
-package org.congocc.templates;
-
-import org.congocc.templates.core.variables.WrappedVariable;
+package org.congocc.templates.core;
 
 /**
  *

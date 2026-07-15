@@ -1,6 +1,6 @@
 package org.congocc.templates.core.nodes;
 
-import static org.congocc.templates.core.variables.Wrap.*;
+import static org.congocc.templates.core.Wrap.*;
 
 import org.congocc.templates.core.Environment;
 import org.congocc.templates.core.reflection.ReflectionCode;

@@ -166,11 +166,10 @@ ListBlock#IteratorBlock :
 
 INJECT IteratorBlock :
     import org.congocc.templates.core.*;
-    import org.congocc.templates.core.variables.*;
     import org.congocc.templates.core.scopes.BlockScope;
     import org.congocc.templates.core.scopes.LoopContext;
     import org.congocc.templates.TemplateHash;
-    import static org.congocc.templates.core.variables.Wrap.*;
+    import static org.congocc.templates.core.Wrap.*;
     implements TemplateElement
 {
     public boolean isOverMap() {
@@ -419,9 +418,8 @@ INJECT BlockAssignment :
     import java.io.StringWriter;
     import java.io.Writer;
     import org.congocc.templates.core.Environment;
-    import org.congocc.templates.core.variables.InvalidReferenceException;
-    import org.congocc.templates.core.variables.UserDirectiveBody;
-    import org.congocc.templates.core.variables.UserDirective;
+    import org.congocc.templates.core.InvalidReferenceException;
+    import org.congocc.templates.core.UserDirectiveBody;
     import org.congocc.templates.core.scopes.Scope;
     import org.congocc.templates.TemplateException;
     import org.congocc.templates.core.nodes.AssignmentInstruction;
@@ -507,9 +505,9 @@ INJECT IncludeInstruction :
     import org.congocc.templates.*;
     import org.congocc.templates.utility.StringUtil;
     import org.congocc.templates.core.Environment;
-    import org.congocc.templates.core.variables.InvalidReferenceException;
+    import org.congocc.templates.core.InvalidReferenceException;
     import org.congocc.templates.core.parser.ParseException;
-    import static org.congocc.templates.core.variables.Wrap.*;
+    import static org.congocc.templates.core.Wrap.*;
     implements TemplateElement
 {
     @Property Template template;
@@ -593,7 +591,7 @@ INJECT ImportDeclaration :
     import org.congocc.templates.Template;
     import org.congocc.templates.TemplateException;
     import org.congocc.templates.core.Environment;
-    import org.congocc.templates.core.variables.InvalidReferenceException;
+    import org.congocc.templates.core.InvalidReferenceException;
     implements TemplateElement
 {
     private String templatePath="";
@@ -824,9 +822,8 @@ INJECT UnifiedCall :
     import java.util.*;
     import org.congocc.templates.core.Environment;
     import org.congocc.templates.core.nodes.ParameterList;
-    import org.congocc.templates.core.variables.UserDirective;
     import org.congocc.templates.TemplateException;
-    import static org.congocc.templates.core.variables.Wrap.*;
+    import static org.congocc.templates.core.Wrap.*;
     implements TemplateElement
 {
     public Expression getNameExp() {
@@ -1011,7 +1008,7 @@ INJECT VarDirective :
    import java.util.*;
    import org.congocc.templates.core.*;
    import org.congocc.templates.core.scopes.Scope;
-   import static org.congocc.templates.core.variables.Wrap.*;
+   import static org.congocc.templates.core.Wrap.*;
    implements TemplateElement
 {
     private Map<String, Expression> vars = new LinkedHashMap<>();
@@ -1276,7 +1273,7 @@ INJECT TemplateHeaderElement :
     import java.util.*;
     import org.congocc.templates.*;
     import static org.congocc.templates.utility.StringUtil.*;
-    import static org.congocc.templates.core.variables.Wrap.*;
+    import static org.congocc.templates.core.Wrap.*;
 {
 
     private Map<String,Expression> params = new LinkedHashMap<>();

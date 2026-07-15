@@ -1,9 +1,9 @@
 package org.congocc.templates.core.nodes;
 
-import static org.congocc.templates.core.variables.Wrap.JAVA_NULL;
-import static org.congocc.templates.core.variables.Wrap.LOOSE_NULL;
-import static org.congocc.templates.core.variables.Wrap.unwrap;
-import static org.congocc.templates.core.variables.Wrap.wrap;
+import static org.congocc.templates.core.Wrap.JAVA_NULL;
+import static org.congocc.templates.core.Wrap.LOOSE_NULL;
+import static org.congocc.templates.core.Wrap.unwrap;
+import static org.congocc.templates.core.Wrap.wrap;
 import org.congocc.templates.core.reflection.*;
 import org.congocc.templates.core.EvaluationException;
 import org.congocc.templates.TemplateException;

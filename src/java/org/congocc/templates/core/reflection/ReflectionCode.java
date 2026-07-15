@@ -7,15 +7,15 @@ import java.math.BigInteger;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 
-import org.congocc.templates.TemplateBoolean;
+import org.congocc.templates.core.TemplateBoolean;
 import org.congocc.templates.core.EvaluationException;
 
 import java.lang.reflect.Array;
 import java.lang.reflect.Executable;
 
 import org.congocc.templates.core.parser.Node;
-import org.congocc.templates.core.variables.Wrap;
-import static org.congocc.templates.core.variables.Wrap.*;
+import org.congocc.templates.core.Wrap;
+import static org.congocc.templates.core.Wrap.*;
 
 /**
  * Code for invoking Java methods by reflection

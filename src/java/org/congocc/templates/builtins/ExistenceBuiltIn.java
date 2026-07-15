@@ -8,10 +8,10 @@ import org.congocc.templates.core.nodes.BuiltInExpression;
 import org.congocc.templates.core.nodes.generated.Expression;
 import org.congocc.templates.core.nodes.generated.ParentheticalExpression;
 import org.congocc.templates.core.reflection.VarArgsFunction;
-import org.congocc.templates.core.variables.InvalidReferenceException;
+import org.congocc.templates.core.InvalidReferenceException;
 import org.congocc.templates.TemplateHash;
 
-import static org.congocc.templates.core.variables.Wrap.*;
+import static org.congocc.templates.core.Wrap.*;
 
 public abstract class ExistenceBuiltIn implements BuiltIn {
     public Object get(Environment env, BuiltInExpression caller)

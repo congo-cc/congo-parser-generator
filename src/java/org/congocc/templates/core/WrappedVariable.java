@@ -1,4 +1,4 @@
-package org.congocc.templates.core.variables;
+package org.congocc.templates.core;
 
 /**
  * <p>This is a marker interface that indicates

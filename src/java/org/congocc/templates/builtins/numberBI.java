@@ -6,7 +6,7 @@ import org.congocc.templates.core.nodes.BuiltInExpression;
 import org.congocc.templates.core.nodes.generated.TemplateNode;
 import org.congocc.templates.TemplateException;
 
-import static org.congocc.templates.core.variables.Wrap.*;
+import static org.congocc.templates.core.Wrap.*;
 
 public class numberBI extends ExpressionEvaluatingBuiltIn
 {

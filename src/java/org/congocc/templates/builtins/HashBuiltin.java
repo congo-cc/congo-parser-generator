@@ -5,7 +5,7 @@ import org.congocc.templates.core.nodes.BuiltInExpression;
 import org.congocc.templates.core.nodes.generated.TemplateNode;
 import org.congocc.templates.TemplateHash;
 
-import static org.congocc.templates.core.variables.Wrap.*;
+import static org.congocc.templates.core.Wrap.*;
 
 import java.util.ArrayList;
 import java.util.Map;

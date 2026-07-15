@@ -13,8 +13,8 @@ import static org.congocc.templates.core.reflection.ReflectionCode.getCachedCons
 import static org.congocc.templates.core.reflection.ReflectionCode.invokeConstructor;
 import static org.congocc.templates.core.reflection.ReflectionCode.isCompatibleMethod;
 import static org.congocc.templates.core.reflection.ReflectionCode.isMoreSpecific;
-import static org.congocc.templates.core.variables.Wrap.assertIsDefined;
-import org.congocc.templates.core.variables.WrappedVariable;
+import static org.congocc.templates.core.Wrap.assertIsDefined;
+import org.congocc.templates.core.WrappedVariable;
 
 public class JavaConstructorCall implements VarArgsFunction<Object> {
 

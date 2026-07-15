@@ -21,7 +21,7 @@ import org.congocc.templates.core.nodes.generated.TemplateElement;
 import org.congocc.templates.core.scopes.*;
 import org.congocc.templates.*;
 
-import static org.congocc.templates.core.variables.Wrap.*;
+import static org.congocc.templates.core.Wrap.*;
 
 /**
  * Object that represents the runtime environment during template processing.
