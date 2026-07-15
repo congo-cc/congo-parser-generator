@@ -422,7 +422,7 @@ ${globals.translateCodeBlock(expansion, 1)}
         }
     [#return]
   [/#if]
-        ${(expansion_index == 0) ?: "if" : "else if"} ([@ExpansionCondition expansion /]) {
+        ${(expansion_index == 0) ? "if" : "else if"} ([@ExpansionCondition expansion /]) {
             [@BuildCode expansion /]
         }
 [/#list]
@@ -900,7 +900,7 @@ ${globals.translateCodeBlock(expansion, 12)}
             });
             let _prev_ste_${newID()} = self.scan_to_end;
             self.current_lookahead_production = "${nt::production::name}";
-            if !self.${nt::production::lookaheadMethodName}(${nt::scanToEnd ?: "true" : "false"}) {
+            if !self.${nt::production::lookaheadMethodName}(${nt::scanToEnd ? "true" : "false"}) {
                 self.scan_to_end = _prev_ste_${newVarIndex};
                 self.lookahead_stack.pop();
                 return false;
@@ -1183,7 +1183,7 @@ impl<'src> Parser<'src> {
             pos: 0,
             builder: AstBuilder::new(),
             build_tree: true,
-            tokens_are_nodes: ${settings::tokensAreNodes ?: "true" : "false"},
+            tokens_are_nodes: ${settings::tokensAreNodes ? "true" : "false"},
             call_stack: Vec::new(),
             currently_parsed_production: "",
             scan_pos: 0,

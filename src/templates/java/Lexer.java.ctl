@@ -18,11 +18,11 @@ import static ${settings::parserPackage}.${TOKEN}.TokenType.*;
    import ${settings::rootAPIPackage}.TokenSource;
 #endif
 
-#var PRESERVE_LINE_ENDINGS = settings::preserveLineEndings ?: "true" : "false",
-     JAVA_UNICODE_ESCAPE = settings::javaUnicodeEscape ?: "true" : "false",
-     PRESERVE_TABS = settings::preserveTabs ?: "true" : "false",
+#var PRESERVE_LINE_ENDINGS = settings::preserveLineEndings ? "true" : "false",
+     JAVA_UNICODE_ESCAPE = settings::javaUnicodeEscape ? "true" : "false",
+     PRESERVE_TABS = settings::preserveTabs ? "true" : "false",
      TERMINATING_STRING = "\"" + settings::terminatingString.j_string + "\"",
-     BaseToken = settings::treeBuildingEnabled ?: "Node.TerminalNode" : TOKEN
+     BaseToken = settings::treeBuildingEnabled ? "Node.TerminalNode" : TOKEN
 
 #macro EnumSet varName tokenNames
    #if !tokenNames
@@ -47,7 +47,7 @@ import java.util.*;
 #endif
 
 public
-${isFinal ?: "final" : ""}
+${isFinal ? "final" : ""}
 class ${settings::lexerClassName} extends TokenSource
 {
 
@@ -56,7 +56,7 @@ class ${settings::lexerClassName} extends TokenSource
   public enum LexicalState {
   #list lexerData::lexicalStates as lexicalState
      ${lexicalState::name}
-     ${lexicalState_has_next ?: ","}
+     ${lexicalState_has_next ? ","}
   #endlist
   }
   LexicalState lexicalState = LexicalState.values()[0];

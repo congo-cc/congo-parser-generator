@@ -32,12 +32,12 @@
   #var canonicalSets = lexicalState::canonicalSets
 
   private static void NFA_FUNCTIONS_init() {
-    NfaFunction[] functions = new NfaFunction[${numChunks > 1 ?: lexicalState::canonicalSets.size()}]
+    NfaFunction[] functions = new NfaFunction[${numChunks > 1 ? lexicalState::canonicalSets.size()}]
     #if numChunks == 1
     {
      #list canonicalSets as state
       ${lexicalState::name}::get${state::methodName}
-      ${state_has_next ?: ","}
+      ${state_has_next ? ","}
      #endlist
     };
     #else
@@ -86,7 +86,7 @@
         {
         #list nfaState::moveRanges as char
           ${globals::displayChar(char)}
-          ${char_has_next ?: ","}
+          ${char_has_next ? ","}
         #endlist
         };
     }

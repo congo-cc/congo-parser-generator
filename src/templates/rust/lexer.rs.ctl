@@ -88,7 +88,7 @@ fn ${state::methodName}(ch: u32, next_states: &mut [u64], valid_types: Option<&H
       [#set lastBlockStartIndex = nfaState_index]
       [#set useIf = true]
     [/#if]
-    ${useIf ?: "if" : "else if"} [@NfaStateCondition nfaState /] {
+    ${useIf ? "if" : "else if"} [@NfaStateCondition nfaState /] {
   [/#if]
   [#if nfaState::nextStateIndex >= 0]
         bitset_set(next_states, ${nfaState::nextStateIndex});

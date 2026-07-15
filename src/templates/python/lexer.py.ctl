@@ -91,7 +91,7 @@ def check_intervals(ranges, ch):
 def NFA_FUNCTIONS_${lexicalState::name}_init():
     functions = [
   #list lexicalState::canonicalSets as state
-        ${state::methodName}${state_has_next ?: ","}
+        ${state::methodName}${state_has_next ? ","}
   #endlist
     ]
   #if multipleLexicalStates
@@ -119,7 +119,7 @@ nfa_functions = NFA_FUNCTIONS_${lexicalState::name}_init()
   #var arrayName = nfaState::movesArrayName
 ${arrayName} = [
   #list nfaState::moveRanges as char
-    ${globals::displayChar(char)}${char_has_next ?: ","}
+    ${globals::displayChar(char)}${char_has_next ? ","}
   #endlist
 ]
 #endmacro
@@ -138,7 +138,7 @@ def ${nfaState::methodName}(ch, next_states, valid_types, already_matched_types)
                  If not, we continue in the same if-else block as before. --]
            #set lastBlockStartIndex = state_index, useElif = false
          #endif
-    ${useElif ?: "elif" : "if"} [@NfaStateCondition state /]:
+    ${useElif ? "elif" : "if"} [@NfaStateCondition state /]:
       #endif
         if valid_types is None or ${state::type::label} in valid_types:
       #if state::nextStateIndex >= 0
@@ -180,7 +180,7 @@ def ${nfaState::methodName}(ch, next_states, valid_types, already_matched_types)
                 If not, we continue in the same if-else block as before. --]
           #set lastBlockStartIndex = state_index, useElif = false
         #endif
-    ${useElif ?: "elif" : "if"} [@NfaStateCondition state /]:
+    ${useElif ? "elif" : "if"} [@NfaStateCondition state /]:
   #endif
   #if state::nextStateIndex >= 0
         next_states.set(${state::nextStateIndex})
@@ -271,7 +271,7 @@ MAX_STATES = ${lexerData::lexicalStates[0]::allNfaStates.size()}
     #else
 MAX_STATES = max(
       #list lexerData::lexicalStates as state
-    ${state::allNfaStates.size()}${state_has_next ?: ","}
+    ${state::allNfaStates.size()}${state_has_next ? ","}
       #endlist
 )
     #endif
@@ -285,7 +285,7 @@ ${is}self.${varName} = EMPTY_SET
     #else
 ${is}self.${varName} = {
    #list tokenNames as type
-${is}    TokenType.${type}${type_has_next ?: ","}
+${is}    TokenType.${type}${type_has_next ? ","}
    #endlist
 ${is}}
     #endif
@@ -304,10 +304,10 @@ def get_function_table_map(lexical_state):
     return nfa_functions
     #endif
 
-#var PRESERVE_LINE_ENDINGS = settings::preserveLineEndings ?: "True" : "False",
-      JAVA_UNICODE_ESCAPE = settings::javaUnicodeEscape ?: "True" : "False",
-      PRESERVE_TABS = settings::preserveTabs ?: "True" : "False",
-      ENSURE_FINAL_EOL = settings::ensureFinalEOL ?: "True" : "False",
+#var PRESERVE_LINE_ENDINGS = settings::preserveLineEndings ? "True" : "False",
+      JAVA_UNICODE_ESCAPE = settings::javaUnicodeEscape ? "True" : "False",
+      PRESERVE_TABS = settings::preserveTabs ? "True" : "False",
+      ENSURE_FINAL_EOL = settings::ensureFinalEOL ? "True" : "False",
       TERMINATING_STRING = "\"" + settings::terminatingString.j_string + "\""
 
 CODING_PATTERN = re.compile(rb'^[ \t\f]*#.*coding[:=][ \t]*([-_.a-zA-Z0-9]+)')
@@ -946,7 +946,7 @@ ${globals.translateLexerInjections(true)}
   #var idx = 0
   #list lexerData::regularExpressions as regexp
     #if regexp::codeSnippet??
-        ${idx > 0 ?: "elif" : "if"} matched_type == TokenType.${regexp::label}:
+        ${idx > 0 ? "elif" : "if"} matched_type == TokenType.${regexp::label}:
 ${globals.translateCodeBlock(regexp::codeSnippet::javaCode, 12)}
       #set idx = idx + 1
     #endif

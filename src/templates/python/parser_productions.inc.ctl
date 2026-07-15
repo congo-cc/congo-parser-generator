@@ -821,7 +821,7 @@ ${is}    ${expressedLHS.replace("@", impliedLHS.replace("@", "None"))}
    [#if !settings::faultTolerant]
 ${is}${LHS.replace("@", "self.consume_token(" + regexp::label + ")")}
    [#else]
-      #var tolerant = terminal::tolerantParsing ?: "True" : "False",
+      #var tolerant = terminal::tolerantParsing ? "True" : "False",
            followSetVarName = "self." + terminal::followSetVarName
       [#if terminal::followSet::incomplete]
          [#set followSetVarName = "follow_set" + CU::newID()]
@@ -948,7 +948,7 @@ ${is}# out of the loop..
     /#if
     #return
   /#if
-${is}${(expansion_index == 0) ?: "if": "elif"} (${ExpansionCondition(expansion, cardinalitiesVar)}):
+${is}${(expansion_index == 0) ? "if": "elif"} (${ExpansionCondition(expansion, cardinalitiesVar)}):
 ${BuildCode(expansion, indent + 4, cardinalitiesVar)}[#rt]
   #if isJtbParseTree() && isProductionInstantiatingNode(expansion)
 ${is}    ${currentNodeVariableName()}.${globals.translateIdentifier("setChoice")}(${expansion_index})
@@ -1006,7 +1006,7 @@ ${SingleTokenCondition(expansion)}[#t]
   #endif
   #if expansion::firstSet::tokenNames.size() < 5
      #list expansion::firstSet::tokenNames as name
-          (self.type_matches(${name}, self.get_token(1)))${name_has_next?:" or "} [#t]
+          (self.type_matches(${name}, self.get_token(1)))${name_has_next?" or "} [#t]
      #endlist
   #else
       (self.has_match(self.${expansion::firstSetVarName},self.get_token(1))) [#t]

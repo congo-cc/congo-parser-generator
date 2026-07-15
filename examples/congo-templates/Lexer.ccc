@@ -352,11 +352,9 @@ TOKEN#Text :
   |
   <DOUBLE_COLON : "::">
   |
-  <BUILT_IN : "?">
-  |
   <EXISTS : "??">
   |
-  <TERNARY : "?:">
+  <TERNARY : "?" | "?:">
   |
   <EQUALS : "=">
   |

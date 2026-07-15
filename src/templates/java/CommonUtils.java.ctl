@@ -65,7 +65,7 @@
 #endfunction
 
 #function bool val
-   #return val ?: "true" : "false"
+   #return val ? "true" : "false"
 #endfunction
 
 #macro BuildCardinalities assertions
@@ -73,7 +73,7 @@
 #endmacro
 
 #macro HandleLexicalStateChange expansion inLookahead cardinalitiesVar=null
-   #var resetToken = inLookahead ?: "currentLookaheadToken" : "lastConsumedToken"
+   #var resetToken = inLookahead ? "currentLookaheadToken" : "lastConsumedToken"
    #var prevLexicalStateVar = newVarName("previousLexicalState")
    #if expansion::specifiedLexicalState??
          LexicalState ${prevLexicalStateVar} = token_source.lexicalState;

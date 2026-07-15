@@ -83,7 +83,7 @@ INJECT Expression :
 TernaryExpression :
     OrExpression
     [
-        "?:"
+        <TERNARY>
         Expression
         [
           ":"
@@ -148,8 +148,6 @@ PrimaryExpression(boolean noSpace)#void :
       "[" Expression "]" #org.congocc.templates.core.nodes.DynamicKeyName(4)
       |
       ("(" [ArgsList] ")") #org.congocc.templates.core.nodes.MethodCall(+1)
-      |
-      "?" <ID> #DotExpression(3)
       |
       "??" #ExistsExpression(2)
       |

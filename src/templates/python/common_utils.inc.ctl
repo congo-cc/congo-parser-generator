@@ -79,14 +79,14 @@ ${prefix}${newID()}[#rt]
  --]
 
 #function bool val
-  #return val ?: "True" : "False"
+  #return val ? "True" : "False"
 #end
 
 [#macro HandleLexicalStateChange expansion inLookahead indent cardinalitiesVar]
 [#-- cardinalitiesVar is threaded for parity with Java; not used in lexical reset. --]
 [#var is = "".right_pad(indent)]
 [#-- ${is}# DBG > HandleLexicalStateChange ${indent} ${expansion.simpleName} --]
-#var resetToken = inLookahead ?: "self.current_lookahead_token" : "self.last_consumed_token"
+#var resetToken = inLookahead ? "self.current_lookahead_token" : "self.last_consumed_token"
 [#if expansion::specifiedLexicalState??]
   #if inLookahead
 ${is}if self.hit_failure:

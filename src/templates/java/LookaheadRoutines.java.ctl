@@ -161,7 +161,7 @@
 
 #macro BuildPredicateRoutine expansion
   #var needsScanCode = !expansion::hasSeparateSyntacticLookahead && expansion::lookaheadAmount >0
-  #var lookaheadAmount = expansion::lookaheadAmount == 2147483647 ?: "UNLIMITED" : expansion::lookaheadAmount
+  #var lookaheadAmount = expansion::lookaheadAmount == 2147483647 ? "UNLIMITED" : expansion::lookaheadAmount
   #set CU::newVarIndex = 0
   #var cardinalitiesVar = null
   #if expansion::cardinalityConstrained
@@ -280,7 +280,7 @@
   #endif
   #if expansion::hasLookBehind
        if (
-         ${!expansion::lookBehind::negated ?: "!"}
+         ${!expansion::lookBehind::negated ? "!"}
          ${expansion::lookBehind::routineName}()
        ) ${returnFalse(cardinalitiesVar!null)};
   #endif
@@ -290,7 +290,7 @@
         ${return("!hitFailure", cardinalitiesVar!null)};
        }
        if (
-         ${!expansion::lookahead::negated ?: "!"}
+         ${!expansion::lookahead::negated ? "!"}
          ${expansion::lookaheadExpansion::scanRoutineName}(true)
        ) ${returnFalse(cardinalitiesVar!null)};
   #endif
@@ -338,7 +338,7 @@
 #macro BuildLookBehindRoutine lookBehind
   #set newVarIndex = 0 in CU
     private boolean ${lookBehind::routineName}() {
-       ListIterator<NonTerminalCall> stackIterator = ${lookBehind::backward ?: "stackIteratorBackward" : "stackIteratorForward"}();
+       ListIterator<NonTerminalCall> stackIterator = ${lookBehind::backward ? "stackIteratorBackward" : "stackIteratorForward"}();
        NonTerminalCall ntc = null;
        #list lookBehind::path as element
           #var elementNegated = (element[0] == "~")
@@ -361,7 +361,7 @@
                  [#if nextElementNegated][#set nextElement = nextElement.substring(1)][/#if]
                  while (stackIterator.hasNext()) {
                     ntc = stackIterator.next();
-                    #var equalityOp = nextElementNegated ?: "!=" : "=="
+                    #var equalityOp = nextElementNegated ? "!=" : "=="
                     if (ntc.productionName ${equalityOp} "${nextElement}") {
                        stackIterator.previous();
                        break;
@@ -372,7 +372,7 @@
           #else
              if (!stackIterator.hasNext()) ${returnFalse(cardinalitiesVar!null)};
              ntc = stackIterator.next();
-             #var equalityOp = elementNegated ?: "==" : "!="
+             #var equalityOp = elementNegated ? "==" : "!="
                if (ntc.productionName ${equalityOp} "${element}") ${returnFalse(cardinalitiesVar!null)};
           #endif
        #endlist
@@ -522,7 +522,7 @@
 
 #macro ScanCodeAssertion assertion cardinalitiesVar patentCardVar
    #if assertion::lookBehind??
-      if (${!assertion::lookBehind::negated ?: "!"}
+      if (${!assertion::lookBehind::negated ? "!"}
          ${assertion::lookBehind::routineName}()) {
             hitFailure = true;
             ${returnFalse(cardinalitiesVar, parentCardVar!null)};
@@ -540,7 +540,7 @@
    #endif
    #if assertion::expansion??
       if (
-         ${!assertion::expansionNegated ?: "!"}
+         ${!assertion::expansionNegated ? "!"}
          ${assertion::expansion::scanRoutineName}()
       ) {
         hitFailure = true;
@@ -666,7 +666,7 @@
      #if expansion::firstSet::tokenNames.size() < CU::USE_FIRST_SET_THRESHOLD
       scanToken(
         #list expansion::firstSet::tokenNames as name
-          ${name} ${name_has_next ?: ","}
+          ${name} ${name_has_next ? ","}
         #endlist
       )
      #else

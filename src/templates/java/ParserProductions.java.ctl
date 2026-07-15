@@ -725,7 +725,7 @@
    #var assertionMessage = "Assertion at: " + assertion::location.j_string + " failed. "
    #if assertion::lookBehind??
        if (
-         ${!assertion::lookBehind::negated ?: "!"}
+         ${!assertion::lookBehind::negated ? "!"}
          ${assertion::lookBehind::routineName}()
        )
        {
@@ -757,7 +757,7 @@
       }
    #endif
    #if assertion::expansion??
-      if (${!assertion::expansionNegated ?: "!"}
+      if (${!assertion::expansionNegated ? "!"}
       ${assertion::expansion::scanRoutineName}()) {
          pushOntoCallStack("${assertion::containingProduction::name}",
                         "${assertion::inputSource.j_string}",
@@ -884,7 +884,7 @@
          popCallStack();
        }
    #else
-       #var tolerant = terminal::tolerantParsing ?: "true" : "false" ,
+       #var tolerant = terminal::tolerantParsing ? "true" : "false" ,
             followSetVarName = terminal::followSetVarName
        #if terminal::followSet::incomplete
          #set followSetVarName = "followSet" + CU::newID()
@@ -1091,7 +1091,7 @@
    #if expansion::firstSet::tokenNames.size() < CU::USE_FIRST_SET_THRESHOLD
       #list expansion::firstSet::tokenNames as name
           typeMatches(${name}, getToken(1))
-          ${name_has_next ?: "||"}
+          ${name_has_next ? "||"}
       #endlist
    #else
       hasMatch(${expansion::firstSetVarName}, getToken(1))

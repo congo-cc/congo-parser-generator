@@ -841,7 +841,7 @@ finally {
 #if !settings::faultTolerant
 ${LHS.replace("@", "ConsumeToken(" + CU::TT + regexp::label + ")")};
 #else
-  #var tolerant = terminal::tolerantParsing ?: "true" : "false"
+  #var tolerant = terminal::tolerantParsing ? "true" : "false"
   #var followSetVarName = terminal::followSetVarName
   #if terminal::followSet::incomplete
     #set followSetVarName = "followSet" + CU::newID()
@@ -972,7 +972,7 @@ catch (ParseException pe) {
     #endif
     #return
   #endif
-${(expansion_index == 0) ?: "if" : "else if"} (${ExpansionCondition(expansion, cardinalitiesVar)}) {
+${(expansion_index == 0) ? "if" : "else if"} (${ExpansionCondition(expansion, cardinalitiesVar)}) {
 ${BuildCode(expansion, cardinalitiesVar)}
   #if isJtbParseTree() && isProductionInstantiatingNode(expansion)
          ${currentNodeVariableName()}.${globals.translateIdentifier("setChoice")}(${expansion_index});
@@ -1045,7 +1045,7 @@ ${BuildCode(subexp, cardinalitiesVar)}
   #if expansion::firstSet::tokenNames.size() < 5
      #list expansion::firstSet::tokenNames as name
         TypeMatches(TokenType.${name}, GetToken(1))
-        ${name_has_next ?: "||"}
+        ${name_has_next ? "||"}
      #endlist
   #else
       HasMatch(${expansion::firstSetVarName}, GetToken(1))

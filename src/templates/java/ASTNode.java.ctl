@@ -14,7 +14,7 @@ import java.util.*;
 #endif
 
 #if isInterface
-public ${isSealed ?: "sealed"} ${isNonSealed ?: "non-sealed"}
+public ${isSealed ? "sealed"} ${isNonSealed ? "non-sealed"}
 interface ${classname} extends Node
    #list permitsList as item
      [#if item_index == 0]permits[#endif]
@@ -27,7 +27,7 @@ interface ${classname} extends Node
 import ${settings::parserPackage}.${settings::baseTokenClassName}.TokenType;
 import static ${settings::parserPackage}.${settings::baseTokenClassName}.TokenType.*;
 
-public ${isAbstract ?: "abstract"} ${isFinal ?: "final"} ${isSealed ?: "sealed"} ${isNonSealed ?: "non-sealed"}
+public ${isAbstract ? "abstract"} ${isFinal ? "final"} ${isSealed ? "sealed"} ${isNonSealed ? "non-sealed"}
 class ${classname} extends ${settings::baseNodeClassName}
    #list permitsList as item
      [#if item_index == 0]permits[#endif]

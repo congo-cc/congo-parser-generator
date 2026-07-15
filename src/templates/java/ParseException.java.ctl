@@ -5,7 +5,7 @@ package ${settings::parserPackage};
 import java.io.PrintStream;
 import java.io.PrintWriter;
 
-#var BASE_EXCEPTION_TYPE = settings::useCheckedException ?: "Exception" : "RuntimeException"
+#var BASE_EXCEPTION_TYPE = settings::useCheckedException ? "Exception" : "RuntimeException"
 #var LOCATION_TYPE = settings::baseTokenClassName
 
 #var TOKEN_TYPE_SET = "EnumSet<TokenType>",

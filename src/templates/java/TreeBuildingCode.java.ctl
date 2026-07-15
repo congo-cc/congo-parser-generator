@@ -1,6 +1,6 @@
-private boolean buildTree = ${settings::treeBuildingDefault ?: "true" : "false"};
-private boolean tokensAreNodes = ${settings::tokensAreNodes ?: "true" : "false"};
-private boolean unparsedTokensAreNodes = ${settings::unparsedTokensAreNodes ?: "true" : "false"};
+private boolean buildTree = ${settings::treeBuildingDefault ? "true" : "false"};
+private boolean tokensAreNodes = ${settings::tokensAreNodes ? "true" : "false"};
+private boolean unparsedTokensAreNodes = ${settings::unparsedTokensAreNodes ? "true" : "false"};
 
     public boolean isTreeBuildingEnabled() {
         return buildTree;

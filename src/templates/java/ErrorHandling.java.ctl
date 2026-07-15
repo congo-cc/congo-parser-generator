@@ -14,7 +14,7 @@ private void pushOntoCallStack(String methodName, String fileName, int line, int
                                         methodName,
                                         line,
                                         column
-                                        ${settings::faultTolerant ?: ", currentFollowSet"}
+                                        ${settings::faultTolerant ? ", currentFollowSet"}
                                         ));
 }
 
@@ -89,7 +89,7 @@ private void pushOntoLookaheadStack(String methodName, String fileName, int line
           methodName,
           line,
           column
-          ${settings::faultTolerant ?: ", null"}
+          ${settings::faultTolerant ? ", null"}
        )
     );
 }
@@ -170,7 +170,7 @@ void dumpLookaheadCallStack(PrintStream ps) {
           , boolean tolerant, EnumSet<TokenType> followSet, Runnable recoveryAction
         #endif
       )
-      ${settings::useCheckedException ?: "throws ParseException"}
+      ${settings::useCheckedException ? "throws ParseException"}
       {
         ${settings::baseTokenClassName} nextToken = nextToken(lastConsumedToken);
         if (nextToken.getType() != expectedType) {

@@ -4,10 +4,10 @@ ${"#"}pragma warning disable 8632
 #import "CommonUtils.inc.ctl" as CU
 #var NFA_RANGE_THRESHOLD = 16, MAX_INT = 2147483647, multipleLexicalStates = lexerData::lexicalStates.size() > 1
 #var TT = "TokenType."
-#var PRESERVE_LINE_ENDINGS = settings::preserveLineEndings ?: "true" : "false",
-      JAVA_UNICODE_ESCAPE = settings::javaUnicodeEscape ?: "true" : "false",
-      ENSURE_FINAL_EOL = settings::ensureFinalEOL ?: "true" : "false",
-      PRESERVE_TABS = settings::preserveTabs ?: "true" : "false",
+#var PRESERVE_LINE_ENDINGS = settings::preserveLineEndings ? "true" : "false",
+      JAVA_UNICODE_ESCAPE = settings::javaUnicodeEscape ? "true" : "false",
+      ENSURE_FINAL_EOL = settings::ensureFinalEOL ? "true" : "false",
+      PRESERVE_TABS = settings::preserveTabs ? "true" : "false",
       TERMINATING_STRING = "\"" + settings::terminatingString.j_string + "\""
 #var BaseToken = settings::baseTokenClassName
 [#-- if settings.treeBuildingEnabled || settings.rootAPIPackage]
@@ -23,7 +23,7 @@ private static HashSet<TokenType> ${varName} = Utils.GetOrMakeSet();
 private static HashSet<TokenType> ${varName} = Utils.GetOrMakeSet(
 #list tokenNames as type
     TokenType.${type}
-    ${type_index < (tokenNames.size()-1) ?: ","}
+    ${type_index < (tokenNames.size()-1) ? ","}
 #endlist
 );
 #endif
@@ -53,7 +53,7 @@ private static HashSet<TokenType> ${varName} = Utils.GetOrMakeSet(
         private static void NFA_FUNCTIONS_${lexicalState::name}Init() {
             var f = new NfaFunction[] {
 #list lexicalState::canonicalSets as state
-                ${state::methodName}${state_has_next ?: ","}
+                ${state::methodName}${state_has_next ? ","}
 #endlist
             };
     #if multipleLexicalStates
@@ -76,7 +76,7 @@ private static HashSet<TokenType> ${varName} = Utils.GetOrMakeSet(
 #var arrayName = nfaState::movesArrayName
         private static int[] ${arrayName} = {
 #list nfaState::moveRanges as char
-            ${globals::displayChar(char)}${char_has_next?:","}
+            ${globals::displayChar(char)}${char_has_next?","}
 #endlist
         };
 
@@ -96,7 +96,7 @@ private static HashSet<TokenType> ${varName} = Utils.GetOrMakeSet(
            #set lastBlockStartIndex = state_index
            #set useIf = true
          #endif
-            ${useIf ?: "if" : "else if"} ([@NfaStateCondition state /]) {
+            ${useIf ? "if" : "else if"} ([@NfaStateCondition state /]) {
       #endif
       #if state::nextStateIndex >= 0
                 nextStates.Set(${state::nextStateIndex});
@@ -141,7 +141,7 @@ private static HashSet<TokenType> ${varName} = Utils.GetOrMakeSet(
            #set lastBlockStartIndex = state_index
            #set useIf = true
          #endif
-            ${useIf ?: "if" : "else if"} ([@NfaStateCondition state /]) {
+            ${useIf ? "if" : "else if"} ([@NfaStateCondition state /]) {
       #endif
       #if state::nextStateIndex >= 0
                 nextStates.Set(${state::nextStateIndex});
@@ -219,7 +219,7 @@ ${globals.translateLexerImports()}
     public class TokenSource {
         internal const int DEFAULT_TAB_SIZE = ${settings::tabSize};
 
-        internal static readonly Token DummyStartToken${settings::usesPreprocessor?:", Ignored"}, Skipped;
+        internal static readonly Token DummyStartToken${settings::usesPreprocessor?", Ignored"}, Skipped;
         public string InputSource { get; internal set; }
         internal readonly string _content;
         internal readonly int _contentLength;
@@ -865,7 +865,7 @@ ${globals.translateLexerImports()}
 #else
             private static int MaxStates = Utils.MaxOf(
 #list lexerData::lexicalStates as state
-                ${state::allNfaStates.size()}${state_has_next ?: ","}
+                ${state::allNfaStates.size()}${state_has_next ? ","}
 #endlist
             );
 #endif
