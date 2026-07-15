@@ -1,7 +1,7 @@
 package org.congocc.templates.extensions;
 
 import org.congocc.templates.core.Environment;
-import org.congocc.templates.core.nodes.ExtensionExpression;
+import org.congocc.templates.core.nodes.generated.DotExpression;
 import org.congocc.templates.core.nodes.generated.Macro;
 import org.congocc.templates.core.nodes.generated.TemplateNode;
 import static org.congocc.templates.core.Wrap.JAVA_NULL;
@@ -13,7 +13,7 @@ import static org.congocc.templates.core.Wrap.JAVA_NULL;
 public abstract class MacroBuiltins extends ExpressionEvaluatingExtension {
 
     @Override
-    public Object get(Environment env, ExtensionExpression caller, Object model) {
+    public Object get(Environment env, DotExpression caller, Object model) {
         if (!(model instanceof Macro)) {
             throw TemplateNode.invalidTypeException(model, caller.lhs(), "macro");
         }

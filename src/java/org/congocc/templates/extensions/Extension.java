@@ -1,9 +1,9 @@
 package org.congocc.templates.extensions;
 
 import org.congocc.templates.core.Environment;
-import org.congocc.templates.core.nodes.ExtensionExpression;
+import org.congocc.templates.core.nodes.generated.DotExpression;
 
 @FunctionalInterface
 public interface Extension {
-    Object get(ExtensionExpression caller, Environment env);
+    Object get(DotExpression caller, Environment env);
 }

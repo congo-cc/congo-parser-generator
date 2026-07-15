@@ -5,7 +5,7 @@ import java.util.function.BiFunction;
 import java.util.function.Function;
 
 import org.congocc.templates.core.Environment;
-import org.congocc.templates.core.nodes.ExtensionExpression;
+import org.congocc.templates.core.nodes.generated.DotExpression;
 import org.congocc.templates.core.TemplateHash;
 
 import static org.congocc.templates.core.Wrap.*;
@@ -17,7 +17,7 @@ import static org.congocc.templates.core.Wrap.*;
 public class stringBI extends ExpressionEvaluatingExtension {
 
     @Override
-    public Object get(Environment env, ExtensionExpression caller, Object model)
+    public Object get(Environment env, DotExpression caller, Object model)
     {
         if (model instanceof Number n) {
             return new NumberFormatter(n, env);

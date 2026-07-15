@@ -1,7 +1,7 @@
 package org.congocc.templates.extensions;
 
 import org.congocc.templates.core.Environment;
-import org.congocc.templates.core.nodes.ExtensionExpression;
+import org.congocc.templates.core.nodes.generated.DotExpression;
 import org.congocc.templates.core.EvaluationException;
 import java.util.function.Function;
 
@@ -11,7 +11,7 @@ import java.util.function.Function;
 public class instanceofBI extends ExpressionEvaluatingExtension {
 
     @Override
-    public Function<String,Boolean> get(Environment env, ExtensionExpression caller, Object object) {
+    public Function<String,Boolean> get(Environment env, DotExpression caller, Object object) {
         return arg -> {
             try {
                 Class<?> clazz = Class.forName(arg);

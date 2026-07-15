@@ -8,7 +8,7 @@ import java.util.List;
 
 import org.congocc.templates.core.Environment;
 import org.congocc.templates.core.ArithmeticEngine;
-import org.congocc.templates.core.nodes.ExtensionExpression;
+import org.congocc.templates.core.nodes.generated.DotExpression;
 import org.congocc.templates.core.nodes.generated.TemplateNode;
 import org.congocc.templates.core.EvaluationException;
 import org.congocc.templates.core.reflection.JavaMethodCall;
@@ -27,7 +27,7 @@ public abstract class SequenceFunctions extends ExpressionEvaluatingExtension {
 
 
     @Override
-    public Object get(Environment env, ExtensionExpression caller, Object model)
+    public Object get(Environment env, DotExpression caller, Object model)
     {
         if (!isList(model)) {
             throw TemplateNode.invalidTypeException(model,

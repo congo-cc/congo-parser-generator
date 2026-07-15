@@ -16,7 +16,7 @@ import java.util.function.Function;
 import org.congocc.templates.core.Environment;
 import org.congocc.templates.core.EvaluationException;
 import org.congocc.templates.core.TemplateBoolean;
-import org.congocc.templates.core.nodes.ExtensionExpression;
+import org.congocc.templates.core.nodes.generated.DotExpression;
 import org.congocc.templates.core.reflection.JavaMethodCall;
 import org.congocc.templates.core.reflection.VarArgsFunction;
 
@@ -77,44 +77,44 @@ public abstract class StringFunctions extends ExpressionEvaluatingExtension {
     }
 
     @Override
-    public Object get(Environment env, ExtensionExpression caller, Object model) {
+    public Object get(Environment env, DotExpression caller, Object model) {
         String string = asString(model);
         return apply(string, env, caller);
     }
 
-    public abstract Object apply(final String string, final Environment env, final ExtensionExpression callingExpression);
+    public abstract Object apply(final String string, final Environment env, final DotExpression callingExpression);
 
     public static class Join extends StringFunctions {
         @Override
-        public Object apply(String string, Environment env, ExtensionExpression caller) {
+        public Object apply(String string, Environment env, DotExpression caller) {
             return new JavaMethodCall(string, "join", caller);
         }
     }
 
     public static class Matches extends StringFunctions {
         @Override
-        public Object apply(String string, Environment env, ExtensionExpression caller) {
+        public Object apply(String string, Environment env, DotExpression caller) {
             return new MatcherBuilder(string);
         }
     }
 
     public static class LeftPad extends StringFunctions {
         @Override
-        public Object apply(String string, Environment env, ExtensionExpression caller) {
+        public Object apply(String string, Environment env, DotExpression caller) {
             return new LeftPadMethod(string);
         }
     }
 
     public static class RightPad extends StringFunctions {
         @Override
-        public Object apply(String string, Environment env, ExtensionExpression caller) {
+        public Object apply(String string, Environment env, DotExpression caller) {
             return new RightPadMethod(string);
         }
     }
 
     public static class WordList extends StringFunctions {
         @Override
-        public Object apply(String string, Environment env, ExtensionExpression caller) {
+        public Object apply(String string, Environment env, DotExpression caller) {
             StringTokenizer st = new StringTokenizer(string);
             List<String> result = new ArrayList<>();
             while (st.hasMoreTokens()) {
@@ -126,7 +126,7 @@ public abstract class StringFunctions extends ExpressionEvaluatingExtension {
 
     public static class Url extends StringFunctions {
         @Override
-        public Object apply(String string, Environment env, ExtensionExpression caller) {
+        public Object apply(String string, Environment env, DotExpression caller) {
             return new urlBIResult(string, env);
         }
     }

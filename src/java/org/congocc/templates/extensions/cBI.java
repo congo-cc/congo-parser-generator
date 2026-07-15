@@ -3,7 +3,7 @@ package org.congocc.templates.extensions;
 import org.congocc.templates.core.Environment;
 import org.congocc.templates.core.EvaluationException;
 import org.congocc.templates.core.InvalidReferenceException;
-import org.congocc.templates.core.nodes.ExtensionExpression;
+import org.congocc.templates.core.nodes.generated.DotExpression;
 
 /**
  * Implementation of ?c built-in
@@ -11,7 +11,7 @@ import org.congocc.templates.core.nodes.ExtensionExpression;
 public class cBI extends ExpressionEvaluatingExtension {
 
     @Override
-    public Object get(Environment env, ExtensionExpression caller, Object model)
+    public Object get(Environment env, DotExpression caller, Object model)
     {
         Number num;
         try {

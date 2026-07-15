@@ -2,7 +2,7 @@ package org.congocc.templates.extensions;
 
 import org.congocc.templates.core.Environment;
 import org.congocc.templates.core.InvalidReferenceException;
-import org.congocc.templates.core.nodes.ExtensionExpression;
+import org.congocc.templates.core.nodes.generated.DotExpression;
 
 /**
  * Implementations of ?cap_first, ?lower_case, ?upper_case and other
@@ -12,7 +12,7 @@ import org.congocc.templates.core.nodes.ExtensionExpression;
 public abstract class StringTransformations extends ExpressionEvaluatingExtension {
 
     @Override
-    public Object get(Environment env, ExtensionExpression caller, Object lhs) {
+    public Object get(Environment env, DotExpression caller, Object lhs) {
         String string = null;
         if (lhs instanceof CharSequence) {
             string = lhs.toString();
