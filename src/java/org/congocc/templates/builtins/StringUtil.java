@@ -1,4 +1,4 @@
-package org.congocc.templates.utility;
+package org.congocc.templates.builtins;
 
 import java.io.UnsupportedEncodingException;
 import java.util.*;

@@ -195,7 +195,7 @@ INJECT PropertyReference :
     import org.congocc.templates.core.Environment;
     import org.congocc.templates.core.reflection.ReflectionCode;
     import org.congocc.templates.core.scope.Scope;
-    import org.congocc.templates.TemplateHash;
+    import org.congocc.templates.core.TemplateHash;
     import static org.congocc.templates.core.Wrap.*;
     implements Expression
 {
@@ -767,7 +767,7 @@ INJECT BuiltinVariable :
     import org.congocc.templates.core.parser.ParseException;
     import org.congocc.templates.TemplateFactory;
     import org.congocc.templates.TemplateException;
-    import org.congocc.templates.TemplateHash;
+    import org.congocc.templates.core.TemplateHash;
     implements Expression
 {
     private String name;

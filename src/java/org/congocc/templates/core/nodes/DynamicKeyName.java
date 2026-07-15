@@ -8,7 +8,7 @@ import org.congocc.templates.core.nodes.generated.Expression;
 import org.congocc.templates.core.nodes.generated.RangeExpression;
 import org.congocc.templates.core.nodes.generated.TemplateNode;
 import org.congocc.templates.TemplateException;
-import org.congocc.templates.TemplateHash;
+import org.congocc.templates.core.TemplateHash;
 
 import java.util.Map;
 import java.util.ArrayList;

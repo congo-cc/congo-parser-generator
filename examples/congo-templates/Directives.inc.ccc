@@ -168,7 +168,7 @@ INJECT IteratorBlock :
     import org.congocc.templates.core.*;
     import org.congocc.templates.core.scopes.BlockScope;
     import org.congocc.templates.core.scopes.LoopContext;
-    import org.congocc.templates.TemplateHash;
+    import org.congocc.templates.core.TemplateHash;
     import static org.congocc.templates.core.Wrap.*;
     implements TemplateElement
 {

@@ -1,6 +1,4 @@
-package org.congocc.templates;
-
-import org.congocc.templates.core.EvaluationException;
+package org.congocc.templates.core;
 
 /**
  * An interface used to indicate show that the object represents a set of

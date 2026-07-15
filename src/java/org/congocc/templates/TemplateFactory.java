@@ -15,7 +15,6 @@ import org.congocc.templates.core.ArithmeticEngine;
 import org.congocc.templates.core.Environment;
 import org.congocc.templates.core.parser.ParseException;
 import org.congocc.templates.core.parser.ParsingProblemImpl;
-import org.congocc.templates.utility.StringUtil;
 
 import static org.congocc.templates.core.Wrap.*;
 import static org.congocc.templates.core.parser.TokenSource.stringFromBytes;

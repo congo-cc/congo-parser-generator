@@ -4,12 +4,12 @@ import java.util.Map;
 import java.util.function.Function;
 
 import org.congocc.templates.core.Environment;
+import org.congocc.templates.core.InvalidReferenceException;
+import org.congocc.templates.core.TemplateHash;
 import org.congocc.templates.core.nodes.BuiltInExpression;
 import org.congocc.templates.core.nodes.generated.Expression;
 import org.congocc.templates.core.nodes.generated.ParentheticalExpression;
 import org.congocc.templates.core.reflection.VarArgsFunction;
-import org.congocc.templates.core.InvalidReferenceException;
-import org.congocc.templates.TemplateHash;
 
 import static org.congocc.templates.core.Wrap.*;
 
