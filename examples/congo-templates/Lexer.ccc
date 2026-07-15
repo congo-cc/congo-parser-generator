@@ -496,7 +496,7 @@ INJECT StringLiteral :
    import org.congocc.templates.TemplateException;
    import org.congocc.templates.TemplateExceptionHandler;
    import org.congocc.templates.core.Environment;
-   import static org.congocc.templates.utility.StringUtil.CTLStringLiteralDec;
+   import static org.congocc.templates.builtins.StringUtil.CTLStringLiteralDec;
    implements Expression
 {
     private TemplateElement interpolatedOutput;

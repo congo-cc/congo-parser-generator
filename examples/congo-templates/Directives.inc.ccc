@@ -503,7 +503,7 @@ IncludeInstruction :
 INJECT IncludeInstruction :
     import java.io.IOException;
     import org.congocc.templates.*;
-    import org.congocc.templates.utility.StringUtil;
+    import org.congocc.templates.builtins.StringUtil;
     import org.congocc.templates.core.Environment;
     import org.congocc.templates.core.InvalidReferenceException;
     import org.congocc.templates.core.parser.ParseException;
@@ -1272,7 +1272,7 @@ IgnorableWhitespace#void :
 INJECT TemplateHeaderElement :
     import java.util.*;
     import org.congocc.templates.*;
-    import static org.congocc.templates.utility.StringUtil.*;
+    import static org.congocc.templates.builtins.StringUtil.*;
     import static org.congocc.templates.core.Wrap.*;
 {
 
