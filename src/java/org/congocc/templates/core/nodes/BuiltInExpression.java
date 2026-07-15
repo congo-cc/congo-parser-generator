@@ -1,6 +1,6 @@
 package org.congocc.templates.core.nodes;
 
-import org.congocc.templates.builtins.*;
+import org.congocc.templates.extensions.*;
 import org.congocc.templates.core.Environment;
 import java.util.HashMap;
 import org.congocc.templates.core.nodes.generated.*;

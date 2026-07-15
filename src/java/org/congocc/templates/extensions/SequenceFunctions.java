@@ -1,4 +1,4 @@
-package org.congocc.templates.builtins;
+package org.congocc.templates.extensions;
 
 import java.text.Collator;
 import java.util.ArrayList;

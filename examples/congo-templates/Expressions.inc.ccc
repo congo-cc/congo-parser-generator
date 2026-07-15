@@ -1071,7 +1071,7 @@ INJECT MethodReference :
     import org.congocc.templates.core.Environment;
     import org.congocc.templates.core.reflection.JavaMethodCall;
     import org.congocc.templates.core.reflection.JavaConstructorCall;
-    import org.congocc.templates.builtins.BuiltIn;
+    import org.congocc.templates.extensions.BuiltIn;
     import org.congocc.templates.core.nodes.BuiltInExpression;
     import static org.congocc.templates.core.nodes.BuiltInExpression.getBuiltin;
     extends BuiltInExpression

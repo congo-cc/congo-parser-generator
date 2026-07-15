@@ -1,9 +1,9 @@
-package org.congocc.templates.builtins;
+package org.congocc.templates.extensions;
 
 import org.congocc.templates.core.Environment;
 import org.congocc.templates.core.nodes.BuiltInExpression;
 import org.congocc.templates.core.nodes.generated.TemplateNode;
-import org.congocc.templates.builtins.StringFunctions.RegexMatchModel;
+import org.congocc.templates.extensions.StringFunctions.RegexMatchModel;
 import static org.congocc.templates.core.Wrap.unwrap;
 
 public class groupsBI extends ExpressionEvaluatingBuiltIn
