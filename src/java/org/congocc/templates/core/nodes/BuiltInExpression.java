@@ -11,7 +11,6 @@ public class BuiltInExpression extends TemplateNode implements Expression {
     {
         knownBuiltins.put("source", (env, caller) -> caller.getTarget().getSource());
         knownBuiltins.put("instanceof", new instanceofBI());
-        knownBuiltins.put("exists", new ExistenceBuiltIn.ExistsBuiltIn());
         knownBuiltins.put("c", new cBI());
         knownBuiltins.put("string", new stringBI());
         knownBuiltins.put("eval", new evalBI());
@@ -52,9 +51,6 @@ public class BuiltInExpression extends TemplateNode implements Expression {
         knownBuiltins.put("namespace", new MacroBuiltins.Namespace());
         knownBuiltins.put("keys", new HashBuiltin.Keys());
         knownBuiltins.put("values", new HashBuiltin.Values());
-        knownBuiltins.put("is_defined", new ExistenceBuiltIn.IsDefinedBuiltIn());
-        knownBuiltins.put("default", new ExistenceBuiltIn.DefaultBuiltIn());
-        knownBuiltins.put("has_content", new ExistenceBuiltIn.HasContentBuiltIn());
     }
 
     private String key;
@@ -83,6 +79,10 @@ public class BuiltInExpression extends TemplateNode implements Expression {
 
     public static void registerBuiltin(String key, BuiltIn bi) {
         knownBuiltins.put(key, bi);
+    }
+
+    public static BuiltIn getBuiltin(String name) {
+        return knownBuiltins.get(name);
     }
 }
 

@@ -52,7 +52,7 @@
    #set injectedFields = {}
    #set newVarIndex = 0 in CU
    #-- Generate the method modifiers and header
-   #if production::leadingComments?has_content
+   #if production::leadingComments
 ${is}# ${production::leadingComments}
    #endif
 ${is}# ${production::location}

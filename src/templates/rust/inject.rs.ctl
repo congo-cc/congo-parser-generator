@@ -50,7 +50,7 @@
      original Java source in FIXME block comments. --]
 [#var parserFieldInject = globals.translateParserClassInjection(true)]
 [#var parserMethodInject = globals.translateParserClassInjection(false)]
-#if parserFieldInject?has_content || parserMethodInject?has_content
+#if parserFieldInject! || parserMethodInject!
    #set hasAnyInject = true
 #endif
 #if !hasAnyInject
@@ -63,7 +63,7 @@ use crate::tokens::TokenType;
 #-- Emit per-node injections (productions and token types)
 #list injectNodes as node
   #var translated = globals.translateInjectedClass(node)
-  #if translated?has_content
+  #if translated!
 // ---------------------------------------------------------------------------
 // INJECT ${node}
 //
@@ -79,7 +79,7 @@ ${translated}
   #endif
 #endlist
 [#-- Emit PARSER_CLASS injections --]
-#if parserFieldInject?has_content || parserMethodInject?has_content
+#if parserFieldInject! || parserMethodInject!
 // ---------------------------------------------------------------------------
 // INJECT PARSER_CLASS (${settings::parserClassName})
 //

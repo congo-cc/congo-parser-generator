@@ -10,7 +10,7 @@
 #endlist
 #var parserFieldInject = globals.translateParserInjections(true)
 #var parserMethodInject = globals.translateParserInjections(false)
-#if parserFieldInject?has_content || parserMethodInject?has_content
+#if parserFieldInject! || parserMethodInject!
   #set hasAnyInject = true
 #endif
 #if !hasAnyInject
@@ -37,7 +37,7 @@ instead, create a separate file (see "Where to Put Your Code" below).
 [#list injectNodes as node]
 | `${node}` | AST node | Methods/fields for ${node} nodes |
 [/#list]
-#if parserFieldInject?has_content || parserMethodInject?has_content
+#if parserFieldInject! || parserMethodInject!
 | `${settings::parserClassName}` | Parser class | Utility methods (e.g., main) |
 #endif
 

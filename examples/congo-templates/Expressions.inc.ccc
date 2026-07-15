@@ -1071,7 +1071,10 @@ INJECT MethodReference :
     import org.congocc.templates.core.Environment;
     import org.congocc.templates.core.reflection.JavaMethodCall;
     import org.congocc.templates.core.reflection.JavaConstructorCall;
-    implements Expression
+    import org.congocc.templates.builtins.BuiltIn;
+    import org.congocc.templates.core.nodes.BuiltInExpression;
+    import static org.congocc.templates.core.nodes.BuiltInExpression.getBuiltin;
+    extends BuiltInExpression
 {
     public Expression getTarget() {
         return (Expression) get(0);
@@ -1080,6 +1083,10 @@ INJECT MethodReference :
     public Object evaluate(Environment env) {
         Object target = getTarget().evaluate(env);
         String methodName = get(2).toString();
+        BuiltIn bi = getBuiltin(methodName);
+        if (bi != null) {
+            return bi.get(env, this);
+        }
         if (methodName.equals("new")) {
             return new JavaConstructorCall(target, this);
         }
