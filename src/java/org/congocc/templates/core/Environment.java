@@ -18,7 +18,7 @@ import org.congocc.templates.core.nodes.generated.NestedInstruction;
 import org.congocc.templates.core.nodes.generated.PositionalArgsList;
 import org.congocc.templates.core.nodes.ParameterList;
 import org.congocc.templates.core.nodes.generated.TemplateElement;
-import org.congocc.templates.core.variables.scope.*;
+import org.congocc.templates.core.scopes.*;
 import org.congocc.templates.*;
 
 import static org.congocc.templates.core.variables.Wrap.*;

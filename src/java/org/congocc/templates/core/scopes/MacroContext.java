@@ -1,4 +1,4 @@
-package org.congocc.templates.core.variables.scope;
+package org.congocc.templates.core.scopes;
 
 import org.congocc.templates.core.Environment;
 import org.congocc.templates.core.nodes.generated.Block;

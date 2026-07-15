@@ -13,8 +13,7 @@ import org.congocc.templates.core.variables.WrappedVariable;
  * in Congo Templates, the "truthiness" of most objects is already implicit
  * via some rules of thumb, like an empty container is taken to be false.
  * All strings and numbers are true, except for the special case of a zero-length
- * string, which is false. A Java null, i.e. that something is undefined,
- * is also false. These rules of thumb are not really 100% correct on purist
+ * string, which is false. These rules of thumb are not really 100% correct on purist
  * grounds, but provide quite a bit of notational convenience, which is
  * nothing to scoff at!
  */

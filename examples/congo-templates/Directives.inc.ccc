@@ -167,8 +167,8 @@ ListBlock#IteratorBlock :
 INJECT IteratorBlock :
     import org.congocc.templates.core.*;
     import org.congocc.templates.core.variables.*;
-    import org.congocc.templates.core.variables.scope.BlockScope;
-    import org.congocc.templates.core.variables.scope.LoopContext;
+    import org.congocc.templates.core.scopes.BlockScope;
+    import org.congocc.templates.core.scopes.LoopContext;
     import org.congocc.templates.TemplateHash;
     import static org.congocc.templates.core.variables.Wrap.*;
     implements TemplateElement
@@ -422,7 +422,7 @@ INJECT BlockAssignment :
     import org.congocc.templates.core.variables.InvalidReferenceException;
     import org.congocc.templates.core.variables.UserDirectiveBody;
     import org.congocc.templates.core.variables.UserDirective;
-    import org.congocc.templates.core.variables.scope.Scope;
+    import org.congocc.templates.core.scopes.Scope;
     import org.congocc.templates.TemplateException;
     import org.congocc.templates.core.nodes.AssignmentInstruction;
     implements TemplateElement
@@ -1010,7 +1010,7 @@ VarDirective :
 INJECT VarDirective :
    import java.util.*;
    import org.congocc.templates.core.*;
-   import org.congocc.templates.core.variables.scope.Scope;
+   import org.congocc.templates.core.scopes.Scope;
    import static org.congocc.templates.core.variables.Wrap.*;
    implements TemplateElement
 {
