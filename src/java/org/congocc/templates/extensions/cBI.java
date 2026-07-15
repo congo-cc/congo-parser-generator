@@ -3,15 +3,15 @@ package org.congocc.templates.extensions;
 import org.congocc.templates.core.Environment;
 import org.congocc.templates.core.EvaluationException;
 import org.congocc.templates.core.InvalidReferenceException;
-import org.congocc.templates.core.nodes.BuiltInExpression;
+import org.congocc.templates.core.nodes.ExtensionExpression;
 
 /**
  * Implementation of ?c built-in
  */
-public class cBI extends ExpressionEvaluatingBuiltIn {
+public class cBI extends ExpressionEvaluatingExpression {
 
     @Override
-    public Object get(Environment env, BuiltInExpression caller, Object model)
+    public Object get(Environment env, ExtensionExpression caller, Object model)
     {
         Number num;
         try {

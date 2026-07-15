@@ -16,7 +16,7 @@ import java.util.function.Function;
 import org.congocc.templates.core.Environment;
 import org.congocc.templates.core.EvaluationException;
 import org.congocc.templates.core.TemplateBoolean;
-import org.congocc.templates.core.nodes.BuiltInExpression;
+import org.congocc.templates.core.nodes.ExtensionExpression;
 import org.congocc.templates.core.reflection.JavaMethodCall;
 import org.congocc.templates.core.reflection.VarArgsFunction;
 
@@ -26,7 +26,7 @@ import static org.congocc.templates.core.Wrap.*;
  * Implementations of ?substring and other
  * standard functions that operate on strings
  */
-public abstract class StringFunctions extends ExpressionEvaluatingBuiltIn {
+public abstract class StringFunctions extends ExpressionEvaluatingExpression {
 
     static private HashMap<String, Pattern> patternLookup = new HashMap<String, Pattern>();
     static private LinkedList<String> patterns = new LinkedList<String>();
@@ -77,44 +77,44 @@ public abstract class StringFunctions extends ExpressionEvaluatingBuiltIn {
     }
 
     @Override
-    public Object get(Environment env, BuiltInExpression caller, Object model) {
+    public Object get(Environment env, ExtensionExpression caller, Object model) {
         String string = asString(model);
         return apply(string, env, caller);
     }
 
-    public abstract Object apply(final String string, final Environment env, final BuiltInExpression callingExpression);
+    public abstract Object apply(final String string, final Environment env, final ExtensionExpression callingExpression);
 
     public static class Join extends StringFunctions {
         @Override
-        public Object apply(String string, Environment env, BuiltInExpression caller) {
+        public Object apply(String string, Environment env, ExtensionExpression caller) {
             return new JavaMethodCall(string, "join", caller);
         }
     }
 
     public static class Matches extends StringFunctions {
         @Override
-        public Object apply(String string, Environment env, BuiltInExpression caller) {
+        public Object apply(String string, Environment env, ExtensionExpression caller) {
             return new MatcherBuilder(string);
         }
     }
 
     public static class LeftPad extends StringFunctions {
         @Override
-        public Object apply(String string, Environment env, BuiltInExpression caller) {
+        public Object apply(String string, Environment env, ExtensionExpression caller) {
             return new LeftPadMethod(string);
         }
     }
 
     public static class RightPad extends StringFunctions {
         @Override
-        public Object apply(String string, Environment env, BuiltInExpression caller) {
+        public Object apply(String string, Environment env, ExtensionExpression caller) {
             return new RightPadMethod(string);
         }
     }
 
     public static class WordList extends StringFunctions {
         @Override
-        public Object apply(String string, Environment env, BuiltInExpression caller) {
+        public Object apply(String string, Environment env, ExtensionExpression caller) {
             StringTokenizer st = new StringTokenizer(string);
             List<String> result = new ArrayList<>();
             while (st.hasMoreTokens()) {
@@ -126,7 +126,7 @@ public abstract class StringFunctions extends ExpressionEvaluatingBuiltIn {
 
     public static class Url extends StringFunctions {
         @Override
-        public Object apply(String string, Environment env, BuiltInExpression caller) {
+        public Object apply(String string, Environment env, ExtensionExpression caller) {
             return new urlBIResult(string, env);
         }
     }

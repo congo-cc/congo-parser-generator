@@ -8,7 +8,7 @@ import java.util.List;
 
 import org.congocc.templates.core.Environment;
 import org.congocc.templates.core.ArithmeticEngine;
-import org.congocc.templates.core.nodes.BuiltInExpression;
+import org.congocc.templates.core.nodes.ExtensionExpression;
 import org.congocc.templates.core.nodes.generated.TemplateNode;
 import org.congocc.templates.core.EvaluationException;
 import org.congocc.templates.core.reflection.JavaMethodCall;
@@ -20,14 +20,14 @@ import static org.congocc.templates.core.Wrap.*;
 /**
  * Implementations of builtins for standard functions that operate on sequences
  */
-public abstract class SequenceFunctions extends ExpressionEvaluatingBuiltIn {
+public abstract class SequenceFunctions extends ExpressionEvaluatingExpression {
 
     static final int KEY_TYPE_STRING = 1;
     static final int KEY_TYPE_NUMBER = 2;
 
 
     @Override
-    public Object get(Environment env, BuiltInExpression caller, Object model)
+    public Object get(Environment env, ExtensionExpression caller, Object model)
     {
         if (!isList(model)) {
             throw TemplateNode.invalidTypeException(model,

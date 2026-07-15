@@ -1,7 +1,7 @@
 package org.congocc.templates.extensions;
 
 import org.congocc.templates.core.Environment;
-import org.congocc.templates.core.nodes.BuiltInExpression;
+import org.congocc.templates.core.nodes.ExtensionExpression;
 import org.congocc.templates.core.nodes.generated.Macro;
 import org.congocc.templates.core.nodes.generated.TemplateNode;
 import static org.congocc.templates.core.Wrap.JAVA_NULL;
@@ -10,10 +10,10 @@ import static org.congocc.templates.core.Wrap.JAVA_NULL;
  * Implementations of ?scope and ?namespace built-ins
  * that expect macro on the lhs.
  */
-public abstract class MacroBuiltins extends ExpressionEvaluatingBuiltIn {
+public abstract class MacroBuiltins extends ExpressionEvaluatingExpression {
 
     @Override
-    public Object get(Environment env, BuiltInExpression caller,
+    public Object get(Environment env, ExtensionExpression caller,
             Object model) {
         if (!(model instanceof Macro)) {
             throw TemplateNode.invalidTypeException(model, caller.getTarget(), "macro");

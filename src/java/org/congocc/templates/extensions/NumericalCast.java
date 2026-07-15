@@ -1,7 +1,7 @@
 package org.congocc.templates.extensions;
 
 import org.congocc.templates.core.Environment;
-import org.congocc.templates.core.nodes.BuiltInExpression;
+import org.congocc.templates.core.nodes.ExtensionExpression;
 import org.congocc.templates.core.nodes.generated.TemplateNode;
 import org.congocc.templates.core.InvalidReferenceException;
 
@@ -13,12 +13,12 @@ import java.math.RoundingMode;
  * Implementation of ?byte, ?int, ?double, ?float,
  * ?short and ?long built-ins
  */
-public class NumericalCast extends ExpressionEvaluatingBuiltIn {
+public class NumericalCast extends ExpressionEvaluatingExpression {
     private static final BigDecimal half = new BigDecimal("0.5");
     private static final MathContext mc = new MathContext(0, RoundingMode.FLOOR);
 
     @Override
-    public Object get(Environment env, BuiltInExpression caller, Object model)
+    public Object get(Environment env, ExtensionExpression caller, Object model)
     {
         try {
             return getNumber((Number)model, caller.getName());

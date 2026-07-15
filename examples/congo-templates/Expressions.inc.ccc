@@ -149,7 +149,7 @@ PrimaryExpression(boolean noSpace)#void :
       |
       ("(" [ArgsList] ")") #org.congocc.templates.core.nodes.MethodCall(+1)
       |
-      "?" <ID> #org.congocc.templates.core.nodes.BuiltInExpression(3)
+      "?" <ID> #org.congocc.templates.core.nodes.ExtensionExpression(3)
       |
       "??" #ExistsExpression(2)
       |
@@ -1071,10 +1071,10 @@ INJECT MethodReference :
     import org.congocc.templates.core.Environment;
     import org.congocc.templates.core.reflection.JavaMethodCall;
     import org.congocc.templates.core.reflection.JavaConstructorCall;
-    import org.congocc.templates.extensions.BuiltIn;
-    import org.congocc.templates.core.nodes.BuiltInExpression;
-    import static org.congocc.templates.core.nodes.BuiltInExpression.getBuiltin;
-    extends BuiltInExpression
+    import org.congocc.templates.extensions.Extension;
+    import org.congocc.templates.core.nodes.ExtensionExpression;
+    import static org.congocc.templates.core.nodes.ExtensionExpression.getExtension;
+    extends ExtensionExpression
 {
     public Expression getTarget() {
         return (Expression) get(0);
@@ -1083,9 +1083,9 @@ INJECT MethodReference :
     public Object evaluate(Environment env) {
         Object target = getTarget().evaluate(env);
         String methodName = get(2).toString();
-        BuiltIn bi = getBuiltin(methodName);
-        if (bi != null) {
-            return bi.get(env, this);
+        Extension ext = getExtension(methodName);
+        if (ext != null) {
+            return ext.get(env, this);
         }
         if (methodName.equals("new")) {
             return new JavaConstructorCall(target, this);

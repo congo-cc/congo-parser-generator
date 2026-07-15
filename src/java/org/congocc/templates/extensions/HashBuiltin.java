@@ -1,7 +1,7 @@
 package org.congocc.templates.extensions;
 
 import org.congocc.templates.core.Environment;
-import org.congocc.templates.core.nodes.BuiltInExpression;
+import org.congocc.templates.core.nodes.ExtensionExpression;
 import org.congocc.templates.core.nodes.generated.TemplateNode;
 import org.congocc.templates.core.TemplateHash;
 
@@ -14,10 +14,10 @@ import java.util.Map;
  * Implementation of ?resolve built-in
  */
 
-public abstract class HashBuiltin extends ExpressionEvaluatingBuiltIn {
+public abstract class HashBuiltin extends ExpressionEvaluatingExpression {
 
     @Override
-    public Object get(Environment env, BuiltInExpression caller, Object lhs)
+    public Object get(Environment env, ExtensionExpression caller, Object lhs)
     {
         if (!(lhs instanceof TemplateHash) && !isMap(lhs)) {
             throw TemplateNode.invalidTypeException(lhs,

@@ -2,16 +2,16 @@ package org.congocc.templates.extensions;
 
 import org.congocc.templates.core.Environment;
 import org.congocc.templates.core.ArithmeticEngine;
-import org.congocc.templates.core.nodes.BuiltInExpression;
+import org.congocc.templates.core.nodes.ExtensionExpression;
 import org.congocc.templates.core.nodes.generated.TemplateNode;
 import org.congocc.templates.TemplateException;
 
 import static org.congocc.templates.core.Wrap.*;
 
-public class numberBI extends ExpressionEvaluatingBuiltIn
+public class numberBI extends ExpressionEvaluatingExpression
 {
     @Override
-    public Object get(Environment env, BuiltInExpression caller, Object value) {
+    public Object get(Environment env, ExtensionExpression caller, Object value) {
         if(value instanceof Number) {
             return value;
         }

@@ -5,7 +5,7 @@ import java.util.function.BiFunction;
 import java.util.function.Function;
 
 import org.congocc.templates.core.Environment;
-import org.congocc.templates.core.nodes.BuiltInExpression;
+import org.congocc.templates.core.nodes.ExtensionExpression;
 import org.congocc.templates.core.TemplateHash;
 
 import static org.congocc.templates.core.Wrap.*;
@@ -14,10 +14,10 @@ import static org.congocc.templates.core.Wrap.*;
  * Implementation of ?string built-in
  */
 
-public class stringBI extends ExpressionEvaluatingBuiltIn {
+public class stringBI extends ExpressionEvaluatingExpression {
 
     @Override
-    public Object get(Environment env, BuiltInExpression caller,
+    public Object get(Environment env, ExtensionExpression caller,
         Object model)
     {
         if (model instanceof Number n) {
