@@ -1,14 +1,14 @@
 package org.congocc.templates;
 
-import org.congocc.templates.core.variables.EvaluationException;
+import org.congocc.templates.core.EvaluationException;
 
 /**
- * An interface used to indicate show that the object represents a set of 
+ * An interface used to indicate show that the object represents a set of
  * key-value mappings. In Congo Templates, one will mostly just use Java API objects
- * that implement java.util.Map. 
+ * that implement java.util.Map.
  */
 public interface TemplateHash {
-    
+
     /**
      * Gets a variable from the hash.
      *
@@ -31,7 +31,7 @@ public interface TemplateHash {
     }
 
     /**
-     * @return a collection containing the keys in the hash. 
+     * @return a collection containing the keys in the hash.
      */
     default Iterable<?> keys() {
         throw new EvaluationException("Unsupported method keys()");

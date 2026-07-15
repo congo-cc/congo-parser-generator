@@ -1,4 +1,4 @@
-package org.congocc.templates.core.variables;
+package org.congocc.templates.core.reflection;
 
 /**
  * You can use this interface to expose Java methods to
@@ -7,8 +7,8 @@ package org.congocc.templates.core.variables;
  * method references. For example:
  * Foo myMethod(Object... args) {...}
  * dataModel.put("myMethod", (VarArgsFunction<Foo>) this::myMethod);
- * You can also use a few of the functional interfaces defined 
- * in the core Java class libraries, notably: 
+ * You can also use a few of the functional interfaces defined
+ * in the core Java class libraries, notably:
  * java.util.function.Function,
  * java.util.function.BiFunction,
  * and java.util.function.Supplier

@@ -42,7 +42,7 @@ public class ParameterList extends TemplateNode {
         return catchall;
     }
 
-    private boolean hasDefaultExpressions() {
+    private boolean hasDefaultParams() {
         return defaults != null && !defaults.isEmpty();
     }
 
@@ -65,7 +65,7 @@ public class ParameterList extends TemplateNode {
         int numArgs = args.numArgs();
         if (numArgs < numRequiredParams()) {
             String message = "Expecting exactly " + numRequiredParams() + " arguments, received " + numArgs + ".";
-            if (catchall != null || hasDefaultExpressions()) {
+            if (catchall != null || hasDefaultParams()) {
                 message = message.replace("exactly", "at least");
             }
             throw new TemplateException(message);
@@ -95,7 +95,7 @@ public class ParameterList extends TemplateNode {
             }
             result.put(catchall, catchAllArgs);
         }
-        if (hasDefaultExpressions()) {
+        if (hasDefaultParams()) {
             for (String param : defaults.keySet()) {
                 if (!result.containsKey(param)) {
                     Expression exp = defaults.get(param);
@@ -136,7 +136,4 @@ public class ParameterList extends TemplateNode {
         }
         return getParameterMap((PositionalArgsList) args, env, false);
     }
-
 }
-
-

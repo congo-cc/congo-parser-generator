@@ -13,7 +13,7 @@ DEFAULT_LEXICAL_STATE=EXPRESSION;
 INJECT Expression :
    import org.congocc.templates.core.Environment;
    import org.congocc.templates.TemplateException;
-   import org.congocc.templates.core.variables.EvaluationException;
+   import org.congocc.templates.core.EvaluationException;
    import org.congocc.templates.TemplateSequence;
    import java.lang.reflect.Array;
    import org.congocc.templates.core.variables.WrappedVariable;
@@ -193,7 +193,7 @@ INJECT ParentheticalExpression :
 
 INJECT PropertyReference :
     import org.congocc.templates.core.Environment;
-    import org.congocc.templates.core.variables.*;
+    import org.congocc.templates.core.reflection.ReflectionCode;
     import org.congocc.templates.core.variables.scope.Scope;
     import org.congocc.templates.TemplateHash;
     import static org.congocc.templates.core.variables.Wrap.*;
@@ -284,7 +284,7 @@ UnaryPlusMinusExpression :
 INJECT UnaryPlusMinusExpression :
     import org.congocc.templates.core.Environment;
     import org.congocc.templates.core.ArithmeticEngine;
-    import org.congocc.templates.core.variables.*;
+    import org.congocc.templates.core.EvaluationException;
     import org.congocc.templates.TemplateException;
     implements Expression
 {
@@ -330,7 +330,7 @@ INJECT AdditiveExpression :
     import org.congocc.templates.TemplateException;
     import org.congocc.templates.core.ArithmeticEngine;
     import org.congocc.templates.core.Environment;
-    import org.congocc.templates.core.variables.EvaluationException;
+    import org.congocc.templates.core.EvaluationException;
     import static org.congocc.templates.core.variables.Wrap.*;
     implements Expression;
 {
@@ -595,7 +595,7 @@ RangeExpression :
 ;
 
 INJECT RangeExpression :
-   import org.congocc.templates.core.variables.*;
+   import org.congocc.templates.core.EvaluationException;
    import org.congocc.templates.core.Environment;
    import org.congocc.templates.TemplateException;
    import static org.congocc.templates.core.variables.Wrap.getNumber;
@@ -884,7 +884,7 @@ PositionalArgsList# :
 INJECT PositionalArgsList :
     import java.util.*;
     import org.congocc.templates.core.Environment;
-    import org.congocc.templates.core.variables.*;
+    import org.congocc.templates.core.EvaluationException;
     import org.congocc.templates.utility.UndeclaredThrowableException;
     import org.congocc.templates.core.nodes.ParameterList;
     import static org.congocc.templates.core.variables.Wrap.assertIsDefined;
@@ -1071,8 +1071,8 @@ INJECT HashLiteral :
 
 INJECT MethodReference :
     import org.congocc.templates.core.Environment;
-    import org.congocc.templates.core.variables.JavaMethodCall;
-    import org.congocc.templates.core.variables.JavaConstructorCall;
+    import org.congocc.templates.core.reflection.JavaMethodCall;
+    import org.congocc.templates.core.reflection.JavaConstructorCall;
     implements Expression
 {
     public Expression getTarget() {

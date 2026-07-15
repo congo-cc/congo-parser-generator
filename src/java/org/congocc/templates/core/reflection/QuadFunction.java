@@ -1,4 +1,4 @@
-package org.congocc.templates.core.variables;
+package org.congocc.templates.core.reflection;
 
 @FunctionalInterface
 public interface QuadFunction<T,U,V,W,R> {

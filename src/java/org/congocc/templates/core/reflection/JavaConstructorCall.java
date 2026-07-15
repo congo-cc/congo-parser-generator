@@ -1,4 +1,4 @@
-package org.congocc.templates.core.variables;
+package org.congocc.templates.core.reflection;
 
 import java.lang.reflect.Constructor;
 import java.util.List;
@@ -6,13 +6,15 @@ import java.util.ArrayList;
 
 import org.congocc.templates.TemplateException;
 import org.congocc.templates.core.parser.Node;
+import org.congocc.templates.core.EvaluationException;
 
-import static org.congocc.templates.core.variables.ReflectionCode.cacheConstructor;
-import static org.congocc.templates.core.variables.ReflectionCode.getCachedConstructor;
-import static org.congocc.templates.core.variables.ReflectionCode.invokeConstructor;
-import static org.congocc.templates.core.variables.ReflectionCode.isCompatibleMethod;
-import static org.congocc.templates.core.variables.ReflectionCode.isMoreSpecific;
-import static org.congocc.templates.core.variables.Wrap.assertIsDefined;;
+import static org.congocc.templates.core.reflection.ReflectionCode.cacheConstructor;
+import static org.congocc.templates.core.reflection.ReflectionCode.getCachedConstructor;
+import static org.congocc.templates.core.reflection.ReflectionCode.invokeConstructor;
+import static org.congocc.templates.core.reflection.ReflectionCode.isCompatibleMethod;
+import static org.congocc.templates.core.reflection.ReflectionCode.isMoreSpecific;
+import static org.congocc.templates.core.variables.Wrap.assertIsDefined;
+import org.congocc.templates.core.variables.WrappedVariable;
 
 public class JavaConstructorCall implements VarArgsFunction<Object> {
 

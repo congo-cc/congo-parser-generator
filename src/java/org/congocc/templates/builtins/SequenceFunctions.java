@@ -10,7 +10,9 @@ import org.congocc.templates.core.Environment;
 import org.congocc.templates.core.ArithmeticEngine;
 import org.congocc.templates.core.nodes.BuiltInExpression;
 import org.congocc.templates.core.nodes.generated.TemplateNode;
-import org.congocc.templates.core.variables.*;
+import org.congocc.templates.core.EvaluationException;
+import org.congocc.templates.core.reflection.JavaMethodCall;
+import org.congocc.templates.core.reflection.VarArgsFunction;
 import org.congocc.templates.TemplateHash;
 import org.congocc.templates.utility.StringUtil;
 
@@ -26,8 +28,7 @@ public abstract class SequenceFunctions extends ExpressionEvaluatingBuiltIn {
 
 
     @Override
-    public Object get(Environment env, BuiltInExpression caller,
-            Object model)
+    public Object get(Environment env, BuiltInExpression caller, Object model)
     {
         if (!isList(model)) {
             throw TemplateNode.invalidTypeException(model,
@@ -41,7 +42,7 @@ public abstract class SequenceFunctions extends ExpressionEvaluatingBuiltIn {
     public static class First extends SequenceFunctions {
         @Override
         public Object apply(Object sequence) {
-            List list = asList(sequence);
+            List<?> list = asList(sequence);
             return list.size() > 0 ? list.get(0) : null;
         }
     }

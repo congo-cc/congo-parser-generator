@@ -1,7 +1,7 @@
 package org.congocc.templates.builtins;
 
 import org.congocc.templates.core.Environment;
-import org.congocc.templates.core.variables.EvaluationException;
+import org.congocc.templates.core.EvaluationException;
 import org.congocc.templates.core.variables.InvalidReferenceException;
 import org.congocc.templates.core.nodes.BuiltInExpression;
 

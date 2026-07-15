@@ -1,4 +1,4 @@
-package org.congocc.templates.core.variables;
+package org.congocc.templates.core.reflection;
 
 import java.lang.reflect.Method;
 import java.lang.reflect.Constructor;
@@ -8,11 +8,13 @@ import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 
 import org.congocc.templates.TemplateBoolean;
+import org.congocc.templates.core.EvaluationException;
 
 import java.lang.reflect.Array;
 import java.lang.reflect.Executable;
 
 import org.congocc.templates.core.parser.Node;
+import org.congocc.templates.core.variables.Wrap;
 import static org.congocc.templates.core.variables.Wrap.*;
 
 /**

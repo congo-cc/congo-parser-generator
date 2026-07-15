@@ -3,6 +3,7 @@ package org.congocc.templates.core.variables;
 import java.util.*;
 import java.lang.reflect.Array;
 import org.congocc.templates.core.Environment;
+import org.congocc.templates.core.EvaluationException;
 import org.congocc.templates.core.nodes.generated.Expression;
 import org.congocc.templates.core.parser.Node;
 import org.congocc.templates.TemplateBoolean;

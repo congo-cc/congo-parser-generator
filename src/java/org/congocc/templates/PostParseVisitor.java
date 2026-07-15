@@ -44,14 +44,6 @@ class PostParseVisitor extends Node.Visitor {
 		}
 	}
 
-	void visit(BuiltInExpression node) {
-		recurse(node);
-		if (node.getBuiltIn() == null) {
-			ParsingProblemImpl problem = new ParsingProblemImpl("Unknown builtin: " + node.getName(), node);
-			template.addParsingProblem(problem);
-		}
-	}
-
 	void visit(Macro node) {
 		String macroName = node.getName();
 		if (template.declaresVariable(macroName)) {

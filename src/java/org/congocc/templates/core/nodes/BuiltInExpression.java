@@ -1,11 +1,8 @@
 package org.congocc.templates.core.nodes;
 
-import static org.congocc.templates.core.variables.Wrap.asString;
-import org.congocc.templates.core.variables.JavaMethodCall;
 import org.congocc.templates.builtins.*;
 import org.congocc.templates.core.Environment;
 import java.util.HashMap;
-import org.congocc.templates.core.parser.*;
 import org.congocc.templates.core.nodes.generated.*;
 
 public class BuiltInExpression extends TemplateNode implements Expression {
@@ -64,19 +61,12 @@ public class BuiltInExpression extends TemplateNode implements Expression {
     private BuiltIn bi;
 
     public void close() {
-        key = getKeyTok().toString().intern();
+        key = get(2).toString().intern();
         bi = knownBuiltins.get(key);
-        if (bi == null) {
-            throw new ParseException("unknown builtin: ?" + key + " at " + getKeyTok().getLocation());
-        }
     }
 
     public Expression getTarget() {
         return (Expression) get(0);
-    }
-
-    public Token getKeyTok() {
-        return (Token) get(2);
     }
 
     public BuiltIn getBuiltIn() {
@@ -89,6 +79,10 @@ public class BuiltInExpression extends TemplateNode implements Expression {
 
     public String getName() {
         return key;
+    }
+
+    public static void registerBuiltin(String key, BuiltIn bi) {
+        knownBuiltins.put(key, bi);
     }
 }
 

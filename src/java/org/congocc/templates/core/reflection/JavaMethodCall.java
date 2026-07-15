@@ -1,11 +1,13 @@
-package org.congocc.templates.core.variables;
+package org.congocc.templates.core.reflection;
 
 import java.lang.reflect.Method;
 import java.util.List;
 
 import java.util.ArrayList;
 import org.congocc.templates.core.parser.Node;
-import static org.congocc.templates.core.variables.ReflectionCode.*;
+import org.congocc.templates.core.EvaluationException;
+import org.congocc.templates.core.variables.WrappedVariable;
+import static org.congocc.templates.core.reflection.ReflectionCode.*;
 import static org.congocc.templates.core.variables.Wrap.assertIsDefined;;
 
 public class JavaMethodCall implements VarArgsFunction<Object> {

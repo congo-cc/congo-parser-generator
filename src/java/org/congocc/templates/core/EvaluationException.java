@@ -1,6 +1,5 @@
-package org.congocc.templates.core.variables;
+package org.congocc.templates.core;
 
-import org.congocc.templates.core.Environment;
 import org.congocc.templates.TemplateException;
 
 /**

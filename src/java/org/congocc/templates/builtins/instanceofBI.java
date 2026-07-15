@@ -2,7 +2,7 @@ package org.congocc.templates.builtins;
 
 import org.congocc.templates.core.Environment;
 import org.congocc.templates.core.nodes.BuiltInExpression;
-import org.congocc.templates.core.variables.EvaluationException;
+import org.congocc.templates.core.EvaluationException;
 import java.util.function.Function;
 
 /**

@@ -80,8 +80,7 @@ INJECT LEXER_CLASS :
             case "#break" -> BREAK;
             case "#embed" -> EMBED;
             case "#else" -> ELSE;
-            case "#elif" -> ELSE_IF;
-            case "#elseif" -> ELSE_IF;
+            case "#elif","#elseif" -> ELSE_IF;
             case "#exec" -> EXEC;
             case "#ftl" -> CTL_HEADER;
             case "#ctl" -> CTL_HEADER;

@@ -3,7 +3,7 @@ package org.congocc.templates.core.nodes;
 import static org.congocc.templates.core.variables.Wrap.*;
 
 import org.congocc.templates.core.Environment;
-import org.congocc.templates.core.variables.*;
+import org.congocc.templates.core.reflection.ReflectionCode;
 import org.congocc.templates.core.nodes.generated.Expression;
 import org.congocc.templates.core.nodes.generated.RangeExpression;
 import org.congocc.templates.core.nodes.generated.TemplateNode;
