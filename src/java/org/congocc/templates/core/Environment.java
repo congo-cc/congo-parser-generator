@@ -1,28 +1,29 @@
 package org.congocc.templates.core;
 
 import java.io.IOException;
-import java.io.PrintWriter;
-import java.io.StringWriter;
 import java.io.Writer;
 import java.text.Collator;
 import java.text.DecimalFormat;
 import java.text.DecimalFormatSymbols;
 import java.text.NumberFormat;
 import java.util.*;
+import java.util.function.Function;
 
 import org.congocc.templates.core.nodes.generated.ArgsList;
 import org.congocc.templates.core.nodes.generated.Block;
-import org.congocc.templates.core.nodes.generated.IncludeInstruction;
+import org.congocc.templates.core.nodes.generated.Expression;
+import org.congocc.templates.core.nodes.generated.IteratorBlock;
+import org.congocc.templates.core.nodes.generated.LoopBlock;
 import org.congocc.templates.core.nodes.generated.Macro;
 import org.congocc.templates.core.nodes.generated.NestedInstruction;
 import org.congocc.templates.core.nodes.generated.PositionalArgsList;
 import org.congocc.templates.core.nodes.ParameterList;
 import org.congocc.templates.core.nodes.generated.TemplateElement;
-import org.congocc.templates.core.nodes.generated.UnifiedCall;
-import org.congocc.templates.core.variables.scope.*;
+import org.congocc.templates.core.scopes.*;
+import org.congocc.templates.extensions.Extension;
 import org.congocc.templates.*;
 
-import static org.congocc.templates.core.variables.Wrap.*;
+import static org.congocc.templates.core.Wrap.*;
 
 /**
  * Object that represents the runtime environment during template processing.
@@ -41,12 +42,8 @@ import static org.congocc.templates.core.variables.Wrap.*;
  * <p>
  * If you need to modify or read this object before or after the
  * <tt>process</tt> call, use
- *
- * @author <a href="mailto:jon@revusky.com">Jonathan Revusky</a>
- * @author Attila Szegedi
  */
-@SuppressWarnings("rawtypes")
-public final class Environment extends Configurable implements Scope {
+public final class Environment implements Scope {
     private static final ThreadLocal<Environment> threadEnv = new ThreadLocal<Environment>();
 
     private static final Map<NumberFormatKey, NumberFormat> localizedNumberFormats = new HashMap<NumberFormatKey, NumberFormat>();
@@ -61,43 +58,29 @@ public final class Environment extends Configurable implements Scope {
         C_NUMBER_FORMAT.setDecimalSeparatorAlwaysShown(false);
     }
 
+    private Template template;
+    private Locale locale;
+    private ArithmeticEngine arithmeticEngine;
+    private String numberFormat;
+    private TemplateExceptionHandler templateExceptionHandler;
     private final Map<String,Object> rootDataModel;
-
     private final List<TemplateElement> elementStack = new ArrayList<TemplateElement>();
-
     private final List<String> recoveredErrorStack = new ArrayList<String>();
-
-    private NumberFormat numberFormat;
-
+    private NumberFormat numberFormatter;
     private Map<String, NumberFormat> numberFormats;
-
+    private Function<String,String> outputEscape;
     private NumberFormat cNumberFormat;
-
     private Collator collator;
-
-    private Writer out;
-
+    private Appendable buffer = new StringBuilder();
     private MacroContext currentMacroContext;
-
     private Scope mainNamespace;
-
     private Scope currentScope;
-
     private Map<Macro, MacroContext> macroContextLookup = new HashMap<>();
-
     private Map<Macro, Scope> macroToNamespaceLookup = new HashMap<>();
-
     private HashMap<String, Object> globalVariables = new HashMap<>();
-
     private HashMap<String, Scope> loadedLibs;
-
     private Throwable lastThrowable;
-
     private Object lastReturnValue;
-
-    private String cachedURLEscapingCharset;
-
-    private boolean urlEscapingCharsetCached;
 
     /**
      * Retrieves the environment object associated with the current thread. Data
@@ -109,10 +92,9 @@ public final class Environment extends Configurable implements Scope {
         return threadEnv.get();
     }
 
-    public Environment(Template template, Map<String,Object> rootDataModel, Writer out) {
-        super(template);
+    public Environment(Template template, Map<String,Object> rootDataModel) {
+        this.template = template;
         this.currentScope = mainNamespace = new BlockScope(template.getRootElement(), this);
-        this.out = out;
         this.rootDataModel = rootDataModel;
         importMacros(template);
     }
@@ -129,21 +111,26 @@ public final class Environment extends Configurable implements Scope {
      * Retrieves the currently processed template.
      */
     public Template getTemplate() {
-        return (Template) getFallback();
+        return template;
+    }
+
+    public void setTemplate(Template template) {
+        this.template = template;
+    }
+
+    public Extension getExtension(String name) {
+        return getTemplateFactory().getExtension(name);
     }
 
     /**
      * Processes the template to which this environment belongs.
      */
-    public void process() throws IOException {
+    public void process() {
         Environment savedEnv = threadEnv.get();
         threadEnv.set(this);
         try {
-            doAutoImportsAndIncludes(this);
             Template template = getTemplate();
             render(template.getRootElement());
-            // Do not flush if there was an exception.
-            out.flush();
         } finally {
             threadEnv.set(savedEnv);
         }
@@ -152,12 +139,14 @@ public final class Environment extends Configurable implements Scope {
     /**
      * "Visit" the template element.
      */
-    public void render(TemplateElement element) throws IOException {
+    public void render(TemplateElement element) {
         pushElement(element);
         Block nestedBlock = element.getNestedBlock();
         boolean createNewScope = nestedBlock != null
                                  && !nestedBlock.isTemplateRoot()
                                  && !(nestedBlock.getParent() instanceof Macro)
+                                 && !(nestedBlock.getParent() instanceof LoopBlock)
+                                 && !(nestedBlock.getParent() instanceof IteratorBlock)
                                  && nestedBlock.createsScope();
         Scope prevScope = currentScope;
         if (createNewScope) {
@@ -176,27 +165,22 @@ public final class Environment extends Configurable implements Scope {
     /**
      * Visit a block using buffering/recovery
      */
-    public void render(Block attemptBlock, Block recoveryBlock) throws IOException {
-        Writer prevOut = this.out;
-        StringWriter sw = new StringWriter();
-        this.out = sw;
+    public void render(Block attemptBlock, Block recoveryBlock) {
+        Appendable prevBuffer = this.buffer;
         TemplateException thrownException = null;
         try {
             render(attemptBlock);
         } catch (TemplateException te) {
             thrownException = te;
-        } finally {
-            this.out = prevOut;
         }
         if (thrownException != null) {
+            this.buffer = prevBuffer;
+            recoveredErrorStack.add(thrownException.getMessage());
             try {
-                recoveredErrorStack.add(thrownException.getMessage());
                 render(recoveryBlock);
             } finally {
                 recoveredErrorStack.remove(recoveredErrorStack.size() - 1);
             }
-        } else {
-            out.write(sw.toString());
         }
     }
 
@@ -208,7 +192,7 @@ public final class Environment extends Configurable implements Scope {
         return recoveredErrorStack.get(recoveredErrorStack.size() - 1);
     }
 
-    public void render(NestedInstruction nestedInstruction) throws IOException {
+    public void render(NestedInstruction nestedInstruction) {
         BlockScope blockScope = new BlockScope(currentMacroContext.getBody(), currentMacroContext.getInvokingScope());
         ParameterList bodyParameters = currentMacroContext.getBodyParameters();
         PositionalArgsList bodyArgs = (PositionalArgsList) nestedInstruction.getArgs();
@@ -222,18 +206,39 @@ public final class Environment extends Configurable implements Scope {
         TemplateElement body = invokingMacroContext.getBody();
         if (body != null) {
             this.currentMacroContext = invokingMacroContext.getInvokingMacroContext();
-            Configurable prevParent = getFallback();
+            Template prevTemplate = getTemplate();
             Scope prevScope = currentScope;
-            setFallback(getCurrentNamespace().getTemplate());
+            setTemplate(getCurrentNamespace().getTemplate());
             currentScope = blockScope;
             try {
                 render(body);
             } finally {
                 currentScope = prevScope;
                 this.currentMacroContext = invokingMacroContext;
-                setFallback(prevParent);
+                setTemplate(prevTemplate);
                 this.currentScope = prevScope;
             }
+        }
+    }
+
+    public void loop(Block block, Expression condition, final boolean until) {
+        Scope prevScope = currentScope;
+        int index = 0;
+        try {
+            while (true) {
+                currentScope = new BlockScope(block, prevScope);
+                currentScope.put("__index", index++);
+                if (!until && condition != null && !condition.isTrue(this)) break;
+                render(block);
+                if (until && condition != null && condition.isTrue(this)) break;
+            }
+        }
+        catch (BreakException br) {}
+        catch (TemplateException te) {
+            handleTemplateException(te);
+        }
+        finally {
+            currentScope = prevScope;
         }
     }
 
@@ -241,7 +246,7 @@ public final class Environment extends Configurable implements Scope {
      * Loop over a block, using the iterator passed in and
      * the given variable name for the loop variable.
      */
-    public void process(Iterator<?> it, Block block, String loopVarName) throws IOException {
+    public void process(Iterator<?> it, Block block, String loopVarName) {
         Scope prevScope = currentScope;
         int index = 0;
         String hasNextName = loopVarName + "_has_next";
@@ -262,7 +267,7 @@ public final class Environment extends Configurable implements Scope {
         }
     }
 
-    public void process(Object mapOrHash, Block block, String keyName, String valueName) throws IOException {
+    public void process(Object mapOrHash, Block block, String keyName, String valueName) {
         Iterator it = null;
         TemplateHash hash = null;
         Map map = null;
@@ -301,20 +306,39 @@ public final class Environment extends Configurable implements Scope {
         }
     }
 
-    public <T> T runInScope(Scope scope, TemplateRunnable<T> runnable) throws IOException {
-        Scope currentScope = this.currentScope;
-        this.currentScope = scope;
-        try {
-            return runnable.run();
-        } finally {
-            this.currentScope = currentScope;
+    public TemplateExceptionHandler getTemplateExceptionHandler() {
+        if (templateExceptionHandler != null) {
+            return templateExceptionHandler;
         }
+        return template.getTemplateFactory().getTemplateExceptionHandler();
+    }
+
+    public void setTemplateExceptionHandler(TemplateExceptionHandler teh) {
+        templateExceptionHandler = teh;
+    }
+
+    public ArithmeticEngine getArithmeticEngine() {
+        if (arithmeticEngine !=null) {
+            return arithmeticEngine;
+        }
+        return template.getArithmeticEngine();
+    }
+
+    public Locale getLocale() {
+        if (locale!=null) {
+            return locale;
+        }
+        return template.getLocale();
+    }
+
+    public void setLocale(Locale locale) {
+        this.locale = locale;
     }
 
     /**
      * "visit" a macro.
      */
-    public void render(Macro macro, ArgsList args, ParameterList bodyParameters, Block nestedBlock) throws IOException {
+    public void render(Macro macro, ArgsList args, ParameterList bodyParameters, Block nestedBlock) {
         if (macro == Macro.DO_NOTHING_MACRO) {
             return;
         }
@@ -330,7 +354,7 @@ public final class Environment extends Configurable implements Scope {
                 }
             }
             Scope prevScope = currentScope;
-            Configurable prevParent = getFallback();
+            Template prevTemplate = getTemplate();
             currentScope = currentMacroContext = mc;
             try {
                 render(macro.getNestedBlock());
@@ -345,7 +369,7 @@ public final class Environment extends Configurable implements Scope {
                 }
                 currentMacroContext = mc.getInvokingMacroContext();
                 currentScope = prevScope;
-                setFallback(prevParent);
+                setTemplate(prevTemplate);
             }
         } finally {
             popElement();
@@ -355,7 +379,6 @@ public final class Environment extends Configurable implements Scope {
     public void visitMacroDef(Macro macro) {
         if (currentMacroContext == null) {
             macroToNamespaceLookup.put(macro, getCurrentNamespace());
-            // getCurrentNamespace().put(macro.getName(), macro);
             this.unqualifiedSet(macro.getName(), macro);
         }
     }
@@ -389,46 +412,7 @@ public final class Environment extends Configurable implements Scope {
             throw te;
         }
         // Finally, pass the exception to the handler
-        getTemplateExceptionHandler().handleTemplateException(te, this, out);
-    }
-
-    public void setTemplateExceptionHandler(
-            TemplateExceptionHandler templateExceptionHandler) {
-        super.setTemplateExceptionHandler(templateExceptionHandler);
-        lastThrowable = null;
-    }
-
-    public void setURLEscapingCharset(String urlEscapingCharset) {
-        urlEscapingCharsetCached = false;
-        super.setURLEscapingCharset(urlEscapingCharset);
-    }
-
-    /*
-     * Note that although it is not allowed to set this setting with the
-     * <tt>setting</tt>
-     * directive, it still must be allowed to set it from Java code while the
-     * template executes, since some frameworks allow templates to actually
-     * change the output encoding on-the-fly.
-     */
-    public void setOutputEncoding(String outputEncoding) {
-        urlEscapingCharsetCached = false;
-        super.setOutputEncoding(outputEncoding);
-    }
-
-    /**
-     * Returns the name of the charset that should be used for URL encoding.
-     * This will be <code>null</code> if the information is not available. The
-     * function caches the return value, so it is quick to call it repeately.
-     */
-    public String getEffectiveURLEscapingCharset() {
-        if (!urlEscapingCharsetCached) {
-            cachedURLEscapingCharset = getURLEscapingCharset();
-            if (cachedURLEscapingCharset == null) {
-                cachedURLEscapingCharset = getOutputEncoding();
-            }
-            urlEscapingCharsetCached = true;
-        }
-        return cachedURLEscapingCharset;
+        getTemplateExceptionHandler().handleTemplateException(te, this);
     }
 
     public Collator getCollator() {
@@ -438,28 +422,56 @@ public final class Environment extends Configurable implements Scope {
         return collator;
     }
 
-    public void setOut(Writer out) {
-        this.out = out;
+    public void setBuffer(Appendable buffer) {
+        this.buffer = buffer;
     }
 
-    public Writer getOut() {
-        return out;
+    public Appendable getBuffer() {
+        return buffer;
     }
 
-    public String formatNumber(Number number) {
-        if (numberFormat == null) {
-            numberFormat = getNumberFormatObject(getNumberFormat());
+    public Function<String,String> getOutputEscape() {
+        if (outputEscape == null) {
+            return template.getOutputEscape();
         }
-        return numberFormat.format(number);
+        return outputEscape;
+    }
+
+    public void append(CharSequence cs) {
+        try {
+           buffer.append(cs);
+        }
+        catch (IOException ioe) {
+            throw new TemplateException(ioe);
+        }
+    }
+
+    public String getOutput() {
+        return buffer.toString();
+    }
+
+    //Not sure about this. REVISIT
+    public String formatNumber(Number number) {
+        if (numberFormatter == null) {
+            numberFormatter = getNumberFormatObject(template.getNumberFormat());
+            if (numberFormatter == null) {
+                numberFormatter = getNumberFormatObject(getNumberFormat());
+            }
+        }
+        return numberFormatter.format(number);
+    }
+
+    public String getNumberFormat() {
+        return numberFormat;
     }
 
     public void setNumberFormat(String formatName) {
-        super.setNumberFormat(formatName);
-        numberFormat = null;
+        this.numberFormat = formatName;
+        numberFormatter = null;
     }
 
-    public Configuration getConfiguration() {
-        return getTemplate().getConfiguration();
+    public TemplateFactory getTemplateFactory() {
+        return getTemplate().getTemplateFactory();
     }
 
     public Object getLastReturnValue() {
@@ -502,7 +514,6 @@ public final class Environment extends Configurable implements Scope {
                 localizedNumberFormats.put(fk, format);
             }
         }
-
         // Clone it and store the clone in the local cache
         format = (NumberFormat) format.clone();
         numberFormats.put(pattern, format);
@@ -562,14 +573,13 @@ public final class Environment extends Configurable implements Scope {
             result = rootDataModel.get(name);
         }
         if (result == null) {
-            result = getConfiguration().getSharedVariable(name.toString());
+            result = getTemplateFactory().getSharedVariable(name.toString());
         }
         return result;
     }
 
     /**
-     * Sets a variable that is visible globally. This is correspondent to CTL
-     * <code><#global <i>name</i>=<i>model</i>></code>.
+     * Sets a variable that is visible globally.
      */
     public void setGlobalVariable(String name, Object value) {
         globalVariables.put(name, value);
@@ -594,22 +604,14 @@ public final class Environment extends Configurable implements Scope {
      */
     public void unqualifiedSet(String name, Object value) {
         Scope scope = this.currentScope;
-        while (!scope.isTemplateNamespace()) {
-            if (scope.get(name) != null) {
+        while (scope != null) {
+            if (scope.definesVariable(name)) {
                 scope.put(name, value);
                 return;
             }
             scope = scope.getEnclosingScope();
         }
-        try {
-            scope.put(name, value);
-        } catch (UndeclaredVariableException uve) {
-            if (globalVariables.containsKey(name)) {
-                globalVariables.put(name, value);
-            } else {
-                throw uve;
-            }
-        }
+        throw new UndeclaredVariableException("The variable " + name + " is not declared here.");
     }
 
     public Environment getEnvironment() {
@@ -629,13 +631,16 @@ public final class Environment extends Configurable implements Scope {
     }
 
     public Object put(String varname, Object value) {
-        return globalVariables.put(varname, value);
+        if (definesVariable(varname)) {
+            return globalVariables.put(varname, value);
+        }
+        throw new UndeclaredVariableException("Variable " + varname + " is undeclared.");
     }
-
+/*
     public Object remove(Object varname) {
         return globalVariables.remove(varname);
     }
-
+*/
     /**
      * Returns the main name-space. This is correspondent of CTL
      * <code>.main</code> hash.
@@ -658,7 +663,7 @@ public final class Environment extends Configurable implements Scope {
 
     /**
      * Returns the data model hash. This is correspondent of CTL
-     * <code>.datamodel</code> hash. That is, it contains both the variables
+     * <code>::datamodel</code> hash. That is, it contains both the variables
      * of the root hash passed to the <code>Template.process(...)</code>, and
      * the shared variables in the <code>Configuration</code>.
      */
@@ -670,7 +675,7 @@ public final class Environment extends Configurable implements Scope {
             public Object get(String key) {
                 Object value = rootDataModel.get(key);
                 if (value == null) {
-                    value = getConfiguration().getSharedVariable(key);
+                    value = getTemplateFactory().getSharedVariable(key);
                 }
                 return value;
             }
@@ -692,71 +697,19 @@ public final class Environment extends Configurable implements Scope {
         elementStack.remove(elementStack.size() - 1);
     }
 
-    /**
-     * Emulates <code>include</code> directive, except that <code>name</code>
-     * must be tempate root relative.
-     *
-     * <p>
-     * It's the same as
-     * <code>include(getTemplateForInclusion(name, encoding, parse))</code>.
-     * But, you may want to separately call these two methods, so you can
-     * determine the source of exceptions more precisely, and thus achieve more
-     * intelligent error handling.
-     *
-     * @see #getTemplateForInclusion(String name, String encoding, boolean
-     *      parse)
-     * @see #include(Template includedTemplate, boolean freshNamespace)
-     */
     public void include(String name, String encoding, boolean parse) throws IOException {
-        include(getTemplateForInclusion(name, encoding, parse), false);
+        include(getTemplateForInclusion(name), false);
     }
 
-    /**
-     * Gets a template for inclusion; used with
-     * {@link #include(Template includedTemplate, boolean freshNamespace)}. The
-     * advantage over simply
-     * using <code>config.getTemplate(...)</code> is that it chooses the
-     * default encoding as the <code>include</code> directive does.
-     *
-     * @param name
-     *                 the name of the template, relatively to the template root
-     *                 directory (not the to the directory of the currently
-     *                 executing
-     *                 template file!). (Note that you can use
-     *                 {@link org.congocc.templates.cache.TemplateCache#getFullTemplatePath} to
-     *                 convert paths to template root relative paths.)
-     * @param encoding
-     *                 the encoding of the obtained template. If null, the encoding
-     *                 of the Template that is currently being processed in this
-     *                 Environment is used.
-     * @param parse
-     *                 whether to process a parsed template or just include the
-     *                 unparsed template source.
-     */
-    public Template getTemplateForInclusion(String name, String encoding, boolean parse) throws IOException {
-        if (encoding == null) {
-            encoding = getTemplate().getEncoding();
-        }
-        if (encoding == null) {
-            encoding = getConfiguration().getEncoding(this.getLocale());
-        }
-        return getConfiguration().getTemplate(name, getLocale(), encoding,
-                parse);
+    public Template getTemplateForInclusion(String name) throws IOException {
+        // REVISIT
+        //return getConfiguration().getTemplate(name, getLocale(), encoding, parse);
+        return getTemplateFactory().getTemplate(name);
     }
 
-    /**
-     * Processes a Template in the context of this <code>Environment</code>,
-     * including its output in the <code>Environment</code>'s Writer.
-     *
-     * @param includedTemplate
-     *                         the template to process. Note that it does
-     *                         <em>not</em> need
-     *                         to be a template returned by
-     *                         {@link #getTemplateForInclusion(String name, String encoding, boolean parse)}.
-     */
     public void include(Template includedTemplate, boolean freshNamespace) throws IOException {
         Template prevTemplate = getTemplate();
-        setFallback(includedTemplate);
+        setTemplate(includedTemplate);
         Scope prevScope = this.currentScope;
         if (freshNamespace) {
             this.currentScope = new BlockScope(includedTemplate.getRootElement(), this);
@@ -769,24 +722,10 @@ public final class Environment extends Configurable implements Scope {
             render(includedTemplate.getRootElement());
         } finally {
             this.currentScope = prevScope;
-            setFallback(prevTemplate);
+            setTemplate(prevTemplate);
         }
     }
 
-    /**
-     * Emulates <code>import</code> directive, except that <code>name</code>
-     * must be tempate root relative.
-     *
-     * <p>
-     * It's the same as
-     * <code>importLib(getTemplateForImporting(name), namespace)</code>. But,
-     * you may want to separately call these two methods, so you can determine
-     * the source of exceptions more precisely, and thus achieve more
-     * intelligent error handling.
-     *
-     * @see #getTemplateForImporting(String name)
-     * @see #importLib(Template includedTemplate, String namespace, boolean global)
-     */
     public Scope importLib(String name, String namespace) throws IOException {
         return importLib(getTemplateForImporting(name), namespace, true);
     }
@@ -806,7 +745,7 @@ public final class Environment extends Configurable implements Scope {
      *             convert paths to template root relative paths.)
      */
     public Template getTemplateForImporting(String name) throws IOException {
-        return getTemplateForInclusion(name, null, true);
+        return getTemplateForInclusion(name);
     }
 
     /**
@@ -839,36 +778,36 @@ public final class Environment extends Configurable implements Scope {
                 if (getCurrentNamespace() == mainNamespace) {
                     // We make libs imported into the main namespace globally visible
                     // for least surprise reasons. (Is this right???)
-                    this.put(namespace, newNamespace);
+                    globalVariables.put(namespace, newNamespace);
                 }
             }
             loadedLibs.put(templateName, newNamespace);
             Scope prevScope = currentScope;
             currentScope = newNamespace;
-            Writer prevOut = out;
-            Configurable prevParent = getFallback();
-            this.out = NULL_WRITER;
-            setFallback(loadedTemplate);
+            Template prevTemplate = getTemplate();
+            Appendable prevBuffer = this.buffer;
+            setBuffer(NULL_WRITER);
+            setTemplate(loadedTemplate);
             try {
                 render(loadedTemplate.getRootElement());
             } finally {
-                this.out = prevOut;
+                this.buffer = prevBuffer;
                 currentScope = prevScope;
-                setFallback(prevParent);
+                setTemplate(prevTemplate);
             }
         }
         return loadedLibs.get(templateName);
     }
 
-    public String renderElementToString(TemplateElement te) throws IOException {
-        Writer prevOut = out;
+    public String renderElementToString(TemplateElement te) {
+        Appendable prevBuffer = buffer;
+        StringBuilder newBuffer = new StringBuilder();
+        this.buffer = newBuffer;
         try {
-            StringWriter sw = new StringWriter();
-            this.out = sw;
             render(te);
-            return sw.toString();
+            return newBuffer.toString();
         } finally {
-            this.out = prevOut;
+            this.buffer = prevBuffer;
         }
     }
 
@@ -902,9 +841,7 @@ public final class Environment extends Configurable implements Scope {
 
     static public final Writer NULL_WRITER = new Writer() {
         public void write(char cbuf[], int off, int len) {}
-
         public void flush() {}
-
         public void close() {}
     };
 }

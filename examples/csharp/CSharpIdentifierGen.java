@@ -1,8 +1,7 @@
 import static java.lang.Character.*;
-import java.text.Normalizer;
 
 /**
- * A little utility to generate all the list of character ranges for the 
+ * A little utility to generate all the list of character ranges for the
  * start and continuation a C# identifier. (Except for the fact that a
  * C# identifier optionally can start with a "@", which we deal with elsewhere.)
  */

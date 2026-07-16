@@ -1,15 +1,5 @@
 <project name="Java Parser" default="compile-all">
-  <!-- Rust code-generation is off by default. Enable with: ant -Drust.enabled=true ... -->
-  <property name="rust.enabled" value="false"/>
-  <target name="-rust-check">
-    <condition property="rust.on">
-      <istrue value="${rust.enabled}"/>
-    </condition>
-  </target>
-  <target name="-rust-guard" depends="-rust-check" unless="rust.on">
-    <echo level="warning">*** Skipping Rust targets (rust.enabled=${rust.enabled}). Enable with: ant -Drust.enabled=true ***</echo>
-  </target>
-
+  <import file="../../common.xml"/>
   <target name="clean">
     <delete dir="org" />
     <delete dir="javaparser" />
@@ -26,27 +16,15 @@
   </target>
 
   <target name="java-parser-gen" depends="init" unless="javaparser.uptodate">
-    <echo>Building Java parser in Java.</echo>
-    <java jar="../../congocc.jar" failonerror="true" fork="true">
-      <assertions> <enable /> </assertions>
-      <arg line ="-n -q Java.ccc" />
-    </java>
+    <congocc target="Java.ccc"/>
   </target>
 
   <target name="python-parser-gen" depends="init" unless = "pyparser.uptodate">
-    <echo>Building Java parser in Python.</echo>
-    <java jar="../../congocc.jar" failonerror="true" fork="true">
-      <assertions> <enable /> </assertions>
-      <arg line ="-n -q -lang python Java.ccc" />
-    </java>
+    <congocc target="Java.ccc" lang="python" args="-n -q"/>
   </target>
 
   <target name="csharp-parser-gen" depends="init" unless="csparser.uptodate">
-    <echo>Building Java parser in CSharp.</echo>
-    <java jar="../../congocc.jar" failonerror="true" fork="true">
-      <assertions> <enable /> </assertions>
-      <arg line="-n -q -lang csharp Java.ccc" />
-    </java>
+    <congocc target="Java.ccc" lang="csharp" args="-n -q"/>
   </target>
 
   <target name="compile-java" depends="java-parser-gen">
@@ -68,21 +46,17 @@
     </exec>
   </target>
 
-  <target name="rust-gen" depends="-rust-guard" if="rust.on">
-    <echo>Building Java parser in Rust.</echo>
-    <java jar="../../congocc.jar" fork="true" failonerror="true">
-      <assertions><enable /></assertions>
-      <arg line="-n -lang rust -d ${basedir}/rust-javaparser ${basedir}/Java.ccc" />
-    </java>
+  <target name="rust-gen" depends="rust-guard" if="rust.available">
+    <congocc target="Java.ccc" args="-d ${basedir}/rust-javaparser -n" lang="rust"/>
   </target>
 
-  <target name="compile-rust" depends="-rust-guard,rust-gen" if="rust.on">
+  <target name="compile-rust" depends="rust-guard,rust-gen" if="rust.available">
     <exec executable="cargo" dir="${basedir}/rust-javaparser" failonerror="true">
       <arg line="build" />
     </exec>
   </target>
 
-  <target name="test-rust" depends="-rust-guard,compile-rust" if="rust.on">
+  <target name="test-rust" depends="rust-guard,compile-rust" if="rust.available">
     <!-- Tests disabled until handwritten Rust code is supplied.
          Eventually, the Rust parser will test against the same files as the Java parser.
     <delete dir="${basedir}/rust-javaparser/test-data" />

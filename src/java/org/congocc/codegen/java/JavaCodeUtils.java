@@ -63,7 +63,7 @@ public class JavaCodeUtils {
             }
         }
         Type type = fd.firstChildOfType(Type.class);
-        Token privateToken = Token.newToken(PRIVATE, fd.getTokenSource());
+        Token privateToken = Token.newToken(PRIVATE);
         //Token privateToken = Token.newToken(PRIVATE, "private", fd.getTokenSource());
         if (mods !=null) mods.add(privateToken);
         else fd.add(fd.indexOf(type), privateToken);
@@ -75,45 +75,17 @@ public class JavaCodeUtils {
         if (fieldType.equals("boolean")) {
             getterMethodName = getterMethodName.replaceFirst("get", "is");
         }
-        String getter = "//Inserted getter for " + fieldName 
-                        +"\npublic " + fieldType + " " + getterMethodName 
+        String getter = "//Inserted getter for " + fieldName
+                        +"\npublic " + fieldType + " " + getterMethodName
                         + "() {return " + fieldName + ";}";
-        String setter = "//Inserted setter for " + fieldName 
-                        + "\npublic void " + setterMethodName 
+        String setter = "//Inserted setter for " + fieldName
+                        + "\npublic void " + setterMethodName
                         + "(" + fieldType + " " +  fieldName + ") {this." + fieldName + " = " + fieldName + ";}";
         MethodDeclaration getterMethod, setterMethod;
         getterMethod = new CongoCCParser(getter).MethodDeclaration();
         setterMethod = new CongoCCParser(setter).MethodDeclaration();
         context.add(index +1, setterMethod);
         context.add(index +1, getterMethod);
-    }
-
-    static public void removeWrongJDKElements(Node context, int target) {
-        List<Annotation> annotations = context.descendants(Annotation.class, 
-            a->a.getName().toLowerCase().startsWith("minjdk") || a.getName().toLowerCase().startsWith("maxjdk"));
-        for (Annotation annotation : annotations) {
-            boolean specifiesMax = annotation.getName().toLowerCase().startsWith("max");
-            String intPart = annotation.getName().substring(6);
-            int specifiedVersion;
-            try {
-                specifiedVersion = Integer.parseInt(intPart);
-            }
-            catch (NumberFormatException nfe) {
-                //okay, do nothing here. Just leave the annotation there and let the 
-                // Java compiler deal with the fact that it is wrong!
-                continue;
-            }
-            boolean removeElement = specifiesMax ? target > specifiedVersion : target < specifiedVersion;
-            Node parent = annotation.getParent();
-            parent.remove(annotation);
-            if (parent instanceof Modifiers) {
-                parent = parent.getParent();
-            }
-            Node grandparent = parent.getParent();
-            if (removeElement) {
-                grandparent.remove(parent);
-            } 
-        }
     }
 
     /**

@@ -101,23 +101,10 @@ tests in `rust-saved/`) can be obtained by running the ant target:
 ant -Drust.enabled=true rust-gen
 ```
 
-### Optionally Add AST Serialization Support
-
-Make the current directory **rust-sqlparser**.  To include serde serialization for ASTs, copy the following text into the generated Cargo.toml file before the [lib] stanza (blank lines before and after).  
-
-```
-[dependencies]
-serde = { version = "1.0", features = ["derive"], optional = true }
-
-[features]
-default = []
-serde = ["dep:serde"]
-```
-
 ### Compiling the Parser
 
-From the **rust-sqlparser** directory, issue *ONE* of the following commands for debug builds.
-
+From the **rust-sqlparser** directory, issue *ONE* of the following commands for builds.  Replace "build" with "test" to build and then run all tests.  
+See [README_RUST.md](https://github.com/richcar58/congo-parser-generator/blob/main/README_RUST.md#zero-dependencies) for details about activating the optional `serde` feature.  
 ```
 cargo build                              # Debug build
 cargo build --features serde             # Debug build with serde serialization support for AST types

@@ -7,7 +7,7 @@ BASE_SRC_DIR="../../build/generated-java";
 
 USES_PREPROCESSOR;
 
-DEACTIVATE_TOKENS=_INCLUDE,_INJECT,_EOF, RECORD, VAR, YIELD, SEALED, NON_SEALED, PERMITS;
+DEACTIVATE_TOKENS=_EOF, VAR, YIELD, SEALED, NON_SEALED, PERMITS;
 
 // We can use this symbol to generate code conditionally
 // based on whether we are generating code for internal use
@@ -16,10 +16,10 @@ DEACTIVATE_TOKENS=_INCLUDE,_INJECT,_EOF, RECORD, VAR, YIELD, SEALED, NON_SEALED,
 /* congocc RESERVED WORDS: These are the reserved words congocc but not in Java */
 
 TOKEN #CongoCCKeyWord :
-  < _INJECT: "INJECT" >
-  |
-  < _INCLUDE : "INCLUDE" | "INCLUDE_GRAMMAR">
-  |
+//  < _INJECT: "INJECT" >
+//  |
+//  < _INCLUDE : "INCLUDE">
+//  |
   < _FAIL : "FAIL" >
   |
   < _UNCACHE_TOKENS : "UNCACHE_TOKENS">
@@ -70,6 +70,11 @@ INJECT TokenSource :
   @Property Grammar grammar;
 }
 
+INJECT interface EmbeddedCode :
+{
+   public CodeLang getSpecifiedLang();
+}
+
 INJECT LEXER_CLASS :
 {
   // Set whether to generate unparsed tokens for WHITESPACE
@@ -93,15 +98,18 @@ INJECT PARSER_CLASS :
     import org.congocc.preprocessor.PreprocessorParser;
     import org.congocc.parser.csharp.CSharpParser;
     import org.congocc.parser.python.PythonParser;
+    import org.congocc.parser.rust.RustParser;
     import org.congocc.parser.python.ast.Module;
+    import org.congocc.parser.rust.ast.Crate;
     import NODE_PACKAGE.TokenProduction.Kind;
 {
     private Grammar grammar;
 
-    public PARSER_CLASS(Grammar grammar, Path path, Map<String, String> definedSymbols) throws IOException {
+    public PARSER_CLASS(Grammar grammar, Path path, Map<String, String> definedSymbols, String defaultLexicalState) throws IOException {
         this(path.toString(), path);
         assert grammar != null;
         this.grammar = grammar;
+        this.defaultLexicalState = defaultLexicalState;
         token_source.setGrammar(grammar);
         PreprocessorParser parser = new PreprocessorParser(path);
         parser.setSymbols(definedSymbols);
@@ -109,11 +117,18 @@ INJECT PARSER_CLASS :
         token_source.setParsedLines(lineMarkers);
     }
 
+    // Leaving a constructor of this signature as a courtesy, in case it was
+    // being used
+    public PARSER_CLASS(Grammar grammar, Path path, Map<String, String> definedSymbols) throws IOException {
+        this(grammar, path, definedSymbols, grammar.getDefaultLexicalState());
+    }
+
     public PARSER_CLASS(Grammar grammar, String inputSource, CharSequence content) throws IOException {
         this(inputSource, content);
         assert grammar != null;
         this.grammar = grammar;
         token_source.setGrammar(grammar);
+        this.defaultLexicalState = grammar.getDefaultLexicalState();
         PreprocessorParser parser = new PreprocessorParser(inputSource, content);
         parser.setSymbols(grammar.getPreprocessorSymbols());
         BitSet lineMarkers = parser.PP_Root();
@@ -148,6 +163,31 @@ INJECT PARSER_CLASS :
     static public org.congocc.parser.csharp.ast.CompilationUnit parseCSharpFile(Path path) throws IOException {
         CSharpParser parser  = new CSharpParser(path);
         return parser.CompilationUnit();
+    }
+
+    static public Crate parseRustFile(String inputSource, CharSequence content) {
+        RustParser parser = new RustParser(inputSource, content);
+        return parser.Crate();
+    }
+
+    static public Crate parseRustFile(Path path) throws IOException {
+        RustParser parser = new RustParser(path);
+        return parser.Crate();
+    }
+
+    static public Node parseSourceFile(Path path) throws IOException {
+        String ps = path.toString();
+        int dotIndex = ps.lastIndexOf('.');
+        if (dotIndex == -1) {
+            throw new IllegalArgumentException("Need a recognizable extension, like .java or .py etc");
+        }
+        return switch (ps.substring(dotIndex)) {
+            case ".java" -> parseJavaFile(path);
+            case ".py" -> parsePythonFile(path);
+            case ".cs" -> parseCSharpFile(path);
+            case ".rs" -> parseRustFile(path);
+            default -> throw new IllegalArgumentException("File extension must be one of .java, .py, .cs, or .rs\nFound: " + ps.substring(dotIndex));
+        };
     }
 
     public Grammar getGrammar() {
@@ -362,8 +402,6 @@ INJECT Token :
    (
       TokenProduction
       |
-      CodeInjection2
-      |
       CodeInjection
       |
       GrammarInclusion =>||
@@ -376,10 +414,13 @@ INJECT Token :
   }
 ;
 
-INJECT GrammarFile :
-{
-    @Property String defaultLexicalState;
-}
+CodeInjection#abstract :
+    RawCodeInjection
+    |
+    JavaCodeInjection2
+    |
+    JavaCodeInjection1
+;
 
 INJECT ReturnType :
     import java.util.List;
@@ -390,18 +431,14 @@ INJECT ReturnType :
     }
 }
 
-INJECT PARSER_CLASS : {
-    private boolean enterIncludes = true, isAlias = false;
-    public void setEnterIncludes(boolean enterIncludes) {this.enterIncludes = enterIncludes;}
-}
-
 GrammarInclusion throws IOException :
 {
    List<String> locations = new ArrayList<>();
-   Token includeToken;
 }
-   ACTIVATE_TOKENS _INCLUDE (<_INCLUDE>)
-   {includeToken = lastConsumedToken;}
+   'INCLUDE'
+   {%
+    Token includeToken = lastConsumedToken;
+   %}
    (
        (
            <STRING_LITERAL> {locations.add(((StringLiteral)lastConsumedToken).getString());}
@@ -423,19 +460,27 @@ GrammarInclusion throws IOException :
        "(" <STRING_LITERAL> {locations.add(((StringLiteral)lastConsumedToken).getString());} ")"
    )
    [";"]
-   {%
-      if (enterIncludes) {
-          Node included = grammar.include(locations, includeToken);
-          if (included!=null) {
-              thisProduction.add(included);
-          } else {
-              getErrors().addWarning(thisProduction, "File is already included.");
-          }
+   {J%
+      Node included = grammar.include(locations, includeToken, defaultLexicalState);
+      if (included == null) {
+          getErrors().addWarning(thisProduction, "File is already included.");
       }
+      else if (included instanceof GrammarFile) {
+          THIS.add(included);
+      }
+   %}
+   {R%
+      This raw code block is ignored, so
+      no need for valid Rust code here!
    %}
 ;
 
-#CodeInjection :
+RawCodeInjection :
+   'INJECT' [<IDENTIFIER>] <UNPARSED_CODE_BLOCK>
+   =>||
+;
+
+#JavaCodeInjection1 :
 {
     boolean isInterface = false;
     boolean isSealed=false;
@@ -444,7 +489,7 @@ GrammarInclusion throws IOException :
     ObjectType ot;
     ClassOrInterfaceBody coib;
 }
-        ACTIVATE_TOKENS _INJECT (<_INJECT>)
+        'INJECT'
         {permissibleModifiers = EnumSet.of(ABSTRACT,FINAL,STRICTFP,SEALED,NON_SEALED);}
         Modifiers
         {isSealed = peekNode().getType()==SEALED || peekNode().hasChildOfType(SEALED);}
@@ -458,7 +503,7 @@ GrammarInclusion throws IOException :
         =>|+1
         [
           SCAN "{" ("}" | "import" | "extends" | "implements" | (Annotation)+ "}") => "{"
-          {foundOptionalInitialBrace=true;}
+          {%foundOptionalInitialBrace=true;%}
         ]
         (ImportDeclaration)*
         (Annotation)*
@@ -481,14 +526,12 @@ GrammarInclusion throws IOException :
         ]
         [coib=ClassOrInterfaceBody {thisProduction.body = coib;}]
         {
-                if (enterIncludes) {
-                    grammar.addCodeInjection(thisProduction);
-                }
+                grammar.addCodeInjection(thisProduction);
                 return thisProduction;
         }
 ;
 
-INJECT CodeInjection :
+INJECT JavaCodeInjection1 :
    import java.util.List;
    import java.util.ArrayList;
    import org.congocc.core.Grammar;
@@ -501,8 +544,7 @@ INJECT CodeInjection :
         CongoCCParser parser;
         try {
             parser = new CongoCCParser(grammar, "dynamicInjection", inject);
-            parser.setEnterIncludes(true);
-            CodeInjection ci = parser.CodeInjection();
+            JavaCodeInjection1 ci = parser.JavaCodeInjection1();
             grammar.getInjector().add(ci);
         } catch (Exception e) {
             //FIXME: need something better here!
@@ -555,26 +597,33 @@ INJECT CodeInjection :
    @Property String name;
 }
 
-CodeInjection2 :
+JavaCodeInjection2 :
 {
         CompilationUnit jcu;
 }
-        ACTIVATE_TOKENS _INJECT (<_INJECT>)
-        ":" =>|| "{"
-        jcu=CompilationUnit
+        'INJECT' ":" =>||
+        "{"
+        jcu=JavaCodeInjection
        "}"
         {
-                if (enterIncludes) {
-                    grammar.addCodeInjection(jcu);
-                }
+           grammar.addCodeInjection(jcu);
         }
 ;
+
+INJECT PARSER_CLASS :
+{
+    private String defaultLexicalState = "DEFAULT";
+    private boolean ignoreCase = false;
+    private boolean requireTokenDeclaration = false;
+}
 
 Options# :
     {HashMap<String, Object> settings = new HashMap<>();}
     Setting(settings) =>||
     (Setting(settings))*
-    {grammar.setSettings(settings);}
+    {
+        grammar.setSettings(settings);
+    }
 ;
 
 Setting(Map<String,Object> settings) #Setting :
@@ -606,28 +655,46 @@ Setting(Map<String,Object> settings) #Setting :
         (<STRING_LITERAL>|<TEXT_BLOCK_LITERAL>) {value = ((StringLiteral) lastConsumedToken).getString();}
         |
         SCAN <IDENTIFIER> "."
-        =>Name {value = peekNode().toString();}
+        =>Name {% value = peekNode().toString(); %}
         |
         <IDENTIFIER> {value = lastConsumedToken.toString();}
         [ <HASH> <IDENTIFIER> { value += "#" + lastConsumedToken.toString();} ]
         ("," {value+=",";}
             <IDENTIFIER> {value+=lastConsumedToken.toString();}
-            [ <HASH> <IDENTIFIER> { value += "#" + lastConsumedToken.toString();} ]
+            [ <HASH> <IDENTIFIER> {% value += "#" + lastConsumedToken.toString(); %} ]
         )*
      )
   ]
   ";"
   {
+      if (key.equals("DEFAULT_LEXICAL_STATE")) {
+          assert !settings.containsKey("DEFAULT_LEXICAL_STATE") : "repeated DEFAULT_LEXICAL_STATE setting!";
+          assert LexerData.isJavaIdentifier(value.toString()) : "Default lexical state must be a valid Java identifier!";
+          this.defaultLexicalState = value.toString();
+          grammar.addLexicalState(value.toString());
+          if (!grammar.isInInclude()) {
+              grammar.setDefaultLexicalState(this.defaultLexicalState);
+          }
+      }
+      if (key.equals("IGNORE_CASE")) {
+          assert !settings.containsKey("IGNORE_CASE") : "repeated IGNORE_CASE setting!";
+          this.ignoreCase = (boolean) value;
+      }
+      if (key.equals("REQUIRE_TOKEN_DECLARATION")) {
+          assert !settings.containsKey("REQUIRE_TOKEN_DECLARATION") : "repeated REQUIRE_TOKEN_DECLARATION setting!";
+          this.requireTokenDeclaration = (boolean) value;
+      }
       settings.put(key, value);
   }
 ;
 
 BNFProduction #org.congocc.core.BNFProduction :
-{
+{%
     TreeBuildingAnnotation tba = null;
     Token firstToken=getToken(1), id;
     Expansion exp;
-}
+    String savedLexicalState = this.defaultLexicalState;
+%}
     [
         "public" | "private" | "protected"
     ]
@@ -657,7 +724,10 @@ BNFProduction #org.congocc.core.BNFProduction :
     [
         SCAN 2 => <IDENTIFIER>
         // SCAN 2 => @lexicalState =$ <IDENTIFIER>
-        {thisProduction.setLexicalState(lastConsumedToken.toString());}
+        {
+            thisProduction.setLexicalState(lastConsumedToken.toString());
+            this.defaultLexicalState = lastConsumedToken.toString();
+        }
         ":"
     ]
     ExpansionChoice
@@ -668,6 +738,7 @@ BNFProduction #org.congocc.core.BNFProduction :
         if (tba == null && !grammar.getAppSettings().getNodeDefaultVoid()) {
            grammar.addNodeType(thisProduction.getName(),thisProduction.getName());
         }
+        this.defaultLexicalState = savedLexicalState;
     }
 ;
 
@@ -905,6 +976,9 @@ ExpansionWithParentheses :
     Token atPrefix = null;
     EmbeddedCode recoveryBlock = null;
     ExpansionChoice choice;
+    // Only necessary if we have a lexical state switch
+    // but we might as well always do it
+    String savedLexicalState = this.defaultLexicalState;
 }
    [lss=LexicalStateSwitch | TokenActivation]
    [
@@ -920,6 +994,8 @@ ExpansionWithParentheses :
    ]
    {
         thisProduction.setAssignment(assignment);
+        // Only necessary if we had a lexical state switch
+        this.defaultLexicalState = savedLexicalState;
    }
    [
        SCAN ~\...\Lookahead =>
@@ -1085,11 +1161,13 @@ int[] CardinalityConstraint#void :
 
 INJECT Assertion :
    import org.congocc.core.Expansion;
+   import org.congocc.core.RawCode;
    extends org.congocc.core.EmptyExpansion
 {
     @Property Expansion expansion;
     @Property int[] cardinalityConstraint = null;
     @Property int assertionIndex = -1;
+    @Property RawCode rawCode;
 
     @Override
     public boolean startsWithGlobalCodeAction(boolean stopAtScanLimit) {
@@ -1122,9 +1200,9 @@ INJECT Assertion :
 
 Assertion# :
     {
-    boolean assertKeywordPresent = false;
-    boolean messageAlreadySeen = false;
-    int[] cardinality = null;
+       boolean assertKeywordPresent = false;
+       boolean messageAlreadySeen = false;
+       int[] cardinality = null;
     }
     (
         (
@@ -1134,6 +1212,8 @@ Assertion# :
         )+
         (
             LookBehind
+            |
+            RawCode {THIS.setRawCode((RawCode)peekNode());}
             |
             (
                 "{"
@@ -1159,19 +1239,19 @@ Assertion# :
                 @assertionExpressionRawCode := RawCode
                 {messageAlreadySeen = true;}
            )
-            [ SCAN {assertKeywordPresent} => @appliedUniversally :=? "#" ]
-            |
-            [ @expansionNegated :=? "~" ]
-            "("
-            ExpansionChoice {thisProduction.setExpansion((Expansion) peekNode());}
-            [
-               @locationExpression := Expression
-            ]
-            [
-                @messageExpression := Expression
-                {messageAlreadySeen = true;}
-            ]
-            ")"
+           [ SCAN {assertKeywordPresent} => @appliedUniversally :=? "#" ]
+           |
+           [ @expansionNegated :=? "~" ]
+           "("
+           ExpansionChoice {thisProduction.setExpansion((Expansion) peekNode());}
+           [
+              @locationExpression := Expression
+           ]
+           [
+               @messageExpression := Expression
+               {messageAlreadySeen = true;}
+           ]
+           ")"
         )
         [
           SCAN {assertKeywordPresent && !messageAlreadySeen} =>
@@ -1193,23 +1273,28 @@ Assertion# :
 Lookahead# :
 {
    Token amountToken=null;
-   boolean hasExplicitNumericalLookahead=false;
+//   boolean hasExplicitNumericalLookahead=false;
    Expansion expansion = null;
-   Expression exp=null;
+   EmbeddedCode exp=null;
    Name name = null;
    Node lb = null;
 }
 [ @assignment := Assignment ] //FIXME: should this have assignment?  It seems to do nothing right now.
-<_SCAN>
+(<_SCAN> | <INTEGER_LITERAL>)
 [
-    <INTEGER_LITERAL> {hasExplicitNumericalLookahead = true;}
+   ENSURE {getTokenType(0) != INTEGER_LITERAL}
+    <INTEGER_LITERAL>
 ]
-[
-    "{"
-    exp=Expression {thisProduction.setSemanticLookahead(exp);}
-    "}"
+{boolean hasExplicitNumericalLookahead = getTokenType(0) == INTEGER_LITERAL;}
+(
+    (
+      "{" exp=Expression "}"
+      |
+      exp=RawCode
+    )
+    {THIS.addSemanticLookahead(exp);}
     ["#" {thisProduction.setSemanticLookaheadNested(true);}]
-]
+)*
 [LookBehind =>|| {lb = peekNode();}]
 [
     SCAN {!hasExplicitNumericalLookahead} =>
@@ -1232,7 +1317,25 @@ INJECT Lookahead :
 {
     @Property Expansion expansion, nestedExpansion;
     @Property boolean negated, semanticLookaheadNested;
-    @Property Expression semanticLookahead;
+    List<EmbeddedCode> semanticLookaheads = new ArrayList<>();
+
+    public void addSemanticLookahead(EmbeddedCode code) {
+        semanticLookaheads.add(code);
+    }
+
+    public EmbeddedCode getSemanticLookahead() {
+        for (EmbeddedCode code : semanticLookaheads) {
+            if (code.getSpecifiedLang() == getGrammar().getCodeLang()) {
+                return code;
+            }
+        }
+        for (EmbeddedCode code : semanticLookaheads) {
+            if (code instanceof Expression) {
+                return code;
+            }
+        }
+        return null;
+    }
 
     public boolean getRequiresScanAhead() {
         if (!getLookaheadExpansion().isPossiblyEmpty()) return true;
@@ -1415,10 +1518,7 @@ ExpansionUnit #void :
 ;
 
 RawCode#org.congocc.core.RawCode :
-   <START_UNPARSED>
-   <UNPARSED_CONTENT>
-   <END_UNPARSED>
-   [<HASH>]
+   <UNPARSED_CODE_BLOCK>
 ;
 
 #EmbeddedCode#interface :
@@ -1485,7 +1585,9 @@ Terminal# :
   {%
       RegularExpression result = (RegularExpression) peekNode();
       if (result instanceof RegexpStringLiteral rsl) {
-            rsl.setLexicalState(grammar.getDefaultLexicalState());
+            rsl.setImplicitLexicalState(this.defaultLexicalState);
+            rsl.setRequireTokenDeclaration(this.requireTokenDeclaration);
+            rsl.setIgnoreCase(this.ignoreCase);
       }
       thisProduction.setRegexp(result);
   %}
@@ -1632,24 +1734,33 @@ Failure# :
       exp=Expression
       [":"]
       |
-      EmbeddedCode
+      Block {THIS.setHasRunnableBlock(true);}
+      |
+      ["=>" {THIS.setHasRunnableBlock(true);} ] RawCode
    ]
    {%
-       thisProduction.setExp(exp);
+       THIS.setExp(exp);
    %}
 ;
 
 INJECT Failure :
+   import org.congocc.core.RawCode;
    extends org.congocc.core.EmptyExpansion
 {
     @Property Expression exp;
+    @Property boolean hasRunnableBlock;
 
-    public CodeBlock getCode() {
+    public EmbeddedCode getCode() {
+        EmbeddedCode code = firstChildOfType(RawCode.class);
+        if (code != null) return code;
         return firstChildOfType(CodeBlock.class);
     }
 }
 
-LexicalStateSwitch : "LEXICAL_STATE" <IDENTIFIER> ;
+LexicalStateSwitch :
+    "LEXICAL_STATE" <IDENTIFIER>
+    {this.defaultLexicalState = lastConsumedToken.toString();}
+;
 
 INJECT LexicalStateSwitch : {
    public String getLexicalStateName() {
@@ -1732,5 +1843,3 @@ INJECT TryBlock  :
     }
 
 }
-
-

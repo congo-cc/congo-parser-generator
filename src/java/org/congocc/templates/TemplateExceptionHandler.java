@@ -1,7 +1,7 @@
 package org.congocc.templates;
 
-import java.io.Writer;
 import java.io.PrintWriter;
+import java.io.StringWriter;
 
 import org.congocc.templates.core.Environment;
 
@@ -11,49 +11,47 @@ import org.congocc.templates.core.Environment;
  */
 
 public interface TemplateExceptionHandler {
-	
+
    /**
     * handle the exception.
     * @param te the exception that occurred.
     * @param env The environment object that represents the rendering context
-    * @param out the character output stream to output to.
+    * @param buffer the buffer to output to.
     */
-    void handleTemplateException(TemplateException te, Environment env, Writer out);
-            
-            
+    void handleTemplateException(TemplateException te, Environment env);
+
+
   /**
    * This is a TemplateExceptionHandler which simply skips errors. It does nothing
-   * to handle the event. Note that the exception is still logged in any case, before
-   * being passed to the handler.
+   * to handle the event.
    */
     TemplateExceptionHandler IGNORE_HANDLER = new TemplateExceptionHandler() {
-        public void handleTemplateException(TemplateException te, Environment env, Writer out) {}
+        public void handleTemplateException(TemplateException te, Environment env) {}
     };
-        
+
     /**
      * This is a TemplateExceptionHandler that simply rethrows the exception.
      * Note that the exception is logged before being rethrown.
      */
     TemplateExceptionHandler RETHROW_HANDLER =new TemplateExceptionHandler() {
-	    public void handleTemplateException(TemplateException te, Environment env, Writer out) {
+	    public void handleTemplateException(TemplateException te, Environment env) {
             throw te;
         }
 	};
-        
+
     /**
      * This is a TemplateExceptionHandler used when you develop the templates. This handler
      * outputs the stack trace information to the client and then rethrows the exception.
      */
 	TemplateExceptionHandler DEBUG_HANDLER =new TemplateExceptionHandler() {
-		  public void handleTemplateException(TemplateException te, Environment env, Writer out) {
-          PrintWriter pw = (out instanceof PrintWriter) 
-                            ? (PrintWriter) out 
-                           : new PrintWriter(out);
-          te.printStackTrace(pw);
-          pw.flush();
-          throw te;
+		  public void handleTemplateException(TemplateException te, Environment env) {
+            StringWriter sw = new StringWriter();
+            PrintWriter pw = new PrintWriter(sw);
+            te.printStackTrace(pw);
+            env.append(sw.toString());
+            throw te;
 		}
-	}; 
+	};
 
         /**
           * This is a TemplateExceptionHandler used when you develop HTML templates. This handler
@@ -61,11 +59,8 @@ public interface TemplateExceptionHandler {
           * surrounds it with tags to make the error message readable with the browser.
           */
     TemplateExceptionHandler HTML_DEBUG_HANDLER =new TemplateExceptionHandler() {
-        public void handleTemplateException(TemplateException te, Environment env, Writer out) {
-            PrintWriter pw = (out instanceof PrintWriter) 
-                        ? (PrintWriter) out 
-                        : new PrintWriter(out);
-            pw.println("<!-- CONGO TEMPLATE ENGINE ERROR MESSAGE STARTS HERE -->"
+        public void handleTemplateException(TemplateException te, Environment env) {
+            env.append("<!-- CONGO TEMPLATE ENGINE ERROR MESSAGE STARTS HERE -->"
                   + "<script language=javascript>//\"></script>"
                   + "<script language=javascript>//\'></script>"
                   + "<script language=javascript>//\"></script>"
@@ -81,10 +76,9 @@ public interface TemplateExceptionHandler {
                   + "font-weight: normal; text-decoration: none; "
                   + "text-transform: none'>"
                   + "<b style='font-size:medium'>Congo template error!</b>"
-                  + "<pre><xmp>");
-            pw.println("</xmp></pre></div></html>");
-            pw.flush();
+                  + "<pre><xmp>\n");
+            env.append("</xmp></pre></div></html>\n");
             throw te;
         }
-	}; 
+	};
 }

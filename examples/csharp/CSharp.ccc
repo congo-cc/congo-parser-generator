@@ -1,11 +1,9 @@
-// This is the Java grammar that is used in the CongoCC
+
 // tool itself but it can be used on its own, and you are free to use it
-// in your own projects. It supports the stable feature set of Dotnet 9,
-// i.e. C# version 13. There are a couple of C# 14 features that are currently
-// unsupported, such as extension members. I anticipate adding full support
-// for C# 14 once Dotnet 10 has a final release.
+// in your own projects. It supports the stable feature set of Dotnet 10,
+// i.e. C# version 14.
 // This grammar serves as a very good showcase for some of the more
-// advanced features of CongoCC, without which, it could well be
+// advanced features of CongoCC, wihout which, it could well be
 // impossible to fully express the current C# language --
 // at least in a clean, elegant way.
 
@@ -23,30 +21,37 @@ FAULT_TOLERANT;
 FAULT_TOLERANT_DEFAULT=false;
 #endif
 
+REQUIRE_TOKEN_DECLARATION;
+
 DEACTIVATE_TOKENS= // The following tokens are turned on
                    // when we enter a Pattern
                   AND, OR, NOT,
                   // The following are the keywords that are
                   // activated when we enter a QueryExpression
                   ASCENDING, DESCENDING, BY, EQUALS, JOIN, GROUP,
-                  LET, INTO, ON, ORDERBY,SELECT, FROM, WHERE;
+                  LET, INTO, ON, ORDERBY,SELECT, FROM, WHERE,
+                  // I should check when shebang was allowed.
+                  SHEBANG ;
 
 INCLUDE "CSharpLexer.ccc"
 
 #CompilationUnit# :
+   [
+      ACTIVATE_TOKENS SHEBANG (<SHEBANG>)
+   ]
    (ExternAliasDirective)*
    (UsingDirective)*
    (GlobalAttributeSection)*
    CompilationUnitBody
    <EOF>
-   {return thisProduction;}
+   {return THIS;}
 ;
 
 CompilationUnitBody#void :
     FileScopedNamespaceDeclaration // Since 10.0
     |
     (
-      SCAN ~(<EOF>|<NAMESPACE>|TypeDeclarationLA)
+      SCAN ~(<EOF>|"namespace"|TypeDeclarationLA)
       =>
       Statement
     )*
@@ -57,33 +62,33 @@ TypeDeclarationLA#scan :
   (AttributeSection)*
   Modifiers
   [ 'partial' ]
-  ENSURE ~(<DELEGATE> <STAR>)
+  ENSURE ~("delegate" "*")
   (
-    <STRUCT>|<CLASS>|<INTERFACE>|<ENUM>|<DELEGATE>
+    "struct"|"class"|"interface"|"enum"|"delegate"
     |
     'record'
-    (<IDENTIFIER>|<STRUCT>|<CLASS>)
+    (<IDENTIFIER>|"struct"|"class")
   )
 ;
 
 FileScopedNamespaceDeclaration :
-   <NAMESPACE> QualifiedIdentifier <SEMICOLON> =>||
+   "namespace" QualifiedIdentifier ";" =>||
    (ExternAliasDirective)*
    (UsingDirective)*
    (TypeDeclaration)*
 ;
 
 NamespaceDeclaration :
-   <NAMESPACE>  QualifiedIdentifier  =>|+1
-   NamespaceBody [<SEMICOLON>]
+   "namespace"  QualifiedIdentifier  =>|+1
+   NamespaceBody [";"]
 ;
 
 QualifiedIdentifier :
-    <IDENTIFIER> (<DOT> <IDENTIFIER>)*
+    <IDENTIFIER> ("." <IDENTIFIER>)*
 ;
 
 NamespaceBody :
-   <LBRACE>
+   "{"
        (ExternAliasDirective)*
        (UsingDirective)*
        (
@@ -91,15 +96,15 @@ NamespaceBody :
           |
           TypeDeclaration
        )*
-   <RBRACE>
+   "}"
 ;
 
 ExternAliasDirective :
-   <EXTERN>
+   "extern"
    'alias'
    =>||
    <IDENTIFIER>
-   <SEMICOLON>
+   ";"
 ;
 
 UsingDirective :
@@ -111,37 +116,37 @@ UsingDirective :
 ;
 
 UsingStaticDirective :
-    <USING><STATIC> =>|| Name <SEMICOLON>
+    ['global'] "using" "static" =>|| Name ";"
 ;
 
 UsingAliasDirective :
-   <USING> <IDENTIFIER> <ASSIGN> =>||
+   ['global'] "using" <IDENTIFIER> "=" =>||
    Type
-   <SEMICOLON>
+   ";"
 ;
 
 UsingNamespaceDirective :
-    <USING> Name <SEMICOLON> =>||
+    ['global'] "using" Name ";" =>||
 ;
 
 GlobalAttributeSection :
-   <LBRACKET> ('assembly' | 'module')
+   "[" ('assembly' | 'module')
    =>||
-   <COLON> AttributeList [<COMMA>] <RBRACKET>
+   ":" AttributeList [","] "]"
 ;
 
 AttributeSection :
-   <LBRACKET>
+   "["
    [
-      (<EVENT> |<RETURN> |<IDENTIFIER> ) <COLON> =>||
+      ("event" |"return" |<IDENTIFIER> ) ":" =>||
    ]
    AttributeList
-   [<COMMA>]
-   <RBRACKET>
+   [","]
+   "]"
 ;
 
 AttributeList :
-     Attribute (<COMMA> =>|+1 Attribute)*
+     Attribute ("," =>|+1 Attribute)*
 ;
 
 Attribute :
@@ -150,28 +155,28 @@ Attribute :
 ;
 
 AttributeArguments :
-    <LPAREN>
+    "("
     [
-       SCAN ~(<RPAREN> | <IDENTIFIER><ASSIGN>)
+       SCAN ~(")" | <IDENTIFIER>"=")
        =>
-       [Type <COLON> =>||] Expression
+       [Type ":" =>||] Expression
        (
-          <COMMA>
-          [Type <COLON> =>||] // since when?
+          ","
+          [Type ":" =>||] // since when?
           Expression
        )*
     ]
     [
-       <IDENTIFIER> <ASSIGN> =>|| Expression #NamedArgument(3)
+       <IDENTIFIER> "=" =>|| Expression #NamedArgument(3)
        (
-          <COMMA> <IDENTIFIER> <ASSIGN> Expression #NamedArgument(3)
+          "," <IDENTIFIER> "=" Expression #NamedArgument(3)
        )*
     ]
-    <RPAREN>
+    ")"
 ;
 
 NamedArgument :
-    <IDENTIFIER> <ASSIGN> Expression
+    <IDENTIFIER> "=" Expression
 ;
 
 /** Name of a Type or a Namespace */
@@ -183,30 +188,30 @@ Name :
    )
    (
       SCAN 2
-      <DOT> <IDENTIFIER> [TypeArgumentList]
+      "." <IDENTIFIER> [TypeArgumentList]
    )*
 ;
 
 QualifiedAliasMember :
-   <IDENTIFIER> <DOUBLE_COLON> =>|| <IDENTIFIER>
+   <IDENTIFIER> "::" =>|| <IDENTIFIER>
    [TypeArgumentList]
 ;
 
 TypeArgumentList :
    (AttributeSection)*
-   <LT>
+   "<"
    =>||
-   TypeArgument ( <COMMA> TypeArgument)*
+   TypeArgument ( "," TypeArgument)*
    DEACTIVATE_TOKENS RIGHT_SHIFT, UNSIGNED_RIGHT_SHIFT, RIGHT_SHIFT_ASSIGN, UNSIGNED_RIGHT_SHIFT_ASSIGN
-   (<GT>)
+   (">")
 ;
 
 TypeArgument :
    (AttributeSection)*
    [
-      <VOID> [<STAR>]
+      "void" ["*"]
       |
-      [<IN>|<OUT>|<REF>] Type
+      ["in"|"out"|"ref"] Type
    ]
 ;
 
@@ -245,17 +250,17 @@ Modifiers#void : //TODO handle illegal combinations of mods
          ||
          hasMatch(permissibleModifiers, getToken(1)) }#
       =>
-      (<NEW>|<PUBLIC>|<PROTECTED>|<INTERNAL>|<PRIVATE>|<ABSTRACT>
-      |<SEALED>|<STATIC>|<UNSAFE>|<OVERRIDE>|<VIRTUAL>|<EXTERN>
-      |<ASYNC>|<REQUIRED>|<FILE>
+      ("new"|"public"|"protected"|"internal"|"private"|"abstract"
+      |"sealed"|"static"|"unsafe"|"override"|"virtual"|"extern"
+      |'async'|'required'|'file'
       // This is allowed on methods in some cases,
       // but not sure where exactly or when this was added
       // Have to check where this is possible and since when
-      | <READONLY>
+      | "readonly"
       // Note that "ref" is only a permissible keyword for struct
       // since 7.3
-      | <REF>
-      | <VOLATILE>
+      | "ref"
+      | "volatile"
       )
       {
          if (permissibleModifiers != null) {
@@ -268,7 +273,6 @@ Modifiers#void : //TODO handle illegal combinations of mods
 
 ClassDeclaration :
   {
-    boolean isaRecordClass = false;
     permissibleModifiers = EnumSet.of(NEW,  PUBLIC, TokenType.PROTECTED,
                                       TokenType.INTERNAL, TokenType.PRIVATE, TokenType.ABSTRACT,
                                       TokenType.SEALED, TokenType.STATIC, TokenType.UNSAFE, TokenType.FILE);
@@ -280,29 +284,28 @@ ClassDeclaration :
      // Record classes are since 10.0
      // and barely mentioned anywhere
      'record'
-     {isaRecordClass =true;}
   ]
-  <CLASS>
+  "class"
   =>||
   <IDENTIFIER>
   [TypeParameterList]
-  [<LPAREN> [FormalParameters] <RPAREN>]
+  ["(" [FormalParameters] ")"]
   [
-     <COLON>
+     ":"
      (
        Name
-       [ <LPAREN> [ArgumentList] <RPAREN>]
-       | <OBJECT>
-       | <STRING>
+       [ "(" [ArgumentList] ")"]
+       | "object"
+       | "string"
        | 'dynamic'
      )
-     (<COMMA> Name [<LPAREN> ArgumentList <RPAREN>] )*
+     ("," Name ["(" ArgumentList ")"] )*
   ]
   TypeParameterConstraints
   (
-      <LBRACE> (ClassMemberDeclaration)* <RBRACE> [<SEMICOLON>]
+      "{" (ClassMemberDeclaration)* "}" [";"]
       |
-      <SEMICOLON>
+      ";"
   )
 ;
 
@@ -322,24 +325,24 @@ StructDeclaration :
      'record'
      {isaRecordStruct=true;}
   ]
-   <STRUCT>
+   "struct"
    =>||
    <IDENTIFIER>
    [TypeParameterList]
-   [<LPAREN> [FormalParameters] <RPAREN>]
+   ["(" [FormalParameters] ")"]
    [
-      SCAN {isaRecordStruct}
+      SCAN {%isaRecordStruct%}
       =>
-      <LPAREN> [FormalParameters] <RPAREN>
+      "(" [FormalParameters] ")"
    ]
-   [<COLON> Name (<COMMA> Name)*]
+   [":" Name ("," Name)*]
    TypeParameterConstraints
    (
-      <LBRACE> (ClassMemberDeclaration)* <RBRACE>
+      "{" (ClassMemberDeclaration)* "}"
       |
-      SCAN {isaRecordStruct} => <SEMICOLON>
+      SCAN {isaRecordStruct} => ";"
    )
-   [<SEMICOLON>]
+   [";"]
 ;
 
 RecordDeclaration :
@@ -355,17 +358,17 @@ RecordDeclaration :
   =>||
   <IDENTIFIER>
   [TypeParameterList]
-  [<LPAREN> [FormalParameters] <RPAREN>]
+  ["(" [FormalParameters] ")"]
   [
     // Call of base constructor
     // Where is this documented?
-    <COLON> Name [<LPAREN> [ArgumentList] <RPAREN>]
+    ":" Name ["(" [ArgumentList] ")"]
   ]
   TypeParameterConstraints
   (
-    <LBRACE> (ClassMemberDeclaration)* <RBRACE> [<SEMICOLON>]
+    "{" (ClassMemberDeclaration)* "}" [";"]
     |
-    <SEMICOLON>
+    ";"
   )
 ;
 
@@ -377,16 +380,16 @@ InterfaceDeclaration :
   (AttributeSection)*
   Modifiers
   ['partial']
-  <INTERFACE>
+  "interface"
   =>||
   <IDENTIFIER>
   [TypeParameterList]
-  [<COLON> Name (<COMMA> Name)*]
+  [":" Name ("," Name)*]
   TypeParameterConstraints
-  <LBRACE>
+  "{"
   (InterfaceMemberDeclaration)*
-  <RBRACE>
-  [<SEMICOLON>]
+  "}"
+  [";"]
 ;
 
 InterfaceMemberDeclaration :
@@ -411,19 +414,19 @@ InterfaceEventDeclaration :
    }
    (AttributeSection)*
    Modifiers
-   <EVENT> =>||
+   "event" =>||
    Type
    <IDENTIFIER>
-   <SEMICOLON>
+   ";"
 ;
 
 InterfaceIndexerDeclaration :
    (AttributeSection)*
-   [<NEW>]
+   ["new"]
    Type
-   <_THIS>
-   <LBRACKET> FormalParameters <RBRACKET>
-   <LBRACE> (InterfaceAccessor)+ <RBRACE>
+   "this"
+   "[" FormalParameters "]"
+   "{" (InterfaceAccessor)+ "}"
 ;
 
 EnumDeclaration :
@@ -434,28 +437,28 @@ EnumDeclaration :
   }
   (AttributeSection)*
   Modifiers
-  <ENUM>
+  "enum"
   =>||
   <IDENTIFIER>
-  [<COLON> (<SBYTE>|<BYTE>|<SHORT>|<USHORT>|<INT>|<UINT>|<LONG>|<ULONG>|<CHAR>|<IDENTIFIER>)]
+  [":" ("sbyte"|"byte"|"short"|"ushort"|"int"|"uint"|"long"|"ulong"|"char"|<IDENTIFIER>)]
   EnumBody
-  [<SEMICOLON>]
+  [";"]
 ;
 
 EnumBody#void :
-   <LBRACE>
+   "{"
    [
       EnumMemberDeclaration
-      (<COMMA> =>|+1 EnumMemberDeclaration)*
-      [<COMMA>]
+      ("," =>|+1 EnumMemberDeclaration)*
+      [","]
    ]
-   <RBRACE>
+   "}"
 ;
 
 EnumMemberDeclaration :
    (AttributeSection)*
    <IDENTIFIER>
-   [<ASSIGN> Expression]
+   ["=" Expression]
 ;
 
 DelegateDeclaration :
@@ -466,15 +469,15 @@ DelegateDeclaration :
   }
   (AttributeSection)*
   Modifiers
-  <DELEGATE>
-  ENSURE ~(<STAR>)
+  "delegate"
+  ENSURE ~("*")
   =>||
   ReturnType
   <IDENTIFIER>
   [TypeParameterList]
-  <LPAREN> [FormalParameters] <RPAREN>
+  "(" [FormalParameters] ")"
   TypeParameterConstraints
-  <SEMICOLON>
+  ";"
 ;
 
 TypeParameterConstraints :
@@ -483,15 +486,15 @@ TypeParameterConstraints :
 
 TypeParameterConstraint :
    ENSURE {checkNextTokenImage("where")}
-   ACTIVATE_TOKENS WHERE (<WHERE>)
+   ACTIVATE_TOKENS WHERE ("where")
    <IDENTIFIER>
-   <COLON>
+   ":"
    (
-      <NEW> <LPAREN> <RPAREN>
+      "new" "(" ")"
       |
-      (<STRUCT> | <CLASS> [<HOOK>] | Name [<HOOK>]) (SCAN 2 <COMMA> Name[<HOOK>])* [<COMMA> <NEW> <LPAREN> <RPAREN>]
+      ("struct" | "class" ["?"] | Name ["?"]) (SCAN 2 "," Name["?"])* ["," "new" "(" ")"]
       |
-      <DEFAULT> // Since C# 9.0 apparently
+      "default" // Since C# 9.0 apparently
    )
 ;
 
@@ -512,6 +515,8 @@ ClassMemberDeclaration :
   |
   OperatorDeclaration
   |
+  ExtensionDeclaration
+  |
   ConstructorDeclaration
   |
   SCAN ~\StructDeclaration
@@ -530,11 +535,11 @@ StructMemberDeclarationUnsafe :
   }
   (AttributeSection)*
   Modifiers
-  <FIXED>
+  "fixed"
   =>||
   Type
-  (<IDENTIFIER> <LBRACKET> Expression <RBRACKET>)+
-  <SEMICOLON>
+  (<IDENTIFIER> "[" Expression "]")+
+  ";"
 ;
 
 ConstantDeclaration :
@@ -544,14 +549,14 @@ ConstantDeclaration :
   }
   (AttributeSection)*
   Modifiers
-  <CONST>
+  "const"
   =>||
   Type
-  ConstantDeclarator (<COMMA> ConstantDeclarator)*
-  <SEMICOLON>
+  ConstantDeclarator ("," ConstantDeclarator)*
+  ";"
 ;
 
-ConstantDeclarator : <IDENTIFIER> <ASSIGN> Expression ;
+ConstantDeclarator : <IDENTIFIER> "=" Expression ;
 
 FieldDeclaration :
   {
@@ -566,8 +571,8 @@ FieldDeclaration :
   Modifiers
   Type
   =>|+2
-  VariableDeclarator (<COMMA> VariableDeclarator)*
- <SEMICOLON>
+  VariableDeclarator ("," VariableDeclarator)*
+ ";"
 ;
 
 PropertyDeclaration :
@@ -585,7 +590,7 @@ PropertyDeclaration :
   Name
   =>|+1
   PropertyBody
-  [<ASSIGN> Expression]
+  ["=" Expression]
 ;
 
 InterfacePropertyDeclaration :
@@ -599,7 +604,7 @@ InterfacePropertyDeclaration :
   Type
   <IDENTIFIER> =>|+1
   (
-     <LBRACE> (InterfaceAccessor)+ <RBRACE> [<ASSIGN> Expression <SEMICOLON>]
+     "{" (InterfaceAccessor)+ "}" ["=" Expression ";"]
      |
      // This seems to be another of these
      // new features not hardly documented
@@ -607,7 +612,7 @@ InterfacePropertyDeclaration :
      // apparently, you can dispense with the
      // "{ get }" but I'm not sure if this is only
      // in interfaces.
-     <ARROW> Expression <SEMICOLON>
+     "=>" Expression ";"
   )
 ;
 
@@ -616,8 +621,8 @@ InterfaceAccessor : // TODO, check that there is only one of each
     ( 'get' | 'set' | 'init' )
     =>||
     (
-      [<ARROW> Expression ]
-      <SEMICOLON>
+      ["=>" Expression ]
+      ";"
       |
       Block
     )
@@ -633,20 +638,20 @@ EventDeclaration :
   }
    (AttributeSection)*
    Modifiers
-   <EVENT>
+   "event"
    =>||
    Type
    (
-      VariableDeclarator =>|+1 (<COMMA> VariableDeclarator)* <SEMICOLON>
+      VariableDeclarator =>|+1 ("," VariableDeclarator)* ";"
       |
       Name
-      <LBRACE>
+      "{"
       (
           AddAccessorDeclaration RemoveAccessorDeclaration
           |
           RemoveAccessorDeclaration AddAccessorDeclaration
       )
-      <RBRACE>
+      "}"
    )
 ;
 
@@ -661,16 +666,16 @@ IndexerDeclaration :
   (AttributeSection)*
   Modifiers
   Type
-  [Name <DOT>]
-  <_THIS>
-  <LBRACKET>
+  [Name "."]
+  "this"
+  "["
   =>||
    FormalParameters
-  <RBRACKET>
+  "]"
   (
-     <LBRACE> (AccessorDeclaration)+ <RBRACE>
+     "{" (AccessorDeclaration)+ "}"
      |
-     <ARROW> [<REF>] Expression <SEMICOLON>
+     "=>" ["ref"] Expression ";"
   )
 ;
 
@@ -681,17 +686,17 @@ OperatorDeclaration :
   }
   (AttributeSection)*
   Modifiers
-  (Type | <IMPLICIT> | <EXPLICIT>)
-  <OPERATOR> =>||
+  (Type | "implicit" | "explicit")
+  "operator" =>||
   (
-     (<PLUS>|<MINUS>) <LPAREN> [<IN>] Type <IDENTIFIER> [<COMMA> [<IN>] Type <IDENTIFIER>] <RPAREN>
+     ("+"|"-") "(" ["in"] Type <IDENTIFIER> ["," ["in"] Type <IDENTIFIER>] ")"
      |
-     (<BANG>|<TILDE>|<INCR>|<DECR>|<TRUE>|<FALSE>) <LPAREN> [<IN>] Type <IDENTIFIER> <RPAREN>
+     ("!"|"~"|"++"|"--"|"true"|"false") "(" ["in"] Type <IDENTIFIER> ")"
      |
-     (<STAR>|<SLASH>|<REM>|<BIT_AND>|<BIT_OR>|<HAT>|<LEFT_SHIFT>|<RIGHT_SHIFT>|<UNSIGNED_RIGHT_SHIFT>|<EQ>|<NE>|<GT>|<LT>|<GE>|<LE>)
-     <LPAREN> [<IN>] Type <IDENTIFIER> <COMMA> [<IN>] Type <IDENTIFIER> <RPAREN>
+     ("*"|"/"|"%"|"&"|"|"|"^"|"<<"|">>"|">>>"|"=="|"!="|">"|"<"|">="|"<=")
+     "(" ["in"] Type <IDENTIFIER> "," ["in"] Type <IDENTIFIER> ")"
      |
-     Type <LPAREN> [<IN>] Type <IDENTIFIER> [<ASSIGN> Expression] <RPAREN>
+     Type "(" ["in"] Type <IDENTIFIER> ["=" Expression] ")"
   )
   MethodBody
 ;
@@ -702,12 +707,39 @@ DestructorDeclaration :
   }
   (AttributeSection)*
   Modifiers
-  <TILDE>
+  "~"
   <IDENTIFIER>
-  <LPAREN>
+  "("
   =>||
-  <RPAREN>
+  ")"
   MethodBody
+;
+
+ExtensionDeclaration :
+   'extension'
+   [TypeParameterList]
+   "("
+   (AttributeSection)*
+   {permissibleModifiers = EnumSet.of(REF, READONLY, IN, SCOPED);}
+   Modifiers
+   Type
+   [<IDENTIFIER>]
+   ")"
+   TypeParameterConstraints
+   ExtensionBody
+   [";"]
+;
+
+ExtensionBody :
+   "{"
+     (
+      MethodDeclaration
+      |
+      PropertyDeclaration
+      |
+      OperatorDeclaration
+     )*
+   "}"
 ;
 
 ConstructorDeclaration :
@@ -718,13 +750,13 @@ ConstructorDeclaration :
   (AttributeSection)*
   Modifiers
   <IDENTIFIER>
-  <LPAREN> =>||
+  "(" =>||
   [FormalParameters]
-  <RPAREN>
+  ")"
   [
-     <COLON>
-     (<BASE> | <_THIS>)
-     <LPAREN> [ArgumentList] <RPAREN>
+     ":"
+     ("base" | "this")
+     "(" [ArgumentList] ")"
   ]
   MethodBody
 ;
@@ -736,28 +768,28 @@ StaticConstructorDeclaration :
    (AttributeSection)*
    Modifiers
    <IDENTIFIER>
-   <LPAREN> =>||
-   <RPAREN>
+   "(" =>||
+   ")"
    MethodBody
 ;
 
-ArgumentList : Argument (<COMMA> Argument)* ;
+ArgumentList : Argument ("," Argument)* ;
 
 Argument :
    [
       // This is necessary to disambiguate
       // the AttributeSection from a CollectionExpression
-      SCAN AttributeSection ENSURE ~(<COMMA>|<RPAREN>) =>
+      SCAN AttributeSection ENSURE ~(","|")") =>
       (AttributeSection)+
    ]
-   [<IDENTIFIER> <COLON> =>||]
+   [<IDENTIFIER> ":" =>||]
    (
-      Type ENSURE(<COMMA>|<RPAREN>) =>||
+      Type ENSURE(","|")") =>||
       |
-      <OUT> Type <IDENTIFIER> =>|| // since C# 7.0
+      "out" Type <IDENTIFIER> =>|| // since C# 7.0
       |
       // Not sure since when "in" is allowed here
-      [<REF> | <OUT> | <IN>] Expression
+      ["ref" | "out" | "in"] Expression
    )
 ;
 
@@ -776,13 +808,13 @@ RemoveAccessorDeclaration :
 ;
 
 PropertyBody :
-  <LBRACE> (AccessorDeclaration)+ <RBRACE>
-   [<ASSIGN> VariableInitializer <SEMICOLON>]
+  "{" (AccessorDeclaration)+ "}"
+   ["=" VariableInitializer ";"]
   |
-  <ARROW>
-  [<REF>] // since 7.3, I think...
+  "=>"
+  ["ref"] // since 7.3, I think...
   Expression
-  <SEMICOLON>
+  ";"
 ;
 
 AccessorDeclaration :
@@ -801,9 +833,9 @@ AccessorDeclaration :
 AccessorBody :
    Block
    |
-   <ARROW> [<REF>] Expression <SEMICOLON>
+   "=>" ["ref"] Expression ";"
    |
-   <SEMICOLON>
+   ";"
 ;
 
 VariableInitializer :
@@ -813,9 +845,9 @@ VariableInitializer :
 ;
 
 ArrayInitializer :
-   <LBRACE>
-      [VariableInitializer (SCAN 2 <COMMA> VariableInitializer)* [<COMMA>]]
-   <RBRACE>
+   "{"
+      [VariableInitializer (SCAN 2 "," VariableInitializer)* [","]]
+   "}"
 ;
 
 MethodDeclaration :
@@ -833,10 +865,10 @@ MethodDeclaration :
   //MemberName
   Name
   [TypeParameterList]
-  <LPAREN>
+  "("
   =>||
    [FormalParameters]
-  <RPAREN>
+  ")"
   TypeParameterConstraints
   MethodBody
 ;
@@ -844,7 +876,7 @@ MethodDeclaration :
 MethodBody :
    Block
    |
-   [<ARROW> [<REF>] Expression] <SEMICOLON>
+   ["=>" ["ref"] Expression] ";"
 ;
 
 InterfaceMethodDeclaration :
@@ -859,15 +891,15 @@ InterfaceMethodDeclaration :
    ReturnType
    Name //<IDENTIFIER>
    [TypeParameterList]
-   <LPAREN> =>||
+   "(" =>||
    [FormalParameters]
-   <RPAREN>
+   ")"
    TypeParameterConstraints
    MethodBody // since 8.0. NB. The method body can be a lone semicolon.
 ;
 
 ReturnType :
-   <VOID> ENSURE ~(<STAR>) =>||
+   "void" ENSURE ~("*") =>||
    |
    Type
 ;
@@ -877,7 +909,7 @@ FormalParameters :
    |
    ParameterArray
    |
-   FixedParameter (<COMMA> FixedParameter =>||)* [<COMMA> VarArgsParameter]
+   FixedParameter ("," FixedParameter =>||)* ["," VarArgsParameter]
 ;
 
 VarArgsParameter#void :
@@ -891,38 +923,38 @@ FixedParameter :
    (AttributeSection)*
    (
       // REVISIT. Allows repeated modifiers, for example
-      <REF>| <OUT> | <_THIS>|<READONLY>
-    | <IN> // since 7.2
+      "ref"| "out" | "this"| "readonly"
+    | "in" // since 7.2
     | 'scoped'
    )*
    =>|+1
    Type
    <IDENTIFIER>
-   [<ASSIGN> Expression]
+   ["=" Expression]
 ;
 
 ParameterArray :
    (AttributeSection)*
-   <PARAMS> =>||
+   "params" =>||
    ArrayType
    <IDENTIFIER>
 ;
 
-VariableDeclarator : <IDENTIFIER> [<ASSIGN> (Expression|ArrayInitializer)] ;
+VariableDeclarator : <IDENTIFIER> ["=" (Expression|ArrayInitializer)] ;
 
 TypeParameterList :
-   <LT>
+   "<"
    TypeParameter
-   (<COMMA>TypeParameter)*
+   (","TypeParameter)*
    DEACTIVATE_TOKENS RIGHT_SHIFT, UNSIGNED_RIGHT_SHIFT, RIGHT_SHIFT_ASSIGN, UNSIGNED_RIGHT_SHIFT_ASSIGN
-   (<GT>)
+   (">")
 ;
 
 TypeParameter# :
     (AttributeSection)*
-    [<IN>|<OUT>|<REF>]
+    ["in"|"out"|"ref"]
     (
-      <VOID> ENSURE ~(<STAR>|<LBRACKET>) =>||
+      "void" ENSURE ~("*"|"[") =>||
       |
       Type
     )
@@ -937,7 +969,7 @@ NonNullableType#void : Type;
 NonTupleType#void : Type;
 
 DelegateStarType :
-   <DELEGATE><STAR> =>||
+   "delegate""*" =>||
    ['managed'|'unmanaged']
    (AttributeSection)*
    TypeParameterList
@@ -949,7 +981,7 @@ Type :
     |
     'dynamic' // Is this right?
     |
-    <VOID> <STAR> =>||
+    "void" "*" =>||
     |
     PrimitiveType
     |
@@ -958,47 +990,47 @@ Type :
     SCAN ~\NonTupleType
     => TupleType
   )
-  (<STAR>)*
+  ("*")*
   [
      // This is weird. Must REVISIT this.
      SCAN ~\NonNullableType
-     => <HOOK>
+     => "?"
   ]
   (
      SCAN 2 ~\NonArrayType =>
-     [<HOOK>]
-     <LBRACKET> (<COMMA>)* <RBRACKET>
+     ["?"]
+     "[" (",")* "]"
   )*
   [
      SCAN 0 \ArrayType =>
      ENSURE {getTokenType(0) == TokenType.RBRACKET}
   ]
-  (SCAN ~\TupleType => <STAR>)*
+  (SCAN ~\TupleType => "*")*
   [
      SCAN ~\NonNullableType
-     => <HOOK>
+     => "?"
   ]
 ;
 
 TupleType :
-   <LPAREN>
+   "("
    Type [<IDENTIFIER>]
-   ENSURE (<COMMA>)
+   ENSURE (",")
    =>||
-   (<COMMA> Type [<IDENTIFIER>])*
-   <RPAREN>
+   ("," Type [<IDENTIFIER>])*
+   ")"
 ;
 
 PrimitiveType#void :
-   <BOOL> | <BYTE> | <CHAR> | <DECIMAL> | <DOUBLE> | <FLOAT>
-   | <INT> | <LONG> | <OBJECT> | <SBYTE> | <SHORT> | <STRING>
-   |<USHORT> |<UINT>|<ULONG>
+   "bool" | "byte" | "char" | "decimal" | "double" | "float"
+   | "int" | "long" | "object" | "sbyte" | "short" | "string"
+   | "ushort" | "uint" | "ulong"
 ;
 
 Block :
-  <LBRACE>
-   ( SCAN ~(<RBRACE>) => Statement )*
-  <RBRACE>
+  "{"
+   ( SCAN ~("}") => Statement )*
+  "}"
 ;
 
 Expression#interface :
@@ -1144,15 +1176,15 @@ LambdaExpression : LambdaLHS =>|| (Block | Expression) ;
 
 LambdaLHS :
   {boolean seenStatic = false;}
-  [<STATIC> {seenStatic = true;}] // since 9.0
+  ["static" {seenStatic = true;}] // since 9.0
   [
      'async'
      [
-        SCAN {!seenStatic} => <STATIC>
+        SCAN {!seenStatic} => "static"
      ]
   ]
   [
-     SCAN (<VOID> | NonNullableType) <LPAREN>
+     SCAN ("void" | NonNullableType) "("
      => ReturnType
   ]
   (
@@ -1160,36 +1192,36 @@ LambdaLHS :
    |
    ExplicitLambdaSignature
   )
-  <ARROW>
+  "=>"
 ;
 
 ImplicitAnonymousFunctionSignature :
    <IDENTIFIER>
    |
-   <LPAREN>
+   "("
    [
       (AttributeSection)*
-      [<OUT>]
+      ["out" | "ref"["readonly"]]
       <IDENTIFIER>
       (
-         <COMMA>
+         ","
          (AttributeSection)*
-         [<OUT>]
+         ["out"|"ref"["readonly"]]
          <IDENTIFIER>
       )*
    ]
-   <RPAREN>
+   ")"
 ;
 
 QueryExpression :
    ENSURE {checkNextTokenImage("from")}
    ENSURE (
-      (<IDENTIFIER>|<FROM>)
+      (<IDENTIFIER>|"from")
       (
-         ENSURE ~(<IDENTIFIER><IN>)
-         Type <IDENTIFIER> <IN>
+         ENSURE ~(<IDENTIFIER> "in")
+         Type <IDENTIFIER> "in"
          |
-         <IDENTIFIER> <IN>
+         <IDENTIFIER> "in"
       )
    )
    ACTIVATE_TOKENS ASCENDING, DESCENDING, BY, EQUALS,GROUP,
@@ -1201,11 +1233,11 @@ QueryExpression :
 ;
 
 FromClause :
-   <FROM>
+   "from"
    (
-      <IDENTIFIER> <IN> =>|| Expression
+      <IDENTIFIER> "in" =>|| Expression
       |
-      Type <IDENTIFIER> <IN> Expression
+      Type <IDENTIFIER> "in" Expression
    )
 ;
 
@@ -1217,7 +1249,7 @@ QueryBody :
       GroupClause
    )
    [
-      <INTO>
+      "into"
       <IDENTIFIER>
       QueryBody
    ]
@@ -1235,44 +1267,47 @@ QueryBodyClause :
    OrderbyClause
 ;
 
-LetClause : <LET> <IDENTIFIER> <ASSIGN> Expression ;
+LetClause : "let" <IDENTIFIER> "=" Expression ;
 
-WhereClause : <WHERE> Expression ;
+WhereClause : "where" Expression ;
 
 JoinClause :
-   <JOIN>
+   "join"
    (
-      <IDENTIFIER> <IN> =>||
+      <IDENTIFIER> "in" =>||
       |
-      Type <IDENTIFIER> <IN>
+      Type <IDENTIFIER> "in"
    )
    Expression
-   <ON>
+   "on"
    Expression
-   <EQUALS>
+   "equals"
    Expression
-   [<INTO> <IDENTIFIER>]
+   ["into" <IDENTIFIER>]
 ;
 
-SelectClause : <SELECT> Expression ;
+SelectClause : "select" Expression ;
 
-GroupClause : <GROUP> Expression <BY> Expression;
+GroupClause : "group" Expression "by" Expression;
 
 OrderbyClause :
-    <ORDERBY>
+    "orderby"
     Expression
-    [<ASCENDING>|<DESCENDING>]
+    ["ascending"|"descending"]
     (
-       <COMMA> Expression [<ASCENDING>|<DESCENDING>]
+       "," Expression ["ascending"|"descending"]
     )*
 ;
 
 AssignmentExpression :
-   ConditionalExpression {Expression lhs = (Expression) peekNode();}
+   ConditionalExpression
+   {
+      if (!(peekNode() instanceof Expression)) System.out.println(peekNode().getLocation());
+      Expression lhs = (Expression) peekNode();}
    [
       AssignmentOperator
       ASSERT {lhs.isAssignableTo(),peekNode()} : "Left-hand side is not assignable." :
-      [<REF>] // since 7.0 ?
+      ["ref"] // since 7.0 ?
       Expression
    ]
 ;
@@ -1280,7 +1315,7 @@ AssignmentExpression :
 MultiplicativeExpression :
    WithExpression
    (
-      (<STAR> | <SLASH> | <REM>)
+      ("*" | "/" | "%")
       WithExpression
    )*
 ;
@@ -1289,44 +1324,44 @@ WithExpression :
    SwitchExpression
    [
       'with'
-      <LBRACE>
+      "{"
       [
          MemberInitializer
-         (SCAN 2 <COMMA> MemberInitializer)*
-         [<COMMA>]
+         (SCAN 2 "," MemberInitializer)*
+         [","]
       ]
-      <RBRACE>
+      "}"
    ]
 ;
 
 SwitchExpression :
    RangeExpression
    [
-      <SWITCH>
-      <LBRACE>
+      "switch"
+      "{"
          SwitchExpressionCase
-         (SCAN 2 <COMMA> SwitchExpressionCase)*
-         [<COMMA>]
-      <RBRACE>
+         (SCAN 2 "," SwitchExpressionCase)*
+         [","]
+      "}"
    ]
 ;
 
 SwitchExpressionCase :
-   Expression [WhenClause] <ARROW> =>|| Expression
+   Expression [WhenClause] "=>" =>|| Expression
    |
-   Pattern [WhenClause] <ARROW> Expression
+   Pattern [WhenClause] "=>" Expression
 ;
 
 RangeExpression :
-   <RANGE> [UnaryExpression]
+   (".." [UnaryExpression]) #RangeExpression
    |
-   UnaryExpression [<RANGE> [UnaryExpression]]
+   UnaryExpression [".." [UnaryExpression]]
 ;
 
 AdditiveExpression :
    MultiplicativeExpression
    (
-      (<PLUS> | <MINUS>)
+      ("+" | "-")
       MultiplicativeExpression
    )*
 ;
@@ -1334,7 +1369,7 @@ AdditiveExpression :
 ShiftExpression :
    AdditiveExpression
    (
-      (<LEFT_SHIFT> | <RIGHT_SHIFT>|<UNSIGNED_RIGHT_SHIFT>)
+      ("<<" | ">>" | ">>>")
       AdditiveExpression
    )*
 ;
@@ -1342,18 +1377,18 @@ ShiftExpression :
 RelationalExpression :
    ShiftExpression
    (
-      (<LT>|<GT>|<LE>|<GE>) ShiftExpression
+      ("<"|">"|"<="|">=") ShiftExpression
       |
-      <AS> Type
+      "as" Type
       |
-      <IS> Pattern
+      "is" Pattern
    )*
 ;
 
 EqualityExpression :
    RelationalExpression
    (
-      (<EQ>|<NE>)
+      ("=="|"!=")
       RelationalExpression
    )*
 ;
@@ -1361,7 +1396,7 @@ EqualityExpression :
 AndExpression :
    EqualityExpression
    (
-      <BIT_AND>
+      "&"
       EqualityExpression
    )*
 ;
@@ -1369,7 +1404,7 @@ AndExpression :
 ExclusiveOrExpression :
    AndExpression
    (
-      <HAT>
+      "^"
       ExclusiveOrExpression
    )*
 ;
@@ -1377,7 +1412,7 @@ ExclusiveOrExpression :
 InclusiveOrExpression :
    ExclusiveOrExpression
    (
-      <BIT_OR>
+      "|"
       ExclusiveOrExpression
    )*
 ;
@@ -1385,7 +1420,7 @@ InclusiveOrExpression :
 ConditionalAndExpression :
    InclusiveOrExpression
    (
-      <SC_AND>
+      "&&"
       InclusiveOrExpression
    )*
 ;
@@ -1393,7 +1428,7 @@ ConditionalAndExpression :
 ConditionalOrExpression :
     ConditionalAndExpression
     (
-       <SC_OR>
+       "||"
        ConditionalAndExpression
     )*
 ;
@@ -1401,7 +1436,7 @@ ConditionalOrExpression :
 NullCoalescingExpression :
     ConditionalOrExpression
     (
-       <DOUBLE_HOOK>
+       "??"
        ConditionalOrExpression
     )*
 ;
@@ -1409,29 +1444,29 @@ NullCoalescingExpression :
 ConditionalExpression :
    NullCoalescingExpression
    [
-      <HOOK>
+      "?"
       (
-       [<REF>] Expression
-       <COLON>
-       [<REF>] Expression
+       ["ref"] Expression
+       ":"
+       ["ref"] Expression
       )
    ]
 ;
 
 AssignmentOperator #void :
-  <ASSIGN>
-  | <PLUSASSIGN>
-  | <MINUSASSIGN>
-  | <STARASSIGN>
-  | <SLASHASSIGN>
-  | <REMASSIGN>
-  | <ANDASSIGN>
-  | <ORASSIGN>
-  | <XORASSIGN>
-  | <LEFT_SHIFT_ASSIGN>
-  | <RIGHT_SHIFT_ASSIGN>
-  | <UNSIGNED_RIGHT_SHIFT_ASSIGN>
-  | <DOUBLE_HOOK_EQUALS> // since 8.0
+  "="
+  | "+="
+  | "-="
+  | "*="
+  | "/="
+  | "%="
+  | "&="
+  | "|="
+  | "^="
+  | "<<="
+  | ">>="
+  | ">>>="
+  | "??="
 ;
 
 UnaryExpression#abstract :
@@ -1457,12 +1492,12 @@ UnaryExpression#abstract :
 ;
 
 FromEndIndex :  // since 8.0
-    <HAT> UnaryExpression
+    "^" UnaryExpression
 ;
 
-ThrowExpression# : <THROW> [Expression] ;
+ThrowExpression# : "throw" [Expression] ;
 
-CastExpression : <LPAREN> Type <RPAREN> =>|+1 UnaryExpression ;
+CastExpression : "(" Type ")" =>|+1 UnaryExpression ;
 
 AwaitExpression :
    SCAN 2
@@ -1470,33 +1505,33 @@ AwaitExpression :
    UnaryExpression
 ;
 
-UnaryExpressionUnsafe : (<STAR>| <BIT_AND>) UnaryExpression ;
+UnaryExpressionUnsafe : ("*"| "&") UnaryExpression ;
 
-PreIncrementExpression : <INCR> UnaryExpression ;
+PreIncrementExpression : "++" UnaryExpression ;
 
-PreDecrementExpression : <DECR> UnaryExpression ;
+PreDecrementExpression : "--" UnaryExpression ;
 
-UnaryExpressionPlusOrMinus : (<PLUS> | <MINUS>) UnaryExpression ;
+UnaryExpressionPlusOrMinus : ("+" | "-") UnaryExpression ;
 
-UnaryExpressionNotPlusMinus : (<BANG> | <TILDE>) UnaryExpression ;
+UnaryExpressionNotPlusMinus : ("!" | "~") UnaryExpression ;
 
 NullConditionalOperations :
-   <HOOK>
-   ENSURE ~(CollectionExpression <COLON>)
+   "?"
+   ENSURE ~(CollectionExpression ":")
    =>|+1
    (
-      <DOT> <IDENTIFIER> [<BANG>][TypeArgumentList =>||]
+      "." <IDENTIFIER> ["!"][TypeArgumentList =>||]
       |
-      <LBRACKET> ArgumentList <RBRACKET>
+      "[" ArgumentList "]"
    )
    (
-      [<HOOK>] <DOT> =>|| <IDENTIFIER> [<BANG>] [TypeArgumentList =>||]
+      ["?"] "." =>|| <IDENTIFIER> ["!"] [TypeArgumentList =>||]
       |
-      [<HOOK>] <LBRACKET> =>|| ArgumentList <RBRACKET>
+      ["?"] "[" =>|| ArgumentList "]"
       |
-      <LPAREN> [ArgumentList] <RPAREN>
+      "(" [ArgumentList] ")"
    )*
-   [<BANG>] // since 8.0
+   ["!"] // since 8.0
 ;
 
 NullConditionalExpression : PrimaryExpression [NullConditionalOperations] ;
@@ -1511,7 +1546,7 @@ PrimaryExpression#void :
       |
       InterpolatedString
       |
-      <_THIS> #This
+      "this" #This
       |
       BaseAccess
       |
@@ -1545,25 +1580,25 @@ PrimaryExpression#void :
    )
    [
         // since 8.0
-        <BANG> #NullForgivingExpression(2)
+        "!" #NullForgivingExpression(2)
    ]
    (
     (
-      (<LPAREN> [ArgumentList] <RPAREN>) #InvocationExpression(+1)
+      ("(" [ArgumentList] ")") #InvocationExpression(+1)
       |
-      (<LBRACKET> [<IDENTIFIER><COLON> =>||] Expression (<COMMA> [<IDENTIFIER><COLON> =>||] Expression)*  <RBRACKET>) #ElementAccess(+1)
+      ("[" [<IDENTIFIER>":" =>||] Expression ("," [<IDENTIFIER>":" =>||] Expression)*  "]") #ElementAccess(+1)
       |
-      (<DOT> <IDENTIFIER> [TypeArgumentList =>||]) #MemberAccess(+1)
+      ("." <IDENTIFIER> [TypeArgumentList =>||]) #MemberAccess(+1)
       |
-      (<POINTER_ACCESS> <IDENTIFIER> [TypeArgumentList=>||]) #PointerMemberAccess(+1)
+      ("->" <IDENTIFIER> [TypeArgumentList=>||]) #PointerMemberAccess(+1)
       |
-      <INCR> #PostIncrementExpression(2)
+      "++" #PostIncrementExpression(2)
       |
-      <DECR> #PostDecrementExpression(2)
+      "--" #PostDecrementExpression(2)
       )
       [
          // since 8.0
-        <BANG> #NullForgivingExpression(2)
+        "!" #NullForgivingExpression(2)
       ]
    )*
 ;
@@ -1575,101 +1610,100 @@ ParenthesizedOrTuple#void :
 ;
 
 ArrayCreationExpression :
-    SCAN <NEW> [NonArrayType] <LBRACKET> =>
-    <NEW>
+    SCAN "new" [NonArrayType] "[" =>
+    "new"
     (
        RankSpecifier ArrayInitializer
        |
-       NonArrayType <LBRACKET> =>|+1 Expression (<COMMA> Expression)* <RBRACKET> (RankSpecifier)* [ArrayInitializer]
+       NonArrayType "[" =>|+1 Expression ("," Expression)* "]" (RankSpecifier)* [ArrayInitializer]
        |
        ArrayType ArrayInitializer
     )
 ;
 
 ObjectCreationExpression :
-   <NEW> =>|+1 [SCAN 1 {getTokenType(1) != TokenType.LPAREN}# => NonArrayType] // This seems possible since C# 9
+   "new" =>|+1 [SCAN 1 {getTokenType(1) != TokenType.LPAREN}# => NonArrayType] // This seems possible since C# 9
    (
-      <LPAREN> [ArgumentList] <RPAREN> [ObjectInitializer | CollectionInitializer]
+      "(" [ArgumentList] ")" [ObjectInitializer | CollectionInitializer]
       |
       (ObjectInitializer | CollectionInitializer)
    )
 ;
 
 AnonymousObjectCreationExpression :
-   <NEW>
-   <LBRACE> =>||
-    [MemberDeclarator (<COMMA> =>|+1 MemberDeclarator)* [<COMMA>]]
-   <RBRACE>
+   "new"
+   "{" =>||
+    [MemberDeclarator ("," =>|+1 MemberDeclarator)* [","]]
+   "}"
 ;
 
 
-RankSpecifier : <LBRACKET> (<COMMA>)* <RBRACKET> ;
+RankSpecifier : "[" (",")* "]" ;
 
 Tuple :
-   <LPAREN>
+   "("
    TupleElement =>|+1
    (
-      <COMMA> TupleElement
+      "," TupleElement
    )+
-   <RPAREN>
+   ")"
 ;
 
 TupleElement :
-   [<IDENTIFIER> <COLON> =>||]
+   [<IDENTIFIER> ":" =>||]
    (
-       Expression ENSURE(<COMMA> | <RPAREN>) =>||
+       Expression ENSURE("," | ")") =>||
        |
-       Type Expression ENSURE(<COMMA> | <RPAREN>) =>||
+       Type Expression ENSURE("," | ")") =>||
    )
    =>||
 ;
 
 PrimitiveTypeAccess :
-//   (PrimitiveType | 'dynamic')
    PrimitiveType
-   <DOT> =>||
+   "." =>||
    <IDENTIFIER>
    [TypeArgumentList =>||]
 ;
 
 QualifiedAliasMemberAccess :
-   <IDENTIFIER> <DOUBLE_COLON> =>||
+   <IDENTIFIER> "::" =>||
    <IDENTIFIER> [TypeArgumentList]
 ;
 
 BaseAccess :
-   <BASE>
+   "base"
    (
-     <DOT> <IDENTIFIER> [TypeArgumentList]
+     "." <IDENTIFIER> [TypeArgumentList]
      |
-    <LBRACKET> Expression (<COMMA> Expression)* <RBRACKET>
+    "[" Expression ("," Expression)* "]"
    )
 ;
 
 NameofExpression :
    'nameof'
-   <LPAREN> =>||
+   "(" =>||
    NamedEntity
-   <RPAREN>
+   ")"
 ;
 
 NamedEntity :
-   (SimpleName | <_THIS> | <BASE> | PredefinedType | QualifiedAliasMember)
-   (<DOT> <IDENTIFIER> [TypeArgumentList])*
+   (SimpleName | "this" | "base" | PredefinedType | QualifiedAliasMember)
+   ("." <IDENTIFIER> [TypeArgumentList])*
 ;
 
 PredefinedType#void :
-    <BOOL> | <BYTE> | <CHAR>| <DECIMAL> | <DOUBLE> | <FLOAT> | <INT>
-    | <LONG> | <OBJECT> | <SBYTE> | <SHORT> | <STRING> | <UINT> | <ULONG> | <USHORT>
+    "bool" | "byte" | "char"| "decimal" | "double" | "float" | "int"
+    | "long" | "object" | "sbyte" | "short" | "string" | "uint" | "ulong" | "ushort"
 ;
 
 // The "(Type)" part is optional (since C# 7.1)
 // if it can be inferred by the compiler.
-DefaultValueExpression# : <DEFAULT> [ <LPAREN> Type <RPAREN> ] ;
+DefaultValueExpression# : "default" [ "(" Type ")" ] ;
 
 SimpleName# : <IDENTIFIER> [TypeArgumentList =>||] ;
 
-ParenthesizedExpression : <LPAREN> Expression <RPAREN> ;
+ParenthesizedExpression : "(" Expression ")" ;
 
 INJECT ParenthesizedExpression : implements Expression
 {
@@ -1679,9 +1713,9 @@ INJECT ParenthesizedExpression : implements Expression
 }
 
 TypeofExpression :
-    <TYPEOF> <LPAREN>
+    "typeof" "("
     (
-       <VOID> [<STAR>]
+       "void" ["*"]
        |
    // The following expansion is a little bit tricky.
    // If our initial scanahead doesn't find any
@@ -1693,25 +1727,25 @@ TypeofExpression :
        |
        Type
     )
-    <RPAREN>
+    ")"
 ;
 
 INJECT PARSER_CLASS : {boolean sawEmptyTypeArgs = false;}
 
 UnboundTypeName :
    {sawEmptyTypeArgs = false;}#
-   [<IDENTIFIER> <DOUBLE_COLON> =>||]
+   [<IDENTIFIER> "::" =>||]
    <IDENTIFIER>
-   [<LT> (<COMMA>)* <GT> {sawEmptyTypeArgs = true;}#]
+   ["<" (",")* ">" {sawEmptyTypeArgs = true;}#]
    (
-      <DOT>
+      "."
       <IDENTIFIER>
-      [<LT> (<COMMA>)* <GT> {sawEmptyTypeArgs = true;}#]
+      ["<" (",")* ">" {sawEmptyTypeArgs = true;}#]
    )*
 ;
 
 MemberDeclarator :
-    <IDENTIFIER> <ASSIGN> =>|| Expression
+    <IDENTIFIER> "=" =>|| Expression
     |
     PrimaryExpression // TODO ensure that it is of the right type
 ;
@@ -1719,87 +1753,87 @@ MemberDeclarator :
 
 AnonymousMethodExpression :
   {boolean seenStatic = false;}
-  [<STATIC> {seenStatic = true;}] // since 9.0
+  ["static" {seenStatic = true;}] // since 9.0
   [
      'async'
      [
-        SCAN {!seenStatic} => <STATIC>
+        SCAN {!seenStatic} => "static"
      ]
   ]
-   <DELEGATE>
+   "delegate"
    =>||
    [
-      <LPAREN>
+      "("
       [ExplicitAnonymousFunctionSignature]
-      <RPAREN>
+      ")"
    ]
    Block
 ;
 
 ExplicitLambdaSignature :
-   <LPAREN>
+   "("
        ExplicitAnonymousFunctionSignature
-   <RPAREN>
+   ")"
 ;
 
 ExplicitAnonymousFunctionSignature :
    ExplicitAnonymousFunctionParameter
-   (<COMMA> ExplicitAnonymousFunctionParameter)*
+   ("," ExplicitAnonymousFunctionParameter)*
 ;
 
 
-ExplicitAnonymousFunctionParameter :  (AttributeSection)* [<REF>|<OUT>|<IN>] Type <IDENTIFIER> ;
+ExplicitAnonymousFunctionParameter :  (AttributeSection)* ["ref"|"out"|"in"] Type <IDENTIFIER> ;
 
 ObjectInitializer :
-  SCAN <LBRACE> (QualifiedIdentifier | <LBRACKET> ArgumentList <RBRACKET>) <ASSIGN>
+  SCAN "{" (QualifiedIdentifier | "[" ArgumentList "]") "="
   =>
-  <LBRACE>
-  MemberInitializer (SCAN 2 <COMMA> MemberInitializer)* [<COMMA>]
-  <RBRACE>
+  "{"
+  MemberInitializer (SCAN 2 "," MemberInitializer)* [","]
+  "}"
 ;
 
 MemberInitializer :
-   ENSURE ~(<LBRACKET>)
+   ENSURE ~("[")
    Expression
-   ENSURE (<COMMA>|<RBRACE>)
+   ENSURE (","|"}")
    =>||
    |
-   (QualifiedIdentifier | <LBRACKET> ArgumentList <RBRACKET>)
+   (QualifiedIdentifier | "[" ArgumentList "]")
    [
       // If this is really optional, it is a mistake in the spec.
       // At least the C# 6.0 spec
-     <ASSIGN>
+     "="
      (Expression | ObjectInitializer | CollectionInitializer)
    ]
 ;
 
 
 CollectionInitializer :
-   <LBRACE>
+   "{"
        [
-          ElementInitializer (<COMMA> =>|+1 ElementInitializer)* [<COMMA>]
+          ElementInitializer ("," =>|+1 ElementInitializer)* [","]
        ]
-   <RBRACE>
+   "}"
 ;
 
 ElementInitializer :
-    <LBRACE> Expression (<COMMA> Expression)* <RBRACE>
+    "{" Expression ("," Expression)* "}"
     |
     Expression // non-assignment, deal with later
 ;
 
-CheckedExpression : <CHECKED> <LPAREN> Expression <RPAREN> ;
+CheckedExpression : "checked" "(" Expression ")" ;
 
-UncheckedExpression : <UNCHECKED> <LPAREN> Expression <RPAREN> ;
+UncheckedExpression : "unchecked" "(" Expression ")" ;
 
-SizeofExpression : <SIZEOF> <LPAREN> Type <RPAREN> ;
+SizeofExpression : "sizeof" "(" Type ")" ;
 
 LiteralExpression# :
-   <TRUE>
+   "true"
    |
-   <FALSE>
+   "false"
    |
-   <NULL>
+   "null"
    |
    <INTEGER_LITERAL>
    |
@@ -1814,7 +1848,7 @@ LiteralExpression# :
    <RAW_STRING_LITERAL>
 ;
 
-Label : SCAN 2 <IDENTIFIER> <COLON> ;
+Label : SCAN 2 <IDENTIFIER> ":" ;
 
 Statement :
    (Label)*
@@ -1824,15 +1858,15 @@ Statement :
        =>
        MethodDeclaration
        |
-       LocalConstantDeclaration <SEMICOLON>
+       LocalConstantDeclaration ";"
        |
-       LocalVariableDeclaration <SEMICOLON>
+       LocalVariableDeclaration ";"
        |
        EmbeddedStatement
     )
 ;
 
-EmptyStatement : <SEMICOLON> ;
+EmptyStatement : ";" ;
 
 EmbeddedStatement :
     Block
@@ -1881,25 +1915,25 @@ EmbeddedStatement :
 ;
 
 LocalVariableDeclarationLA#scan :
-   [ <USING> ]
+   [ "using" ]
    ENSURE {!checkNextTokenImage("await")} // Is there any possibility that a local type is named "await"?
    [SCAN 0 {checkNextTokenImage("scoped")} => <IDENTIFIER>]
-   [<REF>] [<READONLY>]
+   ["ref"] ["readonly"]
    (
       (
          'var'
-         (<IDENTIFIER>|Tuple) <ASSIGN>
+         (<IDENTIFIER>|Tuple) "="
       )
       |
       (
-         Type <IDENTIFIER> (<ASSIGN>|<SEMICOLON>|<COMMA>)
+         Type <IDENTIFIER> ("="|";"|",")
       )
    )
 ;
 
 LocalVariableDeclaration :
   SCAN LocalVariableDeclarationLA =>
-  [<USING>] // since 8.0
+  ["using"] // since 8.0
   (
      VarDeclaration
      |
@@ -1910,33 +1944,33 @@ LocalVariableDeclaration :
 NoVarDeclaration :
    [ 'scoped' ]
    [
-      <REF> // since C# 7.0
+      "ref" // since C# 7.0
    ]
    [
-      <READONLY> //REVISIT
+      "readonly" //REVISIT
    ]
    Type
    ENSURE {getTokenType(-1) == TokenType.DOT || !tokenImage(0).equals("await")}
    =>|+1
    LocalVariableDeclarator
-   (<COMMA> LocalVariableDeclarator)*
+   ("," LocalVariableDeclarator)*
 ;
 
 VarDeclaration :
    [ 'scoped' ]
    [
-      <REF> // since C# 7.0
+      "ref" // since C# 7.0
    ]
    [
-      <READONLY> //REVISIT
+      "readonly" //REVISIT
    ]
    'var'
    =>||
-   (<IDENTIFIER>|Tuple) <ASSIGN> (AttributeSection)* [<REF>] LocalVariableInitializer
+   (<IDENTIFIER>|Tuple) "=" (AttributeSection)* ["ref"] LocalVariableInitializer
 ;
 
 LocalVariableDeclarator :
-   <IDENTIFIER> [<ASSIGN> [<REF>] LocalVariableInitializer]
+   <IDENTIFIER> ["=" ["ref"] LocalVariableInitializer]
 ;
 
 LocalVariableInitializer :
@@ -1946,16 +1980,16 @@ LocalVariableInitializer :
 ;
 
 StackAllocInitializer :
-   <STACKALLOC>
+   "stackalloc"
    (
-      <LBRACKET> <RBRACKET> ArrayInitializer
+      "[" "]" ArrayInitializer
       |
       Type
       (
          SCAN 0 {getTokenType(0) != TokenType.RBRACKET}#
-         => <LBRACKET> Expression <RBRACKET>
+         => "[" Expression "]"
          |
-         <LBRACKET> Expression <RBRACKET>
+         "[" Expression "]"
          |
          {}
       )
@@ -1964,37 +1998,37 @@ StackAllocInitializer :
 ;
 
 LocalConstantDeclaration :
-   <CONST>
+   "const"
    Type
    ConstantDeclarator
-   (<COMMA> ConstantDeclarator)*
+   ("," ConstantDeclarator)*
 ;
 
-CheckedStatement : <CHECKED> =>|+1 Block ;
+CheckedStatement : "checked" =>|+1 Block ;
 
-UncheckedStatement : <UNCHECKED> =>|+1 Block ;
+UncheckedStatement : "unchecked" =>|+1 Block ;
 
-BreakStatement : <BREAK> <SEMICOLON> ;
+BreakStatement : "break" ";" ;
 
-ContinueStatement : <CONTINUE> <SEMICOLON> ;
+ContinueStatement : "continue" ";" ;
 
 GotoStatement :
-   <GOTO>
+   "goto"
    (
       <IDENTIFIER>
       |
-      <DEFAULT> #DefaultValueExpression
+      "default" #DefaultValueExpression
       |
-      <CASE> Expression
+      "case" Expression
    )
-   <SEMICOLON>
+   ";"
 ;
 
-IfStatement : <IF> <LPAREN> Expression <RPAREN> EmbeddedStatement [ <ELSE> EmbeddedStatement] ;
+IfStatement : "if" "(" Expression ")" EmbeddedStatement [ "else" EmbeddedStatement] ;
 
-DoStatement : <DO> EmbeddedStatement <WHILE> <LPAREN> Expression <RPAREN> <SEMICOLON> ;
+DoStatement : "do" EmbeddedStatement "while" "(" Expression ")" ";" ;
 
-WhileStatement : <WHILE> <LPAREN> Expression <RPAREN> EmbeddedStatement ;
+WhileStatement : "while" "(" Expression ")" EmbeddedStatement ;
 
 ForeachStatement :
    {boolean iteratingOverTupleType=false;}
@@ -2002,9 +2036,9 @@ ForeachStatement :
        //Since 8.0 (I think...)
        'await'
     ]
-    <FOREACH> =>||
-    <LPAREN>
-    [<REF>]
+    "foreach" =>||
+    "("
+    ["ref"]
     (
        'var'
        |
@@ -2019,14 +2053,14 @@ ForeachStatement :
        |
        SCAN {iteratingOverTupleType} =>{}
     )
-    <IN>
+    "in"
     Expression
-    <RPAREN>
+    ")"
     EmbeddedStatement
 ;
 
 TryStatement :
-   <TRY> Block
+   "try" Block
    (
       FinallyClause
       |
@@ -2035,30 +2069,30 @@ TryStatement :
 ;
 
 ReturnStatement :
-   <RETURN>
+   "return"
    [
       [
          // since 7.0. Note that this can only happen in a return statement
          // in a method that was itself declared using ref
          // However, I don't think this is our problem. At least for now.
          // We leave it to the compiler!
-         <REF>
+         "ref"
       ]
       Expression
    ]
-   <SEMICOLON>
+   ";"
 ;
 
-ThrowStatement : ThrowExpression <SEMICOLON> ;
+ThrowStatement : ThrowExpression ";" ;
 
-FinallyClause : <FINALLY> Block ;
+FinallyClause : "finally" Block ;
 
-UnsafeStatement : <UNSAFE> Block ;
+UnsafeStatement : "unsafe" Block ;
 
 CatchClause :
-   <CATCH>
-   [ <LPAREN> Type [<IDENTIFIER>] <RPAREN> ]
-   [ 'when' <LPAREN> Expression <RPAREN> ]
+   "catch"
+   [ "(" Type [<IDENTIFIER>] ")" ]
+   [ 'when' "(" Expression ")" ]
    Block
 ;
 
@@ -2066,43 +2100,43 @@ YieldStatement :
    SCAN 3
    'yield'
    (
-      <BREAK>
+      "break"
       |
-      <RETURN> Expression
+      "return" Expression
    )
-   <SEMICOLON>
+   ";"
 ;
 
 UsingStatement :
    ['await']
-   <USING>
+   "using"
    {boolean hasParenthesis = false;}
-   [<LPAREN> {hasParenthesis=true;}]
+   ["(" {hasParenthesis=true;}]
    =>||
    (
-      SCAN LocalVariableDeclaration <RPAREN>
+      SCAN LocalVariableDeclaration ")"
       => LocalVariableDeclaration
       |
       Expression
    )
-   [SCAN 0 {hasParenthesis} => <RPAREN>]
+   [SCAN 0 {hasParenthesis} => ")"]
    EmbeddedStatement
 ;
 
-LockStatement : <LOCK> <LPAREN> Expression <RPAREN> EmbeddedStatement ;
+LockStatement : "lock" "(" Expression ")" EmbeddedStatement ;
 
 FixedStatement :
-   <FIXED>
-   <LPAREN> =>||
+   "fixed"
+   "(" =>||
    Type ASSERT {getTokenType(0) == TokenType.STAR, lastConsumedToken: "The type must have a *"}
-   FixedPointerDeclarator (<COMMA> FixedPointerDeclarator)*
-   <RPAREN>
+   FixedPointerDeclarator ("," FixedPointerDeclarator)*
+   ")"
    EmbeddedStatement
 ;
 
 FixedPointerDeclarator :
    <IDENTIFIER>
-   <ASSIGN> [<BIT_AND>] Expression
+   "=" ["&"] Expression
 ;
 
 StatementExpression#interface :
@@ -2117,12 +2151,12 @@ StatementExpression#interface :
    (
       NullConditionalOperations #NullConditionalExpression(2)
       [
-         (AssignmentOperator [<REF>] Expression) #AssignmentExpression(+1)
+         (AssignmentOperator ["ref"] Expression) #AssignmentExpression(+1)
          ASSERT {lhs.isAssignableTo():"Expression " + lhs + " is not assignable"}
       ]
       |
       SCAN {lhs.isAssignableTo()} =>
-      (AssignmentOperator [<REF>] Expression) #AssignmentExpression(+1)
+      (AssignmentOperator ["ref"] Expression) #AssignmentExpression(+1)
       |
       ASSERT {lhs instanceof StatementExpression} : "Not a statement. "
       + lhs.getClass().getSimpleName() + ":" + lhs.getLocation()
@@ -2132,20 +2166,22 @@ StatementExpression#interface :
    ASSERT {peekNode() instanceof AssignmentExpression, peekNode()} : "Not a statement."
 ;
 
-ExpressionStatement : StatementExpression <SEMICOLON> ;
+ExpressionStatement : StatementExpression ";" ;
 
-SwitchStatement : <SWITCH> <LPAREN> Expression (<COMMA> Expression)* <RPAREN> SwitchBlock ;
+SwitchStatement : "switch" "(" Expression ("," Expression)* ")" SwitchBlock ;
 
-SwitchBlock : <LBRACE> (SwitchSection)* <RBRACE> ;
+SwitchBlock : "{" (SwitchSection)* "}" ;
 
 SwitchLabel :
-   <DEFAULT> <COLON>
+   "default" ":"
    |
    // REVISIT: Why do I need this line?
    // The third choice should be enough, it seems...
-   <CASE> Expression [WhenClause] <COLON> =>||
+   "case" Expression [WhenClause] ":" =>||
    |
-   <CASE> Pattern [WhenClause] <COLON>
+   "case" TypePattern [<IDENTIFIER>] [WhenClause] ":" =>||
+   |
+   "case" Pattern [WhenClause] ":"
 ;
 
 WhenClause :
@@ -2168,17 +2204,17 @@ SwitchSection :
 ;
 
 ForStatement :
-   <FOR>
-   <LPAREN>
-   [LocalVariableDeclaration | StatementExpression (<COMMA> StatementExpression)*]
-   <SEMICOLON>
+   "for"
+   "("
+   [LocalVariableDeclaration | StatementExpression ("," StatementExpression)*]
+   ";"
    [Expression]
-   <SEMICOLON>
+   ";"
    [
       StatementExpression
-      (<COMMA> StatementExpression)*
+      ("," StatementExpression)*
    ]
-   <RPAREN>
+   ")"
    EmbeddedStatement
 ;
 
@@ -2191,11 +2227,11 @@ Pattern :
 
 // New in C# 11
 ListPattern :
-    <LBRACKET>
+    "["
     {seenRange = false;}
-    [InListPattern (<COMMA> =>|+1 InListPattern)*]
-    [<COMMA>]
-    <RBRACKET>
+    [InListPattern ("," =>|+1 InListPattern)*]
+    [","]
+    "]"
     [VariableDesignation]
 ;
 
@@ -2206,14 +2242,14 @@ VariableDesignation# :
 ;
 
 ParenthesizedVariableDesignation :
-   <LPAREN>
+   "("
    [
       VariableDesignation
       (
-         <COMMA> VariableDesignation
+         "," VariableDesignation
       )*
    ]
-   <RPAREN>
+   ")"
 ;
 
 INJECT PARSER_CLASS :
@@ -2224,37 +2260,38 @@ INJECT PARSER_CLASS :
 InListPattern :
   SCAN {!seenRange} =>
   (
-    <RANGE> {seenRange = true;} ENSURE ~(Pattern) =>||
+    ".." {seenRange = true;} ENSURE ~(Pattern) =>||
     |
-    [<RANGE> {seenRange = true;}] Pattern
+    [".." {seenRange = true;}] Pattern
   )
   |
   Pattern
 ;
 
-OrPattern : AndPattern (<OR> AndPattern)* ;
+OrPattern : AndPattern ("or" AndPattern)* ;
 
-AndPattern : NotPattern (<AND> NotPattern)* ;
+AndPattern : NotPattern ("and" NotPattern)* ;
 
-NotPattern : (<NOT>)* PrimaryPattern ;
+NotPattern : ("not")* PrimaryPattern ;
 
 PrimaryPattern :
-   <NULL> | <TRUE> | <FALSE>
+   "null" | "true" | "false"
    |
    ListPattern
    |
    RelationalPattern
    |
-   // These next three options are a bit ugly.
-   CastExpression =>|| // Maybe there is a better way but I don't see it.
+   // These next few options are a bit ugly, as they involve
+   // unbounded lookaheads.  Maybe there is a better way but I don't see it.
+   PropertyPattern
+   |
+   CastExpression =>||
    |
    ParenthesizedPattern =>||
    |
    NameofExpression
    |
    DeclarationPattern
-   |
-   PropertyPattern
    |
    VarPattern
    |
@@ -2267,7 +2304,7 @@ PrimaryPattern :
    //InclusiveOrExpression
 ;
 
-ParenthesizedPattern : <LPAREN> Pattern <RPAREN> ;
+ParenthesizedPattern : "(" Pattern ")" ;
 
 DeclarationPattern :
     NonNullableType
@@ -2288,7 +2325,7 @@ TypePattern :
       Type
       [
          SCAN 2 {getToken(0) instanceof NODE_PACKAGE.PrimitiveType}#
-         => <DOT> <IDENTIFIER>
+         => "." <IDENTIFIER>
       ]
       {
          TokenType lastTokType = getTokenType(0);
@@ -2325,30 +2362,30 @@ TypePattern :
    )
 ;
 
-RelationalPattern : (<GT>|<GE>|<LE>|<LT>|<EQ>|<NE>) RelationalExpression ;
+RelationalPattern : (">"|">="|"<="|"<"|"=="|"!=") RelationalExpression ;
 
 PositionalPattern :
     [NonTupleType =>||]
-    <LPAREN>
+    "("
     [SubPatterns]
-    <RPAREN>
+    ")"
     [PropertySubPattern]
     [SCAN {!checkNextTokenImage("when") || !isInProduction("SwitchExpressionCase", "SwitchLabel")}# => <IDENTIFIER>]
 ;
 
 SubPatterns :
-   [QualifiedIdentifier <COLON> =>||]
+   [QualifiedIdentifier ":" =>||]
    Pattern [VariableDesignation]
    (
       SCAN 2
-      <COMMA>
-      [QualifiedIdentifier <COLON> =>||]
+      ","
+      [QualifiedIdentifier ":" =>||]
       Pattern [VariableDesignation]
    )*
 ;
 
 PropertyPattern :
-   [Type] =>|+1 PropertySubPattern
+   [ParenthesizedPattern =>|| | Type] =>|+1 PropertySubPattern
    [
       SCAN {!checkNextTokenImage("when") || !isInProduction("SwitchExpression", "SwitchStatement")}#
       =><IDENTIFIER>
@@ -2356,24 +2393,24 @@ PropertyPattern :
 ;
 
 PropertySubPattern :
-   <LBRACE>
-    [SubPatterns [<COMMA>]]
-   <RBRACE>
+   "{"
+    [SubPatterns [","]]
+   "}"
 ;
 
 CollectionExpression :
-   <LBRACKET>
+   "["
    [
-      [<RANGE>]
+      [".."]
       Expression
       (
-         <COMMA> =>|+1
-         [<RANGE>]
+         "," =>|+1
+         [".."]
          Expression
       )*
-      [<COMMA>]
+      [","]
    ]
-   <RBRACKET>
+   "]"
 ;
 
 InterpolatedString#abstract :
@@ -2385,7 +2422,7 @@ InterpolatedString#abstract :
 ;
 
 RegularStringInterpolation :
-   <REGULAR_INTERPOLATION_START>
+   '$"'
    LEXICAL_STATE IN_REGULAR_INTERPOLATION
    (
       (
@@ -2393,7 +2430,7 @@ RegularStringInterpolation :
          |
          PlaceHolder
       )*
-      <ENDING_QUOTE>
+      '"'
    )
 ;
 
@@ -2402,7 +2439,7 @@ MultiStringInterpolation :
    LEXICAL_STATE IN_MULTI_INTERPOLATION
    (
       (
-         MultiNonInterpolatedText
+         <NON_INTERPOLATED_TEXT2>
          |
          PlaceHolder
       )*
@@ -2412,26 +2449,22 @@ MultiStringInterpolation :
 
 
 PlaceHolder :
-   <LBRACE>
+   "{"
    LEXICAL_STATE CSHARP
    (
       Expression
-      [<COMMA> Expression]
+      ["," Expression]
       [
-         <COLON>
+         ":"
          RegularNonInterpolatedText
       ]
-      <RBRACE>
+      "}"
    )
 ;
 
 RegularNonInterpolatedText :
    LEXICAL_STATE IN_REGULAR_INTERPOLATION
    (<NON_INTERPOLATED_TEXT>)
-;
-
-MultiNonInterpolatedText : IN_MULTI_INTERPOLATION :
-   <NON_INTERPOLATED_TEXT2>
 ;
 
 InterpolatedRawString :
@@ -2452,7 +2485,10 @@ RawInterpolation :
     LEXICAL_STATE CSHARP
     (
       Expression
-      [<COLON>MultiNonInterpolatedText]
+      [
+         ":"
+         LEXICAL_STATE IN_MULTI_INTERPOLATION(<NON_INTERPOLATED_TEXT2>)*
+      ]
     )
     <END_RAW_INTERPOLATION>
 ;

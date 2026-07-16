@@ -15,12 +15,13 @@ use std::fmt;
 /// # Examples
 ///
 /// ```
-/// use ${settings.parserPackage?replace(".", "_")}::error::ParseError;
+/// use ${settings::parserPackage.replace(".", "_")}::error::ParseError;
 ///
 /// let err = ParseError::new("unexpected end of input".to_string());
 /// assert!(format!("{}", err).contains("unexpected end of input"));
 /// ```
 #[derive(Debug, Clone)]
+#[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
 pub struct ParseError {
     /// Human-readable description of the error.
     pub message: String,

@@ -163,7 +163,7 @@ abstract public class Expansion extends BaseNode {
     public boolean isInsideAssertion() {
         return firstAncestorOfType(Assertion.class) != null;
     }
-    
+
     public boolean isCardinalityConstrained() {
     	return false;
     }
@@ -257,7 +257,7 @@ abstract public class Expansion extends BaseNode {
         return false; // Only an ExpansionSequence or a NonTerminal can have a scan limit.
     }
 
-    public Expression getSemanticLookahead() {
+    public EmbeddedCode getSemanticLookahead() {
         return null;
     }
 

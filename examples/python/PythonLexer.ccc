@@ -76,6 +76,7 @@ INJECT LEXER_CLASS :
    #endif
 
    private BASE_TOKEN_CLASS handleIndentation(BASE_TOKEN_CLASS tok) {
+      if (tok.getBeginOffset() == 0) return tok;
       int beginColumn = tok.getBeginColumn();
       int indentation = indentationStack.get(indentationStack.size()-1);
       boolean expectingIndent = expectingIndent(tok);
@@ -219,14 +220,6 @@ INJECT LEXER_CLASS :
    }
 }
 
-#if __java
-INJECT PARSER_CLASS : {
-   public void setLineJoining(boolean b) {
-      token_source.lineJoiningTurnedOn = b;
-   }
-}
-#endif
-
 INJECT BASE_TOKEN_CLASS : {
    public java.util.List<Integer> getIndents() {
       return null;
@@ -314,6 +307,16 @@ INJECT PARSER_CLASS :
    }
 }
 #endif
+
+CONTEXTUAL #Keyword :
+   <LAZY : 'lazy'>
+   |
+   <TYPE : 'type'>
+   |
+   <MATCH : 'match'>
+   |
+   <CASE : 'case'>
+;
 
 TOKEN :
    <NEWLINE : (<SPACE>)? "\n"> #Newline
@@ -586,9 +589,10 @@ TOKEN :
 // <Token and lexical state definitions for F-strings
 
 TOKEN :
-    <#FSTRING_PREFIX : "f" | "F" >
+    <#FSTRING_PREFIX : "f" | "F" | "t" | "T">
     |
-    <#RAW_FSTRING_PREFIX : "fr" | "Fr" | "fR" | "FR" | "rf" | "rF" | "Rf" | "RF">
+    <#RAW_FSTRING_PREFIX : "fr" | "Fr" | "fR" | "FR" | "rf" | "rF" | "Rf" | "RF"
+                           | "tr" | "Tr" | "tR" | "TR" | "rt" | "rT" | "Rt" | "RT">
     |
     <FSTRING_DOUBLE_QUOTE_START : <FSTRING_PREFIX> '"'>
     |

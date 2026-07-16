@@ -14,27 +14,27 @@
 [#var currentProduction]
 [#var inFirstVarName = ""]
 [#var inFirstIndex = 0]
-[#var MULTIPLE_LEXICAL_STATE_HANDLING = lexerData.numLexicalStates > 1]
+[#var MULTIPLE_LEXICAL_STATE_HANDLING = lexerData::numLexicalStates > 1]
 
 [#-- ====================================================================
      Tree building helper functions
      ==================================================================== --]
 [#function resolveTreeNodeBehavior expansion]
-   [#var treeNodeBehavior = expansion.treeNodeBehavior]
+   [#var treeNodeBehavior = expansion::treeNodeBehavior]
    [#if treeNodeBehavior??]
-      [#if treeNodeBehavior.neverInstantiated!false]
+      [#if treeNodeBehavior::neverInstantiated!false]
          [#return null]
       [/#if]
       [#return treeNodeBehavior]
    [/#if]
-   [#if expansion.simpleName = "BNFProduction"]
-      [#if !settings.nodeDefaultVoid
-                        && !grammar::nodeIsInterface(expansion.name)
-                        && !grammar::nodeIsAbstract(expansion.name)]
-         [#if settings.smartNodeCreation]
-            [#return {"nodeName" : expansion.name, "condition" : "1", "gtNode" : true, "void" :false, "initialShorthand" : " > "}]
+   [#if expansion::simpleName = "BNFProduction"]
+      [#if !settings::nodeDefaultVoid
+                        && !grammar.nodeIsInterface(expansion::name)
+                        && !grammar.nodeIsAbstract(expansion::name)]
+         [#if settings::smartNodeCreation]
+            [#return {"nodeName" : expansion::name, "condition" : "1", "gtNode" : true, "void" :false, "initialShorthand" : " > "}]
          [#else]
-            [#return {"nodeName" : expansion.name, "condition" : null, "gtNode" : false, "void" : false}]
+            [#return {"nodeName" : expansion::name, "condition" : null, "gtNode" : false, "void" : false}]
          [/#if]
       [/#if]
    [/#if]
@@ -42,15 +42,15 @@
 [/#function]
 
 [#function nodeClassName treeNodeBehavior]
-   [#if treeNodeBehavior?? && treeNodeBehavior.nodeName??]
-      [#return treeNodeBehavior.nodeName]
+   [#if treeNodeBehavior?? && treeNodeBehavior::nodeName??]
+      [#return treeNodeBehavior::nodeName]
    [/#if]
-   [#return currentProduction.name]
+   [#return currentProduction::name]
 [/#function]
 
 [#function closeCondition treeNodeBehavior]
-   [#if treeNodeBehavior?? && treeNodeBehavior.condition??]
-      [#if treeNodeBehavior.gtNode]
+   [#if treeNodeBehavior?? && treeNodeBehavior::condition??]
+      [#if treeNodeBehavior::gtNode]
          [#-- gtNode=true means the condition compares against node_arity().
               initialShorthand is the comparison operator (>, >=, !=, etc.).
               For comparison operators, emit a boolean expression.
@@ -58,11 +58,11 @@
               the Java template passes nodeArity()+N to closeNodeScope(Node, int)
               which pops that many children.  In the Rust arena model, all children
               in the open scope are included, so we just return true. --]
-         [#var condStr = "" + treeNodeBehavior.condition]
-         [#if treeNodeBehavior.initialShorthand = ">=" && condStr = "0"]
+         [#var condStr = "" + treeNodeBehavior::condition]
+         [#if treeNodeBehavior::initialShorthand = ">=" && condStr = "0"]
             [#return "true"]
-         [#elseif treeNodeBehavior.initialShorthand?starts_with(">") || treeNodeBehavior.initialShorthand?starts_with("!") || treeNodeBehavior.initialShorthand?starts_with("<")]
-            [#return "self.builder.node_arity()" + treeNodeBehavior.initialShorthand + treeNodeBehavior.condition]
+         [#elseif treeNodeBehavior::initialShorthand.startsWith(">") || treeNodeBehavior::initialShorthand.startsWith("!") || treeNodeBehavior::initialShorthand.startsWith("<")]
+            [#return "self.builder.node_arity()" + treeNodeBehavior::initialShorthand + treeNodeBehavior::condition]
          [#else]
             [#-- Non-comparison (e.g., +1): always create the node --]
             [#return "true"]
@@ -73,14 +73,14 @@
               closeNodeScope(Node, int) which pops that many children.
               In the Rust arena model, all children in scope are included,
               so numeric conditions become true. --]
-         [#var condStr = "" + treeNodeBehavior.condition]
+         [#var condStr = "" + treeNodeBehavior::condition]
          [#if condStr = "1"]
             [#return "true"]
          [#elseif condStr = "0"]
             [#return "false"]
-         [#elseif condStr?length = 1 || condStr?length = 2]
+         [#elseif condStr.length() = 1 || condStr.length() = 2]
             [#-- Small number from #(N) annotation — always create the node --]
-            [#var firstChar = condStr?substring(0, 1)]
+            #var firstChar = condStr.substring(0, 1)
             [#if firstChar = "2" || firstChar = "3" || firstChar = "4" || firstChar = "5" || firstChar = "6" || firstChar = "7" || firstChar = "8" || firstChar = "9"]
                [#return "true"]
             [#else]
@@ -98,28 +98,28 @@
      First set variable generation
      ==================================================================== --]
 [#macro firstSetVar expansion]
-[#var tokenNames = expansion.firstSet.tokenNames]
-[#if tokenNames?size > 0]
-const ${expansion.firstSetVarName}: &[TokenType] = &[
+[#var tokenNames = expansion::firstSet::tokenNames]
+[#if tokenNames.size() > 0]
+const ${expansion::firstSetVarName}: &[TokenType] = &[
 [#list tokenNames as name]
     TokenType::${name}[#if name_has_next],[/#if]
 [/#list]
 ];
 [#else]
-const ${expansion.firstSetVarName}: &[TokenType] = &[];
+const ${expansion::firstSetVarName}: &[TokenType] = &[];
 [/#if]
 [/#macro]
 
 [#macro followSetVar expansion]
-[#var tokenNames = expansion.followSet.tokenNames]
-[#if tokenNames?size > 0]
-const ${expansion.followSetVarName}: &[TokenType] = &[
+[#var tokenNames = expansion::followSet::tokenNames]
+[#if tokenNames.size() > 0]
+const ${expansion::followSetVarName}: &[TokenType] = &[
 [#list tokenNames as name]
     TokenType::${name}[#if name_has_next],[/#if]
 [/#list]
 ];
 [#else]
-const ${expansion.followSetVarName}: &[TokenType] = &[];
+const ${expansion::followSetVarName}: &[TokenType] = &[];
 [/#if]
 [/#macro]
 
@@ -127,26 +127,26 @@ const ${expansion.followSetVarName}: &[TokenType] = &[];
      Expansion condition macros
      ==================================================================== --]
 [#macro ExpansionCondition expansion]
-[#if expansion.requiresPredicateMethod][@ScanAheadCondition expansion /][#else][@SingleTokenCondition expansion /][/#if]
+[#if expansion::requiresPredicateMethod][@ScanAheadCondition expansion /][#else][@SingleTokenCondition expansion /][/#if]
 [/#macro]
 
 [#macro ScanAheadCondition expansion]
-[#if expansion.hasSemanticLookahead && !expansion.lookahead.semanticLookaheadNested]
-    (${globals::translateExpressionSafe(expansion.semanticLookahead, "true")}) &&
+[#if expansion::hasSemanticLookahead && !expansion::lookahead::semanticLookaheadNested]
+    (${globals.translateExpressionSafe(expansion::semanticLookahead, "true")}) &&
 [/#if]
-    self.${expansion.predicateMethodName}()
+    self.${expansion::predicateMethodName}()
 [/#macro]
 
 [#macro SingleTokenCondition expansion]
-[#if expansion.hasSemanticLookahead]
-    (${globals::translateExpressionSafe(expansion.semanticLookahead, "true")}) &&
+[#if expansion::hasSemanticLookahead]
+    (${globals.translateExpressionSafe(expansion::semanticLookahead, "true")}) &&
 [/#if]
-[#if expansion.firstSet.tokenNames?size < 5]
-[#list expansion.firstSet.tokenNames as name]
+[#if expansion::firstSet::tokenNames.size() < 5]
+[#list expansion::firstSet::tokenNames as name]
     self.type_matches(TokenType::${name}, self.pos)[#if name_has_next] || [/#if]
 [/#list]
 [#else]
-    self.has_match(${expansion.firstSetVarName}, self.pos)
+    self.has_match(${expansion::firstSetVarName}, self.pos)
 [/#if]
 [/#macro]
 
@@ -154,7 +154,7 @@ const ${expansion.followSetVarName}: &[TokenType] = &[];
      Lexical state change handling
      ==================================================================== --]
 [#macro HandleLexicalStateChange expansion inLookahead]
-[#if expansion.specifiedLexicalState??]
+[#if expansion::specifiedLexicalState??]
   [#if inLookahead]
 if self.hit_failure { return false; }
 if self.remaining_lookahead <= 0 { return true; }
@@ -172,13 +172,13 @@ if self.remaining_lookahead <= 0 { return true; }
     // restoring the original tokens.
     let _saved_scan_pos_${lexIdx} = self.scan_pos;
     let _saved_tokens_${lexIdx} = self.tokens[self.scan_pos..].to_vec();
-    self.lexical_state = LexicalState::${expansion.specifiedLexicalState};
+    self.lexical_state = LexicalState::${expansion::specifiedLexicalState};
     let _ = self.retokenize_from_idx(self.scan_pos);
     let _lex_result_${lexIdx}: bool = (|| -> bool {
         [#nested/]
         true
     })();
-    if _prev_lex_state_${lexIdx} != LexicalState::${expansion.specifiedLexicalState} {
+    if _prev_lex_state_${lexIdx} != LexicalState::${expansion::specifiedLexicalState} {
         // Note the byte position where the scan ended in the new state.
         let _scan_end_byte_${lexIdx} = if self.scan_pos < self.tokens.len() {
             self.tokens[self.scan_pos].start
@@ -202,19 +202,19 @@ if self.remaining_lookahead <= 0 { return true; }
     }
     if !_lex_result_${lexIdx} { return false; }
   [#else]
-    self.switch_lexical_state(LexicalState::${expansion.specifiedLexicalState});
+    self.switch_lexical_state(LexicalState::${expansion::specifiedLexicalState});
     let _lex_result_${lexIdx}: Result<(), ParseError> = (|| {
         [#nested/]
         Ok(())
     })();
-    if _prev_lex_state_${lexIdx} != LexicalState::${expansion.specifiedLexicalState} {
+    if _prev_lex_state_${lexIdx} != LexicalState::${expansion::specifiedLexicalState} {
         self.switch_lexical_state(_prev_lex_state_${lexIdx});
     }
     _lex_result_${lexIdx}?;
   [/#if]
 }
-[#elseif expansion.tokenActivation??]
-  [#var tokenActivation = expansion.tokenActivation]
+[#elseif expansion::tokenActivation??]
+  [#var tokenActivation = expansion::tokenActivation]
   [#if inLookahead]
 if self.hit_failure { return false; }
 if self.remaining_lookahead <= 0 { return true; }
@@ -223,16 +223,16 @@ if self.remaining_lookahead <= 0 { return true; }
     [#var taIdx = newID()]
     let _prev_active_${taIdx} = self.active_token_types.clone();
     let mut _something_changed_${taIdx} = false;
-  [#if tokenActivation.activatedTokens?size > 0]
+  [#if tokenActivation::activatedTokens.size() > 0]
     _something_changed_${taIdx} = self.activate_token_types(&[
-    [#list tokenActivation.activatedTokens as tokenName]
+    [#list tokenActivation::activatedTokens as tokenName]
         TokenType::${tokenName}[#if tokenName_has_next],[/#if]
     [/#list]
     ]);
   [/#if]
-  [#if tokenActivation.deactivatedTokens?size > 0]
+  [#if tokenActivation::deactivatedTokens.size() > 0]
     _something_changed_${taIdx} = _something_changed_${taIdx} || self.deactivate_token_types(&[
-    [#list tokenActivation.deactivatedTokens as tokenName]
+    [#list tokenActivation::deactivatedTokens as tokenName]
         TokenType::${tokenName}[#if tokenName_has_next],[/#if]
     [/#list]
     ]);
@@ -278,9 +278,9 @@ if self.remaining_lookahead <= 0 { return true; }
     // Parser production methods
     // Generated by parser.rs.ctl
     // =================================================================
-[#list grammar.parserProductions as production]
+[#list grammar::parserProductions as production]
   [#set newVarIndex = 0]
-  [#if !production.onlyForLookahead]
+  [#if !production::onlyForLookahead]
     [#set currentProduction = production]
     [@ParserProduction production /]
   [/#if]
@@ -289,18 +289,18 @@ if self.remaining_lookahead <= 0 { return true; }
 
 [#macro ParserProduction production]
     [#set newVarIndex = 0]
-    ${production.leadingComments}
-    // ${production.location}
-    ${globals::startProduction()}pub fn parse_${production.name?lower_case}(&mut self[#if production.parameterList??], ${globals::translateParameters(production.parameterList)}[/#if]) -> Result<(), ParseError> {
-        self.currently_parsed_production = "${production.name}";
+    ${production::leadingComments}
+    // ${production::location}
+    ${globals.startProduction()}pub fn parse_${production::name.toLowerCase()}(&mut self[#if production::parameterList??], ${globals.translateParameters(production::parameterList)}[/#if]) -> Result<(), ParseError> {
+        self.currently_parsed_production = "${production::name}";
         [@BuildCode production /]
-    }${globals::endProduction()}
+    }${globals.endProduction()}
 [/#macro]
 
 [#-- Main dispatch for generating expansion code, including lexical state handling --]
 [#macro BuildCode expansion]
-[#if expansion.simpleName != "ExpansionSequence" && expansion.simpleName != "ExpansionWithParentheses"]
-        // Code for ${expansion.simpleName} specified at ${expansion.location}
+[#if expansion::simpleName != "ExpansionSequence" && expansion::simpleName != "ExpansionWithParentheses"]
+        // Code for ${expansion::simpleName} specified at ${expansion::location}
 [/#if]
 [@HandleLexicalStateChange expansion, false]
 [@BuildExpansionCode expansion /]
@@ -309,15 +309,15 @@ if self.remaining_lookahead <= 0 { return true; }
 
 [#-- The core dispatch macro for expansion types --]
 [#macro BuildExpansionCode expansion]
-[#var classname = expansion.simpleName]
+[#var classname = expansion::simpleName]
 [#if classname = "CodeBlock"]
-${globals::translateCodeBlock(expansion, 1)}
+${globals.translateCodeBlock(expansion, 1)}
 [#elseif classname = "RawCode"]
         ${expansion}
 [#elseif classname = "Failure"]
 [@BuildCodeFailure expansion /]
 [#elseif classname = "Assertion"]
-  [#if expansion.appliesInRegularParsing]
+  [#if expansion::appliesInRegularParsing]
 [@BuildAssertionCode expansion /]
   [/#if]
 [#elseif classname = "TokenTypeActivation"]
@@ -329,7 +329,7 @@ ${globals::translateCodeBlock(expansion, 1)}
 [#else]
 [@TreeBuildingAndRecovery expansion]
   [#if classname = "BNFProduction"]
-    [@BuildCode expansion.nestedExpansion /]
+    [@BuildCode expansion::nestedExpansion /]
   [#elseif classname = "NonTerminal"]
     [@BuildCodeNonTerminal expansion /]
   [#elseif classname = "Terminal"]
@@ -343,7 +343,7 @@ ${globals::translateCodeBlock(expansion, 1)}
   [#elseif classname = "ExpansionChoice"]
     [@BuildCodeChoice expansion /]
   [#elseif classname = "ExpansionWithParentheses"]
-    [@BuildExpansionCode expansion.nestedExpansion /]
+    [@BuildExpansionCode expansion::nestedExpansion /]
   [#elseif classname = "ExpansionSequence"]
     [@BuildCodeSequence expansion /]
   [/#if]
@@ -360,7 +360,7 @@ ${globals::translateCodeBlock(expansion, 1)}
 [/#if]
 [#if !buildingTreeNode]
   [#-- No tree building needed, just generate the nested code --]
-  [#if expansion.simpleName = "BNFProduction"]
+  [#if expansion::simpleName = "BNFProduction"]
     [#nested/]
         Ok(())
   [#else]
@@ -386,7 +386,7 @@ ${globals::translateCodeBlock(expansion, 1)}
         } else {
             self.builder.clear_node_scope();
         }
-  [#if expansion.simpleName = "BNFProduction"]
+  [#if expansion::simpleName = "BNFProduction"]
         ${resultVar}
   [#else]
         ${resultVar}?;
@@ -396,97 +396,97 @@ ${globals::translateCodeBlock(expansion, 1)}
 
 [#-- Terminal: consume a token --]
 [#macro BuildCodeTerminal terminal]
-[#var regexp = terminal.regexp]
-        self.consume_token(TokenType::${regexp.label})?;
+[#var regexp = terminal::regexp]
+        self.consume_token(TokenType::${regexp::label})?;
 [/#macro]
 
 [#-- NonTerminal: call another production --]
 [#macro BuildCodeNonTerminal nonterminal]
         self.call_stack.push(NonTerminalCall {
-            production_name: "${nonterminal.containingProduction.name}",
-            source_file: "${nonterminal.inputSource?replace("\\", "\\\\")?replace("\"", "\\\"")}",
-            line: ${nonterminal.beginLine},
-            column: ${nonterminal.beginColumn},
+            production_name: "${nonterminal::containingProduction::name}",
+            source_file: "${nonterminal::inputSource.replace("\\", "\\\\").replace("\"", "\\\"")}",
+            line: ${nonterminal::beginLine},
+            column: ${nonterminal::beginColumn},
         });
-        let _nt_r_${newID()} = self.parse_${nonterminal.name?lower_case}(${globals::translateNonterminalArgs(nonterminal.args)!});
+        let _nt_r_${newID()} = self.parse_${nonterminal::name.toLowerCase()}(${globals.translateNonterminalArgs(nonterminal::args)!});
         self.call_stack.pop();
         _nt_r_${newVarIndex}?;
 [/#macro]
 
 [#-- ExpansionChoice: if/else chain --]
 [#macro BuildCodeChoice choice]
-[#list choice.choices as expansion]
-  [#if expansion.enteredUnconditionally]
+[#list choice::choices as expansion]
+  [#if expansion::enteredUnconditionally]
         else {
             [@BuildCode expansion /]
         }
     [#return]
   [/#if]
-        ${(expansion_index == 0)?string("if", "else if")} ([@ExpansionCondition expansion /]) {
+        ${(expansion_index == 0) ? "if" : "else if"} ([@ExpansionCondition expansion /]) {
             [@BuildCode expansion /]
         }
 [/#list]
-[#if choice.parent.simpleName = "ZeroOrMore"]
+[#if choice::parent::simpleName = "ZeroOrMore"]
         else {
             break;
         }
-[#elseif choice.parent.simpleName = "OneOrMore"]
+[#elseif choice::parent::simpleName = "OneOrMore"]
         else if ${inFirstVarName} {
             self.call_stack.push(NonTerminalCall {
-                production_name: "${currentProduction.name}",
-                source_file: "${choice.inputSource?replace("\\", "\\\\")?replace("\"", "\\\"")}",
-                line: ${choice.beginLine},
-                column: ${choice.beginColumn},
+                production_name: "${currentProduction::name}",
+                source_file: "${choice::inputSource.replace("\\", "\\\\").replace("\"", "\\\"")}",
+                line: ${choice::beginLine},
+                column: ${choice::beginColumn},
             });
-            return Err(self.make_parse_error(${choice.firstSetVarName}));
+            return Err(self.make_parse_error(${choice::firstSetVarName}));
         }
         else {
             break;
         }
-[#elseif choice.parent.simpleName != "ZeroOrOne"]
+[#elseif choice::parent::simpleName != "ZeroOrOne"]
         else {
             self.call_stack.push(NonTerminalCall {
-                production_name: "${currentProduction.name}",
-                source_file: "${choice.inputSource?replace("\\", "\\\\")?replace("\"", "\\\"")}",
-                line: ${choice.beginLine},
-                column: ${choice.beginColumn},
+                production_name: "${currentProduction::name}",
+                source_file: "${choice::inputSource.replace("\\", "\\\\").replace("\"", "\\\"")}",
+                line: ${choice::beginLine},
+                column: ${choice::beginColumn},
             });
-            return Err(self.make_parse_error(${choice.firstSetVarName}));
+            return Err(self.make_parse_error(${choice::firstSetVarName}));
         }
 [/#if]
 [/#macro]
 
 [#-- ExpansionSequence: generate each unit --]
 [#macro BuildCodeSequence expansion]
-[#list expansion.units as subexp]
+[#list expansion::units as subexp]
 [@BuildCode subexp /]
 [/#list]
 [/#macro]
 
 [#-- ZeroOrOne: optional expansion --]
 [#macro BuildCodeZeroOrOne zoo]
-[#if zoo.nestedExpansion.class.simpleName = "ExpansionChoice"]
-[@BuildCode zoo.nestedExpansion /]
+[#if zoo::nestedExpansion::class::simpleName = "ExpansionChoice"]
+[@BuildCode zoo::nestedExpansion /]
 [#else]
-        if [@ExpansionCondition zoo.nestedExpansion /] {
-            [@BuildCode zoo.nestedExpansion /]
+        if [@ExpansionCondition zoo::nestedExpansion /] {
+            [@BuildCode zoo::nestedExpansion /]
         }
 [/#if]
 [/#macro]
 
 [#-- OneOrMore: loop with first-iteration check --]
 [#macro BuildCodeOneOrMore oom]
-[#var nestedExp = oom.nestedExpansion, prevInFirstVarName = inFirstVarName]
-[#if nestedExp.simpleName = "ExpansionChoice"]
+[#var nestedExp = oom::nestedExpansion, prevInFirstVarName = inFirstVarName]
+[#if nestedExp::simpleName = "ExpansionChoice"]
   [#set inFirstVarName = "in_first_" + inFirstIndex, inFirstIndex = inFirstIndex + 1]
         let mut ${inFirstVarName} = true;
 [/#if]
         loop {
-            [@BuildCode oom.nestedExpansion /]
-  [#if nestedExp.simpleName = "ExpansionChoice"]
+            [@BuildCode oom::nestedExpansion /]
+  [#if nestedExp::simpleName = "ExpansionChoice"]
             ${inFirstVarName} = false;
   [#else]
-            if !([@ExpansionCondition oom.nestedExpansion /]) { break; }
+            if !([@ExpansionCondition oom::nestedExpansion /]) { break; }
   [/#if]
         }
 [#set inFirstVarName = prevInFirstVarName]
@@ -495,23 +495,23 @@ ${globals::translateCodeBlock(expansion, 1)}
 [#-- ZeroOrMore: loop --]
 [#macro BuildCodeZeroOrMore zom]
         loop {
-[#if zom.nestedExpansion.class.simpleName != "ExpansionChoice"]
-            if !([@ExpansionCondition zom.nestedExpansion /]) { break; }
+[#if zom::nestedExpansion::class::simpleName != "ExpansionChoice"]
+            if !([@ExpansionCondition zom::nestedExpansion /]) { break; }
 [/#if]
-            [@BuildCode zom.nestedExpansion /]
+            [@BuildCode zom::nestedExpansion /]
         }
 [/#macro]
 
 [#-- Failure: signal parse failure --]
 [#macro BuildCodeFailure fail]
-[#if !fail.code??]
-  [#if fail.exp??]
-        self.fail(&format!("Failure: {}", ${fail.exp}))?;
+[#if !fail::code??]
+  [#if fail::exp??]
+        self.fail(&format!("Failure: {}", ${fail::exp}))?;
   [#else]
         self.fail("Failure")?;
   [/#if]
 [#else]
-${globals::translateCodeBlock(fail.code, 1)}
+${globals.translateCodeBlock(fail::code, 1)}
 [/#if]
 [/#macro]
 
@@ -519,39 +519,44 @@ ${globals::translateCodeBlock(fail.code, 1)}
 [#macro BuildAssertionCode assertion]
 [#var optionalPart = ""]
 [#var assertionSkipped = false]
-[#if assertion.assertionExpression??]
-[#var assertCondition = globals::translateExpressionSafe(assertion.assertionExpression, "true")]
-[#if assertCondition?contains("FIXME")]
+[#if assertion::assertionExpression??]
+[#var assertCondition = globals.translateExpressionSafe(assertion::assertionExpression, "true")]
+[#if assertCondition.contains("FIXME")]
 [#set assertionSkipped = true]
-        // Assertion at ${assertion.location} skipped — condition not yet translatable to Rust
+        // Assertion at ${assertion::location} skipped — condition not yet translatable to Rust
         // ${assertCondition}
 [#else]
-[#if assertion.messageExpression??]
-  [#var msgTranslated = globals::translateExpressionSafe(assertion.messageExpression, "\"(message unavailable)\".to_string()")]
-  [#if !msgTranslated?contains("FIXME")]
+[#if assertion::messageExpression??]
+  [#var msgTranslated = globals.translateExpressionSafe(assertion::messageExpression, "\"(message unavailable)\".to_string()")]
+  [#if !msgTranslated.contains("FIXME")]
     [#set optionalPart = " + &" + msgTranslated]
   [/#if]
 [/#if]
         if !(${assertCondition}) {
-            self.fail(&("Assertion at: ${assertion.location?replace("\\", "\\\\")?replace("\"", "\\\"")} failed. ".to_string()${optionalPart}))?;
+            self.fail(&("Assertion at: ${assertion::location.replace("\\", "\\\\").replace("\"", "\\\"")} failed. ".to_string()${optionalPart}))?;
         }
 [/#if]
 [/#if]
-[#if assertion.expansion?? && !assertionSkipped]
-        if [#if !assertion.expansionNegated]![/#if]self.${assertion.expansion.scanRoutineName}() {
-            self.fail(&("Assertion at: ${assertion.location?replace("\\", "\\\\")?replace("\"", "\\\"")} failed. ".to_string()${optionalPart}))?;
+[#if assertion::rawCode?? && !assertion::rawCode::wrongLanguageIgnore]
+    if !(${assertion::rawCode}) {
+         self.fail(&("Assertion at: ${assertion::location.replace("\\", "\\\\").replace("\"", "\\\"")} failed. ".to_string()${optionalPart}))?;
+    }
+[/#if]
+[#if assertion::expansion?? && !assertionSkipped]
+        if [#if !assertion::expansionNegated]![/#if]self.${assertion::expansion::scanRoutineName}() {
+            self.fail(&("Assertion at: ${assertion::location.replace("\\", "\\\\").replace("\"", "\\\"")} failed. ".to_string()${optionalPart}))?;
         }
 [/#if]
 [/#macro]
 
 [#-- Token type activation/deactivation --]
 [#macro BuildCodeTokenTypeActivation activation]
-[#if activation.deactivate]
+[#if activation::deactivate]
         self.deactivate_token_types(&[
 [#else]
         self.activate_token_types(&[
 [/#if]
-[#list activation.tokenNames as name]
+[#list activation::tokenNames as name]
             TokenType::${name}[#if name_has_next],[/#if]
 [/#list]
         ]);
@@ -559,7 +564,7 @@ ${globals::translateCodeBlock(fail.code, 1)}
 
 [#-- TryBlock --]
 [#macro BuildCodeTryBlock tryblock]
-[@BuildCode tryblock.nestedExpansion /]
+[@BuildCode tryblock::nestedExpansion /]
 [/#macro]
 
 [#-- AttemptBlock --]
@@ -568,14 +573,14 @@ ${globals::translateCodeBlock(fail.code, 1)}
     let _attempt_pos_${newID()} = self.pos;
     let _attempt_cs_${newVarIndex} = self.call_stack.len();
     match (|| -> Result<(), ParseError> {
-        [@BuildCode attemptBlock.nestedExpansion /]
+        [@BuildCode attemptBlock::nestedExpansion /]
         Ok(())
     })() {
         Ok(()) => {}
         Err(_) => {
             self.pos = _attempt_pos_${newVarIndex};
             self.call_stack.truncate(_attempt_cs_${newVarIndex});
-            [@BuildCode attemptBlock.recoveryExpansion /]
+            [@BuildCode attemptBlock::recoveryExpansion /]
         }
     }
 }
@@ -588,46 +593,46 @@ ${globals::translateCodeBlock(fail.code, 1)}
     // =================================================================
     // Lookahead routines
     // =================================================================
-[#if grammar.choicePointExpansions?size != 0]
-[#list grammar.choicePointExpansions as expansion]
-  [#if expansion.parent.class.simpleName != "BNFProduction"]
+[#if grammar::choicePointExpansions.size() != 0]
+[#list grammar::choicePointExpansions as expansion]
+  [#if expansion::parent::class::simpleName != "BNFProduction"]
 [@BuildScanRoutine expansion /]
   [/#if]
 [/#list]
-[#list grammar.assertionExpansions as expansion]
+[#list grammar::assertionExpansions as expansion]
 [@BuildAssertionRoutine expansion /]
 [/#list]
-[#list grammar.expansionsNeedingPredicate as expansion]
+[#list grammar::expansionsNeedingPredicate as expansion]
 [@BuildPredicateRoutine expansion /]
 [/#list]
-[#list grammar.allLookaheads as lookahead]
-  [#if lookahead.nestedExpansion??]
+[#list grammar::allLookaheads as lookahead]
+  [#if lookahead::nestedExpansion??]
 [@BuildLookaheadRoutine lookahead /]
   [/#if]
 [/#list]
-[#list grammar.allLookBehinds as lookBehind]
+[#list grammar::allLookBehinds as lookBehind]
 [@BuildLookBehindRoutine lookBehind /]
 [/#list]
-[#list grammar.parserProductions as production]
+[#list grammar::parserProductions as production]
 [@BuildProductionLookaheadMethod production /]
 [/#list]
 [/#if]
 [/#macro]
 
 [#macro BuildPredicateRoutine expansion]
-[#var lookaheadAmount = expansion.lookaheadAmount]
+[#var lookaheadAmount = expansion::lookaheadAmount]
 [#if lookaheadAmount = 2147483647]
   [#set lookaheadAmount = "i32::MAX"]
 [/#if]
-    // BuildPredicateRoutine: expansion at ${expansion.location}
-    fn ${expansion.predicateMethodName}(&mut self) -> bool {
+    // BuildPredicateRoutine: expansion at ${expansion::location}
+    fn ${expansion::predicateMethodName}(&mut self) -> bool {
         self.remaining_lookahead = ${lookaheadAmount};
         self.scan_pos = self.pos;
         let _prev_scan_to_end = self.scan_to_end;
         self.scan_to_end = false;
         let result = (|| -> bool {
 [@BuildPredicateCode expansion /]
-[#if !expansion.hasSeparateSyntacticLookahead && expansion.lookaheadAmount != 0]
+[#if !expansion::hasSeparateSyntacticLookahead && expansion::lookaheadAmount != 0]
 [@BuildScanCode expansion /]
 [/#if]
             true
@@ -641,30 +646,30 @@ ${globals::translateCodeBlock(fail.code, 1)}
 [/#macro]
 
 [#macro BuildScanRoutine expansion]
-[#if !expansion.singleTokenLookahead]
-    // Scanahead routine for expansion at ${expansion.location}
+[#if !expansion::singleTokenLookahead]
+    // Scanahead routine for expansion at ${expansion::location}
     [#set newVarIndex = 0]
-    fn ${expansion.scanRoutineName}(&mut self, _scan_to_end: bool) -> bool {
+    fn ${expansion::scanRoutineName}(&mut self, _scan_to_end: bool) -> bool {
 [#-- Capture the scan routine's own variable index before inner code increments it. --]
 [#var scanIdx = newID()]
-[#if expansion.hasScanLimit]
+[#if expansion::hasScanLimit]
         let _prev_threshold_${scanIdx} = self.passed_predicate_threshold;
         self.passed_predicate_threshold = -1;
 [#else]
         let mut _reached_scan_code_${scanIdx} = false;
-        let _threshold_${scanIdx} = self.remaining_lookahead as i32 - ${expansion.lookaheadAmount};
+        let _threshold_${scanIdx} = self.remaining_lookahead as i32 - ${expansion::lookaheadAmount};
 [/#if]
         let _result_${scanIdx} = (|| -> bool {
             self.lookahead_routine_nesting += 1;
 [@BuildPredicateCode expansion /]
-[#if !expansion.hasScanLimit]
+[#if !expansion::hasScanLimit]
             _reached_scan_code_${scanIdx} = true;
 [/#if]
 [@BuildScanCode expansion /]
             true
         })();
         self.lookahead_routine_nesting -= 1;
-[#if expansion.hasScanLimit]
+[#if expansion::hasScanLimit]
         if self.remaining_lookahead <= self.passed_predicate_threshold {
             self.passed_predicate = true;
             self.passed_predicate_threshold = _prev_threshold_${scanIdx};
@@ -689,8 +694,8 @@ ${globals::translateCodeBlock(fail.code, 1)}
 [/#macro]
 
 [#macro BuildAssertionRoutine expansion]
-    // Scanahead routine for assertion at ${expansion.parent.location}
-    fn ${expansion.scanRoutineName}(&mut self) -> bool {
+    // Scanahead routine for assertion at ${expansion::parent::location}
+    fn ${expansion::scanRoutineName}(&mut self) -> bool {
         [#var assertIdx = newID()]
         let _prev_remaining_${assertIdx} = self.remaining_lookahead;
         self.remaining_lookahead = i32::MAX;
@@ -713,41 +718,41 @@ ${globals::translateCodeBlock(fail.code, 1)}
 [/#macro]
 
 [#macro BuildPredicateCode expansion]
-[#if expansion.hasSemanticLookahead && (expansion.lookahead.semanticLookaheadNested || expansion.containingProduction.onlyForLookahead)]
-            if !(${globals::translateExpressionSafe(expansion.semanticLookahead, "true")}) {
+[#if expansion::hasSemanticLookahead && (expansion::lookahead::semanticLookaheadNested || expansion::containingProduction::onlyForLookahead)]
+            if !(${globals.translateExpressionSafe(expansion::semanticLookahead, "true")}) {
                 return false;
             }
 [/#if]
-[#if expansion.hasLookBehind]
-            if [#if !expansion.lookBehind.negated]![/#if]self.${expansion.lookBehind.routineName}() {
+[#if expansion::hasLookBehind]
+            if [#if !expansion::lookBehind::negated]![/#if]self.${expansion::lookBehind::routineName}() {
                 return false;
             }
 [/#if]
-[#if expansion.hasSeparateSyntacticLookahead]
+[#if expansion::hasSeparateSyntacticLookahead]
             if self.remaining_lookahead <= 0 {
                 self.passed_predicate = true;
                 return !self.hit_failure;
             }
-            if [#if !expansion.lookahead.negated]![/#if]self.${expansion.lookaheadExpansion.scanRoutineName}(true) {
+            if [#if !expansion::lookahead::negated]![/#if]self.${expansion::lookaheadExpansion::scanRoutineName}(true) {
                 return false;
             }
 [/#if]
-[#if expansion.lookaheadAmount == 0]
+[#if expansion::lookaheadAmount == 0]
             self.passed_predicate = true;
 [/#if]
 [/#macro]
 
 [#macro BuildLookaheadRoutine lookahead]
-[#if lookahead.nestedExpansion??]
-    // Lookahead routine for ${lookahead.location}
-    fn ${lookahead.nestedExpansion.scanRoutineName}(&mut self, _scan_to_end: bool) -> bool {
+[#if lookahead::nestedExpansion??]
+    // Lookahead routine for ${lookahead::location}
+    fn ${lookahead::nestedExpansion::scanRoutineName}(&mut self, _scan_to_end: bool) -> bool {
         [#var laIdx = newID()]
         let _prev_remaining_${laIdx} = self.remaining_lookahead;
         let _prev_hit_${laIdx} = self.hit_failure;
         let _prev_scan_${laIdx} = self.scan_pos;
         let _result_${laIdx} = (|| -> bool {
             self.lookahead_routine_nesting += 1;
-[@BuildScanCode lookahead.nestedExpansion /]
+[@BuildScanCode lookahead::nestedExpansion /]
             !self.hit_failure
         })();
         self.lookahead_routine_nesting -= 1;
@@ -760,8 +765,8 @@ ${globals::translateCodeBlock(fail.code, 1)}
 [/#macro]
 
 [#macro BuildLookBehindRoutine lookBehind]
-    fn ${lookBehind.routineName}(&self) -> bool {
-[#if lookBehind.backward]
+    fn ${lookBehind::routineName}(&self) -> bool {
+[#if lookBehind::backward]
         let stack: Vec<&NonTerminalCall> = self.call_stack.iter().rev()
             .chain(self.lookahead_stack.iter().rev()).collect();
 [#else]
@@ -769,23 +774,23 @@ ${globals::translateCodeBlock(fail.code, 1)}
             .chain(self.lookahead_stack.iter()).collect();
 [/#if]
         let mut idx = 0usize;
-[#list lookBehind.path as element]
+[#list lookBehind::path as element]
   [#var elementNegated = (element[0] == "~")]
-  [#if elementNegated][#set element = element?substring(1)][/#if]
+  [#if elementNegated][#set element = element.substring(1)][/#if]
   [#if element = "."]
         if idx >= stack.len() { return false; }
         idx += 1;
   [#elseif element = "..."]
-    [#if element_index = lookBehind.path?size - 1]
-      [#if lookBehind.hasEndingSlash]
+    [#if element_index = lookBehind::path.size() - 1]
+      [#if lookBehind::hasEndingSlash]
         return idx >= stack.len();
       [#else]
         return true;
       [/#if]
     [#else]
-      [#var nextElement = lookBehind.path[element_index + 1]]
+      [#var nextElement = lookBehind::path[element_index + 1]]
       [#var nextElementNegated = (nextElement[0] == "~")]
-      [#if nextElementNegated][#set nextElement = nextElement?substring(1)][/#if]
+      [#if nextElementNegated][#set nextElement = nextElement.substring(1)][/#if]
         while idx < stack.len() {
       [#if nextElementNegated]
             if stack[idx].production_name != "${nextElement}" {
@@ -808,7 +813,7 @@ ${globals::translateCodeBlock(fail.code, 1)}
         idx += 1;
   [/#if]
 [/#list]
-[#if lookBehind.hasEndingSlash]
+[#if lookBehind::hasEndingSlash]
         idx >= stack.len()
 [#else]
         true
@@ -817,9 +822,9 @@ ${globals::translateCodeBlock(fail.code, 1)}
 [/#macro]
 
 [#macro BuildProductionLookaheadMethod production]
-    // Production lookahead for ${production.name}
-    fn ${production.lookaheadMethodName}(&mut self, _scan_to_end: bool) -> bool {
-[@BuildScanCode production.expansion /]
+    // Production lookahead for ${production::name}
+    fn ${production::lookaheadMethodName}(&mut self, _scan_to_end: bool) -> bool {
+[@BuildScanCode production::expansion /]
         true
     }
 
@@ -829,20 +834,20 @@ ${globals::translateCodeBlock(fail.code, 1)}
      Scan code generation (for lookahead routines)
      ==================================================================== --]
 [#macro BuildScanCode expansion]
-[#var classname = expansion.simpleName]
+[#var classname = expansion::simpleName]
 [#if classname != "ExpansionSequence" && classname != "ExpansionWithParentheses"]
             if self.hit_failure { return false; }
             if self.remaining_lookahead <= 0 {
                 return true;
             }
-            // Lookahead for ${classname} at ${expansion.location}
+            // Lookahead for ${classname} at ${expansion::location}
 [/#if]
 [@HandleLexicalStateChange expansion, true]
 [#if classname = "ExpansionWithParentheses"]
-[@BuildScanCode expansion.nestedExpansion /]
-[#elseif expansion.singleTokenLookahead]
+[@BuildScanCode expansion::nestedExpansion /]
+[#elseif expansion::singleTokenLookahead]
 [@ScanSingleToken expansion /]
-[#elseif classname = "Assertion" && expansion.appliesInLookahead]
+[#elseif classname = "Assertion" && expansion::appliesInLookahead]
 [@ScanCodeAssertion expansion /]
 [#elseif classname = "Failure"]
 [@ScanCodeError expansion /]
@@ -859,26 +864,26 @@ ${globals::translateCodeBlock(fail.code, 1)}
 [#elseif classname = "NonTerminal"]
 [@ScanCodeNonTerminal expansion /]
 [#elseif classname = "TryBlock" || classname = "AttemptBlock"]
-[@BuildScanCode expansion.nestedExpansion /]
+[@BuildScanCode expansion::nestedExpansion /]
 [#elseif classname = "ExpansionChoice"]
 [@ScanCodeChoice expansion /]
 [#elseif classname = "CodeBlock"]
-  [#if expansion.appliesInLookahead || expansion.insideLookahead || expansion.containingProduction.onlyForLookahead]
-${globals::translateCodeBlock(expansion, 12)}
+  [#if expansion::appliesInLookahead || expansion::insideLookahead || expansion::containingProduction::onlyForLookahead]
+${globals.translateCodeBlock(expansion, 12)}
   [/#if]
 [/#if]
 [/@HandleLexicalStateChange]
 [/#macro]
 
 [#macro ScanCodeSequence sequence]
-[#list sequence.units as sub]
+[#list sequence::units as sub]
 [@BuildScanCode sub /]
-  [#if sub.scanLimit]
+  [#if sub::scanLimit]
             if !self.scan_to_end && self.lookahead_stack.len() <= 1 {
                 if self.lookahead_routine_nesting == 0 {
-                    self.remaining_lookahead = ${sub.scanLimitPlus};
+                    self.remaining_lookahead = ${sub::scanLimitPlus};
                 } else if self.lookahead_stack.len() == 1 {
-                    self.passed_predicate_threshold = self.remaining_lookahead as i32[#if sub.scanLimitPlus > 0] - ${sub.scanLimitPlus}[/#if];
+                    self.passed_predicate_threshold = self.remaining_lookahead as i32[#if sub::scanLimitPlus > 0] - ${sub::scanLimitPlus}[/#if];
                 }
             }
   [/#if]
@@ -886,16 +891,16 @@ ${globals::translateCodeBlock(expansion, 12)}
 [/#macro]
 
 [#macro ScanCodeNonTerminal nt]
-            // NonTerminal ${nt.name} at ${nt.location}
+            // NonTerminal ${nt::name} at ${nt::location}
             self.lookahead_stack.push(NonTerminalCall {
-                production_name: "${nt.containingProduction.name}",
-                source_file: "${nt.inputSource?replace("\\", "\\\\")?replace("\"", "\\\"")}",
-                line: ${nt.beginLine},
-                column: ${nt.beginColumn},
+                production_name: "${nt::containingProduction::name}",
+                source_file: "${nt::inputSource.replace("\\", "\\\\").replace("\"", "\\\"")}",
+                line: ${nt::beginLine},
+                column: ${nt::beginColumn},
             });
             let _prev_ste_${newID()} = self.scan_to_end;
-            self.current_lookahead_production = "${nt.production.name}";
-            if !self.${nt.production.lookaheadMethodName}(${nt.scanToEnd?string("true", "false")}) {
+            self.current_lookahead_production = "${nt::production::name}";
+            if !self.${nt::production::lookaheadMethodName}(${nt::scanToEnd ? "true" : "false"}) {
                 self.scan_to_end = _prev_ste_${newVarIndex};
                 self.lookahead_stack.pop();
                 return false;
@@ -907,27 +912,32 @@ ${globals::translateCodeBlock(expansion, 12)}
 [/#macro]
 
 [#macro ScanSingleToken expansion]
-[#var firstSet = expansion.firstSet.tokenNames]
-[#if firstSet?size = 1]
+[#var firstSet = expansion::firstSet::tokenNames]
+[#if firstSet.size() = 1]
             if !self.scan_token(&[TokenType::${firstSet[0]}]) {
                 return false;
             }
 [#else]
-            if !self.scan_token(${expansion.firstSetVarName}) {
+            if !self.scan_token(${expansion::firstSetVarName}) {
                 return false;
             }
 [/#if]
 [/#macro]
 
 [#macro ScanCodeAssertion assertion]
-[#if assertion.assertionExpression??]
-            if !(${globals::translateExpressionSafe(assertion.assertionExpression, "true")}) {
+[#if assertion::assertionExpression??]
+            if !(${globals.translateExpressionSafe(assertion::assertionExpression, "true")}) {
                 self.hit_failure = true;
                 return false;
             }
+[#elif assertion::rawCode?? && !assertion::rawCode::wrongLanguageIgnore]
+    if !(${assertion::rawCode}) {
+        self.hit_failure = true;
+        return false;
+    }
 [/#if]
-[#if assertion.expansion??]
-            if [#if !assertion.expansionNegated]![/#if]self.${assertion.expansion.scanRoutineName}() {
+[#if assertion::expansion??]
+            if [#if !assertion::expansionNegated]![/#if]self.${assertion::expansion::scanRoutineName}() {
                 self.hit_failure = true;
                 return false;
             }
@@ -940,8 +950,8 @@ ${globals::translateCodeBlock(expansion, 12)}
 [/#macro]
 
 [#macro ScanCodeTokenActivation activation]
-            self.[#if activation.deactivate]deactivate[#else]activate[/#if]_token_types(&[
-[#list activation.tokenNames as name]
+            self.[#if activation::deactivate]deactivate[#else]activate[/#if]_token_types(&[
+[#list activation::tokenNames as name]
                 TokenType::${name}[#if name_has_next],[/#if]
 [/#list]
             ]);
@@ -955,7 +965,7 @@ ${globals::translateCodeBlock(expansion, 12)}
             let _saved_remaining_${newVarIndex} = self.remaining_lookahead;
             let _saved_hit_${newVarIndex} = self.hit_failure;
             let _saved_pred_${newVarIndex} = self.passed_predicate;
-[#list choice.choices as subseq]
+[#list choice::choices as subseq]
             self.passed_predicate = false;
             if ![@CheckExpansion subseq /] {
                 self.scan_pos = _saved_scan_${newVarIndex};
@@ -973,7 +983,7 @@ ${globals::translateCodeBlock(expansion, 12)}
   [/#if]
 [/#list]
 [#-- Close all nested if-blocks (one per non-last choice) --]
-[#list choice.choices as subseq]
+[#list choice::choices as subseq]
   [#if subseq_has_next]
             }
   [/#if]
@@ -987,7 +997,7 @@ ${globals::translateCodeBlock(expansion, 12)}
             let _saved_${newID()} = self.scan_pos;
             let _saved_pred_${newVarIndex} = self.passed_predicate;
             self.passed_predicate = false;
-            if ![@CheckExpansion zoo.nestedExpansion /] {
+            if ![@CheckExpansion zoo::nestedExpansion /] {
                 if self.passed_predicate && !self.legacy_glitchy_lookahead {
                     self.passed_predicate = _saved_pred_${newVarIndex};
                     return false;
@@ -1005,7 +1015,7 @@ ${globals::translateCodeBlock(expansion, 12)}
             while self.remaining_lookahead > 0 && !self.hit_failure {
                 let _saved_zom_${newVarIndex} = self.scan_pos;
                 self.passed_predicate = false;
-                if ![@CheckExpansion zom.nestedExpansion /] {
+                if ![@CheckExpansion zom::nestedExpansion /] {
                     if self.passed_predicate && !self.legacy_glitchy_lookahead {
                         self.passed_predicate = _saved_pred_${newVarIndex};
                         return false;
@@ -1020,19 +1030,19 @@ ${globals::translateCodeBlock(expansion, 12)}
 [/#macro]
 
 [#macro ScanCodeOneOrMore oom]
-[@BuildScanCode oom.nestedExpansion /]
+[@BuildScanCode oom::nestedExpansion /]
 [@ScanCodeZeroOrMore oom /]
 [/#macro]
 
 [#macro CheckExpansion expansion]
-[#if expansion.singleTokenLookahead]
-  [#if expansion.firstSet.tokenNames?size = 1]
-self.scan_token(&[TokenType::${expansion.firstSet.tokenNames[0]}])
+[#if expansion::singleTokenLookahead]
+  [#if expansion::firstSet::tokenNames.size() = 1]
+self.scan_token(&[TokenType::${expansion::firstSet::tokenNames[0]}])
   [#else]
-self.scan_token(${expansion.firstSetVarName})
+self.scan_token(${expansion::firstSetVarName})
   [/#if]
 [#else]
-self.${expansion.scanRoutineName}(false)
+self.${expansion::scanRoutineName}(false)
 [/#if]
 [/#macro]
 
@@ -1047,26 +1057,26 @@ use crate::ast::{Ast, AstBuilder, NodeId, NodeKind};
 use crate::error::{ParseError, ParseResult};
 use crate::lexer::{Lexer, Token};
 use crate::tokens::{TokenType, LexicalState};
-[#if lexerData.hasContextualTokens]
+[#if lexerData::hasContextualTokens]
 use crate::tokens::{is_contextual_token, literal_string};
 [/#if]
 
 // =================================================================
 // First set constants for production entry points
 // =================================================================
-[#list grammar.parserProductions as production]
-[@firstSetVar production.expansion /]
+[#list grammar::parserProductions as production]
+[@firstSetVar production::expansion /]
 [/#list]
 
 // =================================================================
 // First set constants for internal expansions (lookahead)
 // =================================================================
-[#list grammar.expansionsForFirstSet as expansion]
+[#list grammar::expansionsForFirstSet as expansion]
 [@firstSetVar expansion /]
 [/#list]
 
 /// A call stack entry for tracking parser production context.
-#[derive(Clone)]
+#[derive(Debug, Clone)]
 struct NonTerminalCall {
     production_name: &'static str,
     source_file: &'static str,
@@ -1082,7 +1092,7 @@ struct NonTerminalCall {
 /// # Examples
 ///
 /// ```no_run
-/// use ${settings.parserPackage?replace(".", "_")}::parser::Parser;
+/// use ${settings::parserPackage.replace(".", "_")}::parser::Parser;
 ///
 /// let result = Parser::parse("input text", Some("example.txt"));
 /// match result {
@@ -1092,10 +1102,11 @@ struct NonTerminalCall {
 /// ```
 [#-- Capture the first production name for the root parse() method. --]
 [#var rootProductionName = ""]
-[#list grammar.parserProductions as production]
-  [#set rootProductionName = production.name]
+[#list grammar::parserProductions as production]
+  [#set rootProductionName = production::name]
   [#break]
 [/#list]
+#[derive(Debug)]
 pub struct Parser<'src> {
     /// Pre-computed token list (regular tokens + EOF only).
     tokens: Vec<Token>,
@@ -1142,7 +1153,7 @@ pub struct Parser<'src> {
     /// Active token types for re-tokenization.
     active_token_types: Option<HashSet<TokenType>>,
 [#-- Parser-level fields from INJECT PARSER_CLASS --]
-${globals::getParserFieldStructFields()}}
+${globals.getParserFieldStructFields()}}
 
 
 impl<'src> Parser<'src> {
@@ -1172,7 +1183,7 @@ impl<'src> Parser<'src> {
             pos: 0,
             builder: AstBuilder::new(),
             build_tree: true,
-            tokens_are_nodes: ${settings.tokensAreNodes?string("true", "false")},
+            tokens_are_nodes: ${settings::tokensAreNodes ? "true" : "false"},
             call_stack: Vec::new(),
             currently_parsed_production: "",
             scan_pos: 0,
@@ -1185,19 +1196,19 @@ impl<'src> Parser<'src> {
             current_lookahead_production: "",
             scan_to_end: false,
             next_token_type: None,
-[#if settings.legacyGlitchyLookahead!false]
+[#if settings::legacyGlitchyLookahead!false]
             legacy_glitchy_lookahead: true,
 [#else]
             legacy_glitchy_lookahead: false,
 [/#if]
             lexical_state: LexicalState::default(),
-[#if settings.deactivatedTokens!false]
+[#if settings::deactivatedTokens!false]
             active_token_types: lexer.save_active_tokens(),
 [#else]
             active_token_types: None,
 [/#if]
-${globals::getParserFieldInitializers()}        };
-        parser.parse_${rootProductionName?lower_case}()?;
+${globals.getParserFieldInitializers()}        };
+        parser.parse_${rootProductionName.toLowerCase()}()?;
         let root = parser.builder.peek_node();
         if let Some(root_id) = root {
             parser.builder.set_root(root_id);
@@ -1236,7 +1247,7 @@ ${globals::getParserFieldInitializers()}        };
         }
         let tok = &self.tokens[self.pos];
         if tok.kind != expected {
-[#if lexerData.hasContextualTokens]
+[#if lexerData::hasContextualTokens]
             if self.type_matches(expected, self.pos) {
                 // Contextual match — proceed.
             } else {
@@ -1303,7 +1314,7 @@ ${globals::getParserFieldInitializers()}        };
     fn type_matches(&self, expected: TokenType, tok_pos: usize) -> bool {
         if tok_pos >= self.tokens.len() { return false; }
         if self.tokens[tok_pos].kind == expected { return true; }
-[#if lexerData.hasContextualTokens]
+[#if lexerData::hasContextualTokens]
         if is_contextual_token(expected) {
             if let Some(literal) = literal_string(expected) {
                 let tok = &self.tokens[tok_pos];
@@ -1323,7 +1334,7 @@ ${globals::getParserFieldInitializers()}        };
         for &tt in types {
             if kind == tt { return true; }
         }
-[#if lexerData.hasContextualTokens]
+[#if lexerData::hasContextualTokens]
         for &tt in types {
             if is_contextual_token(tt) && self.type_matches(tt, tok_pos) {
                 return true;

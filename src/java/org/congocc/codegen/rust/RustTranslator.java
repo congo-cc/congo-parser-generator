@@ -4,7 +4,7 @@ import java.util.*;
 
 import org.congocc.core.Grammar;
 import org.congocc.codegen.Translator;
-import org.congocc.codegen.java.CodeInjector;
+import org.congocc.codegen.java.JavaCodeInjector;
 import org.congocc.parser.Node;
 import org.congocc.parser.tree.*;
 
@@ -148,41 +148,28 @@ public class RustTranslator extends Translator {
     @Override
     public String translateTypeName(String name) {
         if (name == null) return name;
-        switch (name) {
-            case "String":   return "String";
-            case "boolean":  return "bool";
-            case "Boolean":  return "bool";
-            case "int":      return "i32";
-            case "Integer":  return "i32";
-            case "long":     return "i64";
-            case "Long":     return "i64";
-            case "float":    return "f32";
-            case "Float":    return "f32";
-            case "double":   return "f64";
-            case "Double":   return "f64";
-            case "char":     return "char";
-            case "Character": return "char";
-            case "void":     return "()";
-            case "Object":   return "Box<dyn std::any::Any>";
-            case "List":     return "Vec";
-            case "ArrayList": return "Vec";
-            case "LinkedList": return "Vec";
-            case "Map":      return "HashMap";
-            case "HashMap":  return "HashMap";
-            case "LinkedHashMap": return "HashMap";
-            case "Set":      return "HashSet";
-            case "HashSet":  return "HashSet";
-            case "LinkedHashSet": return "HashSet";
-            case "Iterator": return "impl Iterator";
-            default:
+        return switch (name) {
+            case "String" -> "String";
+            case "boolean","Boolean" -> "bool";
+            case "int","Integer" -> "i32";
+            case "long", "Long" -> "i64";
+            case "float", "Float" -> "f32";
+            case "double", "Double" -> "f64";
+            case "char", "Character" -> "char";
+            case "void" -> "()";
+            case "Object" -> "Box<dyn std::any::Any>";
+            case "List","ArrayList","LinkedList" -> "Vec";
+            case "Map","HashMap","LinkedHashMap" -> "HashMap";
+            case "Set","HashSet","LinkedHashSet" -> "HashSet";
+            case "Iterator" -> "impl Iterator";
+            default -> {
                 // Strip package prefix from fully-qualified names
                 // e.g. "org.parsers.java.ast.NumericalLiteral" -> "NumericalLiteral"
                 int lastDot = name.lastIndexOf('.');
-                if (lastDot >= 0) {
-                    return name.substring(lastDot + 1);
-                }
-                return name;
-        }
+                name = name.substring(lastDot + 1);
+                yield name;
+            }
+        };
     }
 
     // ----- Operator translation -----
@@ -487,7 +474,7 @@ public class RustTranslator extends Translator {
      * complex grammars get clear guidance on what needs manual intervention.</p>
      */
     @Override
-    public String translateInjectedClass(CodeInjector injector, String name) {
+    public String translateInjectedClass(JavaCodeInjector injector, String name) {
         String qualifiedName = String.format("%s.%s", appSettings.getNodePackage(), name);
         List<ClassOrInterfaceBodyDeclaration> decls = injector.getBodyDeclarations(qualifiedName);
 
@@ -568,7 +555,7 @@ public class RustTranslator extends Translator {
      * produces:
      *   saw_empty_type_args: bool,
      */
-    public String getParserFieldStructFields(CodeInjector injector) {
+    public String getParserFieldStructFields(JavaCodeInjector injector) {
         String qualifiedName = String.format("%s.%s",
             appSettings.getParserPackage(), appSettings.getParserClassName());
         List<ClassOrInterfaceBodyDeclaration> decls = injector.getBodyDeclarations(qualifiedName);
@@ -629,7 +616,7 @@ public class RustTranslator extends Translator {
      * Returns Rust struct initializer expressions for parser fields from
      * INJECT PARSER_CLASS blocks.  Pairs with {@link #getParserFieldStructFields}.
      */
-    public String getParserFieldInitializers(CodeInjector injector) {
+    public String getParserFieldInitializers(JavaCodeInjector injector) {
         // Use the parserFieldNames map populated by getParserFieldStructFields.
         // This avoids calling translateIdentifier which would add "self." prefix.
         StringBuilder result = new StringBuilder();
@@ -661,7 +648,7 @@ public class RustTranslator extends Translator {
      * @param fields if true, process only field declarations; if false, only methods
      * @return the translated Rust code (or FIXME block comments with original Java)
      */
-    public String translateParserClassInjection(CodeInjector injector, boolean fields) {
+    public String translateParserClassInjection(JavaCodeInjector injector, boolean fields) {
         String qualifiedName = String.format("%s.%s",
             appSettings.getParserPackage(), appSettings.getParserClassName());
         List<ClassOrInterfaceBodyDeclaration> decls = injector.getBodyDeclarations(qualifiedName);

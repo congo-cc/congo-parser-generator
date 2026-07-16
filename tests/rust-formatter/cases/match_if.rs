@@ -1,0 +1,6 @@
+fn demo(x:i32)->i32{
+match x{
+0=>0,
+_=>{if x<0{-x}else{x}}
+}
+}

@@ -1,14 +1,5 @@
 <project name="Cics Parser" default="compile" basedir=".">
-  <!-- Rust code-generation is off by default. Enable with: ant -Drust.enabled=true ... -->
-  <property name="rust.enabled" value="false"/>
-  <target name="-rust-check">
-    <condition property="rust.on">
-      <istrue value="${rust.enabled}"/>
-    </condition>
-  </target>
-  <target name="-rust-guard" depends="-rust-check" unless="rust.on">
-    <echo level="warning">*** Skipping Rust targets (rust.enabled=${rust.enabled}). Enable with: ant -Drust.enabled=true ***</echo>
-  </target>
+  <import file="../../common.xml"/>
 
   <target name="clean">
     <delete dir="org" />
@@ -33,25 +24,15 @@
   </target>
 
   <target name="java-parser-gen" depends="init" unless="javaparser.uptodate">
-    <java jar="../../congocc.jar" failonerror="true" fork="true">
-      <assertions> <enable /> </assertions>
-      <arg value="-n" />
-      <arg value="${basedir}/Cics.ccc" />
-    </java>
+    <congocc target="Cics.ccc" />
   </target>
 
   <target name="python-parser-gen" depends="init" unless="pyparser.uptodate">
-    <java jar="../../congocc.jar" failonerror="true" fork="true">
-      <assertions> <enable /> </assertions>
-      <arg line="-n -lang python ${basedir}/Cics.ccc" />
-    </java>
+    <congocc target="Cics.ccc" lang="python"/>
   </target>
 
   <target name="csharp-parser-gen" depends="init" unless="csparser.uptodate">
-    <java jar="../../congocc.jar" failonerror="true" fork="true">
-      <assertions> <enable /> </assertions>
-      <arg line="-n -lang csharp ${basedir}/Cics.ccc" />
-    </java>
+    <congocc target="Cics.ccc" lang="csharp"/>
   </target>
 
   <target name="compile-java" depends="java-parser-gen">
@@ -93,11 +74,8 @@
     </exec>
   </target>
 
-  <target name="rust-gen" depends="-rust-guard" if="rust.on">
-    <java jar="../../congocc.jar" failonerror="true" fork="true">
-      <assertions><enable /></assertions>
-      <arg line="-n -lang rust -d ${basedir}/rust-cicsparser ${basedir}/Cics.ccc" />
-    </java>
+  <target name="rust-gen" depends="rust-guard" if="rust.available">
+    <congocc target="Cics.ccc" lang="rust" args="-n -d ${basedir}/rust-cicsparser"/>
     <delete dir="${basedir}/rust-cicsparser/test-data" />
     <mkdir dir="${basedir}/rust-cicsparser/test-data" />
     <copy todir="${basedir}/rust-cicsparser/test-data">
@@ -105,7 +83,7 @@
     </copy>
   </target>
 
-  <target name="test-rust" depends="-rust-guard,rust-gen" if="rust.on">
+  <target name="test-rust" depends="rust-guard,rust-gen" if="rust.available">
     <exec executable="cargo" dir="${basedir}/rust-cicsparser" failonerror="true">
       <arg line="test -- --nocapture" />
     </exec>

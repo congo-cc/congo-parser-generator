@@ -147,8 +147,6 @@ public final class Main {
         System.out.println("   If this is unset, files are generated relative to the grammar file location.");
         System.out.println(" -lang <language>  Specify the language to generate code in (the default is 'java')");
         System.out.println("                     (valid choices are currently " + sb + ")");
-        System.out.println(" -jdkN             Specify the target JDK version. N is a number from 8 to 26. (Default is 8)");
-        System.out.println("                     (this is only useful when the code generation is in Java)");
         System.out.println(" -n                Suppress the check for a newer version");
         System.out.println(" -p                Define one or more comma-separated (no spaces) symbols to pass to the preprocessor.");
         System.out.println("   For example:   -p debug,strict");
@@ -169,7 +167,6 @@ public final class Main {
         logger.fine(String.format("CongoCC started with command line: %s", String.join(" ", args)));
         Path grammarFile = null, outputDirectory = null;
         String codeLang = "java";
-        int jdkTarget = 0;
         Map<String, String> preprocessorSymbols = new HashMap<>();
         boolean quiet = false, noNewerCheck = false;
         for (int i = 0; i < args.length; i++) {
@@ -220,26 +217,10 @@ public final class Main {
                             System.exit(-1);
                         }
                         codeLang = candidate.toLowerCase();
-                        if (jdkTarget != 0) {
-                            System.err.println("The -jdk flag is only compatible with a Java target.");
-                            System.exit(-1);
-                        }
                     }
                 }
                 else if (arg.toLowerCase().startsWith("-jdk")) {
-                    if (!codeLang.equals("java")) {
-                        System.err.println("The -jdk flag is only compatible with a Java target.");
-                        System.exit(-1);
-                    }
-                    String number = arg.substring(4);
-                    try {
-                       jdkTarget = Integer.parseInt(number);
-                    } catch (NumberFormatException nfe) {
-                        System.err.println("Expecting a number after 'jdk', like -jdk11");
-                    }
-                    if (jdkTarget <8 || jdkTarget > 25) {
-                        System.err.println("The JDK Target currently must be between 8 and 25.");
-                    }
+                    System.err.println("The -jdk flag has been removed. It is currently ignored.");
                 }
                 else {
                     System.err.println("Ignoring unknown flag: " + arg);
@@ -282,21 +263,30 @@ public final class Main {
                 }
             }
         }
-        int errorcode = mainProgram(grammarFile, outputDirectory, codeLang, jdkTarget, quiet, preprocessorSymbols);
+        int errorcode = mainProgram(grammarFile, outputDirectory, codeLang, quiet, preprocessorSymbols);
         System.exit(errorcode);
     }
 
     /**
-     * @param grammarFile The input file
+     * @deprecated Just here for backward compatibility. The jdkTarget parameter is ignored.
+     */
+    @Deprecated
+    public static int mainProgram(Path grammarPath, Path outputDir, String codeLang, int jdkTarget, boolean quiet, Map<String, String> symbols)
+    throws IOException {
+        return mainProgram(grammarPath, outputDir, codeLang, quiet, symbols);
+    }
+
+    /**
+     * @param grammarPath The input file
      * @param outputDir The output directory, if this is null, just use the directory where the input file is.
      * @param quiet Whether to be silent (or quiet). Currently does nothing!
      * @return error code
      */
-    public static int mainProgram(Path grammarFile, Path outputDir, String codeLang, int jdkTarget, boolean quiet, Map<String, String> symbols)
+    public static int mainProgram(Path grammarPath, Path outputDir, String codeLang, boolean quiet, Map<String, String> symbols)
       throws IOException {
         if (!quiet) bannerLine();
-        Grammar grammar = new Grammar(outputDir, codeLang, jdkTarget, quiet, symbols);
-        grammar.parse(grammarFile, true);
+        Grammar grammar = new Grammar(outputDir, codeLang, quiet, symbols);
+        grammar.parse(grammarPath, "DEFAULT");
         Errors errors = grammar.getErrors();
         grammar.doSanityChecks();
         if (errors.getErrorCount() > 0) {
@@ -329,7 +319,7 @@ public final class Main {
         for (String warning : errors.getWarningMessages()) {
             System.err.println(warning);
         }
-        if (!quiet && !errors.getErrorMessages().isEmpty()) for (String info: errors.getInfoMessages()) {
+        if (!quiet) for (String info: errors.getInfoMessages()) {
             System.err.println(info);
         }
     }

@@ -1,0 +1,59 @@
+<project name="common" xmlns:if="ant:if" xmlns:unless="ant:unless">
+  <dirname property="common.basedir" file="${ant.file.common}"/>
+  <target name="rust-check">
+    <echo message="Checking if Rust is available..."/>
+    <exec executable="rustc"
+      outputproperty="rustc.version.output"
+      resultproperty="rustc.version.result"
+      failonerror="false"
+      failifexecutionfails="false">
+     <arg value="--version"/>
+    </exec>
+    <!-- TODO: Decide on some minimal version number and enforce that.
+               For now, only checks if there is a rustc in the PATH.
+     -->
+    <!--loadresource property="rustc.version.number">
+       <propertyresource name="rustc.version.output"/>
+       <filterchain>
+         <tokenfilter>
+           <replaceregex pattern="^rustc\s+(\S+).*" replace="\1"/>
+         </tokenfilter>
+       </filterchain>
+    </loadresource-->
+    <condition property="rust.available">
+      <matches string="${rustc.version.result}" pattern="0" />
+    </condition>
+    <!-- echo message="${rust.available}"/>
+    <echo message="Rust found" if:true="${rust.available}"/>
+    <echo message="Rust not found" unless:true ="${rust.available}"/ -->
+  </target>
+  <target name="rust-guard" depends="rust-check" unless="rust.available">
+    <echo level="warning">*** Rust not available. Skipping any Rust targets. ***</echo>
+  </target>
+
+  <macrodef name="congocc-use-bootstrap">
+    <attribute name="target"/>
+    <attribute name="args" default="-n -q"/>
+    <attribute name="lang" default="java"/>
+    <sequential>
+      <echo message="Building parser from @{target}"/>
+      <java fork="true" jar="${common.basedir}/bin/congocc.jar" failonerror="true">
+        <assertions><enable/></assertions>
+        <arg line="@{args} @{target} -lang @{lang}"/>
+      </java>
+    </sequential>
+  </macrodef>
+
+  <macrodef name="congocc">
+    <attribute name="target"/>
+    <attribute name="args" default="-n -q"/>
+    <attribute name="lang" default="java"/>
+    <sequential>
+      <echo message="Building @{lang} parser from @{target}"/>
+      <java fork="true" jar="${common.basedir}/congocc.jar" failonerror="true">
+        <assertions><enable/></assertions>
+        <arg line="@{args} @{target} -lang @{lang}"/>
+      </java>
+    </sequential>
+  </macrodef>
+</project>

@@ -40,7 +40,6 @@ public class AppSettings {
     private final Set<String> tokensOffByDefault = new HashSet<>();
     private final Map<String, String> extraTokens = new LinkedHashMap<>();
     private boolean ignoreCase, quiet;
-    private int jdkTarget = 8;
 
     public AppSettings(Grammar grammar) {
         this.grammar = grammar;
@@ -51,16 +50,16 @@ public class AppSettings {
             + "JAVA_UNICODE_ESCAPE,IGNORE_CASE,LEXER_USES_PARSER,NODE_DEFAULT_VOID,SMART_NODE_CREATION,"
             + "NODE_USES_PARSER,TREE_BUILDING_DEFAULT,TREE_BUILDING_ENABLED,TOKENS_ARE_NODES,"
             + "SPECIAL_TOKENS_ARE_NODES,UNPARSED_TOKENS_ARE_NODES,"
-            + "TOKEN_MANAGER_USES_PARSER,ENSURE_FINAL_EOL,MINIMAL_TOKEN,C_CONTINUATION_LINE,"
+            + "TOKEN_MANAGER_USES_PARSER,ENSURE_FINAL_EOL,C_CONTINUATION_LINE,"
             + "USE_CHECKED_EXCEPTION,LEGACY_GLITCHY_LOOKAHEAD,TOKEN_CHAINING,USES_PREPROCESSOR,X_JTB_PARSE_TREE,X_SYNTHETIC_NODES_ENABLED,"
-            + "ASSERT_APPLIES_IN_LOOKAHEAD,";
+            + "ASSERT_APPLIES_IN_LOOKAHEAD,REQUIRE_TOKEN_DECLARATION,";
 
     private final String stringSettings = ",BASE_NAME,PARSER_PACKAGE,PARSER_CLASS,LEXER_CLASS,BASE_SRC_DIR,BASE_NODE_CLASS,"
             + "BASE_TOKEN_CLASS,NODE_PREFIX,NODE_CLASS,NODE_PACKAGE,DEFAULT_LEXICAL_STATE,"
             + "NODE_CLASS,OUTPUT_DIRECTORY,DEACTIVATE_TOKENS,EXTRA_TOKENS,ROOT_API_PACKAGE,"
             + "COPYRIGHT_BLURB,TERMINATING_STRING,TEST_PRODUCTION,TEST_EXTENSION,";
 
-    private final String integerSettings = ",TAB_SIZE,TABS_TO_SPACES,JDK_TARGET,";
+    private final String integerSettings = ",TAB_SIZE,TABS_TO_SPACES,";
 
     private static final Map<String, String> locationAliases = new HashMap<String, String>() {
         {
@@ -193,7 +192,11 @@ public class AppSettings {
             Object value = settings.get(key);
             switch (key) {
                 case "IGNORE_CASE" -> setIgnoreCase((Boolean) value);
-                case "DEFAULT_LEXICAL_STATE" -> grammar.setDefaultLexicalState((String) value);
+                case "DEFAULT_LEXICAL_STATE" -> {
+                    if (!grammar.isInInclude()) {
+                        grammar.setDefaultLexicalState((String) value);
+                    }
+                }
                 case "DEACTIVATE_TOKENS" -> {
                     String tokens = (String) settings.get(key);
                     for (StringTokenizer st = new StringTokenizer(tokens, ", \t\n\r"); st.hasMoreTokens(); ) {
@@ -224,32 +227,15 @@ public class AppSettings {
                     if (!grammar.isInInclude() && outputDir == null)
                         outputDir = Paths.get((String) value);
                 }
-
             }
-            if (!grammar.isInInclude() && key.equals("JDK_TARGET") && jdkTarget == 0) {
-                int jdkTarget = (Integer) value;
-                if (jdkTarget >= 8 && jdkTarget <= 22) {
-                    this.jdkTarget = (Integer) value;
-                }
-                else {
-                    this.jdkTarget = 8;
-                    errors.addWarning(null, "Invalid JDK Target " + jdkTarget);
-                }
+            if (!grammar.isInInclude() && key.equals("JDK_TARGET")) {
+                errors.addWarning("Option JDK_TARGET is deprecated and currently has no effect. (It never did!)");
             }
         }
     }
 
     public String getStringSetting(String name, String defaultValue) {
         return (String) settings.getOrDefault(name, defaultValue);
-    }
-
-    public int getJdkTarget() {
-        if (jdkTarget == 0) return 8;
-        return jdkTarget;
-    }
-
-    public void setJdkTarget(int jdkTarget) {
-        this.jdkTarget = jdkTarget;
     }
 
     //FIXME.
@@ -271,13 +257,13 @@ public class AppSettings {
         String packageName = getParserPackage();
         if (packageName != null && packageName.length() > 0) {
             int dotPosition;
-
             switch (codeLang) {
-                case JAVA:
+                case JAVA -> {
                     packageName = packageName.replace('.', '/');
                     dir = dir.resolve(packageName);
-                    break;
-                case PYTHON:  // Use last part of package, append "parser"
+                }
+                case PYTHON -> {
+                    // Use last part of package, append "parser"
                     dotPosition = packageName.lastIndexOf('.');
 
                     if (dotPosition >= 0) {
@@ -287,8 +273,8 @@ public class AppSettings {
                     // Use a user-specified value if available
                     packageName = grammar.getPreprocessorSymbols().getOrDefault("py.package", packageName);
                     dir = dir.resolve(packageName);
-                    break;
-                case CSHARP:
+                }
+                case CSHARP -> {
                     // Use last part of package, append "parser", prepend "cs-"
                     dotPosition = packageName.lastIndexOf('.');
 
@@ -297,10 +283,9 @@ public class AppSettings {
                     }
                     packageName = "cs-".concat(packageName.concat("parser"));
                     dir = dir.resolve(packageName);
-                    break;
-                case RUST:
-                    // Rust uses the -d flag for output directory; no package path resolution needed
-                    break;
+                }
+                // Rust uses the -d flag for output directory; no package path resolution needed
+                case RUST -> {}
             }
             if (!Files.exists(dir)) {
                 Files.createDirectories(dir);
@@ -529,6 +514,11 @@ public class AppSettings {
         return getTabSize() == 0;
     }
 
+    public boolean getRequireTokenDeclaration() {
+        Boolean b = (Boolean) settings.get("REQUIRE_TOKEN_DECLARATION");
+        return b != null && b;
+    }
+
     public boolean getPreserveLineEndings() {
         Boolean b = (Boolean) settings.get("PRESERVE_LINE_ENDINGS");
         return b != null && b;
@@ -543,13 +533,6 @@ public class AppSettings {
         Boolean b = (Boolean) settings.get("TOKEN_CHAINING");
         if (b != null) return b;
         return checkForMethodName("preInsert");
-    }
-
-    public boolean getMinimalToken() {
-        if (getTokenChaining()) return false;
-        Boolean b = (Boolean) settings.get("MINIMAL_TOKEN");
-        if (b != null) return b;
-        return !checkForMethodName("setImage") && !checkForMethodName("setCachedImage");
     }
 
     public boolean getNodeUsesParser() {

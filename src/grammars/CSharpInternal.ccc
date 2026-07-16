@@ -10,35 +10,17 @@ ENSURE_FINAL_EOL;
 
 INCLUDE "../../examples/csharp/CSharp.ccc";
 
-INJECT BASE_NODE_CLASS :
-   import org.congocc.core.Grammar;
-{
-    @Property Grammar grammar;
-}
-
-INJECT BASE_TOKEN_CLASS :
-   import org.congocc.core.Grammar;
-{
-    @Property Grammar grammar;
-}
-
-#InjectionBody :
+InjectionBody :
     (ClassMemberDeclaration)*
     <EOF>
-    {
-        return thisProduction;
-    }
 ;
 
-#EmbeddedCSharpBlock :
+EmbeddedCSharpBlock :
     (SCAN ~(<EOF>) => Statement)+
     <EOF>
-    {return thisProduction;}
 ;
 
-Expression EmbeddedCSharpExpression :
-    {Expression exp;}
-    exp=Expression
+EmbeddedCSharpExpression :
+    Expression
     <EOF>
-    {return exp;}
 ;

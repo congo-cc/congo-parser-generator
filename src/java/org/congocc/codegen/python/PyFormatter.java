@@ -1,16 +1,12 @@
 package org.congocc.codegen.python;
 
+import org.congocc.codegen.AbstractCodeFormatter;
 import org.congocc.parser.*;
 import org.congocc.parser.python.PythonToken;
 import org.congocc.parser.python.ast.*;
 
-public class PyFormatter extends Node.Visitor {
-   {this.visitUnparsedTokens = true;}
-    private StringBuilder buffer = new StringBuilder();
-    private int currentIndentation;
-    private final int indentAmount = 4;
+public class PyFormatter extends AbstractCodeFormatter {
     private int bracketNesting, parenthesesNesting, braceNesting;
-    private final String eol = "\n";
     private boolean altFormat;
 
     public String format(Node node, boolean altFormat) {
@@ -23,9 +19,9 @@ public class PyFormatter extends Node.Visitor {
     }
 
     public String getText() {
-        if (buffer.charAt(buffer.length()-1) != '\n') buffer.append('\n');
-        if (altFormat) buffer.append("\n# explicitdedent:restore\n");
-        return buffer.toString();
+        String result = super.getText();
+        if (altFormat) result+="# explicitdedent:restore\n";
+        return result;
     }
 
     private boolean lineJoining() {
@@ -46,11 +42,9 @@ public class PyFormatter extends Node.Visitor {
             default -> {}
         }
         if (!lineJoining() && tok.startsLine()) {
-            indentLine();
+            appendIndentation();;
         }
-        buffer.append(tok);
-        char ch = followingChar(tok);
-        if (ch == ' ') buffer.append(ch);
+        defaultTokenOutput(tok);
     }
 
     void visit(Comment tok) {
@@ -61,10 +55,10 @@ public class PyFormatter extends Node.Visitor {
             return;
         }
         if (tok.startsLine()) {
-            indentLine();
+            appendIndentation();
         }
         buffer.append(tok);
-        buffer.append(eol);
+        buffer.append('\n');
     }
 
     void visit(IndentToken tok) {
@@ -76,40 +70,25 @@ public class PyFormatter extends Node.Visitor {
         currentIndentation -= indentAmount;
         assert currentIndentation >=0;
         if (altFormat) {
-            buffer.append(eol);
-            indentLine();
+            buffer.append('\n');
+            appendIndentation();
             buffer.append("<-");
         }
     }
 
     void visit(Newline tok) {
         if (lineJoining() || !tok.isUnparsed()) {
-            buffer.append(eol);
+            buffer.append('\n');
         }
     }
 
     void visit(ClassDefinition cd) {
-        buffer.append(eol);
+        buffer.append('\n');
         recurse(cd);
     }
 
     void visit(FunctionDefinition fd) {
         recurse(fd);
-        buffer.append(eol);
-    }
-
-    private void indentLine() {
-        for (int i = 0; i < currentIndentation; i++) {
-            buffer.append((char) ' ');
-        }
-    }
-
-    private char followingChar(PythonToken tok) {
-        try {
-           return tok.getTokenSource().charAt(tok.getEndOffset());
-        }
-        catch (Exception e) {
-            return 0xFFFF;
-        }
+        buffer.append('\n');
     }
 }

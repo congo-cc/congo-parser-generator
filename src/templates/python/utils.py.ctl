@@ -307,9 +307,9 @@ class BitSet:
             return result + INT_BITSIZE * idx
 
 
-[#var JAVA_UNICODE_ESCAPE = settings.javaUnicodeEscape?string("True", "False")]
-[#var ENSURE_FINAL_EOL = settings.ensureFinalEOL?string("True", "False")]
-[#var PRESERVE_LINE_ENDINGS = settings.preserveLineEndings?string("True", "False")]
+#var JAVA_UNICODE_ESCAPE = settings::javaUnicodeEscape ? "True" : "False"
+#var ENSURE_FINAL_EOL = settings::ensureFinalEOL ? "True" : "False"
+#var PRESERVE_LINE_ENDINGS = settings::preserveLineEndings ? "True" : "False"
 
 class ListIterator:
     #

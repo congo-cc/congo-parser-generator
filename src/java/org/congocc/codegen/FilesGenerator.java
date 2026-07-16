@@ -29,17 +29,18 @@ import org.congocc.templates.*;
 public class FilesGenerator {
     private static final Logger logger = Logger.getLogger("filegen");
 
-    private final Configuration templatesConfig = new org.congocc.templates.Configuration();
+    private final TemplateFactory templatesConfig = new org.congocc.templates.TemplateFactory();
     private final Grammar grammar;
     private final AppSettings appSettings;
     private final Errors errors;
-    private final CodeInjector codeInjector;
+    private final JavaCodeInjector codeInjector;
     private final Set<String> tokenSubclassFileNames = new LinkedHashSet<>();
     private final Map<String, String> superClassLookup = new HashMap<>();
     private final CodeLang codeLang;
     private final boolean generateRootApi;
     private final Path parserOutputDirectory;
     private final Path nodeOutputDirectory;
+    private boolean generateTestHarness;
 
     void initializeTemplateEngine() throws IOException {
         Path filename = appSettings.getFilename().toAbsolutePath();
@@ -68,8 +69,9 @@ public class FilesGenerator {
         templatesConfig.setSharedVariable("settings", grammar.getAppSettings());
         templatesConfig.setSharedVariable("lexerData", grammar.getLexerData());
         templatesConfig.setSharedVariable("generated_by", org.congocc.app.Main.PROG_NAME);
-        if (codeLang == JAVA)
+        if (codeLang == JAVA) {
            templatesConfig.addAutoImport("CU", "CommonUtils.java.ctl");
+        }
     }
 
     public FilesGenerator(Grammar grammar) throws IOException {
@@ -81,6 +83,8 @@ public class FilesGenerator {
         this.codeInjector = grammar.getInjector();
         this.parserOutputDirectory = appSettings.getParserOutputDirectory();
         this.nodeOutputDirectory = appSettings.getNodeOutputDirectory();
+        this.generateTestHarness = !appSettings.getStringSetting("TEST_EXTENSION", "").equals("")
+                      && !appSettings.getStringSetting("TEST_PRODUCTION", "").equals("");
     }
 
     public void generateAll() throws IOException {
@@ -241,12 +245,10 @@ public class FilesGenerator {
             if (superClassName == null) superClassName = appSettings.getBaseTokenClassName();
             dataModel.put("superclass", superClassName);
         }
-        Writer out = new StringWriter();
         Template template = templatesConfig.getTemplate(templateName);
         // Sometimes needed in templates for e.g. injector.hasInjectedCode(node)
         dataModel.put("injector", grammar.getInjector());
-        template.process(dataModel, out);
-        String code = out.toString();
+        String code = template.process(dataModel);
         if (!appSettings.isQuiet()) {
             System.out.println("Outputting: " + outputPath.normalize());
         }
@@ -322,7 +324,7 @@ public class FilesGenerator {
                 org.congocc.codegen.csharp.Reaper reaper = new org.congocc.codegen.csharp.Reaper(cscu);
                 reaper.reap();
             }
-            CSharpFormatter formatter = new CSharpFormatter();
+            var formatter = new CSharpFormatter();
             formatter.visit(cscu);
             String s = formatter.getText();
             int finalLines = countChars(s, '\n');
@@ -333,9 +335,8 @@ public class FilesGenerator {
         }
     }
 
-    // Write raw template output for Rust files.  CongoCC does not have a Rust
-    // parser for AST-based post-processing; users can run rustfmt externally.
     void outputRustFile(String code, Path outputFile) throws IOException {
+        // Passthrough: RustFormatter is not yet safe on generated parser output (PR #243).
         try (Writer out = Files.newBufferedWriter(outputFile)) {
             out.write(code);
         }
@@ -360,7 +361,6 @@ public class FilesGenerator {
         }
         try (Writer output = Files.newBufferedWriter(outputFile)) {
             codeInjector.injectCode(jcu);
-            JavaCodeUtils.removeWrongJDKElements(jcu, grammar.getAppSettings().getJdkTarget());
             JavaCodeUtils.addGetterSetters(jcu);
             JavaCodeUtils.stripUnused(jcu);
             JavaFormatter formatter = new JavaFormatter();
@@ -371,8 +371,12 @@ public class FilesGenerator {
     void generateOtherFiles() throws IOException {
         if (generateRootApi) {
             generate(parserOutputDirectory, "TokenSource.java");
-            generate(parserOutputDirectory, "NonTerminalCall.java");
-            generate(parserOutputDirectory, "test/ParseFiles.java");
+            if (!grammar.getProductionTable().isEmpty()) {
+                generate(parserOutputDirectory, "NonTerminalCall.java");
+                if (generateTestHarness) {
+                    generate(parserOutputDirectory, "test/ParseFiles.java");
+                }
+            }
         }
     }
 

@@ -6,10 +6,9 @@ import java.io.PrintStream;
 import org.congocc.templates.TemplateException;
 
 /**
- * This exception is thrown when a &lt;stop&gt;
- * directive is encountered.
+ * This exception is thrown when an assertion fails
+ * or a stop directive is encountered.
  */
-
 public class AssertionFailedException extends TemplateException
 {
     public AssertionFailedException(String s) {

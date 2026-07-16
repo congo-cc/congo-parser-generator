@@ -25,6 +25,10 @@ UNPARSED #Comment :
   < SINGLE_LINE_COMMENT : "//" (<NOT_NEW_LINE>)* <NEW_LINE>>
 ;
 
+TOKEN :
+  <SHEBANG : "#!" (<NOT_NEW_LINE>)* <NEW_LINE>>
+;
+
 TOKEN #Literal :
   < INTEGER_LITERAL: (<DECIMAL_LITERAL> | <HEX_LITERAL> | <BINARY_LITERAL>) (<INTEGER_TYPE_SUFFIX>)?> #IntegerLiteral
   |
@@ -183,7 +187,7 @@ TOKEN #KeyWord :
    | < UNCHECKED : "unchecked" >
    | < UNSAFE : "unsafe" >
    | < USHORT : "ushort" > #PrimitiveType
-   | < USING : ("global" <WHITESPACE>)? "using" >
+   | < USING : "using" >
    | < VIRTUAL : "virtual" >
    | < VOID : "void" >
    | < VOLATILE : "volatile" >
@@ -209,13 +213,32 @@ TOKEN #KeyWord :
 ;
 
 CONTEXTUAL #KeyWord :
-   <ARGLIST : '__arglist'>
-   | <GET : 'get'>
-   | <SET : 'get'>
-   | <INIT : 'init'>
+   <ADD : 'add'>
+   | <ALIAS : 'alias'>
+   | <ARGLIST : '__arglist'>
+   | <ASSEMBLY : 'assembly'>
    | <ASYNC : 'async'>
-   | <REQUIRED : 'required'>
+   | <AWAIT : 'await'>
+   | <DYNAMIC : 'dynamic'>
+   | <EXTENSION : 'extension'>
    | <FILE : 'file'>
+   | <GET : 'get'>
+   | <GLOBAL : 'global'>
+   | <INIT : 'init'>
+   | <MANAGED : 'managed'>
+   | <MODULE : 'module'>
+   | <NAMEOF : 'nameof'>
+   | <PARTIAL : 'partial'>
+   | <RECORD : 'record'>
+   | <REMOVE : 'remove'>
+   | <REQUIRED : 'required'>
+   | <SCOPED : 'scoped'>
+   | <SET : 'set'>
+   | <UNMANAGED : 'unmanaged'>
+   | <VAR : 'var'>
+   | <WHEN : 'when'>
+   | <WITH : 'with'>
+   | <YIELD : 'yield'>
 ;
 
 INCLUDE "CSharpIdentifierDef.ccc"
@@ -236,7 +259,7 @@ TOKEN #Literal :
   |
   < #ESCAPED_CHAR :  "\\"
                     (
-                      (["0","a","b","f","n", "r","t","v","\\","'",'"'])
+                      (["0","a","b","e", "f","n", "r","t","v","\\","'",'"'])
                       |
                       "x" (["0"-"9", "a"-"f", "A"-"F"]){1,4}
                       |
@@ -246,7 +269,7 @@ TOKEN #Literal :
   |
   < #ESCAPED_CHAR2 :  "\\"
                     (
-                      (["0","a","b","f","n", "r","t","v","\\","'",'"'])
+                      (["0","a","b", "e", "f","n", "r","t","v","\\","'",'"'])
                       |
                       "x" (["0"-"9", "a"-"f", "A"-"F"]){1,4}
                       |
@@ -262,7 +285,7 @@ TOKEN #Literal :
   |
   < REGULAR_INTERPOLATION_START : '$"' >
   |
-  < MULTI_INTERPOLATION_START : '$@"' | '@$"' >
+  < MULTI_INTERPOLATION_START : '$@"' | '@$"' > {startingDollars =1;}
   |
   < INTERPOLATED_RAW_STRING_START : ("$")+ ('"'){3,}>
 ;
@@ -276,7 +299,21 @@ TOKEN :
 <IN_MULTI_INTERPOLATION>
 TOKEN :
   // Just any non-interpolated character in an interpolated string.
-  < NON_INTERPOLATED_TEXT2 : ((~['"',"{","}"] | '""') | "{{" | "}}")+ >
+  < NON_INTERPOLATED_TEXT2 : (~['"',"{","}"] | '""')+ >
+  |
+  <BRACES : ("{{" ("{")*) | ("}}" ("}")*)>
+  {
+      String img = matchedToken.toString();
+      int charsToTruncate = img.length() - startingDollars - 1;
+      if (charsToTruncate >= 0) {
+         matchedToken.truncate(charsToTruncate);
+         matchedToken.setType(TokenType.NON_INTERPOLATED_TEXT2);
+         return matchedToken;
+      }
+      matchedToken.setEndOffset(matchedToken.getBeginOffset()+1);
+      if (img.charAt(0) == '{') matchedToken.setType(TokenType.LBRACE);
+      else matchedToken.setType(TokenType.RBRACE);
+  }
 ;
 
 <CSHARP, IN_REGULAR_INTERPOLATION, IN_MULTI_INTERPOLATION >
@@ -304,9 +341,20 @@ TOKEN :
       } else if (trimmed.startsWith("endif")) {
          matchedToken.setType(TokenType.PP_ENDIF);
       } else if (trimmed.startsWith("define")) {
-         matchedToken.setType(TokenType.PP_DEFINE);
+         if (noPPDefineAllowed) {
+            matchedToken.setType(TokenType.INVALID);
+            matchedToken.setUnparsed(false);
+         } else {
+            assert matchedToken.isUnparsed() : "Huh?";
+            matchedToken.setType(TokenType.PP_DEFINE);
+         }
       } else if (trimmed.startsWith("undef")) {
-         matchedToken.setType(TokenType.PP_UNDEF);
+         if (noPPDefineAllowed) {
+            matchedToken.setType(TokenType.INVALID);
+            matchedToken.setUnparsed(false);
+         } else {
+            matchedToken.setType(TokenType.PP_UNDEF);
+         }
       }
    }
 ;
@@ -354,6 +402,21 @@ MORE :
 <IN_RAW_STRING> TOKEN :
     <RAW_STRING_LITERAL : ('"'){3,}("u8")?> #StringLiteral
 ;
+
+#if __java__
+// This does not work with Python. Must REVISIT
+// For now the CSharp and Python impls allow #define and #undef
+// anywhere in a C# source file. Oh well.
+INJECT PARSER_CLASS :
+{
+   private BASE_TOKEN_CLASS TOKEN_HOOK(BASE_TOKEN_CLASS tok) {
+      if (lastConsumedToken != DUMMY_START_TOKEN && !lastConsumedToken.isUnparsed()) {
+         token_source.noPPDefineAllowed = true;
+      }
+      return tok;
+   }
+}
+#endif
 
 INJECT LEXER_CLASS :
 {
@@ -479,6 +542,8 @@ INJECT LEXER_CLASS :
    }
 
 // Token hook to handle preprocessor directives.
+
+   boolean noPPDefineAllowed;
 
    private BASE_TOKEN_CLASS TOKEN_HOOK(BASE_TOKEN_CLASS tok) {
       TokenType type = tok.getType();

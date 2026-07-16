@@ -122,12 +122,17 @@ From the `rust-sqlparser/` directory:
 ```bash
 cargo build              # Debug build
 cargo build --release    # Optimized build
+cargo test               # Debug build and test
+cargo test --release     # Optimized build and test
+
 ```
 
 The crate has no required cargo features.  Tests pull the parser via the
 crate's public re-exports (`parser::Parser`, `parser::ast::Ast`,
 `parser::tokens::TokenType`, etc.); examples are documented in the
 `pretty_parse_test.rs` and `parser_test.rs` files.
+
+See [README_RUST.md](https://github.com/richcar58/congo-parser-generator/blob/main/README_RUST.md#zero-dependencies) for details about activating the optional `serde` feature.
 
 ## Running the Test Suite
 
@@ -239,7 +244,7 @@ can copy the validators from that module.
 ## Grammar Summary
 
 ```
-JmsSelector             : orExpression <EOF>
+BooleanExpression       : orExpression <EOF>
 orExpression            : andExpression ( <OR> andExpression )*
 andExpression           : equalityExpression ( <AND> equalityExpression )*
 equalityExpression      : comparisonExpression

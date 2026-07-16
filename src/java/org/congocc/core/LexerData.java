@@ -27,18 +27,6 @@ public class LexerData {
     private final Set<RegularExpression> overriddenTokens = new HashSet<>();
     private final Set<RegularExpression> lazyTokens = new HashSet<>();
 
-    static public Set<String> JAVA_RESERVED_WORDS = Set.of(
-       "_","abstract","assert","boolean","break",
-       "byte","case","catch","char","class","const",
-       "continue","default","do","double","else","enum",
-       "extends","false","final","finally","float",
-       "for","goto","if","implements","import","instanceof",
-       "int","interface","long","native","new","null",
-       "package","private","protected","public","return",
-       "short","static","strictfp","super","switch","synchronized",
-       "this","throw","throws","transient","true","try",
-       "void","volatile","while");
-
     public LexerData(Grammar grammar) {
         this.grammar = grammar;
         this.errors = grammar.getErrors();
@@ -151,16 +139,16 @@ public class LexerData {
                 && s.codePoints().allMatch(Character::isJavaIdentifierPart);
     }
 
-    boolean regexpLabelAlreadyUsed(String label, RegularExpression re) {
+    RegularExpression regexpLabelAlreadyUsed(String label, RegularExpression re) {
         for (RegularExpression regexp : regularExpressions) {
             if (regexp == re || regexp.label == null) continue;
             if (label.contentEquals(regexp.label))
-                return true;
+                return regexp;
             if (label.equalsIgnoreCase(regexp.getLiteralString())) {
-                return true;
+                return regexp;
             }
         }
-        return false;
+        return null;
     }
 
     public int getTokenCount() {
@@ -205,7 +193,7 @@ public class LexerData {
     public Set<RegularExpression> getLiteralsThatDifferInCaseFromDefault() {
         Set<RegularExpression> result = new LinkedHashSet<>();
         for (RegularExpression re : getRegularExpressions()) {
-            if (re instanceof RegexpStringLiteral && re.getIgnoreCase() != grammar.getAppSettings().isIgnoreCase()) {
+            if (re instanceof RegexpStringLiteral && re.isIgnoreCase() != grammar.getAppSettings().isIgnoreCase()) {
                 result.add(re);
             }
         }
@@ -217,8 +205,9 @@ public class LexerData {
             RegularExpression oldValue = namedTokensTable.get(name);
             namedTokensTable.replace(name, oldValue, regexp);
             overriddenTokens.add(oldValue);
-        } else
+        } else {
             namedTokensTable.put(name, regexp);
+        }
     }
 
     public boolean isOverridden(RegularExpression regexp) {
@@ -229,12 +218,12 @@ public class LexerData {
         return new ArrayList<>(namedTokensTable.values());
     }
 
-    // This method still really needs to be cleaned up!
     void buildData() {
         dealWithDeclaredStringLiterals();
         dealWithUndeclaredStringLiterals();
         dealWithDeclaredPatterns();
         dealWithRegexpRefs();
+        sanityCheckTokenNames();
         if (errors.getErrorCount()>0) return;
         // Check for self-referential loops in regular expressions
         new RegexpVisitor().visit(grammar);
@@ -258,7 +247,11 @@ public class LexerData {
                 String label = stringLiteral.getLabel();
                 RegularExpression regexp = namedTokensTable.get(label);
                 if (regexp != null) {
-                    errors.addInfo(stringLiteral, "Token name \"" + label + " is redefined.");
+                    errors.addInfo(stringLiteral, "Token label " + label + " is redefined here.\n  It was previously declared at: " + regexp.getLocation());
+                    overriddenTokens.add(regexp);
+                    if (regexp instanceof RegexpStringLiteral rsl) {
+                        removeStringLiteral(rsl);
+                    }
                 }
                 addNamedToken(label, stringLiteral);
             }
@@ -273,15 +266,19 @@ public class LexerData {
 
     private RegexpStringLiteral getAlreadyPresent(RegexpStringLiteral rsl) {
         String image = rsl.getLiteralString();
-        for (int i = 0; i< regularExpressions.size(); i++) {
-            RegularExpression r = regularExpressions.get(i);
-            if (!(r instanceof RegexpStringLiteral)) continue;
-            RegexpStringLiteral other = (RegexpStringLiteral) r;
-            if (other.getIgnoreCase() && !image.equalsIgnoreCase(other.getLiteralString())) continue;
-            if (!other.getIgnoreCase() && !image.equals(other.getLiteralString())) continue;
-            return other;
+        RegexpStringLiteral result = null;
+        for (RegularExpression r : regularExpressions) {
+            if (isOverridden(r)) continue;
+            if (r instanceof RegexpStringLiteral other) {
+                if (other.isIgnoreCase() && !image.equalsIgnoreCase(other.getLiteralString())) continue;
+                if (!other.isIgnoreCase() && !image.equals(other.getLiteralString())) continue;
+                result = other;
+                if (other.isInLexicalState(rsl.getImplicitLexicalState())) {
+                    break;
+                }
+            }
         }
-        return null;
+        return result;
     }
 
     private void dealWithUndeclaredStringLiterals() {
@@ -291,11 +288,58 @@ public class LexerData {
             String image = stringLiteral.getLiteralString();
             RegexpStringLiteral alreadyPresent = getAlreadyPresent(stringLiteral);
             if (alreadyPresent == null) {
+                if (stringLiteral.isRequireTokenDeclaration()) {
+                    errors.addError(stringLiteral,
+                         "String literal token "
+                         + stringLiteral.getSource()
+                         + " is not declared in the "
+                         + stringLiteral.getImplicitLexicalState()
+                         + " lexical state.");
+                    continue;
+                }
                 if (stringLiteral.isContextual()) {
                     contextualStrings.add(image);
                 }
                 addRegularExpression(stringLiteral);
-            } else {
+            }
+            else if (!alreadyPresent.isInLexicalState(stringLiteral.getImplicitLexicalState())) {
+                if (stringLiteral.isRequireTokenDeclaration()) {
+                    errors.addError(stringLiteral,
+                                    "String literal " + alreadyPresent.getSource()
+                                    + " at " + alreadyPresent.getLocation()
+                                    + " is not declared in the "
+                                    + stringLiteral.getImplicitLexicalState()
+                                    + " lexical state.");
+                    continue;
+                }
+                if (stringLiteral.isContextual()) {
+                    contextualStrings.add(stringLiteral.getLiteralString());
+                }
+                addRegularExpression(stringLiteral);
+            }
+            else {
+                boolean usesSingleQuote = stringLiteral.getSource().charAt(0) == '\'';
+                if (usesSingleQuote)  {
+                    if (!alreadyPresent.isContextual() && image.indexOf('"')==-1) {
+                      errors.addWarning(stringLiteral,
+                        "String literal token "
+                        + stringLiteral.getSource()
+                        + " uses single quotes, but is declared at "
+                        + alreadyPresent.getLocation()
+                        + " and thus is not a contextual keyword.");
+                    }
+                }
+                else {
+                    if (alreadyPresent.isContextual() && image.indexOf('\'') == -1) {
+                        errors.addWarning(stringLiteral,
+                            "String literal token "
+                             + stringLiteral.getSource()
+                             + " uses double quotes, but is declared at "
+                             + alreadyPresent.getLocation()
+                             + " as a contextual keyword.");
+                    }
+                }
+                stringLiteral.setIgnoreCase(alreadyPresent.isIgnoreCase());
                 stringLiteral.setOrdinal(alreadyPresent.getOrdinal());
                 stringLiteral.setLabel(alreadyPresent.getLabel());
                 Kind kind = alreadyPresent.getTokenProduction() == null ? TOKEN
@@ -320,7 +364,9 @@ public class LexerData {
                     String label = re.getLabel();
                     RegularExpression regexp = namedTokensTable.get(label);
                     if (regexp != null) {
-                        errors.addInfo(res.getRegexp(), "Token name \"" + label + " is redefined.");
+                        overriddenTokens.add(regexp);
+                        errors.addInfo(res.getRegexp(), "Token name \"" + label + " is redefined here.\n"
+                                        + " It was previously declared at: " + regexp.getLocation());
                     }
                     addNamedToken(label, re);
                 }
@@ -375,6 +421,21 @@ public class LexerData {
                     alreadyVisited.add(referredTo);
                     errors.addError(ref, "Self-referential loop detected");
                 }
+            }
+        }
+    }
+
+    public void removeStringLiteral(RegexpStringLiteral rsl) {
+        for (String lexicalStateName : rsl.getLexicalStateNames()){
+            getLexicalState(lexicalStateName).removeStringLiteral(rsl);
+        }
+    }
+
+    private void sanityCheckTokenNames() {
+        for (RegularExpression re : getRegularExpressions()) {
+            String label = re.getLabel();
+            if (getLexicalState(label) != null) {
+                errors.addError(re, "Regular Expression label " + label + " cannot be the same as the name of a lexical state.");
             }
         }
     }

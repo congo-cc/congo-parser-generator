@@ -7,7 +7,7 @@
 //! Coverage: every test combines at least two logical operators
 //! (chosen from `AND`, `OR`, `NOT`) with at least two relational or
 //! comparison operators.  Across the suite, every grammar production
-//! (`JmsSelector`, `orExpression`, `andExpression`, `equalityExpression`,
+//! (`BooleanExpression`, `orExpression`, `andExpression`, `equalityExpression`,
 //! `comparisonExpression`, `addExpression`, `multExpr`, `unaryExpr`,
 //! `primaryExpr`, `literal`, `stringLitteral`, `variable`) and every
 //! literal kind (`STRING_LITERAL`, `DECIMAL_LITERAL`, `HEX_LITERAL`,
@@ -67,60 +67,30 @@ fn pp_and_or_with_eq_gt() {
     run_pretty_case(&PrettyCase {
         name: "pp_and_or_with_eq_gt",
         sql: "name = 'foo' AND age > 18 OR active = TRUE",
-        expected: r#"JmsSelector
+        expected: r#"BooleanExpression
   orExpression
     andExpression
       equalityExpression
-        comparisonExpression
-          addExpression
-            multExpr
-              unaryExpr
-                primaryExpr
-                  variable
-                    Token(ID, "name")
-        Token(_TOKEN_17, "=")
-        comparisonExpression
-          addExpression
-            multExpr
-              unaryExpr
-                primaryExpr
-                  literal
-                    stringLitteral
-                      Token(STRING_LITERAL, "'foo'")
+        variable
+          Token(ID, "name")
+        Token(EQUALS, "=")
+        literal
+          stringLitteral
+            Token(STRING_LITERAL, "'foo'")
       Token(AND, "AND")
-      equalityExpression
-        comparisonExpression
-          addExpression
-            multExpr
-              unaryExpr
-                primaryExpr
-                  variable
-                    Token(ID, "age")
-          Token(_TOKEN_20, ">")
-          addExpression
-            multExpr
-              unaryExpr
-                primaryExpr
-                  literal
-                    Token(DECIMAL_LITERAL, "18")
+      comparisonExpression
+        variable
+          Token(ID, "age")
+        Token(GT, ">")
+        literal
+          Token(DECIMAL_LITERAL, "18")
     Token(OR, "OR")
-    andExpression
-      equalityExpression
-        comparisonExpression
-          addExpression
-            multExpr
-              unaryExpr
-                primaryExpr
-                  variable
-                    Token(ID, "active")
-        Token(_TOKEN_17, "=")
-        comparisonExpression
-          addExpression
-            multExpr
-              unaryExpr
-                primaryExpr
-                  literal
-                    Token(TRUE, "TRUE")
+    equalityExpression
+      variable
+        Token(ID, "active")
+      Token(EQUALS, "=")
+      literal
+        Token(TRUE, "TRUE")
   Token(EOF, "")"#,
     });
 }
@@ -131,70 +101,34 @@ fn pp_not_and_with_eq_ge_le() {
     run_pretty_case(&PrettyCase {
         name: "pp_not_and_with_eq_ge_le",
         sql: "NOT (status = 'closed') AND priority >= 5 AND retries <= 3",
-        expected: r#"JmsSelector
-  orExpression
-    andExpression
-      equalityExpression
-        comparisonExpression
-          addExpression
-            multExpr
-              unaryExpr
-                Token(NOT, "NOT")
-                unaryExpr
-                  primaryExpr
-                    Token(_TOKEN_24, "(")
-                    orExpression
-                      andExpression
-                        equalityExpression
-                          comparisonExpression
-                            addExpression
-                              multExpr
-                                unaryExpr
-                                  primaryExpr
-                                    variable
-                                      Token(ID, "status")
-                          Token(_TOKEN_17, "=")
-                          comparisonExpression
-                            addExpression
-                              multExpr
-                                unaryExpr
-                                  primaryExpr
-                                    literal
-                                      stringLitteral
-                                        Token(STRING_LITERAL, "'closed'")
-                    Token(_TOKEN_26, ")")
-      Token(AND, "AND")
-      equalityExpression
-        comparisonExpression
-          addExpression
-            multExpr
-              unaryExpr
-                primaryExpr
-                  variable
-                    Token(ID, "priority")
-          Token(_TOKEN_21, ">=")
-          addExpression
-            multExpr
-              unaryExpr
-                primaryExpr
-                  literal
-                    Token(DECIMAL_LITERAL, "5")
-      Token(AND, "AND")
-      equalityExpression
-        comparisonExpression
-          addExpression
-            multExpr
-              unaryExpr
-                primaryExpr
-                  variable
-                    Token(ID, "retries")
-          Token(_TOKEN_23, "<=")
-          addExpression
-            multExpr
-              unaryExpr
-                primaryExpr
-                  literal
-                    Token(DECIMAL_LITERAL, "3")
+        expected: r#"BooleanExpression
+  andExpression
+    unaryExpr
+      Token(NOT, "NOT")
+      primaryExpr
+        Token(LPAREN, "(")
+        equalityExpression
+          variable
+            Token(ID, "status")
+          Token(EQUALS, "=")
+          literal
+            stringLitteral
+              Token(STRING_LITERAL, "'closed'")
+        Token(RPAREN, ")")
+    Token(AND, "AND")
+    comparisonExpression
+      variable
+        Token(ID, "priority")
+      Token(GTE, ">=")
+      literal
+        Token(DECIMAL_LITERAL, "5")
+    Token(AND, "AND")
+    comparisonExpression
+      variable
+        Token(ID, "retries")
+      Token(LTE, "<=")
+      literal
+        Token(DECIMAL_LITERAL, "3")
   Token(EOF, "")"#,
     });
 }
@@ -205,49 +139,28 @@ fn pp_or_and_with_isnull_isnotnull_eq() {
     run_pretty_case(&PrettyCase {
         name: "pp_or_and_with_isnull_isnotnull_eq",
         sql: "email IS NULL OR username IS NOT NULL AND verified = FALSE",
-        expected: r#"JmsSelector
+        expected: r#"BooleanExpression
   orExpression
-    andExpression
-      equalityExpression
-        comparisonExpression
-          addExpression
-            multExpr
-              unaryExpr
-                primaryExpr
-                  variable
-                    Token(ID, "email")
-        Token(IS, "IS")
-        Token(NULL, "NULL")
+    equalityExpression
+      variable
+        Token(ID, "email")
+      Token(IS, "IS")
+      Token(NULL, "NULL")
     Token(OR, "OR")
     andExpression
       equalityExpression
-        comparisonExpression
-          addExpression
-            multExpr
-              unaryExpr
-                primaryExpr
-                  variable
-                    Token(ID, "username")
+        variable
+          Token(ID, "username")
         Token(IS, "IS")
         Token(NOT, "NOT")
         Token(NULL, "NULL")
       Token(AND, "AND")
       equalityExpression
-        comparisonExpression
-          addExpression
-            multExpr
-              unaryExpr
-                primaryExpr
-                  variable
-                    Token(ID, "verified")
-        Token(_TOKEN_17, "=")
-        comparisonExpression
-          addExpression
-            multExpr
-              unaryExpr
-                primaryExpr
-                  literal
-                    Token(FALSE, "FALSE")
+        variable
+          Token(ID, "verified")
+        Token(EQUALS, "=")
+        literal
+          Token(FALSE, "FALSE")
   Token(EOF, "")"#,
     });
 }
@@ -258,68 +171,35 @@ fn pp_and_not_or_with_like_ne_eq() {
     run_pretty_case(&PrettyCase {
         name: "pp_and_not_or_with_like_ne_eq",
         sql: "name LIKE 'admin%' AND NOT (level <> 0) OR role = 'guest'",
-        expected: r#"JmsSelector
+        expected: r#"BooleanExpression
   orExpression
     andExpression
-      equalityExpression
-        comparisonExpression
-          addExpression
-            multExpr
-              unaryExpr
-                primaryExpr
-                  variable
-                    Token(ID, "name")
-          Token(LIKE, "LIKE")
-          stringLitteral
-            Token(STRING_LITERAL, "'admin%'")
+      comparisonExpression
+        variable
+          Token(ID, "name")
+        Token(LIKE, "LIKE")
+        stringLitteral
+          Token(STRING_LITERAL, "'admin%'")
       Token(AND, "AND")
-      equalityExpression
-        comparisonExpression
-          addExpression
-            multExpr
-              unaryExpr
-                Token(NOT, "NOT")
-                unaryExpr
-                  primaryExpr
-                    Token(_TOKEN_24, "(")
-                    orExpression
-                      andExpression
-                        equalityExpression
-                          comparisonExpression
-                            addExpression
-                              multExpr
-                                unaryExpr
-                                  primaryExpr
-                                    variable
-                                      Token(ID, "level")
-                          Token(_TOKEN_18, "<>")
-                          comparisonExpression
-                            addExpression
-                              multExpr
-                                unaryExpr
-                                  primaryExpr
-                                    literal
-                                      Token(OCTAL_LITERAL, "0")
-                    Token(_TOKEN_26, ")")
+      unaryExpr
+        Token(NOT, "NOT")
+        primaryExpr
+          Token(LPAREN, "(")
+          equalityExpression
+            variable
+              Token(ID, "level")
+            Token(DIAMOND, "<>")
+            literal
+              Token(OCTAL_LITERAL, "0")
+          Token(RPAREN, ")")
     Token(OR, "OR")
-    andExpression
-      equalityExpression
-        comparisonExpression
-          addExpression
-            multExpr
-              unaryExpr
-                primaryExpr
-                  variable
-                    Token(ID, "role")
-        Token(_TOKEN_17, "=")
-        comparisonExpression
-          addExpression
-            multExpr
-              unaryExpr
-                primaryExpr
-                  literal
-                    stringLitteral
-                      Token(STRING_LITERAL, "'guest'")
+    equalityExpression
+      variable
+        Token(ID, "role")
+      Token(EQUALS, "=")
+      literal
+        stringLitteral
+          Token(STRING_LITERAL, "'guest'")
   Token(EOF, "")"#,
     });
 }
@@ -331,81 +211,39 @@ fn pp_and_or_with_arith_between_eq() {
     run_pretty_case(&PrettyCase {
         name: "pp_and_or_with_arith_between_eq",
         sql: "(x + y) > z AND value BETWEEN 100 AND 200 OR flag = TRUE",
-        expected: r#"JmsSelector
+        expected: r#"BooleanExpression
   orExpression
     andExpression
-      equalityExpression
-        comparisonExpression
+      comparisonExpression
+        primaryExpr
+          Token(LPAREN, "(")
           addExpression
-            multExpr
-              unaryExpr
-                primaryExpr
-                  Token(_TOKEN_24, "(")
-                  orExpression
-                    andExpression
-                      equalityExpression
-                        comparisonExpression
-                          addExpression
-                            multExpr
-                              unaryExpr
-                                primaryExpr
-                                  variable
-                                    Token(ID, "x")
-                            Token(_TOKEN_27, "+")
-                            multExpr
-                              unaryExpr
-                                primaryExpr
-                                  variable
-                                    Token(ID, "y")
-                  Token(_TOKEN_26, ")")
-          Token(_TOKEN_20, ">")
-          addExpression
-            multExpr
-              unaryExpr
-                primaryExpr
-                  variable
-                    Token(ID, "z")
+            variable
+              Token(ID, "x")
+            Token(PLUS, "+")
+            variable
+              Token(ID, "y")
+          Token(RPAREN, ")")
+        Token(GT, ">")
+        variable
+          Token(ID, "z")
       Token(AND, "AND")
-      equalityExpression
-        comparisonExpression
-          addExpression
-            multExpr
-              unaryExpr
-                primaryExpr
-                  variable
-                    Token(ID, "value")
-          Token(BETWEEN, "BETWEEN")
-          addExpression
-            multExpr
-              unaryExpr
-                primaryExpr
-                  literal
-                    Token(DECIMAL_LITERAL, "100")
-          Token(AND, "AND")
-          addExpression
-            multExpr
-              unaryExpr
-                primaryExpr
-                  literal
-                    Token(DECIMAL_LITERAL, "200")
+      comparisonExpression
+        variable
+          Token(ID, "value")
+        Token(BETWEEN, "BETWEEN")
+        literal
+          Token(DECIMAL_LITERAL, "100")
+        Token(AND, "AND")
+        literal
+          Token(DECIMAL_LITERAL, "200")
     Token(OR, "OR")
-    andExpression
-      equalityExpression
-        comparisonExpression
-          addExpression
-            multExpr
-              unaryExpr
-                primaryExpr
-                  variable
-                    Token(ID, "flag")
-        Token(_TOKEN_17, "=")
-        comparisonExpression
-          addExpression
-            multExpr
-              unaryExpr
-                primaryExpr
-                  literal
-                    Token(TRUE, "TRUE")
+    equalityExpression
+      variable
+        Token(ID, "flag")
+      Token(EQUALS, "=")
+      literal
+        Token(TRUE, "TRUE")
   Token(EOF, "")"#,
     });
 }
@@ -417,58 +255,39 @@ fn pp_or_not_with_in_isnull() {
     run_pretty_case(&PrettyCase {
         name: "pp_or_not_with_in_isnull",
         sql: "country IN ('US', 'CA', 'MX') OR NOT (state IS NULL)",
-        expected: r#"JmsSelector
+        expected: r#"BooleanExpression
   orExpression
-    andExpression
-      equalityExpression
-        comparisonExpression
-          addExpression
-            multExpr
-              unaryExpr
-                primaryExpr
-                  variable
-                    Token(ID, "country")
-          Token(IN, "IN")
-          Token(_TOKEN_24, "(")
-          inElement
-            literal
-              stringLitteral
-                Token(STRING_LITERAL, "'US'")
-          Token(_TOKEN_25, ",")
-          inElement
-            literal
-              stringLitteral
-                Token(STRING_LITERAL, "'CA'")
-          Token(_TOKEN_25, ",")
-          inElement
-            literal
-              stringLitteral
-                Token(STRING_LITERAL, "'MX'")
-          Token(_TOKEN_26, ")")
+    comparisonExpression
+      variable
+        Token(ID, "country")
+      Token(IN, "IN")
+      Token(LPAREN, "(")
+      inElement
+        literal
+          stringLitteral
+            Token(STRING_LITERAL, "'US'")
+      Token(COMMA, ",")
+      inElement
+        literal
+          stringLitteral
+            Token(STRING_LITERAL, "'CA'")
+      Token(COMMA, ",")
+      inElement
+        literal
+          stringLitteral
+            Token(STRING_LITERAL, "'MX'")
+      Token(RPAREN, ")")
     Token(OR, "OR")
-    andExpression
-      equalityExpression
-        comparisonExpression
-          addExpression
-            multExpr
-              unaryExpr
-                Token(NOT, "NOT")
-                unaryExpr
-                  primaryExpr
-                    Token(_TOKEN_24, "(")
-                    orExpression
-                      andExpression
-                        equalityExpression
-                          comparisonExpression
-                            addExpression
-                              multExpr
-                                unaryExpr
-                                  primaryExpr
-                                    variable
-                                      Token(ID, "state")
-                          Token(IS, "IS")
-                          Token(NULL, "NULL")
-                    Token(_TOKEN_26, ")")
+    unaryExpr
+      Token(NOT, "NOT")
+      primaryExpr
+        Token(LPAREN, "(")
+        equalityExpression
+          variable
+            Token(ID, "state")
+          Token(IS, "IS")
+          Token(NULL, "NULL")
+        Token(RPAREN, ")")
   Token(EOF, "")"#,
     });
 }
@@ -479,72 +298,43 @@ fn pp_and_or_with_notin_notbetween_eq() {
     run_pretty_case(&PrettyCase {
         name: "pp_and_or_with_notin_notbetween_eq",
         sql: "code NOT IN ('A', 'B') AND price NOT BETWEEN 10 AND 100 OR active = TRUE",
-        expected: r#"JmsSelector
+        expected: r#"BooleanExpression
   orExpression
     andExpression
-      equalityExpression
-        comparisonExpression
-          addExpression
-            multExpr
-              unaryExpr
-                primaryExpr
-                  variable
-                    Token(ID, "code")
-          Token(NOT, "NOT")
-          Token(IN, "IN")
-          Token(_TOKEN_24, "(")
-          inElement
-            literal
-              stringLitteral
-                Token(STRING_LITERAL, "'A'")
-          Token(_TOKEN_25, ",")
-          inElement
-            literal
-              stringLitteral
-                Token(STRING_LITERAL, "'B'")
-          Token(_TOKEN_26, ")")
+      comparisonExpression
+        variable
+          Token(ID, "code")
+        Token(NOT, "NOT")
+        Token(IN, "IN")
+        Token(LPAREN, "(")
+        inElement
+          literal
+            stringLitteral
+              Token(STRING_LITERAL, "'A'")
+        Token(COMMA, ",")
+        inElement
+          literal
+            stringLitteral
+              Token(STRING_LITERAL, "'B'")
+        Token(RPAREN, ")")
       Token(AND, "AND")
-      equalityExpression
-        comparisonExpression
-          addExpression
-            multExpr
-              unaryExpr
-                primaryExpr
-                  variable
-                    Token(ID, "price")
-          Token(NOT, "NOT")
-          Token(BETWEEN, "BETWEEN")
-          addExpression
-            multExpr
-              unaryExpr
-                primaryExpr
-                  literal
-                    Token(DECIMAL_LITERAL, "10")
-          Token(AND, "AND")
-          addExpression
-            multExpr
-              unaryExpr
-                primaryExpr
-                  literal
-                    Token(DECIMAL_LITERAL, "100")
+      comparisonExpression
+        variable
+          Token(ID, "price")
+        Token(NOT, "NOT")
+        Token(BETWEEN, "BETWEEN")
+        literal
+          Token(DECIMAL_LITERAL, "10")
+        Token(AND, "AND")
+        literal
+          Token(DECIMAL_LITERAL, "100")
     Token(OR, "OR")
-    andExpression
-      equalityExpression
-        comparisonExpression
-          addExpression
-            multExpr
-              unaryExpr
-                primaryExpr
-                  variable
-                    Token(ID, "active")
-        Token(_TOKEN_17, "=")
-        comparisonExpression
-          addExpression
-            multExpr
-              unaryExpr
-                primaryExpr
-                  literal
-                    Token(TRUE, "TRUE")
+    equalityExpression
+      variable
+        Token(ID, "active")
+      Token(EQUALS, "=")
+      literal
+        Token(TRUE, "TRUE")
   Token(EOF, "")"#,
     });
 }
@@ -556,105 +346,52 @@ fn pp_and_not_or_with_arith_ge_lt_eq() {
     run_pretty_case(&PrettyCase {
         name: "pp_and_not_or_with_arith_ge_lt_eq",
         sql: "(x * 2) >= y AND NOT (z / 3 < 1) OR remainder = (n % 5)",
-        expected: r#"JmsSelector
+        expected: r#"BooleanExpression
   orExpression
     andExpression
-      equalityExpression
-        comparisonExpression
-          addExpression
-            multExpr
-              unaryExpr
-                primaryExpr
-                  Token(_TOKEN_24, "(")
-                  orExpression
-                    andExpression
-                      equalityExpression
-                        comparisonExpression
-                          addExpression
-                            multExpr
-                              unaryExpr
-                                primaryExpr
-                                  variable
-                                    Token(ID, "x")
-                              Token(_TOKEN_29, "*")
-                              unaryExpr
-                                primaryExpr
-                                  literal
-                                    Token(DECIMAL_LITERAL, "2")
-                  Token(_TOKEN_26, ")")
-          Token(_TOKEN_21, ">=")
-          addExpression
-            multExpr
-              unaryExpr
-                primaryExpr
-                  variable
-                    Token(ID, "y")
+      comparisonExpression
+        primaryExpr
+          Token(LPAREN, "(")
+          multExpr
+            variable
+              Token(ID, "x")
+            Token(STAR, "*")
+            literal
+              Token(DECIMAL_LITERAL, "2")
+          Token(RPAREN, ")")
+        Token(GTE, ">=")
+        variable
+          Token(ID, "y")
       Token(AND, "AND")
-      equalityExpression
-        comparisonExpression
-          addExpression
+      unaryExpr
+        Token(NOT, "NOT")
+        primaryExpr
+          Token(LPAREN, "(")
+          comparisonExpression
             multExpr
-              unaryExpr
-                Token(NOT, "NOT")
-                unaryExpr
-                  primaryExpr
-                    Token(_TOKEN_24, "(")
-                    orExpression
-                      andExpression
-                        equalityExpression
-                          comparisonExpression
-                            addExpression
-                              multExpr
-                                unaryExpr
-                                  primaryExpr
-                                    variable
-                                      Token(ID, "z")
-                                Token(_TOKEN_30, "/")
-                                unaryExpr
-                                  primaryExpr
-                                    literal
-                                      Token(DECIMAL_LITERAL, "3")
-                            Token(_TOKEN_22, "<")
-                            addExpression
-                              multExpr
-                                unaryExpr
-                                  primaryExpr
-                                    literal
-                                      Token(DECIMAL_LITERAL, "1")
-                    Token(_TOKEN_26, ")")
+              variable
+                Token(ID, "z")
+              Token(DIV, "/")
+              literal
+                Token(DECIMAL_LITERAL, "3")
+            Token(LT, "<")
+            literal
+              Token(DECIMAL_LITERAL, "1")
+          Token(RPAREN, ")")
     Token(OR, "OR")
-    andExpression
-      equalityExpression
-        comparisonExpression
-          addExpression
-            multExpr
-              unaryExpr
-                primaryExpr
-                  variable
-                    Token(ID, "remainder")
-        Token(_TOKEN_17, "=")
-        comparisonExpression
-          addExpression
-            multExpr
-              unaryExpr
-                primaryExpr
-                  Token(_TOKEN_24, "(")
-                  orExpression
-                    andExpression
-                      equalityExpression
-                        comparisonExpression
-                          addExpression
-                            multExpr
-                              unaryExpr
-                                primaryExpr
-                                  variable
-                                    Token(ID, "n")
-                              Token(_TOKEN_31, "%")
-                              unaryExpr
-                                primaryExpr
-                                  literal
-                                    Token(DECIMAL_LITERAL, "5")
-                  Token(_TOKEN_26, ")")
+    equalityExpression
+      variable
+        Token(ID, "remainder")
+      Token(EQUALS, "=")
+      primaryExpr
+        Token(LPAREN, "(")
+        multExpr
+          variable
+            Token(ID, "n")
+          Token(PERCENT, "%")
+          literal
+            Token(DECIMAL_LITERAL, "5")
+        Token(RPAREN, ")")
   Token(EOF, "")"#,
     });
 }
@@ -666,75 +403,36 @@ fn pp_and_or_with_hex_oct_arith() {
     run_pretty_case(&PrettyCase {
         name: "pp_and_or_with_hex_oct_arith",
         sql: "value = 0xFF AND (count - 1) > 0 OR flags = 0777",
-        expected: r#"JmsSelector
+        expected: r#"BooleanExpression
   orExpression
     andExpression
       equalityExpression
-        comparisonExpression
-          addExpression
-            multExpr
-              unaryExpr
-                primaryExpr
-                  variable
-                    Token(ID, "value")
-        Token(_TOKEN_17, "=")
-        comparisonExpression
-          addExpression
-            multExpr
-              unaryExpr
-                primaryExpr
-                  literal
-                    Token(HEX_LITERAL, "0xFF")
+        variable
+          Token(ID, "value")
+        Token(EQUALS, "=")
+        literal
+          Token(HEX_LITERAL, "0xFF")
       Token(AND, "AND")
-      equalityExpression
-        comparisonExpression
+      comparisonExpression
+        primaryExpr
+          Token(LPAREN, "(")
           addExpression
-            multExpr
-              unaryExpr
-                primaryExpr
-                  Token(_TOKEN_24, "(")
-                  orExpression
-                    andExpression
-                      equalityExpression
-                        comparisonExpression
-                          addExpression
-                            multExpr
-                              unaryExpr
-                                primaryExpr
-                                  variable
-                                    Token(ID, "count")
-                            Token(_TOKEN_28, "-")
-                            multExpr
-                              unaryExpr
-                                primaryExpr
-                                  literal
-                                    Token(DECIMAL_LITERAL, "1")
-                  Token(_TOKEN_26, ")")
-          Token(_TOKEN_20, ">")
-          addExpression
-            multExpr
-              unaryExpr
-                primaryExpr
-                  literal
-                    Token(OCTAL_LITERAL, "0")
+            variable
+              Token(ID, "count")
+            Token(MINUS, "-")
+            literal
+              Token(DECIMAL_LITERAL, "1")
+          Token(RPAREN, ")")
+        Token(GT, ">")
+        literal
+          Token(OCTAL_LITERAL, "0")
     Token(OR, "OR")
-    andExpression
-      equalityExpression
-        comparisonExpression
-          addExpression
-            multExpr
-              unaryExpr
-                primaryExpr
-                  variable
-                    Token(ID, "flags")
-        Token(_TOKEN_17, "=")
-        comparisonExpression
-          addExpression
-            multExpr
-              unaryExpr
-                primaryExpr
-                  literal
-                    Token(OCTAL_LITERAL, "0777")
+    equalityExpression
+      variable
+        Token(ID, "flags")
+      Token(EQUALS, "=")
+      literal
+        Token(OCTAL_LITERAL, "0777")
   Token(EOF, "")"#,
     });
 }
@@ -745,58 +443,29 @@ fn pp_and_or_with_floats() {
     run_pretty_case(&PrettyCase {
         name: "pp_and_or_with_floats",
         sql: "temperature = 98.6 AND height > 5.5e1 OR weight < .75e2",
-        expected: r#"JmsSelector
+        expected: r#"BooleanExpression
   orExpression
     andExpression
       equalityExpression
-        comparisonExpression
-          addExpression
-            multExpr
-              unaryExpr
-                primaryExpr
-                  variable
-                    Token(ID, "temperature")
-        Token(_TOKEN_17, "=")
-        comparisonExpression
-          addExpression
-            multExpr
-              unaryExpr
-                primaryExpr
-                  literal
-                    Token(FLOATING_POINT_LITERAL, "98.6")
+        variable
+          Token(ID, "temperature")
+        Token(EQUALS, "=")
+        literal
+          Token(FLOATING_POINT_LITERAL, "98.6")
       Token(AND, "AND")
-      equalityExpression
-        comparisonExpression
-          addExpression
-            multExpr
-              unaryExpr
-                primaryExpr
-                  variable
-                    Token(ID, "height")
-          Token(_TOKEN_20, ">")
-          addExpression
-            multExpr
-              unaryExpr
-                primaryExpr
-                  literal
-                    Token(FLOATING_POINT_LITERAL, "5.5e1")
+      comparisonExpression
+        variable
+          Token(ID, "height")
+        Token(GT, ">")
+        literal
+          Token(FLOATING_POINT_LITERAL, "5.5e1")
     Token(OR, "OR")
-    andExpression
-      equalityExpression
-        comparisonExpression
-          addExpression
-            multExpr
-              unaryExpr
-                primaryExpr
-                  variable
-                    Token(ID, "weight")
-          Token(_TOKEN_22, "<")
-          addExpression
-            multExpr
-              unaryExpr
-                primaryExpr
-                  literal
-                    Token(FLOATING_POINT_LITERAL, ".75e2")
+    comparisonExpression
+      variable
+        Token(ID, "weight")
+      Token(LT, "<")
+      literal
+        Token(FLOATING_POINT_LITERAL, ".75e2")
   Token(EOF, "")"#,
     });
 }
@@ -808,78 +477,39 @@ fn pp_and_not_or_with_unary_eq_isnotnull() {
     run_pretty_case(&PrettyCase {
         name: "pp_and_not_or_with_unary_eq_isnotnull",
         sql: "(-x) > 0 AND NOT (y = NULL) OR z IS NOT NULL",
-        expected: r#"JmsSelector
+        expected: r#"BooleanExpression
   orExpression
     andExpression
-      equalityExpression
-        comparisonExpression
-          addExpression
-            multExpr
-              unaryExpr
-                primaryExpr
-                  Token(_TOKEN_24, "(")
-                  orExpression
-                    andExpression
-                      equalityExpression
-                        comparisonExpression
-                          addExpression
-                            multExpr
-                              unaryExpr
-                                Token(_TOKEN_28, "-")
-                                unaryExpr
-                                  primaryExpr
-                                    variable
-                                      Token(ID, "x")
-                  Token(_TOKEN_26, ")")
-          Token(_TOKEN_20, ">")
-          addExpression
-            multExpr
-              unaryExpr
-                primaryExpr
-                  literal
-                    Token(OCTAL_LITERAL, "0")
+      comparisonExpression
+        primaryExpr
+          Token(LPAREN, "(")
+          unaryExpr
+            Token(MINUS, "-")
+            variable
+              Token(ID, "x")
+          Token(RPAREN, ")")
+        Token(GT, ">")
+        literal
+          Token(OCTAL_LITERAL, "0")
       Token(AND, "AND")
-      equalityExpression
-        comparisonExpression
-          addExpression
-            multExpr
-              unaryExpr
-                Token(NOT, "NOT")
-                unaryExpr
-                  primaryExpr
-                    Token(_TOKEN_24, "(")
-                    orExpression
-                      andExpression
-                        equalityExpression
-                          comparisonExpression
-                            addExpression
-                              multExpr
-                                unaryExpr
-                                  primaryExpr
-                                    variable
-                                      Token(ID, "y")
-                          Token(_TOKEN_17, "=")
-                          comparisonExpression
-                            addExpression
-                              multExpr
-                                unaryExpr
-                                  primaryExpr
-                                    literal
-                                      Token(NULL, "NULL")
-                    Token(_TOKEN_26, ")")
-    Token(OR, "OR")
-    andExpression
-      equalityExpression
-        comparisonExpression
-          addExpression
-            multExpr
-              unaryExpr
-                primaryExpr
-                  variable
-                    Token(ID, "z")
-        Token(IS, "IS")
+      unaryExpr
         Token(NOT, "NOT")
-        Token(NULL, "NULL")
+        primaryExpr
+          Token(LPAREN, "(")
+          equalityExpression
+            variable
+              Token(ID, "y")
+            Token(EQUALS, "=")
+            literal
+              Token(NULL, "NULL")
+          Token(RPAREN, ")")
+    Token(OR, "OR")
+    equalityExpression
+      variable
+        Token(ID, "z")
+      Token(IS, "IS")
+      Token(NOT, "NOT")
+      Token(NULL, "NULL")
   Token(EOF, "")"#,
     });
 }
@@ -891,55 +521,34 @@ fn pp_and_or_with_like_escape_notlike_eq() {
     run_pretty_case(&PrettyCase {
         name: "pp_and_or_with_like_escape_notlike_eq",
         sql: "path LIKE '/usr/!%doc' ESCAPE '!' AND owner NOT LIKE 'svc_%' OR mode = 'rw'",
-        expected: r#"JmsSelector
+        expected: r#"BooleanExpression
   orExpression
     andExpression
-      equalityExpression
-        comparisonExpression
-          addExpression
-            multExpr
-              unaryExpr
-                primaryExpr
-                  variable
-                    Token(ID, "path")
-          Token(LIKE, "LIKE")
-          stringLitteral
-            Token(STRING_LITERAL, "'/usr/!%doc'")
-          Token(ESCAPE, "ESCAPE")
-          stringLitteral
-            Token(STRING_LITERAL, "'!'")
+      comparisonExpression
+        variable
+          Token(ID, "path")
+        Token(LIKE, "LIKE")
+        stringLitteral
+          Token(STRING_LITERAL, "'/usr/!%doc'")
+        Token(ESCAPE, "ESCAPE")
+        stringLitteral
+          Token(STRING_LITERAL, "'!'")
       Token(AND, "AND")
-      equalityExpression
-        comparisonExpression
-          addExpression
-            multExpr
-              unaryExpr
-                primaryExpr
-                  variable
-                    Token(ID, "owner")
-          Token(NOT, "NOT")
-          Token(LIKE, "LIKE")
-          stringLitteral
-            Token(STRING_LITERAL, "'svc_%'")
+      comparisonExpression
+        variable
+          Token(ID, "owner")
+        Token(NOT, "NOT")
+        Token(LIKE, "LIKE")
+        stringLitteral
+          Token(STRING_LITERAL, "'svc_%'")
     Token(OR, "OR")
-    andExpression
-      equalityExpression
-        comparisonExpression
-          addExpression
-            multExpr
-              unaryExpr
-                primaryExpr
-                  variable
-                    Token(ID, "mode")
-        Token(_TOKEN_17, "=")
-        comparisonExpression
-          addExpression
-            multExpr
-              unaryExpr
-                primaryExpr
-                  literal
-                    stringLitteral
-                      Token(STRING_LITERAL, "'rw'")
+    equalityExpression
+      variable
+        Token(ID, "mode")
+      Token(EQUALS, "=")
+      literal
+        stringLitteral
+          Token(STRING_LITERAL, "'rw'")
   Token(EOF, "")"#,
     });
 }

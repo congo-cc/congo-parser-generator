@@ -14,6 +14,18 @@ UNPARSED #Comment :
   < LINE_COMMENT : "//" (~["\n"])* "\n" > #LineComment
 ;
 
+CONTEXTUAL #KeyWord :
+   <MACRO_RULES : 'macro_rules'>
+   |
+   <RAW : 'raw'>
+   |
+   <SAFE : 'safe'>
+   |
+   <UNION : 'union'>
+   |
+   <STATIC_LIFETIME : "'static">
+;
+
 TOKEN #KeyWord :
   <UNDERSCORE : "_">
 | < ABSTRACT: "abstract" >
@@ -21,16 +33,18 @@ TOKEN #KeyWord :
 | < ASYNC: "async" >
 | < AWAIT: "await" >
 | < BECOME: "become" >
+| < BREAK : "break" >
 //| < BOX: "box" >
 | < CONST: "const" >
 | < CONTINUE: "continue" >
 | < CRATE: "crate" >
 | < DOLLAR_CRATE: "$crate">
 | < DO: "do" >
+| < DYN: "dyn" >
 | < ELSE: "else" >
 | < ENUM: "enum" >
 | < EXTERN: "extern" >
-| < FALSE: "false" >
+| < FALSE: "false" > #BooleanLiteral
 | < FINAL: "final" >
 | < FN: "fn" >
 | < FOR: "for" >
@@ -43,6 +57,7 @@ TOKEN #KeyWord :
 | < MATCH: "match" >
 | < MOD: "mod" >
 | < MOVE: "move" >
+| < MUT : "mut" >
 | < OVERRIDE: "override" >
 | < PRIV: "priv" >
 | < PUB: "pub">
@@ -54,7 +69,7 @@ TOKEN #KeyWord :
 | < STRUCT: "struct" >
 | < SUPER: "super" >
 | < TRAIT: "trait" >
-| < TRUE: "true" >
+| < TRUE: "true" > #BooleanLiteral
 | < TRY: "try" >
 | < TYPE: "type" >
 | < TYPEOF: "typeof" >
@@ -82,11 +97,11 @@ TOKEN #NumericalLiteral :
        |<FLOATING_POINT_LITERAL2>
        |<FLOATING_POINT_LITERAL3>
        |<FLOATING_POINT_LITERAL4>
-    > #FloatingPointLiteral
+    >
     {
       if (charAt(matchEnd-1) == '.' && (charAt(matchEnd) == '.' || Character.isUnicodeIdentifierStart(charAt(matchEnd)))) {
          matchedToken.truncate(1);
-         matchedToken.setType(INTEGER_LITERAL);
+         matchedToken=matchedToken.replaceType(INTEGER_LITERAL);
       }
     }
     |
@@ -94,13 +109,13 @@ TOKEN #NumericalLiteral :
     |
     <#FLOATING_POINT_LITERAL2: <DEC_LITERAL> ".">
     |
-    <#FLOATING_POINT_LITERAL3: <DEC_LITERAL> <FLOAT_EXPONENT> ("f16|f32"|"f64")?>
+    <#FLOATING_POINT_LITERAL3: <DEC_LITERAL> <FLOAT_EXPONENT> ("f16"|"f32"|"f64")?>
     |
     <#FLOATING_POINT_LITERAL4 : <DEC_LITERAL> "." <DEC_LITERAL>  (<FLOAT_EXPONENT>)? ("f16"|"f32"|"f64")?>
     |
     <#FLOAT_EXPONENT: ["e","E"] (["+","-"])? ("_")* <DEC_LITERAL>>
     |
-    <INTEGER_LITERAL: (<DEC_LITERAL> | <BIN_LITERAL> | <OCT_LITERAL> | <HEX_LITERAL>) (<INTEGER_SUFFIX>)?> #IntegerLiteral
+    <INTEGER_LITERAL: (<DEC_LITERAL> | <BIN_LITERAL> | <OCT_LITERAL> | <HEX_LITERAL>) (<INTEGER_SUFFIX>)?>
     |
     <#DEC_LITERAL: ["0"-"9"] (["0"-"9","_"])*>
     |
@@ -129,7 +144,6 @@ TOKEN #Punctuation :
   |<DOT_DOT: "..">
   |<SLASH_EQUALS: "/=">
   |<DOUBLE_COLON: "::">
-//  |<LEFT_ARROW: "<-">
   |<LT_LT: "<<">
   |<LTE: "<=">
   |<EQ: "==">
@@ -163,7 +177,7 @@ TOKEN #Punctuation :
 ;
 
 
-TOKEN #Literal :
+TOKEN #CharLiteral :
   <CHAR_LITERAL:
       "'"
       (
@@ -294,7 +308,7 @@ TOKEN:
 
 <IN_HASH_RAW_STRING, IN_MULTILINE_COMMENT>
 MORE:
-   <~[]>
+   <ANY_CHAR : ~[]>
 ;
 
 <IN_MULTILINE_COMMENT>
@@ -339,8 +353,6 @@ INJECT LEXER_CLASS :
 
 TOKEN :
    <UNDERLINE_LIFETIME : "'_">
-   |
-   <STATIC_LIFETIME : "'static">
    |
    <LIFETIME_OR_LABEL : "'" <ID>>
 ;

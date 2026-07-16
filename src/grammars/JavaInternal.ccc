@@ -6,13 +6,32 @@
 // based on whether we are generating code for internal use
 #define __congo_internal__
 
+REQUIRE_TOKEN_DECLARATION;
+
 // In general usage, it is probably better to INCLUDE the (more stable) Java grammar
 // that is in the bootstrap jarfile.
 //INCLUDE JAVA
-
 INCLUDE "../../examples/java/Java.ccc"
 
-INJECT Expression : extends EmbeddedCode
+// This is actually the CompilationUnit production
+// but without the JEP 512 addition that methods and fields
+// can exist at the top level
+
+#JavaCodeInjection#CompilationUnit :
+  [ PackageDeclaration! ]
+  ( ImportDeclaration )*!
+  ( TypeDeclaration)*!
+  ASSERT ("}")
+  {
+    return thisProduction;
+  }
+;
+
+INJECT Expression : extends EmbeddedCode {
+    default CodeLang getSpecifiedLang() {
+        return CodeLang.JAVA;
+    }
+}
 
 VariableDeclarator# : VariableDeclaratorId [ "=" VariableInitializer ] ;
 
@@ -39,15 +58,9 @@ INJECT CompilationUnit :
         return (jpd == null) ? null : jpd.getName();
     }
 
-    public List<TypeDeclaration> getTypeDeclarations() {
-        return childrenOfType(TypeDeclaration.class);
-    }
-
     public void addImportDeclaration(ImportDeclaration decl) {
         PackageDeclaration pd = firstChildOfType(PackageDeclaration.class);
-        if (pd != null) {
-            add(1 + indexOf(pd), decl);
-        }
+        add(1 + indexOf(pd), decl);
     }
 }
 
@@ -134,7 +147,7 @@ INJECT ExtendsList :
         }
         ListIterator<Node> iterator = iterator();
         if (!iterator.hasNext()) {
-            iterator.add(Token.newToken(EXTENDS, this.getTokenSource()));
+            iterator.add(Token.newToken(EXTENDS));
             iterator.next();
             iterator.add(type);
         } else {
@@ -142,7 +155,7 @@ INJECT ExtendsList :
                 if (type.equals(iterator.next()))
                     return;
             }
-            iterator.add(Token.newToken(COMMA, this.getTokenSource()));
+            iterator.add(Token.newToken(COMMA));
             iterator.next();
             iterator.add(type);
         }
@@ -160,7 +173,7 @@ INJECT TypeParameters :
                 iterator.next();
             }
             iterator.previous();
-            iterator.add(Token.newToken(COMMA, this.getTokenSource()));
+            iterator.add(Token.newToken(COMMA));
             iterator.next();
             iterator.add(param);
         }
@@ -194,26 +207,6 @@ INJECT ClassOrInterfaceBody :
         for (ClassOrInterfaceBodyDeclaration elem : elements) {
             iterator.add(elem);
             iterator.next();
-        }
-    }
-
-    // REVISIT. fix token chaining
-    public void removeDuplicateMethods() {
-        Set<String> sigs = new HashSet<String>();
-        ListIterator<Node> decls = iterator();
-        while (decls.hasNext()) {
-           Node n = decls.next();
-           if (n instanceof MethodDeclaration) {
-               MethodDeclaration decl = (MethodDeclaration) n;
-               String sig = decl.getFullSignature();
-               if (sig != null) {
-                    if (sigs.contains(sig)) {
-                        decls.remove();
-                    } else {
-                        sigs.add(sig);
-                    }
-               }
-           }
         }
     }
 }
@@ -284,7 +277,7 @@ INJECT ImplementsList :
     public void addType(ObjectType type) {
         ListIterator<Node> iterator = iterator();
         if (!iterator.hasNext()) {
-            iterator.add(Token.newToken(IMPLEMENTS, this.getTokenSource()));
+            iterator.add(Token.newToken(IMPLEMENTS));
             iterator.next();
             iterator.add(type);
         } else {
@@ -292,7 +285,7 @@ INJECT ImplementsList :
                 if (type.equals(iterator.next()))
                     return;
             }
-            iterator.add(Token.newToken(COMMA, this.getTokenSource()));
+            iterator.add(Token.newToken(COMMA));
             iterator.next();
             iterator.add(type);
         }
@@ -362,10 +355,6 @@ INJECT FormalParameters :
         return childrenOfType(FormalParameter.class);
     }
 
-//  public String getName() {
-//      return ((VariableDeclaratorId)getParameterId()).getName();
-//  }
-
     public String toString() {
         StringBuilder buf = new StringBuilder();
         List<FormalParameter> params = getParams();
@@ -419,6 +408,10 @@ INJECT CodeBlock :
         return this;
     }
 
+    public CodeLang getSpecifiedLang() {
+        return CodeLang.JAVA;
+    }
+
     public String toString() {
         StringBuilder buf = new StringBuilder();
         List<? extends TerminalNode> tokens = getAllTokens(true);
@@ -439,6 +432,3 @@ INJECT CodeBlock :
         return buf.toString();
     }
 }
-
-
-

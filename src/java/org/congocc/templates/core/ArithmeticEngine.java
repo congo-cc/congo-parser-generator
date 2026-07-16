@@ -5,7 +5,6 @@ import java.util.HashMap;
 import java.util.Map;
 
 import org.congocc.templates.*;
-import org.congocc.templates.core.variables.EvaluationException;
 
 /**
  * Class to perform arithmetic operations.

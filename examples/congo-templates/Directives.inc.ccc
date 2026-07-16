@@ -13,7 +13,6 @@ Interpolation :
 ;
 
 INJECT Interpolation :
-    import java.io.IOException;
     import org.congocc.templates.core.Environment;
     import org.congocc.templates.TemplateException;
     implements TemplateElement
@@ -25,9 +24,11 @@ INJECT Interpolation :
     /**
      * Outputs the string value of the enclosed expression.
      */
-    public void execute(Environment env) throws IOException {
+    public void execute(Environment env) {
         Expression exp = getExpression();
-        env.getOut().write(exp.getStringValue(env));
+        String output = exp.getStringValue(env);
+        output = env.getOutputEscape().apply(output);
+        env.append(output);
     }
 
     public String getDescription() {
@@ -60,11 +61,10 @@ IfBlock :
 
 INJECT IfBlock :
     import java.util.*;
-    import java.io.IOException;
     import org.congocc.templates.core.Environment;
     implements TemplateElement
 {
-    public void execute(Environment env) throws IOException {
+    public void execute(Environment env) {
         for (ConditionalBlock cblock : childrenOfType(ConditionalBlock.class)) {
             Expression condition = cblock.getCondition();
             if (condition == null || condition.isTrue(env)) {
@@ -82,7 +82,6 @@ INJECT IfBlock :
 }
 
 INJECT ConditionalBlock :
-    import java.io.IOException;
     import org.congocc.templates.core.Environment;
     implements TemplateElement
 {
@@ -90,7 +89,7 @@ INJECT ConditionalBlock :
     	return firstChildOfType(Expression.class);
     }
 
-    public void execute(Environment env) throws IOException {
+    public void execute(Environment env) {
         env.render(firstChildOfType(Block.class));
     }
 
@@ -109,7 +108,6 @@ AttemptBlock :
 ;
 
 INJECT AttemptBlock :
-    import java.io.IOException;
     import org.congocc.templates.core.Environment;
     implements TemplateElement
 {
@@ -121,13 +119,34 @@ INJECT AttemptBlock :
         return childrenOfType(Block.class).get(1);
     }
 
-    public void execute(Environment env) throws IOException
-    {
+    public void execute(Environment env) {
         env.render(getAttemptBlock(), getRecoverBlock());
     }
 
     public String getDescription() {
         return "attempt block";
+    }
+}
+
+LoopBlock :
+   {Token start;}
+   start=<LOOP>
+   [
+      ('while' | 'until')
+      Expression
+   ]
+   <DIRECTIVE_END>
+   Block
+   CloseDirectiveBlock(start)
+;
+
+INJECT LoopBlock :
+    import org.congocc.templates.core.*;
+    implements TemplateElement
+{
+    public void execute(Environment env) {
+        boolean until = get(1).getType() == UNTIL;
+        env.loop(getNestedBlock(), firstChildOfType(Expression.class), until);
     }
 }
 
@@ -147,13 +166,11 @@ ListBlock#IteratorBlock :
 ;
 
 INJECT IteratorBlock :
-    import java.io.IOException;
     import org.congocc.templates.core.*;
-    import org.congocc.templates.core.variables.*;
-    import org.congocc.templates.core.variables.scope.BlockScope;
-    import org.congocc.templates.core.variables.scope.LoopContext;
-    import org.congocc.templates.TemplateHash;
-    import static org.congocc.templates.core.variables.Wrap.*;
+    import org.congocc.templates.core.scopes.BlockScope;
+    import org.congocc.templates.core.scopes.LoopContext;
+    import org.congocc.templates.core.TemplateHash;
+    import static org.congocc.templates.core.Wrap.*;
     implements TemplateElement
 {
     public boolean isOverMap() {
@@ -173,7 +190,7 @@ INJECT IteratorBlock :
         return (Expression) get(1);
     }
 
-    public void execute(Environment env) throws IOException {
+    public void execute(Environment env) {
         Object listVar = getListExpression().evaluate(env);
         if (listVar == LOOSE_NULL) return;
         assertNonNull(listVar, getListExpression());
@@ -327,7 +344,6 @@ NestedInstruction# :
 ;
 
 INJECT NestedInstruction :
-    import java.io.IOException;
     import org.congocc.templates.core.*;
     implements TemplateElement
 {
@@ -344,7 +360,7 @@ INJECT NestedInstruction :
      * what it was before macro invocation to implement this properly.
      * I (JR) realized this thanks to some incisive comments from Daniel Dekany.
      */
-    public void execute(Environment env) throws IOException {
+    public void execute(Environment env) {
         env.render(this);
     }
 
@@ -400,14 +416,12 @@ BlockAssignment :
 ;
 
 INJECT BlockAssignment :
-    import java.io.IOException;
     import java.io.StringWriter;
     import java.io.Writer;
     import org.congocc.templates.core.Environment;
-    import org.congocc.templates.core.variables.InvalidReferenceException;
-    import org.congocc.templates.core.variables.UserDirectiveBody;
-    import org.congocc.templates.core.variables.UserDirective;
-    import org.congocc.templates.core.variables.scope.Scope;
+    import org.congocc.templates.core.InvalidReferenceException;
+    import org.congocc.templates.core.UserDirectiveBody;
+    import org.congocc.templates.core.scopes.Scope;
     import org.congocc.templates.TemplateException;
     import org.congocc.templates.core.nodes.AssignmentInstruction;
     implements TemplateElement
@@ -424,7 +438,7 @@ INJECT BlockAssignment :
         return null;
     }
 
-    public void execute(Environment env) throws IOException {
+    public void execute(Environment env) {
     	Map scope = null;
         Expression namespaceExp = getNamespaceExp();
     	if (namespaceExp != null) {
@@ -434,18 +448,18 @@ INJECT BlockAssignment :
                 throw new InvalidReferenceException(getLocation() + "\nInvalid reference to namespace: " + namespaceExp);
     		}
     	}
-        Writer existingWriter = env.getOut();
-        StringWriter bufferWriter = new StringWriter();
+        Appendable existingBuffer = env.getBuffer();
+        StringBuilder newBuffer = new StringBuilder();
         try {
             Block block = firstChildOfType(Block.class);
             if (block != null) {
-                env.setOut(bufferWriter);
+                env.setBuffer(newBuffer);
                 env.render(block);
             }
         } finally {
-            env.setOut(existingWriter);
+            env.setBuffer(existingBuffer);
         }
-        AssignmentInstruction.set(getTargetExpression(), bufferWriter.toString(), env, scope);
+        AssignmentInstruction.set(getTargetExpression(), newBuffer.toString(), env, scope);
     }
 
     public String getDescription() {
@@ -489,13 +503,12 @@ IncludeInstruction :
 
 INJECT IncludeInstruction :
     import java.io.IOException;
-    import java.io.IOException;
     import org.congocc.templates.*;
-    import org.congocc.templates.utility.StringUtil;
+    import org.congocc.templates.extensions.StringUtil;
     import org.congocc.templates.core.Environment;
-    import org.congocc.templates.core.variables.InvalidReferenceException;
+    import org.congocc.templates.core.InvalidReferenceException;
     import org.congocc.templates.core.parser.ParseException;
-    import static org.congocc.templates.core.variables.Wrap.*;
+    import static org.congocc.templates.core.Wrap.*;
     implements TemplateElement
 {
     @Property Template template;
@@ -513,7 +526,7 @@ INJECT IncludeInstruction :
         return null;
     }
 
-    public void execute(Environment env) throws IOException {
+    public void execute(Environment env) {
         String templateNameString = ((Expression) get(1)).getStringValue(env);
         if( templateNameString == null ) {
             String msg = "Error " + getLocation()
@@ -528,10 +541,10 @@ INJECT IncludeInstruction :
         boolean parse = true;
         Expression parseExp = getParamByName("parse");
         if (parseExp != null) {
-            Object tm = parseExp.evaluate(env);
-            assertNonNull(tm, parseExp);
-            if (tm instanceof CharSequence) {
-                parse = StringUtil.getYesNo(asString(tm));
+            Object result = parseExp.evaluate(env);
+            assertNonNull(result, parseExp);
+            if (result instanceof CharSequence) {
+                parse = StringUtil.getYesNo(asString(result));
             }
             else {
                 parse = parseExp.isTrue(env);
@@ -546,7 +559,9 @@ INJECT IncludeInstruction :
     	}
         try {
             //REVISIT
-            includedTemplate = env.getTemplateForInclusion(templateNameString, encoding, parse);
+            //includedTemplate = env.getTemplateForInclusion(templateNameString, encoding, parse);
+            includedTemplate = env.getTemplateForInclusion(templateNameString);
+            env.include(includedTemplate, useFreshNamespace());
         }
         catch (ParseException pe) {
             String msg = "Error parsing included template "
@@ -558,7 +573,6 @@ INJECT IncludeInstruction :
                         + templateNameString;
             throw new TemplateException(msg, ioe);
         }
-        env.include(includedTemplate, useFreshNamespace());
     }
 }
 
@@ -578,7 +592,7 @@ INJECT ImportDeclaration :
     import org.congocc.templates.Template;
     import org.congocc.templates.TemplateException;
     import org.congocc.templates.core.Environment;
-    import org.congocc.templates.core.variables.InvalidReferenceException;
+    import org.congocc.templates.core.InvalidReferenceException;
     implements TemplateElement
 {
     private String templatePath="";
@@ -592,7 +606,7 @@ INJECT ImportDeclaration :
     	return (Expression) get(1);
     }
 
-    public void execute(Environment env) throws IOException {
+    public void execute(Environment env) {
         String templateNameString = getTemplateNameExpression().getStringValue(env);
         if( templateNameString == null ) {
             String msg = "Error " + getLocation()
@@ -616,6 +630,7 @@ INJECT ImportDeclaration :
                 templateNameString = templatePath + templateNameString;
             }
             importedTemplate = env.getTemplateForImporting(templateNameString);
+            env.importLib(importedTemplate, getNamespace(), false);
         }
         catch (ParseException pe) {
             String msg = "Error parsing imported template "
@@ -627,7 +642,6 @@ INJECT ImportDeclaration :
                         + templateNameString;
             throw new TemplateException(msg, ioe);
         }
-        env.importLib(importedTemplate, getNamespace(), false);
     }
 
     public String getDescription() {
@@ -651,7 +665,7 @@ INJECT ImportDeclaration :
 #ParameterList#org.congocc.templates.core.nodes.ParameterList(true) :
 {
 	Token arg=null, firstArg=null, ellipsis = null;
-	Expression defValue = null;
+	Expression defaultValue = null;
 	String catchAll = null;
 	boolean isCatchAll = false, hasDefaults = false;
 	Set<String> paramNames = new HashSet<String>();
@@ -660,7 +674,7 @@ INJECT ImportDeclaration :
           arg=<ID>
           {
           	if (firstArg == null) firstArg = arg;
-          	defValue = null;
+          	defaultValue = null;
           	if (paramNames.contains(arg.toString())) {
           		throw new ParseException(getErrorStart(arg) + "\nThe parameter " + arg.toString() + " cannot be repeated.");
           	}
@@ -671,37 +685,37 @@ INJECT ImportDeclaration :
           ]
           [
             <EQUALS>
-          	defValue=Expression
+          	defaultValue=Expression
             {
 		      hasDefaults = true;
             }
           ]
           [<COMMA>]
-	  {
+	      {
           if (catchAll != null) {
               throw new ParseException(getErrorStart(arg)
                 + "\nThere may only be one \"catch-all\" parameter in a macro declaration, "
                 + "and it must be the last parameter.", arg.getBeginLine(), arg.getEndLine());
           }
           if (isCatchAll) {
-              if (defValue != null) {
+              if (defaultValue != null) {
                   throw new ParseException(getErrorStart(arg)
                     + "\n\"Catch-all\" macro parameter may not have a default value.",
                     arg.getBeginLine(), arg.getEndLine());
               }
-              thisProduction.setCatchAll(arg.toString());
+              THIS.setCatchAll(arg.toString());
           }
-          else if (defValue == null) {
+          else if (defaultValue == null) {
              if (hasDefaults) {
                   throw new ParseException(getErrorStart(arg)
                     + "\nIn a macro declaration, parameters without a default value "
                     + "must all occur before the parameters with default values.",
                     arg.getBeginLine(), arg.getEndLine());
              }
-          	 thisProduction.addParam(arg.toString());
+          	 THIS.addParam(arg.toString());
           }
           else {
-              thisProduction.addParam(arg.toString(), defValue);
+              THIS.addParamWithDefaultValue(arg.toString(), defaultValue);
           	  hasDefaults = true;
           }
 	  }
@@ -739,8 +753,7 @@ Function#Macro :
 INJECT Macro :
     import org.congocc.templates.core.Environment;
     import org.congocc.templates.core.nodes.ParameterList;
-    import org.congocc.templates.core.variables.WrappedVariable;
-    implements TemplateElement, WrappedVariable
+    implements TemplateElement
 {
     static public final Macro DO_NOTHING_MACRO = new Macro();
     static {
@@ -783,6 +796,10 @@ INJECT Macro :
     public String getDescription() {
         return (isFunction() ? "function " : "macro ") + getName();
     }
+
+    public String toString() {
+        return getDescription() + " " + getLocation();
+    }
 }
 
 UnifiedCall :
@@ -803,13 +820,11 @@ UnifiedCall :
 ;
 
 INJECT UnifiedCall :
-    import java.io.IOException;
     import java.util.*;
     import org.congocc.templates.core.Environment;
     import org.congocc.templates.core.nodes.ParameterList;
-    import org.congocc.templates.core.variables.UserDirective;
     import org.congocc.templates.TemplateException;
-    import static org.congocc.templates.core.variables.Wrap.*;
+    import static org.congocc.templates.core.Wrap.*;
     implements TemplateElement
 {
     public Expression getNameExp() {
@@ -839,13 +854,13 @@ INJECT UnifiedCall :
     	}
     }
 
-    public void execute(Environment env) throws IOException {
+    public void execute(Environment env) {
         Expression nameExp = getNameExp();
-        Object tm = nameExp.evaluate(env);
+        Object executable = nameExp.evaluate(env);
         ArgsList args = getArgs();
         ParameterList bodyParameters = getBodyParameters();
-        if (tm == Macro.DO_NOTHING_MACRO || tm ==LOOSE_NULL) return; // shortcut here.
-        if (tm instanceof Macro macro) {
+        if (executable == Macro.DO_NOTHING_MACRO || executable ==LOOSE_NULL) return; // shortcut here.
+        if (executable instanceof Macro macro) {
             if (macro.isFunction()) {
                 throw new TemplateException("Routine " + macro.getName()
                         + " is a function. A function can only be called " +
@@ -854,7 +869,7 @@ INJECT UnifiedCall :
             env.render(macro, args, bodyParameters, firstChildOfType(Block.class));
         }
         else {
-            assertNonNull(tm, nameExp);
+            assertNonNull(executable, nameExp);
             throw new TemplateException(getLocation() + ": " + getNameExp() +
                     " is not a macro.");
         }
@@ -894,11 +909,10 @@ NoParseBlock# :
 ;
 
 INJECT NoParseBlock :
-    import java.io.IOException;
     import org.congocc.templates.core.Environment;
     implements TemplateElement
 {
-    public void execute(Environment env) throws IOException {
+    public void execute(Environment env) {
         String source = getSource();
         for (int i = 0; i < source.length(); i++) {
             if (source.charAt(i) == '>' || source.charAt(i) == ']') {
@@ -912,16 +926,16 @@ INJECT NoParseBlock :
                 break;
             }
         }
-        env.getOut().write(source);
+        env.append(source);
     }
 }
 
 CloseDirectiveBlock(Token startToken)#void :
     <CLOSE_DIRECTIVE_BLOCK>
 	{
-        String image = lastConsumedToken.toString();
-        String nameAtEnd = image.startsWith("#end") ? image.substring(4) : stripNonLetter(image);
-        String nameAtStart = stripNonLetter(startToken.toString());
+        String image = stripNonLetters(lastConsumedToken.toString());
+        String nameAtEnd = image.startsWith("end") ? image.substring(3) : image;
+        String nameAtStart = stripNonLetters(startToken.toString());
         if (nameAtEnd.length() > 0) {
             if (!nameAtStart.equals(nameAtEnd)) {
                 if (!(nameAtStart.equals("attempt") && nameAtEnd.equals("recover"))) {
@@ -929,7 +943,7 @@ CloseDirectiveBlock(Token startToken)#void :
                                      + nameAtStart
                                      + " to close the block starting on line "
                                      + startToken.getBeginLine()
-                                     + " but found " + nameAtEnd;
+                                     + " but found " + lastConsumedToken;
                     throw new ParseException(message, lastConsumedToken, parsingStack);
                 }
             }
@@ -941,7 +955,7 @@ CloseDirectiveBlock(Token startToken)#void :
 
 INJECT PARSER_CLASS :
 {
-    static String stripNonLetter(String s) {
+    static String stripNonLetters(String s) {
         StringBuilder buf = new StringBuilder();
         for (int i = 0; i < s.length(); i++) {
             if (Character.isLetter(s.charAt(i))) {
@@ -956,49 +970,7 @@ INJECT PARSER_CLASS :
 /**
  * Production to terminate potentially empty elements. Either a ">" or "/>"
  */
-LooseDirectiveEnd : <DIRECTIVE_END> | <EMPTY_DIRECTIVE_END> ;
-
-PropertySetting :
-   <SETTING>
-   <ID>
-   <EQUALS>
-   Expression
-   LooseDirectiveEnd
-;
-
-INJECT PropertySetting :
-    import org.congocc.templates.core.Environment;
-    import static org.congocc.templates.core.variables.Wrap.*;
-    implements TemplateElement
-{
-    public String getKey() {
-    	return firstChildOfType(ID).toString();
-    }
-
-    public Expression getValue() {
-    	return (Expression) get(3);
-    }
-
-    public void execute(Environment env) {
-        Object mval = getValue().evaluate(env);
-        String strval;
-        if (mval instanceof CharSequence) {
-            strval = mval.toString();
-        } else if (isBoolean(mval)) {
-            strval = asBoolean(mval) ? "true" : "false";
-        } else if (mval instanceof Number n) {
-            strval = n.toString();
-        } else {
-            strval = getValue().getStringValue(env);
-        }
-        env.setSetting(getKey(), strval);
-    }
-
-    public String getDescription() {
-        return "setting " + getKey() + " set to " + "\"" + getValue() + "\" "
-	    + "[" + getLocation() + "]";
-    }
-}
+LooseDirectiveEnd#void : <DIRECTIVE_END> | <EMPTY_DIRECTIVE_END> ;
 
 VarDirective :
 {
@@ -1036,8 +1008,8 @@ VarDirective :
 INJECT VarDirective :
    import java.util.*;
    import org.congocc.templates.core.*;
-   import org.congocc.templates.core.variables.scope.Scope;
-   import static org.congocc.templates.core.variables.Wrap.*;
+   import org.congocc.templates.core.scopes.Scope;
+   import static org.congocc.templates.core.Wrap.*;
    implements TemplateElement
 {
     private Map<String, Expression> vars = new LinkedHashMap<>();
@@ -1054,9 +1026,9 @@ INJECT VarDirective :
                 }
             }
             else {
-                Object tm = exp.evaluate(env);
-                assertIsDefined(tm, exp);
-                scope.put(varname, tm);
+                Object value = exp.evaluate(env);
+                assertIsDefined(value, exp);
+                scope.put(varname, value);
             }
         }
     }
@@ -1090,6 +1062,8 @@ TemplateElement#interface :
    |
    ListBlock
    |
+   LoopBlock
+   |
    AssignmentInstruction
    |
    BlockAssignment
@@ -1106,8 +1080,8 @@ TemplateElement#interface :
    |
    NoParseBlock
    |
-   PropertySetting
-   |
+//   PropertySetting
+//   |
    VarDirective
    |
    BreakInstruction
@@ -1130,7 +1104,6 @@ TemplateElement#interface :
 
 INJECT TemplateElement :
    import java.util.*;
-   import java.io.IOException;
    import org.congocc.templates.core.Environment;
 {
     /**
@@ -1139,7 +1112,7 @@ INJECT TemplateElement :
      *
      * @param env The runtime environment
      */
-    void execute(Environment env) throws IOException;
+    void execute(Environment env);
 
     String getDescription();
 
@@ -1171,7 +1144,6 @@ TextElement# :
 ;
 
 INJECT TextElement :
-   import java.io.IOException;
    import org.congocc.templates.core.Environment;
    import org.congocc.templates.core.nodes.Whitespace;
    import org.congocc.templates.core.nodes.AssignmentInstruction;
@@ -1198,8 +1170,8 @@ INJECT TextElement :
         return outputText = buf.toString();
     }
 
-    public void execute(Environment env) throws IOException {
-        env.getOut().write(getOutputText());
+    public void execute(Environment env) {
+        env.append(getOutputText());
  	}
 
 	private boolean ignoresSandwichedWhitespace(Node elem) {
@@ -1208,8 +1180,7 @@ INJECT TextElement :
 		       || (elem instanceof BlockAssignment)
 		       || (elem instanceof VarDirective)
 		       || (elem instanceof ImportDeclaration)
-		       || (elem instanceof ExecInstruction)
-		       || (elem instanceof PropertySetting);
+		       || (elem instanceof ExecInstruction);
  	}
 }
 
@@ -1224,7 +1195,6 @@ Block#(true) :
 ;
 
 INJECT Block :
-    import java.io.IOException;
     import org.congocc.templates.core.Environment;
     implements TemplateElement
 {
@@ -1245,7 +1215,7 @@ INJECT Block :
     	return declaredVariables != null && !declaredVariables.isEmpty();
     }
 
-    public void execute(Environment env) throws IOException {
+    public void execute(Environment env) {
         for (TemplateElement element : childrenOfType(TemplateElement.class)) {
             env.render(element);
         }
@@ -1269,6 +1239,9 @@ INJECT Block :
  * ${...} but no directives.
  */
 #TemplateText#Block :
+    DEACTIVATE_TOKENS POSSIBLE_DIRECTIVE, POSSIBLE_END_DIRECTIVE,
+                      START_TAG, CLOSE_DIRECTIVE_BLOCK, UNIFIED_CALL,
+                      UNIFIED_CALL_END
     (
         TextElement
         |
@@ -1303,8 +1276,8 @@ IgnorableWhitespace#void :
 INJECT TemplateHeaderElement :
     import java.util.*;
     import org.congocc.templates.*;
-    import static org.congocc.templates.utility.StringUtil.*;
-    import static org.congocc.templates.core.variables.Wrap.*;
+    import static org.congocc.templates.extensions.StringUtil.*;
+    import static org.congocc.templates.core.Wrap.*;
 {
 
     private Map<String,Expression> params = new LinkedHashMap<>();
@@ -1340,26 +1313,26 @@ INJECT TemplateHeaderElement :
     }
 
 	public String getStringParameter(String name) {
-		Object tm = getParameter(name);
-        if (tm == null) return null;
+		Object param = getParameter(name);
+        if (param == null) return null;
 		try {
-			return asString(tm);
+			return asString(param);
 		} catch (ClassCastException cce) {
 		    throw new IllegalArgumentException("Parameter " + name + " is not a string.");
 		}
 	}
 
 	public boolean getBooleanParameter(String name) {
-		Object tm = getParameter(name);
-		if (tm == null) {
+		Object param = getParameter(name);
+		if (param == null) {
 			throw new IllegalArgumentException("No parameter " + name);
 		}
-		if (isBoolean(tm)) {
-			return asBoolean(tm);
+		if (isBoolean(param)) {
+			return asBoolean(param);
 		}
-		if (tm instanceof CharSequence) {
+		if (param instanceof CharSequence) {
 			try {
-				return getYesNo(asString(tm));
+				return getYesNo(asString(param));
 			} catch (Exception e) {
 				throw new IllegalArgumentException(e);
 			}
@@ -1402,9 +1375,10 @@ Expression IdentifierOrStringLiteral#void :
  */
 Block Root#void :
 {
-   TemplateHeaderElement header;
+   //TemplateHeaderElement header;
    Block doc;
 }
+#if false
    [
        header=TemplateHeaderElement
        {
@@ -1421,6 +1395,7 @@ Block Root#void :
        	   }
        }
    ]
+#endif
    doc=Block
    {assert doc.getParent() == null;}
    <EOF>

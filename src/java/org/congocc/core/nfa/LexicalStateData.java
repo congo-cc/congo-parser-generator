@@ -20,8 +20,8 @@ public class LexicalStateData {
     private final List<NfaState> simpleStates = new ArrayList<>();
     private final Map<Set<NfaState>, CompositeStateSet> canonicalSetLookup = new HashMap<>();
 
-    private final Map<String, RegexpStringLiteral> caseSensitiveTokenTable = new HashMap<>();
-    private final Map<String, RegexpStringLiteral> caseInsensitiveTokenTable = new HashMap<>();
+    private final Map<String, List<RegexpStringLiteral>> caseSensitiveTokenTable = new HashMap<>();
+    private final Map<String, List<RegexpStringLiteral>> caseInsensitiveTokenTable = new HashMap<>();
 
     private final Set<RegularExpression> regularExpressions = new LinkedHashSet<>();
 
@@ -31,7 +31,6 @@ public class LexicalStateData {
 
     public LexicalStateData(Grammar grammar, String name) {
         this.grammar = grammar;
-        // this.errors = grammar.getErrors();
         this.name = name;
         initialState = new NfaState(this, null);
     }
@@ -58,24 +57,30 @@ public class LexicalStateData {
         tokenProductions.add(tokenProduction);
     }
 
-    public boolean containsRegularExpression(RegularExpression re) {
-        return regularExpressions.contains(re);
-    }
-
     public void addStringLiteral(RegexpStringLiteral re) {
-        if (re.getIgnoreCase()) {
-            caseInsensitiveTokenTable.putIfAbsent(re.getLiteralString().toUpperCase(), re);
-        } else {
-            caseSensitiveTokenTable.putIfAbsent(re.getLiteralString(), re);
+        String key = re.getLiteralString();
+        Map<String, List<RegexpStringLiteral>> table = caseSensitiveTokenTable;
+        if (re.isIgnoreCase()) {
+            key = key.toUpperCase();
+            table = caseInsensitiveTokenTable;
         }
+        List<RegexpStringLiteral> list = table.get(key);
+        if (list == null) {
+            list = new ArrayList<>();
+            table.put(key, list);
+        }
+        list.add(re);
     }
 
     public RegexpStringLiteral getStringLiteral(String image) {
-        RegexpStringLiteral result = caseSensitiveTokenTable.get(image);
-        if (result == null) {
-            result = caseInsensitiveTokenTable.get(image.toUpperCase());
+        List<RegexpStringLiteral> list = caseSensitiveTokenTable.get(image);
+        if (list == null || list.isEmpty()) {
+            list = caseInsensitiveTokenTable.get(image.toUpperCase());
         }
-        return result;
+        if (list == null || list.isEmpty()) {
+            return null;
+        }
+        return list.get(0);
     }
 
     CompositeStateSet getCanonicalComposite(Set<NfaState> stateSet) {
@@ -148,6 +153,7 @@ public class LexicalStateData {
         boolean ignore = tp.isIgnoreCase() || grammar.getAppSettings().isIgnoreCase();//REVISIT
         for (RegexpSpec regexpSpec : tp.getRegexpSpecs()) {
             RegularExpression currentRegexp = regexpSpec.getRegexp();
+            if (grammar.getLexerData().isOverridden(currentRegexp)) continue;
             if (currentRegexp.isPrivate() || grammar.getLexerData().isOverridden(currentRegexp)) {
                 continue;
             }
@@ -160,15 +166,34 @@ public class LexicalStateData {
     }
 
     private void processUnspecifiedStringLiterals() {
-        for (RegexpStringLiteral rsl : caseInsensitiveTokenTable.values()) {
-            if (rsl.getTokenProduction() != null) continue;
-            regularExpressions.add(rsl);
-            new NfaBuilder(this, rsl, true).buildStates();
+        for (List<RegexpStringLiteral> rslist : caseSensitiveTokenTable.values()) {
+            for (RegexpStringLiteral rsl : rslist) {
+                if (rsl.getTokenProduction() != null) continue;
+                regularExpressions.add(rsl);
+                new NfaBuilder(this, rsl, false).buildStates();
+            }
         }
-        for (RegexpStringLiteral rsl : caseSensitiveTokenTable.values()) {
-            if (rsl.getTokenProduction() != null) continue;
-            regularExpressions.add(rsl);
-            new NfaBuilder(this, rsl, false).buildStates();
+        for (List<RegexpStringLiteral> rslist : caseInsensitiveTokenTable.values()) {
+            for (RegexpStringLiteral rsl : rslist) {
+                if (rsl.getTokenProduction() != null)
+                    continue;
+                regularExpressions.add(rsl);
+                new NfaBuilder(this, rsl, true).buildStates();
+            }
+        }
+    }
+
+    public void removeStringLiteral(RegexpStringLiteral rsl) {
+        String key = rsl.getLiteralString();
+        Map<String, List<RegexpStringLiteral>> table = caseSensitiveTokenTable;
+        if (rsl.isIgnoreCase()) {
+            key = key.toUpperCase();
+            table = caseInsensitiveTokenTable;
+        }
+        List<RegexpStringLiteral> list = table.get(key);
+        if (list != null) {
+            list.remove(rsl);
+            if (list.isEmpty()) table.remove(key);
         }
     }
 }

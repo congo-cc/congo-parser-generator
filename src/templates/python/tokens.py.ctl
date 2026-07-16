@@ -5,11 +5,11 @@ from enum import Enum, auto, unique
 from .utils import _GenWrapper, _List
 
 __all__ = [
-    '${settings.baseNodeClassName}',
+    '${settings::baseNodeClassName}',
     'TokenType',
     'Token',
-[#var tokenSubClassInfo = globals::tokenSubClassInfo()]
-[#list tokenSubClassInfo.sortedNames as name]
+[#var tokenSubClassInfo = globals.tokenSubClassInfo()]
+[#list tokenSubClassInfo::sortedNames as name]
     '${name}',
 [/#list]
     'new_token',
@@ -21,24 +21,24 @@ __all__ = [
 
 @unique
 class TokenType(Enum):
- [#list lexerData.regularExpressions as regexp]
-    ${regexp.label} = auto()
+ [#list lexerData::regularExpressions as regexp]
+    ${regexp::label} = auto()
  [/#list]
- [#list settings.extraTokenNames as t]
+ [#list settings::extraTokenNames as t]
     ${t} = auto()
  [/#list]
     INVALID = auto()
 
 @unique
 class LexicalState(Enum):
-  [#list lexerData.lexicalStates as lexicalState]
-    ${lexicalState.name} = auto()
+  [#list lexerData::lexicalStates as lexicalState]
+    ${lexicalState::name} = auto()
   [/#list]
 
-class ${settings.baseNodeClassName}:
+class ${settings::baseNodeClassName}:
 
     __slots__ = (
-[#if settings.nodeUsesParser]
+[#if settings::nodeUsesParser]
         'parser',
 [/#if]
         '_token_source',
@@ -47,7 +47,7 @@ class ${settings.baseNodeClassName}:
         'is_unparsed',
         'begin_offset',
         'end_offset',
-[#if settings.faultTolerant]
+[#if settings::faultTolerant]
         'dirty',
 [/#if]
         'named_child_map',
@@ -89,7 +89,7 @@ class ${settings.baseNodeClassName}:
     @property
     def token_source(self):
         result = self._token_source
-#if settings.tokenChaining
+#if settings::tokenChaining
         if not result:
             if self.prepended_token:
                 result = self.prepended_token.token_source
@@ -175,7 +175,7 @@ class ${settings.baseNodeClassName}:
         self.begin_offset = start.begin_offset
         if end is None:
             self.end_offset = start.end_offset
-[#if settings.tokenChaining]
+[#if settings::tokenChaining]
         self.prepended_token = start.prepended_token
         if end is None:
             self.appended_token = start.appended_token
@@ -184,7 +184,7 @@ class ${settings.baseNodeClassName}:
             if self.token_source is None:
                 self.token_source = end.token_source
             self.end_offset = end.end_offset
-[#if settings.tokenChaining]
+[#if settings::tokenChaining]
             self.appended_token = end.appended_token
 [/#if]
 
@@ -198,7 +198,7 @@ class ${settings.baseNodeClassName}:
             return self.type
         # return None
 
-[#if settings.tokensAreNodes]
+[#if settings::tokensAreNodes]
     #
     # Return the very first token that is part of this node.
     # It may be an unparsed (i.e. special) token.
@@ -283,33 +283,33 @@ class ${settings.baseNodeClassName}:
                                            self.end_line,
                                            self.end_column)
 
-class Token[#if settings.treeBuildingEnabled](${settings.baseNodeClassName})[/#if]:
+class Token[#if settings::treeBuildingEnabled](${settings::baseNodeClassName})[/#if]:
 
     __slots__ = (
         'type',
-#if settings.tokenChaining || settings.faultTolerant
+#if settings::tokenChaining || settings::faultTolerant
         '_image',
 /#if
-#if settings.tokenChaining
+#if settings::tokenChaining
         'prepended_token',
         'appended_token',
         'is_inserted',
 /#if
         'previous_token',
         'next_token',
-#var injectedFields = globals::injectedTokenFieldNames()
-#if injectedFields?size > 0
+#var injectedFields = globals.injectedTokenFieldNames()
+#if injectedFields.size() > 0
         # injected fields
 #list injectedFields as fieldName
         '${fieldName}',
 /#list
 /#if
-#if settings.faultTolerant
+#if settings::faultTolerant
         '_is_skipped',
         '_is_virtual',
         'dirty',
 /#if
-#if !settings.treeBuildingEnabled
+#if !settings::treeBuildingEnabled
         'begin_offset',
         'end_offset',
         'is_unparsed',
@@ -318,27 +318,27 @@ class Token[#if settings.treeBuildingEnabled](${settings.baseNodeClassName})[/#i
     )
 
     def __init__(self, type, token_source, begin_offset, end_offset):
-#if settings.treeBuildingEnabled
+#if settings::treeBuildingEnabled
         super().__init__(token_source, begin_offset, end_offset)
 #else
         self.begin_offset = begin_offset
         self.end_offset = end_offset
         self.token_source = token_source
 /#if
-${globals::translateTokenInjections(true)}
+${globals.translateTokenInjections(true)}
         self.type = type
         self.previous_token = None
         self.next_token = None
         self.is_unparsed = False
-#if settings.faultTolerant
+#if settings::faultTolerant
         self.dirty = False
         self._is_virtual = False
         self._is_skipped = False
 /#if
-#if settings.tokenChaining || settings.faultTolerant
+#if settings::tokenChaining || settings::faultTolerant
         self._image = None
 /#if
-#if settings.tokenChaining
+#if settings::tokenChaining
         self.prepended_token = None
         self.appended_token = None
         self.is_inserted = False
@@ -362,7 +362,7 @@ ${globals::translateTokenInjections(true)}
 
     def replace_type(self, tt):
         result = new_token(tt, self.token_source, self.begin_offset, self.end_offset)
-#if settings.tokenChaining
+#if settings::tokenChaining
         result.prepended_token = self.prepended_token
         result.appended_token = self.appended_token
         result.is_inserted = self.is_inserted
@@ -379,7 +379,7 @@ ${globals::translateTokenInjections(true)}
 
     @property
     def image(self):
-#if !settings.tokenChaining
+#if !settings::tokenChaining
         return self.source
 #else
         return self._image if self._image else self.source
@@ -397,7 +397,7 @@ ${globals::translateTokenInjections(true)}
         ts = self.token_source
         return None if not ts else ts.get_line(self)
 
-#if settings.tokenChaining || settings.faultTolerant
+#if settings::tokenChaining || settings::faultTolerant
     @image.setter
     def image(self, value):
         self._image = value
@@ -431,13 +431,13 @@ ${globals::translateTokenInjections(true)}
 
     @property
     def is_virtual(self):
-#if settings.faultTolerant
+#if settings::faultTolerant
         return self._is_virtual or self.type == TokenType.EOF
 #else
         return self.type == TokenType.EOF
 /#if
 
-#if settings.faultTolerant
+#if settings::faultTolerant
     @is_virtual.setter
     def is_virtual(self, value):
         self._is_virtual = value
@@ -445,7 +445,7 @@ ${globals::translateTokenInjections(true)}
 /#if
     @property
     def is_skipped(self):
-#if settings.faultTolerant
+#if settings::faultTolerant
         return self._is_skipped
 #else
         return False
@@ -475,7 +475,7 @@ ${globals::translateTokenInjections(true)}
 
     @property
     def previous_cached_token(self):
-#if settings.tokenChaining
+#if settings::tokenChaining
         if self.prepended_token:
             return self.prepended_token
 /#if
@@ -486,7 +486,7 @@ ${globals::translateTokenInjections(true)}
 
     @property
     def next_cached_token(self):
-#if settings.tokenChaining
+#if settings::tokenChaining
         if self.appended_token:
             return self.appended_token
 /#if
@@ -505,7 +505,7 @@ ${globals::translateTokenInjections(true)}
                                                  self.end_line,
                                                  self.end_column)
 
-#if settings.treeBuildingEnabled && settings.tokenChaining
+#if settings::treeBuildingEnabled && settings::tokenChaining
     # Copy the location info from another node or start/end nodes
     def copy_location_info(self, start, end=None):
         super().copy_location_info(start, end)
@@ -528,7 +528,7 @@ ${globals::translateTokenInjections(true)}
         self.begin_offset = start.begin_offset
         if end is None:
             self.end_offset = start.end_offset
-  #if settings.tokenChaining
+  #if settings::tokenChaining
             self.prepended_token = start.prepended_token
             self.appended_token = start.appended_token
   /#if
@@ -536,7 +536,7 @@ ${globals::translateTokenInjections(true)}
             if self.token_source is None:
                 self.token_source = end.token_source
             self.end_offset = end.end_offset
-  #if settings.tokenChaining
+  #if settings::tokenChaining
             self.prepended_token = start.prepended_token
             self.appended_token = end.appended_token
   /#if
@@ -552,7 +552,7 @@ ${globals::translateTokenInjections(true)}
         return '%s:%s:%s' % (self.input_source, self.begin_line,
                              self.begin_column)
 
-#if !settings.treeBuildingEnabled
+#if !settings::treeBuildingEnabled
 [#-- Not inherited from BaseNode --]
     @property
     def begin_line(self):
@@ -578,12 +578,12 @@ ${globals::translateTokenInjections(true)}
 
 /#if
 
-${globals::translateTokenInjections(false)}
+${globals.translateTokenInjections(false)}
 
 class InvalidToken(Token):
     def __init__(self, token_source, begin_offset, end_offset):
         super().__init__(TokenType.INVALID, token_source, begin_offset, end_offset)
-[#if settings.faultTolerant]
+[#if settings::faultTolerant]
         self.is_unparsed = True
         self.dirty = True
 [/#if]
@@ -594,27 +594,27 @@ class SkippedToken(InvalidToken): pass
 #
 # Token subclasses
 #
-[#list tokenSubClassInfo.sortedNames as name]
-class ${name}(${tokenSubClassInfo.tokenClassMap[name]}): pass
+[#list tokenSubClassInfo::sortedNames as name]
+class ${name}(${tokenSubClassInfo::tokenClassMap[name]}): pass
 
 [/#list]
-[#if settings.extraTokens?size > 0]
-  [#list settings.extraTokenNames as name]
-    [#var cn = settings.extraTokens[name]]
+[#if settings::extraTokens.size() > 0]
+  [#list settings::extraTokenNames as name]
+    [#var cn = settings::extraTokens[name]]
 class ${cn}(Token):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
-${globals::translateTokenSubclassInjections(cn, true)}
-${globals::translateTokenSubclassInjections(cn, false)}
+${globals.translateTokenSubclassInjections(cn, true)}
+${globals.translateTokenSubclassInjections(cn, false)}
   [/#list]
 [/#if]
 
 def new_token(type, token_source, begin_offset, end_offset):
-#if settings.treeBuildingEnabled
-  #list lexerData.orderedNamedTokens as re
-    #if re.generatedClassName != "Token" && !re.private
-    if type == TokenType.${re.label}:
-        return ${re.generatedClassName}(type, token_source, begin_offset, end_offset)
+#if settings::treeBuildingEnabled
+  #list lexerData::orderedNamedTokens as re
+    #if re::generatedClassName != "Token" && !re::private
+    if type == TokenType.${re::label}:
+        return ${re::generatedClassName}(type, token_source, begin_offset, end_offset)
     /#if
   /#list
 /#if
