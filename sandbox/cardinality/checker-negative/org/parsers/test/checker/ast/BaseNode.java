@@ -10,16 +10,16 @@ import java.util.Map;
 import java.util.Collection;
 import java.util.Collections;
 
-
 /**
 * The base concrete class for non-terminal Nodes
 */
-public class BaseNode implements Node {
+public class BaseNode implements Node { 
+
     private TelescopedSequenceLexer tokenSource;
 
-    public TelescopedSequenceLexer getTokenSource() {
-        if (tokenSource == null) {
-            for (Node child : children()) {
+    public TelescopedSequenceLexer getTokenSource() { 
+        if (tokenSource == null) { 
+            for (Node child : children()) { 
                 if (child.getTokenSource() instanceof TelescopedSequenceLexer) tokenSource = (TelescopedSequenceLexer) child.getTokenSource();
                 if (tokenSource != null) break;
             }
@@ -27,7 +27,7 @@ public class BaseNode implements Node {
         return tokenSource;
     }
 
-    public void setTokenSource(TokenSource tokenSource) {
+    public void setTokenSource(TokenSource tokenSource) { 
         this.tokenSource = (TelescopedSequenceLexer) tokenSource;
     }
 
@@ -41,17 +41,17 @@ public class BaseNode implements Node {
     * @param listClass the #java.util.List implementation to use internally
     * for the child nodes. By default #java.util.ArrayList is used.
     */
-    public static void setListClass(Class<? extends List<Node>> listClass) {
+    public static void setListClass(Class<? extends List<Node>> listClass) { 
         BaseNode.listClass = listClass;
     }
 
-    private List<Node> newList() {
-        if (listClass == null) {
+    private List<Node> newList() { 
+        if (listClass == null) { 
             return new ArrayList<>();
         }
-        try {
+        try { 
             return listClass.getDeclaredConstructor().newInstance();
-        } catch (Exception e) {
+        } catch (Exception e) { 
             throw new RuntimeException(e);
         }
     }
@@ -67,134 +67,134 @@ public class BaseNode implements Node {
     private int beginOffset, endOffset;
     private boolean unparsed;
 
-    public boolean isUnparsed() {
+    public boolean isUnparsed() { 
         return this.unparsed;
     }
 
-    public void setUnparsed(boolean unparsed) {
+    public void setUnparsed(boolean unparsed) { 
         this.unparsed = unparsed;
     }
 
-    public void setParent(Node n) {
+    public void setParent(Node n) { 
         parent = n;
     }
 
-    public Node getParent() {
+    public Node getParent() { 
         return parent;
     }
 
-    public boolean add(Node n) {
+    public boolean add(Node n) { 
         n.setParent(this);
         return children.add(n);
     }
 
-    public void add(int i, Node n) {
+    public void add(int i, Node n) { 
         children.add(i, n);
         n.setParent(this);
     }
 
-    public Node get(int i) {
+    public Node get(int i) { 
         return children.get(i);
     }
 
-    public Node set(int i, Node n) {
+    public Node set(int i, Node n) { 
         children.get(i).setParent(null);
         n.setParent(this);
         return children.set(i, n);
     }
 
-    public Node remove(int i) {
+    public Node remove(int i) { 
         Node n = children.remove(i);
         n.setParent(null);
         return n;
     }
 
-    public boolean remove(Object obj) {
+    public boolean remove(Object obj) { 
         Node n = (Node) obj;
         n.setParent(null);
         return children.remove(n);
     }
 
-    public void clear() {
-        for (Node child : children) {
+    public void clear() { 
+        for (Node child : children) { 
             child.setParent(null);
         }
         children.clear();
     }
 
-    public int size() {
+    public int size() { 
         return children.size();
     }
 
-    public List<Node> children() {
+    public List<Node> children() { 
         return Collections.unmodifiableList(children);
     }
 
-    public int getBeginOffset() {
+    public int getBeginOffset() { 
         return beginOffset;
     }
 
-    public void setBeginOffset(int beginOffset) {
+    public void setBeginOffset(int beginOffset) { 
         this.beginOffset = beginOffset;
     }
 
-    public int getEndOffset() {
+    public int getEndOffset() { 
         return endOffset;
     }
 
-    public void setEndOffset(int endOffset) {
+    public void setEndOffset(int endOffset) { 
         this.endOffset = endOffset;
     }
 
-    public List<Node> subList(int from, int to) {
+    public List<Node> subList(int from, int to) { 
         return children.subList(from, to);
     }
 
-    public List<Token> getRealTokens() {
+    public List<Token> getRealTokens() { 
         return descendants(Token.class, t -> !t.isUnparsed());
     }
 
-    public boolean addAll(Collection<? extends Node> nodes) {
+    public boolean addAll(Collection<? extends Node> nodes) { 
         for (Node n : nodes)n.setParent(this);
         return children.addAll(nodes);
     }
 
-    public boolean addAll(int i, Collection<? extends Node> nodes) {
+    public boolean addAll(int i, Collection<? extends Node> nodes) { 
         for (Node n : nodes)n.setParent(this);
         return children.addAll(i, nodes);
     }
 
-    public boolean containsAll(Collection<?> nodes) {
+    public boolean containsAll(Collection<?> nodes) { 
         return children.containsAll(nodes);
     }
 
-    public boolean retainAll(Collection<?> nodes) {
+    public boolean retainAll(Collection<?> nodes) { 
         return children.containsAll(nodes);
     }
 
-    public boolean removeAll(Collection<?> nodes) {
+    public boolean removeAll(Collection<?> nodes) { 
         return children.removeAll(nodes);
     }
 
-    public String toString() {
+    public String toString() { 
         return getSource();
     }
 
     private Map<String, Node> namedChildMap;
     private Map<String, List<Node>> namedChildListMap;
 
-    public Node getNamedChild(String name) {
-        if (namedChildMap == null) {
+    public Node getNamedChild(String name) { 
+        if (namedChildMap == null) { 
             return null;
         }
         return namedChildMap.get(name);
     }
 
-    public void setNamedChild(String name, Node node) {
-        if (namedChildMap == null) {
+    public void setNamedChild(String name, Node node) { 
+        if (namedChildMap == null) { 
             namedChildMap = new HashMap<>();
         }
-        if (namedChildMap.containsKey(name)) {
+        if (namedChildMap.containsKey(name)) { 
             // Can't have duplicates
             String msg = String.format("Duplicate named child not allowed: {0}", name);
             throw new RuntimeException(msg);
@@ -202,21 +202,20 @@ public class BaseNode implements Node {
         namedChildMap.put(name, node);
     }
 
-    public List<Node> getNamedChildList(String name) {
-        if (namedChildListMap == null) {
+    public List<Node> getNamedChildList(String name) { 
+        if (namedChildListMap == null) { 
             return null;
         }
         return namedChildListMap.get(name);
     }
 
-    public void addToNamedChildList(String name, Node node) {
-        if (namedChildListMap == null) {
+    public void addToNamedChildList(String name, Node node) { 
+        if (namedChildListMap == null) { 
             namedChildListMap = new HashMap<>();
         }
         List<Node> nodeList = namedChildListMap.computeIfAbsent(name, k -> new ArrayList<>());
         nodeList.add(node);
     }
-
 }
 
 

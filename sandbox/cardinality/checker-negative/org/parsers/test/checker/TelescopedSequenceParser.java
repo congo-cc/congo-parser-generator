@@ -17,30 +17,30 @@ import org.parsers.test.checker.Token.TokenType;
 import static org.parsers.test.checker.Token.TokenType.*;
 import org.parsers.test.checker.ast.Root;
 
+public class TelescopedSequenceParser { 
 
-public class TelescopedSequenceParser {
+    private static final class CardinalityState { 
 
-    private static final class CardinalityState {
         private final int[] cardinalities;
         private final boolean isProvisional;
 
-        public CardinalityState(int[] cardinalities, boolean isProvisional) {
+        public CardinalityState(int[] cardinalities, boolean isProvisional) { 
             this.cardinalities = cardinalities.clone();
             // Defensive copy to ensure immutability
             this.isProvisional = isProvisional;
         }
 
-        public int[] cardinalities() {
+        public int[] cardinalities() { 
             return cardinalities.clone();
             // Defensive copy to prevent modification
         }
 
-        public boolean isProvisional() {
+        public boolean isProvisional() { 
             return isProvisional;
         }
 
         @Override
-        public boolean equals(Object o) {
+        public boolean equals(Object o) { 
             if (this == o) return true;
             if (o == null || getClass() != o.getClass()) return false;
             CardinalityState that = (CardinalityState) o;
@@ -48,24 +48,23 @@ public class TelescopedSequenceParser {
         }
 
         @Override
-        public int hashCode() {
+        public int hashCode() { 
             return 31 * Arrays.hashCode(cardinalities) + Boolean.hashCode(isProvisional);
         }
 
         @Override
-        public String toString() {
+        public String toString() { 
             return "CardinalityState{" + "cardinalities=" + Arrays.toString(cardinalities) + ", isProvisional=" + isProvisional + '}';
         }
-
     }
 
+    private final class RepetitionCardinality { 
 
-    private final class RepetitionCardinality {
         final int[][] choiceCardinalities;
         Stack<CardinalityState> cardinalitiesStack = new Stack<>();
         final int[] cardinalities;
 
-        RepetitionCardinality(int[][] choiceCardinalities) {
+        RepetitionCardinality(int[][] choiceCardinalities) { 
             this.choiceCardinalities = choiceCardinalities;
             // push an initialized, non-provisional frame to start a loop
             cardinalitiesStack.push(new CardinalityState(new int[choiceCardinalities.length], false));
@@ -73,14 +72,14 @@ public class TelescopedSequenceParser {
             cardinalities = new int[choiceCardinalities.length];
         }
 
-        public final boolean choose(int choiceNo, boolean isLookahead) {
-            if (isLookahead) {
+        public final boolean choose(int choiceNo, boolean isLookahead) { 
+            if (isLookahead) { 
                 CardinalityState currentState = cardinalitiesStack.peek();
                 CardinalityState priorState = currentState;
-                if (!currentState.isProvisional()) {
+                if (!currentState.isProvisional()) { 
                     // open new provisional frame
                     push(true);
-                } else {
+                } else { 
                     priorState = cardinalitiesStack.get(cardinalitiesStack.size() - 2);
                 }
                 // at this point current is a provisional frame
@@ -90,20 +89,20 @@ public class TelescopedSequenceParser {
                 // allowing the detection of multiple chooses during the lookahead process.  In
                 // other words, in a given iteration only the first increment is necessary and
                 // sufficient for accuracy.
-                if (currentCardinalities[choiceNo] == priorCardinalities[choiceNo]) {
-                    if (currentCardinalities[choiceNo] < choiceCardinalities[choiceNo][1]) {
+                if (currentCardinalities[choiceNo] == priorCardinalities[choiceNo]) { 
+                    if (currentCardinalities[choiceNo] < choiceCardinalities[choiceNo][1]) { 
                         ++currentCardinalities[choiceNo];
                         // replace the provisional frame at tos with incremented one
                         cardinalitiesStack.pop();
                         cardinalitiesStack.push(new CardinalityState(currentCardinalities, true));
                         return true;
                     }
-                } else {
+                } else { 
                     return true;
                 }
-            } else {
+            } else { 
                 // the real thing
-                if (cardinalities[choiceNo] < choiceCardinalities[choiceNo][1]) {
+                if (cardinalities[choiceNo] < choiceCardinalities[choiceNo][1]) { 
                     ++cardinalities[choiceNo];
                     return true;
                 }
@@ -112,30 +111,30 @@ public class TelescopedSequenceParser {
             return false;
         }
 
-        public CardinalityState push(boolean isProvisional) {
-            if (cardinalitiesStack.size() == 0) {
+        public CardinalityState push(boolean isProvisional) { 
+            if (cardinalitiesStack.size() == 0) { 
                 // create new initialized frame
                 return cardinalitiesStack.push(new CardinalityState(new int[choiceCardinalities.length], isProvisional));
-            } else {
+            } else { 
                 // create new frame from current top frame
                 return cardinalitiesStack.push(new CardinalityState(cardinalitiesStack.peek().cardinalities(), isProvisional));
             }
         }
 
-        public boolean checkCardinality(boolean isLookahead) {
-            if (isLookahead) {
+        public boolean checkCardinality(boolean isLookahead) { 
+            if (isLookahead) { 
                 CardinalityState finalized = new CardinalityState(new int[choiceCardinalities.length], false);
-                if (cardinalitiesStack.size() == 1) {
+                if (cardinalitiesStack.size() == 1) { 
                     finalized = cardinalitiesStack.pop();
                 }
-                for (int i = 0; i < finalized.cardinalities().length; i++) {
-                    if (finalized.cardinalities()[i] < choiceCardinalities[i][0]) {
+                for (int i = 0; i < finalized.cardinalities().length; i++) { 
+                    if (finalized.cardinalities()[i] < choiceCardinalities[i][0]) { 
                         return false;
                     }
                 }
-            } else {
-                for (int i = 0; i < choiceCardinalities.length; i++) {
-                    if (cardinalities[i] < choiceCardinalities[i][0]) {
+            } else { 
+                for (int i = 0; i < choiceCardinalities.length; i++) { 
+                    if (cardinalities[i] < choiceCardinalities[i][0]) { 
                         return false;
                     }
                 }
@@ -143,14 +142,14 @@ public class TelescopedSequenceParser {
             return true;
         }
 
-        public void commitIteration(boolean isParsing) {
-            if (cardinalitiesStack.peek().isProvisional()) {
+        public void commitIteration(boolean isParsing) { 
+            if (cardinalitiesStack.peek().isProvisional()) { 
                 CardinalityState current = cardinalitiesStack.pop();
                 // replace the penultimate frame with the current one
                 cardinalitiesStack.pop();
                 // pop the penultimate
                 cardinalitiesStack.push(new CardinalityState(current.cardinalities(), false));
-            } else if (isParsing) {
+            } else if (isParsing) { 
                 // No provisional frame (i.e., no lookahead "choose" yet), but we are parsing now, so
                 // update the lookahead cardinalities by borrowing the parsing ones, as the lookahead
                 // cardinality increment is potentially done after the actual parsing increment
@@ -161,24 +160,22 @@ public class TelescopedSequenceParser {
             }
         }
 
-        public boolean commit(boolean isSuccess) {
-            if (!cardinalitiesStack.isEmpty() && cardinalitiesStack.peek().isProvisional()) {
+        public boolean commit(boolean isSuccess) { 
+            if (!cardinalitiesStack.isEmpty() && cardinalitiesStack.peek().isProvisional()) { 
                 // discard the provisional frame if not successful
-                if (!isSuccess) {
+                if (!isSuccess) { 
                     cardinalitiesStack.pop();
                     assert(!cardinalitiesStack.peek().isProvisional()) : "provisional frames should always be on top of a non-provisional frame.";
                 }
             }
             return isSuccess;
         }
-
     }
 
     static final int UNLIMITED = Integer.MAX_VALUE;
     private final Token DUMMY_START_TOKEN = new Token();
     // The last token successfully "consumed"
     Token lastConsumedToken = DUMMY_START_TOKEN;
-    private TokenType nextTokenType;
     // Normally null when parsing, populated when doing lookahead
     private Token currentLookaheadToken;
     private boolean hitFailure;
@@ -186,37 +183,37 @@ public class TelescopedSequenceParser {
     private String currentLookaheadProduction;
     private boolean cancelled;
 
-    public void cancel() {
+    public void cancel() { 
         cancelled = true;
     }
 
-    public boolean isCancelled() {
+    public boolean isCancelled() { 
         return cancelled;
     }
 
-    public boolean getLegacyGlitchyLookahead() {
+    public boolean getLegacyGlitchyLookahead() { 
         return false;
     }
 
     /** Generated Lexer. */
     private TelescopedSequenceLexer token_source;
 
-    public void setInputSource(String inputSource) {
+    public void setInputSource(String inputSource) { 
         token_source.setInputSource(inputSource);
     }
 
-    String getInputSource() {
+    String getInputSource() { 
         return token_source.getInputSource();
     }
 
     //=================================
     // Generated constructors
     //=================================
-    public TelescopedSequenceParser(String inputSource, CharSequence content) {
+    public TelescopedSequenceParser(String inputSource, CharSequence content) { 
         this(new TelescopedSequenceLexer(inputSource, content));
     }
 
-    public TelescopedSequenceParser(CharSequence content) {
+    public TelescopedSequenceParser(CharSequence content) { 
         this("input", content);
     }
 
@@ -225,23 +222,23 @@ public class TelescopedSequenceParser {
     * will be used in error messages and so on.
     * @param path The location (typically the filename) from which to get the input to parse
     */
-    public TelescopedSequenceParser(String inputSource, Path path) throws IOException {
+    public TelescopedSequenceParser(String inputSource, Path path) throws IOException { 
         this(inputSource, TokenSource.stringFromBytes(Files.readAllBytes(path)));
     }
 
-    public TelescopedSequenceParser(String inputSource, Path path, Charset charset) throws IOException {
+    public TelescopedSequenceParser(String inputSource, Path path, Charset charset) throws IOException { 
         this(inputSource, TokenSource.stringFromBytes(Files.readAllBytes(path), charset));
     }
 
     /**
     * @param path The location (typically the filename) from which to get the input to parse
     */
-    public TelescopedSequenceParser(Path path) throws IOException {
+    public TelescopedSequenceParser(Path path) throws IOException { 
         this(path.toString(), path);
     }
 
     /** Constructor with user supplied Lexer. */
-    public TelescopedSequenceParser(TelescopedSequenceLexer lexer) {
+    public TelescopedSequenceParser(TelescopedSequenceLexer lexer) { 
         token_source = lexer;
         lastConsumedToken.setTokenSource(lexer);
     }
@@ -250,25 +247,24 @@ public class TelescopedSequenceParser {
     * Set the starting line/column for location reporting.
     * By default, this is 1,1.
     */
-    public void setStartingPos(int startingLine, int startingColumn) {
+    public void setStartingPos(int startingLine, int startingColumn) { 
         token_source.setStartingPos(startingLine, startingColumn);
     }
 
     // If the next token is cached, it returns that
     // Otherwise, it goes to the token_source, i.e. the Lexer.
-    private Token nextToken(final Token tok) {
+    private Token nextToken(final Token tok) { 
         Token result = token_source.getNextToken(tok);
-        while (result.isUnparsed()) {
+        while (result.isUnparsed()) { 
             result = token_source.getNextToken(result);
         }
-        nextTokenType = null;
         return result;
     }
 
     /**
     * @return the next Token off the stream. This is the same as #getToken(1)
     */
-    public final Token getNextToken() {
+    public final Token getNextToken() { 
         return getToken(1);
     }
 
@@ -279,42 +275,40 @@ public class TelescopedSequenceParser {
     * Otherwise, it is the lastConsumedToken. If you pass in a negative
     * number it goes backward.
     */
-    public final Token getToken(final int index) {
+    public final Token getToken(final int index) { 
         Token t = currentLookaheadToken == null ? lastConsumedToken : currentLookaheadToken;
-        for (int i = 0; i < index; i++) {
+        for (int i = 0; i < index; i++) { 
             t = nextToken(t);
         }
-        for (int i = 0; i > index; i--) {
+        for (int i = 0; i > index; i--) { 
             t = t.getPrevious();
             if (t == null) break;
         }
         return t;
     }
 
-    boolean activateTokenTypes(TokenType...types) {
+    boolean activateTokenTypes(TokenType... types) { 
         if (token_source.activeTokenTypes == null) return false;
         boolean result = false;
-        for (TokenType tt : types) {
+        for (TokenType tt : types) { 
             result |= token_source.activeTokenTypes.add(tt);
         }
-        if (result) {
+        if (result) { 
             token_source.reset(getToken(0));
-            nextTokenType = null;
         }
         return result;
     }
 
-    boolean deactivateTokenTypes(TokenType...types) {
+    boolean deactivateTokenTypes(TokenType... types) { 
         boolean result = false;
-        if (token_source.activeTokenTypes == null) {
+        if (token_source.activeTokenTypes == null) { 
             token_source.activeTokenTypes = EnumSet.allOf(TokenType.class);
         }
-        for (TokenType tt : types) {
+        for (TokenType tt : types) { 
             result |= token_source.activeTokenTypes.remove(tt);
         }
-        if (result) {
+        if (result) { 
             token_source.reset(getToken(0));
-            nextTokenType = null;
         }
         return result;
     }
@@ -327,8 +321,8 @@ public class TelescopedSequenceParser {
     * the hitFailure flag to true, so that the lookahead routine we're in will
     * fail at the first opportunity.
     */
-    private void fail(String message, Node location) {
-        if (currentLookaheadToken == null) {
+    private void fail(String message, Node location) { 
+        if (currentLookaheadToken == null) { 
             if (message == null) message = "";
             throw new ParseException(message, location, parsingStack);
         }
@@ -336,95 +330,95 @@ public class TelescopedSequenceParser {
     }
 
     // TelescopedSequence.ccc:5:1
-    final public void Root() {
+    final public void Root() { 
         if (cancelled) throw new CancellationException();
         this.currentlyParsedProduction = "Root";
         // Code for BNFProduction specified at TelescopedSequence.ccc:5:1
         Root thisProduction = null;
-        if (buildTree) {
+        if (buildTree) { 
             thisProduction = new Root();
             openNodeScope(thisProduction);
         }
         ParseException parseException3 = null;
         int callStackSize4 = parsingStack.size();
-        try {
+        try { 
             // Code for OneOrMore specified at TelescopedSequence.ccc:5:8
-            RepetitionCardinality cardinalities0 = new RepetitionCardinality(new int[][] {new int[] {3,
-            5}, new int[] {0, 2}});
-            while (true) {
+            RepetitionCardinality cardinalities0 = new RepetitionCardinality(new int[][] { new int[] { 3,
+            5}, new int[] { 0, 2}});
+            while (true) { 
                 // Code for Assertion specified at TelescopedSequence.ccc:5:10
-                if (!cardinalities0.choose(0, false)) {
+                if (!cardinalities0.choose(0, false)) { 
                     fail("Maximum cardinality constraint at: TelescopedSequence.ccc:5:10 exceeded.", getToken(1));
                 }
                 // Code for Assertion specified at TelescopedSequence.ccc:5:25
-                if (!cardinalities0.choose(1, false)) {
+                if (!cardinalities0.choose(1, false)) { 
                     fail("Maximum cardinality constraint at: TelescopedSequence.ccc:5:25 exceeded.", getToken(1));
                 }
                 // Code for Terminal specified at TelescopedSequence.ccc:5:40
                 pushOntoCallStack("Root", "TelescopedSequence.ccc", 5, 40);
-                try {
+                try { 
                     consumeToken(X);
-                } finally {
+                } finally { 
                     popCallStack();
                 }
                 cardinalities0.commitIteration(true);
                 if (!(typeMatches(X, getToken(1)))) break;
             }
-            if (!cardinalities0.checkCardinality(false)) {
+            if (!cardinalities0.checkCardinality(false)) { 
                 fail("Minimum cardinality constraint(s) for: TelescopedSequence.ccc:5:8 not met.", getToken(1));
             }
-        } catch (ParseException e) {
+        } catch (ParseException e) { 
             parseException3 = e;
             throw e;
-        } finally {
+        } finally { 
             restoreCallStack(callStackSize4);
-            if (thisProduction != null) {
-                if (parseException3 == null) {
+            if (thisProduction != null) { 
+                if (parseException3 == null) { 
                     closeNodeScope(thisProduction, nodeArity() > 1);
-                } else {
+                } else { 
                     clearNodeScope();
                 }
             }
         }
     }
 
-    private boolean typeMatches(TokenType type, Token tok) {
+    private boolean typeMatches(TokenType type, Token tok) { 
         return tok.getType() == type;
     }
 
     private ArrayList<NonTerminalCall> parsingStack = new ArrayList<>();
     private final ArrayList<NonTerminalCall> lookaheadStack = new ArrayList<>();
 
-    private void pushOntoCallStack(String methodName, String fileName, int line, int column) {
+    private void pushOntoCallStack(String methodName, String fileName, int line, int column) { 
         parsingStack.add(new NonTerminalCall("TelescopedSequenceParser", getToken(1), fileName, methodName, line, column));
     }
 
-    private void popCallStack() {
+    private void popCallStack() { 
         NonTerminalCall ntc = parsingStack.remove(parsingStack.size() - 1);
         this.currentlyParsedProduction = ntc.productionName;
     }
 
-    private void restoreCallStack(int prevSize) {
-        while (parsingStack.size() > prevSize) {
+    private void restoreCallStack(int prevSize) { 
+        while (parsingStack.size() > prevSize) { 
             popCallStack();
         }
     }
 
-    void dumpLookaheadStack(PrintStream ps) {
+    void dumpLookaheadStack(PrintStream ps) { 
         ListIterator<NonTerminalCall> it = lookaheadStack.listIterator(lookaheadStack.size());
-        while (it.hasPrevious()) {
+        while (it.hasPrevious()) { 
             ps.print(it.previous());
         }
     }
 
-    void dumpCallStack(PrintStream ps) {
+    void dumpCallStack(PrintStream ps) { 
         ListIterator<NonTerminalCall> it = parsingStack.listIterator(parsingStack.size());
-        while (it.hasPrevious()) {
+        while (it.hasPrevious()) { 
             ps.print(it.previous());
         }
     }
 
-    void dumpLookaheadCallStack(PrintStream ps) {
+    void dumpLookaheadCallStack(PrintStream ps) { 
         ps.println("Current Parser Production is: " + currentlyParsedProduction);
         ps.println("Current Lookahead Production is: " + currentLookaheadProduction);
         ps.println("---Lookahead Stack---");
@@ -433,24 +427,23 @@ public class TelescopedSequenceParser {
         dumpCallStack(ps);
     }
 
-    public boolean isParserTolerant() {
+    public boolean isParserTolerant() { 
         return false;
     }
 
-    public void setParserTolerant(boolean tolerantParsing) {
-        if (tolerantParsing) {
+    public void setParserTolerant(boolean tolerantParsing) { 
+        if (tolerantParsing) { 
             throw new UnsupportedOperationException("This parser was not built with that feature!");
         }
     }
 
-    private Token consumeToken(TokenType expectedType) {
+    private Token consumeToken(TokenType expectedType) { 
         Token nextToken = nextToken(lastConsumedToken);
-        if (nextToken.getType() != expectedType) {
+        if (nextToken.getType() != expectedType) { 
             nextToken = handleUnexpectedTokenType(expectedType, nextToken);
         }
         this.lastConsumedToken = nextToken;
-        this.nextTokenType = null;
-        if (buildTree && tokensAreNodes) {
+        if (buildTree && tokensAreNodes) { 
             lastConsumedToken.open();
             pushNode(lastConsumedToken);
             lastConsumedToken.close();
@@ -458,7 +451,7 @@ public class TelescopedSequenceParser {
         return lastConsumedToken;
     }
 
-    private Token handleUnexpectedTokenType(TokenType expectedType, Token nextToken) {
+    private Token handleUnexpectedTokenType(TokenType expectedType, Token nextToken) { 
         throw new ParseException(nextToken, EnumSet.of(expectedType), parsingStack);
     }
 
@@ -466,15 +459,15 @@ public class TelescopedSequenceParser {
     private boolean tokensAreNodes = true;
     private boolean unparsedTokensAreNodes = false;
 
-    public boolean isTreeBuildingEnabled() {
+    public boolean isTreeBuildingEnabled() { 
         return buildTree;
     }
 
-    public void setUnparsedTokensAreNodes(boolean unparsedTokensAreNodes) {
+    public void setUnparsedTokensAreNodes(boolean unparsedTokensAreNodes) { 
         this.unparsedTokensAreNodes = unparsedTokensAreNodes;
     }
 
-    public void setTokensAreNodes(boolean tokensAreNodes) {
+    public void setTokensAreNodes(boolean tokensAreNodes) { 
         this.tokensAreNodes = tokensAreNodes;
     }
 
@@ -484,7 +477,7 @@ public class TelescopedSequenceParser {
     * @return the root node of the AST. It only makes sense to call
     * this after a successful parse.
     */
-    public Node rootNode() {
+    public Node rootNode() { 
         return currentNodeScope.rootNode();
     }
 
@@ -492,7 +485,7 @@ public class TelescopedSequenceParser {
     * push a node onto the top of the node stack
     * @param n the node to push
     */
-    public void pushNode(Node n) {
+    public void pushNode(Node n) { 
         currentNodeScope.add(n);
     }
 
@@ -500,14 +493,14 @@ public class TelescopedSequenceParser {
     * @return the node on the top of the stack, and remove it from the
     * stack.
     */
-    public Node popNode() {
+    public Node popNode() { 
         return currentNodeScope.pop();
     }
 
     /**
     * @return the node currently on the top of the tree-building stack.
     */
-    public Node peekNode() {
+    public Node peekNode() { 
         return currentNodeScope.peek();
     }
 
@@ -517,7 +510,7 @@ public class TelescopedSequenceParser {
     * This is effectively equivalent to popNode() followed by pushNode(n)
     * @param n the node to poke
     */
-    public void pokeNode(Node n) {
+    public void pokeNode(Node n) { 
         currentNodeScope.poke(n);
     }
 
@@ -525,7 +518,7 @@ public class TelescopedSequenceParser {
     * Replace the type of the last consumed token and poke it onto the
     * stack.
     */
-    protected void replaceTokenType(TokenType tt) {
+    protected void replaceTokenType(TokenType tt) { 
         lastConsumedToken = lastConsumedToken.replaceType(tt);
         pokeNode(lastConsumedToken);
     }
@@ -534,17 +527,17 @@ public class TelescopedSequenceParser {
     * @return the number of Nodes on the tree-building stack in the current node
     * scope.
     */
-    public int nodeArity() {
+    public int nodeArity() { 
         return currentNodeScope.size();
     }
 
-    private void clearNodeScope() {
+    private void clearNodeScope() { 
         currentNodeScope.clear();
     }
 
-    private void openNodeScope(Node n) {
+    private void openNodeScope(Node n) { 
         new NodeScope();
-        if (n != null) {
+        if (n != null) { 
             n.setTokenSource(lastConsumedToken.getTokenSource());
             // We set the begin/end offsets based on the ending location
             // of the last consumed token. So, we start with a Node
@@ -565,38 +558,38 @@ public class TelescopedSequenceParser {
     * @param num is the number of child nodes to pop as children
     * @return @{code true}
     */
-    private boolean closeNodeScope(Node n, int num) {
+    private boolean closeNodeScope(Node n, int num) { 
         n.setBeginOffset(lastConsumedToken.getEndOffset());
         n.setEndOffset(lastConsumedToken.getEndOffset());
         currentNodeScope.close();
         ArrayList<Node> nodes = new ArrayList<>();
-        for (int i = 0; i < num; i++) {
+        for (int i = 0; i < num; i++) { 
             nodes.add(popNode());
         }
         Collections.reverse(nodes);
-        for (Node child : nodes) {
-            if (child.getInputSource() == n.getInputSource()) {
+        for (Node child : nodes) { 
+            if (child.getInputSource() == n.getInputSource()) { 
                 n.setBeginOffset(child.getBeginOffset());
                 break;
             }
         }
-        for (Node child : nodes) {
-            if (unparsedTokensAreNodes && child instanceof Token) {
+        for (Node child : nodes) { 
+            if (unparsedTokensAreNodes && child instanceof Token) { 
                 Token tok = (Token) child;
-                while (tok.previousCachedToken() != null && tok.previousCachedToken().isUnparsed()) {
+                while (tok.previousCachedToken() != null && tok.previousCachedToken().isUnparsed()) { 
                     tok = tok.previousCachedToken();
                 }
                 boolean locationSet = false;
-                while (tok.isUnparsed()) {
+                while (tok.isUnparsed()) { 
                     n.add(tok);
-                    if (!locationSet && tok.getInputSource() == n.getInputSource() && tok.getBeginOffset() < n.getBeginOffset()) {
+                    if (!locationSet && tok.getInputSource() == n.getInputSource() && tok.getBeginOffset() < n.getBeginOffset()) { 
                         n.setBeginOffset(tok.getBeginOffset());
                         locationSet = true;
                     }
                     tok = tok.nextCachedToken();
                 }
             }
-            if (child.getInputSource() == n.getInputSource()) {
+            if (child.getInputSource() == n.getInputSource()) { 
                 n.setEndOffset(child.getEndOffset());
             }
             n.add(child);
@@ -613,86 +606,85 @@ public class TelescopedSequenceParser {
     * on to the stack.  If the condition is false the node is not
     * constructed and they are left on the stack.
     */
-    private boolean closeNodeScope(Node n, boolean condition) {
-        if (n == null || !condition) {
+    private boolean closeNodeScope(Node n, boolean condition) { 
+        if (n == null || !condition) { 
             currentNodeScope.close();
             return false;
         }
         return closeNodeScope(n, nodeArity());
     }
 
-    public boolean getBuildTree() {
+    public boolean getBuildTree() { 
         return buildTree;
     }
 
-    public void setBuildTree(boolean buildTree) {
+    public void setBuildTree(boolean buildTree) { 
         this.buildTree = buildTree;
     }
 
-
     @SuppressWarnings("serial")
-    class NodeScope extends ArrayList<Node> {
+    class NodeScope extends ArrayList<Node> { 
+
         NodeScope parentScope;
 
-        NodeScope() {
+        NodeScope() { 
             this.parentScope = TelescopedSequenceParser.this.currentNodeScope;
             TelescopedSequenceParser.this.currentNodeScope = this;
         }
 
-        boolean isRootScope() {
+        boolean isRootScope() { 
             return parentScope == null;
         }
 
-        Node rootNode() {
+        Node rootNode() { 
             NodeScope ns = this;
-            while (ns.parentScope != null) {
+            while (ns.parentScope != null) { 
                 ns = ns.parentScope;
             }
             return ns.isEmpty() ? null : ns.get(0);
         }
 
-        Node peek() {
-            if (isEmpty()) {
+        Node peek() { 
+            if (isEmpty()) { 
                 return parentScope == null ? null : parentScope.peek();
             }
             return get(size() - 1);
         }
 
-        Node pop() {
+        Node pop() { 
             return isEmpty() ? parentScope.pop() : remove(size() - 1);
         }
 
-        void poke(Node n) {
-            if (isEmpty()) {
+        void poke(Node n) { 
+            if (isEmpty()) { 
                 parentScope.poke(n);
-            } else {
+            } else { 
                 set(size() - 1, n);
             }
         }
 
-        void close() {
+        void close() { 
             parentScope.addAll(this);
             TelescopedSequenceParser.this.currentNodeScope = parentScope;
         }
 
-        int nestingLevel() {
+        int nestingLevel() { 
             int result = 0;
             NodeScope parent = this;
-            while (parent.parentScope != null) {
+            while (parent.parentScope != null) { 
                 result++;
                 parent = parent.parentScope;
             }
             return result;
         }
 
-        public NodeScope clone() {
+        public NodeScope clone() { 
             NodeScope clone = (NodeScope) super.clone();
-            if (parentScope != null) {
+            if (parentScope != null) { 
                 clone.parentScope = parentScope.clone();
             }
             return clone;
         }
-
     }
 
 }

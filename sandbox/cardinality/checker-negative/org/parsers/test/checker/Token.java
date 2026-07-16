@@ -9,53 +9,51 @@ import java.util.Collections;
 import java.util.Iterator;
 import java.util.List;
 
+public class Token implements CharSequence, Node.TerminalNode { 
 
-public class Token implements CharSequence, Node.TerminalNode {
-
-    public enum TokenType implements Node.NodeType {
+    public enum TokenType implements Node.NodeType { 
         EOF, X("x"), DUMMY, INVALID;
 
-        TokenType() {
+        TokenType() { 
         }
 
-        TokenType(String literalString) {
+        TokenType(String literalString) { 
             this.literalString = literalString;
         }
 
         private String literalString;
 
-        public String getLiteralString() {
+        public String getLiteralString() { 
             return literalString;
         }
 
         private boolean contextualKeyword, ignoreCase;
 
-        TokenType(String literalString, boolean contextualKeyword, boolean ignoreCase) {
+        TokenType(String literalString, boolean contextualKeyword, boolean ignoreCase) { 
             this.literalString = literalString;
             this.contextualKeyword = contextualKeyword;
             this.ignoreCase = ignoreCase;
         }
 
-        public boolean isContextualKeyword() {
+        public boolean isContextualKeyword() { 
             return contextualKeyword;
         }
 
-        public boolean isIgnoreCase() {
+        public boolean isIgnoreCase() { 
             return ignoreCase;
         }
 
-        public boolean isUndefined() {
+        public boolean isUndefined() { 
             return this == DUMMY;
         }
 
-        public boolean isInvalid() {
+        public boolean isInvalid() { 
             return this == INVALID;
         }
 
-        public boolean isEOF() {
+        public boolean isEOF() { 
             return this == EOF;
         }
-
     }
 
     private TokenSource tokenSource;
@@ -64,10 +62,27 @@ public class Token implements CharSequence, Node.TerminalNode {
     private int endOffset;
     private boolean unparsed;
     private Node parent;
+    private String cachedImage;
 
-    public void truncate(int amount) {
+    /**
+    * If cachedImage is set, then the various methods
+    * that implement #java.lang.CharSequence use that string
+    * rather than what is returned by getSource()
+    */
+    public void setCachedImage(String image) { 
+        this.cachedImage = image;
+    }
+
+    public String getCachedImage() { 
+        return this.cachedImage;
+    }
+
+    public void truncate(int amount) { 
         int newEndOffset = Math.max(getBeginOffset(), getEndOffset() - amount);
         setEndOffset(newEndOffset);
+        if (cachedImage != null) { 
+            cachedImage = cachedImage.substring(0, newEndOffset - getBeginOffset());
+        }
     }
 
     /**
@@ -75,7 +90,7 @@ public class Token implements CharSequence, Node.TerminalNode {
     * programmer would use this method. It needs to
     * be public because it is part of the org.parsers.test.checker.Node interface.
     */
-    public void setBeginOffset(int beginOffset) {
+    public void setBeginOffset(int beginOffset) { 
         this.beginOffset = beginOffset;
     }
 
@@ -84,7 +99,7 @@ public class Token implements CharSequence, Node.TerminalNode {
     * programmer would use this method. It needs to
     * be public because it is part of the org.parsers.test.checker.Node interface.
     */
-    public void setEndOffset(int endOffset) {
+    public void setEndOffset(int endOffset) { 
         this.endOffset = endOffset;
     }
 
@@ -92,7 +107,7 @@ public class Token implements CharSequence, Node.TerminalNode {
     * @return the TokenSource object that handles
     * location info for the tokens.
     */
-    public TokenSource getTokenSource() {
+    public TokenSource getTokenSource() { 
         return tokenSource;
     }
 
@@ -100,7 +115,7 @@ public class Token implements CharSequence, Node.TerminalNode {
     * @return the line of source which contains the token.
     * This can be useful in error reporting.
     */
-    public String getSourceLine() {
+    public String getSourceLine() { 
         return tokenSource.getLine(this);
     }
 
@@ -108,11 +123,11 @@ public class Token implements CharSequence, Node.TerminalNode {
     * It should be exceedingly rare that an application
     * programmer needs to use this method.
     */
-    public void setTokenSource(TokenSource tokenSource) {
+    public void setTokenSource(TokenSource tokenSource) { 
         this.tokenSource = tokenSource;
     }
 
-    public boolean isInvalid() {
+    public boolean isInvalid() { 
         return getType().isInvalid();
     }
 
@@ -120,33 +135,33 @@ public class Token implements CharSequence, Node.TerminalNode {
     * Return the TokenType of this Token object
     */
     @Override
-    public TokenType getType() {
+    public TokenType getType() { 
         return type;
     }
 
-    protected void setType(TokenType type) {
+    protected void setType(TokenType type) { 
         this.type = type;
     }
 
     /**
     * @return whether this Token represent actual input or was it inserted somehow?
     */
-    public boolean isVirtual() {
+    public boolean isVirtual() { 
         return type == TokenType.EOF;
     }
 
     /**
     * @return Did we skip this token in parsing?
     */
-    public boolean isSkipped() {
+    public boolean isSkipped() { 
         return false;
     }
 
-    public int getBeginOffset() {
+    public int getBeginOffset() { 
         return beginOffset;
     }
 
-    public int getEndOffset() {
+    public int getEndOffset() { 
         return endOffset;
     }
 
@@ -155,7 +170,7 @@ public class Token implements CharSequence, Node.TerminalNode {
     * or null
     */
     @Override
-    public final Token getNext() {
+    public final Token getNext() { 
         return getNextParsedToken();
     }
 
@@ -163,9 +178,9 @@ public class Token implements CharSequence, Node.TerminalNode {
     * @return the previous regular (i.e. parsed) token
     * or null
     */
-    public final Token getPrevious() {
+    public final Token getPrevious() { 
         Token result = previousCachedToken();
-        while (result != null && result.isUnparsed()) {
+        while (result != null && result.isUnparsed()) { 
             result = result.previousCachedToken();
         }
         return result;
@@ -174,9 +189,9 @@ public class Token implements CharSequence, Node.TerminalNode {
     /**
     * @return the next regular (i.e. parsed) token
     */
-    private Token getNextParsedToken() {
+    private Token getNextParsedToken() { 
         Token result = nextCachedToken();
-        while (result != null && result.isUnparsed()) {
+        while (result != null && result.isUnparsed()) { 
             result = result.nextCachedToken();
         }
         return result;
@@ -185,31 +200,46 @@ public class Token implements CharSequence, Node.TerminalNode {
     /**
     * @return the next token of any sort (parsed or unparsed or invalid)
     */
-    public Token nextCachedToken() {
+    public Token nextCachedToken() { 
         if (getType() == TokenType.EOF) return null;
         TokenSource tokenSource = getTokenSource();
         return tokenSource != null ? (Token) tokenSource.nextCachedToken(getEndOffset()) : null;
     }
 
-    public Token previousCachedToken() {
+    /**
+    * @return the previous token of any sort (parsed or unparsed or invalid)
+    */
+    public Token previousCachedToken() { 
         if (getTokenSource() == null) return null;
         return (Token) getTokenSource().previousCachedToken(getBeginOffset());
     }
 
-    Token getPreviousToken() {
+    Token getPreviousToken() { 
         return previousCachedToken();
     }
 
-    public Token replaceType(TokenType type) {
-        if (type == this.getType()) {
+    /**
+    * @return the SKIPped characters before this token
+    */
+    public String getPrecedingSkippedChars() { 
+        Token prevToken = previousCachedToken();
+        if (prevToken == null) return "";
+        int prevTokenEnd = prevToken.getEndOffset();
+        if (prevTokenEnd == this.getBeginOffset()) return "";
+        return getTokenSource().subSequence(prevTokenEnd, this.getBeginOffset()).toString();
+    }
+
+    public Token replaceType(TokenType type) { 
+        if (type == this.getType()) { 
             return this;
         }
         Token result = newToken(type, getTokenSource(), getBeginOffset(), getEndOffset());
+        result.cachedImage = this.cachedImage;
         getTokenSource().cacheToken(result);
         return result;
     }
 
-    public String getSource() {
+    public String getSource() { 
         if (type == TokenType.EOF) return "";
         TokenSource ts = getTokenSource();
         int beginOffset = getBeginOffset();
@@ -217,51 +247,51 @@ public class Token implements CharSequence, Node.TerminalNode {
         return ts == null || beginOffset <= 0 && endOffset <= 0 ? null : ts.getText(beginOffset, endOffset);
     }
 
-    protected Token() {
+    protected Token() { 
     }
 
-    public Token(TokenType type, TokenSource tokenSource, int beginOffset, int endOffset) {
+    protected Token(TokenType type, TokenSource tokenSource, int beginOffset, int endOffset) { 
         this.type = type;
         this.tokenSource = tokenSource;
         this.beginOffset = beginOffset;
         this.endOffset = endOffset;
     }
 
-    public boolean isUnparsed() {
+    public boolean isUnparsed() { 
         return unparsed;
     }
 
-    public void setUnparsed(boolean unparsed) {
+    public void setUnparsed(boolean unparsed) { 
         this.unparsed = unparsed;
     }
 
     /**
     * @return An iterator of the tokens preceding this one.
     */
-    public Iterator<Token> precedingTokens() {
-        return new Iterator<Token>() {
+    public Iterator<Token> precedingTokens() { 
+        return new Iterator<Token>() { 
+
             Token currentPoint = Token.this;
 
-            public boolean hasNext() {
+            public boolean hasNext() { 
                 return currentPoint.previousCachedToken() != null;
             }
 
-            public Token next() {
+            public Token next() { 
                 Token previous = currentPoint.previousCachedToken();
                 if (previous == null) throw new java.util.NoSuchElementException("No previous token!");
                 return currentPoint = previous;
             }
-
         };
     }
 
     /**
     * @return a list of the unparsed tokens preceding this one in the order they appear in the input
     */
-    public List<Token> precedingUnparsedTokens() {
+    public List<Token> precedingUnparsedTokens() { 
         List<Token> result = new ArrayList<>();
         Token t = this.previousCachedToken();
-        while (t != null && t.isUnparsed()) {
+        while (t != null && t.isUnparsed()) { 
             result.add(t);
             t = t.previousCachedToken();
         }
@@ -272,48 +302,61 @@ public class Token implements CharSequence, Node.TerminalNode {
     /**
     * @return An iterator of the (cached) tokens that follow this one.
     */
-    public Iterator<Token> followingTokens() {
-        return new java.util.Iterator<Token>() {
+    public Iterator<Token> followingTokens() { 
+        return new java.util.Iterator<Token>() { 
+
             Token currentPoint = Token.this;
 
-            public boolean hasNext() {
+            public boolean hasNext() { 
                 return currentPoint.nextCachedToken() != null;
             }
 
-            public Token next() {
+            public Token next() { 
                 Token next = currentPoint.nextCachedToken();
                 if (next == null) throw new java.util.NoSuchElementException("No next token!");
                 return currentPoint = next;
             }
-
         };
     }
 
-    public void copyLocationInfo(Token from) {
+    public void copyLocationInfo(Token from) { 
         setTokenSource(from.getTokenSource());
         setBeginOffset(from.getBeginOffset());
         setEndOffset(from.getEndOffset());
     }
 
-    public void copyLocationInfo(Token start, Token end) {
+    public void copyLocationInfo(Token start, Token end) { 
         setTokenSource(start.getTokenSource());
         if (tokenSource == null) setTokenSource(end.getTokenSource());
         setBeginOffset(start.getBeginOffset());
         setEndOffset(end.getEndOffset());
     }
 
-    public static Token newToken(TokenType type, TokenSource tokenSource) {
-        Token result = newToken(type, tokenSource, 0, 0);
+    /**
+    * A constructor for "synthetic" tokens, that were not vended by
+    * a XXXLexer object.
+    */
+    public static Token newToken(TokenType type) { 
+        Token result = newToken(type, null, 0, 0);
         return result;
     }
 
-    public static Token newToken(TokenType type, String image, TokenSource tokenSource) {
-        Token newToken = newToken(type, tokenSource);
-        return newToken;
+    /**
+    * A constructor for "synthetic" tokens, that were not vended by
+    * a XXXLexer object.
+    */
+    public static Token newToken(TokenType type, String image) { 
+        Token result = newToken(type);
+        result.setCachedImage(image);
+        return result;
     }
 
-    public static Token newToken(TokenType type, TokenSource tokenSource, int beginOffset, int endOffset) {
-        switch(type) {
+    /**
+    * This is the factory method used by the internal machinery to
+    * instantiate a new token.
+    */
+    public static Token newToken(TokenType type, TokenSource tokenSource, int beginOffset, int endOffset) { 
+        switch(type) { 
             case INVALID : 
                 return new InvalidToken(tokenSource, beginOffset, endOffset);
             default : 
@@ -321,47 +364,53 @@ public class Token implements CharSequence, Node.TerminalNode {
         }
     }
 
-    public Node getParent() {
+    public Node getParent() { 
         return parent;
     }
 
-    public void setParent(Node parent) {
+    public void setParent(Node parent) { 
         this.parent = parent;
     }
 
-    public boolean isEmpty() {
+    public boolean isEmpty() { 
         return length() == 0;
     }
 
-    public int length() {
+    public int length() { 
+        if (cachedImage != null) return cachedImage.length();
         return endOffset - beginOffset;
     }
 
-    public CharSequence subSequence(int start, int end) {
+    public CharSequence subSequence(int start, int end) { 
+        if (cachedImage != null) return cachedImage.substring(start, end);
         return getTokenSource().subSequence(beginOffset + start, beginOffset + end);
     }
 
-    public char charAt(int offset) {
-        return getTokenSource().charAt(beginOffset + offset);
+    public char charAt(int offset) { 
+        if (cachedImage != null) return cachedImage.charAt(offset);
+        TokenSource ts = getTokenSource();
+        return ts != null ? ts.charAt(beginOffset + offset) : this.getType().getLiteralString().charAt(offset);
     }
 
     /**
-    * @deprecated Use toString() instead
+    * @deprecated Typically use just toString() or occasionally getCachedImage()
     */
     @Deprecated
-    public String getImage() {
+    public String getImage() { 
         return toString();
     }
 
     @Override
-    public String toString() {
+    public String toString() { 
+        if (cachedImage != null) { 
+            return cachedImage;
+        }
         String result = getSource();
-        if (result == null) {
+        if (result == null) { 
             result = getType().getLiteralString();
         }
         return result;
     }
-
 }
 
 

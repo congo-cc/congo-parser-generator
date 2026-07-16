@@ -5,12 +5,12 @@ import org.parsers.test.checker.Token.TokenType;
 import static org.parsers.test.checker.Token.TokenType.*;
 import java.util.*;
 
+public class TelescopedSequenceLexer extends TokenSource { 
 
-public class TelescopedSequenceLexer extends TokenSource {
     private static MatcherHook MATCHER_HOOK;
 
     // this cannot be initialized here, since hook must be set afterwards
-    public enum LexicalState {
+    public enum LexicalState { 
         DEFAULT
     }
 
@@ -28,7 +28,7 @@ public class TelescopedSequenceLexer extends TokenSource {
     // additional input
     static final EnumSet<TokenType> moreTokens = EnumSet.noneOf(TokenType.class);
 
-    public TelescopedSequenceLexer(CharSequence input) {
+    public TelescopedSequenceLexer(CharSequence input) { 
         this("input", input);
     }
 
@@ -37,7 +37,7 @@ public class TelescopedSequenceLexer extends TokenSource {
     * that will be used in error messages and so on.
     * @param input the input
     */
-    public TelescopedSequenceLexer(String inputSource, CharSequence input) {
+    public TelescopedSequenceLexer(String inputSource, CharSequence input) { 
         this(inputSource, input, LexicalState.DEFAULT, 1, 1);
     }
 
@@ -52,12 +52,12 @@ public class TelescopedSequenceLexer extends TokenSource {
     * @param startingColumn number at which we are starting for the purposes of location/error messages. In most normal
     * usages this is 1.
     */
-    public TelescopedSequenceLexer(String inputSource, CharSequence input, LexicalState lexState, int startingLine, int startingColumn) {
+    public TelescopedSequenceLexer(String inputSource, CharSequence input, LexicalState lexState, int startingLine, int startingColumn) { 
         super(inputSource, input, startingLine, startingColumn, 1, true, false, false, "");
         if (lexicalState != null) switchTo(lexState);
     }
 
-    public Token getNextToken(Token tok) {
+    public Token getNextToken(Token tok) { 
         return getNextToken(tok, this.activeTokenTypes);
     }
 
@@ -68,8 +68,8 @@ public class TelescopedSequenceLexer extends TokenSource {
     * the token after this one. If not, it finally goes
     * to the NFA machinery
     */
-    public Token getNextToken(Token tok, EnumSet<TokenType> activeTokenTypes) {
-        if (tok == null) {
+    public Token getNextToken(Token tok, EnumSet<TokenType> activeTokenTypes) { 
+        if (tok == null) { 
             tok = tokenizeAt(0, null, activeTokenTypes);
             cacheToken(tok);
             return tok;
@@ -77,11 +77,11 @@ public class TelescopedSequenceLexer extends TokenSource {
         Token cachedToken = tok.nextCachedToken();
         // If the cached next token is not currently active, we
         // throw it away and go back to the TelescopedSequenceLexer
-        if (cachedToken != null && activeTokenTypes != null && !activeTokenTypes.contains(cachedToken.getType())) {
+        if (cachedToken != null && activeTokenTypes != null && !activeTokenTypes.contains(cachedToken.getType())) { 
             reset(tok);
             cachedToken = null;
         }
-        if (cachedToken == null) {
+        if (cachedToken == null) { 
             Token token = tokenizeAt(tok.getEndOffset(), null, activeTokenTypes);
             cacheToken(token);
             return token;
@@ -89,45 +89,41 @@ public class TelescopedSequenceLexer extends TokenSource {
         return cachedToken;
     }
 
+    static class MatchInfo { 
 
-    static class MatchInfo {
         TokenType matchedType;
         int matchLength;
 
         @Override
-        public int hashCode() {
+        public int hashCode() { 
             return Objects.hash(matchLength, matchedType);
         }
 
         @Override
-        public boolean equals(Object obj) {
+        public boolean equals(Object obj) { 
             if (this == obj) return true;
             if (obj == null) return false;
             if (getClass() != obj.getClass()) return false;
             MatchInfo other = (MatchInfo) obj;
             return matchLength == other.matchLength && matchedType == other.matchedType;
         }
-
     }
-
 
     @FunctionalInterface
-    private interface MatcherHook {
+    private interface MatcherHook { 
 
         MatchInfo apply(LexicalState lexicalState, CharSequence input, int position, EnumSet<TokenType> activeTokenTypes, NfaFunction[] nfaFunctions, BitSet currentStates, BitSet nextStates, MatchInfo matchInfo);
-
     }
-
 
     /**
     * Core tokenization method. Note that this can be called from a static context.
     * Hence the extra parameters that need to be passed in.
     */
-    static MatchInfo getMatchInfo(CharSequence input, int position, EnumSet<TokenType> activeTokenTypes, NfaFunction[] nfaFunctions, BitSet currentStates, BitSet nextStates, MatchInfo matchInfo) {
-        if (matchInfo == null) {
+    static MatchInfo getMatchInfo(CharSequence input, int position, EnumSet<TokenType> activeTokenTypes, NfaFunction[] nfaFunctions, BitSet currentStates, BitSet nextStates, MatchInfo matchInfo) { 
+        if (matchInfo == null) { 
             matchInfo = new MatchInfo();
         }
-        if (position >= input.length()) {
+        if (position >= input.length()) { 
             matchInfo.matchedType = EOF;
             matchInfo.matchLength = 0;
             return matchInfo;
@@ -141,27 +137,27 @@ public class TelescopedSequenceLexer extends TokenSource {
         if (nextStates == null) nextStates = new BitSet(1);
         else nextStates.clear();
         // the core NFA loop
-        do {
+        do { 
             // Holder for the new type (if any) matched on this iteration
-            if (position > start) {
+            if (position > start) { 
                 // What was nextStates on the last iteration
                 // is now the currentStates!
                 BitSet temp = currentStates;
                 currentStates = nextStates;
                 nextStates = temp;
                 nextStates.clear();
-            } else {
+            } else { 
                 currentStates.set(0);
             }
-            if (position >= input.length()) {
+            if (position >= input.length()) { 
                 break;
             }
             int curChar = Character.codePointAt(input, position++);
             if (curChar > 0xFFFF) position++;
             int nextActive = currentStates.nextSetBit(0);
-            while (nextActive != -1) {
+            while (nextActive != -1) { 
                 TokenType returnedType = nfaFunctions[nextActive].apply(curChar, nextStates, activeTokenTypes, alreadyMatchedTypes);
-                if (returnedType != null && (position - start > matchLength || returnedType.ordinal() < matchedType.ordinal())) {
+                if (returnedType != null && (position - start > matchLength || returnedType.ordinal() < matchedType.ordinal())) { 
                     matchedType = returnedType;
                     matchLength = position - start;
                     alreadyMatchedTypes.add(returnedType);
@@ -182,7 +178,7 @@ public class TelescopedSequenceLexer extends TokenSource {
     * @param activeTokenTypes The active token types. If this is null, they are all active.
     * @return the Token at position
     */
-    final Token tokenizeAt(int position, LexicalState lexicalState, EnumSet<TokenType> activeTokenTypes) {
+    final Token tokenizeAt(int position, LexicalState lexicalState, EnumSet<TokenType> activeTokenTypes) { 
         if (lexicalState == null) lexicalState = this.lexicalState;
         int tokenBeginOffset = position;
         int matchStart = position;
@@ -194,22 +190,22 @@ public class TelescopedSequenceLexer extends TokenSource {
         MatchInfo matchInfo = new MatchInfo();
         BitSet currentStates = new BitSet(1);
         BitSet nextStates = new BitSet(1);
-        while (matchedToken == null) {
+        while (matchedToken == null) { 
             matchStart = position;
             if (!inMore) tokenBeginOffset = position;
-            if (MATCHER_HOOK != null) {
+            if (MATCHER_HOOK != null) { 
                 matchInfo = MATCHER_HOOK.apply(lexicalState, this, position, activeTokenTypes, nfaFunctions, currentStates, nextStates, matchInfo);
-                if (matchInfo == null) {
+                if (matchInfo == null) { 
                     matchInfo = getMatchInfo(this, position, activeTokenTypes, nfaFunctions, currentStates, nextStates, matchInfo);
                 }
-            } else {
+            } else { 
                 matchInfo = getMatchInfo(this, position, activeTokenTypes, nfaFunctions, currentStates, nextStates, matchInfo);
             }
             matchedType = matchInfo.matchedType;
             inMore = moreTokens.contains(matchedType);
             position += matchInfo.matchLength;
-            if (matchedType == TokenType.INVALID) {
-                if (invalidRegionStart == -1) {
+            if (matchedType == TokenType.INVALID) { 
+                if (invalidRegionStart == -1) { 
                     invalidRegionStart = tokenBeginOffset;
                 }
                 int cp = Character.codePointAt(this, position);
@@ -217,12 +213,12 @@ public class TelescopedSequenceLexer extends TokenSource {
                 if (cp > 0xFFFF) ++position;
                 continue;
             }
-            if (invalidRegionStart != -1) {
+            if (invalidRegionStart != -1) { 
                 return new InvalidToken(this, invalidRegionStart, tokenBeginOffset);
             }
-            if (skippedTokens.contains(matchedType)) {
+            if (skippedTokens.contains(matchedType)) { 
                 skipTokens(tokenBeginOffset, position);
-            } else if (regularTokens.contains(matchedType) || unparsedTokens.contains(matchedType)) {
+            } else if (regularTokens.contains(matchedType) || unparsedTokens.contains(matchedType)) { 
                 matchedToken = Token.newToken(matchedType, this, tokenBeginOffset, position);
                 matchedToken.setUnparsed(!regularTokens.contains(matchedType));
             }
@@ -235,8 +231,8 @@ public class TelescopedSequenceLexer extends TokenSource {
     * @param lexState the lexical state to switch to
     * @return whether we switched (i.e. we weren't already in the desired lexical state)
     */
-    public boolean switchTo(LexicalState lexState) {
-        if (this.lexicalState != lexState) {
+    public boolean switchTo(LexicalState lexState) { 
+        if (this.lexicalState != lexState) { 
             this.lexicalState = lexState;
             return true;
         }
@@ -245,36 +241,34 @@ public class TelescopedSequenceLexer extends TokenSource {
 
     // Reset the token source input
     // to just after the Token passed in.
-    void reset(Token t, LexicalState state) {
+    void reset(Token t, LexicalState state) { 
         uncacheTokens(t);
-        if (state != null) {
+        if (state != null) { 
             switchTo(state);
         }
     }
 
-    void reset(Token t) {
+    void reset(Token t) { 
         reset(t, null);
     }
 
-    public String getLine(Token tok) {
+    public String getLine(Token tok) { 
         int lineNum = tok.getBeginLine();
         return getText(getLineStartOffset(lineNum), getLineEndOffset(lineNum) + 1);
     }
-
 
     // NFA related code follows.
     // The functional interface that represents
     // the acceptance method of an NFA state
     @FunctionalInterface
-    interface NfaFunction {
+    interface NfaFunction { 
 
         TokenType apply(int ch, BitSet bs, EnumSet<TokenType> validTypes, EnumSet<TokenType> alreadyMatchedTypes);
-
     }
 
     private static NfaFunction[] nfaFunctions;
     // Initialize the various NFA method tables
-    static {
+    static { 
         DEFAULT.NFA_FUNCTIONS_init();
     }
 
@@ -282,23 +276,22 @@ public class TelescopedSequenceLexer extends TokenSource {
     /**
     * Holder class for NFA code related to DEFAULT lexical state
     */
-    private static class DEFAULT {
+    private static class DEFAULT { 
 
-        private static TokenType getNfaIndex0(int ch, BitSet nextStates, EnumSet<TokenType> validTypes, EnumSet<TokenType> alreadyMatchedTypes) {
+        private static TokenType getNfaIndex0(int ch, BitSet nextStates, EnumSet<TokenType> validTypes, EnumSet<TokenType> alreadyMatchedTypes) { 
             TokenType type = null;
-            if (ch == 'x') {
-                if (validTypes == null || validTypes.contains(X)) {
+            if (ch == 'x') { 
+                if (validTypes == null || validTypes.contains(X)) { 
                     type = X;
                 }
             }
             return type;
         }
 
-        private static void NFA_FUNCTIONS_init() {
-            NfaFunction[] functions = new NfaFunction[] {DEFAULT::getNfaIndex0};
+        private static void NFA_FUNCTIONS_init() { 
+            NfaFunction[] functions = new NfaFunction[] { DEFAULT::getNfaIndex0};
             nfaFunctions = functions;
         }
-
     }
 
 }

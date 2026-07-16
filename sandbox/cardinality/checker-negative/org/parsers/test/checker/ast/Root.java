@@ -8,8 +8,7 @@ import org.parsers.test.checker.*;
 import java.util.*;
 import static org.parsers.test.checker.Token.TokenType.*;
 
-
-public class Root extends BaseNode {
+public class Root extends BaseNode { 
 }
 
 

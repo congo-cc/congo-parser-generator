@@ -124,10 +124,10 @@
 #endmacro
 
 #function returnFalse cardinalitiesVar=null parentCardVar=null useLoopParam=false
-   #if cardinalitiesVar??
+   #if cardinalitiesVar?? && cardinalitiesVar.length() > 0
       #if useLoopParam
          #return "return (loopCardinalities != null ? loopCardinalities : ${cardinalitiesVar}).commit(false)"
-      #elif parentCardVar??
+      #elif parentCardVar?? && parentCardVar.length() > 0
          #return "return ${parentCardVar}.commit(false)"
       #else
          #return "return ${cardinalitiesVar}.commit(false)"
@@ -138,10 +138,10 @@
 #endfunction
 
 #function returnTrue cardinalitiesVar=null parentCardVar=null useLoopParam=false
-   #if cardinalitiesVar??
+   #if cardinalitiesVar?? && cardinalitiesVar.length() > 0
       #if useLoopParam
          #return "return (loopCardinalities != null ? loopCardinalities : ${cardinalitiesVar}).commit(true)"
-      #elif parentCardVar??
+      #elif parentCardVar?? && parentCardVar.length() > 0
          #return "return ${parentCardVar}.commit(true)"
       #else
          #return "return ${cardinalitiesVar}.commit(true)"
@@ -152,10 +152,10 @@
 #endfunction
 
 #function return retVal cardinalitiesVar=null parentCardVar=null useLoopParam=false
-   #if cardinalitiesVar??
+   #if cardinalitiesVar?? && cardinalitiesVar.length() > 0
       #if useLoopParam
          #return "return (loopCardinalities != null ? loopCardinalities : ${cardinalitiesVar}).commit(${retVal})"
-      #elif parentCardVar??
+      #elif parentCardVar?? && parentCardVar.length() > 0
          #return "return ${parentCardVar}.commit(${retVal})"
       #else
          #return "return ${cardinalitiesVar}.commit(${retVal})"

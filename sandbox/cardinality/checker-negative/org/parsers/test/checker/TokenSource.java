@@ -13,18 +13,18 @@ import static java.nio.charset.StandardCharsets.*;
 import java.util.Arrays;
 import java.util.BitSet;
 
+abstract public class TokenSource implements CharSequence { 
 
-abstract public class TokenSource implements CharSequence {
     private int tabSize = 1;
 
-    public void setTabSize(int tabSize) {
+    public void setTabSize(int tabSize) { 
         this.tabSize = tabSize;
     }
 
     // Typically a filename, I suppose.
     private String inputSource = "input";
 
-    protected int getTabSize() {
+    protected int getTabSize() { 
         return tabSize;
     }
 
@@ -57,20 +57,20 @@ abstract public class TokenSource implements CharSequence {
     * Set the starting line/column for location reporting.
     * By default, this is 1,1.
     */
-    public void setStartingPos(int startingLine, int startingColumn) {
+    public void setStartingPos(int startingLine, int startingColumn) { 
         this.startingLine = startingLine;
         this.startingColumn = startingColumn;
     }
 
-    public void setExtraIndent(int extraIndent) {
+    public void setExtraIndent(int extraIndent) { 
         this.extraIndent = extraIndent;
     }
 
-    public int getExtraIndent() {
+    public int getExtraIndent() { 
         return this.extraIndent;
     }
 
-    protected TokenSource(String inputSource, CharSequence input, int startingLine, int startingColumn, int tabSize, boolean preserveTabs, boolean preserveLineEndings, boolean javaUnicodeEscape, String terminatingString) {
+    protected TokenSource(String inputSource, CharSequence input, int startingLine, int startingColumn, int tabSize, boolean preserveTabs, boolean preserveLineEndings, boolean javaUnicodeEscape, String terminatingString) { 
         this.inputSource = inputSource;
         this.tabSize = tabSize;
         this.startingLine = startingLine;
@@ -82,17 +82,17 @@ abstract public class TokenSource implements CharSequence {
 
     // Icky method to handle annoying stuff. Might make this public later if it is
     // needed elsewhere
-    static protected String mungeContent(CharSequence content, boolean preserveTabs, int tabSize, boolean preserveLines, boolean javaUnicodeEscape, String terminatingString) {
-        if (preserveTabs && preserveLines && !javaUnicodeEscape) {
-            if (!terminatingString.isEmpty()) {
-                if (content.length() == 0) {
+    static protected String mungeContent(CharSequence content, boolean preserveTabs, int tabSize, boolean preserveLines, boolean javaUnicodeEscape, String terminatingString) { 
+        if (preserveTabs && preserveLines && !javaUnicodeEscape) { 
+            if (!terminatingString.isEmpty()) { 
+                if (content.length() == 0) { 
                     content = terminatingString;
-                } else {
+                } else { 
                     int lastChar = content.charAt(content.length() - 1);
-                    if (lastChar != '\n' && lastChar != '\r') {
-                        if (content instanceof StringBuilder) {
+                    if (lastChar != '\n' && lastChar != '\r') { 
+                        if (content instanceof StringBuilder) { 
                             ((StringBuilder) content).append('\n');
-                        } else {
+                        } else { 
                             content = content + terminatingString;
                         }
                     }
@@ -105,24 +105,24 @@ abstract public class TokenSource implements CharSequence {
         // is really unused.
         int col = 0;
         int index = 0, contentLength = content.length();
-        while (index < contentLength) {
+        while (index < contentLength) { 
             char ch = content.charAt(index++);
-            if (ch == '\n') {
+            if (ch == '\n') { 
                 buf.append(ch);
                 col = 0;
-            } else if (javaUnicodeEscape && ch == '\\' && index < contentLength && content.charAt(index) == 'u') {
+            } else if (javaUnicodeEscape && ch == '\\' && index < contentLength && content.charAt(index) == 'u') { 
                 int numPrecedingSlashes = 0;
-                for (int i = index - 1; i >= 0; i--) {
+                for (int i = index - 1; i >= 0; i--) { 
                     if (content.charAt(i) == '\\') numPrecedingSlashes++;
                     else break;
                 }
-                if (numPrecedingSlashes % 2 == 0) {
+                if (numPrecedingSlashes % 2 == 0) { 
                     buf.append('\\');
                     ++col;
                     continue;
                 }
                 int numConsecutiveUs = 0;
-                for (int i = index; i < contentLength; i++) {
+                for (int i = index; i < contentLength; i++) { 
                     if (content.charAt(i) == 'u') numConsecutiveUs++;
                     else break;
                 }
@@ -130,105 +130,105 @@ abstract public class TokenSource implements CharSequence {
                 buf.append((char) Integer.parseInt(fourHexDigits, 16));
                 index += (numConsecutiveUs + 4);
                 ++col;
-            } else if (!preserveLines && ch == '\r') {
+            } else if (!preserveLines && ch == '\r') { 
                 buf.append('\n');
                 col = 0;
-                if (index < contentLength && content.charAt(index) == '\n') {
+                if (index < contentLength && content.charAt(index) == '\n') { 
                     ++index;
                 }
-            } else if (ch == '\t' && !preserveTabs) {
+            } else if (ch == '\t' && !preserveTabs) { 
                 int spacesToAdd = tabSize - col % tabSize;
-                for (int i = 0; i < spacesToAdd; i++) {
+                for (int i = 0; i < spacesToAdd; i++) { 
                     buf.append(' ');
                     col++;
                 }
-            } else {
+            } else { 
                 buf.append(ch);
                 if (!Character.isLowSurrogate(ch)) col++;
             }
         }
-        if (!terminatingString.isEmpty()) {
-            if (buf.length() == 0) {
+        if (!terminatingString.isEmpty()) { 
+            if (buf.length() == 0) { 
                 return terminatingString;
             }
-            if (buf.length() < terminatingString.length()) {
+            if (buf.length() < terminatingString.length()) { 
                 buf.append(terminatingString);
-            } else if (!buf.substring(buf.length() - terminatingString.length()).equals(terminatingString)) {
+            } else if (!buf.substring(buf.length() - terminatingString.length()).equals(terminatingString)) { 
                 buf.append(terminatingString);
             }
         }
         return buf.toString();
     }
 
-    private void createTokenLocationTable() {
+    private void createTokenLocationTable() { 
         int size = content.length() + 1;
         tokenLocationTable = new Node.TerminalNode[size];
         tokenOffsets = new BitSet(size);
     }
 
-    protected final void skipTokens(int begin, int end) {
-        for (int i = begin; i < end; i++) {
+    protected final void skipTokens(int begin, int end) { 
+        for (int i = begin; i < end; i++) { 
             tokenLocationTable[i] = SKIPPED;
         }
     }
 
-    public final char charAt(int pos) {
+    public final char charAt(int pos) { 
         return content.charAt(pos);
     }
 
-    public final int length() {
+    public final int length() { 
         return content.length();
     }
 
-    public final CharSequence subSequence(int start, int end) {
+    public final CharSequence subSequence(int start, int end) { 
         return content.subSequence(start, end);
     }
 
-    public String toString() {
+    public String toString() { 
         return content.toString();
     }
 
-    public void cacheToken(Node.TerminalNode tok) {
+    public void cacheToken(Node.TerminalNode tok) { 
         int beginOffset = tok.getBeginOffset();
         // If the token is already cached, we just jump out. (I think this is okay...)
         if (tokenLocationTable[beginOffset] == tok) return;
         int endOffset = tok.getEndOffset();
         tokenOffsets.set(beginOffset);
-        if (endOffset > beginOffset + 1) {
+        if (endOffset > beginOffset + 1) { 
             // This handles some weird usage cases where token locations
             // have been adjusted.
             tokenOffsets.clear(beginOffset + 1, endOffset);
-            for (int i = beginOffset + 1; i < endOffset; i++) {
+            for (int i = beginOffset + 1; i < endOffset; i++) { 
                 tokenLocationTable[i] = null;
             }
         }
         tokenLocationTable[beginOffset] = tok;
     }
 
-    public void uncacheTokens(Node.TerminalNode lastToken) {
+    public void uncacheTokens(Node.TerminalNode lastToken) { 
         int endOffset = lastToken.getEndOffset();
-        if (endOffset < tokenOffsets.length()) {
+        if (endOffset < tokenOffsets.length()) { 
             tokenOffsets.clear(lastToken.getEndOffset(), tokenOffsets.length());
         }
     }
 
-    protected void cleanUpOrphans(Node.TerminalNode tok) {
+    protected void cleanUpOrphans(Node.TerminalNode tok) { 
         tokenOffsets.clear(tok.getBeginOffset() + 1, tok.getEndOffset());
     }
 
-    public Node.TerminalNode nextCachedToken(int offset) {
+    public Node.TerminalNode nextCachedToken(int offset) { 
         int nextOffset = tokenOffsets.nextSetBit(offset);
         return nextOffset != -1 ? tokenLocationTable[nextOffset] : null;
     }
 
-    public Node.TerminalNode previousCachedToken(int offset) {
+    public Node.TerminalNode previousCachedToken(int offset) { 
         int prevOffset = tokenOffsets.previousSetBit(offset - 1);
         return prevOffset == -1 ? null : tokenLocationTable[prevOffset];
     }
 
     // Just use the canned binary search to check whether the char
     // is in one of the intervals
-    static protected boolean checkIntervals(int[] ranges, int ch) {
+    static protected boolean checkIntervals(int[] ranges, int ch) { 
         int result = Arrays.binarySearch(ranges, ch);
         return result >= 0 || result % 2 == 0;
     }
@@ -236,12 +236,12 @@ abstract public class TokenSource implements CharSequence {
     /**
     * The offset of the start of the given line. This is in code units
     */
-    public int getLineStartOffset(int lineNumber) {
+    public int getLineStartOffset(int lineNumber) { 
         int realLineNumber = lineNumber - startingLine;
-        if (realLineNumber <= 0) {
+        if (realLineNumber <= 0) { 
             return 0;
         }
-        if (realLineNumber >= lineOffsets.length) {
+        if (realLineNumber >= lineOffsets.length) { 
             return content.length();
         }
         return lineOffsets[realLineNumber];
@@ -250,59 +250,59 @@ abstract public class TokenSource implements CharSequence {
     /**
     * The offset of the end of the given line. This is in code units.
     */
-    public int getLineEndOffset(int lineNumber) {
+    public int getLineEndOffset(int lineNumber) { 
         int realLineNumber = lineNumber - startingLine;
-        if (realLineNumber < 0) {
+        if (realLineNumber < 0) { 
             return 0;
         }
-        if (realLineNumber >= lineOffsets.length) {
+        if (realLineNumber >= lineOffsets.length) { 
             return content.length();
         }
-        if (realLineNumber == lineOffsets.length - 1) {
+        if (realLineNumber == lineOffsets.length - 1) { 
             return content.length() - 1;
         }
         return lineOffsets[realLineNumber + 1] - 1;
     }
 
-    public int getLineFromOffset(int pos) {
-        if (pos >= content.length()) {
-            if (content.charAt(content.length() - 1) == '\n') {
+    public int getLineFromOffset(int pos) { 
+        if (pos >= content.length()) { 
+            if (content.charAt(content.length() - 1) == '\n') { 
                 return startingLine + lineOffsets.length;
             }
             return startingLine + lineOffsets.length - 1;
         }
         int bsearchResult = Arrays.binarySearch(lineOffsets, pos);
-        if (bsearchResult >= 0) {
+        if (bsearchResult >= 0) { 
             return Math.max(startingLine, startingLine + bsearchResult);
         }
         return Math.max(startingLine, startingLine - (bsearchResult + 2));
     }
 
-    private void createLineOffsetsTable() {
-        if (content.length() == 0) {
+    private void createLineOffsetsTable() { 
+        if (content.length() == 0) { 
             this.lineOffsets = new int[0];
             return;
         }
         int lineCount = 0;
         int length = content.length();
-        for (int i = 0; i < length; i++) {
+        for (int i = 0; i < length; i++) { 
             char ch = content.charAt(i);
-            if (ch == '\t' || Character.isHighSurrogate(ch)) {
+            if (ch == '\t' || Character.isHighSurrogate(ch)) { 
                 needToCalculateColumns.set(lineCount);
             }
-            if (ch == '\n') {
+            if (ch == '\n') { 
                 lineCount++;
             }
         }
-        if (content.charAt(length - 1) != '\n') {
+        if (content.charAt(length - 1) != '\n') { 
             lineCount++;
         }
         int[] lineOffsets = new int[lineCount];
         lineOffsets[0] = 0;
         int index = 1;
-        for (int i = 0; i < length; i++) {
+        for (int i = 0; i < length; i++) { 
             char ch = content.charAt(i);
-            if (ch == '\n') {
+            if (ch == '\n') { 
                 if (i + 1 == length) break;
                 lineOffsets[index++] = i + 1;
             }
@@ -314,26 +314,26 @@ abstract public class TokenSource implements CharSequence {
     * @return the column (1-based and in code points)
     * from the absolute offset passed in as a parameter
     */
-    public int getCodePointColumnFromOffset(int pos) {
+    public int getCodePointColumnFromOffset(int pos) { 
         if (pos >= content.length()) return 1;
         if (pos == 0) return startingColumn;
         final int line = getLineFromOffset(pos) - startingLine;
         final int lineStart = lineOffsets[line];
         int startColumnAdjustment = line > 0 ? 1 : startingColumn;
         int unadjustedColumn = pos - lineStart + startColumnAdjustment;
-        if (!needToCalculateColumns.get(line)) {
+        if (!needToCalculateColumns.get(line)) { 
             return unadjustedColumn;
         }
         if (Character.isLowSurrogate(content.charAt(pos))) --pos;
         int result = startColumnAdjustment;
-        for (int i = lineStart; i < pos; i++) {
+        for (int i = lineStart; i < pos; i++) { 
             char ch = content.charAt(i);
-            if (ch == '\t') {
+            if (ch == '\t') { 
                 result += tabSize - (result - 1) % tabSize;
-            } else if (Character.isHighSurrogate(ch)) {
+            } else if (Character.isHighSurrogate(ch)) { 
                 ++result;
                 ++i;
-            } else {
+            } else { 
                 ++result;
             }
         }
@@ -343,7 +343,7 @@ abstract public class TokenSource implements CharSequence {
     /**
     * @return the line length in code _units_
     */
-    int getLineLength(int lineNumber) {
+    int getLineLength(int lineNumber) { 
         int startOffset = getLineStartOffset(lineNumber);
         int endOffset = getLineEndOffset(lineNumber);
         return 1 + endOffset - startOffset;
@@ -353,13 +353,13 @@ abstract public class TokenSource implements CharSequence {
     * @return the text between startOffset (inclusive)
     * and endOffset(exclusive)
     */
-    public String getText(int startOffset, int endOffset) {
+    public String getText(int startOffset, int endOffset) { 
         return subSequence(startOffset, endOffset).toString();
     }
 
-    public boolean atLineStart(Node.TerminalNode tok) {
+    public boolean atLineStart(Node.TerminalNode tok) { 
         int offset = tok.getBeginOffset();
-        while (offset > 0) {
+        while (offset > 0) { 
             --offset;
             char c = charAt(offset);
             if (!Character.isWhitespace(c)) return false;
@@ -368,17 +368,17 @@ abstract public class TokenSource implements CharSequence {
         return true;
     }
 
-    public String getLine(Node.TerminalNode tok) {
+    public String getLine(Node.TerminalNode tok) { 
         int lineNum = tok.getBeginLine();
         return getText(getLineStartOffset(lineNum), getLineEndOffset(lineNum) + 1);
     }
 
     // The source of the raw characters that we are scanning
-    public String getInputSource() {
+    public String getInputSource() { 
         return inputSource;
     }
 
-    public void setInputSource(String inputSource) {
+    public void setInputSource(String inputSource) { 
         this.inputSource = inputSource;
     }
 
@@ -386,31 +386,31 @@ abstract public class TokenSource implements CharSequence {
     * @param bytes the raw byte array
     * @param charset The encoding to use to decode the bytes. If this is null, we check for the
     * initial byte order mark (used by Microsoft a lot seemingly)
-    * See: https://docs.microsoft.com/es-es/globalization/encoding/byte-order-markc
+    * See: https://en.wikipedia.org/wiki/Byte_order_mark
     * @return A String taking into account the encoding passed in or in the byte order mark (if it was present).
     * And if no encoding was passed in and no byte-order mark was present, we assume the raw input
     * is in UTF-8.
     */
-    public static String stringFromBytes(byte[] bytes, Charset charset) throws CharacterCodingException {
+    public static String stringFromBytes(byte[] bytes, Charset charset) throws CharacterCodingException { 
         int arrayLength = bytes.length;
-        if (charset == null) {
+        if (charset == null) { 
             int firstByte = arrayLength > 0 ? Byte.toUnsignedInt(bytes[0]) : 1;
             int secondByte = arrayLength > 1 ? Byte.toUnsignedInt(bytes[1]) : 1;
             int thirdByte = arrayLength > 2 ? Byte.toUnsignedInt(bytes[2]) : 1;
             int fourthByte = arrayLength > 3 ? Byte.toUnsignedInt(bytes[3]) : 1;
-            if (firstByte == 0xEF && secondByte == 0xBB && thirdByte == 0xBF) {
+            if (firstByte == 0xEF && secondByte == 0xBB && thirdByte == 0xBF) { 
                 return new String(bytes, 3, bytes.length - 3, UTF_8);
             }
-            if (firstByte == 0 && secondByte == 0 && thirdByte == 0xFE && fourthByte == 0xFF) {
+            if (firstByte == 0 && secondByte == 0 && thirdByte == 0xFE && fourthByte == 0xFF) { 
                 return new String(bytes, 4, bytes.length - 4, Charset.forName("UTF-32BE"));
             }
-            if (firstByte == 0xFF && secondByte == 0xFE && thirdByte == 0 && fourthByte == 0) {
+            if (firstByte == 0xFF && secondByte == 0xFE && thirdByte == 0 && fourthByte == 0) { 
                 return new String(bytes, 4, bytes.length - 4, Charset.forName("UTF-32LE"));
             }
-            if (firstByte == 0xFE && secondByte == 0xFF) {
+            if (firstByte == 0xFE && secondByte == 0xFF) { 
                 return new String(bytes, 2, bytes.length - 2, UTF_16BE);
             }
-            if (firstByte == 0xFF && secondByte == 0xFE) {
+            if (firstByte == 0xFF && secondByte == 0xFE) { 
                 return new String(bytes, 2, bytes.length - 2, UTF_16LE);
             }
             charset = UTF_8;
@@ -418,17 +418,17 @@ abstract public class TokenSource implements CharSequence {
         CharsetDecoder decoder = charset.newDecoder();
         ByteBuffer b = ByteBuffer.wrap(bytes);
         CharBuffer c = CharBuffer.allocate(bytes.length);
-        while (true) {
+        while (true) { 
             CoderResult r = decoder.decode(b, c, false);
-            if (!r.isError()) {
+            if (!r.isError()) { 
                 break;
             }
-            if (!r.isMalformed()) {
+            if (!r.isMalformed()) { 
                 r.throwException();
             }
             int n = r.length();
             b.position(b.position() + n);
-            for (int i = 0; i < n; i++) {
+            for (int i = 0; i < n; i++) { 
                 c.put((char) 0xFFFD);
             }
         }
@@ -438,10 +438,9 @@ abstract public class TokenSource implements CharSequence {
         // return new String(bytes, charset);
     }
 
-    public static String stringFromBytes(byte[] bytes) throws CharacterCodingException {
+    public static String stringFromBytes(byte[] bytes) throws CharacterCodingException { 
         return stringFromBytes(bytes, null);
     }
-
 }
 
 
