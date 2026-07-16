@@ -3,7 +3,7 @@
 **Branch:** `feature/delegated-repetition-cardinality` (from `master`)  
 **Baseline behavior:** current `master` (post cardinality merge)  
 **Original feature:** commit `82d331d` (repetition cardinality); small adjustments since  
-**Status:** Phase 3 (Java lookahead / SCAN for delegated cardinality) **done**. Phases 0–3 complete on this branch. C#, Python, and Rust template work is deferred; full polyglot lookahead alignment is saved on `feature/delegated-repetition-cardinality-polyglot-backup`. Phase 4 is tests/docs polish + optional CICS refactor.  
+**Status:** Phase 4 (tests & docs) **done**. Phases 0–4 complete on this branch (Java). C#, Python, and Rust template work is deferred; full polyglot lookahead alignment is saved on `feature/delegated-repetition-cardinality-polyglot-backup`. CICS `CommonOptions` production refactor remains optional follow-up.  
 **See also:** `docs/parse-debugger-plan.md` (semantic parse trace API for large generated parsers — plan only).
 
 ---
@@ -253,24 +253,25 @@ Reuse existing `RepetitionCardinality` commit/provisional stack so parse and loo
 
 ## 8. Phase 4 — Tests & docs
 
-| Item | Action |
-|------|--------|
-| `sandbox/cardinality/CardTests.ccc` | Parent/Child delegation, inner loop vs delegate, illegal dual call sites |
-| `sandbox/cardinality/RepetitionCardinality.md` | Document delegation, one-level rule, stack rationale |
-| `examples/cics` | Optional refactor to `CommonOptions` production + tests |
-| CI | `ant test-cardinality-oracles-java`; sandbox `test-java` + `test-checker-negative` required; Python/C# sandbox runs optional / unchanged from `master` |
+| Item | Action | Status |
+|------|--------|--------|
+| `sandbox/cardinality/CardTests.ccc` | Pure Parent/Child, mixed local+delegated, inner loop vs delegate | **Done** |
+| Checker negatives | Orphan / `?` / telescoping / inconsistent / ambiguous | **Done** (Phase 0–1) |
+| `sandbox/cardinality/RepetitionCardinality.md` | Document delegation, one-level rule, stack, future bias | **Done** |
+| `examples/cics` | Optional refactor to `CommonOptions` production + tests | Deferred (optional) |
+| CI | sandbox `test-java` + `test-checker-negative` | Required on this branch |
 
 ---
 
 ## 9. Implementation order
 
-1. **Phase 0** — fix scope predicate; orphan/`?` errors; per-sequence telescoping warning; revisit ZOM info; sandbox negative grammar tests (**Java checker / grammar model**)  
-2. Phase 1 — delegation analysis + checker extensions  
-3. Phase 2 — Java parse templates + sandbox Java parse tests  
-4. Phase 3 — Java lookahead + sandbox (parse + lookahead paths)  
-5. **Later phase** — port C#, Python (and Rust when applicable); start from `feature/delegated-repetition-cardinality-polyglot-backup`  
-6. CICS `CommonOptions` refactor (optional but strong regression for real usage)  
-7. Update `RepetitionCardinality.md` and this plan’s status  
+1. **Phase 0** — fix scope predicate; orphan/`?` errors; per-sequence telescoping warning; revisit ZOM info; sandbox negative grammar tests (**Java checker / grammar model**) — **done**  
+2. Phase 1 — delegation analysis + checker extensions — **done**  
+3. Phase 2 — Java parse templates + sandbox Java parse tests — **done**  
+4. Phase 3 — Java lookahead + sandbox (parse + lookahead paths) — **done**  
+5. Phase 4 — tests & docs (this section) — **done** (CICS refactor still optional)  
+6. **Later phase** — port C#, Python (and Rust when applicable); start from `feature/delegated-repetition-cardinality-polyglot-backup`  
+7. CICS `CommonOptions` refactor (optional but strong regression for real usage)  
 
 ---
 
@@ -290,9 +291,48 @@ Reuse existing `RepetitionCardinality` commit/provisional stack so parse and loo
 
 ---
 
-## 11. Non-goals (this branch / phase 1)
+## 11. Non-goals (this branch)
 
-- Unlimited upward delegation (stack is ready; checker stays one hop)  
+- Unlimited upward / multi-hop delegation (stack is ready; checker stays one hop — see §12)  
 - RCAs inside `ATTEMPT`/`RECOVER` via delegation  
 - New surface syntax unless implicit binding proves insufficient  
-- LSP diagnostic messages (follow-up in `congocc-lsp` if desired)
+- LSP diagnostic messages (follow-up in `congocc-lsp` if desired)  
+- Same callee linked to multiple distinct parent loops (ambiguous today — see §12)
+
+---
+
+## 12. Future: multi-parent loops and multi-hop bias
+
+**Today:** each delegated assertion stores one absolute `assertionIndex` into a single winning parent loop’s `int[][]`. The checker rejects a callee invoked from more than one distinct iterating loop, and orphans bind only one hop (direct caller’s iterator).
+
+**Motivation to relax:**
+
+1. **Multi-parent** — e.g. `Parent` and `Parent2` both call the same `Child` with different local RCA counts before the NonTerminal. Absolute indices on `Child` cannot serve both layouts.
+2. **Multi-hop** — `Parent → Middle → Leaf`, possibly with `Middle : &M1 | Leaf1 | Leaf2 | &M2` where `Leaf1` / `Leaf2` contribute different numbers of orphans to the **root** loop’s tally array.
+
+**Proposed runtime frame** (extends the existing delegated stack):
+
+```text
+DelegatedCardinalityBinding {
+    RepetitionCardinality cardinality;  // usually the root loop’s object
+    int indexBias;                      // start of this callee’s contiguous block
+}
+```
+
+At an RCA in a callee:
+
+```text
+choose(indexBias + localAssertionIndex, …)
+```
+
+**Layout:** discovery assigns each linked callee a contiguous block in the root `choiceCardinalities` (local RCAs first, then delegated blocks in stable order). Different call sites push different biases:
+
+- Parent → Middle: bias at Middle’s block  
+- Middle → Leaf1: bias at Leaf1’s block (width = Leaf1’s orphan count)  
+- Middle → Leaf2: bias at Leaf2’s block (possibly different width)
+
+A **scalar bias** is enough while each callee’s assertions stay contiguous. A mapping vector / jagged array is only needed if assertions are deduplicated, reordered, or selectively bound.
+
+**Min check:** unchanged — after the root loop exits, `checkCardinality` walks the entire root array. Intermediate hops do not own a separate min pass; they only shift where leaf tallies land.
+
+**Checker changes when enabling this:** allow multiple parent loops / multi-hop edges; emit per-call-site bias (or map) instead of baking one global index into each child assertion; keep call-site consistency rules as needed so every path that can fire an RCA pushes a coherent binding.

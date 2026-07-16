@@ -88,6 +88,28 @@ These constraints refine the parsing process while maintaining the expressivenes
 
 Repetition cardinality provides precise control over element occurrences within repetition constructs and repetitions themselves in CongoCC. By applying identical lookahead and parsing constraints, it ensures predictable parsing behavior for cardinality-constrained syntax without semantic rules or confusingly complex syntax in grammar definitions.
 
-### 7. Sandbox build (`build.xml`)
+### 7. Delegated repetition cardinality
+
+Orphan RCAs (no enclosing `*`/`+` in the same production) may bind to a **direct caller’s** iterating loop:
+
+```text
+Parent : ( Child )+ ;
+Child  : & Opt1 | & Opt2 ;
+```
+
+- Discovery links orphans in `Child` to that single enclosing loop (one hop).
+- The parent loop allocates one `RepetitionCardinality` for **local** RCAs in the loop body plus **delegated** orphans (local indices first, then delegated).
+- At parse time the caller pushes that object on a delegated stack around the NonTerminal call; the callee’s `ENSURE`/`ASSERT` RCAs use the stack top. Lookahead passes the same object into the callee’s production scan method.
+- Call sites must be consistent: the same callee may not be invoked both inside and outside a loop, or from two distinct loops (ambiguous).
+
+**Inner loop wins:** an RCA under a `*`/`+` inside the callee binds locally; only non-enclosed orphans delegate. (Sandbox: `InnerVsDelegateChild` uses an inner `+` for `V` so the alternative is not entered unconditionally.)
+
+**Mixed local + delegated** is allowed in one parent loop, e.g. `( &A | &B | Child )+` shares one tally array for `A`, `B`, and Child’s orphans.
+
+**Not yet supported (future):** multi-hop (`Parent → Middle → Leaf`) and the same callee linked to multiple parent loop layouts. A natural extension is a stack frame `(RepetitionCardinality, indexBias)` so each call site selects a contiguous block in the root loop’s array (`choose(bias + localIndex)`), including when an intermediate production branches to leaves with different orphan counts. See `docs/delegated-repetition-cardinality-plan.md` §12.
+
+### 8. Sandbox build (`build.xml`)
 
 `ant clean test-all` regenerates **Java**, **Python**, and **C#** from `CardTests.ccc`, compiles them, and runs the same `testfiles` corpus on each implementation. Java and C# runs are required to pass. The Python step is skipped (with a message) when the generated `parser.py` still contains CongoCC CTL dedent markers (`<-`): on very large parsers the bundled Python parse/format pass may not run, in which case the file is not valid CPython until that pipeline succeeds.
+
+On the delegated-cardinality feature branch, `ant test-java` and `ant test-checker-negative` are the required Java checks (`checker-negative/` covers orphan / `ZeroOrOne` / telescoping / delegation consistency errors).

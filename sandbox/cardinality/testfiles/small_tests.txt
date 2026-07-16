@@ -41,3 +41,16 @@ $YX$
 @Y!
 @XY!
 @YX!
+^W^
+^Z^
+^WZ^
+^WP^
+^WQ^
+^WZPQ^
+^ZWQP^
+~U~
+~V~
+~UV~
+~VU~
+~UVV~
+~VVU~

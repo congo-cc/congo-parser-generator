@@ -64,6 +64,12 @@ Test :
     |
     // Phase 3: lookahead/parse of delegated loop followed by a trailing delimiter.
     "@" DelegatedParent "!"
+    |
+    // Phase 4: mixed local RCAs + delegated orphans in one parent loop.
+    "^" MixedParent "^"
+    |
+    // Phase 4: orphan RCA delegates; RCA under an inner * binds locally.
+    "~" InnerVsDelegateParent "~"
 ;  
 
 // Phase 2/3: RCAs in callee bind to caller's iterating loop.
@@ -75,7 +81,29 @@ DelegatedOpts :
 
 DelegatedParent :
     ( DelegatedOpts )+
-; 
+;
+
+// Local &W / &Z share the same RepetitionCardinality as MixedChild's orphans.
+MixedChild :
+    ENSURE {&0:1&} "P"
+    |
+    ENSURE {&0:1&} "Q"
+;
+
+MixedParent :
+    ( & "W" | & "Z" | MixedChild )+
+;
+
+// "U" delegates to the parent +; "V" is tallied by the inner +.
+InnerVsDelegateChild :
+    ENSURE {&0:1&} "U"
+    |
+    ( & "V" )+
+;
+
+InnerVsDelegateParent :
+    ( InnerVsDelegateChild )+
+;
 
 Letters :
     LTest1 | LTest2 | LTest3
