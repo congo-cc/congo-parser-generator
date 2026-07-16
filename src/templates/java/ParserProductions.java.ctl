@@ -751,8 +751,8 @@
          fail("${assertionMessage}"${optionalPart},
               ${assertion::locationExpression!"getToken(1)"});
       }
-   #elif assertion::cardinalityConstraint??
-      if (!${cardinalitiesVar!"cardinalities"}.choose(${assertion::assertionIndex}, false)) {
+   #elif assertion::cardinalityConstraint?? && cardinalitiesVar?? && cardinalitiesVar.length() > 0
+      if (!${cardinalitiesVar}.choose(${assertion::assertionIndex}, false)) {
          fail("Maximum cardinality constraint at: ${assertion::location.JavaStringEncode} exceeded.", getToken(1));
       }
    #endif

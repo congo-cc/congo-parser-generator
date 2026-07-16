@@ -1021,6 +1021,8 @@ INJECT ExpansionWithParentheses :
    import org.congocc.core.*;
    import org.congocc.core.ExpansionSequence.*;
    import org.congocc.parser.tree.*;
+   import java.util.ArrayList;
+   import java.util.List;
    extends ExpansionWithNested
    implements SyntaxElement
 {
@@ -1030,7 +1032,18 @@ INJECT ExpansionWithParentheses :
 
     int assertionIndex = -1;
 
-    private void collectInScopeCardinalityAssertions(List<Assertion> assertions) {
+    // Set by Grammar.discoverDelegatedCardinality() after full parse (Phase 1).
+    private List<Assertion> delegatedAssertions;
+
+    public void setDelegatedCardinalityAssertions(List<Assertion> assertions) {
+        this.delegatedAssertions = assertions;
+    }
+
+    public List<Assertion> getDelegatedCardinalityAssertions() {
+        return delegatedAssertions;
+    }
+
+    private void collectLocalCardinalityAssertions(List<Assertion> assertions) {
         if (!(this instanceof IteratingExpansion)) {
             return;
         }
@@ -1050,15 +1063,30 @@ INJECT ExpansionWithParentheses :
         }
     }
 
-    @Override
-    public void close() {
-        super.close();
+    private void collectInScopeCardinalityAssertions(List<Assertion> assertions) {
+        collectLocalCardinalityAssertions(assertions);
+        if (delegatedAssertions != null) {
+            assertions.addAll(delegatedAssertions);
+        }
+    }
+
+    /**
+     * Assigns assertionIndex values for local then delegated RCAs.
+     * Called from {@link #close()} at parse time and again after delegation discovery.
+     */
+    public void refreshAssertionIndices() {
         assertionIndex = -1;
         List<Assertion> assertions = new ArrayList<>();
         collectInScopeCardinalityAssertions(assertions);
         for (Assertion assertion : assertions) {
             assertion.setAssertionIndex(++assertionIndex);
         }
+    }
+
+    @Override
+    public void close() {
+        super.close();
+        refreshAssertionIndices();
     }
 
     public List<Assertion> getCardinalityAssertions() {
@@ -1073,10 +1101,15 @@ INJECT ExpansionWithParentheses :
      * at upon satisfaction of the loop's exit conditions
      */
     public boolean isCardinalityContainer() {
-        if (this instanceof IteratingExpansion) {
-            return getCardinalityAssertions().size() > 0;
+        if (!(this instanceof IteratingExpansion)) {
+            return false;
         }
-        return false;
+        // Phase 1: only local RCAs drive container allocation. Delegated RCAs are linked
+        // and indexed, but parse/lookahead stack push (Phase 2) is required before the
+        // parent loop instantiates RepetitionCardinality for them.
+        List<Assertion> local = new ArrayList<>();
+        collectLocalCardinalityAssertions(local);
+        return !local.isEmpty();
     }
 
     public int[][] getCardinalityConstraints() {

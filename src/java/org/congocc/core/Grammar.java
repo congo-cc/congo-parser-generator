@@ -517,6 +517,199 @@ public class Grammar extends GrammarFile {
         return false;
     }
 
+    private final Map<Assertion, DelegatedCardinalityLink> delegatedCardinalityByAssertion = new IdentityHashMap<>();
+    private final Map<BNFProduction, DelegatedCardinalityLink> delegatedCardinalityByCallee = new IdentityHashMap<>();
+    private final Map<ExpansionWithParentheses, List<DelegatedCardinalityLink>> delegatedCardinalityByLoop = new IdentityHashMap<>();
+
+    public ExpansionWithParentheses getDelegatedCardinalityLoop(Assertion assertion) {
+        DelegatedCardinalityLink link = delegatedCardinalityByAssertion.get(assertion);
+        return link == null ? null : link.getLoop();
+    }
+
+    public boolean isDelegatedCardinalityAssertion(Assertion assertion) {
+        return delegatedCardinalityByAssertion.containsKey(assertion);
+    }
+
+    public boolean isDelegatedCardinalityProduction(BNFProduction production) {
+        return delegatedCardinalityByCallee.containsKey(production);
+    }
+
+    public List<DelegatedCardinalityLink> getDelegatedCardinalityLinks(ExpansionWithParentheses loop) {
+        List<DelegatedCardinalityLink> links = delegatedCardinalityByLoop.get(loop);
+        return links == null ? Collections.emptyList() : Collections.unmodifiableList(links);
+    }
+
+    /**
+     * Phase 1: link orphan RCAs in callee productions to a single enclosing
+     * iterating expansion at each call site, then re-index affected loops.
+     * Must run after {@link #checkReferences()} so NonTerminal → production resolves.
+     */
+    void discoverDelegatedCardinality() {
+        delegatedCardinalityByAssertion.clear();
+        delegatedCardinalityByCallee.clear();
+        delegatedCardinalityByLoop.clear();
+
+        // Callee production → all NonTerminal call sites (grammar-wide).
+        Map<BNFProduction, List<NonTerminal>> callSitesByCallee = new IdentityHashMap<>();
+        for (NonTerminal nt : descendants(NonTerminal.class)) {
+            BNFProduction callee = nt.getProduction();
+            if (callee == null) {
+                continue;
+            }
+            callSitesByCallee.computeIfAbsent(callee, k -> new ArrayList<>()).add(nt);
+        }
+
+        // Candidate links discovered while walking each loop body.
+        Map<BNFProduction, List<DelegatedCardinalityLink>> candidatesByCallee = new IdentityHashMap<>();
+
+        for (ExpansionWithParentheses loop : descendants(ExpansionWithParentheses.class,
+                e -> e instanceof IteratingExpansion)) {
+            List<NonTerminal> directCallSites = collectNonTerminalsStoppingAtInnerLoops(loop.getNestedExpansion());
+            for (NonTerminal nt : directCallSites) {
+                BNFProduction callee = nt.getProduction();
+                if (callee == null) {
+                    continue;
+                }
+                List<Assertion> orphans = collectOrphanCardinalityAssertions(callee);
+                if (orphans.isEmpty()) {
+                    continue;
+                }
+                DelegatedCardinalityLink link = new DelegatedCardinalityLink(loop, nt, callee, orphans);
+                candidatesByCallee.computeIfAbsent(callee, k -> new ArrayList<>()).add(link);
+            }
+        }
+
+        Set<ExpansionWithParentheses> loopsToRefresh = new LinkedHashSet<>();
+        Map<ExpansionWithParentheses, LinkedHashSet<Assertion>> assertionsByLoop = new IdentityHashMap<>();
+        Map<ExpansionWithParentheses, List<DelegatedCardinalityLink>> linksByLoop = new IdentityHashMap<>();
+
+        for (Map.Entry<BNFProduction, List<DelegatedCardinalityLink>> entry : candidatesByCallee.entrySet()) {
+            BNFProduction callee = entry.getKey();
+            List<DelegatedCardinalityLink> candidates = entry.getValue();
+            List<NonTerminal> allCallSites = callSitesByCallee.getOrDefault(callee, Collections.emptyList());
+
+            List<NonTerminal> nonDelegating = new ArrayList<>();
+            for (NonTerminal nt : allCallSites) {
+                if (nearestIteratingAncestor(nt) == null) {
+                    nonDelegating.add(nt);
+                }
+            }
+
+            LinkedHashMap<ExpansionWithParentheses, DelegatedCardinalityLink> byLoop = new LinkedHashMap<>();
+            for (DelegatedCardinalityLink link : candidates) {
+                byLoop.putIfAbsent(link.getLoop(), link);
+            }
+
+            if (!nonDelegating.isEmpty()) {
+                errors.addError(callee,
+                    "Production " + callee.getName()
+                    + " has repetition cardinality constraints with no local ZeroOrMore/OneOrMore, "
+                    + "but is also invoked outside a ZeroOrMore/OneOrMore (delegated cardinality requires "
+                    + "consistent call sites).");
+                continue;
+            }
+
+            if (byLoop.size() > 1) {
+                errors.addError(callee,
+                    "Production " + callee.getName()
+                    + " has repetition cardinality constraints with no local ZeroOrMore/OneOrMore, "
+                    + "but is invoked from multiple distinct ZeroOrMore/OneOrMore loops "
+                    + "(ambiguous delegated cardinality).");
+                continue;
+            }
+
+            if (byLoop.isEmpty()) {
+                continue;
+            }
+
+            ExpansionWithParentheses winningLoop = byLoop.keySet().iterator().next();
+            DelegatedCardinalityLink representative = byLoop.get(winningLoop);
+            LinkedHashSet<Assertion> ordered =
+                    assertionsByLoop.computeIfAbsent(winningLoop, k -> new LinkedHashSet<>());
+            List<DelegatedCardinalityLink> accepted =
+                    linksByLoop.computeIfAbsent(winningLoop, k -> new ArrayList<>());
+
+            for (DelegatedCardinalityLink link : candidates) {
+                if (link.getLoop() != winningLoop) {
+                    continue;
+                }
+                accepted.add(link);
+                for (Assertion a : link.getDelegatedAssertions()) {
+                    ordered.add(a);
+                    delegatedCardinalityByAssertion.put(a, link);
+                }
+            }
+
+            delegatedCardinalityByCallee.put(callee, representative);
+            loopsToRefresh.add(winningLoop);
+        }
+
+        for (Map.Entry<ExpansionWithParentheses, LinkedHashSet<Assertion>> e : assertionsByLoop.entrySet()) {
+            ExpansionWithParentheses loop = e.getKey();
+            loop.setDelegatedCardinalityAssertions(new ArrayList<>(e.getValue()));
+            delegatedCardinalityByLoop.put(loop, linksByLoop.get(loop));
+        }
+
+        for (ExpansionWithParentheses loop : loopsToRefresh) {
+            loop.refreshAssertionIndices();
+        }
+    }
+
+    private static ExpansionWithParentheses nearestIteratingAncestor(Node node) {
+        return node.firstAncestorOfType(ExpansionWithParentheses.class, e -> e instanceof IteratingExpansion);
+    }
+
+    /**
+     * NonTerminals under {@code expansion}, not descending into nested iterating expansions.
+     */
+    private static List<NonTerminal> collectNonTerminalsStoppingAtInnerLoops(Expansion expansion) {
+        List<NonTerminal> result = new ArrayList<>();
+        if (expansion == null) {
+            return result;
+        }
+        collectNonTerminalsStoppingAtInnerLoops(expansion, result);
+        return result;
+    }
+
+    private static void collectNonTerminalsStoppingAtInnerLoops(Node node, List<NonTerminal> result) {
+        for (Node child : node.children()) {
+            if (child instanceof NonTerminal nt) {
+                result.add(nt);
+            } else if (child instanceof IteratingExpansion) {
+                // Inner loop wins: do not collect call sites beneath it.
+                continue;
+            } else {
+                collectNonTerminalsStoppingAtInnerLoops(child, result);
+            }
+        }
+    }
+
+    /**
+     * Cardinality assertions in {@code production} with no enclosing IteratingExpansion
+     * (and not merely under ZeroOrOne — those remain hard errors, not candidates for delegation).
+     */
+    private static List<Assertion> collectOrphanCardinalityAssertions(BNFProduction production) {
+        List<Assertion> orphans = new ArrayList<>();
+        Expansion body = production.getExpansion();
+        if (body == null) {
+            return orphans;
+        }
+        for (Assertion assertion : body.descendantsOfType(Assertion.class)) {
+            if (!assertion.isCardinalityConstraint()) {
+                continue;
+            }
+            if (assertion.hasAncestorOfType(ZeroOrOne.class)
+                    && nearestIteratingAncestor(assertion) == null) {
+                // ZeroOrOne-only RCAs are never delegated.
+                continue;
+            }
+            if (nearestIteratingAncestor(assertion) == null) {
+                orphans.add(assertion);
+            }
+        }
+        return orphans;
+    }
+
     public class CardinalityChecker extends Visitor {
         private final Grammar context;
         CardinalityChecker(Grammar context) {
@@ -528,11 +721,22 @@ public class Grammar extends GrammarFile {
 
         public void visit(BNFProduction n) {
             recurse(n);
-            boolean hasCardinalityAssertion = false;
+            if (context.isDelegatedCardinalityProduction(n)) {
+                return;
+            }
+            boolean hasOrphanCardinalityAssertion = false;
             boolean hasLocalCardinalityContainer = false;
             for (Assertion assertion : n.descendants(Assertion.class)) {
-                if (assertion.isCardinalityConstraint()) {
-                    hasCardinalityAssertion = true;
+                if (!assertion.isCardinalityConstraint()) {
+                    continue;
+                }
+                if (context.isDelegatedCardinalityAssertion(assertion)) {
+                    continue;
+                }
+                ExpansionWithParentheses iter = assertion.firstAncestorOfType(
+                        ExpansionWithParentheses.class, exp -> exp instanceof IteratingExpansion);
+                if (iter == null && !assertion.hasAncestorOfType(ZeroOrOne.class)) {
+                    hasOrphanCardinalityAssertion = true;
                 }
             }
             for (ExpansionWithParentheses exp : n.descendants(ExpansionWithParentheses.class)) {
@@ -541,7 +745,7 @@ public class Grammar extends GrammarFile {
                     break;
                 }
             }
-            if (hasCardinalityAssertion && !hasLocalCardinalityContainer) {
+            if (hasOrphanCardinalityAssertion && !hasLocalCardinalityContainer) {
                 context.errors.addInfo(n,
                     "This production uses repetition cardinality constraints but has no local ZeroOrMore/OneOrMore loop; "
                     + "a parent production iterator (delegated cardinality) may be required.");
@@ -550,6 +754,10 @@ public class Grammar extends GrammarFile {
 
         public void visit(Assertion assertion) {
             if (assertion.isCardinalityConstraint()) {
+                if (context.isDelegatedCardinalityAssertion(assertion)) {
+                    recurse(assertion);
+                    return;
+                }
                 ExpansionWithParentheses iterContainer = assertion.firstAncestorOfType(
                         ExpansionWithParentheses.class, exp -> exp instanceof IteratingExpansion);
                 if (iterContainer == null) {
@@ -736,6 +944,7 @@ public class Grammar extends GrammarFile {
         }
 
         if (isUsingCardinality()) {
+            discoverDelegatedCardinality();
             new CardinalityChecker(this);
         }
 

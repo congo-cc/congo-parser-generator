@@ -559,7 +559,7 @@
          ${returnFalse(cardinalitiesVar, parentCardVar!null, useLoopParam)};
       }
    #endif
-   #if assertion::cardinalityConstraint??
+   #if assertion::cardinalityConstraint?? && cardinalitiesVar?? && cardinalitiesVar.length() > 0
       // Cardinality constraint check to ensure maximum not reached.
       if (!${cardinalitiesVar}.choose([#if useLoopParam]loopCardinalities != null ? ${assertion::assertionIndex} : 0[#elif parentCardVar == "cardinalities"]${assertion::assertionIndex}[#else]0[/#if], true)) {
          hitFailure = true;

@@ -49,9 +49,26 @@ expect_warning() {
   fi
 }
 
+expect_success() {
+  file=$1
+  echo "== expect success: $file"
+  set +e
+  out=$(java -jar "$CONGOCC_JAR" -n -q "$file" 2>&1)
+  code=$?
+  set -e
+  if [ "$code" -ne 0 ]; then
+    echo "FAIL: $file expected success (exit $code)"
+    echo "$out"
+    FAIL=1
+  fi
+}
+
 expect_error OrphanRCA.ccc "not within a ZeroOrMore or OneOrMore"
 expect_error RCAInZeroOrOne.ccc "ZeroOrOne"
 expect_warning TelescopedSequence.ccc "effective minimum exceeds effective maximum"
+expect_success DelegatedOk.ccc
+expect_error DelegatedInconsistentCalls.ccc "consistent call sites"
+expect_error DelegatedAmbiguousLoops.ccc "ambiguous delegated cardinality"
 
 if [ "$FAIL" -ne 0 ]; then
   echo "Checker negative tests FAILED"

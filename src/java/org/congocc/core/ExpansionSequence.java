@@ -65,7 +65,8 @@ public class ExpansionSequence extends Expansion {
         ExpansionWithParentheses assertionContainer =
                 assertion.firstAncestorOfType(ExpansionWithParentheses.class, isOuterCardinalityScope);
         if (assertionContainer == null) {
-            return false;
+            // Delegated RCA: no local iterator in the callee production.
+            return getGrammar().isDelegatedCardinalityAssertion(assertion);
         }
         ExpansionWithParentheses sequenceContainer = getCardinalitiesContainer();
         if (sequenceContainer != null) {
@@ -96,7 +97,20 @@ public class ExpansionSequence extends Expansion {
     }
 
     public ExpansionWithParentheses getCardinalitiesContainer() {
-        return firstAncestorOfType(ExpansionWithParentheses.class, isOuterCardinalityScope);
+        ExpansionWithParentheses local = firstAncestorOfType(ExpansionWithParentheses.class, isOuterCardinalityScope);
+        if (local != null) {
+            return local;
+        }
+        // Delegated: return the linked parent loop for an in-sequence RCA, if any.
+        for (Assertion a : childrenOfType(Assertion.class)) {
+            if (a.isCardinalityConstraint()) {
+                ExpansionWithParentheses loop = getGrammar().getDelegatedCardinalityLoop(a);
+                if (loop != null) {
+                    return loop;
+                }
+            }
+        }
+        return null;
     }
 
     public int getCardinalityIndex() {

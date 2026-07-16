@@ -3,7 +3,7 @@
 **Branch:** `feature/delegated-repetition-cardinality` (from `master`)  
 **Baseline behavior:** current `master` (post cardinality merge)  
 **Original feature:** commit `82d331d` (repetition cardinality); small adjustments since  
-**Status:** Phase 0 (checker / grammar model) in progress on **Java target only**. C#, Python, and Rust template work is deferred; full polyglot lookahead alignment is saved on `feature/delegated-repetition-cardinality-polyglot-backup`.  
+**Status:** Phase 1 (delegation discovery / linking) in progress on **Java target only**. Phase 0 checker hardening is done. C#, Python, and Rust template work is deferred; full polyglot lookahead alignment is saved on `feature/delegated-repetition-cardinality-polyglot-backup`.  
 **See also:** `docs/parse-debugger-plan.md` (semantic parse trace API for large generated parsers — plan only).
 
 ---
@@ -205,6 +205,8 @@ Today `ExpansionWithParentheses.close()` assigns `assertionIndex` from `getCardi
 2. Delegated sequences from each linked `C`, in stable discovery order (NT walk order in `L`’s body).
 
 Parent loop `L` owns `int[][] choiceCardinalities` and global assertion indices for all delegated RCAs.
+
+**Implemented:** `Grammar.discoverDelegatedCardinality()` after `checkReferences()`, populates `delegatedAssertions` on `L`, then `refreshAssertionIndices()`. `isCardinalityContainer()` still keys off **local** RCAs only until Phase 2 allocates `RepetitionCardinality` / push-pop for delegated use.
 
 ### 5.4 Scope predicates
 

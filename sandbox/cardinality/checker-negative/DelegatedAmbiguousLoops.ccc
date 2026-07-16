@@ -1,0 +1,9 @@
+// Expect error: Child invoked from two distinct iterating expansions
+PARSER_PACKAGE="org.parsers.test.checker";
+TEST_PRODUCTION=Root;
+
+Root : Parent ;
+
+Parent : ( Child )+ ( Child )* ;
+
+Child : ENSURE {&0:1&} "x" ;
