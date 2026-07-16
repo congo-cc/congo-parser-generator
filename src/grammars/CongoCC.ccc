@@ -1104,12 +1104,8 @@ INJECT ExpansionWithParentheses :
         if (!(this instanceof IteratingExpansion)) {
             return false;
         }
-        // Phase 1: only local RCAs drive container allocation. Delegated RCAs are linked
-        // and indexed, but parse/lookahead stack push (Phase 2) is required before the
-        // parent loop instantiates RepetitionCardinality for them.
-        List<Assertion> local = new ArrayList<>();
-        collectLocalCardinalityAssertions(local);
-        return !local.isEmpty();
+        // Local and delegated RCAs: parent loop allocates RepetitionCardinality for both.
+        return !getCardinalityAssertions().isEmpty();
     }
 
     public int[][] getCardinalityConstraints() {
@@ -1224,6 +1220,11 @@ INJECT Assertion :
 
     public boolean isCardinalityConstraint() {
         return cardinalityConstraint != null;
+    }
+
+    /** True if this RCA is bound to a caller's iterating loop (delegated cardinality). */
+    public boolean isDelegatedCardinality() {
+        return getGrammar().isDelegatedCardinalityAssertion(this);
     }
 
     public LookBehind getLookBehind() {

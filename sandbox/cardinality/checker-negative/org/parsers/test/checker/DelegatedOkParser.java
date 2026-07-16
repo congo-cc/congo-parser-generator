@@ -6,10 +6,14 @@ import java.io.PrintStream;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.charset.Charset;
+import java.util.Arrays;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.EnumSet;
 import java.util.ListIterator;
+import java.util.ArrayDeque;
+import java.util.Deque;
+import java.util.Stack;
 import java.util.concurrent.CancellationException;
 import org.parsers.test.checker.Token.TokenType;
 import static org.parsers.test.checker.Token.TokenType.*;
@@ -18,6 +22,174 @@ import org.parsers.test.checker.ast.Parent;
 import org.parsers.test.checker.ast.Child;
 
 public class DelegatedOkParser { 
+
+    private static final class CardinalityState { 
+
+        private final int[] cardinalities;
+        private final boolean isProvisional;
+
+        public CardinalityState(int[] cardinalities, boolean isProvisional) { 
+            this.cardinalities = cardinalities.clone();
+            // Defensive copy to ensure immutability
+            this.isProvisional = isProvisional;
+        }
+
+        public int[] cardinalities() { 
+            return cardinalities.clone();
+            // Defensive copy to prevent modification
+        }
+
+        public boolean isProvisional() { 
+            return isProvisional;
+        }
+
+        @Override
+        public boolean equals(Object o) { 
+            if (this == o) return true;
+            if (o == null || getClass() != o.getClass()) return false;
+            CardinalityState that = (CardinalityState) o;
+            return isProvisional == that.isProvisional && Arrays.equals(cardinalities, that.cardinalities);
+        }
+
+        @Override
+        public int hashCode() { 
+            return 31 * Arrays.hashCode(cardinalities) + Boolean.hashCode(isProvisional);
+        }
+
+        @Override
+        public String toString() { 
+            return "CardinalityState{" + "cardinalities=" + Arrays.toString(cardinalities) + ", isProvisional=" + isProvisional + '}';
+        }
+    }
+
+    private final class RepetitionCardinality { 
+
+        final int[][] choiceCardinalities;
+        Stack<CardinalityState> cardinalitiesStack = new Stack<>();
+        final int[] cardinalities;
+
+        RepetitionCardinality(int[][] choiceCardinalities) { 
+            this.choiceCardinalities = choiceCardinalities;
+            // push an initialized, non-provisional frame to start a loop
+            cardinalitiesStack.push(new CardinalityState(new int[choiceCardinalities.length], false));
+            // initialize the parse version of the cardinality state
+            cardinalities = new int[choiceCardinalities.length];
+        }
+
+        public final boolean choose(int choiceNo, boolean isLookahead) { 
+            if (isLookahead) { 
+                CardinalityState currentState = cardinalitiesStack.peek();
+                CardinalityState priorState = currentState;
+                if (!currentState.isProvisional()) { 
+                    // open new provisional frame
+                    push(true);
+                } else { 
+                    priorState = cardinalitiesStack.get(cardinalitiesStack.size() - 2);
+                }
+                // at this point current is a provisional frame
+                int[] currentCardinalities = currentState.cardinalities();
+                int[] priorCardinalities = priorState.cardinalities();
+                // N.B., there can never be more than one increment per interation, hence this check
+                // allowing the detection of multiple chooses during the lookahead process.  In
+                // other words, in a given iteration only the first increment is necessary and
+                // sufficient for accuracy.
+                if (currentCardinalities[choiceNo] == priorCardinalities[choiceNo]) { 
+                    if (currentCardinalities[choiceNo] < choiceCardinalities[choiceNo][1]) { 
+                        ++currentCardinalities[choiceNo];
+                        // replace the provisional frame at tos with incremented one
+                        cardinalitiesStack.pop();
+                        cardinalitiesStack.push(new CardinalityState(currentCardinalities, true));
+                        return true;
+                    }
+                } else { 
+                    return true;
+                }
+            } else { 
+                // the real thing
+                if (cardinalities[choiceNo] < choiceCardinalities[choiceNo][1]) { 
+                    ++cardinalities[choiceNo];
+                    return true;
+                }
+            }
+            // cardinality maximum exceeded; indicate failure
+            return false;
+        }
+
+        public CardinalityState push(boolean isProvisional) { 
+            if (cardinalitiesStack.size() == 0) { 
+                // create new initialized frame
+                return cardinalitiesStack.push(new CardinalityState(new int[choiceCardinalities.length], isProvisional));
+            } else { 
+                // create new frame from current top frame
+                return cardinalitiesStack.push(new CardinalityState(cardinalitiesStack.peek().cardinalities(), isProvisional));
+            }
+        }
+
+        public boolean checkCardinality(boolean isLookahead) { 
+            if (isLookahead) { 
+                CardinalityState finalized = new CardinalityState(new int[choiceCardinalities.length], false);
+                if (cardinalitiesStack.size() == 1) { 
+                    finalized = cardinalitiesStack.pop();
+                }
+                for (int i = 0; i < finalized.cardinalities().length; i++) { 
+                    if (finalized.cardinalities()[i] < choiceCardinalities[i][0]) { 
+                        return false;
+                    }
+                }
+            } else { 
+                for (int i = 0; i < choiceCardinalities.length; i++) { 
+                    if (cardinalities[i] < choiceCardinalities[i][0]) { 
+                        return false;
+                    }
+                }
+            }
+            return true;
+        }
+
+        public void commitIteration(boolean isParsing) { 
+            if (cardinalitiesStack.peek().isProvisional()) { 
+                CardinalityState current = cardinalitiesStack.pop();
+                // replace the penultimate frame with the current one
+                cardinalitiesStack.pop();
+                // pop the penultimate
+                cardinalitiesStack.push(new CardinalityState(current.cardinalities(), false));
+            } else if (isParsing) { 
+                // No provisional frame (i.e., no lookahead "choose" yet), but we are parsing now, so
+                // update the lookahead cardinalities by borrowing the parsing ones, as the lookahead
+                // cardinality increment is potentially done after the actual parsing increment
+                // (this handles the OneOrMore loop order).
+                cardinalitiesStack.pop();
+                // pop the penultimate
+                cardinalitiesStack.push(new CardinalityState(cardinalities, false));
+            }
+        }
+
+        public boolean commit(boolean isSuccess) { 
+            if (!cardinalitiesStack.isEmpty() && cardinalitiesStack.peek().isProvisional()) { 
+                // discard the provisional frame if not successful
+                if (!isSuccess) { 
+                    cardinalitiesStack.pop();
+                    assert(!cardinalitiesStack.peek().isProvisional()) : "provisional frames should always be on top of a non-provisional frame.";
+                }
+            }
+            return isSuccess;
+        }
+    }
+
+    // Delegated RCAs in a callee production bind to the caller's iterating loop via this stack.
+    private final Deque<RepetitionCardinality> delegatedCardinalityStack = new ArrayDeque<>();
+
+    private void pushDelegatedCardinality(RepetitionCardinality cardinalities) { 
+        delegatedCardinalityStack.push(cardinalities);
+    }
+
+    private void popDelegatedCardinality() { 
+        delegatedCardinalityStack.pop();
+    }
+
+    private RepetitionCardinality peekDelegatedCardinality() { 
+        return delegatedCardinalityStack.peek();
+    }
 
     static final int UNLIMITED = Integer.MAX_VALUE;
     private final Token DUMMY_START_TOKEN = new Token();
@@ -162,6 +334,22 @@ public class DelegatedOkParser {
         return result;
     }
 
+    /*
+    * This method generalizes the failure of an assertion, i.e. the routine
+    * works both when in lookahead and in parsing. If the current lookahead
+    * token is null, then we are not in a lookahead, i.e. we are parsing, so
+    * it just throws the exception. If we are in a lookahead routine, we set
+    * the hitFailure flag to true, so that the lookahead routine we're in will
+    * fail at the first opportunity.
+    */
+    private void fail(String message, Node location) { 
+        if (currentLookaheadToken == null) { 
+            if (message == null) message = "";
+            throw new ParseException(message, location, parsingStack);
+        }
+        hitFailure = true;
+    }
+
     // DelegatedOk.ccc:5:1
     final public void Root() { 
         if (cancelled) throw new CancellationException();
@@ -211,14 +399,19 @@ public class DelegatedOkParser {
         int callStackSize4 = parsingStack.size();
         try { 
             // Code for OneOrMore specified at DelegatedOk.ccc:7:10
+            RepetitionCardinality cardinalities0 = new RepetitionCardinality(new int[][] { new int[] { 0,
+            1}});
             while (true) { 
                 // Code for NonTerminal specified at DelegatedOk.ccc:7:12
                 pushOntoCallStack("Parent", "DelegatedOk.ccc", 7, 12);
+                pushDelegatedCardinality(cardinalities0);
                 try { 
                     Child();
                 } finally { 
                     popCallStack();
+                    popDelegatedCardinality();
                 }
+                cardinalities0.commitIteration(true);
                 if (!(scan$DelegatedOk_ccc$7$12())) break;
             }
         } catch (ParseException e) { 
@@ -250,6 +443,9 @@ public class DelegatedOkParser {
         int callStackSize4 = parsingStack.size();
         try { 
             // Code for Assertion specified at DelegatedOk.ccc:9:9
+            if (!peekDelegatedCardinality().choose(0, false)) { 
+                fail("Maximum cardinality constraint at: DelegatedOk.ccc:9:9 exceeded.", getToken(1));
+            }
             // Code for Terminal specified at DelegatedOk.ccc:9:24
             pushOntoCallStack("Child", "DelegatedOk.ccc", 9, 24);
             try { 

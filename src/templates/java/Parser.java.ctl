@@ -21,6 +21,8 @@ import java.util.ListIterator;
 import java.util.Map;
 import java.util.Objects;
 #if grammar::usingCardinality
+  import java.util.ArrayDeque;
+  import java.util.Deque;
   import java.util.Stack;
   import java.util.concurrent.atomic.AtomicInteger;
 #endif
@@ -208,6 +210,21 @@ public ${isFinal ? "final"} class ${settings::parserClassName} {
             }
             return isSuccess;
         }
+    }
+
+    // Delegated RCAs in a callee production bind to the caller's iterating loop via this stack.
+    private final Deque<RepetitionCardinality> delegatedCardinalityStack = new ArrayDeque<>();
+
+    private void pushDelegatedCardinality(RepetitionCardinality cardinalities) {
+        delegatedCardinalityStack.push(cardinalities);
+    }
+
+    private void popDelegatedCardinality() {
+        delegatedCardinalityStack.pop();
+    }
+
+    private RepetitionCardinality peekDelegatedCardinality() {
+        return delegatedCardinalityStack.peek();
     }
 #endif
 

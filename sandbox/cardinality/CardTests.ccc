@@ -59,7 +59,20 @@ Test :
     "[" 
     LEXICAL_STATE JAVA (Modifiers) 
     "]"!->{System.out.println("'" + lastConsumedToken + "' found; expected ']'!");}
+    |
+    "$" DelegatedParent "$"
 ;  
+
+// Phase 2: RCAs in callee bind to caller's iterating loop.
+DelegatedOpts :
+    ENSURE {&0:1&} "X"
+    |
+    ENSURE {&0:1&} "Y"
+;
+
+DelegatedParent :
+    ( DelegatedOpts )+
+; 
 
 Letters :
     LTest1 | LTest2 | LTest3

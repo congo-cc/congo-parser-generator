@@ -79,8 +79,13 @@ public class ExpansionSequence extends Expansion {
 
     @Override
     public boolean isCardinalityConstrained() {
-        Assertion cardinalityAssertion = firstDescendantOfType(Assertion.class, isInScopeConstraint);
-        return cardinalityAssertion != null;
+        // Delegated RCAs bind at parse time via the caller stack (Phase 2).
+        // Until Phase 3 threads RepetitionCardinality into production lookahead,
+        // do not treat delegated-only sequences as scan/predicate cardinality params.
+        Assertion local = firstDescendantOfType(Assertion.class, assertion ->
+                isInScopeConstraint.test(assertion)
+                && !getGrammar().isDelegatedCardinalityAssertion(assertion));
+        return local != null;
     }
 
     public List<Assertion> getCardinalityAssertions() {
