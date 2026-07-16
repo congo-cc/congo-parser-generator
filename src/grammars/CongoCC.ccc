@@ -865,6 +865,20 @@ INJECT ExpansionChoice :
         return false;
     }
 
+    public boolean isLocallyCardinalityConstrained() {
+        for (ExpansionSequence s : getChoices()) {
+            if (s.isLocallyCardinalityConstrained()) return true;
+        }
+        return false;
+    }
+
+    public boolean isDelegatedCardinalityConstrained() {
+        for (ExpansionSequence s : getChoices()) {
+            if (s.isDelegatedCardinalityConstrained()) return true;
+        }
+        return false;
+    }
+
     @Override
     public TokenSet getFirstSet() {
          if (firstSet == null) {

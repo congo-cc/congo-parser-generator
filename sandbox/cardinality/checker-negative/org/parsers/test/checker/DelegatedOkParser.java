@@ -517,7 +517,7 @@ public class DelegatedOkParser {
             pushOntoLookaheadStack("Parent", "DelegatedOk.ccc", 7, 12);
             currentLookaheadProduction = "Child";
             try { 
-                if (!check$Child(false)) return false;
+                if (!check$Child(false, null)) return false;
             } finally { 
                 popLookaheadStack();
             }
@@ -530,15 +530,20 @@ public class DelegatedOkParser {
     }
 
     // BuildProductionLookaheadMethod macro
-    private boolean check$Child(boolean scanToEnd) { 
+    private boolean check$Child(boolean scanToEnd, RepetitionCardinality cardinalities) { 
         // skipping check
-        if (hitFailure) return false;
-        if (remainingLookahead <= 0) return true;
+        if (hitFailure) return cardinalities != null ? cardinalities.commit(false) : false;
+        if (remainingLookahead <= 0) return cardinalities != null ? cardinalities.commit(true) : true;
         // Lookahead Code for Assertion specified at DelegatedOk.ccc:9:9
-        if (hitFailure) return false;
-        if (remainingLookahead <= 0) return true;
+        // Cardinality constraint check to ensure maximum not reached.
+        if (cardinalities != null && !cardinalities.choose(0, true)) { 
+            hitFailure = true;
+            return cardinalities != null ? cardinalities.commit(false) : false;
+        }
+        if (hitFailure) return cardinalities != null ? cardinalities.commit(false) : false;
+        if (remainingLookahead <= 0) return cardinalities != null ? cardinalities.commit(true) : true;
         // Lookahead Code for Terminal specified at DelegatedOk.ccc:9:24
-        if (!scanToken(X)) return false;
+        if (!scanToken(X)) return cardinalities != null ? cardinalities.commit(false) : false;
         return true;
     }
 

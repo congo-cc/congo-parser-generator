@@ -61,9 +61,12 @@ Test :
     "]"!->{System.out.println("'" + lastConsumedToken + "' found; expected ']'!");}
     |
     "$" DelegatedParent "$"
+    |
+    // Phase 3: lookahead/parse of delegated loop followed by a trailing delimiter.
+    "@" DelegatedParent "!"
 ;  
 
-// Phase 2: RCAs in callee bind to caller's iterating loop.
+// Phase 2/3: RCAs in callee bind to caller's iterating loop.
 DelegatedOpts :
     ENSURE {&0:1&} "X"
     |

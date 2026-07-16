@@ -1086,8 +1086,10 @@
    #if expansion::hasSemanticLookahead && !expansion::lookahead::semanticLookaheadNested
       (${expansion::semanticLookahead}) &&
    #endif
-   #if expansion::cardinalityConstrained && cardinalitiesVar??
+   #if expansion::cardinalityConstrained && cardinalitiesVar?? && cardinalitiesVar.length() > 0
       ${expansion::predicateMethodName}(${cardinalitiesVar})
+   #elif expansion::delegatedCardinalityConstrained
+      ${expansion::predicateMethodName}(peekDelegatedCardinality())
    #else
       ${expansion::predicateMethodName}()
    #endif

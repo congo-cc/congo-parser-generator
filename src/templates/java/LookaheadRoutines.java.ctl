@@ -126,11 +126,11 @@
 #function returnFalse cardinalitiesVar=null parentCardVar=null useLoopParam=false
    #if cardinalitiesVar?? && cardinalitiesVar.length() > 0
       #if useLoopParam
-         #return "return (loopCardinalities != null ? loopCardinalities : ${cardinalitiesVar}).commit(false)"
+         #return "return ((loopCardinalities != null) ? loopCardinalities : ${cardinalitiesVar}) != null ? ((loopCardinalities != null) ? loopCardinalities : ${cardinalitiesVar}).commit(false) : false"
       #elif parentCardVar?? && parentCardVar.length() > 0
-         #return "return ${parentCardVar}.commit(false)"
+         #return "return ${parentCardVar} != null ? ${parentCardVar}.commit(false) : false"
       #else
-         #return "return ${cardinalitiesVar}.commit(false)"
+         #return "return ${cardinalitiesVar} != null ? ${cardinalitiesVar}.commit(false) : false"
       #endif
    #else
       #return "return false"
@@ -140,11 +140,11 @@
 #function returnTrue cardinalitiesVar=null parentCardVar=null useLoopParam=false
    #if cardinalitiesVar?? && cardinalitiesVar.length() > 0
       #if useLoopParam
-         #return "return (loopCardinalities != null ? loopCardinalities : ${cardinalitiesVar}).commit(true)"
+         #return "return ((loopCardinalities != null) ? loopCardinalities : ${cardinalitiesVar}) != null ? ((loopCardinalities != null) ? loopCardinalities : ${cardinalitiesVar}).commit(true) : true"
       #elif parentCardVar?? && parentCardVar.length() > 0
-         #return "return ${parentCardVar}.commit(true)"
+         #return "return ${parentCardVar} != null ? ${parentCardVar}.commit(true) : true"
       #else
-         #return "return ${cardinalitiesVar}.commit(true)"
+         #return "return ${cardinalitiesVar} != null ? ${cardinalitiesVar}.commit(true) : true"
       #endif
    #else
       #return "return true"
@@ -154,11 +154,11 @@
 #function return retVal cardinalitiesVar=null parentCardVar=null useLoopParam=false
    #if cardinalitiesVar?? && cardinalitiesVar.length() > 0
       #if useLoopParam
-         #return "return (loopCardinalities != null ? loopCardinalities : ${cardinalitiesVar}).commit(${retVal})"
+         #return "return ((loopCardinalities != null) ? loopCardinalities : ${cardinalitiesVar}) != null ? ((loopCardinalities != null) ? loopCardinalities : ${cardinalitiesVar}).commit(${retVal}) : ${retVal}"
       #elif parentCardVar?? && parentCardVar.length() > 0
-         #return "return ${parentCardVar}.commit(${retVal})"
+         #return "return ${parentCardVar} != null ? ${parentCardVar}.commit(${retVal}) : ${retVal}"
       #else
-         #return "return ${cardinalitiesVar}.commit(${retVal})"
+         #return "return ${cardinalitiesVar} != null ? ${cardinalitiesVar}.commit(${retVal}) : ${retVal}"
       #endif
    #else
       #return "return ${retVal}"
@@ -211,9 +211,11 @@
   private boolean ${expansion::scanRoutineName}(boolean scanToEnd[#if expansion::cardinalityConstrained], RepetitionCardinality loopCardinalities[/#if]) {
     #if expansion::cardinalityConstrained
     RepetitionCardinality cardinalities = loopCardinalities;
+      #if expansion::locallyCardinalityConstrained
     if (cardinalities == null) {
       cardinalities = new RepetitionCardinality(${CU::BuildCardinalities(expansion::cardinalityConstraints)});
     }
+      #endif
     #endif
     #if expansion::hasScanLimit
        int prevPassedPredicateThreshold = this.passedPredicateThreshold;
@@ -397,11 +399,15 @@
 #endmacro
 
 #macro BuildProductionLookaheadMethod production
-   #-- TODO: I think this will need a cardinalitiesVar arg if/when cardinality is transitive across productions.
    // BuildProductionLookaheadMethod macro
   #set CU::newVarIndex = 0
-   private boolean ${production::lookaheadMethodName}(boolean scanToEnd) {
-      ${BuildScanCode(production::expansion)}
+  #var needsCard = production::delegatedCardinalityTarget
+   private boolean ${production::lookaheadMethodName}(boolean scanToEnd[#if needsCard], RepetitionCardinality cardinalities[/#if]) {
+      #if needsCard
+         ${BuildScanCode(production::expansion, "cardinalities", "cardinalities")}
+      #else
+         ${BuildScanCode(production::expansion)}
+      #endif
       return true;
    }
 #endmacro
@@ -510,8 +516,12 @@
       // NonTerminal ${nt::name} at ${nt::location}
       pushOntoLookaheadStack("${nt::containingProduction::name}", "${nt::inputSource.JavaStringEncode}", ${nt::beginLine}, ${nt::beginColumn});
       currentLookaheadProduction = "${nt::production::name}";
+      #var passCard = false
+      #if nt::production::delegatedCardinalityTarget && cardinalitiesVar?? && cardinalitiesVar.length() > 0
+         #set passCard = true
+      #endif
       try {
-          if (!${nt::production::lookaheadMethodName}(${CU::bool(nt::scanToEnd)})) ${returnFalse(cardinalitiesVar!null)};
+          if (!${nt::production::lookaheadMethodName}(${CU::bool(nt::scanToEnd)}[#if passCard], ${cardinalitiesVar}[#elif nt::production::delegatedCardinalityTarget], null[/#if])) ${returnFalse(cardinalitiesVar!null)};
       }
       finally {
           popLookaheadStack();
@@ -561,9 +571,15 @@
    #endif
    #if assertion::cardinalityConstraint?? && cardinalitiesVar?? && cardinalitiesVar.length() > 0
       // Cardinality constraint check to ensure maximum not reached.
-      if (!${cardinalitiesVar}.choose([#if useLoopParam]loopCardinalities != null ? ${assertion::assertionIndex} : 0[#elif parentCardVar == "cardinalities"]${assertion::assertionIndex}[#else]0[/#if], true)) {
+      if (${cardinalitiesVar} != null && !${cardinalitiesVar}.choose([#if useLoopParam]loopCardinalities != null ? ${assertion::assertionIndex} : 0[#elif parentCardVar == "cardinalities" || assertion::delegatedCardinality]${assertion::assertionIndex}[#else]0[/#if], true)) {
          hitFailure = true;
          ${returnFalse(cardinalitiesVar, parentCardVar!null, useLoopParam)};
+      }
+   #elif assertion::cardinalityConstraint?? && assertion::delegatedCardinality
+      // Delegated RCA during parse-time predicate: caller's card is on the stack.
+      if (!peekDelegatedCardinality().choose(${assertion::assertionIndex}, true)) {
+         hitFailure = true;
+         ${returnFalse(cardinalitiesVar!null, parentCardVar!null, useLoopParam)};
       }
    #endif
 #endmacro
@@ -621,8 +637,8 @@
 --]
 #macro ScanCodeZeroOrMore zom cardVar=null cardinalitiesVar=null
    #var prevPassPredicateVarName = "passedPredicate" + CU::newID()
-    #var zomCardVar = cardVar!false
-    #if zom::cardinalityContainer & !zomCardVar
+    #var zomCardVar = cardVar!""
+    #if zom::cardinalityContainer && zomCardVar.length() == 0
       #set zomCardVar = "cardinality" + repetitionIndex
       #set repetitionIndex = repetitionIndex + 1
       // instantiating the OneOrMore choice cardinality container for its ExpansionChoices
@@ -685,10 +701,12 @@
       scanToken(${expansion::firstSetVarName})
      #endif
    #else
-     #if grammar::assertionExpansions?? && grammar::assertionExpansions.contains(expansion)
+     #if expansion::simpleName = "NonTerminal" && expansion::production::delegatedCardinalityTarget
+      ${expansion::production::lookaheadMethodName}(false, [#if cardinalitiesVar?? && cardinalitiesVar.length() > 0]${cardinalitiesVar}[#else]null[/#if])
+     #elif grammar::assertionExpansions?? && grammar::assertionExpansions.contains(expansion)
       ${expansion::scanRoutineName}()
      #else
-      ${expansion::scanRoutineName}(false[#if expansion::cardinalityConstrained], [#if cardinalitiesVar??]${cardinalitiesVar}[#else]null[/#if][/#if])
+      ${expansion::scanRoutineName}(false[#if expansion::cardinalityConstrained], [#if cardinalitiesVar?? && cardinalitiesVar.length() > 0]${cardinalitiesVar}[#else]null[/#if][/#if])
      #endif
    #endif
 #endmacro
