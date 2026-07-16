@@ -7,6 +7,7 @@ import java.text.DecimalFormat;
 import java.text.DecimalFormatSymbols;
 import java.text.NumberFormat;
 import java.util.*;
+import java.util.function.Function;
 
 import org.congocc.templates.core.nodes.generated.ArgsList;
 import org.congocc.templates.core.nodes.generated.Block;
@@ -19,6 +20,7 @@ import org.congocc.templates.core.nodes.generated.PositionalArgsList;
 import org.congocc.templates.core.nodes.ParameterList;
 import org.congocc.templates.core.nodes.generated.TemplateElement;
 import org.congocc.templates.core.scopes.*;
+import org.congocc.templates.extensions.Extension;
 import org.congocc.templates.*;
 
 import static org.congocc.templates.core.Wrap.*;
@@ -66,6 +68,7 @@ public final class Environment implements Scope {
     private final List<String> recoveredErrorStack = new ArrayList<String>();
     private NumberFormat numberFormatter;
     private Map<String, NumberFormat> numberFormats;
+    private Function<String,String> outputEscape;
     private NumberFormat cNumberFormat;
     private Collator collator;
     private Appendable buffer = new StringBuilder();
@@ -113,6 +116,10 @@ public final class Environment implements Scope {
 
     public void setTemplate(Template template) {
         this.template = template;
+    }
+
+    public Extension getExtension(String name) {
+        return getTemplateFactory().getExtension(name);
     }
 
     /**
@@ -421,6 +428,13 @@ public final class Environment implements Scope {
 
     public Appendable getBuffer() {
         return buffer;
+    }
+
+    public Function<String,String> getOutputEscape() {
+        if (outputEscape == null) {
+            return template.getOutputEscape();
+        }
+        return outputEscape;
     }
 
     public void append(CharSequence cs) {

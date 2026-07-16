@@ -6,7 +6,7 @@ import org.congocc.templates.core.EvaluationException;
 import java.util.function.Function;
 
 /**
- * Implementation of ?instanceof built-in
+ * Implementation of instanceof extension
  */
 public class instanceofBI extends ExpressionEvaluatingExtension {
 

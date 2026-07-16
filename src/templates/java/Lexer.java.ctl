@@ -21,7 +21,7 @@ import static ${settings::parserPackage}.${TOKEN}.TokenType.*;
 #var PRESERVE_LINE_ENDINGS = settings::preserveLineEndings ? "true" : "false",
      JAVA_UNICODE_ESCAPE = settings::javaUnicodeEscape ? "true" : "false",
      PRESERVE_TABS = settings::preserveTabs ? "true" : "false",
-     TERMINATING_STRING = "\"" + settings::terminatingString.j_string + "\"",
+     TERMINATING_STRING = "\"" + settings::terminatingString.JavaStringEncode + "\"",
      BaseToken = settings::treeBuildingEnabled ? "Node.TerminalNode" : TOKEN
 
 #macro EnumSet varName tokenNames

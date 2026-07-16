@@ -279,7 +279,7 @@ MAX_STATES = max(
 # Lexer code and data
 
 #macro EnumSet varName tokenNames indent = 0
-    #var is = "".right_pad(indent)
+    #var is = "".RightPad(indent)
     #if tokenNames.size() == 0
 ${is}self.${varName} = EMPTY_SET
     #else
@@ -308,7 +308,7 @@ def get_function_table_map(lexical_state):
       JAVA_UNICODE_ESCAPE = settings::javaUnicodeEscape ? "True" : "False",
       PRESERVE_TABS = settings::preserveTabs ? "True" : "False",
       ENSURE_FINAL_EOL = settings::ensureFinalEOL ? "True" : "False",
-      TERMINATING_STRING = "\"" + settings::terminatingString.j_string + "\""
+      TERMINATING_STRING = "\"" + settings::terminatingString.JavaStringEncode + "\""
 
 CODING_PATTERN = re.compile(rb'^[ \t\f]*#.*coding[:=][ \t]*([-_.a-zA-Z0-9]+)')
 

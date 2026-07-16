@@ -250,7 +250,7 @@ finally {
 #function imputedJtbFieldName nodeClass
    #if nodeClass?? && isJtbParseTree() && topLevelExpansion
       #-- Determine the name of the node field containing the reference to a synthetic syntax node
-      #var fieldName = nodeClass.uncap_first
+      #var fieldName = nodeClass.UncapFirst
       #var fieldOrdinal
       #if jtbNameMap[nodeClass]??
          #-- Allow for JTB-style syntactic node names (but exclude Token and <non-terminal> ).
@@ -544,7 +544,7 @@ if (BuildTree) {
       #var lhsName = assignment::name
       #if assignment::propertyAssignment
          #-- This is the assignment of the current node's effective value to a property of the production node
-         #set lhsName = lhsName.cap_first
+         #set lhsName = lhsName.CapFirst
          #if lhsType?? && assignment::declarationOf
             #-- This is a declaration assignment; inject required property
             ${injectDeclaration(lhsType, assignment::name, assignment)}
@@ -702,7 +702,7 @@ Fail("Failure");
 #if assertion::messageExpression??
   #set optionalPart = " + " + globals.translateExpression(assertion::messageExpression)
 #endif
-   #var assertionMessage = "Assertion at: " + assertion::location.j_string + " failed. "
+   #var assertionMessage = "Assertion at: " + assertion::location.JavaStringEncode + " failed. "
    #if assertion::lookBehind??
 if ([#if !assertion::lookBehind::negated]![/#if]${assertion::lookBehind::routineName}()) {
     Fail("${assertionMessage}"${optionalPart});
@@ -717,7 +717,7 @@ if (!(${assertion::rawCode})) {
 }
    #elif assertion::cardinalityConstraint?? && cardinalitiesVar?? && (cardinalitiesVar.length() > 0)
 if (!${cardinalitiesVar}.Choose(${assertion::assertionIndex}, false)) {
-    Fail("Maximum cardinality constraint at: ${assertion::location.j_string} exceeded.");
+    Fail("Maximum cardinality constraint at: ${assertion::location.JavaStringEncode} exceeded.");
 }
    #endif
    #if assertion::expansion??
@@ -773,7 +773,7 @@ ${BuildCode(attemptBlock::recoveryExpansion, "")}
 
 #macro BuildCodeNonTerminal nonterminal
 #-- // DBG > BuildCodeNonTerminal ${nonterminal.production.name}
-PushOntoCallStack("${nonterminal::containingProduction::name}", "${nonterminal::inputSource.j_string}", ${nonterminal::beginLine}, ${nonterminal::beginColumn});
+PushOntoCallStack("${nonterminal::containingProduction::name}", "${nonterminal::inputSource.JavaStringEncode}", ${nonterminal::beginLine}, ${nonterminal::beginColumn});
 #if settings::faultTolerant
   #var followSet = nonterminal::followSet
   #if !followSet::incomplete
@@ -896,7 +896,7 @@ ${RecoveryLoop(oom, cardinalitiesVar)}
 }
 #if oom::minCardinalityConstrained && oom::cardinalityContainer
     if (!${cardinalitiesVar}.CheckCardinality(false)) {
-        Fail("Minimum cardinality constraint(s) for: ${oom::location.j_string} not met.");
+        Fail("Minimum cardinality constraint(s) for: ${oom::location.JavaStringEncode} not met.");
     }
 #endif
    #set inFirstVarName = prevInFirstVarName
@@ -922,7 +922,7 @@ while (true) {
 }
 #if zom::minCardinalityConstrained && zom::cardinalityContainer
     if (!${cardinalitiesVar}.CheckCardinality(false)) {
-        Fail("Minimum cardinality constraint(s) for: ${zom::location.j_string} not met.");
+        Fail("Minimum cardinality constraint(s) for: ${zom::location.JavaStringEncode} not met.");
     }
 #endif
 #-- // DBG < BuildCodeZeroOrMore
@@ -985,7 +985,7 @@ else {
 }
 #elif choice::parent::simpleName = "OneOrMore"
 else if (${inFirstVarName}) {
-    PushOntoCallStack("${currentProduction::name}", "${choice::inputSource.j_string}", ${choice::beginLine}, ${choice::beginColumn});
+    PushOntoCallStack("${currentProduction::name}", "${choice::inputSource.JavaStringEncode}", ${choice::beginLine}, ${choice::beginColumn});
     throw new ParseException(this, ${choice::firstSetVarName});
 }
 else {
@@ -993,7 +993,7 @@ else {
 }
 #elif choice::parent::simpleName != "ZeroOrOne"
 else {
-    PushOntoCallStack("${currentProduction::name}", "${choice::inputSource.j_string}", ${choice::beginLine}, ${choice::beginColumn});
+    PushOntoCallStack("${currentProduction::name}", "${choice::inputSource.JavaStringEncode}", ${choice::beginLine}, ${choice::beginColumn});
     throw new ParseException(this, ${choice::firstSetVarName});
 }
 /#if

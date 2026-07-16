@@ -52,13 +52,6 @@ public class MethodCall extends TemplateNode implements Expression {
             return wrap(supplier.get());
         }
         List<Object> argumentList = args != null ? args.getParameterSequence(leftSide, env) : new ArrayList<>();
-        if (leftSide instanceof VarArgsFunction<?> targetMethod) {
-            Object[] argArray =  argumentList.toArray();
-            for (int i = 0; i < argArray.length; i++) {
-                argArray[i] = unwrap(argArray[i]);
-            }
-            return wrap(targetMethod.apply(argArray));
-        }
         if (leftSide instanceof Function func) {
             if (args == null || args.childrenOfType(Expression.class).size() != 1) {
                 throw new EvaluationException("The method " + lhs() + " takes exactly one argument.");
@@ -83,6 +76,13 @@ public class MethodCall extends TemplateNode implements Expression {
                 throw new EvaluationException("The method " + lhs() + " takes exactly four arguments.");
             }
             return wrap(quadf.apply(argumentList.get(0), argumentList.get(1), argumentList.get(2), argumentList.get(3)));
+        }
+        if (leftSide instanceof VarArgsFunction<?> targetMethod) {
+            Object[] argArray =  argumentList.toArray();
+            for (int i = 0; i < argArray.length; i++) {
+                argArray[i] = unwrap(argArray[i]);
+            }
+            return wrap(targetMethod.apply(argArray));
         }
         throw invalidTypeException(leftSide, lhs(), "method");
     }

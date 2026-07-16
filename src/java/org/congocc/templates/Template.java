@@ -2,6 +2,7 @@ package org.congocc.templates;
 
 import java.io.IOException;
 import java.util.*;
+import java.util.function.Function;
 
 import org.congocc.templates.core.ArithmeticEngine;
 import org.congocc.templates.core.Environment;
@@ -27,6 +28,8 @@ public class Template {
     private ArithmeticEngine arithmeticEngine;
     private Locale locale;
     private String numberFormat;
+
+    private Function<String,String> outputEscape;
 
     /**
      * A prime constructor to which all other constructors should
@@ -67,6 +70,13 @@ public class Template {
             return arithmeticEngine;
         }
         return getTemplateFactory().getArithmeticEngine();
+    }
+
+    public Function<String,String> getOutputEscape() {
+        if (outputEscape == null) {
+            return getTemplateFactory().getOutputEscape();
+        }
+        return outputEscape;
     }
 
     public Locale getLocale() {

@@ -27,6 +27,7 @@ INJECT Interpolation :
     public void execute(Environment env) {
         Expression exp = getExpression();
         String output = exp.getStringValue(env);
+        output = env.getOutputEscape().apply(output);
         env.append(output);
     }
 
@@ -1238,6 +1239,9 @@ INJECT Block :
  * ${...} but no directives.
  */
 #TemplateText#Block :
+    DEACTIVATE_TOKENS POSSIBLE_DIRECTIVE, POSSIBLE_END_DIRECTIVE,
+                      START_TAG, CLOSE_DIRECTIVE_BLOCK, UNIFIED_CALL,
+                      UNIFIED_CALL_END
     (
         TextElement
         |

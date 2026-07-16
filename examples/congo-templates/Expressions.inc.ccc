@@ -1073,80 +1073,14 @@ INJECT DotExpression :
     import org.congocc.templates.core.nodes.ExtensionExpression;
     extends TemplateNode implements Expression
 {
-    private static Map<String, Extension> knownExtensions = new HashMap<>();
-    static
-    {
-        knownExtensions.put("_source", (caller, env) -> caller.lhs().getSource());
-        knownExtensions.put("instanceof", new instanceofBI());
-        knownExtensions.put("_c", new cBI());
-        knownExtensions.put("_string", new stringBI());
-        knownExtensions.put("_eval", new evalBI());
-        NumericalCast numericalCast = new NumericalCast();
-        knownExtensions.put("byte", numericalCast);
-        knownExtensions.put("double", numericalCast);
-        knownExtensions.put("float", numericalCast);
-        knownExtensions.put("int", numericalCast);
-        knownExtensions.put("long", numericalCast);
-        knownExtensions.put("short", numericalCast);
-        knownExtensions.put("_floor", numericalCast);
-        knownExtensions.put("_ceiling", numericalCast);
-        knownExtensions.put("_round", numericalCast);
-        knownExtensions.put("_capitalize", new StringTransformations.Capitalize());
-        knownExtensions.put("cap_first", new StringTransformations.CapFirst(true));
-        knownExtensions.put("uncap_first", new StringTransformations.CapFirst(false));
-        knownExtensions.put("j_string", new StringTransformations.Java());
-        knownExtensions.put("js_string", new StringTransformations.JavaScript());
-        knownExtensions.put("chop_linebreak", new StringTransformations.Chomp());
-        knownExtensions.put("_html", new StringTransformations.Html());
-        knownExtensions.put("web_safe", knownExtensions.get("_html"));
-        knownExtensions.put("_rtf", new StringTransformations.Rtf());
-        knownExtensions.put("_xml", new StringTransformations.Xml());
-        knownExtensions.put("_xhtml", new StringTransformations.Xhtml());
-        knownExtensions.put("join", new StringFunctions.Join());
-        knownExtensions.put("_number", new numberBI());
-        knownExtensions.put("left_pad", new StringFunctions.LeftPad());
-        knownExtensions.put("right_pad", new StringFunctions.RightPad());
-        knownExtensions.put("_groups", new groupsBI());
-        knownExtensions.put("_matches", new StringFunctions.Matches());
-        knownExtensions.put("word_list", new StringFunctions.WordList());
-        knownExtensions.put("_url", new StringFunctions.Url());
-        knownExtensions.put("_first", new SequenceFunctions.First());
-        knownExtensions.put("_last", new SequenceFunctions.Last());
-        knownExtensions.put("_reverse", new SequenceFunctions.Reverse());
-        knownExtensions.put("_scope", new MacroBuiltins.Scope());
-        knownExtensions.put("_namespace", new MacroBuiltins.Namespace());
-        knownExtensions.put("_keys", new HashBuiltin.Keys());
-        knownExtensions.put("_values", new HashBuiltin.Values());
-        knownExtensions = Collections.synchronizedMap(knownExtensions);
-    }
-
-    private Extension extension;
-
-    public void close() {
-        String key = get(2).toString().intern();
-        extension = knownExtensions.get(key);
-    }
-
     public Expression lhs() {
         return (Expression) get(0);
-    }
-
-    public Extension getExtension() {
-        return extension;
-    }
-
-    public static void registerExtension(String name, Extension extension) {
-        knownExtensions.put(name, extension);
-    }
-
-    public static Extension getExtension(String name) {
-        return knownExtensions.get(name);
     }
 
     public Object evaluate(Environment env) {
         Object target = lhs().evaluate(env);
         String name = get(2).toString();
-        Extension ext = getExtension(name);
+        Extension ext = env.getExtension(name);
         if (ext != null) {
             return ext.get(this, env);
         }

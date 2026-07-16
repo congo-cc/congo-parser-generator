@@ -496,7 +496,7 @@
 --]
 #macro ScanCodeNonTerminal nt cardinalitiesVar
       // NonTerminal ${nt::name} at ${nt::location}
-      pushOntoLookaheadStack("${nt::containingProduction::name}", "${nt::inputSource.j_string}", ${nt::beginLine}, ${nt::beginColumn});
+      pushOntoLookaheadStack("${nt::containingProduction::name}", "${nt::inputSource.JavaStringEncode}", ${nt::beginLine}, ${nt::beginColumn});
       currentLookaheadProduction = "${nt::production::name}";
       try {
           if (!${nt::production::lookaheadMethodName}(${CU::bool(nt::scanToEnd)})) ${returnFalse(cardinalitiesVar!null)};
