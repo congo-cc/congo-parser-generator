@@ -1,4 +1,4 @@
-// Expect error: Child invoked from two distinct iterating expansions
+// Expect success: Child invoked from two distinct iterating expansions (multi-parent bias).
 PARSER_PACKAGE="org.parsers.test.checker";
 TEST_PRODUCTION=Root;
 

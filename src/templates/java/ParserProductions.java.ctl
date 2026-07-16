@@ -756,7 +756,7 @@
          fail("Maximum cardinality constraint at: ${assertion::location.JavaStringEncode} exceeded.", getToken(1));
       }
    #elif assertion::cardinalityConstraint?? && assertion::delegatedCardinality
-      if (!peekDelegatedCardinality().choose(${assertion::assertionIndex}, false)) {
+      if (!peekDelegatedCardinality().choose(peekDelegatedBias() + ${assertion::assertionIndex}, false)) {
          fail("Maximum cardinality constraint at: ${assertion::location.JavaStringEncode} exceeded.", getToken(1));
       }
    #endif
@@ -838,7 +838,7 @@
       #endif
    #endif
    #if pushDelegated
-      pushDelegatedCardinality(${cardinalitiesVar});
+      pushDelegatedCardinality(${cardinalitiesVar}, ${nonterminal::delegatedCardinalityBias});
    #endif
    try {
       ${AcceptNonTerminal(nonterminal)}

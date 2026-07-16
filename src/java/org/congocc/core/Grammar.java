@@ -540,8 +540,21 @@ public class Grammar extends GrammarFile {
     }
 
     /**
-     * Phase 1: link orphan RCAs in callee productions to a single enclosing
-     * iterating expansion at each call site, then re-index affected loops.
+     * Bias of {@code nt}'s callee block within the nearest enclosing iterating loop's
+     * {@code RepetitionCardinality} array, or {@code 0} if not a delegated call site.
+     */
+    public int getDelegatedCardinalityBias(NonTerminal nt) {
+        ExpansionWithParentheses loop = nearestIteratingAncestor(nt);
+        if (loop == null) {
+            return 0;
+        }
+        return loop.getDelegatedCardinalityBias(nt.getProduction());
+    }
+
+    /**
+     * Link orphan RCAs in callee productions to each enclosing iterating expansion
+     * at consistent call sites, then re-index affected loops. Multi-parent is allowed:
+     * each loop gets its own contiguous block and bias for the callee.
      * Must run after {@link #checkReferences()} so NonTerminal → production resolves.
      */
     void discoverDelegatedCardinality() {
@@ -549,7 +562,6 @@ public class Grammar extends GrammarFile {
         delegatedCardinalityByCallee.clear();
         delegatedCardinalityByLoop.clear();
 
-        // Callee production → all NonTerminal call sites (grammar-wide).
         Map<BNFProduction, List<NonTerminal>> callSitesByCallee = new IdentityHashMap<>();
         for (NonTerminal nt : descendants(NonTerminal.class)) {
             BNFProduction callee = nt.getProduction();
@@ -559,7 +571,6 @@ public class Grammar extends GrammarFile {
             callSitesByCallee.computeIfAbsent(callee, k -> new ArrayList<>()).add(nt);
         }
 
-        // Candidate links discovered while walking each loop body.
         Map<BNFProduction, List<DelegatedCardinalityLink>> candidatesByCallee = new IdentityHashMap<>();
 
         for (ExpansionWithParentheses loop : descendants(ExpansionWithParentheses.class,
@@ -595,11 +606,6 @@ public class Grammar extends GrammarFile {
                 }
             }
 
-            LinkedHashMap<ExpansionWithParentheses, DelegatedCardinalityLink> byLoop = new LinkedHashMap<>();
-            for (DelegatedCardinalityLink link : candidates) {
-                byLoop.putIfAbsent(link.getLoop(), link);
-            }
-
             if (!nonDelegating.isEmpty()) {
                 errors.addError(callee,
                     "Production " + callee.getName()
@@ -609,39 +615,34 @@ public class Grammar extends GrammarFile {
                 continue;
             }
 
-            if (byLoop.size() > 1) {
-                errors.addError(callee,
-                    "Production " + callee.getName()
-                    + " has repetition cardinality constraints with no local ZeroOrMore/OneOrMore, "
-                    + "but is invoked from multiple distinct ZeroOrMore/OneOrMore loops "
-                    + "(ambiguous delegated cardinality).");
+            if (candidates.isEmpty()) {
                 continue;
             }
 
-            if (byLoop.isEmpty()) {
-                continue;
+            // Relative indices within the callee (stable across all parent loops).
+            List<Assertion> orphans = candidates.get(0).getDelegatedAssertions();
+            for (int i = 0; i < orphans.size(); i++) {
+                orphans.get(i).setAssertionIndex(i);
             }
 
-            ExpansionWithParentheses winningLoop = byLoop.keySet().iterator().next();
-            DelegatedCardinalityLink representative = byLoop.get(winningLoop);
-            LinkedHashSet<Assertion> ordered =
-                    assertionsByLoop.computeIfAbsent(winningLoop, k -> new LinkedHashSet<>());
-            List<DelegatedCardinalityLink> accepted =
-                    linksByLoop.computeIfAbsent(winningLoop, k -> new ArrayList<>());
+            DelegatedCardinalityLink representative = candidates.get(0);
+            delegatedCardinalityByCallee.put(callee, representative);
 
             for (DelegatedCardinalityLink link : candidates) {
-                if (link.getLoop() != winningLoop) {
-                    continue;
-                }
+                ExpansionWithParentheses loop = link.getLoop();
+                LinkedHashSet<Assertion> ordered =
+                        assertionsByLoop.computeIfAbsent(loop, k -> new LinkedHashSet<>());
+                List<DelegatedCardinalityLink> accepted =
+                        linksByLoop.computeIfAbsent(loop, k -> new ArrayList<>());
                 accepted.add(link);
                 for (Assertion a : link.getDelegatedAssertions()) {
                     ordered.add(a);
-                    delegatedCardinalityByAssertion.put(a, link);
+                    // One representative link per assertion is enough for isDelegated checks;
+                    // bias is looked up per call site / loop.
+                    delegatedCardinalityByAssertion.putIfAbsent(a, link);
                 }
+                loopsToRefresh.add(loop);
             }
-
-            delegatedCardinalityByCallee.put(callee, representative);
-            loopsToRefresh.add(winningLoop);
         }
 
         for (Map.Entry<ExpansionWithParentheses, LinkedHashSet<Assertion>> e : assertionsByLoop.entrySet()) {

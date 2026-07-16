@@ -15,12 +15,12 @@ import java.util.Collections;
 */
 public class BaseNode implements Node { 
 
-    private DelegatedOkLexer tokenSource;
+    private DelegatedMultiParentLexer tokenSource;
 
-    public DelegatedOkLexer getTokenSource() { 
+    public DelegatedMultiParentLexer getTokenSource() { 
         if (tokenSource == null) { 
             for (Node child : children()) { 
-                if (child.getTokenSource() instanceof DelegatedOkLexer) tokenSource = (DelegatedOkLexer) child.getTokenSource();
+                if (child.getTokenSource() instanceof DelegatedMultiParentLexer) tokenSource = (DelegatedMultiParentLexer) child.getTokenSource();
                 if (tokenSource != null) break;
             }
         }
@@ -28,7 +28,7 @@ public class BaseNode implements Node {
     }
 
     public void setTokenSource(TokenSource tokenSource) { 
-        this.tokenSource = (DelegatedOkLexer) tokenSource;
+        this.tokenSource = (DelegatedMultiParentLexer) tokenSource;
     }
 
     private static Class<? extends List<Node>> listClass;

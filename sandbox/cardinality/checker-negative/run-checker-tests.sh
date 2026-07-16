@@ -68,7 +68,7 @@ expect_error RCAInZeroOrOne.ccc "ZeroOrOne"
 expect_warning TelescopedSequence.ccc "effective minimum exceeds effective maximum"
 expect_success DelegatedOk.ccc
 expect_error DelegatedInconsistentCalls.ccc "consistent call sites"
-expect_error DelegatedAmbiguousLoops.ccc "ambiguous delegated cardinality"
+expect_success DelegatedMultiParent.ccc
 
 if [ "$FAIL" -ne 0 ]; then
   echo "Checker negative tests FAILED"

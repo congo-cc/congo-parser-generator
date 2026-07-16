@@ -403,6 +403,18 @@ Command :
     )
 ;
 
+
+// Shared NOHANDLE / RESP / RESP2 options; RCAs bind to each command's enclosing * / +.
+CommonOptions :
+    (
+        & @noHandle :=? <NOHANDLE>
+        |
+        & <RESP> "(" Name #ResponseName(1) ")"
+        |
+        & <RESP2> "(" Name #Response2Name(1) ")"
+    )
+;
+
 Abend :
     <ABEND>
     (
@@ -414,13 +426,7 @@ Abend :
             & @noDump :=? <NODUMP>
         ) #TerminationOption 
         |
-        (
-            & @noHandle :=? <NOHANDLE>
-            |
-            & <RESP> "(" Name #ResponseName(1) ")"
-            |
-            & <RESP2> "(" Name #Response2Name(1) ")"
-        ) #CommonOptions
+        CommonOptions
     )* =>||
 ;
 
@@ -436,13 +442,7 @@ HandleAbend :
             <RESET>
         )
         |
-        (
-            & @noHandle :=? <NOHANDLE>
-            |
-            & <RESP> "(" Name #ResponseName(1) ")"
-            |
-            & <RESP2> "(" Name #Response2Name(1) ")"
-        ) #CommonOptions
+        CommonOptions
     )* =>||
 ;
 
@@ -454,13 +454,7 @@ Acquire :
             |
             && <PROCESSTYPE> "(" DataValue ")"
             |
-            (
-                & @noHandle :=? <NOHANDLE>
-                |
-                & <RESP> "(" Name #ResponseName(1) ")"
-                |
-                & <RESP2> "(" Name #Response2Name(1) ")"
-            ) #CommonOptions
+            CommonOptions
         )+ =>||
         |
         <ACTIVITYID> "(" DataValue ")"
@@ -474,13 +468,7 @@ Add :
         |
         && <EVENT> "(" DataValue ")"
         |
-        (
-            & @noHandle :=? <NOHANDLE>
-            |
-            & <RESP> "(" Name #ResponseName(1) ")"
-            |
-            & <RESP2> "(" Name #Response2Name(1) ")"
-        ) #CommonOptions
+        CommonOptions
     )+ =>||
 ;
 
@@ -499,13 +487,7 @@ Address :
         |
         & <TWA> "(" PtrRef ")"
         |
-        (
-            & @noHandle :=? <NOHANDLE>
-            |
-            & <RESP> "(" Name #ResponseName(1) ")"
-            |
-            & <RESP2> "(" Name #Response2Name(1) ")"
-        ) #CommonOptions
+        CommonOptions
     )* =>|| // includes any subset including empty
 ;
     
@@ -517,13 +499,7 @@ AddressSet :
         <SET> "(" PtrRef ")" <USING> "(" DataArea ")"
     )
     ( 
-        (
-            & @noHandle :=? <NOHANDLE>
-            |
-            & <RESP> "(" Name #ResponseName(1) ")"
-            |
-            & <RESP2> "(" Name #Response2Name(1) ")"
-        ) #CommonOptions
+        CommonOptions
     )* =>||
 ;
 
@@ -534,13 +510,7 @@ AllocateAPPC :
         | 
         & <STATE> "(" Cvda ")"
         |
-        (
-            & @noHandle :=? <NOHANDLE>
-            |
-            & <RESP> "(" Name #ResponseName(1) ")"
-            |
-            & <RESP2> "(" Name #Response2Name(1) ")"
-        ) #CommonOptions
+        CommonOptions
         |
         && (
             <PARTNER> "(" Name ")" =>||
@@ -557,26 +527,14 @@ AllocateAPPC :
 Syncpoint :
     <SYNCPOINT>
     (
-        (
-            & @noHandle :=? <NOHANDLE>
-            |
-            & <RESP> "(" Name #ResponseName(1) ")"
-            |
-            & <RESP2> "(" Name #Response2Name(1) ")"
-        ) #CommonOptions
+        CommonOptions
     )* =>||
 ;
 
 SyncpointRollback :
     <SYNCPOINT> <ROLLBACK>
     (
-        (
-            & @noHandle :=? <NOHANDLE>
-            |
-            & <RESP> "(" Name #ResponseName(1) ")"
-            |
-            & <RESP2> "(" Name #Response2Name(1) ")"
-        ) #CommonOptions
+        CommonOptions
     )* =>|| // Note: this will warn with a sanity check as "probably not intended"!!!
 ;
 
@@ -599,13 +557,7 @@ Xctl :
             & <INPUTMSGLEN> "(" DataValue ")"
         )+
         |
-        (
-            & @noHandle :=? <NOHANDLE>
-            |
-            & <RESP> "(" Name #ResponseName(1) ")"
-            |
-            & <RESP2> "(" Name #Response2Name(1) ")"
-        ) #CommonOptions
+        CommonOptions
     )* =>||
 ;
 
@@ -639,13 +591,7 @@ Link :
             )+
         )+
         |
-        (
-            & @noHandle :=? <NOHANDLE>
-            |
-            & <RESP> "(" Name #ResponseName(1) ")"
-            |
-            & <RESP2> "(" Name #Response2Name(1) ")"
-        ) #CommonOptions
+        CommonOptions
     )* =>||
 ;
 
@@ -678,13 +624,7 @@ Return :
         |
         &<ENDACTIVITY>
         |
-        (
-            & @noHandle :=? <NOHANDLE>
-            |
-            & <RESP> "(" Name #ResponseName(1) ")"
-            |
-            & <RESP2> "(" Name #Response2Name(1) ")"
-        ) #CommonOptions
+        CommonOptions
     )* =>||
 ;
 
@@ -715,13 +655,7 @@ Receive3270 :
         |
         &<ASIS>
         |
-        (
-            & @noHandle :=? <NOHANDLE>
-            |
-            & <RESP> "(" Name #ResponseName(1) ")"
-            |
-            & <RESP2> "(" Name #Response2Name(1) ")"
-        ) #CommonOptions
+        CommonOptions
     )+ =>||
 ;
 
@@ -752,13 +686,7 @@ ReceiveMap :
         |
         &<MAPSET> "(" Name ")"
         |
-        (
-            & @noHandle :=? <NOHANDLE>
-            |
-            & <RESP> "(" Name #ResponseName(1) ")"
-            |
-            & <RESP2> "(" Name #Response2Name(1) ")"
-        ) #CommonOptions
+        CommonOptions
     )* =>||
 ;
 
@@ -805,13 +733,7 @@ SendMap : //minimum at this point
         |
         &<FRSET>
         |
-        (
-            & @noHandle :=? <NOHANDLE>
-            |
-            & <RESP> "(" Name #ResponseName(1) ")"
-            |
-            & <RESP2> "(" Name #Response2Name(1) ")"
-        ) #CommonOptions
+        CommonOptions
     )* =>||
 ;
 
@@ -842,13 +764,7 @@ StartBr :
         |
         &( <EQUAL> | <GTEQ> )
         |
-        (
-            & @noHandle :=? <NOHANDLE>
-            |
-            & <RESP> "(" Name #ResponseName(1) ")"
-            |
-            & <RESP2> "(" Name #Response2Name(1) ")"
-        ) #CommonOptions
+        CommonOptions
     )+ =>||
 ;
 
@@ -861,13 +777,7 @@ EndBr :
         |
         &<REQID> "(" DataValue ")"
         |
-        (
-            & @noHandle :=? <NOHANDLE>
-            |
-            & <RESP> "(" Name #ResponseName(1) ")"
-            |
-            & <RESP2> "(" Name #Response2Name(1) ")"
-        ) #CommonOptions
+        CommonOptions
     )+ =>||
 ;
 
@@ -918,13 +828,7 @@ Read :
         |
         &<NOSUSPEND>
         |
-        (
-            & @noHandle :=? <NOHANDLE>
-            |
-            & <RESP> "(" Name #ResponseName(1) ")"
-            |
-            & <RESP2> "(" Name #Response2Name(1) ")"
-        ) #CommonOptions
+        CommonOptions
     )+ =>||
 ;
 
@@ -973,13 +877,7 @@ ReadPrev :
         |
         &<NOSUSPEND>
         |
-        (
-            & @noHandle :=? <NOHANDLE>
-            |
-            & <RESP> "(" Name #ResponseName(1) ")"
-            |
-            & <RESP2> "(" Name #Response2Name(1) ")"
-        ) #CommonOptions
+        CommonOptions
     )+ =>||
 ;
 
@@ -1027,13 +925,7 @@ ReadNext :
         |
         &<NOSUSPEND>
         |
-        (
-            & @noHandle :=? <NOHANDLE>
-            |
-            & <RESP> "(" Name #ResponseName(1) ")"
-            |
-            & <RESP2> "(" Name #Response2Name(1) ")"
-        ) #CommonOptions
+        CommonOptions
     )+ =>||
     ASSERT {!(sysidPresent && !lengthPresent)} : "SYSID is present, but LENGTH is not"
 ;
@@ -1055,13 +947,7 @@ Rewrite :
         |
         &<NOSUSPEND>
         |
-        (
-            & @noHandle :=? <NOHANDLE>
-            |
-            & <RESP> "(" Name #ResponseName(1) ")"
-            |
-            & <RESP2> "(" Name #Response2Name(1) ")"
-        ) #CommonOptions
+        CommonOptions
     )+ =>||
 ;
 
@@ -1092,13 +978,7 @@ Write :
         |
         &<NOSUSPEND>
         |
-        (
-            & @noHandle :=? <NOHANDLE>
-            |
-            & <RESP> "(" Name #ResponseName(1) ")"
-            |
-            & <RESP2> "(" Name #Response2Name(1) ")"
-        ) #CommonOptions
+        CommonOptions
     )+ =>||
 ;
 
@@ -1113,13 +993,7 @@ WriteQTd :
         |
         &<SYSID> "(" SystemName ")"
         |
-        (
-            & @noHandle :=? <NOHANDLE>
-            |
-            & <RESP> "(" Name #ResponseName(1) ")"
-            |
-            & <RESP2> "(" Name #Response2Name(1) ")"
-        ) #CommonOptions
+        CommonOptions
     )+ =>||
 ;
 
@@ -1153,13 +1027,7 @@ WriteQTs :
         |
         &<NOSUSPEND>
         |
-        (
-            & @noHandle :=? <NOHANDLE>
-            |
-            & <RESP> "(" Name #ResponseName(1) ")"
-            |
-            & <RESP2> "(" Name #Response2Name(1) ")"
-        ) #CommonOptions
+        CommonOptions
     )+ =>||
 ;
 
@@ -1311,13 +1179,7 @@ Send3270 :
         |
         &<DEFRESP>
         |
-        (
-            & @noHandle :=? <NOHANDLE>
-            |
-            & <RESP> "(" Name #ResponseName(1) ")"
-            |
-            & <RESP2> "(" Name #Response2Name(1) ")"
-        ) #CommonOptions
+        CommonOptions
     )+ =>||
 ;
 
@@ -1360,13 +1222,7 @@ SendText :
             )+ =>||
         ) =>||
         |
-        (
-            & @noHandle :=? <NOHANDLE>
-            |
-            & <RESP> "(" Name #ResponseName ")"
-            |
-            & <RESP2> "(" Name #Response2Name ")"
-        ) #CommonOptions
+        CommonOptions
     )+ =>||
 ;
 
@@ -1375,13 +1231,7 @@ Asktime :
     (
         &<ABSTIME> "(" DataArea ")"
         |
-        (
-            & @noHandle :=? <NOHANDLE>
-            |
-            & <RESP> "(" Name #ResponseName(1) ")"
-            |
-            & <RESP2> "(" Name #Response2Name(1) ")"
-        ) #CommonOptions
+        CommonOptions
     )* =>||
 ;
 
@@ -1444,13 +1294,7 @@ Formattime :
         |
         &<YEAR> "(" DataArea ")"
         |
-        (
-            & @noHandle :=? <NOHANDLE>
-            |
-            & <RESP> "(" Name #ResponseName(1) ")"
-            |
-            & <RESP2> "(" Name #Response2Name(1) ")"
-        ) #CommonOptions
+        CommonOptions
     )+ =>||
 ;
 
@@ -1486,12 +1330,6 @@ Delete :
         |
         &<NOSUSPEND>
         |
-        (
-            & @noHandle :=? <NOHANDLE>
-            |
-            & <RESP> "(" Name #ResponseName(1) ")"
-            |
-            & <RESP2> "(" Name #Response2Name(1) ")"
-        ) #CommonOptions
+        CommonOptions
     )+ =>||
 ;

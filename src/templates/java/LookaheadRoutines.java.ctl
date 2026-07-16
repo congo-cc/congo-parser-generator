@@ -520,8 +520,18 @@
       #if nt::production::delegatedCardinalityTarget && cardinalitiesVar?? && cardinalitiesVar.length() > 0
          #set passCard = true
       #endif
+      #var pushDelegatedLookahead = nt::production::delegatedCardinalityTarget && cardinalitiesVar?? && cardinalitiesVar.length() > 0
       try {
+          #if pushDelegatedLookahead
+             pushDelegatedCardinality(${cardinalitiesVar}, ${nt::delegatedCardinalityBias});
+             try {
+          #endif
           if (!${nt::production::lookaheadMethodName}(${CU::bool(nt::scanToEnd)}[#if passCard], ${cardinalitiesVar}[#elif nt::production::delegatedCardinalityTarget], null[/#if])) ${returnFalse(cardinalitiesVar!null)};
+          #if pushDelegatedLookahead
+             } finally {
+                popDelegatedCardinality();
+             }
+          #endif
       }
       finally {
           popLookaheadStack();
@@ -571,13 +581,17 @@
    #endif
    #if assertion::cardinalityConstraint?? && cardinalitiesVar?? && cardinalitiesVar.length() > 0
       // Cardinality constraint check to ensure maximum not reached.
-      if (${cardinalitiesVar} != null && !${cardinalitiesVar}.choose([#if useLoopParam]loopCardinalities != null ? ${assertion::assertionIndex} : 0[#elif parentCardVar == "cardinalities" || assertion::delegatedCardinality]${assertion::assertionIndex}[#else]0[/#if], true)) {
+      #var chooseIndex = assertion::assertionIndex
+      #if assertion::delegatedCardinality
+         #set chooseIndex = "peekDelegatedBias() + " + assertion::assertionIndex
+      #endif
+      if (${cardinalitiesVar} != null && !${cardinalitiesVar}.choose([#if useLoopParam]loopCardinalities != null ? ${assertion::assertionIndex} : 0[#elif parentCardVar == "cardinalities" || assertion::delegatedCardinality]${chooseIndex}[#else]0[/#if], true)) {
          hitFailure = true;
          ${returnFalse(cardinalitiesVar, parentCardVar!null, useLoopParam)};
       }
    #elif assertion::cardinalityConstraint?? && assertion::delegatedCardinality
       // Delegated RCA during parse-time predicate: caller's card is on the stack.
-      if (!peekDelegatedCardinality().choose(${assertion::assertionIndex}, true)) {
+      if (!peekDelegatedCardinality().choose(peekDelegatedBias() + ${assertion::assertionIndex}, true)) {
          hitFailure = true;
          ${returnFalse(cardinalitiesVar!null, parentCardVar!null, useLoopParam)};
       }

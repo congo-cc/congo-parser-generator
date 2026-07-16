@@ -213,10 +213,22 @@ public ${isFinal ? "final"} class ${settings::parserClassName} {
     }
 
     // Delegated RCAs in a callee production bind to the caller's iterating loop via this stack.
-    private final Deque<RepetitionCardinality> delegatedCardinalityStack = new ArrayDeque<>();
+    // indexBias selects the callee's contiguous block when the same orphans are shared across
+    // parent loops with different local RCA layouts (multi-parent).
+    private static final class DelegatedCardinalityBinding {
+        final RepetitionCardinality cardinalities;
+        final int indexBias;
 
-    private void pushDelegatedCardinality(RepetitionCardinality cardinalities) {
-        delegatedCardinalityStack.push(cardinalities);
+        DelegatedCardinalityBinding(RepetitionCardinality cardinalities, int indexBias) {
+            this.cardinalities = cardinalities;
+            this.indexBias = indexBias;
+        }
+    }
+
+    private final Deque<DelegatedCardinalityBinding> delegatedCardinalityStack = new ArrayDeque<>();
+
+    private void pushDelegatedCardinality(RepetitionCardinality cardinalities, int indexBias) {
+        delegatedCardinalityStack.push(new DelegatedCardinalityBinding(cardinalities, indexBias));
     }
 
     private void popDelegatedCardinality() {
@@ -224,7 +236,11 @@ public ${isFinal ? "final"} class ${settings::parserClassName} {
     }
 
     private RepetitionCardinality peekDelegatedCardinality() {
-        return delegatedCardinalityStack.peek();
+        return delegatedCardinalityStack.peek().cardinalities;
+    }
+
+    private int peekDelegatedBias() {
+        return delegatedCardinalityStack.peek().indexBias;
     }
 #endif
 

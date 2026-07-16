@@ -25,7 +25,7 @@ public class NonTerminalCall {
     }
 
     StackTraceElement createStackTraceElement() { 
-        return new StackTraceElement("DelegatedOkParser", productionName, sourceFile, line);
+        return new StackTraceElement("DelegatedMultiParentParser", productionName, sourceFile, line);
     }
 
     public String toString() { 

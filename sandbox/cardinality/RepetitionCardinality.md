@@ -106,7 +106,7 @@ Child  : & Opt1 | & Opt2 ;
 
 **Mixed local + delegated** is allowed in one parent loop, e.g. `( &A | &B | Child )+` shares one tally array for `A`, `B`, and Child’s orphans.
 
-**Not yet supported (future):** multi-hop (`Parent → Middle → Leaf`) and the same callee linked to multiple parent loop layouts. A natural extension is a stack frame `(RepetitionCardinality, indexBias)` so each call site selects a contiguous block in the root loop’s array (`choose(bias + localIndex)`), including when an intermediate production branches to leaves with different orphan counts. See `docs/delegated-repetition-cardinality-plan.md` §12.
+**Not yet supported (future):** multi-hop (`Parent → Middle → Leaf`). Multi-parent loops that share one callee (different local RCA layouts) are supported via a stack frame `(RepetitionCardinality, indexBias)` so each call site selects that callee’s contiguous block (`choose(bias + localIndex)`). See `docs/delegated-repetition-cardinality-plan.md` §12.
 
 ### 8. Sandbox build (`build.xml`)
 

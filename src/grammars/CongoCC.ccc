@@ -1049,12 +1049,27 @@ INJECT ExpansionWithParentheses :
     // Set by Grammar.discoverDelegatedCardinality() after full parse (Phase 1).
     private List<Assertion> delegatedAssertions;
 
+    // Callee production → start index of its orphan block in this loop's RepetitionCardinality.
+    private java.util.Map<BNFProduction, Integer> delegatedBiasByCallee;
+
     public void setDelegatedCardinalityAssertions(List<Assertion> assertions) {
         this.delegatedAssertions = assertions;
     }
 
     public List<Assertion> getDelegatedCardinalityAssertions() {
         return delegatedAssertions;
+    }
+
+    public void setDelegatedCardinalityBiases(java.util.Map<BNFProduction, Integer> biases) {
+        this.delegatedBiasByCallee = biases;
+    }
+
+    public int getDelegatedCardinalityBias(BNFProduction callee) {
+        if (delegatedBiasByCallee == null || callee == null) {
+            return 0;
+        }
+        Integer bias = delegatedBiasByCallee.get(callee);
+        return bias == null ? 0 : bias;
     }
 
     private void collectLocalCardinalityAssertions(List<Assertion> assertions) {
@@ -1085,16 +1100,32 @@ INJECT ExpansionWithParentheses :
     }
 
     /**
-     * Assigns assertionIndex values for local then delegated RCAs.
+     * Assigns assertionIndex for local RCAs (absolute in this loop).
+     * Delegated orphans keep callee-relative indices; computes per-callee bias instead.
      * Called from {@link #close()} at parse time and again after delegation discovery.
      */
     public void refreshAssertionIndices() {
         assertionIndex = -1;
-        List<Assertion> assertions = new ArrayList<>();
-        collectInScopeCardinalityAssertions(assertions);
-        for (Assertion assertion : assertions) {
+        List<Assertion> locals = new ArrayList<>();
+        collectLocalCardinalityAssertions(locals);
+        for (Assertion assertion : locals) {
             assertion.setAssertionIndex(++assertionIndex);
         }
+        java.util.LinkedHashMap<BNFProduction, Integer> biases = new java.util.LinkedHashMap<>();
+        if (delegatedAssertions != null && !delegatedAssertions.isEmpty()) {
+            int next = assertionIndex + 1;
+            BNFProduction currentCallee = null;
+            for (Assertion a : delegatedAssertions) {
+                BNFProduction callee = a.getContainingProduction();
+                if (callee != currentCallee) {
+                    currentCallee = callee;
+                    biases.put(callee, next);
+                }
+                // Delegated assertionIndex is callee-relative (set in discovery); advance slot.
+                next++;
+            }
+        }
+        this.delegatedBiasByCallee = biases;
     }
 
     @Override
