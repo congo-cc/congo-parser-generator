@@ -370,7 +370,7 @@ INJECT AdditiveExpression :
             result.addAll(rightList);
             return result;
         }
-        if (isMap(left) && isMap(right)) {
+        if (left instanceof Map && right instanceof Map) {
             Map<?,?> leftMap = (Map) unwrap(left);
             Map<?,?> rightMap = (Map) unwrap(right);
             Map<Object,Object> result = new LinkedHashMap<>(leftMap);

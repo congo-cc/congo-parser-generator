@@ -51,7 +51,6 @@ public class TemplateFactory {
         knownExtensions.put("Source", (caller, env) -> caller.lhs().getSource());
         knownExtensions.put("instanceof", new instanceofBI());
         knownExtensions.put("C", new cBI());
-        knownExtensions.put("String", new stringBI());
         knownExtensions.put("Eval", new evalBI());
         NumericalCast numericalCast = new NumericalCast();
         knownExtensions.put("byte", numericalCast);
