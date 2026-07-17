@@ -90,7 +90,7 @@ Repetition cardinality provides precise control over element occurrences within 
 
 ### 7. Delegated repetition cardinality
 
-Orphan RCAs (no enclosing `*`/`+` in the same production) may bind to a **direct caller’s** iterating loop:
+Orphan RCAs (no enclosing `*`/`+` in the same production) may bind to a **direct caller's** iterating loop:
 
 ```text
 Parent : ( Child )+ ;
@@ -99,17 +99,60 @@ Child  : & Opt1 | & Opt2 ;
 
 - Discovery links orphans in `Child` to that single enclosing loop (one hop).
 - The parent loop allocates one `RepetitionCardinality` for **local** RCAs in the loop body plus **delegated** orphans (local indices first, then delegated).
-- At parse time the caller pushes that object on a delegated stack around the NonTerminal call; the callee’s `ENSURE`/`ASSERT` RCAs use the stack top. Lookahead passes the same object into the callee’s production scan method.
-- Call sites must be consistent: the same callee may not be invoked both inside and outside a loop, or from two distinct loops (ambiguous).
+- At parse time the caller pushes that object on a delegated stack around the NonTerminal call; the callee's `ENSURE`/`ASSERT` RCAs use the stack top. Lookahead passes the same object into the callee's production scan method.
+- Call sites must be consistent: the same callee may not be invoked both inside and outside a loop, or from two distinct loops (ambiguous) **unless** each parent loop uses a different `indexBias` into a shared orphan block (multi-parent).
 
 **Inner loop wins:** an RCA under a `*`/`+` inside the callee binds locally; only non-enclosed orphans delegate. (Sandbox: `InnerVsDelegateChild` uses an inner `+` for `V` so the alternative is not entered unconditionally.)
 
-**Mixed local + delegated** is allowed in one parent loop, e.g. `( &A | &B | Child )+` shares one tally array for `A`, `B`, and Child’s orphans.
+**Mixed local + delegated** is allowed in one parent loop, e.g. `( &A | &B | Child )+` shares one tally array for `A`, `B`, and Child's orphans.
 
-**Not yet supported (future):** multi-hop (`Parent → Middle → Leaf`). Multi-parent loops that share one callee (different local RCA layouts) are supported via a stack frame `(RepetitionCardinality, indexBias)` so each call site selects that callee’s contiguous block (`choose(bias + localIndex)`). See `docs/delegated-repetition-cardinality-plan.md` §12.
+**Multi-parent bias:** when the same callee's orphans are shared across several parent loops with different local RCA layouts, each call site pushes `(RepetitionCardinality, indexBias)` and delegated `choose` uses `bias + localIndex`. CICS `CommonOptions` is the production exemplar.
 
-### 8. Sandbox build (`build.xml`)
+**Not yet supported (future):** multi-hop (`Parent → Middle → Leaf`).
 
-`ant clean test-all` regenerates **Java**, **Python**, and **C#** from `CardTests.ccc`, compiles them, and runs the same `testfiles` corpus on each implementation. Java and C# runs are required to pass. The Python step is skipped (with a message) when the generated `parser.py` still contains CongoCC CTL dedent markers (`<-`): on very large parsers the bundled Python parse/format pass may not run, in which case the file is not valid CPython until that pipeline succeeds.
+### 8. Polyglot status
 
-On the delegated-cardinality feature branch, `ant test-java` and `ant test-checker-negative` are the required Java checks (`checker-negative/` covers orphan / `ZeroOrOne` / telescoping / delegation consistency errors).
+| Target | Local RCA | Delegated RCA | CardTests (`ant test-*`) |
+|--------|-----------|---------------|--------------------------|
+| Java | yes | yes | required |
+| C# | yes | yes | required |
+| Python | yes | yes | required (see §9) |
+| Rust | deferred | deferred | — |
+
+Codegen lives in `src/templates/{java,csharp,python}/`. Semantic actions written as Java `System.out.println` are rewritten for C# (`Console.WriteLine`) and Python (`print`).
+
+### 9. Sandbox build (`build.xml`)
+
+`ant clean test-all` regenerates **Java**, **Python**, and **C#** from `CardTests.ccc`, compiles them, and runs the same `testfiles` corpus on each implementation. All three language runs are expected to pass.
+
+`ant test-checker-negative` covers orphan / `ZeroOrOne` / telescoping / delegation-consistency errors under `checker-negative/`.
+
+Notes:
+
+- Python historically could skip when `parser.py` still contained CTL dedent markers (`<-`) after a failed format pass; with current `parser.py.ctl` explicitdedent / inject ordering, CardTests formats and runs.
+- CardTests `allows` uses a single `EnumSet.of(...)` arity so Python (no method overloads) matches Java/C#.
+- Parse harnesses report per-file success/failure counts but exit 0 when some inputs are expected to fail (same pattern as the JSON example).
+
+### 10. CICS and large choice groups (Python indent)
+
+CPython rejects modules whose nested block depth exceeds ~100. A flat RCA choice with ~100+ alternatives (CICS `Assign`) generated a lookahead chain deeper than that limit.
+
+**Mitigation used in `examples/cics/Cics.ccc`:** split the giant choice into `AssignOptsA` / `AssignOptsB` and iterate `( AssignOptsA | AssignOptsB )+`. Orphan RCAs in those callees bind to `Assign`'s loop via delegated cardinality. After the split, max generated indent is ~60 and CICS `test-python` runs with the other languages.
+
+### 11. Lexical-state / FT footnote (`END_TOKEN` and issue #203)
+
+`CardTests` uses:
+
+```text
+"[" LEXICAL_STATE JAVA (Modifiers) "]"
+```
+
+with `<DEFAULT,JAVA> TOKEN: <END_TOKEN: "]" >` as a **workaround** for [issue #203](https://github.com/congo-cc/congo-parser-generator/issues/203).
+
+**What goes wrong (FT only):** if `]` is *not* a valid token in `JAVA`, Modifiers' SCAN/lookahead still probes past the closing bracket while the lexer is in `JAVA`. The lexer yields `INVALID`. Fault-tolerant `nextToken` then marks that `INVALID` as **unparsed** and skips it — even though the `]` belongs to the *outer* DEFAULT-state production. The Modifiers loop "eats" the delimiter and continues into the next line of input (e.g. from `[ public ]` into `[final public]`), which surfaces as a failure *inside* `Modifiers`, not at the `"]"` consume.
+
+**Repro:** `#define FT` and change the declaration to `<DEFAULT> TOKEN: <END_TOKEN: "]" >` (omit `JAVA`). Non-FT still passes; FT fails on the bracketed modifier cases in `testfiles/small_tests.txt`.
+
+**Why `<JAVA>` alone still "works":** lookahead may cache `]` as `END_TOKEN` under `JAVA`; after restoring DEFAULT, `getNextToken` can return that cached token without retokenizing. That path does not exercise the INVALID→unparsed bug.
+
+**Why this is hard:** recovery mutates the shared token cache during speculative lookahead under a temporary lexical state. Guarding `setUnparsed` with "not in lookahead" alone is not a complete fix (it changes other FT failure modes). A durable fix likely needs either (a) not applying FT rewrite during lookahead, plus careful cache invalidation on lexical-state restore, or (b) treating outer-follow tokens that are inactive in the inner state as a hard lookahead failure instead of `INVALID`/`unparsed`.

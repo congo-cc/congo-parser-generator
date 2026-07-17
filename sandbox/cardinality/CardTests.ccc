@@ -28,8 +28,12 @@ FAULT_TOLERANT_DEFAULT=true;
     <ANY_CHARS: (~["!"])+ >
 ;
 
-// FIXME: to reveal a bug in lexical state changing remove DEFAULT from the following:
-<DEFAULT,JAVA> TOKEN: <END_TOKEN: "]" > ; //TODO: remove this when issue #203 fixed
+// Issue #203 workaround: "]" must also be valid in JAVA so FT lookahead inside
+// LEXICAL_STATE JAVA (Modifiers) does not tokenize the closing bracket as INVALID
+// and then mark it unparsed (which skips the delimiter and lets Modifiers run on).
+// To reproduce #203: #define FT and change this to <DEFAULT> only (omit JAVA).
+// See RepetitionCardinality.md §11 and https://github.com/congo-cc/congo-parser-generator/issues/203
+<DEFAULT,JAVA> TOKEN: <END_TOKEN: "]" > ;
 
 DelimitedString :
     LEXICAL_STATE ANY

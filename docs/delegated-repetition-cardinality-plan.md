@@ -3,8 +3,8 @@
 **Branch:** `feature/delegated-repetition-cardinality` (from `master`)  
 **Baseline behavior:** current `master` (post cardinality merge)  
 **Original feature:** commit `82d331d` (repetition cardinality); small adjustments since  
-**Status:** Phases 0–4 complete on this branch (Java), including CICS `CommonOptions` refactor via multi-parent bias. C#, Python, and Rust template work is deferred; full polyglot lookahead alignment is saved on `feature/delegated-repetition-cardinality-polyglot-backup`.  
-**See also:** `docs/parse-debugger-plan.md` (semantic parse trace API for large generated parsers — plan only).
+**Status:** Phases 0–4 complete (Java), including CICS `CommonOptions` via multi-parent bias. **C# and Python delegated-cardinality templates are ported** on this branch; Rust remains deferred. CICS Python tests run after splitting `Assign` into `AssignOptsA`/`AssignOptsB` (CPython indent-depth limit).  
+**See also:** `sandbox/cardinality/RepetitionCardinality.md` (feature docs + #203 lexical/FT note); `docs/parse-debugger-plan.md` (semantic parse trace API — plan only).
 
 ---
 
@@ -257,9 +257,9 @@ Reuse existing `RepetitionCardinality` commit/provisional stack so parse and loo
 |------|--------|--------|
 | `sandbox/cardinality/CardTests.ccc` | Pure Parent/Child, mixed local+delegated, inner loop vs delegate | **Done** |
 | Checker negatives | Orphan / `?` / telescoping / inconsistent / ambiguous | **Done** (Phase 0–1) |
-| `sandbox/cardinality/RepetitionCardinality.md` | Document delegation, one-level rule, stack, future bias | **Done** |
-| `examples/cics` | Optional refactor to `CommonOptions` production + tests | **Done** (shared production + multi-parent bias) |
-| CI | sandbox `test-java` + `test-checker-negative` | Required on this branch |
+| `sandbox/cardinality/RepetitionCardinality.md` | Document delegation, polyglot, CICS split, #203 note | **Done** |
+| `examples/cics` | `CommonOptions` production + multi-parent bias; Assign split for Python | **Done** |
+| CI | sandbox `test-java` / `test-python` / `test-csharp` + `test-checker-negative`; CICS `test-all` includes Python | Required on this branch |
 
 ---
 
@@ -269,9 +269,9 @@ Reuse existing `RepetitionCardinality` commit/provisional stack so parse and loo
 2. Phase 1 — delegation analysis + checker extensions — **done**  
 3. Phase 2 — Java parse templates + sandbox Java parse tests — **done**  
 4. Phase 3 — Java lookahead + sandbox (parse + lookahead paths) — **done**  
-5. Phase 4 — tests & docs (this section) — **done** (CICS refactor still optional)  
-6. **Later phase** — port C#, Python (and Rust when applicable); start from `feature/delegated-repetition-cardinality-polyglot-backup`  
-7. CICS `CommonOptions` refactor (optional but strong regression for real usage)  
+5. Phase 4 — tests & docs (this section) — **done**  
+6. **Later phase** — port C#, Python — **done** on this branch; Rust still deferred  
+7. CICS `CommonOptions` refactor + Assign split for Python indent — **done**
 
 ---
 
