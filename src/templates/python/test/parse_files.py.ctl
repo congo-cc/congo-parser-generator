@@ -70,8 +70,7 @@ def main():
 
 if __name__ == '__main__':
     try:
-        main()
-        rc = 0 if failures == 0 else 1
+        rc = main()
     except KeyboardInterrupt:
         rc = 2
     print('\nThe Python impl successfully parsed %s files.' % successes)
