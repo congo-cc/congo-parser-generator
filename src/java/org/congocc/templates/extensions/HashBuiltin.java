@@ -19,7 +19,7 @@ public abstract class HashBuiltin extends ExpressionEvaluatingExtension {
     @Override
     public Object get(Environment env, DotExpression caller, Object lhs)
     {
-        if (!isMap(lhs)) {
+        if (!(lhs instanceof Map)) {
             throw TemplateNode.invalidTypeException(lhs, caller.lhs(), "map");
         }
         return apply(unwrap(lhs));

@@ -16,7 +16,6 @@ INJECT Expression :
    import org.congocc.templates.core.EvaluationException;
    import org.congocc.templates.TemplateSequence;
    import java.lang.reflect.Array;
-   import org.congocc.templates.core.WrappedVariable;
    import static org.congocc.templates.core.Wrap.*;
 {
     public abstract Object evaluate(Environment env);
@@ -40,9 +39,6 @@ INJECT Expression :
         }
         if (referent instanceof Number n) {
             return env.formatNumber(n);
-        }
-        if (referent instanceof WrappedVariable w) {
-            return w.getAsString();
         }
         if (referent instanceof CharSequence cs) {
             return cs.toString();

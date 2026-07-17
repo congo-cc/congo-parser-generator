@@ -14,7 +14,6 @@ import static org.congocc.templates.core.reflection.ReflectionCode.invokeConstru
 import static org.congocc.templates.core.reflection.ReflectionCode.isCompatibleMethod;
 import static org.congocc.templates.core.reflection.ReflectionCode.isMoreSpecific;
 import static org.congocc.templates.core.Wrap.assertIsDefined;
-import org.congocc.templates.core.WrappedVariable;
 
 public class JavaConstructorCall implements VarArgsFunction<Object> {
 
@@ -25,12 +24,6 @@ public class JavaConstructorCall implements VarArgsFunction<Object> {
     public JavaConstructorCall(Object target, Node location) {
         assertIsDefined(target, location);
         this.location = location;
-        if (target instanceof WrappedVariable wv) {
-            Object wrappedObject = wv.getWrappedObject();
-            if (wrappedObject != null) {
-                target = wrappedObject;
-            }
-        }
         if (target instanceof Class clazz) {
             this.clazz = clazz;
         }

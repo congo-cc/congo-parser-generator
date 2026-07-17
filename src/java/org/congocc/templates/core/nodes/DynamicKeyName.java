@@ -42,8 +42,8 @@ public class DynamicKeyName extends TemplateNode implements Expression {
         if (key instanceof CharSequence) {
             return dealWithStringKey(leftSide, key.toString(), env);
         }
-        if (isMap(leftSide)) {
-            return ((Map<?,?>) unwrap(leftSide)).get(unwrap(key));
+        if (leftSide instanceof Map m) {
+            return m.get(unwrap(key));
         }
         throw invalidTypeException(key, getNameExpression(), "number, range, or string");
     }

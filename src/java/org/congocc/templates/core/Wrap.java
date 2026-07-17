@@ -23,17 +23,9 @@ public class Wrap {
     /**
      * A singleton value used to represent a java null
      * which comes from a wrapped Java API, for example, i.e.
-     * is intentional. A null that comes from a generic container
-     * like a map is assumed to be unintentional and a
-     * result of programming error.
+     * is intentional.
      */
-    public static final Object JAVA_NULL = new JavaNull();
-
-    static private class JavaNull implements WrappedVariable {
-        public Object getWrappedObject() {
-            return null;
-        }
-    }
+    public static final Object JAVA_NULL = new Object();
 
     public static void assertNonNull(Object value, Node location) {
         assertIsDefined(value, location);
@@ -49,13 +41,6 @@ public class Wrap {
     }
 
     private Wrap() {}
-
-    public static boolean isMap(Object obj) {
-        if (obj instanceof WrappedVariable) {
-            obj = ((WrappedVariable) obj).getWrappedObject();
-        }
-        return obj instanceof Map;
-    }
 
     public static boolean isList(Object obj) {
         if (obj.getClass().isArray()) {
@@ -145,12 +130,6 @@ public class Wrap {
         }
         if (object == JAVA_NULL) {
             return null;
-        }
-        if (object instanceof WrappedVariable) {
-            Object unwrapped = ((WrappedVariable) object).getWrappedObject();
-            if (unwrapped !=null) {
-                return unwrapped;
-            }
         }
         return object;
     }
