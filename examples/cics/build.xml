@@ -60,11 +60,12 @@
     </java>
   </target>
 
-  <!-- Python: codegen succeeds but CPython rejects parser.py (nested block / indent depth) for this grammar size. -->
-  <target name="test-python">
+  <!-- CICS Python still exceeds CPython's nested-indent limit (~100); max generated depth ~116. -->
+  <target name="test-python" depends="python-parser-gen">
     <echo level="warning">
-      Skipping CICS Python parse tests: generated parser.py exceeds CPython nested-indentation limits.
-      Run ant python-parser-gen to refresh output; use Java/C# tests in test-all until lookahead codegen flattens deep scans.
+      Skipping CICS Python parse tests: generated parser.py hits IndentationError (too many levels of indentation).
+      Codegen and format succeed; CPython cannot import the module until lookahead nesting is flattened.
+      CardTests and smaller examples (json/lua) do run under test-python.
     </echo>
   </target>
 

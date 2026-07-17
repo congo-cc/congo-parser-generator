@@ -191,6 +191,8 @@ class InvalidNode(BaseNode):
     pass
 <-
 
+# explicitdedent:restore
+
 #if grammar::usingCardinality
 class CardinalityState:
     __slots__ = ('_cardinalities', 'is_provisional')
@@ -278,9 +280,21 @@ class RepetitionCardinality:
                 assert not self.cardinalities_stack[-1].is_provisional
         return is_success
 
+
+# Delegated RCAs in a callee production bind to the caller's iterating loop via this stack.
+# index_bias selects the callee's contiguous block when the same orphans are shared across
+# parent loops with different local RCA layouts (multi-parent).
+class DelegatedCardinalityBinding:
+    __slots__ = ('cardinalities', 'index_bias')
+
+    def __init__(self, cardinalities, index_bias):
+        self.cardinalities = cardinalities
+        self.index_bias = index_bias
+
 #endif
 
 class Parser:
+# explicitdedent:on
 
     __slots__ = (
         'token_source',
@@ -294,6 +308,9 @@ class Parser:
         'passed_predicate',
         'passed_predicate_threshold',
         'lookahead_routine_nesting',
+#if grammar::usingCardinality
+        '_delegated_cardinality_stack',
+#endif
 #if settings::faultTolerant
         'outer_follow_set',
         'current_follow_set',
@@ -344,6 +361,9 @@ ${globals.translateParserInjections(true)}
         self.lookahead_routine_nesting = 0
         self.parsing_stack = []
         self.lookahead_stack = []
+#if grammar::usingCardinality
+        self._delegated_cardinality_stack = []
+#endif
 [#if settings::treeBuildingEnabled]
         self.build_tree = ${CU::bool(settings::treeBuildingDefault)}
         self.tokens_are_nodes = ${CU::bool(settings::tokensAreNodes)}
@@ -438,6 +458,22 @@ ${globals.translateParserInjections(true)}
 #if settings::faultTolerant
         self.outer_follow_set = ntc.follow_set
 /#if
+
+#if grammar::usingCardinality
+    def push_delegated_cardinality(self, cardinalities, index_bias):
+        self._delegated_cardinality_stack.append(
+            DelegatedCardinalityBinding(cardinalities, index_bias))
+
+    def pop_delegated_cardinality(self):
+        self._delegated_cardinality_stack.pop()
+
+    def peek_delegated_cardinality(self):
+        return self._delegated_cardinality_stack[-1].cardinalities
+
+    def peek_delegated_bias(self):
+        return self._delegated_cardinality_stack[-1].index_bias
+
+#endif
 
     def restore_call_stack(self, prev_size):
         while len(self.parsing_stack) > prev_size:
@@ -647,6 +683,9 @@ ${globals.translateParserInjections(true)}
 
 # explicitdedent:restore
 
+${globals.translateParserInjections(false)}
+
+
 #if settings::treeBuildingEnabled
 #
 # AST definitions
@@ -661,4 +700,3 @@ ${globals.translateInjectedClass(node)}
     #endif
   #endlist
 #endif
-${globals.translateParserInjections(false)}
