@@ -1031,8 +1031,17 @@ WriteQTs :
     )+ =>||
 ;
 
-Assign : //TODO: This one is too big for Python (too much indentation)
+// Split so generated Python lookahead stays under CPython's ~100 indent-depth limit.
+Assign :
     <ASSIGN>
+    (
+        AssignOptsA
+        |
+        AssignOptsB
+    )+ =>||
+;
+
+AssignOptsA :
     (
         &<ABCODE> "(" DataArea ")" |
         &<ABDUMP> "(" DataArea ")" |
@@ -1086,7 +1095,12 @@ Assign : //TODO: This one is too big for Python (too much indentation)
         &<KATAKANA> "(" DataArea ")" |
         &<LANGINUSE> "(" DataArea ")" |
         &<LDCMNEM> "(" DataArea ")" |
-        &<LDCNUM> "(" DataArea ")" |
+        &<LDCNUM> "(" DataArea ")"
+    )
+;
+
+AssignOptsB :
+    (
         &<LINKLEVEL> "(" DataArea ")" |
         &<LOCALCCSID> "(" DataArea ")" |
         &<MAJORVERSION> "(" DataArea ")" |
@@ -1146,7 +1160,7 @@ Assign : //TODO: This one is too big for Python (too much indentation)
         &<USERNAME> "(" DataArea ")" |
         &<USERPRIORITY> "(" DataArea ")" |
         &<VALIDATION> "(" DataArea ")"
-    )+ =>||
+    )
 ;
 
 Send3270 :
