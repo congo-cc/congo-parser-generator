@@ -1,9 +1,9 @@
 package org.congocc.templates.extensions;
 
+import org.congocc.templates.TemplateException;
 import org.congocc.templates.core.Environment;
 import org.congocc.templates.core.nodes.generated.DotExpression;
 import org.congocc.templates.core.nodes.generated.TemplateNode;
-import org.congocc.templates.core.TemplateHash;
 
 import static org.congocc.templates.core.Wrap.*;
 
@@ -19,9 +19,8 @@ public abstract class HashBuiltin extends ExpressionEvaluatingExtension {
     @Override
     public Object get(Environment env, DotExpression caller, Object lhs)
     {
-        if (!(lhs instanceof TemplateHash) && !isMap(lhs)) {
-            throw TemplateNode.invalidTypeException(lhs,
-                    caller.lhs(), "hash");
+        if (!isMap(lhs)) {
+            throw TemplateNode.invalidTypeException(lhs, caller.lhs(), "map");
         }
         return apply(unwrap(lhs));
     }
@@ -30,11 +29,11 @@ public abstract class HashBuiltin extends ExpressionEvaluatingExtension {
 
     public static class Keys extends HashBuiltin {
         @Override
-        public Iterable apply(Object hash) {
-            if (hash instanceof Map m) {
+        public Iterable apply(Object arg) {
+            if (arg instanceof Map m) {
                 return new ArrayList(m.keySet());
             }
-            return ((TemplateHash) hash).keys();
+            throw new TemplateException("Expecting a map here.");
         }
     }
 
@@ -42,9 +41,6 @@ public abstract class HashBuiltin extends ExpressionEvaluatingExtension {
         @Override
         public Iterable apply(Object hash)
         {
-            if (hash instanceof TemplateHash th) {
-                return th.values();
-            }
             return new ArrayList(((Map) hash).values());
         }
     }

@@ -193,7 +193,6 @@ INJECT PropertyReference :
     import org.congocc.templates.core.Environment;
     import org.congocc.templates.core.reflection.ReflectionCode;
     import org.congocc.templates.core.scope.Scope;
-    import org.congocc.templates.core.TemplateHash;
     import static org.congocc.templates.core.Wrap.*;
     implements Expression
 {
@@ -220,9 +219,6 @@ INJECT PropertyReference :
 //                assertNonNull(value, getTarget());
 //            }
             return wrap(value);
-        }
-        if (lhs instanceof TemplateHash hash) {
-            return wrap(hash.get(getKey()));
         }
         return ReflectionCode.getProperty(lhs, getKey());
     }
@@ -765,7 +761,6 @@ INJECT BuiltinVariable :
     import org.congocc.templates.core.parser.ParseException;
     import org.congocc.templates.TemplateFactory;
     import org.congocc.templates.TemplateException;
-    import org.congocc.templates.core.TemplateHash;
     implements Expression
 {
     private String name;
@@ -786,7 +781,12 @@ INJECT BuiltinVariable :
            case "locals" : return env.getCurrentMacroContext();
            case "data_model" : return env.getDataModel();
            case "scope" : return env.getCurrentScope();
-           case "vars" : return new VarsHash(env);
+           case "vars" :
+               return new Object() {
+                   public Object get(String key) {
+                       return env.getVariable(key);
+                   }
+               };
            case "locale" : return env.getLocale().toString();
            case "lang" : return env.getLocale().getLanguage();
            case "pass" : return Macro.DO_NOTHING_MACRO;
@@ -795,23 +795,6 @@ INJECT BuiltinVariable :
            case "error" : return env.getCurrentRecoveredErrorMessage();
         }
         throw new TemplateException("Invalid built-in variable: " + this);
-    }
-
-    static class VarsHash implements TemplateHash {
-
-        private final Environment env;
-
-        VarsHash(Environment env) {
-            this.env = env;
-        }
-
-        public Object get(String key) {
-            return env.getVariable(key);
-        }
-
-        public boolean isEmpty() {
-            return false;
-        }
     }
 }
 

@@ -17,6 +17,10 @@ INJECT Interpolation :
     import org.congocc.templates.TemplateException;
     implements TemplateElement
 {
+    public boolean hasBackSlash() {
+        return ((CharSequence)get(0)).charAt(1) == '\\';
+    }
+
     public Expression getExpression() {
     	return firstChildOfType(Expression.class);
     }
@@ -27,7 +31,9 @@ INJECT Interpolation :
     public void execute(Environment env) {
         Expression exp = getExpression();
         String output = exp.getStringValue(env);
-        output = env.getOutputEscape().apply(output);
+        if (!hasBackSlash()) {
+            output = env.getOutputEscape().apply(output);
+        }
         env.append(output);
     }
 
@@ -169,7 +175,6 @@ INJECT IteratorBlock :
     import org.congocc.templates.core.*;
     import org.congocc.templates.core.scopes.BlockScope;
     import org.congocc.templates.core.scopes.LoopContext;
-    import org.congocc.templates.core.TemplateHash;
     import static org.congocc.templates.core.Wrap.*;
     implements TemplateElement
 {
@@ -199,11 +204,11 @@ INJECT IteratorBlock :
                 throw TemplateNode.invalidTypeException(listVar, getListExpression(), "collection or sequence");
             }
             env.process(asIterator(listVar), getNestedBlock(), getIndexName());
-        } else if (listVar instanceof Map || listVar instanceof TemplateHash) {
-            env.process(listVar, getNestedBlock(), getIndexName(), getValueVarName());
+        } else if (listVar instanceof Map m) {
+            env.process(m, getNestedBlock(), getIndexName(), getValueVarName());
         }
         else {
-            String message = "Expecting map or hash, at " + getListExpression().getLocation();
+            String message = "Expecting Map at " + getListExpression().getLocation();
             throw new EvaluationException(message);
         }
     }
@@ -1345,7 +1350,7 @@ Map<String,Expression> ParamList#void :
 {
    Token id;
    Expression exp;
-   Map<String,Expression> result = new HashMap<String,Expression>();
+   Map<String,Expression> result = new HashMap<>();
 }
    (
       id=<ID>
@@ -1375,31 +1380,18 @@ Expression IdentifierOrStringLiteral#void :
  */
 Block Root#void :
 {
-   //TemplateHeaderElement header;
    Block doc;
+   TemplateHeaderElement teh = null;
 }
-#if false
    [
-       header=TemplateHeaderElement
-       {
-       	   template.setHeaderElement(header);
-       	   String templateEncoding = template.getEncoding();
-       	   if (templateEncoding != null && header.hasParameter("encoding")) {
-       	   	  String encoding = null;
-       	   	  try {
-       	   	     encoding = header.getStringParameter("encoding");
-       	   	  } catch (Exception e) {}
-       	   	  if (encoding != null && !encoding.equals(templateEncoding)) {
-       	   	  	throw new Template.WrongEncodingException(encoding);
-       	   	  }
-       	   }
-       }
+      teh=TemplateHeaderElement
    ]
-#endif
    doc=Block
-   {assert doc.getParent() == null;}
+   {
+      if (teh != null) {doc.add(0, teh);}
+   }
    <EOF>
    {
        return doc;
    }
-   ;
+;

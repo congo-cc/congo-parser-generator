@@ -13,7 +13,6 @@ import org.congocc.templates.core.nodes.generated.TemplateNode;
 import org.congocc.templates.core.EvaluationException;
 import org.congocc.templates.core.reflection.JavaMethodCall;
 import org.congocc.templates.core.reflection.VarArgsFunction;
-import org.congocc.templates.core.TemplateHash;
 
 import static org.congocc.templates.core.Wrap.*;
 

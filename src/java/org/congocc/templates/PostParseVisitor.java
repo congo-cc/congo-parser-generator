@@ -1,7 +1,6 @@
 package org.congocc.templates;
 
 import org.congocc.templates.core.nodes.generated.*;
-import org.congocc.templates.core.nodes.generated.DotExpression;
 import org.congocc.templates.core.parser.Node;
 import org.congocc.templates.core.parser.ParseException;
 import org.congocc.templates.core.parser.ParsingProblemImpl;
@@ -19,9 +18,7 @@ class PostParseVisitor extends Node.Visitor {
 		this.template = template;
 	}
 
-	void visit(Template template) {
-		TemplateHeaderElement header = template.getHeaderElement();
-		if (header != null) visit(header);
+	void visit() {
 		visit(template.getRootTreeNode());
 	}
 

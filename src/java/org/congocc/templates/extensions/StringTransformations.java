@@ -5,8 +5,7 @@ import org.congocc.templates.core.InvalidReferenceException;
 import org.congocc.templates.core.nodes.generated.DotExpression;
 
 /**
- * Implementations of ?cap_first, ?lower_case, ?upper_case and other
- * built-ins that change a string into another string
+ * Implementations of CapFirst and other
  */
 
 public abstract class StringTransformations extends ExpressionEvaluatingExtension {

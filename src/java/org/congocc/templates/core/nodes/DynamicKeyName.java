@@ -8,7 +8,6 @@ import org.congocc.templates.core.nodes.generated.Expression;
 import org.congocc.templates.core.nodes.generated.RangeExpression;
 import org.congocc.templates.core.nodes.generated.TemplateNode;
 import org.congocc.templates.TemplateException;
-import org.congocc.templates.core.TemplateHash;
 
 import java.util.Map;
 import java.util.ArrayList;
@@ -72,9 +71,6 @@ public class DynamicKeyName extends TemplateNode implements Expression {
                 return m.containsKey(key) ? JAVA_NULL : null;
             }
             return wrap(obj);
-        }
-        if (lhs instanceof TemplateHash th) {
-            return wrap(th.get(key));
         }
         return ReflectionCode.getProperty(lhs, key);
     }

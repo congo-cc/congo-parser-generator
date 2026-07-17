@@ -6,7 +6,6 @@ import java.util.function.Function;
 
 import org.congocc.templates.core.Environment;
 import org.congocc.templates.core.nodes.generated.DotExpression;
-import org.congocc.templates.core.TemplateHash;
 
 import static org.congocc.templates.core.Wrap.*;
 
@@ -54,7 +53,7 @@ public class stringBI extends ExpressionEvaluatingExtension {
     }
 
 
-    static class NumberFormatter implements TemplateHash, Function<String,Object> {
+    static class NumberFormatter implements Function<String,Object> {
         private final Number number;
         private final Environment env;
         private final NumberFormat defaultFormat;

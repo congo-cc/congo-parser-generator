@@ -68,10 +68,17 @@ public class ReflectionCode {
         }
     }
 
+
     public static Object getProperty(Object object, String key) {
         Method getter = getGetter(object, key);
+        if (getter == NO_SUCH_METHOD) {
+            getter = getGetter(object, "");
+        }
         if (getter != NO_SUCH_METHOD) {
             try {
+                if (getter.getName().equals("get")) {
+                    return wrap(getter.invoke(object, key));
+                }
                 return wrap(getter.invoke(object));
             } catch (Exception e) {
                 throw new EvaluationException(e);
@@ -180,25 +187,33 @@ public class ReflectionCode {
             } catch (NoSuchMethodException nsme) {
             }
         }
-        String methodName = "get" + name.substring(0, 1).toUpperCase() + name.substring(1);
+        String methodName = "get";
+        if (name.length()>0) {
+            methodName += name.substring(0, 1).toUpperCase() + name.substring(1);
+        }
         try {
-            Method m = object.getClass().getMethod(methodName);
+            Method m = null;
+            if (methodName.equals("get")) {
+                m = object.getClass().getMethod("get", String.class);
+            } else {
+                m = object.getClass().getMethod(methodName);
+            }
             if (m.getReturnType() != Void.TYPE) {
                 getterCache.put(lookupKey, m);
                 m.setAccessible(true);
                 return m;
             }
-        } catch (NoSuchMethodException nsme) {
-        }
-        methodName = methodName.replaceFirst("get", "is");
-        try {
-            Method m = object.getClass().getMethod(methodName);
-            if (m.getReturnType() == Boolean.TYPE || m.getReturnType() == Boolean.class) {
-                getterCache.put(getLookupKey(object, name), m);
-                m.setAccessible(true);
-                return m;
-            }
-        } catch (NoSuchMethodException nsme) {
+        } catch (NoSuchMethodException nsme) {}
+        if (name.length() > 0) {
+            methodName = methodName.replaceFirst("get", "is");
+            try {
+                Method m = object.getClass().getMethod(methodName);
+                if (m.getReturnType() == Boolean.TYPE || m.getReturnType() == Boolean.class) {
+                    getterCache.put(getLookupKey(object, name), m);
+                    m.setAccessible(true);
+                    return m;
+                }
+            } catch (NoSuchMethodException nsme) {}
         }
         getterCache.put(lookupKey, NO_SUCH_METHOD);
         return NO_SUCH_METHOD;
