@@ -2,8 +2,11 @@ package org.congocc.templates.core;
 
 import java.util.*;
 import java.lang.reflect.Array;
+import java.lang.reflect.Method;
+
 import org.congocc.templates.core.nodes.generated.Expression;
 import org.congocc.templates.core.parser.Node;
+import org.congocc.templates.core.reflection.ReflectionCode;
 import org.congocc.templates.TemplateException;
 
 public class Wrap {
@@ -77,20 +80,29 @@ public class Wrap {
     }
 
     public static boolean isBoolean(Object obj) {
-        if (obj instanceof TemplateBoolean) {
+        if (obj instanceof Boolean) {
             return true;
         }
-        if (obj instanceof WrappedVariable) {
-            obj = ((WrappedVariable) obj).getWrappedObject();
+        Method m = ReflectionCode.getGetter(obj, "asBoolean");
+        if (m != ReflectionCode.NO_SUCH_METHOD) {
+            return true;
         }
-        return obj instanceof Boolean;
+        return false;
     }
 
-    public static boolean asBoolean(Object obj) {
-        if (obj instanceof TemplateBoolean) {
-            return ((TemplateBoolean) obj).getAsBoolean();
+    /**
+     * @return the object as boolean. If this is a boolean, just return it.
+     * Otherwise look for the magic getAsBoolean method and if it's there, return
+     * the result of that. Otherwise, just return a null.
+     */
+    public static Boolean asBoolean(Object obj) {
+        if (!(obj instanceof Boolean)) {
+            obj = ReflectionCode.getProperty(obj, "asBoolean");
         }
-        return (Boolean) obj;
+        if (obj instanceof Boolean b) {
+            return b;
+        }
+        return null;
     }
 
     public static boolean isIterable(Object obj) {

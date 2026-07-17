@@ -15,7 +15,6 @@ import java.util.function.Function;
 
 import org.congocc.templates.core.Environment;
 import org.congocc.templates.core.EvaluationException;
-import org.congocc.templates.core.TemplateBoolean;
 import org.congocc.templates.core.nodes.generated.DotExpression;
 import org.congocc.templates.core.reflection.JavaMethodCall;
 import org.congocc.templates.core.reflection.VarArgsFunction;
@@ -155,7 +154,7 @@ public abstract class StringFunctions extends ExpressionEvaluatingExtension {
         }
     }
 
-    static class RegexMatchModel extends AbstractList<Object> implements TemplateBoolean {
+    static class RegexMatchModel extends AbstractList<Object> {
         Matcher matcher;
         String input;
         final boolean matches;
