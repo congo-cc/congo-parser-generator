@@ -123,7 +123,8 @@ public abstract class RegularExpression extends BaseNode {
         StringBuilder buf = new StringBuilder();
         int firstCodePoint = s.codePointAt(0);
         int startRest = 0;
-        if (Character.isJavaIdentifierStart(firstCodePoint)) {
+        // '$' is a Java identifier start but not a valid C#/Python enum member name.
+        if (Character.isJavaIdentifierStart(firstCodePoint) && firstCodePoint != '$') {
             buf.appendCodePoint(s.codePointAt(0));
             startRest = firstCodePoint > 0xFFFF ? 2 : 1;
         }
@@ -134,7 +135,8 @@ public abstract class RegularExpression extends BaseNode {
     }
 
     private String alphabetize(int ch) {
-        if (Character.isJavaIdentifierPart(ch)) {
+        // '$' is a Java identifier part but not a valid C#/Python enum member name.
+        if (Character.isJavaIdentifierPart(ch) && ch != '$') {
             return codePointToString(ch);
         }
         return switch(ch) {
