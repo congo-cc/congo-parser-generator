@@ -37,33 +37,33 @@
      We iterate grammar.nodeNames (which includes both productions and token
      types like NUMBER) rather than globals.sortedNodeClassNames (which only
      includes productions). We also check for PARSER_CLASS injections. --]
-[#var hasAnyInject = false]
-[#var injectNodes = []]
-[#list grammar.nodeNames as node]
-[#if injector::hasInjectedCode(node)]
-[#set hasAnyInject = true]
-[#set injectNodes = injectNodes + [node]]
-[/#if]
-[/#list]
+#var hasAnyInject = false
+#var injectNodes = []
+#list grammar::nodeNames as node
+  #if injector.hasInjectedCode(node)
+    #set hasAnyInject = true
+    #set injectNodes = injectNodes + [node]
+  #endif
+#endlist
 [#-- Check for PARSER_CLASS injections via translateParserClassInjection which
      uses the correct parserPackage.parserClassName lookup key and includes
      original Java source in FIXME block comments. --]
-[#var parserFieldInject = globals::translateParserClassInjection(true)]
-[#var parserMethodInject = globals::translateParserClassInjection(false)]
-[#if parserFieldInject?has_content || parserMethodInject?has_content]
-[#set hasAnyInject = true]
-[/#if]
-[#if !hasAnyInject]
+[#var parserFieldInject = globals.translateParserClassInjection(true)]
+[#var parserMethodInject = globals.translateParserClassInjection(false)]
+#if parserFieldInject! || parserMethodInject!
+   #set hasAnyInject = true
+#endif
+#if !hasAnyInject
 // No code injections found in this grammar.
 // The generated parser is fully functional without manual intervention.
-[#else]
+#else
 use crate::ast::{Ast, NodeId, NodeKind};
 use crate::tokens::TokenType;
 
-[#-- Emit per-node injections (productions and token types) --]
-[#list injectNodes as node]
-[#var translated = globals::translateInjectedClass(node)]
-[#if translated?has_content]
+#-- Emit per-node injections (productions and token types)
+#list injectNodes as node
+  #var translated = globals.translateInjectedClass(node)
+  #if translated!
 // ---------------------------------------------------------------------------
 // INJECT ${node}
 //
@@ -76,12 +76,12 @@ impl Ast {
 ${translated}
 }
 
-[/#if]
-[/#list]
+  #endif
+#endlist
 [#-- Emit PARSER_CLASS injections --]
-[#if parserFieldInject?has_content || parserMethodInject?has_content]
+#if parserFieldInject! || parserMethodInject!
 // ---------------------------------------------------------------------------
-// INJECT PARSER_CLASS (${settings.parserClassName})
+// INJECT PARSER_CLASS (${settings::parserClassName})
 //
 // Parser class injections typically add utility methods (e.g., main()) to the
 // parser.  In Rust, the parser is a struct with parsing methods; injected
@@ -93,12 +93,8 @@ ${translated}
 // equivalents in the library crate.  If you need a Rust binary, create a
 // separate bin/main.rs that uses this parser library.
 
-[#if parserFieldInject?has_content]
-${parserFieldInject}
-[/#if]
-[#if parserMethodInject?has_content]
-${parserMethodInject}
-[/#if]
+${parserFieldInject!}
+${parserMethodInject!}
 
 [/#if]
 [/#if]

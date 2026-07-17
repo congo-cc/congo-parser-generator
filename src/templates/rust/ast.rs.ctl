@@ -29,7 +29,7 @@ pub struct TokenId(pub u32);
 #[derive(Debug, Clone, PartialEq)]
 #[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
 pub enum NodeKind {
-[#list grammar.nodeNames as nodeName]
+[#list grammar::nodeNames as nodeName]
     /// Node for the `${nodeName}` production.
     ${nodeName},
 [/#list]
@@ -41,7 +41,7 @@ impl NodeKind {
     /// Returns the name of this node kind as a string.
     pub fn name(&self) -> &'static str {
         match self {
-[#list grammar.nodeNames as nodeName]
+[#list grammar::nodeNames as nodeName]
             NodeKind::${nodeName} => "${nodeName}",
 [/#list]
             NodeKind::Token(_) => "Token",
@@ -121,7 +121,7 @@ pub struct StoredToken {
 /// # Examples
 ///
 /// ```no_run
-/// use ${settings.parserPackage?replace(".", "_")}::parser::Parser;
+/// use ${settings::parserPackage.replace(".", "_")}::parser::Parser;
 ///
 /// let ast = Parser::parse("example", Some("test")).unwrap();
 /// println!("Root: {:?}", ast.root());

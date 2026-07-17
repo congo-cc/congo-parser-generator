@@ -15,7 +15,7 @@ use std::fmt;
 /// # Examples
 ///
 /// ```
-/// use ${settings.parserPackage?replace(".", "_")}::error::ParseError;
+/// use ${settings::parserPackage.replace(".", "_")}::error::ParseError;
 ///
 /// let err = ParseError::new("unexpected end of input".to_string());
 /// assert!(format!("{}", err).contains("unexpected end of input"));

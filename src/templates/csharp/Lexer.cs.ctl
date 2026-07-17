@@ -2,19 +2,19 @@
 // ReSharper disable InconsistentNaming
 ${"#"}pragma warning disable 8632
 #import "CommonUtils.inc.ctl" as CU
-#var NFA_RANGE_THRESHOLD = 16, MAX_INT = 2147483647, multipleLexicalStates = lexerData.lexicalStates?size > 1
+#var NFA_RANGE_THRESHOLD = 16, MAX_INT = 2147483647, multipleLexicalStates = lexerData::lexicalStates.size() > 1
 #var TT = "TokenType."
-#var PRESERVE_LINE_ENDINGS = settings.preserveLineEndings?string("true", "false"),
-      JAVA_UNICODE_ESCAPE = settings.javaUnicodeEscape?string("true", "false"),
-      ENSURE_FINAL_EOL = settings.ensureFinalEOL?string("true", "false"),
-      TERMINATING_STRING = "\"" + settings.terminatingString?j_string + "\"",
-      PRESERVE_TABS = settings.preserveTabs?string("true", "false")
-#var BaseToken = settings.baseTokenClassName
+#var PRESERVE_LINE_ENDINGS = settings::preserveLineEndings ? "true" : "false",
+      JAVA_UNICODE_ESCAPE = settings::javaUnicodeEscape ? "true" : "false",
+      ENSURE_FINAL_EOL = settings::ensureFinalEOL ? "true" : "false",
+      PRESERVE_TABS = settings::preserveTabs ? "true" : "false",
+      TERMINATING_STRING = "\"" + settings::terminatingString.JavaStringEncode + "\""
+#var BaseToken = settings::baseTokenClassName
 [#-- if settings.treeBuildingEnabled || settings.rootAPIPackage]
   #set BaseToken = "Node.TerminalNode"
 #endif --]
 
-#var TOKEN = settings.baseTokenClassName
+#var TOKEN = settings::baseTokenClassName
 
 #macro EnumSet varName tokenNames
 #if !tokenNames
@@ -23,7 +23,7 @@ private static HashSet<TokenType> ${varName} = Utils.GetOrMakeSet();
 private static HashSet<TokenType> ${varName} = Utils.GetOrMakeSet(
 #list tokenNames as type
     TokenType.${type}
-    ${type_index < (tokenNames?size-1) ?: ","}
+    ${type_index < (tokenNames.size()-1) ? ","}
 #endlist
 );
 #endif
@@ -34,7 +34,7 @@ private static HashSet<TokenType> ${varName} = Utils.GetOrMakeSet(
   for the given lexical state
 --]
 #macro GenerateStateCode lexicalState
-  #list lexicalState.canonicalSets as state
+  #list lexicalState::canonicalSets as state
     #if state_index = 0
      [@GenerateInitialStateMethod state /]
     #else
@@ -42,22 +42,22 @@ private static HashSet<TokenType> ${varName} = Utils.GetOrMakeSet(
     #endif
   #endlist
 
-  #list lexicalState.allNfaStates as nfaState
-    #if nfaState.moveRanges?size >= NFA_RANGE_THRESHOLD
+  #list lexicalState::allNfaStates as nfaState
+    #if nfaState::moveRanges.size() >= NFA_RANGE_THRESHOLD
       [@GenerateMoveArray nfaState /]
     #endif
   #endlist
 
 
 
-        private static void NFA_FUNCTIONS_${lexicalState.name}Init() {
+        private static void NFA_FUNCTIONS_${lexicalState::name}Init() {
             var f = new NfaFunction[] {
-#list lexicalState.canonicalSets as state
-                ${state.methodName}${state_has_next ?: ","}
+#list lexicalState::canonicalSets as state
+                ${state::methodName}${state_has_next ? ","}
 #endlist
             };
     #if multipleLexicalStates
-            functionTableMap.Add(LexicalState.${lexicalState.name}, f);
+            functionTableMap.Add(LexicalState.${lexicalState::name}, f);
     #else
             nfaFunctions = f;
     #endif
@@ -72,41 +72,41 @@ private static HashSet<TokenType> ${varName} = Utils.GetOrMakeSet(
    org.congocc.core.NfaState
 --]
 #macro GenerateMoveArray nfaState
-#var moveRanges = nfaState.moveRanges
-#var arrayName = nfaState.movesArrayName
+#var moveRanges = nfaState::moveRanges
+#var arrayName = nfaState::movesArrayName
         private static int[] ${arrayName} = {
-#list nfaState.moveRanges as char
-            ${globals.displayChar(char)}${char_has_next?:","}
+#list nfaState::moveRanges as char
+            ${globals::displayChar(char)}${char_has_next?","}
 #endlist
         };
 
 #endmacro
 
 #macro GenerateInitialStateMethod nfaState
-        static TokenType? ${nfaState.methodName}(int ch, BitSet nextStates, HashSet<TokenType> validTypes, HashSet<TokenType> AlreadyMatchedTypes) {
+        static TokenType? ${nfaState::methodName}(int ch, BitSet nextStates, HashSet<TokenType> validTypes, HashSet<TokenType> AlreadyMatchedTypes) {
             TokenType? type = null;
-    #var states = nfaState.orderedStates, lastBlockStartIndex = 0, useIf = false
+    #var states = nfaState::orderedStates, lastBlockStartIndex = 0, useIf = false
     #list states as state
-      #if state_index == 0 || !state.moveRanges::equals(states[state_index - 1].moveRanges)
+      #if state_index == 0 || !state::moveRanges.equals(states[state_index - 1]::moveRanges)
           #-- In this case we need a new if or possibly else if
-         #if state_index == 0 || state::overlaps(states::subList(lastBlockStartIndex, state_index))
+         #if state_index == 0 || state.overlaps(states.subList(lastBlockStartIndex, state_index))
            [#-- If there is overlap between this state and any of the states
                  handled since the last lone if, we start a new if-else
                  If not, we continue in the same if-else block as before. --]
            #set lastBlockStartIndex = state_index
            #set useIf = true
          #endif
-            ${useIf ?: "if" : "else if"} ([@NfaStateCondition state /]) {
+            ${useIf ? "if" : "else if"} ([@NfaStateCondition state /]) {
       #endif
-      #if state.nextStateIndex >= 0
-                nextStates.Set(${state.nextStateIndex});
+      #if state::nextStateIndex >= 0
+                nextStates.Set(${state::nextStateIndex});
       #endif
-      #if !state_has_next || !state.moveRanges::equals(states[state_index + 1].moveRanges)
+      #if !state_has_next || !state::moveRanges.equals(states[state_index + 1]::moveRanges)
         #-- We've reached the end of the block.
-          #if state.nextState.final
-                #var type = state.type
-                if ((validTypes == null) || validTypes.Contains(${TT}${type.label})) {
-                    type = ${TT}${type.label};
+          #if state::nextState::final
+                #var type = state::type
+                if ((validTypes == null) || validTypes.Contains(${TT}${type::label})) {
+                    type = ${TT}${type::label};
                 }
           #endif
             }
@@ -122,36 +122,36 @@ private static HashSet<TokenType> ${varName} = Utils.GetOrMakeSet(
    that correspond to an instanceof org.congocc.core.CompositeNfaState
 --]
 #macro GenerateNfaMethod nfaState
-        static TokenType? ${nfaState.methodName}(int ch, BitSet nextStates, HashSet<TokenType> validTypes, HashSet<TokenType> AlreadyMatchedTypes) {
-  #if lexerData::isLazy(nfaState.type)
-    if (AlreadyMatchedTypes.Contains(${TT}${nfaState.type.label})) {
+        static TokenType? ${nfaState::methodName}(int ch, BitSet nextStates, HashSet<TokenType> validTypes, HashSet<TokenType> AlreadyMatchedTypes) {
+  #if lexerData.isLazy(nfaState::type)
+    if (AlreadyMatchedTypes.Contains(${TT}${nfaState::type::label})) {
         return null;
     }
   #endif
 
             TokenType? type = null;
-    #var states = nfaState.orderedStates, lastBlockStartIndex = 0, useIf = false
+    #var states = nfaState::orderedStates, lastBlockStartIndex = 0, useIf = false
     #list states as state
-      #if state_index == 0 || !state.moveRanges::equals(states[state_index - 1].moveRanges)
+      #if state_index == 0 || !state::moveRanges.equals(states[state_index - 1]::moveRanges)
           #-- In this case we need a new if or possibly else if
-         #if state_index == 0 || state::overlaps(states::subList(lastBlockStartIndex, state_index))
+         #if state_index == 0 || state.overlaps(states.subList(lastBlockStartIndex, state_index))
            [#-- If there is overlap between this state and any of the states
                  handled since the last lone if, we start a new if-else
                  If not, we continue in the same if-else block as before. --]
            #set lastBlockStartIndex = state_index
            #set useIf = true
          #endif
-            ${useIf ?: "if" : "else if"} ([@NfaStateCondition state /]) {
+            ${useIf ? "if" : "else if"} ([@NfaStateCondition state /]) {
       #endif
-      #if state.nextStateIndex >= 0
-                nextStates.Set(${state.nextStateIndex});
+      #if state::nextStateIndex >= 0
+                nextStates.Set(${state::nextStateIndex});
       #endif
-      #if !state_has_next || !state.moveRanges::equals(states[state_index + 1].moveRanges)
+      #if !state_has_next || !state::moveRanges.equals(states[state_index + 1]::moveRanges)
         #-- We've reached the end of the block.
-          #if state.nextState.final
-                #var type = state.type
-                if ((validTypes == null) || validTypes.Contains(${TT}${type.label})) {
-                    type = ${TT}${type.label};
+          #if state::nextState::final
+                #var type = state::type
+                if ((validTypes == null) || validTypes.Contains(${TT}${type::label})) {
+                    type = ${TT}${type::label};
                 }
           #endif
             }
@@ -169,12 +169,12 @@ it uses the canned binary search routine. For the smaller moveRanges
 it just generates the inline conditional expression
 --]
 #macro NfaStateCondition nfaState
-    #if nfaState.moveRanges?size < NFA_RANGE_THRESHOLD
-      [@RangesCondition nfaState.moveRanges /]
-    #elseif nfaState.hasAsciiMoves && nfaState.hasNonAsciiMoves
-      ([@RangesCondition nfaState.asciiMoveRanges/]) || ((ch >= (char) 128) && CheckIntervals(${nfaState.movesArrayName}, ch))
+    #if nfaState::moveRanges.size() < NFA_RANGE_THRESHOLD
+      [@RangesCondition nfaState::moveRanges /]
+    #elseif nfaState::hasAsciiMoves && nfaState::hasNonAsciiMoves
+      ([@RangesCondition nfaState::asciiMoveRanges/]) || ((ch >= (char) 128) && CheckIntervals(${nfaState::movesArrayName}, ch))
     #else
-      CheckIntervals(${nfaState.movesArrayName}, ch)
+      CheckIntervals(${nfaState::movesArrayName}, ch)
     #endif
 #endmacro
 
@@ -186,9 +186,9 @@ if NFA state's moveRanges array is smaller than NFA_RANGE_THRESHOLD
 --]
 #macro RangesCondition moveRanges
     #var left = moveRanges[0], right = moveRanges[1]
-    #var displayLeft = globals.displayChar(left), displayRight = globals.displayChar(right)
+    #var displayLeft = globals::displayChar(left), displayRight = globals::displayChar(right)
     #var singleChar = left == right
-    #if moveRanges?size == 2
+    #if moveRanges.size() == 2
        #if singleChar
           ch == ${displayLeft}
        #elif left + 1 == right
@@ -206,7 +206,7 @@ if NFA state's moveRanges array is smaller than NFA_RANGE_THRESHOLD
     #endif
 #endmacro
 
-#var csPackage = globals::getPreprocessorSymbol('cs.package', settings.parserPackage)
+#var csPackage = globals.getPreprocessorSymbol('cs.package', settings::parserPackage)
 namespace ${csPackage} {
     using System;
     using System.Collections.Generic;
@@ -214,12 +214,12 @@ namespace ${csPackage} {
     using System.IO;
     using System.Text;
     using System.Text.RegularExpressions;
-${globals::translateLexerImports()}
+${globals.translateLexerImports()}
 
     public class TokenSource {
-        internal const int DEFAULT_TAB_SIZE = ${settings.tabSize};
+        internal const int DEFAULT_TAB_SIZE = ${settings::tabSize};
 
-        internal static readonly Token DummyStartToken${settings.usesPreprocessor?:", Ignored"}, Skipped;
+        internal static readonly Token DummyStartToken${settings::usesPreprocessor?", Ignored"}, Skipped;
         public string InputSource { get; internal set; }
         internal readonly string _content;
         internal readonly int _contentLength;
@@ -239,7 +239,7 @@ ${globals::translateLexerImports()}
 
         static TokenSource() {
             DummyStartToken = new InvalidToken(null, 0, 0);
-#if settings.usesPreprocessor
+#if settings::usesPreprocessor
             Ignored = new InvalidToken(null, 0, 0);
             Ignored.IsUnparsed = true;
 #endif
@@ -456,7 +456,7 @@ ${globals::translateLexerImports()}
                     case '\t' when !preserveTabs:
                     {
                         justSawUnicodeEscape = false;
-                        int spacesToAdd = ${settings.tabSize} - col % ${settings.tabSize};
+                        int spacesToAdd = ${settings::tabSize} - col % ${settings::tabSize};
                         for (int i = 0; i < spacesToAdd; i++) {
                             buf.Append(' ');
                             col++;
@@ -526,7 +526,7 @@ ${globals::translateLexerImports()}
 
         protected void SkipTokens(int begin, int end) {
             for (int i = begin; i < end; i++) {
-#if settings.usesPreprocessor
+#if settings::usesPreprocessor
                 if (_tokenLocationTable[i] != Ignored) {
                     _tokenLocationTable[i] = Skipped;
                 }
@@ -536,7 +536,7 @@ ${globals::translateLexerImports()}
             }
         }
 
-#if settings.usesPreprocessor
+#if settings::usesPreprocessor
         public int NextUnignoredOffset(int offset) {
             while (offset < _tokenLocationTable.Length - 1  && _tokenLocationTable[offset] == Ignored) {
                 ++offset;
@@ -586,7 +586,7 @@ ${globals::translateLexerImports()}
         }
 
 #endif
-#if settings.cppContinuationLine
+#if settings::cppContinuationLine
     protected void HandleCContinuationLines() {
       for (int offset = _content.IndexOf('\\'); offset >= 0; offset = _content.IndexOf('\\', offset + 1)) {
           int nlIndex = _content.IndexOf('\n', offset);
@@ -607,7 +607,7 @@ ${globals::translateLexerImports()}
                 // have been adjusted.
                 _tokenOffsets.Clear(beginOffset + 1, endOffset);
                 for (int i = beginOffset + 1; i < endOffset; i++) {
-#if settings.usesPreprocessor
+#if settings::usesPreprocessor
                     if (_tokenLocationTable[i] != Ignored)
 #endif
                         _tokenLocationTable[i] = null;
@@ -683,7 +683,7 @@ ${globals::translateLexerImports()}
         * and endOffset(exclusive)
         */
         public string GetText(int startOffset, int endOffset) {
-#if !settings.usesPreprocessor
+#if !settings::usesPreprocessor
             return _content.Substring(startOffset, endOffset - startOffset);
 #else
             StringBuilder buf = new StringBuilder();
@@ -706,7 +706,7 @@ ${globals::translateLexerImports()}
             return prevOffset == -1 ? null : _tokenLocationTable[prevOffset];
         }
 
-#if settings.usesPreprocessor
+#if settings::usesPreprocessor
         /**
         * This is used in conjunction with having a preprocessor.
         * We set which lines are actually parsed lines and the
@@ -810,27 +810,27 @@ ${globals::translateLexerImports()}
 
     public class Lexer : TokenSource[#if useLogging!false], IObservable<LogInfo>[/#if] {
 
-#if settings.lexerUsesParser
+#if settings::lexerUsesParser
         internal Parser Parser { get; internal set; }
 #endif
 
 
-#if lexerData.hasLexicalStateTransitions
+#if lexerData::hasLexicalStateTransitions
         // A lookup for lexical state transitions triggered by a certain token type
         private static Dictionary<TokenType, LexicalState> tokenTypeToLexicalStateMap = new Dictionary<TokenType, LexicalState>();
 #endif
 
         // Token types that are "regular" tokens that participate in parsing,
         // i.e. declared as TOKEN
-        [@EnumSet "regularTokens", lexerData.regularTokens.tokenNames /]
+        [@EnumSet "regularTokens", lexerData::regularTokens::tokenNames /]
         // Token types that do not participate in parsing
         // i.e. declared as UNPARSED (or SPECIAL_TOKEN)
-        [@EnumSet "unparsedTokens", lexerData.unparsedTokens.tokenNames /]
+        [@EnumSet "unparsedTokens", lexerData::unparsedTokens::tokenNames /]
         #-- // Tokens that are skipped, i.e. SKIP
-        [@EnumSet "skippedTokens", lexerData.skippedTokens.tokenNames /]
+        [@EnumSet "skippedTokens", lexerData::skippedTokens::tokenNames /]
         // Tokens that correspond to a MORE, i.e. that are pending
         // additional input
-        [@EnumSet "moreTokens", lexerData.moreTokens.tokenNames /]
+        [@EnumSet "moreTokens", lexerData::moreTokens::tokenNames /]
 
         // NFA code and data
 
@@ -855,17 +855,17 @@ ${globals::translateLexerImports()}
             return temp >= 0 || temp % 2 == 0;
         }
 
-#list lexerData.lexicalStates as lexicalState
+#list lexerData::lexicalStates as lexicalState
 [@GenerateStateCode lexicalState/]
 #endlist
 
         #-- Compute the maximum size of state bitsets
 #if !multipleLexicalStates
-            private const int MaxStates = ${lexerData.lexicalStates[0].allNfaStates?size};
+            private const int MaxStates = ${lexerData::lexicalStates[0]::allNfaStates.size()};
 #else
             private static int MaxStates = Utils.MaxOf(
-#list lexerData.lexicalStates as state
-                ${state.allNfaStates?size}${state_has_next ?: ","}
+#list lexerData::lexicalStates as state
+                ${state::allNfaStates.size()}${state_has_next ? ","}
 #endlist
             );
 #endif
@@ -882,14 +882,14 @@ ${globals::translateLexerImports()}
         // constructors
 
         static Lexer() {
-#list lexerData.lexicalStates as lexicalState
-            NFA_FUNCTIONS_${lexicalState.name}Init();
+#list lexerData::lexicalStates as lexicalState
+            NFA_FUNCTIONS_${lexicalState::name}Init();
 #endlist
-#if lexerData.hasLexicalStateTransitions
+#if lexerData::hasLexicalStateTransitions
             // Generate the map for lexical state transitions from the various token types
-  #list lexerData.regularExpressions as regexp
-    #if regexp.newLexicalState??
-            tokenTypeToLexicalStateMap[TokenType.${regexp.label}] = LexicalState.${regexp.newLexicalState.name};
+  #list lexerData::regularExpressions as regexp
+    #if regexp::newLexicalState??
+            tokenTypeToLexicalStateMap[TokenType.${regexp::label}] = LexicalState.${regexp::newLexicalState::name};
     #endif
   #endlist
 #endif
@@ -901,32 +901,32 @@ ${globals::translateLexerImports()}
 
         internal HashSet<TokenType> ActiveTokenTypes;
 
-        public Lexer(string inputSource, LexicalState lexState = LexicalState.${lexerData.lexicalStates[0].name}, int line = 1, int column = 1) : base(inputSource, line, column) {
-#if settings.deactivatedTokens
+        public Lexer(string inputSource, LexicalState lexState = LexicalState.${lexerData::lexicalStates[0]::name}, int line = 1, int column = 1) : base(inputSource, line, column) {
+#if settings::deactivatedTokens
         ActiveTokenTypes = Utils.EnumSet(
-  #list lexerData.regularExpressions as regexp
-            TokenType.${regexp.label},
+  #list lexerData::regularExpressions as regexp
+            TokenType.${regexp::label},
   #endlist
-  #list settings.extraTokenNames as t
+  #list settings::extraTokenNames as t
             TokenType.${t},
   #endlist
             TokenType.DUMMY,
             TokenType.INVALID
         );
 
-  #list settings.deactivatedTokens as token
-            ActiveTokenTypes.Remove(${CU.TT}${token});
+  #list settings::deactivatedTokens as token
+            ActiveTokenTypes.Remove(${CU::TT}${token});
   #endlist
 #else
             ActiveTokenTypes = null;
 #endif
-#if settings.extraTokens
-  #list settings.extraTokenNames as token
-            regularTokens.Add(${CU.TT}${token});
+#if settings::extraTokens
+  #list settings::extraTokenNames as token
+            regularTokens.Add(${CU::TT}${token});
   #endlist
 #endif
 
-${globals::translateLexerInitializers()}
+${globals.translateLexerInitializers()}
             SwitchTo(lexState);
         }
 
@@ -957,7 +957,7 @@ ${globals::translateLexerInitializers()}
             return false;
         }
 
-#if lexerData.hasLexicalStateTransitions
+#if lexerData::hasLexicalStateTransitions
         internal bool DoLexicalStateSwitch(TokenType tokenType) {
             if (!tokenTypeToLexicalStateMap.ContainsKey(tokenType)) {
                 return false;
@@ -1047,7 +1047,7 @@ ${globals::translateLexerInitializers()}
                     currentStates = nextStates;
                     nextStates = temp;
                     nextStates.Clear();
-#if settings.usesPreprocessor
+#if settings::usesPreprocessor
                     position = input.NextUnignoredOffset(position);
 #endif
                 } else {
@@ -1099,7 +1099,7 @@ ${globals::translateLexerInitializers()}
             // was a lexical state change since the last iteration of this loop!
                 NfaFunction[] nfaFunctions = GetFunctionTable(_lexicalState);
 #endif
-#if settings.usesPreprocessor
+#if settings::usesPreprocessor
                 position = NextUnignoredOffset(position);
 #endif
                 matchStart = position;
@@ -1120,7 +1120,7 @@ ${globals::translateLexerInitializers()}
                 matchedType = matchInfo.matchedType;
                 inMore = moreTokens.Contains((TokenType) matchedType);
                 position += matchInfo.matchLength;
-#if lexerData.hasLexicalStateTransitions
+#if lexerData::hasLexicalStateTransitions
                 LexicalState newState;
 
                 if (tokenTypeToLexicalStateMap.TryGetValue((TokenType) matchedType, out newState)) {
@@ -1151,15 +1151,15 @@ ${globals::translateLexerInitializers()}
                                                   position);
                     matchedToken.IsUnparsed = !regularTokens.Contains((TokenType) matchedType);
                 }
-#if lexerData.hasTokenActions
+#if lexerData::hasTokenActions
                 matchedToken = TokenLexicalActions(matchedToken, matchedType, tokenBeginOffset, matchStart, position);
 #endif
             }
-#list grammar.lexerTokenHooks as tokenHookMethodName
+#list grammar::lexerTokenHooks as tokenHookMethodName
   #if tokenHookMethodName = "CommonTokenAction"
-                ${globals::translateIdentifier(tokenHookMethodName)}(matchedToken);
+                ${globals.translateIdentifier(tokenHookMethodName)}(matchedToken);
   #else
-                    matchedToken = ${globals::translateIdentifier(tokenHookMethodName)}(matchedToken);
+                    matchedToken = ${globals.translateIdentifier(tokenHookMethodName)}(matchedToken);
   #endif
 #endlist
             return matchedToken;
@@ -1265,14 +1265,14 @@ ${globals::translateLexerInitializers()}
                                                   _bufferPosition);
                     matchedToken.IsUnparsed = !regularTokens.Contains((TokenType) matchedType);
                 }
-     #if lexerData.hasTokenActions
+     #if lexerData::hasTokenActions
                 matchedToken = TokenLexicalActions(matchedToken, matchedType, tokenBeginOffset, matchStart, _bufferPosition);
      #endif
-     #if lexerData.hasLexicalStateTransitions
+     #if lexerData::hasLexicalStateTransitions
                 DoLexicalStateSwitch(matchedType.Value);
      #endif
             }
- #list grammar.lexerTokenHooks as tokenHookMethodName
+ #list grammar::lexerTokenHooks as tokenHookMethodName
     #if tokenHookMethodName = "CommonTokenAction"
                 ${tokenHookMethodName}(matchedToken);
     #else
@@ -1285,27 +1285,27 @@ ${globals::translateLexerInitializers()}
         // Reset the token source input
         // to just after the ${TOKEN} passed in.
         internal void Reset(${TOKEN} t, LexicalState? state = null) {
-#list grammar.resetTokenHooks as resetTokenHookMethodName
-            ${globals::translateIdentifier(resetTokenHookMethodName)}(t);
+#list grammar::resetTokenHooks as resetTokenHookMethodName
+            ${globals.translateIdentifier(resetTokenHookMethodName)}(t);
 #endlist
             UncacheTokens(t);
             if (state != null) {
                 SwitchTo(state.Value);
             }
-#if lexerData.hasLexicalStateTransitions
+#if lexerData::hasLexicalStateTransitions
             else {
                 DoLexicalStateSwitch(t.Type);
             }
 #endif
         }
 
-#if lexerData.hasTokenActions
+#if lexerData::hasTokenActions
         private Token TokenLexicalActions(Token matchedToken, TokenType? matchedType, int tokenBeginOffset, int matchStart, int matchEnd) {
             switch (matchedType) {
-        #list lexerData.regularExpressions as regexp
-                #if regexp.codeSnippet??
-            case TokenType.${regexp.label}:
-${globals::translateCodeBlock(regexp.codeSnippet.javaCode, 16)}
+        #list lexerData::regularExpressions as regexp
+                #if regexp::codeSnippet??
+            case TokenType.${regexp::label}:
+${globals.translateCodeBlock(regexp::codeSnippet::javaCode, 16)}
                 break;
                 #endif
         #endlist
@@ -1334,7 +1334,7 @@ ${globals::translateCodeBlock(regexp.codeSnippet.javaCode, 16)}
         }
 
 #endif
-#if settings.tokenChaining
+#if settings::tokenChaining
         override public void CacheToken(${BaseToken} tok) {
             ${TOKEN} token = (${TOKEN}) tok;
             if (token.isInserted) {
@@ -1376,8 +1376,8 @@ ${globals::translateCodeBlock(regexp.codeSnippet.javaCode, 16)}
 #endif
         }
 
-${globals::translateLexerInjections(true)}
+${globals.translateLexerInjections(true)}
 
-${globals::translateLexerInjections(false)}
+${globals.translateLexerInjections(false)}
     }
 }

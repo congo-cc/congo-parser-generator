@@ -1,4 +1,4 @@
-#var MULTIPLE_LEXICAL_STATE_HANDLING = (lexerData.numLexicalStates > 1)
+#var MULTIPLE_LEXICAL_STATE_HANDLING = (lexerData::numLexicalStates > 1)
 # explicitdedent:on
     <-
     def stack_iterator_forward(self):
@@ -65,7 +65,7 @@
     <-
 
     def push_onto_lookahead_stack(self, method_name, filename, line, column):
-        self.lookahead_stack.append(NonTerminalCall(self, filename, method_name, line, column[#if settings.faultTolerant], None[/#if]))
+        self.lookahead_stack.append(NonTerminalCall(self, filename, method_name, line, column[#if settings::faultTolerant], None[/#if]))
     <-
 
     def pop_lookahead_stack(self):
@@ -74,32 +74,32 @@
         self.scan_to_end = ntc.scan_to_end
     <-
 
-    def consume_token(self, expected_type[#if settings.faultTolerant], tolerant, follow_set[/#if]):
+    def consume_token(self, expected_type[#if settings::faultTolerant], tolerant, follow_set[/#if]):
         # old_token = self.last_consumed_token
         next_token = self.next_token(self.last_consumed_token)
         if not self.type_matches(expected_type,next_token) :
-          #if lexerData.hasContextualTokens
+          #if lexerData::hasContextualTokens
                if expected_type != next_token.type :
                     next_token = next_token.replace_type(expected_type)
                <-
                else: [#rt]
           #endif
-                 next_token = self.handle_unexpected_token_type(expected_type, next_token[#if settings.faultTolerant], tolerant, follow_set[/#if])
+                 next_token = self.handle_unexpected_token_type(expected_type, next_token[#if settings::faultTolerant], tolerant, follow_set[/#if])
         <-
         self.last_consumed_token = next_token
         self._next_token_type = None
-#if settings.treeBuildingEnabled
+#if settings::treeBuildingEnabled
         if self.build_tree and self.tokens_are_nodes:
-  #list grammar.openNodeScopeHooks as hook
+  #list grammar::openNodeScopeHooks as hook
             ${hook}(self.last_consumed_token)
   #endlist
             self.push_node(self.last_consumed_token)
-  #list grammar.closeNodeScopeHooks as hook
+  #list grammar::closeNodeScopeHooks as hook
             ${hook}(self.last_consumed_token)
   #endlist
         <-
 #endif
-#if settings.faultTolerant
+#if settings::faultTolerant
         # Check whether the very next token is in the follow set of the last consumed token
         # and if it is not, we check one token ahead to see if skipping the next token remedies
         # the problem.
@@ -119,8 +119,8 @@
         return self.last_consumed_token
     <-
 
-    def handle_unexpected_token_type(self, expected_type, next_token[#if settings.faultTolerant], tolerant, follow_set[/#if]):
-      #if !settings.faultTolerant
+    def handle_unexpected_token_type(self, expected_type, next_token[#if settings::faultTolerant], tolerant, follow_set[/#if]):
+      #if !settings::faultTolerant
         raise ParseException(self, token=next_token, expected=set([expected_type]))
       #else
         if not self.tolerant_parsing:
@@ -134,7 +134,7 @@
             if self.debug_fault_tolerant:
                 logger.info('Skipping token of type: %s at: %s', next_token.type, next_token.location)
             <-
-#if settings.treeBuildingEnabled
+#if settings::treeBuildingEnabled
             self.push_node(next_token)
 #endif
             # self.last_consumed_token.next = next_next
@@ -151,7 +151,7 @@
             if self.debug_fault_tolerant:
                 logger.info('Inserting virtual token of type: %s at: %s', expected_type, virtual_token.location)
             <-
-#if lexerData.hasLexicalStateTransitions
+#if lexerData::hasLexicalStateTransitions
             if self.token_source.do_lexical_state_switch(expected_type):
                 self.token_source.reset(virtual_token)
             <-

@@ -940,7 +940,7 @@ PrimaryExpression#interface :
     |
     ("::" [TypeArguments] (<IDENTIFIER>|"new")) #MethodReference(+1)
     |
-    ENSURE {getTokenType(0) == IDENTIFIER}
+    ASSERT {getTokenType(0) == IDENTIFIER, getToken(0) : "Not a valid method name: " + peekNode()}
     InvocationArguments #MethodCall(+1)
    )
  )*

@@ -2,7 +2,6 @@ package org.congocc.codegen;
 
 import java.io.IOException;
 import java.io.Writer;
-import java.io.StringWriter;
 import java.lang.System;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -29,7 +28,7 @@ import org.congocc.templates.*;
 public class FilesGenerator {
     private static final Logger logger = Logger.getLogger("filegen");
 
-    private final Configuration templatesConfig = new org.congocc.templates.Configuration();
+    //private final TemplateFactory templateFactory = new TemplateFactory();
     private final Grammar grammar;
     private final AppSettings appSettings;
     private final Errors errors;
@@ -43,6 +42,7 @@ public class FilesGenerator {
     private boolean generateTestHarness;
 
     void initializeTemplateEngine() throws IOException {
+        TemplateFactory templateFactory = TemplateFactory.getDefault();
         Path filename = appSettings.getFilename().toAbsolutePath();
         Path dir = filename.getParent();
         //
@@ -53,24 +53,23 @@ public class FilesGenerator {
         // We check for the 'templates' subdirectory existing, because otherwise
         // the template library will raise an exception.
         //
-
         String templateFolder = "/templates/".concat(codeLang.toString().toLowerCase());
         Path altDir = dir.resolve(templateFolder.substring(1));
         if (Files.exists(altDir)) {
-            templatesConfig.setDirectoryForTemplateLoading(altDir.toString());
+            templateFactory.setDirectoryForTemplateLoading(altDir.toString());
         } else {
-            templatesConfig.setDirectoryForTemplateLoading(dir.toString());
+            templateFactory.setDirectoryForTemplateLoading(dir.toString());
         }
-        templatesConfig.setClassForTemplateLoading(this.getClass(),templateFolder);
-        templatesConfig.setNumberFormat("computer");
-        templatesConfig.setArithmeticEngine(org.congocc.templates.core.ArithmeticEngine.CONSERVATIVE_ENGINE);
-        templatesConfig.setSharedVariable("grammar", grammar);
-        templatesConfig.setSharedVariable("globals", grammar.getTemplateGlobals());
-        templatesConfig.setSharedVariable("settings", grammar.getAppSettings());
-        templatesConfig.setSharedVariable("lexerData", grammar.getLexerData());
-        templatesConfig.setSharedVariable("generated_by", org.congocc.app.Main.PROG_NAME);
+        templateFactory.setClassForTemplateLoading(this.getClass(),templateFolder);
+        templateFactory.setNumberFormat("computer");
+        templateFactory.setArithmeticEngine(org.congocc.templates.core.ArithmeticEngine.CONSERVATIVE_ENGINE);
+        templateFactory.setSharedVariable("grammar", grammar);
+        templateFactory.setSharedVariable("globals", grammar.getTemplateGlobals());
+        templateFactory.setSharedVariable("settings", grammar.getAppSettings());
+        templateFactory.setSharedVariable("lexerData", grammar.getLexerData());
+        templateFactory.setSharedVariable("generated_by", org.congocc.app.Main.PROG_NAME);
         if (codeLang == JAVA) {
-           templatesConfig.addAutoImport("CU", "CommonUtils.java.ctl");
+           templateFactory.addAutoImport("CU", "CommonUtils.java.ctl");
         }
     }
 
@@ -110,7 +109,8 @@ public class FilesGenerator {
             }
             case PYTHON -> {
                 // Hardcoded for now, could make configurable later
-                String[] paths = new String[]{
+                //String[] paths = new String[]{
+                String[] paths = {
                         "__init__.py",
                         "utils.py",
                         "tokens.py",
@@ -245,12 +245,10 @@ public class FilesGenerator {
             if (superClassName == null) superClassName = appSettings.getBaseTokenClassName();
             dataModel.put("superclass", superClassName);
         }
-        Writer out = new StringWriter();
-        Template template = templatesConfig.getTemplate(templateName);
+        Template template = TemplateFactory.getDefault().getTemplate(templateName);
         // Sometimes needed in templates for e.g. injector.hasInjectedCode(node)
         dataModel.put("injector", grammar.getInjector());
-        template.process(dataModel, out);
-        String code = out.toString();
+        String code = template.process(dataModel);
         if (!appSettings.isQuiet()) {
             System.out.println("Outputting: " + outputPath.normalize());
         }
@@ -442,46 +440,6 @@ public class FilesGenerator {
 
     private boolean regenerate(Path file) throws IOException {
         return true;
-/*
-        boolean result = false;
-
-        if (!Files.exists(file)) {
-        	result = true;
-        }
-        else {
-            String ourName = file.getFileName().toString();
-            String canonicalName = file.normalize().getFileName().toString();
-            if (canonicalName.equalsIgnoreCase(ourName) && !canonicalName.equals(ourName)) {
-                String msg = "You cannot have two files that differ only in case, as in "
-                        + ourName + " and "+ canonicalName
-                        + "\nThis does work on a case-sensitive file system but fails on a case-insensitive one (i.e. Mac/Windows)"
-                        + " \nYou will need to rename something in your grammar!";
-                throw new IOException(msg);
-            }
-            String filename = file.getFileName().toString();
-            // Changes here to allow different rules to be used for different
-            // languages. At the moment there are no non-Java code injections
-            String extension = codeLang.equals("java") ? ".java" : codeLang.equals("python") ? ".py" : ".cs";
-            if (filename.endsWith(extension)) {
-                String typename = filename.substring(0, filename.length()  - extension.length());
-                if (codeInjector.hasInjectedCode(typename)) {
-                    result = true;
-                }
-                if (typename.equals(appSettings.getBaseTokenClassName())) {
-                    // The Token class now contains the TokenType enum,
-                    // so we always regenerate.
-                    result = true;
-                }
-            }
-            //
-            // For now regenerate() isn't called for generating Python or C# files,
-            // but I'll leave this here for the moment
-            //
-            result = extension.equals(".py") || extension.equals(".cs");    // for now, always regenerate
-        }
-        logger.fine(String.format("regenerate %s -> %s", file, result));
-        return result;
- */
     }
 
     void generateTreeBuildingFiles(boolean wanted) throws IOException {

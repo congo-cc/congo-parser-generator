@@ -10,7 +10,7 @@
 --]
 [#var cache_sets = true]
 [#macro enumSet varName tokenNames]
-[#var size = tokenNames?size]
+[#var size = tokenNames.size()]
 [#if size = 0]
     ${varName} = EMPTY_SET
 [#elseif cache_sets]
@@ -30,7 +30,7 @@
 [/#macro]
 
 [#macro firstSetVar expansion]
-    [@enumSet expansion.firstSetVarName, expansion.firstSet.tokenNames /]
+    [@enumSet expansion::firstSetVarName, expansion::firstSet::tokenNames /]
 [/#macro]
 
 [#--
@@ -40,7 +40,7 @@
 --]
 
 [#macro followSetVar expansion]
-    [@enumSet expansion.followSetVarName, expansion.followSet.tokenNames /]
+    [@enumSet expansion::followSetVarName, expansion::followSet::tokenNames /]
 [/#macro]
 
 
@@ -50,7 +50,7 @@
   onto the type name, and optionally initializes it to some value
 [#macro newVar type init = null]
    [#set newVarIndex = newVarIndex + 1]
-   ${type} ${type?lower_case}${newVarIndex}
+   ${type} ${type.toLowerCase()}${newVarIndex}
    [#if init??]
       = ${init}
    [/#if]
@@ -78,16 +78,16 @@ ${prefix}${newID()}[#rt]
 [/#macro]
  --]
 
-[#function bool val]
-[#return val?string("True", "False")/]
-[/#function]
+#function bool val
+  #return val ? "True" : "False"
+#end
 
 [#macro HandleLexicalStateChange expansion inLookahead indent cardinalitiesVar]
 [#-- cardinalitiesVar is threaded for parity with Java; not used in lexical reset. --]
-[#var is = ""?right_pad(indent)]
+[#var is = "".RightPad(indent)]
 [#-- ${is}# DBG > HandleLexicalStateChange ${indent} ${expansion.simpleName} --]
-[#var resetToken = inLookahead?string("self.current_lookahead_token", "self.last_consumed_token")]
-[#if expansion.specifiedLexicalState??]
+#var resetToken = inLookahead ? "self.current_lookahead_token" : "self.last_consumed_token"
+[#if expansion::specifiedLexicalState??]
   #if inLookahead
 ${is}if self.hit_failure:
 ${is}    return False
@@ -96,20 +96,20 @@ ${is}    return True
   #endif
   [#var prevLexicalStateVar = newVarName("previousLexicalState")]
 ${is}${prevLexicalStateVar} = self.token_source.lexical_state
-${is}self.token_source.reset(${resetToken}, LexicalState.${expansion.specifiedLexicalState})
+${is}self.token_source.reset(${resetToken}, LexicalState.${expansion::specifiedLexicalState})
 ${is}try:
 [#nested indent + 4 /]
 ${is}finally:
-${is}    if ${prevLexicalStateVar} != LexicalState.${expansion.specifiedLexicalState}:
+${is}    if ${prevLexicalStateVar} != LexicalState.${expansion::specifiedLexicalState}:
 ${is}        if ${resetToken}.next:
 ${is}            self.token_source.reset(${resetToken}, ${prevLexicalStateVar})
 ${is}        else:
 ${is}            self.token_source.switch_to(${prevLexicalStateVar})
 ${is}        self._next_token_type = None
-[#elseif expansion.tokenActivation??]
-  [#var tokenActivation = expansion.tokenActivation]
+[#elseif expansion::tokenActivation??]
+  [#var tokenActivation = expansion::tokenActivation]
   [#var methodName = "activate_token_types"]
-  [#if tokenActivation.deactivate]
+  [#if tokenActivation::deactivate]
     [#set methodName = "deactivate_token_types"]
   [/#if]
   [#var prevActives = newVarName("previousActives")]
@@ -122,16 +122,16 @@ ${is}    return True
   #endif
 ${is}${somethingChanged} = False
 ${is}${prevActives} = _Set(self.token_source.active_token_types)
-[#if expansion.tokenActivation.activatedTokens?size > 0]
+[#if expansion::tokenActivation::activatedTokens.size() > 0]
 ${is}${somethingChanged} = ${somethingChanged} or self.activate_token_types(
-  [#list tokenActivation.activatedTokens as tokenName]
+  [#list tokenActivation::activatedTokens as tokenName]
 ${is}    ${tokenName}[#if tokenName_has_next],[/#if]
   [/#list]
 ${is})
 [/#if]
-[#if expansion.tokenActivation.deactivatedTokens?size > 0]
+[#if expansion::tokenActivation::deactivatedTokens.size() > 0]
 ${is}${somethingChanged} = ${somethingChanged} or self.deactivate_token_types(
-  [#list tokenActivation.deactivatedTokens as tokenName]
+  [#list tokenActivation::deactivatedTokens as tokenName]
 ${is}    ${tokenName}[#if tokenName_has_next],[/#if]
   [/#list]
 ${is})

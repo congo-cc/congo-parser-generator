@@ -74,33 +74,32 @@ INJECT LEXER_CLASS :
     }
 
     private TokenType directiveTypeFromString(String name) {
-        switch(name) {
-            case "#assert" : return _ASSERT;
-            case "#attempt" : return _ATTEMPT;
-            case "#break" : return BREAK;
-            case "#embed" : return EMBED;
-            case "#else" : return ELSE;
-            case "#elif" : return ELSE_IF;
-            case "#elseif" : return ELSE_IF;
-            case "#exec" : return EXEC;
-            case "#ftl":
-            case "#ctl" : return CTL_HEADER;
-            case "#function" : return FUNCTION;
-            case "#if" : return IF;
-            case "#import" : return IMPORT;
-            case "#include" : return _INCLUDE;
-            case "#list" : return LIST;
-            case "#loop" : return LOOP;
-            case "#macro" : return _MACRO;
-            case "#nested" : return NESTED;
-            case "#recover" : return _RECOVER;
-            case "#return" : return RETURN;
-            case "#set" : return SET;
-            case "#setting" : return SETTING;
-            case "#stop" : return STOP;
-            case "#var" : return VAR;
-        }
-        return UNKNOWN_DIRECTIVE;
+        return switch(name) {
+            case "#assert" -> _ASSERT;
+            case "#attempt" -> _ATTEMPT;
+            case "#break" -> BREAK;
+            case "#embed" -> EMBED;
+            case "#else" -> ELSE;
+            case "#elif","#elseif" -> ELSE_IF;
+            case "#exec" -> EXEC;
+            case "#ftl" -> CTL_HEADER;
+            case "#ctl" -> CTL_HEADER;
+            case "#function" -> FUNCTION;
+            case "#if" -> IF;
+            case "#import" -> IMPORT;
+            case "#include" -> _INCLUDE;
+            case "#list" -> LIST;
+            case "#loop" -> LOOP;
+            case "#macro" -> _MACRO;
+            case "#nested" -> NESTED;
+            case "#recover" -> _RECOVER;
+            case "#return" -> RETURN;
+            case "#set" ->  SET;
+            case "#setting" -> SETTING;
+            case "#stop" -> STOP;
+            case "#var" -> VAR;
+            default -> UNKNOWN_DIRECTIVE;
+        };
     }
 
     private Token TOKEN_HOOK(Token token) {
@@ -326,16 +325,16 @@ TOKEN#Text :
 
 <EXPRESSION> TOKEN#Literal :
   <STRING_LITERAL :
-      ("\""
-          ((~["\\", "\""]) | ("\\" ~[]))*
-      "\"")
+      ('"'
+          ((~['\\', '"']) | ('\\' ~[]))*
+      '"')
       |
       ("'"
           ((~["\\", "'"]) | ("\\" ~[]))*
       "'")
   > #StringLiteral
   |
-  <RAW_STRING : "r" (("\"" (~["\""])* "\"") | ("'" (~["'"])* "'"))> #StringLiteral
+  <RAW_STRING : "r" (('"' (~['"'])* '"') | ("'" (~["'"])* "'"))> #StringLiteral
   |
   <FALSE : "false"> #BooleanLiteral
   |
@@ -353,11 +352,9 @@ TOKEN#Text :
   |
   <DOUBLE_COLON : "::">
   |
-  <BUILT_IN : "?">
-  |
   <EXISTS : "??">
   |
-  <TERNARY : "?:">
+  <TERNARY : "?" | "?:">
   |
   <EQUALS : "=">
   |
@@ -447,7 +444,7 @@ INJECT Identifier :
 
 INJECT NullLiteral :
    import org.congocc.templates.core.Environment;
-   import static org.congocc.templates.core.variables.Wrap.JAVA_NULL;
+   import static org.congocc.templates.core.Wrap.JAVA_NULL;
    implements Expression
 {
     public Object evaluate(Environment env) {
@@ -457,7 +454,6 @@ INJECT NullLiteral :
 
 INJECT BooleanLiteral :
     import org.congocc.templates.core.Environment;
-    import org.congocc.templates.core.variables.*;
     implements Expression
 {
     public boolean isTrue(Environment env) {
@@ -498,8 +494,7 @@ INJECT StringLiteral :
    import org.congocc.templates.TemplateException;
    import org.congocc.templates.TemplateExceptionHandler;
    import org.congocc.templates.core.Environment;
-   import java.io.IOException;
-   import static org.congocc.templates.utility.StringUtil.CTLStringLiteralDec;
+   import static org.congocc.templates.extensions.StringUtil.CTLStringLiteralDec;
    implements Expression
 {
     private TemplateElement interpolatedOutput;
@@ -548,9 +543,6 @@ INJECT StringLiteral :
             env.setTemplateExceptionHandler(TemplateExceptionHandler.RETHROW_HANDLER);
             try {
                return env.renderElementToString(interpolatedOutput);
-            }
-            catch (IOException ioe) {
-                throw new TemplateException(ioe);
             }
             finally {
                 env.setTemplateExceptionHandler(teh);

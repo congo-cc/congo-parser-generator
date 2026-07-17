@@ -29,7 +29,7 @@ pub const DEFAULT_WIDTH: usize = 120;
 /// # Examples
 ///
 /// ```
-/// use ${settings.parserPackage?replace(".", "_")}::pretty::Doc;
+/// use ${settings::parserPackage.replace(".", "_")}::pretty::Doc;
 ///
 /// let doc = Doc::group(Doc::concat(vec![
 ///     Doc::text("["),
@@ -119,7 +119,7 @@ impl Doc {
     /// # Examples
     ///
     /// ```
-    /// use ${settings.parserPackage?replace(".", "_")}::pretty::Doc;
+    /// use ${settings::parserPackage.replace(".", "_")}::pretty::Doc;
     ///
     /// let items = vec![Doc::text("a"), Doc::text("b"), Doc::text("c")];
     /// let doc = Doc::intersperse(items, Doc::text(", "));
@@ -294,8 +294,8 @@ pub fn render(doc: &Doc, width: usize) -> String {
 /// # Examples
 ///
 /// ```no_run
-/// use ${settings.parserPackage?replace(".", "_")}::pretty::{PrettyPrinter, DefaultPrettyPrinter, Doc};
-/// use ${settings.parserPackage?replace(".", "_")}::ast::Ast;
+/// use ${settings::parserPackage.replace(".", "_")}::pretty::{PrettyPrinter, DefaultPrettyPrinter, Doc};
+/// use ${settings::parserPackage.replace(".", "_")}::ast::Ast;
 ///
 /// // Use the generated defaults directly:
 /// // let ast = Parser::parse("...", Some("input")).unwrap();
@@ -331,16 +331,16 @@ pub trait PrettyPrinter {
     /// Dispatches to the appropriate `pp_*` method based on node kind.
     fn pp(&self, ast: &Ast, id: NodeId) -> Doc {
         match ast.kind(id) {
-[#list grammar.nodeNames as nodeName]
-            NodeKind::${nodeName} => self.pp_${nodeName?lower_case}(ast, id),
+[#list grammar::nodeNames as nodeName]
+            NodeKind::${nodeName} => self.pp_${nodeName.toLowerCase()}(ast, id),
 [/#list]
             NodeKind::Token(_) => self.pp_token(ast, id),
         }
     }
 
-[#list grammar.nodeNames as nodeName]
+[#list grammar::nodeNames as nodeName]
     /// Pretty-print a `${nodeName}` node.
-    fn pp_${nodeName?lower_case}(&self, ast: &Ast, id: NodeId) -> Doc {
+    fn pp_${nodeName.toLowerCase()}(&self, ast: &Ast, id: NodeId) -> Doc {
         self.pp_default(ast, id)
     }
 
@@ -413,8 +413,8 @@ pub trait PrettyPrinter {
 /// # Examples
 ///
 /// ```no_run
-/// use ${settings.parserPackage?replace(".", "_")}::pretty::{DefaultPrettyPrinter, PrettyPrinter};
-/// use ${settings.parserPackage?replace(".", "_")}::parser::Parser;
+/// use ${settings::parserPackage.replace(".", "_")}::pretty::{DefaultPrettyPrinter, PrettyPrinter};
+/// use ${settings::parserPackage.replace(".", "_")}::parser::Parser;
 ///
 /// let ast = Parser::parse("{}", Some("input.json")).unwrap();
 /// let output = DefaultPrettyPrinter.pretty_print(&ast);

@@ -1,5 +1,7 @@
-// This file defines the expression
+// This file defines the expressio
 // grammar. It is INCLUDEd from the main template.
+
+DEFAULT_LEXICAL_STATE=EXPRESSION;
 
 #Expression#interface :
     TernaryExpression
@@ -11,11 +13,10 @@
 INJECT Expression :
    import org.congocc.templates.core.Environment;
    import org.congocc.templates.TemplateException;
-   import org.congocc.templates.core.variables.EvaluationException;
+   import org.congocc.templates.core.EvaluationException;
    import org.congocc.templates.TemplateSequence;
    import java.lang.reflect.Array;
-   import org.congocc.templates.core.variables.WrappedVariable;
-   import static org.congocc.templates.core.variables.Wrap.*;
+   import static org.congocc.templates.core.Wrap.*;
 {
     public abstract Object evaluate(Environment env);
 
@@ -38,9 +39,6 @@ INJECT Expression :
         }
         if (referent instanceof Number n) {
             return env.formatNumber(n);
-        }
-        if (referent instanceof WrappedVariable w) {
-            return w.getAsString();
         }
         if (referent instanceof CharSequence cs) {
             return cs.toString();
@@ -84,7 +82,7 @@ TernaryExpression :
         <TERNARY>
         Expression
         [
-          <COLON>
+          ":"
           Expression
         ]
     ]
@@ -92,7 +90,7 @@ TernaryExpression :
 
 INJECT TernaryExpression :
    import org.congocc.templates.core.Environment;
-   import static org.congocc.templates.core.variables.Wrap.LOOSE_NULL;
+   import static org.congocc.templates.core.Wrap.LOOSE_NULL;
    implements Expression
 {
     public Object evaluate(Environment env) {
@@ -107,11 +105,11 @@ INJECT TernaryExpression :
 }
 
 Literal#void :
-  <NULL>
+  "null"
   |
-  <TRUE>
+  "true"
   |
-  <FALSE>
+  "false"
   |
   <NUMBER>
   |
@@ -138,39 +136,33 @@ PrimaryExpression(boolean noSpace)#void :
     SCAN {!noSpace || getToken(0).getEndOffset() == getToken(1).getBeginOffset()} =>
     (
       (
-        <DOT>
+        "::"
         DEACTIVATE_TOKENS IN, AS, TRUE, FALSE, NULL
         (<ID>)
-      ) #DotVariable(+1)
+      ) #PropertyReference(+1)
       |
-      <OPEN_BRACKET> Expression <CLOSE_BRACKET> #org.congocc.templates.core.nodes.DynamicKeyName(4)
+      "[" Expression "]" #org.congocc.templates.core.nodes.DynamicKeyName(4)
       |
-      (<OPEN_PAREN> [ArgsList] <CLOSE_PAREN>) #MethodCall(+1)
+      ("(" [ArgsList] ")") #org.congocc.templates.core.nodes.MethodCall(+1)
       |
-      <BUILT_IN><ID> #BuiltInExpression(3)
-      |
-      <EXISTS>#ExistsExpression(2)
+      "??" #ExistsExpression(2)
       |
       (
-        <EXCLAM>
+        "!"
         [
-            ENSURE ~(<DOT>)
+            ENSURE ~("::")
             ENSURE {!(getTokenType(1) == ID && getTokenType(2) == EQUALS)
                    || !isInProduction("NamedArgs")}
             PrimaryExpression(false)
         ]
       ) #DefaultToExpression(+1)
       |
-      <DOUBLE_COLON> <ID> #MethodReference(3)
+      "." <ID> #DotExpression(3)
     )
   )*
 ;
 
-ParentheticalExpression :
-    <OPEN_PAREN>
-    Expression
-    <CLOSE_PAREN>
-;
+ParentheticalExpression : "(" Expression ")" ;
 
 INJECT ParentheticalExpression :
    import org.congocc.templates.core.Environment;
@@ -193,12 +185,11 @@ INJECT ParentheticalExpression :
     }
 }
 
-INJECT DotVariable :
+INJECT PropertyReference :
     import org.congocc.templates.core.Environment;
-    import org.congocc.templates.core.variables.*;
-    import org.congocc.templates.core.variables.scope.Scope;
-    import org.congocc.templates.TemplateHash;
-    import static org.congocc.templates.core.variables.Wrap.*;
+    import org.congocc.templates.core.reflection.ReflectionCode;
+    import org.congocc.templates.core.scope.Scope;
+    import static org.congocc.templates.core.Wrap.*;
     implements Expression
 {
     public Expression getTarget() {
@@ -220,10 +211,10 @@ INJECT DotVariable :
         if (lhs instanceof Map m) {
             Object key = getKey();
             Object value = m.get(key);
+//            if (value == null && !m.containsKey(key)) {
+//                assertNonNull(value, getTarget());
+//            }
             return wrap(value);
-        }
-        if (lhs instanceof TemplateHash hash) {
-            return wrap(hash.get(getKey()));
         }
         return ReflectionCode.getProperty(lhs, getKey());
     }
@@ -242,7 +233,7 @@ UnaryExpression#void :
 ;
 
 NotExpression :
-   <EXCLAM>
+   "!"
    (
       PrimaryExpression(false)
       |
@@ -269,9 +260,9 @@ INJECT NotExpression :
 
 UnaryPlusMinusExpression :
    (
-      <PLUS>
+      "+"
       |
-      <MINUS>
+      "-"
    )
    (
       UnaryPlusMinusExpression
@@ -283,7 +274,7 @@ UnaryPlusMinusExpression :
 INJECT UnaryPlusMinusExpression :
     import org.congocc.templates.core.Environment;
     import org.congocc.templates.core.ArithmeticEngine;
-    import org.congocc.templates.core.variables.*;
+    import org.congocc.templates.core.EvaluationException;
     import org.congocc.templates.TemplateException;
     implements Expression
 {
@@ -317,9 +308,9 @@ AdditiveExpression :
    MultiplicativeExpression
    (
       (
-         <PLUS>
+         "+"
          |
-         <MINUS>
+         "-"
       )
       MultiplicativeExpression
    )*
@@ -329,8 +320,8 @@ INJECT AdditiveExpression :
     import org.congocc.templates.TemplateException;
     import org.congocc.templates.core.ArithmeticEngine;
     import org.congocc.templates.core.Environment;
-    import org.congocc.templates.core.variables.EvaluationException;
-    import static org.congocc.templates.core.variables.Wrap.*;
+    import org.congocc.templates.core.EvaluationException;
+    import static org.congocc.templates.core.Wrap.*;
     implements Expression;
 {
 
@@ -379,7 +370,7 @@ INJECT AdditiveExpression :
             result.addAll(rightList);
             return result;
         }
-        if (isMap(left) && isMap(right)) {
+        if (left instanceof Map && right instanceof Map) {
             Map<?,?> leftMap = (Map) unwrap(left);
             Map<?,?> rightMap = (Map) unwrap(right);
             Map<Object,Object> result = new LinkedHashMap<>(leftMap);
@@ -396,11 +387,11 @@ MultiplicativeExpression :
    UnaryExpression
    (
       (
-         <TIMES>
+         "*"
          |
-         <DIVIDE>
+         "/"
          |
-         <PERCENT>
+         "%"
       )
       UnaryExpression
    )*
@@ -410,7 +401,7 @@ INJECT MultiplicativeExpression :
    import org.congocc.templates.TemplateException;
    import org.congocc.templates.core.Environment;
    import org.congocc.templates.core.ArithmeticEngine;
-   import static org.congocc.templates.core.variables.Wrap.getNumber;
+   import static org.congocc.templates.core.Wrap.getNumber;
    implements Expression
 {
     public Expression getLeft() {
@@ -468,11 +459,11 @@ EqualityExpression :
    RelationalExpression
    [
      (
-      <NOT_EQUALS>
+      "!="
       |
-      <EQUALS>
+      "="
       |
-      <DOUBLE_EQUALS>
+      "=="
      )
      RelationalExpression
    ]
@@ -481,7 +472,7 @@ EqualityExpression :
 INJECT EqualityExpression :
     import org.congocc.templates.core.Environment;
     import org.congocc.templates.core.ArithmeticEngine;
-    import static org.congocc.templates.core.variables.Wrap.*;
+    import static org.congocc.templates.core.Wrap.*;
     implements Expression
 {
     public Expression getLeft() {
@@ -547,7 +538,7 @@ INJECT RelationalExpression :
     import org.congocc.templates.TemplateException;
     import org.congocc.templates.core.Environment;
     import org.congocc.templates.core.ArithmeticEngine;
-    import static org.congocc.templates.core.variables.Wrap.*;
+    import static org.congocc.templates.core.Wrap.*;
     implements Expression;
 {
     public Expression getLeft() {
@@ -586,7 +577,7 @@ INJECT RelationalExpression :
 RangeExpression :
    AdditiveExpression
    [
-    <DOT_DOT>
+    ".."
     [
        AdditiveExpression
     ]
@@ -594,10 +585,10 @@ RangeExpression :
 ;
 
 INJECT RangeExpression :
-   import org.congocc.templates.core.variables.*;
+   import org.congocc.templates.core.EvaluationException;
    import org.congocc.templates.core.Environment;
    import org.congocc.templates.TemplateException;
-   import static org.congocc.templates.core.variables.Wrap.getNumber;
+   import static org.congocc.templates.core.Wrap.getNumber;
    implements Expression
 {
     public Expression getLeft() {
@@ -717,25 +708,24 @@ INJECT OrExpression :
 }
 
 ListLiteral :
-    <OPEN_BRACKET>
+    "["
     [
       Expression
       (
-         <COMMA>
+         ","
          Expression
       )*
     ]
-    <CLOSE_BRACKET>
+    "]"
 ;
 
 INJECT ListLiteral :
-  import java.io.IOException;
   import java.util.ArrayList;
   import java.util.List;
   import org.congocc.templates.core.Environment;
   import org.congocc.templates.TemplateException;
-  import org.congocc.templates.core.variables.scope.Scope;
-  import static org.congocc.templates.core.variables.Wrap.assertIsDefined;
+  import org.congocc.templates.core.scope.Scope;
+  import static org.congocc.templates.core.Wrap.assertIsDefined;
   implements Expression
 {
     public List<Expression> getElements() {
@@ -754,7 +744,7 @@ INJECT ListLiteral :
 }
 
 BuiltinVariable :
-   <DOT>
+   "::"
    <ID>
    {
       thisProduction.setName(lastConsumedToken.toString());
@@ -762,12 +752,11 @@ BuiltinVariable :
 ;
 
 INJECT BuiltinVariable :
-    import org.congocc.templates.core.variables.*;
+    import org.congocc.templates.core.*;
     import org.congocc.templates.core.Environment;
     import org.congocc.templates.core.parser.ParseException;
-    import org.congocc.templates.Configuration;
+    import org.congocc.templates.TemplateFactory;
     import org.congocc.templates.TemplateException;
-    import org.congocc.templates.TemplateHash;
     implements Expression
 {
     private String name;
@@ -788,42 +777,28 @@ INJECT BuiltinVariable :
            case "locals" : return env.getCurrentMacroContext();
            case "data_model" : return env.getDataModel();
            case "scope" : return env.getCurrentScope();
-           case "vars" : return new VarsHash(env);
+           case "vars" :
+               return new Object() {
+                   public Object get(String key) {
+                       return env.getVariable(key);
+                   }
+               };
            case "locale" : return env.getLocale().toString();
            case "lang" : return env.getLocale().getLanguage();
            case "pass" : return Macro.DO_NOTHING_MACRO;
            case "name" : return env.getTemplate().getName();
-           case "version" : return Configuration.getVersionNumber();
-           case "output_encoding" : return env.getOutputEncoding();
-           case "url_escaping_charset" : return env.getURLEscapingCharset();
+           case "version" : return TemplateFactory.getVersionNumber();
            case "error" : return env.getCurrentRecoveredErrorMessage();
         }
         throw new TemplateException("Invalid built-in variable: " + this);
     }
-
-    static class VarsHash implements TemplateHash {
-
-        private final Environment env;
-
-        VarsHash(Environment env) {
-            this.env = env;
-        }
-
-        public Object get(String key) {
-            return env.getVariable(key);
-        }
-
-        public boolean isEmpty() {
-            return false;
-        }
-    }
 }
 
 INJECT DefaultToExpression :
-    import org.congocc.templates.core.Environment;
-    import org.congocc.templates.core.variables.*;
-    import static org.congocc.templates.core.variables.Wrap.LOOSE_NULL;
-    import static org.congocc.templates.core.variables.Wrap.JAVA_NULL;
+    import org.congocc.templates.core.*;
+    import static org.congocc.templates.core.Wrap.LOOSE_NULL;
+    import static org.congocc.templates.core.Wrap.JAVA_NULL;
+    import static org.congocc.templates.core.Wrap.assertIsDefined;
     implements Expression
 {
 	public Expression getLeft() {
@@ -852,9 +827,9 @@ INJECT DefaultToExpression :
 
 INJECT ExistsExpression :
     import org.congocc.templates.core.Environment;
-    import org.congocc.templates.core.variables.InvalidReferenceException;
-    import static org.congocc.templates.core.variables.Wrap.JAVA_NULL;
-    import static org.congocc.templates.core.variables.Wrap.LOOSE_NULL;
+    import org.congocc.templates.core.InvalidReferenceException;
+    import static org.congocc.templates.core.Wrap.JAVA_NULL;
+    import static org.congocc.templates.core.Wrap.LOOSE_NULL;
     implements Expression
 {
 	public Expression getExpression() {
@@ -874,229 +849,10 @@ INJECT ExistsExpression :
 	}
 }
 
-INJECT BuiltInExpression :
-    import java.util.HashMap;
-    import org.congocc.templates.core.Environment;
-    import org.congocc.templates.builtins.*;
-    import org.congocc.templates.TemplateHash;
-    import org.congocc.templates.core.variables.JavaMethodCall;
-    import static org.congocc.templates.core.variables.Wrap.asString;
-    implements Expression;
-{
-    private static final HashMap<String, BuiltIn> knownBuiltins = new HashMap<String, BuiltIn>();
-    {
-        knownBuiltins.put("source", (env,caller)->caller.getTarget().getSource());
-        knownBuiltins.put("upper_case", (env,caller)->asString(caller.getTarget().evaluate(env)).toUpperCase(env.getLocale()));
-        knownBuiltins.put("lower_case", (env,caller)->asString(caller.getTarget().evaluate(env)).toLowerCase(env.getLocale()));
-        knownBuiltins.put("length", (env,caller)->asString(caller.getTarget().evaluate(env)).length());
-        knownBuiltins.put("trim", (env,caller)->asString(caller.getTarget().evaluate(env)).trim());
-        knownBuiltins.put("substring", (env,caller)->new JavaMethodCall(asString(caller.getTarget().evaluate(env)),"substring", caller));
-        knownBuiltins.put("instanceof", new instanceofBI());
-        knownBuiltins.put("exists", new ExistenceBuiltIn.ExistsBuiltIn());
-        knownBuiltins.put("c", new cBI());
-        knownBuiltins.put("size", new sizeBI());
-        knownBuiltins.put("string", new stringBI());
-        knownBuiltins.put("eval", new evalBI());
-        knownBuiltins.put("resolve", new resolveBI());
-        NumericalCast numericalCast = new NumericalCast();
-        knownBuiltins.put("byte", numericalCast);
-        knownBuiltins.put("double", numericalCast);
-        knownBuiltins.put("float", numericalCast);
-        knownBuiltins.put("int", numericalCast);
-        knownBuiltins.put("long", numericalCast);
-        knownBuiltins.put("short", numericalCast);
-        knownBuiltins.put("floor", numericalCast);
-        knownBuiltins.put("ceiling", numericalCast);
-        knownBuiltins.put("round", numericalCast);
-        knownBuiltins.put("capitalize", new StringTransformations.Capitalize());
-        knownBuiltins.put("cap_first", new StringTransformations.CapFirst(true));
-        knownBuiltins.put("uncap_first", new StringTransformations.CapFirst(false));
-        knownBuiltins.put("j_string", new StringTransformations.Java());
-        knownBuiltins.put("js_string", new StringTransformations.JavaScript());
-        knownBuiltins.put("chop_linebreak", new StringTransformations.Chomp());
-        knownBuiltins.put("html", new StringTransformations.Html());
-        knownBuiltins.put("web_safe", knownBuiltins.get("html"));
-        knownBuiltins.put("rtf", new StringTransformations.Rtf());
-        knownBuiltins.put("xml", new StringTransformations.Xml());
-        knownBuiltins.put("xhtml", new StringTransformations.Xhtml());
-        knownBuiltins.put("join", new StringFunctions.Join());
-        knownBuiltins.put("index_of", new StringFunctions.IndexOf());
-        knownBuiltins.put("last_index_of", new StringFunctions.LastIndexOf());
-        knownBuiltins.put("contains", new StringFunctions.Contains());
-        knownBuiltins.put("number", new numberBI());
-        knownBuiltins.put("left_pad", new StringFunctions.LeftPad());
-        knownBuiltins.put("right_pad", new StringFunctions.RightPad());
-        knownBuiltins.put("replace", new StringFunctions.Replace());
-        knownBuiltins.put("split", new StringFunctions.Split());
-        knownBuiltins.put("groups", new groupsBI());
-        knownBuiltins.put("matches", new StringFunctions.Matches());
-        knownBuiltins.put("starts_with", new StringFunctions.StartsWith());
-        knownBuiltins.put("ends_with", new StringFunctions.EndsWith());
-        knownBuiltins.put("word_list", new StringFunctions.WordList());
-        knownBuiltins.put("url", new StringFunctions.Url());
-        knownBuiltins.put("first", new SequenceFunctions.First());
-        knownBuiltins.put("last", new SequenceFunctions.Last());
-        knownBuiltins.put("reverse", new SequenceFunctions.Reverse());
-        knownBuiltins.put("sort", new SequenceFunctions.Sort());
-        knownBuiltins.put("chunk", new SequenceFunctions.Chunk());
-        knownBuiltins.put("seq_contains", new SequenceContainsBuiltIn());
-        knownBuiltins.put("scope", new MacroBuiltins.Scope());
-        knownBuiltins.put("namespace", new MacroBuiltins.Namespace());
-        knownBuiltins.put("keys", new HashBuiltin.Keys());
-        knownBuiltins.put("values", new HashBuiltin.Values());
-        knownBuiltins.put("is_defined", new ExistenceBuiltIn.IsDefinedBuiltIn());
-        knownBuiltins.put("default", new ExistenceBuiltIn.DefaultBuiltIn());
-        knownBuiltins.put("has_content", new ExistenceBuiltIn.HasContentBuiltIn());
-    }
-
-    private String key;
-    private BuiltIn bi;
-
-    public void close() {
-        key = getKeyTok().toString().intern();
-        bi = knownBuiltins.get(key);
-        if (bi == null) {
-            throw new ParseException("unknown builtin: ?" + key +  " at " + getKeyTok().getLocation());
-        }
-    }
-
-    public Expression getTarget() {
-        return (Expression) get(0);
-    }
-
-    public Token getKeyTok() {
-        return (Token) get(2);
-    }
-
-    public BuiltIn getBuiltIn() {
-        return bi;
-    }
-
-    public Object evaluate(Environment env) {
-        return bi.get(env, this);
-    }
-
-    public String getName() {
-        return key;
-    }
-}
-
-INJECT MethodCall :
-    import java.util.ArrayList;
-    import java.util.List;
-    import java.io.Writer;
-    import java.io.IOException;
-    import java.io.StringWriter;
-    import java.util.function.BiFunction;
-    import java.util.function.Function;
-    import java.util.function.Supplier;
-    import org.congocc.templates.core.Environment;
-    import org.congocc.templates.core.variables.*;
-    import static org.congocc.templates.core.variables.Wrap.wrap;
-    import static org.congocc.templates.core.variables.Wrap.unwrap;
-    import static org.congocc.templates.core.variables.Wrap.LOOSE_NULL;
-    import static org.congocc.templates.core.variables.Wrap.JAVA_NULL;
-    implements Expression;
-{
-
-    public ArgsList getArgs() {
-        return firstChildOfType(ArgsList.class);
-    }
-
-    public Expression getTarget() {
-    	return (Expression) get(0);
-    }
-
-    @SuppressWarnings({"unchecked","rawtypes"})
-    public Object evaluate(Environment env) {
-        Object value = getTarget().evaluate(env);
-        if (value == LOOSE_NULL) return JAVA_NULL;
-        if (value instanceof VarArgsFunction<?> targetMethod) {
-            ArgsList args = getArgs();
-            List<Object> argumentList;
-            if (args !=null) {
-                argumentList = args.getParameterSequence(targetMethod, env);
-            } else {
-                argumentList = new ArrayList<>();
-            }
-            Object result = targetMethod.apply(argumentList.toArray(new Object[argumentList.size()]));
-            return wrap(result);
-        }
-        else if (value instanceof Supplier<?> supplier) {
-            ArgsList argsList = getArgs();
-            if (argsList != null && argsList.firstChildOfType(Expression.class) !=null) {
-                throw new EvaluationException("The method " + getTarget() + " takes no arguments.");
-            }
-            return wrap(supplier.get());
-        }
-        else if (value instanceof Function func) {
-            ArgsList args = getArgs();
-            if (args == null || args.childrenOfType(Expression.class).size() != 1) {
-                throw new EvaluationException("The method " + getTarget() + " takes exactly one argument.");
-            }
-            Expression argExp = (Expression)getArgs().get(0);
-            Object arg = unwrap(argExp.evaluate(env));
-            return wrap(func.apply(arg));
-        }
-        else if (value instanceof BiFunction bif) {
-            ArgsList args = getArgs();
-            List<Expression> argExpressions = args == null ? new ArrayList<>() : args.childrenOfType(Expression.class);
-            if (argExpressions.size() != 2) {
-                throw new EvaluationException("The method " + getTarget() + " takes exactly two arguments.");
-            }
-            Object firstArg = argExpressions.get(0).evaluate(env);
-            Object secondArg = argExpressions.get(1).evaluate(env);
-            return wrap(bif.apply(firstArg, secondArg));
-        }
-        else if (value instanceof TriFunction trif) {
-            ArgsList args = getArgs();
-            List<Expression> argExpressions = args == null ? new ArrayList<>() : args.childrenOfType(Expression.class);
-            if (argExpressions.size() != 3) {
-                throw new EvaluationException("The method " + getTarget() + " takes exactly three arguments.");
-            }
-            Object firstArg = argExpressions.get(0).evaluate(env);
-            Object secondArg = argExpressions.get(1).evaluate(env);
-            Object thirdArg = argExpressions.get(2).evaluate(env);
-            return wrap(trif.apply(firstArg, secondArg, thirdArg));
-        }
-        else if (value instanceof QuadFunction quadf) {
-            ArgsList args = getArgs();
-            List<Expression> argExpressions = args == null ? new ArrayList<>() : args.childrenOfType(Expression.class);
-            if (argExpressions.size() != 4) {
-                throw new EvaluationException("The method " + getTarget() + " takes exactly four arguments.");
-            }
-            Object firstArg = argExpressions.get(0).evaluate(env);
-            Object secondArg = argExpressions.get(1).evaluate(env);
-            Object thirdArg = argExpressions.get(2).evaluate(env);
-            Object fourthArg = argExpressions.get(3).evaluate(env);
-            return wrap(quadf.apply(firstArg, secondArg, thirdArg, fourthArg));
-        }
-        else if (value instanceof Macro func) {
-            StringWriter sw = null;
-            env.setLastReturnValue(null);
-            Writer prevOut = env.getOut();
-            try {
-                env.setOut(Environment.NULL_WRITER);
-                if (!func.isFunction()) {
-                    sw = new StringWriter();
-                    env.setOut(sw);
-                 }
-                env.render(func, getArgs(), null, null);
-            } catch (IOException ioe) {
-                throw new InternalError("This should be impossible.");
-            } finally {
-                env.setOut(prevOut);
-            }
-            return sw != null ? sw.getBuffer().toString() : env.getLastReturnValue();
-        }
-        throw invalidTypeException(value, getTarget(), "method");
-    }
-}
-
 PositionalArgsList# :
 	Expression
 	(
-	   <COMMA>
+	   ","
 	   Expression
 	)*
 ;
@@ -1104,16 +860,19 @@ PositionalArgsList# :
 INJECT PositionalArgsList :
     import java.util.*;
     import org.congocc.templates.core.Environment;
-    import org.congocc.templates.core.variables.*;
+    import org.congocc.templates.core.EvaluationException;
     import org.congocc.templates.utility.UndeclaredThrowableException;
     import org.congocc.templates.core.nodes.ParameterList;
-    import static org.congocc.templates.core.variables.Wrap.assertIsDefined;
+    import static org.congocc.templates.core.Wrap.assertIsDefined;
+    import static org.congocc.templates.core.Wrap.JAVA_NULL;
     extends ArgsList
 {
-   public List getParameterSequence(Object target, Environment env) {
+   public List<Object> getParameterSequence(Object target, Environment env) {
         List<Object> result = new ArrayList<>();
         for (Expression exp : childrenOfType(Expression.class)) {
-           result.add(exp.evaluate(env));
+            Object obj = exp.evaluate(env);
+            assertIsDefined(obj, exp);
+            result.add(obj);
         }
         return result;
     }
@@ -1130,8 +889,12 @@ INJECT PositionalArgsList :
     public Object getValueAt(int i, Environment env) {
         Expression exp = childrenOfType(Expression.class).get(i);
         Object value = exp.evaluate(env);
-        assertIsDefined(value, exp);
+        if (value == null) value = JAVA_NULL;
         return value;
+    }
+
+    public int numArgs() {
+        return childrenOfType(Expression.class).size();
     }
 }
 
@@ -1141,15 +904,15 @@ NamedArgsList :
 	Expression arg;
 }
 	<ID> {param = lastConsumedToken.toString();}
-	<EQUALS>
+	"="
 	arg=Expression
 	{
 		thisProduction.addNamedArg(param, arg);
 	}
 	(
-	   [<COMMA>]
+	   [","]
 	   <ID> {param = lastConsumedToken.toString();}
-	   <EQUALS>
+	   "="
 	   arg=Expression
 	   {thisProduction.addNamedArg(param, arg);}
 	)*
@@ -1161,7 +924,7 @@ INJECT NamedArgsList :
     import org.congocc.templates.core.nodes.ParameterList;
     import org.congocc.templates.core.parser.ParseException;
     import org.congocc.templates.*;
-    import static org.congocc.templates.core.variables.Wrap.*;
+    import static org.congocc.templates.core.Wrap.*;
     extends ArgsList;
 {
 
@@ -1208,7 +971,7 @@ INJECT NamedArgsList :
 
 ArgsList#abstract :
 	(
-	   SCAN <ID><EQUALS> =>
+	   SCAN <ID> "=" =>
        NamedArgsList
        |
        PositionalArgsList
@@ -1228,25 +991,24 @@ INJECT ArgsList :
 }
 
 HashLiteral :
-   <OPEN_BRACE>
+   "{"
    [
        Expression
-       <COLON>
+       ":"
        Expression
        (
-          <COMMA>
+          ","
            Expression
-           <COLON>
+           ":"
            Expression
        )*
    ]
-   <CLOSE_BRACE>
+   "}"
 ;
 
 INJECT HashLiteral :
     import java.util.*;
-    import org.congocc.templates.core.Environment;
-    import org.congocc.templates.core.variables.*;
+    import org.congocc.templates.core.*;
     import org.congocc.templates.core.ast.CollectionAndSequence;
     implements Expression
 {
@@ -1282,22 +1044,28 @@ INJECT HashLiteral :
     }
 }
 
-INJECT MethodReference :
+INJECT DotExpression :
     import org.congocc.templates.core.Environment;
-    import org.congocc.templates.core.variables.JavaMethodCall;
-    import org.congocc.templates.core.variables.JavaConstructorCall;
-    implements Expression
+    import org.congocc.templates.core.reflection.JavaMethodCall;
+    import org.congocc.templates.core.reflection.JavaConstructorCall;
+    import org.congocc.templates.extensions.*;
+    import org.congocc.templates.core.nodes.ExtensionExpression;
+    extends TemplateNode implements Expression
 {
-    public Expression getTarget() {
+    public Expression lhs() {
         return (Expression) get(0);
     }
 
     public Object evaluate(Environment env) {
-        Object target = getTarget().evaluate(env);
-        String methodName = get(2).toString();
-        if (methodName.equals("new")) {
+        Object target = lhs().evaluate(env);
+        String name = get(2).toString();
+        Extension ext = env.getExtension(name);
+        if (ext != null) {
+            return ext.get(this, env);
+        }
+        if (name.equals("new")) {
             return new JavaConstructorCall(target, this);
         }
-        return new JavaMethodCall(target, methodName, this);
+        return new JavaMethodCall(target, name, this);
     }
 }

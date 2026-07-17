@@ -76,7 +76,7 @@
             n.token_source = lct.token_source
             n.begin_offset = next.begin_offset
             n.open()
-[#list grammar.openNodeScopeHooks as hook]
+[#list grammar::openNodeScopeHooks as hook]
             self.${hook}(n)
 [/#list]
     <- <-
@@ -99,7 +99,7 @@
         <-
         n.close()
         self.push_node(n)
-[#list grammar.closeNodeScopeHooks as hook]
+[#list grammar::closeNodeScopeHooks as hook]
         ${hook}(n)
 [/#list]
      <-
@@ -146,7 +146,7 @@
             <-
             n.close()
             self.push_node(n)
-[#list grammar.closeNodeScopeHooks as hook]
+[#list grammar::closeNodeScopeHooks as hook]
             self.${hook}(n)
 [/#list]
         <-

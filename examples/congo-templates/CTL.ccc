@@ -44,7 +44,7 @@ INJECT BASE_NODE_CLASS :
    import org.congocc.templates.core.Environment;
    import org.congocc.templates.core.parser.Token;
    import org.congocc.templates.core.nodes.generated.Expression;
-   import static org.congocc.templates.core.variables.Wrap.assertNonNull;
+   import static org.congocc.templates.core.Wrap.assertNonNull;
 {
 	@Property Template template;
 

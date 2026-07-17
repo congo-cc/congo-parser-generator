@@ -1,4 +1,4 @@
-#var csPackage = globals::getPreprocessorSymbol('cs.package', settings.parserPackage)
+#var csPackage = globals.getPreprocessorSymbol('cs.package', settings::parserPackage)
 <Project Sdk="Microsoft.NET.Sdk">
     <PropertyGroup>
         <OutputType>Exe</OutputType>

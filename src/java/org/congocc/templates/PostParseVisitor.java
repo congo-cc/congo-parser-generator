@@ -1,20 +1,15 @@
 package org.congocc.templates;
 
-import org.congocc.templates.core.Configurable;
 import org.congocc.templates.core.nodes.generated.*;
 import org.congocc.templates.core.parser.Node;
 import org.congocc.templates.core.parser.ParseException;
 import org.congocc.templates.core.parser.ParsingProblemImpl;
 import org.congocc.templates.core.nodes.AssignmentInstruction;
 
-import java.util.*;
-
 /**
  * A class that visits the AST after the parsing step proper,
  * and makes various checks and adjustments.
- * @author revusky
  */
-
 class PostParseVisitor extends Node.Visitor {
 
 	private Template template;
@@ -23,26 +18,8 @@ class PostParseVisitor extends Node.Visitor {
 		this.template = template;
 	}
 
-	void visit(Template template) {
-		TemplateHeaderElement header = template.getHeaderElement();
-		if (header != null) visit(header);
+	void visit() {
 		visit(template.getRootTreeNode());
-	}
-
-	void visit(TemplateHeaderElement header) {
-		if (header == null) return;
-		for (Map.Entry<String, Expression> entry : header.getParams().entrySet()) {
-			String key = entry.getKey();
-			try {
-				if (!key.equals("encoding")) {
-					ParsingProblemImpl problem  = new ParsingProblemImpl("Unknown ctl header parameter: " + entry.getKey(), header);
-					template.addParsingProblem(problem);
-				}
-			} catch (Exception e) {
-				ParsingProblemImpl problem = new ParsingProblemImpl(e.getMessage(), header);
-				template.addParsingProblem(problem);
-			}
-		}
 	}
 
 	void visit(AssignmentInstruction node) {
@@ -60,14 +37,6 @@ class PostParseVisitor extends Node.Visitor {
 		Expression targetExpression = node.getTargetExpression();
 		if (!targetExpression.isAssignableTo()) {
 			ParsingProblemImpl problem = new ParsingProblemImpl("The expression " + targetExpression + " cannot be assigned to.", targetExpression);
-			template.addParsingProblem(problem);
-		}
-	}
-
-	void visit(BuiltInExpression node) {
-		recurse(node);
-		if (node.getBuiltIn() == null) {
-			ParsingProblemImpl problem = new ParsingProblemImpl("Unknown builtin: " + node.getName(), node);
 			template.addParsingProblem(problem);
 		}
 	}
@@ -170,22 +139,4 @@ class PostParseVisitor extends Node.Visitor {
 		template.declareVariable(namespaceName);
 		recurse(node);
 	}
-
-    void visit(PropertySetting node) {
-    	String key = node.getKey();
-        if (!key.equals(Configurable.LOCALE_KEY) &&
-                !key.equals(Configurable.NUMBER_FORMAT_KEY) &&
-                !key.equals(Configurable.TIME_FORMAT_KEY) &&
-                !key.equals(Configurable.DATE_FORMAT_KEY) &&
-                !key.equals(Configurable.DATETIME_FORMAT_KEY) &&
-                !key.equals(Configurable.TIME_ZONE_KEY) &&
-                !key.equals(Configurable.BOOLEAN_FORMAT_KEY) &&
-                !key.equals(Configurable.URL_ESCAPING_CHARSET_KEY))
-            {
-        		ParsingProblemImpl problem = new ParsingProblemImpl("Invalid setting name, or it is not allowed to change the"
-                        + "value of the setting with CTL: "
-                        + key, node);
-        		template.addParsingProblem(problem);
-            }
-    }
 }

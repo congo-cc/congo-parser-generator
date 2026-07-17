@@ -1,11 +1,10 @@
 package org.congocc.templates.core.nodes;
 
-import java.io.IOException;
 import java.util.*;
 import java.lang.reflect.Array;
 import org.congocc.templates.core.Environment;
-import org.congocc.templates.core.variables.EvaluationException;
-import org.congocc.templates.core.variables.InvalidReferenceException;
+import org.congocc.templates.core.EvaluationException;
+import org.congocc.templates.core.InvalidReferenceException;
 import org.congocc.templates.core.nodes.generated.Expression;
 import org.congocc.templates.core.nodes.generated.ParentheticalExpression;
 import org.congocc.templates.core.nodes.generated.StringLiteral;
@@ -13,7 +12,7 @@ import org.congocc.templates.core.nodes.generated.TemplateElement;
 import org.congocc.templates.core.nodes.generated.TemplateNode;
 import org.congocc.templates.core.parser.Node;
 import org.congocc.templates.core.parser.Token;
-import org.congocc.templates.core.variables.ReflectionCode;
+import org.congocc.templates.core.reflection.ReflectionCode;
 import static org.congocc.templates.core.parser.Token.TokenType.*;
 
 @SuppressWarnings("unchecked")
@@ -45,7 +44,7 @@ public class AssignmentInstruction extends TemplateNode implements TemplateEleme
         return null;
     }
 
-    public void execute(Environment env) throws IOException {
+    public void execute(Environment env) {
     	Map<String,Object> scope = null;
         Expression namespaceExp = getNamespaceExp();
     	if (namespaceExp != null) {
@@ -102,7 +101,6 @@ public class AssignmentInstruction extends TemplateNode implements TemplateEleme
         if (key instanceof String && ReflectionCode.setProperty(target, (String) key, value)) {
             return;
         }
-        // TODO: check for the beans setter setXXX method
         // TODO: improve error message a bit
         throw new EvaluationException("Could not set " + lhs);
     }
