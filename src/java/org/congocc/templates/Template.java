@@ -72,7 +72,7 @@ public class Template {
         if (this.locale != null) {
             return locale;
         }
-        return getTemplateFactory().getLocale();
+        return getTemplateFactory().getDefaultLocale();
     }
 
     public void setLocale(Locale locale) {
