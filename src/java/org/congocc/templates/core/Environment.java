@@ -118,10 +118,6 @@ public final class Environment implements Scope {
         this.template = template;
     }
 
-    public Extension getExtension(String name) {
-        return getTemplateFactory().getExtension(name);
-    }
-
     /**
      * Processes the template to which this environment belongs.
      */

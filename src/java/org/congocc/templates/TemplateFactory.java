@@ -46,50 +46,6 @@ public class TemplateFactory {
     private Locale defaultLocale = Locale.getDefault();
     private Function<String,String> outputEscape = Function.identity();
 
-    private Map<String, Extension> knownExtensions = new HashMap<>();
-    {
-        knownExtensions.put("Source", (caller, env) -> caller.lhs().getSource());
-        knownExtensions.put("instanceof", new instanceofBI());
-        knownExtensions.put("C", new cBI());
-        knownExtensions.put("Eval", new evalBI());
-        NumericalCast numericalCast = new NumericalCast();
-        knownExtensions.put("byte", numericalCast);
-        knownExtensions.put("double", numericalCast);
-        knownExtensions.put("float", numericalCast);
-        knownExtensions.put("int", numericalCast);
-        knownExtensions.put("long", numericalCast);
-        knownExtensions.put("short", numericalCast);
-        knownExtensions.put("Floor", numericalCast);
-        knownExtensions.put("Ceiling", numericalCast);
-        knownExtensions.put("Round", numericalCast);
-        knownExtensions.put("Capitalize", new StringTransformations.Capitalize());
-        knownExtensions.put("CapFirst", new StringTransformations.CapFirst(true));
-        knownExtensions.put("UncapFirst", new StringTransformations.CapFirst(false));
-        knownExtensions.put("JavaStringEncode", new StringTransformations.Java());
-        knownExtensions.put("JavaScriptStringEncode", new StringTransformations.JavaScript());
-        knownExtensions.put("ChopLinebreak", new StringTransformations.Chomp());
-        knownExtensions.put("HTML", new StringTransformations.Html());
-        knownExtensions.put("WebSafe", knownExtensions.get("HTML"));
-        knownExtensions.put("RTF", new StringTransformations.Rtf());
-        knownExtensions.put("XML", new StringTransformations.Xml());
-        knownExtensions.put("XHTML", new StringTransformations.Xhtml());
-        knownExtensions.put("Join", new StringFunctions.Join());
-        knownExtensions.put("Number", new numberBI());
-        knownExtensions.put("LeftPad", new StringFunctions.LeftPad());
-        knownExtensions.put("RightPad", new StringFunctions.RightPad());
-        knownExtensions.put("Groups", new groupsBI());
-        knownExtensions.put("Matches", new StringFunctions.Matches());
-        knownExtensions.put("WordList", new StringFunctions.WordList());
-        knownExtensions.put("URL", new StringFunctions.Url());
-        knownExtensions.put("First", new SequenceFunctions.First());
-        knownExtensions.put("Last", new SequenceFunctions.Last());
-        knownExtensions.put("Reverse", new SequenceFunctions.Reverse());
-        knownExtensions.put("Scope", new MacroBuiltins.Scope());
-        knownExtensions.put("Namespace", new MacroBuiltins.Namespace());
-        knownExtensions.put("Keys", new HashBuiltin.Keys());
-        knownExtensions.put("Values", new HashBuiltin.Values());
-        knownExtensions = Collections.synchronizedMap(knownExtensions);
-    }
 
     public static TemplateFactory getDefault() {
         return defaultFactory;
@@ -109,18 +65,6 @@ public class TemplateFactory {
             directoryForTemplateLoading = null;
             throw new IllegalArgumentException("Directory " + dir + " is not a directory.");
         }
-    }
-
-    public Extension getExtension(String name) {
-        return knownExtensions.get(name);
-    }
-
-    public void registerExtension(String name, Extension extension) {
-        knownExtensions.put(name, extension);
-    }
-
-    public void registerFunctionExtension(String name, Function<Object,?> func) {
-        registerExtension(name, (exp,env)->func.apply(exp.lhs().evaluate(env)));
     }
 
     public Function<String,String> getOutputEscape() {

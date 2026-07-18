@@ -1050,16 +1050,21 @@ INJECT DotExpression :
     import org.congocc.templates.core.reflection.JavaConstructorCall;
     import org.congocc.templates.extensions.*;
     import org.congocc.templates.core.nodes.ExtensionExpression;
+    import org.congocc.templates.core.nodes.MethodCall;
     extends TemplateNode implements Expression
 {
     public Expression lhs() {
         return (Expression) get(0);
     }
 
+    public boolean isInInvocation() {
+        return getParent() instanceof MethodCall;
+    }
+
     public Object evaluate(Environment env) {
         Object target = lhs().evaluate(env);
         String name = get(2).toString();
-        Extension ext = env.getExtension(name);
+        Extension ext = Extension.find(name);
         if (ext != null) {
             return ext.get(this, env);
         }
