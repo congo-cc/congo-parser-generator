@@ -56,8 +56,8 @@ public abstract class SequenceFunctions extends ExpressionEvaluatingExtension {
     public static class Reverse extends SequenceFunctions {
         @Override
         public Object apply(Object sequence) {
-            List list = asList(sequence);
-            list = new ArrayList(list);
+            List<?> list = asList(sequence);
+            list = new ArrayList<Object>(list);
             Collections.reverse(list);
             return list;
         }

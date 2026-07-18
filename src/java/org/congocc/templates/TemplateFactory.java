@@ -43,7 +43,7 @@ public class TemplateFactory {
     private Class<?> classForTemplateLoading;
     private String pathPrefix = "";
     private Path directoryForTemplateLoading = Paths.get(".").toAbsolutePath().normalize();
-    private Locale locale = Locale.getDefault();
+    private Locale defaultLocale = Locale.getDefault();
     private Function<String,String> outputEscape = Function.identity();
 
     private Map<String, Extension> knownExtensions = new HashMap<>();
@@ -142,7 +142,7 @@ public class TemplateFactory {
     }
 
     public Template getTemplate(String name) throws IOException {
-        return getTemplate(name, getLocale());
+        return getTemplate(name, getDefaultLocale());
     }
 
     /** Retrieves a template specified by name
@@ -236,12 +236,12 @@ public class TemplateFactory {
         this.arithmeticEngine = arithmeticEngine;
     }
 
-    public Locale getLocale() {
-        return locale;
+    public Locale getDefaultLocale() {
+        return defaultLocale;
     }
 
-    public void setLocale(Locale locale) {
-        this.locale = locale;
+    public void setDefaultLocale(Locale locale) {
+        this.defaultLocale = locale;
     }
 
     public void setNumberFormat(String numberFormat) {
