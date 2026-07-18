@@ -4,9 +4,6 @@ import org.congocc.templates.core.Environment;
 import org.congocc.templates.core.EvaluationException;
 import org.congocc.templates.core.nodes.generated.DotExpression;
 
-import static org.congocc.templates.core.Wrap.asList;
-import static org.congocc.templates.core.Wrap.isList;
-
 import java.lang.reflect.Array;
 import java.util.Arrays;
 import java.util.ArrayList;
@@ -34,6 +31,10 @@ public interface Extension {
 
     static void remove(String name) {
         Inner.knownExtensions.remove(name);
+    }
+
+    static boolean isExtension(String name) {
+        return Inner.knownExtensions.get(name) != null;
     }
 
     // Using inner class because you can't put a static initializer

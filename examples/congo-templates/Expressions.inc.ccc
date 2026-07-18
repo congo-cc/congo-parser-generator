@@ -158,6 +158,12 @@ PrimaryExpression(boolean noSpace)#void :
       ) #DefaultToExpression(+1)
       |
       "." <ID> #DotExpression(3)
+      ASSERT {
+        Extension.isExtension(lastConsumedToken.toString())
+        || getTokenType(1) == OPEN_PAREN,
+        lastConsumedToken :
+        lastConsumedToken.toString() + " is not an extension."
+      }
     )
   )*
 ;
