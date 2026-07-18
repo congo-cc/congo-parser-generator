@@ -217,9 +217,11 @@ INJECT PropertyReference :
         if (lhs instanceof Map m) {
             Object key = getKey();
             Object value = m.get(key);
-//            if (value == null && !m.containsKey(key)) {
-//                assertNonNull(value, getTarget());
-//            }
+#if false
+            if (value == null && !m.containsKey(key)) {
+                assertNonNull(value, getTarget());
+            }
+#endif
             return wrap(value);
         }
         return ReflectionCode.getProperty(lhs, getKey());
@@ -1059,6 +1061,13 @@ INJECT DotExpression :
     import org.congocc.templates.core.nodes.MethodCall;
     extends TemplateNode implements Expression
 {
+    private Extension ext;
+
+    public void close() {
+        String extOrMethodName = get(2).toString();
+        this.ext = Extension.find(extOrMethodName);
+    }
+
     public Expression lhs() {
         return (Expression) get(0);
     }
@@ -1068,15 +1077,13 @@ INJECT DotExpression :
     }
 
     public Object evaluate(Environment env) {
-        Object target = lhs().evaluate(env);
-        String name = get(2).toString();
-        Extension ext = Extension.find(name);
         if (ext != null) {
             return ext.get(this, env);
         }
-        if (name.equals("new")) {
-            return new JavaConstructorCall(target, this);
-        }
-        return new JavaMethodCall(target, name, this);
+        Object target = lhs().evaluate(env);
+        String name = get(2).toString();
+        return name.equals("new") ?
+            new JavaConstructorCall(target, this) :
+            new JavaMethodCall(target, name, this);
     }
 }

@@ -41,13 +41,6 @@ public abstract class StringTransformations extends ExpressionEvaluatingExtensio
         }
     }
 
-    public static class Xml extends StringTransformations {
-        @Override
-        public String apply(String string) {
-            return StringUtil.XMLEnc(string);
-        }
-    }
-
     public static class Rtf extends StringTransformations {
         @Override
         public String apply(String string) {

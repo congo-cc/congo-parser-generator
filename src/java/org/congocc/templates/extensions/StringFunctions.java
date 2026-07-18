@@ -111,18 +111,6 @@ public abstract class StringFunctions extends ExpressionEvaluatingExtension {
         }
     }
 
-    public static class WordList extends StringFunctions {
-        @Override
-        public Object apply(String string, Environment env, DotExpression caller) {
-            StringTokenizer st = new StringTokenizer(string);
-            List<String> result = new ArrayList<>();
-            while (st.hasMoreTokens()) {
-                result.add(st.nextToken());
-            }
-            return result;
-        }
-    }
-
     public static class Url extends StringFunctions {
         @Override
         public Object apply(String string, Environment env, DotExpression caller) {
