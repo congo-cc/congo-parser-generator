@@ -81,12 +81,10 @@ public interface Extension {
     static class Inner {
         private static Map<String, Extension> knownExtensions = new ConcurrentHashMap<>();
         static {
-            register("C", new cBI());
             NumericalCast numericalCast = new NumericalCast();
             register("Floor", numericalCast);
             register("Ceiling", numericalCast);
             register("Round", numericalCast);
-            register("Join", new StringFunctions.Join());
             register("Number", new numberBI());
             register("Groups", new groupsBI());
             register("Matches", new StringFunctions.Matches());
@@ -112,6 +110,7 @@ public interface Extension {
             register("XHTML", Inner::XHTMLEncode);
             register("RTF", Inner::RTFEncode);
             register("Eval", Inner::Eval);
+            register("C", Inner::C);
             register("byte", Inner::byteCast);
             register("double", Inner::doubleCast);
             register("float", Inner::floatCast);
@@ -374,6 +373,22 @@ public interface Extension {
                 return clazz.isInstance(object);
             };
         }
+
+        private static Object C(DotExpression caller, Environment env) {
+            Object arg = caller.lhs().evaluate(env);
+            if (arg instanceof Number num) {
+                if (num instanceof Integer) {
+                    // We accelerate this fairly common case
+                    return num.toString();
+                } else {
+                    return (env == null ? Environment.getNewCNumberFormat() : env.getCNumberFormat()).format(num);
+                }
+            }
+            else {
+                throw new EvaluationException("Expecting a number on the left side of ?c");
+            }
+        }
+
 
     }
 }

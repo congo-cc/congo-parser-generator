@@ -82,13 +82,6 @@ public abstract class StringFunctions extends ExpressionEvaluatingExtension {
 
     public abstract Object apply(final String string, final Environment env, final DotExpression callingExpression);
 
-    public static class Join extends StringFunctions {
-        @Override
-        public Object apply(String string, Environment env, DotExpression caller) {
-            return new JavaMethodCall(string, "join", caller);
-        }
-    }
-
     public static class Matches extends StringFunctions {
         @Override
         public Object apply(String string, Environment env, DotExpression caller) {

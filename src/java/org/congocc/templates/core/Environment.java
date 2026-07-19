@@ -20,7 +20,6 @@ import org.congocc.templates.core.nodes.generated.PositionalArgsList;
 import org.congocc.templates.core.nodes.ParameterList;
 import org.congocc.templates.core.nodes.generated.TemplateElement;
 import org.congocc.templates.core.scopes.*;
-import org.congocc.templates.extensions.Extension;
 import org.congocc.templates.*;
 
 import static org.congocc.templates.core.Wrap.*;
@@ -367,7 +366,9 @@ public final class Environment implements Scope {
     public void visitMacroDef(Macro macro) {
         if (currentMacroContext == null) {
             macroToNamespaceLookup.put(macro, getCurrentNamespace());
-            this.unqualifiedSet(macro.getName(), macro);
+            //this.unqualifiedSet(macro.getName(), macro);
+            //assert currentScope.definesVariable(macro.getName());
+            currentScope.put(macro.getName(), macro);
         }
     }
 
@@ -615,7 +616,7 @@ public final class Environment implements Scope {
     }
 
     public boolean definesVariable(String name) {
-        return globalVariables.containsKey(name) || rootDataModel.get(name) != null;
+        return globalVariables.containsKey(name) || rootDataModel.containsKey(name);
     }
 
     public Object put(String varname, Object value) {
@@ -624,11 +625,7 @@ public final class Environment implements Scope {
         }
         throw new UndeclaredVariableException("Variable " + varname + " is undeclared.");
     }
-/*
-    public Object remove(Object varname) {
-        return globalVariables.remove(varname);
-    }
-*/
+
     /**
      * Returns the main name-space. This is correspondent of CTL
      * <code>.main</code> hash.
