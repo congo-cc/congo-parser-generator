@@ -651,7 +651,7 @@ ${globals.translateCodeBlock(expansion, 1)}
          #else
             #-- take care of terminal and non-terminal expansions; they cannot contain child expansions
             #if classname = "NonTerminal"
-               [@BuildCodeNonTerminal expansion/]
+               [@BuildCodeNonTerminal expansion, cardinalitiesVar/]
             #elif classname = "Terminal"
                [@BuildCodeTerminal expansion/]
             #else
@@ -719,6 +719,10 @@ if (!(${assertion::rawCode})) {
 if (!${cardinalitiesVar}.Choose(${assertion::assertionIndex}, false)) {
     Fail("Maximum cardinality constraint at: ${assertion::location.JavaStringEncode} exceeded.");
 }
+   #elif assertion::cardinalityConstraint?? && assertion::delegatedCardinality
+if (!PeekDelegatedCardinality().Choose(PeekDelegatedBias() + ${assertion::assertionIndex}, false)) {
+    Fail("Maximum cardinality constraint at: ${assertion::location.JavaStringEncode} exceeded.");
+}
    #endif
    #if assertion::expansion??
 if ([#if !assertion::expansionNegated]![/#if]${assertion::expansion::scanRoutineName}()) {
@@ -771,8 +775,12 @@ ${BuildCode(attemptBlock::recoveryExpansion, "")}
 
 #-- The following macros build expansions that might build tree nodes (could be called "syntactic" nodes).
 
-#macro BuildCodeNonTerminal nonterminal
+#macro BuildCodeNonTerminal nonterminal cardinalitiesVar
 #-- // DBG > BuildCodeNonTerminal ${nonterminal.production.name}
+#var pushDelegated = false
+#if nonterminal::production::delegatedCardinalityTarget && cardinalitiesVar?? && (cardinalitiesVar.length() > 0)
+  #set pushDelegated = true
+#endif
 PushOntoCallStack("${nonterminal::containingProduction::name}", "${nonterminal::inputSource.JavaStringEncode}", ${nonterminal::beginLine}, ${nonterminal::beginColumn});
 #if settings::faultTolerant
   #var followSet = nonterminal::followSet
@@ -790,11 +798,17 @@ if (OuterFollowSet != null) {
 }
   #endif
 #endif
+#if pushDelegated
+PushDelegatedCardinality(${cardinalitiesVar}, ${nonterminal::delegatedCardinalityBias});
+#endif
 try {
     [@AcceptNonTerminal nonterminal /]
 }
 finally {
     PopCallStack();
+#if pushDelegated
+    PopDelegatedCardinality();
+#endif
 }
 #-- // DBG < BuildCodeNonTerminal${nonterminal.production.name}
 #endmacro
@@ -1028,6 +1042,8 @@ ${BuildCode(subexp, cardinalitiesVar)}
   #endif
   #if expansion::cardinalityConstrained && cardinalitiesVar?? && (cardinalitiesVar.length() > 0)
     ${expansion::predicateMethodName}(${cardinalitiesVar})
+  #elif expansion::delegatedCardinalityConstrained
+    ${expansion::predicateMethodName}(PeekDelegatedCardinality())
   #else
     ${expansion::predicateMethodName}()
   #endif

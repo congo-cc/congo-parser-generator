@@ -1,0 +1,5 @@
+// Expect error: RCA inside (...)? optional
+PARSER_PACKAGE="org.parsers.test.checker";
+TEST_PRODUCTION=Root;
+
+Root : ( & "a" | "b" )? ;

@@ -865,6 +865,20 @@ INJECT ExpansionChoice :
         return false;
     }
 
+    public boolean isLocallyCardinalityConstrained() {
+        for (ExpansionSequence s : getChoices()) {
+            if (s.isLocallyCardinalityConstrained()) return true;
+        }
+        return false;
+    }
+
+    public boolean isDelegatedCardinalityConstrained() {
+        for (ExpansionSequence s : getChoices()) {
+            if (s.isDelegatedCardinalityConstrained()) return true;
+        }
+        return false;
+    }
+
     @Override
     public TokenSet getFirstSet() {
          if (firstSet == null) {
@@ -1020,6 +1034,9 @@ ExpansionWithParentheses :
 INJECT ExpansionWithParentheses :
    import org.congocc.core.*;
    import org.congocc.core.ExpansionSequence.*;
+   import org.congocc.parser.tree.*;
+   import java.util.ArrayList;
+   import java.util.List;
    extends ExpansionWithNested
    implements SyntaxElement
 {
@@ -1029,29 +1046,97 @@ INJECT ExpansionWithParentheses :
 
     int assertionIndex = -1;
 
-    @Override
-    public void close() {
-        super.close();
-        for (Assertion assertion : getCardinalityAssertions()) {
-            if (assertion.isCardinalityConstraint()) {
-                assertion.setAssertionIndex(++assertionIndex);
+    // Set by Grammar.discoverDelegatedCardinality() after full parse (Phase 1).
+    private List<Assertion> delegatedAssertions;
+
+    // Callee production → start index of its orphan block in this loop's RepetitionCardinality.
+    private java.util.Map<BNFProduction, Integer> delegatedBiasByCallee;
+
+    public void setDelegatedCardinalityAssertions(List<Assertion> assertions) {
+        this.delegatedAssertions = assertions;
+    }
+
+    public List<Assertion> getDelegatedCardinalityAssertions() {
+        return delegatedAssertions;
+    }
+
+    public void setDelegatedCardinalityBiases(java.util.Map<BNFProduction, Integer> biases) {
+        this.delegatedBiasByCallee = biases;
+    }
+
+    public int getDelegatedCardinalityBias(BNFProduction callee) {
+        if (delegatedBiasByCallee == null || callee == null) {
+            return 0;
+        }
+        Integer bias = delegatedBiasByCallee.get(callee);
+        return bias == null ? 0 : bias;
+    }
+
+    private void collectLocalCardinalityAssertions(List<Assertion> assertions) {
+        if (!(this instanceof IteratingExpansion)) {
+            return;
+        }
+        Expansion nested = getNestedExpansion();
+        if (nested == null) {
+            return;
+        }
+        for (Assertion assertion : nested.descendantsOfType(Assertion.class)) {
+            if (!assertion.isCardinalityConstraint()) {
+                continue;
+            }
+            ExpansionWithParentheses container = assertion.firstAncestorOfType(
+                    ExpansionWithParentheses.class, exp -> exp instanceof IteratingExpansion);
+            if (container == this) {
+                assertions.add(assertion);
             }
         }
     }
 
-    public List<Assertion> getCardinalityAssertions() {
-        List<ExpansionSequence> sequences;
-        if (getNestedExpansion() instanceof ExpansionChoice) {
-            sequences = getNestedExpansion().childrenOfType(ExpansionSequence.class);
-        } else {
-            sequences = childrenOfType(ExpansionSequence.class);
+    private void collectInScopeCardinalityAssertions(List<Assertion> assertions) {
+        collectLocalCardinalityAssertions(assertions);
+        if (delegatedAssertions != null) {
+            assertions.addAll(delegatedAssertions);
         }
-        List<Assertion> assertions = new ArrayList<>();
-        for (ExpansionSequence es : sequences) {
-            if (es.isCardinalityConstrained()) {
-                assertions.addAll(es.getCardinalityAssertions());
+    }
+
+    /**
+     * Assigns assertionIndex for local RCAs (absolute in this loop).
+     * Delegated orphans keep callee-relative indices; computes per-callee bias instead.
+     * Called from {@link #close()} at parse time and again after delegation discovery.
+     */
+    public void refreshAssertionIndices() {
+        assertionIndex = -1;
+        List<Assertion> locals = new ArrayList<>();
+        collectLocalCardinalityAssertions(locals);
+        for (Assertion assertion : locals) {
+            assertion.setAssertionIndex(++assertionIndex);
+        }
+        java.util.LinkedHashMap<BNFProduction, Integer> biases = new java.util.LinkedHashMap<>();
+        if (delegatedAssertions != null && !delegatedAssertions.isEmpty()) {
+            int next = assertionIndex + 1;
+            BNFProduction currentCallee = null;
+            for (Assertion a : delegatedAssertions) {
+                BNFProduction callee = a.getContainingProduction();
+                if (callee != currentCallee) {
+                    currentCallee = callee;
+                    biases.put(callee, next);
+                }
+                // Delegated assertionIndex is callee-relative (set in discovery); advance slot.
+                next++;
             }
         }
+        this.delegatedBiasByCallee = biases;
+    }
+
+    @Override
+    public void close() {
+        super.close();
+        refreshAssertionIndices();
+    }
+
+    public List<Assertion> getCardinalityAssertions() {
+        List<Assertion> assertions = new ArrayList<>();
+        collectInScopeCardinalityAssertions(assertions);
         return assertions;
     }
 
@@ -1061,10 +1146,11 @@ INJECT ExpansionWithParentheses :
      * at upon satisfaction of the loop's exit conditions
      */
     public boolean isCardinalityContainer() {
-        if (this instanceof IteratingExpansion) {
-            return getCardinalityAssertions().size() > 0;
+        if (!(this instanceof IteratingExpansion)) {
+            return false;
         }
-        return false;
+        // Local and delegated RCAs: parent loop allocates RepetitionCardinality for both.
+        return !getCardinalityAssertions().isEmpty();
     }
 
     public int[][] getCardinalityConstraints() {
@@ -1181,6 +1267,11 @@ INJECT Assertion :
         return cardinalityConstraint != null;
     }
 
+    /** True if this RCA is bound to a caller's iterating loop (delegated cardinality). */
+    public boolean isDelegatedCardinality() {
+        return getGrammar().isDelegatedCardinalityAssertion(this);
+    }
+
     public LookBehind getLookBehind() {
         return firstChildOfType(LookBehind.class);
     }
@@ -1247,8 +1338,10 @@ Assertion# :
           [":"]
         ]
         |
-        // This is an abbreviated form equivalent to "ASSERT {&...&}#..." and is usually what is desired.
-        SCAN /.../BNFProduction/.../ExpansionWithParentheses/ExpansionChoice/ExpansionSequence/ExpansionUnit =>
+        // Abbreviated RCA (& / && / &m:n&). Allowed in any ExpansionChoice under a BNF
+        // production — not only inside ExpansionWithParentheses — so bare production
+        // bodies can host orphan RCAs for delegated cardinality.
+        SCAN /.../BNFProduction/.../ExpansionChoice/ExpansionSequence/ExpansionUnit =>
         cardinality=CardinalityConstraint =>||
         {
           thisProduction.setCardinalityConstraint(cardinality);

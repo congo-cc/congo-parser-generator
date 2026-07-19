@@ -60,12 +60,10 @@
     </java>
   </target>
 
-  <!-- Python: codegen succeeds but CPython rejects parser.py (nested block / indent depth) for this grammar size. -->
-  <target name="test-python">
-    <echo level="warning">
-      Skipping CICS Python parse tests: generated parser.py exceeds CPython nested-indentation limits.
-      Run ant python-parser-gen to refresh output; use Java/C# tests in test-all until lookahead codegen flattens deep scans.
-    </echo>
+  <target name="test-python" depends="python-parser-gen">
+    <exec executable="python3" dir="${basedir}/cicsparser/test" failonerror="true">
+      <arg line="-u parse_files.py ../../testfiles" />
+    </exec>
   </target>
 
   <target name="test-csharp" depends="compile-csharp">
@@ -91,7 +89,7 @@
 
   <target name="compile" depends="python-parser-gen,compile-csharp,compile-java"/>
 
-  <target name="test-all" depends="test-java,test-csharp,test-rust"/>
+  <target name="test-all" depends="test-java,test-python,test-csharp,test-rust"/>
 
   <target name="build" depends="compile"/>
 

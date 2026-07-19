@@ -629,7 +629,7 @@ ${is}self.uncache_tokens()
          [#else]
             [#-- take care of terminal and non-terminal expansions; they cannot contain child expansions --]
             [#if classname = "NonTerminal"]
-               [@BuildCodeNonTerminal expansion, indent /]
+               [@BuildCodeNonTerminal expansion, indent, cardinalitiesVar /]
             [#elif classname = "Terminal"]
                [@BuildCodeTerminal expansion, indent /]
             [#else]
@@ -703,6 +703,9 @@ ${is}    self.fail("${assertionMessage}"${optionalPart})
 [#elif assertion::cardinalityConstraint?? && cardinalitiesVar?? && (cardinalitiesVar.length() > 0)]
 ${is}if not ${cardinalitiesVar}.choose(${assertion::assertionIndex}, False):
 ${is}    self.fail('Maximum cardinality constraint at: ${assertion::location.JavaStringEncode} exceeded.')
+[#elif assertion::cardinalityConstraint?? && assertion::delegatedCardinality]
+${is}if not self.peek_delegated_cardinality().choose(self.peek_delegated_bias() + ${assertion::assertionIndex}, False):
+${is}    self.fail('Maximum cardinality constraint at: ${assertion::location.JavaStringEncode} exceeded.')
 [/#if]
 [#if assertion::expansion??]
 ${is}if [#if !assertion::expansionNegated]not [/#if]self.${assertion::expansion::scanRoutineName}():
@@ -756,9 +759,13 @@ ${BuildCode(attemptBlock::recoveryExpansion, indent + 4, "")}
 
 [#-- The following macros build expansions that might build tree nodes (could be called "syntactic" nodes). --]
 
-[#macro BuildCodeNonTerminal nonterminal indent]
+[#macro BuildCodeNonTerminal nonterminal indent cardinalitiesVar]
 [#var is = padding(indent)]
 [#--${is}# DBG > BuildCodeNonTerminal ${indent} ${nonterminal.production.name} --]
+[#var pushDelegated = false]
+[#if nonterminal::production::delegatedCardinalityTarget && cardinalitiesVar?? && (cardinalitiesVar.length() > 0)]
+  [#set pushDelegated = true]
+[/#if]
    [#var production = nonterminal::production]
 ${is}self.push_onto_call_stack('${nonterminal::containingProduction::name}', '${nonterminal::inputSource.JavaStringEncode}', ${nonterminal::beginLine}, ${nonterminal::beginColumn})
 [#if settings::faultTolerant]
@@ -775,10 +782,16 @@ ${is}    new_follow_set = set(self.${nonterminal::followSetVarName}) | self.oute
 ${is}    self.outer_follow_set = new_follow_set
    [/#if]
 [/#if]
+[#if pushDelegated]
+${is}self.push_delegated_cardinality(${cardinalitiesVar}, ${nonterminal::delegatedCardinalityBias})
+[/#if]
 ${is}try:
 [@AcceptNonTerminal nonterminal, indent + 4 /]
 ${is}finally:
 ${is}    self.pop_call_stack()
+[#if pushDelegated]
+${is}    self.pop_delegated_cardinality()
+[/#if]
 [#--${is}# DBG < BuildCodeNonTerminal ${indent} ${nonterminal.production.name} --]
 [/#macro]
 
@@ -996,7 +1009,7 @@ ${SingleTokenCondition(expansion)}[#t]
 
 [#-- Generates code for when we need a scanahead --]
 [#macro ScanAheadCondition expansion cardinalitiesVar]
-[#if expansion::lookahead?? && expansion::lookahead::assignment??](${expansion::lookahead::assignment::name} = [/#if][#if expansion::hasSemanticLookahead && !expansion::lookahead::semanticLookaheadNested](${globals.translateExpression(expansion::semanticLookahead)}) and [/#if][#if expansion::cardinalityConstrained && cardinalitiesVar?? && (cardinalitiesVar.length() > 0)]self.${expansion::predicateMethodName}(${cardinalitiesVar})[#else]self.${expansion::predicateMethodName}()[/#if][#if expansion::lookahead?? && expansion::lookahead::assignment??])[/#if][#t]
+[#if expansion::lookahead?? && expansion::lookahead::assignment??](${expansion::lookahead::assignment::name} = [/#if][#if expansion::hasSemanticLookahead && !expansion::lookahead::semanticLookaheadNested](${globals.translateExpression(expansion::semanticLookahead)}) and [/#if][#if expansion::cardinalityConstrained && cardinalitiesVar?? && (cardinalitiesVar.length() > 0)]self.${expansion::predicateMethodName}(${cardinalitiesVar})[#elseif expansion::delegatedCardinalityConstrained]self.${expansion::predicateMethodName}(self.peek_delegated_cardinality())[#else]self.${expansion::predicateMethodName}()[/#if][#if expansion::lookahead?? && expansion::lookahead::assignment??])[/#if][#t]
 [/#macro]
 
 [#-- Generates code for when we don't need any scanahead routine --]

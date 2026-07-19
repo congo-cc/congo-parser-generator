@@ -21,6 +21,8 @@ import java.util.ListIterator;
 import java.util.Map;
 import java.util.Objects;
 #if grammar::usingCardinality
+  import java.util.ArrayDeque;
+  import java.util.Deque;
   import java.util.Stack;
   import java.util.concurrent.atomic.AtomicInteger;
 #endif
@@ -208,6 +210,37 @@ public ${isFinal ? "final"} class ${settings::parserClassName} {
             }
             return isSuccess;
         }
+    }
+
+    // Delegated RCAs in a callee production bind to the caller's iterating loop via this stack.
+    // indexBias selects the callee's contiguous block when the same orphans are shared across
+    // parent loops with different local RCA layouts (multi-parent).
+    private static final class DelegatedCardinalityBinding {
+        final RepetitionCardinality cardinalities;
+        final int indexBias;
+
+        DelegatedCardinalityBinding(RepetitionCardinality cardinalities, int indexBias) {
+            this.cardinalities = cardinalities;
+            this.indexBias = indexBias;
+        }
+    }
+
+    private final Deque<DelegatedCardinalityBinding> delegatedCardinalityStack = new ArrayDeque<>();
+
+    private void pushDelegatedCardinality(RepetitionCardinality cardinalities, int indexBias) {
+        delegatedCardinalityStack.push(new DelegatedCardinalityBinding(cardinalities, indexBias));
+    }
+
+    private void popDelegatedCardinality() {
+        delegatedCardinalityStack.pop();
+    }
+
+    private RepetitionCardinality peekDelegatedCardinality() {
+        return delegatedCardinalityStack.peek().cardinalities;
+    }
+
+    private int peekDelegatedBias() {
+        return delegatedCardinalityStack.peek().indexBias;
     }
 #endif
 

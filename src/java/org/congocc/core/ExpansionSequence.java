@@ -45,23 +45,92 @@ public class ExpansionSequence extends Expansion {
     public Predicate<ExpansionWithParentheses> isOuterCardinalityScope = (expWithParens) -> {
         return (expWithParens instanceof IteratingExpansion);
     };
+    /** Nearest {@link ExpansionSequence} ancestor (direct parent counts). */
+    static ExpansionSequence nearestContainingSequence(Assertion assertion) {
+        for (Node node = assertion.getParent(); node != null; node = node.getParent()) {
+            if (node instanceof ExpansionSequence es) {
+                return es;
+            }
+        }
+        return null;
+    }
 
     public Predicate<Assertion> isInScopeConstraint = (assertion) -> {
-        return assertion.isCardinalityConstraint() && assertion.firstAncestorOfType(ExpansionWithParentheses.class, isOuterCardinalityScope) == getCardinalitiesContainer();
+        if (!assertion.isCardinalityConstraint()) {
+            return false;
+        }
+        if (nearestContainingSequence(assertion) != this) {
+            return false;
+        }
+        ExpansionWithParentheses assertionContainer =
+                assertion.firstAncestorOfType(ExpansionWithParentheses.class, isOuterCardinalityScope);
+        if (assertionContainer == null) {
+            // Delegated RCA: no local iterator in the callee production.
+            return getGrammar().isDelegatedCardinalityAssertion(assertion);
+        }
+        ExpansionWithParentheses sequenceContainer = getCardinalitiesContainer();
+        if (sequenceContainer != null) {
+            return sequenceContainer == assertionContainer;
+        }
+        // Assertion sees the iterator; this sequence is its direct ancestor but
+        // getCardinalitiesContainer() did not (parent-chain quirk in some grammars).
+        return true;
     };
 
     @Override
-    public boolean isCardinalityConstrained() { //N.B., this can (erroneously) extend beyond the parent production.
-        Assertion cardinalityAssertion = firstDescendantOfType(Assertion.class, isInScopeConstraint);
-        return cardinalityAssertion != null;
+    public boolean isCardinalityConstrained() {
+        return firstDescendantOfType(Assertion.class, isInScopeConstraint) != null;
+    }
+
+    /**
+     * True when this sequence has in-scope RCAs that are not delegated
+     * (i.e. they belong to a local {@code *}/{@code +} in the same production).
+     */
+    public boolean isLocallyCardinalityConstrained() {
+        Assertion local = firstDescendantOfType(Assertion.class, assertion ->
+                isInScopeConstraint.test(assertion)
+                && !getGrammar().isDelegatedCardinalityAssertion(assertion));
+        return local != null;
+    }
+
+    /**
+     * True when this sequence has in-scope RCAs bound to a caller's iterating loop.
+     */
+    public boolean isDelegatedCardinalityConstrained() {
+        Assertion delegated = firstDescendantOfType(Assertion.class, assertion ->
+                isInScopeConstraint.test(assertion)
+                && getGrammar().isDelegatedCardinalityAssertion(assertion));
+        return delegated != null;
     }
 
     public List<Assertion> getCardinalityAssertions() {
         return descendantsOfType(Assertion.class, isInScopeConstraint);
     }
 
+    public int[][] getCardinalityConstraints() {
+        List<Assertion> assertions = getCardinalityAssertions();
+        int[][] result = new int[assertions.size()][];
+        for (int i = 0; i < assertions.size(); i++) {
+            result[i] = assertions.get(i).getCardinalityConstraint();
+        }
+        return result;
+    }
+
     public ExpansionWithParentheses getCardinalitiesContainer() {
-        return firstAncestorOfType(ExpansionWithParentheses.class, isOuterCardinalityScope);
+        ExpansionWithParentheses local = firstAncestorOfType(ExpansionWithParentheses.class, isOuterCardinalityScope);
+        if (local != null) {
+            return local;
+        }
+        // Delegated: return the linked parent loop for an in-sequence RCA, if any.
+        for (Assertion a : childrenOfType(Assertion.class)) {
+            if (a.isCardinalityConstraint()) {
+                ExpansionWithParentheses loop = getGrammar().getDelegatedCardinalityLoop(a);
+                if (loop != null) {
+                    return loop;
+                }
+            }
+        }
+        return null;
     }
 
     public int getCardinalityIndex() {
