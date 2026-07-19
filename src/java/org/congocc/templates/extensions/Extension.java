@@ -81,7 +81,6 @@ public interface Extension {
     static class Inner {
         private static Map<String, Extension> knownExtensions = new ConcurrentHashMap<>();
         static {
-            register("instanceof", new instanceofBI());
             register("C", new cBI());
             NumericalCast numericalCast = new NumericalCast();
             register("Floor", numericalCast);
@@ -105,12 +104,6 @@ public interface Extension {
             register("Size", Inner::Size);
             register("Keys", Inner::Keys);
             register("Values", Inner::Values);
-            register("byte", Inner::byteCast);
-            register("double", Inner::doubleCast);
-            register("float", Inner::floatCast);
-            register("int", Inner::intCast);
-            register("long", Inner::longCast);
-            register("short", Inner::shortCast);
             register("Capitalize", Inner::Capitalize);
             register("Chomp", Inner::Chomp);
             register("WordList", Inner::WordList);
@@ -121,6 +114,13 @@ public interface Extension {
             register("XHTML", Inner::XHTMLEncode);
             register("RTF", Inner::RTFEncode);
             register("Eval", Inner::Eval);
+            register("byte", Inner::byteCast);
+            register("double", Inner::doubleCast);
+            register("float", Inner::floatCast);
+            register("int", Inner::intCast);
+            register("long", Inner::longCast);
+            register("short", Inner::shortCast);
+            register("instanceof", Inner::IsInstance);
             alias("Websafe", "HTML");
         }
 
@@ -353,5 +353,27 @@ public interface Extension {
             var exp = parser.Expression();
             return exp.evaluate(env);
         }
+
+        public static Function<Object,Boolean> IsInstance(DotExpression caller, Environment env) {
+            Object object = caller.lhs().evaluate(env);
+            return arg -> {
+                Class<?> clazz = null;
+                if (arg instanceof Class) {
+                    clazz = (Class<?>) arg;
+                }
+                else if (arg instanceof CharSequence cs) {
+                    try {
+                        clazz = Class.forName(cs.toString());
+                    } catch (Exception e) {
+                        throw new EvaluationException(e);
+                    }
+                }
+                else {
+                    throw new EvaluationException("Expecting a class or the name of a class");
+                }
+                return clazz.isInstance(object);
+            };
+        }
+
     }
 }
