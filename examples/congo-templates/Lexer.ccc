@@ -411,10 +411,10 @@ TOKEN#Text :
   <OPEN_BRACE : "{" >
   |
   <CLOSE_BRACE : "}" >
-  |
-  <IN : "in">
-  |
-  <AS : "as">
+//  |
+//  <IN : "in">
+//  |
+//  <AS : "as">
 ;
 
 INCLUDE JAVA_IDENTIFIER_DEF

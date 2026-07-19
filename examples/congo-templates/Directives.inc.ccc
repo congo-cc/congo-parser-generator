@@ -160,7 +160,7 @@ ListBlock#IteratorBlock :
 {Token start;}
    start=<LIST>
    Expression
-   <AS>
+   'as'
    <ID>
    [
       <COMMA>
@@ -412,7 +412,7 @@ BlockAssignment :
    PrimaryExpression(false)
    [
       SCAN 1 {peekNode() instanceof Token} =>
-      <IN>
+      'in'
       Expression
    ]
    <DIRECTIVE_END> =>||
@@ -480,15 +480,19 @@ AssignmentInstruction#org.congocc.templates.core.nodes.AssignmentInstruction :
    <EQUALS> =>||
    Expression
    (
+     ENSURE {!(getTokenImage(1).equals("in") && getTokenType(2) != EQUALS)}
      [<COMMA>]
-     PrimaryExpression(false)
-     {if (!(peekNode() instanceof Token)) complexLHS = true;}
+     (
+        <ID>
+        |
+        PrimaryExpression(false) {complexLHS = true;}
+     )
      <EQUALS>
      Expression
    )*
    [
       SCAN {!complexLHS} =>
-      <IN>
+      'in'
       Expression
    ]
    LooseDirectiveEnd
@@ -584,7 +588,7 @@ INJECT IncludeInstruction :
 ImportDeclaration :
    <IMPORT>
    Expression
-   <AS>
+   'as'
    <ID>
    LooseDirectiveEnd
    {
@@ -1024,7 +1028,6 @@ INJECT VarDirective :
             String varname = entry.getKey();
             Expression exp = entry.getValue();
             Scope scope = env.getCurrentScope();
-            //System.out.println("The current scope is " + scope);
             if (exp == null) {
                 if (scope.get(varname) == null) {
                     scope.put(varname, JAVA_NULL);
@@ -1085,6 +1088,7 @@ TemplateElement#interface :
    |
    NoParseBlock
    |
+// TODO: put back in later
 //   PropertySetting
 //   |
    VarDirective

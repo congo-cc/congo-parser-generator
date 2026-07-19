@@ -16,7 +16,7 @@ import org.congocc.templates.core.ArithmeticEngine;
 import org.congocc.templates.core.Environment;
 import org.congocc.templates.core.parser.ParseException;
 import org.congocc.templates.core.parser.ParsingProblemImpl;
-import org.congocc.templates.extensions.*;
+import org.congocc.templates.extensions.StringUtil;
 
 import static org.congocc.templates.core.Wrap.*;
 import static org.congocc.templates.core.parser.TokenSource.stringFromBytes;
@@ -73,6 +73,22 @@ public class TemplateFactory {
 
     public void setOutputEscape(Function<String,String> outputEscape) {
         this.outputEscape = outputEscape;
+    }
+
+    public void setHTMLEscape() {
+        this.outputEscape = StringUtil::HTMLEnc;
+    }
+
+    public void setXMLEscape() {
+        this.outputEscape = StringUtil::XMLEnc;
+    }
+
+    public void setXHTMLEscape() {
+        this.outputEscape = StringUtil::XHTMLEnc;
+    }
+
+    public void setNoEscape() {
+        this.outputEscape = Function.identity();
     }
 
 

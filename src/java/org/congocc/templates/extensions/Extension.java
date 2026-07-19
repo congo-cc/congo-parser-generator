@@ -3,6 +3,8 @@ package org.congocc.templates.extensions;
 import org.congocc.templates.core.Environment;
 import org.congocc.templates.core.EvaluationException;
 import org.congocc.templates.core.nodes.generated.DotExpression;
+import org.congocc.templates.core.parser.CTLLexer;
+import org.congocc.templates.core.parser.CTLParser;
 
 import java.lang.reflect.Array;
 import java.util.Arrays;
@@ -14,7 +16,6 @@ import java.util.Map;
 import java.util.StringTokenizer;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.function.Function;
-
 
 /**
  * An Extension is essentially what was
@@ -48,10 +49,17 @@ public interface Extension {
      * extension is "foobar", then lhs.foobar will return
      * func.apply(lhs)
      */
-    static void register(String name, Function<Object,?> func) {
-        register(name, (exp,env)->func.apply(exp.lhs().evaluate(env)));
+    static void register(String name, Function<Object, ?> func) {
+        register(name, (exp, env) -> func.apply(exp.lhs().evaluate(env)));
     }
 
+    /**
+     * Remove (or unregister, if you will) a given
+     * extension. So, if you think that some standard
+     * extension is dangerous or undesirable, just remove it.
+     *
+     * @param name the name of the extension to be removed.
+     */
     static void remove(String name) {
         Inner.knownExtensions.remove(name);
     }
@@ -72,24 +80,13 @@ public interface Extension {
     // in an interface
     static class Inner {
         private static Map<String, Extension> knownExtensions = new ConcurrentHashMap<>();
-        static
-        {
+        static {
             register("instanceof", new instanceofBI());
             register("C", new cBI());
-            register("Eval", new evalBI());
             NumericalCast numericalCast = new NumericalCast();
             register("Floor", numericalCast);
             register("Ceiling", numericalCast);
             register("Round", numericalCast);
-            register("Capitalize", new StringTransformations.Capitalize());
-            register("CapFirst", new StringTransformations.CapFirst(true));
-            register("UncapFirst", new StringTransformations.CapFirst(false));
-            register("JavaStringEncode", new StringTransformations.Java());
-            register("JavaScriptStringEncode", new StringTransformations.JavaScript());
-            register("Chomp", new StringTransformations.Chomp());
-            register("HTML", new StringTransformations.Html());
-            register("RTF", new StringTransformations.Rtf());
-            register("XHTML", new StringTransformations.Xhtml());
             register("Join", new StringFunctions.Join());
             register("Number", new numberBI());
             register("LeftPad", new StringFunctions.LeftPad());
@@ -100,24 +97,34 @@ public interface Extension {
             register("Scope", new MacroBuiltins.Scope());
             register("Namespace", new MacroBuiltins.Namespace());
             register("Source", (caller, env) -> caller.lhs().getSource());
-            register("Reverse", Inner::reverse);
-            register("First", Inner::first);
-            register("Last", Inner::last);
-            register("Size", Inner::size);
-            register("Keys", Inner::values);
-            register("Values", Inner::values);
+            register("CapFirst", Inner::CapFirst);
+            register("UncapFirst", Inner::UncapFirst);
+            register("Reverse", Inner::Reverse);
+            register("First", Inner::First);
+            register("Last", Inner::Last);
+            register("Size", Inner::Size);
+            register("Keys", Inner::Keys);
+            register("Values", Inner::Values);
             register("byte", Inner::byteCast);
             register("double", Inner::doubleCast);
             register("float", Inner::floatCast);
             register("int", Inner::intCast);
             register("long", Inner::longCast);
             register("short", Inner::shortCast);
+            register("Capitalize", Inner::Capitalize);
+            register("Chomp", Inner::Chomp);
             register("WordList", Inner::WordList);
+            register("JavaStringEncode", Inner::JavaStringEncode);
+            register("JavaScriptStringEncode", Inner::JavaScriptStringEncode);
+            register("HTML", Inner::HTMLEncode);
             register("XML", Inner::XMLEncode);
+            register("XHTML", Inner::XHTMLEncode);
+            register("RTF", Inner::RTFEncode);
+            register("Eval", Inner::Eval);
             alias("Websafe", "HTML");
         }
 
-        private static List<Object> reverse(Object arg) {
+        private static List<Object> Reverse(Object arg) {
             if (arg instanceof List l) {
                 List<Object> result = new ArrayList<Object>(l);
                 Collections.reverse(result);
@@ -132,31 +139,35 @@ public interface Extension {
             throw new EvaluationException("Expecting list or array");
         }
 
-        private static Object first(Object arg) {
+        private static Object First(Object arg) {
             if (arg instanceof List l) {
-                if (l.size() == 0) return null;
+                if (l.size() == 0)
+                    return null;
                 return l.get(0);
             }
             if (arg.getClass().isArray()) {
-                if (Array.getLength(arg)==0) return null;
+                if (Array.getLength(arg) == 0)
+                    return null;
                 return Array.get(arg, 0);
             }
             throw new EvaluationException("Expecting list or array");
         }
 
-        private static Object last(Object arg) {
+        private static Object Last(Object arg) {
             if (arg instanceof List l) {
-                if (l.size() == 0) return null;
-                return l.get(l.size()-1);
+                if (l.size() == 0)
+                    return null;
+                return l.get(l.size() - 1);
             }
             if (arg.getClass().isArray()) {
-                if (Array.getLength(arg)==0) return null;
+                if (Array.getLength(arg) == 0)
+                    return null;
                 return Array.get(arg, 0);
             }
             throw new EvaluationException("Expecting list or array");
         }
 
-        private static int size(Object arg) {
+        private static int Size(Object arg) {
             if (arg instanceof Collection c) {
                 return c.size();
             }
@@ -169,14 +180,14 @@ public interface Extension {
             throw new EvaluationException("Expecting collection array");
         }
 
-        private static List<Object> keys(Object arg) {
+        private static List<Object> Keys(Object arg) {
             if (arg instanceof Map m) {
                 return new ArrayList<Object>(m.keySet());
             }
             throw new EvaluationException("Expecting map");
         }
 
-        private static List<Object> values(Object arg) {
+        private static List<Object> Values(Object arg) {
             if (arg instanceof Map m) {
                 return new ArrayList<Object>(m.values());
             }
@@ -225,6 +236,53 @@ public interface Extension {
             throw new EvaluationException("Expecting number");
         }
 
+        private static String Capitalize(Object arg) {
+            if (arg instanceof CharSequence) {
+                String s = arg.toString();
+                return StringUtil.capitalize(s);
+            }
+            throw new EvaluationException("Expecting a string");
+        }
+
+        private static String Chomp(Object arg) {
+            if (arg instanceof CharSequence) {
+                String s = arg.toString();
+                return StringUtil.chomp(s);
+            }
+            throw new EvaluationException("Expecting a string");
+        }
+
+        private static String CapFirst(Object arg) {
+            return capUncapFirst(arg, true);
+        }
+
+        private static String UncapFirst(Object arg) {
+            return capUncapFirst(arg, false);
+        }
+
+        private static String capUncapFirst(Object arg, boolean cap) {
+            if (arg instanceof CharSequence) {
+                String s = arg.toString();
+                boolean justcopy = false;
+                StringBuilder buf = new StringBuilder();
+                for (int i = 0; i < s.length(); i++) {
+                    char ch = s.charAt(i);
+                    if (justcopy) {
+                        buf.append(ch);
+                        continue;
+                    }
+                    if (!Character.isWhitespace(ch)) {
+                        if (cap) ch = Character.toUpperCase(ch);
+                        else ch = Character.toLowerCase(ch);
+                        justcopy = true;
+                    }
+                    buf.append(ch);
+                }
+                return buf.toString();
+            }
+            throw new EvaluationException("Expecting a string");
+        }
+
         private static List<String> WordList(Object arg) {
             if (arg instanceof CharSequence) {
                 String s = arg.toString();
@@ -238,12 +296,62 @@ public interface Extension {
             throw new EvaluationException("Expecting a string");
         }
 
+        private static String HTMLEncode(Object arg) {
+            if (arg instanceof CharSequence) {
+                String s = arg.toString();
+                return StringUtil.HTMLEnc(s);
+            }
+            throw new EvaluationException("Expecting a string");
+        }
+
+        private static String XHTMLEncode(Object arg) {
+            if (arg instanceof CharSequence) {
+                String s = arg.toString();
+                return StringUtil.XHTMLEnc(s);
+            }
+            throw new EvaluationException("Expecting a string");
+        }
+
         private static String XMLEncode(Object arg) {
             if (arg instanceof CharSequence) {
                 String s = arg.toString();
                 return StringUtil.XMLEnc(s);
             }
             throw new EvaluationException("Expecting a string");
+        }
+
+        private static String JavaStringEncode(Object arg) {
+            if (arg instanceof CharSequence) {
+                String s = arg.toString();
+                return StringUtil.javaStringEncode(s);
+            }
+            throw new EvaluationException("Expecting a string");
+        }
+
+        private static String JavaScriptStringEncode(Object arg) {
+            if (arg instanceof CharSequence) {
+                String s = arg.toString();
+                return StringUtil.javaScriptStringEnc(s);
+            }
+            throw new EvaluationException("Expecting a string");
+        }
+
+        private static String RTFEncode(Object arg) {
+            if (arg instanceof CharSequence) {
+                String s = arg.toString();
+                return StringUtil.RTFEnc(s);
+            }
+            throw new EvaluationException("Expecting a string");
+        }
+
+        public static Object Eval(DotExpression caller, Environment env) {
+            String input = "(" + caller.lhs().evaluate(env) + ")";
+            CTLLexer tokenSource = new CTLLexer("input", input, CTLLexer.LexicalState.EXPRESSION, caller.getBeginLine(),
+                    caller.getBeginColumn());
+            CTLParser parser = new CTLParser(tokenSource);
+            parser.setTemplate(caller.getTemplate());
+            var exp = parser.Expression();
+            return exp.evaluate(env);
         }
     }
 }

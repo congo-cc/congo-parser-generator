@@ -366,7 +366,7 @@ public class StringUtil {
      *
      * @see #jQuote(String)
      */
-    public static String javaStringEnc(String s) {
+    public static String javaStringEncode(String s) {
         int ln = s.length();
         for (int i = 0; i < ln; i++) {
             char c = s.charAt(i);

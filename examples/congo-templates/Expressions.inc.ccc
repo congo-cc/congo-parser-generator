@@ -1,4 +1,4 @@
-// This file defines the expressio
+// This file defines the expression
 // grammar. It is INCLUDEd from the main template.
 
 DEFAULT_LEXICAL_STATE=EXPRESSION;
@@ -153,6 +153,7 @@ PrimaryExpression(boolean noSpace)#void :
             ENSURE ~("::")
             ENSURE {!(getTokenType(1) == ID && getTokenType(2) == EQUALS)
                    || !isInProduction("NamedArgs")}
+            ENSURE {!getTokenImage(1).equals("as") || getTokenType(2) != ID}
             PrimaryExpression(false)
         ]
       ) #DefaultToExpression(+1)
@@ -162,7 +163,7 @@ PrimaryExpression(boolean noSpace)#void :
         Extension.isExtension(lastConsumedToken.toString())
         || getTokenType(1) == OPEN_PAREN,
         lastConsumedToken :
-        lastConsumedToken.toString() + " is not an extension."
+        "Unknown extension: " + lastConsumedToken
       }
     )
   )*
@@ -514,8 +515,10 @@ INJECT EqualityExpression :
             int comp = ae.compareNumbers(n1, n2);
             return operation == NOT_EQUALS ? comp !=0 : comp == 0;
         }
-        left = unwrap(left);
-        right = unwrap(right);
+        if (left instanceof CharSequence cs1 && right instanceof CharSequence cs2) {
+            boolean result = CharSequence.compare(cs1, cs2) == 0;
+            return operation == NOT_EQUALS ? !result : result;
+        }
         return operation == NOT_EQUALS ? !left.equals(right) : left.equals(right);
     }
 
