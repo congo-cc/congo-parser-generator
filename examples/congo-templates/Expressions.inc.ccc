@@ -782,24 +782,24 @@ INJECT BuiltinVariable :
 
     public Object evaluate(Environment env) {
         switch (name) {
-           case "namespace" : return env.getCurrentNamespace();
-           case "main" : return env.getMainNamespace();
-           case "globals" : return env;
-           case "locals" : return env.getCurrentMacroContext();
-           case "data_model" : return env.getDataModel();
-           case "scope" : return env.getCurrentScope();
-           case "vars" :
+           case "Namespace" : return env.getCurrentNamespace();
+           case "Main" : return env.getMainNamespace();
+           case "Globals" : return env;
+           case "Locals" : return env.getCurrentMacroContext();
+           case "DataRoot" : return env.getDataModel();
+           case "Scope" : return env.getCurrentScope();
+           case "Vars" :
                return new Object() {
                    public Object get(String key) {
                        return env.getVariable(key);
                    }
                };
-           case "locale" : return env.getLocale().toString();
-           case "lang" : return env.getLocale().getLanguage();
-           case "pass" : return Macro.DO_NOTHING_MACRO;
-           case "name" : return env.getTemplate().getName();
-           case "version" : return TemplateFactory.getVersionNumber();
-           case "error" : return env.getCurrentRecoveredErrorMessage();
+           case "Locale" : return env.getLocale().toString();
+           case "Lang" : return env.getLocale().getLanguage();
+           case "Pass" : return Macro.DO_NOTHING_MACRO;
+           case "Name" : return env.getTemplate().getName();
+           case "Version" : return TemplateFactory.getVersionNumber();
+           case "Error" : return env.getCurrentRecoveredErrorMessage();
         }
         throw new TemplateException("Invalid built-in variable: " + this);
     }

@@ -388,7 +388,5 @@ public interface Extension {
                 throw new EvaluationException("Expecting a number on the left side of ?c");
             }
         }
-
-
     }
 }

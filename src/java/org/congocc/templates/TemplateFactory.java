@@ -75,19 +75,19 @@ public class TemplateFactory {
         this.outputEscape = outputEscape;
     }
 
-    public void setHTMLEscape() {
+    public void enableHTMLEscape() {
         this.outputEscape = StringUtil::HTMLEnc;
     }
 
-    public void setXMLEscape() {
+    public void enableXMLEscape() {
         this.outputEscape = StringUtil::XMLEnc;
     }
 
-    public void setXHTMLEscape() {
+    public void enableXHTMLEscape() {
         this.outputEscape = StringUtil::XHTMLEnc;
     }
 
-    public void setNoEscape() {
+    public void disableOutputEscaping() {
         this.outputEscape = Function.identity();
     }
 

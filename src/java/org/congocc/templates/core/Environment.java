@@ -648,7 +648,7 @@ public final class Environment implements Scope {
 
     /**
      * Returns the data model hash. This is correspondent of CTL
-     * <code>::datamodel</code> hash. That is, it contains both the variables
+     * <code>.DataRoot</code> hash. That is, it contains both the variables
      * of the root hash passed to the <code>Template.process(...)</code>, and
      * the shared variables in the <code>Configuration</code>.
      */

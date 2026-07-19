@@ -1026,6 +1026,8 @@ AllocationExpression#abstract :
   ObjectArrayInitialization
   |
   ObjectInstantiation
+  |
+  "new" FAIL "Expecting an array or object instantiation"
 ;
 
 PrimitiveArrayInitialization :
@@ -1326,7 +1328,7 @@ ForStatement#abstract :
    |
    EnhancedForStatement
    |
-   "for" FAIL
+   "for" FAIL "Expecting regular or enhanced for statement"
 ;
 
 BasicForStatement :
