@@ -1338,8 +1338,10 @@ Assertion# :
           [":"]
         ]
         |
-        // This is an abbreviated form equivalent to "ASSERT {&...&}#..." and is usually what is desired.
-        SCAN /.../BNFProduction/.../ExpansionWithParentheses/ExpansionChoice/ExpansionSequence/ExpansionUnit =>
+        // Abbreviated RCA (& / && / &m:n&). Allowed in any ExpansionChoice under a BNF
+        // production — not only inside ExpansionWithParentheses — so bare production
+        // bodies can host orphan RCAs for delegated cardinality.
+        SCAN /.../BNFProduction/.../ExpansionChoice/ExpansionSequence/ExpansionUnit =>
         cardinality=CardinalityConstraint =>||
         {
           thisProduction.setCardinalityConstraint(cardinality);

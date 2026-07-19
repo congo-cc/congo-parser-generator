@@ -3,8 +3,8 @@
 **Branch:** `feature/delegated-repetition-cardinality` (from `master`)  
 **Baseline behavior:** current `master` (post cardinality merge)  
 **Original feature:** commit `82d331d` (repetition cardinality); small adjustments since  
-**Status:** Phases 0–4 complete (Java), including CICS `CommonOptions` via multi-parent bias. **C# and Python delegated-cardinality templates are ported** on this branch; Rust remains deferred. CICS Python tests run after splitting `Assign` into `AssignOptsA`/`AssignOptsB` (CPython indent-depth limit).  
-**See also:** `sandbox/cardinality/RepetitionCardinality.md` (feature docs + #203 lexical/FT note); `docs/parse-debugger-plan.md` (semantic parse trace API — plan only).
+**Status:** Phases 0–4 complete (Java), including CICS `CommonOption` via multi-parent bias. **C# and Python delegated-cardinality templates are ported** on this branch; Rust remains deferred. CICS Python tests run after splitting `Assign` into `AssignOptA`/`AssignOptB` (CPython indent-depth limit). Abbreviated RCA SCAN allows bare `ExpansionChoice` production bodies (no required outer parentheses).  
+**See also:** `sandbox/cardinality/RepetitionCardinality.md` (feature docs); `sandbox/cardinality/futures.md` (polyglot/ops/#203/futures); `docs/parse-debugger-plan.md` (semantic parse trace API — plan only).
 
 ---
 
@@ -257,8 +257,9 @@ Reuse existing `RepetitionCardinality` commit/provisional stack so parse and loo
 |------|--------|--------|
 | `sandbox/cardinality/CardTests.ccc` | Pure Parent/Child, mixed local+delegated, inner loop vs delegate | **Done** |
 | Checker negatives | Orphan / `?` / telescoping / inconsistent / ambiguous | **Done** (Phase 0–1) |
-| `sandbox/cardinality/RepetitionCardinality.md` | Document delegation, polyglot, CICS split, #203 note | **Done** |
-| `examples/cics` | `CommonOptions` production + multi-parent bias; Assign split for Python | **Done** |
+| `sandbox/cardinality/RepetitionCardinality.md` | Integrate local + delegated RCA in main sections | **Done** |
+| `sandbox/cardinality/futures.md` | Polyglot, sandbox ops, CICS indent, #203, futures | **Done** |
+| `examples/cics` | `CommonOption` production + multi-parent bias; `AssignOptA`/`B` split for Python | **Done** |
 | CI | sandbox `test-java` / `test-python` / `test-csharp` + `test-checker-negative`; CICS `test-all` includes Python | Required on this branch |
 
 ---
@@ -271,7 +272,7 @@ Reuse existing `RepetitionCardinality` commit/provisional stack so parse and loo
 4. Phase 3 — Java lookahead + sandbox (parse + lookahead paths) — **done**  
 5. Phase 4 — tests & docs (this section) — **done**  
 6. **Later phase** — port C#, Python — **done** on this branch; Rust still deferred  
-7. CICS `CommonOptions` refactor + Assign split for Python indent — **done**
+7. CICS `CommonOption` refactor + `AssignOptA`/`B` split for Python indent — **done**
 
 ---
 

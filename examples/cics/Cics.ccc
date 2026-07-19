@@ -405,14 +405,12 @@ Command :
 
 
 // Shared NOHANDLE / RESP / RESP2 options; RCAs bind to each command's enclosing * / +.
-CommonOptions :
-    (
-        & @noHandle :=? <NOHANDLE>
-        |
-        & <RESP> "(" Name #ResponseName(1) ")"
-        |
-        & <RESP2> "(" Name #Response2Name(1) ")"
-    )
+CommonOption :
+    & @noHandle :=? <NOHANDLE>
+    |
+    & <RESP> "(" Name #ResponseName(1) ")"
+    |
+    & <RESP2> "(" Name #Response2Name(1) ")"
 ;
 
 Abend :
@@ -426,7 +424,7 @@ Abend :
             & @noDump :=? <NODUMP>
         ) #TerminationOption 
         |
-        CommonOptions
+        CommonOption
     )* =>||
 ;
 
@@ -442,7 +440,7 @@ HandleAbend :
             <RESET>
         )
         |
-        CommonOptions
+        CommonOption
     )* =>||
 ;
 
@@ -454,7 +452,7 @@ Acquire :
             |
             && <PROCESSTYPE> "(" DataValue ")"
             |
-            CommonOptions
+            CommonOption
         )+ =>||
         |
         <ACTIVITYID> "(" DataValue ")"
@@ -468,7 +466,7 @@ Add :
         |
         && <EVENT> "(" DataValue ")"
         |
-        CommonOptions
+        CommonOption
     )+ =>||
 ;
 
@@ -487,7 +485,7 @@ Address :
         |
         & <TWA> "(" PtrRef ")"
         |
-        CommonOptions
+        CommonOption
     )* =>|| // includes any subset including empty
 ;
     
@@ -499,7 +497,7 @@ AddressSet :
         <SET> "(" PtrRef ")" <USING> "(" DataArea ")"
     )
     ( 
-        CommonOptions
+        CommonOption
     )* =>||
 ;
 
@@ -510,7 +508,7 @@ AllocateAPPC :
         | 
         & <STATE> "(" Cvda ")"
         |
-        CommonOptions
+        CommonOption
         |
         && (
             <PARTNER> "(" Name ")" =>||
@@ -527,14 +525,14 @@ AllocateAPPC :
 Syncpoint :
     <SYNCPOINT>
     (
-        CommonOptions
+        CommonOption
     )* =>||
 ;
 
 SyncpointRollback :
     <SYNCPOINT> <ROLLBACK>
     (
-        CommonOptions
+        CommonOption
     )* =>|| // Note: this will warn with a sanity check as "probably not intended"!!!
 ;
 
@@ -557,7 +555,7 @@ Xctl :
             & <INPUTMSGLEN> "(" DataValue ")"
         )+
         |
-        CommonOptions
+        CommonOption
     )* =>||
 ;
 
@@ -591,7 +589,7 @@ Link :
             )+
         )+
         |
-        CommonOptions
+        CommonOption
     )* =>||
 ;
 
@@ -624,7 +622,7 @@ Return :
         |
         &<ENDACTIVITY>
         |
-        CommonOptions
+        CommonOption
     )* =>||
 ;
 
@@ -655,7 +653,7 @@ Receive3270 :
         |
         &<ASIS>
         |
-        CommonOptions
+        CommonOption
     )+ =>||
 ;
 
@@ -686,7 +684,7 @@ ReceiveMap :
         |
         &<MAPSET> "(" Name ")"
         |
-        CommonOptions
+        CommonOption
     )* =>||
 ;
 
@@ -733,7 +731,7 @@ SendMap : //minimum at this point
         |
         &<FRSET>
         |
-        CommonOptions
+        CommonOption
     )* =>||
 ;
 
@@ -764,7 +762,7 @@ StartBr :
         |
         &( <EQUAL> | <GTEQ> )
         |
-        CommonOptions
+        CommonOption
     )+ =>||
 ;
 
@@ -777,7 +775,7 @@ EndBr :
         |
         &<REQID> "(" DataValue ")"
         |
-        CommonOptions
+        CommonOption
     )+ =>||
 ;
 
@@ -828,7 +826,7 @@ Read :
         |
         &<NOSUSPEND>
         |
-        CommonOptions
+        CommonOption
     )+ =>||
 ;
 
@@ -877,7 +875,7 @@ ReadPrev :
         |
         &<NOSUSPEND>
         |
-        CommonOptions
+        CommonOption
     )+ =>||
 ;
 
@@ -925,7 +923,7 @@ ReadNext :
         |
         &<NOSUSPEND>
         |
-        CommonOptions
+        CommonOption
     )+ =>||
     ASSERT {!(sysidPresent && !lengthPresent)} : "SYSID is present, but LENGTH is not"
 ;
@@ -947,7 +945,7 @@ Rewrite :
         |
         &<NOSUSPEND>
         |
-        CommonOptions
+        CommonOption
     )+ =>||
 ;
 
@@ -978,7 +976,7 @@ Write :
         |
         &<NOSUSPEND>
         |
-        CommonOptions
+        CommonOption
     )+ =>||
 ;
 
@@ -993,7 +991,7 @@ WriteQTd :
         |
         &<SYSID> "(" SystemName ")"
         |
-        CommonOptions
+        CommonOption
     )+ =>||
 ;
 
@@ -1027,7 +1025,7 @@ WriteQTs :
         |
         &<NOSUSPEND>
         |
-        CommonOptions
+        CommonOption
     )+ =>||
 ;
 
@@ -1035,132 +1033,128 @@ WriteQTs :
 Assign :
     <ASSIGN>
     (
-        AssignOptsA
+        AssignOptA
         |
-        AssignOptsB
+        AssignOptB
     )+ =>||
 ;
 
-AssignOptsA :
-    (
-        &<ABCODE> "(" DataArea ")" |
-        &<ABDUMP> "(" DataArea ")" |
-        &<ABOFFSET> "(" DataArea ")" |
-        &<ABPROGRAM> "(" DataArea ")" |
-        &<ACTIVITY> "(" DataArea ")" |
-        &<ACTIVITYID> "(" DataArea ")" |
-        &<ALTSCRNHT> "(" DataArea ")" |
-        &<ALTSCRNWD> "(" DataArea ")" |
-        &<APLKYBD> "(" DataArea ")" |
-        &<APLTEXT> "(" DataArea ")" |
-        &<APPLICATION> "(" DataArea ")" |
-        &<APPLID> "(" DataArea ")" |
-        &<ASRAINTRPT> "(" DataArea ")" |
-        &<ASRAKEY> "(" Cvda ")" |
-        &<ASRAPSW> "(" DataArea ")" |
-        &<ASRAPSW16> "(" DataArea ")" |
-        &<ASRAREGS> "(" DataArea ")" |
-        &<ASRAREGS64> "(" DataArea ")" |
-        &<ASRASPC> "(" Cvda ")" |
-        &<ASRASTG> "(" Cvda ")" |
-        &<BRIDGE> "(" DataArea ")" |
-        &<BTRANS> "(" DataArea ")" |
-        &<CHANNEL> "(" DataArea ")" |
-        &<CMDSEC> "(" DataArea ")" |
-        &<COLOR> "(" DataArea ")" |
-        &<CWALENG> "(" DataArea ")" |
-        &<DEFSCRNHT> "(" DataArea ")" |
-        &<DEFSCRNWD> "(" DataArea ")" |
-        &<DELIMITER> "(" DataArea ")" |
-        &<DESTCOUNT> "(" DataArea ")" |
-        &<DESTID> "(" DataArea ")" |
-        &<DESTIDLENG> "(" DataArea ")" |
-        &<DSSCS> "(" DataArea ")" |
-        &<DS3270> "(" DataArea ")" |
-        &<ERRORMSG> "(" DataArea ")" |
-        &<ERRORMSGLEN> "(" DataArea ")" |
-        &<EWASUPP> "(" DataArea ")" |
-        &<EXTDS> "(" DataArea ")" |
-        &<FACILITY> "(" DataArea ")" |
-        &<FCI> "(" DataArea ")" |
-        &<GCHARS> "(" DataArea ")" |
-        &<GCODES> "(" DataArea ")" |
-        &<GMMI> "(" DataArea ")" |
-        &<HILIGHT> "(" DataArea ")" |
-        &<INITPARM> "(" DataArea ")" |
-        &<INITPARMLEN> "(" DataArea ")" |
-        &<INPARTN> "(" DataArea ")" |
-        &<INPUTMSGLEN> "(" DataArea ")" |
-        &<INVOKINGPROG> "(" DataArea ")" |
-        &<KATAKANA> "(" DataArea ")" |
-        &<LANGINUSE> "(" DataArea ")" |
-        &<LDCMNEM> "(" DataArea ")" |
-        &<LDCNUM> "(" DataArea ")"
-    )
+AssignOptA :
+    &<ABCODE> "(" DataArea ")" |
+    &<ABDUMP> "(" DataArea ")" |
+    &<ABOFFSET> "(" DataArea ")" |
+    &<ABPROGRAM> "(" DataArea ")" |
+    &<ACTIVITY> "(" DataArea ")" |
+    &<ACTIVITYID> "(" DataArea ")" |
+    &<ALTSCRNHT> "(" DataArea ")" |
+    &<ALTSCRNWD> "(" DataArea ")" |
+    &<APLKYBD> "(" DataArea ")" |
+    &<APLTEXT> "(" DataArea ")" |
+    &<APPLICATION> "(" DataArea ")" |
+    &<APPLID> "(" DataArea ")" |
+    &<ASRAINTRPT> "(" DataArea ")" |
+    &<ASRAKEY> "(" Cvda ")" |
+    &<ASRAPSW> "(" DataArea ")" |
+    &<ASRAPSW16> "(" DataArea ")" |
+    &<ASRAREGS> "(" DataArea ")" |
+    &<ASRAREGS64> "(" DataArea ")" |
+    &<ASRASPC> "(" Cvda ")" |
+    &<ASRASTG> "(" Cvda ")" |
+    &<BRIDGE> "(" DataArea ")" |
+    &<BTRANS> "(" DataArea ")" |
+    &<CHANNEL> "(" DataArea ")" |
+    &<CMDSEC> "(" DataArea ")" |
+    &<COLOR> "(" DataArea ")" |
+    &<CWALENG> "(" DataArea ")" |
+    &<DEFSCRNHT> "(" DataArea ")" |
+    &<DEFSCRNWD> "(" DataArea ")" |
+    &<DELIMITER> "(" DataArea ")" |
+    &<DESTCOUNT> "(" DataArea ")" |
+    &<DESTID> "(" DataArea ")" |
+    &<DESTIDLENG> "(" DataArea ")" |
+    &<DSSCS> "(" DataArea ")" |
+    &<DS3270> "(" DataArea ")" |
+    &<ERRORMSG> "(" DataArea ")" |
+    &<ERRORMSGLEN> "(" DataArea ")" |
+    &<EWASUPP> "(" DataArea ")" |
+    &<EXTDS> "(" DataArea ")" |
+    &<FACILITY> "(" DataArea ")" |
+    &<FCI> "(" DataArea ")" |
+    &<GCHARS> "(" DataArea ")" |
+    &<GCODES> "(" DataArea ")" |
+    &<GMMI> "(" DataArea ")" |
+    &<HILIGHT> "(" DataArea ")" |
+    &<INITPARM> "(" DataArea ")" |
+    &<INITPARMLEN> "(" DataArea ")" |
+    &<INPARTN> "(" DataArea ")" |
+    &<INPUTMSGLEN> "(" DataArea ")" |
+    &<INVOKINGPROG> "(" DataArea ")" |
+    &<KATAKANA> "(" DataArea ")" |
+    &<LANGINUSE> "(" DataArea ")" |
+    &<LDCMNEM> "(" DataArea ")" |
+    &<LDCNUM> "(" DataArea ")"
 ;
 
-AssignOptsB :
-    (
-        &<LINKLEVEL> "(" DataArea ")" |
-        &<LOCALCCSID> "(" DataArea ")" |
-        &<MAJORVERSION> "(" DataArea ")" |
-        &<MAPCOLUMN> "(" DataArea ")" |
-        &<MAPHEIGHT> "(" DataArea ")" |
-        &<MAPLINE> "(" DataArea ")" |
-        &<MAPWIDTH> "(" DataArea ")" |
-        &<MICROVERSION> "(" DataArea ")" |
-        &<MINORVERSION> "(" DataArea ")" |
-        &<MSRCONTROL> "(" DataArea ")" |
-        &<NATLANGINUSE> "(" DataArea ")" |
-        &<NETNAME> "(" DataArea ")" |
-        &<NEXTTRANSID> "(" DataArea ")" |
-        &<NUMTAB> "(" DataArea ")" |
-        &<OPCLASS> "(" DataArea ")" |
-        &<OPERATION> "(" DataArea ")" |
-        &<OPERKEYS> "(" DataArea ")" |
-        &<OPID> "(" DataArea ")" |
-        &<OPSECURITY> "(" DataArea ")" |
-        &<ORGABCODE> "(" DataArea ")" |
-        &<OUTLINE> "(" DataArea ")" |
-        &<PAGENUM> "(" DataArea ")" |
-        &<PARTNPAGE> "(" DataArea ")" |
-        &<PARTNS> "(" DataArea ")" |
-        &<PARTNSET> "(" DataArea ")" |
-        &<PLATFORM> "(" DataArea ")" |
-        &<PRINSYSID> "(" DataArea ")" |
-        &<PROCESS> "(" DataArea ")" |
-        &<PROCESSTYPE> "(" DataArea ")" |
-        &<PROGRAM> "(" DataArea ")" |
-        &<PS> "(" DataArea ")" |
-        &<QNAME> "(" DataArea ")" |
-        &<RESSEC> "(" DataArea ")" |
-        &<RESTART> "(" DataArea ")" |
-        &<RETURNPROG> "(" DataArea ")" |
-        &<SCRNHT> "(" DataArea ")" |
-        &<SCRNWD> "(" DataArea ")" |
-        &<SIGDATA> "(" DataArea ")" |
-        &<SOSI> "(" DataArea ")" |
-        &<STARTCODE> "(" DataArea ")" |
-        &<STATIONID> "(" DataArea ")" |
-        &<SYSID> "(" DataArea ")" |
-        &<TASKPRIORITY> "(" DataArea ")" |
-        &<TCTUALENG> "(" DataArea ")" |
-        &<TELLERID> "(" DataArea ")" |
-        &<TERMCODE> "(" DataArea ")" |
-        &<TERMPRIORITY> "(" DataArea ")" |
-        &<TEXTKYBD> "(" DataArea ")" |
-        &<TEXTPRINT> "(" DataArea ")" |
-        &<TNADDR> "(" DataArea ")" |
-        &<TNIPFAMILY> "(" Cvda ")" |
-        &<TNPORT> "(" DataArea ")" |
-        &<TRANPRIORITY> "(" DataArea ")" |
-        &<TWALENG> "(" DataArea ")" |
-        &<UNATTEND> "(" DataArea ")" |
-        &<USERID> "(" DataArea ")" |
-        &<USERNAME> "(" DataArea ")" |
-        &<USERPRIORITY> "(" DataArea ")" |
-        &<VALIDATION> "(" DataArea ")"
-    )
+AssignOptB :
+    &<LINKLEVEL> "(" DataArea ")" |
+    &<LOCALCCSID> "(" DataArea ")" |
+    &<MAJORVERSION> "(" DataArea ")" |
+    &<MAPCOLUMN> "(" DataArea ")" |
+    &<MAPHEIGHT> "(" DataArea ")" |
+    &<MAPLINE> "(" DataArea ")" |
+    &<MAPWIDTH> "(" DataArea ")" |
+    &<MICROVERSION> "(" DataArea ")" |
+    &<MINORVERSION> "(" DataArea ")" |
+    &<MSRCONTROL> "(" DataArea ")" |
+    &<NATLANGINUSE> "(" DataArea ")" |
+    &<NETNAME> "(" DataArea ")" |
+    &<NEXTTRANSID> "(" DataArea ")" |
+    &<NUMTAB> "(" DataArea ")" |
+    &<OPCLASS> "(" DataArea ")" |
+    &<OPERATION> "(" DataArea ")" |
+    &<OPERKEYS> "(" DataArea ")" |
+    &<OPID> "(" DataArea ")" |
+    &<OPSECURITY> "(" DataArea ")" |
+    &<ORGABCODE> "(" DataArea ")" |
+    &<OUTLINE> "(" DataArea ")" |
+    &<PAGENUM> "(" DataArea ")" |
+    &<PARTNPAGE> "(" DataArea ")" |
+    &<PARTNS> "(" DataArea ")" |
+    &<PARTNSET> "(" DataArea ")" |
+    &<PLATFORM> "(" DataArea ")" |
+    &<PRINSYSID> "(" DataArea ")" |
+    &<PROCESS> "(" DataArea ")" |
+    &<PROCESSTYPE> "(" DataArea ")" |
+    &<PROGRAM> "(" DataArea ")" |
+    &<PS> "(" DataArea ")" |
+    &<QNAME> "(" DataArea ")" |
+    &<RESSEC> "(" DataArea ")" |
+    &<RESTART> "(" DataArea ")" |
+    &<RETURNPROG> "(" DataArea ")" |
+    &<SCRNHT> "(" DataArea ")" |
+    &<SCRNWD> "(" DataArea ")" |
+    &<SIGDATA> "(" DataArea ")" |
+    &<SOSI> "(" DataArea ")" |
+    &<STARTCODE> "(" DataArea ")" |
+    &<STATIONID> "(" DataArea ")" |
+    &<SYSID> "(" DataArea ")" |
+    &<TASKPRIORITY> "(" DataArea ")" |
+    &<TCTUALENG> "(" DataArea ")" |
+    &<TELLERID> "(" DataArea ")" |
+    &<TERMCODE> "(" DataArea ")" |
+    &<TERMPRIORITY> "(" DataArea ")" |
+    &<TEXTKYBD> "(" DataArea ")" |
+    &<TEXTPRINT> "(" DataArea ")" |
+    &<TNADDR> "(" DataArea ")" |
+    &<TNIPFAMILY> "(" Cvda ")" |
+    &<TNPORT> "(" DataArea ")" |
+    &<TRANPRIORITY> "(" DataArea ")" |
+    &<TWALENG> "(" DataArea ")" |
+    &<UNATTEND> "(" DataArea ")" |
+    &<USERID> "(" DataArea ")" |
+    &<USERNAME> "(" DataArea ")" |
+    &<USERPRIORITY> "(" DataArea ")" |
+    &<VALIDATION> "(" DataArea ")"
 ;
 
 Send3270 :
@@ -1193,7 +1187,7 @@ Send3270 :
         |
         &<DEFRESP>
         |
-        CommonOptions
+        CommonOption
     )+ =>||
 ;
 
@@ -1236,7 +1230,7 @@ SendText :
             )+ =>||
         ) =>||
         |
-        CommonOptions
+        CommonOption
     )+ =>||
 ;
 
@@ -1245,7 +1239,7 @@ Asktime :
     (
         &<ABSTIME> "(" DataArea ")"
         |
-        CommonOptions
+        CommonOption
     )* =>||
 ;
 
@@ -1308,7 +1302,7 @@ Formattime :
         |
         &<YEAR> "(" DataArea ")"
         |
-        CommonOptions
+        CommonOption
     )+ =>||
 ;
 
@@ -1344,6 +1338,6 @@ Delete :
         |
         &<NOSUSPEND>
         |
-        CommonOptions
+        CommonOption
     )+ =>||
 ;

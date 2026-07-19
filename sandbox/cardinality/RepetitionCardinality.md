@@ -1,20 +1,22 @@
-##Repetition Cardinality Assertions
+## Repetition Cardinality Assertions
 
 ### 1. Introduction
 
-The repetition cardinality assertion is a mechanism provided by the CongoCC parser generator.  It enables the constraining of the number of times a specific expansion may occur within a repeating grammar element. Thus, it constrains the behavior of `OneOrMore` (`+`) and `ZeroOrMore` (`*`) loops dynamically by allowing explicit occurrence limits to be optionally specified at points in the grammatical scope of the loop.
+The repetition cardinality assertion is a mechanism provided by the CongoCC parser generator. It enables constraining how many times a specific expansion may occur within a repeating grammar element — that is, within a `OneOrMore` (`+`) or `ZeroOrMore` (`*`) loop — by placing explicit occurrence limits at points in the grammatical scope of that loop.
+
+A **repetition cardinality assertion**, or *RCA*, is written `&m:n&`, where `m` is the lower bound and `n` the upper bound of how often the following sequence may appear in the nearest enclosing syntactic repetition. Shorthand forms are `&n` (exactly `n`), `&n:&` (at least `n`), and bare `&` (at most once, i.e. `&0:1&`).
+
+The iterating loop may live in the **same** production as the RCA, or — with **delegated** cardinality — in a **direct caller** production that invokes a callee whose RCAs are orphans (no local `*`/`+`). Delegation is what lets shared option groups (for example CICS `CommonOption`) be written once and reused under many command loops.
 
 ### 2. Why Cardinality Constraints?
 
-Often programming languages impose restrictions on the number of syntactic elements of a certain type that may be used within a source construct. These restrictions can go beyond the simple "no more than one instance in any order" to cases requiring "exactly one of each ...", "no more than *n* ..." or "between *n* and *m* ..." occurrences. This introduces constraints that are usually difficult or tedious to enforce during top-down parsing.  In particular, the solution to this often requires obscure semantic actions or overly complex grammatical expression.
+Programming languages often restrict how many syntactic elements of a given kind may appear in a construct: “at most one of each …”, “exactly one …”, “between *n* and *m* …”. Those rules are awkward to enforce in plain top-down grammars and usually force obscure semantic actions or bloated BNF.
 
-A notable example of a language with a compelling need for this capability in a top-down parser is IBM's **Customer Information Control System (CICS)** embedded command language. CICS is an extensive  language comprising hundreds of commands. With a single seemingly innocuous syntactic rule stating that "optional items may occur in any order," CICS seems not to be parsable by any of the common parser generators. Use of a typical recursive descent parser generator would would be expected to require tedious semantic actions and predicates within the grammar specification to enforce this kind of syntax restriction during parsing.
-
-The following describes a feature of the CongoCC grammar supporting a type of constraining predicate: **a repetition cardinality assertion**, or *RCA*, notated generally as `&m:n&`, where `m` is the lower bound of cardinality and `n` is the upper bound of cardinality of the following sequence in the context of the nearest enclosing syntactic repetition. This sequence must be within a `ZeroOrMore` or `OneOrMore` expansion. The notation may also be abbreviated as `&n` (equivalent to `&n:n&`, meaning "exactly n"), `&n:&` (equivalent to `&n:∞&`), or simply `&`, which defaults to `&0:1&` (meaning "no more than one").
+IBM’s **Customer Information Control System (CICS)** embedded command language is a strong example: hundreds of commands share the rule that optional items may occur in any order, with per-option occurrence limits. Without RCAs (and without delegation for shared options), a recursive-descent grammar would need tedious predicates and duplicated choice groups at every call site.
 
 ### 3. CongoCC Formal Syntax
 
-In the CongoCC parser generator the syntax used to express repetition cardinality consists of an assertion with a semantic predicate specifying a special notation as follows (and itself using this notation):
+Repetition cardinality is expressed as an assertion whose predicate uses the cardinality notation (the meta-syntax itself uses RCAs):
 
 ```
 ( &"ASSERT" | &"ENSURE" )+ "{" Cardinality "}"
@@ -22,7 +24,7 @@ In the CongoCC parser generator the syntax used to express repetition cardinalit
 Cardinality
 ```
 
-The syntax for repetition cardinality (`Cardinality`) can be expressed as:
+Cardinality:
 
 ```
 "&" [ [ Min [ ":" [ Max ] ] ] "&" ]
@@ -30,129 +32,69 @@ The syntax for repetition cardinality (`Cardinality`) can be expressed as:
 
 where:
 
-- `Min` is the minimum required occurrences (optional; defaults to `0` if lone "&", `1` if following "&" present).
-- `Max` is the maximum allowed occurrences (optional; defaults to `Min` if the `Min` if no ":" is present or the largest *integer* value otherwise).
-- A lone `"&"` is interpreted as `&0:1&`, meaning the expansion may appear at most once.
-- A `"&&"` is interpreted as `&1:1&`, meaning the expansion must appear exactly once.
-- If no constraint is specified, it is implicitly equivalent to `&0:∞&` (no upper limit).
+- `Min` is the minimum required occurrences (optional; defaults to `0` for lone `"&"`, `1` if a following `"&"` is present).
+- `Max` is the maximum allowed occurrences (optional; defaults to `Min` if no `":"` is present, otherwise unbounded / largest integer).
+- Lone `"&"` means `&0:1&` (at most once).
+- `"&&"` means `&1:1&` (exactly once).
+- With no constraint, behavior is like `&0:∞&` (no upper limit from an RCA).
 
-If an `ASSERT` is used, the assertion will only be checked during parsing, and will not affect any lookahead. To enforce the assertion during lookahead in addition to parsing, `ENSURE` may be specified, or it may be followed by the `#` suffix consistent with other semantic assertions.
-
-For convenience and readablity the assertion may also be abbreviated using the cardinality syntax alone at the point that the corresponding `ASSERT` and/or `ENSURE` may be used.  When this is the case, it also implies the application of the constraint in both lookahead and parsing.
-
+`ASSERT` checks only during parsing (not lookahead). `ENSURE`, or the `#` suffix on a semantic assertion, also applies during lookahead. The **abbreviated** form (cardinality syntax alone) implies both parse and lookahead, and may appear in any `ExpansionChoice` under a BNF production — including a bare production body used for delegated orphans (no outer parentheses required).
 
 ### 4. Formal Semantics
 
-- The repetition constraints are always applied during **parsing** of the affected repetition, and may be applied during **lookahead**, thus ensuring that parsing follows a consistent path.
-- Upon entering a repetition `(...)*` or `(...)+` the parser will initialize a cardinality tally if the loop contains an RCA.  Each unique RCA within the loop will have its own tally.
-- At the point in either lookahead or parsing that the parser encounters the RCA, it will attempt to increment the tally by one and the lookahead or parsing will continue if it is successful. If the tally has already reached the maximum indicated in the associated RCA, however, parsing or lookahead will fail.  This process is repeated for each RCA encountered until the loop controlling them is exited.
-- Following exit of the loop, the parser will check each RCA's tally against the minimum cardinality of the RCA and, if met, will continue as is normally the case.  If the minimum constraint is not met, the parsing or lookahead will fail at that point.
+- Constraints apply during **parsing** of the owning repetition, and may apply during **lookahead**, so SCAN and parse stay aligned.
+- On entering `(...)*` or `(...)+`, if the loop owns RCAs (local and/or delegated), the parser allocates a `RepetitionCardinality` tally vector — one slot per RCA in stable order (local indices first, then delegated).
+- When an RCA is reached, the parser tries to increment its tally; success continues, failure (already at max) fails parse or ends the lookahead loop attempt.
+- On loop exit, each tally is checked against its minimum; failure fails parse or lookahead.
 
-#### **Examples of expansion behavior**:
-  - `( &A | &B | &C )*` allows any subset of sequences of `A`, `B`, and `C`, including the empty set. Specifically, `{}` (empty sequence), `A`, `B`, `C`, `AB`, `AC`, `BA`, `CA`, `BC`, `CB`, `ABC`, `CBA`, `BAC`, `CAB`, `BCA`, `ACB`. 
-      - The parser will enter the loop containing either an `A`, `B`, or `C` after initializing three distinct tallies to the value 0.
-      - Each iteration of the loop that is attempted will increment the corresponding tally by 1, provided it is not already 1, and will parse the choice normally. If the tally cannot be incremented (i.e., it has already been incremented in this loop instance), parsing will fail with a parse exception (or the lookahead will deem the loop completed).
-      - During lookahead when no choice is available within the loop, either because the input does not match any choice or the input matches a choice but that choice's tally is 1, the loop exits.
-      - The parser does not need to check the minimum cardinality because it is 0 and permits omission of any choices.
-    - `( &1:2& A | && B )*` ensures `A` appears **at least once but no more than twice**, and `B` appears **exactly once**. Possible sequences include `{}`, `AB`, `BA`, `AAB`, `ABA`, `BAA`.
-        - The parser will enter the loop containing `A` or `B` after initializing both tallies to 0.
-        - If an `A` is the next input token, the parser checks the first tally and, if it is not already 2, increments it. If it is already 2, the loop is terminated with an exception (or lookahead will deem the loop completed).
-        - If a `B` is encountered, the parser checks the second tally and, if it is not already 1, increments it.  If it is already 1, the loop is terminated with an exception (or lookahead will deem the loop completed).
-        - Upon loop completion the parser will check the first tally and, if it is not at least 1, will indicate a parse exception (or if in lookahead, will deem the loop's lookahead scan to have failed). If the first tally meets the minimum check, the parser will then check the second tally in the same manner. 
+**Local binding:** an RCA under a `*`/`+` in the same production binds to that nearest enclosing iterator.
+
+**Delegated binding:** an orphan RCA in callee `C` binds to a **direct** caller’s iterating loop `L` that invokes `C` (one hop). At parse time the caller pushes the loop’s `RepetitionCardinality` (and, for multi-parent layouts, an `indexBias`) around the NonTerminal call; the callee’s RCAs use the stack top. Lookahead passes the same object into the callee’s production scan method. Call sites must be consistent: the same callee may not be used both inside and outside a loop, or from two distinct loops, unless multi-parent bias assigns each site a distinct contiguous index block.
+
+**Inner loop wins:** an RCA under a `*`/`+` inside the callee binds locally; only non-enclosed orphans delegate.
+
+**Mixed local + delegated:** one parent loop may own both, e.g. `( &A | &B | Child )+`, sharing one tally array.
+
+#### Examples of expansion behavior
+
+- `( &A | &B | &C )*` — any subset of `A`, `B`, `C` (including empty), each at most once.
+- `( &1:2& A | && B )*` — `A` one or two times, `B` exactly once (order free among valid sequences such as `AB`, `BA`, `AAB`, …).
+
+Delegated shape:
+
+```text
+Parent : ( Child )+ ;
+Child  : & Opt1 | & Opt2 ;   // orphans bind to Parent's +
+```
 
 ### 5. Examples of Usage
 
 #### Basic Cases
 
-- `( &Foo | &Bar )*` → Equivalent to `( &0:1& Foo | Bar& )*` → Equivalent to `( ENSURE ASSERT {&0:1&} Foo | Bar ENSURE ASSERT {&0:1&} =>|| )*` .
+- `( &Foo | &Bar )*` → equivalent to `( &0:1& Foo | &0:1& Bar )*` → equivalent to the long `ENSURE ASSERT {&0:1&} …` form.
 
-This is an example of the simplest use of repetition cardinality to recognize the set of all combinations of at most one `Foo` and one `Bar`. Note that the placement of the repetition cardinality assertion usually does not affect the syntax recognized by the grammar, since recognition of the entire sequence is based on the truth of all the predicates and assertions in the sequence, but the position could affect semantic actions applied before the acceptance or rejection of the sequence by the RCA.
+Placement of the RCA usually does not change the language recognized (the whole alternative must succeed), but can affect when semantic actions run relative to accept/reject.
 
-- `( && Foo | Bar )*` → Equivalent to `( &1:1& Foo | Bar )*`.
+- `( && Foo | Bar )*` → `( &1:1& Foo | Bar )*`.
 
 #### Constrained Elements Within Repetitions
 
-- `( &1:2& A | B )*` → A sequence of `A` and `B` containing at least one, but not more than two `A`s, and any number of `B`s, including none, or an empty sequence.
-- `( &0:4& A | &B )*` → A sequence of `A` and `B` containing no more than four `A`s and one `B`, or an empty sequence.
-- `( &2& Foo )*` → A sequence of `Foo` appearing **exactly twice**, or nothing.
-- `( & Bar )*` → `Bar` or nothing. Equivalent to `[Bar]`.
-
-These constraints refine the parsing process while maintaining the expressiveness of choice-based repetitions.
+- `( &1:2& A | B )*` — at least one and at most two `A`s; any number of `B`s.
+- `( &0:4& A | &B )*` — at most four `A`s and at most one `B`.
+- `( &2& Foo )*` — exactly two `Foo`s, or empty if the loop allows exit before mins are met in other designs; with mins enforced on exit, empty fails when a min is positive.
+- `( & Bar )*` — `Bar` or nothing; like `[Bar]`.
 
 #### Constrained Repetitions
 
-* `( ( A | B ) &5&)+` → A sequence of `A`s and `B`s of length 5.
-* `( &5:&( A | B ) )*` → An optional sequence of 5 or more `A`s and/or `B`s.    
+- `( ( A | B ) &5& )+` — sequences of `A`/`B` of length 5.
+- `( &5:& ( A | B ) )*` — optional run of five or more `A`/`B`.
+
+#### Delegation
+
+- Shared options: `CommonOption : & <NOHANDLE> | & <RESP> … ;` used as `( CommonOption )*` under many commands.
+- Mixed: `( & "W" | & "Z" | MixedChild )+` with orphans in `MixedChild`.
+- Inner vs delegate: callee has both an orphan and `( & "V" )+`; only the orphan binds to the parent loop.
 
 ### 6. Summary
 
-Repetition cardinality provides precise control over element occurrences within repetition constructs and repetitions themselves in CongoCC. By applying identical lookahead and parsing constraints, it ensures predictable parsing behavior for cardinality-constrained syntax without semantic rules or confusingly complex syntax in grammar definitions.
-
-### 7. Delegated repetition cardinality
-
-Orphan RCAs (no enclosing `*`/`+` in the same production) may bind to a **direct caller's** iterating loop:
-
-```text
-Parent : ( Child )+ ;
-Child  : & Opt1 | & Opt2 ;
-```
-
-- Discovery links orphans in `Child` to that single enclosing loop (one hop).
-- The parent loop allocates one `RepetitionCardinality` for **local** RCAs in the loop body plus **delegated** orphans (local indices first, then delegated).
-- At parse time the caller pushes that object on a delegated stack around the NonTerminal call; the callee's `ENSURE`/`ASSERT` RCAs use the stack top. Lookahead passes the same object into the callee's production scan method.
-- Call sites must be consistent: the same callee may not be invoked both inside and outside a loop, or from two distinct loops (ambiguous) **unless** each parent loop uses a different `indexBias` into a shared orphan block (multi-parent).
-
-**Inner loop wins:** an RCA under a `*`/`+` inside the callee binds locally; only non-enclosed orphans delegate. (Sandbox: `InnerVsDelegateChild` uses an inner `+` for `V` so the alternative is not entered unconditionally.)
-
-**Mixed local + delegated** is allowed in one parent loop, e.g. `( &A | &B | Child )+` shares one tally array for `A`, `B`, and Child's orphans.
-
-**Multi-parent bias:** when the same callee's orphans are shared across several parent loops with different local RCA layouts, each call site pushes `(RepetitionCardinality, indexBias)` and delegated `choose` uses `bias + localIndex`. CICS `CommonOptions` is the production exemplar.
-
-**Not yet supported (future):** multi-hop (`Parent → Middle → Leaf`).
-
-### 8. Polyglot status
-
-| Target | Local RCA | Delegated RCA | CardTests (`ant test-*`) |
-|--------|-----------|---------------|--------------------------|
-| Java | yes | yes | required |
-| C# | yes | yes | required |
-| Python | yes | yes | required (see §9) |
-| Rust | deferred | deferred | — |
-
-Codegen lives in `src/templates/{java,csharp,python}/`. Semantic actions written as Java `System.out.println` are rewritten for C# (`Console.WriteLine`) and Python (`print`).
-
-### 9. Sandbox build (`build.xml`)
-
-`ant clean test-all` regenerates **Java**, **Python**, and **C#** from `CardTests.ccc`, compiles them, and runs the same `testfiles` corpus on each implementation. All three language runs are expected to pass.
-
-`ant test-checker-negative` covers orphan / `ZeroOrOne` / telescoping / delegation-consistency errors under `checker-negative/`.
-
-Notes:
-
-- Python historically could skip when `parser.py` still contained CTL dedent markers (`<-`) after a failed format pass; with current `parser.py.ctl` explicitdedent / inject ordering, CardTests formats and runs.
-- CardTests `allows` uses a single `EnumSet.of(...)` arity so Python (no method overloads) matches Java/C#.
-- Parse harnesses report per-file success/failure counts but exit 0 when some inputs are expected to fail (same pattern as the JSON example).
-
-### 10. CICS and large choice groups (Python indent)
-
-CPython rejects modules whose nested block depth exceeds ~100. A flat RCA choice with ~100+ alternatives (CICS `Assign`) generated a lookahead chain deeper than that limit.
-
-**Mitigation used in `examples/cics/Cics.ccc`:** split the giant choice into `AssignOptsA` / `AssignOptsB` and iterate `( AssignOptsA | AssignOptsB )+`. Orphan RCAs in those callees bind to `Assign`'s loop via delegated cardinality. After the split, max generated indent is ~60 and CICS `test-python` runs with the other languages.
-
-### 11. Lexical-state / FT footnote (`END_TOKEN` and issue #203)
-
-`CardTests` uses:
-
-```text
-"[" LEXICAL_STATE JAVA (Modifiers) "]"
-```
-
-with `<DEFAULT,JAVA> TOKEN: <END_TOKEN: "]" >` as a **workaround** for [issue #203](https://github.com/congo-cc/congo-parser-generator/issues/203).
-
-**What goes wrong (FT only):** if `]` is *not* a valid token in `JAVA`, Modifiers' SCAN/lookahead still probes past the closing bracket while the lexer is in `JAVA`. The lexer yields `INVALID`. Fault-tolerant `nextToken` then marks that `INVALID` as **unparsed** and skips it — even though the `]` belongs to the *outer* DEFAULT-state production. The Modifiers loop "eats" the delimiter and continues into the next line of input (e.g. from `[ public ]` into `[final public]`), which surfaces as a failure *inside* `Modifiers`, not at the `"]"` consume.
-
-**Repro:** `#define FT` and change the declaration to `<DEFAULT> TOKEN: <END_TOKEN: "]" >` (omit `JAVA`). Non-FT still passes; FT fails on the bracketed modifier cases in `testfiles/small_tests.txt`.
-
-**Why `<JAVA>` alone still "works":** lookahead may cache `]` as `END_TOKEN` under `JAVA`; after restoring DEFAULT, `getNextToken` can return that cached token without retokenizing. That path does not exercise the INVALID→unparsed bug.
-
-**Why this is hard:** recovery mutates the shared token cache during speculative lookahead under a temporary lexical state. Guarding `setUnparsed` with "not in lookahead" alone is not a complete fix (it changes other FT failure modes). A durable fix likely needs either (a) not applying FT rewrite during lookahead, plus careful cache invalidation on lexical-state restore, or (b) treating outer-follow tokens that are inactive in the inner state as a hard lookahead failure instead of `INVALID`/`unparsed`.
+Repetition cardinality gives precise, lookahead-aligned control over occurrence counts inside `*` / `+` without semantic predicates or duplicated BNF. **Local** RCAs bind to the nearest enclosing loop in the same production; **delegated** RCAs bind orphan assertions in a callee to a direct caller’s loop, so shared option productions stay DRY. CongoCC targets Java, C#, and Python for both local and delegated codegen; the sandbox (`CardTests`, `checker-negative/`) and CICS example exercise the feature end to end.
