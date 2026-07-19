@@ -2,8 +2,11 @@ package org.congocc.templates.core;
 
 import java.util.*;
 import java.lang.reflect.Array;
+import java.lang.reflect.Method;
+
 import org.congocc.templates.core.nodes.generated.Expression;
 import org.congocc.templates.core.parser.Node;
+import org.congocc.templates.core.reflection.ReflectionCode;
 import org.congocc.templates.TemplateException;
 
 public class Wrap {
@@ -20,17 +23,9 @@ public class Wrap {
     /**
      * A singleton value used to represent a java null
      * which comes from a wrapped Java API, for example, i.e.
-     * is intentional. A null that comes from a generic container
-     * like a map is assumed to be unintentional and a
-     * result of programming error.
+     * is intentional.
      */
-    public static final Object JAVA_NULL = new JavaNull();
-
-    static private class JavaNull implements WrappedVariable {
-        public Object getWrappedObject() {
-            return null;
-        }
-    }
+    public static final Object JAVA_NULL = new Object();
 
     public static void assertNonNull(Object value, Node location) {
         assertIsDefined(value, location);
@@ -47,13 +42,6 @@ public class Wrap {
 
     private Wrap() {}
 
-    public static boolean isMap(Object obj) {
-        if (obj instanceof WrappedVariable) {
-            obj = ((WrappedVariable) obj).getWrappedObject();
-        }
-        return obj instanceof Map;
-    }
-
     public static boolean isList(Object obj) {
         if (obj.getClass().isArray()) {
             return true;
@@ -62,6 +50,9 @@ public class Wrap {
     }
 
     public static List<?> asList(Object obj) {
+        if (obj instanceof List l) {
+            return l;
+        }
         if (obj.getClass().isArray()) {
             List<Object> result = new ArrayList<>();
             for (int i = 0; i < Array.getLength(obj); i++) {
@@ -69,7 +60,7 @@ public class Wrap {
             }
             return result;
         }
-        return (List<?>) obj;
+        throw new TemplateException("expecting a List here");
     }
 
     public static String asString(Object obj) {
@@ -77,20 +68,29 @@ public class Wrap {
     }
 
     public static boolean isBoolean(Object obj) {
-        if (obj instanceof TemplateBoolean) {
+        if (obj instanceof Boolean) {
             return true;
         }
-        if (obj instanceof WrappedVariable) {
-            obj = ((WrappedVariable) obj).getWrappedObject();
+        Method m = ReflectionCode.getGetter(obj, "asBoolean");
+        if (m != ReflectionCode.NO_SUCH_METHOD) {
+            return true;
         }
-        return obj instanceof Boolean;
+        return false;
     }
 
-    public static boolean asBoolean(Object obj) {
-        if (obj instanceof TemplateBoolean) {
-            return ((TemplateBoolean) obj).getAsBoolean();
+    /**
+     * @return the object as boolean. If this is a boolean, just return it.
+     * Otherwise look for the magic getAsBoolean method and if it's there, return
+     * the result of that. Otherwise, just return a null.
+     */
+    public static Boolean asBoolean(Object obj) {
+        if (!(obj instanceof Boolean)) {
+            obj = ReflectionCode.getProperty(obj, "asBoolean");
         }
-        return (Boolean) obj;
+        if (obj instanceof Boolean b) {
+            return b;
+        }
+        return null;
     }
 
     public static boolean isIterable(Object obj) {
@@ -133,12 +133,6 @@ public class Wrap {
         }
         if (object == JAVA_NULL) {
             return null;
-        }
-        if (object instanceof WrappedVariable) {
-            Object unwrapped = ((WrappedVariable) object).getWrappedObject();
-            if (unwrapped !=null) {
-                return unwrapped;
-            }
         }
         return object;
     }

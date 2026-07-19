@@ -1,4 +1,4 @@
-// This file defines the expressio
+// This file defines the expression
 // grammar. It is INCLUDEd from the main template.
 
 DEFAULT_LEXICAL_STATE=EXPRESSION;
@@ -16,7 +16,6 @@ INJECT Expression :
    import org.congocc.templates.core.EvaluationException;
    import org.congocc.templates.TemplateSequence;
    import java.lang.reflect.Array;
-   import org.congocc.templates.core.WrappedVariable;
    import static org.congocc.templates.core.Wrap.*;
 {
     public abstract Object evaluate(Environment env);
@@ -40,9 +39,6 @@ INJECT Expression :
         }
         if (referent instanceof Number n) {
             return env.formatNumber(n);
-        }
-        if (referent instanceof WrappedVariable w) {
-            return w.getAsString();
         }
         if (referent instanceof CharSequence cs) {
             return cs.toString();
@@ -157,11 +153,18 @@ PrimaryExpression(boolean noSpace)#void :
             ENSURE ~("::")
             ENSURE {!(getTokenType(1) == ID && getTokenType(2) == EQUALS)
                    || !isInProduction("NamedArgs")}
+            ENSURE {!getTokenImage(1).equals("as") || getTokenType(2) != ID}
             PrimaryExpression(false)
         ]
       ) #DefaultToExpression(+1)
       |
       "." <ID> #DotExpression(3)
+      ASSERT {
+        Extension.isExtension(lastConsumedToken.toString())
+        || getTokenType(1) == OPEN_PAREN,
+        lastConsumedToken :
+        "Unknown extension: " + lastConsumedToken
+      }
     )
   )*
 ;
@@ -193,7 +196,6 @@ INJECT PropertyReference :
     import org.congocc.templates.core.Environment;
     import org.congocc.templates.core.reflection.ReflectionCode;
     import org.congocc.templates.core.scope.Scope;
-    import org.congocc.templates.core.TemplateHash;
     import static org.congocc.templates.core.Wrap.*;
     implements Expression
 {
@@ -216,13 +218,12 @@ INJECT PropertyReference :
         if (lhs instanceof Map m) {
             Object key = getKey();
             Object value = m.get(key);
-//            if (value == null && !m.containsKey(key)) {
-//                assertNonNull(value, getTarget());
-//            }
+#if false
+            if (value == null && !m.containsKey(key)) {
+                assertNonNull(value, getTarget());
+            }
+#endif
             return wrap(value);
-        }
-        if (lhs instanceof TemplateHash hash) {
-            return wrap(hash.get(getKey()));
         }
         return ReflectionCode.getProperty(lhs, getKey());
     }
@@ -378,7 +379,7 @@ INJECT AdditiveExpression :
             result.addAll(rightList);
             return result;
         }
-        if (isMap(left) && isMap(right)) {
+        if (left instanceof Map && right instanceof Map) {
             Map<?,?> leftMap = (Map) unwrap(left);
             Map<?,?> rightMap = (Map) unwrap(right);
             Map<Object,Object> result = new LinkedHashMap<>(leftMap);
@@ -514,8 +515,10 @@ INJECT EqualityExpression :
             int comp = ae.compareNumbers(n1, n2);
             return operation == NOT_EQUALS ? comp !=0 : comp == 0;
         }
-        left = unwrap(left);
-        right = unwrap(right);
+        if (left instanceof CharSequence cs1 && right instanceof CharSequence cs2) {
+            boolean result = CharSequence.compare(cs1, cs2) == 0;
+            return operation == NOT_EQUALS ? !result : result;
+        }
         return operation == NOT_EQUALS ? !left.equals(right) : left.equals(right);
     }
 
@@ -765,7 +768,6 @@ INJECT BuiltinVariable :
     import org.congocc.templates.core.parser.ParseException;
     import org.congocc.templates.TemplateFactory;
     import org.congocc.templates.TemplateException;
-    import org.congocc.templates.core.TemplateHash;
     implements Expression
 {
     private String name;
@@ -786,7 +788,12 @@ INJECT BuiltinVariable :
            case "locals" : return env.getCurrentMacroContext();
            case "data_model" : return env.getDataModel();
            case "scope" : return env.getCurrentScope();
-           case "vars" : return new VarsHash(env);
+           case "vars" :
+               return new Object() {
+                   public Object get(String key) {
+                       return env.getVariable(key);
+                   }
+               };
            case "locale" : return env.getLocale().toString();
            case "lang" : return env.getLocale().getLanguage();
            case "pass" : return Macro.DO_NOTHING_MACRO;
@@ -795,23 +802,6 @@ INJECT BuiltinVariable :
            case "error" : return env.getCurrentRecoveredErrorMessage();
         }
         throw new TemplateException("Invalid built-in variable: " + this);
-    }
-
-    static class VarsHash implements TemplateHash {
-
-        private final Environment env;
-
-        VarsHash(Environment env) {
-            this.env = env;
-        }
-
-        public Object get(String key) {
-            return env.getVariable(key);
-        }
-
-        public boolean isEmpty() {
-            return false;
-        }
     }
 }
 
@@ -1071,22 +1061,32 @@ INJECT DotExpression :
     import org.congocc.templates.core.reflection.JavaConstructorCall;
     import org.congocc.templates.extensions.*;
     import org.congocc.templates.core.nodes.ExtensionExpression;
+    import org.congocc.templates.core.nodes.MethodCall;
     extends TemplateNode implements Expression
 {
+    private Extension ext;
+
+    public void close() {
+        String extOrMethodName = get(2).toString();
+        this.ext = Extension.find(extOrMethodName);
+    }
+
     public Expression lhs() {
         return (Expression) get(0);
     }
 
+    public boolean isInInvocation() {
+        return getParent() instanceof MethodCall;
+    }
+
     public Object evaluate(Environment env) {
-        Object target = lhs().evaluate(env);
-        String name = get(2).toString();
-        Extension ext = env.getExtension(name);
         if (ext != null) {
             return ext.get(this, env);
         }
-        if (name.equals("new")) {
-            return new JavaConstructorCall(target, this);
-        }
-        return new JavaMethodCall(target, name, this);
+        Object target = lhs().evaluate(env);
+        String name = get(2).toString();
+        return name.equals("new") ?
+            new JavaConstructorCall(target, this) :
+            new JavaMethodCall(target, name, this);
     }
 }

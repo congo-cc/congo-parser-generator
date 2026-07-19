@@ -15,8 +15,6 @@ public class groupsBI extends ExpressionEvaluatingExtension
         if (obj instanceof RegexMatchModel.Match match) {
             return match.subs;
         }
-        else {
-            throw TemplateNode.invalidTypeException(obj, caller.lhs(), "regular expression matcher");
-        }
+        throw TemplateNode.invalidTypeException(obj, caller.lhs(), "regular expression matcher");
     }
 }

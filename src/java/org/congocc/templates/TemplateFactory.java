@@ -16,7 +16,7 @@ import org.congocc.templates.core.ArithmeticEngine;
 import org.congocc.templates.core.Environment;
 import org.congocc.templates.core.parser.ParseException;
 import org.congocc.templates.core.parser.ParsingProblemImpl;
-import org.congocc.templates.extensions.*;
+import org.congocc.templates.extensions.StringUtil;
 
 import static org.congocc.templates.core.Wrap.*;
 import static org.congocc.templates.core.parser.TokenSource.stringFromBytes;
@@ -25,10 +25,8 @@ import static org.congocc.templates.core.parser.TokenSource.stringFromBytes;
  * Main entry point into the Congo Templates API, this class encapsulates the
  * various configuration parameters with which the template engine is run, as well
  * as serves as a central template loading and caching point. Note that
- * this class uses a default strategy for loading
- * and caching templates.
+ * this class uses a default strategy for loadingand caching templates.
  */
-
 public class TemplateFactory {
 
     private static TemplateFactory defaultFactory = new TemplateFactory();
@@ -37,66 +35,24 @@ public class TemplateFactory {
     private Map<String, String> autoImportMap = new HashMap<String, String>();
     private ArrayList<String> autoImports = new ArrayList<String>();
     private ArrayList<String> autoIncludes = new ArrayList<String>();
-    private boolean tolerateParsingProblems;
     private Map<String,Template> templateCache = Collections.synchronizedMap(new HashMap<>());
     private ArithmeticEngine arithmeticEngine = ArithmeticEngine.BIGDECIMAL_ENGINE;
     private String numberFormat = "number";
-    TemplateExceptionHandler templateExceptionHandler = TemplateExceptionHandler.DEBUG_HANDLER;
+    private TemplateExceptionHandler templateExceptionHandler = TemplateExceptionHandler.DEBUG_HANDLER;
 
     private Class<?> classForTemplateLoading;
     private String pathPrefix = "";
     private Path directoryForTemplateLoading = Paths.get(".").toAbsolutePath().normalize();
-    private Locale locale = Locale.getDefault();
+    private Locale defaultLocale = Locale.getDefault();
     private Function<String,String> outputEscape = Function.identity();
 
-    private Map<String, Extension> knownExtensions = new HashMap<>();
-    {
-        knownExtensions.put("Source", (caller, env) -> caller.lhs().getSource());
-        knownExtensions.put("instanceof", new instanceofBI());
-        knownExtensions.put("C", new cBI());
-        knownExtensions.put("String", new stringBI());
-        knownExtensions.put("Eval", new evalBI());
-        NumericalCast numericalCast = new NumericalCast();
-        knownExtensions.put("byte", numericalCast);
-        knownExtensions.put("double", numericalCast);
-        knownExtensions.put("float", numericalCast);
-        knownExtensions.put("int", numericalCast);
-        knownExtensions.put("long", numericalCast);
-        knownExtensions.put("short", numericalCast);
-        knownExtensions.put("Floor", numericalCast);
-        knownExtensions.put("Ceiling", numericalCast);
-        knownExtensions.put("Round", numericalCast);
-        knownExtensions.put("Capitalize", new StringTransformations.Capitalize());
-        knownExtensions.put("CapFirst", new StringTransformations.CapFirst(true));
-        knownExtensions.put("UncapFirst", new StringTransformations.CapFirst(false));
-        knownExtensions.put("JavaStringEncode", new StringTransformations.Java());
-        knownExtensions.put("JavaScriptStringEncode", new StringTransformations.JavaScript());
-        knownExtensions.put("ChopLinebreak", new StringTransformations.Chomp());
-        knownExtensions.put("HTML", new StringTransformations.Html());
-        knownExtensions.put("WebSafe", knownExtensions.get("HTML"));
-        knownExtensions.put("RTF", new StringTransformations.Rtf());
-        knownExtensions.put("XML", new StringTransformations.Xml());
-        knownExtensions.put("XHTML", new StringTransformations.Xhtml());
-        knownExtensions.put("Join", new StringFunctions.Join());
-        knownExtensions.put("Number", new numberBI());
-        knownExtensions.put("LeftPad", new StringFunctions.LeftPad());
-        knownExtensions.put("RightPad", new StringFunctions.RightPad());
-        knownExtensions.put("Groups", new groupsBI());
-        knownExtensions.put("Matches", new StringFunctions.Matches());
-        knownExtensions.put("WordList", new StringFunctions.WordList());
-        knownExtensions.put("URL", new StringFunctions.Url());
-        knownExtensions.put("First", new SequenceFunctions.First());
-        knownExtensions.put("Last", new SequenceFunctions.Last());
-        knownExtensions.put("Reverse", new SequenceFunctions.Reverse());
-        knownExtensions.put("Scope", new MacroBuiltins.Scope());
-        knownExtensions.put("Namespace", new MacroBuiltins.Namespace());
-        knownExtensions.put("Keys", new HashBuiltin.Keys());
-        knownExtensions.put("Values", new HashBuiltin.Values());
-        knownExtensions = Collections.synchronizedMap(knownExtensions);
+
+    public static TemplateFactory getDefault() {
+        return defaultFactory;
     }
 
-    static public TemplateFactory getDefault() {
-        return defaultFactory;
+    protected static void setDefault(TemplateFactory factory) {
+        defaultFactory = factory;
     }
 
     /**
@@ -111,25 +67,28 @@ public class TemplateFactory {
         }
     }
 
-    public Extension getExtension(String name) {
-        return knownExtensions.get(name);
-    }
-
-    public void registerExtension(String name, Extension extension) {
-        knownExtensions.put(name, extension);
-    }
-
-    //@SuppressWarnings({"rawtypes","unchecked"})
-    public void registerFunctionExtension(String name, Function<Object,? extends Object> func) {
-        registerExtension(name, (exp,env)->func.apply(exp.lhs().evaluate(env)));
-    }
-
     public Function<String,String> getOutputEscape() {
         return outputEscape;
     }
 
     public void setOutputEscape(Function<String,String> outputEscape) {
         this.outputEscape = outputEscape;
+    }
+
+    public void setHTMLEscape() {
+        this.outputEscape = StringUtil::HTMLEnc;
+    }
+
+    public void setXMLEscape() {
+        this.outputEscape = StringUtil::XMLEnc;
+    }
+
+    public void setXHTMLEscape() {
+        this.outputEscape = StringUtil::XHTMLEnc;
+    }
+
+    public void setNoEscape() {
+        this.outputEscape = Function.identity();
     }
 
 
@@ -143,7 +102,7 @@ public class TemplateFactory {
     }
 
     public Template getTemplate(String name) throws IOException {
-        return getTemplate(name, getLocale());
+        return getTemplate(name, getDefaultLocale());
     }
 
     /** Retrieves a template specified by name
@@ -204,9 +163,7 @@ public class TemplateFactory {
             for (ParsingProblemImpl pp : result.getParsingProblems()) {
                 System.err.println(pp.getMessage());
             }
-            if (!tolerateParsingProblems) {
-                throw new ParseException(result.getParsingProblems());
-            }
+            throw new ParseException(result.getParsingProblems());
         }
         result.setLastModified(lastModified);
         result.setLocale(locale);
@@ -239,12 +196,12 @@ public class TemplateFactory {
         this.arithmeticEngine = arithmeticEngine;
     }
 
-    public Locale getLocale() {
-        return locale;
+    public Locale getDefaultLocale() {
+        return defaultLocale;
     }
 
-    public void setLocale(Locale locale) {
-        this.locale = locale;
+    public void setDefaultLocale(Locale locale) {
+        this.defaultLocale = locale;
     }
 
     public void setNumberFormat(String numberFormat) {
@@ -332,27 +289,7 @@ public class TemplateFactory {
         autoImportMap.put(namespace, template);
     }
 
-    /**
-     * Remove an auto-imported template
-     * @param namespace the name of the namespace into which the template was imported
-     */
-
-    public synchronized void removeAutoImport(String namespace) {
-        autoImports.remove(namespace);
-        autoImportMap.remove(namespace);
-    }
-
-    /**
-     * set a map of namespace names to templates for auto-importing
-     * a set of templates. Note that all previous auto-imports are removed.
-     */
-
-    public synchronized void setAutoImports(Map<String, String> map) {
-        autoImports = new ArrayList<String>(map.keySet());
-       	autoImportMap = new HashMap<String, String>(map);
-    }
-
-    void doAutoImportsAndIncludes(Environment env) throws IOException {
+    void doAutoImports(Environment env) throws IOException {
     	for (String namespace : autoImports) {
             String templateName = autoImportMap.get(namespace);
             env.importLib(templateName, namespace);
@@ -360,35 +297,6 @@ public class TemplateFactory {
     	for(String templateName: autoIncludes) {
             env.include(getTemplate(templateName, env.getLocale()), false);
         }
-    }
-
-    /**
-     * add a template to be automatically included at the top of any template that
-     * is vended by this Configuration object.
-     * @param templateName the lookup name of the template.
-     */
-
-    public synchronized void addAutoInclude(String templateName) {
-        autoIncludes.remove(templateName);
-        autoIncludes.add(templateName);
-    }
-
-    /**
-     * set the list of automatically included templates.
-     * Note that all previous auto-includes are removed.
-     */
-    public synchronized void setAutoIncludes(List<String> templateNames) {
-        autoIncludes.clear();
-        autoIncludes.addAll(templateNames);
-    }
-
-    /**
-     * remove a template from the auto-include list.
-     * @param templateName the lookup name of the template in question.
-     */
-
-    public synchronized void removeAutoInclude(String templateName) {
-        autoIncludes.remove(templateName);
     }
 
     /**

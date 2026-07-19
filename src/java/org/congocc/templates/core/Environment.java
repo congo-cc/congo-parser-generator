@@ -118,10 +118,6 @@ public final class Environment implements Scope {
         this.template = template;
     }
 
-    public Extension getExtension(String name) {
-        return getTemplateFactory().getExtension(name);
-    }
-
     /**
      * Processes the template to which this environment belongs.
      */
@@ -267,17 +263,9 @@ public final class Environment implements Scope {
         }
     }
 
-    public void process(Object mapOrHash, Block block, String keyName, String valueName) {
-        Iterator it = null;
-        TemplateHash hash = null;
-        Map map = null;
-        if (mapOrHash instanceof Map m) {
-            it = m.keySet().iterator();
-        }
-        else {
-            hash = (TemplateHash) mapOrHash;
-            it = hash.keys().iterator();
-        }
+    @SuppressWarnings("rawtypes")
+    public void process(Map map, Block block, String keyName, String valueName) {
+        Iterator it = map.keySet().iterator();
         Scope prevScope = currentScope;
         int index = 0;
         String keyHasNext = keyName + "_has_next";
@@ -288,7 +276,7 @@ public final class Environment implements Scope {
             while (it.hasNext()) {
                 currentScope = new BlockScope(block, prevScope);
                 Object key = it.next();
-                Object value = map != null ? map.get(key) : hash.get(key.toString());
+                Object value = map.get(key);
                 boolean hasNext = it.hasNext();
                 currentScope.put(keyName, wrap(key));
                 currentScope.put(valueName, wrap(value));
@@ -432,7 +420,7 @@ public final class Environment implements Scope {
 
     public Function<String,String> getOutputEscape() {
         if (outputEscape == null) {
-            return template.getOutputEscape();
+            return getTemplateFactory().getOutputEscape();
         }
         return outputEscape;
     }
@@ -667,11 +655,8 @@ public final class Environment implements Scope {
      * of the root hash passed to the <code>Template.process(...)</code>, and
      * the shared variables in the <code>Configuration</code>.
      */
-    public TemplateHash getDataModel() {
-        final TemplateHash result = new TemplateHash() {
-            public boolean isEmpty() {
-                return false;
-            }
+    public Object getDataModel() {
+        return new Object() {
             public Object get(String key) {
                 Object value = rootDataModel.get(key);
                 if (value == null) {
@@ -680,7 +665,6 @@ public final class Environment implements Scope {
                 return value;
             }
         };
-        return result;
     }
 
     public List<TemplateElement> getElementStack() {

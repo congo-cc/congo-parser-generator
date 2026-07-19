@@ -17,6 +17,10 @@ INJECT Interpolation :
     import org.congocc.templates.TemplateException;
     implements TemplateElement
 {
+    public boolean hasBackSlash() {
+        return ((CharSequence)get(0)).charAt(1) == '\\';
+    }
+
     public Expression getExpression() {
     	return firstChildOfType(Expression.class);
     }
@@ -27,7 +31,9 @@ INJECT Interpolation :
     public void execute(Environment env) {
         Expression exp = getExpression();
         String output = exp.getStringValue(env);
-        output = env.getOutputEscape().apply(output);
+        if (!hasBackSlash()) {
+            output = env.getOutputEscape().apply(output);
+        }
         env.append(output);
     }
 
@@ -154,7 +160,7 @@ ListBlock#IteratorBlock :
 {Token start;}
    start=<LIST>
    Expression
-   <AS>
+   'as'
    <ID>
    [
       <COMMA>
@@ -169,7 +175,6 @@ INJECT IteratorBlock :
     import org.congocc.templates.core.*;
     import org.congocc.templates.core.scopes.BlockScope;
     import org.congocc.templates.core.scopes.LoopContext;
-    import org.congocc.templates.core.TemplateHash;
     import static org.congocc.templates.core.Wrap.*;
     implements TemplateElement
 {
@@ -199,11 +204,11 @@ INJECT IteratorBlock :
                 throw TemplateNode.invalidTypeException(listVar, getListExpression(), "collection or sequence");
             }
             env.process(asIterator(listVar), getNestedBlock(), getIndexName());
-        } else if (listVar instanceof Map || listVar instanceof TemplateHash) {
-            env.process(listVar, getNestedBlock(), getIndexName(), getValueVarName());
+        } else if (listVar instanceof Map m) {
+            env.process(m, getNestedBlock(), getIndexName(), getValueVarName());
         }
         else {
-            String message = "Expecting map or hash, at " + getListExpression().getLocation();
+            String message = "Expecting Map at " + getListExpression().getLocation();
             throw new EvaluationException(message);
         }
     }
@@ -407,7 +412,7 @@ BlockAssignment :
    PrimaryExpression(false)
    [
       SCAN 1 {peekNode() instanceof Token} =>
-      <IN>
+      'in'
       Expression
    ]
    <DIRECTIVE_END> =>||
@@ -475,15 +480,19 @@ AssignmentInstruction#org.congocc.templates.core.nodes.AssignmentInstruction :
    <EQUALS> =>||
    Expression
    (
+     ENSURE {!(getTokenImage(1).equals("in") && getTokenType(2) != EQUALS)}
      [<COMMA>]
-     PrimaryExpression(false)
-     {if (!(peekNode() instanceof Token)) complexLHS = true;}
+     (
+        <ID>
+        |
+        PrimaryExpression(false) {complexLHS = true;}
+     )
      <EQUALS>
      Expression
    )*
    [
       SCAN {!complexLHS} =>
-      <IN>
+      'in'
       Expression
    ]
    LooseDirectiveEnd
@@ -579,7 +588,7 @@ INJECT IncludeInstruction :
 ImportDeclaration :
    <IMPORT>
    Expression
-   <AS>
+   'as'
    <ID>
    LooseDirectiveEnd
    {
@@ -1019,7 +1028,6 @@ INJECT VarDirective :
             String varname = entry.getKey();
             Expression exp = entry.getValue();
             Scope scope = env.getCurrentScope();
-            //System.out.println("The current scope is " + scope);
             if (exp == null) {
                 if (scope.get(varname) == null) {
                     scope.put(varname, JAVA_NULL);
@@ -1080,6 +1088,7 @@ TemplateElement#interface :
    |
    NoParseBlock
    |
+// TODO: put back in later
 //   PropertySetting
 //   |
    VarDirective
@@ -1345,7 +1354,7 @@ Map<String,Expression> ParamList#void :
 {
    Token id;
    Expression exp;
-   Map<String,Expression> result = new HashMap<String,Expression>();
+   Map<String,Expression> result = new HashMap<>();
 }
    (
       id=<ID>
@@ -1375,31 +1384,18 @@ Expression IdentifierOrStringLiteral#void :
  */
 Block Root#void :
 {
-   //TemplateHeaderElement header;
    Block doc;
+   TemplateHeaderElement teh = null;
 }
-#if false
    [
-       header=TemplateHeaderElement
-       {
-       	   template.setHeaderElement(header);
-       	   String templateEncoding = template.getEncoding();
-       	   if (templateEncoding != null && header.hasParameter("encoding")) {
-       	   	  String encoding = null;
-       	   	  try {
-       	   	     encoding = header.getStringParameter("encoding");
-       	   	  } catch (Exception e) {}
-       	   	  if (encoding != null && !encoding.equals(templateEncoding)) {
-       	   	  	throw new Template.WrongEncodingException(encoding);
-       	   	  }
-       	   }
-       }
+      teh=TemplateHeaderElement
    ]
-#endif
    doc=Block
-   {assert doc.getParent() == null;}
+   {
+      if (teh != null) {doc.add(0, teh);}
+   }
    <EOF>
    {
        return doc;
    }
-   ;
+;

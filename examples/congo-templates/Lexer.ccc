@@ -325,16 +325,16 @@ TOKEN#Text :
 
 <EXPRESSION> TOKEN#Literal :
   <STRING_LITERAL :
-      ("\""
-          ((~["\\", "\""]) | ("\\" ~[]))*
-      "\"")
+      ('"'
+          ((~['\\', '"']) | ('\\' ~[]))*
+      '"')
       |
       ("'"
           ((~["\\", "'"]) | ("\\" ~[]))*
       "'")
   > #StringLiteral
   |
-  <RAW_STRING : "r" (("\"" (~["\""])* "\"") | ("'" (~["'"])* "'"))> #StringLiteral
+  <RAW_STRING : "r" (('"' (~['"'])* '"') | ("'" (~["'"])* "'"))> #StringLiteral
   |
   <FALSE : "false"> #BooleanLiteral
   |
@@ -411,10 +411,10 @@ TOKEN#Text :
   <OPEN_BRACE : "{" >
   |
   <CLOSE_BRACE : "}" >
-  |
-  <IN : "in">
-  |
-  <AS : "as">
+//  |
+//  <IN : "in">
+//  |
+//  <AS : "as">
 ;
 
 INCLUDE JAVA_IDENTIFIER_DEF

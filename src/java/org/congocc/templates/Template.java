@@ -17,51 +17,36 @@ public class Template {
     private Block rootElement;
     private Map<String, Macro> macros = new HashMap<String, Macro>();
     private List<ImportDeclaration> imports = new ArrayList<>();
-    private String encoding = "UTF-8";
-    private String name = "template";
+    private String name;
 
     private List<ParsingProblemImpl> parsingProblems = new ArrayList<>();
-    private TemplateHeaderElement headerElement;
 
     private long lastModified;
     private TemplateFactory factory;
     private ArithmeticEngine arithmeticEngine;
     private Locale locale;
     private String numberFormat;
-
     private Function<String,String> outputEscape;
 
-    /**
-     * A prime constructor to which all other constructors should
-     * delegate directly or indirectly.
-     */
-    protected Template(String name, TemplateFactory factory)
+	Template(String name, CharSequence content, TemplateFactory factory)
     {
         this.name = name;
         this.factory = factory;
-        this.lastModified = System.currentTimeMillis();
-    }
-
-	public Template(String name, CharSequence input, TemplateFactory cfg)
-    {
-        this(name, cfg);
-        CTLParser parser = new CTLParser(this, input);
+        CTLParser parser = new CTLParser(this, content);
         parser.setInputSource(getName());
         this.rootElement = parser.Root();
-        PostParseVisitor ppv = new PostParseVisitor(this);
-        ppv.visit(this);
+        new PostParseVisitor(this).visit();
 	}
 
-    public Template(String content) {
-        CTLParser parser = new CTLParser(this, content);
-        this.rootElement = parser.Root();
-        new PostParseVisitor(this).visit(this);
+    public Template(String name, CharSequence content) {
+        this(name, content, TemplateFactory.getDefault());
+    }
+
+    public Template(CharSequence content) {
+        this("template", content, TemplateFactory.getDefault());
     }
 
     public TemplateFactory getTemplateFactory() {
-        if (factory == null) {
-            return TemplateFactory.getDefault();
-        }
         return factory;
     }
 
@@ -79,11 +64,15 @@ public class Template {
         return outputEscape;
     }
 
+    public void setOutputEscape(Function<String,String> outputEscape) {
+        this.outputEscape = outputEscape;
+    }
+
     public Locale getLocale() {
         if (this.locale != null) {
             return locale;
         }
-        return getTemplateFactory().getLocale();
+        return getTemplateFactory().getDefaultLocale();
     }
 
     public void setLocale(Locale locale) {
@@ -112,7 +101,7 @@ public class Template {
     public String process(Map<String,Object> rootMap) throws IOException
     {
         Environment env = new Environment(this, rootMap);
-        getTemplateFactory().doAutoImportsAndIncludes(env);
+        getTemplateFactory().doAutoImports(env);
         env.process();
         return env.getOutput();
     }
@@ -129,19 +118,10 @@ public class Template {
         Environment env = new Environment(this, rootMap);
         env.setLocale(getLocale());
         env.setBuffer(appendable);
-        getTemplateFactory().doAutoImportsAndIncludes(env);
+        getTemplateFactory().doAutoImports(env);
         env.process();
     }
 
-    /**
-     * The path of the template file relative to the directory what you use to store the templates.
-     * For example, if the real path of template is <tt>"/www/templates/community/forum.fm"</tt>,
-     * and you use "<tt>"/www/templates"</tt> as
-     * {@link TemplateFactory#setDirectoryForTemplateLoading "directoryForTemplateLoading"},
-     * then <tt>name</tt> should be <tt>"community/forum.fm"</tt>. The <tt>name</tt> is used for example when you
-     * use <tt>&lt;include ...></tt> and you give a path that is relative to the current
-     * template, or in error messages when the template engine logs an error while it processes the template.
-     */
     public String getName() {
         return name;
     }
@@ -159,13 +139,6 @@ public class Template {
     }
 
     /**
-     * Returns the character encoding used for reading included files.
-     */
-    public String getEncoding() {
-        return this.encoding;
-    }
-
-    /**
      * Called by code internally to maintain
      * a list of imports
      */
@@ -173,12 +146,8 @@ public class Template {
         imports.add(id);
     }
 
-    public void setHeaderElement(TemplateHeaderElement headerElement) {
-    	this.headerElement = headerElement;
-    }
-
     public TemplateHeaderElement getHeaderElement() {
-    	return headerElement;
+    	return rootElement.firstChildOfType(TemplateHeaderElement.class);
     }
 
     public boolean declaresVariable(String name) {
@@ -200,11 +169,11 @@ public class Template {
         return imports;
     }
 
-    public long getLastModified() {
+    long getLastModified() {
         return lastModified;
     }
 
-    public void setLastModified(long lastModified) {
+    void setLastModified(long lastModified) {
         this.lastModified = lastModified;
     }
 

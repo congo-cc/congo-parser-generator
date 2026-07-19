@@ -9,7 +9,6 @@ import org.congocc.templates.core.Environment;
  * An API for objects that handle exceptions that are thrown during
  * template rendering.
  */
-
 public interface TemplateExceptionHandler {
 
    /**
@@ -31,7 +30,6 @@ public interface TemplateExceptionHandler {
 
     /**
      * This is a TemplateExceptionHandler that simply rethrows the exception.
-     * Note that the exception is logged before being rethrown.
      */
     TemplateExceptionHandler RETHROW_HANDLER =new TemplateExceptionHandler() {
 	    public void handleTemplateException(TemplateException te, Environment env) {

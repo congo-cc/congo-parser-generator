@@ -7,7 +7,6 @@ import java.math.BigInteger;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 
-import org.congocc.templates.core.TemplateBoolean;
 import org.congocc.templates.core.EvaluationException;
 
 import java.lang.reflect.Array;
@@ -22,12 +21,26 @@ import static org.congocc.templates.core.Wrap.*;
  */
 public class ReflectionCode {
 
-    private static Map<String,Method> methodCache = new ConcurrentHashMap<>();
-    private static Map<String,Constructor<?>> constructorCache = new ConcurrentHashMap<>();
-    private static Map<String, Method> getterCache = new ConcurrentHashMap<>();
-    private static Map<String, Method> setterCache = new ConcurrentHashMap<>();
+    // A record type that is used as the key to look up
+    // cached methods and constructors.
+    private record LookupKey (Class<?> target, String name, Class<?>[] params) {
+        static LookupKey create(Object obj, String name, Object[] args) {
+            Class<?>[] params = null;
+            if (args != null) {
+                params = new Class<?>[args.length];
+                for (int i = 0; i< args.length; i++) {
+                    params[i] = args[i].getClass();
+                }
+            }
+            return new LookupKey(obj.getClass(), name, params);
+        }
+    }
+    private static Map<LookupKey,Method> methodCache = new ConcurrentHashMap<>();
+    private static Map<LookupKey,Constructor<?>> constructorCache = new ConcurrentHashMap<>();
+    private static Map<LookupKey, Method> getterCache = new ConcurrentHashMap<>();
+    private static Map<LookupKey, Method> setterCache = new ConcurrentHashMap<>();
     private static final Object CAN_NOT_UNWRAP = new Object();
-    private static final Method NO_SUCH_METHOD;
+    public static final Method NO_SUCH_METHOD;
     static {
         try {
             NO_SUCH_METHOD = Object.class.getMethod("wait");
@@ -70,8 +83,14 @@ public class ReflectionCode {
 
     public static Object getProperty(Object object, String key) {
         Method getter = getGetter(object, key);
+        if (getter == NO_SUCH_METHOD) {
+            getter = getGetter(object, "");
+        }
         if (getter != NO_SUCH_METHOD) {
             try {
+                if (getter.getName().equals("get")) {
+                    return wrap(getter.invoke(object, key));
+                }
                 return wrap(getter.invoke(object));
             } catch (Exception e) {
                 throw new EvaluationException(e);
@@ -94,19 +113,19 @@ public class ReflectionCode {
     }
 
     static Method getCachedMethod(Object target, String methodName, Object[] params) {
-        return methodCache.get(getLookupKey(target, methodName, params));
+        return methodCache.get(LookupKey.create(target, methodName, params));
     }
 
     static Constructor<?> getCachedConstructor(Class<?> clazz, Object[] params) {
-        return constructorCache.get(getLookupKey(clazz, "new", params ));
+        return constructorCache.get(LookupKey.create(clazz, "new", params ));
     }
 
     static void cacheMethod(Method m, Object target, Object[] params) {
-        methodCache.put(getLookupKey(target, m.getName(), params), m);
+        methodCache.put(LookupKey.create(target, m.getName(), params), m);
     }
 
     static void cacheConstructor(Constructor<?> c, Object[] params) {
-        constructorCache.put(getLookupKey(c.getDeclaringClass(), "new", params), c);
+        constructorCache.put(LookupKey.create(c.getDeclaringClass(), "new", params), c);
     }
 
     static boolean isCompatibleMethod(Executable method, Object[] params) {
@@ -163,8 +182,8 @@ public class ReflectionCode {
         return moreSpecific && !lessSpecific;
     }
 
-    private static Method getGetter(Object object, String name) {
-        String lookupKey = getLookupKey(object, name);
+    public static Method getGetter(Object object, String name) {
+        LookupKey lookupKey = LookupKey.create(object, name, null);
         Method cachedMethod = getterCache.get(lookupKey);
         if (cachedMethod != null) {
             return cachedMethod;
@@ -180,32 +199,40 @@ public class ReflectionCode {
             } catch (NoSuchMethodException nsme) {
             }
         }
-        String methodName = "get" + name.substring(0, 1).toUpperCase() + name.substring(1);
+        String methodName = "get";
+        if (name.length()>0) {
+            methodName += name.substring(0, 1).toUpperCase() + name.substring(1);
+        }
         try {
-            Method m = object.getClass().getMethod(methodName);
+            Method m = null;
+            if (methodName.equals("get")) {
+                m = object.getClass().getMethod("get", String.class);
+            } else {
+                m = object.getClass().getMethod(methodName);
+            }
             if (m.getReturnType() != Void.TYPE) {
                 getterCache.put(lookupKey, m);
                 m.setAccessible(true);
                 return m;
             }
-        } catch (NoSuchMethodException nsme) {
-        }
-        methodName = methodName.replaceFirst("get", "is");
-        try {
-            Method m = object.getClass().getMethod(methodName);
-            if (m.getReturnType() == Boolean.TYPE || m.getReturnType() == Boolean.class) {
-                getterCache.put(getLookupKey(object, name), m);
-                m.setAccessible(true);
-                return m;
-            }
-        } catch (NoSuchMethodException nsme) {
+        } catch (NoSuchMethodException nsme) {}
+        if (name.length() > 0) {
+            methodName = methodName.replaceFirst("get", "is");
+            try {
+                Method m = object.getClass().getMethod(methodName);
+                if (m.getReturnType() == Boolean.TYPE || m.getReturnType() == Boolean.class) {
+                    getterCache.put(LookupKey.create(object, name, null), m);
+                    m.setAccessible(true);
+                    return m;
+                }
+            } catch (NoSuchMethodException nsme) {}
         }
         getterCache.put(lookupKey, NO_SUCH_METHOD);
         return NO_SUCH_METHOD;
     }
 
     private static Method getSetter(Object target, String name, Object value) {
-        String lookupKey = getLookupKey(target, name, value);
+        LookupKey lookupKey = LookupKey.create(target, name, null);
         Method cachedMethod = setterCache.get(lookupKey);
         if (cachedMethod != null) {
             return cachedMethod;
@@ -285,13 +312,8 @@ public class ReflectionCode {
             return object;
         }
         if (desiredType == Boolean.TYPE || desiredType == Boolean.class) {
-            if (object instanceof Boolean) {
-                return (Boolean) object;
-            }
-            if (object instanceof TemplateBoolean tb) {
-                return tb.getAsBoolean();
-            }
-            return CAN_NOT_UNWRAP;
+            Boolean b = asBoolean(object);
+            return b!=null ? b : CAN_NOT_UNWRAP;
         }
         if (object instanceof Number num) {
             if (desiredType == Integer.class || desiredType == Integer.TYPE) {
@@ -324,30 +346,5 @@ public class ReflectionCode {
             return object.toString();
         }
         return CAN_NOT_UNWRAP;
-    }
-
-    private static String getLookupKey(Object target, String methodName, Object[] params) {
-        StringBuilder buf = new StringBuilder();
-        buf.append(target.getClass().getName());
-        buf.append('#');
-        buf.append(methodName);
-        buf.append('#');
-        if (params != null) for (Object param : params) {
-            if (param == null) {
-                buf.append("NULL");
-            } else {
-                buf.append(param.getClass());
-            }
-            buf.append(':');
-        }
-        return buf.toString();
-    }
-
-    private static String getLookupKey(Object object, String propertyName) {
-        return object.getClass().getName() + "##" + propertyName;
-    }
-
-    private static String getLookupKey(Object object, String propertyName, Object value) {
-        return object.getClass().getName() + "#" + propertyName + "#" + value.getClass().getName();
     }
 }

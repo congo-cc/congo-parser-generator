@@ -7,7 +7,6 @@ import java.util.HashMap;
 import java.util.Iterator;
 import java.util.LinkedList;
 import java.util.List;
-import java.util.StringTokenizer;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import java.util.regex.PatternSyntaxException;
@@ -15,7 +14,6 @@ import java.util.function.Function;
 
 import org.congocc.templates.core.Environment;
 import org.congocc.templates.core.EvaluationException;
-import org.congocc.templates.core.TemplateBoolean;
 import org.congocc.templates.core.nodes.generated.DotExpression;
 import org.congocc.templates.core.reflection.JavaMethodCall;
 import org.congocc.templates.core.reflection.VarArgsFunction;
@@ -98,32 +96,6 @@ public abstract class StringFunctions extends ExpressionEvaluatingExtension {
         }
     }
 
-    public static class LeftPad extends StringFunctions {
-        @Override
-        public Object apply(String string, Environment env, DotExpression caller) {
-            return new LeftPadMethod(string);
-        }
-    }
-
-    public static class RightPad extends StringFunctions {
-        @Override
-        public Object apply(String string, Environment env, DotExpression caller) {
-            return new RightPadMethod(string);
-        }
-    }
-
-    public static class WordList extends StringFunctions {
-        @Override
-        public Object apply(String string, Environment env, DotExpression caller) {
-            StringTokenizer st = new StringTokenizer(string);
-            List<String> result = new ArrayList<>();
-            while (st.hasMoreTokens()) {
-                result.add(st.nextToken());
-            }
-            return result;
-        }
-    }
-
     public static class Url extends StringFunctions {
         @Override
         public Object apply(String string, Environment env, DotExpression caller) {
@@ -155,7 +127,7 @@ public abstract class StringFunctions extends ExpressionEvaluatingExtension {
         }
     }
 
-    static class RegexMatchModel extends AbstractList<Object> implements TemplateBoolean {
+    static class RegexMatchModel extends AbstractList<Object> {
         Matcher matcher;
         String input;
         final boolean matches;
@@ -246,110 +218,6 @@ public abstract class StringFunctions extends ExpressionEvaluatingExtension {
                 return match;
             }
         }
-    }
-
-    static class LeftPadMethod implements VarArgsFunction<String> {
-        private String string;
-
-        LeftPadMethod(String s) {
-            this.string = s;
-        }
-
-        public String apply(Object... args) {
-            int ln  = args.length;
-            if (ln == 0) {
-                throw new EvaluationException(
-                "?left_pad(...) expects at least 1 argument.");
-            }
-            if (ln > 2) {
-                throw new EvaluationException(
-                "?left_pad(...) expects at most 2 arguments.");
-            }
-            Object obj = args[0];
-            if (!(obj instanceof Number)) {
-                throw new EvaluationException(
-                        "?left_pad(...) expects a number as "
-                        + "its 1st argument.");
-            }
-            int width = ((Number)obj).intValue();
-
-            if (ln > 1) {
-                obj = args[1];
-                if (!(obj instanceof CharSequence)) {
-                    throw new EvaluationException(
-                            "?left_pad(...) expects a string as "
-                            + "its 2nd argument.");
-                }
-                String filling = asString(obj);
-                try {
-                    return StringUtil.leftPad(string, width, filling);
-                } catch (IllegalArgumentException e) {
-                    if (filling.length() == 0) {
-                        throw new EvaluationException(
-                                "The 2nd argument of ?left_pad(...) "
-                                + "can't be a 0 length string.");
-                    } else {
-                        throw new EvaluationException(
-                                "Error while executing the ?left_pad(...) "
-                                + "built-in.", e);
-                    }
-                }
-            } else {
-                return StringUtil.leftPad(string, width, " ");
-            }
-        }
-    }
-
-    static class RightPadMethod implements VarArgsFunction<String> {
-        private String string;
-
-        private RightPadMethod(String string) {
-            this.string = string;
-        }
-
-        public String apply(Object... args) {
-            int ln  = args.length;
-            if (ln == 0) {
-                throw new EvaluationException(
-                "?right_pad(...) expects at least 1 argument.");
-            }
-            if (ln > 2) {
-                throw new EvaluationException(
-                "?right_pad(...) expects at most 2 arguments.");
-            }
-            Object obj = args[0];
-            if (!(obj instanceof Number)) {
-                throw new EvaluationException(
-                        "?right_pad(...) expects a number as "
-                        + "its 1st argument.");
-            }
-            int width = ((Number)obj).intValue();
-            if (ln > 1) {
-                obj = args[1];
-                if (!(obj instanceof CharSequence)) {
-                    throw new EvaluationException(
-                            "?right_pad(...) expects a string as "
-                            + "its 2nd argument.");
-                }
-                String filling = asString(obj);
-                try {
-                    return StringUtil.rightPad(string, width, filling);
-                } catch (IllegalArgumentException e) {
-                    if (filling.length() == 0) {
-                        throw new EvaluationException(
-                                "The 2nd argument of ?right_pad(...) "
-                                + "can't be a 0 length string.");
-                    } else {
-                        throw new EvaluationException(
-                                "Error while executing the ?right_pad(...) "
-                                + "built-in.", e);
-                    }
-                }
-            } else {
-                return StringUtil.rightPad(string, width, " ");
-            }
-        }
-
     }
 
     static class urlBIResult implements Function<String,String> {

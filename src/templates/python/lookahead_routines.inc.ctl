@@ -264,7 +264,7 @@ ${BuildScanCode(expansion, inner, "", "")}
 [/#macro]
 
 [#macro BuildScanRoutine expansion indent]
-[#var is = "".RightPad(indent)]
+[#var is = padding(indent)]
 [#-- ${is}# DBG > BuildScanRoutine ${indent} --]
 #if !expansion::singleTokenLookahead || expansion::requiresPredicateMethod
 ${is}# scanahead routine for expansion at:
@@ -319,7 +319,7 @@ ${is}    ${lhReturnTrue(cardinalitiesVar, "", true)}
 [/#macro]
 
 [#macro BuildAssertionRoutine expansion indent]
-[#var is = "".RightPad(indent)]
+[#var is = padding(indent)]
 [#-- ${is}# DBG > BuildAssertionRoutine ${indent} --]
 ${is}# scanahead routine for assertion at:
 ${is}# ${expansion::parent::location}
@@ -349,7 +349,7 @@ ${is}        self.hit_failure = prev_hit_failure
 
 [#-- Build the code for checking semantic lookahead, lookbehind, and/or syntactic lookahead --]
 #macro BuildPredicateCode expansion indent cardinalitiesVar useLoopParam=false
-#var is = "".RightPad(indent)
+#var is = padding(indent)
 [#-- ${is}# DBG > BuildPredicateCode ${indent} --]
 #if expansion::hasSemanticLookahead && (expansion::lookahead::semanticLookaheadNested || expansion::containingProduction::onlyForLookahead)
 ${is}if not (${globals.translateExpression(expansion::semanticLookahead)}):
@@ -378,7 +378,7 @@ ${is}self.passed_predicate = True
    that is used in a nested lookahead.
  --]
 [#macro BuildLookaheadRoutine lookahead indent]
-[#var is = "".RightPad(indent)]
+[#var is = padding(indent)]
 [#-- ${is}# DBG > BuildLookaheadRoutine ${indent} --]
 [#if lookahead::nestedExpansion??]
 ${is}# lookahead routine for lookahead at:
@@ -410,7 +410,7 @@ ${is}        self.hit_failure = prev_hit_failure
 [/#macro]
 
 [#macro BuildLookBehindRoutine lookBehind indent]
-[#var is = "".RightPad(indent)]
+[#var is = padding(indent)]
 [#-- ${is}# DBG > BuildLookBehindRoutine ${indent} --]
 ${is}# Look behind
 ${is}def ${lookBehind::routineName}(self):
@@ -460,7 +460,7 @@ ${is}    return True
 [/#macro]
 
 [#macro BuildProductionLookaheadMethod production indent]
-[#var is = "".RightPad(indent)]
+[#var is = padding(indent)]
 [#--     # DBG > BuildProductionLookaheadMethod ${indent} --]
   [#var needsCard = production::delegatedCardinalityTarget]
     # BuildProductionLookaheadMethod
@@ -482,7 +482,7 @@ ${BuildScanCode(production::expansion, 8, "", "")}
    based on the Expansion's class name.
 --]
 [#macro BuildScanCode expansion indent cardVar parentCardVar useLoopParam=false]
-[#var is = "".RightPad(indent)]
+[#var is = padding(indent)]
 [#-- ${is}# DBG > BuildScanCode ${indent} ${expansion.simpleName} --]
   [#var classname = expansion::simpleName]
   [#if classname != "ExpansionSequence" && classname != "ExpansionWithParentheses"]
@@ -534,7 +534,7 @@ ${globals.translateCodeBlock(expansion, indent)}
    Generates the lookahead code for an ExpansionSequence.
 --]
 #macro ScanCodeSequence sequence indent cardVar parentCardVar useLoopParam=false
-#var is = "".RightPad(indent)
+#var is = padding(indent)
 [#-- ${is}# DBG > ScanCodeSequence ${indent} --]
 #list sequence::units as sub
        [@BuildScanCode sub, indent, cardVar, parentCardVar, useLoopParam /]
@@ -550,7 +550,7 @@ ${is}        self.passed_predicate_threshold = self.remaining_lookahead[#if sub:
 /#macro
 
 [#macro ScanCodeNonTerminal nt indent cardinalitiesVar useLoopParam=false]
-[#var is = "".RightPad(indent)]
+[#var is = padding(indent)]
 ${is}# NonTerminal ${nt::name} at ${nt::location}
 ${is}self.push_onto_lookahead_stack('${nt::containingProduction::name}', '${nt::inputSource.JavaStringEncode}', ${nt::beginLine}, ${nt::beginColumn})
 ${is}self.current_lookahead_production = '${nt::production::name}'
@@ -576,7 +576,7 @@ ${is}    self.pop_lookahead_stack()
 [/#macro]
 
 [#macro ScanSingleToken expansion indent cardinalitiesVar useLoopParam=false]
-[#var is = "".RightPad(indent)]
+[#var is = padding(indent)]
 [#var firstSet = expansion::firstSet::tokenNames]
 [#-- ${is}# DBG > ScanSingleToken ${indent} --]
 [#if firstSet.size() = 1]
@@ -598,7 +598,7 @@ ${is}    ${lhReturnFalse(cardinalitiesVar, "", useLoopParam)}
 [/#macro]
 
 [#macro ScanCodeAssertion assertion indent cardinalitiesVar parentCardVar useLoopParam=false]
-[#var is = "".RightPad(indent)]
+[#var is = padding(indent)]
 [#-- ${is}# DBG > ScanCodeAssertion ${indent} --]
 [#if assertion::lookBehind??]
 ${is}if [#if !assertion::lookBehind::negated]not [/#if]self.${assertion::lookBehind::routineName}():
@@ -635,7 +635,7 @@ ${is}    ${lhReturnFalse(cardinalitiesVar, parentCardVar, useLoopParam)}
 [/#macro]
 
 [#macro ScanCodeError expansion indent cardinalitiesVar useLoopParam=false]
-[#var is = "".RightPad(indent)]
+[#var is = padding(indent)]
 [#-- ${is}# DBG > ScanCodeError ${indent} --]
 ${is}self.hit_failure = True
 ${is}${lhReturnFalse(cardinalitiesVar, "", useLoopParam)}
@@ -643,7 +643,7 @@ ${is}${lhReturnFalse(cardinalitiesVar, "", useLoopParam)}
 [/#macro]
 
 #macro ScanCodeChoice choice indent cardinalitiesVar parentCardVar useLoopParam=false
-#var is = "".RightPad(indent)
+#var is = padding(indent)
 [#-- ${is}# DBG > ScanCodeChoice ${indent} --]
 ${is}${CU::newVarName("token")} = self.current_lookahead_token
 ${is}remaining_lookahead${CU::newVarIndex} = self.remaining_lookahead
@@ -674,7 +674,7 @@ ${is}    self.passed_predicate = passed_predicate${CU::newVarIndex}
 /#macro
 
 #macro ScanCodeZeroOrOne zoo indent cardVar parentCardVar useLoopParam=false
-#var is = "".RightPad(indent)
+#var is = padding(indent)
 [#-- ${is}# DBG > ScanCodeZeroOrOne ${indent} --]
 ${is}${CU::newVarName("token")} = self.current_lookahead_token
 ${is}passed_predicate${CU::newVarIndex} = self.passed_predicate
@@ -694,7 +694,7 @@ ${is}    self.passed_predicate = passed_predicate${CU::newVarIndex}
   Generates lookahead code for a ZeroOrMore construct]
 --]
 #macro ScanCodeZeroOrMore zom indent cardVar parentCardVar useLoopParam=false
-#var is = "".RightPad(indent)
+#var is = padding(indent)
 [#var zomCardVar = cardVar!""]
 [#if zom::cardinalityContainer && (!cardVar?? || cardVar == "")]
 [#set zomCardVar = "cardinality" + repetitionIndex][#set repetitionIndex = repetitionIndex + 1]
@@ -727,7 +727,7 @@ ${is}self.hit_failure = False
 /#macro
 
 [#macro ScanCodeOneOrMore oom indent cardinalitiesVar useLoopParam=false]
-[#var is = "".RightPad(indent)]
+[#var is = padding(indent)]
 [#-- ${is}# DBG > ScanCodeOneOrMore ${indent} --]
 [#var oomCardVar = ""]
 [#if oom::cardinalityContainer]

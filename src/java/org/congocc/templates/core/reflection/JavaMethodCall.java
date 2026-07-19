@@ -6,7 +6,6 @@ import java.util.List;
 import java.util.ArrayList;
 import org.congocc.templates.core.parser.Node;
 import org.congocc.templates.core.EvaluationException;
-import org.congocc.templates.core.WrappedVariable;
 import static org.congocc.templates.core.reflection.ReflectionCode.*;
 import static org.congocc.templates.core.Wrap.assertIsDefined;;
 
@@ -20,12 +19,6 @@ public class JavaMethodCall implements VarArgsFunction<Object> {
     public JavaMethodCall(Object target, String methodName, Node location) {
         assertIsDefined(target, location);
         this.location = location;
-        if (target instanceof WrappedVariable wv) {
-            Object wrappedObject = wv.getWrappedObject();
-            if (wrappedObject != null) {
-                target = wrappedObject;
-            }
-        }
         this.target = target;
         this.methodName = methodName;
         findPossibleMethods();
