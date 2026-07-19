@@ -31,16 +31,10 @@ public class NumericalCast extends ExpressionEvaluatingExtension {
 
     private Number getNumber(Number num, String extensionName) {
         return switch(extensionName) {
-            case "int" -> num.intValue();
-            case "double" -> num.doubleValue();
-            case "long" -> num.longValue();
-            case "float" -> num.floatValue();
-            case "byte" -> num.byteValue();
-            case "short" -> num.shortValue();
-            case "_floor" -> BigDecimal.valueOf(num.doubleValue()).divide(BigDecimal.ONE, 0, RoundingMode.FLOOR);
-            case "_ceiling" -> BigDecimal.valueOf(num.doubleValue()).divide(BigDecimal.ONE, 0, RoundingMode.CEILING);
-            case "_round" -> BigDecimal.valueOf(num.doubleValue()).add(BD_HALF, MATH_CONTEXT).divide(BigDecimal.ONE, 0, RoundingMode.FLOOR);
-            default -> throw new InternalError("The only numerical cast built-ins available are int, long, short, byte, float, double, _floor, _ceiling, and _round.");
+            case "Floor" -> BigDecimal.valueOf(num.doubleValue()).divide(BigDecimal.ONE, 0, RoundingMode.FLOOR);
+            case "Ceiling" -> BigDecimal.valueOf(num.doubleValue()).divide(BigDecimal.ONE, 0, RoundingMode.CEILING);
+            case "Round" -> BigDecimal.valueOf(num.doubleValue()).add(BD_HALF, MATH_CONTEXT).divide(BigDecimal.ONE, 0, RoundingMode.FLOOR);
+            default -> throw new InternalError("The only numerical cast built-ins available are Floor, Ceiling, and Round.");
         };
     }
 }

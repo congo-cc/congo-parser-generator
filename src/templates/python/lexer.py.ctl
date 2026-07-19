@@ -279,7 +279,7 @@ MAX_STATES = max(
 # Lexer code and data
 
 #macro EnumSet varName tokenNames indent = 0
-    #var is = "".RightPad(indent)
+    #var is = padding(indent)
     #if tokenNames.size() == 0
 ${is}self.${varName} = EMPTY_SET
     #else

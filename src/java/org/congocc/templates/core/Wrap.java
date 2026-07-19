@@ -50,6 +50,9 @@ public class Wrap {
     }
 
     public static List<?> asList(Object obj) {
+        if (obj instanceof List l) {
+            return l;
+        }
         if (obj.getClass().isArray()) {
             List<Object> result = new ArrayList<>();
             for (int i = 0; i < Array.getLength(obj); i++) {
@@ -57,7 +60,7 @@ public class Wrap {
             }
             return result;
         }
-        return (List<?>) obj;
+        throw new TemplateException("expecting a List here");
     }
 
     public static String asString(Object obj) {

@@ -29,10 +29,6 @@ public class BlockScope extends HashMap<String,Object> implements Scope {
 		return super.put(key, value);
 	}
 
-	protected void putUnconditionally(String key, Object var) {
-		super.put(key, var);
-	}
-
 	public Block getBlock() {
 		return block;
 	}

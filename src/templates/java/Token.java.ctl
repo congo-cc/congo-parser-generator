@@ -559,7 +559,7 @@ public class ${settings::baseTokenClassName} ${implements} {
        #if settings::treeBuildingEnabled
            switch(type) {
            #list lexerData::orderedNamedTokens as re
-            #if re::generatedClassName != "${settings.baseTokenClassName}" && !re::private
+            #if re::generatedClassName != "${settings::baseTokenClassName}" && !re::private
               #var generatedClassName = re::generatedClassName
               #if !generatedClassName.contains(".")
                  #set generatedClassName = grammar::nodePrefix + generatedClassName

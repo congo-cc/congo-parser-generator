@@ -46,7 +46,7 @@
 #endmacro
 
 #macro ParserProduction production indent
-#var is = "".RightPad(indent)
+#var is = padding(indent)
    #set nodeNumbering = 0
    #set nodeFieldOrdinal = {}
    #set injectedFields = {}
@@ -71,7 +71,7 @@ ${is}# end of parse_${production::name}${globals.endProduction()}
    as part of a recovery routine
 --]
 #macro BuildRecoverRoutines indent
-#var is = "".RightPad(indent)
+#var is = padding(indent)
 #list grammar::expansionsNeedingRecoverMethod as expansion
 ${is}def ${expansion::recoverMethodName}(self, pe):
 ${is}    initial_token = self.last_consumed_token
@@ -126,14 +126,14 @@ ${is}    return success
 #endmacro
 
 #macro BuildCode expansion indent cardinalitiesVar
-#var is = "".RightPad(indent)
+#var is = padding(indent)
 [#--${is}# DBG > BuildCode ${indent} ${expansion.simpleName} --]
 #if expansion::simpleName != "ExpansionSequence" && expansion::simpleName != "ExpansionWithParentheses"
 ${is}# Code for ${expansion::simpleName} specified at ${expansion::location}
 /#if
 [@CU::HandleLexicalStateChange expansion, false, indent, cardinalitiesVar; indent]
   #if settings::faultTolerant && expansion::requiresRecoverMethod && !expansion::possiblyEmpty
-    [#var is = "".RightPad(indent)][#-- needed for when passed as nested content --]
+    [#var is = padding(indent)][#-- needed for when passed as nested content --]
 ${is}if self.pending_recovery:
 ${is}    self.${expansion::recoverMethodName}(None)
   /#if
@@ -143,7 +143,7 @@ ${is}    self.${expansion::recoverMethodName}(None)
 /#macro
 
 [#macro TreeBuildingAndRecovery expansion indent cardinalitiesVar]
-[#var is = "".RightPad(indent)]
+[#var is = padding(indent)]
 [#--${is}# DBG > TreeBuildingAndRecovery ${indent} --]
    [#var production = null,
          treeNodeBehavior,
@@ -470,13 +470,13 @@ ${is}    self.restore_call_stack(${callStackSizeVar})
 
 [#macro buildTreeNode production treeNodeBehavior nodeVarName indent]
 [#-- FIXME: production is not used here --]
-[#var is = "".RightPad(indent)]
+[#var is = padding(indent)]
 [@createNode nodeClassName(treeNodeBehavior), nodeVarName, indent /]
 [/#macro]
 
 [#--  Boilerplate code to create the node variable --]
 [#macro createNode nodeName nodeVarName indent]
-[#var is = "".RightPad(indent)]
+[#var is = padding(indent)]
 ${is}${nodeVarName} = None
 ${is}if self.build_tree:
 ${is}    ${nodeVarName} = ${nodeName}([#if settings::nodeUsesParser]self[#else]self.input_source[/#if])
@@ -484,7 +484,7 @@ ${is}    self.open_node_scope(${nodeVarName})
 [/#macro]
 
 [#macro buildTreeNodeEpilogue treeNodeBehavior nodeVarName parseExceptionVar indent]
-[#var is = "".RightPad(indent)]
+[#var is = padding(indent)]
 ${is}    if ${nodeVarName}:
 ${is}        if ${parseExceptionVar} is None:
       [#if treeNodeBehavior?? && treeNodeBehavior::assignment??]
@@ -598,7 +598,7 @@ ${is}        self.clear_node_scope()
 [/#function]
 
 [#macro BuildExpansionCode expansion indent cardinalitiesVar]
-[#var is = "".RightPad(indent)]
+[#var is = padding(indent)]
 [#var classname = expansion::simpleName]
 [#--${is}# DBG > BuildExpansionCode ${indent} ${classname} --]
     [#var prevLexicalStateVar = CU::newVarName("previousLexicalState")]
@@ -666,7 +666,7 @@ ${is}self.uncache_tokens()
 [#-- The following macros build expansions that never build tree nodes. --]
 
 [#macro BuildCodeFailure fail, indent]
-[#var is = "".RightPad(indent)]
+[#var is = padding(indent)]
    #if fail::hasRunnableBlock
      #if fail::code::class::simpleName = "RawCode"
 ${fail::code}
@@ -681,7 +681,7 @@ ${is}self.fail('Failure')
 [/#macro]
 
 [#macro BuildAssertionCode assertion indent cardinalitiesVar]
-[#var is = "".RightPad(indent)]
+[#var is = padding(indent)]
    #if !assertion::appliesInRegularParsing
 ${is}pass
      #return
@@ -711,7 +711,7 @@ ${is}    self.fail("${assertionMessage}"${optionalPart})
 [/#macro]
 
 [#macro BuildCodeTokenTypeActivation activation indent]
-[#var is = "".RightPad(indent)]
+[#var is = padding(indent)]
 [#--${is}# DBG > BuildCodeTokenTypeActivation ${indent} --]
 [#if activation::deactivate]
 ${is}self.deactivate_token_types(
@@ -726,7 +726,7 @@ ${is})
 [/#macro]
 
 [#macro BuildCodeTryBlock tryblock indent cardinalitiesVar]
-[#var is = "".RightPad(indent)]
+[#var is = padding(indent)]
 [#--${is}# DBG > BuildCodeTryBlock ${indent} --]
 ${is}try:
 ${BuildCode(tryblock::nestedExpansion, indent + 4, cardinalitiesVar)}[#rt]
@@ -740,7 +740,7 @@ ${is}${tryblock::finallyBlock!}
 [/#macro]
 
 [#macro BuildCodeAttemptBlock attemptBlock indent cardinalitiesVar]
-[#var is = "".RightPad(indent)]
+[#var is = padding(indent)]
 [#--${is}# DBG > BuildCodeAttemptBlock ${indent} --]
 ${is}try:
 ${is}    self.stash_parse_state()
@@ -757,7 +757,7 @@ ${BuildCode(attemptBlock::recoveryExpansion, indent + 4, "")}
 [#-- The following macros build expansions that might build tree nodes (could be called "syntactic" nodes). --]
 
 [#macro BuildCodeNonTerminal nonterminal indent]
-[#var is = "".RightPad(indent)]
+[#var is = padding(indent)]
 [#--${is}# DBG > BuildCodeNonTerminal ${indent} ${nonterminal.production.name} --]
    [#var production = nonterminal::production]
 ${is}self.push_onto_call_stack('${nonterminal::containingProduction::name}', '${nonterminal::inputSource.JavaStringEncode}', ${nonterminal::beginLine}, ${nonterminal::beginColumn})
@@ -783,7 +783,7 @@ ${is}    self.pop_call_stack()
 [/#macro]
 
 [#macro AcceptNonTerminal nonterminal indent]
-[#var is = "".RightPad(indent)]
+[#var is = padding(indent)]
    [#var lhsClassName = nonterminal::production::nodeName]
    [#var expressedLHS = getLhsPattern(nonterminal::assignment, lhsClassName)]
    [#var impliedLHS = "@"]
@@ -814,7 +814,7 @@ ${is}    ${expressedLHS.replace("@", impliedLHS.replace("@", "None"))}
 [/#macro]
 
 [#macro BuildCodeTerminal terminal indent]
-[#var is = "".RightPad(indent)]
+[#var is = padding(indent)]
 [#--${is}# DBG > BuildCodeRegexp ${indent} --]
    [#var LHS = getLhsPattern(terminal::assignment, "Token"),
          regexp = terminal::regexp ]
@@ -835,7 +835,7 @@ ${is}${LHS.replace("@", "self.consume_token(" + regexp::label + ", " + tolerant 
 [/#macro]
 
 [#macro BuildCodeZeroOrOne zoo indent cardinalitiesVar]
-[#var is = "".RightPad(indent)]
+[#var is = padding(indent)]
 [#--${is}# DBG > BuildCodeZeroOrOne ${indent} ${zoo.nestedExpansion.class.simpleName} --]
     [#if zoo::nestedExpansion::class::simpleName = "ExpansionChoice"]
 ${BuildCode(zoo::nestedExpansion, indent, cardinalitiesVar)}[#rt]
@@ -847,7 +847,7 @@ ${BuildCode(zoo::nestedExpansion, indent + 4, cardinalitiesVar)}[#rt]
 [/#macro]
 
 [#macro BuildCodeOneOrMore oom indent]
-[#var is = "".RightPad(indent)]
+[#var is = padding(indent)]
 [#--${is}# DBG > BuildCodeOneOrMore ${indent} --]
 [#var nestedExp = oom::nestedExpansion, prevInFirstVarName = inFirstVarName/]
 [#var cardinalitiesVar = ""]
@@ -878,7 +878,7 @@ ${is}    self.fail('Minimum cardinality constraint(s) for: ${oom::location.JavaS
 [/#macro]
 
 [#macro BuildCodeZeroOrMore zom indent]
-[#var is = "".RightPad(indent)]
+[#var is = padding(indent)]
 [#--${is}# DBG > BuildCodeZeroOrMore ${indent} --]
 [#var cardinalitiesVar = ""]
 [#if zom::cardinalityContainer]
@@ -901,7 +901,7 @@ ${is}    self.fail('Minimum cardinality constraint(s) for: ${zom::location.JavaS
 [/#macro]
 
 [#macro RecoveryLoop loopExpansion indent cardinalitiesVar]
-[#var is = "".RightPad(indent)]
+[#var is = padding(indent)]
 [#--${is}# DBG > RecoveryLoop ${indent} --]
    [#if !settings::faultTolerant || !loopExpansion::requiresRecoverMethod]
 ${BuildCode(loopExpansion::nestedExpansion, indent, cardinalitiesVar)}[#rt]
@@ -931,7 +931,7 @@ ${is}    if self.pending_recovery: raise
 [/#macro]
 
 #macro BuildCodeChoice choice indent cardinalitiesVar
-#var is = "".RightPad(indent)
+#var is = padding(indent)
 [#--${is}# DBG > BuildCodeChoice ${indent} --]
 #list choice::choices as expansion
   #if expansion::enteredUnconditionally
@@ -972,7 +972,7 @@ ${is}    raise ParseException(self, expected=self.${choice::firstSetVarName})
 /#macro
 
 [#macro BuildCodeSequence expansion indent cardinalitiesVar]
-[#var is = "".RightPad(indent)]
+[#var is = padding(indent)]
 [#--${is}# DBG > BuildCodeSequence ${indent} --]
    [#list expansion::units as subexp]
 ${BuildCode(subexp, indent, cardinalitiesVar)}[#rt]

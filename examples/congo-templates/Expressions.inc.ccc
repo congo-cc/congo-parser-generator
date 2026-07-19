@@ -1,4 +1,4 @@
-// This file defines the expressio
+// This file defines the expression
 // grammar. It is INCLUDEd from the main template.
 
 DEFAULT_LEXICAL_STATE=EXPRESSION;
@@ -153,11 +153,18 @@ PrimaryExpression(boolean noSpace)#void :
             ENSURE ~("::")
             ENSURE {!(getTokenType(1) == ID && getTokenType(2) == EQUALS)
                    || !isInProduction("NamedArgs")}
+            ENSURE {!getTokenImage(1).equals("as") || getTokenType(2) != ID}
             PrimaryExpression(false)
         ]
       ) #DefaultToExpression(+1)
       |
       "." <ID> #DotExpression(3)
+      ASSERT {
+        Extension.isExtension(lastConsumedToken.toString())
+        || getTokenType(1) == OPEN_PAREN,
+        lastConsumedToken :
+        "Unknown extension: " + lastConsumedToken
+      }
     )
   )*
 ;
@@ -211,9 +218,11 @@ INJECT PropertyReference :
         if (lhs instanceof Map m) {
             Object key = getKey();
             Object value = m.get(key);
-//            if (value == null && !m.containsKey(key)) {
-//                assertNonNull(value, getTarget());
-//            }
+#if false
+            if (value == null && !m.containsKey(key)) {
+                assertNonNull(value, getTarget());
+            }
+#endif
             return wrap(value);
         }
         return ReflectionCode.getProperty(lhs, getKey());
@@ -506,8 +515,10 @@ INJECT EqualityExpression :
             int comp = ae.compareNumbers(n1, n2);
             return operation == NOT_EQUALS ? comp !=0 : comp == 0;
         }
-        left = unwrap(left);
-        right = unwrap(right);
+        if (left instanceof CharSequence cs1 && right instanceof CharSequence cs2) {
+            boolean result = CharSequence.compare(cs1, cs2) == 0;
+            return operation == NOT_EQUALS ? !result : result;
+        }
         return operation == NOT_EQUALS ? !left.equals(right) : left.equals(right);
     }
 
@@ -771,24 +782,24 @@ INJECT BuiltinVariable :
 
     public Object evaluate(Environment env) {
         switch (name) {
-           case "namespace" : return env.getCurrentNamespace();
-           case "main" : return env.getMainNamespace();
-           case "globals" : return env;
-           case "locals" : return env.getCurrentMacroContext();
-           case "data_model" : return env.getDataModel();
-           case "scope" : return env.getCurrentScope();
-           case "vars" :
+           case "Namespace" : return env.getCurrentNamespace();
+           case "Main" : return env.getMainNamespace();
+           case "Globals" : return env;
+           case "Locals" : return env.getCurrentMacroContext();
+           case "DataRoot" : return env.getDataModel();
+           case "Scope" : return env.getCurrentScope();
+           case "Vars" :
                return new Object() {
                    public Object get(String key) {
                        return env.getVariable(key);
                    }
                };
-           case "locale" : return env.getLocale().toString();
-           case "lang" : return env.getLocale().getLanguage();
-           case "pass" : return Macro.DO_NOTHING_MACRO;
-           case "name" : return env.getTemplate().getName();
-           case "version" : return TemplateFactory.getVersionNumber();
-           case "error" : return env.getCurrentRecoveredErrorMessage();
+           case "Locale" : return env.getLocale().toString();
+           case "Lang" : return env.getLocale().getLanguage();
+           case "Pass" : return Macro.DO_NOTHING_MACRO;
+           case "Name" : return env.getTemplate().getName();
+           case "Version" : return TemplateFactory.getVersionNumber();
+           case "Error" : return env.getCurrentRecoveredErrorMessage();
         }
         throw new TemplateException("Invalid built-in variable: " + this);
     }
@@ -1050,22 +1061,32 @@ INJECT DotExpression :
     import org.congocc.templates.core.reflection.JavaConstructorCall;
     import org.congocc.templates.extensions.*;
     import org.congocc.templates.core.nodes.ExtensionExpression;
+    import org.congocc.templates.core.nodes.MethodCall;
     extends TemplateNode implements Expression
 {
+    private Extension ext;
+
+    public void close() {
+        String extOrMethodName = get(2).toString();
+        this.ext = Extension.find(extOrMethodName);
+    }
+
     public Expression lhs() {
         return (Expression) get(0);
     }
 
+    public boolean isInInvocation() {
+        return getParent() instanceof MethodCall;
+    }
+
     public Object evaluate(Environment env) {
-        Object target = lhs().evaluate(env);
-        String name = get(2).toString();
-        Extension ext = env.getExtension(name);
         if (ext != null) {
             return ext.get(this, env);
         }
-        if (name.equals("new")) {
-            return new JavaConstructorCall(target, this);
-        }
-        return new JavaMethodCall(target, name, this);
+        Object target = lhs().evaluate(env);
+        String name = get(2).toString();
+        return name.equals("new") ?
+            new JavaConstructorCall(target, this) :
+            new JavaMethodCall(target, name, this);
     }
 }
