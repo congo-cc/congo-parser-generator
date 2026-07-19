@@ -308,6 +308,37 @@ ${globals.translateParserImports()}
                 return isSuccess;
             }
         }
+
+        // Delegated RCAs in a callee production bind to the caller's iterating loop via this stack.
+        // indexBias selects the callee's contiguous block when the same orphans are shared across
+        // parent loops with different local RCA layouts (multi-parent).
+        private sealed class DelegatedCardinalityBinding {
+            public readonly RepetitionCardinality Cardinalities;
+            public readonly int IndexBias;
+
+            public DelegatedCardinalityBinding(RepetitionCardinality cardinalities, int indexBias) {
+                Cardinalities = cardinalities;
+                IndexBias = indexBias;
+            }
+        }
+
+        private readonly Stack<DelegatedCardinalityBinding> _delegatedCardinalityStack = new Stack<DelegatedCardinalityBinding>();
+
+        private void PushDelegatedCardinality(RepetitionCardinality cardinalities, int indexBias) {
+            _delegatedCardinalityStack.Push(new DelegatedCardinalityBinding(cardinalities, indexBias));
+        }
+
+        private void PopDelegatedCardinality() {
+            _delegatedCardinalityStack.Pop();
+        }
+
+        private RepetitionCardinality PeekDelegatedCardinality() {
+            return _delegatedCardinalityStack.Peek().Cardinalities;
+        }
+
+        private int PeekDelegatedBias() {
+            return _delegatedCardinalityStack.Peek().IndexBias;
+        }
 #endif
 
         public string InputSource { get; private set; }

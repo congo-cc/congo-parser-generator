@@ -168,6 +168,20 @@ abstract public class Expansion extends BaseNode {
     	return false;
     }
 
+    /** Local (non-delegated) RCAs in this expansion; overridden on ExpansionSequence. */
+    public boolean isLocallyCardinalityConstrained() {
+        return false;
+    }
+
+    /** Delegated RCAs in this expansion; overridden on ExpansionSequence. */
+    public boolean isDelegatedCardinalityConstrained() {
+        return false;
+    }
+
+    public int[][] getCardinalityConstraints() {
+        return new int[0][];
+    }
+
     public boolean getHasNumericalLookahead() {
         return false;
     }

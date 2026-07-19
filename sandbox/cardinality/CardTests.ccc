@@ -28,8 +28,12 @@ FAULT_TOLERANT_DEFAULT=true;
     <ANY_CHARS: (~["!"])+ >
 ;
 
-// FIXME: to reveal a bug in lexical state changing remove DEFAULT from the following:
-<DEFAULT,JAVA> TOKEN: <END_TOKEN: "]" > ; //TODO: remove this when issue #203 fixed
+// Issue #203 workaround: "]" must also be valid in JAVA so FT lookahead inside
+// LEXICAL_STATE JAVA (Modifiers) does not tokenize the closing bracket as INVALID
+// and then mark it unparsed (which skips the delimiter and lets Modifiers run on).
+// To reproduce #203: #define FT and change this to <DEFAULT> only (omit JAVA).
+// See RepetitionCardinality.md §11 and https://github.com/congo-cc/congo-parser-generator/issues/203
+<DEFAULT,JAVA> TOKEN: <END_TOKEN: "]" > ;
 
 DelimitedString :
     LEXICAL_STATE ANY
@@ -59,7 +63,51 @@ Test :
     "[" 
     LEXICAL_STATE JAVA (Modifiers) 
     "]"!->{System.out.println("'" + lastConsumedToken + "' found; expected ']'!");}
+    |
+    "$" DelegatedParent "$"
+    |
+    // Phase 3: lookahead/parse of delegated loop followed by a trailing delimiter.
+    "@" DelegatedParent "!"
+    |
+    // Phase 4: mixed local RCAs + delegated orphans in one parent loop.
+    "^" MixedParent "^"
+    |
+    // Phase 4: orphan RCA delegates; RCA under an inner * binds locally.
+    "~" InnerVsDelegateParent "~"
 ;  
+
+// Phase 2/3: RCAs in callee bind to caller's iterating loop.
+DelegatedOpts :
+    ENSURE {&0:1&} "X"
+    |
+    ENSURE {&0:1&} "Y"
+;
+
+DelegatedParent :
+    ( DelegatedOpts )+
+;
+
+// Local &W / &Z share the same RepetitionCardinality as MixedChild's orphans.
+MixedChild :
+    ENSURE {&0:1&} "P"
+    |
+    ENSURE {&0:1&} "Q"
+;
+
+MixedParent :
+    ( & "W" | & "Z" | MixedChild )+
+;
+
+// "U" delegates to the parent +; "V" is tallied by the inner +.
+InnerVsDelegateChild :
+    ENSURE {&0:1&} "U"
+    |
+    ( & "V" )+
+;
+
+InnerVsDelegateParent :
+    ( InnerVsDelegateChild )+
+;
 
 Letters :
     LTest1 | LTest2 | LTest3
@@ -330,27 +378,27 @@ INJECT PARSER_CLASS : {
 Modifiers :
  (
     (
-       SCAN {allows(ABSTRACT,FINAL)}# =>          & (<ABSTRACT>|<FINAL> ) =>||// Note the "&" is the short form for "ENSURE ASSERT {&0:1&}".
+       SCAN {allows(EnumSet.of(ABSTRACT,FINAL))}# =>          & (<ABSTRACT>|<FINAL> ) =>||// Note the "&" is the short form for "ENSURE ASSERT {&0:1&}".
        |  
-       SCAN {allows(PRIVATE,PROTECTED,PUBLIC)}# =>& (<PRIVATE>|<PROTECTED>|<PUBLIC>) =>||
+       SCAN {allows(EnumSet.of(PRIVATE,PROTECTED,PUBLIC))}# =>& (<PRIVATE>|<PROTECTED>|<PUBLIC>) =>||
        |
-       SCAN {allows(STATIC)}# =>                  & <STATIC> =>||
+       SCAN {allows(EnumSet.of(STATIC))}# =>                  & <STATIC> =>||
        |
-       SCAN {allows(SYNCHRONIZED)}# =>            & <SYNCHRONIZED> =>||
+       SCAN {allows(EnumSet.of(SYNCHRONIZED))}# =>            & <SYNCHRONIZED> =>||
        |
-       SCAN {allows(NATIVE)}# =>                  & <NATIVE> =>||
+       SCAN {allows(EnumSet.of(NATIVE))}# =>                  & <NATIVE> =>||
        |
-       SCAN {allows(TRANSIENT)}# =>               & <TRANSIENT> =>||
+       SCAN {allows(EnumSet.of(TRANSIENT))}# =>               & <TRANSIENT> =>||
        |
-       SCAN {allows(VOLATILE)}# =>                & <VOLATILE> =>||
+       SCAN {allows(EnumSet.of(VOLATILE))}# =>                & <VOLATILE> =>||
        |
-       SCAN {allows(STRICTFP)}# =>                & <STRICTFP> =>||
+       SCAN {allows(EnumSet.of(STRICTFP))}# =>                & <STRICTFP> =>||
        |
-       SCAN {allows(_DEFAULT)}# =>                & <_DEFAULT> =>||
+       SCAN {allows(EnumSet.of(_DEFAULT))}# =>                & <_DEFAULT> =>||
     ) =>||
     |
     SCAN {
-        allows(SEALED) 
+        allows(EnumSet.of(SEALED)) 
         &&
         (
           checkNextTokenImage("sealed","non-sealed")
@@ -368,25 +416,14 @@ Modifiers :
 
 INJECT PARSER_CLASS :
 {
-    boolean allows(TokenType t1) {
+    // Single arity so Python (no overloads) matches Java/C#. Call sites use EnumSet.of(...).
+    boolean allows(EnumSet<TokenType> types) {
         if (isParserTolerant() || permissibleModifiers == null) return true;
-        if (permissibleModifiers.contains(t1)) {
-            //System.out.println("allowed=" + t1);
-            return true;
-        }
-        return false;
-    }
-    boolean allows(TokenType t1, TokenType t2) {
-        if (isParserTolerant() || permissibleModifiers == null) return true;
-        if (permissibleModifiers.contains(t1) || permissibleModifiers.contains(t2)) {
-            return true;
-        }
-        return false;
-    }
-    boolean allows(TokenType t1, TokenType t2, TokenType t3) {
-        if (isParserTolerant() || permissibleModifiers == null) return true;
-        if (permissibleModifiers.contains(t1) || permissibleModifiers.contains(t2) || permissibleModifiers.contains(t3)) {
-            return true;
+        for (TokenType t : types) {
+            if (permissibleModifiers.contains(t)) {
+                //System.out.println("allowed=" + t);
+                return true;
+            }
         }
         return false;
     }
