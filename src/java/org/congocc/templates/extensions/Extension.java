@@ -88,8 +88,6 @@ public interface Extension {
             register("Round", numericalCast);
             register("Join", new StringFunctions.Join());
             register("Number", new numberBI());
-            register("LeftPad", new StringFunctions.LeftPad());
-            register("RightPad", new StringFunctions.RightPad());
             register("Groups", new groupsBI());
             register("Matches", new StringFunctions.Matches());
             register("URL", new StringFunctions.Url());
@@ -321,11 +319,13 @@ public interface Extension {
         }
 
         private static String JavaStringEncode(Object arg) {
+            return StringUtil.javaStringEncode(arg.toString());
+            /*
             if (arg instanceof CharSequence) {
                 String s = arg.toString();
                 return StringUtil.javaStringEncode(s);
             }
-            throw new EvaluationException("Expecting a string");
+            throw new EvaluationException("Expecting a string");*/
         }
 
         private static String JavaScriptStringEncode(Object arg) {

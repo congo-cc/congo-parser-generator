@@ -6,6 +6,7 @@ import java.lang.System;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.*;
+import java.util.function.Function;
 import java.util.logging.Logger;
 
 import org.congocc.app.AppSettings;
@@ -68,6 +69,16 @@ public class FilesGenerator {
         templateFactory.setSharedVariable("settings", grammar.getAppSettings());
         templateFactory.setSharedVariable("lexerData", grammar.getLexerData());
         templateFactory.setSharedVariable("generated_by", org.congocc.app.Main.PROG_NAME);
+        templateFactory.setSharedVariable("padding",
+          (Function<Integer,String>)
+           n->{
+            StringBuilder buf = new StringBuilder();
+             for (int i = 0; i<n; i++) {
+                buf.append(' ');
+             }
+             return buf.toString();
+           }
+        );
         if (codeLang == JAVA) {
            templateFactory.addAutoImport("CU", "CommonUtils.java.ctl");
         }
