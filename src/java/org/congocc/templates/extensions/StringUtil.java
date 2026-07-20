@@ -250,27 +250,6 @@ public class StringUtil {
         return buf.toString();
     }
 
-    @SuppressWarnings("deprecation")
-    public static Locale deduceLocale(String input) {
-       Locale locale = Locale.getDefault();
-       if (input.charAt(0) == '"') input = input.substring(1, input.length() -1);
-       StringTokenizer st = new StringTokenizer(input, ",_ ");
-       String lang = "", country = "";
-       if (st.hasMoreTokens()) {
-          lang = st.nextToken();
-       }
-       if (st.hasMoreTokens()) {
-          country = st.nextToken();
-       }
-       if (!st.hasMoreTokens()) {
-          locale = new Locale(lang, country);
-       }
-       else {
-          locale = new Locale(lang, country, st.nextToken());
-       }
-       return locale;
-    }
-
     public static String capitalize(String s) {
         StringTokenizer st = new StringTokenizer(s, " \t\r\n", true);
         StringBuilder buf = new StringBuilder(s.length());
@@ -472,61 +451,4 @@ public class StringUtil {
         return s;
     }
 
-    /**
-     * Pads the string at the left with a filling pattern until it reaches the
-     * desired length. If the string is longer than this length, then it returns
-     * the unchanged string. For example: <code>leftPad('ABC', 9, '1234')</code>
-     * returns <code>"123412ABC"</code>.
-     *
-     * @param s the string that will be padded.
-     * @param minLength the length to reach.
-     * @param filling the filling pattern. Must be at least 1 characters long.
-     *     Can't be <code>null</code>.
-     */
-    public static String leftPad(String s, int minLength, String filling) {
-        int paddingLength = minLength - s.length();
-        if (paddingLength<=0) {
-            return s;
-        }
-        if (filling.length() == 0) {
-            throw new IllegalArgumentException(
-                    "The \"filling\" argument can't be the empty string.");
-        }
-        StringBuilder buf = new StringBuilder();
-        while (buf.length() < paddingLength) {
-            buf.append(filling);
-        }
-        buf.setLength(paddingLength);
-        buf.append(s);
-        return buf.toString();
-    }
-
-    /**
-     * Pads the string at the right with a filling pattern until it reaches the
-     * desired length. If the string is longer than this length, then it returns
-     * the unchanged string. For example: <code>rightPad('ABC', 9, '1234')</code>
-     * returns <code>"ABC412341"</code>. Note that the filling pattern is
-     * started as if you overlay <code>"123412341"</code> with the left-aligned
-     * <code>"ABC"</code>, so it starts with <code>"4"</code>.
-     *
-     * @param s the string that will be padded.
-     * @param minLength the length to reach.
-     * @param filling the filling pattern. Must be at least 1 characters long.
-     *     Can't be <code>null</code>.
-     */
-    public static String rightPad(String s, int minLength, String filling) {
-        int paddingLength = minLength - s.length();
-        if (paddingLength <= 0) {
-            return s;
-        }
-        if (filling.length() == 0) {
-            throw new IllegalArgumentException(
-                    "The \"filling\" argument can't be 0 length string.");
-        }
-        StringBuilder buf = new StringBuilder(filling);
-        while (buf.length()<paddingLength) buf.append(filling);
-        String padding = buf.toString();
-        padding = padding.substring(padding.length() - paddingLength);
-        return s + padding;
-    }
 }

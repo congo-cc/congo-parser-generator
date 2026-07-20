@@ -81,13 +81,7 @@ public interface Extension {
     static class Inner {
         private static Map<String, Extension> knownExtensions = new ConcurrentHashMap<>();
         static {
-            NumericalCast numericalCast = new NumericalCast();
-            register("Floor", numericalCast);
-            register("Ceiling", numericalCast);
-            register("Round", numericalCast);
             register("Number", new numberBI());
-            register("Groups", new groupsBI());
-            register("Matches", new StringFunctions.Matches());
             register("URL", new StringFunctions.Url());
             register("Scope", new MacroBuiltins.Scope());
             register("Namespace", new MacroBuiltins.Namespace());

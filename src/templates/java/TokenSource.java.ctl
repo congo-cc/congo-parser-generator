@@ -147,6 +147,8 @@ abstract public class TokenSource implements CharSequence
             }
             String fourHexDigits = content.subSequence(index + numConsecutiveUs,
                                           index + numConsecutiveUs + 4).toString();
+            // The parseInt can throw an exception, of course, but we just
+            // let it throw and have the exception bubble up.
             buf.append((char) Integer.parseInt(fourHexDigits, 16));
             index += (numConsecutiveUs + 4);
             ++col;
@@ -587,7 +589,7 @@ abstract public class TokenSource implements CharSequence
     c.limit(c.position());
     c.rewind();
     return c.toString();
-    // return new String(bytes, charset);
+    #-- return new String(bytes, charset);
   }
 
   public static String stringFromBytes(byte[] bytes) throws CharacterCodingException {
