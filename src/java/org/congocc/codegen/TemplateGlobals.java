@@ -10,6 +10,7 @@ import org.congocc.app.*;
 import org.congocc.core.*;
 import org.congocc.codegen.rust.RustTranslator;
 import org.congocc.codegen.csharp.CSharpTranslator;
+import org.congocc.codegen.python.PythonTranslator;
 import org.congocc.parser.Node;
 import static org.congocc.parser.Node.CodeLang.*;
 import org.congocc.parser.tree.*;
@@ -344,6 +345,8 @@ public class TemplateGlobals {
             translateStatements(javaCodeBlock, indent, result);
             if (translator instanceof CSharpTranslator) {
                 patchJavaSystemOutCallsForCSharp(result);
+            } else if (translator instanceof PythonTranslator) {
+                patchJavaSystemOutCallsForPython(result);
             }
         }
         translator.popSymbols();
@@ -360,6 +363,17 @@ public class TemplateGlobals {
         replaceAllInBuilder(buf, "System.out.Println", "Console.WriteLine");
         replaceAllInBuilder(buf, "System.out.print", "Console.Write");
         replaceAllInBuilder(buf, "System.out.Print", "Console.Write");
+    }
+
+    /**
+     * Same idea as the C# patch: keep Java-style diagnostic prints in grammars working under Python.
+     * {@code System.out.print} becomes {@code print} (adds a newline); good enough for test grammars.
+     */
+    private static void patchJavaSystemOutCallsForPython(StringBuilder buf) {
+        replaceAllInBuilder(buf, "System.out.println", "print");
+        replaceAllInBuilder(buf, "System.out.Println", "print");
+        replaceAllInBuilder(buf, "System.out.print", "print");
+        replaceAllInBuilder(buf, "System.out.Print", "print");
     }
 
     private static void replaceAllInBuilder(StringBuilder sb, String from, String to) {

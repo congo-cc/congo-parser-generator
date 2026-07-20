@@ -61,6 +61,14 @@ public class NonTerminal extends Expansion implements SyntaxElement {
         return !getStopAtScanLimit();
     }
 
+    /**
+     * Bias of this call site's callee block in the enclosing loop's cardinality array
+     * when the production is a delegated-cardinality target.
+     */
+    public int getDelegatedCardinalityBias() {
+        return getGrammar().getDelegatedCardinalityBias(this);
+    }
+
     public TokenSet getFirstSet() {
         if (firstSet == null) {
             firstSet = getNestedExpansion().getFirstSet();

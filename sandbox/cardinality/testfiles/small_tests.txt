@@ -33,3 +33,24 @@
 [final static public]
 [final public static]
 (the end)
+$X$
+$Y$
+$XY$
+$YX$
+@X!
+@Y!
+@XY!
+@YX!
+^W^
+^Z^
+^WZ^
+^WP^
+^WQ^
+^WZPQ^
+^ZWQP^
+~U~
+~V~
+~UV~
+~VU~
+~UVV~
+~VVU~

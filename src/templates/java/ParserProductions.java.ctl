@@ -668,7 +668,7 @@
          #else
             #-- take care of terminal and non-terminal expansions; they cannot contain child expansions --
             #if classname = "NonTerminal"
-               ${BuildCodeNonTerminal(expansion)}
+               ${BuildCodeNonTerminal(expansion, cardinalitiesVar)}
             #elif classname = "Terminal"
                ${BuildCodeTerminal(expansion)}
             #else
@@ -751,8 +751,12 @@
          fail("${assertionMessage}"${optionalPart},
               ${assertion::locationExpression!"getToken(1)"});
       }
-   #elif assertion::cardinalityConstraint??
-      if (!${cardinalitiesVar!"cardinalities"}.choose(${assertion::assertionIndex}, false)) {
+   #elif assertion::cardinalityConstraint?? && cardinalitiesVar?? && cardinalitiesVar.length() > 0
+      if (!${cardinalitiesVar}.choose(${assertion::assertionIndex}, false)) {
+         fail("Maximum cardinality constraint at: ${assertion::location.JavaStringEncode} exceeded.", getToken(1));
+      }
+   #elif assertion::cardinalityConstraint?? && assertion::delegatedCardinality
+      if (!peekDelegatedCardinality().choose(peekDelegatedBias() + ${assertion::assertionIndex}, false)) {
          fail("Maximum cardinality constraint at: ${assertion::location.JavaStringEncode} exceeded.", getToken(1));
       }
    #endif
@@ -811,7 +815,11 @@
 
 #-- The following macros build expansions that might build tree nodes (could be called "syntactic" nodes). --
 
-#macro BuildCodeNonTerminal nonterminal
+#macro BuildCodeNonTerminal nonterminal cardinalitiesVar=null
+   #var pushDelegated = false
+   #if nonterminal::production::delegatedCardinalityTarget && cardinalitiesVar?? && cardinalitiesVar.length() > 0
+      #set pushDelegated = true
+   #endif
    pushOntoCallStack("${nonterminal::containingProduction::name}", "${nonterminal::inputSource.JavaStringEncode}", ${nonterminal::beginLine}, ${nonterminal::beginColumn});
    #if settings::faultTolerant
       #var followSet = nonterminal::followSet
@@ -829,11 +837,17 @@
          }
       #endif
    #endif
+   #if pushDelegated
+      pushDelegatedCardinality(${cardinalitiesVar}, ${nonterminal::delegatedCardinalityBias});
+   #endif
    try {
       ${AcceptNonTerminal(nonterminal)}
    }
    finally {
        popCallStack();
+   #if pushDelegated
+       popDelegatedCardinality();
+   #endif
    }
 #endmacro
 
@@ -1072,8 +1086,10 @@
    #if expansion::hasSemanticLookahead && !expansion::lookahead::semanticLookaheadNested
       (${expansion::semanticLookahead}) &&
    #endif
-   #if expansion::cardinalityConstrained && cardinalitiesVar??
+   #if expansion::cardinalityConstrained && cardinalitiesVar?? && cardinalitiesVar.length() > 0
       ${expansion::predicateMethodName}(${cardinalitiesVar})
+   #elif expansion::delegatedCardinalityConstrained
+      ${expansion::predicateMethodName}(peekDelegatedCardinality())
    #else
       ${expansion::predicateMethodName}()
    #endif

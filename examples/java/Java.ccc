@@ -695,6 +695,18 @@ INJECT SwitchExpression : implements Expression {
   }
 }
 
+INJECT SuperDotName : implements PrimaryExpression
+{
+  public boolean canBeThrown() {
+    return true;
+  }
+
+  public boolean canBeAssignedTo() {
+    return true;
+  }
+}
+
+
 INJECT DotNew : extends AllocationExpression {
   public boolean canBeThrown() {return true;}
 }
@@ -907,19 +919,19 @@ ObjectCastExpression :
 
 PrimaryExpression#interface :
  (
+  MethodReference
+  |
   LiteralExpression
   |
   "this" #LiteralExpression
   |
-  "super" #LiteralExpression
+  "super" "." =>|| <IDENTIFIER> #SuperDotName(3)
   |
   Parentheses
   |
   AllocationExpression
   |
   ClassLiteral
-  |
-  MethodReference
   |
   Name
  )
@@ -934,6 +946,7 @@ PrimaryExpression#interface :
     |
     ("." =>|+1 AllocationExpression) #DotNew(+1)
     |
+    ENSURE {getTokenType(0) == IDENTIFIER || getTokenType(0) == RPAREN || getTokenType(0) == RBRACKET}
     ("[" Expression "]") #ArrayAccess(+1)
     |
     ("." [TypeArguments] <IDENTIFIER>) #DotName(+1)
@@ -944,7 +957,6 @@ PrimaryExpression#interface :
     InvocationArguments #MethodCall(+1)
    )
  )*
- ASSERT {getTokenType(0) != SUPER, getToken(0) : "Not a valid expression here " + getToken(0).getLocation()}
 ;
 
 LiteralExpression# : Literal ;

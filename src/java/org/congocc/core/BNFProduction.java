@@ -74,6 +74,11 @@ public class BNFProduction extends Expansion {
         return tba!=null && "scan".equals(tba.getNodeName());
     }
 
+    /** True if orphan RCAs in this production are linked to a caller's iterating loop. */
+    public boolean isDelegatedCardinalityTarget() {
+        return getGrammar().isDelegatedCardinalityProduction(this);
+    }
+
     public String getLookaheadMethodName() {
         return getAppSettings().generateIdentifierPrefix("check") + name;
     }

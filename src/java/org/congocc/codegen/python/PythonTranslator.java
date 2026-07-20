@@ -64,6 +64,17 @@ public class PythonTranslator extends Translator {
         else if (ident.equals("toString")) {
             result = "__str__";
         }
+        else if (ident.equals("THIS_PRODUCTION") || ident.equals("THIS")) {
+            // Prefer explicit mapping before the lowercase camelToSnake branch.
+            result = "this_production";
+        }
+        else if (ident.equals("THAT") || ident.equals("peekNode()")) {
+            // Identifier.toString() rewrites THAT -> "peekNode()" as a primary name.
+            result = "self.peek_node()";
+        }
+        else if (ident.equals("popNode()")) {
+            result = "self.pop_node()";
+        }
         else if (ident.startsWith(appSettings.getNodePackage().concat("."))) {
             int prefixLength = appSettings.getNodePackage().length() + 1;
             result = ident.substring(prefixLength);
@@ -76,9 +87,6 @@ public class PythonTranslator extends Translator {
         }
         else if (ident.equals("PARSER_CLASS") || (ident.equals(appSettings.getParserClassName()))) {
             result = "Parser";
-        }
-        else if (ident.equals("THIS_PRODUCTION") || ident.equals("THIS")) {
-            result = "this_production";
         }
         else if (ident.equals("BASE_TOKEN_CLASS") || (ident.equals(appSettings.getBaseTokenClassName()))) {
             result = "Token";
