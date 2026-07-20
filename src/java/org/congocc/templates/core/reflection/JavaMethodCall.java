@@ -15,12 +15,14 @@ public class JavaMethodCall implements VarArgsFunction<Object> {
     private Object target;
     private List<Method> possibleMethods;
     private Node location;
+    private int numArgs;
 
-    public JavaMethodCall(Object target, String methodName, Node location) {
+    public JavaMethodCall(Object target, String methodName, int numArgs, Node location) {
         assertIsDefined(target, location);
         this.location = location;
         this.target = target;
         this.methodName = methodName;
+        this.numArgs = numArgs;
         findPossibleMethods();
     }
 
@@ -38,7 +40,15 @@ public class JavaMethodCall implements VarArgsFunction<Object> {
         possibleMethods = new ArrayList<>();
         for (Method method : methods) {
             if (method.getName().equals(methodName)) {
-                possibleMethods.add(method);
+                int numParams = method.getParameterTypes().length;
+                if (!method.isVarArgs()) {
+                    if (numParams == numArgs) {
+                        possibleMethods.add(method);
+                    }
+                }
+                else if (numArgs >= numParams -1) {
+                    possibleMethods.add(method);
+                }
             }
         }
         if (possibleMethods.size() == 1) {

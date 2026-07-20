@@ -49,7 +49,7 @@ public interface Extension {
      * extension is "foobar", then lhs.foobar will return
      * func.apply(lhs)
      */
-    static void register(String name, Function<Object, ?> func) {
+    static void register(String name, Function<Object,?> func) {
         register(name, (exp, env) -> func.apply(exp.lhs().evaluate(env)));
     }
 
@@ -118,7 +118,14 @@ public interface Extension {
             register("long", Inner::longCast);
             register("short", Inner::shortCast);
             register("instanceof", Inner::IsInstance);
+            alias("InstanceOf", "instanceof");
             alias("Websafe", "HTML");
+            alias("Int", "int");
+            alias("Double", "double");
+            alias("Float", "float");
+            alias("Byte", "byte");
+            alias("Long", "long");
+            alias("Short", "short");
         }
 
         private static List<Object> Reverse(Object arg) {

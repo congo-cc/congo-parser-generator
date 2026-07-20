@@ -904,6 +904,7 @@ INJECT PositionalArgsList :
         return value;
     }
 
+    @Override
     public int numArgs() {
         return childrenOfType(Expression.class).size();
     }
@@ -953,7 +954,8 @@ INJECT NamedArgsList :
         return namedArgs;
     }
 
-    public int size() {
+    @Override
+    public int numArgs() {
         return namedArgs.size();
     }
 
@@ -993,12 +995,9 @@ INJECT ArgsList :
     import java.util.*;
     import org.congocc.templates.core.Environment;
 {
-	/**
-	 * The target will be a TemplateTranformModel.
-	 */
 	public abstract Map<String, Object> getParameterMap(Object target, Environment env);
-
 	public abstract List<Object> getParameterSequence(Object target, Environment env);
+    public abstract int numArgs();
 }
 
 HashLiteral :
@@ -1079,6 +1078,13 @@ INJECT DotExpression :
         return getParent() instanceof MethodCall;
     }
 
+    public int numArgs() {
+        if (getParent() instanceof MethodCall mc) {
+            return mc.numArgs();
+        }
+        return 0;
+    }
+
     public Object evaluate(Environment env) {
         if (ext != null) {
             return ext.get(this, env);
@@ -1086,7 +1092,7 @@ INJECT DotExpression :
         Object target = lhs().evaluate(env);
         String name = get(2).toString();
         return name.equals("new") ?
-            new JavaConstructorCall(target, this) :
-            new JavaMethodCall(target, name, this);
+            new JavaConstructorCall(target, numArgs(), this) :
+            new JavaMethodCall(target, name, numArgs(), this);
     }
 }

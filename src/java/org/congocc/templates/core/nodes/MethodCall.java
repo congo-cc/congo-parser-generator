@@ -25,6 +25,11 @@ public class MethodCall extends TemplateNode implements Expression {
         return (Expression) get(0);
     }
 
+    public int numArgs() {
+        ArgsList argsList = getArgs();
+        return argsList == null ? 0 : argsList.numArgs();
+    }
+
     @SuppressWarnings("unchecked")
     public Object evaluate(Environment env) {
         Object leftSide = lhs().evaluate(env);

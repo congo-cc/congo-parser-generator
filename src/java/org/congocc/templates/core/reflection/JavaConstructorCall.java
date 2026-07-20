@@ -21,7 +21,7 @@ public class JavaConstructorCall implements VarArgsFunction<Object> {
     private List<Constructor<?>> constructors = new ArrayList<>();
     private Node location;
 
-    public JavaConstructorCall(Object target, Node location) {
+    public JavaConstructorCall(Object target, int numArgs, Node location) {
         assertIsDefined(target, location);
         this.location = location;
         if (target instanceof Class clazz) {
@@ -35,10 +35,17 @@ public class JavaConstructorCall implements VarArgsFunction<Object> {
             }
         }
         else {
-            throw new TemplateException("Cannot invoke a constructor on target: " + target);
+            throw new EvaluationException("Expecting either a Class instance of the class to be instantiated, or the fully qualified class name (as a string): " + target.getClass());
         }
         for (Constructor<?> cons : clazz.getConstructors()) {
-            constructors.add(cons);
+            int numParams = cons.getParameterTypes().length;
+            if (!cons.isVarArgs()) {
+                if (numParams == numArgs) {
+                    constructors.add(cons);
+                }
+            } else if (numArgs >= numParams -1) {
+                constructors.add(cons);
+            }
         }
     }
 
