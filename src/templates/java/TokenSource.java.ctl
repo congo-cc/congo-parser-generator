@@ -109,24 +109,16 @@ abstract public class TokenSource implements CharSequence
    static protected String mungeContent(CharSequence content, boolean preserveTabs, int tabSize, boolean preserveLines,
         boolean javaUnicodeEscape, String terminatingString) {
     if (preserveTabs && preserveLines && !javaUnicodeEscape) {
-        if (!terminatingString.isEmpty()) {
-            if (content.length() == 0) {
-                content = terminatingString;
-            } else {
-                int lastChar = content.charAt(content.length() - 1);
-                if (lastChar != '\n' && lastChar != '\r') {
-                    if (content instanceof StringBuilder) {
-                        ((StringBuilder) content).append('\n');
-                    } else {
-                        content = content + terminatingString;
-                    }
-                }
-            }
+        if (!terminatingString.isEmpty() && !endsWith(content, terminatingString)) {
+            StringBuilder sb = null;
+            if (content instanceof StringBuilder) sb = (StringBuilder) content;
+            else sb = new StringBuilder(content);
+            sb.append(terminatingString);
         }
         return content.toString();
     }
     StringBuilder buf = new StringBuilder();
-    // This is just to handle tabs to spaces. If you don't have that setting set, it
+    // This is just to handle tabs to spaces. If you're preserving tabs, then it
     // is really unused.
     int col = 0;
     int index = 0, contentLength = content.length();
@@ -153,7 +145,8 @@ abstract public class TokenSource implements CharSequence
                 if (content.charAt(i) == 'u') numConsecutiveUs++;
                 else break;
             }
-            String fourHexDigits = content.subSequence(index + numConsecutiveUs, index + numConsecutiveUs + 4).toString();
+            String fourHexDigits = content.subSequence(index + numConsecutiveUs,
+                                          index + numConsecutiveUs + 4).toString();
             buf.append((char) Integer.parseInt(fourHexDigits, 16));
             index += (numConsecutiveUs + 4);
             ++col;
@@ -175,17 +168,24 @@ abstract public class TokenSource implements CharSequence
             if (!Character.isLowSurrogate(ch)) col++;
         }
     }
-    if (!terminatingString.isEmpty()) {
-        if (buf.length() == 0) {
-            return terminatingString;
-        }
-        if (buf.length() < terminatingString.length()) {
-            buf.append(terminatingString);
-        } else if (!buf.substring(buf.length()-terminatingString.length()).equals(terminatingString)) {
-            buf.append(terminatingString);
-        }
+    if (!terminatingString.isEmpty() && !endsWith(content,terminatingString)) {
+        buf.append(terminatingString);
     }
     return buf.toString();
+   }
+
+   private static boolean endsWith(CharSequence content, CharSequence tail) {
+      if (tail.length() > content.length()) return false;
+      CharSequence lastBit = content.subSequence(content.length() - tail.length(), content.length());
+      return contentEquals(lastBit, tail);
+   }
+
+   private static boolean contentEquals(CharSequence cs1, CharSequence cs2) {
+     if (cs1.length() != cs2.length()) return false;
+     for (int i = 0; i< cs1.length(); i++) {
+         if (cs1.charAt(i) != cs2.charAt(i)) return false;
+     }
+     return true;
    }
 
    private void createTokenLocationTable() {
@@ -268,8 +268,8 @@ abstract public class TokenSource implements CharSequence
     protected void setLineSkipped(${BaseToken} tok) {
         setLineSkipped(tok, true);
     }
-
 #endif
+
 #if settings::cppContinuationLine
     protected void handleCContinuationLines() {
       String input = content.toString();
