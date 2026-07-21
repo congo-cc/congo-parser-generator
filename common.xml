@@ -37,7 +37,7 @@
     <attribute name="lang" default="java"/>
     <sequential>
       <echo message="Building parser from @{target}"/>
-      <java fork="true" jar="${common.basedir}/bin/congocc.jar" failonerror="true">
+      <java fork="true" jar="${common.basedir}/template-engine/bootstrap/congocc.jar" failonerror="true">
         <assertions><enable/></assertions>
         <arg line="@{args} @{target} -lang @{lang}"/>
       </java>
