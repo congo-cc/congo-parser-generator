@@ -54,5 +54,6 @@ jobs:
           8.0.x
     - name: Run core tests
       run: |
+        git submodule update --init
         ant -version
         ant full-test
