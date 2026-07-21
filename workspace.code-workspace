@@ -17,12 +17,14 @@
 		"java.project.sourcePaths": [
 			"src/java",
 			"build/generated-java",
+			"template-engine/src/java",
+			"template-engine/template-engine/src/java,
 			"examples/json",
 			"examples/java",
 			"examples/python",
 			"examples/lua",
 			"examples/csharp",
-		        "examples/rust"
+            "examples/rust"
 		],
 		"cSpell.enabled": false,
 		"files.trimTrailingWhitespace": true
