@@ -37,7 +37,7 @@
       srcfile="examples/csharp/PPDirectiveLine.ccc" />
   </target>
 
-  <target name="restore-bootstrap-jar">
+  <target name="restore-bootstrap-jar" depends="init-template-submodule">
     <exec executable="git" dir="${basedir}">
       <arg line="checkout template-engine/bootstrap/congocc.jar" />
     </exec>
