@@ -32,10 +32,6 @@
       <srcfiles dir="src/grammars" includes="RustInternal.ccc" />
       <srcfiles dir="examples/rust" includes="*.ccc" />
     </uptodate>
-    <uptodate property="templates.uptodate"
-      targetfile="build/generated-java/org/congocc/templates/core/parser/CTLParser.java">
-      <srcfiles dir="examples/congo-templates" includes="*.ccc" />
-    </uptodate>
     <uptodate property="ppline.uptodate"
       targetfile="build/generated-java/org/parsers/csharp/ppline/PPDirectiveLineParser.java"
       srcfile="examples/csharp/PPDirectiveLine.ccc" />
@@ -43,7 +39,7 @@
 
   <target name="restore-bootstrap-jar">
     <exec executable="git" dir="${basedir}">
-      <arg line="checkout bin/congocc.jar" />
+      <arg line="checkout template-engine/bootstrap/congocc.jar" />
     </exec>
   </target>
 
@@ -58,8 +54,8 @@
      drop in the newly built jarfile and build and test again
 -->
   <target name="full-test" depends="restore-bootstrap-jar,clean,jar,test">
-    <echo>Now we copy the new congocc.jar to bin to rebootstrap</echo>
-    <copy file="congocc.jar" todir="bin" />
+    <echo>Now we copy the new congocc.jar over rebootstrap</echo>
+    <copy file="congocc.jar" todir="template-engine/bootstrap" />
     <antcall target="clean" />
     <antcall target="test" />
   </target>
@@ -67,9 +63,7 @@
   <target name="clean">
     <delete file="congocc.jar" />
     <delete dir="build" />
-    <delete>
-      <fileset dir="." includes="**/*.class" />
-    </delete>
+    <ant target="clean" dir="template-engine" />
     <ant target="clean" dir="examples/json" />
     <ant target="clean" dir="examples/java" />
     <ant target="clean" dir="examples/python" />
@@ -101,9 +95,6 @@
   <target name="rust-gen" unless="rust.uptodate">
     <congocc-use-bootstrap target="src/grammars/RustInternal.ccc" />
   </target>
-  <target name="templates-gen" unless="templates.uptodate">
-    <congocc-use-bootstrap target="examples/congo-templates/CTL.ccc" />
-  </target>
 
   <target name="build-parsers"
     depends="init,
@@ -114,7 +105,7 @@
                python-gen,
                csharp-gen,
                rust-gen,
-               templates-gen"
+               templates-jar"
   />
 
   <target name="compile" depends="build-parsers">
@@ -127,7 +118,8 @@
       release="17">
       <src path="src/java" />
       <src path="build/generated-java" />
-      <compilerarg value="-Xlint:deprecation" />
+      <src path="template-engine/src/java" />
+      <src path="template-engine/build/generated-java" />
     </javac>
     <copy todir="build" file="LICENSE" />
     <copy todir="build/templates">
@@ -146,23 +138,6 @@
       </fileset>
     </copy>
   </target>
-
-  <target name="templates-compile" depends="init,templates-gen">
-    <copy todir="build" file="LICENSE" />
-    <javac destdir="build"
-      deprecation="off"
-      debug="on"
-      optimize="off"
-      failonerror="true"
-      includeantruntime="false"
-      release="17">
-      <src path="src/java/" />
-      <src path="build/generated-java/" />
-      <include name="org/congocc/templates/**" />
-      <compilerarg value="-Xlint:deprecation" />
-    </javac>
-  </target>
-
 
   <target name="test" depends="jar">
     <echo>Testing the JSON Parser</echo>
@@ -246,6 +221,7 @@
   <target name="jar" depends="compile">
     <jar jarfile="congocc.jar" compress="true" excludes="**/*.java">
       <fileset dir="build" includes="LICENSE,include/,org/,templates/" />
+      <fileset dir="template-engine/build" />
       <manifest>
         <attribute name="Main-Class" value="org.congocc.app.Main" />
         <attribute name="Built-By" value="${user.name}" />
@@ -254,15 +230,8 @@
     </jar>
   </target>
 
-  <target name="templates-jar" depends="templates-compile">
-    <jar jarfile="congo-templates.jar"
-      basedir="build"
-      compress="true"
-      includes="LICENSE,org/congocc/templates/**/*.class">
-      <manifest>
-        <attribute name="Main-Class" value="org.congocc.templates.cli.CommandLine" />
-      </manifest>
-    </jar>
+  <target name="templates-jar">
+    <ant dir="template-engine" target="jar"/>
   </target>
 
   <target name="update-bootstrap">
@@ -276,11 +245,11 @@
     <antcall target="clean" />
     <antcall target="jar" />
     <echo>Copying current jar to bootstrap location ...</echo>
-    <copy file="congocc.jar" todir="bin" />
+    <copy file="congocc.jar" todir="template-engine/bootstrap" />
     <echo>Ensuring any generated code is up to date in the bootstrap jar ...</echo>
     <antcall target="clean" />
     <antcall target="jar" />
     <echo>Copying current jar to bootstrap location ...</echo>
-    <copy file="congocc.jar" todir="bin" />
+    <copy file="congocc.jar" todir="template-engine/bootstrap" />
   </target>
 </project>
