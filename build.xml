@@ -6,49 +6,49 @@
 
   <target name="init">
     <available
-            file="template-engine/bootstrap/congocc.jar"
-            property="bootstrap.jar.present"
-        />
+      file="template-engine/bootstrap/congocc.jar"
+      property="bootstrap.jar.present"
+    />
     <uptodate
-            property="parser.uptodate"
-            targetfile="build/generated-java/org/congocc/parser/CongoCCParser.java"
-        >
+      property="parser.uptodate"
+      targetfile="build/generated-java/org/congocc/parser/CongoCCParser.java"
+    >
       <srcfiles dir="src/grammars" includes="CongoCC.ccc" />
       <srcfiles dir="src/grammars" includes="Lexical.inc.ccc" />
       <srcfiles dir="src/grammars" includes="JavaInternal.ccc" />
       <srcfiles dir="examples/java" includes="*.ccc" />
     </uptodate>
     <uptodate
-            property="preprocessor.uptodate"
-            targetfile="build/generated-java/org/congocc/preprocessor/PreprocessorParser.java"
-            srcfile="examples/preprocessor/Preprocessor.ccc"
-        />
+      property="preprocessor.uptodate"
+      targetfile="build/generated-java/org/congocc/preprocessor/PreprocessorParser.java"
+      srcfile="examples/preprocessor/Preprocessor.ccc"
+    />
     <uptodate
-            property="python.uptodate"
-            targetfile="build/generated-java/org/congocc/parser/python/PythonParser.java"
-        >
+      property="python.uptodate"
+      targetfile="build/generated-java/org/congocc/parser/python/PythonParser.java"
+    >
       <srcfiles dir="src/grammars" includes="PythonInternal.ccc" />
       <srcfiles dir="examples/python" includes="*.ccc" />
     </uptodate>
     <uptodate
-            property="csharp.uptodate"
-            targetfile="build/generated-java/org/congocc/parser/csharp/CSharpParser.java"
-        >
+      property="csharp.uptodate"
+      targetfile="build/generated-java/org/congocc/parser/csharp/CSharpParser.java"
+    >
       <srcfiles dir="src/grammars" includes="CSharpInternal.ccc" />
       <srcfiles dir="examples/csharp" includes="*.ccc" />
     </uptodate>
     <uptodate
-            property="rust.uptodate"
-            targetfile="build/generated-java/org/congocc/parser/rust/RustParser.java"
-        >
+      property="rust.uptodate"
+      targetfile="build/generated-java/org/congocc/parser/rust/RustParser.java"
+    >
       <srcfiles dir="src/grammars" includes="RustInternal.ccc" />
       <srcfiles dir="examples/rust" includes="*.ccc" />
     </uptodate>
     <uptodate
-            property="ppline.uptodate"
-            targetfile="build/generated-java/org/parsers/csharp/ppline/PPDirectiveLineParser.java"
-            srcfile="examples/csharp/PPDirectiveLine.ccc"
-        />
+      property="ppline.uptodate"
+      targetfile="build/generated-java/org/parsers/csharp/ppline/PPDirectiveLineParser.java"
+      srcfile="examples/csharp/PPDirectiveLine.ccc"
+    />
   </target>
 
   <target name="restore-bootstrap-jar" depends="init-template-submodule">
@@ -88,9 +88,9 @@
   </target>
   <target name="ppline-gen" unless="ppline.uptodate">
     <congocc-use-bootstrap
-            target="examples/csharp/PPDirectiveLine.ccc"
-            args="-n -q -d ../../build/generated-java"
-        />
+      target="examples/csharp/PPDirectiveLine.ccc"
+      args="-n -q -d ../../build/generated-java"
+    />
   </target>
   <target name="python-gen" unless="python.uptodate">
     <congocc-use-bootstrap target="src/grammars/PythonInternal.ccc" />
@@ -103,8 +103,8 @@
   </target>
 
   <target
-        name="build-parsers"
-        depends="init,
+    name="build-parsers"
+    depends="init,
                build-ctl-code,
                parser-gen,
                preprocessor-gen,
@@ -112,18 +112,18 @@
                python-gen,
                csharp-gen,
                rust-gen"
-    />
+  />
 
   <target name="compile" depends="build-parsers">
     <javac
-            destdir="build"
-            deprecation="off"
-            debug="on"
-            optimize="off"
-            failonerror="true"
-            includeantruntime="false"
-            release="17"
-        >
+      destdir="build"
+      deprecation="off"
+      debug="on"
+      optimize="off"
+      failonerror="true"
+      includeantruntime="false"
+      release="17"
+    >
       <src path="src/java" />
       <src path="build/generated-java" />
       <src path="template-engine/src/java" />
@@ -200,11 +200,11 @@
   <target name="test-rust-formatter" depends="jar,rust-guard" if="rust.on">
     <echo>Running RustFormatter golden-file tests</echo>
     <javac
-            srcdir="tests/rust-formatter"
-            destdir="build"
-            classpath="congocc.jar"
-            includeantruntime="false"
-        />
+      srcdir="tests/rust-formatter"
+      destdir="build"
+      classpath="congocc.jar"
+      includeantruntime="false"
+    />
     <java classname="RustFormatterTest" fork="true" failonerror="true">
       <classpath>
         <pathelement path="build" />
@@ -231,7 +231,7 @@
   <target name="jar" depends="compile">
     <jar jarfile="congocc.jar" compress="true" excludes="**/*.java">
       <fileset dir="build" includes="LICENSE,include/,org/,templates/" />
-      <fileset dir="template-engine/build" />
+      <fileset dir="template-engine/build" excludes="LICENSE"/>
       <manifest>
         <attribute name="Main-Class" value="org.congocc.app.Main" />
         <attribute name="Built-By" value="${user.name}" />
@@ -260,8 +260,7 @@
     <antcall target="jar" />
     <echo>Copying current jar to bootstrap location ...</echo>
     <copy file="congocc.jar" todir="template-engine/bootstrap" />
-    <echo
-        >Ensuring any generated code is up to date in the bootstrap jar ...</echo>
+    <echo>Ensuring any generated code is up to date in the bootstrap jar ...</echo>
     <antcall target="clean" />
     <antcall target="jar" />
     <echo>Copying current jar to bootstrap location ...</echo>
