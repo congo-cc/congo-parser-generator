@@ -78,16 +78,6 @@
     <delete file="congocc.jar" />
     <delete dir="build" />
     <ant target="clean" dir="template-engine" />
-    <ant target="clean" dir="examples/json" />
-    <ant target="clean" dir="examples/java" />
-    <ant target="clean" dir="examples/python" />
-    <ant target="clean" dir="examples/csharp" />
-    <ant target="clean" dir="examples/rust" />
-    <ant target="clean" dir="examples/lua" />
-    <ant target="clean" dir="examples/preprocessor" />
-    <ant target="clean" dir="examples/cics" />
-    <ant target="clean" dir="examples/arithmetic" />
-    <ant target="clean" dir="examples/sqlexpr" />
   </target>
 
   <target name="parser-gen" unless="parser.uptodate">
@@ -115,7 +105,6 @@
   <target
         name="build-parsers"
         depends="init,
-               init-template-submodule,
                build-ctl-code,
                parser-gen,
                preprocessor-gen,
@@ -252,6 +241,10 @@
   </target>
 
   <target name="build-ctl-code">
+    <echo>Updating template engine submodule...</echo>
+    <exec executable="git" dir="${basedir}" timeout="10000">
+      <arg line="submodule update --init --recursive" />
+    </exec>
     <ant dir="template-engine" target="build-parser" />
   </target>
 
