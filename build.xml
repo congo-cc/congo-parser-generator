@@ -116,13 +116,13 @@
         name="build-parsers"
         depends="init,
                init-template-submodule,
+               build-ctl-code,
                parser-gen,
                preprocessor-gen,
                ppline-gen,
                python-gen,
                csharp-gen,
-               rust-gen,
-               templates-jar"
+               rust-gen"
     />
 
   <target name="compile" depends="build-parsers">
@@ -251,8 +251,8 @@
     </jar>
   </target>
 
-  <target name="templates-jar">
-    <ant dir="template-engine" target="jar" />
+  <target name="build-ctl-code">
+    <ant dir="template-engine" target="build-parser" />
   </target>
 
   <target name="update-bootstrap">
