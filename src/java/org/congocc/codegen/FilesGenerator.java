@@ -79,9 +79,29 @@ public class FilesGenerator {
              return buf.toString();
            }
         );
+        templateFactory.setSharedVariable("capFirst",
+            (Function<String,String>) s-> capUncapFirst(s, true)
+        );
+        templateFactory.setSharedVariable("uncapFirst",
+            (Function<String,String>) s-> capUncapFirst(s, false)
+        );
+
         if (codeLang == JAVA) {
            templateFactory.addAutoImport("CU", "CommonUtils.java.ctl");
         }
+    }
+
+    static private String capUncapFirst(String s, boolean cap) {
+        StringBuilder buf = new StringBuilder(s);
+        for (int i = 0; i < s.length(); i++) {
+            char ch = s.charAt(i);
+            if (!Character.isWhitespace(ch)) {
+                ch = cap ? Character.toUpperCase(ch) : Character.toLowerCase(ch);
+                buf.setCharAt(i, ch);
+                break;
+            }
+        }
+        return buf.toString();
     }
 
     public FilesGenerator(Grammar grammar) throws IOException {

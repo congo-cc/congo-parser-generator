@@ -270,7 +270,7 @@
 #function imputedJtbFieldName nodeClass
    #if nodeClass?? && isJtbParseTree() && topLevelExpansion
       #-- Determine the name of the node field containing the reference to a synthetic syntax node --
-      #var fieldName = nodeClass.UncapFirst,
+      #var fieldName = uncapFirst(nodeClass)
            fieldOrdinal
       #if jtbNameMap[nodeClass]??
          #-- Allow for JTB-style syntactic node names (but exclude Token and <non-terminal> ). --
@@ -564,7 +564,7 @@
       #var lhsName = assignment::name
       #if assignment::propertyAssignment
          #-- This is the assignment of the current node's effective value to a property of the production node --
-         #set lhsName = lhsName.CapFirst
+         #set lhsName = capFirst(lhsName)
          #if lhsType?? && assignment::declarationOf
             #-- This is a declaration assignment; inject required property --
             ${injectDeclaration(lhsType, assignment::name, assignment)}

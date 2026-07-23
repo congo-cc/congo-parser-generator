@@ -232,7 +232,7 @@ ${is}    self.restore_call_stack(${callStackSizeVar})
 [#function imputedJtbFieldName nodeClass]
    [#if nodeClass?? && isJtbParseTree() && topLevelExpansion]
       [#-- Determine the name of the node field containing the reference to a synthetic syntax node --]
-      [#var fieldName = nodeClass.UncapFirst]
+      #var fieldName = uncapFirst(nodeClass)
       [#var fieldOrdinal]
       [#if jtbNameMap[nodeClass]??]
          [#-- Allow for JTB-style syntactic node names (but exclude Token and <non-terminal> ). --]
