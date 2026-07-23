@@ -927,7 +927,7 @@ PrimaryExpression#interface :
   |
   "super" "." =>|| <IDENTIFIER> #SuperDotName(3)
   |
-  "super" FAIL "Found '" + getToken(1) + "', was expecting '.' after 'super'" :
+  "super" FAIL "Was expecting '.' after 'super'" :
   |
   Parentheses
   |
@@ -953,7 +953,7 @@ PrimaryExpression#interface :
     ENSURE {getTokenType(0) == IDENTIFIER || getTokenType(0) == RPAREN || getTokenType(0) == RBRACKET}
     ("[" Expression "]") #ArrayAccess(+1)
     |
-    FAIL "The token '" + getToken(0) + "' cannot precede the left bracket here."
+    FAIL "ArrayAccess is not valid here."
     "["
     |
     ("::" [TypeArguments] (<IDENTIFIER>|"new")) #MethodReference(+1)
