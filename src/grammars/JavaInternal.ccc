@@ -397,11 +397,15 @@ INJECT CodeBlock :
    extends org.congocc.core.EmptyExpansion
    implements EmbeddedCode
 {
-    @Property boolean appliesInLookahead;
+    @Property boolean hasHash;
+
+    public boolean isAppliesInLookahead() {
+        return hasHash || getContainingProduction().isOnlyForLookahead();
+    }
 
     @Override
     public boolean startsWithGlobalCodeAction(boolean stopAtScanLimit) {
-        return isAppliesInLookahead() || getContainingProduction().isOnlyForLookahead();
+        return isAppliesInLookahead();
     }
 
     public CodeBlock getJavaCode() {

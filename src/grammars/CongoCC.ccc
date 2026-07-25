@@ -1609,7 +1609,7 @@ RawCode#org.congocc.core.RawCode :
         "#"
         {
             popNode();
-            ((CodeBlock) peekNode()).setAppliesInLookahead(true);
+            ((CodeBlock) peekNode()).setHasHash(true);
         }
       ]
       |
