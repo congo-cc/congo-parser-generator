@@ -151,14 +151,7 @@ ImportDeclaration :
     [ "static" | 'module' {isModule=true;}]
     Name
     [
-      //ASSERT {!isModule : "No wildcard import in a module import declaration"}
-      #if __python__
-      ASSERT {% not is_module %}
-      #elif __rust__
-      ASSERT {% !is_module %}
-      #else
-      ASSERT {% !isModule %}
-      #endif
+      ASSERT {!isModule : "No wildcard import in a module import declaration"}
       "." "*" =>||
     ]
     ";"
@@ -264,7 +257,7 @@ TypeDeclarationLA#scan :
      | "interface"
      | "enum"
      | "@" "interface"
-     | 'record' <IDENTIFIER>
+     | ENSURE {tokenImage(1).toString().equals("record")} <IDENTIFIER> <IDENTIFIER>
    )
 ;
 
@@ -848,14 +841,15 @@ UnaryExpression :
 
 PreIncrementExpression :
   "++" UnaryExpression
-  ASSERT {((Expression)peekNode()).canBeAssignedTo(), peekNode()}
-  : "Expression " + peekNode() + " is not an assignable variable."
+  ASSERT {((Expression)peekNode()).canBeAssignedTo(),
+         peekNode() :
+         "Expression " + peekNode() + " is not an assignable variable."}
 ;
 
 PreDecrementExpression :
   "--" UnaryExpression
-  ASSERT {((Expression)peekNode()).canBeAssignedTo(), peekNode()}
-  : "Expression " + peekNode() + " is not an assignable variable."
+  ASSERT {((Expression)peekNode()).canBeAssignedTo(), peekNode()
+  : "Expression " + peekNode() + " is not an assignable variable."}
 ;
 
 UnaryExpressionNotPlusMinus :
@@ -1432,7 +1426,7 @@ ResourcesInTryBlock :
          Name
          |
          PrimaryExpression
-         ASSERT {peekNode() instanceof DotName, peekNode()} : "Resource should be a field access here."
+         ASSERT {peekNode() instanceof DotName, peekNode() : "Resource should be a field access here."}
        )
        [";"]
     )+

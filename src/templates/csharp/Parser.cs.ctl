@@ -540,6 +540,10 @@ ${globals.translateParserInitializers()}
             return GetToken(n).ToString();
         }
 
+        internal string GetTokenImage(int n) {
+            return GetToken(n).ToString();
+        }
+
         internal TokenType GetTokenType(int n) {
             return GetToken(n).Type;
         }
