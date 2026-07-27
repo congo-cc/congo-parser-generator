@@ -67,12 +67,14 @@ public class ParseException extends ${BASE_EXCEPTION_TYPE} {
      }
   }
 
+  @Override
   public void printStackTrace(PrintStream ps) {
       ps.println(getMessage());
       ps.print(getCustomStackTrace());
     #-- printJavaStackTrace(ps);
   }
 
+  @Override
   public void printStackTrace(PrintWriter pw) {
       pw.println(getMessage());
       pw.print(getCustomStackTrace());
