@@ -945,6 +945,7 @@ PrimaryExpression#interface :
     ("." [TypeArguments] <IDENTIFIER>) #DotName(+1)
     |
     ENSURE {getTokenType(0) == IDENTIFIER || getTokenType(0) == RPAREN || getTokenType(0) == RBRACKET}
+    ENSURE {!(peekNode() instanceof ObjectInstantiation)}
     ("[" Expression "]") #ArrayAccess(+1)
     |
     FAIL "ArrayAccess is not valid here."
