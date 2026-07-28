@@ -57,8 +57,18 @@
     </exec>
   </target>
 
-  <target name="init-template-submodule" unless="bootstrap.jar.present">
-    <exec executable="git" dir="${basedir}">
+  <!-- Ensure template-engine/ exists (git submodule) before nested ant or compile. -->
+  <target name="check-template-engine">
+    <available file="template-engine/build.xml" property="template.engine.present" />
+  </target>
+
+  <target
+    name="init-template-submodule"
+    depends="check-template-engine"
+    unless="template.engine.present"
+  >
+    <echo>Initializing template-engine submodule...</echo>
+    <exec executable="git" dir="${basedir}" failonerror="true">
       <arg line="submodule update --init --recursive" />
     </exec>
   </target>
@@ -74,7 +84,7 @@
     <antcall target="test" />
   </target>
 
-  <target name="clean">
+  <target name="clean" depends="init-template-submodule">
     <delete file="congocc.jar" />
     <delete dir="build" />
     <ant target="clean" dir="template-engine" />
