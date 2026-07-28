@@ -1062,7 +1062,6 @@ INJECT Expression :
         }
       }
       return true;
-      // return childrenOfType(Expression.class).stream().allMatch(Expression::isConstant);
    }
 }
 
