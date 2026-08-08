@@ -9,7 +9,6 @@ TOKEN :
    <SHE_BANG : "#!" (~["\n"])* "\n">
 ;
 
-// Some subtleties with comments not being addressed (yet)
 UNPARSED #Comment :
   < LINE_COMMENT : "//" (~["\n"])* "\n" > #LineComment
 ;
@@ -318,7 +317,7 @@ MORE :
 
 <IN_MULTILINE_COMMENT>
 UNPARSED :
-   <MULTILINE_COMMMENT : "*/">
+   <MULTILINE_COMMENT : "*/">
    {
       assert commentNesting >=0 : "Should be impossible!";
       if (commentNesting > 0) {

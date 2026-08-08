@@ -198,7 +198,7 @@ public class RustFormatter extends Node.Visitor {
             emitLineComment(text);
             return;
         }
-        if (t == MULTILINE_COMMMENT) {
+        if (t == MULTILINE_COMMENT) {
             emitBlockComment(text);
             return;
         }
@@ -611,7 +611,7 @@ public class RustFormatter extends Node.Visitor {
             newLine();
             wantNewlineNext = false;
             sawSourceNewline = false;
-            prev = MULTILINE_COMMMENT;
+            prev = MULTILINE_COMMENT;
         } else {
             // Inline /* ... */: surround with a space if not at line start.
             boolean ownLine = sawSourceNewline || wantNewlineNext;
@@ -623,7 +623,7 @@ public class RustFormatter extends Node.Visitor {
             buffer.append(text);
             atLineStart = false;
             sawSourceNewline = false;
-            prev = MULTILINE_COMMMENT;
+            prev = MULTILINE_COMMENT;
         }
     }
 

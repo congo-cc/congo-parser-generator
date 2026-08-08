@@ -5,10 +5,6 @@
   </tstamp>
 
   <target name="init">
-    <available
-      file="template-engine/bootstrap/congocc.jar"
-      property="bootstrap.jar.present"
-    />
     <uptodate
       property="parser.uptodate"
       targetfile="build/generated-java/org/congocc/parser/CongoCCParser.java"
@@ -51,9 +47,9 @@
     />
   </target>
 
-  <target name="restore-bootstrap-jar" depends="init-template-submodule">
+  <target name="restore-bootstrap-jar">
     <exec executable="git" dir="template-engine">
-      <arg line="checkout bootstrap/congocc.jar" />
+      <arg line="checkout bin/congocc.jar" />
     </exec>
   </target>
 
@@ -79,7 +75,7 @@
 -->
   <target name="full-test" depends="restore-bootstrap-jar,clean,jar,test">
     <echo>Now we copy the new congocc.jar over rebootstrap</echo>
-    <copy file="congocc.jar" todir="template-engine/bootstrap" />
+    <copy file="congocc.jar" todir="bin" />
     <antcall target="clean" />
     <antcall target="test" />
   </target>
@@ -269,11 +265,10 @@
     <antcall target="clean" />
     <antcall target="jar" />
     <echo>Copying current jar to bootstrap location ...</echo>
-    <copy file="congocc.jar" todir="template-engine/bootstrap" />
     <echo>Ensuring any generated code is up to date in the bootstrap jar ...</echo>
     <antcall target="clean" />
     <antcall target="jar" />
     <echo>Copying current jar to bootstrap location ...</echo>
-    <copy file="congocc.jar" todir="template-engine/bootstrap" />
+    <copy file="congocc.jar" todir="bin" />
   </target>
 </project>
