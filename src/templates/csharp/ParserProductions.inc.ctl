@@ -572,7 +572,7 @@ if (BuildTree) {
    #return "@"
 #endfunction
 
-#function injectDeclaration typeName, fieldName, assignment
+#function injectDeclaration typeName, fieldName, assignment=null
     #if !isProductionInstantiatingNode(currentProduction)
       #exec grammar::errors.addWarning(currentProduction, "Attempt to inject property or field declaration " + fieldName + " into an un-instantiated production node " + currentProduction::name + "; the assignment will be ignored.")
       #return ""

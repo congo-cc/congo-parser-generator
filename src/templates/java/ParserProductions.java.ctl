@@ -270,7 +270,7 @@
 #function imputedJtbFieldName nodeClass
    #if nodeClass?? && isJtbParseTree() && topLevelExpansion
       #-- Determine the name of the node field containing the reference to a synthetic syntax node --
-      #var fieldName = uncapFirst(nodeClass)
+      #var fieldName = uncapFirst(nodeClass),
            fieldOrdinal
       #if jtbNameMap[nodeClass]??
          #-- Allow for JTB-style syntactic node names (but exclude Token and <non-terminal> ). --
@@ -592,7 +592,7 @@
    #return "@"
 #endfunction
 
-#function injectDeclaration typeName, fieldName, assignment
+#function injectDeclaration typeName, fieldName, assignment=null
    #if !isProductionInstantiatingNode(currentProduction)
       #exec grammar::errors.addWarning(currentProduction, "Attempt to inject property or field declaration " + fieldName + " into an un-instantiated production node " + currentProduction::name + "; the assignment will be ignored.")
       #return ""
