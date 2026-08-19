@@ -1162,9 +1162,8 @@ LocalVariableDeclaration :
    (
     Modifiers
     (
-      'var' <IDENTIFIER>
-      |
-      Type (<IDENTIFIER>|"_")
+      ('var' | Type)
+      (<IDENTIFIER>| "_")
     )
    )
    =>
@@ -1207,20 +1206,11 @@ RecordPattern :
     ReferenceType
     "(" =>||
     [
-      SCAN ~(")") =>
-      (
-        "_"
-        |
-        CasePattern
-        (
-          ","
-          ("_"|CasePattern)
-        )*
-      )
+        ("_" | CasePattern)
+        ("," ("_" | CasePattern))*
     ]
     ")"
 ;
-
 
 TypePattern :
   {permissibleModifiers = EnumSet.of(FINAL);}#
