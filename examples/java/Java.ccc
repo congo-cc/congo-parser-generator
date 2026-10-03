@@ -519,7 +519,22 @@ ArrayInitializer :
   {return thisProduction;}
 ;
 
-FormalParameters : "(" [ FormalParameter ( "," FormalParameter)* ] ")" ;
+FormalParameters :
+   "("
+   [
+      (ReceiverParameter|FormalParameter)
+      ( "," FormalParameter)*
+   ]
+   ")"
+;
+
+ReceiverParameter :
+   (Annotation)*
+   Type
+   [<IDENTIFIER>"."]
+   "this"
+   =>||
+;
 
 FormalParameter :
    {permissibleModifiers = EnumSet.of(FINAL);}#
