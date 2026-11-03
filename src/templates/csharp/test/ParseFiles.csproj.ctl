@@ -2,12 +2,12 @@
 <Project Sdk="Microsoft.NET.Sdk">
     <PropertyGroup>
         <OutputType>Exe</OutputType>
-        <TargetFramework>net8.0</TargetFramework>
+        <TargetFramework>net10.0</TargetFramework>
         <RootNamespace>${csPackage}.test</RootNamespace>
     </PropertyGroup>
     <ItemGroup>
       <Reference Include="${csPackage}">
-        <HintPath>../bin/Debug/net8.0/${csPackage}.dll</HintPath>
+        <HintPath>../bin/Debug/net10.0/${csPackage}.dll</HintPath>
       </Reference>
     </ItemGroup>
 </Project>
