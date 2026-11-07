@@ -331,9 +331,20 @@ public boolean getLegacyGlitchyLookahead() {
         token_source.setStartingPos(startingLine, startingColumn);
     }
 
+#var NEXT_TOKEN_MEMO = grammar::parserTokenHooks.size() == 0
   // If the next token is cached, it returns that
   // Otherwise, it goes to the token_source, i.e. the Lexer.
   private ${settings::baseTokenClassName} nextToken(final ${settings::baseTokenClassName} tok) {
+#if NEXT_TOKEN_MEMO
+    // Each token keeps the last answer for it, as long as the cached tokens are
+    // unchanged (TokenSource.cacheVersion)
+    int version = token_source.getCacheVersion();
+    if (tok != null && tok.nextToken != null && tok.nextTokenVersion == version
+   #if settings::faultTolerant
+        && !(tok.nextToken.isInvalid() && isParserTolerant())
+   #endif
+    ) return tok.nextToken;
+#endif
     ${settings::baseTokenClassName} result = token_source.getNextToken(tok);
      #list grammar::parserTokenHooks as methodName
       result = ${methodName}(result);
@@ -351,6 +362,13 @@ public boolean getLegacyGlitchyLookahead() {
       }
     }
    #endif
+#if NEXT_TOKEN_MEMO
+    // Kept only if finding it changed nothing, so that asking again gives the same token
+    if (tok != null && version == token_source.getCacheVersion() && tok.getTokenSource() == token_source) {
+      tok.nextToken = result;
+      tok.nextTokenVersion = version;
+    }
+#endif
     return result;
   }
 
@@ -505,16 +523,24 @@ public boolean getLegacyGlitchyLookahead() {
         if (currentLookaheadProduction.equals(name)) return true;
       }
     }
-    Iterator<NonTerminalCall> it = stackIteratorBackward();
-    while (it.hasNext()) {
-      NonTerminalCall ntc = it.next();
-      if (ntc.productionName.equals(productionName)) {
+    // The stacks from the top down, the lookahead stack first (as stackIteratorBackward),
+    // without making the entries of the call stack
+    for (int i = lookaheadStack.size() - 1; i >= 0; i--) {
+      if (isProduction(lookaheadStack.get(i).productionName, productionName, prods)) return true;
+    }
+    for (int i = parsingStack.size() - 1; i >= 0; i--) {
+      if (isProduction(parsingStack.productionName(i), productionName, prods)) return true;
+    }
+    return false;
+  }
+
+  private static boolean isProduction(String name, String productionName, String... prods) {
+    if (name.equals(productionName)) {
+      return true;
+    }
+    for (String other : prods) {
+      if (name.equals(other)) {
         return true;
-      }
-      for (String name : prods) {
-        if (ntc.productionName.equals(name)) {
-          return true;
-        }
       }
     }
     return false;

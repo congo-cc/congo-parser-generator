@@ -820,7 +820,7 @@
    #if nonterminal::production::delegatedCardinalityTarget && cardinalitiesVar?? && cardinalitiesVar.length() > 0
       #set pushDelegated = true
    #endif
-   pushOntoCallStack("${nonterminal::containingProduction::name}", "${nonterminal::inputSource.JavaStringEncode}", ${nonterminal::beginLine}, ${nonterminal::beginColumn});
+   pushOntoCallStack(${nonterminal::callSiteVarName});
    #if settings::faultTolerant
       #var followSet = nonterminal::followSet
       #if !followSet::incomplete
@@ -890,13 +890,7 @@
    #var LHS = getLhsPattern(terminal::assignment, "Token"), regexp = terminal::regexp
    #var lambda = terminal::recoveryBlock!
    #if !settings::faultTolerant
-       pushOntoCallStack("${currentProduction::name}","${terminal::inputSource.JavaStringEncode}", ${terminal::beginLine}, ${terminal::beginColumn});
-       try {
-           ${LHS.replace("@", "consumeToken(" + regexp::label + ")")};
-       }
-       finally {
-         popCallStack();
-       }
+       ${LHS.replace("@", "consumeToken(" + regexp::label + ", " + terminal::callSiteVarName + ")")};
    #else
        #var tolerant = terminal::tolerantParsing ? "true" : "false" ,
             followSetVarName = terminal::followSetVarName
@@ -1045,14 +1039,14 @@
       }
    #elif choice::parent::simpleName = "OneOrMore"
        else if (${inFirstVarName}) {
-           pushOntoCallStack("${currentProduction::name}", "${choice::inputSource.JavaStringEncode}", ${choice::beginLine}, ${choice::beginColumn});
+           pushOntoCallStack(${choice::callSiteVarName});
            throw new ParseException(getToken(1), ${choice::firstSetVarName}, parsingStack);
        } else {
            break;
        }
    #elif choice::parent::simpleName != "ZeroOrOne"
        else {
-           pushOntoCallStack("${currentProduction::name}", "${choice::inputSource.JavaStringEncode}", ${choice::beginLine}, ${choice::beginColumn});
+           pushOntoCallStack(${choice::callSiteVarName});
            throw new ParseException(getToken(1), ${choice::firstSetVarName}, parsingStack);
         }
    #endif
@@ -1109,7 +1103,9 @@
           typeMatches(${name}, getToken(1))
           ${name_has_next ? "||"}
       #endlist
-   #else
+   #elif expansion::firstSet::hasContextualTokens
       hasMatch(${expansion::firstSetVarName}, getToken(1))
+   #else
+      ${expansion::firstSetVarName}.contains(getToken(1).getType())
    #endif
 #endmacro

@@ -10,6 +10,36 @@
     #if grammar::choicePointExpansions
        ${BuildLookaheads()}
     #endif
+    [#-- after all the code that refers to a site, so that the table holds exactly those --]
+    ${callSiteVars()}
+#endmacro
+
+#macro callSiteVars
+    //=================================
+     // The places in the grammar from which the parser pushes an entry onto its call stack,
+     // filled in blocks to keep each initializer well below the size limit of a method
+     //=================================
+    #var callSites = grammar::callSites, blockSize = 1000
+    #var numBlocks = callSites.size() == 0 ? 0 : 1 + ((callSites.size() - 1) / blockSize).int
+    private static final NonTerminalCall.Site[] CALL_SITES = new NonTerminalCall.Site[${callSites.size()}];
+    static {
+    #list 1..numBlocks as block
+        CALL_SITES_init${block}();
+    #endlist
+    }
+    #list 1..numBlocks as block
+
+    private static void CALL_SITES_init${block}() {
+       #list 1..blockSize as index
+          #var offset = (block - 1) * blockSize + index - 1
+          #if offset >= callSites.size()
+            #break
+          #endif
+          #var expansion = callSites[offset]
+        CALL_SITES[${offset}] = new NonTerminalCall.Site("${settings::parserClassName}", "${expansion::inputSource.JavaStringEncode}", "${expansion::containingProduction::name}", ${expansion::beginLine}, ${expansion::beginColumn}, ${offset});
+       #endlist
+    }
+    #endlist
 #endmacro
 
 #macro firstSetVars
@@ -66,6 +96,17 @@
      currentLookaheadToken = peekedToken;
      return true;
   }
+
+#if lexerData::hasContextualTokens
+  // scanToken for a set that holds no contextual keyword
+  private boolean scanTokenOf(EnumSet<TokenType> types) {
+     ${settings::baseTokenClassName} peekedToken = nextToken(currentLookaheadToken);
+     if (!types.contains(peekedToken.getType())) return false;
+     --remainingLookahead;
+     currentLookaheadToken = peekedToken;
+     return true;
+  }
+#endif
 
 #if lexerData::hasContextualTokens
   private boolean typeMatches(TokenType type, ${settings::baseTokenClassName} tok) {
@@ -515,7 +556,7 @@
 --]
 #macro ScanCodeNonTerminal nt cardinalitiesVar
       // NonTerminal ${nt::name} at ${nt::location}
-      pushOntoLookaheadStack("${nt::containingProduction::name}", "${nt::inputSource.JavaStringEncode}", ${nt::beginLine}, ${nt::beginColumn});
+      pushOntoLookaheadStack(${nt::callSiteVarName});
       currentLookaheadProduction = "${nt::production::name}";
       #var passCard = false
       #if nt::production::delegatedCardinalityTarget && cardinalitiesVar?? && cardinalitiesVar.length() > 0
@@ -548,6 +589,8 @@
           [#if name_has_next],[/#if]
         #endlist
       )) ${returnFalse(cardinalitiesVar!null)};
+    #elif lexerData::hasContextualTokens && !expansion::firstSet::hasContextualTokens
+      if (!scanTokenOf(${expansion::firstSetVarName})) ${returnFalse(cardinalitiesVar!null)};
     #else
       if (!scanToken(${expansion::firstSetVarName})) ${returnFalse(cardinalitiesVar!null)};
     #endif
@@ -712,6 +755,8 @@
           ${name} ${name_has_next ? ","}
         #endlist
       )
+     #elif lexerData::hasContextualTokens && !expansion::firstSet::hasContextualTokens
+      scanTokenOf(${expansion::firstSetVarName})
      #else
       scanToken(${expansion::firstSetVarName})
      #endif

@@ -108,7 +108,7 @@ public class ParseException extends ${BASE_EXCEPTION_TYPE} {
          NonTerminalCall ntc = callStack.remove(callStack.size()-1);
          while (!stackTrace.isEmpty()) {
              StackTraceElement elem = stackTrace.remove(stackTrace.size()-1);
-             if (elem.getMethodName().equals(ntc.productionName) && elem.getClassName().endsWith("." + ntc.parserClassName)) {
+             if (elem.getMethodName().equals(ntc.productionName) && elem.getClassName().endsWith("." + ntc.site.parserClassName)) {
                  ntc.javaSourceLine = elem.getLineNumber();
                  break;
              }

@@ -90,6 +90,13 @@ public class ${settings::baseTokenClassName} ${implements} {
 #endif
 
     private String cachedImage;
+
+#if grammar::parserTokenHooks.size() == 0
+    // The parser's answer for the token after this one, valid while the
+    // cacheVersion of the token source is nextTokenVersion
+    ${settings::baseTokenClassName} nextToken;
+    int nextTokenVersion;
+#endif
     /**
      * If cachedImage is set, then the various methods
      * that implement #java.lang.CharSequence use that string
@@ -132,10 +139,12 @@ public class ${settings::baseTokenClassName} ${implements} {
         prependedToken.inserted = true;
         prependedToken.beginOffset = prependedToken.endOffset = this.beginOffset;
         this.prependedToken = prependedToken;
+        tokenChanged();
     }
 
     void unsetAppendedToken() {
         this.appendedToken = null;
+        tokenChanged();
     }
 
 #endif
@@ -146,7 +155,9 @@ public class ${settings::baseTokenClassName} ${implements} {
      * be public because it is part of the ${settings::parserPackage}.Node interface.
      */
     public void setBeginOffset(int beginOffset) {
+        if (beginOffset == this.beginOffset) return;
         this.beginOffset = beginOffset;
+        tokenChanged();
     }
 
     /**
@@ -155,7 +166,14 @@ public class ${settings::baseTokenClassName} ${implements} {
      * be public because it is part of the ${settings::parserPackage}.Node interface.
      */
     public void setEndOffset(int endOffset) {
+        if (endOffset == this.endOffset) return;
         this.endOffset = endOffset;
+        tokenChanged();
+    }
+
+    // The token that follows this one can be another one now.
+    private void tokenChanged() {
+        if (tokenSource != null) tokenSource.cachedTokensChanged();
     }
 
     /**
@@ -179,7 +197,10 @@ public class ${settings::baseTokenClassName} ${implements} {
      * programmer needs to use this method.
      */
     public void setTokenSource(TokenSource tokenSource) {
+        if (tokenSource == this.tokenSource) return;
+        tokenChanged();
         this.tokenSource = tokenSource;
+        tokenChanged();
     }
 
     public boolean isInvalid() {
@@ -197,7 +218,9 @@ public class ${settings::baseTokenClassName} ${implements} {
     }
 
     protected void setType(TokenType type) {
+        if (type == this.type) return;
         this.type = type;
+        tokenChanged();
     }
 
     /**
@@ -403,6 +426,7 @@ public class ${settings::baseTokenClassName} ${implements} {
 #else
         getTokenSource().cacheToken(result);
 #endif
+        tokenChanged();
         return result;
     }
 
@@ -428,7 +452,9 @@ public class ${settings::baseTokenClassName} ${implements} {
     }
 
     public void setUnparsed(boolean unparsed) {
+        if (unparsed == this.unparsed) return;
         this.unparsed = unparsed;
+        tokenChanged();
     }
 
     /**

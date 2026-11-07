@@ -10,15 +10,75 @@ import java.io.PrintStream;
 #endif
 
 public class NonTerminalCall {
-    final String sourceFile;
-    public final String productionName;
-    final String parserClassName;
-    final TokenSource tokenSource;
-    final int position, line, column;
+
+    /**
+     * The part of a call-stack entry that is the same for every call from one
+     * place in the grammar: the generated parser holds one constant per place.
+     */
+    public static final class Site {
+        final String parserClassName, sourceFile;
+        // public, as with ROOT_API_PACKAGE the parser is in another package
+        public final String productionName;
+        final int line, column;
+        // the index in the parser's table of sites, or -1; public, as with ROOT_API_PACKAGE
+        // the parser is in another package
+        public final int index;
+
+        public Site(String parserClassName, String sourceFile, String productionName, int line, int column) {
+            this(parserClassName, sourceFile, productionName, line, column, -1);
+        }
+
+        public Site(String parserClassName, String sourceFile, String productionName, int line, int column, int index) {
+            this.parserClassName = parserClassName;
+            this.sourceFile = sourceFile;
+            this.productionName = productionName;
+            this.line = line;
+            this.column = column;
+            this.index = index;
+        }
+    }
+
+    Site site;
+    public String productionName;
+    TokenSource tokenSource;
+    int position;
     int javaSourceLine;
 #if settings::faultTolerant
-    final Set<${BaseTokenType}> followSet;
+    Set<${BaseTokenType}> followSet;
 #endif
+
+    public NonTerminalCall(Site site, ${LocationType} location
+                          #if settings::faultTolerant
+                             , Set<${BaseTokenType}> followSet
+                          #endif
+    )
+    {
+        this.site = site;
+        this.productionName = site.productionName;
+        this.tokenSource = location.getTokenSource();
+        this.position = location.getBeginOffset();
+#if settings::faultTolerant
+        this.followSet = followSet;
+#endif
+    }
+
+    // An entry of the parse call stack, made when the stack is read.
+    // Public, as with ROOT_API_PACKAGE the parser is in another package.
+    public NonTerminalCall(Site site, TokenSource tokenSource, int position
+                          #if settings::faultTolerant
+                             , Set<${BaseTokenType}> followSet
+                          #endif
+    )
+    {
+        this.site = site;
+        this.productionName = site.productionName;
+        this.tokenSource = tokenSource;
+        this.position = position;
+#if settings::faultTolerant
+        this.followSet = followSet;
+#endif
+    }
+
     public NonTerminalCall(String parserClassName,
                           ${LocationType} location,
                           String sourceFile,
@@ -30,16 +90,18 @@ public class NonTerminalCall {
                           #endif
     )
     {
-        this.parserClassName = parserClassName;
+        this(new Site(parserClassName, sourceFile, productionName, line, column), location
+             ${settings::faultTolerant ? ", followSet"});
+    }
+
+    // Gives an entry of the lookahead stack, which nothing keeps once it is popped, new content.
+    // Public, as with ROOT_API_PACKAGE the parser is in another package.
+    public void reuse(Site site, ${LocationType} location) {
+        this.site = site;
+        this.productionName = site.productionName;
         this.tokenSource = location.getTokenSource();
         this.position = location.getBeginOffset();
-        this.sourceFile = sourceFile;
-        this.productionName = productionName;
-        this.line = line;
-        this.column = column;
-#if settings::faultTolerant
-        this.followSet = followSet;
-#endif
+        this.javaSourceLine = 0;
     }
 
     public String getLocation() {
@@ -51,7 +113,7 @@ public class NonTerminalCall {
     }
 
     StackTraceElement createStackTraceElement() {
-        return new StackTraceElement("${settings::parserClassName}", productionName, sourceFile, line);
+        return new StackTraceElement("${settings::parserClassName}", productionName, site.sourceFile, site.line);
     }
 
     public String toString() {
@@ -60,18 +122,18 @@ public class NonTerminalCall {
          buf.append(getLocation());
          buf.append(" in ");
          String javaSourceLocation = javaSourceLine > 0 ?
-                ","+parserClassName + ".java:" + javaSourceLine
+                ","+site.parserClassName + ".java:" + javaSourceLine
                 : "";
          return "at "
                 + getLocation()
                 + " in "
                 + productionName
                 + "("
-                + sourceFile
+                + site.sourceFile
                 + ":"
-                + line
+                + site.line
                 + ":"
-                + column
+                + site.column
                 + javaSourceLocation
                 + ")\n";
     }

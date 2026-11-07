@@ -21,31 +21,14 @@
     #endif
   #endlist
 
-  #-- We break the initialization into multiple chunkSize
-  #-- if we have more than a couple of thousand NFA states in order to
-  #-- get around the Code Too Large problem
-  #-- This is pretty rare, and I thought it never happened, except
-  #-- user ngx reported running into this with his SQL grammar
-
-  #var chunkSize = 2000 #-- arbitrary number. I think it could actually be up to a bit over 6000.
-  #var numChunks = 1 + (lexicalState::canonicalSets.size() / chunkSize).int
-  #var canonicalSets = lexicalState::canonicalSets
+  #var canonicalSets = lexicalState::canonicalSets, blockSize = 256
+  #var numBlocks = 1 + ((canonicalSets.size() - 1) / blockSize).int
 
   private static void NFA_FUNCTIONS_init() {
-    NfaFunction[] functions = new NfaFunction[${numChunks > 1 ? lexicalState::canonicalSets.size()}]
-    #if numChunks == 1
-    {
-     #list canonicalSets as state
-      ${lexicalState::name}::get${state::methodName}
-      ${state_has_next ? ","}
-     #endlist
-    };
-    #else
-    ;
-    #list 1..numChunks as index
-        NFA_FUNCTIONS_init${index}(functions);
-    #endlist
-    #endif
+    NfaFunction[] functions = new NfaFunction[${canonicalSets.size()}];
+    for (int i = 0; i < functions.length; i++) {
+        functions[i] = new NfaDispatch(i);
+    }
     #if multipleLexicalStates
       functionTableMap.put(LexicalState.${lexicalState::name}, functions);
     #else
@@ -53,20 +36,52 @@
     #endif
   }
 
-  #if numChunks > 1
-     #list 1..numChunks as index
-     private static void NFA_FUNCTIONS_init${index}(NfaFunction[] funcArray) {
-         #list 1..chunkSize as index2
-            #var offset = index*chunkSize + index2 -chunkSize -1
-            #if offset >= canonicalSets.size()
-              #break
-            #endif
-            #var state = canonicalSets[offset]
-            funcArray[${offset}] = ${lexicalState::name}::get${state::methodName};
-         #endlist
-     }
-     #endlist
-  #endif
+  // The NfaFunction of every state of this lexical state: it calls the method of its
+  // state. One class, where a method reference per state would have the JVM spin a
+  // class for each of them when the lexer is first used.
+  private static final class NfaDispatch implements NfaFunction {
+      private final int state;
+
+      NfaDispatch(int state) {
+          this.state = state;
+      }
+
+      public TokenType apply(int ch, BitSet nextStates, EnumSet<TokenType> validTypes, EnumSet<TokenType> alreadyMatchedTypes) {
+    #if numBlocks == 1
+          switch (state) {
+       #list canonicalSets as nfaState
+              case ${nfaState_index}: return get${nfaState::methodName}(ch, nextStates, validTypes, alreadyMatchedTypes);
+       #endlist
+              default: return null;
+          }
+    #else
+          switch (state / ${blockSize}) {
+       #list 1..numBlocks as block
+              case ${block - 1}: return apply${block}(ch, nextStates, validTypes, alreadyMatchedTypes);
+       #endlist
+              default: return null;
+          }
+    #endif
+      }
+    #-- Blocks of at most blockSize states keep each method well below the size the JIT compiles
+    #if numBlocks > 1
+    #list 1..numBlocks as block
+
+      private TokenType apply${block}(int ch, BitSet nextStates, EnumSet<TokenType> validTypes, EnumSet<TokenType> alreadyMatchedTypes) {
+          switch (state) {
+       #list 1..blockSize as index
+          #var offset = (block - 1) * blockSize + index - 1
+          #if offset >= canonicalSets.size()
+            #break
+          #endif
+              case ${offset}: return get${canonicalSets[offset]::methodName}(ch, nextStates, validTypes, alreadyMatchedTypes);
+       #endlist
+              default: return null;
+          }
+      }
+    #endlist
+    #endif
+  }
 
 #endmacro
 

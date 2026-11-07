@@ -49,6 +49,9 @@ abstract public class TokenSource implements CharSequence
 // A BitSet that stores where the tokens are located.
 #-- This is not strictly necessary, I suppose...
    private BitSet tokenOffsets;
+// Counts the changes to the cached tokens. The parser keeps the token
+// it last found after a given token for as long as this does not change.
+   private int cacheVersion;
 
 //  A Bitset that stores the line numbers that
 // contain either hard tabs or extended (beyond 0xFFFF) unicode
@@ -99,7 +102,6 @@ abstract public class TokenSource implements CharSequence
         this.startingLine = startingLine;
         this.startingColumn = startingColumn;
         this.content = mungeContent(input, preserveTabs, tabSize, preserveLineEndings, javaUnicodeEscape, terminatingString);
-        createLineOffsetsTable();
         createTokenLocationTable();
      }
 
@@ -117,15 +119,16 @@ abstract public class TokenSource implements CharSequence
         }
         return content.toString();
     }
-    StringBuilder buf = new StringBuilder();
+    // The text between the characters that change is copied in one piece, and
+    // not at all if nothing changes.
+    StringBuilder buf = null;
     // This is just to handle tabs to spaces. If you're preserving tabs, then it
     // is really unused.
     int col = 0;
-    int index = 0, contentLength = content.length();
+    int index = 0, contentLength = content.length(), copied = 0;
     while (index < contentLength) {
         char ch = content.charAt(index++);
         if (ch == '\n') {
-            buf.append(ch);
             col = 0;
         }
         else if (javaUnicodeEscape && ch == '\\' && index < contentLength && content.charAt(index)=='u') {
@@ -136,7 +139,6 @@ abstract public class TokenSource implements CharSequence
                 else break;
             }
             if (numPrecedingSlashes % 2 == 0) {
-                buf.append('\\');
                 ++col;
                 continue;
             }
@@ -147,30 +149,43 @@ abstract public class TokenSource implements CharSequence
             }
             String fourHexDigits = content.subSequence(index + numConsecutiveUs,
                                           index + numConsecutiveUs + 4).toString();
+            if (buf == null) buf = new StringBuilder(contentLength);
+            buf.append(content, copied, index - 1);
             // The parseInt can throw an exception, of course, but we just
             // let it throw and have the exception bubble up.
             buf.append((char) Integer.parseInt(fourHexDigits, 16));
             index += (numConsecutiveUs + 4);
+            copied = index;
             ++col;
         }
         else if (!preserveLines && ch == '\r') {
+            if (buf == null) buf = new StringBuilder(contentLength);
+            buf.append(content, copied, index - 1);
             buf.append('\n');
             col = 0;
             if (index < contentLength && content.charAt(index) == '\n') {
                 ++index;
             }
+            copied = index;
         } else if (ch == '\t' && !preserveTabs) {
+            if (buf == null) buf = new StringBuilder(contentLength);
+            buf.append(content, copied, index - 1);
             int spacesToAdd = tabSize - col % tabSize;
             for (int i = 0; i < spacesToAdd; i++) {
                 buf.append(' ');
                 col++;
             }
+            copied = index;
         } else {
-            buf.append(ch);
             if (!Character.isLowSurrogate(ch)) col++;
         }
     }
-    if (!terminatingString.isEmpty() && !endsWith(content,terminatingString)) {
+    boolean terminate = !terminatingString.isEmpty() && !endsWith(content,terminatingString);
+    if (buf == null) {
+        return terminate ? content.toString() + terminatingString : content.toString();
+    }
+    buf.append(content, copied, contentLength);
+    if (terminate) {
         buf.append(terminatingString);
     }
     return buf.toString();
@@ -231,6 +246,7 @@ abstract public class TokenSource implements CharSequence
     }
 
     protected final void setIgnoredRange(int begin, int end) {
+        cacheVersion++;
         for (int offset = begin; offset < end; offset++) {
            tokenLocationTable[offset] = IGNORED;
            tokenOffsets.clear(begin, end);
@@ -285,10 +301,25 @@ abstract public class TokenSource implements CharSequence
     }
 
 #endif
+    public final int getCacheVersion() {
+        return cacheVersion;
+    }
+
+    /**
+     * To be called when a cached token changes in a way that can change
+     * which token follows another one.
+     */
+    public final void cachedTokensChanged() {
+        cacheVersion++;
+    }
+
     public void cacheToken(${BaseToken} tok) {
         int beginOffset = tok.getBeginOffset();
         // If the token is already cached, we just jump out. (I think this is okay...)
         if (tokenLocationTable[beginOffset] == tok) return;
+        // A token behind all the cached ones is no other token's successor yet,
+        // so only a token cached in between changes what follows a token.
+        if (beginOffset < tokenOffsets.length()) cacheVersion++;
         int endOffset = tok.getEndOffset();
         tokenOffsets.set(beginOffset);
         if (endOffset > beginOffset + 1) {
@@ -309,6 +340,7 @@ abstract public class TokenSource implements CharSequence
     }
 
     public void uncacheTokens(${BaseToken} lastToken) {
+        cacheVersion++;
         int endOffset = lastToken.getEndOffset();
         if (endOffset < tokenOffsets.length()) {
             tokenOffsets.clear(lastToken.getEndOffset(), tokenOffsets.length());
@@ -316,6 +348,7 @@ abstract public class TokenSource implements CharSequence
     }
 
     protected void cleanUpOrphans(${BaseToken} tok) {
+        cacheVersion++;
         tokenOffsets.clear(tok.getBeginOffset()+1, tok.getEndOffset());
     }
 
@@ -338,6 +371,7 @@ abstract public class TokenSource implements CharSequence
      * are parsed (i.e. not ignored)
      */
     private void setParsedLines(BitSet parsedLines, boolean reversed) {
+        int[] lineOffsets = lineOffsets();
         for (int i = 0; i < lineOffsets.length; i++) {
             boolean turnOffLine = !parsedLines.get(i + 1);
             if (reversed) turnOffLine = !turnOffLine;
@@ -374,6 +408,7 @@ abstract public class TokenSource implements CharSequence
      * The offset of the start of the given line. This is in code units
      */
     public int getLineStartOffset(int lineNumber) {
+        int[] lineOffsets = lineOffsets();
         int realLineNumber = lineNumber - startingLine;
         if (realLineNumber <= 0) {
             return 0;
@@ -388,6 +423,7 @@ abstract public class TokenSource implements CharSequence
      * The offset of the end of the given line. This is in code units.
      */
     public int getLineEndOffset(int lineNumber) {
+        int[] lineOffsets = lineOffsets();
         int realLineNumber = lineNumber - startingLine;
         if (realLineNumber < 0) {
             return 0;
@@ -402,6 +438,7 @@ abstract public class TokenSource implements CharSequence
     }
 
     public int getLineFromOffset(int pos) {
+        int[] lineOffsets = lineOffsets();
         if (pos >= content.length()) {
             if (content.charAt(content.length() - 1) == '\n') {
                 return startingLine + lineOffsets.length;
@@ -415,6 +452,13 @@ abstract public class TokenSource implements CharSequence
         }
         #-- REVISIT
         return Math.max(startingLine, startingLine -(bsearchResult + 2));
+    }
+
+    // The line table is built when a line or column is first asked for, which
+    // a parse without errors often never does.
+    private int[] lineOffsets() {
+        if (lineOffsets == null) createLineOffsetsTable();
+        return lineOffsets;
     }
 
     private void createLineOffsetsTable() {
@@ -459,7 +503,7 @@ abstract public class TokenSource implements CharSequence
         if (pos >= content.length()) return 1;
         if (pos == 0) return startingColumn;
         final int line = getLineFromOffset(pos)-startingLine;
-        final int lineStart = lineOffsets[line];
+        final int lineStart = lineOffsets()[line];
         int startColumnAdjustment = line > 0 ? 1 : startingColumn;
         int unadjustedColumn = pos - lineStart + startColumnAdjustment;
         if (!needToCalculateColumns.get(line)) {

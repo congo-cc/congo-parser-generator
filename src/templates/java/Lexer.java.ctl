@@ -61,6 +61,12 @@ class ${settings::lexerClassName} extends TokenSource
   }
   LexicalState lexicalState = LexicalState.values()[0];
 
+  // Used by tokenizeAt for every token; their content is not needed between two calls.
+  private final MatchInfo matchInfo = new MatchInfo();
+  private final BitSet currentStates = new BitSet(${lexerData::maxNfaStates});
+  private final BitSet nextStates = new BitSet(${lexerData::maxNfaStates});
+  private final EnumSet<TokenType> alreadyMatchedTypes = EnumSet.noneOf(TokenType.class);
+
  #if settings::lexerUsesParser
   private ${settings::parserClassName} parser;
 
@@ -201,6 +207,13 @@ class ${settings::lexerClassName} extends TokenSource
    * Hence the extra parameters that need to be passed in.
    */
   static MatchInfo getMatchInfo(CharSequence input, int position, EnumSet<TokenType> activeTokenTypes, NfaFunction[] nfaFunctions, BitSet currentStates, BitSet nextStates, MatchInfo matchInfo) {
+       return getMatchInfo(input, position, activeTokenTypes, nfaFunctions, currentStates, nextStates, matchInfo, null);
+  }
+
+  /**
+   * As above, with a set to hold the types matched so far; it is cleared first, or created if it is null.
+   */
+  static MatchInfo getMatchInfo(CharSequence input, int position, EnumSet<TokenType> activeTokenTypes, NfaFunction[] nfaFunctions, BitSet currentStates, BitSet nextStates, MatchInfo matchInfo, EnumSet<TokenType> alreadyMatchedTypes) {
        if (matchInfo == null) {
            matchInfo = new MatchInfo();
        }
@@ -212,7 +225,8 @@ class ${settings::lexerClassName} extends TokenSource
        int start = position;
        int matchLength = 0;
        TokenType matchedType = TokenType.INVALID;
-       EnumSet<TokenType> alreadyMatchedTypes = EnumSet.noneOf(TokenType.class);
+       if (alreadyMatchedTypes == null) alreadyMatchedTypes = EnumSet.noneOf(TokenType.class);
+       else alreadyMatchedTypes.clear();
        if (currentStates == null) currentStates = new BitSet(${lexerData::maxNfaStates});
        else currentStates.clear();
        if (nextStates == null) nextStates = new BitSet(${lexerData::maxNfaStates});
@@ -272,9 +286,7 @@ class ${settings::lexerClassName} extends TokenSource
       ${TOKEN} matchedToken = null;
       TokenType matchedType = null;
       // The core tokenization loop
-      MatchInfo matchInfo = new MatchInfo();
-      BitSet currentStates = new BitSet(${lexerData::maxNfaStates});
-      BitSet nextStates = new BitSet(${lexerData::maxNfaStates});
+      MatchInfo matchInfo = this.matchInfo;
       while (matchedToken == null) {
       #if NFA::multipleLexicalStates
        // Get the NFA function table for the current lexical state.
@@ -288,12 +300,12 @@ class ${settings::lexerClassName} extends TokenSource
         matchStart = position;
         if (!inMore) tokenBeginOffset = position;
         if (MATCHER_HOOK != null) {
-            matchInfo = MATCHER_HOOK.apply(lexicalState, this, position, activeTokenTypes, nfaFunctions, currentStates, nextStates, matchInfo);
+            matchInfo = MATCHER_HOOK.apply(lexicalState, this, position, activeTokenTypes, nfaFunctions, currentStates, nextStates, this.matchInfo);
             if (matchInfo == null) {
-                matchInfo = getMatchInfo(this, position, activeTokenTypes, nfaFunctions, currentStates, nextStates, matchInfo);
+                matchInfo = getMatchInfo(this, position, activeTokenTypes, nfaFunctions, currentStates, nextStates, this.matchInfo, alreadyMatchedTypes);
             }
         } else {
-            matchInfo = getMatchInfo(this, position, activeTokenTypes, nfaFunctions, currentStates, nextStates, matchInfo);
+            matchInfo = getMatchInfo(this, position, activeTokenTypes, nfaFunctions, currentStates, nextStates, this.matchInfo, alreadyMatchedTypes);
         }
         matchedType = matchInfo.matchedType;
         inMore = moreTokens.contains(matchedType);

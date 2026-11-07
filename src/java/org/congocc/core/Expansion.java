@@ -292,6 +292,15 @@ abstract public class Expansion extends BaseNode {
         return firstSetVarName;
     }
 
+    /**
+     * The generated expression for this expansion as a call-stack site
+     * (production, grammar file, line, column): an element of the parser's
+     * table of sites, see Grammar.getCallSites().
+     */
+    public String getCallSiteVarName() {
+        return "CALL_SITES[" + getGrammar().getCallSiteIndex(this) + "]";
+    }
+
     public String getFinalSetVarName() {
         String result = getFirstSetVarName();
         String prefix = getAppSettings().generateIdentifierPrefix("first_set");

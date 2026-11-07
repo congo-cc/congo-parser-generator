@@ -252,6 +252,28 @@ public class Grammar extends GrammarFile {
         return descendants(Expansion.class, Expansion::isAtChoicePoint);
     }
 
+    private final List<Expansion> callSites = new ArrayList<>();
+    private final Map<Expansion, Integer> callSiteIndexes = new IdentityHashMap<>();
+
+    /**
+     * @return the expansions for which the generated parser pushes an entry onto its
+     * call stack or lookahead stack, in the order the generated code first referred to them
+     */
+    public List<Expansion> getCallSites() {
+        return callSites;
+    }
+
+    /**
+     * @return the index of the expansion in the generated table of call-stack sites;
+     * the first call for an expansion adds it to the table
+     */
+    public int getCallSiteIndex(Expansion exp) {
+        return callSiteIndexes.computeIfAbsent(exp, e -> {
+            callSites.add(e);
+            return callSites.size() - 1;
+        });
+    }
+
     public List<Expansion> getAssertionExpansions() {
         return descendants(Expansion.class, exp->exp.getParent() instanceof Assertion);
     }
