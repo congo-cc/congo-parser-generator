@@ -1,0 +1,4 @@
+count a b;
+expect many;
+count a;
+expect few;

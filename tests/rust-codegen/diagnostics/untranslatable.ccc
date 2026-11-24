@@ -1,0 +1,43 @@
+/*
+ * Java code that the Rust target cannot translate: System.nanoTime(),
+ * System.identityHashCode() and System.out are not part of the Java subset
+ * that it translates.  Used by RustCodegenTest
+ * (diagnostics/untranslatable-code-*).
+ *
+ * The semantic lookahead, the assertion and the assignment to 'mode' (which a
+ * semantic lookahead reads) change what is parsed, so they are errors; the
+ * logging statement and the method that nothing calls do not, so they are
+ * warnings.  RustCodegenTest checks the line and column of each diagnostic:
+ * keep the code below at its place.
+ */
+PARSER_PACKAGE=rcgtest.untranslatable;
+
+SKIP : " " | "\t" | "\n" | "\r" ;
+
+TOKEN : <A : "a"> | <B : "b"> | <C : "c"> | <SEMI : ";"> ;
+
+INJECT PARSER_CLASS : {
+    private int mode;
+}
+
+Root : (Statement)* <EOF> ;
+
+Statement : First | Second | Third ;
+
+First :
+    SCAN {System.nanoTime() > 0} => "a" ";"
+;
+
+Second :
+    "b"
+    ASSERT {System.nanoTime() > 0}
+    ";"
+;
+
+Third : "c" {mode = System.identityHashCode(this);} {System.out.println("logging only");}
+    [SCAN {mode == 0} => ";"]
+;
+
+INJECT PARSER_CLASS : {
+    private void unused() { System.gc(); }
+}

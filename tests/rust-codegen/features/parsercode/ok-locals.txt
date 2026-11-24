@@ -1,0 +1,4 @@
+let x = 1;
+let const x = "s";
+let x : t = y;
+let const x : t = { a; b };

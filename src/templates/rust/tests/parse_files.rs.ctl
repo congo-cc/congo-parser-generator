@@ -60,7 +60,7 @@ fn parse_test_files() {
         );
     }
 
-[#var extension = globals.getStringSetting("TEST_EXTENSION", "txt")]
+[#var extension = globals.getStringSetting("TEST_EXTENSION", "rs")]
     let extension = "${extension}";
 
     let mut files: Vec<PathBuf> = Vec::new();

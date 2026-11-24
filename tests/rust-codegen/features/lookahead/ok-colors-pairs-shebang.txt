@@ -1,0 +1,6 @@
+color red;
+color black;
+color magenta;
+pair a: 1, 2, b: 3;
+pair 5;
+#!x;

@@ -5,7 +5,8 @@
 /.settings/*
 __pycache__/*
 /Ant*.out
-/*.jar
+.ant-targets-build.xml
+# /*.jar
 \#*
 /examples/arithmetic/ex1/*
 /examples/arithmetic/ex2/*
@@ -51,6 +52,11 @@ __pycache__/*
 /examples/python/rust-pythonparser/*
 /examples/csharp/rust-csharpparser/*
 /examples/sqlexpr/rust-sqlparser/*
+/examples/rust/org/*
+/examples/rust/rust-rustparser/*
+/examples/rust/rust-harness/target/*
+/examples/rust/rust-harness/Cargo.lock
+/examples/rust/tree-dumps/*
 /sandbox/peg/*
 /personal.code-workspace
 /.vscode/*

@@ -1,0 +1,26 @@
+/*
+ * Injected methods that cannot be translated: an error if the code that
+ * changes what is parsed or lexed calls them (directly or not), a warning
+ * otherwise.  Lexer token hooks are only called by the Java lexer: a warning.
+ * Used by RustCodegenTest (diagnostics/reachability), which checks the line
+ * and column of each diagnostic: keep the code below at its place.
+ */
+PARSER_PACKAGE=rcgtest.reachability;
+
+SKIP : " " | "\t" | "\n" | "\r" ;
+
+TOKEN : <A : "a"> {calledFromAction();} | <B : "b"> ;
+
+Root : (SCAN {check()} => "a" | "b")* <EOF> ;
+
+INJECT PARSER_CLASS : {
+    private boolean check() { return calledIndirectly(); }
+    private boolean calledIndirectly() { return System.nanoTime() > 0; }
+    private void neverCalledEither() { System.gc(); }
+}
+
+INJECT LEXER_CLASS : {
+    private void calledFromAction() { System.gc(); }
+    private void neverCalled() { System.gc(); }
+    private Token tokenHook(Token token) { return token; }
+}

@@ -31,6 +31,52 @@ impl TokenType {
     /// Total number of defined token types (excluding DUMMY and INVALID).
     pub const COUNT: usize = ${lexerData::regularExpressions.size() + settings::extraTokenNames.size()};
 
+    /// Number of variants including the `DUMMY` and `INVALID` sentinels.
+    pub const NUM_VARIANTS: usize = Self::COUNT + 2;
+
+    /// Every variant, in ordinal (declaration) order.  `ALL[t.ordinal()] == t`
+    /// holds for every `t`, which lets code map ordinals back to variants
+    /// without `unsafe` transmutes.
+    pub const ALL: [TokenType; ${lexerData::regularExpressions.size() + settings::extraTokenNames.size() + 2}] = [
+[#list lexerData::regularExpressions as regexp]
+        TokenType::${regexp::label},
+[/#list]
+[#list settings::extraTokenNames as extraToken]
+        TokenType::${extraToken},
+[/#list]
+        TokenType::DUMMY,
+        TokenType::INVALID,
+    ];
+
+    /// Returns the ordinal of this token type (its position in [`TokenType::ALL`]).
+    /// Ordinals match the Java `TokenType.ordinal()` values of the same grammar.
+    #[inline]
+    pub const fn ordinal(self) -> usize {
+        self as u16 as usize
+    }
+
+    /// Returns the token type with the given ordinal, or `None` if the
+    /// ordinal is out of range.
+    #[inline]
+    pub fn from_ordinal(ordinal: usize) -> Option<TokenType> {
+        Self::ALL.get(ordinal).copied()
+    }
+
+    /// Returns `true` if this token type was declared with `[IGNORE_CASE]`.
+    /// Contextual keywords that ignore case match identifiers case-insensitively,
+    /// exactly like `TokenType.isIgnoreCase()` in the Java target.
+    #[allow(clippy::match_like_matches_macro)]
+    pub fn is_ignore_case(self) -> bool {
+        match self {
+[#list lexerData::regularExpressions as regexp]
+  [#if regexp::ignoreCase]
+            TokenType::${regexp::label} => true,
+  [/#if]
+[/#list]
+            _ => false,
+        }
+    }
+
     /// Returns `true` if this token type is a regular (parsing) token.
     pub fn is_regular(self) -> bool {
         matches!(self,
@@ -103,6 +149,14 @@ pub fn is_contextual_token(tt: TokenType) -> bool {
 [/#list]
 }
 
+/// The contextual token types as a set, so that the parser can find the
+/// contextual members of a first set with one bitwise AND.
+pub const CONTEXTUAL_TOKEN_TYPES: TokenTypeSet = TokenTypeSet::from_slice(&[
+[#list lexerData::contextualTokens as ctok]
+    TokenType::${ctok::label},
+[/#list]
+]);
+
 /// Returns the literal string for a token type, if it has one.
 ///
 /// Used for contextual token matching: when the lexer produces an identifier,
@@ -111,7 +165,7 @@ pub fn literal_string(tt: TokenType) -> Option<&'static str> {
     match tt {
 [#list lexerData::regularExpressions as regexp]
     [#if regexp::literalString??]
-        TokenType::${regexp::label} => Some("${regexp::literalString.replace("\\", "\\\\").replace("\"", "\\\"")}"),
+        TokenType::${regexp::label} => Some(${globals.rustStringLiteral(regexp::literalString)}),
     [/#if]
 [/#list]
         _ => None,
@@ -125,6 +179,9 @@ pub fn literal_string(tt: TokenType) -> Option<&'static str> {
 pub fn is_contextual_token(_tt: TokenType) -> bool {
     false
 }
+
+/// The contextual token types as a set (empty: this grammar has none).
+pub const CONTEXTUAL_TOKEN_TYPES: TokenTypeSet = TokenTypeSet::new();
 [/#if]
 
 /// Lexical states for this grammar.
@@ -158,3 +215,214 @@ pub fn lexical_state_for(tt: TokenType) -> Option<LexicalState> {
     }
 }
 [/#if]
+
+/// Number of 64-bit words in a [`TokenTypeSet`].
+const TOKEN_TYPE_SET_WORDS: usize = (TokenType::NUM_VARIANTS + 63) / 64;
+
+/// A compact set of token types backed by a fixed-size bitset.
+///
+/// This is the Rust counterpart of Java's `EnumSet<TokenType>`.  Membership
+/// tests, inserts and removals are O(1) and the set is `Copy`, so saving and
+/// restoring the active token types around an `ACTIVATE_TOKENS` /
+/// `DEACTIVATE_TOKENS` expansion costs a few word copies instead of cloning a
+/// hash set.  The lexer consults the set once per NFA match, which is why a
+/// hash set was too slow there.
+///
+/// # Examples
+///
+/// ```
+/// use ${settings::parserPackage.replace(".", "_")}::tokens::{TokenType, TokenTypeSet};
+///
+/// let mut set = TokenTypeSet::new();
+/// assert!(set.insert(TokenType::EOF));   // newly added
+/// assert!(!set.insert(TokenType::EOF));  // already present
+/// assert!(set.contains(TokenType::EOF));
+/// assert!(set.remove(TokenType::EOF));
+/// assert!(set.is_empty());
+/// ```
+#[derive(Clone, Copy, PartialEq, Eq, Hash, Default)]
+pub struct TokenTypeSet {
+    words: [u64; TOKEN_TYPE_SET_WORDS],
+}
+
+#[allow(dead_code)]
+impl TokenTypeSet {
+    /// Returns an empty set.
+    pub const fn new() -> Self {
+        TokenTypeSet { words: [0; TOKEN_TYPE_SET_WORDS] }
+    }
+
+    /// Every token type, including the `DUMMY` and `INVALID` sentinels: the
+    /// counterpart of Java's `EnumSet.allOf(TokenType.class)`, which is what
+    /// the Java lexer and parser start from when token types are deactivated.
+    pub const ALL_TYPES: TokenTypeSet = TokenTypeSet::first_n(TokenType::NUM_VARIANTS);
+
+    /// Every grammar token type (ordinals `0..COUNT`), i.e. every type except
+    /// the `DUMMY` and `INVALID` sentinels.
+    pub const ALL_GRAMMAR_TYPES: TokenTypeSet = TokenTypeSet::first_n(TokenType::COUNT);
+
+    /// The set of the token types with ordinals `0..n`.
+    const fn first_n(n: usize) -> Self {
+        let mut words = [0u64; TOKEN_TYPE_SET_WORDS];
+        let mut i = 0;
+        while i < n {
+            words[i >> 6] |= 1u64 << (i & 63);
+            i += 1;
+        }
+        TokenTypeSet { words }
+    }
+
+    /// Returns the set of every grammar token type (ordinals `0..COUNT`),
+    /// i.e. every type except the `DUMMY` and `INVALID` sentinels.
+    pub const fn all_grammar_types() -> Self {
+        Self::ALL_GRAMMAR_TYPES
+    }
+
+    /// Returns a set containing exactly the given types.
+    pub fn of(types: &[TokenType]) -> Self {
+        Self::from_slice(types)
+    }
+
+    /// Returns a set containing exactly the given types.  Being a `const fn`,
+    /// it lets the parser keep its first sets in constants, like the Java
+    /// parser's `static final EnumSet` fields.
+    ///
+    /// ```
+    /// use ${settings::parserPackage.replace(".", "_")}::tokens::{TokenType, TokenTypeSet};
+    ///
+    /// const ENDS: TokenTypeSet = TokenTypeSet::from_slice(&[TokenType::EOF, TokenType::INVALID]);
+    /// assert!(ENDS.contains(TokenType::EOF));
+    /// assert!(!ENDS.contains(TokenType::DUMMY));
+    /// ```
+    pub const fn from_slice(types: &[TokenType]) -> Self {
+        let mut words = [0u64; TOKEN_TYPE_SET_WORDS];
+        let mut i = 0;
+        while i < types.len() {
+            let ordinal = types[i].ordinal();
+            words[ordinal >> 6] |= 1u64 << (ordinal & 63);
+            i += 1;
+        }
+        TokenTypeSet { words }
+    }
+
+    /// Returns the members common to `self` and `other`.
+    #[inline]
+    pub const fn intersection(&self, other: &TokenTypeSet) -> TokenTypeSet {
+        let mut words = [0u64; TOKEN_TYPE_SET_WORDS];
+        let mut i = 0;
+        while i < TOKEN_TYPE_SET_WORDS {
+            words[i] = self.words[i] & other.words[i];
+            i += 1;
+        }
+        TokenTypeSet { words }
+    }
+
+    /// Returns `true` if `tt` is in the set.
+    #[inline]
+    pub fn contains(&self, tt: TokenType) -> bool {
+        let ordinal = tt.ordinal();
+        (self.words[ordinal >> 6] >> (ordinal & 63)) & 1 != 0
+    }
+
+    /// Adds `tt`; returns `true` if it was not already present
+    /// (the same contract as `EnumSet.add`).
+    #[inline]
+    pub fn insert(&mut self, tt: TokenType) -> bool {
+        let ordinal = tt.ordinal();
+        let mask = 1u64 << (ordinal & 63);
+        let word = &mut self.words[ordinal >> 6];
+        let absent = *word & mask == 0;
+        *word |= mask;
+        absent
+    }
+
+    /// Removes `tt`; returns `true` if it was present
+    /// (the same contract as `EnumSet.remove`).
+    #[inline]
+    pub fn remove(&mut self, tt: TokenType) -> bool {
+        let ordinal = tt.ordinal();
+        let mask = 1u64 << (ordinal & 63);
+        let word = &mut self.words[ordinal >> 6];
+        let present = *word & mask != 0;
+        *word &= !mask;
+        present
+    }
+
+    /// Returns `true` if the set has no members.
+    pub fn is_empty(&self) -> bool {
+        self.words.iter().all(|&w| w == 0)
+    }
+
+    /// Returns the number of members.
+    pub fn len(&self) -> usize {
+        self.words.iter().map(|w| w.count_ones() as usize).sum()
+    }
+
+    /// Iterates over the members in ordinal order.  Only the set bits are
+    /// visited, so iterating over a small set is cheap however many token
+    /// types the grammar has.
+    pub fn iter(&self) -> impl Iterator<Item = TokenType> + '_ {
+        self.words.iter().enumerate().flat_map(|(index, &word)| {
+            let mut remaining = word;
+            std::iter::from_fn(move || {
+                if remaining == 0 {
+                    return None;
+                }
+                let bit = remaining.trailing_zeros() as usize;
+                remaining &= remaining - 1;
+                Some(TokenType::ALL[index * 64 + bit])
+            })
+        })
+    }
+
+    /// Converts the set to a `HashSet` (used by the public lexer API, which
+    /// predates this type and exposes `HashSet<TokenType>`).
+    pub fn to_hash_set(&self) -> std::collections::HashSet<TokenType> {
+        self.iter().collect()
+    }
+}
+
+impl FromIterator<TokenType> for TokenTypeSet {
+    fn from_iter<I: IntoIterator<Item = TokenType>>(iter: I) -> Self {
+        let mut set = TokenTypeSet::new();
+        for tt in iter {
+            set.insert(tt);
+        }
+        set
+    }
+}
+
+impl std::fmt::Debug for TokenTypeSet {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        f.debug_set().entries(self.iter()).finish()
+    }
+}
+
+/// Compares two strings the way Java's `String.equalsIgnoreCase` does:
+/// the strings must have the same length in UTF-16 code units, and each pair
+/// of characters must be equal, equal after upper-casing, or equal after
+/// lower-casing.  Characters whose case mapping expands to several characters
+/// are compared unchanged, as Java's per-`char` mapping never expands.
+#[allow(dead_code)]
+pub fn java_equals_ignore_case(a: &str, b: &str) -> bool {
+    fn single_upper(c: char) -> char {
+        let mut it = c.to_uppercase();
+        match (it.next(), it.next()) {
+            (Some(u), None) => u,
+            _ => c,
+        }
+    }
+    fn single_lower(c: char) -> char {
+        let mut it = c.to_lowercase();
+        match (it.next(), it.next()) {
+            (Some(l), None) => l,
+            _ => c,
+        }
+    }
+    if a.encode_utf16().count() != b.encode_utf16().count() {
+        return false;
+    }
+    a.chars().zip(b.chars()).all(|(x, y)| {
+        x == y || single_upper(x) == single_upper(y) || single_lower(x) == single_lower(y)
+    })
+}

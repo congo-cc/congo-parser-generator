@@ -1,0 +1,9 @@
+block
+  leave;
+  inner;
+  block deep; end
+  if x { nested; leave; far; odd; }
+end
+outer;
+free;
+if y { far; odd; free; if z { far; } }

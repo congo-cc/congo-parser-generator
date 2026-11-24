@@ -1,0 +1,6 @@
+group (a [b] c);
+group (a [b] c)!
+group [a (b) {c} d]!
+group ();
+group (a (b (c)) d);
+group [x, y: z = 1];

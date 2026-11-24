@@ -1,0 +1,13 @@
+gt;
+gt a;
+gt a b;
+gt a b c;
+ge a b;
+ge a b c;
+lt;
+lt a;
+lt a b;
+lt a b c;
+le a;
+le a b;
+le a b c;

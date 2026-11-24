@@ -4,12 +4,11 @@ import java.io.IOException;
 import java.nio.file.Path;
 import java.util.*;
 import java.util.function.Function;
-import java.util.regex.Pattern;
 
 import org.congocc.app.*;
 import org.congocc.core.*;
-import org.congocc.codegen.rust.RustTranslator;
 import org.congocc.codegen.csharp.CSharpTranslator;
+import org.congocc.codegen.rust.RustCodeEmitter;
 import org.congocc.codegen.python.PythonTranslator;
 import org.congocc.parser.Node;
 import static org.congocc.parser.Node.CodeLang.*;
@@ -198,129 +197,6 @@ public class TemplateGlobals {
         return result.toString();
     }
 
-    /**
-     * Translates a Java expression to the target language with a safe fallback
-     * for Rust.  If translation fails or produces obviously broken Rust code,
-     * returns the given {@code fallback} value with a FIXME comment containing
-     * the original Java source.  For non-Rust targets, delegates to
-     * {@link #translateExpression(Node)}.
-     *
-     * @param expr     the Java expression AST node to translate
-     * @param fallback the Rust expression to emit when translation fails
-     *                 (e.g., "true" for boolean contexts)
-     * @return the translated expression, or fallback with FIXME comment
-     */
-    public String translateExpressionSafe(Node expr, String fallback) {
-        if (!(translator instanceof RustTranslator)) {
-            return translateExpression(expr);
-        }
-        // Check the original Java source for patterns that are known to produce
-        // broken Rust code (e.g., instanceof checks, parser API calls).  This
-        // catches cases where the translator "succeeds" but the output references
-        // undefined variables or types.
-        String javaSource = (expr != null) ? expr.getSource() : null;
-        if (javaSource != null && looksLikeUntranslatableJava(javaSource)) {
-            String src = javaSource.replace("*/", "* /").replace("\n", " ").trim();
-            return fallback + " /* FIXME(congocc): " + src + " */";
-        }
-        try {
-            String translated = translateExpression(expr);
-            if (looksLikeBadRustTranslation(translated)) {
-                String src = (javaSource != null)
-                    ? javaSource.replace("*/", "* /").replace("\n", " ").trim()
-                    : "untranslatable expression";
-                return fallback + " /* FIXME(congocc): " + src + " */";
-            }
-            return translated;
-        } catch (Exception e) {
-            String src = (javaSource != null)
-                ? javaSource.replace("*/", "* /").replace("\n", " ").trim()
-                : "expression translation failed";
-            return fallback + " /* FIXME(congocc): " + src + " */";
-        }
-    }
-
-    /**
-     * Checks the original Java source of an expression for patterns that cannot
-     * produce valid Rust code — e.g., instanceof checks that reference Java's
-     * per-type class hierarchy, or calls to parser API methods that don't exist
-     * in the Rust parser struct.
-     */
-    private static boolean looksLikeUntranslatableJava(String javaSource) {
-        // instanceof checks reference Java class hierarchy; in Rust, the arena
-        // model uses NodeKind enum matching which requires different variable scope
-        if (javaSource.contains("instanceof")) return true;
-        // Java parser API methods with no Rust equivalent
-        if (javaSource.contains("peekNode") || javaSource.contains("popNode")) return true;
-        if (javaSource.contains("tokenImage") || javaSource.contains("getTokenType")) return true;
-        if (javaSource.contains("getToken(")) return true;
-        if (javaSource.contains("lastConsumedToken")) return true;
-        if (javaSource.contains("permissibleModifiers")) return true;
-        if (javaSource.contains("isInProduction")) return true;
-        if (javaSource.contains("EnumSet.of")) return true;
-        if (javaSource.contains(".equals(")) return true;
-        if (javaSource.contains("hasMatch(")) return true;
-        // Java collection mutation: list.add(x), set.add(x), map.put(...).
-        // The arena AST has no Java-style ArrayList/HashSet/HashMap locals, so
-        // these calls cannot be safely translated.  The local variable they
-        // operate on is almost always a production-local Java variable whose
-        // declaration already FIXME'd out for being an untranslatable type.
-        if (javaSource.contains(".add(")) return true;
-        // Java's `null` does not have a clean Rust analog: `x = null` requires
-        // `x: Option<T>`, and `x == null`/`x != null` need `is_none()`/`is_some()`.
-        // The naive translation `x = None` is type-incorrect against the default
-        // `String`/`bool`/`i32` declarations that `emitDefaultDeclarationsForFIXME`
-        // emits for production-local Java variables.  No working grammar uses
-        // `null` in a code-action or lookahead expression, so a plain keyword
-        // check does not regress any existing example.
-        if (NULL_KEYWORD_PATTERN.matcher(javaSource).find()) return true;
-        return false;
-    }
-
-    // Matches the bare Java `null` keyword (word-bounded so we don't false-match
-    // on identifiers like `nullable` or `isNull`).
-    private static final Pattern NULL_KEYWORD_PATTERN = Pattern.compile("\\bnull\\b");
-
-    // Regex patterns indicating broken Java-to-Rust translation output.
-    // Double method call: some_method.some_method( — from incorrect camelCase decomposition.
-    // Matches with or without a leading dot.
-    private static final Pattern DOUBLE_METHOD_PATTERN =
-        Pattern.compile("\\b([a-z_]+)\\.\\1\\(");
-    // All-caps Java identifiers incorrectly snake_cased: t_r_u_e (TRUE), n_u_l_l
-    // (NULL), f_a_l_s_e (FALSE), p_u_b_l_i_c (PUBLIC), etc.  Matches three or
-    // more single lowercase letters separated by underscores; the original
-    // 4-letter-only pattern missed 5+ letter constants like FALSE.
-    private static final Pattern OVER_SNAKE_CASED_PATTERN =
-        Pattern.compile("\\b[a-z](?:_[a-z]){2,}\\b");
-
-    /**
-     * Heuristic check for Java-to-Rust translations that are syntactically
-     * present but semantically broken — e.g., references to Java parser fields
-     * that don't exist in Rust, incorrectly translated method calls, etc.
-     */
-    // Variable declarations with Java AST types that don't exist in Rust
-    private static final Pattern JAVA_TYPE_DECL_PATTERN =
-        Pattern.compile("let\\s+(?:mut\\s+)?\\w+:\\s*(?:Expression|Node|Statement|Token)\\b");
-
-    private static boolean looksLikeBadRustTranslation(String code) {
-        if (code.contains("FIXME(congocc)")) return true;
-        if (DOUBLE_METHOD_PATTERN.matcher(code).find()) return true;
-        if (code.contains("enum_set.")) return true;
-        if (OVER_SNAKE_CASED_PATTERN.matcher(code).find()) return true;
-        // Parser-internal method calls that don't exist in Rust
-        if (code.contains("peek_node()") || code.contains("pop_node()")) return true;
-        // Java .equals() translated to standalone eq() function
-        if (code.contains("eq(")) return true;
-        // Java parser API references that have no Rust equivalent
-        if (code.contains("token_image") || code.contains("get_token_type")
-            || code.contains("get_token(") || code.contains("last_consumed_token")
-            || code.contains("is_in_production") || code.contains("this_production")
-            || code.contains("permissible_modifiers") || code.contains("contains(")) return true;
-        // Variable declarations using Java AST types (no per-type classes in Rust)
-        if (JAVA_TYPE_DECL_PATTERN.matcher(code).find()) return true;
-        return false;
-    }
-
     private void translateStatements(Node node, int indent, StringBuilder result) {
         if (node instanceof Statement) {
             translator.translateStatement(node, indent, result);
@@ -339,15 +215,11 @@ public class TemplateGlobals {
         StringBuilder result = new StringBuilder();
         Translator.SymbolTable syms = new Translator.SymbolTable();
         translator.pushSymbols(syms);
-        if (translator instanceof RustTranslator) {
-            translateCodeBlockForRust(javaCodeBlock, indent, result);
-        } else {
-            translateStatements(javaCodeBlock, indent, result);
-            if (translator instanceof CSharpTranslator) {
-                patchJavaSystemOutCallsForCSharp(result);
-            } else if (translator instanceof PythonTranslator) {
-                patchJavaSystemOutCallsForPython(result);
-            }
+        translateStatements(javaCodeBlock, indent, result);
+        if (translator instanceof CSharpTranslator) {
+            patchJavaSystemOutCallsForCSharp(result);
+        } else if (translator instanceof PythonTranslator) {
+            patchJavaSystemOutCallsForPython(result);
         }
         translator.popSymbols();
         return result.toString();
@@ -381,102 +253,6 @@ public class TemplateGlobals {
         while ((i = sb.indexOf(from, i)) >= 0) {
             sb.replace(i, i + from.length(), to);
             i += to.length();
-        }
-    }
-
-    /**
-     * Translates a Java code block for Rust with FIXME fallback.  If the
-     * translation produces obviously broken Rust (references to Java-only
-     * parser fields, incorrect method translations, etc.), emits the original
-     * Java source as a block comment with a FIXME marker instead.
-     */
-    private void translateCodeBlockForRust(Node codeBlock, int indent, StringBuilder result) {
-        // Check original Java source for patterns known to be untranslatable
-        String javaSource = codeBlock.getSource();
-        if (javaSource != null && looksLikeUntranslatableJava(javaSource)) {
-            emitCodeBlockFIXME(codeBlock, indent, result);
-            return;
-        }
-        try {
-            StringBuilder buf = new StringBuilder();
-            translateStatements(codeBlock, indent, buf);
-            String translated = buf.toString();
-            if (looksLikeBadRustTranslation(translated)) {
-                emitCodeBlockFIXME(codeBlock, indent, result);
-            } else {
-                result.append(translated);
-            }
-        } catch (Exception e) {
-            emitCodeBlockFIXME(codeBlock, indent, result);
-        }
-    }
-
-    /**
-     * Emits a FIXME block comment containing the original Java source from a
-     * code action that could not be translated to Rust.  The block comment is
-     * valid Rust syntax anywhere (inside functions, match arms, etc.).
-     */
-    // Matches Java variable declarations of supported scalar types, including
-    // comma-separated lists: "String t, u" or "boolean a, b, c".  Group 2 is
-    // the full name list (still containing commas); the caller splits on `,`.
-    private static final Pattern JAVA_VAR_DECL_PATTERN =
-        Pattern.compile("\\b(boolean|int|long|String)\\s+([a-zA-Z_]\\w*(?:\\s*,\\s*[a-zA-Z_]\\w*)*)");
-
-    private void emitCodeBlockFIXME(Node codeBlock, int indent, StringBuilder result) {
-        String pad = " ".repeat(Math.max(indent * 4, 8));
-        String src = codeBlock.getSource();
-        if (src != null && !src.isEmpty()) {
-            // Emit default variable declarations for any variables defined in the
-            // FIXME'd code block, so subsequent code that references them compiles.
-            if (translator instanceof RustTranslator) {
-                emitDefaultDeclarationsForFIXME(src, pad, result);
-            }
-            // Escape any existing block comment delimiters in the Java source
-            src = src.replace("*/", "* /");
-            result.append(pad).append("/* FIXME(congocc): Java code action not yet translated to Rust\n");
-            for (String line : src.split("\n")) {
-                result.append(pad).append("   ").append(line).append('\n');
-            }
-            result.append(pad).append("*/\n");
-        }
-    }
-
-    /**
-     * Scans Java source for variable declarations and emits Rust default
-     * declarations for them.  This ensures that subsequent code referencing
-     * these variables (e.g., non-terminal arguments) still compiles even
-     * though the code block was replaced by a FIXME comment.
-     */
-    private void emitDefaultDeclarationsForFIXME(String javaSource, String pad, StringBuilder result) {
-        java.util.regex.Matcher m = JAVA_VAR_DECL_PATTERN.matcher(javaSource);
-        while (m.find()) {
-            String javaType = m.group(1);
-            String nameList = m.group(2);
-            String rustType, rustDefault;
-            switch (javaType) {
-                case "boolean" -> {
-                    rustType = "bool";
-                    rustDefault = "false";
-                }
-                case "int" -> {
-                    rustType = "i32";
-                    rustDefault = "0";
-                }
-                case "long" -> {
-                    rustType = "i64"; rustDefault = "0";
-                }
-                case "String" -> {
-                    rustType = "String";
-                    rustDefault = "String::new()";
-                }
-                default -> {continue;}
-            }
-            // Split the name list on commas; "String t, u" -> ["t", "u"].
-            for (String javaName : nameList.split("\\s*,\\s*")) {
-                String rustName = translator.translateIdentifier(javaName.trim(), Translator.TranslationContext.VARIABLE);
-                result.append(pad).append("let mut ").append(rustName).append(": ")
-                      .append(rustType).append(" = ").append(rustDefault).append(";\n");
-            }
         }
     }
 
@@ -640,35 +416,6 @@ public class TemplateGlobals {
         return translateInjections(className, fields, fields && translator.isIncludeInitializers());
     }
 
-    /**
-     * Extracts field declarations from INJECT PARSER_CLASS blocks and returns
-     * them as Rust struct field definitions (e.g., "saw_empty_type_args: bool,").
-     * These are Java parser class fields that need to become Rust parser struct
-     * fields so that code actions and scan methods can share state.
-     */
-    public String getParserFieldStructFields() {
-        if (!(translator instanceof RustTranslator rustTranslator)) return "";
-        return rustTranslator.getParserFieldStructFields(grammar.getInjector());
-    }
-
-    /**
-     * Returns Rust struct initializer expressions for parser fields extracted
-     * from INJECT PARSER_CLASS blocks (e.g., "saw_empty_type_args: false,").
-     */
-    public String getParserFieldInitializers() {
-        if (!(translator instanceof RustTranslator rustTranslator)) return "";
-        return rustTranslator.getParserFieldInitializers(grammar.getInjector());
-    }
-
-    // used in Rust inject.rs.ctl template — includes original Java source in FIXME comments
-    public String translateParserClassInjection(boolean fields) {
-        if (translator instanceof org.congocc.codegen.rust.RustTranslator rustTranslator) {
-            return rustTranslator.translateParserClassInjection(grammar.getInjector(), fields);
-        }
-        // Fall back to the generic path for non-Rust translators
-        return translateParserInjections(fields);
-    }
-
     // used in templates
     public String translateLexerInitializers() {
         String className = String.format("%s.%s", appSettings.getParserPackage(), appSettings.getLexerClassName());
@@ -765,5 +512,138 @@ public class TemplateGlobals {
         List<String> result = seq.steps(bnn);
         result.remove(0); // The bnn value
         return result;
+    }
+
+    // =====================================================================
+    // Rust target.  These methods are only called by the templates in
+    // src/templates/rust; they delegate to RustCodeEmitter, which translates
+    // the grammar's Java code with type checking and reports what it cannot
+    // translate (see that class for the failure policy).  No other target
+    // uses them, so they cannot change Java, Python or C# output.
+    // =====================================================================
+
+    private RustCodeEmitter rustEmitter;
+
+    private RustCodeEmitter rust() {
+        if (rustEmitter == null) {
+            rustEmitter = new RustCodeEmitter(grammar);
+        }
+        return rustEmitter;
+    }
+
+    /** Rust: a code action of a production, emitted in the production's function. */
+    public String rustAction(CodeBlock block, int indent) {
+        return rust().action(block, indent);
+    }
+
+    /** Rust: a code action emitted in a lookahead routine. */
+    public String rustLookaheadAction(CodeBlock block, int indent) {
+        return rust().lookaheadAction(block, indent);
+    }
+
+    /** Rust: the semantic lookahead of an expansion, as a boolean expression. */
+    public String rustPredicate(Expansion expansion, boolean inline) {
+        return rust().predicate(expansion, inline);
+    }
+
+    /** Rust: the condition of an assertion, as a boolean expression. */
+    public String rustAssertionCondition(Assertion assertion, boolean inline) {
+        return rust().assertionCondition(assertion, inline);
+    }
+
+    /** Rust: the failure message of an assertion, as a {@code &str} expression. */
+    public String rustAssertionMessage(Assertion assertion) {
+        return rust().assertionMessage(assertion);
+    }
+
+    /** Rust: the token at which an assertion failure is reported, or "" for the next token. */
+    public String rustAssertionLocation(Assertion assertion) {
+        String location = rust().assertionLocation(assertion);
+        return location == null ? "" : location;
+    }
+
+    /** Rust: the statement closing a tree node scope (see RustCodeEmitter#closeNodeScope). */
+    public String rustCloseNodeScope(Object condition, boolean gtNode, String shorthand, Expansion site, String offsetExpr) {
+        return rust().closeNodeScope(condition, gtNode, shorthand, site, offsetExpr);
+    }
+
+    /** Rust: the parameter list of a production's function (each parameter preceded by ", "). */
+    public String rustProductionParameters(BNFProduction production) {
+        return rust().productionParameterList(production);
+    }
+
+    /** Rust: the call of a non-terminal's production function, with its arguments. */
+    public String rustNonTerminalCall(NonTerminal nonTerminal) {
+        return rust().nonTerminalCall(nonTerminal);
+    }
+
+    /** Rust: the message of a FAIL statement, as a {@code &str} expression. */
+    public String rustFailureMessage(Failure fail) {
+        return rust().failureMessage(fail);
+    }
+
+    /** Rust: the code of a FAIL statement that has a code block. */
+    public String rustFailureCode(Failure fail, int indent) {
+        return rust().failureCode(fail, indent);
+    }
+
+    /** Rust: reports a construct the Rust target does not implement; returns the statement to emit. */
+    public String rustUnsupported(Node at, String feature, String consequence) {
+        return rust().unsupported(at, feature, consequence);
+    }
+
+    /** Rust: the assignment of a parsed terminal or non-terminal, if any. */
+    public String rustAssignment(Expansion expansion, int indent, String valueVar) {
+        return rust().assignment(expansion, indent, valueVar);
+    }
+
+    /** Rust: the lexical action of a token definition. */
+    public String rustLexerAction(RegularExpression regexp) {
+        return rust().lexerAction(regexp, 16);
+    }
+
+    /** Rust: struct fields from INJECT PARSER_CLASS. */
+    public String rustParserFields() {
+        return rust().parserFieldDeclarations();
+    }
+
+    /** Rust: struct initializers for the INJECT PARSER_CLASS fields. */
+    public String rustParserFieldInits() {
+        return rust().parserFieldInitializers();
+    }
+
+    /** Rust: methods from INJECT PARSER_CLASS. */
+    public String rustParserMethods() {
+        return rust().parserMethods();
+    }
+
+    /** Rust: struct fields from INJECT LEXER_CLASS. */
+    public String rustLexerFieldDeclarations() {
+        return rust().lexerFieldDeclarations();
+    }
+
+    /** Rust: struct initializers for the INJECT LEXER_CLASS fields. */
+    public String rustLexerFieldInitializers() {
+        return rust().lexerFieldInitializers();
+    }
+
+    /** Rust: methods from INJECT LEXER_CLASS. */
+    public String rustLexerMethods() {
+        return rust().lexerMethods();
+    }
+
+    /** Rust: helper functions needed by translated code (Character predicates). */
+    public String rustSupportCode() {
+        return rust().supportCode();
+    }
+
+    /** Rust: a string literal for an arbitrary Java string. */
+    public String rustStringLiteral(String s) {
+        return RustCodeEmitter.stringLiteral(s);
+    }
+
+    /** Rust: the Markdown report of untranslated constructs, for FIXME.md. */
+    public String rustTranslationReport() {
+        return rust().translationReport();
     }
 }

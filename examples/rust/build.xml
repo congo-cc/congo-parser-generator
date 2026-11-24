@@ -2,6 +2,12 @@
   <import file="../../common.xml"/>
   <target name="clean">
     <delete dir="org" />
+    <delete dir="rust-rustparser" />
+    <delete dir="rust-harness/target" />
+    <delete dir="tree-dumps" />
+    <delete>
+      <fileset dir="." includes="*.class" />
+    </delete>
   </target>
 
   <target name="init">
@@ -33,5 +39,77 @@
   </target>
 
   <target name="build" depends="compile"/>
+
+  <!-- ==================================================================
+       The Rust parser generated from the same grammar.
+
+       rust-gen      generates the Rust crate into rust-rustparser/.  No Java
+                     code of the grammar may be left untranslated: the
+                     generator fails if any is (no -rust-allow-stubs here).
+       compile-rust  builds the crate and its test harness (rust-harness/),
+                     optimized.
+       test-rust     runs the harness's unit tests, then checks that the Rust
+                     parser builds exactly the same tree as the Java parser
+                     for every file in testfiles/, and the same tree or a
+                     syntax error at the same place for every file in
+                     invalid-testfiles/
+                     (TreeDump.java writes the Java parser's trees,
+                     rust-harness compares).
+       bench         measures both parsers on testfiles/ (not part of the
+                     tests: timings depend on the machine).
+       ================================================================== -->
+
+  <target name="compile-tree-dump" depends="compile">
+    <javac debug="on"
+      failonerror="true"
+      includeantruntime="false"
+      release="17"
+      srcdir="."
+      classpath="."
+      includes="TreeDump.java" />
+  </target>
+
+  <target name="rust-gen" depends="rust-guard" if="rust.available">
+    <congocc target="Rust.ccc" args="-n -d ${basedir}/rust-rustparser" lang="rust"/>
+  </target>
+
+  <target name="compile-rust" depends="rust-guard,rust-gen" if="rust.available">
+    <exec executable="cargo" dir="${basedir}/rust-harness" failonerror="true">
+      <arg line="build --release" />
+    </exec>
+  </target>
+
+  <target name="test-rust" depends="rust-guard,compile-tree-dump,compile-rust" if="rust.available">
+    <exec executable="cargo" dir="${basedir}/rust-harness" failonerror="true">
+      <arg line="test --release" />
+    </exec>
+    <delete dir="${basedir}/tree-dumps" />
+    <!-- invalid-testfiles holds inputs that are not valid Rust: for those
+         with a syntax error that the parser detects, the dumps compare the
+         location of the error. -->
+    <java fork="true" classpath="." failonerror="true" classname="TreeDump">
+      <arg value="-o" />
+      <arg value="${basedir}/tree-dumps/java" />
+      <arg value="${basedir}/testfiles" />
+      <arg value="${basedir}/invalid-testfiles" />
+    </java>
+    <exec executable="${basedir}/rust-harness/target/release/rust-harness" dir="${basedir}" failonerror="true">
+      <arg value="compare" />
+      <arg value="${basedir}/tree-dumps/java" />
+      <arg value="${basedir}/testfiles" />
+      <arg value="${basedir}/invalid-testfiles" />
+    </exec>
+  </target>
+
+  <target name="bench" depends="rust-guard,compile-tree-dump,compile-rust" if="rust.available">
+    <java fork="true" classpath="." failonerror="true" classname="TreeDump">
+      <arg line="-bench 10 testfiles" />
+    </java>
+    <exec executable="${basedir}/rust-harness/target/release/rust-harness" dir="${basedir}" failonerror="true">
+      <arg line="bench 10 testfiles" />
+    </exec>
+  </target>
+
+  <target name="test-all" depends="test,test-rust"/>
 
 </project>

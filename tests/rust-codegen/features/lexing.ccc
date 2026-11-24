@@ -1,0 +1,190 @@
+/*
+ * Lexing.  RustCodegenTest generates a Java and a Rust parser from this
+ * grammar and checks that they build the same tree (or report the same error)
+ * for every input in the lexing/ directory.  The trees contain every token
+ * with its type and offsets, so they show how the input was lexed.  The
+ * constructs are the ones that Rust.ccc and RustLexer.ccc use.
+ *
+ *   a << b >> c;      SHL and SHR are deactivated (the DEACTIVATE_TOKENS
+ *                     setting); a shift is two touching "<" or ">", which
+ *                     the grammar re-lexes as one token (ACTIVATE_TOKENS),
+ *                     so that list<list<a>> keeps two ">" tokens
+ *   t.0.1;            FLOAT is deactivated after a "." (DEACTIVATE_TOKENS in
+ *                     the grammar), so that "0.1" is lexed as INT "." INT
+ *   1..2; 1.max;      a lexical action cuts "1." down to the INT "1" when a
+ *                     "." or a letter follows (charAt, matchEnd, truncate,
+ *                     replaceType, Character.isLetter)
+ *   r##"a"#b"##;      a raw string: MORE in a lexical state, with counts kept
+ *                     in fields of the lexer (INJECT LEXER_CLASS); a closing
+ *                     quote with too few hashes is dropped (matchedToken =
+ *                     null), the token begins at the "r" (setBeginOffset),
+ *                     extra hashes are left out of it (setEndOffset), and
+ *                     the lexer goes back to the default state (switchTo)
+ *   nested comments   block comments may contain block comments: UNPARSED,
+ *                     with a nesting count (this comment cannot show them);
+ *                     the text of an unterminated comment (MORE) becomes
+ *                     part of the EOF token, so the input still parses
+ *   words a+b (c;     a lexical state for one part of the grammar
+ *                     (LEXICAL_STATE in the grammar), entered during
+ *                     lookahead too (SCAN 2); the ";" that ends the words is
+ *                     looked at in the WORDS state (WORDS_END) and must be
+ *                     re-lexed as a SEMI when the state ends
+ *   union u;          a contextual keyword: "union" is an identifier
+ *                     elsewhere (union = 1;)
+ *   "x"_ "y"_z;       a string suffix cannot be a lone "_": a method of the
+ *                     lexer (INJECT LEXER_CLASS) cuts it off the token
+ *                     (length, charAt, truncate)
+ *   #! anything       a shebang line, lexed only at the start (the
+ *                     token is activated by the grammar)
+ */
+PARSER_PACKAGE=rcgtest.lexing;
+PARSER_CLASS=FeatureParser;
+LEXER_CLASS=FeatureLexer;
+ENSURE_FINAL_EOL;
+DEACTIVATE_TOKENS=SHL, SHR, SHEBANG;
+
+<DEFAULT, WORDS> SKIP : " " | "\t" | "\n" | "\r" ;
+
+UNPARSED #Comment : <LINE_COMMENT : "//" (~["\n"])* "\n"> ;
+
+TOKEN : <SHEBANG : "#!" (~["\n"])* "\n"> ;
+
+TOKEN : <SEMI : ";"> ;
+
+<WORDS> TOKEN : <WORD : (~[" ", "\t", "\n", "\r", ";"])+> | <WORDS_END : ";"> ;
+
+// A contextual keyword is written with single quotes.
+CONTEXTUAL : <UNION : 'union'> ;
+
+TOKEN :
+    <DOT : "."> | <DOTDOT : ".."> | <EQ : "="> | <LT : "<"> | <GT : ">"> | <HASH : "#"> | <BANG : "!">
+  | <SHL : "<<"> | <SHR : ">>">
+  // The KW_ prefix keeps the token names apart from CongoCC's own keywords.
+  | <KW_WORDS : "words"> | <KW_LIST : "list">
+  | <INT : (["0"-"9"])+>
+  | <FLOAT : (["0"-"9"])+ "." (["0"-"9"])*>
+    {
+        // "1." followed by "." (a range) or a letter (a method): only "1" is a number.
+        if (charAt(matchEnd - 1) == '.' && (charAt(matchEnd) == '.' || Character.isLetter(charAt(matchEnd)))) {
+            matchedToken.truncate(1);
+            matchedToken = matchedToken.replaceType(INT);
+        }
+    }
+  | <ID : ["a"-"z", "_"] (["a"-"z", "_", "0"-"9"])*>
+  | <STRING : "\"" (~["\"", "\n"])* "\"" (<ID>)?> {chopLoneUnderscore(matchedToken);}
+;
+
+MORE :
+    <RAW_STRING_START : "r" ("#")+ "\"">
+    {
+        rawStringStart = matchStart;
+        int index = matchStart + 1;
+        startingHashes = 0;
+        while (charAt(index++) == '#') startingHashes++;
+    } : IN_RAW_STRING
+  |
+    <COMMENT_START : "/*"> {commentStart = matchStart;} : IN_COMMENT
+;
+
+<IN_RAW_STRING>
+TOKEN :
+    <RAW_STRING : "\"" ("#")+>
+    {
+        int trailingHashes = matchEnd - matchStart - 1;
+        if (trailingHashes < startingHashes) {
+            // Not the end of the string: keep going.
+            matchedToken = null;
+        } else {
+            if (trailingHashes > startingHashes) {
+                matchedToken.setEndOffset(matchEnd - (trailingHashes - startingHashes));
+            }
+            matchedToken.setBeginOffset(rawStringStart);
+            switchTo(LexicalState.DEFAULT);
+        }
+    }
+;
+
+<IN_RAW_STRING, IN_COMMENT>
+MORE : <ANY_CHAR : ~[]> ;
+
+<IN_COMMENT>
+MORE : <NESTED_COMMENT_START : "/*"> {commentNesting++;} ;
+
+<IN_COMMENT>
+UNPARSED :
+    <BLOCK_COMMENT : "*/">
+    {
+        if (commentNesting > 0) {
+            commentNesting--;
+            matchedToken = null;
+        } else {
+            matchedToken.setBeginOffset(commentStart);
+            switchTo(LexicalState.DEFAULT);
+        }
+    }
+;
+
+INJECT LEXER_CLASS : {
+    private int rawStringStart, startingHashes, commentStart, commentNesting;
+
+    // The suffix of a string cannot be a lone underscore.
+    private void chopLoneUnderscore(Token token) {
+        if (token.length() > 2) {
+            int last = token.charAt(token.length() - 1);
+            int beforeLast = token.charAt(token.length() - 2);
+            if (last == '_' && beforeLast == '"') {
+                token.truncate(1);
+            }
+        }
+    }
+}
+
+Root : [Shebang] (Statement)* <EOF> ;
+
+Shebang :
+    ENSURE ("#" "!")
+    ENSURE {getToken(1).getEndOffset() == getToken(2).getBeginOffset()}
+    ACTIVATE_TOKENS SHEBANG (<SHEBANG>)
+;
+
+Statement :
+    SCAN 2 => Words
+  | SCAN 'union' <ID> => Union
+  | ExpressionStatement
+;
+
+Words : "words" LEXICAL_STATE WORDS ((<WORD>)*) ";" ;
+
+Union : 'union' <ID> ";" ;
+
+ExpressionStatement : Expression ["=" Expression] ";" ;
+
+Expression : Postfix ((LeftShift | RightShift) Postfix)* ;
+
+LeftShift #void :
+    SCAN "<" "<" ENSURE {getToken(-1).getEndOffset() == getToken(0).getBeginOffset()}
+    => ACTIVATE_TOKENS SHL ("<<")
+;
+
+RightShift #void :
+    ENSURE (">" ">")
+    ENSURE {getToken(1).getEndOffset() == getToken(2).getBeginOffset()}
+    ACTIVATE_TOKENS SHR (">>")
+;
+
+Postfix :
+    Primary
+    (
+        SCAN "." (<INT> | <FLOAT>) => "." DEACTIVATE_TOKENS FLOAT (<INT>)
+      | ".." Primary
+      | "." <ID>
+    )*
+;
+
+Primary : <INT> | <FLOAT> | <ID> | Strings | RawStrings | ListType ;
+
+Strings : (<STRING> [<ID>])+ ;
+
+RawStrings : (<RAW_STRING>)+ ("#")* ;
+
+ListType : "list" "<" (ListType | <ID>) ">" ;

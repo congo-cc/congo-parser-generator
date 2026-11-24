@@ -1,0 +1,39 @@
+/*
+ * Productions make no node unless they say so (NODE_DEFAULT_VOID=true).
+ * RustCodegenTest generates a Java and a Rust parser from this grammar and
+ * checks that they build the same tree (or report the same error) for every
+ * input in the voidnodes/ directory.
+ *
+ *   1 + 2 * x;        Sum and Product have no annotation: their tokens go to
+ *                     the enclosing node; the statement has one (#Statement)
+ *   (1 + 2);          a production node (Group #Group) and an inline node
+ *                     (#Inner) inside a production without node
+ *   [a b c]           a production annotated with a condition: a List node
+ *                     only for more than two items (#List(>2))
+ */
+PARSER_PACKAGE=rcgtest.voidnodes;
+PARSER_CLASS=FeatureParser;
+LEXER_CLASS=FeatureLexer;
+NODE_DEFAULT_VOID=true;
+
+SKIP : " " | "\t" | "\n" | "\r" ;
+
+TOKEN :
+    <SEMI : ";"> | <PLUS : "+"> | <TIMES : "*"> | <LPAREN : "("> | <RPAREN : ")"> | <LBRACKET : "["> | <RBRACKET : "]">
+  | <NUM : (["0"-"9"])+>
+  | <ID : (["a"-"z"])+>
+;
+
+Root #Root : (Statement | List)* <EOF> ;
+
+Statement #Statement : Sum ";" ;
+
+Sum : Product ("+" Product)* ;
+
+Product : Atom ("*" Atom)* ;
+
+Atom : <NUM> | <ID> | Group ;
+
+Group #Group : "(" (Sum) #Inner ")" ;
+
+List #List(>2) : "[" (Atom)* "]" ;

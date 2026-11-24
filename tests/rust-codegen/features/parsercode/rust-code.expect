@@ -1,0 +1,3 @@
+# The arguments of Ordered(next(), counter, next()) are evaluated into
+# temporaries, in order, before the call (Rust borrows self for the call).
+parser.rs: let __argument_0 = self.next(); let __argument_1 = self.counter; let __argument_2 = self.next(); self.parse_Ordered(__argument_0, __argument_1, __argument_2)

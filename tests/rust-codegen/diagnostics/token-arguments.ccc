@@ -1,0 +1,20 @@
+/*
+ * A token that is not held in a variable, passed to an injected method that
+ * takes a Token: the Rust target passes a Token as '&mut Token', so it cannot
+ * translate the call.  Passing a local variable works.  Used by
+ * RustCodegenTest (diagnostics/token-arguments), which checks the line and
+ * column of each diagnostic: keep the code below at its place.
+ */
+PARSER_PACKAGE=rcgtest.tokenarguments;
+
+SKIP : " " | "\t" | "\n" | "\r" ;
+
+TOKEN : <A : "a"> | <B : "b"> ;
+
+Root : (SCAN {isA(getToken(1))} => "a" | Other)* <EOF> ;
+
+Other : {Token next = getToken(1);} "b" [SCAN 0 {isA(next)} => "a"] ;
+
+INJECT PARSER_CLASS : {
+    private boolean isA(Token token) { return token.getType() == A; }
+}

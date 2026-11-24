@@ -1,0 +1,31 @@
+/*
+ * Injected members whose Rust names are taken by the generated code.  Used by
+ * RustCodegenTest (diagnostics/reserved-member-names), which checks the line
+ * and column of each diagnostic: keep the code below at its place.
+ *
+ * lexerPos, typeMatches and chars are used by code that changes what is
+ * parsed or lexed, so they are errors (and so are the uses); pos and
+ * parseRoot are not used, so they are warnings.
+ */
+PARSER_PACKAGE=rcgtest.reserved;
+
+SKIP : " " | "\t" | "\n" | "\r" ;
+
+TOKEN : <A : "a"> | <B : "b"> ;
+
+root :
+    (SCAN {typeMatches(lexerPos)} => "a" | "b" | "c")* <EOF>
+;
+
+INJECT PARSER_CLASS : {
+    private int lexerPos;
+    private int pos;
+    boolean typeMatches(int kind) { return kind == 0; }
+    void parseRoot() {}
+}
+
+TOKEN : <C : "c"> {chars++;} ;
+
+INJECT LEXER_CLASS : {
+    private int chars;
+}

@@ -243,12 +243,113 @@
     <ant dir="examples/cics" target="test-rust" />
     <ant dir="examples/arithmetic" target="test-rust" />
     <ant dir="examples/sqlexpr" target="test-rust" />
+    <!-- The Rust parser of the Rust grammar, compared with its Java parser -->
+    <ant dir="examples/rust" target="test-rust" />
+    <!-- The tests of the Rust target itself (tests/rust-codegen) -->
+    <antcall target="test-rust-codegen" />
     <!-- Java Rust tests disabled until handwritten Rust code is supplied -->
     <!-- <ant dir="examples/java" target="test-rust" /> -->
     <!-- Python Rust tests disabled until handwritten Rust code is supplied -->
     <!-- <ant dir="examples/python" target="test-rust" /> -->
     <!-- CSharp Rust tests disabled until handwritten Rust code is supplied -->
     <!-- <ant dir="examples/csharp" target="test-rust" /> -->
+  </target>
+
+  <!--
+    Regression guard for the code generators (tests/generated-output/README.md).
+    snapshot-generated-output generates every grammar of the repository for
+    every target language with congocc.jar, and stores the generated files
+    and the generator's messages in the directory generated-output.dir;
+    compare-generated-output compares two snapshots byte for byte (by default
+    for Java, Python and C#; set generated-output.langs to change that):
+
+      ant snapshot-generated-output -Dgenerated-output.dir=/tmp/before
+      (change the generator)
+      ant snapshot-generated-output -Dgenerated-output.dir=/tmp/after
+      ant compare-generated-output -Dgenerated-output.baseline=/tmp/before
+                                   -Dgenerated-output.candidate=/tmp/after
+
+    compare-generated-output first runs test-generated-output-tool, the
+    tool's checks of its own comparison (they take less than a second).
+  -->
+  <property name="generated-output.langs" value="java,python,csharp" />
+  <property name="generated-output.jobs" value="4" />
+  <target name="compile-generated-output-tool">
+    <mkdir dir="build/generated-output-tool" />
+    <javac srcdir="tests/generated-output" includes="GeneratedOutputSnapshot.java"
+           destdir="build/generated-output-tool" includeantruntime="false" release="17" encoding="UTF-8"
+           debug="true" />
+  </target>
+  <target name="snapshot-generated-output" depends="jar,compile-generated-output-tool">
+    <fail unless="generated-output.dir"
+          message="Set the property generated-output.dir to the directory to write the snapshot to." />
+    <java classname="GeneratedOutputSnapshot" classpath="build/generated-output-tool" fork="true"
+          failonerror="true" dir="${basedir}">
+      <arg value="snapshot" />
+      <arg value="--jar" />
+      <arg value="${basedir}/congocc.jar" />
+      <arg value="--repo" />
+      <arg value="${basedir}" />
+      <arg value="--out" />
+      <arg value="${generated-output.dir}" />
+      <arg value="--jobs" />
+      <arg value="${generated-output.jobs}" />
+    </java>
+  </target>
+  <target name="test-generated-output-tool" depends="compile-generated-output-tool">
+    <java classname="GeneratedOutputSnapshot" classpath="build/generated-output-tool" fork="true"
+          failonerror="true" dir="${basedir}">
+      <arg value="self-test" />
+    </java>
+  </target>
+  <target name="compare-generated-output" depends="test-generated-output-tool">
+    <fail message="Set the properties generated-output.baseline and generated-output.candidate to the two snapshot directories.">
+      <condition>
+        <not>
+          <and>
+            <isset property="generated-output.baseline" />
+            <isset property="generated-output.candidate" />
+          </and>
+        </not>
+      </condition>
+    </fail>
+    <java classname="GeneratedOutputSnapshot" classpath="build/generated-output-tool" fork="true"
+          failonerror="true" dir="${basedir}">
+      <arg value="compare" />
+      <arg value="${generated-output.baseline}" />
+      <arg value="${generated-output.candidate}" />
+      <arg value="--langs" />
+      <arg value="${generated-output.langs}" />
+    </java>
+  </target>
+
+  <!--
+    Tests of the Rust target (tests/rust-codegen/README.md): the
+    -rust-allow-stubs flag, the diagnostics for Java code that cannot be
+    translated to Rust, and the feature grammars, whose Rust parsers must
+    build the same trees as their Java parsers.  Needs cargo.  To run only
+    the tests whose names contain a text, pass it with -only, for example
+    ant test-rust-codegen -Drust-codegen.args="-only features/lexing"
+  -->
+  <property name="rust-codegen.args" value="" />
+  <target name="test-rust-codegen" depends="jar,rust-guard" if="rust.available">
+    <echo>Testing the Rust target (tests/rust-codegen)</echo>
+    <mkdir dir="build/rust-codegen-tests/classes" />
+    <javac srcdir="tests/rust-codegen" includes="org/**/*.java" destdir="build/rust-codegen-tests/classes"
+           classpath="congocc.jar" includeantruntime="false" release="17" encoding="UTF-8" debug="true" />
+    <java classname="org.congocc.codegen.rust.RustCodegenTest" fork="true" failonerror="true" dir="${basedir}">
+      <classpath>
+        <pathelement location="build/rust-codegen-tests/classes" />
+        <pathelement location="congocc.jar" />
+      </classpath>
+      <arg value="--repo" />
+      <arg value="${basedir}" />
+      <arg value="--jar" />
+      <arg value="${basedir}/congocc.jar" />
+      <arg value="--work" />
+      <arg value="${basedir}/build/rust-codegen-tests" />
+      <arg line="${rust-codegen.args}" />
+    </java>
   </target>
 
   <target name="jar" depends="compile">

@@ -1,0 +1,97 @@
+/*
+ * Code written for one target language.  RustCodegenTest generates a Java and
+ * a Rust parser from this grammar and checks that they build the same tree
+ * (or report the same error) for every input in the rawcode/ directory.
+ * Every piece of code has a Java and a Rust version that compute the same
+ * thing, so the two parsers build the same trees only if each runs its own
+ * version.
+ *
+ *   count a b c;      code actions in raw code blocks, {J% ... %} for Java
+ *                     and {R% ... %} for Rust (each parser ignores the other
+ *                     language's blocks), count the names; a tree building
+ *                     annotation reads the count (#Counted(count)), and an
+ *                     assertion, written for each language between
+ *                     '#if __rust__', '#else' and '#endif', allows at most
+ *                     four names
+ *   expect many;      a semantic lookahead with a raw code block for each
+ *                     language: "many" is accepted only after a count of
+ *                     two or more names (the lookahead checks the condition
+ *                     and the next token, so "few" is accepted after any
+ *                     count)
+ *   pairs a b;        raw code that also runs during lookahead ({R% ... %}#)
+ *                     counts the names while the statement is scanned; an
+ *                     ENSURE then accepts it as Pairs only if the count is
+ *                     even (OddPairs otherwise).  Counter can be more than
+ *                     one token long ([<NUM>]): when an expansion is a single
+ *                     token, CongoCC scans just that token, without its raw
+ *                     code (Expansion.hasGlobalSemanticActions only looks for
+ *                     code blocks), for every target
+ *
+ * The injected Java method trace is inside '#if !__rust__ ... #endif': the
+ * Rust target does not see it, so it does not report its untranslatable code.
+ */
+PARSER_PACKAGE=rcgtest.rawcode;
+PARSER_CLASS=FeatureParser;
+LEXER_CLASS=FeatureLexer;
+
+SKIP : " " | "\t" | "\n" | "\r" ;
+
+TOKEN :
+    <SEMI : ";">
+  // The KW_ prefix keeps the token names apart from CongoCC's own keywords.
+  | <KW_COUNT : "count"> | <KW_EXPECT : "expect"> | <KW_MANY : "many"> | <KW_FEW : "few"> | <KW_PAIRS : "pairs">
+  | <NUM : (["0"-"9"])+>
+  | <ID : (["a"-"z"])+>
+;
+
+INJECT PARSER_CLASS : {
+    private int count, seen;
+#if !__rust__
+    private void trace(String what) {
+        if (System.getenv("RCG_TRACE") != null) System.out.println(what);
+    }
+#endif
+}
+
+Root : (Statement)* <EOF> ;
+
+Statement #void : Count | Expect | SCAN Pairs => Pairs | OddPairs ;
+
+Count :
+    "count"
+    {J% count = 0; %}
+    {R% self.count = 0; %}
+    ((<ID> {J% count++; %} {R% self.count += 1; %})+) #Counted(count)
+#if __rust__
+    ASSERT {R% self.count < 5 %}
+#else
+    ASSERT {count < 5 : "at most four names"}
+    {trace("count " + count);}
+#endif
+    ";"
+;
+
+Expect :
+    "expect"
+    (
+        SCAN {J% count > 1 %} {R% self.count > 1 %} => "many" #Many(1)
+      | "few" #Few(1)
+    )
+    ";"
+;
+
+Pairs :
+    "pairs"
+    {J% seen = 0; %}# {R% self.seen = 0; %}#
+    (Counter)+
+#if __rust__
+    ENSURE {R% self.seen % 2 == 0 %}
+#else
+    ENSURE {seen % 2 == 0}
+#endif
+    ";"
+;
+
+Counter : <ID> [<NUM>] {J% seen++; %}# {R% self.seen += 1; %}# ;
+
+OddPairs : "pairs" (<ID>)+ ";" ;

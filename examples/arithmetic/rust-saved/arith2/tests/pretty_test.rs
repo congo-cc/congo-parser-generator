@@ -64,52 +64,33 @@ fn pretty_print_expressions() {
 #[test]
 fn pretty_print_structure() {
     // Verify that "2+3*4" produces the expected indented tree structure.
+    //
+    // The parser creates nodes as the Java parser does, with smart node
+    // creation (the grammar's default): a production's node is only created
+    // when it has more than one child.  So the operand "2" is a NUMBER token
+    // directly under the AdditiveExpression, while "3*4" is a
+    // MultiplicativeExpression.  This is the tree that the Java parser
+    // generated from Arithmetic2.ccc builds for the same input.
     let ast = Parser::parse("2+3*4", Some("test")).unwrap();
     let formatted = DefaultPrettyPrinter.pretty_print(&ast);
 
     println!("--- Pretty-print of 2+3*4 ---");
     println!("{}", formatted);
 
-    // Check indentation: children should be indented under their parents.
-    // The top-level AdditiveExpression should appear with no indentation.
-    let lines: Vec<&str> = formatted.lines().collect();
-    assert!(
-        lines[0].starts_with("AdditiveExpression"),
-        "first line should be AdditiveExpression, got: {:?}",
-        lines[0]
+    let expected = "\
+AdditiveExpression
+  Token(NUMBER, \"2\")
+  Token(PLUS, \"+\")
+  MultiplicativeExpression
+    Token(NUMBER, \"3\")
+    Token(TIMES, \"*\")
+    Token(NUMBER, \"4\")
+";
+    assert_eq!(
+        formatted.trim_end(),
+        expected.trim_end(),
+        "unexpected pretty-print of 2+3*4; each level of the tree must be indented by 2 more spaces"
     );
-
-    // MultiplicativeExpression children should be indented by 2 spaces.
-    let mult_lines: Vec<&&str> = lines.iter()
-        .filter(|l| l.contains("MultiplicativeExpression"))
-        .collect();
-    assert!(
-        mult_lines.len() >= 2,
-        "should have at least 2 MultiplicativeExpression nodes"
-    );
-    for ml in &mult_lines {
-        assert!(
-            ml.starts_with("  MultiplicativeExpression"),
-            "MultiplicativeExpression should be indented 2 spaces: {:?}",
-            ml
-        );
-    }
-
-    // Token children of a MultiplicativeExpression should be indented 4 spaces.
-    let number_lines: Vec<&&str> = lines.iter()
-        .filter(|l| l.contains("Token(NUMBER,"))
-        .collect();
-    assert!(
-        !number_lines.is_empty(),
-        "should have NUMBER token lines"
-    );
-    for nl in &number_lines {
-        assert!(
-            nl.starts_with("    Token("),
-            "NUMBER tokens should be indented 4 spaces: {:?}",
-            nl
-        );
-    }
 }
 
 #[test]

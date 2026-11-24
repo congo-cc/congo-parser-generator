@@ -1,0 +1,24 @@
+/*
+ * The grammar features of unimplemented.ccc, inside '#if !__rust__ ...
+ * #endif' as its warnings suggest: the Java parser keeps them and the Rust
+ * target does not see them, so it reports nothing.  Used by RustCodegenTest
+ * (diagnostics/unimplemented-features-for-other-targets-only).
+ */
+PARSER_PACKAGE=rcgtest.unimplemented.otherTargets;
+PARSER_CLASS=OtherTargetsParser;
+#if !__rust__
+FAULT_TOLERANT;
+#endif
+
+SKIP : " " | "\t" | "\n" | "\r" ;
+
+TOKEN : <A : "a"> | <B : "b"> ;
+
+Root : ("a")* ("b")* <EOF> ;
+
+INJECT PARSER_CLASS : {
+    private int seen;
+#if !__rust__
+    private void tokenHook$counting(Token token) { seen++; }
+#endif
+}

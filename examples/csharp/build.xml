@@ -84,7 +84,10 @@
   </target>
 
   <target name="rust-gen" depends="rust-guard" if="rust.available">
-    <congocc target="CSharp.ccc" args="-n -d rust-csharpparser" lang="rust"/>
+    <!-- -rust-allow-stubs: the grammar's Java code uses types and APIs that the
+         Rust target does not translate, so the Rust crate is generated with
+         stubs for that code; the generator reports each stub as a warning. -->
+    <congocc target="CSharp.ccc" args="-n -d rust-csharpparser -rust-allow-stubs" lang="rust"/>
   </target>
 
   <target name="compile-rust" depends="rust-guard,rust-gen" if="rust.available">

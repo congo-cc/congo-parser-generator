@@ -1,0 +1,6 @@
+always a;
+always (a b);
+empty;
+lone
+voided a;
+voided (x y);

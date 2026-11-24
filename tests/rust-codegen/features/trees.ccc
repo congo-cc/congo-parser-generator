@@ -1,0 +1,82 @@
+/*
+ * Tree-building annotations.  RustCodegenTest generates a Java and a Rust
+ * parser from this grammar and checks that they build the same tree (or
+ * report the same error) for every input in the trees/ directory.
+ *
+ * Each statement exercises one kind of annotation:
+ *
+ *   def a b;          a definite node with a fixed number of children: #Two(2)
+ *   plus a;           "+": the children of the scope plus nodes taken from
+ *                     the enclosing scope: #WithPrevious(+1)
+ *   minus a b c;      "-": all the children of the scope but one: #AllButOne(-1)
+ *   gt a b;           ">" condition on the number of children: #Many(>2)
+ *   ge a b c;         ">=": #AtLeastThree(>=3)
+ *   lt a;             "<": #FewerThanThree(<3)
+ *   le a b;           "<=": #AtMostTwo(<=2)
+ *   flag [on] a;      a boolean condition read from a parser field: #Flagged(wrapNext)
+ *   take one|two a b; an int expression giving the number of children: #Taken(takeCount)
+ *   always a;         a node created whatever its number of children: #Always
+ *   empty;            a definite node without children: #Nothing(0)
+ *   lone              a production node with an explicit condition: #Lone(true)
+ *   voided a;         a #void production: its children go to the enclosing node
+ *   (a b)             a production node created by smart node creation (more
+ *                     than one child); a lone item creates no node
+ */
+PARSER_PACKAGE=rcgtest.trees;
+PARSER_CLASS=FeatureParser;
+LEXER_CLASS=FeatureLexer;
+
+SKIP : " " | "\t" | "\n" | "\r" ;
+
+TOKEN :
+    <SEMI : ";"> | <LPAREN : "("> | <RPAREN : ")">
+  // The KW_ prefix keeps the token names apart from CongoCC's own keywords.
+  | <KW_DEF : "def"> | <KW_PLUS : "plus"> | <KW_MINUS : "minus">
+  | <KW_GT : "gt"> | <KW_GE : "ge"> | <KW_LT : "lt"> | <KW_LE : "le">
+  | <KW_FLAG : "flag"> | <KW_ON : "on"> | <KW_TAKE : "take"> | <KW_ONE : "one"> | <KW_TWO : "two">
+  | <KW_ALWAYS : "always"> | <KW_EMPTY : "empty"> | <KW_LONE : "lone"> | <KW_VOIDED : "voided">
+  | <NUM : (["0"-"9"])+>
+  | <ID : (["a"-"z"])+>
+;
+
+INJECT PARSER_CLASS : {
+    private boolean wrapNext;
+    private int takeCount = 1;
+}
+
+Root : (Statement)* <EOF> ;
+
+Statement #void :
+    Definite | Plus | Minus | Greater | GreaterOrEqual | Less | LessOrEqual
+  | Flag | Take | Always | Empty | Lone | Voided | Item
+;
+
+Definite : "def" Item Item #Two(2) ";" ;
+
+Plus : "plus" Item ";" #WithPrevious(+1) ;
+
+Minus : ("minus" Item Item Item) #AllButOne(-1) ";" ;
+
+Greater : ("gt" (Item)*) #Many(>2) ";" ;
+
+GreaterOrEqual : ("ge" (Item)*) #AtLeastThree(>=3) ";" ;
+
+Less : ("lt" (Item)*) #FewerThanThree(<3) ";" ;
+
+LessOrEqual : ("le" (Item)*) #AtMostTwo(<=2) ";" ;
+
+Flag : "flag" ["on" {wrapNext = true;}] (Item) #Flagged(wrapNext) ";" {wrapNext = false;} ;
+
+Take : "take" ("one" {takeCount = 1;} | "two" {takeCount = 2;}) Item Item #Taken(takeCount) ";" ;
+
+Always : "always" (Item) #Always ";" ;
+
+Empty : "empty" #Nothing(0) ";" ;
+
+Lone #Lone(true) : "lone" ;
+
+Voided #void : "voided" Item ";" ;
+
+Item : <ID> | <NUM> | Group ;
+
+Group : "(" (Item)* ")" ;

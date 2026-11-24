@@ -151,6 +151,9 @@ public final class Main {
         System.out.println(" -p                Define one or more comma-separated (no spaces) symbols to pass to the preprocessor.");
         System.out.println("   For example:   -p debug,strict");
         System.out.println(" -q                Quieter output");
+        System.out.println(" -rust-allow-stubs With -lang rust, replace Java code that cannot be translated to Rust and");
+        System.out.println("                   that affects parsing by stubs (reported as warnings) instead of errors.");
+        System.out.println("                   The generated parser may then behave differently from the Java parser.");
         System.out.println();
     }
 
@@ -168,7 +171,7 @@ public final class Main {
         Path grammarFile = null, outputDirectory = null;
         String codeLang = "java";
         Map<String, String> preprocessorSymbols = new HashMap<>();
-        boolean quiet = false, noNewerCheck = false;
+        boolean quiet = false, noNewerCheck = false, rustAllowStubs = false;
         for (int i = 0; i < args.length; i++) {
             String arg = args[i];
             if (arg.charAt(0) == '-') {
@@ -208,6 +211,9 @@ public final class Main {
                 else if (arg.equalsIgnoreCase("-q") || arg.equalsIgnoreCase("-quiet")) {
                     quiet = true;
                 }
+                else if (arg.equalsIgnoreCase("-rust-allow-stubs")) {
+                    rustAllowStubs = true;
+                }
                 else if (arg.equalsIgnoreCase("-lang")) {
                     String candidate = args[++i];
 
@@ -239,6 +245,9 @@ public final class Main {
                 }
             }
         }
+        if (rustAllowStubs && !codeLang.equals("rust")) {
+            System.err.println("The -rust-allow-stubs flag only applies when generating Rust (-lang rust); it is ignored.");
+        }
         if (!noNewerCheck) {
             checkForNewer();
         }
@@ -263,7 +272,7 @@ public final class Main {
                 }
             }
         }
-        int errorcode = mainProgram(grammarFile, outputDirectory, codeLang, quiet, preprocessorSymbols);
+        int errorcode = mainProgram(grammarFile, outputDirectory, codeLang, quiet, rustAllowStubs, preprocessorSymbols);
         System.exit(errorcode);
     }
 
@@ -284,8 +293,32 @@ public final class Main {
      */
     public static int mainProgram(Path grammarPath, Path outputDir, String codeLang, boolean quiet, Map<String, String> symbols)
       throws IOException {
+        return mainProgram(grammarPath, outputDir, codeLang, quiet, false, symbols);
+    }
+
+    /**
+     * Runs CongoCC on one grammar file.
+     *
+     * <p>Example (generating a Rust parser, stubbing out untranslatable code):</p>
+     * <pre>
+     *   int status = Main.mainProgram(Paths.get("Rust.ccc"), null, "rust", true, true, Map.of());
+     * </pre>
+     *
+     * @param grammarPath    the grammar file
+     * @param outputDir      the output directory; if null, files are generated next to the grammar
+     * @param codeLang       the target language: java, python, csharp or rust
+     * @param quiet          whether to print less
+     * @param rustAllowStubs only for the Rust target: replace Java code that cannot be translated
+     *                       by stubs (reported as warnings) instead of reporting errors
+     * @param symbols        preprocessor symbols
+     * @return 0 on success, 1 if errors were reported (the files may still have been generated)
+     */
+    public static int mainProgram(Path grammarPath, Path outputDir, String codeLang, boolean quiet,
+                                  boolean rustAllowStubs, Map<String, String> symbols)
+      throws IOException {
         if (!quiet) bannerLine();
         Grammar grammar = new Grammar(outputDir, codeLang, quiet, symbols);
+        grammar.getAppSettings().setRustAllowStubs(rustAllowStubs);
         grammar.parse(grammarPath, "DEFAULT");
         Errors errors = grammar.getErrors();
         grammar.doSanityChecks();
@@ -301,7 +334,14 @@ public final class Main {
         grammar.checkUnparsedContent();
         grammar.reportDeadCode();
         grammar.generateFiles();
-        if (errors.getWarningCount() == 0 && !quiet) {
+        if (errors.getErrorCount() > 0 && "rust".equalsIgnoreCase(codeLang)) {
+            // The Rust target reports the Java code it cannot translate as
+            // errors during code generation; do not claim success then.  (For
+            // the other targets the messages are left as they were, so that
+            // their output does not change.)
+            System.out.println("Parser generated with " + errors.getErrorCount()
+                                + " error(s); the generated code is incomplete (see below).");
+        } else if (errors.getWarningCount() == 0 && !quiet) {
             System.out.println("Parser generated successfully.");
         } else if (errors.getWarningCount()>0) {
             System.out.println("Parser generated with 0 errors and "

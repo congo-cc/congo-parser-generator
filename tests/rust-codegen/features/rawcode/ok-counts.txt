@@ -1,0 +1,2 @@
+count a;
+count a b c d;

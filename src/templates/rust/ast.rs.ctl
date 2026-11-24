@@ -624,6 +624,47 @@ impl Ast {
         self.nodes[n].next_sibling = None;
     }
 
+    /// Makes `id` the root of the tree.
+    ///
+    /// Use it to wrap the whole tree in a new node, for example to append an
+    /// operand to an expression whose root is not the node that the edit
+    /// needs:
+    ///
+    /// ```ignore
+    /// let old_root = ast.root().unwrap();
+    /// let sum = ast.new_node(NodeKind::AdditiveExpression);
+    /// ast.append_child(sum, old_root);
+    /// let plus = ast.new_synthetic_token(TokenType::PLUS, "+");
+    /// ast.append_child(sum, plus);
+    /// let one = ast.new_synthetic_token(TokenType::NUMBER, "1");
+    /// ast.append_child(sum, one);
+    /// ast.set_root(sum);
+    /// ```
+    ///
+    /// The previous root stays in the arena: in the new tree if it was
+    /// attached to it, as above, or unreachable otherwise.
+    ///
+    /// # Panics
+    ///
+    /// Panics if `id` is not a node of this tree, or if it has a parent (a
+    /// root has none; [`detach`](Self::detach) the node first).
+    pub fn set_root(&mut self, id: NodeId) {
+        let node = self.nodes.get(id.0 as usize).unwrap_or_else(|| {
+            panic!(
+                "Ast::set_root({:?}): the tree has only {} nodes; use a NodeId returned by this tree",
+                id,
+                self.nodes.len()
+            )
+        });
+        if let Some(parent) = node.parent {
+            panic!(
+                "Ast::set_root({:?}): the node is a child of {:?}; detach it before making it the root",
+                id, parent
+            );
+        }
+        self.root = Some(id);
+    }
+
     // --- Internal helpers ---
 
     /// Compute 1-based line number from a byte offset.
@@ -712,6 +753,16 @@ impl<'a> Iterator for DescendantIter<'a> {
 
 // --- Builder ---
 
+/// The node that a scope of an [`AstBuilder`] builds.
+#[derive(Debug, Clone)]
+enum ScopeNode {
+    /// A node allocated before the scope was opened ([`AstBuilder::open_node_scope`]).
+    Allocated(NodeId),
+    /// A node that is only allocated if the scope is closed with the node
+    /// kept ([`AstBuilder::open_deferred_node_scope`]).
+    Deferred(NodeKind),
+}
+
 /// Builder for constructing an AST during parsing.
 ///
 /// The builder accumulates nodes and tokens, wiring up parent/child/sibling
@@ -723,7 +774,7 @@ pub struct AstBuilder {
     tokens: Vec<StoredToken>,
     /// Stack of node scopes. Each scope tracks nodes pushed during parsing
     /// of a production. The tuple is `(scope_start_index, node_being_built)`.
-    scope_stack: Vec<(usize, Option<NodeId>)>,
+    scope_stack: Vec<(usize, ScopeNode)>,
     /// Flat list of node IDs in the current scope.
     node_stack: Vec<NodeId>,
     root: Option<NodeId>,
@@ -834,7 +885,42 @@ impl AstBuilder {
     /// `close_node_scope` is called.
     pub fn open_node_scope(&mut self, node: NodeId) {
         let scope_start = self.node_stack.len();
-        self.scope_stack.push((scope_start, Some(node)));
+        self.scope_stack.push((scope_start, ScopeNode::Allocated(node)));
+    }
+
+    /// Opens a new node scope for a node of the given kind that is only
+    /// allocated when the scope is closed and the node is kept: by
+    /// [`close_node_scope_definite`](Self::close_node_scope_definite), or by
+    /// [`close_node_scope_conditional`](Self::close_node_scope_conditional)
+    /// with a true condition.  The generated parser opens all its scopes this
+    /// way, so that the nodes that the tree-building rules leave out (with
+    /// smart node creation, for example, a production's node is only kept
+    /// when it has more than one child) are never stored: the tree's
+    /// [`Ast::node_count`] counts only its own nodes.  The Java parser
+    /// allocates such nodes and lets the garbage collector reclaim them.
+    ///
+    /// The node gets its [`NodeId`] when it is allocated, after its
+    /// children's, so the ids of a tree built this way are in post-order.
+    ///
+    /// # Examples
+    ///
+    /// ```ignore
+    /// builder.open_deferred_node_scope(NodeKind::Expression);
+    /// // ... parse, pushing the child nodes ...
+    /// let kept = builder.close_node_scope_conditional(builder.node_arity() > 1, offset);
+    /// ```
+    pub fn open_deferred_node_scope(&mut self, kind: NodeKind) {
+        let scope_start = self.node_stack.len();
+        self.scope_stack.push((scope_start, ScopeNode::Deferred(kind)));
+    }
+
+    /// Returns the node of a scope that is being closed with its node kept,
+    /// allocating a deferred node with the empty span at `offset`.
+    fn scope_node_id(&mut self, scope_node: ScopeNode, offset: u32) -> NodeId {
+        match scope_node {
+            ScopeNode::Allocated(id) => id,
+            ScopeNode::Deferred(kind) => self.add_node(kind, offset, offset),
+        }
     }
 
     /// Pushes a node onto the current scope's stack.
@@ -843,8 +929,28 @@ impl AstBuilder {
     }
 
     /// Pops and returns the top node from the current scope's stack.
+    ///
+    /// As in the Java target, popping from an empty scope pops from the
+    /// enclosing scope: the scopes form one stack of nodes, and a scope whose
+    /// nodes have all been popped simply becomes empty.
     pub fn pop_node(&mut self) -> Option<NodeId> {
-        self.node_stack.pop()
+        let node = self.node_stack.pop();
+        self.clamp_scope_starts();
+        node
+    }
+
+    /// Restores the invariant `scope_start <= node_stack.len()` after nodes
+    /// were popped from below the start of the innermost scope(s).  Scope
+    /// starts are non-decreasing from the outermost scope inwards, so only a
+    /// suffix of the scope stack can be affected.
+    fn clamp_scope_starts(&mut self) {
+        let len = self.node_stack.len();
+        for scope in self.scope_stack.iter_mut().rev() {
+            if scope.0 <= len {
+                break;
+            }
+            scope.0 = len;
+        }
     }
 
     /// Returns the top node on the stack without removing it.
@@ -869,17 +975,19 @@ impl AstBuilder {
     /// scope is discarded.
     ///
     /// Returns `true` if the node was created (condition was true).
+    ///
+    /// A node opened with
+    /// [`open_deferred_node_scope`](Self::open_deferred_node_scope) and
+    /// kept without children gets the empty span at offset 0; the generated
+    /// parser uses [`close_node_scope_conditional`](Self::close_node_scope_conditional),
+    /// which takes the offset to use.
     pub fn close_node_scope(&mut self, condition: bool) -> bool {
-        let (scope_start, maybe_node) = match self.scope_stack.pop() {
+        let (scope_start, scope_node) = match self.scope_stack.pop() {
             Some(s) => s,
             None => return false,
         };
-        let node_id = match maybe_node {
-            Some(id) => id,
-            None => return false,
-        };
-
         if condition {
+            let node_id = self.scope_node_id(scope_node, 0);
             // Collect all nodes pushed in this scope.
             let children: Vec<NodeId> = self.node_stack.drain(scope_start..).collect();
 
@@ -905,6 +1013,109 @@ impl AstBuilder {
             // Condition is false: leave children on the stack, discard the node.
             false
         }
+    }
+
+    /// Closes the current node scope as a *definite* node (grammar syntax
+    /// `#Name(n)` or `#Name(+n)`), with the semantics of the Java target's
+    /// `closeNodeScope(Node, int)`:
+    ///
+    /// 1. the scope is closed, so its nodes now belong to the enclosing scope;
+    /// 2. the top `num` nodes are popped (reaching into enclosing scopes if
+    ///    the closed scope had fewer than `num` nodes) and become the
+    ///    children of the scope's node, in their original order;
+    /// 3. the node spans from the first child's start to the last child's
+    ///    end; a node without children is the empty span at
+    ///    `default_offset`, which the parser passes as the end offset of the
+    ///    last consumed token;
+    /// 4. the node is pushed onto the enclosing scope.
+    ///
+    /// A negative `num` is treated as zero, like the Java loop
+    /// `for (int i = 0; i < num; i++)`.
+    ///
+    /// # Panics
+    ///
+    /// Panics if no scope is open, or if fewer than `num` nodes are on the
+    /// stack (the Java target fails with a `NullPointerException` there).
+    /// Both indicate an error in the grammar's tree-building annotations.
+    ///
+    /// # Examples
+    ///
+    /// ```ignore
+    /// // #CallExpression(2): the callee and the argument list.
+    /// let node = builder.add_node(NodeKind::CallExpression, off, off);
+    /// builder.open_node_scope(node);
+    /// // ... parse the arguments, pushing one node ...
+    /// builder.close_node_scope_definite(2, off);
+    /// ```
+    pub fn close_node_scope_definite(&mut self, num: i32, default_offset: u32) -> bool {
+        let scope_node = match self.scope_stack.pop() {
+            Some((_, scope_node)) => scope_node,
+            None => panic!(
+                "AstBuilder::close_node_scope_definite({}) was called without an open node scope; \
+                 open_node_scope() and the close calls must be balanced (generated parser or grammar action error)",
+                num
+            ),
+        };
+        let count = num.max(0) as usize;
+        if count > self.node_stack.len() {
+            let kind_name = match &scope_node {
+                ScopeNode::Allocated(id) => self.nodes[id.0 as usize].kind.name(),
+                ScopeNode::Deferred(kind) => kind.name(),
+            };
+            panic!(
+                "a definite node #{}({}) needs {} child nodes, but only {} nodes are on the node stack; \
+                 check the node count in the grammar's tree-building annotation",
+                kind_name,
+                num,
+                count,
+                self.node_stack.len()
+            );
+        }
+        let children = self.node_stack.split_off(self.node_stack.len() - count);
+        let node_id = self.scope_node_id(scope_node, default_offset);
+        self.clamp_scope_starts();
+        let mut begin = default_offset;
+        let mut end = default_offset;
+        if let Some(first) = children.first() {
+            begin = self.nodes[first.0 as usize].begin_offset;
+        }
+        for &child in &children {
+            end = self.nodes[child.0 as usize].end_offset;
+            self.add_child_to(node_id, child);
+        }
+        let node = &mut self.nodes[node_id.0 as usize];
+        node.begin_offset = begin;
+        node.end_offset = end;
+        self.node_stack.push(node_id);
+        true
+    }
+
+    /// Closes the current node scope as a *conditional* node (grammar syntax
+    /// `#Name` or `#Name(condition)`), with the semantics of the Java
+    /// target's `closeNodeScope(Node, boolean)`: if `condition` is true, every
+    /// node pushed since the scope was opened becomes a child (see
+    /// [`close_node_scope_definite`](Self::close_node_scope_definite), which
+    /// also describes `default_offset`); otherwise the scope is closed and
+    /// its nodes are left on the stack for the enclosing scope.
+    ///
+    /// Returns `true` if the node was created.
+    ///
+    /// # Panics
+    ///
+    /// Panics if no scope is open.
+    pub fn close_node_scope_conditional(&mut self, condition: bool, default_offset: u32) -> bool {
+        if !condition {
+            if self.scope_stack.pop().is_none() {
+                panic!(
+                    "AstBuilder::close_node_scope_conditional(false) was called without an open node scope; \
+                     open_node_scope() and the close calls must be balanced (generated parser or grammar action error)"
+                );
+            }
+            return false;
+        }
+        // Java evaluates nodeArity() before the scope is closed.
+        let arity = self.node_arity();
+        self.close_node_scope_definite(arity as i32, default_offset)
     }
 
     /// Clears all nodes from the current scope and pops it.

@@ -569,3 +569,348 @@ The org.congocc.codegen.rust.RustFormatter Java class formats Rust source code. 
   examples/sqlexpr/rust-sqlparser/parser.rs. Done: enhanced output saved to sandbox/rustfmt/RustFormatter-enhanced.out, valid Rust with 161 minor rustfmt-stylistic diffs remaining. 
   Next: await your review. (disable recaps in /config)
 --------------------------- End Response
+
+## Generating a Rust Parser for the Rust Language
+
+Our goal is for CongoCC to generate a Rust parser for the Rust Language.  The Rust parser should be at least as efficient as the generated Java parser.  The Rust Language grammar is defined in examples/rust/Rust.ccc.    
+
+### Background Information
+
+Please review CongoCC background information to gain an understanding of its goals, interfaces and implementation:
+
+1. README.md and README_RUST.md
+2. CongoCC documentation at https://parsers.org/html
+3. Generating Rust output:  https://parsers.org/html/docs/targets/rust.html
+4. CongoCC generation, example and test source code.
+
+### Phase 1 - Fix Rust Compilation Bugs
+
+Use the following command to generate a Rust parser for the Rust Language:
+
+```
+java -jar congocc.jar -n -lang rust -d examples/rust/rustparser examples/rust/Rust.ccc
+```
+
+Compile the generated parser code:
+
+```
+cd examples/rust/rustparser
+cargo clean
+cargo build
+```
+
+Analyze and explain the root causes of each of the errors and warnings.  Present for review different approaches to fixing Rust code generation.  Do not make any changes without explicit permission.  
+
+--------------------------- Response
+
+The build fails with 5 errors and 4 warnings, and since rustc only reaches borrow-checking after name resolution and type-checking pass, those errors may be hiding a further layer. I'll check that in a scratch copy, starting with the error sites in the generated code. · summary
+
+  Ran 1 shell command
+
+The commented-out Java block declaring seenConst/maybeMore/numNodes is the bigger problem, since the SCAN predicates still reference maybe_more and seen_const. I'm checking how those were declared and what close_node_scope expects. · summary
+
+  Ran 1 shell command
+
+The Rust builder's close_node_scope takes only a bool, so a definite node count gets lost, and the Java initializer is commented out, so those SCAN branches never fire. Next I'll read the full builder and the template's tree-node annotations. · summary
+
+  Read 1 file, ran 2 shell commands
+
+The template comments suggest a shortcut: Rust's arena model treats all in-scope children as included, so numeric conditions are always true. That differs from Java for definite nodes like #MethodCall(4), so I'm generating the Java parser in my scratchpad to compare the exact behavior. · summary
+
+  Ran 2 shell commands
+
+Java's closeNodeScope(Node, int num) pops a fixed count of nodes past the scope start, whereas the Rust builder only offers the boolean form bounded by scope_start. Next I'll check how Java's popNode crosses scope boundaries and list every grammar annotation this affects. · summary
+
+  Ran 1 shell command
+
+Java's NodeScope.pop() falls through to the parent scope when empty, which is how #MethodCall(4) picks up the receiver parsed before the scope opened. Next I'll check errors 2–5 with parenthesis_nesting: false. · summary
+
+  Ran 1 shell command
+
+The four i32 fields are declared, but startDelim, endDelim and mostNestedDelim are missing, and the initializers follow a different order. I'm checking the template to find where those come from. · summary
+
+  Searched for 1 pattern, ran 1 shell command
+
+Now I'll read the whole RustTranslator.java — it's the core of Java→Rust code translation and will explain several of these errors at once.
+
+  Read 1 file
+
+The RustTranslator.java bug is at lines 619-630: getParserFieldInitializers() hard-codes ": false" for every field, while an unused getDefaultForType() helper sits just below it. getRustTypeFromDecl() also returns null for TokenType, dropping three fields silently; I'm checking where those fields are used and the warnings site next. · summary
+
+  Ran 2 shell commands
+
+The backscan routines for contextual predicates emit a dead store after their last element, and unused_assignments isn't allowed in lib.rs, which causes the warnings. More importantly, untranslatable semantic predicates were replaced with true, which would stop the DelimTokenTree loop from ending at closing delimiters, so I'm inventorying all the FIXME substitutions next. · summary
+
+  Searched for 1 pattern, ran 1 shell command
+
+Besides the 5 compile errors, 7 Java code actions and 20 semantic predicates in parser.rs were commented out or replaced with true. The lexer has no FIXMEs, but I'm checking whether RustLexer.ccc's Java lexical actions were translated or dropped. · summary
+
+  Searched for 1 pattern, ran 1 shell command
+
+The Rust lexer template ignores lexical actions and INJECT LEXER_CLASS entirely, silently dropping them, which is critical here since those actions hold the switchTo(LexicalState.RUST) calls that exit raw-string and block-comment states. Next I'll check how the template handles state transitions. · summary
+
+  Searched for 1 pattern, ran 1 shell command
+
+The lexer's exit transitions back to RUST were dropped, so it never leaves that state after the first comment or raw string. I'm checking a Lua-specific heuristic in the generic template next, since it also applies to Rust. · summary
+
+  Ran 1 shell command
+
+The heuristic does nothing for Rust's tokens and stems from the same gap: the generic template has no general lexical-action mechanism, so a Lua-specific hack got hard-coded into it. Next I'll copy the crate to a scratchpad and apply throwaway minimal patches to see what rustc reports beyond these five errors. · summary
+
+  Ran 1 shell command
+
+The throwaway patches leave the build at the same 4 warnings, so no hidden borrow-check layer is involved. Next I'm checking the test target and the harness, since cargo build doesn't compile it. · summary
+
+  Ran 1 shell command
+
+The test target compiles, but its harness looks for .txt files when the tests are .rs, and there's no test-data/ directory. Next I'll write a small throwaway driver to check whether the compiled parser actually parses Rust. · summary
+
+  Made 1 scratchpad edit +58, ran 1 shell command
+
+Now targeted snippets — each isolates one hypothesized root cause (dropped lexer action, true-substituted predicate, commented-out code action, or definite-node arity):
+
+  Ran 1 shell command
+
+Even fn main() {} fails because the BlockExpression loop guard is always true, so the parser keeps trying statements at }. The block-comment test that passed looks like a false positive, and I'm checking it with an AST dump next. · summary
+
+  Ran 1 shell command
+
+A comment-prefixed const X line reports success, but the parser swallowed everything after the comment into the EOF token, so a pass-only harness would miss it. I'm checking why 0..10 parses at all and comparing the tree shape against Java. · summary
+
+  Ran 1 shell command
+
+Two silent wrong results turned up: 0..10 tokenizes as a float followed by a tuple-index parse, and a.b(c) leaves a, ., and b outside MethodCall. Next I'll pull the Java parser's trees for the same inputs to use as ground truth. · summary
+
+  Ran 2 shell commands
+
+Java's parser handles every case correctly, so the failures are all in the Rust generator, which also builds a 13-level chain of single-child nodes where Java has the literal directly under ConstantItem. I suspect SMART_NODE_CREATION isn't working, so I'm checking the template next. · summary
+
+  Ran 1 shell command
+
+Java emits 128 smart-node arity checks while Rust emits none, because a leading space in the template's shorthand breaks the startsWith test so every production takes the always-create path. I'm tracing where the single node_arity() call came from and checking performance patterns next. · summary
+
+  Ran 1 shell command
+
+Let me quantify the end-to-end impact on the real test corpus — patched-to-compile Rust parser vs. the Java parser, same 50-odd files:
+
+  Ran 1 shell command
+
+Java passes all 106 files, while the patched Rust build passes only 3 of 106; the error patterns point to a few specific root causes. I'm now checking whether those 3 Rust passes are genuine. · summary
+
+  Ran 3 shell commands
+
+The -e mode strips the trailing newline (an artifact of my $(cat)), which LINE_COMMENT requires. Let me pass the exact file contents properly:
+
+  Ran 1 shell command
+
+sqrt.rs is confirmed as a false positive: 352 lines collapsed into one EOF token. Let me check whether inject.rs's empty tree is legitimate:
+
+  Searched for 1 pattern
+
+Inject.rs holds only line comments, so its empty tree is right; the run gives 2 trivial passes, 1 false positive, and 103 failures. Next I'm checking the Rust translation entry points in TemplateGlobals to see why simple expressions like getTokenType(1) != RBRACE fall through. · summary
+
+  Read 1 file, ran 1 shell command
+
+Translation gating rejects any predicate or code block containing common constructs like instanceof or null via a substring deny-list, turning them into literal true or comments. I'm checking whether this gets reported at generation time. · summary
+
+  Ran 1 shell command
+
+getTranslationWarnings() has no consumers, so the warnings are collected but never reported, despite the Javadoc. I'm checking whether FIXME.md mentions the dropped predicates or lexer actions. · summary
+
+  Ran 1 shell command
+
+FIXME.md doesn't cover the 20 predicate substitutions, 7 commented-out actions, or the dropped lexer actions. Next I'll find which runtime helpers the generated Rust Parser already offers to replace getTokenType, getToken, checkNextTokenType, and stackIteratorBackward. · summary
+
+  Ran 1 shell command
+
+The Rust runtime has no counterparts for the Java parser APIs the grammar uses, which is why the translator deny-lists them, and isInProduction is deny-listed even though is_in_production exists in Rust. I'm checking Java's getToken lookahead indexing next so the parity layer matches it. · summary
+
+  Ran 2 shell commands
+
+Java's getToken(n) is relative to the lookahead token during scanning and to the last consumed token otherwise, so the Rust parity layer would map to scan_pos and pos. Next I'll check what retokenize_from_pos costs, since the whole-file tokenization and frequent token toggling could make it expensive. · summary
+
+  Searched for 1 pattern
+
+retokenize_from_idx builds a fresh lexer over the whole remaining file on every token toggle, which is O(file size) each time, and it never deactivates tokens, so DEACTIVATE_TOKENS may be ineffective. I'm checking that with tuple indexing next. · summary
+
+  Ran 1 shell command
+
+Confirmed that DEACTIVATE_TOKENS is lost on retokenization, so t.0.1 fails in Rust while Java builds nested indexing expressions. I'm checking whether the unsafe transmute path is reachable and sound, since its comment calls it a simplification. · summary
+
+  Searched for 1 pattern, ran 2 shell commands
+
+The lexer's default deactivations are applied as expected, so the transmute is sound and I'm not flagging it. The real bug is that retokenize_from_idx adds the parser's active set to a fresh lexer's defaults rather than replacing them, so parser-side deactivations get lost; I'm comparing against a working example's Rust targets next. · summary
+
+  Ran 1 shell command
+
+The root build.xml compiles the Rust grammar into CongoCC itself and bundles include/rust/Rust.ccc, so I need to confirm that before deciding whether editing Rust.ccc is a safe fix. · summary
+
+  Searched for 1 pattern, ran 1 shell command
+
+Grammar.java:67 defines a __rust__ preprocessor symbol for Rust targets, and RawCode.java handles native code blocks, including Rust ones; I'm now checking RawCode's syntax. · summary
+
+  Searched for 1 pattern, ran 1 shell command
+
+CongoCC already supports {R% … %} raw code blocks in actions and predicates, so I'm checking how CSharp.ccc uses them and whether the Rust template emits RawCode inside scan predicates. · summary
+
+  Searched for 1 pattern, ran 1 shell command
+
+translateExpressionSafe runs its deny-list checks before RawCode is passed through, and its output check rejects any text containing get_token( or contains(, so even hand-written Rust in a SCAN predicate gets replaced with true. I'm checking the template lines for the backscan warning next. · summary
+
+  Ran 1 shell command
+
+idx += 1 fires after every element, including the last, at parser.rs.ctl:811, and only the look-behind reads it. Next I'm checking what the template emits after the loop. · summary
+
+  Ran 1 shell command
+
+Let me confirm the two Info: messages from generation are grammar-level (language-independent) rather than Rust-specific:
+
+  Ran 1 shell command
+
+Those are grammar-level and language-independent (intentional shadowing of Lifetime alternatives), so they're benign for this task. Let me pin the last few template line numbers I'll cite.
+
+  Ran 1 shell command
+
+All references are confirmed; next I'll check which grammar sites the 7 commented-out actions come from, since some are duplicated into scan routines. · summary
+
+  Ran 1 shell command
+
+Confirmed: 4 unique code-action sites (Rust.ccc:360, 431, 1233, 1246), emitted 7 times. Let me save the key context for future sessions before writing up.
+
+  Wrote 3 memories
+
+I made no changes to source, templates, or the grammar. cargo build fails with 5 errors and 4 warnings, which come from 3 generator bugs. Fixing just those would be misleading, though. I patched them in a scratch copy and the crate then builds cleanly, but it genuinely parses only 2 of the 106 files in examples/rust/testfiles. The Java parser built from the same grammar parses all 106. The compile errors are the visible part of a translation step that silently replaces Java code it can't translate with true or a comment.
+
+0. The command as written writes to the wrong place
+
+-d examples/rust/rustparser actually wrote the crate to examples/rust/examples/rust/rustparser/ and left an empty examples/rust/rustparser/:
+- Main.java:254 creates the -d directory relative to the current directory.
+- AppSettings.java:251-254 resolves the same path relative to the grammar's directory.
+
+I re-ran with an absolute -d, confirmed the output was byte-identical, and deleted the stray nested copy.
+
+1. Root causes of the errors and warnings
+
+Error 1 — E0425 cannot find value numNodes (parser.rs:24841, from #GenericArgsBounds(numNodes) at Rust.ccc:372). Three problems stack up, so renaming the variable won't fix it:
+1. The node-count expression isn't translated. closeCondition() (parser.rs.ctl:71-91) emits the Java source text as-is.
+2. The Rust runtime has no fixed-child-count close. AstBuilder::close_node_scope(condition: bool) (ast.rs.ctl:872) only takes a boolean, so a renamed num_nodes (an i32) becomes E0308.
+   - Java's closeNodeScope(Node, int) pops exactly n nodes, reaching into the parent scope when needed. That's how #MethodCall(4) picks up a receiver parsed before the scope opened.
+3. The value would be 0 anyway. The code block that computes it (Rust.ccc:360-365) was commented out as a FIXME. The fallback just declares num_nodes = 0 and maybe_more = false, so both SCAN {maybeMore…} branches can never run.
+
+Errors 2–5 — E0308 expected i32, found bool (parser.rs:20354-20357, from INJECT PARSER_CLASS at Rust.ccc:1228).
+- getParserFieldInitializers() (RustTranslator.java:619-630) hard-codes : false for every field.
+- A correct getDefaultForType() sits just below it (:632) but is never called.
+- The field-name map (:44) doesn't keep the field types.
+- Same code: getRustTypeFromDecl() (:604-610) returns null for TokenType. That silently drops startDelim/endDelim/mostNestedDelim, and every expression that uses them then became a FIXME.
+
+Warnings 1–4 — value assigned to idx is never read (parser.rs:66865-66892, from the look-behind predicates \Trait, \Statement, \MatchExpression).
+- parser.rs.ctl:813 emits idx += 1 after every element, including the last. That final value is only read when the path ends in a slash.
+- unused_assignments isn't in lib.rs's #![allow] list.
+
+That's the full compile-time list. With these patched, cargo build --all-targets succeeds, with no hidden borrow-checker errors.
+
+2. What compiling would actually give you
+
+The same inputs run through Java and through the Rust crate patched to compile:
+
+┌──────────────────────────────────┬──────────────────────────────┬──────────────────┬───────────────────────────────────────────────────────────────────────────────────────┐
+│              Input               │             Java             │       Rust       │                                         Cause                                         │
+├──────────────────────────────────┼──────────────────────────────┼──────────────────┼───────────────────────────────────────────────────────────────────────────────────────┤
+│ fn main() {}                     │ parses                       │ fails            │ BlockExpression loop guard (Rust.ccc:429) → true                                      │
+├──────────────────────────────────┼──────────────────────────────┼──────────────────┼───────────────────────────────────────────────────────────────────────────────────────┤
+│ println!("hi"), #[derive(Debug)] │ parses                       │ fails            │ DelimTokenTree guard (:1244) → true; the loop runs to EOF                             │
+├──────────────────────────────────┼──────────────────────────────┼──────────────────┼───────────────────────────────────────────────────────────────────────────────────────┤
+│ Iterator<Item = u8>              │ parses                       │ fails            │ code action commented out; maybe_more always false                                    │
+├──────────────────────────────────┼──────────────────────────────┼──────────────────┼───────────────────────────────────────────────────────────────────────────────────────┤
+│ if a == b { c }                  │ parses                       │ fails            │ isInConditionButNotParenthesized() → true                                             │
+├──────────────────────────────────┼──────────────────────────────┼──────────────────┼───────────────────────────────────────────────────────────────────────────────────────┤
+│ 1.max(2), r#"x"#; …              │ parses                       │ fails            │ lexer actions dropped                                                                 │
+├──────────────────────────────────┼──────────────────────────────┼──────────────────┼───────────────────────────────────────────────────────────────────────────────────────┤
+│ t.0.1                            │ parses                       │ fails            │ DEACTIVATE_TOKENS lost when retokenizing                                              │
+├──────────────────────────────────┼──────────────────────────────┼──────────────────┼───────────────────────────────────────────────────────────────────────────────────────┤
+│ /* c */ const X: i32 = 1;        │ parses                       │ "OK", empty AST  │ lexer never leaves the comment state; the rest of the file lands inside the EOF token │
+├──────────────────────────────────┼──────────────────────────────┼──────────────────┼───────────────────────────────────────────────────────────────────────────────────────┤
+│ 0..10                            │ RangeExpression              │ "OK", wrong tree │ lexed as FLOAT("0.") DOT INT("10"), parsed as tuple indexing                          │
+├──────────────────────────────────┼──────────────────────────────┼──────────────────┼───────────────────────────────────────────────────────────────────────────────────────┤
+│ a.b(c)                           │ MethodCall[a . b CallParams] │ "OK", wrong tree │ (4) ignored; MethodCall contains only CallParams                                      │
+└──────────────────────────────────┴──────────────────────────────┴──────────────────┴───────────────────────────────────────────────────────────────────────────────────────┘
+
+In the test files, sqrt.rs (352 lines) "passes" with an empty AST. The test harness only checks for "no error", so it would count these as passes.
+
+Six underlying problems explain all of this:
+- A. Translation is decided by matching substrings, and failures are silent (TemplateGlobals.java:213-278, 305-322, 393-442).
+  - Any Java containing getTokenType, getToken(, instanceof, .equals( or null is rejected. Those are the most common constructs in CongoCC predicates.
+  - In this grammar, 20 predicates became true and 7 actions became comments.
+  - isInProduction is rejected even though the Rust runtime has is_in_production.
+  - The output check also rejects text containing get_token( or contains(. So even a hand-written native Rust predicate (SCAN {R% … %}) would be replaced with true.
+- B. The Rust runtime lacks the Java parser helpers. There is no get_token(n), get_token_type(n), check_next_token_type, stack_iterator_backward or last_consumed_token. That missing layer is why the substring filter exists.
+- C. Lexer actions and INJECT LEXER_CLASS aren't supported at all.
+  - lexer.rs.ctl drops them with no FIXME and no warning.
+  - This grammar's exits back to the normal lexical state (RustLexer.ccc:303, 329) live inside those actions, so raw strings and block comments never end.
+  - A Lua-specific [==[…]==] check was hard-coded into the generic template (lexer.rs.ctl:441-490) as a substitute for Lua's own lexer action.
+- D. Tree building doesn't match Java.
+  - Fixed-count nodes #X(n) and #X(+n) become true (parser.rs.ctl:66-88). Every postfix expression in this grammar depends on them.
+  - Smart node creation is silently off for every grammar: the template stores " > " with a leading space (:35) but tests .startsWith(">") (:64).
+  - As a result, Java emits 128 nodeArity() > 1 checks and Rust emits none. A bare literal ends up wrapped in a 13-level chain of single-child nodes.
+- E. Retokenizing is wrong and slow.
+  - retokenize_from_idx (parser.rs.ctl:1452) re-lexes the entire rest of the file on every token activation change, twice per change.
+  - It re-applies token activations to the fresh lexer but never the deactivations (:1460).
+- F. None of this is reported.
+  - getTranslationWarnings() has no callers.
+  - FIXME.md doesn't mention the predicate or lexer substitutions.
+  - The generator prints "Parser generated successfully."
+
+3. Approaches
+
+1 — Minimal patches (just make it compile). Keep field types and call getDefaultForType, support TokenType fields, translate the count expression, and stop emitting the last idx += 1.
+- Hours of work, but the result is a passing build that parses 2 of 106 files, which hides the real state.
+- The initializer and warning fixes are worth doing under any approach. Error 1 can't be fixed correctly without the fixed-count support from D.
+
+2 — Write native Rust in the grammar ({R% … %} / #if __rust__). Hand-write Rust for about 30 grammar sites: predicates, actions, parser fields, lexer actions.
+- Pros: exact semantics and idiomatic Rust.
+- Cons:
+  - It still needs C, D and E: the lexer has no place to put the code, and the tree building is still wrong.
+  - Native Rust predicates would need to bypass the substring filter.
+  - The logic is duplicated in two languages.
+  - Nothing carries over to other grammars.
+  - Rust.ccc is also compiled into CongoCC itself via src/grammars/RustInternal.ccc, so every edit must keep the Java build working.
+
+3 — Make the generic pipeline correct.
+- Add the missing Java-equivalent helpers to the parser and lexer runtimes, including a hook for lexer actions.
+- Replace the substring matching with translation driven by the parsed Java code.
+- Fix D and E.
+- Fail loudly: anything untranslatable becomes a generation error, never true.
+- Pros: fixes the whole class of problems for every grammar, including Java/C#/Python.
+- Cons: the most work. It has to be limited to the Java subset grammars actually use; everything in Rust.ccc is simple.
+
+4 — Hybrid (recommended): do the runtime, tree-building and lexer work from Approach 3, translate only what's needed, and keep {R%…%} working as an escape hatch. Suggested order:
+1. Fail loudly and report, plus the fixes from Approach 1 worth doing anyway. Small, and it turns the silent substitutions into a checklist.
+2. Tree-building fixes (D). Turning smart nodes on changes tree shape for the grammars that work today, so their tests will need updating.
+3. Runtime helpers and lexer hook (B, C).
+4. Translation coverage for Rust.ccc (A), regression-testing JSON, Lua, CICS and arithmetic.
+5. Retokenizing (E): correctness first, then lazy tokenizing for speed.
+6. Test setup.
+   - examples/rust/build.xml has no Rust targets.
+   - Rust.ccc sets no TEST_EXTENSION, so the harness looks for .txt files.
+   - There's no test-data/ directory.
+   - Tests should compare ASTs against the Java parser rather than just check for "no error".
+
+Also fix the -d path problem.
+
+Your efficiency goal can't be measured yet, since almost every file fails. Things that will matter:
+- re-lexing the whole remaining file on every token activation change
+- lexer state functions using hashed HashSet<TokenType> per character where Java uses bit sets
+- the disabled smart node creation
+- a Vec allocation on every look-behind check
+
+Files
+
+- Created: examples/rust/rustparser/, the generated crate plus target/ from your build. docs/claude_prompts.md and examples/rust/org/ were already modified or untracked before I started.
+- Removed: the stray examples/rust/examples/ from the first run.
+- Scratch: the patched crate and test driver are in /tmp/claude-1000/-home-rich-git-congo2/21fc5554-629b-4db1-a501-f06134ddff92/scratchpad/probe/. The Java comparison build is in /tmp/claude-1000/-home-rich-git-congo2/21fc5554-629b-4db1-a501-f06134ddff92/scratchpad/jclasses/.
+
+Which approach do you want? If it's 4, I'd start with step 1. I can also turn this analysis into a shareable page.
+
+✻ Worked for 13m 9s · done 2:52 PM
+
+--------------------------- End Response

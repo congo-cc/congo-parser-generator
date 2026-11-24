@@ -1,0 +1,394 @@
+/*
+ * The rest of the Java subset that the Rust target translates (the subset is
+ * listed in the generated FIXME.md): the constructs that the other feature
+ * grammars do not use.  RustCodegenTest generates a Java and a Rust parser
+ * from this grammar and checks that they build the same tree (or report the
+ * same error) for every input in the javasubset/ directory.  Every
+ * computation decides whether a node is built or which type a token gets, so
+ * the trees show its result.
+ *
+ *   number 1234 sum product mirror wide shifts letter;
+ *                     each word after the number is wrapped in a node when a
+ *                     property of the number holds:
+ *                       sum      the digit sum is even (do/while, -= and +=,
+ *                                char - char promoted to int)
+ *                       product  the product of the non-zero digits is over
+ *                                100 (while with continue, *= on a long, an
+ *                                (int) cast)
+ *                       mirror   the number is a palindrome (%= and /= on a
+ *                                local copy in a do/while loop)
+ *                       wide     the number times 3000000 does not fit in an
+ *                                int ((long) cast, int * long promotion, a
+ *                                long literal)
+ *                       shifts   <<, >> and >>> on int and long values (Java
+ *                                masks the shift distance), & | ^ on ints
+ *                                (checked against % and -, which is exact
+ *                                for numbers >= 0, and with & binding more
+ *                                tightly than |), & and | on comparisons, hex
+ *                                literals; it fails only for 2147483647,
+ *                                whose shift by 33 overflows a long (both
+ *                                languages drop the high bits)
+ *                       letter   the letter at position (digit sum % 26) of
+ *                                the alphabet comes before 'm' (char + int
+ *                                promoted to int, an int compared with chars)
+ *   outer { probe }   the call stack, walked up from the bottom
+ *   outer { inner { probe } }
+ *                     (stackIteratorForward) and back (previous), and down
+ *                     from the top (stackIteratorBackward) and back up
+ *                     (hasPrevious, previous): "probe" is wrapped in a node
+ *                     for each of these facts that holds
+ *   list a, b ;; c;   a field of type TokenType that is null until a
+ *                     separator is seen (assigned null, compared with null
+ *                     and with token types): #Uniform for one kind of
+ *                     separator.  The names of a list can be noted names
+ *                     (see below)
+ *   classify ?Da ?Lé  the lexer classifies the character after "?" and a
+ *                     capital letter with the Character predicate that the
+ *                     letter names (a switch on a char in a lexical action).
+ *                     "?" is a MORE prefix, so the action reads the letter at
+ *                     tokenBeginOffset + 1 and the character at
+ *                     matchStart + 1.  A probe whose predicate does not hold
+ *                     becomes a PROBE_FAILS token (after a check of
+ *                     matchedType); the MORE prefix's action checks that it
+ *                     has no matchedToken (== null), and the probe's action
+ *                     that it has one (!= null), or the probe becomes a
+ *                     BROKEN_PROBE; the probe switches back to DEFAULT
+ *                     through a local variable of type LexicalState
+ *   # a note          an unparsed token: its lexical action checks
+ *   word;             matchedToken.isUnparsed(), and the next name becomes a
+ *                     NOTED_NAME (the name's own action checks that a name is
+ *                     not unparsed).  The name is wrapped in
+ *                     #OrdinalRemainderTwo when the ordinal() of its token
+ *                     type leaves 2 when divided by a static final constant,
+ *                     3: true for NAME (29), false for NOTED_NAME (33), so the
+ *                     trees differ if the Rust ordinals are shifted from
+ *                     Java's
+ *   order compare compound receiver;
+ *                     Java evaluates operands from left to right, also where
+ *                     Rust would not by itself: each word is wrapped in a
+ *                     node when Java's order is kept with a field whose value
+ *                     the next operand changes:
+ *                       compare  a TokenType field compared with a call
+ *                                (Rust compares it by reference)
+ *                       compound compound assignments to fields (Rust
+ *                                evaluates the value first): += -= |= *= &=
+ *                                on int, long and boolean fields, and <<=
+ *                       receiver charAt on a Token field, with an index
+ *                                computed by a call
+ *
+ * The letters of the probes: A isAlphabetic, D isDigit, I
+ * isIdentifierIgnorable, C isISOControl, J isJavaIdentifierStart, K
+ * isJavaIdentifierPart, L isLetter, M isLetterOrDigit, W isLowerCase, B
+ * isSpaceChar, T isTitleCase, S isUnicodeIdentifierStart, P
+ * isUnicodeIdentifierPart, U isUpperCase, H isWhitespace.
+ *
+ * The inputs stay within the range of int: Java wraps around on overflow,
+ * while the translated Rust arithmetic does not (see FIXME.md).  Fields of
+ * type LexicalState and casts to char are outside the subset (the test
+ * diagnostics/outside-the-subset checks how they are reported).
+ */
+PARSER_PACKAGE=rcgtest.javasubset;
+PARSER_CLASS=FeatureParser;
+LEXER_CLASS=FeatureLexer;
+// Token types without a pattern: only the lexical actions produce them.
+EXTRA_TOKENS=PROBE_FAILS, BROKEN_PROBE, NOTED_NAME;
+
+SKIP : " " | "\t" | "\n" | "\r" ;
+
+UNPARSED : <NOTE : "#" (~["\n"])*> {if (matchedToken.isUnparsed()) noted = true;} ;
+
+TOKEN :
+    <SEMI : ";"> | <COMMA : ","> | <DOUBLE_SEMI : ";;"> | <LBRACE : "{"> | <RBRACE : "}">
+  // The KW_ prefix keeps the token names apart from CongoCC's own keywords.
+  | <KW_NUMBER : "number"> | <KW_SUM : "sum"> | <KW_PRODUCT : "product"> | <KW_MIRROR : "mirror">
+  | <KW_WIDE : "wide"> | <KW_SHIFTS : "shifts"> | <KW_LETTER : "letter">
+  | <KW_OUTER : "outer"> | <KW_INNER : "inner"> | <KW_PROBE : "probe"> | <KW_LIST : "list">
+  | <KW_CLASSIFY : "classify"> | <KW_ORDER : "order"> | <KW_COMPARE : "compare">
+  | <KW_COMPOUND : "compound"> | <KW_RECEIVER : "receiver">
+  | <NUM : (["0"-"9"])+>
+  | <NAME : (["a"-"z"])+>
+    {
+        // The first name after a note becomes a NOTED_NAME.
+        if (noted && !matchedToken.isUnparsed()) {
+            matchedToken = matchedToken.replaceType(NOTED_NAME);
+        }
+        noted = false;
+    }
+;
+
+MORE : <PROBE_START : "?"> {probeStartHadNoToken = matchedToken == null;} : PROBING ;
+
+<PROBING> TOKEN :
+    <PROBE : ["A"-"Z"] ~["\n", "\r"]>
+    {
+        // The token begins at the "?" (a MORE prefix), the match at the letter.
+        char predicate = charAt(tokenBeginOffset + 1);
+        char c = charAt(matchStart + 1);
+        boolean holds = false;
+        switch (predicate) {
+            case 'A' : holds = Character.isAlphabetic(c); break;
+            case 'D' : holds = Character.isDigit(c); break;
+            case 'I' : holds = Character.isIdentifierIgnorable(c); break;
+            case 'C' : holds = Character.isISOControl(c); break;
+            case 'J' : holds = Character.isJavaIdentifierStart(c); break;
+            case 'K' : holds = Character.isJavaIdentifierPart(c); break;
+            case 'L' : holds = Character.isLetter(c); break;
+            case 'M' : holds = Character.isLetterOrDigit(c); break;
+            case 'W' : holds = Character.isLowerCase(c); break;
+            case 'B' : holds = Character.isSpaceChar(c); break;
+            case 'T' : holds = Character.isTitleCase(c); break;
+            case 'S' : holds = Character.isUnicodeIdentifierStart(c); break;
+            case 'P' : holds = Character.isUnicodeIdentifierPart(c); break;
+            case 'U' : holds = Character.isUpperCase(c); break;
+            case 'H' : holds = Character.isWhitespace(c); break;
+            default : break;
+        }
+        if (matchedToken != null && !probeStartHadNoToken) {
+            matchedToken = matchedToken.replaceType(BROKEN_PROBE);
+        } else if (matchedToken != null && matchedType == PROBE && !holds) {
+            matchedToken = matchedToken.replaceType(PROBE_FAILS);
+        }
+        LexicalState back = LexicalState.DEFAULT;
+        switchTo(back);
+    }
+;
+
+INJECT LEXER_CLASS : {
+    private boolean noted, probeStartHadNoToken;
+}
+
+INJECT PARSER_CLASS : {
+    private TokenType lastSeparator;
+    private boolean mixedSeparators;
+    // A constant: in Rust, every parser has its own copy, which never changes.
+    private static final int ORDINAL_MODULUS = 3;
+
+    /** The value of a number token, computed from its characters. */
+    private int value(Token number) {
+        int result = 0;
+        int i = 0;
+        while (i < number.length()) {
+            result = result * 10 + (number.charAt(i) - '0');
+            i++;
+        }
+        return result;
+    }
+
+    private int digitSum(Token number) {
+        int sum = 0;
+        int i = number.length();
+        do {
+            i -= 1;
+            sum += number.charAt(i) - '0';
+        } while (i > 0);
+        return sum;
+    }
+
+    private long nonZeroProduct(Token number) {
+        long product = 1;
+        int i = -1;
+        while (i + 1 < number.length()) {
+            i++;
+            int digit = (int) (number.charAt(i) - '0');
+            if (digit == 0) continue;
+            product *= digit;
+        }
+        return product;
+    }
+
+    private boolean isPalindrome(int n) {
+        int rest = n;
+        int reversed = 0;
+        do {
+            int digit = rest;
+            digit %= 10;
+            reversed = reversed * 10 + digit;
+            rest /= 10;
+        } while (rest != 0);
+        return reversed == n;
+    }
+
+    private boolean isWide(int n) {
+        long scaled = (long) n * 3000000;
+        return scaled > 2147483647L;
+    }
+
+    private boolean shiftsAgree(int n) {
+        long wide = (long) n << 33;
+        // Java masks the distance of an int shift to 5 bits: n << 33 is n << 1.
+        int masked = n << 33;
+        int negative = -n;
+        int unsigned = negative >>> 28;
+        int signed = negative >> 28;
+        int low = n & 0xF;
+        int high = n | 0xF;
+        int flipped = n ^ 0xF;
+        boolean bitsAgree = low == n % 16 && high == n - low + 15 && flipped == high - low;
+        // (n ^ 5) & 3 is (n % 4) ^ 1; for n = 7, (n & 0xF | n ^ 5) & 3 would be 3, not 7.
+        boolean precedence = ((n & 0xF) | (n ^ 0x5) & 0x3) == (low | ((n % 4) ^ 1));
+        boolean small = n >= 0 & n < 268435456;
+        return (wide >> 33) == n && masked == n << 1 && (n == 0 | !small | unsigned == 15 & signed == -1)
+            && bitsAgree && precedence;
+    }
+
+    private boolean letterBeforeM(Token number) {
+        int letter = 'a' + digitSum(number) % 26;
+        return letter < 'm' && letter >= 'a';
+    }
+
+    /** Whether the first call on the stack was made by the given production. */
+    private boolean firstCallerIs(String name) {
+        ListIterator<NonTerminalCall> it = stackIteratorForward();
+        return it.hasNext() && it.next().productionName == name;
+    }
+
+    /** The number of calls on the stack made by the given production. */
+    private int callersNamed(String name) {
+        int count = 0;
+        ListIterator<NonTerminalCall> it = stackIteratorForward();
+        while (it.hasNext()) {
+            if (it.next().productionName == name) ++count;
+        }
+        return count;
+    }
+
+    /** Whether the call before the last one was made by the given production. */
+    private boolean callerOfCallerIs(String name) {
+        ListIterator<NonTerminalCall> it = stackIteratorForward();
+        while (it.hasNext()) {
+            it.next();
+        }
+        if (!it.hasPrevious()) return false;
+        it.previous();
+        return it.hasPrevious() && it.previous().productionName == name;
+    }
+
+    /** Walks down the stack to its bottom, then back up to the first call. */
+    private boolean bottomCallerIs(String name) {
+        ListIterator<NonTerminalCall> it = stackIteratorBackward();
+        while (it.hasNext()) {
+            it.next();
+        }
+        return it.hasPrevious() && it.previous().productionName == name;
+    }
+
+    // The fields of the evaluation order checks, and the calls that change
+    // them while an expression that reads them is evaluated.
+    private int counter;
+    private long total;
+    private boolean flag;
+    private TokenType remembered;
+    private Token heldToken, orderKeyword;
+
+    private int setCounter(int value) { counter = value; return 1; }
+
+    private int setTotal(long value) { total = value; return 2; }
+
+    private boolean clearFlag() { flag = false; return true; }
+
+    private TokenType remember(TokenType type) { remembered = type; return type; }
+
+    /** Sets heldToken to the token just consumed (a keyword) and returns 0. */
+    private int replaceHeldToken() { heldToken = getToken(0); return 0; }
+
+    private boolean fieldReadBeforeCall() {
+        remembered = null;
+        // Java compares null with NUM, then remembered is NUM.
+        return remembered != remember(NUM) && remembered == NUM;
+    }
+
+    private boolean compoundReadsTargetFirst() {
+        counter = 5;
+        counter += setCounter(100);
+        boolean sum = counter == 6;
+        counter = 5;
+        counter -= setCounter(100);
+        boolean difference = counter == 4;
+        counter = 6;
+        counter |= setCounter(8);
+        boolean bits = counter == 7;
+        counter = 5;
+        counter <<= setCounter(100);
+        boolean shifted = counter == 10;
+        total = 5;
+        total *= setTotal(100);
+        boolean product = total == 10;
+        flag = true;
+        flag &= clearFlag();
+        return sum && difference && bits && shifted && product && flag;
+    }
+
+    /**
+     * Java reads heldToken (the "order" keyword) before the index replaces
+     * it with the token just consumed ("receiver").
+     */
+    private boolean receiverReadBeforeIndex() {
+        heldToken = orderKeyword;
+        return heldToken.charAt(replaceHeldToken()) == 'o';
+    }
+}
+
+Root : (Statement)* <EOF> ;
+
+Statement #void : NumberFacts | Nest | SeparatedList | Classify | EvaluationOrder | Name ;
+
+NumberFacts :
+    "number" <NUM> {Token number = getToken(0);}
+    (
+        ("sum") #EvenDigitSum(digitSum(number) % 2 == 0)
+      | ("product") #BigProduct(nonZeroProduct(number) > 100)
+      | ("mirror") #Palindrome(isPalindrome(value(number)))
+      | ("wide") #Wide(isWide(value(number)))
+      | ("shifts") #ShiftsAgree(shiftsAgree(value(number)))
+      | ("letter") #EarlyLetter(letterBeforeM(number))
+    )*
+    ";"
+;
+
+Nest : "outer" "{" (Inner | Probe) "}" ;
+
+Inner : "inner" "{" Probe "}" ;
+
+Probe :
+    (
+        (
+            (
+                (
+                    ("probe") #RootFirst(firstCallerIs("Root"))
+                ) #StatementFirst(firstCallerIs("Statement"))
+            ) #OneInner(callersNamed("Inner") == 1)
+        ) #NestTwoUp(callerOfCallerIs("Nest"))
+    ) #RootAtBottom(bottomCallerIs("Root"))
+;
+
+SeparatedList :
+    (
+        "list" {lastSeparator = null; mixedSeparators = false;}
+        AnyName
+        (
+            ("," | ";;")
+            {
+                if (lastSeparator != null && lastSeparator != getTokenType(0)) mixedSeparators = true;
+                lastSeparator = getTokenType(0);
+            }
+            AnyName
+        )*
+    ) #Uniform(lastSeparator == null || !mixedSeparators)
+    ";"
+;
+
+Classify : "classify" (<PROBE> | <PROBE_FAILS> | <BROKEN_PROBE>)+ ";" ;
+
+EvaluationOrder :
+    "order" {orderKeyword = getToken(0);}
+    (
+        ("compare") #FieldReadFirst(fieldReadBeforeCall())
+      | ("compound") #CompoundReadsTargetFirst(compoundReadsTargetFirst())
+      | ("receiver") #ReceiverReadFirst(receiverReadBeforeIndex())
+    )*
+    ";"
+;
+
+Name : (AnyName) #OrdinalRemainderTwo(getTokenType(0).ordinal() % ORDINAL_MODULUS == 2) ";" ;
+
+AnyName #void : <NAME> | <NOTED_NAME> ;

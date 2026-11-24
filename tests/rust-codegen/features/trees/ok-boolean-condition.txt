@@ -1,0 +1,5 @@
+flag a;
+flag on a;
+flag (a b);
+flag on (a b);
+flag b;

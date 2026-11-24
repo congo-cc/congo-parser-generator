@@ -1,0 +1,3 @@
+take one a b;
+take two a b;
+take one (x y) 7;
