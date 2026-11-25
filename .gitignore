@@ -6,7 +6,7 @@
 __pycache__/*
 /Ant*.out
 .ant-targets-build.xml
-/*.jar
+# /*.jar
 \#*
 /examples/arithmetic/ex1/*
 /examples/arithmetic/ex2/*
