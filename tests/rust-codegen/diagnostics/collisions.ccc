@@ -1,0 +1,23 @@
+/*
+ * Injected members whose Java names differ but whose Rust names are the
+ * same: none of them is generated.  Used by RustCodegenTest
+ * (diagnostics/rust-name-collisions), which checks the line and column of
+ * each diagnostic: keep the code below at its place.
+ *
+ * fooBar and foo_bar are used by a semantic lookahead: errors; x$y and x_y
+ * are not used: warnings.
+ */
+PARSER_PACKAGE=rcgtest.collisions;
+
+SKIP : " " | "\t" | "\n" | "\r" ;
+
+TOKEN : <A : "a"> | <B : "b"> ;
+
+Root : (SCAN {fooBar > 0 || foo_bar()} => "a" | "b")* <EOF> ;
+
+INJECT PARSER_CLASS : {
+    private int fooBar;
+    private boolean foo_bar() { return true; }
+    private int x$y;
+    private int x_y;
+}

@@ -1,0 +1,11 @@
+number 1234 sum product mirror wide shifts letter;
+number 12321 sum product mirror wide shifts letter;
+number 7 sum product mirror wide shifts letter;
+number 0 sum product mirror wide shifts letter;
+number 909090 product;
+number 99999 sum product letter;
+number 1000000 product mirror wide shifts;
+number 268435455 shifts wide;
+number 300000000 shifts;
+number 2147483647 shifts wide;
+number 5;

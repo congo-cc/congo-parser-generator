@@ -694,6 +694,31 @@ public class AppSettings {
         this.quiet = quiet;
     }
 
+    /**
+     * Whether Java code in the grammar that the Rust target cannot translate,
+     * and that can change how the input is parsed, is replaced by a stub
+     * (reported as a warning) instead of being reported as an error.  Set by
+     * the {@code -rust-allow-stubs} command line flag; only the Rust target
+     * reads it.  See {@code org.congocc.codegen.rust.RustCodeEmitter}.
+     */
+    private boolean rustAllowStubs;
+
+    /**
+     * @return true if untranslatable Java code is stubbed out in Rust
+     *         output instead of being an error (the {@code -rust-allow-stubs} flag)
+     */
+    public boolean getRustAllowStubs() {
+        return rustAllowStubs;
+    }
+
+    /**
+     * @param rustAllowStubs true to stub out untranslatable Java code in Rust
+     *                       output instead of reporting errors
+     */
+    public void setRustAllowStubs(boolean rustAllowStubs) {
+        this.rustAllowStubs = rustAllowStubs;
+    }
+
     public boolean getDebugFaultTolerant() {
         return false;
     }

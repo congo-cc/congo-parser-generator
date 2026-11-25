@@ -1,0 +1,4 @@
+nest ();
+nest (a);
+nest (a (b (c 1)) d);
+nest (a (b (c (d))));

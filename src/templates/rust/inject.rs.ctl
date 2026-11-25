@@ -7,7 +7,8 @@
 //! Code injections from grammar INJECT blocks.
 //!
 //! The grammar file contains INJECT blocks that add methods and fields to
-//! AST node classes.  In Java/Python/C#, these are inserted directly into
+//! AST node classes.  (Code injected into the parser and lexer classes is not
+//! in this file: it is translated into the `Parser` and `Lexer` structs.)  In Java/Python/C#, these are inserted directly into
 //! per-type class bodies.  In Rust's arena-based AST, there are no per-type
 //! structs, so injected code must be adapted to work with `(&Ast, NodeId)` pairs.
 //!
@@ -33,10 +34,12 @@
 //! See `FIXME.md` in this directory for a full inventory of needed implementations
 //! and an API reference for writing arena-based code.
 
-[#-- Detect whether ANY INJECT blocks exist in this grammar.
+[#-- Detect whether ANY node INJECT blocks exist in this grammar.
      We iterate grammar.nodeNames (which includes both productions and token
      types like NUMBER) rather than globals.sortedNodeClassNames (which only
-     includes productions). We also check for PARSER_CLASS injections. --]
+     includes productions).  INJECT PARSER_CLASS and INJECT LEXER_CLASS code is
+     not handled here: RustCodeEmitter translates it into the Parser and Lexer
+     structs (parser.rs and lexer.rs) and reports what it cannot translate. --]
 #var hasAnyInject = false
 #var injectNodes = []
 #list grammar::nodeNames as node
@@ -45,17 +48,9 @@
     #set injectNodes = injectNodes + [node]
   #endif
 #endlist
-[#-- Check for PARSER_CLASS injections via translateParserClassInjection which
-     uses the correct parserPackage.parserClassName lookup key and includes
-     original Java source in FIXME block comments. --]
-[#var parserFieldInject = globals.translateParserClassInjection(true)]
-[#var parserMethodInject = globals.translateParserClassInjection(false)]
-#if parserFieldInject! || parserMethodInject!
-   #set hasAnyInject = true
-#endif
 #if !hasAnyInject
-// No code injections found in this grammar.
-// The generated parser is fully functional without manual intervention.
+// No code is injected into node classes in this grammar.  (Code injected into
+// the parser and lexer classes is translated into parser.rs and lexer.rs.)
 #else
 use crate::ast::{Ast, NodeId, NodeKind};
 use crate::tokens::TokenType;
@@ -78,23 +73,4 @@ ${translated}
 
   #endif
 #endlist
-[#-- Emit PARSER_CLASS injections --]
-#if parserFieldInject! || parserMethodInject!
-// ---------------------------------------------------------------------------
-// INJECT PARSER_CLASS (${settings::parserClassName})
-//
-// Parser class injections typically add utility methods (e.g., main()) to the
-// parser.  In Rust, the parser is a struct with parsing methods; injected
-// methods like main() should be placed in a separate binary crate or test.
-// ---------------------------------------------------------------------------
-
-// Note: Parser class injections are shown below for reference.  Methods like
-// main() are Java-specific entry points and typically do not need Rust
-// equivalents in the library crate.  If you need a Rust binary, create a
-// separate bin/main.rs that uses this parser library.
-
-${parserFieldInject!}
-${parserMethodInject!}
-
-[/#if]
-[/#if]
+#endif

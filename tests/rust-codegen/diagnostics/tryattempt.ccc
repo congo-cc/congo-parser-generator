@@ -1,0 +1,19 @@
+/*
+ * TRY/CATCH and ATTEMPT/RECOVER, which the Rust target does not implement:
+ * errors, or stubs with -rust-allow-stubs.  Used by RustCodegenTest
+ * (diagnostics/try-and-attempt-*), which checks the line and column of each
+ * diagnostic: keep the code below at its place.
+ */
+PARSER_PACKAGE=rcgtest.tryattempt;
+
+SKIP : " " | "\t" | "\n" | "\r" ;
+
+TOKEN : <A : "a"> | <B : "b"> | <SEMI : ";"> ;
+
+Root : (Statement)* <EOF> ;
+
+Statement :
+    try { "a" ";" } catch (ParseException e) { }
+    |
+    ATTEMPT "b" ";" RECOVER ("b")
+;

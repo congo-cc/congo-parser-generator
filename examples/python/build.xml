@@ -77,7 +77,10 @@
   </target>
 
   <target name="rust-gen" depends="rust-guard" if="rust.available">
-    <congocc target="Python.ccc" lang="rust" args="-n -q -d ${basedir}/rust-pythonparser"/>
+    <!-- -rust-allow-stubs: the grammar's Java code uses types and APIs that the
+         Rust target does not translate, so the Rust crate is generated with
+         stubs for that code; the generator reports each stub as a warning. -->
+    <congocc target="Python.ccc" lang="rust" args="-n -q -d ${basedir}/rust-pythonparser -rust-allow-stubs"/>
   </target>
 
   <target name="compile-rust" depends="rust-guard,rust-gen" if="rust.on">

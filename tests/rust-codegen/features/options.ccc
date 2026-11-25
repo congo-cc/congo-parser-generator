@@ -1,0 +1,47 @@
+/*
+ * Tree building settings: every production makes a node
+ * (SMART_NODE_CREATION=false) and tokens are not nodes
+ * (TOKENS_ARE_NODES=false).  RustCodegenTest generates a Java and a Rust
+ * parser from this grammar and checks that they build the same tree (or
+ * report the same error) for every input in the options/ directory.
+ *
+ *   ;                 a statement node without children
+ *   1 + 2 * x;        definite nodes made of the previous node and the next
+ *                     one (#Plus(2), #Times(2)): the operators are not nodes,
+ *                     so they are not counted
+ *   (1 + 2) * 3;      a production node with a single child, which smart
+ *                     node creation would leave out
+ *   7; x;             a number or a name makes a node without children
+ *                     (#Num, #Name): a token is not a node, and without these
+ *                     annotations #Times(2) would take a node of an enclosing
+ *                     scope
+ *   a, b, c;          a conditional node (#List(>1)): the commas are not
+ *                     counted either
+ */
+PARSER_PACKAGE=rcgtest.options;
+PARSER_CLASS=FeatureParser;
+LEXER_CLASS=FeatureLexer;
+SMART_NODE_CREATION=false;
+TOKENS_ARE_NODES=false;
+
+SKIP : " " | "\t" | "\n" | "\r" ;
+
+TOKEN :
+    <SEMI : ";"> | <COMMA : ","> | <PLUS : "+"> | <TIMES : "*"> | <LPAREN : "("> | <RPAREN : ")">
+  | <NUM : (["0"-"9"])+>
+  | <ID : (["a"-"z"])+>
+;
+
+Root : (Statement)* <EOF> ;
+
+Statement : [Items] ";" ;
+
+Items #void : (Sum ("," Sum)*) #List(>1) ;
+
+Sum : Product ("+" Product #Plus(2))* ;
+
+Product : Atom ("*" Atom #Times(2))* ;
+
+Atom #void : <NUM> #Num | <ID> #Name | Group ;
+
+Group : "(" Sum ")" ;

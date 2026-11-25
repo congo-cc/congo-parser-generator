@@ -1,0 +1,131 @@
+/*
+ * Lookahead.  RustCodegenTest generates a Java and a Rust parser from this
+ * grammar and checks that they build the same tree (or report the same error)
+ * for every input in the lookahead/ directory.
+ *
+ *   x:  y: 42           numeric lookahead (SCAN 2), SCAN 0 with a semantic condition
+ *   x = 1;              syntactic lookahead (SCAN <ID> "=")
+ *   f(1, 2,);           semantic lookahead (getTokenType), =>|+1 in a loop
+ *   let x [= e];        up-to-here marker (=>||)
+ *   block ... end       nested statements
+ *   leave;              ASSERT with a message: only inside a block (isInProduction)
+ *   deep;               only two blocks deep (semantic lookahead calling an
+ *                       injected method that walks the call stack)
+ *   inner; outer; nested; far; free; odd;
+ *                       lookbehind, on the call stack, whose entries are the
+ *                       productions that made the calls (Root calls the
+ *                       top-level statements): directly in a block (\Block),
+ *                       at the top level (\Root/), in a conditional of a
+ *                       top-level block (/Root/Statement/Block/Statement/Conditional),
+ *                       anywhere in a conditional (\...\Conditional), outside
+ *                       every block (~\...\Block), not directly in a block
+ *                       but called through at least two productions (\~Block\.)
+ *   if e { ... } else { ... }
+ *                       a syntactic ASSERT with a message: no second else
+ *   color red;          a choice of many tokens (first-set lookahead)
+ *   #!x;                ENSURE during lookahead: "#" and "!" must touch (getToken)
+ *   ?                   FAIL with a message
+ *   pair a: 1, 2;       nested syntactic lookahead (Pair has its own SCAN)
+ */
+PARSER_PACKAGE=rcgtest.lookahead;
+PARSER_CLASS=FeatureParser;
+LEXER_CLASS=FeatureLexer;
+
+SKIP : " " | "\t" | "\n" | "\r" ;
+
+TOKEN :
+    <SEMI : ";"> | <EQ : "="> | <COLON : ":"> | <COMMA : ","> | <DOT : "."> | <LPAREN : "("> | <RPAREN : ")">
+  | <LBRACE : "{"> | <RBRACE : "}"> | <HASH : "#"> | <BANG : "!"> | <QUESTION : "?">
+  // The KW_ prefix keeps the token names apart from CongoCC's own keywords.
+  | <KW_LET : "let"> | <KW_BLOCK : "block"> | <KW_END : "end"> | <KW_IF : "if"> | <KW_ELSE : "else">
+  | <KW_LEAVE : "leave"> | <KW_DEEP : "deep"> | <KW_INNER : "inner"> | <KW_OUTER : "outer">
+  | <KW_NESTED : "nested"> | <KW_FAR : "far"> | <KW_FREE : "free"> | <KW_ODD : "odd">
+  | <KW_COLOR : "color"> | <KW_PAIR : "pair">
+  | <KW_RED : "red"> | <KW_GREEN : "green"> | <KW_BLUE : "blue"> | <KW_CYAN : "cyan">
+  | <KW_MAGENTA : "magenta"> | <KW_YELLOW : "yellow"> | <KW_BLACK : "black">
+  | <NUM : (["0"-"9"])+>
+  | <ID : (["a"-"z"])+>
+;
+
+INJECT PARSER_CLASS : {
+    /** The number of Block productions on the call stack. */
+    private int blockDepth() {
+        int depth = 0;
+        ListIterator<NonTerminalCall> it = stackIteratorBackward();
+        while (it.hasNext()) {
+            if (it.next().productionName == "Block") depth++;
+        }
+        return depth;
+    }
+}
+
+Root : (Statement)* <EOF> ;
+
+Statement :
+    SCAN 2 => Label
+  | SCAN <ID> "=" => Assignment
+  | SCAN {getTokenType(1) == ID && getTokenType(2) == LPAREN} => Call
+  | Declaration
+  | Block
+  | Conditional
+  | Leave
+  | SCAN {blockDepth() >= 2 && checkNextTokenType(KW_DEEP)} => Deep
+  | SCAN \Block => Inner
+  | SCAN \Root/ => Outer
+  | SCAN /Root/Statement/Block/Statement/Conditional => Nested
+  | SCAN \...\Conditional => Far
+  | SCAN ~\...\Block => Free
+  | SCAN \~Block\. => Odd
+  | Color
+  | Shebang
+  | Pairs
+  // FAIL takes a Java expression: the parentheses end it.
+  | ("?" FAIL "a question mark is not a statement")
+  | ExpressionStatement
+;
+
+Label : <ID> ":" [SCAN 0 {getTokenType(1) == NUM} => <NUM>] ;
+
+Assignment : <ID> "=" Expression ";" ;
+
+Call : <ID> "(" [Expression ("," =>|+1 Expression)* [","]] ")" ";" ;
+
+Declaration : "let" <ID> =>|| ["=" Expression] ";" ;
+
+Block : "block" (Statement)* "end" ;
+
+Conditional :
+    "if" Expression "{" (Statement)* "}"
+    ["else" "{" (Statement)* "}"]
+    ASSERT ~("else") : "a conditional has at most one else"
+;
+
+Leave : "leave" ASSERT {isInProduction("Block") : "leave outside of a block"} ";" ;
+
+Deep : "deep" ";" ;
+
+Inner : "inner" ";" ;
+
+Outer : "outer" ";" ;
+
+Nested : "nested" ";" ;
+
+Far : "far" ";" ;
+
+Free : "free" ";" ;
+
+Odd : "odd" ";" ;
+
+Color : "color" ("red" | "green" | "blue" | "cyan" | "magenta" | "yellow" | "black") ";" ;
+
+Shebang : "#" ENSURE {getToken(0).getEndOffset() == getToken(1).getBeginOffset()} "!" <ID> =>|| ";" ;
+
+Pairs : "pair" (SCAN Pair "," => Pair ",")* Pair ";" ;
+
+Pair : SCAN <ID> ":" => <ID> ":" <NUM> | <NUM> ;
+
+ExpressionStatement : Expression ";" ;
+
+Expression : Primary ("." <ID> ["(" ")"])* ;
+
+Primary : <NUM> | <ID> | "(" Expression ")" ;

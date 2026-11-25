@@ -1,0 +1,17 @@
+/*
+ * A grammar whose Java code can all be translated to Rust: the Rust target
+ * reports nothing and the crate builds.  Used by RustCodegenTest (cli/...).
+ */
+PARSER_PACKAGE=rcgtest.clean;
+
+SKIP : " " | "\t" | "\n" | "\r" ;
+
+TOKEN : <A : "a"> | <B : "b"> | <SEMI : ";"> ;
+
+INJECT PARSER_CLASS : {
+    private int count;
+}
+
+Root : (SCAN {count < 3} => Item {count++;})* <EOF> ;
+
+Item : "a" | "b" ";" ;

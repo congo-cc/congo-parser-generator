@@ -22,6 +22,16 @@
 OUTPUT_DIRECTORY = "./";
 PARSER_CLASS=SqlExprParser;
 PARSER_PACKAGE=parser;
+// The hand-written Rust tests of this example (rust-saved/tests) expect a node
+// for every production, including the productions that match a single token
+// (literal, variable, stringLitteral, ...).  Smart node creation, the default,
+// leaves those nodes out (a node is only created when it has more than one
+// child), so it is turned off for the Rust target.  (Before the Rust target
+// honored this setting, its parser always behaved as if it were turned off.)
+// The other targets keep the default.
+#if __rust__
+SMART_NODE_CREATION=false;
+#endif
 
 INJECT :
 {

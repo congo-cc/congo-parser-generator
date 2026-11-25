@@ -1,0 +1,24 @@
+/*
+ * Grammar features that the Rust target does not implement.  It reports
+ * each one as a warning (the Rust parser then behaves differently from the
+ * Java parser, as the warning says), and the crate builds.  Used by
+ * RustCodegenTest (diagnostics/unimplemented-features-are-warnings).
+ */
+PARSER_PACKAGE=rcgtest.unimplemented;
+FAULT_TOLERANT;
+UNPARSED_TOKENS_ARE_NODES;
+
+SKIP : " " | "\t" | "\n" | "\r" ;
+
+UNPARSED : <COMMENT : "#" (~["\n"])*> ;
+
+TOKEN : <A : "a"> | <B : "b"> ;
+
+Root : (&1:2& "a")* ("b")* <EOF> ;
+
+INJECT PARSER_CLASS : {
+    private int seen;
+    private void tokenHook$counting(Token token) { seen++; }
+    private void openNodeHook$counting(Node node) { seen++; }
+    private void closeNodeHook$counting(Node node) { seen++; }
+}

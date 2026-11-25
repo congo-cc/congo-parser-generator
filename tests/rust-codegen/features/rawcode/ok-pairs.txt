@@ -1,0 +1,4 @@
+pairs a b;
+pairs a b c;
+pairs a b c d;
+pairs a 1 b 2;

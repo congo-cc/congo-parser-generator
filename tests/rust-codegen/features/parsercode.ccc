@@ -1,0 +1,187 @@
+/*
+ * Java code in the parser.  RustCodegenTest generates a Java and a Rust
+ * parser from this grammar and checks that they build the same tree (or
+ * report the same error) for every input in the parsercode/ directory.  The
+ * code decides which nodes are built and which alternatives are taken, so the
+ * trees show what it computed.  The constructs are the ones that Rust.ccc
+ * uses, plus production parameters.
+ *
+ *   nest (a (b (c)));    an int parameter: the depth of each list is passed
+ *                        down (Nest(depth + 1)); the lists at an even depth
+ *                        get an Even node, and an ASSERT rejects lists nested
+ *                        more than three deep
+ *   seq a b;             arguments with side effects (next() increments a
+ *                        field), evaluated left to right as in Java: when they
+ *                        are, the Ordered node gets an Ascending node.  The
+ *                        Rust code evaluates them into temporaries first
+ *                        (parsercode/rust-code.expect checks it)
+ *   tag (a) name "s";    parameters of the types Token, TokenType, String,
+ *                        char, long and boolean, and an injected method that
+ *                        takes a Token and a long (the Rust target passes a
+ *                        Token as '&mut Token', so the argument is a local)
+ *   let [const] x [: t] = v;
+ *                        locals declared in a code block of the production,
+ *                        used by later semantic lookahead and tree building
+ *                        annotations (as GenericArgBinding in Rust.ccc)
+ *   1; "s"; x;           instanceof on a token class and on its superclass
+ *                        (the token classes are in the node package, so the
+ *                        Java code names them NODE_PACKAGE.Name)
+ *   { a; b; c }          a block whose last statement may omit its ";": a
+ *                        local updated after each statement and read by the
+ *                        semantic lookahead of the loop (as BlockExpression in
+ *                        Rust.ccc)
+ *   group (a [b] c);     code that also runs during lookahead ({...}#), with
+ *   group (a [b] c)!     switch statements, fields of type TokenType and
+ *                        chained assignments (as DelimTokenTree in Rust.ccc);
+ *                        the statement that ends with "!" is recognized by
+ *                        scanning the whole group
+ */
+PARSER_PACKAGE=rcgtest.parsercode;
+PARSER_CLASS=FeatureParser;
+LEXER_CLASS=FeatureLexer;
+
+SKIP : " " | "\t" | "\n" | "\r" ;
+
+TOKEN :
+    <SEMI : ";"> | <EQ : "="> | <COLON : ":"> | <BANG : "!"> | <COMMA : ",">
+  | <LPAREN : "("> | <RPAREN : ")"> | <LBRACKET : "["> | <RBRACKET : "]"> | <LBRACE : "{"> | <RBRACE : "}">
+  // The KW_ prefix keeps the token names apart from CongoCC's own keywords.
+  | <KW_NEST : "nest"> | <KW_SEQ : "seq"> | <KW_TAG : "tag"> | <KW_LET : "let"> | <KW_CONST : "const">
+  | <KW_GROUP : "group">
+;
+
+// Token classes, for instanceof: NumberLiteral and TextLiteral extend Literal.
+TOKEN #Literal :
+    <NUM : (["0"-"9"])+> #NumberLiteral
+  | <STR : "\"" (~["\"", "\n"])* "\""> #TextLiteral
+;
+
+TOKEN #Name : <ID : (["a"-"z", "_"])+> ;
+
+INJECT PARSER_CLASS : {
+    private int counter;
+    private TokenType startDelim, endDelim;
+    private int parens, brackets, delimNesting;
+
+    /** 1, 2, 3...: a call with a side effect. */
+    private int next() {
+        return ++counter;
+    }
+
+    /** Whether the token is a name longer than the given length. */
+    private boolean longName(Token token, long length) {
+        return token instanceof NODE_PACKAGE.Name && token.length() > length;
+    }
+}
+
+Root : (Statement)* <EOF> ;
+
+Statement #void :
+    ";" #Empty(1)
+  | NestStatement
+  | Sequence
+  | Tag
+  | Let
+  | SCAN Group "!" => Shout
+  | GroupStatement
+  | Value
+    (
+        SCAN {getTokenType(0) == RBRACE} => {}
+      | ";" #ValueStatement(+1)
+      | {}
+    )
+;
+
+NestStatement : "nest" Nest(0) ";" ;
+
+Nest(int depth) :
+    "("
+    ASSERT {depth <= 3 : "lists are nested at most three deep"}
+    ((<ID> | <NUM> | Nest(depth + 1))*) #Even(depth % 2 == 0)
+    ")"
+;
+
+// The second argument is read between the two calls: Java gives 1, 1, 2 the
+// first time, 3, 3, 4 the second time, and so on.
+Sequence : "seq" Ordered(next(), counter, next()) ";" ;
+
+Ordered(int first, int second, int third) : ((<ID>)+) #Ascending(first == second && second < third) ;
+
+Tag : "tag" Tagged(getToken(1), RPAREN, "parens", ')', 2L, true) ";" ;
+
+Tagged(Token opener, TokenType closer, String label, char mark, long limit, boolean strict) :
+    ("(" (<ID>)* ")") #Labelled(label.equals("parens") && opener.getType() == LPAREN && closer == RPAREN && mark == ')')
+    {Token following = getToken(1);}
+    [SCAN {strict && longName(following, limit)} => <ID> #LongName(1)]
+    [<STR>]
+;
+
+Let : "let" Binding ";" ;
+
+Binding #void :
+    ["const"]
+    {
+        boolean seenConst = getTokenType(0) == KW_CONST;
+        boolean typed = getToken(1) instanceof NODE_PACKAGE.Name && getTokenType(2) == COLON;
+        int arity = seenConst ? 6 : 5;
+    }
+    <ID>
+    (
+        SCAN {typed} => ":" <ID> "=" Value #TypedBinding(arity)
+      | "=" Value #Binding(arity - 2)
+    )
+;
+
+Value #void :
+    SCAN {getToken(1) instanceof NODE_PACKAGE.NumberLiteral} => <NUM> #NumberValue(1)
+  | SCAN {getToken(1) instanceof NODE_PACKAGE.Literal} => <STR> #TextValue(1)
+  | <ID>
+  | Block
+;
+
+Block :
+    {boolean seenLast = false;}
+    "{"
+    (
+        SCAN 0 {!seenLast && getTokenType(1) != RBRACE} => Statement
+        {seenLast = getTokenType(0) != RBRACE && getTokenType(0) != SEMI;}
+    )*
+    "}"
+;
+
+Shout : Group "!" ;
+
+GroupStatement : Group ";" ;
+
+Group :
+    "group"
+    ("(" | "[")
+    {
+        startDelim = getTokenType(0);
+        parens = brackets = delimNesting = 0;
+        switch (getTokenType(0)) {
+            case LPAREN : endDelim = RPAREN; break;
+            case LBRACKET : endDelim = RBRACKET; break;
+            default : assert false : "only ( and [ open a group";
+        }
+    }#
+    (
+        SCAN {delimNesting > 0 || !checkNextTokenType(endDelim)}# =>
+        AnyToken
+        {
+            if (getTokenType(0) == startDelim) delimNesting++;
+            else if (getTokenType(0) == endDelim) delimNesting--;
+            switch (getTokenType(0)) {
+                case LPAREN : ++parens; break;
+                case RPAREN : --parens; break;
+                case LBRACKET : case LBRACE : ++brackets; break;
+                case RBRACKET : case RBRACE : --brackets; break;
+            }
+        }#
+        ASSERT {parens >= 0 && brackets >= 0 : "unbalanced delimiters"}
+    )*
+    (")" | "]")
+    ASSERT {parens == 0 && brackets == 0 : "unbalanced delimiters"}
+;
+
+AnyToken #void : <ID> | <NUM> | <STR> | "(" | ")" | "[" | "]" | "{" | "}" | "," | ":" | "=" ;

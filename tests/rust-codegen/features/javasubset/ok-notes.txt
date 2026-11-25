@@ -1,0 +1,6 @@
+# a note before a name
+word;
+other;
+# a note before a list
+list first, second;
+# a note at the end, without a final newline

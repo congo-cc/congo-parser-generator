@@ -1,0 +1,4 @@
+a << b >> c;
+list<list<a>>;
+list<list<a>> >> b << c;
+x = a<<b;

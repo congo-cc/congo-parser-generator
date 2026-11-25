@@ -1,0 +1,35 @@
+/*
+ * Java code just outside the subset that the Rust target translates (the
+ * subset is listed in the generated FIXME.md): a field of type LexicalState,
+ * a String field, a mutable static field, a cast to char and a compound
+ * assignment of a long to an int.  Each one is used by code that decides
+ * what is parsed, so each is an error.  Used by RustCodegenTest
+ * (diagnostics/outside-the-subset), which checks the line and column of each
+ * diagnostic: keep the code below at its place.
+ */
+PARSER_PACKAGE=rcgtest.outsidesubset;
+
+SKIP : " " | "\t" | "\n" | "\r" ;
+
+TOKEN : <A : "a"> {switchTo(next);} | <B : "b"> | <C : "c"> | <D : "d"> ;
+
+INJECT LEXER_CLASS : {
+    private LexicalState next = LexicalState.DEFAULT;
+}
+
+INJECT PARSER_CLASS : {
+    private String lastName;
+    private static int instances;
+    private boolean nextLetterIsB(int offset) { char c = (char) ('a' + offset); return c == 'b'; }
+    private boolean grows(long step) { int size = 0; size += step; return size > 0; }
+}
+
+Root :
+    (
+        SCAN {nextLetterIsB(1)} => "a"
+      | SCAN {grows(1)} => "b"
+      | SCAN {lastName == null} => "c"
+      | SCAN {instances == 0} => "d"
+    )*
+    <EOF>
+;
